@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const PLATFORMS = [
   {
@@ -91,18 +90,13 @@ const PLATFORMS = [
 ];
 
 export function PlatformCarousel() {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [offset, setOffset] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   
-  // Number of visible items based on screen size
   const visibleCount = 4;
   
   const nextSlide = useCallback(() => {
-    setCurrentIndex((prev) => (prev + 1) % PLATFORMS.length);
-  }, []);
-
-  const prevSlide = useCallback(() => {
-    setCurrentIndex((prev) => (prev - 1 + PLATFORMS.length) % PLATFORMS.length);
+    setOffset((prev) => (prev + 1) % PLATFORMS.length);
   }, []);
 
   // Auto-rotate every 3 seconds
@@ -112,14 +106,28 @@ export function PlatformCarousel() {
     return () => clearInterval(interval);
   }, [isPaused, nextSlide]);
 
-  // Get visible platforms with wrap-around
+  // Get extended platforms for smooth infinite scroll (show extra on sides for fade effect)
   const getVisiblePlatforms = () => {
     const result = [];
-    for (let i = 0; i < visibleCount; i++) {
-      const index = (currentIndex + i) % PLATFORMS.length;
-      result.push({ ...PLATFORMS[index], originalIndex: index });
+    // Show 2 extra on each side for the fade effect
+    for (let i = -1; i < visibleCount + 1; i++) {
+      const index = (offset + i + PLATFORMS.length) % PLATFORMS.length;
+      result.push({ ...PLATFORMS[index], position: i });
     }
     return result;
+  };
+
+  // Calculate opacity based on position (0 and 1 are fully visible, edges fade out)
+  const getOpacity = (position: number) => {
+    if (position === 0 || position === 1 || position === 2 || position === 3) {
+      // First 4 cards (the main visible ones)
+      if (position === 0) return 0.85; // Slight fade on left edge
+      if (position === 3) return 0.85; // Slight fade on right edge
+      return 1; // Center cards fully visible
+    }
+    if (position === -1) return 0.3; // Far left - heavily faded
+    if (position === 4) return 0.3; // Far right - heavily faded
+    return 0;
   };
 
   return (
@@ -128,38 +136,21 @@ export function PlatformCarousel() {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Navigation buttons */}
-      <button
-        onClick={prevSlide}
-        className="absolute -left-4 top-1/2 z-20 -translate-y-1/2 rounded-full border bg-background p-2 shadow-lg transition-all hover:bg-muted"
-        aria-label="Previous platform"
-      >
-        <ChevronLeft className="h-5 w-5" />
-      </button>
-      <button
-        onClick={nextSlide}
-        className="absolute -right-4 top-1/2 z-20 -translate-y-1/2 rounded-full border bg-background p-2 shadow-lg transition-all hover:bg-muted"
-        aria-label="Next platform"
-      >
-        <ChevronRight className="h-5 w-5" />
-      </button>
-
-      {/* Carousel container with fade edges */}
+      {/* Carousel container */}
       <div className="relative overflow-hidden">
-        {/* Left fade gradient */}
-        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-muted/80 to-transparent" />
-        {/* Right fade gradient */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-muted/80 to-transparent" />
+        {/* Left fade gradient overlay */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-32 bg-gradient-to-r from-background via-background/80 to-transparent" />
+        {/* Right fade gradient overlay */}
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-32 bg-gradient-to-l from-background via-background/80 to-transparent" />
 
         {/* Cards container */}
-        <div className="flex gap-6 px-8 transition-transform duration-500 ease-in-out">
+        <div className="flex gap-6 transition-transform duration-700 ease-in-out">
           {getVisiblePlatforms().map((platform, idx) => (
             <div
-              key={`${platform.name}-${idx}`}
-              className="w-full min-w-[calc(25%-18px)] flex-shrink-0 transition-all duration-500"
+              key={`${platform.name}-${offset}-${idx}`}
+              className="w-[calc(25%-18px)] flex-shrink-0 transition-opacity duration-700"
               style={{
-                opacity: idx === 0 || idx === visibleCount - 1 ? 0.6 : 1,
-                transform: idx === 0 || idx === visibleCount - 1 ? 'scale(0.95)' : 'scale(1)',
+                opacity: getOpacity(platform.position),
               }}
             >
               <PlatformCard {...platform} />
@@ -168,18 +159,16 @@ export function PlatformCarousel() {
         </div>
       </div>
 
-      {/* Dot indicators */}
-      <div className="mt-6 flex justify-center gap-2">
+      {/* Minimal dot indicator */}
+      <div className="mt-8 flex justify-center gap-1.5">
         {PLATFORMS.map((_, idx) => (
-          <button
+          <div
             key={idx}
-            onClick={() => setCurrentIndex(idx)}
-            className={`h-2 w-2 rounded-full transition-all ${
-              idx === currentIndex
-                ? "w-6 bg-primary"
-                : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+            className={`h-1.5 rounded-full transition-all duration-300 ${
+              idx === offset % PLATFORMS.length
+                ? "w-4 bg-primary"
+                : "w-1.5 bg-muted-foreground/20"
             }`}
-            aria-label={`Go to slide ${idx + 1}`}
           />
         ))}
       </div>
