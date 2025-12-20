@@ -97,7 +97,6 @@ export function PlatformCarousel() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const visibleCount = 4;
   const cardWidthPercent = 25; // Each card is 25% of container
   const gapPx = 24; // gap-6 = 24px
 

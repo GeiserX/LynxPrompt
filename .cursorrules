@@ -67,8 +67,9 @@ npm run dev
 
 ### Build and Push Docker Image
 ```bash
-docker build -t geiserback.mango-alpha.ts.net:5000/lynxprompt:latest .
-docker push geiserback.mango-alpha.ts.net:5000/lynxprompt:latest
+# Use semver tags (e.g., 0.2.0), not :latest
+docker build -t geiserback.mango-alpha.ts.net:5000/lynxprompt:<version> .
+docker push geiserback.mango-alpha.ts.net:5000/lynxprompt:<version>
 ```
 
 ### Database Operations
