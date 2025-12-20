@@ -1,0 +1,108 @@
+# LynxPrompt Project Rules
+
+## Project Overview
+LynxPrompt is a web application that generates AI IDE configuration files (.cursorrules, CLAUDE.md, copilot-instructions.md, .windsurfrules, etc.) based on user preferences through a wizard interface. It provides a "mouse experience rather than keyboard experience" for creating AI prompts.
+
+## Tech Stack
+- **Frontend**: Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS, shadcn/ui
+- **Backend**: Next.js API Routes
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: NextAuth.js (GitHub OAuth, Google OAuth, Magic Link)
+- **Testing**: Vitest, React Testing Library
+- **Containerization**: Docker with multi-stage builds
+
+## Repository Structure
+- Main repo: https://github.com/GeiserX/LynxPrompt (private)
+- Production deployment managed via Portainer from Gitea
+
+## Infrastructure
+
+### Docker Registry
+- **Private registry**: `geiserback.mango-alpha.ts.net:5000` (Tailscale)
+- **Alternative IP**: `192.168.10.100:5000` (use when DNS doesn't resolve)
+- Images are built and pushed manually, NOT via GitHub Actions
+
+### Portainer
+- **URL**: `http://watchtower.mango-alpha.ts.net:9001`
+- **API Key**: stored in `gitea/watchtower/.env` as `PORTAINER_API_KEY`
+- **Endpoint ID**: 2 (for Docker operations)
+- Stack ID for lynxprompt: 161
+
+### Gitea (for Portainer stack definitions)
+- **URL**: `http://192.168.10.100:3010`
+- **Repo**: `giteaer/watchtower`
+- **Credentials**: Username `giteaer`, token from `gitea/watchtower/renovate/docker-compose.yml`
+- Stack compose file: `lynxprompt/docker-compose.yml`
+
+### Production Deployment
+- **Domain**: https://lynxprompt.com
+- **Port**: 4990 (internal), proxied via Caddy
+- **Database**: PostgreSQL 17-alpine with data at `/mnt/user/appdata/lynxprompt/postgres`
+
+## Environment Variables
+- `MOCK=true`: Use mock data (no database)
+- `MOCK=false` (default): Use PostgreSQL database
+- `NEXTAUTH_SECRET`: Required for authentication
+- `DATABASE_URL`: PostgreSQL connection string
+
+## Key Files
+- `docker-compose.yml` (root): Development environment
+- `gitea/watchtower/lynxprompt/docker-compose.yml`: Production stack
+- `prisma/seed.ts`: Database seeding script
+- `src/lib/data/templates.ts`: Data layer with mock/DB switching
+
+## CI/CD
+- GitHub Actions workflow: `.github/workflows/ci.yml`
+- Runs: lint, test, build
+- On tags (v*): Creates GitHub Release
+- Does NOT build/push Docker images (done manually)
+
+## Common Commands
+
+### Local Development
+```bash
+docker-compose up -d
+npm run dev
+```
+
+### Build and Push Docker Image
+```bash
+docker build -t geiserback.mango-alpha.ts.net:5000/lynxprompt:latest .
+docker push geiserback.mango-alpha.ts.net:5000/lynxprompt:latest
+```
+
+### Database Operations
+```bash
+npx prisma generate
+npx prisma db push
+npx prisma db seed
+```
+
+### Portainer Stack Redeploy (PowerShell)
+```powershell
+$headers = @{
+    "X-API-Key" = $env:PORTAINER_API_KEY
+    "Content-Type" = "application/json"
+}
+$body = @{
+    PullImage = $true
+    RepositoryAuthentication = $true
+    RepositoryUsername = "giteaer"
+    RepositoryPassword = $env:GITEA_TOKEN
+} | ConvertTo-Json
+Invoke-RestMethod -Uri "http://watchtower.mango-alpha.ts.net:9001/api/stacks/161/git/redeploy?endpointId=2" -Method PUT -Headers $headers -Body $body
+```
+
+## Conventions
+- License: GPL with commercial usage restricted to Sergio Fernández Rubio or heirs
+- Footer attribution: "LynxPrompt by Geiser Cloud (https://geiser.cloud)"
+- Always debug after building locally
+- Check logs automatically after builds
+
+## Known Issues
+- Tailscale DNS may not resolve on Docker host - use IP `192.168.10.100` as fallback
+- `useSearchParams` requires Suspense boundary in client components
+- Database pages need `export const dynamic = "force-dynamic"` to prevent build-time DB access
+
+## Owner
+Sergio Fernández Rubio
