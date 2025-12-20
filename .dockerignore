@@ -1,0 +1,64 @@
+# =============================================================================
+# LynxPrompt .dockerignore
+# =============================================================================
+
+# Dependencies (will be installed in container)
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+.next/
+out/
+build/
+dist/
+.swc/
+
+# Environment files (NEVER include in Docker image)
+.env
+.env.*
+!.env.example
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Testing
+coverage/
+*.lcov
+.nyc_output
+tests/
+
+# Documentation
+*.md
+!README.md
+
+# Docker files (avoid recursion)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Temporary
+tmp/
+temp/
+*.tmp
+
+# Misc
+*.pem
+LICENSE
+CONTRIBUTING.md
