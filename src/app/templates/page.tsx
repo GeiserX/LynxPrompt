@@ -253,7 +253,15 @@ export default function TemplatesPage() {
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
-              © 2025 LynxPrompt by Sergio Fernández Rubio
+              © 2025 LynxPrompt by{" "}
+              <a 
+                href="https://geiser.cloud" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:underline"
+              >
+                Geiser Cloud
+              </a>
             </p>
           </div>
           <div className="flex gap-4">

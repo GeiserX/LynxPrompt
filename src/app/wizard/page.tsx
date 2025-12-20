@@ -1215,7 +1215,15 @@ function LoginRequired() {
       {/* Footer */}
       <footer className="border-t py-6">
         <div className="container text-center text-sm text-muted-foreground">
-          © 2025 LynxPrompt by Sergio Fernández Rubio
+          © 2025 LynxPrompt by{" "}
+            <a 
+              href="https://geiser.cloud" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="hover:underline"
+            >
+              Geiser Cloud
+            </a>
         </div>
       </footer>
     </div>
