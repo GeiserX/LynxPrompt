@@ -21,17 +21,8 @@ FROM base AS deps
 # Copy package files
 COPY package.json package-lock.json* pnpm-lock.yaml* yarn.lock* ./
 
-# Install dependencies based on the preferred package manager
-RUN \
-  if [ -f pnpm-lock.yaml ]; then \
-    corepack enable pnpm && pnpm install --frozen-lockfile; \
-  elif [ -f yarn.lock ]; then \
-    yarn --frozen-lockfile; \
-  elif [ -f package-lock.json ]; then \
-    npm ci; \
-  else \
-    npm install; \
-  fi
+# Install dependencies
+RUN npm install
 
 # -----------------------------------------------------------------------------
 # Development stage
