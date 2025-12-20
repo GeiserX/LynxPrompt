@@ -6,98 +6,18 @@ import {
   Filter,
   Download,
   Heart,
-  Star,
   Users,
   Plus,
 } from "lucide-react";
+import { getTemplates, getCategories, type TemplateData } from "@/lib/data/templates";
 
-// Mock data for templates
-const FEATURED_TEMPLATES = [
-  {
-    id: "1",
-    name: "Full-Stack TypeScript",
-    description:
-      "Complete setup for Next.js, TypeScript, Prisma, and testing with AI-powered coding assistance",
-    author: "LynxPrompt",
-    downloads: 1234,
-    likes: 89,
-    tags: ["typescript", "nextjs", "fullstack"],
-    platforms: ["cursor", "claude", "copilot"],
-    isOfficial: true,
-  },
-  {
-    id: "2",
-    name: "Python Data Science",
-    description:
-      "Optimized for Jupyter notebooks, pandas, and ML workflows with intelligent code completion",
-    author: "DataEngineer42",
-    downloads: 856,
-    likes: 67,
-    tags: ["python", "data-science", "ml"],
-    platforms: ["cursor", "claude"],
-    isOfficial: false,
-  },
-  {
-    id: "3",
-    name: "Go Microservices",
-    description:
-      "Production-ready Go setup with Docker, Kubernetes configs, and API development rules",
-    author: "CloudNative",
-    downloads: 623,
-    likes: 45,
-    tags: ["go", "microservices", "devops"],
-    platforms: ["cursor", "copilot", "windsurf"],
-    isOfficial: false,
-  },
-  {
-    id: "4",
-    name: "React Component Library",
-    description:
-      "Perfect for building reusable UI components with Storybook, testing, and documentation",
-    author: "UIDesigner",
-    downloads: 445,
-    likes: 38,
-    tags: ["react", "typescript", "ui"],
-    platforms: ["cursor", "claude"],
-    isOfficial: false,
-  },
-  {
-    id: "5",
-    name: "Rust Systems Programming",
-    description:
-      "Low-level systems development with memory safety checks and performance optimization rules",
-    author: "RustaceanPro",
-    downloads: 312,
-    likes: 52,
-    tags: ["rust", "systems", "performance"],
-    platforms: ["cursor", "claude", "copilot"],
-    isOfficial: false,
-  },
-  {
-    id: "6",
-    name: "DevOps Infrastructure",
-    description:
-      "Terraform, Ansible, and CI/CD pipeline configurations with security best practices",
-    author: "InfraWizard",
-    downloads: 289,
-    likes: 41,
-    tags: ["devops", "terraform", "cicd"],
-    platforms: ["cursor", "windsurf"],
-    isOfficial: false,
-  },
-];
+export default async function TemplatesPage() {
+  // Fetch data from database (or mock if MOCK=true)
+  const [templates, categories] = await Promise.all([
+    getTemplates(),
+    getCategories(),
+  ]);
 
-const CATEGORIES = [
-  { id: "all", label: "All Templates", count: 156 },
-  { id: "frontend", label: "Frontend", count: 42 },
-  { id: "backend", label: "Backend", count: 38 },
-  { id: "fullstack", label: "Full-Stack", count: 28 },
-  { id: "devops", label: "DevOps", count: 24 },
-  { id: "data", label: "Data Science", count: 16 },
-  { id: "mobile", label: "Mobile", count: 8 },
-];
-
-export default function TemplatesPage() {
   return (
     <div className="flex min-h-screen flex-col">
       {/* Header */}
@@ -164,7 +84,7 @@ export default function TemplatesPage() {
               <div>
                 <h3 className="mb-3 font-semibold">Categories</h3>
                 <nav className="space-y-1">
-                  {CATEGORIES.map((cat) => (
+                  {categories.map((cat) => (
                     <button
                       key={cat.id}
                       className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted ${
@@ -207,7 +127,14 @@ export default function TemplatesPage() {
           {/* Templates Grid */}
           <main className="flex-1">
             <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Featured Templates</h2>
+              <h2 className="text-lg font-semibold">
+                Featured Templates
+                {process.env.MOCK === "true" && (
+                  <span className="ml-2 rounded bg-yellow-500/10 px-2 py-0.5 text-xs text-yellow-600">
+                    Mock Data
+                  </span>
+                )}
+              </h2>
               <select className="rounded-lg border bg-background px-3 py-2 text-sm">
                 <option>Most Popular</option>
                 <option>Most Recent</option>
@@ -215,18 +142,33 @@ export default function TemplatesPage() {
               </select>
             </div>
 
-            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-              {FEATURED_TEMPLATES.map((template) => (
-                <TemplateCard key={template.id} template={template} />
-              ))}
-            </div>
+            {templates.length === 0 ? (
+              <div className="rounded-lg border border-dashed p-12 text-center">
+                <Users className="mx-auto h-12 w-12 text-muted-foreground" />
+                <h3 className="mt-4 font-semibold">No templates yet</h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Be the first to contribute a template!
+                </p>
+                <Button asChild className="mt-4">
+                  <Link href="/auth/signin">Submit Template</Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                {templates.map((template) => (
+                  <TemplateCard key={template.id} template={template} />
+                ))}
+              </div>
+            )}
 
             {/* Load More */}
-            <div className="mt-8 text-center">
-              <Button variant="outline" size="lg">
-                Load More Templates
-              </Button>
-            </div>
+            {templates.length > 0 && (
+              <div className="mt-8 text-center">
+                <Button variant="outline" size="lg">
+                  Load More Templates
+                </Button>
+              </div>
+            )}
           </main>
         </div>
       </div>
@@ -284,11 +226,7 @@ export default function TemplatesPage() {
   );
 }
 
-function TemplateCard({
-  template,
-}: {
-  template: (typeof FEATURED_TEMPLATES)[0];
-}) {
+function TemplateCard({ template }: { template: TemplateData }) {
   const platformIcons: Record<string, string> = {
     cursor: "⚡",
     claude: "🧠",
@@ -333,7 +271,7 @@ function TemplateCard({
         <div className="mt-4 flex items-center gap-3">
           {template.platforms.map((p) => (
             <span key={p} title={p} className="text-lg">
-              {platformIcons[p]}
+              {platformIcons[p] || "📦"}
             </span>
           ))}
         </div>
