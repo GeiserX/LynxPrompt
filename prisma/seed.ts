@@ -230,6 +230,195 @@ github: [{{GITHUB_USERNAME}}]
       isPublic: true,
       isSystem: true,
     },
+    // =========================================================================
+    // AI IDE Configuration Templates
+    // =========================================================================
+    {
+      name: "Full-Stack TypeScript",
+      description: "Complete setup for Next.js, TypeScript, Prisma, and testing with AI-powered coding assistance",
+      type: TemplateType.CURSORRULES,
+      content: `# Full-Stack TypeScript Project Rules
+
+You are an expert in TypeScript, Next.js 14+ (App Router), React, Prisma, and modern web development.
+
+## Code Style
+- Write concise, type-safe TypeScript code
+- Use functional components with React hooks
+- Prefer named exports for components
+- Use descriptive variable names (e.g., isLoading, hasError)
+
+## Architecture
+- Follow Next.js App Router conventions
+- Use Server Components by default, Client Components when needed
+- Implement proper error boundaries
+- Use Prisma for database operations
+
+## Best Practices
+- Always validate user input
+- Use Zod for schema validation
+- Implement proper error handling
+- Write unit tests for critical functions
+- Use conventional commits for version control`,
+      variables: {},
+      isPublic: true,
+      isSystem: true,
+      usageCount: 1234,
+    },
+    {
+      name: "Python Data Science",
+      description: "Optimized for Jupyter notebooks, pandas, and ML workflows with intelligent code completion",
+      type: TemplateType.CURSORRULES,
+      content: `# Python Data Science Rules
+
+You are an expert in Python, pandas, NumPy, scikit-learn, and data science workflows.
+
+## Code Style
+- Follow PEP 8 guidelines
+- Use type hints for function signatures
+- Write clear docstrings for functions
+- Use meaningful variable names
+
+## Data Handling
+- Validate data before processing
+- Handle missing values explicitly
+- Use vectorized operations over loops
+- Document data transformations
+
+## Best Practices
+- Use virtual environments
+- Pin dependency versions
+- Write reproducible notebooks
+- Include data validation checks
+- Log experiment parameters`,
+      variables: {},
+      isPublic: true,
+      isSystem: true,
+      usageCount: 856,
+    },
+    {
+      name: "Go Microservices",
+      description: "Production-ready Go setup with Docker, Kubernetes configs, and API development rules",
+      type: TemplateType.CURSORRULES,
+      content: `# Go Microservices Rules
+
+You are an expert in Go, microservices architecture, Docker, and Kubernetes.
+
+## Code Style
+- Follow Go idioms and conventions
+- Use short, descriptive variable names
+- Handle errors explicitly
+- Use interfaces for abstraction
+
+## Architecture
+- Design for horizontal scaling
+- Implement health checks
+- Use structured logging
+- Follow 12-factor app principles
+
+## Best Practices
+- Write table-driven tests
+- Use context for cancellation
+- Implement graceful shutdown
+- Document API endpoints
+- Use dependency injection`,
+      variables: {},
+      isPublic: true,
+      isSystem: true,
+      usageCount: 623,
+    },
+    {
+      name: "React Component Library",
+      description: "Perfect for building reusable UI components with Storybook, testing, and documentation",
+      type: TemplateType.CURSORRULES,
+      content: `# React Component Library Rules
+
+You are an expert in React, TypeScript, Storybook, and component library development.
+
+## Code Style
+- Use TypeScript with strict mode
+- Prefer composition over inheritance
+- Use CSS-in-JS or Tailwind CSS
+- Export components and types together
+
+## Component Design
+- Build atomic, reusable components
+- Use proper prop typing
+- Implement accessibility (ARIA)
+- Support theming/customization
+
+## Best Practices
+- Write stories for all components
+- Test with React Testing Library
+- Document props and usage
+- Follow semantic versioning
+- Provide sensible defaults`,
+      variables: {},
+      isPublic: true,
+      isSystem: true,
+      usageCount: 445,
+    },
+    {
+      name: "Rust Systems Programming",
+      description: "Low-level systems development with memory safety focus and performance optimization hints",
+      type: TemplateType.CURSORRULES,
+      content: `# Rust Systems Programming Rules
+
+You are an expert in Rust, systems programming, and performance optimization.
+
+## Code Style
+- Use idiomatic Rust patterns
+- Prefer zero-cost abstractions
+- Use meaningful type names
+- Document unsafe blocks
+
+## Memory Safety
+- Minimize unsafe code
+- Use RAII patterns
+- Prefer borrowing over cloning
+- Avoid memory allocations in hot paths
+
+## Best Practices
+- Write comprehensive tests
+- Use clippy for linting
+- Profile before optimizing
+- Document performance characteristics
+- Use cargo features for optional deps`,
+      variables: {},
+      isPublic: true,
+      isSystem: true,
+      usageCount: 312,
+    },
+    {
+      name: "DevOps & Infrastructure",
+      description: "Terraform, Ansible, and CI/CD pipelines with security best practices and IaC patterns",
+      type: TemplateType.CURSORRULES,
+      content: `# DevOps & Infrastructure Rules
+
+You are an expert in Terraform, Ansible, Docker, Kubernetes, and CI/CD.
+
+## Code Style
+- Use consistent naming conventions
+- Modularize infrastructure code
+- Document all variables
+- Use version constraints
+
+## Security
+- Never hardcode secrets
+- Use least privilege principle
+- Enable audit logging
+- Scan for vulnerabilities
+
+## Best Practices
+- Use infrastructure as code
+- Implement GitOps workflows
+- Test infrastructure changes
+- Use blue-green deployments
+- Monitor and alert proactively`,
+      variables: {},
+      isPublic: true,
+      isSystem: true,
+      usageCount: 567,
+    },
   ];
 
   for (const template of templates) {
