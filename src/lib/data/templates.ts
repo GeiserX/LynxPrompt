@@ -120,6 +120,23 @@ const MOCK_CATEGORIES: CategoryData[] = [
 const isMockMode = () => process.env.MOCK === "true";
 
 /**
+ * Extract tags from template name and description
+ */
+function extractTags(name: string, description: string): string[] {
+  const text = `${name} ${description}`.toLowerCase();
+  const tagKeywords = [
+    "typescript", "javascript", "python", "go", "rust", "java", "kotlin",
+    "react", "nextjs", "vue", "angular", "svelte",
+    "nodejs", "deno", "bun",
+    "fullstack", "frontend", "backend", "devops", "ml", "data-science",
+    "docker", "kubernetes", "terraform", "aws", "gcp", "azure",
+    "testing", "ci/cd", "microservices", "api",
+  ];
+  
+  return tagKeywords.filter(tag => text.includes(tag.replace("-", " ")) || text.includes(tag));
+}
+
+/**
  * Get featured/public templates
  */
 export async function getTemplates(options?: {
@@ -155,10 +172,14 @@ export async function getTemplates(options?: {
     return templates.slice(offset, offset + limit);
   }
 
-  // Fetch from database
+  // Fetch from database - AI IDE configuration templates
   const templates = await prisma.template.findMany({
     where: {
       isPublic: true,
+      // Only fetch AI IDE config templates for the marketplace
+      type: {
+        in: ["CURSORRULES", "CLAUDE_MD", "COPILOT_INSTRUCTIONS", "WINDSURF_RULES"],
+      },
       ...(options?.search && {
         OR: [
           { name: { contains: options.search, mode: "insensitive" } },
@@ -176,16 +197,24 @@ export async function getTemplates(options?: {
     skip: options?.offset || 0,
   });
 
+  // Map template types to platform names
+  const typeToPlatform: Record<string, string[]> = {
+    CURSORRULES: ["cursor"],
+    CLAUDE_MD: ["claude"],
+    COPILOT_INSTRUCTIONS: ["copilot"],
+    WINDSURF_RULES: ["windsurf"],
+  };
+
   return templates.map((t) => ({
     id: t.id,
     name: t.name,
     description: t.description || "",
-    author: t.user?.name || "Anonymous",
+    author: t.user?.name || (t.isSystem ? "LynxPrompt" : "Anonymous"),
     authorId: t.userId || undefined,
     downloads: t.usageCount,
     likes: 0, // TODO: implement likes system
-    tags: [], // TODO: add tags to schema
-    platforms: [], // TODO: extract from content
+    tags: extractTags(t.name, t.description || ""), // Extract tags from name/description
+    platforms: typeToPlatform[t.type] || [],
     isOfficial: t.isSystem,
     createdAt: t.createdAt,
   }));
