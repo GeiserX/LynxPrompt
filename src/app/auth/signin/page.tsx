@@ -81,7 +81,15 @@ export default function SignInPage() {
         </div>
 
         <p className="text-sm text-white/60">
-          © 2025 LynxPrompt by Sergio Fernández Rubio
+          © 2025 LynxPrompt by{" "}
+          <a 
+            href="https://geiser.cloud" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="hover:underline"
+          >
+            Geiser Cloud
+          </a>
         </p>
       </div>
 
