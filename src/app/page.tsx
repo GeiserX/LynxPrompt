@@ -120,10 +120,13 @@ export default function HomePage() {
       <section className="container mx-auto px-4 py-20 sm:px-6 lg:px-8">
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 p-8 text-white sm:p-12">
           <div className="relative z-10">
-            <h2 className="text-3xl font-bold">Join the Template Marketplace</h2>
+            <h2 className="text-3xl font-bold">
+              Join the Template Marketplace
+            </h2>
             <p className="mt-2 max-w-xl text-white/80">
-              Share your AI configurations with the community. Discover templates
-              from developers worldwide and contribute your own workflows.
+              Share your AI configurations with the community. Discover
+              templates from developers worldwide and contribute your own
+              workflows.
             </p>
             <div className="mt-6 flex flex-wrap gap-4">
               <Button
@@ -156,9 +159,9 @@ export default function HomePage() {
             <Sparkles className="h-4 w-4 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
               © 2025 LynxPrompt by{" "}
-              <a 
-                href="https://geiser.cloud" 
-                target="_blank" 
+              <a
+                href="https://geiser.cloud"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="hover:underline"
               >
@@ -209,4 +212,3 @@ function FeatureCard({
     </div>
   );
 }
-

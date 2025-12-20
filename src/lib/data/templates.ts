@@ -125,15 +125,42 @@ const isMockMode = () => process.env.MOCK === "true";
 function extractTags(name: string, description: string): string[] {
   const text = `${name} ${description}`.toLowerCase();
   const tagKeywords = [
-    "typescript", "javascript", "python", "go", "rust", "java", "kotlin",
-    "react", "nextjs", "vue", "angular", "svelte",
-    "nodejs", "deno", "bun",
-    "fullstack", "frontend", "backend", "devops", "ml", "data-science",
-    "docker", "kubernetes", "terraform", "aws", "gcp", "azure",
-    "testing", "ci/cd", "microservices", "api",
+    "typescript",
+    "javascript",
+    "python",
+    "go",
+    "rust",
+    "java",
+    "kotlin",
+    "react",
+    "nextjs",
+    "vue",
+    "angular",
+    "svelte",
+    "nodejs",
+    "deno",
+    "bun",
+    "fullstack",
+    "frontend",
+    "backend",
+    "devops",
+    "ml",
+    "data-science",
+    "docker",
+    "kubernetes",
+    "terraform",
+    "aws",
+    "gcp",
+    "azure",
+    "testing",
+    "ci/cd",
+    "microservices",
+    "api",
   ];
-  
-  return tagKeywords.filter(tag => text.includes(tag.replace("-", " ")) || text.includes(tag));
+
+  return tagKeywords.filter(
+    (tag) => text.includes(tag.replace("-", " ")) || text.includes(tag)
+  );
 }
 
 /**
@@ -147,14 +174,14 @@ export async function getTemplates(options?: {
 }): Promise<TemplateData[]> {
   if (isMockMode()) {
     let templates = [...MOCK_TEMPLATES];
-    
+
     // Filter by category
     if (options?.category && options.category !== "all") {
       templates = templates.filter((t) =>
         t.tags.some((tag) => tag.includes(options.category!))
       );
     }
-    
+
     // Filter by search
     if (options?.search) {
       const search = options.search.toLowerCase();
@@ -165,7 +192,7 @@ export async function getTemplates(options?: {
           t.tags.some((tag) => tag.includes(search))
       );
     }
-    
+
     // Apply pagination
     const offset = options?.offset || 0;
     const limit = options?.limit || 50;
@@ -178,7 +205,12 @@ export async function getTemplates(options?: {
       isPublic: true,
       // Only fetch AI IDE config templates for the marketplace
       type: {
-        in: ["CURSORRULES", "CLAUDE_MD", "COPILOT_INSTRUCTIONS", "WINDSURF_RULES"],
+        in: [
+          "CURSORRULES",
+          "CLAUDE_MD",
+          "COPILOT_INSTRUCTIONS",
+          "WINDSURF_RULES",
+        ],
       },
       ...(options?.search && {
         OR: [
@@ -231,7 +263,7 @@ export async function getCategories(): Promise<CategoryData[]> {
   // For now, return static categories
   // TODO: compute counts dynamically from database
   const totalCount = await prisma.template.count({ where: { isPublic: true } });
-  
+
   return [
     { id: "all", label: "All Templates", count: totalCount },
     { id: "frontend", label: "Frontend", count: 0 },
@@ -246,7 +278,9 @@ export async function getCategories(): Promise<CategoryData[]> {
 /**
  * Get a single template by ID
  */
-export async function getTemplateById(id: string): Promise<TemplateData | null> {
+export async function getTemplateById(
+  id: string
+): Promise<TemplateData | null> {
   if (isMockMode()) {
     return MOCK_TEMPLATES.find((t) => t.id === id) || null;
   }

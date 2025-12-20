@@ -81,10 +81,10 @@
   }
 
   .scrollbar-thin::-webkit-scrollbar-track {
-    @apply bg-muted rounded-full;
+    @apply rounded-full bg-muted;
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50;
+    @apply rounded-full bg-muted-foreground/30 hover:bg-muted-foreground/50;
   }
 }

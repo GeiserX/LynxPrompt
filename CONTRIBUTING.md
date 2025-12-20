@@ -35,6 +35,7 @@ type(scope): description
 Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 
 Examples:
+
 - `feat(wizard): add language selection step`
 - `fix(generator): handle empty template variables`
 - `docs(readme): update installation instructions`
@@ -102,6 +103,7 @@ src/
 ## 🐛 Reporting Bugs
 
 Please use the GitHub issue tracker with:
+
 - Clear description
 - Steps to reproduce
 - Expected vs actual behavior
@@ -110,6 +112,7 @@ Please use the GitHub issue tracker with:
 ## 💡 Feature Requests
 
 Open an issue with:
+
 - Clear use case
 - Proposed solution
 - Alternatives considered
