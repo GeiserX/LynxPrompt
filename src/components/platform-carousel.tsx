@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const PLATFORMS = [
@@ -94,15 +94,28 @@ export function PlatformCarousel() {
   const [offset, setOffset] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const visibleCount = 4;
+  const cardWidthPercent = 25; // Each card is 25% of container
+  const gapPx = 24; // gap-6 = 24px
 
   const nextSlide = useCallback(() => {
-    setOffset((prev) => (prev + 1) % PLATFORMS.length);
-  }, []);
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setOffset((prev) => prev + 1);
+  }, [isTransitioning]);
 
   const prevSlide = useCallback(() => {
-    setOffset((prev) => (prev - 1 + PLATFORMS.length) % PLATFORMS.length);
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setOffset((prev) => prev - 1);
+  }, [isTransitioning]);
+
+  // Handle transition end - reset position seamlessly for infinite scroll
+  const handleTransitionEnd = useCallback(() => {
+    setIsTransitioning(false);
   }, []);
 
   // Auto-rotate every 2 seconds
@@ -112,27 +125,41 @@ export function PlatformCarousel() {
     return () => clearInterval(interval);
   }, [isPaused, nextSlide]);
 
-  // Get extended platforms for smooth infinite scroll (show extra on sides for fade effect)
-  const getVisiblePlatforms = () => {
-    const result = [];
-    // Show 2 extra on each side for the fade effect
-    for (let i = -1; i < visibleCount + 1; i++) {
-      const index = (offset + i + PLATFORMS.length) % PLATFORMS.length;
-      result.push({ ...PLATFORMS[index], position: i });
-    }
-    return result;
+  // Create extended array for infinite scroll effect
+  // We need enough cards to show smooth transitions in both directions
+  const extendedPlatforms = [
+    ...PLATFORMS.slice(-2), // Last 2 for left scroll
+    ...PLATFORMS,
+    ...PLATFORMS,
+    ...PLATFORMS.slice(0, 2), // First 2 for right scroll
+  ];
+
+  // Calculate the transform based on offset
+  // Each step moves by one card width + gap
+  const getTransform = () => {
+    // Start position accounts for the 2 prepended cards
+    const baseOffset = 2;
+    const normalizedOffset =
+      ((offset % PLATFORMS.length) + PLATFORMS.length) % PLATFORMS.length;
+    const totalOffset = baseOffset + normalizedOffset;
+    // Calculate percentage: each card is ~25% plus gap adjustment
+    return `translateX(calc(-${totalOffset * cardWidthPercent}% - ${totalOffset * gapPx}px))`;
   };
 
-  // Calculate opacity based on position (0 and 1 are fully visible, edges fade out)
-  const getOpacity = (position: number) => {
-    if (position === 0 || position === 1 || position === 2 || position === 3) {
-      // First 4 cards (the main visible ones)
-      if (position === 0) return 0.85; // Slight fade on left edge
-      if (position === 3) return 0.85; // Slight fade on right edge
-      return 1; // Center cards fully visible
+  // Calculate opacity based on visual position
+  const getOpacity = (visualIndex: number) => {
+    const normalizedOffset =
+      ((offset % PLATFORMS.length) + PLATFORMS.length) % PLATFORMS.length;
+    const relativePos = visualIndex - 2 - normalizedOffset; // Position relative to first visible card
+
+    if (relativePos >= 0 && relativePos <= 3) {
+      // Main visible cards
+      if (relativePos === 0) return 0.85;
+      if (relativePos === 3) return 0.85;
+      return 1;
     }
-    if (position === -1) return 0.3; // Far left - heavily faded
-    if (position === 4) return 0.3; // Far right - heavily faded
+    if (relativePos === -1) return 0.3;
+    if (relativePos === 4) return 0.3;
     return 0;
   };
 
@@ -169,20 +196,24 @@ export function PlatformCarousel() {
       </button>
 
       {/* Carousel container */}
-      <div className="relative overflow-hidden">
+      <div className="relative overflow-hidden" ref={containerRef}>
         {/* Left fade gradient overlay */}
         <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-32 bg-gradient-to-r from-background via-background/80 to-transparent" />
         {/* Right fade gradient overlay */}
         <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-32 bg-gradient-to-l from-background via-background/80 to-transparent" />
 
-        {/* Cards container */}
-        <div className="flex gap-6 transition-transform duration-700 ease-in-out">
-          {getVisiblePlatforms().map((platform, idx) => (
+        {/* Cards container with smooth sliding */}
+        <div
+          className="flex gap-6 transition-transform duration-700 ease-in-out"
+          style={{ transform: getTransform() }}
+          onTransitionEnd={handleTransitionEnd}
+        >
+          {extendedPlatforms.map((platform, idx) => (
             <div
-              key={`${platform.name}-${offset}-${idx}`}
-              className="w-[calc(25%-18px)] flex-shrink-0 transition-opacity duration-700"
+              key={`${platform.name}-${idx}`}
+              className="w-[calc(25%-18px)] flex-shrink-0 transition-opacity duration-500"
               style={{
-                opacity: getOpacity(platform.position),
+                opacity: getOpacity(idx),
               }}
             >
               <PlatformCard {...platform} />
@@ -197,7 +228,9 @@ export function PlatformCarousel() {
           <div
             key={idx}
             className={`h-1.5 rounded-full transition-all duration-300 ${
-              idx === offset % PLATFORMS.length
+              ((offset % PLATFORMS.length) + PLATFORMS.length) %
+                PLATFORMS.length ===
+              idx
                 ? "w-4 bg-primary"
                 : "w-1.5 bg-muted-foreground/20"
             }`}
