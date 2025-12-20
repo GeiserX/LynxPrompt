@@ -7,7 +7,7 @@
   "license": "SEE LICENSE FILE",
   "repository": {
     "type": "git",
-    "url": "https://github.com/GeiserX/lynxprompt.git"
+    "url": "https://github.com/GeiserX/LynxPrompt.git"
   },
   "scripts": {
     "dev": "next dev",
