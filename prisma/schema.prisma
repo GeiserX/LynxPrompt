@@ -1,0 +1,331 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// AUTHENTICATION & USERS
+// ============================================================================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  accounts      Account[]
+  sessions      Session[]
+  preferences   Preference[]
+  templates     Template[]
+  projects      Project[]
+
+  @@index([email])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================================================
+// USER PREFERENCES - Memory of past decisions
+// ============================================================================
+
+model Preference {
+  id        String   @id @default(cuid())
+  userId    String
+  category  String   // e.g., "license", "funding", "cicd", "testing"
+  key       String   // e.g., "default_license", "github_sponsors_username"
+  value     String   @db.Text // JSON or plain text value
+  isDefault Boolean  @default(false)
+  usageCount Int     @default(0) // Track how often this preference is used
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, category, key])
+  @@index([userId])
+  @@index([category])
+}
+
+// ============================================================================
+// TEMPLATES - Reusable content (FUNDING.yml, LICENSE, etc.)
+// ============================================================================
+
+model Template {
+  id          String       @id @default(cuid())
+  userId      String?      // null = system template
+  name        String
+  description String?
+  type        TemplateType
+  content     String       @db.Text
+  variables   Json?        // Variables that can be substituted (e.g., {{AUTHOR_NAME}})
+  isPublic    Boolean      @default(false)
+  isSystem    Boolean      @default(false) // System-provided templates
+  usageCount  Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@index([isPublic])
+}
+
+enum TemplateType {
+  LICENSE
+  FUNDING
+  CURSORRULES
+  CLAUDE_MD
+  COPILOT_INSTRUCTIONS
+  WINDSURF_RULES
+  GITIGNORE
+  README
+  CONTRIBUTING
+  CODE_OF_CONDUCT
+  SECURITY
+  DOCKERFILE
+  DOCKER_COMPOSE
+  GITHUB_ACTIONS
+  GITLAB_CI
+  EDITORCONFIG
+  PRETTIER
+  ESLINT
+  PRE_COMMIT
+  CUSTOM
+}
+
+// ============================================================================
+// PROJECTS - Saved configurations
+// ============================================================================
+
+model Project {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  
+  // Configuration stored as JSON
+  config      Json     // Complete wizard configuration
+  
+  // Quick access fields for filtering/searching
+  persona     String?  // Developer persona (backend, frontend, etc.)
+  languages   String[] // Programming languages
+  frameworks  String[] // Frameworks used
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  generatedFiles GeneratedFile[]
+
+  @@index([userId])
+  @@index([persona])
+}
+
+// ============================================================================
+// GENERATED FILES - Output files from wizard
+// ============================================================================
+
+model GeneratedFile {
+  id        String   @id @default(cuid())
+  projectId String
+  type      TemplateType
+  filename  String   // e.g., ".cursorrules", "CLAUDE.md"
+  filepath  String   // e.g., ".github/FUNDING.yml"
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+// ============================================================================
+// WIZARD CONFIGURATION - Dynamic wizard steps
+// ============================================================================
+
+model WizardStep {
+  id          String   @id @default(cuid())
+  order       Int
+  name        String
+  title       String
+  description String?
+  icon        String?  // Icon name or emoji
+  isRequired  Boolean  @default(true)
+  isActive    Boolean  @default(true)
+  
+  // Conditional display logic (JSON)
+  // e.g., { "showIf": { "persona": ["backend", "fullstack"] } }
+  conditions  Json?
+  
+  // Step configuration
+  config      Json     // Field definitions, options, etc.
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([order])
+  @@index([isActive])
+}
+
+// ============================================================================
+// DECISION RULES - If-then logic
+// ============================================================================
+
+model DecisionRule {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  priority    Int      @default(0) // Higher priority rules evaluated first
+  isActive    Boolean  @default(true)
+  
+  // Condition (JSON) - What triggers this rule
+  // e.g., { "language": "typescript", "testing": true }
+  condition   Json
+  
+  // Action (JSON) - What happens when triggered
+  // e.g., { "suggest": "jest", "set": { "testRunner": "jest" } }
+  action      Json
+  
+  // Category for grouping
+  category    String   // e.g., "testing", "linting", "cicd"
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+  @@index([isActive])
+  @@index([priority])
+}
+
+// ============================================================================
+// AI IDE PLATFORMS - Supported platforms configuration
+// ============================================================================
+
+model AIPlatform {
+  id           String   @id @default(cuid())
+  name         String   @unique // e.g., "cursor", "claude_code"
+  displayName  String   // e.g., "Cursor", "Claude Code"
+  description  String?
+  configFile   String   // e.g., ".cursorrules", "CLAUDE.md"
+  configPath   String   @default("") // e.g., ".github/" or ""
+  website      String?
+  docsUrl      String?
+  icon         String?
+  isActive     Boolean  @default(true)
+  
+  // Template structure for this platform
+  templateStructure Json?
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+// ============================================================================
+// PROGRAMMING LANGUAGES & FRAMEWORKS
+// ============================================================================
+
+model Language {
+  id           String   @id @default(cuid())
+  name         String   @unique // e.g., "typescript"
+  displayName  String   // e.g., "TypeScript"
+  icon         String?
+  category     String?  // e.g., "compiled", "interpreted", "scripting"
+  isPopular    Boolean  @default(false)
+  
+  // Default suggestions when this language is selected
+  suggestions  Json?    // e.g., { "testing": ["jest", "vitest"], "linting": ["eslint"] }
+  
+  frameworks   Framework[]
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([isPopular])
+}
+
+model Framework {
+  id           String   @id @default(cuid())
+  name         String   // e.g., "nextjs"
+  displayName  String   // e.g., "Next.js"
+  languageId   String
+  icon         String?
+  category     String?  // e.g., "frontend", "backend", "fullstack"
+  isPopular    Boolean  @default(false)
+  
+  // Default suggestions when this framework is selected
+  suggestions  Json?
+  
+  language     Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([name, languageId])
+  @@index([languageId])
+  @@index([isPopular])
+}
+
+// ============================================================================
+// ANALYTICS & USAGE TRACKING (Optional, privacy-respecting)
+// ============================================================================
+
+model UsageEvent {
+  id        String   @id @default(cuid())
+  userId    String?  // null for anonymous
+  eventType String   // e.g., "generate", "download", "copy"
+  metadata  Json?    // Additional event data
+  createdAt DateTime @default(now())
+
+  @@index([eventType])
+  @@index([createdAt])
+}
