@@ -250,14 +250,36 @@ const PLATFORMS = [
   },
 ];
 
+// Define the config type
+type WizardConfig = {
+  persona: string;
+  skillLevel: string;
+  languages: string[];
+  letAiDecide: boolean;
+  license: string;
+  funding: boolean;
+  conventionalCommits: boolean;
+  semver: boolean;
+  releaseStrategy: string;
+  releaseStrategyOther: string;
+  cicd: string;
+  buildContainer: boolean;
+  containerRegistry: string;
+  containerRegistryOther: string;
+  registryUsername: string;
+  aiBehaviorRules: string[];
+  platforms: string[];
+  additionalFeedback: string;
+};
+
 export default function WizardPage() {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
-  const [config, setConfig] = useState({
+  const [config, setConfig] = useState<WizardConfig>({
     persona: "",
     skillLevel: "",
-    languages: [] as string[],
+    languages: [],
     letAiDecide: false,
     license: "mit",
     funding: false,
@@ -645,8 +667,8 @@ function StepRepository({
   config,
   onChange,
 }: {
-  config: typeof import("./page").default extends () => infer R ? never : never;
-  onChange: (updates: Record<string, unknown>) => void;
+  config: WizardConfig;
+  onChange: (updates: Partial<WizardConfig>) => void;
 }) {
   return (
     <div>
@@ -768,8 +790,8 @@ function StepCICD({
   config,
   onChange,
 }: {
-  config: Record<string, unknown>;
-  onChange: (updates: Record<string, unknown>) => void;
+  config: WizardConfig;
+  onChange: (updates: Partial<WizardConfig>) => void;
 }) {
   return (
     <div>
@@ -1040,7 +1062,7 @@ function StepFeedback({
   );
 }
 
-function StepGenerate({ config }: { config: Record<string, unknown> }) {
+function StepGenerate({ config }: { config: WizardConfig }) {
   return (
     <div>
       <h2 className="text-2xl font-bold">Review & Generate</h2>
@@ -1052,7 +1074,7 @@ function StepGenerate({ config }: { config: Record<string, unknown> }) {
         <div className="rounded-lg bg-muted p-4">
           <h3 className="font-medium">Files to generate:</h3>
           <ul className="mt-2 space-y-1">
-            {(config.platforms as string[])?.map((p) => {
+            {config.platforms.map((p) => {
               const platform = PLATFORMS.find((pl) => pl.id === p);
               return (
                 <li key={p} className="flex items-center gap-2 text-sm">
@@ -1079,7 +1101,7 @@ function StepGenerate({ config }: { config: Record<string, unknown> }) {
         <div className="rounded-lg border p-4">
           <h3 className="font-medium">AI Behavior Rules:</h3>
           <div className="mt-2 flex flex-wrap gap-2">
-            {(config.aiBehaviorRules as string[])?.map((rule) => (
+            {config.aiBehaviorRules.map((rule) => (
               <span
                 key={rule}
                 className="rounded-full bg-primary/10 px-3 py-1 text-xs text-primary"

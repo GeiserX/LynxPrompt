@@ -11,6 +11,9 @@ import {
 } from "lucide-react";
 import { getTemplates, getCategories, type TemplateData } from "@/lib/data/templates";
 
+// Force dynamic rendering to avoid database calls at build time
+export const dynamic = "force-dynamic";
+
 export default async function TemplatesPage() {
   // Fetch data from database (or mock if MOCK=true)
   const [templates, categories] = await Promise.all([
