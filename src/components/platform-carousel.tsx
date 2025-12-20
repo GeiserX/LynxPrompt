@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const PLATFORMS = [
   {
@@ -92,6 +93,7 @@ const PLATFORMS = [
 export function PlatformCarousel() {
   const [offset, setOffset] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   
   const visibleCount = 4;
   
@@ -99,10 +101,14 @@ export function PlatformCarousel() {
     setOffset((prev) => (prev + 1) % PLATFORMS.length);
   }, []);
 
-  // Auto-rotate every 3 seconds
+  const prevSlide = useCallback(() => {
+    setOffset((prev) => (prev - 1 + PLATFORMS.length) % PLATFORMS.length);
+  }, []);
+
+  // Auto-rotate every 2 seconds
   useEffect(() => {
     if (isPaused) return;
-    const interval = setInterval(nextSlide, 3000);
+    const interval = setInterval(nextSlide, 2000);
     return () => clearInterval(interval);
   }, [isPaused, nextSlide]);
 
@@ -132,10 +138,30 @@ export function PlatformCarousel() {
 
   return (
     <div 
-      className="relative"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
+      className="group/carousel relative"
+      onMouseEnter={() => { setIsPaused(true); setIsHovered(true); }}
+      onMouseLeave={() => { setIsPaused(false); setIsHovered(false); }}
     >
+      {/* Navigation buttons - only visible on hover */}
+      <button
+        onClick={prevSlide}
+        className={`absolute left-2 top-1/2 z-20 -translate-y-1/2 rounded-full border bg-background/80 p-2 shadow-md backdrop-blur-sm transition-all duration-300 hover:bg-background ${
+          isHovered ? "opacity-70 hover:opacity-100" : "opacity-0"
+        }`}
+        aria-label="Previous platform"
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </button>
+      <button
+        onClick={nextSlide}
+        className={`absolute right-2 top-1/2 z-20 -translate-y-1/2 rounded-full border bg-background/80 p-2 shadow-md backdrop-blur-sm transition-all duration-300 hover:bg-background ${
+          isHovered ? "opacity-70 hover:opacity-100" : "opacity-0"
+        }`}
+        aria-label="Next platform"
+      >
+        <ChevronRight className="h-4 w-4" />
+      </button>
+
       {/* Carousel container */}
       <div className="relative overflow-hidden">
         {/* Left fade gradient overlay */}
