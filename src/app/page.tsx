@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Sparkles,
@@ -10,13 +9,14 @@ import {
   ArrowRight,
   Users,
 } from "lucide-react";
+import { PlatformCarousel } from "@/components/platform-carousel";
 
 export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2">
             <Sparkles className="h-6 w-6 text-primary" />
             <span className="text-xl font-bold">LynxPrompt</span>
@@ -43,7 +43,7 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <section className="container flex flex-col items-center justify-center gap-8 py-24 text-center">
+      <section className="container mx-auto flex flex-col items-center justify-center gap-8 px-4 py-24 text-center sm:px-6 lg:px-8">
         <div className="flex max-w-3xl flex-col items-center gap-4">
           <div className="flex items-center gap-2 rounded-full border bg-muted px-4 py-1.5 text-sm">
             <MousePointer2 className="h-4 w-4" />
@@ -100,9 +100,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Supported Platforms - Elegant Cards */}
+      {/* Supported Platforms - Carousel */}
       <section className="border-y bg-muted/30 py-20">
-        <div className="container">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-12 text-center">
             <h2 className="text-3xl font-bold tracking-tight">
               Works with your favorite AI IDEs
@@ -112,45 +112,12 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            <PlatformCard
-              name="Cursor"
-              description="AI-first code editor"
-              configFile=".cursorrules"
-              gradient="from-blue-500 to-cyan-500"
-              icon="⚡"
-            />
-            <PlatformCard
-              name="Claude"
-              description="Anthropic's AI assistant"
-              configFile="CLAUDE.md"
-              gradient="from-orange-500 to-amber-500"
-              icon="🧠"
-            />
-            <PlatformCard
-              name="GitHub Copilot"
-              description="AI pair programmer"
-              configFile="copilot-instructions.md"
-              gradient="from-gray-700 to-gray-900"
-              icon="🤖"
-            />
-            <PlatformCard
-              name="Windsurf"
-              description="Codeium's agentic IDE"
-              configFile=".windsurfrules"
-              gradient="from-teal-500 to-emerald-500"
-              icon="🏄"
-            />
-          </div>
-
-          <p className="mt-8 text-center text-sm text-muted-foreground">
-            + Continue.dev, Cody, Gemini Code Assist, and more coming soon
-          </p>
+          <PlatformCarousel />
         </div>
       </section>
 
       {/* Community Templates CTA */}
-      <section className="container py-20">
+      <section className="container mx-auto px-4 py-20 sm:px-6 lg:px-8">
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 p-8 text-white sm:p-12">
           <div className="relative z-10">
             <h2 className="text-3xl font-bold">Join the Template Marketplace</h2>
@@ -158,7 +125,7 @@ export default function HomePage() {
               Share your AI configurations with the community. Discover templates
               from developers worldwide and contribute your own workflows.
             </p>
-            <div className="mt-6 flex gap-4">
+            <div className="mt-6 flex flex-wrap gap-4">
               <Button
                 variant="secondary"
                 size="lg"
@@ -168,10 +135,9 @@ export default function HomePage() {
                 <Link href="/templates">Explore Templates</Link>
               </Button>
               <Button
-                variant="outline"
                 size="lg"
                 asChild
-                className="border-white/30 text-white hover:bg-white/10"
+                className="border-2 border-white bg-transparent text-white hover:bg-white/20"
               >
                 <Link href="/auth/signin">Start Contributing</Link>
               </Button>
@@ -185,7 +151,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="border-t py-8">
-        <div className="container flex flex-col items-center justify-between gap-4 sm:flex-row">
+        <div className="container mx-auto flex flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:px-6 lg:px-8">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
@@ -236,42 +202,3 @@ function FeatureCard({
   );
 }
 
-function PlatformCard({
-  name,
-  description,
-  configFile,
-  gradient,
-  icon,
-}: {
-  name: string;
-  description: string;
-  configFile: string;
-  gradient: string;
-  icon: string;
-}) {
-  return (
-    <div className="group relative overflow-hidden rounded-xl border bg-card p-6 transition-all hover:-translate-y-1 hover:shadow-xl">
-      {/* Gradient accent bar */}
-      <div
-        className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${gradient}`}
-      />
-
-      <div className="mb-4 flex items-center gap-3">
-        <span className="text-3xl">{icon}</span>
-        <div>
-          <h3 className="font-semibold">{name}</h3>
-          <p className="text-xs text-muted-foreground">{description}</p>
-        </div>
-      </div>
-
-      <div className="rounded-md bg-muted/50 px-3 py-2">
-        <code className="text-xs text-muted-foreground">{configFile}</code>
-      </div>
-
-      {/* Hover gradient overlay */}
-      <div
-        className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 transition-opacity group-hover:opacity-5`}
-      />
-    </div>
-  );
-}
