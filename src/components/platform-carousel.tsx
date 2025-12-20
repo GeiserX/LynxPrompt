@@ -94,9 +94,9 @@ export function PlatformCarousel() {
   const [offset, setOffset] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  
+
   const visibleCount = 4;
-  
+
   const nextSlide = useCallback(() => {
     setOffset((prev) => (prev + 1) % PLATFORMS.length);
   }, []);
@@ -137,10 +137,16 @@ export function PlatformCarousel() {
   };
 
   return (
-    <div 
+    <div
       className="group/carousel relative"
-      onMouseEnter={() => { setIsPaused(true); setIsHovered(true); }}
-      onMouseLeave={() => { setIsPaused(false); setIsHovered(false); }}
+      onMouseEnter={() => {
+        setIsPaused(true);
+        setIsHovered(true);
+      }}
+      onMouseLeave={() => {
+        setIsPaused(false);
+        setIsHovered(false);
+      }}
     >
       {/* Navigation buttons - only visible on hover */}
       <button
@@ -241,4 +247,3 @@ function PlatformCard({
     </div>
   );
 }
-

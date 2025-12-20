@@ -12,6 +12,7 @@ LynxPrompt is an intelligent, conditional-logic-driven web application that gene
 ## 🚀 The Problem We Solve
 
 Setting up a new repository with proper AI assistant configurations is tedious:
+
 - Writing `.cursorrules` for Cursor
 - Creating `CLAUDE.md` for Claude Code
 - Setting up GitHub Copilot instructions
@@ -19,6 +20,7 @@ Setting up a new repository with proper AI assistant configurations is tedious:
 - And many more...
 
 Each time you start a project, you repeat the same decisions:
+
 - Which license? MIT? Apache 2.0? GPL?
 - Do you need FUNDING.yml?
 - Conventional commits? Semver?
@@ -30,29 +32,33 @@ Each time you start a project, you repeat the same decisions:
 ## ✨ Key Features
 
 ### 🧠 Smart Conditional Logic
+
 - If-then-if-then decision trees
-- "You used MIT license last time. Reuse it?" 
+- "You used MIT license last time. Reuse it?"
 - Dependencies between choices (e.g., TypeScript → suggests Jest/Vitest)
 - Progressive disclosure - show only relevant options
 
 ### 💾 Preference Memory
+
 - User profiles store past decisions
 - Reusable templates for FUNDING.yml, LICENSE, etc.
 - "Quick setup" based on your history
 - Shareable preference profiles
 
 ### 🎨 Multi-Platform AI IDE Support
-| Platform | Config File | Status |
-|----------|-------------|--------|
-| Cursor | `.cursorrules` | ✅ Planned |
-| Claude Code | `CLAUDE.md` | ✅ Planned |
-| GitHub Copilot | `.github/copilot-instructions.md` | ✅ Planned |
-| Windsurf | `.windsurfrules` | ✅ Planned |
-| Continue.dev | `config.json` | 🔄 Future |
-| Cody | `.cody/cody.json` | 🔄 Future |
-| Gemini Code Assist | TBD | 🔄 Future |
+
+| Platform           | Config File                       | Status     |
+| ------------------ | --------------------------------- | ---------- |
+| Cursor             | `.cursorrules`                    | ✅ Planned |
+| Claude Code        | `CLAUDE.md`                       | ✅ Planned |
+| GitHub Copilot     | `.github/copilot-instructions.md` | ✅ Planned |
+| Windsurf           | `.windsurfrules`                  | ✅ Planned |
+| Continue.dev       | `config.json`                     | 🔄 Future  |
+| Cody               | `.cody/cody.json`                 | 🔄 Future  |
+| Gemini Code Assist | TBD                               | 🔄 Future  |
 
 ### 📦 Comprehensive Repository Setup
+
 - **Licensing**: MIT, Apache 2.0, GPL, BSD, Unlicense, Custom
 - **Funding**: FUNDING.yml with GitHub Sponsors, Ko-fi, Patreon, etc.
 - **CI/CD**: GitHub Actions, GitLab CI, CircleCI, Jenkins
@@ -64,7 +70,9 @@ Each time you start a project, you repeat the same decisions:
 - **Security**: SECURITY.md, Dependabot, CodeQL
 
 ### 👥 Developer Personas
+
 Tailored experiences for:
+
 - 🖥️ **Backend Developers** - APIs, databases, microservices
 - 🎨 **Frontend Developers** - React, Vue, Angular, Svelte
 - 🔄 **Full-Stack Developers** - Complete application setups
@@ -77,6 +85,7 @@ Tailored experiences for:
 - 🤖 **ML Engineers** - Model training, MLOps, experiments
 
 ### 🎛️ Smart Defaults
+
 - "Let the AI decide based on the prompt" option
 - Context-aware suggestions
 - Search fields for long lists (languages, frameworks)
@@ -85,33 +94,36 @@ Tailored experiences for:
 ## 🛠️ Technology Stack
 
 ### Frontend
-| Technology | Purpose |
-|------------|---------|
-| **Next.js 15** | React framework with App Router |
-| **TypeScript** | Type safety |
-| **Tailwind CSS** | Utility-first styling |
-| **shadcn/ui** | Modern, accessible UI components |
-| **React Hook Form** | Form handling |
-| **Zod** | Schema validation |
-| **TanStack Query** | Server state management |
-| **Zustand** | Client state management |
+
+| Technology          | Purpose                          |
+| ------------------- | -------------------------------- |
+| **Next.js 15**      | React framework with App Router  |
+| **TypeScript**      | Type safety                      |
+| **Tailwind CSS**    | Utility-first styling            |
+| **shadcn/ui**       | Modern, accessible UI components |
+| **React Hook Form** | Form handling                    |
+| **Zod**             | Schema validation                |
+| **TanStack Query**  | Server state management          |
+| **Zustand**         | Client state management          |
 
 ### Backend
-| Technology | Purpose |
-|------------|---------|
-| **Next.js API Routes** | API endpoints |
-| **Prisma** | Type-safe ORM |
-| **PostgreSQL** | Primary database |
-| **NextAuth.js** | Authentication |
-| **Zod** | API validation |
+
+| Technology             | Purpose          |
+| ---------------------- | ---------------- |
+| **Next.js API Routes** | API endpoints    |
+| **Prisma**             | Type-safe ORM    |
+| **PostgreSQL**         | Primary database |
+| **NextAuth.js**        | Authentication   |
+| **Zod**                | API validation   |
 
 ### Infrastructure
-| Technology | Purpose |
-|------------|---------|
-| **Docker** | Containerization |
-| **Docker Compose** | Local development |
-| **Vercel** | Production deployment (optional) |
-| **GitHub Actions** | CI/CD |
+
+| Technology         | Purpose                          |
+| ------------------ | -------------------------------- |
+| **Docker**         | Containerization                 |
+| **Docker Compose** | Local development                |
+| **Vercel**         | Production deployment (optional) |
+| **GitHub Actions** | CI/CD                            |
 
 ## 📁 Project Structure
 
@@ -252,6 +264,7 @@ lynxprompt/
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - Node.js 20+
 - PostgreSQL 15+
 - pnpm (recommended) or npm
@@ -289,6 +302,7 @@ docker-compose up -d
 ## 📋 Roadmap
 
 ### Phase 1: MVP (v0.1.0)
+
 - [ ] Basic wizard flow
 - [ ] User authentication
 - [ ] Cursor & Claude Code support
@@ -297,6 +311,7 @@ docker-compose up -d
 - [ ] Download generated files
 
 ### Phase 2: Enhanced Features (v0.2.0)
+
 - [ ] GitHub Copilot & Windsurf support
 - [ ] Template editor
 - [ ] Shareable preference profiles
@@ -304,6 +319,7 @@ docker-compose up -d
 - [ ] Docker setup generators
 
 ### Phase 3: Advanced (v0.3.0)
+
 - [ ] Community templates
 - [ ] API access
 - [ ] VS Code extension
@@ -329,6 +345,7 @@ See the [LICENSE](LICENSE) file for full details.
 ## 💖 Support
 
 If you find LynxPrompt useful, consider:
+
 - ⭐ Starring the repository
 - 🐛 Reporting bugs
 - 💡 Suggesting features

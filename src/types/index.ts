@@ -213,7 +213,8 @@ export const AI_BEHAVIOR_RULES: Record<
 > = {
   always_debug_after_build: {
     label: "Always Debug After Building",
-    description: "AI should always run and test the application locally after making changes",
+    description:
+      "AI should always run and test the application locally after making changes",
     defaultPrompt:
       "After building or making changes locally, always debug and verify the changes work correctly before considering the task complete. Run the application and check for errors in the console, logs, and browser (if applicable).",
   },

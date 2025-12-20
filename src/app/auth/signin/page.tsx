@@ -5,7 +5,14 @@ import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Mail, Github, Chrome, ArrowLeft, Loader2 } from "lucide-react";
+import {
+  Sparkles,
+  Mail,
+  Github,
+  Chrome,
+  ArrowLeft,
+  Loader2,
+} from "lucide-react";
 
 function SignInContent() {
   const searchParams = useSearchParams();
@@ -82,9 +89,9 @@ function SignInContent() {
 
         <p className="text-sm text-white/60">
           © 2025 LynxPrompt by{" "}
-          <a 
-            href="https://geiser.cloud" 
-            target="_blank" 
+          <a
+            href="https://geiser.cloud"
+            target="_blank"
             rel="noopener noreferrer"
             className="hover:underline"
           >
@@ -206,7 +213,10 @@ function SignInContent() {
                     Terms of Service
                   </Link>{" "}
                   and{" "}
-                  <Link href="/privacy" className="text-primary hover:underline">
+                  <Link
+                    href="/privacy"
+                    className="text-primary hover:underline"
+                  >
                     Privacy Policy
                   </Link>
                 </p>

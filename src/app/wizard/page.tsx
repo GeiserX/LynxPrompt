@@ -125,19 +125,22 @@ const SKILL_LEVELS = [
     value: "novice",
     label: "Novice",
     icon: "🌱",
-    description: "New to this area - AI will be more verbose, explain concepts, and ask more clarifying questions",
+    description:
+      "New to this area - AI will be more verbose, explain concepts, and ask more clarifying questions",
   },
   {
     value: "intermediate",
     label: "Intermediate",
     icon: "🌿",
-    description: "Comfortable with basics - AI gives balanced explanations, asks when needed",
+    description:
+      "Comfortable with basics - AI gives balanced explanations, asks when needed",
   },
   {
     value: "senior",
     label: "Senior / Expert",
     icon: "🌳",
-    description: "Deep expertise - AI is concise, assumes knowledge, minimal hand-holding",
+    description:
+      "Deep expertise - AI is concise, assumes knowledge, minimal hand-holding",
   },
 ];
 
@@ -450,7 +453,9 @@ export default function WizardPage() {
                   selected={config.languages}
                   letAiDecide={config.letAiDecide}
                   onToggle={(v) => toggleArrayValue("languages", v)}
-                  onLetAiDecide={(v) => setConfig({ ...config, letAiDecide: v })}
+                  onLetAiDecide={(v) =>
+                    setConfig({ ...config, letAiDecide: v })
+                  }
                 />
               )}
               {currentStep === 3 && (
@@ -464,7 +469,9 @@ export default function WizardPage() {
                   value={config.releaseStrategy}
                   otherValue={config.releaseStrategyOther}
                   onChange={(v) => setConfig({ ...config, releaseStrategy: v })}
-                  onOtherChange={(v) => setConfig({ ...config, releaseStrategyOther: v })}
+                  onOtherChange={(v) =>
+                    setConfig({ ...config, releaseStrategyOther: v })
+                  }
                 />
               )}
               {currentStep === 5 && (
@@ -488,7 +495,9 @@ export default function WizardPage() {
               {currentStep === 8 && (
                 <StepFeedback
                   value={config.additionalFeedback}
-                  onChange={(v) => setConfig({ ...config, additionalFeedback: v })}
+                  onChange={(v) =>
+                    setConfig({ ...config, additionalFeedback: v })
+                  }
                 />
               )}
               {currentStep === 9 && <StepGenerate config={config} />}
@@ -573,7 +582,8 @@ function StepSkillLevel({
     <div>
       <h2 className="text-2xl font-bold">What&apos;s your skill level?</h2>
       <p className="mt-2 text-muted-foreground">
-        This controls how verbose the AI will be and how often it asks clarifying questions.
+        This controls how verbose the AI will be and how often it asks
+        clarifying questions.
       </p>
 
       <div className="mt-6 space-y-3">
@@ -830,7 +840,13 @@ function StepCICD({
           label="Build Container Image"
           description="Do you plan to build a container image in this repo?"
           checked={config.buildContainer as boolean}
-          onChange={(v) => onChange({ buildContainer: v, containerRegistry: v ? config.containerRegistry : "", registryUsername: v ? config.registryUsername : "" })}
+          onChange={(v) =>
+            onChange({
+              buildContainer: v,
+              containerRegistry: v ? config.containerRegistry : "",
+              registryUsername: v ? config.registryUsername : "",
+            })
+          }
         />
 
         {/* Container Registry Selection - only show if buildContainer is true */}
@@ -838,12 +854,16 @@ function StepCICD({
           <>
             <div>
               <label className="text-sm font-medium">Container Registry</label>
-              <p className="text-xs text-muted-foreground mb-2">Where will you push your container images?</p>
+              <p className="mb-2 text-xs text-muted-foreground">
+                Where will you push your container images?
+              </p>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 {CONTAINER_REGISTRIES.map((registry) => (
                   <button
                     key={registry.value}
-                    onClick={() => onChange({ containerRegistry: registry.value })}
+                    onClick={() =>
+                      onChange({ containerRegistry: registry.value })
+                    }
                     className={`flex items-center gap-2 rounded-lg border p-3 text-left transition-all ${
                       config.containerRegistry === registry.value
                         ? "border-primary bg-primary/5 ring-1 ring-primary"
@@ -852,7 +872,9 @@ function StepCICD({
                   >
                     <span className="text-xl">{registry.icon}</span>
                     <div className="flex-1">
-                      <span className="text-sm font-medium">{registry.label}</span>
+                      <span className="text-sm font-medium">
+                        {registry.label}
+                      </span>
                     </div>
                     {config.containerRegistry === registry.value && (
                       <Check className="h-4 w-4 text-primary" />
@@ -869,7 +891,9 @@ function StepCICD({
                 <input
                   type="text"
                   value={(config.containerRegistryOther as string) || ""}
-                  onChange={(e) => onChange({ containerRegistryOther: e.target.value })}
+                  onChange={(e) =>
+                    onChange({ containerRegistryOther: e.target.value })
+                  }
                   placeholder="e.g., registry.mycompany.com"
                   className="mt-2 w-full rounded-lg border bg-background px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
                 />
@@ -879,32 +903,50 @@ function StepCICD({
             {/* Registry Username */}
             {config.containerRegistry && (
               <div>
-                <label className="text-sm font-medium">Registry Username / Handle</label>
-                <p className="text-xs text-muted-foreground mb-2">Your username on the selected registry (used for image naming)</p>
+                <label className="text-sm font-medium">
+                  Registry Username / Handle
+                </label>
+                <p className="mb-2 text-xs text-muted-foreground">
+                  Your username on the selected registry (used for image naming)
+                </p>
                 <input
                   type="text"
                   value={(config.registryUsername as string) || ""}
-                  onChange={(e) => onChange({ registryUsername: e.target.value })}
+                  onChange={(e) =>
+                    onChange({ registryUsername: e.target.value })
+                  }
                   placeholder={
-                    config.containerRegistry === "dockerhub" ? "e.g., myusername" :
-                    config.containerRegistry === "ghcr" ? "e.g., github-username" :
-                    config.containerRegistry === "quay" ? "e.g., quay-username" :
-                    "e.g., your-username"
+                    config.containerRegistry === "dockerhub"
+                      ? "e.g., myusername"
+                      : config.containerRegistry === "ghcr"
+                        ? "e.g., github-username"
+                        : config.containerRegistry === "quay"
+                          ? "e.g., quay-username"
+                          : "e.g., your-username"
                   }
                   className="mt-2 w-full rounded-lg border bg-background px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
                 />
                 {config.registryUsername && config.containerRegistry && (
                   <p className="mt-2 text-xs text-muted-foreground">
-                    Image will be tagged as: <code className="rounded bg-muted px-1 py-0.5">
-                      {config.containerRegistry === "ghcr" ? "ghcr.io" :
-                       config.containerRegistry === "dockerhub" ? "docker.io" :
-                       config.containerRegistry === "quay" ? "quay.io" :
-                       config.containerRegistry === "ecr" ? "*.ecr.*.amazonaws.com" :
-                       config.containerRegistry === "gcr" ? "gcr.io" :
-                       config.containerRegistry === "acr" ? "*.azurecr.io" :
-                       config.containerRegistry === "gitlab" ? "registry.gitlab.com" :
-                       (config.containerRegistryOther as string) || "registry"
-                      }/{config.registryUsername}/your-image
+                    Image will be tagged as:{" "}
+                    <code className="rounded bg-muted px-1 py-0.5">
+                      {config.containerRegistry === "ghcr"
+                        ? "ghcr.io"
+                        : config.containerRegistry === "dockerhub"
+                          ? "docker.io"
+                          : config.containerRegistry === "quay"
+                            ? "quay.io"
+                            : config.containerRegistry === "ecr"
+                              ? "*.ecr.*.amazonaws.com"
+                              : config.containerRegistry === "gcr"
+                                ? "gcr.io"
+                                : config.containerRegistry === "acr"
+                                  ? "*.azurecr.io"
+                                  : config.containerRegistry === "gitlab"
+                                    ? "registry.gitlab.com"
+                                    : (config.containerRegistryOther as string) ||
+                                      "registry"}
+                      /{config.registryUsername}/your-image
                     </code>
                   </p>
                 )}
@@ -1031,8 +1073,9 @@ function StepFeedback({
     <div>
       <h2 className="text-2xl font-bold">Anything we&apos;ve missed?</h2>
       <p className="mt-2 text-muted-foreground">
-        Is there something specific you&apos;d like the AI to know about your project
-        that we haven&apos;t asked? Add any additional context or requirements here.
+        Is there something specific you&apos;d like the AI to know about your
+        project that we haven&apos;t asked? Add any additional context or
+        requirements here.
       </p>
 
       <div className="mt-6">
@@ -1048,7 +1091,9 @@ function StepFeedback({
         <h4 className="font-medium">💡 Suggestions for what to include:</h4>
         <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
           <li>• Specific coding standards or style guides your team follows</li>
-          <li>• Architectural patterns (microservices, monolith, serverless)</li>
+          <li>
+            • Architectural patterns (microservices, monolith, serverless)
+          </li>
           <li>• Special deployment requirements or environments</li>
           <li>• Team-specific workflows or review processes</li>
           <li>• Any constraints or limitations to be aware of</li>
@@ -1238,14 +1283,14 @@ function LoginRequired() {
       <footer className="border-t py-6">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground sm:px-6 lg:px-8">
           © 2025 LynxPrompt by{" "}
-            <a 
-              href="https://geiser.cloud" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="hover:underline"
-            >
-              Geiser Cloud
-            </a>
+          <a
+            href="https://geiser.cloud"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:underline"
+          >
+            Geiser Cloud
+          </a>
         </div>
       </footer>
     </div>

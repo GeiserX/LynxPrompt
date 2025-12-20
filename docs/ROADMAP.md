@@ -16,6 +16,7 @@ This document tracks planned features and improvements for LynxPrompt.
 ## 🟡 In Progress
 
 ### Admin & Moderation
+
 - [ ] Admin dashboard for template moderation
 - [ ] Moderation queue for new template submissions
 - [ ] Bulk delete/approve actions
@@ -26,12 +27,14 @@ This document tracks planned features and improvements for LynxPrompt.
 ### Core Functionality
 
 #### Wizard File Generation
+
 - [ ] Actually generate `.cursorrules`, `CLAUDE.md`, etc. from wizard choices
 - [ ] Download as ZIP with all selected files
 - [ ] Copy to clipboard functionality
 - [ ] Preview generated content before download
 
 #### User Dashboard
+
 - [ ] View saved templates and preferences
 - [ ] Download history
 - [ ] Favorite templates
@@ -40,18 +43,21 @@ This document tracks planned features and improvements for LynxPrompt.
 ### Template System
 
 #### Template Management
+
 - [ ] Template versioning (keep history of changes)
 - [ ] Template forking (duplicate & customize others' templates)
 - [ ] Import existing configs (upload your `.cursorrules` to create template)
 - [ ] Template preview (show what files look like before download)
 
 #### Search & Filters
+
 - [ ] Wire search to actual database queries
 - [ ] Filter by platform, category, tags
 - [ ] Sort by popularity, date, downloads
 - [ ] Pagination
 
 #### Template Analytics
+
 - [ ] Track template downloads/usage
 - [ ] Show trending templates
 - [ ] Usage statistics for template authors
@@ -59,6 +65,7 @@ This document tracks planned features and improvements for LynxPrompt.
 ### API
 
 #### REST API (Planned)
+
 ```
 GET    /api/templates          - List templates
 GET    /api/templates/:id      - Get template details

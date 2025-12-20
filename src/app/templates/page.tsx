@@ -9,7 +9,11 @@ import {
   Users,
   Plus,
 } from "lucide-react";
-import { getTemplates, getCategories, type TemplateData } from "@/lib/data/templates";
+import {
+  getTemplates,
+  getCategories,
+  type TemplateData,
+} from "@/lib/data/templates";
 
 // Force dynamic rendering to avoid database calls at build time
 export const dynamic = "force-dynamic";
@@ -199,9 +203,9 @@ export default async function TemplatesPage() {
             <Sparkles className="h-4 w-4 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
               © 2025 LynxPrompt by{" "}
-              <a 
-                href="https://geiser.cloud" 
-                target="_blank" 
+              <a
+                href="https://geiser.cloud"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="hover:underline"
               >

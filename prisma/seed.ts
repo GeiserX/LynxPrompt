@@ -235,7 +235,8 @@ github: [{{GITHUB_USERNAME}}]
     // =========================================================================
     {
       name: "Full-Stack TypeScript",
-      description: "Complete setup for Next.js, TypeScript, Prisma, and testing with AI-powered coding assistance",
+      description:
+        "Complete setup for Next.js, TypeScript, Prisma, and testing with AI-powered coding assistance",
       type: TemplateType.CURSORRULES,
       content: `# Full-Stack TypeScript Project Rules
 
@@ -266,7 +267,8 @@ You are an expert in TypeScript, Next.js 14+ (App Router), React, Prisma, and mo
     },
     {
       name: "Python Data Science",
-      description: "Optimized for Jupyter notebooks, pandas, and ML workflows with intelligent code completion",
+      description:
+        "Optimized for Jupyter notebooks, pandas, and ML workflows with intelligent code completion",
       type: TemplateType.CURSORRULES,
       content: `# Python Data Science Rules
 
@@ -297,7 +299,8 @@ You are an expert in Python, pandas, NumPy, scikit-learn, and data science workf
     },
     {
       name: "Go Microservices",
-      description: "Production-ready Go setup with Docker, Kubernetes configs, and API development rules",
+      description:
+        "Production-ready Go setup with Docker, Kubernetes configs, and API development rules",
       type: TemplateType.CURSORRULES,
       content: `# Go Microservices Rules
 
@@ -328,7 +331,8 @@ You are an expert in Go, microservices architecture, Docker, and Kubernetes.
     },
     {
       name: "React Component Library",
-      description: "Perfect for building reusable UI components with Storybook, testing, and documentation",
+      description:
+        "Perfect for building reusable UI components with Storybook, testing, and documentation",
       type: TemplateType.CURSORRULES,
       content: `# React Component Library Rules
 
@@ -359,7 +363,8 @@ You are an expert in React, TypeScript, Storybook, and component library develop
     },
     {
       name: "Rust Systems Programming",
-      description: "Low-level systems development with memory safety focus and performance optimization hints",
+      description:
+        "Low-level systems development with memory safety focus and performance optimization hints",
       type: TemplateType.CURSORRULES,
       content: `# Rust Systems Programming Rules
 
@@ -390,7 +395,8 @@ You are an expert in Rust, systems programming, and performance optimization.
     },
     {
       name: "DevOps & Infrastructure",
-      description: "Terraform, Ansible, and CI/CD pipelines with security best practices and IaC patterns",
+      description:
+        "Terraform, Ansible, and CI/CD pipelines with security best practices and IaC patterns",
       type: TemplateType.CURSORRULES,
       content: `# DevOps & Infrastructure Rules
 
@@ -451,7 +457,11 @@ You are an expert in Terraform, Ansible, Docker, Kubernetes, and CI/CD.
           { value: "fullstack", label: "Full-Stack Developer", icon: "🔄" },
           { value: "devops", label: "DevOps Engineer", icon: "⚙️" },
           { value: "dba", label: "Database Administrator", icon: "🗄️" },
-          { value: "infrastructure", label: "Infrastructure Engineer", icon: "🏗️" },
+          {
+            value: "infrastructure",
+            label: "Infrastructure Engineer",
+            icon: "🏗️",
+          },
           { value: "sre", label: "SRE", icon: "🔧" },
           { value: "mobile", label: "Mobile Developer", icon: "📱" },
           { value: "data", label: "Data Engineer", icon: "📊" },
@@ -498,17 +508,22 @@ You are an expert in Terraform, Ansible, Docker, Kubernetes, and CI/CD.
       order: 5,
       name: "ai_behavior",
       title: "AI Behavior Rules",
-      description: "Define how AI assistants should behave when helping you code",
+      description:
+        "Define how AI assistants should behave when helping you code",
       icon: "🧠",
       isRequired: false,
       config: {
         multiSelect: true,
-        defaultEnabled: ["always_debug_after_build", "follow_existing_patterns"],
+        defaultEnabled: [
+          "always_debug_after_build",
+          "follow_existing_patterns",
+        ],
         options: [
           {
             id: "always_debug_after_build",
             label: "Always Debug After Building",
-            description: "AI should always run and test the application locally after making changes",
+            description:
+              "AI should always run and test the application locally after making changes",
             recommended: true,
           },
           {
@@ -526,7 +541,8 @@ You are an expert in Terraform, Ansible, Docker, Kubernetes, and CI/CD.
           {
             id: "prefer_simple_solutions",
             label: "Prefer Simple Solutions",
-            description: "Favor straightforward implementations over complex ones",
+            description:
+              "Favor straightforward implementations over complex ones",
             recommended: true,
           },
           {
