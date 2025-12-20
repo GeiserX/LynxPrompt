@@ -241,3 +241,4 @@ function PlatformCard({
     </div>
   );
 }
+
