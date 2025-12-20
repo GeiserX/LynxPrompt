@@ -329,7 +329,7 @@ export default function WizardPage() {
     <div className="flex min-h-screen flex-col bg-muted/30">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
-        <div className="container flex h-16 items-center justify-between">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2">
             <Sparkles className="h-6 w-6 text-primary" />
             <span className="text-xl font-bold">LynxPrompt</span>
@@ -343,7 +343,7 @@ export default function WizardPage() {
         </div>
       </header>
 
-      <div className="container flex flex-1 gap-8 py-8">
+      <div className="container mx-auto flex flex-1 gap-8 px-4 py-8 sm:px-6 lg:px-8">
         {/* Sidebar - Step Navigation */}
         <aside className="hidden w-64 shrink-0 lg:block">
           <div className="sticky top-24 space-y-2">
@@ -1141,7 +1141,7 @@ function LoginRequired() {
     <div className="flex min-h-screen flex-col bg-muted/30">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
-        <div className="container flex h-16 items-center justify-between">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2">
             <Sparkles className="h-6 w-6 text-primary" />
             <span className="text-xl font-bold">LynxPrompt</span>
@@ -1214,7 +1214,7 @@ function LoginRequired() {
 
       {/* Footer */}
       <footer className="border-t py-6">
-        <div className="container text-center text-sm text-muted-foreground">
+        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground sm:px-6 lg:px-8">
           © 2025 LynxPrompt by{" "}
             <a 
               href="https://geiser.cloud" 

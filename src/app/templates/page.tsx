@@ -102,7 +102,7 @@ export default function TemplatesPage() {
     <div className="flex min-h-screen flex-col">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
-        <div className="container flex h-16 items-center justify-between">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2">
             <Sparkles className="h-6 w-6 text-primary" />
             <span className="text-xl font-bold">LynxPrompt</span>
@@ -126,7 +126,7 @@ export default function TemplatesPage() {
 
       {/* Hero */}
       <section className="border-b bg-gradient-to-b from-muted/50 to-background py-12">
-        <div className="container">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <h1 className="text-4xl font-bold tracking-tight">
               Template Marketplace
@@ -156,7 +156,7 @@ export default function TemplatesPage() {
       </section>
 
       {/* Main Content */}
-      <div className="container flex-1 py-8">
+      <div className="container mx-auto flex-1 px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex gap-8">
           {/* Sidebar */}
           <aside className="hidden w-56 shrink-0 lg:block">
@@ -233,7 +233,7 @@ export default function TemplatesPage() {
 
       {/* CTA */}
       <section className="border-t bg-muted/30 py-12">
-        <div className="container text-center">
+        <div className="container mx-auto px-4 text-center sm:px-6 lg:px-8">
           <Users className="mx-auto h-12 w-12 text-primary" />
           <h2 className="mt-4 text-2xl font-bold">
             Share Your AI Configurations
@@ -249,7 +249,7 @@ export default function TemplatesPage() {
 
       {/* Footer */}
       <footer className="border-t py-8">
-        <div className="container flex flex-col items-center justify-between gap-4 sm:flex-row">
+        <div className="container mx-auto flex flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:px-6 lg:px-8">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
