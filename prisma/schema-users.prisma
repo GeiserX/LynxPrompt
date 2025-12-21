@@ -55,6 +55,12 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  // Profile fields (user onboarding)
+  displayName      String?   // For author attribution in templates
+  persona          String?   // backend, frontend, fullstack, devops, etc.
+  skillLevel       String?   // novice, intermediate, senior
+  profileCompleted Boolean   @default(false)  // Track if onboarding done
+
   // Relations
   accounts       Account[]
   sessions       Session[]

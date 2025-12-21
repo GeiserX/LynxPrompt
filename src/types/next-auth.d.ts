@@ -9,6 +9,11 @@ declare module "next-auth" {
       email?: string | null;
       image?: string | null;
       role?: UserRole | string;
+      // Profile fields
+      displayName?: string | null;
+      persona?: string | null;
+      skillLevel?: string | null;
+      profileCompleted?: boolean;
     };
   }
 
@@ -20,5 +25,10 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT {
     role?: UserRole | string;
+    // Profile fields
+    displayName?: string | null;
+    persona?: string | null;
+    skillLevel?: string | null;
+    profileCompleted?: boolean;
   }
 }

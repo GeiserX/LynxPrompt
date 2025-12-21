@@ -9,7 +9,6 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
-  User,
   Code,
   GitBranch,
   Rocket,
@@ -18,15 +17,16 @@ import {
   Target,
   LogIn,
   Lock,
-  GraduationCap,
   Globe,
   MessageSquare,
+  FolderGit2,
+  Settings,
 } from "lucide-react";
 
+// New wizard steps - removed persona and skill level (now in profile)
 const WIZARD_STEPS = [
-  { id: "persona", title: "Developer Persona", icon: User },
-  { id: "skill_level", title: "Skill Level", icon: GraduationCap },
-  { id: "languages", title: "Languages", icon: Code },
+  { id: "project", title: "Project Info", icon: FolderGit2 },
+  { id: "languages", title: "Tech Stack", icon: Code },
   { id: "repository", title: "Repository", icon: GitBranch },
   { id: "release_strategy", title: "Release Strategy", icon: Globe },
   { id: "cicd", title: "CI/CD", icon: Rocket },
@@ -70,91 +70,14 @@ const RELEASE_STRATEGIES = [
 ];
 
 const CONTAINER_REGISTRIES = [
-  {
-    value: "dockerhub",
-    label: "Docker Hub",
-    icon: "🐳",
-    description: "The default public Docker registry",
-  },
-  {
-    value: "ghcr",
-    label: "GitHub Container Registry",
-    icon: "📦",
-    description: "GitHub's container registry (ghcr.io)",
-  },
-  {
-    value: "quay",
-    label: "Quay.io",
-    icon: "🔴",
-    description: "Red Hat's container registry",
-  },
-  {
-    value: "ecr",
-    label: "Amazon ECR",
-    icon: "☁️",
-    description: "AWS Elastic Container Registry",
-  },
-  {
-    value: "gcr",
-    label: "Google Container Registry",
-    icon: "🌐",
-    description: "Google Cloud Container Registry",
-  },
-  {
-    value: "acr",
-    label: "Azure Container Registry",
-    icon: "🔷",
-    description: "Microsoft Azure Container Registry",
-  },
-  {
-    value: "gitlab",
-    label: "GitLab Container Registry",
-    icon: "🦊",
-    description: "GitLab's built-in container registry",
-  },
-  {
-    value: "other",
-    label: "Other (specify)",
-    icon: "📝",
-    description: "Self-hosted or other registry",
-  },
-];
-
-const SKILL_LEVELS = [
-  {
-    value: "novice",
-    label: "Novice",
-    icon: "🌱",
-    description:
-      "New to this area - AI will be more verbose, explain concepts, and ask more clarifying questions",
-  },
-  {
-    value: "intermediate",
-    label: "Intermediate",
-    icon: "🌿",
-    description:
-      "Comfortable with basics - AI gives balanced explanations, asks when needed",
-  },
-  {
-    value: "senior",
-    label: "Senior / Expert",
-    icon: "🌳",
-    description:
-      "Deep expertise - AI is concise, assumes knowledge, minimal hand-holding",
-  },
-];
-
-const PERSONAS = [
-  { value: "backend", label: "Backend Developer", icon: "🖥️" },
-  { value: "frontend", label: "Frontend Developer", icon: "🎨" },
-  { value: "fullstack", label: "Full-Stack Developer", icon: "🔄" },
-  { value: "devops", label: "DevOps Engineer", icon: "⚙️" },
-  { value: "dba", label: "Database Administrator", icon: "🗄️" },
-  { value: "infrastructure", label: "Infrastructure Engineer", icon: "🏗️" },
-  { value: "sre", label: "SRE", icon: "🔧" },
-  { value: "mobile", label: "Mobile Developer", icon: "📱" },
-  { value: "data", label: "Data Engineer", icon: "📊" },
-  { value: "ml", label: "ML Engineer", icon: "🤖" },
+  { value: "dockerhub", label: "Docker Hub", icon: "🐳" },
+  { value: "ghcr", label: "GitHub Container Registry", icon: "📦" },
+  { value: "quay", label: "Quay.io", icon: "🔴" },
+  { value: "ecr", label: "Amazon ECR", icon: "☁️" },
+  { value: "gcr", label: "Google Container Registry", icon: "🌐" },
+  { value: "acr", label: "Azure Container Registry", icon: "🔷" },
+  { value: "gitlab", label: "GitLab Container Registry", icon: "🦊" },
+  { value: "other", label: "Other (specify)", icon: "📝" },
 ];
 
 const LANGUAGES = [
@@ -169,6 +92,21 @@ const LANGUAGES = [
   { value: "ruby", label: "Ruby", icon: "💎" },
   { value: "swift", label: "Swift", icon: "🍎" },
   { value: "kotlin", label: "Kotlin", icon: "🎨" },
+];
+
+const FRAMEWORKS = [
+  { value: "react", label: "React", icon: "⚛️" },
+  { value: "nextjs", label: "Next.js", icon: "▲" },
+  { value: "vue", label: "Vue.js", icon: "💚" },
+  { value: "angular", label: "Angular", icon: "🅰️" },
+  { value: "svelte", label: "Svelte", icon: "🔥" },
+  { value: "express", label: "Express.js", icon: "📦" },
+  { value: "fastapi", label: "FastAPI", icon: "⚡" },
+  { value: "django", label: "Django", icon: "🎸" },
+  { value: "flask", label: "Flask", icon: "🌶️" },
+  { value: "spring", label: "Spring Boot", icon: "🌱" },
+  { value: "dotnet", label: ".NET", icon: "🔷" },
+  { value: "rails", label: "Ruby on Rails", icon: "🛤️" },
 ];
 
 const AI_BEHAVIOR_RULES = [
@@ -232,7 +170,7 @@ const PLATFORMS = [
   },
   {
     id: "claude",
-    name: "Claude",
+    name: "Claude Code",
     file: "CLAUDE.md",
     icon: "🧠",
     gradient: "from-orange-500 to-amber-500",
@@ -253,11 +191,12 @@ const PLATFORMS = [
   },
 ];
 
-// Define the config type
+// Updated config type - removed persona and skillLevel (from profile now)
 type WizardConfig = {
-  persona: string;
-  skillLevel: string;
+  projectName: string;
+  projectDescription: string;
   languages: string[];
+  frameworks: string[];
   letAiDecide: boolean;
   license: string;
   funding: boolean;
@@ -276,13 +215,13 @@ type WizardConfig = {
 };
 
 export default function WizardPage() {
-  // SECURITY: Use proper NextAuth session instead of localStorage
   const { data: session, status } = useSession();
   const [currentStep, setCurrentStep] = useState(0);
   const [config, setConfig] = useState<WizardConfig>({
-    persona: "",
-    skillLevel: "",
+    projectName: "",
+    projectDescription: "",
     languages: [],
+    frameworks: [],
     letAiDecide: false,
     license: "mit",
     funding: false,
@@ -318,6 +257,11 @@ export default function WizardPage() {
     return <LoginRequired />;
   }
 
+  // Check if profile is completed - redirect to profile setup if not
+  if (!session.user.profileCompleted) {
+    return <ProfileSetupRequired />;
+  }
+
   const handleNext = () => {
     if (currentStep < WIZARD_STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
@@ -331,7 +275,7 @@ export default function WizardPage() {
   };
 
   const toggleArrayValue = (
-    key: "languages" | "aiBehaviorRules" | "platforms",
+    key: "languages" | "frameworks" | "aiBehaviorRules" | "platforms",
     value: string
   ) => {
     setConfig((prev) => ({
@@ -364,6 +308,39 @@ export default function WizardPage() {
         {/* Sidebar - Step Navigation */}
         <aside className="hidden w-64 shrink-0 lg:block">
           <div className="sticky top-24 space-y-2">
+            {/* User Profile Info */}
+            <div className="mb-6 rounded-lg border bg-card p-4">
+              <div className="flex items-center gap-3">
+                {session.user.image ? (
+                  <img
+                    src={session.user.image}
+                    alt=""
+                    className="h-10 w-10 rounded-full"
+                  />
+                ) : (
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                    <span className="text-lg">
+                      {(session.user.displayName || session.user.name || "U")[0]}
+                    </span>
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="truncate font-medium">
+                    {session.user.displayName || session.user.name}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground capitalize">
+                    {session.user.persona} • {session.user.skillLevel}
+                  </p>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" asChild className="mt-2 w-full">
+                <Link href="/settings/profile">
+                  <Settings className="mr-2 h-4 w-4" />
+                  Edit Profile
+                </Link>
+              </Button>
+            </div>
+
             {WIZARD_STEPS.map((step, index) => {
               const Icon = step.icon;
               const isActive = index === currentStep;
@@ -429,34 +406,32 @@ export default function WizardPage() {
             {/* Step Content */}
             <div className="rounded-xl border bg-card p-8">
               {currentStep === 0 && (
-                <StepPersona
-                  value={config.persona}
-                  onChange={(v) => setConfig({ ...config, persona: v })}
-                />
-              )}
-              {currentStep === 1 && (
-                <StepSkillLevel
-                  value={config.skillLevel}
-                  onChange={(v) => setConfig({ ...config, skillLevel: v })}
-                />
-              )}
-              {currentStep === 2 && (
-                <StepLanguages
-                  selected={config.languages}
-                  letAiDecide={config.letAiDecide}
-                  onToggle={(v) => toggleArrayValue("languages", v)}
-                  onLetAiDecide={(v) =>
-                    setConfig({ ...config, letAiDecide: v })
+                <StepProject
+                  name={config.projectName}
+                  description={config.projectDescription}
+                  onNameChange={(v) => setConfig({ ...config, projectName: v })}
+                  onDescriptionChange={(v) =>
+                    setConfig({ ...config, projectDescription: v })
                   }
                 />
               )}
-              {currentStep === 3 && (
+              {currentStep === 1 && (
+                <StepTechStack
+                  selectedLanguages={config.languages}
+                  selectedFrameworks={config.frameworks}
+                  letAiDecide={config.letAiDecide}
+                  onToggleLanguage={(v) => toggleArrayValue("languages", v)}
+                  onToggleFramework={(v) => toggleArrayValue("frameworks", v)}
+                  onLetAiDecide={(v) => setConfig({ ...config, letAiDecide: v })}
+                />
+              )}
+              {currentStep === 2 && (
                 <StepRepository
                   config={config}
                   onChange={(updates) => setConfig({ ...config, ...updates })}
                 />
               )}
-              {currentStep === 4 && (
+              {currentStep === 3 && (
                 <StepReleaseStrategy
                   value={config.releaseStrategy}
                   otherValue={config.releaseStrategyOther}
@@ -466,25 +441,25 @@ export default function WizardPage() {
                   }
                 />
               )}
-              {currentStep === 5 && (
+              {currentStep === 4 && (
                 <StepCICD
                   config={config}
                   onChange={(updates) => setConfig({ ...config, ...updates })}
                 />
               )}
-              {currentStep === 6 && (
+              {currentStep === 5 && (
                 <StepAIBehavior
                   selected={config.aiBehaviorRules}
                   onToggle={(v) => toggleArrayValue("aiBehaviorRules", v)}
                 />
               )}
-              {currentStep === 7 && (
+              {currentStep === 6 && (
                 <StepPlatforms
                   selected={config.platforms}
                   onToggle={(v) => toggleArrayValue("platforms", v)}
                 />
               )}
-              {currentStep === 8 && (
+              {currentStep === 7 && (
                 <StepFeedback
                   value={config.additionalFeedback}
                   onChange={(v) =>
@@ -492,7 +467,9 @@ export default function WizardPage() {
                   }
                 />
               )}
-              {currentStep === 9 && <StepGenerate config={config} />}
+              {currentStep === 8 && (
+                <StepGenerate config={config} session={session} />
+              )}
 
               {/* Navigation */}
               <div className="mt-8 flex justify-between">
@@ -524,126 +501,128 @@ export default function WizardPage() {
   );
 }
 
-// Step Components
-function StepPersona({
-  value,
-  onChange,
+// NEW: Project Info Step
+function StepProject({
+  name,
+  description,
+  onNameChange,
+  onDescriptionChange,
 }: {
-  value: string;
-  onChange: (v: string) => void;
+  name: string;
+  description: string;
+  onNameChange: (v: string) => void;
+  onDescriptionChange: (v: string) => void;
 }) {
   return (
     <div>
-      <h2 className="text-2xl font-bold">What type of developer are you?</h2>
+      <h2 className="text-2xl font-bold">What project is this for?</h2>
       <p className="mt-2 text-muted-foreground">
-        This helps us suggest relevant options for your workflow.
+        Tell us about the repository you&apos;re setting up AI configurations for.
       </p>
 
-      <div className="mt-6 grid grid-cols-2 gap-3">
-        {PERSONAS.map((persona) => (
-          <button
-            key={persona.value}
-            onClick={() => onChange(persona.value)}
-            className={`flex items-center gap-3 rounded-lg border p-4 text-left transition-all hover:border-primary ${
-              value === persona.value
-                ? "border-primary bg-primary/5 ring-1 ring-primary"
-                : ""
-            }`}
-          >
-            <span className="text-2xl">{persona.icon}</span>
-            <span className="font-medium">{persona.label}</span>
-          </button>
-        ))}
+      <div className="mt-6 space-y-6">
+        <div>
+          <label className="mb-2 block text-sm font-medium">
+            Project Name <span className="text-destructive">*</span>
+          </label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => onNameChange(e.target.value)}
+            placeholder="e.g., my-awesome-app, company-backend"
+            className="w-full rounded-lg border bg-background px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium">
+            Description (optional)
+          </label>
+          <textarea
+            value={description}
+            onChange={(e) => onDescriptionChange(e.target.value)}
+            placeholder="Brief description of what this project does..."
+            rows={3}
+            className="w-full resize-none rounded-lg border bg-background px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
       </div>
 
-      <p className="mt-4 text-center text-sm text-muted-foreground">
-        Skip this step if you prefer not to specify
-      </p>
+      <div className="mt-6 rounded-lg bg-muted/50 p-4">
+        <p className="text-sm text-muted-foreground">
+          💡 The project name will be used to customize your AI configuration files
+          and make them specific to this repository.
+        </p>
+      </div>
     </div>
   );
 }
 
-function StepSkillLevel({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <div>
-      <h2 className="text-2xl font-bold">What&apos;s your skill level?</h2>
-      <p className="mt-2 text-muted-foreground">
-        This controls how verbose the AI will be and how often it asks
-        clarifying questions.
-      </p>
-
-      <div className="mt-6 space-y-3">
-        {SKILL_LEVELS.map((level) => (
-          <button
-            key={level.value}
-            onClick={() => onChange(level.value)}
-            className={`flex w-full items-start gap-4 rounded-lg border p-5 text-left transition-all hover:border-primary ${
-              value === level.value
-                ? "border-primary bg-primary/5 ring-1 ring-primary"
-                : ""
-            }`}
-          >
-            <span className="text-3xl">{level.icon}</span>
-            <div className="flex-1">
-              <span className="text-lg font-semibold">{level.label}</span>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {level.description}
-              </p>
-            </div>
-            {value === level.value && (
-              <Check className="h-5 w-5 text-primary" />
-            )}
-          </button>
-        ))}
-      </div>
-
-      <p className="mt-4 text-center text-sm text-muted-foreground">
-        This affects all generated config files
-      </p>
-    </div>
-  );
-}
-
-function StepLanguages({
-  selected,
+// UPDATED: Tech Stack Step (renamed from Languages)
+function StepTechStack({
+  selectedLanguages,
+  selectedFrameworks,
   letAiDecide,
-  onToggle,
+  onToggleLanguage,
+  onToggleFramework,
   onLetAiDecide,
 }: {
-  selected: string[];
+  selectedLanguages: string[];
+  selectedFrameworks: string[];
   letAiDecide: boolean;
-  onToggle: (v: string) => void;
+  onToggleLanguage: (v: string) => void;
+  onToggleFramework: (v: string) => void;
   onLetAiDecide: (v: boolean) => void;
 }) {
   return (
     <div>
-      <h2 className="text-2xl font-bold">Select Languages & Frameworks</h2>
+      <h2 className="text-2xl font-bold">Select Your Tech Stack</h2>
       <p className="mt-2 text-muted-foreground">
-        Choose the technologies you&apos;ll be working with.
+        Choose all the languages and frameworks you&apos;ll be using. Select multiple!
       </p>
 
-      <div className="mt-6 grid grid-cols-3 gap-3">
-        {LANGUAGES.map((lang) => (
-          <button
-            key={lang.value}
-            onClick={() => onToggle(lang.value)}
-            disabled={letAiDecide}
-            className={`flex items-center gap-2 rounded-lg border p-3 text-left transition-all hover:border-primary disabled:opacity-50 ${
-              selected.includes(lang.value) && !letAiDecide
-                ? "border-primary bg-primary/5 ring-1 ring-primary"
-                : ""
-            }`}
-          >
-            <span className="text-xl">{lang.icon}</span>
-            <span className="text-sm font-medium">{lang.label}</span>
-          </button>
-        ))}
+      {/* Languages */}
+      <div className="mt-6">
+        <h3 className="mb-3 font-semibold">Languages</h3>
+        <div className="grid grid-cols-3 gap-3">
+          {LANGUAGES.map((lang) => (
+            <button
+              key={lang.value}
+              onClick={() => onToggleLanguage(lang.value)}
+              disabled={letAiDecide}
+              className={`flex items-center gap-2 rounded-lg border p-3 text-left transition-all hover:border-primary disabled:opacity-50 ${
+                selectedLanguages.includes(lang.value) && !letAiDecide
+                  ? "border-primary bg-primary/5 ring-1 ring-primary"
+                  : ""
+              }`}
+            >
+              <span className="text-xl">{lang.icon}</span>
+              <span className="text-sm font-medium">{lang.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Frameworks */}
+      <div className="mt-6">
+        <h3 className="mb-3 font-semibold">Frameworks & Libraries</h3>
+        <div className="grid grid-cols-3 gap-3">
+          {FRAMEWORKS.map((fw) => (
+            <button
+              key={fw.value}
+              onClick={() => onToggleFramework(fw.value)}
+              disabled={letAiDecide}
+              className={`flex items-center gap-2 rounded-lg border p-3 text-left transition-all hover:border-primary disabled:opacity-50 ${
+                selectedFrameworks.includes(fw.value) && !letAiDecide
+                  ? "border-primary bg-primary/5 ring-1 ring-primary"
+                  : ""
+              }`}
+            >
+              <span className="text-xl">{fw.icon}</span>
+              <span className="text-sm font-medium">{fw.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="mt-6">
@@ -660,6 +639,9 @@ function StepLanguages({
             Let AI decide based on the project
           </span>
         </button>
+        <p className="mt-2 text-center text-sm text-muted-foreground">
+          AI will analyze your codebase and suggest additional technologies
+        </p>
       </div>
     </div>
   );
@@ -771,7 +753,6 @@ function StepReleaseStrategy({
         ))}
       </div>
 
-      {/* Show text input when "other" is selected */}
       {value === "other" && (
         <div className="mt-4">
           <label className="text-sm font-medium">Please specify:</label>
@@ -827,11 +808,10 @@ function StepCICD({
           </div>
         </div>
 
-        {/* Container Build Question */}
         <ToggleOption
           label="Build Container Image"
           description="Do you plan to build a container image in this repo?"
-          checked={config.buildContainer as boolean}
+          checked={config.buildContainer}
           onChange={(v) =>
             onChange({
               buildContainer: v,
@@ -841,14 +821,10 @@ function StepCICD({
           }
         />
 
-        {/* Container Registry Selection - only show if buildContainer is true */}
         {config.buildContainer && (
           <>
             <div>
               <label className="text-sm font-medium">Container Registry</label>
-              <p className="mb-2 text-xs text-muted-foreground">
-                Where will you push your container images?
-              </p>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 {CONTAINER_REGISTRIES.map((registry) => (
                   <button
@@ -863,26 +839,18 @@ function StepCICD({
                     }`}
                   >
                     <span className="text-xl">{registry.icon}</span>
-                    <div className="flex-1">
-                      <span className="text-sm font-medium">
-                        {registry.label}
-                      </span>
-                    </div>
-                    {config.containerRegistry === registry.value && (
-                      <Check className="h-4 w-4 text-primary" />
-                    )}
+                    <span className="text-sm font-medium">{registry.label}</span>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Other registry input */}
             {config.containerRegistry === "other" && (
               <div>
                 <label className="text-sm font-medium">Registry URL</label>
                 <input
                   type="text"
-                  value={(config.containerRegistryOther as string) || ""}
+                  value={config.containerRegistryOther || ""}
                   onChange={(e) =>
                     onChange({ containerRegistryOther: e.target.value })
                   }
@@ -892,56 +860,20 @@ function StepCICD({
               </div>
             )}
 
-            {/* Registry Username */}
             {config.containerRegistry && (
               <div>
                 <label className="text-sm font-medium">
                   Registry Username / Handle
                 </label>
-                <p className="mb-2 text-xs text-muted-foreground">
-                  Your username on the selected registry (used for image naming)
-                </p>
                 <input
                   type="text"
-                  value={(config.registryUsername as string) || ""}
+                  value={config.registryUsername || ""}
                   onChange={(e) =>
                     onChange({ registryUsername: e.target.value })
                   }
-                  placeholder={
-                    config.containerRegistry === "dockerhub"
-                      ? "e.g., myusername"
-                      : config.containerRegistry === "ghcr"
-                        ? "e.g., github-username"
-                        : config.containerRegistry === "quay"
-                          ? "e.g., quay-username"
-                          : "e.g., your-username"
-                  }
+                  placeholder="e.g., myusername"
                   className="mt-2 w-full rounded-lg border bg-background px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
                 />
-                {config.registryUsername && config.containerRegistry && (
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    Image will be tagged as:{" "}
-                    <code className="rounded bg-muted px-1 py-0.5">
-                      {config.containerRegistry === "ghcr"
-                        ? "ghcr.io"
-                        : config.containerRegistry === "dockerhub"
-                          ? "docker.io"
-                          : config.containerRegistry === "quay"
-                            ? "quay.io"
-                            : config.containerRegistry === "ecr"
-                              ? "*.ecr.*.amazonaws.com"
-                              : config.containerRegistry === "gcr"
-                                ? "gcr.io"
-                                : config.containerRegistry === "acr"
-                                  ? "*.azurecr.io"
-                                  : config.containerRegistry === "gitlab"
-                                    ? "registry.gitlab.com"
-                                    : (config.containerRegistryOther as string) ||
-                                      "registry"}
-                      /{config.registryUsername}/your-image
-                    </code>
-                  </p>
-                )}
               </div>
             )}
           </>
@@ -1066,48 +998,58 @@ function StepFeedback({
       <h2 className="text-2xl font-bold">Anything we&apos;ve missed?</h2>
       <p className="mt-2 text-muted-foreground">
         Is there something specific you&apos;d like the AI to know about your
-        project that we haven&apos;t asked? Add any additional context or
-        requirements here.
+        project that we haven&apos;t asked? Add any additional context.
       </p>
 
       <div className="mt-6">
         <textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="E.g., 'This project uses a monorepo setup with Turborepo', 'We follow a specific naming convention for components', 'The team prefers functional programming patterns'..."
+          placeholder="E.g., 'This project uses a monorepo setup with Turborepo', 'We follow a specific naming convention for components'..."
           className="min-h-[200px] w-full resize-y rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
       </div>
 
       <div className="mt-4 rounded-lg bg-muted/50 p-4">
-        <h4 className="font-medium">💡 Suggestions for what to include:</h4>
+        <h4 className="font-medium">💡 Suggestions:</h4>
         <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
-          <li>• Specific coding standards or style guides your team follows</li>
-          <li>
-            • Architectural patterns (microservices, monolith, serverless)
-          </li>
-          <li>• Special deployment requirements or environments</li>
-          <li>• Team-specific workflows or review processes</li>
-          <li>• Any constraints or limitations to be aware of</li>
+          <li>• Specific coding standards or style guides</li>
+          <li>• Architectural patterns (microservices, monolith, serverless)</li>
+          <li>• Special deployment requirements</li>
+          <li>• Team-specific workflows</li>
         </ul>
       </div>
-
-      <p className="mt-4 text-center text-sm text-muted-foreground">
-        This is optional - skip if the previous questions covered everything
-      </p>
     </div>
   );
 }
 
-function StepGenerate({ config }: { config: WizardConfig }) {
+function StepGenerate({
+  config,
+  session,
+}: {
+  config: WizardConfig;
+  session: { user: { displayName?: string | null; name?: string | null; persona?: string | null; skillLevel?: string | null } };
+}) {
   return (
     <div>
       <h2 className="text-2xl font-bold">Review & Generate</h2>
       <p className="mt-2 text-muted-foreground">
-        Review your configuration and download your files.
+        Review your configuration for <strong>{config.projectName || "your project"}</strong>.
       </p>
 
       <div className="mt-6 space-y-4">
+        {/* Profile info used */}
+        <div className="rounded-lg border bg-muted/30 p-4">
+          <h3 className="font-medium">Using your profile settings:</h3>
+          <div className="mt-2 flex gap-4 text-sm text-muted-foreground">
+            <span>Author: {session.user.displayName || session.user.name}</span>
+            <span>•</span>
+            <span className="capitalize">{session.user.persona}</span>
+            <span>•</span>
+            <span className="capitalize">{session.user.skillLevel} level</span>
+          </div>
+        </div>
+
         <div className="rounded-lg bg-muted p-4">
           <h3 className="font-medium">Files to generate:</h3>
           <ul className="mt-2 space-y-1">
@@ -1136,6 +1078,33 @@ function StepGenerate({ config }: { config: WizardConfig }) {
         </div>
 
         <div className="rounded-lg border p-4">
+          <h3 className="font-medium">Tech Stack:</h3>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {config.languages.map((lang) => (
+              <span
+                key={lang}
+                className="rounded-full bg-blue-500/10 px-3 py-1 text-xs text-blue-600"
+              >
+                {LANGUAGES.find((l) => l.value === lang)?.label || lang}
+              </span>
+            ))}
+            {config.frameworks.map((fw) => (
+              <span
+                key={fw}
+                className="rounded-full bg-purple-500/10 px-3 py-1 text-xs text-purple-600"
+              >
+                {FRAMEWORKS.find((f) => f.value === fw)?.label || fw}
+              </span>
+            ))}
+            {config.letAiDecide && (
+              <span className="rounded-full bg-orange-500/10 px-3 py-1 text-xs text-orange-600">
+                + AI will suggest more
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-lg border p-4">
           <h3 className="font-medium">AI Behavior Rules:</h3>
           <div className="mt-2 flex flex-wrap gap-2">
             {config.aiBehaviorRules.map((rule) => (
@@ -1148,10 +1117,6 @@ function StepGenerate({ config }: { config: WizardConfig }) {
             ))}
           </div>
         </div>
-
-        <p className="text-center text-sm text-muted-foreground">
-          ✨ Your configuration will be saved to your account
-        </p>
       </div>
     </div>
   );
@@ -1198,7 +1163,6 @@ function ToggleOption({
 function LoginRequired() {
   return (
     <div className="flex min-h-screen flex-col bg-muted/30">
-      {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2">
@@ -1214,7 +1178,6 @@ function LoginRequired() {
         </div>
       </header>
 
-      {/* Login Required Content */}
       <div className="flex flex-1 items-center justify-center p-8">
         <div className="mx-auto max-w-md text-center">
           <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
@@ -1224,7 +1187,7 @@ function LoginRequired() {
           <h1 className="text-3xl font-bold">Sign in to continue</h1>
           <p className="mt-3 text-muted-foreground">
             Create an account or sign in to start building your AI IDE
-            configurations. Your preferences will be saved for future use.
+            configurations.
           </p>
 
           <div className="mt-8 space-y-4">
@@ -1234,57 +1197,72 @@ function LoginRequired() {
                 Sign in to Get Started
               </Link>
             </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-            <p className="text-sm text-muted-foreground">
-              Don&apos;t have an account?{" "}
-              <Link
-                href="/auth/signin?callbackUrl=/wizard"
-                className="font-medium text-primary hover:underline"
-              >
-                Create one for free
-              </Link>
-            </p>
+// NEW: Profile Setup Required Component
+function ProfileSetupRequired() {
+  return (
+    <div className="flex min-h-screen flex-col bg-muted/30">
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+          <Link href="/" className="flex items-center gap-2">
+            <Sparkles className="h-6 w-6 text-primary" />
+            <span className="text-xl font-bold">LynxPrompt</span>
+          </Link>
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Home
+            </Link>
+          </Button>
+        </div>
+      </header>
+
+      <div className="flex flex-1 items-center justify-center p-8">
+        <div className="mx-auto max-w-md text-center">
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-purple-500/20">
+            <Settings className="h-10 w-10 text-primary" />
           </div>
 
-          {/* Benefits */}
-          <div className="mt-12 rounded-xl border bg-card p-6 text-left">
-            <h3 className="font-semibold">Why sign in?</h3>
+          <h1 className="text-3xl font-bold">Complete Your Profile</h1>
+          <p className="mt-3 text-muted-foreground">
+            Before we set up your repository, tell us a bit about yourself.
+            This helps us personalize your AI configurations.
+          </p>
+
+          <div className="mt-8 space-y-4">
+            <Button asChild size="lg" className="w-full">
+              <Link href="/settings/profile?onboarding=true">
+                <Settings className="mr-2 h-5 w-5" />
+                Set Up Your Profile
+              </Link>
+            </Button>
+          </div>
+
+          <div className="mt-8 rounded-xl border bg-card p-6 text-left">
+            <h3 className="font-semibold">What you&apos;ll set up:</h3>
             <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <span>Save and sync your configurations across devices</span>
+                <span>Your display name (used as author in templates)</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <span>Create and share templates with the community</span>
+                <span>Developer type (backend, frontend, fullstack, etc.)</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <span>Reuse your LICENSE, FUNDING.yml across projects</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <span>Access your history and quick setup options</span>
+                <span>Skill level (controls AI verbosity)</span>
               </li>
             </ul>
           </div>
         </div>
       </div>
-
-      {/* Footer */}
-      <footer className="border-t py-6">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground sm:px-6 lg:px-8">
-          © 2025 LynxPrompt by{" "}
-          <a
-            href="https://geiser.cloud"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:underline"
-          >
-            Geiser Cloud
-          </a>
-        </div>
-      </footer>
     </div>
   );
 }
