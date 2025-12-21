@@ -39,6 +39,7 @@ export const authOptions: NextAuthOptions = {
         },
       },
       from: process.env.SMTP_FROM || "noreply@lynxprompt.com",
+      maxAge: 24 * 60 * 60, // 24 hours token validity
     }),
     // Passkey authentication provider
     CredentialsProvider({
@@ -210,8 +211,8 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
     updateAge: 24 * 60 * 60, // 24 hours - refresh session if older
   },
-  // Security: Only enable debug in development
-  debug: process.env.NODE_ENV === "development",
+  // Enable debug to troubleshoot verification issues
+  debug: true,
   // Security: Use secure cookies in production
   cookies: {
     sessionToken: {
