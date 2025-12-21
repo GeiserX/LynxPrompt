@@ -310,7 +310,7 @@ export async function getTemplates(options?: {
         ],
       }),
     },
-    orderBy: [{ usageCount: "desc" }, { createdAt: "desc" }],
+    orderBy: [{ downloads: "desc" }, { createdAt: "desc" }],
     take: options?.limit || 50,
     skip: options?.offset || 0,
   });
@@ -339,7 +339,7 @@ export async function getTemplates(options?: {
         select: { name: true, id: true },
       },
     },
-    orderBy: [{ usageCount: "desc" }, { createdAt: "desc" }],
+    orderBy: [{ downloads: "desc" }, { createdAt: "desc" }],
     take: options?.limit || 50,
     skip: options?.offset || 0,
   });
@@ -574,7 +574,7 @@ export async function incrementTemplateUsage(id: string): Promise<void> {
     const realId = id.replace("usr_", "");
     await prismaUsers.userTemplate.update({
       where: { id: realId },
-      data: { usageCount: { increment: 1 } },
+      data: { downloads: { increment: 1 } },
     });
   }
 }
