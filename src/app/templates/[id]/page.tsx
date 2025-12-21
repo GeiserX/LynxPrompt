@@ -18,20 +18,13 @@ import {
 } from "lucide-react";
 
 // Platform info
-const platformInfo: Record<
-  string,
-  { name: string; file: string; icon: string }
-> = {
-  cursor: { name: "Cursor", file: ".cursorrules", icon: "⚡" },
-  claude_code: { name: "Claude Code", file: "CLAUDE.md", icon: "🧠" },
-  github_copilot: {
-    name: "GitHub Copilot",
-    file: ".github/copilot-instructions.md",
-    icon: "🤖",
-  },
-  windsurf: { name: "Windsurf", file: ".windsurfrules", icon: "🏄" },
-  claude: { name: "Claude Code", file: "CLAUDE.md", icon: "🧠" },
-  copilot: { name: "GitHub Copilot", file: "copilot-instructions.md", icon: "🤖" },
+const platformInfo: Record<string, { name: string; file: string }> = {
+  cursor: { name: "Cursor", file: ".cursorrules" },
+  claude_code: { name: "Claude Code", file: "CLAUDE.md" },
+  github_copilot: { name: "GitHub Copilot", file: ".github/copilot-instructions.md" },
+  windsurf: { name: "Windsurf", file: ".windsurfrules" },
+  claude: { name: "Claude Code", file: "CLAUDE.md" },
+  copilot: { name: "GitHub Copilot", file: "copilot-instructions.md" },
 };
 
 const tierColors: Record<string, string> = {
@@ -113,11 +106,6 @@ export default function TemplateDetailPage() {
   if (!template) {
     return null;
   }
-
-  const allPlatforms = [
-    template.targetPlatform,
-    ...(template.compatibleWith || []),
-  ].filter(Boolean);
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -205,52 +193,14 @@ export default function TemplateDetailPage() {
               </div>
             </div>
 
-            {/* Platform Compatibility */}
-            {allPlatforms.length > 0 && (
-              <div className="mb-8 rounded-xl border bg-muted/30 p-6">
-                <h2 className="mb-4 font-semibold">Compatible Platforms</h2>
-                <div className="flex flex-wrap gap-3">
-                  {allPlatforms.map((p) => {
-                    const info = platformInfo[p || ""] || {
-                      name: p,
-                      file: "",
-                      icon: "📦",
-                    };
-                    const isPrimary = p === template.targetPlatform;
-                    return (
-                      <div
-                        key={p}
-                        className={`flex items-center gap-2 rounded-lg border px-4 py-2 ${
-                          isPrimary
-                            ? "border-primary bg-primary/5"
-                            : "bg-background"
-                        }`}
-                      >
-                        <span className="text-xl">{info.icon}</span>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{info.name}</span>
-                            {isPrimary && (
-                              <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs text-primary">
-                                Primary
-                              </span>
-                            )}
-                          </div>
-                          {info.file && (
-                            <code className="text-xs text-muted-foreground">
-                              {info.file}
-                            </code>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <p className="mt-4 text-sm text-muted-foreground">
-                  This template was created for{" "}
-                  {platformInfo[template.targetPlatform || ""]?.name || "Cursor"}{" "}
-                  but can be easily adapted for other platforms. Download and
-                  select your preferred platform.
+            {/* Originally Built For */}
+            {template.targetPlatform && (
+              <div className="mb-8 rounded-xl border bg-muted/30 p-4">
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-medium text-foreground">Originally built for: </span>
+                  {platformInfo[template.targetPlatform]?.name || template.targetPlatform}
+                  <span className="mx-2">•</span>
+                  <span>Works with any AI IDE — choose your platform when downloading.</span>
                 </p>
               </div>
             )}
