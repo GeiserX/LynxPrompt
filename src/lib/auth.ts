@@ -136,30 +136,41 @@ export const authOptions: NextAuthOptions = {
         if (user) {
           session.user.id = user.id;
           // Fetch role and profile fields from database
-          const dbUser = await prismaUsers.user.findUnique({
-            where: { id: user.id },
-            select: {
-              role: true,
-              displayName: true,
-              persona: true,
-              skillLevel: true,
-              profileCompleted: true,
-            },
-          });
-          session.user.role = dbUser?.role || "USER";
-          session.user.displayName = dbUser?.displayName || null;
-          session.user.persona = dbUser?.persona || null;
-          session.user.skillLevel = dbUser?.skillLevel || null;
-          session.user.profileCompleted = dbUser?.profileCompleted || false;
+          // Wrap in try-catch to prevent session failures on DB issues
+          try {
+            const dbUser = await prismaUsers.user.findUnique({
+              where: { id: user.id },
+              select: {
+                role: true,
+                displayName: true,
+                persona: true,
+                skillLevel: true,
+                profileCompleted: true,
+              },
+            });
+            session.user.role = dbUser?.role || "USER";
+            session.user.displayName = dbUser?.displayName || null;
+            session.user.persona = dbUser?.persona || null;
+            session.user.skillLevel = dbUser?.skillLevel || null;
+            session.user.profileCompleted = dbUser?.profileCompleted || false;
+          } catch (error) {
+            // Log but don't fail the session - use defaults
+            console.error("Error fetching user details for session:", error);
+            session.user.role = "USER";
+            session.user.displayName = null;
+            session.user.persona = null;
+            session.user.skillLevel = null;
+            session.user.profileCompleted = false;
+          }
         }
         // For JWT sessions (Passkey)
-        if (token) {
+        if (token && !user) {
           session.user.id = token.sub as string;
-          session.user.role = token.role as string || "USER";
-          session.user.displayName = token.displayName as string | null;
-          session.user.persona = token.persona as string | null;
-          session.user.skillLevel = token.skillLevel as string | null;
-          session.user.profileCompleted = token.profileCompleted as boolean || false;
+          session.user.role = (token.role as string) || "USER";
+          session.user.displayName = (token.displayName as string) || null;
+          session.user.persona = (token.persona as string) || null;
+          session.user.skillLevel = (token.skillLevel as string) || null;
+          session.user.profileCompleted = (token.profileCompleted as boolean) || false;
         }
       }
       return session;

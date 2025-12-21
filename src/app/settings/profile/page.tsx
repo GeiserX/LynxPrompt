@@ -78,7 +78,7 @@ export default function ProfileSettingsPage() {
 }
 
 function ProfileSettingsContent() {
-  const { status } = useSession();
+  const { status, update: updateSession } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
   const isOnboarding = searchParams.get("onboarding") === "true";
@@ -142,11 +142,14 @@ function ProfileSettingsContent() {
       setProfile(updatedProfile);
       setSuccess("Profile saved successfully!");
 
+      // Refresh the session to get updated profileCompleted status
+      await updateSession();
+
       // If onboarding and profile is now complete, redirect to wizard
       if (isOnboarding && updatedProfile.profileCompleted) {
         setTimeout(() => {
           router.push("/wizard");
-        }, 1000);
+        }, 500);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save profile");
