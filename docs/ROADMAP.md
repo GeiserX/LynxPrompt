@@ -20,27 +20,9 @@ This document tracks planned features and improvements for LynxPrompt.
 - [x] Status page link (Uptime Kuma integration ready)
 - [x] Transparent logo for all backgrounds
 - [x] **Sign out button visible on all pages** (UserMenu component)
-
-## 🟡 In Progress
-
-### Dashboard Improvements
-
-- [ ] Redesign dashboard as a proper dashboard (not wizard redirect)
-  - User statistics (templates created, downloads, favorites)
-  - Recent activity feed
-  - Quick actions cards
-  - "Create New Configuration" button (separate from wizard inline)
-- [ ] Separate wizard trigger from dashboard home
-- [x] "Share Your Template" quick action card
-
-### User Account Features
-
-- [ ] **Account Linking** - Allow users to link multiple auth providers:
-  - Link GitHub account to existing email account
-  - Link Google account to existing account
-  - Link Magic Link email to OAuth account
-  - Unified profile across all linked accounts
-  - UI in Settings to manage linked accounts
+- [x] **Dashboard redesign** - User stats, recent activity, quick actions, My Templates section
+- [x] **Account linking UI** - Link/unlink GitHub, Google, and Email accounts from settings
+- [x] "Share Your Template" quick action card on dashboard
 
 ## 🔴 Planned Features
 
@@ -381,5 +363,5 @@ POST   /api/generate           - Generate config files from wizard data
 - Affiliate program for promoters
 - Gift subscriptions
 - Annual subscription discount (2 months free)
-- **Local app integration**: Instead of downloading files, have a Windows/macOS/Linux companion app that receives configs directly from the web and creates files locally
+- **Local app integration**: Instead of downloading files, the IDE automatically receive configs directly from the web and creates files locally
 - **Restrict template sharing to subscribers** (future consideration)
