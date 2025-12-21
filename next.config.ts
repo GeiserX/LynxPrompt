@@ -28,6 +28,23 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "2mb",
     },
   },
+
+  // Security: Disable x-powered-by header
+  poweredByHeader: false,
+
+  // Security: Additional headers (backup for middleware)
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-DNS-Prefetch-Control", value: "on" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
