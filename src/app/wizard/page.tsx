@@ -20,8 +20,10 @@ import {
   MessageSquare,
   FolderGit2,
   Settings,
+  Loader2,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { generateConfigFiles, downloadZip } from "@/lib/file-generator";
 
 // New wizard steps - removed persona and skill level (now in profile)
 const WIZARD_STEPS = [
@@ -274,6 +276,8 @@ export default function WizardPage() {
     }
   };
 
+  const [isDownloading, setIsDownloading] = useState(false);
+
   const toggleArrayValue = (
     key: "languages" | "frameworks" | "aiBehaviorRules" | "platforms",
     value: string
@@ -284,6 +288,49 @@ export default function WizardPage() {
         ? prev[key].filter((v) => v !== value)
         : [...prev[key], value],
     }));
+  };
+
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    try {
+      const wizardConfig = {
+        projectName: config.projectName,
+        projectDescription: config.projectDescription,
+        languages: config.languages,
+        frameworks: config.frameworks,
+        letAiDecide: config.letAiDecide,
+        repoHost: config.repoHost,
+        repoUrl: config.repoUrl,
+        isPublic: config.isPublic,
+        license: config.license,
+        funding: config.funding,
+        fundingUrl: config.fundingUrl,
+        releaseStrategy: config.releaseStrategy,
+        customReleaseStrategy: config.releaseStrategyOther,
+        cicd: [config.cicd],
+        containerRegistry: config.containerRegistry,
+        customRegistry: config.containerRegistryOther,
+        deploymentTarget: [],
+        aiBehaviorRules: config.aiBehaviorRules,
+        platforms: config.platforms,
+        additionalFeedback: config.additionalFeedback,
+      };
+
+      const userProfile = {
+        displayName: session.user.displayName,
+        name: session.user.name,
+        persona: session.user.persona,
+        skillLevel: session.user.skillLevel,
+      };
+
+      const blob = await generateConfigFiles(wizardConfig, userProfile);
+      downloadZip(blob, config.projectName);
+    } catch (error) {
+      console.error("Error generating files:", error);
+      alert("Failed to generate files. Please try again.");
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   return (
@@ -490,9 +537,22 @@ export default function WizardPage() {
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 ) : (
-                  <Button className="bg-gradient-to-r from-purple-600 to-pink-600">
-                    <Download className="mr-2 h-4 w-4" />
-                    Download All Files
+                  <Button
+                    className="bg-gradient-to-r from-purple-600 to-pink-600"
+                    onClick={handleDownload}
+                    disabled={isDownloading}
+                  >
+                    {isDownloading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="mr-2 h-4 w-4" />
+                        Download All Files
+                      </>
+                    )}
                   </Button>
                 )}
               </div>
