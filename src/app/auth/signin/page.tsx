@@ -13,6 +13,7 @@ import {
   ArrowLeft,
   Loader2,
 } from "lucide-react";
+import { Logo } from "@/components/logo";
 
 function SignInContent() {
   const searchParams = useSearchParams();
@@ -122,10 +123,7 @@ function SignInContent() {
       <div className="flex flex-1 flex-col">
         {/* Mobile header */}
         <div className="flex items-center justify-between border-b p-4 lg:hidden">
-          <Link href="/" className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold">LynxPrompt</span>
-          </Link>
+          <Logo />
         </div>
 
         <div className="flex flex-1 items-center justify-center p-8">

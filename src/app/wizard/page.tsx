@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
-  Sparkles,
   ArrowLeft,
   ArrowRight,
   Check,
@@ -22,6 +21,7 @@ import {
   FolderGit2,
   Settings,
 } from "lucide-react";
+import { Logo } from "@/components/logo";
 
 // New wizard steps - removed persona and skill level (now in profile)
 const WIZARD_STEPS = [
@@ -291,10 +291,7 @@ export default function WizardPage() {
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold">LynxPrompt</span>
-          </Link>
+          <Logo />
           <Button variant="ghost" size="sm" asChild>
             <Link href="/">
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -1165,10 +1162,7 @@ function LoginRequired() {
     <div className="flex min-h-screen flex-col bg-muted/30">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold">LynxPrompt</span>
-          </Link>
+          <Logo />
           <Button variant="ghost" size="sm" asChild>
             <Link href="/">
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -1210,10 +1204,7 @@ function ProfileSetupRequired() {
     <div className="flex min-h-screen flex-col bg-muted/30">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold">LynxPrompt</span>
-          </Link>
+          <Logo />
           <Button variant="ghost" size="sm" asChild>
             <Link href="/">
               <ArrowLeft className="mr-2 h-4 w-4" />
