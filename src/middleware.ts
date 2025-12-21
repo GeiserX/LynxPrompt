@@ -15,7 +15,7 @@ let lastCleanup = Date.now();
 function cleanupRateLimitStore() {
   const now = Date.now();
   if (now - lastCleanup < RATE_LIMIT_CLEANUP_INTERVAL) return;
-  
+
   lastCleanup = now;
   for (const [key, record] of rateLimitStore.entries()) {
     if (now > record.resetTime) {
@@ -25,7 +25,12 @@ function cleanupRateLimitStore() {
 }
 
 // Paths that require authentication
-const protectedPaths = ["/dashboard", "/settings", "/api/auth/passkey/register", "/api/auth/passkey/list"];
+const protectedPaths = [
+  "/dashboard",
+  "/settings",
+  "/api/auth/passkey/register",
+  "/api/auth/passkey/list",
+];
 
 // Paths with stricter rate limiting (auth-related)
 const authPaths = ["/api/auth", "/auth/signin"];
@@ -110,7 +115,9 @@ export function middleware(request: NextRequest) {
   // Rate limiting
   const isAuthPath = authPaths.some((p) => pathname.startsWith(p));
   const rateLimitKey = `${clientIP}:${isAuthPath ? "auth" : "general"}`;
-  const maxRequests = isAuthPath ? RATE_LIMIT_AUTH_MAX : RATE_LIMIT_MAX_REQUESTS;
+  const maxRequests = isAuthPath
+    ? RATE_LIMIT_AUTH_MAX
+    : RATE_LIMIT_MAX_REQUESTS;
 
   if (isRateLimited(rateLimitKey, maxRequests)) {
     return new NextResponse("Too Many Requests", {
@@ -130,8 +137,9 @@ export function middleware(request: NextRequest) {
 
   if (isProtected) {
     // Check for session cookie (works with database sessions)
-    const sessionCookie = request.cookies.get("__Secure-next-auth.session-token") 
-      || request.cookies.get("next-auth.session-token");
+    const sessionCookie =
+      request.cookies.get("__Secure-next-auth.session-token") ||
+      request.cookies.get("next-auth.session-token");
 
     if (!sessionCookie?.value) {
       // Redirect to sign in
@@ -152,7 +160,3 @@ export const config = {
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
-
-
-
-

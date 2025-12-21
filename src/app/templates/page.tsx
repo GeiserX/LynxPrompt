@@ -294,7 +294,7 @@ function TemplateCard({ template }: { template: TemplateData }) {
 
         {template.difficulty && (
           <div className="mt-4">
-            <span className="text-xs text-muted-foreground capitalize">
+            <span className="text-xs capitalize text-muted-foreground">
               {template.difficulty} level
             </span>
           </div>

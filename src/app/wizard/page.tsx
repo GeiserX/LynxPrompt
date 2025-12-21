@@ -317,15 +317,19 @@ export default function WizardPage() {
                 ) : (
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
                     <span className="text-lg">
-                      {(session.user.displayName || session.user.name || "U")[0]}
+                      {
+                        (session.user.displayName ||
+                          session.user.name ||
+                          "U")[0]
+                      }
                     </span>
                   </div>
                 )}
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="truncate font-medium">
                     {session.user.displayName || session.user.name}
                   </p>
-                  <p className="truncate text-xs text-muted-foreground capitalize">
+                  <p className="truncate text-xs capitalize text-muted-foreground">
                     {session.user.persona} • {session.user.skillLevel}
                   </p>
                 </div>
@@ -419,7 +423,9 @@ export default function WizardPage() {
                   letAiDecide={config.letAiDecide}
                   onToggleLanguage={(v) => toggleArrayValue("languages", v)}
                   onToggleFramework={(v) => toggleArrayValue("frameworks", v)}
-                  onLetAiDecide={(v) => setConfig({ ...config, letAiDecide: v })}
+                  onLetAiDecide={(v) =>
+                    setConfig({ ...config, letAiDecide: v })
+                  }
                 />
               )}
               {currentStep === 2 && (
@@ -514,7 +520,8 @@ function StepProject({
     <div>
       <h2 className="text-2xl font-bold">What project is this for?</h2>
       <p className="mt-2 text-muted-foreground">
-        Tell us about the repository you&apos;re setting up AI configurations for.
+        Tell us about the repository you&apos;re setting up AI configurations
+        for.
       </p>
 
       <div className="mt-6 space-y-6">
@@ -547,8 +554,8 @@ function StepProject({
 
       <div className="mt-6 rounded-lg bg-muted/50 p-4">
         <p className="text-sm text-muted-foreground">
-          💡 The project name will be used to customize your AI configuration files
-          and make them specific to this repository.
+          💡 The project name will be used to customize your AI configuration
+          files and make them specific to this repository.
         </p>
       </div>
     </div>
@@ -575,7 +582,8 @@ function StepTechStack({
     <div>
       <h2 className="text-2xl font-bold">Select Your Tech Stack</h2>
       <p className="mt-2 text-muted-foreground">
-        Choose all the languages and frameworks you&apos;ll be using. Select multiple!
+        Choose all the languages and frameworks you&apos;ll be using. Select
+        multiple!
       </p>
 
       {/* Languages */}
@@ -836,7 +844,9 @@ function StepCICD({
                     }`}
                   >
                     <span className="text-xl">{registry.icon}</span>
-                    <span className="text-sm font-medium">{registry.label}</span>
+                    <span className="text-sm font-medium">
+                      {registry.label}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -1011,7 +1021,9 @@ function StepFeedback({
         <h4 className="font-medium">💡 Suggestions:</h4>
         <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
           <li>• Specific coding standards or style guides</li>
-          <li>• Architectural patterns (microservices, monolith, serverless)</li>
+          <li>
+            • Architectural patterns (microservices, monolith, serverless)
+          </li>
           <li>• Special deployment requirements</li>
           <li>• Team-specific workflows</li>
         </ul>
@@ -1025,13 +1037,21 @@ function StepGenerate({
   session,
 }: {
   config: WizardConfig;
-  session: { user: { displayName?: string | null; name?: string | null; persona?: string | null; skillLevel?: string | null } };
+  session: {
+    user: {
+      displayName?: string | null;
+      name?: string | null;
+      persona?: string | null;
+      skillLevel?: string | null;
+    };
+  };
 }) {
   return (
     <div>
       <h2 className="text-2xl font-bold">Review & Generate</h2>
       <p className="mt-2 text-muted-foreground">
-        Review your configuration for <strong>{config.projectName || "your project"}</strong>.
+        Review your configuration for{" "}
+        <strong>{config.projectName || "your project"}</strong>.
       </p>
 
       <div className="mt-6 space-y-4">
@@ -1222,8 +1242,8 @@ function ProfileSetupRequired() {
 
           <h1 className="text-3xl font-bold">Complete Your Profile</h1>
           <p className="mt-3 text-muted-foreground">
-            Before we set up your repository, tell us a bit about yourself.
-            This helps us personalize your AI configurations.
+            Before we set up your repository, tell us a bit about yourself. This
+            helps us personalize your AI configurations.
           </p>
 
           <div className="mt-8 space-y-4">

@@ -38,7 +38,9 @@ export const metadata: Metadata = {
       { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
       { url: "/favicon-48.png", sizes: "48x48", type: "image/png" },
     ],
-    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
   },
   openGraph: {
     title: "LynxPrompt - AI IDE Configuration Generator",
@@ -75,9 +77,7 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <AnalyticsProvider>
-              {children}
-            </AnalyticsProvider>
+            <AnalyticsProvider>{children}</AnalyticsProvider>
             <Toaster />
           </ThemeProvider>
         </SessionProvider>

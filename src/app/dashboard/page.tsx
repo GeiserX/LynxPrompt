@@ -105,9 +105,7 @@ export default function DashboardPage() {
                 key={action.href}
                 href={action.href}
                 className={`group relative overflow-hidden rounded-lg border p-6 transition-all hover:border-primary hover:shadow-md ${
-                  action.primary
-                    ? "border-primary bg-primary/5"
-                    : "bg-card"
+                  action.primary ? "border-primary bg-primary/5" : "bg-card"
                 }`}
               >
                 <div className="flex items-start justify-between">
@@ -140,8 +138,8 @@ export default function DashboardPage() {
                 <h3 className="font-semibold">New to LynxPrompt?</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Start by creating your first AI IDE configuration. Our wizard
-                  will guide you through selecting your tech stack, coding style,
-                  and preferences.
+                  will guide you through selecting your tech stack, coding
+                  style, and preferences.
                 </p>
                 <Button asChild className="mt-4" size="sm">
                   <Link href="/wizard">

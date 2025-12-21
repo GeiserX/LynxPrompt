@@ -7,10 +7,14 @@ import { Button } from "@/components/ui/button";
 import { AlertCircle, ArrowLeft, Mail, RefreshCw } from "lucide-react";
 import { Logo } from "@/components/logo";
 
-const ERROR_MESSAGES: Record<string, { title: string; description: string; action?: string }> = {
+const ERROR_MESSAGES: Record<
+  string,
+  { title: string; description: string; action?: string }
+> = {
   Configuration: {
     title: "Configuration Error",
-    description: "There's a problem with the server configuration. Please contact support.",
+    description:
+      "There's a problem with the server configuration. Please contact support.",
   },
   AccessDenied: {
     title: "Access Denied",
@@ -18,20 +22,24 @@ const ERROR_MESSAGES: Record<string, { title: string; description: string; actio
   },
   Verification: {
     title: "Link Expired or Already Used",
-    description: "This magic link has expired or has already been used. Magic links can only be used once and expire after 24 hours.",
+    description:
+      "This magic link has expired or has already been used. Magic links can only be used once and expire after 24 hours.",
     action: "request_new",
   },
   OAuthSignin: {
     title: "OAuth Sign In Error",
-    description: "There was a problem starting the sign in process. Please try again.",
+    description:
+      "There was a problem starting the sign in process. Please try again.",
   },
   OAuthCallback: {
-    title: "OAuth Callback Error", 
-    description: "There was a problem completing the sign in. Please try again.",
+    title: "OAuth Callback Error",
+    description:
+      "There was a problem completing the sign in. Please try again.",
   },
   OAuthCreateAccount: {
     title: "Account Creation Error",
-    description: "Could not create your account. An account with this email may already exist.",
+    description:
+      "Could not create your account. An account with this email may already exist.",
   },
   EmailCreateAccount: {
     title: "Account Creation Error",
@@ -43,7 +51,8 @@ const ERROR_MESSAGES: Record<string, { title: string; description: string; actio
   },
   OAuthAccountNotLinked: {
     title: "Account Not Linked",
-    description: "This email is already associated with another sign-in method. Please sign in using your original method.",
+    description:
+      "This email is already associated with another sign-in method. Please sign in using your original method.",
   },
   EmailSignin: {
     title: "Email Sign In Error",
@@ -60,7 +69,8 @@ const ERROR_MESSAGES: Record<string, { title: string; description: string; actio
   },
   Default: {
     title: "Authentication Error",
-    description: "An unexpected error occurred during authentication. Please try again.",
+    description:
+      "An unexpected error occurred during authentication. Please try again.",
   },
 };
 

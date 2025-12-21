@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { trackEvent, type AnalyticsEvent, type AnalyticsEventType } from "@/lib/analytics/clickhouse";
+import {
+  trackEvent,
+  type AnalyticsEvent,
+  type AnalyticsEventType,
+} from "@/lib/analytics/clickhouse";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import crypto from "crypto";
@@ -64,10 +68,7 @@ export async function POST(request: NextRequest) {
 
     // Rate limit check
     if (!checkRateLimit(ip)) {
-      return NextResponse.json(
-        { error: "Too many requests" },
-        { status: 429 }
-      );
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }
 
     const body = await request.json();
@@ -109,7 +110,8 @@ export async function POST(request: NextRequest) {
       template_category: eventData.template_category,
       platform: eventData.platform,
       search_query: sanitizeString(eventData.search_query, 200),
-      search_results_count: parseInt(eventData.search_results_count) || undefined,
+      search_results_count:
+        parseInt(eventData.search_results_count) || undefined,
       wizard_step: eventData.wizard_step,
       wizard_step_number: parseInt(eventData.wizard_step_number) || undefined,
       feature_name: eventData.feature_name,
@@ -150,7 +152,10 @@ function sanitizeUrl(url?: string): string | undefined {
   }
 }
 
-function sanitizeString(str?: string, maxLen: number = 200): string | undefined {
+function sanitizeString(
+  str?: string,
+  maxLen: number = 200
+): string | undefined {
   if (!str) return undefined;
   // Remove any potential XSS/injection
   return str.replace(/[<>'"]/g, "").slice(0, maxLen);

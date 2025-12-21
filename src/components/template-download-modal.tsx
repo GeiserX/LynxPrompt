@@ -41,16 +41,21 @@ interface TemplateDownloadModalProps {
 const allPlatforms = [
   { id: "cursor", name: "Cursor", file: ".cursorrules" },
   { id: "claude_code", name: "Claude Code", file: "CLAUDE.md" },
-  { id: "github_copilot", name: "GitHub Copilot", file: ".github/copilot-instructions.md" },
+  {
+    id: "github_copilot",
+    name: "GitHub Copilot",
+    file: ".github/copilot-instructions.md",
+  },
   { id: "windsurf", name: "Windsurf", file: ".windsurfrules" },
   { id: "continue_dev", name: "Continue.dev", file: ".continuerc.json" },
   { id: "cody", name: "Sourcegraph Cody", file: ".cody/instructions.md" },
   { id: "aider", name: "Aider", file: ".aider.conf.yml" },
 ];
 
-const platformInfo: Record<string, { name: string; file: string }> = Object.fromEntries(
-  allPlatforms.map(p => [p.id, { name: p.name, file: p.file }])
-);
+const platformInfo: Record<string, { name: string; file: string }> =
+  Object.fromEntries(
+    allPlatforms.map((p) => [p.id, { name: p.name, file: p.file }])
+  );
 
 export function TemplateDownloadModal({
   isOpen,
@@ -69,7 +74,7 @@ export function TemplateDownloadModal({
   // Initialize values from template variables AND user session data
   useEffect(() => {
     const initialValues: Record<string, string> = {};
-    
+
     // Start with template variables
     if (template.variables) {
       Object.assign(initialValues, template.variables);
@@ -78,9 +83,15 @@ export function TemplateDownloadModal({
     // Auto-fill author-related fields from session if user is logged in
     if (session?.user) {
       const authorName = session.user.displayName || session.user.name || "";
-      
+
       // Common author field names that templates might use
-      const authorFields = ["AUTHOR_NAME", "author", "AUTHOR", "authorName", "author_name"];
+      const authorFields = [
+        "AUTHOR_NAME",
+        "author",
+        "AUTHOR",
+        "authorName",
+        "author_name",
+      ];
       for (const field of authorFields) {
         if (!initialValues[field] && authorName) {
           initialValues[field] = authorName;
@@ -116,12 +127,12 @@ export function TemplateDownloadModal({
   const handleDownload = async () => {
     const platform = platformInfo[selectedPlatform];
     const filename = platform?.file || ".cursorrules";
-    
+
     // Track the download if template has an ID
     if (template.id) {
       // Track in ClickHouse for real-time analytics
       trackTemplateDownload(template.id, selectedPlatform, template.name);
-      
+
       // Also track in PostgreSQL for denormalized counts
       try {
         await fetch(`/api/templates/${template.id}/download`, {

@@ -81,8 +81,16 @@ const MOCK_TEMPLATES: TemplateData[] = [
     compatibleWith: ["claude_code", "windsurf", "github_copilot"],
     variables: { APP_NAME: "", AUTHOR_NAME: "" },
     sensitiveFields: {
-      APP_NAME: { label: "Application Name", required: true, placeholder: "MyApp" },
-      AUTHOR_NAME: { label: "Author Name", required: false, placeholder: "Your Name" },
+      APP_NAME: {
+        label: "Application Name",
+        required: true,
+        placeholder: "MyApp",
+      },
+      AUTHOR_NAME: {
+        label: "Author Name",
+        required: false,
+        placeholder: "Your Name",
+      },
     },
     category: "web",
     difficulty: "intermediate",
@@ -116,7 +124,11 @@ You are an expert in Python, pandas, NumPy, scikit-learn, and data science workf
     compatibleWith: ["claude_code", "windsurf"],
     variables: { APP_NAME: "" },
     sensitiveFields: {
-      APP_NAME: { label: "Project Name", required: true, placeholder: "ml-project" },
+      APP_NAME: {
+        label: "Project Name",
+        required: true,
+        placeholder: "ml-project",
+      },
     },
     category: "data-science",
     difficulty: "intermediate",
@@ -150,7 +162,11 @@ You are an expert in Go, microservices architecture, Docker, and Kubernetes.
     compatibleWith: ["claude_code", "github_copilot"],
     variables: { APP_NAME: "" },
     sensitiveFields: {
-      APP_NAME: { label: "Service Name", required: true, placeholder: "my-service" },
+      APP_NAME: {
+        label: "Service Name",
+        required: true,
+        placeholder: "my-service",
+      },
     },
     category: "backend",
     difficulty: "advanced",
@@ -180,8 +196,15 @@ You are an expert in Go, microservices architecture, Docker, and Kubernetes.
     compatibleWith: ["claude_code", "windsurf", "github_copilot"],
     variables: { APP_NAME: "", PROJECT_DESCRIPTION: "" },
     sensitiveFields: {
-      APP_NAME: { label: "Project Name", required: true, placeholder: "my-project" },
-      PROJECT_DESCRIPTION: { label: "What does your project do?", required: false },
+      APP_NAME: {
+        label: "Project Name",
+        required: true,
+        placeholder: "my-project",
+      },
+      PROJECT_DESCRIPTION: {
+        label: "What does your project do?",
+        required: false,
+      },
     },
     category: "general",
     difficulty: "beginner",
@@ -356,7 +379,9 @@ export async function getTemplates(options?: {
     likes: t.favorites || 0,
     tags: (t.tags as string[]) || extractTags(t.name, t.description || ""),
     platforms: t.compatibleWith?.length
-      ? [t.targetPlatform, ...t.compatibleWith].filter((p): p is string => p !== null && p !== undefined)
+      ? [t.targetPlatform, ...t.compatibleWith].filter(
+          (p): p is string => p !== null && p !== undefined
+        )
       : typeToPlatform[t.type] || [],
     isOfficial: true,
     createdAt: t.createdAt,
@@ -364,7 +389,8 @@ export async function getTemplates(options?: {
     targetPlatform: t.targetPlatform || undefined,
     compatibleWith: (t.compatibleWith as string[] | null) || [],
     variables: (t.variables as unknown as Record<string, string>) || {},
-    sensitiveFields: (t.sensitiveFields as unknown as Record<string, SensitiveField>) || {},
+    sensitiveFields:
+      (t.sensitiveFields as unknown as Record<string, SensitiveField>) || {},
     category: t.category || undefined,
     difficulty: t.difficulty || undefined,
   }));
@@ -381,7 +407,9 @@ export async function getTemplates(options?: {
     likes: t.favorites || 0,
     tags: (t.tags as string[]) || extractTags(t.name, t.description || ""),
     platforms: t.compatibleWith?.length
-      ? [t.targetPlatform, ...t.compatibleWith].filter((p): p is string => p !== null && p !== undefined)
+      ? [t.targetPlatform, ...t.compatibleWith].filter(
+          (p): p is string => p !== null && p !== undefined
+        )
       : typeToPlatform[t.type] || [],
     isOfficial: false,
     createdAt: t.createdAt,
@@ -389,7 +417,8 @@ export async function getTemplates(options?: {
     targetPlatform: t.targetPlatform || undefined,
     compatibleWith: (t.compatibleWith as string[] | null) || [],
     variables: (t.variables as unknown as Record<string, string>) || {},
-    sensitiveFields: (t.sensitiveFields as unknown as Record<string, SensitiveField>) || {},
+    sensitiveFields:
+      (t.sensitiveFields as unknown as Record<string, SensitiveField>) || {},
     category: t.category || undefined,
     difficulty: t.difficulty || undefined,
   }));
@@ -467,15 +496,23 @@ export async function getTemplateById(
       likes: template.favorites || 0,
       tags: (template.tags as string[]) || [],
       platforms: template.compatibleWith?.length
-        ? [template.targetPlatform, ...(template.compatibleWith as string[])].filter((p): p is string => p !== null && p !== undefined)
+        ? [
+            template.targetPlatform,
+            ...(template.compatibleWith as string[]),
+          ].filter((p): p is string => p !== null && p !== undefined)
         : typeToPlatform[template.type] || [],
       isOfficial: true,
       createdAt: template.createdAt,
       tier: template.tier,
       targetPlatform: template.targetPlatform || undefined,
       compatibleWith: (template.compatibleWith as string[] | null) || [],
-      variables: (template.variables as unknown as Record<string, string>) || {},
-      sensitiveFields: (template.sensitiveFields as unknown as Record<string, SensitiveField>) || {},
+      variables:
+        (template.variables as unknown as Record<string, string>) || {},
+      sensitiveFields:
+        (template.sensitiveFields as unknown as Record<
+          string,
+          SensitiveField
+        >) || {},
       category: template.category || undefined,
       difficulty: template.difficulty || undefined,
     };
@@ -483,7 +520,7 @@ export async function getTemplateById(
     const realId = id.replace("usr_", "");
     // SECURITY: Only fetch public templates - prevents IDOR vulnerability
     const template = await prismaUsers.userTemplate.findFirst({
-      where: { 
+      where: {
         id: realId,
         isPublic: true, // Only allow access to public templates
       },
@@ -507,15 +544,23 @@ export async function getTemplateById(
       likes: template.favorites || 0,
       tags: (template.tags as string[]) || [],
       platforms: template.compatibleWith?.length
-        ? [template.targetPlatform, ...(template.compatibleWith as string[])].filter((p): p is string => p !== null && p !== undefined)
+        ? [
+            template.targetPlatform,
+            ...(template.compatibleWith as string[]),
+          ].filter((p): p is string => p !== null && p !== undefined)
         : typeToPlatform[template.type] || [],
       isOfficial: false,
       createdAt: template.createdAt,
       tier: template.tier,
       targetPlatform: template.targetPlatform || undefined,
       compatibleWith: (template.compatibleWith as string[] | null) || [],
-      variables: (template.variables as unknown as Record<string, string>) || {},
-      sensitiveFields: (template.sensitiveFields as unknown as Record<string, SensitiveField>) || {},
+      variables:
+        (template.variables as unknown as Record<string, string>) || {},
+      sensitiveFields:
+        (template.sensitiveFields as unknown as Record<
+          string,
+          SensitiveField
+        >) || {},
       category: template.category || undefined,
       difficulty: template.difficulty || undefined,
     };
@@ -543,8 +588,13 @@ export async function getTemplateById(
       tier: systemTemplate.tier,
       targetPlatform: systemTemplate.targetPlatform || undefined,
       compatibleWith: (systemTemplate.compatibleWith as string[] | null) || [],
-      variables: (systemTemplate.variables as unknown as Record<string, string>) || {},
-      sensitiveFields: (systemTemplate.sensitiveFields as unknown as Record<string, SensitiveField>) || {},
+      variables:
+        (systemTemplate.variables as unknown as Record<string, string>) || {},
+      sensitiveFields:
+        (systemTemplate.sensitiveFields as unknown as Record<
+          string,
+          SensitiveField
+        >) || {},
       category: systemTemplate.category || undefined,
       difficulty: systemTemplate.difficulty || undefined,
     };

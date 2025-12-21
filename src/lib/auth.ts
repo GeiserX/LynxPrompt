@@ -51,13 +51,17 @@ export const authOptions: NextAuthOptions = {
         challenge: { label: "Challenge", type: "text" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.authResponse || !credentials?.challenge) {
+        if (
+          !credentials?.email ||
+          !credentials?.authResponse ||
+          !credentials?.challenge
+        ) {
           return null;
         }
 
         try {
           const authResponse = JSON.parse(credentials.authResponse);
-          
+
           // Find user and their authenticator
           const user = await prismaUsers.user.findUnique({
             where: { email: credentials.email },
@@ -78,17 +82,20 @@ export const authOptions: NextAuthOptions = {
           }
 
           // Verify the authentication response
-          const verification: VerifiedAuthenticationResponse = await verifyAuthenticationResponse({
-            response: authResponse,
-            expectedChallenge: credentials.challenge,
-            expectedOrigin: rpOrigin,
-            expectedRPID: rpID,
-            authenticator: {
-              credentialID: Uint8Array.from(Buffer.from(authenticator.credentialID, "base64url")),
-              credentialPublicKey: authenticator.credentialPublicKey,
-              counter: Number(authenticator.counter),
-            },
-          });
+          const verification: VerifiedAuthenticationResponse =
+            await verifyAuthenticationResponse({
+              response: authResponse,
+              expectedChallenge: credentials.challenge,
+              expectedOrigin: rpOrigin,
+              expectedRPID: rpID,
+              authenticator: {
+                credentialID: Uint8Array.from(
+                  Buffer.from(authenticator.credentialID, "base64url")
+                ),
+                credentialPublicKey: authenticator.credentialPublicKey,
+                counter: Number(authenticator.counter),
+              },
+            });
 
           if (!verification.verified) {
             return null;
@@ -172,7 +179,8 @@ export const authOptions: NextAuthOptions = {
           session.user.displayName = (token.displayName as string) || null;
           session.user.persona = (token.persona as string) || null;
           session.user.skillLevel = (token.skillLevel as string) || null;
-          session.user.profileCompleted = (token.profileCompleted as boolean) || false;
+          session.user.profileCompleted =
+            (token.profileCompleted as boolean) || false;
         }
       }
       return session;

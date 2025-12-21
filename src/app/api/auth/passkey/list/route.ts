@@ -6,7 +6,7 @@ import { prismaUsers } from "@/lib/db-users";
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
@@ -37,7 +37,7 @@ export async function GET() {
 export async function DELETE(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
@@ -45,7 +45,10 @@ export async function DELETE(request: Request) {
     const { id } = await request.json();
 
     if (!id) {
-      return NextResponse.json({ error: "Passkey ID required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Passkey ID required" },
+        { status: 400 }
+      );
     }
 
     // Verify the passkey belongs to the user
@@ -68,7 +71,3 @@ export async function DELETE(request: Request) {
     );
   }
 }
-
-
-
-

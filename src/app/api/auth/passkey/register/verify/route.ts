@@ -15,7 +15,7 @@ function sanitizeString(input: string, maxLength: number = 100): string {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
@@ -37,11 +37,19 @@ export async function POST(request: NextRequest) {
     });
 
     if (!verification.verified || !verification.registrationInfo) {
-      return NextResponse.json({ error: "Verification failed" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Verification failed" },
+        { status: 400 }
+      );
     }
 
-    const { credentialID, credentialPublicKey, counter, credentialBackedUp, credentialDeviceType } = 
-      verification.registrationInfo;
+    const {
+      credentialID,
+      credentialPublicKey,
+      counter,
+      credentialBackedUp,
+      credentialDeviceType,
+    } = verification.registrationInfo;
 
     // SECURITY: Sanitize the passkey name to prevent XSS
     const sanitizedName = name ? sanitizeString(name, 50) : "Passkey";
@@ -73,7 +81,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-
-
-

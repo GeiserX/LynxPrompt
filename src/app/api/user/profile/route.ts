@@ -84,23 +84,20 @@ export async function PUT(request: NextRequest) {
 
     // Sanitize display name (prevent XSS)
     const sanitizedDisplayName = displayName
-      ? String(displayName)
-          .trim()
-          .slice(0, 100)
-          .replace(/[<>]/g, "")
+      ? String(displayName).trim().slice(0, 100).replace(/[<>]/g, "")
       : undefined;
 
     // Determine if profile is now complete
     const profileCompleted = Boolean(
-      (sanitizedDisplayName || body.keepDisplayName) &&
-        persona &&
-        skillLevel
+      (sanitizedDisplayName || body.keepDisplayName) && persona && skillLevel
     );
 
     const updatedUser = await prismaUsers.user.update({
       where: { id: session.user.id },
       data: {
-        ...(sanitizedDisplayName !== undefined && { displayName: sanitizedDisplayName }),
+        ...(sanitizedDisplayName !== undefined && {
+          displayName: sanitizedDisplayName,
+        }),
         ...(persona && { persona }),
         ...(skillLevel && { skillLevel }),
         profileCompleted,

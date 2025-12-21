@@ -94,7 +94,9 @@ export default function SecuritySettingsPage() {
       setShowNameInput(false);
       fetchPasskeys();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to register passkey");
+      setError(
+        err instanceof Error ? err.message : "Failed to register passkey"
+      );
     } finally {
       setRegistering(false);
     }
@@ -202,7 +204,8 @@ export default function SecuritySettingsPage() {
                 <div>
                   <h2 className="font-semibold">Passkeys</h2>
                   <p className="text-sm text-muted-foreground">
-                    Passwordless authentication using biometrics or security keys
+                    Passwordless authentication using biometrics or security
+                    keys
                   </p>
                 </div>
               </div>
@@ -219,7 +222,9 @@ export default function SecuritySettingsPage() {
                     <div className="flex items-center gap-3">
                       {getDeviceIcon(passkey.credentialDeviceType)}
                       <div>
-                        <p className="font-medium">{passkey.name || "Passkey"}</p>
+                        <p className="font-medium">
+                          {passkey.name || "Passkey"}
+                        </p>
                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
@@ -229,7 +234,9 @@ export default function SecuritySettingsPage() {
                           {passkey.lastUsedAt && (
                             <span>
                               Last used{" "}
-                              {new Date(passkey.lastUsedAt).toLocaleDateString()}
+                              {new Date(
+                                passkey.lastUsedAt
+                              ).toLocaleDateString()}
                             </span>
                           )}
                           {passkey.credentialBackedUp && (
@@ -336,7 +343,3 @@ export default function SecuritySettingsPage() {
     </div>
   );
 }
-
-
-
-

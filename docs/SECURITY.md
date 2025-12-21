@@ -5,17 +5,20 @@
 ### 1. Authentication & Authorization
 
 #### NextAuth.js Configuration
+
 - **Session Strategy**: Database sessions with secure cookie settings
 - **Secure Cookies**: `__Secure-` prefix in production, HttpOnly, SameSite=Lax
 - **Session Lifetime**: 30-day max age with 24-hour refresh interval
 - **Role-Based Access**: USER, ADMIN, SUPERADMIN roles
 
 #### OAuth Providers
+
 - GitHub OAuth with proper callback validation
 - Google OAuth (optional)
 - Magic Link email authentication
 
 #### Passkeys (WebAuthn)
+
 - FIDO2/WebAuthn support for passwordless authentication
 - Challenge-based authentication to prevent replay attacks
 - Credential storage with counter tracking
@@ -23,11 +26,13 @@
 ### 2. API Security
 
 #### Rate Limiting
+
 - General requests: 100/minute per IP
 - Auth endpoints: 10/minute per IP
 - 429 responses with Retry-After headers
 
 #### Input Validation
+
 - Prisma ORM prevents SQL injection
 - Type validation via TypeScript
 - API routes validate required parameters
@@ -35,6 +40,7 @@
 ### 3. HTTP Security Headers
 
 All responses include:
+
 - `X-Frame-Options: DENY` - Prevents clickjacking
 - `X-Content-Type-Options: nosniff` - Prevents MIME sniffing
 - `X-XSS-Protection: 1; mode=block` - XSS filter
@@ -46,12 +52,14 @@ All responses include:
 ### 4. Infrastructure Security
 
 #### Docker
+
 - Non-root user (`nextjs`, UID 1001)
 - Multi-stage builds (minimal production image)
 - No exposed database ports in production
 - Isolated Docker networks per stack
 
 #### Database
+
 - Dual database architecture (app data vs user data)
 - Strong randomly-generated passwords (48 hex characters)
 - Connection strings not exposed externally
@@ -119,10 +127,12 @@ All responses include:
 ## Known Vulnerabilities
 
 ### Dependencies (as of build)
+
 - Run `npm audit` regularly
 - Auto-update via Dependabot/Renovate
 
 ### Mitigated Issues
+
 - CVE-2024-XXXXX (Next.js middleware bypass) - Fixed via update to 15.5.9+
 
 ---
@@ -130,6 +140,7 @@ All responses include:
 ## Incident Response
 
 ### If a breach is suspected:
+
 1. Rotate all secrets immediately
 2. Invalidate all sessions (truncate sessions table)
 3. Review audit logs
@@ -137,6 +148,7 @@ All responses include:
 5. Document timeline and actions
 
 ### Contact
+
 Security issues: security@lynxprompt.com (configure when available)
 
 ---
@@ -144,11 +156,13 @@ Security issues: security@lynxprompt.com (configure when available)
 ## Compliance Considerations
 
 ### GDPR
+
 - User data in dedicated database (easy to export/delete)
 - No tracking without consent
 - Privacy policy needed
 
 ### Data Retention
+
 - Sessions: Auto-expire after 30 days
 - User data: Retained until account deletion
 - Logs: Configure retention policy
@@ -156,7 +170,3 @@ Security issues: security@lynxprompt.com (configure when available)
 ---
 
 Last updated: 2025-12-21
-
-
-
-

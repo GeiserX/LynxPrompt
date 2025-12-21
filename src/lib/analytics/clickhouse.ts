@@ -439,7 +439,14 @@ export async function getPlatformStats(
  */
 export async function getWizardFunnel(
   days: number = 30
-): Promise<Array<{ step: string; step_number: number; count: number; drop_off_rate: number }>> {
+): Promise<
+  Array<{
+    step: string;
+    step_number: number;
+    count: number;
+    drop_off_rate: number;
+  }>
+> {
   if (!isAnalyticsEnabled()) return [];
 
   const query = `

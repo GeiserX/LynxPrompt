@@ -194,9 +194,7 @@ function ProfileSettingsContent() {
           <nav className="flex items-center gap-4">
             {!isOnboarding && (
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/settings/security">
-                  Security Settings
-                </Link>
+                <Link href="/settings/security">Security Settings</Link>
               </Button>
             )}
             <Button variant="ghost" size="sm" asChild>
@@ -257,7 +255,8 @@ function ProfileSettingsContent() {
               <div>
                 <h2 className="font-semibold">Display Name</h2>
                 <p className="text-sm text-muted-foreground">
-                  This name will be used as the author when you download templates
+                  This name will be used as the author when you download
+                  templates
                 </p>
               </div>
             </div>
@@ -270,8 +269,8 @@ function ProfileSettingsContent() {
             />
             {profile?.image && (
               <p className="mt-3 text-sm text-muted-foreground">
-                Your profile picture is pulled from your OAuth provider (GitHub/Google).
-                To change it, use{" "}
+                Your profile picture is pulled from your OAuth provider
+                (GitHub/Google). To change it, use{" "}
                 <a
                   href="https://gravatar.com"
                   target="_blank"
@@ -292,7 +291,8 @@ function ProfileSettingsContent() {
               <div>
                 <h2 className="font-semibold">Developer Type</h2>
                 <p className="text-sm text-muted-foreground">
-                  What type of developer are you? This helps suggest relevant options.
+                  What type of developer are you? This helps suggest relevant
+                  options.
                 </p>
               </div>
             </div>

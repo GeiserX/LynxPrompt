@@ -8,7 +8,7 @@ import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
 export async function POST() {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
@@ -62,7 +62,3 @@ export async function POST() {
     );
   }
 }
-
-
-
-

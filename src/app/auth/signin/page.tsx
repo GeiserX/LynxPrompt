@@ -5,19 +5,13 @@ import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import {
-  Mail,
-  Github,
-  Chrome,
-  ArrowLeft,
-  Loader2,
-} from "lucide-react";
+import { Mail, Github, Chrome, ArrowLeft, Loader2 } from "lucide-react";
 import { Logo } from "@/components/logo";
 
 function SignInContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
-  
+
   // SECURITY: Validate callbackUrl to prevent open redirect attacks
   const rawCallbackUrl = searchParams.get("callbackUrl") || "/wizard";
   const callbackUrl = (() => {
