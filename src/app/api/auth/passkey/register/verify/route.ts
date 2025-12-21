@@ -4,6 +4,14 @@ import { authOptions, webAuthnConfig } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { verifyRegistrationResponse } from "@simplewebauthn/server";
 
+// SECURITY: Sanitize user input to prevent XSS
+function sanitizeString(input: string, maxLength: number = 100): string {
+  return input
+    .replace(/[<>'"&]/g, "") // Remove potentially dangerous characters
+    .trim()
+    .slice(0, maxLength); // Limit length
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -35,6 +43,9 @@ export async function POST(request: NextRequest) {
     const { credentialID, credentialPublicKey, counter, credentialBackedUp, credentialDeviceType } = 
       verification.registrationInfo;
 
+    // SECURITY: Sanitize the passkey name to prevent XSS
+    const sanitizedName = name ? sanitizeString(name, 50) : "Passkey";
+
     // Store the authenticator
     await prismaUsers.authenticator.create({
       data: {
@@ -45,7 +56,7 @@ export async function POST(request: NextRequest) {
         credentialDeviceType,
         credentialBackedUp,
         transports: registrationResponse.response.transports || [],
-        name: name || "Passkey",
+        name: sanitizedName,
       },
     });
 
@@ -62,3 +73,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+

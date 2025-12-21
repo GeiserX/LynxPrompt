@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { webAuthnConfig } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
-import { generateAuthenticationOptions } from "@simplewebauthn/server";
+import { generateAuthenticationOptions, type AuthenticatorTransportFuture } from "@simplewebauthn/server";
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,10 +17,11 @@ export async function POST(request: NextRequest) {
       include: { authenticators: true },
     });
 
+    // SECURITY: Don't reveal whether the email exists - prevents user enumeration
     if (!user || user.authenticators.length === 0) {
       return NextResponse.json(
-        { error: "No passkeys found for this email" },
-        { status: 404 }
+        { error: "Invalid email or no passkeys registered" },
+        { status: 400 }
       );
     }
 
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
       allowCredentials: user.authenticators.map((auth) => ({
         id: Uint8Array.from(Buffer.from(auth.credentialID, "base64url")),
         type: "public-key" as const,
-        transports: auth.transports as AuthenticatorTransport[],
+        transports: auth.transports as AuthenticatorTransportFuture[],
       })),
       userVerification: "preferred",
     });
@@ -53,3 +54,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+

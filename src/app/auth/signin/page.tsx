@@ -16,8 +16,26 @@ import {
 
 function SignInContent() {
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/wizard";
   const error = searchParams.get("error");
+  
+  // SECURITY: Validate callbackUrl to prevent open redirect attacks
+  const rawCallbackUrl = searchParams.get("callbackUrl") || "/wizard";
+  const callbackUrl = (() => {
+    // Only allow relative URLs or same-origin URLs
+    if (rawCallbackUrl.startsWith("/") && !rawCallbackUrl.startsWith("//")) {
+      return rawCallbackUrl;
+    }
+    try {
+      const url = new URL(rawCallbackUrl, window.location.origin);
+      // Only allow same origin
+      if (url.origin === window.location.origin) {
+        return rawCallbackUrl;
+      }
+    } catch {
+      // Invalid URL, use default
+    }
+    return "/wizard"; // Default safe redirect
+  })();
 
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);

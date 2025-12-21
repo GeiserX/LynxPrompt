@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
   Sparkles,
@@ -276,8 +277,8 @@ type WizardConfig = {
 };
 
 export default function WizardPage() {
-  const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  // SECURITY: Use proper NextAuth session instead of localStorage
+  const { data: session, status } = useSession();
   const [currentStep, setCurrentStep] = useState(0);
   const [config, setConfig] = useState<WizardConfig>({
     persona: "",
@@ -304,16 +305,8 @@ export default function WizardPage() {
     additionalFeedback: "",
   });
 
-  // Check authentication on mount
-  useEffect(() => {
-    // TODO: Replace with actual NextAuth session check
-    // For now, check localStorage for demo purposes
-    const isLoggedIn = localStorage.getItem("lynxprompt_authenticated");
-    setIsAuthenticated(isLoggedIn === "true");
-  }, []);
-
   // Show loading state while checking auth
-  if (isAuthenticated === null) {
+  if (status === "loading") {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="animate-pulse text-muted-foreground">Loading...</div>
@@ -322,7 +315,7 @@ export default function WizardPage() {
   }
 
   // Show login required screen if not authenticated
-  if (!isAuthenticated) {
+  if (status === "unauthenticated" || !session) {
     return <LoginRequired />;
   }
 

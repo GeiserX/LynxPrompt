@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions, webAuthnConfig } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
-import { generateRegistrationOptions } from "@simplewebauthn/server";
+import { generateRegistrationOptions, type AuthenticatorTransportFuture } from "@simplewebauthn/server";
 
 export async function POST() {
   try {
@@ -33,7 +33,7 @@ export async function POST() {
       excludeCredentials: user.authenticators.map((auth) => ({
         id: Uint8Array.from(Buffer.from(auth.credentialID, "base64url")),
         type: "public-key" as const,
-        transports: auth.transports as AuthenticatorTransport[],
+        transports: auth.transports as AuthenticatorTransportFuture[],
       })),
       authenticatorSelection: {
         residentKey: "preferred",
@@ -61,3 +61,5 @@ export async function POST() {
     );
   }
 }
+
+

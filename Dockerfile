@@ -81,6 +81,11 @@ RUN adduser --system --uid 1001 nextjs
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
 
+# Copy Prisma engine files for both databases
+COPY --from=builder /app/node_modules/@prisma/client-app ./node_modules/@prisma/client-app
+COPY --from=builder /app/node_modules/@prisma/client-users ./node_modules/@prisma/client-users
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+
 # Set correct permissions for prerender cache
 RUN mkdir .next
 RUN chown nextjs:nodejs .next

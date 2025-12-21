@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   X,
@@ -115,9 +115,9 @@ export function TemplateSharePreview({
   }, [template.content, template.variables]);
 
   // Initialize edited content with sanitized version
-  useState(() => {
+  useEffect(() => {
     setEditedContent(sanitizedContent);
-  });
+  }, [sanitizedContent]);
 
   if (!isOpen) return null;
 

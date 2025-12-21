@@ -9,6 +9,21 @@ const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 const RATE_LIMIT_MAX_REQUESTS = 100; // 100 requests per minute for general
 const RATE_LIMIT_AUTH_MAX = 10; // 10 auth attempts per minute
+const RATE_LIMIT_CLEANUP_INTERVAL = 5 * 60 * 1000; // Cleanup every 5 minutes
+
+// SECURITY: Prevent memory leak by cleaning up expired rate limit entries
+let lastCleanup = Date.now();
+function cleanupRateLimitStore() {
+  const now = Date.now();
+  if (now - lastCleanup < RATE_LIMIT_CLEANUP_INTERVAL) return;
+  
+  lastCleanup = now;
+  for (const [key, record] of rateLimitStore.entries()) {
+    if (now > record.resetTime) {
+      rateLimitStore.delete(key);
+    }
+  }
+}
 
 // Paths that require authentication
 const protectedPaths = ["/dashboard", "/settings", "/api/auth/passkey/register", "/api/auth/passkey/list"];
@@ -90,6 +105,9 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const clientIP = getClientIP(request);
 
+  // SECURITY: Periodically clean up expired rate limit entries
+  cleanupRateLimitStore();
+
   // Rate limiting
   const isAuthPath = authPaths.some((p) => pathname.startsWith(p));
   const rateLimitKey = `${clientIP}:${isAuthPath ? "auth" : "general"}`;
@@ -134,3 +152,5 @@ export const config = {
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
+
+
