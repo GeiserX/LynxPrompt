@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -62,8 +62,23 @@ interface UserProfile {
   image: string | null;
 }
 
+// Wrapper component with Suspense for useSearchParams
 export default function ProfileSettingsPage() {
-  const { data: session, status } = useSession();
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        </div>
+      }
+    >
+      <ProfileSettingsContent />
+    </Suspense>
+  );
+}
+
+function ProfileSettingsContent() {
+  const { status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
   const isOnboarding = searchParams.get("onboarding") === "true";
