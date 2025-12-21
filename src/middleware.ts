@@ -8,7 +8,7 @@ const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 const RATE_LIMIT_MAX_REQUESTS = 100; // 100 requests per minute for general
-const RATE_LIMIT_AUTH_MAX = 10; // 10 auth attempts per minute
+const RATE_LIMIT_AUTH_MAX = 30; // 30 auth attempts per minute (magic link flow needs several requests)
 const RATE_LIMIT_CLEANUP_INTERVAL = 5 * 60 * 1000; // Cleanup every 5 minutes
 
 // SECURITY: Prevent memory leak by cleaning up expired rate limit entries

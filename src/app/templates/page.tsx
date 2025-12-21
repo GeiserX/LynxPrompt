@@ -35,7 +35,7 @@ export default async function TemplatesPage() {
             <span className="text-xl font-bold">LynxPrompt</span>
           </Link>
           <nav className="flex items-center gap-4">
-            <Link href="/wizard" className="text-sm hover:underline">
+            <Link href="/auth/signin" className="text-sm hover:underline">
               Get Started
             </Link>
             <Link
