@@ -480,3 +480,4 @@ export async function getWizardFunnel(days: number = 30): Promise<
 
 // Export for server-side initialization
 export { isAnalyticsEnabled };
+

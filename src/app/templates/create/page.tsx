@@ -1,90 +1,199 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Sparkles,
   ArrowLeft,
+  Upload,
+  FileText,
+  Tag,
+  X,
+  Loader2,
+  CheckCircle2,
   Zap,
   Layers,
   Settings2,
-  Check,
-  ArrowRight,
+  Info,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
 
-type TemplateTier = "simple" | "intermediate" | "advanced";
+const TEMPLATE_TYPES = [
+  { value: "CURSORRULES", label: "Cursor Rules (.cursorrules)", icon: "🎯" },
+  { value: "CLAUDE_MD", label: "Claude MD (CLAUDE.md)", icon: "🤖" },
+  { value: "COPILOT_INSTRUCTIONS", label: "GitHub Copilot Instructions", icon: "✈️" },
+  { value: "WINDSURF_RULES", label: "Windsurf Rules", icon: "🏄" },
+  { value: "CUSTOM", label: "Custom / Other", icon: "📄" },
+] as const;
 
-interface TierInfo {
-  id: TemplateTier;
-  name: string;
-  icon: React.ReactNode;
-  description: string;
-  benefits: string[];
-  limitations: string[];
-  recommended?: string;
+function determineTier(content: string): { tier: string; label: string; icon: React.ReactNode; color: string } {
+  const lineCount = content.split("\n").length;
+  if (lineCount <= 50) {
+    return { tier: "SIMPLE", label: "Simple", icon: <Zap className="h-4 w-4" />, color: "text-green-500" };
+  }
+  if (lineCount <= 200) {
+    return { tier: "INTERMEDIATE", label: "Intermediate", icon: <Layers className="h-4 w-4" />, color: "text-yellow-500" };
+  }
+  return { tier: "ADVANCED", label: "Advanced", icon: <Settings2 className="h-4 w-4" />, color: "text-purple-500" };
 }
 
-const tiers: TierInfo[] = [
-  {
-    id: "simple",
-    name: "Simple",
-    icon: <Zap className="h-8 w-8" />,
-    description:
-      "Quick setup with minimal configuration. Perfect for beginners or small projects.",
-    benefits: [
-      "Ready in under 2 minutes",
-      "Pre-filled best practices",
-      "Just add project name and description",
-      "Great for learning",
-    ],
-    limitations: [
-      "Limited customization",
-      "Basic rules only",
-      "No conditional logic",
-    ],
-    recommended: "Beginners & Quick Projects",
-  },
-  {
-    id: "intermediate",
-    name: "Intermediate",
-    icon: <Layers className="h-8 w-8" />,
-    description:
-      "Balanced configuration with common patterns. Ideal for most development workflows.",
-    benefits: [
-      "Common development patterns included",
-      "Tech stack customization",
-      "Testing and CI/CD sections",
-      "IDE-specific optimizations",
-    ],
-    limitations: [
-      "Some advanced features unavailable",
-      "Limited conditional logic",
-    ],
-    recommended: "Most Developers",
-  },
-  {
-    id: "advanced",
-    name: "Advanced",
-    icon: <Settings2 className="h-8 w-8" />,
-    description:
-      "Full control over every aspect. For teams and complex multi-service architectures.",
-    benefits: [
-      "Complete customization",
-      "Conditional rules & logic",
-      "Multi-platform export",
-      "Team collaboration features",
-      "Custom sections & variables",
-    ],
-    limitations: ["Requires more setup time", "Steeper learning curve"],
-    recommended: "Teams & Complex Projects",
-  },
-];
+export default function ShareTemplatePage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-export default function CreateTemplatePage() {
-  const [selectedTier, setSelectedTier] = useState<TemplateTier | null>(null);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [content, setContent] = useState("");
+  const [type, setType] = useState<string>("CURSORRULES");
+  const [tagInput, setTagInput] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
+  const [isPublic, setIsPublic] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<{ id: string; name: string } | null>(null);
+
+  // Auto-detect tier based on content
+  const detectedTier = content.trim() ? determineTier(content) : null;
+  const lineCount = content.split("\n").filter(l => l.trim()).length;
+
+  // Redirect to sign in if not authenticated
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/signin?callbackUrl=/templates/create");
+    }
+  }, [status, router]);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check file size (max 500KB)
+    if (file.size > 500 * 1024) {
+      setError("File is too large. Maximum size is 500KB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      setContent(text);
+      setError(null);
+
+      // Auto-detect type from filename
+      const filename = file.name.toLowerCase();
+      if (filename.includes("cursorrules") || filename === ".cursorrules") {
+        setType("CURSORRULES");
+      } else if (filename.includes("claude") || filename === "claude.md") {
+        setType("CLAUDE_MD");
+      } else if (filename.includes("copilot")) {
+        setType("COPILOT_INSTRUCTIONS");
+      } else if (filename.includes("windsurf")) {
+        setType("WINDSURF_RULES");
+      }
+    };
+    reader.onerror = () => {
+      setError("Failed to read file");
+    };
+    reader.readAsText(file);
+  };
+
+  const addTag = () => {
+    const tag = tagInput.trim().toLowerCase();
+    if (tag && tag.length <= 30 && !tags.includes(tag) && tags.length < 10) {
+      setTags([...tags, tag]);
+      setTagInput("");
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setTags(tags.filter(t => t !== tagToRemove));
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addTag();
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          description: description.trim(),
+          content: content.trim(),
+          type,
+          tags,
+          isPublic,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create template");
+      }
+
+      setSuccess({ id: data.template.id, name: data.template.name });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (status === "loading") {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (success) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
+          <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+            <Logo />
+            <UserMenu />
+          </div>
+        </header>
+
+        <main className="flex flex-1 items-center justify-center p-4">
+          <div className="mx-auto max-w-md text-center">
+            <div className="mb-6 inline-flex rounded-full bg-green-100 p-4 dark:bg-green-900/30">
+              <CheckCircle2 className="h-12 w-12 text-green-600 dark:text-green-400" />
+            </div>
+            <h1 className="mb-2 text-2xl font-bold">Template Shared!</h1>
+            <p className="mb-6 text-muted-foreground">
+              Your template &quot;{success.name}&quot; is now available in the marketplace.
+            </p>
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <Button asChild>
+                <Link href={`/templates/user-${success.id}`}>View Template</Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href="/dashboard">Back to Dashboard</Link>
+              </Button>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -107,76 +216,215 @@ export default function CreateTemplatePage() {
       {/* Main Content */}
       <main className="flex-1">
         <div className="container mx-auto px-4 py-12 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-5xl">
+          <div className="mx-auto max-w-3xl">
             {/* Page Header */}
-            <div className="mb-12 text-center">
-              <h1 className="text-4xl font-bold tracking-tight">
-                Create a New Template
+            <div className="mb-8 text-center">
+              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                Share Your Prompt
               </h1>
-              <p className="mt-4 text-lg text-muted-foreground">
-                Choose your experience level to get started. You can always
-                upgrade later.
+              <p className="mt-3 text-lg text-muted-foreground">
+                Share your AI IDE configuration with the community. It&apos;s simple!
               </p>
             </div>
 
-            {/* Tier Selection */}
-            <div className="grid gap-6 md:grid-cols-3">
-              {tiers.map((tier) => (
-                <TierCard
-                  key={tier.id}
-                  tier={tier}
-                  isSelected={selectedTier === tier.id}
-                  onSelect={() => setSelectedTier(tier.id)}
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {/* Error */}
+              {error && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200">
+                  {error}
+                </div>
+              )}
+
+              {/* Content Section */}
+              <div className="rounded-xl border bg-card p-6">
+                <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+                  <FileText className="h-5 w-5 text-primary" />
+                  Prompt Content
+                </h2>
+                
+                {/* Upload Button */}
+                <div className="mb-4">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                    accept=".md,.txt,.cursorrules,.rules"
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full border-dashed"
+                  >
+                    <Upload className="mr-2 h-4 w-4" />
+                    Upload a file (.cursorrules, .md, .txt)
+                  </Button>
+                  <p className="mt-2 text-center text-xs text-muted-foreground">
+                    Or paste your content directly below
+                  </p>
+                </div>
+
+                {/* Editor */}
+                <textarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder="Paste your .cursorrules, CLAUDE.md, or other AI IDE configuration here..."
+                  className="min-h-[300px] w-full rounded-lg border bg-muted/30 p-4 font-mono text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  required
                 />
-              ))}
-            </div>
 
-            {/* Continue Button */}
-            {selectedTier && (
-              <div className="mt-12 text-center">
-                <Button size="lg" asChild>
-                  <Link href={`/templates/create/${selectedTier}`}>
-                    Continue with{" "}
-                    {tiers.find((t) => t.id === selectedTier)?.name}
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
+                {/* Auto-detected tier */}
+                {detectedTier && (
+                  <div className="mt-4 flex items-center justify-between rounded-lg bg-muted/50 px-4 py-3">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Info className="h-4 w-4" />
+                      <span>{lineCount} lines</span>
+                    </div>
+                    <div className={`flex items-center gap-2 font-medium ${detectedTier.color}`}>
+                      {detectedTier.icon}
+                      <span>Auto-categorized as {detectedTier.label}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Details Section */}
+              <div className="rounded-xl border bg-card p-6">
+                <h2 className="mb-4 text-lg font-semibold">Details</h2>
+                
+                <div className="space-y-4">
+                  {/* Title */}
+                  <div>
+                    <label htmlFor="name" className="mb-1 block text-sm font-medium">
+                      Title <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="name"
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="e.g., React TypeScript Best Practices"
+                      className="w-full rounded-lg border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      required
+                      minLength={3}
+                      maxLength={100}
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label htmlFor="description" className="mb-1 block text-sm font-medium">
+                      Description
+                    </label>
+                    <textarea
+                      id="description"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="Briefly describe what this prompt does and when to use it..."
+                      className="w-full rounded-lg border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      rows={3}
+                      maxLength={500}
+                    />
+                  </div>
+
+                  {/* Type */}
+                  <div>
+                    <label htmlFor="type" className="mb-1 block text-sm font-medium">
+                      Prompt Type <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="type"
+                      value={type}
+                      onChange={(e) => setType(e.target.value)}
+                      className="w-full rounded-lg border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    >
+                      {TEMPLATE_TYPES.map((t) => (
+                        <option key={t.value} value={t.value}>
+                          {t.icon} {t.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Tags */}
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">
+                      <Tag className="mr-1 inline h-4 w-4" />
+                      Tags (up to 10)
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={tagInput}
+                        onChange={(e) => setTagInput(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Add a tag and press Enter"
+                        className="flex-1 rounded-lg border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        maxLength={30}
+                      />
+                      <Button type="button" variant="secondary" onClick={addTag}>
+                        Add
+                      </Button>
+                    </div>
+                    {tags.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm text-primary"
+                          >
+                            {tag}
+                            <button
+                              type="button"
+                              onClick={() => removeTag(tag)}
+                              className="hover:text-primary/70"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Visibility */}
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id="isPublic"
+                      checked={isPublic}
+                      onChange={(e) => setIsPublic(e.target.checked)}
+                      className="h-4 w-4 rounded border-gray-300"
+                    />
+                    <label htmlFor="isPublic" className="text-sm">
+                      Make this prompt public in the marketplace
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Submit */}
+              <div className="flex justify-end gap-4">
+                <Button type="button" variant="outline" asChild>
+                  <Link href="/dashboard">Cancel</Link>
                 </Button>
-                <p className="mt-3 text-sm text-muted-foreground">
-                  You can change tiers anytime during creation
-                </p>
+                <Button type="submit" disabled={isSubmitting || !content.trim() || !name.trim()}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sharing...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Share Prompt
+                    </>
+                  )}
+                </Button>
               </div>
-            )}
-
-            {/* Info Section */}
-            <div className="mt-16 rounded-xl border bg-muted/30 p-8">
-              <h2 className="text-xl font-semibold">How Template Tiers Work</h2>
-              <div className="mt-6 grid gap-6 md:grid-cols-3">
-                <div>
-                  <h3 className="font-medium text-primary">Simple</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Fill in basic project info and get a working template
-                    instantly. Best for quick setups or when you&apos;re new to
-                    AI IDE configurations.
-                  </p>
-                </div>
-                <div>
-                  <h3 className="font-medium text-primary">Intermediate</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Customize your tech stack, testing approach, and coding
-                    standards. Includes common patterns that most developers
-                    need.
-                  </p>
-                </div>
-                <div>
-                  <h3 className="font-medium text-primary">Advanced</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Define conditional rules, custom sections, and complex
-                    workflows. Export to multiple platforms with tailored
-                    configurations.
-                  </p>
-                </div>
-              </div>
-            </div>
+            </form>
           </div>
         </div>
       </main>
@@ -201,90 +449,5 @@ export default function CreateTemplatePage() {
         </div>
       </footer>
     </div>
-  );
-}
-
-function TierCard({
-  tier,
-  isSelected,
-  onSelect,
-}: {
-  tier: TierInfo;
-  isSelected: boolean;
-  onSelect: () => void;
-}) {
-  return (
-    <button
-      onClick={onSelect}
-      className={`group relative flex flex-col rounded-2xl border-2 p-6 text-left transition-all hover:shadow-lg ${
-        isSelected
-          ? "border-primary bg-primary/5 ring-2 ring-primary/20"
-          : "border-border hover:border-primary/50"
-      }`}
-    >
-      {/* Recommended Badge */}
-      {tier.recommended && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-          <span className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
-            {tier.recommended}
-          </span>
-        </div>
-      )}
-
-      {/* Icon & Name */}
-      <div className="mb-4 flex items-center gap-3">
-        <div
-          className={`rounded-xl p-3 ${
-            isSelected
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted group-hover:bg-primary/10"
-          }`}
-        >
-          {tier.icon}
-        </div>
-        <h3 className="text-xl font-semibold">{tier.name}</h3>
-      </div>
-
-      {/* Description */}
-      <p className="mb-6 text-sm text-muted-foreground">{tier.description}</p>
-
-      {/* Benefits */}
-      <div className="mb-4 flex-1">
-        <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          What you get
-        </h4>
-        <ul className="space-y-2">
-          {tier.benefits.map((benefit, i) => (
-            <li key={i} className="flex items-start gap-2 text-sm">
-              <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
-              <span>{benefit}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* Limitations */}
-      <div>
-        <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Limitations
-        </h4>
-        <ul className="space-y-1">
-          {tier.limitations.map((limitation, i) => (
-            <li key={i} className="text-xs text-muted-foreground">
-              • {limitation}
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* Selection Indicator */}
-      {isSelected && (
-        <div className="absolute right-4 top-4">
-          <div className="rounded-full bg-primary p-1">
-            <Check className="h-4 w-4 text-primary-foreground" />
-          </div>
-        </div>
-      )}
-    </button>
   );
 }

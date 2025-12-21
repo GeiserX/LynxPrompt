@@ -170,3 +170,4 @@ Security issues: security@lynxprompt.com (configure when available)
 ---
 
 Last updated: 2025-12-21
+
