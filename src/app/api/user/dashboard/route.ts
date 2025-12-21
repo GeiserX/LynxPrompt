@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
+import { prismaApp } from "@/lib/db-app";
 
 export async function GET() {
   try {
@@ -107,15 +108,75 @@ export async function GET() {
       isOwnDownload: activity.userId === userId,
     }));
 
+    // Get user's favorite templates (max 6)
+    const favorites = await prismaUsers.templateFavorite.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+    });
+
+    // Enrich favorites with template details
+    const enrichedFavorites = await Promise.all(
+      favorites.map(async (fav) => {
+        if (fav.templateType === "system") {
+          const template = await prismaApp.systemTemplate.findUnique({
+            where: { id: fav.templateId },
+            select: {
+              id: true,
+              name: true,
+              description: true,
+              downloads: true,
+              favorites: true,
+              tier: true,
+            },
+          });
+          if (template) {
+            return {
+              id: `sys_${template.id}`,
+              name: template.name,
+              description: template.description,
+              downloads: template.downloads,
+              favorites: template.favorites,
+              tier: template.tier,
+              isOfficial: true,
+            };
+          }
+        } else {
+          const template = await prismaUsers.userTemplate.findUnique({
+            where: { id: fav.templateId },
+            include: {
+              user: { select: { name: true } },
+            },
+          });
+          if (template) {
+            return {
+              id: `usr_${template.id}`,
+              name: template.name,
+              description: template.description,
+              downloads: template.downloads,
+              favorites: template.favorites,
+              tier: template.tier,
+              author: template.user?.name || "Anonymous",
+              isOfficial: false,
+            };
+          }
+        }
+        return null;
+      })
+    );
+
     return NextResponse.json({
       stats: {
         templatesCreated,
         totalDownloads: totalDownloads._sum.downloads || 0,
         totalFavorites,
-        linkedProviders: linkedAccounts.map((a: { provider: string }) => a.provider),
+        linkedProviders: linkedAccounts.map(
+          (a: { provider: string }) => a.provider
+        ),
       },
       myTemplates,
       recentActivity: enrichedActivity,
+      favoriteTemplates: enrichedFavorites.filter((f) => f !== null),
     });
   } catch (error) {
     console.error("Dashboard API error:", error);
