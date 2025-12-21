@@ -10,8 +10,10 @@ import {
   Shield,
   ArrowRight,
   Sparkles,
+  Upload,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { UserMenu } from "@/components/user-menu";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -49,6 +51,12 @@ export default function DashboardPage() {
       primary: true,
     },
     {
+      title: "Share Your Template",
+      description: "Upload and sell your own AI prompts and configs",
+      icon: Upload,
+      href: "/templates/create",
+    },
+    {
       title: "Browse Templates",
       description: "Explore community templates and best practices",
       icon: FileText,
@@ -56,15 +64,9 @@ export default function DashboardPage() {
     },
     {
       title: "Profile Settings",
-      description: "Customize your developer profile and preferences",
+      description: "Customize your profile and linked accounts",
       icon: Settings,
       href: "/settings/profile",
-    },
-    {
-      title: "Security",
-      description: "Manage passkeys and authentication methods",
-      icon: Shield,
-      href: "/settings/security",
     },
   ];
 
@@ -78,9 +80,7 @@ export default function DashboardPage() {
             <Link href="/templates" className="text-sm hover:underline">
               Templates
             </Link>
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/settings/profile">Settings</Link>
-            </Button>
+            <UserMenu />
           </nav>
         </div>
       </header>

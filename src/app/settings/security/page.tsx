@@ -16,6 +16,7 @@ import {
   Clock,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { UserMenu } from "@/components/user-menu";
 import { startRegistration } from "@simplewebauthn/browser";
 
 interface Passkey {
@@ -160,11 +161,15 @@ export default function SecuritySettingsPage() {
           <Logo />
           <nav className="flex items-center gap-4">
             <Button variant="ghost" size="sm" asChild>
+              <Link href="/settings/profile">Profile</Link>
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
               <Link href="/dashboard">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Dashboard
+                Dashboard
               </Link>
             </Button>
+            <UserMenu />
           </nav>
         </div>
       </header>

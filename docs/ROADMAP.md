@@ -19,6 +19,7 @@ This document tracks planned features and improvements for LynxPrompt.
 - [x] Session-aware navigation (Dashboard vs Sign In)
 - [x] Status page link (Uptime Kuma integration ready)
 - [x] Transparent logo for all backgrounds
+- [x] **Sign out button visible on all pages** (UserMenu component)
 
 ## 🟡 In Progress
 
@@ -30,6 +31,16 @@ This document tracks planned features and improvements for LynxPrompt.
   - Quick actions cards
   - "Create New Configuration" button (separate from wizard inline)
 - [ ] Separate wizard trigger from dashboard home
+- [x] "Share Your Template" quick action card
+
+### User Account Features
+
+- [ ] **Account Linking** - Allow users to link multiple auth providers:
+  - Link GitHub account to existing email account
+  - Link Google account to existing account
+  - Link Magic Link email to OAuth account
+  - Unified profile across all linked accounts
+  - UI in Settings to manage linked accounts
 
 ## 🔴 Planned Features
 
@@ -61,6 +72,37 @@ This document tracks planned features and improvements for LynxPrompt.
 - [ ] Usage analytics per user
 - [ ] Author earnings dashboard
 - [ ] Payout requests and history
+- [ ] **My Templates section** - list of user's shared templates with stats
+
+### Template Sharing & Selling
+
+#### Who Can Share Templates
+
+**Current Plan (Phase 1)**:
+
+- All logged-in users can share templates (free or paid)
+- Users can upload their own prompts directly (title, tags, content)
+- Users can share templates created with the wizard
+- Sharing is available from the dashboard
+
+**Future (Phase 2)** - May restrict based on subscription:
+
+- Free users: Can share free templates only
+- Pro/Max users: Can share both free and paid templates
+- Consideration: Require subscription to monetize templates
+
+#### Template Upload Options
+
+1. **Direct Upload**: Write/paste prompt content, add title, tags, description
+2. **From Wizard**: Save wizard-generated config as a shareable template
+3. **Import**: Upload existing config files to create template
+
+#### Pricing Options for Authors
+
+- Free template (no cost to download)
+- Paid template (min €5, author sets price)
+- "Included in Max" option (earns from subscription pool)
+- "Purchase only" option (not included in Max pool)
 
 ### Template System
 
@@ -95,11 +137,11 @@ This document tracks planned features and improvements for LynxPrompt.
 
 #### Pricing Page Structure
 
-| Tier     | Price    | Features                                                       |
-| -------- | -------- | -------------------------------------------------------------- |
-| **Free** | €0/month | Basic templates, limited wizard features                       |
-| **Pro**  | €X/month | Intermediate repo wizards, priority support                    |
-| **Max**  | €X/month | Advanced wizards + ALL community prompts (including paid ones) |
+| Tier     | Price     | Features                                                       |
+| -------- | --------- | -------------------------------------------------------------- |
+| **Free** | €0/month  | Basic templates, limited wizard features                       |
+| **Pro**  | €5/month  | Intermediate repo wizards, priority support                    |
+| **Max**  | €20/month | Advanced wizards + ALL community prompts (including paid ones) |
 
 #### Key Subscription Rules
 
@@ -225,6 +267,7 @@ Each user needs:
 - [ ] Individual template purchase flow
 - [ ] Revenue tracking per template
 - [ ] Author earnings dashboard
+- [ ] **Template upload flow** (direct upload, from wizard, import)
 
 ### Phase 3: Max Subscription Pool
 
@@ -269,6 +312,9 @@ GET    /api/user/templates     - Get user's templates
 GET    /api/user/purchases     - Get purchased templates
 GET    /api/user/earnings      - Get author earnings
 POST   /api/user/payout        - Request payout
+GET    /api/user/linked-accounts - Get linked auth providers
+POST   /api/user/link-account    - Link a new auth provider
+DELETE /api/user/unlink-account  - Unlink an auth provider
 
 GET    /api/billing/subscription - Get current subscription
 POST   /api/billing/subscribe    - Start subscription
@@ -335,3 +381,5 @@ POST   /api/generate           - Generate config files from wizard data
 - Affiliate program for promoters
 - Gift subscriptions
 - Annual subscription discount (2 months free)
+- **Local app integration**: Instead of downloading files, have a Windows/macOS/Linux companion app that receives configs directly from the web and creates files locally
+- **Restrict template sharing to subscribers** (future consideration)

@@ -18,6 +18,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { UserMenu } from "@/components/user-menu";
 import {
   trackTemplateView,
   trackTemplateFavorite,
@@ -182,9 +183,10 @@ export default function TemplateDetailPage() {
             <Button variant="ghost" size="sm" asChild>
               <Link href="/templates">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Templates
+                Templates
               </Link>
             </Button>
+            <UserMenu />
           </nav>
         </div>
       </header>

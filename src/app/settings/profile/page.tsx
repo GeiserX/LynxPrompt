@@ -15,6 +15,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { UserMenu } from "@/components/user-menu";
 
 const PERSONAS = [
   { value: "backend", label: "Backend Developer", icon: "🖥️" },
@@ -194,15 +195,16 @@ function ProfileSettingsContent() {
           <nav className="flex items-center gap-4">
             {!isOnboarding && (
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/settings/security">Security Settings</Link>
+                <Link href="/settings/security">Security</Link>
               </Button>
             )}
             <Button variant="ghost" size="sm" asChild>
               <Link href={isOnboarding ? "/" : "/dashboard"}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                {isOnboarding ? "Back to Home" : "Back to Dashboard"}
+                {isOnboarding ? "Home" : "Dashboard"}
               </Link>
             </Button>
+            {!isOnboarding && <UserMenu />}
           </nav>
         </div>
       </header>

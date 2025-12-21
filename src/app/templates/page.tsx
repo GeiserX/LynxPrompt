@@ -10,6 +10,7 @@ import {
   Plus,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { UserMenu } from "@/components/user-menu";
 import {
   getTemplates,
   getCategories,
@@ -33,8 +34,8 @@ export default async function TemplatesPage() {
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <Logo />
           <nav className="flex items-center gap-4">
-            <Link href="/auth/signin" className="text-sm hover:underline">
-              Get Started
+            <Link href="/wizard" className="text-sm hover:underline">
+              Create
             </Link>
             <Link
               href="/templates"
@@ -42,9 +43,7 @@ export default async function TemplatesPage() {
             >
               Templates
             </Link>
-            <Button asChild size="sm">
-              <Link href="/auth/signin">Sign In</Link>
-            </Button>
+            <UserMenu />
           </nav>
         </div>
       </header>

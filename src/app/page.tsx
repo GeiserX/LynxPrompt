@@ -12,11 +12,9 @@ import {
 } from "lucide-react";
 import { PlatformCarousel } from "@/components/platform-carousel";
 import { Logo } from "@/components/logo";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { UserMenu } from "@/components/user-menu";
 
-export default async function HomePage() {
-  const session = await getServerSession(authOptions);
+export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
       {/* Header */}
@@ -35,15 +33,7 @@ export default async function HomePage() {
               <Activity className="mr-1 inline h-3 w-3" />
               Status
             </Link>
-            {session ? (
-              <Button asChild size="sm">
-                <Link href="/dashboard">Dashboard</Link>
-              </Button>
-            ) : (
-              <Button asChild size="sm">
-                <Link href="/auth/signin">Sign In</Link>
-              </Button>
-            )}
+            <UserMenu />
           </nav>
         </div>
       </header>
