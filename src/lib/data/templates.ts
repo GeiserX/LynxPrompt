@@ -481,8 +481,12 @@ export async function getTemplateById(
     };
   } else if (id.startsWith("usr_")) {
     const realId = id.replace("usr_", "");
-    const template = await prismaUsers.userTemplate.findUnique({
-      where: { id: realId },
+    // SECURITY: Only fetch public templates - prevents IDOR vulnerability
+    const template = await prismaUsers.userTemplate.findFirst({
+      where: { 
+        id: realId,
+        isPublic: true, // Only allow access to public templates
+      },
       include: {
         user: {
           select: { name: true, id: true },
