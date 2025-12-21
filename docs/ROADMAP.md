@@ -31,14 +31,6 @@ This document tracks planned features and improvements for LynxPrompt.
   - "Create New Configuration" button (separate from wizard inline)
 - [ ] Separate wizard trigger from dashboard home
 
-### Monetization System
-
-- [ ] Template pricing model (free vs paid templates)
-- [ ] PayPal integration for payments
-- [ ] User payout system for template authors
-- [ ] Billing settings in user profile
-- [ ] Transaction history
-
 ## 🔴 Planned Features
 
 ### Core Functionality
@@ -52,13 +44,23 @@ This document tracks planned features and improvements for LynxPrompt.
 - [ ] Save wizard configurations as drafts
 - [ ] Import existing configs (upload your `.cursorrules` to create template)
 
+#### Wizard Tiers (Feature Gating)
+
+| Feature                                | Free | Pro | Max |
+| -------------------------------------- | ---- | --- | --- |
+| Basic templates                        | ✅   | ✅  | ✅  |
+| Intermediate repo wizards              | ❌   | ✅  | ✅  |
+| Advanced repo wizards                  | ❌   | ❌  | ✅  |
+| All community prompts (including paid) | ❌   | ❌  | ✅  |
+
 #### User Dashboard
 
 - [ ] View saved templates and preferences
 - [ ] Download history
 - [ ] Favorite templates
 - [ ] Usage analytics per user
-- [ ] Author earnings dashboard (for paid templates)
+- [ ] Author earnings dashboard
+- [ ] Payout requests and history
 
 ### Template System
 
@@ -85,23 +87,167 @@ This document tracks planned features and improvements for LynxPrompt.
 - [ ] Usage statistics for template authors
 - [ ] Revenue reports for paid templates
 
-### Monetization
+---
 
-#### Payment System
+## 💰 Monetization Strategy
 
-- [ ] PayPal integration for receiving payments
-- [ ] Stripe as alternative payment processor
-- [ ] Template pricing (free, $1-$50 range)
-- [ ] Revenue split (e.g., 80% author, 20% platform)
-- [ ] Payout thresholds and schedules
-- [ ] Tax documentation (1099 for US authors)
+### Subscription Tiers
 
-#### Premium Features
+#### Pricing Page Structure
 
-- [ ] Pro subscription for unlimited downloads
-- [ ] Priority support for subscribers
-- [ ] Early access to new features
-- [ ] Custom branding for teams
+| Tier     | Price    | Features                                                       |
+| -------- | -------- | -------------------------------------------------------------- |
+| **Free** | €0/month | Basic templates, limited wizard features                       |
+| **Pro**  | €X/month | Intermediate repo wizards, priority support                    |
+| **Max**  | €X/month | Advanced wizards + ALL community prompts (including paid ones) |
+
+#### Key Subscription Rules
+
+- **Free users**: Access to basic templates only
+- **Pro users**: Access to intermediate wizard features for repos
+- **Max users**: Full access to advanced wizards AND all paid community prompts
+
+### Template Marketplace Pricing
+
+#### Individual Template Purchases
+
+- **Minimum price**: €5 (configurable by author, minimum €5)
+- **Default suggested price**: €5
+- **Author sets their own price** above minimum
+
+#### Revenue Split
+
+| Recipient                 | Percentage |
+| ------------------------- | ---------- |
+| **Platform (LynxPrompt)** | 30%        |
+| **Template Author**       | 70%        |
+
+### Spotify-Style Revenue Pool (for Max Subscribers)
+
+Max subscribers get access to ALL paid prompts. Revenue is redistributed using a **Spotify-like model**:
+
+#### How It Works
+
+1. **Pool Calculation**: Each month, 70% of Max subscription revenue goes into the "creator pool"
+2. **Platform Cut**: 30% always goes to LynxPrompt
+3. **Distribution**: Creator pool is divided among authors based on **download share**
+4. **Formula**: `Author Payout = (Author's Downloads / Total Downloads) × Creator Pool`
+
+#### Example
+
+```
+Monthly Max Subscription Revenue: €10,000
+Platform Cut (30%): €3,000
+Creator Pool (70%): €7,000
+
+Author A: 1,000 downloads (10% of total) → €700 payout
+Author B: 500 downloads (5% of total) → €350 payout
+Author C: 2,500 downloads (25% of total) → €1,750 payout
+...and so on
+```
+
+#### Transparency for Authors
+
+- **Clear disclosure**: When uploading a paid template, authors are informed:
+  > "Max subscribers can access all paid templates. You'll receive a share of the subscription pool based on how often your templates are downloaded by Max users. Platform takes 30%, you keep 70% of your share."
+- Authors can opt-out and keep templates "purchase-only" (not included in Max)
+
+### Payment Processing
+
+#### Multi-Currency & Crypto Support
+
+Need a payment processor that supports:
+
+- [ ] All major currencies (EUR, USD, GBP, etc.)
+- [ ] Cryptocurrency payments (BTC, ETH, USDC, etc.)
+- [ ] Automatic currency conversion
+- [ ] Low fees for international transactions
+
+#### Payment Processor Options
+
+| Provider              | Pros                          | Cons                        |
+| --------------------- | ----------------------------- | --------------------------- |
+| **Stripe**            | Best for cards, subscriptions | Limited crypto              |
+| **PayPal**            | Wide adoption                 | Higher fees, limited crypto |
+| **Paddle**            | Handles tax compliance (MoR)  | Higher cut                  |
+| **LemonSqueezy**      | Modern, handles taxes         | Newer, less known           |
+| **BTCPay Server**     | Self-hosted crypto            | No fiat, complex            |
+| **Coinbase Commerce** | Easy crypto                   | Crypto only                 |
+| **NOWPayments**       | Multi-crypto                  | Crypto only                 |
+
+**Recommended approach**:
+
+- Primary: **Stripe** (cards + subscriptions)
+- Secondary: **Coinbase Commerce** or **NOWPayments** (crypto)
+
+### Billing Data Management
+
+#### User Billing Profile
+
+Each user needs:
+
+- [ ] Billing name and address
+- [ ] Tax ID (VAT number for EU)
+- [ ] Preferred currency
+- [ ] Payout method (PayPal email, bank account, crypto wallet)
+- [ ] Payout threshold (minimum €50 before payout)
+- [ ] Payout schedule (monthly, on-demand)
+
+#### Transaction History
+
+- [ ] All purchases made
+- [ ] All earnings received
+- [ ] Pending payouts
+- [ ] Tax documents (invoices, 1099 for US)
+
+#### Author Payout System
+
+- [ ] Request payout when balance > €50
+- [ ] Automatic monthly payouts (if enabled)
+- [ ] Support for PayPal, bank transfer, crypto
+- [ ] Generate invoices for authors
+
+---
+
+## 🛒 Implementation Roadmap for Monetization
+
+### Phase 1: Foundation
+
+- [ ] Create Pricing page UI with tier comparison
+- [ ] Implement subscription database schema (plans, subscriptions, invoices)
+- [ ] Integrate Stripe for card payments and subscriptions
+- [ ] Add subscription status to user session
+- [ ] Gate wizard features by subscription tier
+
+### Phase 2: Template Marketplace
+
+- [ ] Allow authors to set template prices (min €5)
+- [ ] Individual template purchase flow
+- [ ] Revenue tracking per template
+- [ ] Author earnings dashboard
+
+### Phase 3: Max Subscription Pool
+
+- [ ] Implement download tracking for paid templates
+- [ ] Monthly revenue pool calculation
+- [ ] Spotify-style distribution algorithm
+- [ ] Author payout notifications
+
+### Phase 4: Multi-Payment Support
+
+- [ ] Add crypto payment option (Coinbase Commerce / NOWPayments)
+- [ ] Multi-currency display and conversion
+- [ ] International tax handling (VAT for EU)
+
+### Phase 5: Payouts
+
+- [ ] Author payout request system
+- [ ] PayPal Mass Pay integration
+- [ ] Bank transfer option (via Stripe Connect)
+- [ ] Crypto payouts
+- [ ] Tax document generation
+
+---
 
 ### API
 
@@ -122,6 +268,13 @@ PUT    /api/user/preferences   - Update preferences
 GET    /api/user/templates     - Get user's templates
 GET    /api/user/purchases     - Get purchased templates
 GET    /api/user/earnings      - Get author earnings
+POST   /api/user/payout        - Request payout
+
+GET    /api/billing/subscription - Get current subscription
+POST   /api/billing/subscribe    - Start subscription
+POST   /api/billing/cancel       - Cancel subscription
+GET    /api/billing/invoices     - Get invoices
+GET    /api/billing/history      - Transaction history
 
 POST   /api/generate           - Generate config files from wizard data
 ```
@@ -133,6 +286,7 @@ POST   /api/generate           - Generate config files from wizard data
 - [ ] Bulk approve/reject actions
 - [ ] Email verification requirement for paid submissions
 - [ ] Content policy enforcement
+- [ ] Revenue and payout management
 
 ### Abuse Prevention
 
@@ -142,6 +296,7 @@ POST   /api/generate           - Generate config files from wizard data
 - [ ] Report button for users to flag bad templates
 - [ ] CAPTCHA on submission form
 - [ ] Fraud detection for payments
+- [ ] Chargeback handling
 
 ### Infrastructure
 
@@ -151,6 +306,7 @@ POST   /api/generate           - Generate config files from wizard data
 - [ ] Status page (Uptime Kuma) at status.lynxprompt.com
 - [ ] CDN for static assets
 - [ ] Database backups automation
+- [ ] Payment webhook handlers
 
 ## 📋 Technical Debt
 
@@ -176,3 +332,6 @@ POST   /api/generate           - Generate config files from wizard data
 - Template collections/bundles
 - "Compare templates" feature
 - Template changelogs
+- Affiliate program for promoters
+- Gift subscriptions
+- Annual subscription discount (2 months free)
