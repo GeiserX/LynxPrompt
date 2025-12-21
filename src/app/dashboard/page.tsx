@@ -53,10 +53,22 @@ interface RecentActivity {
   isOwnDownload: boolean;
 }
 
+interface FavoriteTemplate {
+  id: string;
+  name: string;
+  description: string | null;
+  downloads: number;
+  favorites: number;
+  tier: string;
+  isOfficial: boolean;
+  author?: string;
+}
+
 interface DashboardData {
   stats: DashboardStats;
   myTemplates: MyTemplate[];
   recentActivity: RecentActivity[];
+  favoriteTemplates: FavoriteTemplate[];
 }
 
 export default function DashboardPage() {
@@ -423,6 +435,87 @@ export default function DashboardPage() {
                         </Button>
                       </div>
                     ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Favorite Templates */}
+              <div>
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className="text-lg font-semibold">Favorite Templates</h2>
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link href="/templates">
+                      Browse All
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
+
+                {loading ? (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {[1, 2].map((i) => (
+                      <div
+                        key={i}
+                        className="h-24 animate-pulse rounded-lg bg-muted"
+                      />
+                    ))}
+                  </div>
+                ) : !dashboardData?.favoriteTemplates ||
+                  dashboardData.favoriteTemplates.length === 0 ? (
+                  <div className="rounded-lg border bg-card p-6 text-center">
+                    <Heart className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
+                    <h3 className="font-medium">No favorites yet</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Browse templates and click the heart to save them here
+                    </p>
+                    <Button
+                      asChild
+                      className="mt-4"
+                      size="sm"
+                      variant="outline"
+                    >
+                      <Link href="/templates">Browse Templates</Link>
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {dashboardData.favoriteTemplates
+                      .slice(0, 4)
+                      .map((template) => (
+                        <Link
+                          key={template.id}
+                          href={`/templates/${template.id}`}
+                          className="group rounded-lg border bg-card p-4 transition-colors hover:border-primary"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="min-w-0 flex-1">
+                              <h4 className="truncate font-medium group-hover:text-primary">
+                                {template.name}
+                              </h4>
+                              <p className="mt-0.5 text-xs text-muted-foreground">
+                                {template.isOfficial
+                                  ? "LynxPrompt"
+                                  : template.author}
+                              </p>
+                            </div>
+                            {template.isOfficial && (
+                              <span className="ml-2 rounded bg-primary/10 px-1.5 py-0.5 text-xs text-primary">
+                                Official
+                              </span>
+                            )}
+                          </div>
+                          <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <Download className="h-3 w-3" />
+                              {template.downloads}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Heart className="h-3 w-3" />
+                              {template.favorites}
+                            </span>
+                          </div>
+                        </Link>
+                      ))}
                   </div>
                 )}
               </div>

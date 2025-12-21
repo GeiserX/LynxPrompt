@@ -21,10 +21,20 @@ import {
   FolderGit2,
   Settings,
   Loader2,
+  Copy,
+  Eye,
+  FileText,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
-import { generateConfigFiles, downloadZip } from "@/lib/file-generator";
+import {
+  generateConfigFiles,
+  downloadZip,
+  generateAllFiles,
+  type GeneratedFile,
+} from "@/lib/file-generator";
 
 // New wizard steps - removed persona and skill level (now in profile)
 const WIZARD_STEPS = [
@@ -225,6 +235,9 @@ export default function WizardPage() {
   const { data: session, status } = useSession();
   const [currentStep, setCurrentStep] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [previewFiles, setPreviewFiles] = useState<GeneratedFile[]>([]);
+  const [expandedFile, setExpandedFile] = useState<string | null>(null);
+  const [copiedFile, setCopiedFile] = useState<string | null>(null);
   const [config, setConfig] = useState<WizardConfig>({
     projectName: "",
     projectDescription: "",
@@ -276,7 +289,55 @@ export default function WizardPage() {
 
   const handleNext = () => {
     if (currentStep < WIZARD_STEPS.length - 1) {
-      setCurrentStep(currentStep + 1);
+      const nextStep = currentStep + 1;
+      setCurrentStep(nextStep);
+
+      // Generate preview files when entering the last step
+      if (nextStep === WIZARD_STEPS.length - 1) {
+        const wizardConfig = {
+          projectName: config.projectName,
+          projectDescription: config.projectDescription,
+          languages: config.languages,
+          frameworks: config.frameworks,
+          letAiDecide: config.letAiDecide,
+          repoHost: config.repoHost,
+          repoUrl: config.repoUrl,
+          isPublic: config.isPublic,
+          license: config.license,
+          funding: config.funding,
+          fundingUrl: config.fundingUrl,
+          releaseStrategy: config.releaseStrategy,
+          customReleaseStrategy: config.releaseStrategyOther,
+          cicd: [config.cicd],
+          containerRegistry: config.containerRegistry,
+          customRegistry: config.containerRegistryOther,
+          deploymentTarget: [],
+          aiBehaviorRules: config.aiBehaviorRules,
+          platforms: config.platforms,
+          additionalFeedback: config.additionalFeedback,
+        };
+        const userProfile = {
+          displayName: session.user.displayName,
+          name: session.user.name,
+          persona: session.user.persona,
+          skillLevel: session.user.skillLevel,
+        };
+        const files = generateAllFiles(wizardConfig, userProfile);
+        setPreviewFiles(files);
+        if (files.length > 0) {
+          setExpandedFile(files[0].fileName);
+        }
+      }
+    }
+  };
+
+  const handleCopyFile = async (fileName: string, content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedFile(fileName);
+      setTimeout(() => setCopiedFile(null), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
     }
   };
 
@@ -529,7 +590,17 @@ export default function WizardPage() {
                 />
               )}
               {currentStep === 8 && (
-                <StepGenerate config={config} session={session} />
+                <StepGenerate
+                  config={config}
+                  session={session}
+                  previewFiles={previewFiles}
+                  expandedFile={expandedFile}
+                  copiedFile={copiedFile}
+                  onToggleExpand={(fileName) =>
+                    setExpandedFile(expandedFile === fileName ? null : fileName)
+                  }
+                  onCopyFile={handleCopyFile}
+                />
               )}
 
               {/* Navigation */}
@@ -1106,6 +1177,11 @@ function StepFeedback({
 function StepGenerate({
   config,
   session,
+  previewFiles,
+  expandedFile,
+  copiedFile,
+  onToggleExpand,
+  onCopyFile,
 }: {
   config: WizardConfig;
   session: {
@@ -1116,13 +1192,19 @@ function StepGenerate({
       skillLevel?: string | null;
     };
   };
+  previewFiles: GeneratedFile[];
+  expandedFile: string | null;
+  copiedFile: string | null;
+  onToggleExpand: (fileName: string) => void;
+  onCopyFile: (fileName: string, content: string) => void;
 }) {
   return (
     <div>
-      <h2 className="text-2xl font-bold">Review & Generate</h2>
+      <h2 className="text-2xl font-bold">Preview & Download</h2>
       <p className="mt-2 text-muted-foreground">
-        Review your configuration for{" "}
-        <strong>{config.projectName || "your project"}</strong>.
+        Preview your generated files for{" "}
+        <strong>{config.projectName || "your project"}</strong>. Click to expand
+        and copy individual files.
       </p>
 
       <div className="mt-6 space-y-4">
@@ -1138,71 +1220,112 @@ function StepGenerate({
           </div>
         </div>
 
-        <div className="rounded-lg bg-muted p-4">
-          <h3 className="font-medium">Files to generate:</h3>
-          <ul className="mt-2 space-y-1">
-            {config.platforms.map((p) => {
-              const platform = PLATFORMS.find((pl) => pl.id === p);
-              return (
-                <li key={p} className="flex items-center gap-2 text-sm">
-                  <Check className="h-4 w-4 text-primary" />
-                  <span>{platform?.file}</span>
-                </li>
-              );
-            })}
-            {config.license !== "none" && (
-              <li className="flex items-center gap-2 text-sm">
-                <Check className="h-4 w-4 text-primary" />
-                <span>LICENSE</span>
-              </li>
-            )}
-            {config.funding && (
-              <li className="flex items-center gap-2 text-sm">
-                <Check className="h-4 w-4 text-primary" />
-                <span>.github/FUNDING.yml</span>
-              </li>
-            )}
-          </ul>
+        {/* File Previews */}
+        <div className="space-y-2">
+          <h3 className="font-medium">
+            Generated Files ({previewFiles.length}):
+          </h3>
+          {previewFiles.map((file) => (
+            <div
+              key={file.fileName}
+              className="overflow-hidden rounded-lg border"
+            >
+              {/* File Header */}
+              <button
+                onClick={() => onToggleExpand(file.fileName)}
+                className="flex w-full items-center justify-between bg-muted/50 px-4 py-3 text-left hover:bg-muted/70"
+              >
+                <div className="flex items-center gap-3">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-mono text-sm">{file.fileName}</span>
+                  {file.platform && (
+                    <span className="rounded bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                      {PLATFORMS.find((p) => p.id === file.platform)?.name ||
+                        file.platform}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCopyFile(file.fileName, file.content);
+                    }}
+                    className="flex items-center gap-1 rounded px-2 py-1 text-xs hover:bg-background"
+                  >
+                    {copiedFile === file.fileName ? (
+                      <>
+                        <Check className="h-3 w-3 text-green-500" />
+                        <span className="text-green-500">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3 w-3" />
+                        <span>Copy</span>
+                      </>
+                    )}
+                  </button>
+                  {expandedFile === file.fileName ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </div>
+              </button>
+
+              {/* File Content Preview */}
+              {expandedFile === file.fileName && (
+                <div className="border-t bg-background">
+                  <pre className="max-h-64 overflow-auto p-4 text-xs">
+                    <code>{file.content}</code>
+                  </pre>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
 
-        <div className="rounded-lg border p-4">
-          <h3 className="font-medium">Tech Stack:</h3>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {config.languages.map((lang) => (
-              <span
-                key={lang}
-                className="rounded-full bg-blue-500/10 px-3 py-1 text-xs text-blue-600"
-              >
-                {LANGUAGES.find((l) => l.value === lang)?.label || lang}
-              </span>
-            ))}
-            {config.frameworks.map((fw) => (
-              <span
-                key={fw}
-                className="rounded-full bg-purple-500/10 px-3 py-1 text-xs text-purple-600"
-              >
-                {FRAMEWORKS.find((f) => f.value === fw)?.label || fw}
-              </span>
-            ))}
-            {config.letAiDecide && (
-              <span className="rounded-full bg-orange-500/10 px-3 py-1 text-xs text-orange-600">
-                + AI will suggest more
-              </span>
-            )}
+        {/* Summary cards */}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="rounded-lg border p-4">
+            <h3 className="font-medium">Tech Stack:</h3>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {config.languages.map((lang) => (
+                <span
+                  key={lang}
+                  className="rounded-full bg-blue-500/10 px-3 py-1 text-xs text-blue-600"
+                >
+                  {LANGUAGES.find((l) => l.value === lang)?.label || lang}
+                </span>
+              ))}
+              {config.frameworks.map((fw) => (
+                <span
+                  key={fw}
+                  className="rounded-full bg-purple-500/10 px-3 py-1 text-xs text-purple-600"
+                >
+                  {FRAMEWORKS.find((f) => f.value === fw)?.label || fw}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
 
-        <div className="rounded-lg border p-4">
-          <h3 className="font-medium">AI Behavior Rules:</h3>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {config.aiBehaviorRules.map((rule) => (
-              <span
-                key={rule}
-                className="rounded-full bg-primary/10 px-3 py-1 text-xs text-primary"
-              >
-                {AI_BEHAVIOR_RULES.find((r) => r.id === rule)?.label}
-              </span>
-            ))}
+          <div className="rounded-lg border p-4">
+            <h3 className="font-medium">AI Behavior:</h3>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {config.aiBehaviorRules.slice(0, 3).map((rule) => (
+                <span
+                  key={rule}
+                  className="rounded-full bg-primary/10 px-3 py-1 text-xs text-primary"
+                >
+                  {AI_BEHAVIOR_RULES.find((r) => r.id === rule)?.label}
+                </span>
+              ))}
+              {config.aiBehaviorRules.length > 3 && (
+                <span className="rounded-full bg-muted px-3 py-1 text-xs">
+                  +{config.aiBehaviorRules.length - 3} more
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>

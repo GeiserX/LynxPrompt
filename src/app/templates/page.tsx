@@ -8,6 +8,8 @@ import {
   Heart,
   Users,
   Plus,
+  TrendingUp,
+  Clock,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
@@ -15,15 +17,51 @@ import {
   getTemplates,
   getCategories,
   type TemplateData,
+  type SortOption,
 } from "@/lib/data/templates";
 
 // Force dynamic rendering to avoid database calls at build time
 export const dynamic = "force-dynamic";
 
-export default async function TemplatesPage() {
+const SORT_OPTIONS: {
+  value: SortOption;
+  label: string;
+  icon: React.ReactNode;
+}[] = [
+  {
+    value: "popular",
+    label: "Most Popular",
+    icon: <TrendingUp className="h-4 w-4" />,
+  },
+  {
+    value: "recent",
+    label: "Most Recent",
+    icon: <Clock className="h-4 w-4" />,
+  },
+  {
+    value: "downloads",
+    label: "Most Downloaded",
+    icon: <Download className="h-4 w-4" />,
+  },
+  {
+    value: "favorites",
+    label: "Most Favorited",
+    icon: <Heart className="h-4 w-4" />,
+  },
+];
+
+export default async function TemplatesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sort?: string; q?: string }>;
+}) {
+  const params = await searchParams;
+  const sortParam = (params.sort as SortOption) || "popular";
+  const searchQuery = params.q || "";
+
   // Fetch data from database (or mock if MOCK=true)
   const [templates, categories] = await Promise.all([
-    getTemplates(),
+    getTemplates({ sort: sortParam, search: searchQuery || undefined }),
     getCategories(),
   ]);
 
@@ -132,18 +170,36 @@ export default async function TemplatesPage() {
           <main className="flex-1">
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-lg font-semibold">
-                Featured Templates
+                {sortParam === "popular"
+                  ? "Popular"
+                  : sortParam === "recent"
+                    ? "Recent"
+                    : sortParam === "downloads"
+                      ? "Most Downloaded"
+                      : "Most Favorited"}{" "}
+                Templates
                 {process.env.MOCK === "true" && (
                   <span className="ml-2 rounded bg-yellow-500/10 px-2 py-0.5 text-xs text-yellow-600">
                     Mock Data
                   </span>
                 )}
               </h2>
-              <select className="rounded-lg border bg-background px-3 py-2 text-sm">
-                <option>Most Popular</option>
-                <option>Most Recent</option>
-                <option>Most Downloaded</option>
-              </select>
+              <div className="flex items-center gap-1 rounded-lg border bg-background p-1">
+                {SORT_OPTIONS.map((option) => (
+                  <Link
+                    key={option.value}
+                    href={`/templates?sort=${option.value}${searchQuery ? `&q=${searchQuery}` : ""}`}
+                    className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors ${
+                      sortParam === option.value
+                        ? "bg-primary text-primary-foreground"
+                        : "hover:bg-muted"
+                    }`}
+                  >
+                    {option.icon}
+                    <span className="hidden sm:inline">{option.label}</span>
+                  </Link>
+                ))}
+              </div>
             </div>
 
             {templates.length === 0 ? (

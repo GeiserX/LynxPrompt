@@ -351,12 +351,19 @@ function getRuleDescription(ruleId: string): string {
   return rules[ruleId] || ruleId;
 }
 
-// Main function to generate all files and create ZIP
-export async function generateConfigFiles(
+// Type for generated file
+export interface GeneratedFile {
+  fileName: string;
+  content: string;
+  platform?: string;
+}
+
+// Generate all files as an array (for preview)
+export function generateAllFiles(
   config: WizardConfig,
   user: UserProfile
-): Promise<Blob> {
-  const zip = new JSZip();
+): GeneratedFile[] {
+  const files: GeneratedFile[] = [];
 
   // Generate platform-specific files
   config.platforms.forEach((platform) => {
@@ -380,8 +387,7 @@ export async function generateConfigFiles(
     }
 
     if (content) {
-      // Handle nested paths like .github/copilot-instructions.md
-      zip.file(fileName, content);
+      files.push({ fileName, content, platform });
     }
   });
 
@@ -389,15 +395,30 @@ export async function generateConfigFiles(
   if (config.license && config.license !== "none") {
     const licenseContent = generateLicense(config.license, user);
     if (licenseContent) {
-      zip.file("LICENSE", licenseContent);
+      files.push({ fileName: "LICENSE", content: licenseContent });
     }
   }
 
   // Generate FUNDING.yml if enabled
   if (config.funding) {
     const fundingContent = generateFunding(config);
-    zip.file(".github/FUNDING.yml", fundingContent);
+    files.push({ fileName: ".github/FUNDING.yml", content: fundingContent });
   }
+
+  return files;
+}
+
+// Main function to generate all files and create ZIP
+export async function generateConfigFiles(
+  config: WizardConfig,
+  user: UserProfile
+): Promise<Blob> {
+  const zip = new JSZip();
+  const files = generateAllFiles(config, user);
+
+  files.forEach((file) => {
+    zip.file(file.fileName, file.content);
+  });
 
   // Generate the ZIP blob
   return await zip.generateAsync({ type: "blob" });

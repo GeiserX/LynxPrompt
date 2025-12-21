@@ -271,6 +271,8 @@ function extractTags(name: string, description: string): string[] {
   );
 }
 
+export type SortOption = "popular" | "recent" | "downloads" | "favorites";
+
 /**
  * Get featured/public templates
  */
@@ -279,7 +281,10 @@ export async function getTemplates(options?: {
   search?: string;
   limit?: number;
   offset?: number;
+  sort?: SortOption;
 }): Promise<TemplateData[]> {
+  const sortBy = options?.sort || "popular";
+
   if (isMockMode()) {
     let templates = [...MOCK_TEMPLATES];
 
@@ -301,6 +306,26 @@ export async function getTemplates(options?: {
       );
     }
 
+    // Sort
+    switch (sortBy) {
+      case "recent":
+        // Mock data doesn't have createdAt, so keep default order
+        break;
+      case "downloads":
+        templates.sort((a, b) => b.downloads - a.downloads);
+        break;
+      case "favorites":
+        templates.sort((a, b) => b.likes - a.likes);
+        break;
+      case "popular":
+      default:
+        // Popular = combination of downloads + likes
+        templates.sort(
+          (a, b) => b.downloads + b.likes * 5 - (a.downloads + a.likes * 5)
+        );
+        break;
+    }
+
     // Apply pagination
     const offset = options?.offset || 0;
     const limit = options?.limit || 50;
@@ -313,6 +338,21 @@ export async function getTemplates(options?: {
     CLAUDE_MD: ["claude"],
     COPILOT_INSTRUCTIONS: ["copilot"],
     WINDSURF_RULES: ["windsurf"],
+  };
+
+  // Build orderBy based on sort option
+  const getOrderBy = () => {
+    switch (sortBy) {
+      case "recent":
+        return [{ createdAt: "desc" as const }];
+      case "downloads":
+        return [{ downloads: "desc" as const }];
+      case "favorites":
+        return [{ favorites: "desc" as const }];
+      case "popular":
+      default:
+        return [{ downloads: "desc" as const }, { favorites: "desc" as const }];
+    }
   };
 
   // Fetch system templates from APP database
@@ -333,7 +373,7 @@ export async function getTemplates(options?: {
         ],
       }),
     },
-    orderBy: [{ downloads: "desc" }, { createdAt: "desc" }],
+    orderBy: getOrderBy(),
     take: options?.limit || 50,
     skip: options?.offset || 0,
   });
@@ -362,7 +402,7 @@ export async function getTemplates(options?: {
         select: { name: true, id: true },
       },
     },
-    orderBy: [{ downloads: "desc" }, { createdAt: "desc" }],
+    orderBy: getOrderBy(),
     take: options?.limit || 50,
     skip: options?.offset || 0,
   });
@@ -423,9 +463,29 @@ export async function getTemplates(options?: {
     difficulty: t.difficulty || undefined,
   }));
 
-  // Combine and sort by downloads
+  // Combine and sort
   const allTemplates = [...mappedSystemTemplates, ...mappedUserTemplates];
-  allTemplates.sort((a, b) => b.downloads - a.downloads);
+
+  switch (sortBy) {
+    case "recent":
+      allTemplates.sort(
+        (a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0)
+      );
+      break;
+    case "downloads":
+      allTemplates.sort((a, b) => b.downloads - a.downloads);
+      break;
+    case "favorites":
+      allTemplates.sort((a, b) => b.likes - a.likes);
+      break;
+    case "popular":
+    default:
+      // Popular = weighted combination
+      allTemplates.sort(
+        (a, b) => b.downloads + b.likes * 5 - (a.downloads + a.likes * 5)
+      );
+      break;
+  }
 
   return allTemplates.slice(0, options?.limit || 50);
 }
