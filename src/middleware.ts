@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getToken } from "next-auth/jwt";
 
 // Rate limiting store (in-memory, per-instance)
 // For production at scale, use Redis or similar
@@ -101,7 +100,7 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
   return response;
 }
 
-export async function middleware(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const clientIP = getClientIP(request);
 
@@ -125,15 +124,16 @@ export async function middleware(request: NextRequest) {
   }
 
   // Check protected paths
+  // Note: With database sessions, we check for the session cookie existence
+  // The actual session validation happens in the page/API route via useSession() or getServerSession()
   const isProtected = protectedPaths.some((p) => pathname.startsWith(p));
 
   if (isProtected) {
-    const token = await getToken({
-      req: request,
-      secret: process.env.NEXTAUTH_SECRET,
-    });
+    // Check for session cookie (works with database sessions)
+    const sessionCookie = request.cookies.get("__Secure-next-auth.session-token") 
+      || request.cookies.get("next-auth.session-token");
 
-    if (!token) {
+    if (!sessionCookie?.value) {
       // Redirect to sign in
       const signInUrl = new URL("/auth/signin", request.url);
       signInUrl.searchParams.set("callbackUrl", pathname);
