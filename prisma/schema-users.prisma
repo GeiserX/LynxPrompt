@@ -1,0 +1,230 @@
+// Prisma schema for USER DATA (Golden - Critical backups)
+// This database contains all user-specific data that must be preserved
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/@prisma/client-users"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL_USERS")
+}
+
+// ============================================================================
+// AUTHENTICATION & USERS
+// ============================================================================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  role          UserRole  @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  accounts       Account[]
+  sessions       Session[]
+  preferences    Preference[]
+  templates      UserTemplate[]
+  projects       Project[]
+  authenticators Authenticator[]
+
+  @@index([email])
+  @@index([role])
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPERADMIN
+}
+
+// ============================================================================
+// PASSKEYS (WebAuthn Authenticators)
+// ============================================================================
+
+model Authenticator {
+  id                   String   @id @default(cuid())
+  userId               String
+  credentialID         String   @unique
+  credentialPublicKey  Bytes
+  counter              BigInt
+  credentialDeviceType String
+  credentialBackedUp   Boolean
+  transports           String[]
+  name                 String?  // User-friendly name like "MacBook Touch ID"
+  createdAt            DateTime @default(now())
+  lastUsedAt           DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================================================
+// USER PREFERENCES - Memory of past decisions
+// ============================================================================
+
+model Preference {
+  id        String   @id @default(cuid())
+  userId    String
+  category  String   // e.g., "license", "funding", "cicd", "testing"
+  key       String   // e.g., "default_license", "github_sponsors_username"
+  value     String   @db.Text // JSON or plain text value
+  isDefault Boolean  @default(false)
+  usageCount Int     @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, category, key])
+  @@index([userId])
+  @@index([category])
+}
+
+// ============================================================================
+// USER TEMPLATES - User-created templates (NOT system templates)
+// ============================================================================
+
+model UserTemplate {
+  id          String       @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  type        TemplateType
+  content     String       @db.Text
+  variables   Json?
+  isPublic    Boolean      @default(false)
+  usageCount  Int          @default(0)
+  
+  tier             TemplateTier @default(INTERMEDIATE)
+  targetPlatform   String?
+  compatibleWith   String[]
+  tags             String[]
+  category         String?
+  difficulty       String?
+  sensitiveFields  Json?
+  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@index([isPublic])
+  @@index([tier])
+}
+
+enum TemplateTier {
+  SIMPLE
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum TemplateType {
+  LICENSE
+  FUNDING
+  CURSORRULES
+  CLAUDE_MD
+  COPILOT_INSTRUCTIONS
+  WINDSURF_RULES
+  GITIGNORE
+  README
+  CONTRIBUTING
+  CODE_OF_CONDUCT
+  SECURITY
+  DOCKERFILE
+  DOCKER_COMPOSE
+  GITHUB_ACTIONS
+  GITLAB_CI
+  EDITORCONFIG
+  PRETTIER
+  ESLINT
+  PRE_COMMIT
+  CUSTOM
+}
+
+// ============================================================================
+// PROJECTS - User's saved configurations
+// ============================================================================
+
+model Project {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  config      Json
+  persona     String?
+  languages   String[]
+  frameworks  String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  generatedFiles GeneratedFile[]
+
+  @@index([userId])
+  @@index([persona])
+}
+
+// ============================================================================
+// GENERATED FILES - User's generated output files
+// ============================================================================
+
+model GeneratedFile {
+  id        String   @id @default(cuid())
+  projectId String
+  type      TemplateType
+  filename  String
+  filepath  String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}

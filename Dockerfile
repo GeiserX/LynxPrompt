@@ -34,8 +34,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Generate Prisma client
-RUN npx prisma generate
+# Generate Prisma clients for both databases
+RUN npx prisma generate --schema=prisma/schema-app.prisma
+RUN npx prisma generate --schema=prisma/schema-users.prisma
 
 ENV NODE_ENV=development
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -54,8 +55,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Generate Prisma client
-RUN npx prisma generate
+# Generate Prisma clients for both databases
+RUN npx prisma generate --schema=prisma/schema-app.prisma
+RUN npx prisma generate --schema=prisma/schema-users.prisma
 
 # Build the application
 ENV NEXT_TELEMETRY_DISABLED=1
