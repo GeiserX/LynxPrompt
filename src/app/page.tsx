@@ -22,6 +22,9 @@ export default function HomePage() {
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <Logo />
           <nav className="flex items-center gap-4">
+            <Link href="/docs" className="text-sm hover:underline">
+              Docs
+            </Link>
             <Link href="/templates" className="text-sm hover:underline">
               Templates
             </Link>
@@ -167,23 +170,22 @@ export default function HomePage() {
           </div>
           <div className="flex gap-4">
             <Link
-              href="https://status.lynxprompt.com"
-              className="text-sm text-muted-foreground hover:underline"
-              target="_blank"
-            >
-              Status
-            </Link>
-            <Link
-              href="/docs"
-              className="text-sm text-muted-foreground hover:underline"
-            >
-              Docs
-            </Link>
-            <Link
               href="/privacy"
               className="text-sm text-muted-foreground hover:underline"
             >
               Privacy
+            </Link>
+            <Link
+              href="/terms"
+              className="text-sm text-muted-foreground hover:underline"
+            >
+              Terms
+            </Link>
+            <Link
+              href="/about"
+              className="text-sm text-muted-foreground hover:underline"
+            >
+              About
             </Link>
           </div>
         </div>
