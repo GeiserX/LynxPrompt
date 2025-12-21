@@ -23,6 +23,11 @@ This document tracks planned features and improvements for LynxPrompt.
 - [x] **Dashboard redesign** - User stats, recent activity, quick actions, My Templates section
 - [x] **Account linking UI** - Link/unlink GitHub, Google, and Email accounts from settings
 - [x] "Share Your Template" quick action card on dashboard
+- [x] **Copy individual files to clipboard** in wizard preview
+- [x] **Preview generated content before download** with expandable file sections
+- [x] **Template sorting** - Sort by popularity (default), recent, downloads, favorites
+- [x] **Pricing page UI** - Beautiful tier comparison (Free/Pro/Max)
+- [x] **Favorite templates** - Heart button + favorites shown in dashboard
 
 ## 🔴 Planned Features
 
@@ -32,8 +37,8 @@ This document tracks planned features and improvements for LynxPrompt.
 
 - [x] Generate configuration files from wizard choices
 - [x] Download as ZIP with all selected files
-- [ ] Copy individual files to clipboard
-- [ ] Preview generated content before download
+- [x] Copy individual files to clipboard
+- [x] Preview generated content before download
 - [ ] Save wizard configurations as drafts
 - [ ] Import existing configs (upload your `.cursorrules` to create template)
 
@@ -50,11 +55,11 @@ This document tracks planned features and improvements for LynxPrompt.
 
 - [ ] View saved templates and preferences
 - [ ] Download history
-- [ ] Favorite templates
+- [x] Favorite templates (displayed in dashboard)
 - [ ] Usage analytics per user
 - [ ] Author earnings dashboard
 - [ ] Payout requests and history
-- [ ] **My Templates section** - list of user's shared templates with stats
+- [x] **My Templates section** - list of user's shared templates with stats
 
 ### Template Sharing & Selling
 
@@ -365,3 +370,4 @@ POST   /api/generate           - Generate config files from wizard data
 - Annual subscription discount (2 months free)
 - **Local app integration**: Instead of downloading files, the IDE automatically receive configs directly from the web and creates files locally
 - **Restrict template sharing to subscribers** (future consideration)
+- Use gravatar for emails
