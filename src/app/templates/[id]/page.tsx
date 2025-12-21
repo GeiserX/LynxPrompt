@@ -18,6 +18,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { trackTemplateView, trackTemplateFavorite } from "@/lib/analytics/client";
 
 // Platform info
 const platformInfo: Record<string, { name: string; file: string }> = {
@@ -80,6 +81,8 @@ export default function TemplateDetailPage() {
         if (res.ok) {
           const data = await res.json();
           setTemplate(data);
+          // Track template view
+          trackTemplateView(data.id, data.name, data.category);
         } else {
           router.push("/templates");
         }
@@ -123,6 +126,8 @@ export default function TemplateDetailPage() {
       if (res.ok) {
         const data = await res.json();
         setIsFavorited(data.favorited);
+        // Track favorite action
+        trackTemplateFavorite(params.id as string, data.favorited);
         // Update local like count
         if (template) {
           setTemplate({

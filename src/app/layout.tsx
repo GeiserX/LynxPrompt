@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import Script from "next/script";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { SessionProvider } from "@/components/providers/session-provider";
+import { AnalyticsProvider } from "@/components/providers/analytics-provider";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
@@ -74,7 +75,9 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            {children}
+            <AnalyticsProvider>
+              {children}
+            </AnalyticsProvider>
             <Toaster />
           </ThemeProvider>
         </SessionProvider>
