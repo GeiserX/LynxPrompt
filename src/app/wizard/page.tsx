@@ -200,8 +200,12 @@ type WizardConfig = {
   languages: string[];
   frameworks: string[];
   letAiDecide: boolean;
+  repoHost: string;
+  repoUrl: string;
+  isPublic: boolean;
   license: string;
   funding: boolean;
+  fundingUrl: string;
   conventionalCommits: boolean;
   semver: boolean;
   releaseStrategy: string;
@@ -226,8 +230,12 @@ export default function WizardPage() {
     languages: [],
     frameworks: [],
     letAiDecide: false,
+    repoHost: "github",
+    repoUrl: "",
+    isPublic: true,
     license: "mit",
     funding: false,
+    fundingUrl: "",
     conventionalCommits: true,
     semver: true,
     releaseStrategy: "",
