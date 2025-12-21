@@ -1,7 +1,9 @@
 import { NextAuthOptions } from "next-auth";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
-import EmailProvider from "next-auth/providers/email";
+import EmailProvider, {
+  SendVerificationRequestParams,
+} from "next-auth/providers/email";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prismaUsers } from "@/lib/db-users";
@@ -12,17 +14,13 @@ import {
 import { createTransport } from "nodemailer";
 
 // Custom email template for magic links
-async function sendVerificationRequest({
-  identifier: email,
-  url,
-  provider,
-}: {
-  identifier: string;
-  url: string;
-  provider: { server: string; from: string };
-}) {
+async function sendVerificationRequest(
+  params: SendVerificationRequestParams
+): Promise<void> {
+  const { identifier: email, url, provider } = params;
   const { host } = new URL(url);
-  const transport = createTransport(provider.server);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const transport = createTransport(provider.server as any);
 
   const result = await transport.sendMail({
     to: email,
