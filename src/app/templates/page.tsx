@@ -234,15 +234,6 @@ export default async function TemplatesPage() {
 }
 
 function TemplateCard({ template }: { template: TemplateData }) {
-  const platformIcons: Record<string, string> = {
-    cursor: "⚡",
-    claude: "🧠",
-    copilot: "🤖",
-    windsurf: "🏄",
-    claude_code: "🧠",
-    github_copilot: "🤖",
-  };
-
   const tierColors: Record<string, string> = {
     SIMPLE: "bg-green-500/10 text-green-600",
     INTERMEDIATE: "bg-blue-500/10 text-blue-600",
@@ -303,20 +294,13 @@ function TemplateCard({ template }: { template: TemplateData }) {
           )}
         </div>
 
-        <div className="mt-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {template.platforms.slice(0, 4).map((p) => (
-              <span key={p} title={p} className="text-lg">
-                {platformIcons[p] || "📦"}
-              </span>
-            ))}
-          </div>
-          {template.difficulty && (
+        {template.difficulty && (
+          <div className="mt-4">
             <span className="text-xs text-muted-foreground capitalize">
-              {template.difficulty}
+              {template.difficulty} level
             </span>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       <div className="flex items-center justify-between border-t px-5 py-3">

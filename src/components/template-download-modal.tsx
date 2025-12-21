@@ -34,20 +34,20 @@ interface TemplateDownloadModalProps {
   targetPlatform?: string; // Override the default platform
 }
 
-const platformInfo: Record<
-  string,
-  { name: string; file: string; icon: string }
-> = {
-  cursor: { name: "Cursor", file: ".cursorrules", icon: "⚡" },
-  claude_code: { name: "Claude Code", file: "CLAUDE.md", icon: "🧠" },
-  github_copilot: {
-    name: "GitHub Copilot",
-    file: ".github/copilot-instructions.md",
-    icon: "🤖",
-  },
-  windsurf: { name: "Windsurf", file: ".windsurfrules", icon: "🏄" },
-  continue_dev: { name: "Continue.dev", file: ".continuerc.json", icon: "▶️" },
-};
+// All supported platforms for download
+const allPlatforms = [
+  { id: "cursor", name: "Cursor", file: ".cursorrules" },
+  { id: "claude_code", name: "Claude Code", file: "CLAUDE.md" },
+  { id: "github_copilot", name: "GitHub Copilot", file: ".github/copilot-instructions.md" },
+  { id: "windsurf", name: "Windsurf", file: ".windsurfrules" },
+  { id: "continue_dev", name: "Continue.dev", file: ".continuerc.json" },
+  { id: "cody", name: "Sourcegraph Cody", file: ".cody/instructions.md" },
+  { id: "aider", name: "Aider", file: ".aider.conf.yml" },
+];
+
+const platformInfo: Record<string, { name: string; file: string }> = Object.fromEntries(
+  allPlatforms.map(p => [p.id, { name: p.name, file: p.file }])
+);
 
 export function TemplateDownloadModal({
   isOpen,
@@ -105,11 +105,6 @@ export function TemplateDownloadModal({
     URL.revokeObjectURL(url);
   };
 
-  const compatiblePlatforms = [
-    template.targetPlatform,
-    ...(template.compatibleWith || []),
-  ].filter(Boolean) as string[];
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-2xl bg-background shadow-2xl">
@@ -133,40 +128,33 @@ export function TemplateDownloadModal({
 
         {/* Content */}
         <div className="max-h-[60vh] overflow-y-auto p-6">
-          {/* Platform Selection */}
-          {compatiblePlatforms.length > 1 && (
-            <div className="mb-6">
-              <label className="mb-2 block text-sm font-medium">
-                Download for Platform
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {compatiblePlatforms.map((p) => {
-                  const info = platformInfo[p];
-                  if (!info) return null;
-                  return (
-                    <button
-                      key={p}
-                      onClick={() => setSelectedPlatform(p)}
-                      className={`flex items-center gap-2 rounded-lg border px-4 py-2 transition-colors ${
-                        selectedPlatform === p
-                          ? "border-primary bg-primary/10"
-                          : "hover:border-primary/50"
-                      }`}
-                    >
-                      <span>{info.icon}</span>
-                      <span className="text-sm">{info.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Will be saved as:{" "}
-                <code className="rounded bg-muted px-1">
-                  {platformInfo[selectedPlatform]?.file}
-                </code>
-              </p>
+          {/* Platform Selection - Always show all platforms */}
+          <div className="mb-6">
+            <label className="mb-2 block text-sm font-medium">
+              Which AI IDE are you using?
+            </label>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {allPlatforms.map((platform) => (
+                <button
+                  key={platform.id}
+                  onClick={() => setSelectedPlatform(platform.id)}
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left transition-colors ${
+                    selectedPlatform === platform.id
+                      ? "border-primary bg-primary/10"
+                      : "hover:border-primary/50"
+                  }`}
+                >
+                  <span className="text-sm font-medium">{platform.name}</span>
+                </button>
+              ))}
             </div>
-          )}
+            <p className="mt-2 text-xs text-muted-foreground">
+              Will be saved as:{" "}
+              <code className="rounded bg-muted px-1">
+                {platformInfo[selectedPlatform]?.file || ".cursorrules"}
+              </code>
+            </p>
+          </div>
 
           {/* Variable Inputs */}
           {Object.keys(sensitiveFields).length > 0 && (
