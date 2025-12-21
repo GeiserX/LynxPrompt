@@ -219,6 +219,7 @@ type WizardConfig = {
 export default function WizardPage() {
   const { data: session, status } = useSession();
   const [currentStep, setCurrentStep] = useState(0);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [config, setConfig] = useState<WizardConfig>({
     projectName: "",
     projectDescription: "",
@@ -275,8 +276,6 @@ export default function WizardPage() {
       setCurrentStep(currentStep - 1);
     }
   };
-
-  const [isDownloading, setIsDownloading] = useState(false);
 
   const toggleArrayValue = (
     key: "languages" | "frameworks" | "aiBehaviorRules" | "platforms",
