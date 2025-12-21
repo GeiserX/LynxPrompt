@@ -13,6 +13,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { UserMenu } from "@/components/user-menu";
 
 type TemplateTier = "simple" | "intermediate" | "advanced";
 
@@ -93,11 +94,12 @@ export default function CreateTemplatePage() {
           <Logo />
           <nav className="flex items-center gap-4">
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/templates">
+              <Link href="/dashboard">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Templates
+                Dashboard
               </Link>
             </Button>
+            <UserMenu />
           </nav>
         </div>
       </header>
