@@ -78,7 +78,10 @@ export async function POST(
         });
       }
 
-      return NextResponse.json({ favorited: false, message: "Removed from favorites" });
+      return NextResponse.json({
+        favorited: false,
+        message: "Removed from favorites",
+      });
     } else {
       // Add favorite
       await prismaUsers.templateFavorite.create({
@@ -102,7 +105,10 @@ export async function POST(
         });
       }
 
-      return NextResponse.json({ favorited: true, message: "Added to favorites" });
+      return NextResponse.json({
+        favorited: true,
+        message: "Added to favorites",
+      });
     }
   } catch (error) {
     console.error("Error toggling favorite:", error);

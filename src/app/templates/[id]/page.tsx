@@ -18,13 +18,19 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
-import { trackTemplateView, trackTemplateFavorite } from "@/lib/analytics/client";
+import {
+  trackTemplateView,
+  trackTemplateFavorite,
+} from "@/lib/analytics/client";
 
 // Platform info
 const platformInfo: Record<string, { name: string; file: string }> = {
   cursor: { name: "Cursor", file: ".cursorrules" },
   claude_code: { name: "Claude Code", file: "CLAUDE.md" },
-  github_copilot: { name: "GitHub Copilot", file: ".github/copilot-instructions.md" },
+  github_copilot: {
+    name: "GitHub Copilot",
+    file: ".github/copilot-instructions.md",
+  },
   windsurf: { name: "Windsurf", file: ".windsurfrules" },
   claude: { name: "Claude Code", file: "CLAUDE.md" },
   copilot: { name: "GitHub Copilot", file: "copilot-instructions.md" },
@@ -57,7 +63,10 @@ interface TemplateData {
   targetPlatform?: string;
   compatibleWith?: string[];
   variables?: Record<string, string>;
-  sensitiveFields?: Record<string, { label: string; required: boolean; placeholder?: string }>;
+  sensitiveFields?: Record<
+    string,
+    { label: string; required: boolean; placeholder?: string }
+  >;
   category?: string;
   difficulty?: string;
 }
@@ -241,7 +250,9 @@ export default function TemplateDetailPage() {
                   </span>
                 )}
                 {template.difficulty && (
-                  <span className="capitalize">{template.difficulty} level</span>
+                  <span className="capitalize">
+                    {template.difficulty} level
+                  </span>
                 )}
               </div>
             </div>
@@ -250,10 +261,16 @@ export default function TemplateDetailPage() {
             {template.targetPlatform && (
               <div className="mb-8 rounded-xl border bg-muted/30 p-4">
                 <p className="text-sm text-muted-foreground">
-                  <span className="font-medium text-foreground">Originally built for: </span>
-                  {platformInfo[template.targetPlatform]?.name || template.targetPlatform}
+                  <span className="font-medium text-foreground">
+                    Originally built for:{" "}
+                  </span>
+                  {platformInfo[template.targetPlatform]?.name ||
+                    template.targetPlatform}
                   <span className="mx-2">•</span>
-                  <span>Works with any AI IDE — choose your platform when downloading.</span>
+                  <span>
+                    Works with any AI IDE — choose your platform when
+                    downloading.
+                  </span>
                 </p>
               </div>
             )}

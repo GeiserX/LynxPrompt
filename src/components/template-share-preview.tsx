@@ -39,27 +39,56 @@ interface SanitizedTemplate {
 // Patterns to detect and sanitize
 const sensitivePatterns = [
   // URLs with specific domains
-  { pattern: /https?:\/\/[^\s"']+\.(local|internal|corp)\b[^\s"']*/gi, replacement: "{{INTERNAL_URL}}" },
+  {
+    pattern: /https?:\/\/[^\s"']+\.(local|internal|corp)\b[^\s"']*/gi,
+    replacement: "{{INTERNAL_URL}}",
+  },
   // IP addresses
-  { pattern: /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g, replacement: "{{IP_ADDRESS}}" },
+  {
+    pattern: /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g,
+    replacement: "{{IP_ADDRESS}}",
+  },
   // Ports with specific numbers
   { pattern: /:(\d{4,5})\b/g, replacement: ":{{PORT}}" },
   // API keys patterns
-  { pattern: /['"](sk|pk|api|key|token|secret|password)[-_]?[a-zA-Z0-9]{20,}['"]/gi, replacement: '"{{API_KEY}}"' },
+  {
+    pattern:
+      /['"](sk|pk|api|key|token|secret|password)[-_]?[a-zA-Z0-9]{20,}['"]/gi,
+    replacement: '"{{API_KEY}}"',
+  },
   // Environment variables with values
-  { pattern: /(\w+_SECRET|_KEY|_TOKEN|_PASSWORD)\s*[=:]\s*["']?[^"'\n]+["']?/gi, replacement: "$1={{SECRET}}" },
+  {
+    pattern: /(\w+_SECRET|_KEY|_TOKEN|_PASSWORD)\s*[=:]\s*["']?[^"'\n]+["']?/gi,
+    replacement: "$1={{SECRET}}",
+  },
   // Email addresses
-  { pattern: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, replacement: "{{EMAIL}}" },
+  {
+    pattern: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
+    replacement: "{{EMAIL}}",
+  },
   // Usernames in URLs
-  { pattern: /github\.com\/[a-zA-Z0-9-]+/g, replacement: "github.com/{{USERNAME}}" },
+  {
+    pattern: /github\.com\/[a-zA-Z0-9-]+/g,
+    replacement: "github.com/{{USERNAME}}",
+  },
   // Docker registry URLs with user
-  { pattern: /[a-zA-Z0-9.-]+\.(ts\.net|local):?\d*\/[a-zA-Z0-9-]+/g, replacement: "{{REGISTRY}}/{{IMAGE}}" },
+  {
+    pattern: /[a-zA-Z0-9.-]+\.(ts\.net|local):?\d*\/[a-zA-Z0-9-]+/g,
+    replacement: "{{REGISTRY}}/{{IMAGE}}",
+  },
 ];
 
 // Words that might indicate project-specific content
 const specificityIndicators = [
-  "my-", "our-", "-prod", "-staging", "-dev",
-  "internal", "private", "corp", "company",
+  "my-",
+  "our-",
+  "-prod",
+  "-staging",
+  "-dev",
+  "internal",
+  "private",
+  "corp",
+  "company",
 ];
 
 export function TemplateSharePreview({
@@ -85,7 +114,9 @@ export function TemplateSharePreview({
     sensitivePatterns.forEach(({ pattern, replacement }) => {
       const matches = content.match(pattern);
       if (matches) {
-        issues.push(`Found ${matches.length} instance(s) of potentially sensitive data`);
+        issues.push(
+          `Found ${matches.length} instance(s) of potentially sensitive data`
+        );
         content = content.replace(pattern, replacement);
       }
     });
@@ -106,7 +137,9 @@ export function TemplateSharePreview({
     // Check for specificity indicators
     specificityIndicators.forEach((indicator) => {
       if (content.toLowerCase().includes(indicator)) {
-        issues.push(`Content may contain project-specific term: "${indicator}"`);
+        issues.push(
+          `Content may contain project-specific term: "${indicator}"`
+        );
       }
     });
 
@@ -146,10 +179,7 @@ export function TemplateSharePreview({
               </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="rounded-full p-2 hover:bg-muted"
-          >
+          <button onClick={onClose} className="rounded-full p-2 hover:bg-muted">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -164,9 +194,9 @@ export function TemplateSharePreview({
                 Automatic Sanitization Applied
               </h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                We automatically detect and replace sensitive data like API keys,
-                internal URLs, IP addresses, and project-specific names with
-                placeholders. Please review the content below.
+                We automatically detect and replace sensitive data like API
+                keys, internal URLs, IP addresses, and project-specific names
+                with placeholders. Please review the content below.
               </p>
             </div>
           </div>

@@ -179,8 +179,7 @@ async function main() {
     },
     {
       name: "Python Data Science",
-      description:
-        "Optimized for Jupyter notebooks, pandas, and ML workflows",
+      description: "Optimized for Jupyter notebooks, pandas, and ML workflows",
       type: TemplateType.CURSORRULES,
       tier: TemplateTier.INTERMEDIATE,
       targetPlatform: "cursor",

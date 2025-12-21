@@ -134,7 +134,8 @@ export default function CreateTemplatePage() {
               <div className="mt-12 text-center">
                 <Button size="lg" asChild>
                   <Link href={`/templates/create/${selectedTier}`}>
-                    Continue with {tiers.find((t) => t.id === selectedTier)?.name}
+                    Continue with{" "}
+                    {tiers.find((t) => t.id === selectedTier)?.name}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
@@ -146,16 +147,14 @@ export default function CreateTemplatePage() {
 
             {/* Info Section */}
             <div className="mt-16 rounded-xl border bg-muted/30 p-8">
-              <h2 className="text-xl font-semibold">
-                How Template Tiers Work
-              </h2>
+              <h2 className="text-xl font-semibold">How Template Tiers Work</h2>
               <div className="mt-6 grid gap-6 md:grid-cols-3">
                 <div>
                   <h3 className="font-medium text-primary">Simple</h3>
                   <p className="mt-2 text-sm text-muted-foreground">
                     Fill in basic project info and get a working template
-                    instantly. Best for quick setups or when you&apos;re new to AI
-                    IDE configurations.
+                    instantly. Best for quick setups or when you&apos;re new to
+                    AI IDE configurations.
                   </p>
                 </div>
                 <div>
@@ -269,10 +268,7 @@ function TierCard({
         </h4>
         <ul className="space-y-1">
           {tier.limitations.map((limitation, i) => (
-            <li
-              key={i}
-              className="text-xs text-muted-foreground"
-            >
+            <li key={i} className="text-xs text-muted-foreground">
               • {limitation}
             </li>
           ))}
