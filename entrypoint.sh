@@ -1,16 +1,9 @@
 #!/bin/sh
 set -e
 
-echo "Running database migrations..."
+echo "Starting LynxPrompt..."
 
-# Push schema to app database
-npx prisma db push --schema=prisma/schema-app.prisma --skip-generate
+# Note: Database migrations should be run manually or via a separate init container
+# Tables are expected to already exist. Use prisma db push locally before deploying.
 
-# Push schema to users database
-npx prisma db push --schema=prisma/schema-users.prisma --skip-generate
-
-echo "Running database seed..."
-npx prisma db seed || echo "Seed already applied or failed (continuing...)"
-
-echo "Starting application..."
 exec node server.js
