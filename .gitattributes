@@ -1,0 +1,6 @@
+# Force LF line endings for shell scripts
+*.sh text eol=lf
+entrypoint.sh text eol=lf
+
+# Default to auto detection for other files
+* text=auto
