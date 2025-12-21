@@ -6,7 +6,6 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
-  Sparkles,
   Mail,
   Github,
   Chrome,
@@ -83,10 +82,7 @@ function SignInContent() {
     <div className="flex min-h-screen">
       {/* Left side - Branding */}
       <div className="hidden flex-1 flex-col justify-between bg-gradient-to-br from-purple-600 to-pink-600 p-12 text-white lg:flex">
-        <Link href="/" className="flex items-center gap-2">
-          <Sparkles className="h-8 w-8" />
-          <span className="text-2xl font-bold">LynxPrompt</span>
-        </Link>
+        <Logo className="brightness-0 invert" />
 
         <div className="max-w-md">
           <h1 className="text-4xl font-bold leading-tight">
