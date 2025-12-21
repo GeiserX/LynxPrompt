@@ -134,17 +134,31 @@ export const authOptions: NextAuthOptions = {
         // For database sessions (OAuth, Email)
         if (user) {
           session.user.id = user.id;
-          // Fetch role from database
+          // Fetch role and profile fields from database
           const dbUser = await prismaUsers.user.findUnique({
             where: { id: user.id },
-            select: { role: true },
+            select: {
+              role: true,
+              displayName: true,
+              persona: true,
+              skillLevel: true,
+              profileCompleted: true,
+            },
           });
           session.user.role = dbUser?.role || "USER";
+          session.user.displayName = dbUser?.displayName || null;
+          session.user.persona = dbUser?.persona || null;
+          session.user.skillLevel = dbUser?.skillLevel || null;
+          session.user.profileCompleted = dbUser?.profileCompleted || false;
         }
         // For JWT sessions (Passkey)
         if (token) {
           session.user.id = token.sub as string;
           session.user.role = token.role as string || "USER";
+          session.user.displayName = token.displayName as string | null;
+          session.user.persona = token.persona as string | null;
+          session.user.skillLevel = token.skillLevel as string | null;
+          session.user.profileCompleted = token.profileCompleted as boolean || false;
         }
       }
       return session;
@@ -154,9 +168,19 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         const dbUser = await prismaUsers.user.findUnique({
           where: { id: user.id },
-          select: { role: true },
+          select: {
+            role: true,
+            displayName: true,
+            persona: true,
+            skillLevel: true,
+            profileCompleted: true,
+          },
         });
         token.role = dbUser?.role || "USER";
+        token.displayName = dbUser?.displayName || null;
+        token.persona = dbUser?.persona || null;
+        token.skillLevel = dbUser?.skillLevel || null;
+        token.profileCompleted = dbUser?.profileCompleted || false;
       }
       return token;
     },

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
   X,
@@ -55,6 +56,7 @@ export function TemplateDownloadModal({
   template,
   targetPlatform,
 }: TemplateDownloadModalProps) {
+  const { data: session } = useSession();
   const [values, setValues] = useState<Record<string, string>>({});
   const [copied, setCopied] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -62,12 +64,30 @@ export function TemplateDownloadModal({
     targetPlatform || template.targetPlatform || "cursor"
   );
 
-  // Initialize values from template variables
+  // Initialize values from template variables AND user session data
   useEffect(() => {
+    const initialValues: Record<string, string> = {};
+    
+    // Start with template variables
     if (template.variables) {
-      setValues(template.variables);
+      Object.assign(initialValues, template.variables);
     }
-  }, [template.variables]);
+
+    // Auto-fill author-related fields from session if user is logged in
+    if (session?.user) {
+      const authorName = session.user.displayName || session.user.name || "";
+      
+      // Common author field names that templates might use
+      const authorFields = ["AUTHOR_NAME", "author", "AUTHOR", "authorName", "author_name"];
+      for (const field of authorFields) {
+        if (!initialValues[field] && authorName) {
+          initialValues[field] = authorName;
+        }
+      }
+    }
+
+    setValues(initialValues);
+  }, [template.variables, session]);
 
   if (!isOpen) return null;
 
@@ -121,6 +141,8 @@ export function TemplateDownloadModal({
           <button
             onClick={onClose}
             className="rounded-full p-2 hover:bg-muted"
+            aria-label="Close modal"
+            title="Close"
           >
             <X className="h-5 w-5" />
           </button>
@@ -128,6 +150,33 @@ export function TemplateDownloadModal({
 
         {/* Content */}
         <div className="max-h-[60vh] overflow-y-auto p-6">
+          {/* Show logged-in user info for author attribution */}
+          {session?.user && (
+            <div className="mb-6 flex items-center gap-3 rounded-lg border bg-muted/30 p-3">
+              {session.user.image ? (
+                <img
+                  src={session.user.image}
+                  alt=""
+                  className="h-8 w-8 rounded-full"
+                />
+              ) : (
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                  <span className="text-sm font-medium">
+                    {(session.user.displayName || session.user.name || "U")[0]}
+                  </span>
+                </div>
+              )}
+              <div className="flex-1">
+                <p className="text-sm font-medium">
+                  Downloading as {session.user.displayName || session.user.name}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Author name auto-filled from your profile
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Platform Selection - Always show all platforms */}
           <div className="mb-6">
             <label className="mb-2 block text-sm font-medium">
