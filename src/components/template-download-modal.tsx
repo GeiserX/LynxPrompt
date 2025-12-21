@@ -13,6 +13,7 @@ import {
   EyeOff,
   Info,
 } from "lucide-react";
+import { trackTemplateDownload } from "@/lib/analytics/client";
 
 interface SensitiveField {
   label: string;
@@ -118,6 +119,10 @@ export function TemplateDownloadModal({
     
     // Track the download if template has an ID
     if (template.id) {
+      // Track in ClickHouse for real-time analytics
+      trackTemplateDownload(template.id, selectedPlatform, template.name);
+      
+      // Also track in PostgreSQL for denormalized counts
       try {
         await fetch(`/api/templates/${template.id}/download`, {
           method: "POST",
