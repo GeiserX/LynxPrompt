@@ -68,6 +68,8 @@ model User {
   templates      UserTemplate[]
   projects       Project[]
   authenticators Authenticator[]
+  favorites      TemplateFavorite[]
+  downloads      TemplateDownload[]
 
   @@index([email])
   @@index([role])
@@ -141,10 +143,13 @@ model UserTemplate {
   name        String
   description String?
   type        TemplateType
-  content     String       @db.Text
-  variables   Json?
+  content     String       @db.Text   // ALWAYS stored with placeholders like {{AUTHOR_NAME}}
+  variables   Json?                    // Default values for variables (NOT personal data)
   isPublic    Boolean      @default(false)
-  usageCount  Int          @default(0)
+  
+  // Statistics (denormalized for performance, updated via triggers/API)
+  downloads    Int          @default(0)
+  favorites    Int          @default(0)
   
   tier             TemplateTier @default(INTERMEDIATE)
   targetPlatform   String?
@@ -152,6 +157,9 @@ model UserTemplate {
   tags             String[]
   category         String?
   difficulty       String?
+  
+  // Privacy: defines which fields contain personal data and should be stripped when sharing
+  // Format: { "AUTHOR_NAME": { "label": "Author Name", "private": true }, ... }
   sensitiveFields  Json?
   
   createdAt   DateTime     @default(now())
@@ -163,6 +171,8 @@ model UserTemplate {
   @@index([type])
   @@index([isPublic])
   @@index([tier])
+  @@index([downloads])
+  @@index([favorites])
 }
 
 enum TemplateTier {
@@ -215,6 +225,43 @@ model Project {
 
   @@index([userId])
   @@index([persona])
+}
+
+// ============================================================================
+// TEMPLATE FAVORITES - Track which users favorited which templates
+// ============================================================================
+
+model TemplateFavorite {
+  id           String   @id @default(cuid())
+  userId       String
+  templateId   String   // Can be SystemTemplate or UserTemplate ID
+  templateType String   // "system" or "user" - which database the template is in
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, templateId, templateType])
+  @@index([templateId, templateType])
+  @@index([userId])
+}
+
+// ============================================================================
+// TEMPLATE DOWNLOADS - Track template downloads (can be anonymous)
+// ============================================================================
+
+model TemplateDownload {
+  id           String   @id @default(cuid())
+  userId       String?  // null for anonymous downloads
+  templateId   String
+  templateType String   // "system" or "user"
+  platform     String?  // which IDE they downloaded for (cursor, claude, etc.)
+  createdAt    DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([templateId, templateType])
+  @@index([userId])
+  @@index([createdAt])
 }
 
 // ============================================================================

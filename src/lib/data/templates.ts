@@ -352,8 +352,8 @@ export async function getTemplates(options?: {
     content: t.content,
     author: "LynxPrompt",
     authorId: undefined,
-    downloads: t.usageCount,
-    likes: 0,
+    downloads: t.downloads || 0,
+    likes: t.favorites || 0,
     tags: (t.tags as string[]) || extractTags(t.name, t.description || ""),
     platforms: t.compatibleWith?.length
       ? [t.targetPlatform, ...t.compatibleWith].filter((p): p is string => p !== null && p !== undefined)
@@ -377,8 +377,8 @@ export async function getTemplates(options?: {
     content: t.content,
     author: t.user?.name || "Anonymous",
     authorId: t.userId,
-    downloads: t.usageCount,
-    likes: 0,
+    downloads: t.downloads || 0,
+    likes: t.favorites || 0,
     tags: (t.tags as string[]) || extractTags(t.name, t.description || ""),
     platforms: t.compatibleWith?.length
       ? [t.targetPlatform, ...t.compatibleWith].filter((p): p is string => p !== null && p !== undefined)
@@ -463,8 +463,8 @@ export async function getTemplateById(
       content: template.content,
       author: "LynxPrompt",
       authorId: undefined,
-      downloads: template.usageCount,
-      likes: 0,
+      downloads: template.downloads || 0,
+      likes: template.favorites || 0,
       tags: (template.tags as string[]) || [],
       platforms: template.compatibleWith?.length
         ? [template.targetPlatform, ...(template.compatibleWith as string[])].filter((p): p is string => p !== null && p !== undefined)
@@ -503,8 +503,8 @@ export async function getTemplateById(
       content: template.content,
       author: template.user?.name || "Anonymous",
       authorId: template.userId,
-      downloads: template.usageCount,
-      likes: 0,
+      downloads: template.downloads || 0,
+      likes: template.favorites || 0,
       tags: (template.tags as string[]) || [],
       platforms: template.compatibleWith?.length
         ? [template.targetPlatform, ...(template.compatibleWith as string[])].filter((p): p is string => p !== null && p !== undefined)
@@ -534,8 +534,8 @@ export async function getTemplateById(
       content: systemTemplate.content,
       author: "LynxPrompt",
       authorId: undefined,
-      downloads: systemTemplate.usageCount,
-      likes: 0,
+      downloads: systemTemplate.downloads || 0,
+      likes: systemTemplate.favorites || 0,
       tags: (systemTemplate.tags as string[]) || [],
       platforms: typeToPlatform[systemTemplate.type] || [],
       isOfficial: true,
@@ -555,6 +555,7 @@ export async function getTemplateById(
 
 /**
  * Increment template download/usage count
+ * @deprecated Use the /api/templates/[id]/download endpoint instead for proper tracking
  */
 export async function incrementTemplateUsage(id: string): Promise<void> {
   if (isMockMode()) {
@@ -567,7 +568,7 @@ export async function incrementTemplateUsage(id: string): Promise<void> {
     const realId = id.replace("sys_", "");
     await prismaApp.systemTemplate.update({
       where: { id: realId },
-      data: { usageCount: { increment: 1 } },
+      data: { downloads: { increment: 1 } },
     });
   } else if (id.startsWith("usr_")) {
     const realId = id.replace("usr_", "");

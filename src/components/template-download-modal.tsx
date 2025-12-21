@@ -24,6 +24,7 @@ interface TemplateDownloadModalProps {
   isOpen: boolean;
   onClose: () => void;
   template: {
+    id?: string; // Template ID for tracking downloads
     name: string;
     description?: string;
     content: string;
@@ -111,9 +112,25 @@ export function TemplateDownloadModal({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     const platform = platformInfo[selectedPlatform];
     const filename = platform?.file || ".cursorrules";
+    
+    // Track the download if template has an ID
+    if (template.id) {
+      try {
+        await fetch(`/api/templates/${template.id}/download`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ platform: selectedPlatform }),
+        });
+      } catch {
+        // Don't fail the download if tracking fails
+        console.warn("Failed to track download");
+      }
+    }
+
+    // Perform the actual download
     const blob = new Blob([processedContent], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
