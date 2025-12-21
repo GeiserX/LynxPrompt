@@ -1,4 +1,4 @@
-name: CI/CD
+﻿name: CI/CD
 
 on:
   push:
@@ -31,8 +31,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate Prisma client
-        run: npx prisma generate
+      - name: Generate Prisma clients
+        run: |
+          npx prisma generate --schema=prisma/schema-app.prisma
+          npx prisma generate --schema=prisma/schema-users.prisma
 
       - name: Run ESLint
         run: npm run lint
@@ -63,8 +65,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate Prisma client
-        run: npx prisma generate
+      - name: Generate Prisma clients
+        run: |
+          npx prisma generate --schema=prisma/schema-app.prisma
+          npx prisma generate --schema=prisma/schema-users.prisma
 
       - name: Run tests
         run: npm run test -- --coverage
@@ -96,8 +100,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate Prisma client
-        run: npx prisma generate
+      - name: Generate Prisma clients
+        run: |
+          npx prisma generate --schema=prisma/schema-app.prisma
+          npx prisma generate --schema=prisma/schema-users.prisma
 
       - name: Build application
         run: npm run build
