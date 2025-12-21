@@ -123,9 +123,9 @@ export default async function TemplatesPage() {
               </div>
 
               <Button asChild className="w-full">
-                <Link href="/auth/signin">
+                <Link href="/templates/create">
                   <Plus className="mr-2 h-4 w-4" />
-                  Submit Template
+                  Create Template
                 </Link>
               </Button>
             </div>
@@ -239,16 +239,39 @@ function TemplateCard({ template }: { template: TemplateData }) {
     claude: "🧠",
     copilot: "🤖",
     windsurf: "🏄",
+    claude_code: "🧠",
+    github_copilot: "🤖",
+  };
+
+  const tierColors: Record<string, string> = {
+    SIMPLE: "bg-green-500/10 text-green-600",
+    INTERMEDIATE: "bg-blue-500/10 text-blue-600",
+    ADVANCED: "bg-purple-500/10 text-purple-600",
+  };
+
+  const tierLabels: Record<string, string> = {
+    SIMPLE: "Simple",
+    INTERMEDIATE: "Intermediate",
+    ADVANCED: "Advanced",
   };
 
   return (
     <div className="group flex flex-col rounded-xl border bg-card transition-shadow hover:shadow-lg">
       <div className="flex-1 p-5">
         <div className="flex items-start justify-between">
-          <div>
-            <h3 className="font-semibold group-hover:text-primary">
-              {template.name}
-            </h3>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold group-hover:text-primary">
+                {template.name}
+              </h3>
+              {template.tier && (
+                <span
+                  className={`rounded px-1.5 py-0.5 text-xs font-medium ${tierColors[template.tier] || ""}`}
+                >
+                  {tierLabels[template.tier]}
+                </span>
+              )}
+            </div>
             <p className="mt-0.5 text-sm text-muted-foreground">
               by {template.author}
               {template.isOfficial && (
@@ -265,7 +288,7 @@ function TemplateCard({ template }: { template: TemplateData }) {
         </p>
 
         <div className="mt-4 flex flex-wrap gap-1.5">
-          {template.tags.map((tag) => (
+          {template.tags.slice(0, 4).map((tag) => (
             <span
               key={tag}
               className="rounded-full bg-muted px-2 py-0.5 text-xs"
@@ -273,14 +296,26 @@ function TemplateCard({ template }: { template: TemplateData }) {
               {tag}
             </span>
           ))}
+          {template.tags.length > 4 && (
+            <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+              +{template.tags.length - 4}
+            </span>
+          )}
         </div>
 
-        <div className="mt-4 flex items-center gap-3">
-          {template.platforms.map((p) => (
-            <span key={p} title={p} className="text-lg">
-              {platformIcons[p] || "📦"}
+        <div className="mt-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {template.platforms.slice(0, 4).map((p) => (
+              <span key={p} title={p} className="text-lg">
+                {platformIcons[p] || "📦"}
+              </span>
+            ))}
+          </div>
+          {template.difficulty && (
+            <span className="text-xs text-muted-foreground capitalize">
+              {template.difficulty}
             </span>
-          ))}
+          )}
         </div>
       </div>
 
@@ -288,15 +323,15 @@ function TemplateCard({ template }: { template: TemplateData }) {
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <span className="flex items-center gap-1">
             <Download className="h-4 w-4" />
-            {template.downloads}
+            {template.downloads.toLocaleString()}
           </span>
           <span className="flex items-center gap-1">
             <Heart className="h-4 w-4" />
             {template.likes}
           </span>
         </div>
-        <Button variant="ghost" size="sm">
-          Use Template
+        <Button variant="ghost" size="sm" asChild>
+          <Link href={`/templates/${template.id}`}>Use Template</Link>
         </Button>
       </div>
     </div>

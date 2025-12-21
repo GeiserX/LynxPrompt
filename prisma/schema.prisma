@@ -104,10 +104,26 @@ model Template {
   description String?
   type        TemplateType
   content     String       @db.Text
-  variables   Json?        // Variables that can be substituted (e.g., {{AUTHOR_NAME}})
+  variables   Json?        // Variables that can be substituted (e.g., {{APP_NAME}})
   isPublic    Boolean      @default(false)
   isSystem    Boolean      @default(false) // System-provided templates
   usageCount  Int          @default(0)
+  
+  // Template complexity tier
+  tier        TemplateTier @default(INTERMEDIATE)
+  
+  // Cross-IDE compatibility
+  targetPlatform  String?      // Primary IDE this was created for (e.g., "cursor", "claude_code")
+  compatibleWith  String[]     // List of compatible platform IDs
+  
+  // Metadata for marketplace
+  tags        String[]
+  category    String?          // e.g., "web", "mobile", "devops", "data-science"
+  difficulty  String?          // "beginner", "intermediate", "advanced"
+  
+  // Sanitization metadata
+  sensitiveFields Json?        // Fields that should be prompted when downloading
+  
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
@@ -116,6 +132,15 @@ model Template {
   @@index([userId])
   @@index([type])
   @@index([isPublic])
+  @@index([tier])
+  @@index([targetPlatform])
+  @@index([category])
+}
+
+enum TemplateTier {
+  SIMPLE       // Basic template with minimal customization
+  INTERMEDIATE // Moderate customization with common patterns
+  ADVANCED     // Full control with complex logic and conditions
 }
 
 enum TemplateType {

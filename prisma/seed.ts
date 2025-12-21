@@ -1,4 +1,4 @@
-import { PrismaClient, TemplateType } from "@prisma/client";
+import { PrismaClient, TemplateType, TemplateTier } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -164,6 +164,7 @@ async function main() {
       name: "MIT License",
       description: "A permissive license that allows reuse with attribution",
       type: TemplateType.LICENSE,
+      tier: TemplateTier.SIMPLE,
       content: `MIT License
 
 Copyright (c) {{YEAR}} {{AUTHOR_NAME}}
@@ -186,6 +187,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.`,
       variables: { YEAR: "2025", AUTHOR_NAME: "" },
+      sensitiveFields: { AUTHOR_NAME: { label: "Author Name", required: true } },
+      tags: ["license", "permissive", "oss"],
+      category: "legal",
       isPublic: true,
       isSystem: true,
     },
@@ -193,6 +197,7 @@ SOFTWARE.`,
       name: "Apache 2.0 License",
       description: "A permissive license with patent rights grant",
       type: TemplateType.LICENSE,
+      tier: TemplateTier.SIMPLE,
       content: `Apache License
 Version 2.0, January 2004
 http://www.apache.org/licenses/
@@ -211,6 +216,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.`,
       variables: { YEAR: "2025", AUTHOR_NAME: "" },
+      sensitiveFields: { AUTHOR_NAME: { label: "Author Name", required: true } },
+      tags: ["license", "permissive", "patents", "oss"],
+      category: "legal",
       isPublic: true,
       isSystem: true,
     },
@@ -218,6 +226,7 @@ limitations under the License.`,
       name: "GitHub Funding",
       description: "Basic FUNDING.yml template",
       type: TemplateType.FUNDING,
+      tier: TemplateTier.SIMPLE,
       content: `# These are supported funding model platforms
 
 github: [{{GITHUB_USERNAME}}]
@@ -227,6 +236,11 @@ github: [{{GITHUB_USERNAME}}]
 # tidelift: # Replace with a single Tidelift platform-name/package-name e.g., npm/babel
 # custom: # Replace with up to 4 custom sponsorship URLs e.g., ['link1', 'link2']`,
       variables: { GITHUB_USERNAME: "" },
+      sensitiveFields: {
+        GITHUB_USERNAME: { label: "GitHub Username", required: true },
+      },
+      tags: ["funding", "sponsorship", "github"],
+      category: "repository",
       isPublic: true,
       isSystem: true,
     },
@@ -234,13 +248,25 @@ github: [{{GITHUB_USERNAME}}]
     // AI IDE Configuration Templates
     // =========================================================================
     {
-      name: "Full-Stack TypeScript",
+      name: "Next.js Full-Stack Application",
       description:
-        "Complete setup for Next.js, TypeScript, Prisma, and testing with AI-powered coding assistance",
+        "Complete setup for Next.js 15, TypeScript, Prisma ORM, and modern web development with comprehensive AI coding assistance rules",
       type: TemplateType.CURSORRULES,
-      content: `# Full-Stack TypeScript Project Rules
+      tier: TemplateTier.ADVANCED,
+      targetPlatform: "cursor",
+      compatibleWith: ["claude_code", "windsurf", "github_copilot"],
+      content: `# {{APP_NAME}} Project Rules
 
-You are an expert in TypeScript, Next.js 14+ (App Router), React, Prisma, and modern web development.
+## Project Overview
+{{APP_NAME}} is a web application built with Next.js 15 (App Router), React 19, TypeScript, and Prisma ORM.
+
+## Tech Stack
+- **Frontend**: Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS, shadcn/ui
+- **Backend**: Next.js API Routes
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: NextAuth.js
+- **Testing**: Vitest, React Testing Library
+- **Containerization**: Docker with multi-stage builds
 
 ## Code Style
 - Write concise, type-safe TypeScript code
@@ -250,29 +276,85 @@ You are an expert in TypeScript, Next.js 14+ (App Router), React, Prisma, and mo
 
 ## Architecture
 - Follow Next.js App Router conventions
-- Use Server Components by default, Client Components when needed
-- Implement proper error boundaries
-- Use Prisma for database operations
+- Use Server Components by default, Client Components only when needed
+- Implement proper error boundaries and loading states
+- Use Prisma for all database operations
+- Keep API routes thin, move logic to lib/services
+
+## File Structure
+\`\`\`
+src/
+├── app/           # Next.js App Router pages
+├── components/    # Reusable UI components
+├── lib/           # Utilities, helpers, services
+├── types/         # TypeScript type definitions
+└── styles/        # Global styles
+\`\`\`
 
 ## Best Practices
-- Always validate user input
-- Use Zod for schema validation
-- Implement proper error handling
+- Always validate user input with Zod
+- Implement proper error handling with try/catch
 - Write unit tests for critical functions
-- Use conventional commits for version control`,
-      variables: {},
+- Use conventional commits for version control
+- Always debug after building locally
+- Check logs automatically after builds
+- Follow existing patterns in the codebase
+
+## Database Operations
+\`\`\`bash
+npx prisma generate    # Generate client
+npx prisma db push     # Push schema
+npx prisma db seed     # Seed data
+\`\`\`
+
+## Known Patterns
+- \`useSearchParams\` requires Suspense boundary in client components
+- Database pages need \`export const dynamic = "force-dynamic"\`
+- Use environment variables for all configuration
+
+## Owner
+{{AUTHOR_NAME}}`,
+      variables: { APP_NAME: "", AUTHOR_NAME: "" },
+      sensitiveFields: {
+        APP_NAME: {
+          label: "Application Name",
+          required: true,
+          placeholder: "MyApp",
+        },
+        AUTHOR_NAME: {
+          label: "Author/Owner Name",
+          required: false,
+          placeholder: "Your Name",
+        },
+      },
+      tags: [
+        "nextjs",
+        "typescript",
+        "react",
+        "prisma",
+        "fullstack",
+        "tailwind",
+      ],
+      category: "web",
+      difficulty: "intermediate",
       isPublic: true,
       isSystem: true,
-      usageCount: 1234,
+      usageCount: 1567,
     },
     {
       name: "Python Data Science",
       description:
         "Optimized for Jupyter notebooks, pandas, and ML workflows with intelligent code completion",
       type: TemplateType.CURSORRULES,
-      content: `# Python Data Science Rules
+      tier: TemplateTier.INTERMEDIATE,
+      targetPlatform: "cursor",
+      compatibleWith: ["claude_code", "windsurf", "github_copilot"],
+      content: `# {{APP_NAME}} - Data Science Project Rules
 
 You are an expert in Python, pandas, NumPy, scikit-learn, and data science workflows.
+
+## Project Context
+{{PROJECT_DESCRIPTION}}
 
 ## Code Style
 - Follow PEP 8 guidelines
@@ -287,12 +369,47 @@ You are an expert in Python, pandas, NumPy, scikit-learn, and data science workf
 - Document data transformations
 
 ## Best Practices
-- Use virtual environments
-- Pin dependency versions
+- Use virtual environments (venv or conda)
+- Pin dependency versions in requirements.txt
 - Write reproducible notebooks
 - Include data validation checks
-- Log experiment parameters`,
-      variables: {},
+- Log experiment parameters
+
+## Common Commands
+\`\`\`bash
+python -m venv venv       # Create virtual env
+pip install -r requirements.txt  # Install deps
+pytest tests/ -v          # Run tests
+jupyter lab               # Start Jupyter
+\`\`\`
+
+## Notes
+{{ADDITIONAL_NOTES}}`,
+      variables: {
+        APP_NAME: "",
+        PROJECT_DESCRIPTION: "",
+        ADDITIONAL_NOTES: "",
+      },
+      sensitiveFields: {
+        APP_NAME: {
+          label: "Project Name",
+          required: true,
+          placeholder: "ml-project",
+        },
+        PROJECT_DESCRIPTION: {
+          label: "Project Description",
+          required: false,
+          placeholder: "Brief description of your data science project",
+        },
+        ADDITIONAL_NOTES: {
+          label: "Additional Notes",
+          required: false,
+          placeholder: "Any specific notes for this project",
+        },
+      },
+      tags: ["python", "data-science", "pandas", "numpy", "ml", "jupyter"],
+      category: "data-science",
+      difficulty: "intermediate",
       isPublic: true,
       isSystem: true,
       usageCount: 856,
@@ -302,7 +419,10 @@ You are an expert in Python, pandas, NumPy, scikit-learn, and data science workf
       description:
         "Production-ready Go setup with Docker, Kubernetes configs, and API development rules",
       type: TemplateType.CURSORRULES,
-      content: `# Go Microservices Rules
+      tier: TemplateTier.ADVANCED,
+      targetPlatform: "cursor",
+      compatibleWith: ["claude_code", "windsurf", "github_copilot"],
+      content: `# {{APP_NAME}} - Go Microservices Rules
 
 You are an expert in Go, microservices architecture, Docker, and Kubernetes.
 
@@ -315,16 +435,33 @@ You are an expert in Go, microservices architecture, Docker, and Kubernetes.
 ## Architecture
 - Design for horizontal scaling
 - Implement health checks
-- Use structured logging
+- Use structured logging (zerolog/zap)
 - Follow 12-factor app principles
 
 ## Best Practices
 - Write table-driven tests
 - Use context for cancellation
 - Implement graceful shutdown
-- Document API endpoints
-- Use dependency injection`,
-      variables: {},
+- Document API endpoints with OpenAPI
+- Use dependency injection
+
+## Common Commands
+\`\`\`bash
+go run ./cmd/{{APP_NAME}}   # Run the service
+go test ./... -v            # Run all tests
+go build -o bin/{{APP_NAME}} ./cmd/{{APP_NAME}}  # Build
+\`\`\``,
+      variables: { APP_NAME: "" },
+      sensitiveFields: {
+        APP_NAME: {
+          label: "Service Name",
+          required: true,
+          placeholder: "my-service",
+        },
+      },
+      tags: ["go", "microservices", "docker", "kubernetes", "api"],
+      category: "backend",
+      difficulty: "advanced",
       isPublic: true,
       isSystem: true,
       usageCount: 623,
@@ -334,7 +471,10 @@ You are an expert in Go, microservices architecture, Docker, and Kubernetes.
       description:
         "Perfect for building reusable UI components with Storybook, testing, and documentation",
       type: TemplateType.CURSORRULES,
-      content: `# React Component Library Rules
+      tier: TemplateTier.INTERMEDIATE,
+      targetPlatform: "cursor",
+      compatibleWith: ["claude_code", "windsurf", "github_copilot"],
+      content: `# {{APP_NAME}} Component Library Rules
 
 You are an expert in React, TypeScript, Storybook, and component library development.
 
@@ -346,17 +486,39 @@ You are an expert in React, TypeScript, Storybook, and component library develop
 
 ## Component Design
 - Build atomic, reusable components
-- Use proper prop typing
-- Implement accessibility (ARIA)
+- Use proper prop typing with TypeScript
+- Implement accessibility (ARIA attributes)
 - Support theming/customization
 
 ## Best Practices
-- Write stories for all components
+- Write stories for all components in Storybook
 - Test with React Testing Library
-- Document props and usage
+- Document props and usage examples
 - Follow semantic versioning
-- Provide sensible defaults`,
-      variables: {},
+- Provide sensible defaults for all props
+
+## File Structure
+\`\`\`
+src/
+├── components/
+│   └── Button/
+│       ├── Button.tsx
+│       ├── Button.test.tsx
+│       ├── Button.stories.tsx
+│       └── index.ts
+└── index.ts
+\`\`\``,
+      variables: { APP_NAME: "" },
+      sensitiveFields: {
+        APP_NAME: {
+          label: "Library Name",
+          required: true,
+          placeholder: "my-ui-kit",
+        },
+      },
+      tags: ["react", "typescript", "storybook", "ui", "components"],
+      category: "frontend",
+      difficulty: "intermediate",
       isPublic: true,
       isSystem: true,
       usageCount: 445,
@@ -366,7 +528,10 @@ You are an expert in React, TypeScript, Storybook, and component library develop
       description:
         "Low-level systems development with memory safety focus and performance optimization hints",
       type: TemplateType.CURSORRULES,
-      content: `# Rust Systems Programming Rules
+      tier: TemplateTier.ADVANCED,
+      targetPlatform: "cursor",
+      compatibleWith: ["claude_code", "windsurf"],
+      content: `# {{APP_NAME}} - Rust Systems Programming Rules
 
 You are an expert in Rust, systems programming, and performance optimization.
 
@@ -374,21 +539,39 @@ You are an expert in Rust, systems programming, and performance optimization.
 - Use idiomatic Rust patterns
 - Prefer zero-cost abstractions
 - Use meaningful type names
-- Document unsafe blocks
+- Document unsafe blocks thoroughly
 
 ## Memory Safety
-- Minimize unsafe code
-- Use RAII patterns
+- Minimize unsafe code blocks
+- Use RAII patterns for resource management
 - Prefer borrowing over cloning
 - Avoid memory allocations in hot paths
 
 ## Best Practices
-- Write comprehensive tests
-- Use clippy for linting
-- Profile before optimizing
+- Write comprehensive unit and integration tests
+- Use clippy for linting: \`cargo clippy\`
+- Profile before optimizing (use flamegraph)
 - Document performance characteristics
-- Use cargo features for optional deps`,
-      variables: {},
+- Use cargo features for optional dependencies
+
+## Common Commands
+\`\`\`bash
+cargo build --release    # Build optimized
+cargo test              # Run tests
+cargo clippy            # Lint
+cargo fmt               # Format code
+\`\`\``,
+      variables: { APP_NAME: "" },
+      sensitiveFields: {
+        APP_NAME: {
+          label: "Project Name",
+          required: true,
+          placeholder: "my-rust-project",
+        },
+      },
+      tags: ["rust", "systems", "performance", "memory-safety"],
+      category: "systems",
+      difficulty: "advanced",
       isPublic: true,
       isSystem: true,
       usageCount: 312,
@@ -398,32 +581,227 @@ You are an expert in Rust, systems programming, and performance optimization.
       description:
         "Terraform, Ansible, and CI/CD pipelines with security best practices and IaC patterns",
       type: TemplateType.CURSORRULES,
-      content: `# DevOps & Infrastructure Rules
+      tier: TemplateTier.ADVANCED,
+      targetPlatform: "cursor",
+      compatibleWith: ["claude_code", "windsurf", "github_copilot"],
+      content: `# {{APP_NAME}} Infrastructure Rules
 
 You are an expert in Terraform, Ansible, Docker, Kubernetes, and CI/CD.
 
 ## Code Style
-- Use consistent naming conventions
+- Use consistent naming conventions (snake_case for Terraform)
 - Modularize infrastructure code
-- Document all variables
-- Use version constraints
+- Document all variables with descriptions
+- Use version constraints for providers
 
 ## Security
-- Never hardcode secrets
-- Use least privilege principle
-- Enable audit logging
-- Scan for vulnerabilities
+- Never hardcode secrets (use vault/secrets manager)
+- Use least privilege principle for IAM
+- Enable audit logging on all resources
+- Scan for vulnerabilities in CI/CD
 
 ## Best Practices
-- Use infrastructure as code
+- Use infrastructure as code for everything
 - Implement GitOps workflows
-- Test infrastructure changes
-- Use blue-green deployments
-- Monitor and alert proactively`,
-      variables: {},
+- Test infrastructure changes in staging first
+- Use blue-green deployments for zero downtime
+- Monitor and alert proactively
+
+## File Structure
+\`\`\`
+terraform/
+├── modules/
+├── environments/
+│   ├── dev/
+│   ├── staging/
+│   └── prod/
+└── main.tf
+\`\`\``,
+      variables: { APP_NAME: "" },
+      sensitiveFields: {
+        APP_NAME: {
+          label: "Infrastructure Name",
+          required: true,
+          placeholder: "my-infra",
+        },
+      },
+      tags: ["terraform", "ansible", "docker", "kubernetes", "devops", "cicd"],
+      category: "devops",
+      difficulty: "advanced",
       isPublic: true,
       isSystem: true,
       usageCount: 567,
+    },
+    // =========================================================================
+    // CLAUDE.md Templates
+    // =========================================================================
+    {
+      name: "Claude Code - Web Application",
+      description:
+        "CLAUDE.md template optimized for web application development with clear context and commands",
+      type: TemplateType.CLAUDE_MD,
+      tier: TemplateTier.INTERMEDIATE,
+      targetPlatform: "claude_code",
+      compatibleWith: ["cursor", "windsurf"],
+      content: `# Project Context
+
+When working with this codebase, prioritize readability over cleverness. Ask clarifying questions before making architectural changes.
+
+## About {{APP_NAME}}
+
+{{PROJECT_DESCRIPTION}}
+
+## Tech Stack
+{{TECH_STACK}}
+
+## Key Directories
+
+- \`src/\` - Main source code
+- \`tests/\` - Test files
+- \`docs/\` - Documentation
+
+## Standards
+
+- Type hints/TypeScript required on all functions
+- Write tests for new functionality
+- Follow existing code patterns
+
+## Common Commands
+
+\`\`\`bash
+{{DEV_COMMAND}}      # Start dev server
+{{TEST_COMMAND}}     # Run tests
+{{BUILD_COMMAND}}    # Build for production
+\`\`\`
+
+## Notes
+
+{{ADDITIONAL_NOTES}}`,
+      variables: {
+        APP_NAME: "",
+        PROJECT_DESCRIPTION: "",
+        TECH_STACK: "",
+        DEV_COMMAND: "npm run dev",
+        TEST_COMMAND: "npm test",
+        BUILD_COMMAND: "npm run build",
+        ADDITIONAL_NOTES: "",
+      },
+      sensitiveFields: {
+        APP_NAME: {
+          label: "Application Name",
+          required: true,
+          placeholder: "my-app",
+        },
+        PROJECT_DESCRIPTION: {
+          label: "Project Description",
+          required: true,
+          placeholder: "A web application that...",
+        },
+        TECH_STACK: {
+          label: "Tech Stack",
+          required: false,
+          placeholder: "React, Node.js, PostgreSQL",
+        },
+      },
+      tags: ["claude", "web", "fullstack"],
+      category: "web",
+      difficulty: "beginner",
+      isPublic: true,
+      isSystem: true,
+      usageCount: 423,
+    },
+    // =========================================================================
+    // GitHub Copilot Templates
+    // =========================================================================
+    {
+      name: "Copilot Instructions - TypeScript",
+      description:
+        "GitHub Copilot instructions for TypeScript projects with coding standards",
+      type: TemplateType.COPILOT_INSTRUCTIONS,
+      tier: TemplateTier.SIMPLE,
+      targetPlatform: "github_copilot",
+      compatibleWith: ["cursor", "claude_code", "windsurf"],
+      content: `# Copilot Instructions for {{APP_NAME}}
+
+This project uses TypeScript with strict type checking.
+
+## Coding Standards
+- Use camelCase for variables and functions
+- Use PascalCase for types, interfaces, and components
+- Use single quotes for strings
+- Use 2 spaces for indentation
+- Prefer arrow functions for callbacks
+- Always include return types on functions
+
+## Architecture
+- Functional components with hooks (no class components)
+- Co-locate tests with source files
+- Use absolute imports from \`src/\`
+
+## Naming Conventions
+- Prefix interfaces with \`I\` only for external APIs
+- Prefix type guards with \`is\`
+- Use descriptive names: \`isLoading\`, \`hasError\`, \`canSubmit\`
+
+## Testing
+- Use \`describe\` blocks to group related tests
+- Use \`it\` for individual test cases
+- Mock external dependencies`,
+      variables: { APP_NAME: "" },
+      sensitiveFields: {
+        APP_NAME: {
+          label: "Project Name",
+          required: true,
+          placeholder: "my-project",
+        },
+      },
+      tags: ["copilot", "typescript", "github"],
+      category: "web",
+      difficulty: "beginner",
+      isPublic: true,
+      isSystem: true,
+      usageCount: 678,
+    },
+    // =========================================================================
+    // Simple Tier Templates (Beginner-friendly)
+    // =========================================================================
+    {
+      name: "Simple Project Setup",
+      description:
+        "Minimal configuration for beginners - just the essentials to get started",
+      type: TemplateType.CURSORRULES,
+      tier: TemplateTier.SIMPLE,
+      targetPlatform: "cursor",
+      compatibleWith: ["claude_code", "windsurf", "github_copilot"],
+      content: `# {{APP_NAME}}
+
+## About
+{{PROJECT_DESCRIPTION}}
+
+## Rules
+- Keep code simple and readable
+- Add comments for complex logic
+- Test changes before committing
+- Ask questions when unsure`,
+      variables: { APP_NAME: "", PROJECT_DESCRIPTION: "" },
+      sensitiveFields: {
+        APP_NAME: {
+          label: "Project Name",
+          required: true,
+          placeholder: "my-project",
+        },
+        PROJECT_DESCRIPTION: {
+          label: "What does your project do?",
+          required: false,
+          placeholder: "A simple app that...",
+        },
+      },
+      tags: ["simple", "beginner", "minimal"],
+      category: "general",
+      difficulty: "beginner",
+      isPublic: true,
+      isSystem: true,
+      usageCount: 892,
     },
   ];
 

@@ -4,10 +4,17 @@ import { prisma } from "@/lib/db";
 // Template Types
 // =============================================================================
 
+export interface SensitiveField {
+  label: string;
+  required: boolean;
+  placeholder?: string;
+}
+
 export interface TemplateData {
   id: string;
   name: string;
   description: string;
+  content?: string;
   author: string;
   authorId?: string;
   downloads: number;
@@ -16,6 +23,14 @@ export interface TemplateData {
   platforms: string[];
   isOfficial: boolean;
   createdAt?: Date;
+  // New fields for v0.3.0
+  tier?: "SIMPLE" | "INTERMEDIATE" | "ADVANCED";
+  targetPlatform?: string;
+  compatibleWith?: string[];
+  variables?: Record<string, string>;
+  sensitiveFields?: Record<string, SensitiveField>;
+  category?: string;
+  difficulty?: string;
 }
 
 export interface CategoryData {
@@ -31,75 +46,144 @@ export interface CategoryData {
 const MOCK_TEMPLATES: TemplateData[] = [
   {
     id: "1",
-    name: "Full-Stack TypeScript",
+    name: "Next.js Full-Stack Application",
     description:
-      "Complete setup for Next.js, TypeScript, Prisma, and testing with AI-powered coding assistance",
+      "Complete setup for Next.js 15, TypeScript, Prisma ORM, and modern web development with comprehensive AI coding assistance rules",
+    content: `# {{APP_NAME}} Project Rules
+
+## Project Overview
+{{APP_NAME}} is a web application built with Next.js 15 (App Router), React 19, TypeScript, and Prisma ORM.
+
+## Tech Stack
+- **Frontend**: Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS, shadcn/ui
+- **Backend**: Next.js API Routes
+- **Database**: PostgreSQL with Prisma ORM
+
+## Code Style
+- Write concise, type-safe TypeScript code
+- Use functional components with React hooks
+- Prefer named exports for components
+
+## Best Practices
+- Always validate user input with Zod
+- Implement proper error handling
+- Write unit tests for critical functions
+- Use conventional commits for version control`,
     author: "LynxPrompt",
-    downloads: 1234,
+    downloads: 1567,
     likes: 89,
-    tags: ["typescript", "nextjs", "fullstack"],
-    platforms: ["cursor", "claude", "copilot"],
+    tags: ["typescript", "nextjs", "fullstack", "react", "prisma"],
+    platforms: ["cursor", "claude", "copilot", "windsurf"],
     isOfficial: true,
+    tier: "ADVANCED",
+    targetPlatform: "cursor",
+    compatibleWith: ["claude_code", "windsurf", "github_copilot"],
+    variables: { APP_NAME: "", AUTHOR_NAME: "" },
+    sensitiveFields: {
+      APP_NAME: { label: "Application Name", required: true, placeholder: "MyApp" },
+      AUTHOR_NAME: { label: "Author Name", required: false, placeholder: "Your Name" },
+    },
+    category: "web",
+    difficulty: "intermediate",
   },
   {
     id: "2",
     name: "Python Data Science",
     description:
       "Optimized for Jupyter notebooks, pandas, and ML workflows with intelligent code completion",
+    content: `# {{APP_NAME}} - Data Science Project Rules
+
+You are an expert in Python, pandas, NumPy, scikit-learn, and data science workflows.
+
+## Code Style
+- Follow PEP 8 guidelines
+- Use type hints for function signatures
+- Write clear docstrings for functions
+
+## Best Practices
+- Use virtual environments
+- Pin dependency versions
+- Write reproducible notebooks`,
     author: "DataEngineer42",
     downloads: 856,
     likes: 67,
-    tags: ["python", "data-science", "ml"],
+    tags: ["python", "data-science", "ml", "pandas", "jupyter"],
     platforms: ["cursor", "claude"],
     isOfficial: false,
+    tier: "INTERMEDIATE",
+    targetPlatform: "cursor",
+    compatibleWith: ["claude_code", "windsurf"],
+    variables: { APP_NAME: "" },
+    sensitiveFields: {
+      APP_NAME: { label: "Project Name", required: true, placeholder: "ml-project" },
+    },
+    category: "data-science",
+    difficulty: "intermediate",
   },
   {
     id: "3",
     name: "Go Microservices",
     description:
       "Production-ready Go setup with Docker, Kubernetes configs, and API development rules",
+    content: `# {{APP_NAME}} - Go Microservices Rules
+
+You are an expert in Go, microservices architecture, Docker, and Kubernetes.
+
+## Code Style
+- Follow Go idioms and conventions
+- Handle errors explicitly
+- Use interfaces for abstraction
+
+## Best Practices
+- Write table-driven tests
+- Implement graceful shutdown
+- Document API endpoints`,
     author: "CloudNative",
     downloads: 623,
     likes: 45,
-    tags: ["go", "microservices", "devops"],
+    tags: ["go", "microservices", "devops", "docker", "kubernetes"],
     platforms: ["cursor", "copilot", "windsurf"],
     isOfficial: false,
+    tier: "ADVANCED",
+    targetPlatform: "cursor",
+    compatibleWith: ["claude_code", "github_copilot"],
+    variables: { APP_NAME: "" },
+    sensitiveFields: {
+      APP_NAME: { label: "Service Name", required: true, placeholder: "my-service" },
+    },
+    category: "backend",
+    difficulty: "advanced",
   },
   {
     id: "4",
-    name: "React Component Library",
+    name: "Simple Project Setup",
     description:
-      "Perfect for building reusable UI components with Storybook, testing, and documentation",
-    author: "UIDesigner",
-    downloads: 445,
-    likes: 38,
-    tags: ["react", "typescript", "ui"],
-    platforms: ["cursor", "claude", "copilot"],
-    isOfficial: false,
-  },
-  {
-    id: "5",
-    name: "Rust Systems Programming",
-    description:
-      "Low-level systems development with memory safety focus and performance optimization hints",
-    author: "RustLover",
-    downloads: 312,
-    likes: 29,
-    tags: ["rust", "systems", "performance"],
-    platforms: ["cursor", "copilot"],
-    isOfficial: false,
-  },
-  {
-    id: "6",
-    name: "DevOps & Infrastructure",
-    description:
-      "Terraform, Ansible, and CI/CD pipelines with security best practices and IaC patterns",
-    author: "InfraExpert",
-    downloads: 567,
-    likes: 52,
-    tags: ["devops", "terraform", "kubernetes"],
-    platforms: ["cursor", "claude", "windsurf"],
+      "Minimal configuration for beginners - just the essentials to get started",
+    content: `# {{APP_NAME}}
+
+## About
+{{PROJECT_DESCRIPTION}}
+
+## Rules
+- Keep code simple and readable
+- Add comments for complex logic
+- Test changes before committing`,
+    author: "LynxPrompt",
+    downloads: 892,
+    likes: 78,
+    tags: ["simple", "beginner", "minimal"],
+    platforms: ["cursor", "claude", "copilot", "windsurf"],
     isOfficial: true,
+    tier: "SIMPLE",
+    targetPlatform: "cursor",
+    compatibleWith: ["claude_code", "windsurf", "github_copilot"],
+    variables: { APP_NAME: "", PROJECT_DESCRIPTION: "" },
+    sensitiveFields: {
+      APP_NAME: { label: "Project Name", required: true, placeholder: "my-project" },
+      PROJECT_DESCRIPTION: { label: "What does your project do?", required: false },
+    },
+    category: "general",
+    difficulty: "beginner",
   },
 ];
 
@@ -241,14 +325,24 @@ export async function getTemplates(options?: {
     id: t.id,
     name: t.name,
     description: t.description || "",
+    content: t.content,
     author: t.user?.name || (t.isSystem ? "LynxPrompt" : "Anonymous"),
     authorId: t.userId || undefined,
     downloads: t.usageCount,
     likes: 0, // TODO: implement likes system
-    tags: extractTags(t.name, t.description || ""), // Extract tags from name/description
-    platforms: typeToPlatform[t.type] || [],
+    tags: (t.tags as string[]) || extractTags(t.name, t.description || ""),
+    platforms: t.compatibleWith?.length
+      ? [t.targetPlatform, ...t.compatibleWith].filter((p): p is string => p !== null && p !== undefined)
+      : typeToPlatform[t.type] || [],
     isOfficial: t.isSystem,
     createdAt: t.createdAt,
+    tier: t.tier,
+    targetPlatform: t.targetPlatform || undefined,
+    compatibleWith: (t.compatibleWith as string[] | null) || [],
+    variables: (t.variables as unknown as Record<string, string>) || {},
+    sensitiveFields: (t.sensitiveFields as unknown as Record<string, SensitiveField>) || {},
+    category: t.category || undefined,
+    difficulty: t.difficulty || undefined,
   }));
 }
 
@@ -276,7 +370,7 @@ export async function getCategories(): Promise<CategoryData[]> {
 }
 
 /**
- * Get a single template by ID
+ * Get a single template by ID with full content
  */
 export async function getTemplateById(
   id: string
@@ -296,18 +390,36 @@ export async function getTemplateById(
 
   if (!template) return null;
 
+  // Map template types to platform names
+  const typeToPlatform: Record<string, string[]> = {
+    CURSORRULES: ["cursor"],
+    CLAUDE_MD: ["claude"],
+    COPILOT_INSTRUCTIONS: ["copilot"],
+    WINDSURF_RULES: ["windsurf"],
+  };
+
   return {
     id: template.id,
     name: template.name,
     description: template.description || "",
-    author: template.user?.name || "Anonymous",
+    content: template.content,
+    author: template.user?.name || (template.isSystem ? "LynxPrompt" : "Anonymous"),
     authorId: template.userId || undefined,
     downloads: template.usageCount,
     likes: 0,
-    tags: [],
-    platforms: [],
+    tags: (template.tags as string[]) || [],
+    platforms: template.compatibleWith?.length
+      ? [template.targetPlatform, ...(template.compatibleWith as string[])].filter((p): p is string => p !== null && p !== undefined)
+      : typeToPlatform[template.type] || [],
     isOfficial: template.isSystem,
     createdAt: template.createdAt,
+    tier: template.tier,
+    targetPlatform: template.targetPlatform || undefined,
+    compatibleWith: (template.compatibleWith as string[] | null) || [],
+    variables: (template.variables as unknown as Record<string, string>) || {},
+    sensitiveFields: (template.sensitiveFields as unknown as Record<string, SensitiveField>) || {},
+    category: template.category || undefined,
+    difficulty: template.difficulty || undefined,
   };
 }
 
