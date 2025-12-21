@@ -8,11 +8,15 @@ import {
   MousePointer2,
   ArrowRight,
   Users,
+  Activity,
 } from "lucide-react";
 import { PlatformCarousel } from "@/components/platform-carousel";
 import { Logo } from "@/components/logo";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const session = await getServerSession(authOptions);
   return (
     <div className="flex min-h-screen flex-col">
       {/* Header */}
@@ -20,22 +24,26 @@ export default function HomePage() {
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <Logo />
           <nav className="flex items-center gap-4">
-            <Link href="/auth/signin" className="text-sm hover:underline">
-              Get Started
-            </Link>
             <Link href="/templates" className="text-sm hover:underline">
               Templates
             </Link>
             <Link
-              href="https://github.com/GeiserX/lynxprompt"
+              href="https://status.lynxprompt.com"
               className="text-sm hover:underline"
               target="_blank"
             >
-              GitHub
+              <Activity className="mr-1 inline h-3 w-3" />
+              Status
             </Link>
-            <Button asChild size="sm">
-              <Link href="/auth/signin">Sign In</Link>
-            </Button>
+            {session ? (
+              <Button asChild size="sm">
+                <Link href="/dashboard">Dashboard</Link>
+              </Button>
+            ) : (
+              <Button asChild size="sm">
+                <Link href="/auth/signin">Sign In</Link>
+              </Button>
+            )}
           </nav>
         </div>
       </header>
@@ -169,10 +177,11 @@ export default function HomePage() {
           </div>
           <div className="flex gap-4">
             <Link
-              href="https://github.com/GeiserX/lynxprompt"
+              href="https://status.lynxprompt.com"
               className="text-sm text-muted-foreground hover:underline"
+              target="_blank"
             >
-              GitHub
+              Status
             </Link>
             <Link
               href="/docs"
@@ -181,10 +190,10 @@ export default function HomePage() {
               Docs
             </Link>
             <Link
-              href="/license"
+              href="/privacy"
               className="text-sm text-muted-foreground hover:underline"
             >
-              License
+              Privacy
             </Link>
           </div>
         </div>

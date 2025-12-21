@@ -9,6 +9,129 @@ import {
   verifyAuthenticationResponse,
   type VerifiedAuthenticationResponse,
 } from "@simplewebauthn/server";
+import { createTransport } from "nodemailer";
+
+// Custom email template for magic links
+async function sendVerificationRequest({
+  identifier: email,
+  url,
+  provider,
+}: {
+  identifier: string;
+  url: string;
+  provider: { server: string; from: string };
+}) {
+  const { host } = new URL(url);
+  const transport = createTransport(provider.server);
+
+  const result = await transport.sendMail({
+    to: email,
+    from: `"LynxPrompt" <${provider.from}>`,
+    subject: `Sign in to LynxPrompt`,
+    text: text({ url, host }),
+    html: html({ url, host, email }),
+  });
+
+  const failed = result.rejected.concat(result.pending).filter(Boolean);
+  if (failed.length) {
+    throw new Error(`Email(s) (${failed.join(", ")}) could not be sent`);
+  }
+}
+
+function html({
+  url,
+  host,
+  email,
+}: {
+  url: string;
+  host: string;
+  email: string;
+}) {
+  const escapedEmail = `${email.replace(/\./g, "&#8203;.")}`;
+  const escapedHost = `${host.replace(/\./g, "&#8203;.")}`;
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign in to LynxPrompt</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
+  <table role="presentation" style="width: 100%; border-collapse: collapse;">
+    <tr>
+      <td align="center" style="padding: 40px 0;">
+        <table role="presentation" style="width: 100%; max-width: 560px; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <!-- Header with gradient -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #9333ea 0%, #ec4899 100%); padding: 32px 40px; border-radius: 12px 12px 0 0; text-align: center;">
+              <img src="https://lynxprompt.com/logo.png" alt="LynxPrompt" style="height: 40px; width: auto;" />
+            </td>
+          </tr>
+          
+          <!-- Main content -->
+          <tr>
+            <td style="padding: 40px;">
+              <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 700; color: #18181b; text-align: center;">
+                Sign in to LynxPrompt
+              </h1>
+              
+              <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 24px; color: #52525b; text-align: center;">
+                Click the button below to sign in to your account at <strong>${escapedHost}</strong>
+              </p>
+              
+              <!-- CTA Button -->
+              <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td align="center" style="padding: 16px 0;">
+                    <a href="${url}" target="_blank" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #9333ea 0%, #ec4899 100%); color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 14px rgba(147, 51, 234, 0.4);">
+                      Sign in to LynxPrompt
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin: 24px 0 0 0; font-size: 14px; line-height: 20px; color: #71717a; text-align: center;">
+                This link will expire in 24 hours and can only be used once.
+              </p>
+              
+              <!-- Divider -->
+              <hr style="margin: 32px 0; border: none; border-top: 1px solid #e4e4e7;" />
+              
+              <p style="margin: 0 0 8px 0; font-size: 13px; color: #a1a1aa; text-align: center;">
+                If you didn't request this email, you can safely ignore it.
+              </p>
+              
+              <p style="margin: 0; font-size: 13px; color: #a1a1aa; text-align: center;">
+                Requested for: ${escapedEmail}
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px 40px; background-color: #fafafa; border-radius: 0 0 12px 12px; text-align: center;">
+              <p style="margin: 0; font-size: 12px; color: #a1a1aa;">
+                © 2025 LynxPrompt by <a href="https://geiser.cloud" style="color: #9333ea; text-decoration: none;">Geiser Cloud</a>
+              </p>
+              <p style="margin: 8px 0 0 0; font-size: 12px; color: #a1a1aa;">
+                AI IDE Configuration Generator
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+}
+
+function text({ url, host }: { url: string; host: string }) {
+  return `Sign in to LynxPrompt (${host})\n\nClick here to sign in:\n${url}\n\nThis link expires in 24 hours and can only be used once.\n\nIf you didn't request this email, you can safely ignore it.`;
+}
 
 // WebAuthn configuration
 const rpID = process.env.NEXTAUTH_URL
@@ -40,6 +163,7 @@ export const authOptions: NextAuthOptions = {
       },
       from: process.env.SMTP_FROM || "noreply@lynxprompt.com",
       maxAge: 24 * 60 * 60, // 24 hours token validity
+      sendVerificationRequest,
     }),
     // Passkey authentication provider
     CredentialsProvider({
@@ -219,8 +343,8 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
     updateAge: 24 * 60 * 60, // 24 hours - refresh session if older
   },
-  // Enable debug to troubleshoot verification issues
-  debug: true,
+  // Disable debug in production
+  debug: process.env.NODE_ENV === "development",
   // Security: Use secure cookies in production
   cookies: {
     sessionToken: {
