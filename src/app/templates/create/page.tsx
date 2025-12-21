@@ -25,20 +25,44 @@ import { UserMenu } from "@/components/user-menu";
 const TEMPLATE_TYPES = [
   { value: "CURSORRULES", label: "Cursor Rules (.cursorrules)", icon: "🎯" },
   { value: "CLAUDE_MD", label: "Claude MD (CLAUDE.md)", icon: "🤖" },
-  { value: "COPILOT_INSTRUCTIONS", label: "GitHub Copilot Instructions", icon: "✈️" },
+  {
+    value: "COPILOT_INSTRUCTIONS",
+    label: "GitHub Copilot Instructions",
+    icon: "✈️",
+  },
   { value: "WINDSURF_RULES", label: "Windsurf Rules", icon: "🏄" },
   { value: "CUSTOM", label: "Custom / Other", icon: "📄" },
 ] as const;
 
-function determineTier(content: string): { tier: string; label: string; icon: React.ReactNode; color: string } {
+function determineTier(content: string): {
+  tier: string;
+  label: string;
+  icon: React.ReactNode;
+  color: string;
+} {
   const lineCount = content.split("\n").length;
   if (lineCount <= 50) {
-    return { tier: "SIMPLE", label: "Simple", icon: <Zap className="h-4 w-4" />, color: "text-green-500" };
+    return {
+      tier: "SIMPLE",
+      label: "Simple",
+      icon: <Zap className="h-4 w-4" />,
+      color: "text-green-500",
+    };
   }
   if (lineCount <= 200) {
-    return { tier: "INTERMEDIATE", label: "Intermediate", icon: <Layers className="h-4 w-4" />, color: "text-yellow-500" };
+    return {
+      tier: "INTERMEDIATE",
+      label: "Intermediate",
+      icon: <Layers className="h-4 w-4" />,
+      color: "text-yellow-500",
+    };
   }
-  return { tier: "ADVANCED", label: "Advanced", icon: <Settings2 className="h-4 w-4" />, color: "text-purple-500" };
+  return {
+    tier: "ADVANCED",
+    label: "Advanced",
+    icon: <Settings2 className="h-4 w-4" />,
+    color: "text-purple-500",
+  };
 }
 
 export default function ShareTemplatePage() {
@@ -55,11 +79,13 @@ export default function ShareTemplatePage() {
   const [isPublic, setIsPublic] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<{ id: string; name: string } | null>(null);
+  const [success, setSuccess] = useState<{ id: string; name: string } | null>(
+    null
+  );
 
   // Auto-detect tier based on content
   const detectedTier = content.trim() ? determineTier(content) : null;
-  const lineCount = content.split("\n").filter(l => l.trim()).length;
+  const lineCount = content.split("\n").filter((l) => l.trim()).length;
 
   // Redirect to sign in if not authenticated
   useEffect(() => {
@@ -111,7 +137,7 @@ export default function ShareTemplatePage() {
   };
 
   const removeTag = (tagToRemove: string) => {
-    setTags(tags.filter(t => t !== tagToRemove));
+    setTags(tags.filter((t) => t !== tagToRemove));
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -179,11 +205,14 @@ export default function ShareTemplatePage() {
             </div>
             <h1 className="mb-2 text-2xl font-bold">Template Shared!</h1>
             <p className="mb-6 text-muted-foreground">
-              Your template &quot;{success.name}&quot; is now available in the marketplace.
+              Your template &quot;{success.name}&quot; is now available in the
+              marketplace.
             </p>
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
               <Button asChild>
-                <Link href={`/templates/user-${success.id}`}>View Template</Link>
+                <Link href={`/templates/user-${success.id}`}>
+                  View Template
+                </Link>
               </Button>
               <Button variant="outline" asChild>
                 <Link href="/dashboard">Back to Dashboard</Link>
@@ -223,7 +252,8 @@ export default function ShareTemplatePage() {
                 Share Your Prompt
               </h1>
               <p className="mt-3 text-lg text-muted-foreground">
-                Share your AI IDE configuration with the community. It&apos;s simple!
+                Share your AI IDE configuration with the community. It&apos;s
+                simple!
               </p>
             </div>
 
@@ -242,7 +272,7 @@ export default function ShareTemplatePage() {
                   <FileText className="h-5 w-5 text-primary" />
                   Prompt Content
                 </h2>
-                
+
                 {/* Upload Button */}
                 <div className="mb-4">
                   <input
@@ -282,7 +312,9 @@ export default function ShareTemplatePage() {
                       <Info className="h-4 w-4" />
                       <span>{lineCount} lines</span>
                     </div>
-                    <div className={`flex items-center gap-2 font-medium ${detectedTier.color}`}>
+                    <div
+                      className={`flex items-center gap-2 font-medium ${detectedTier.color}`}
+                    >
                       {detectedTier.icon}
                       <span>Auto-categorized as {detectedTier.label}</span>
                     </div>
@@ -293,11 +325,14 @@ export default function ShareTemplatePage() {
               {/* Details Section */}
               <div className="rounded-xl border bg-card p-6">
                 <h2 className="mb-4 text-lg font-semibold">Details</h2>
-                
+
                 <div className="space-y-4">
                   {/* Title */}
                   <div>
-                    <label htmlFor="name" className="mb-1 block text-sm font-medium">
+                    <label
+                      htmlFor="name"
+                      className="mb-1 block text-sm font-medium"
+                    >
                       Title <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -315,7 +350,10 @@ export default function ShareTemplatePage() {
 
                   {/* Description */}
                   <div>
-                    <label htmlFor="description" className="mb-1 block text-sm font-medium">
+                    <label
+                      htmlFor="description"
+                      className="mb-1 block text-sm font-medium"
+                    >
                       Description
                     </label>
                     <textarea
@@ -331,7 +369,10 @@ export default function ShareTemplatePage() {
 
                   {/* Type */}
                   <div>
-                    <label htmlFor="type" className="mb-1 block text-sm font-medium">
+                    <label
+                      htmlFor="type"
+                      className="mb-1 block text-sm font-medium"
+                    >
                       Prompt Type <span className="text-red-500">*</span>
                     </label>
                     <select
@@ -364,7 +405,11 @@ export default function ShareTemplatePage() {
                         className="flex-1 rounded-lg border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                         maxLength={30}
                       />
-                      <Button type="button" variant="secondary" onClick={addTag}>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={addTag}
+                      >
                         Add
                       </Button>
                     </div>
@@ -410,7 +455,10 @@ export default function ShareTemplatePage() {
                 <Button type="button" variant="outline" asChild>
                   <Link href="/dashboard">Cancel</Link>
                 </Button>
-                <Button type="submit" disabled={isSubmitting || !content.trim() || !name.trim()}>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting || !content.trim() || !name.trim()}
+                >
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -186,4 +186,3 @@ export async function GET() {
     );
   }
 }
-

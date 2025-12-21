@@ -15,7 +15,9 @@ const TEMPLATE_TYPES = [
 type TemplateType = (typeof TEMPLATE_TYPES)[number];
 
 // Determine tier based on line count
-function determineTier(content: string): "SIMPLE" | "INTERMEDIATE" | "ADVANCED" {
+function determineTier(
+  content: string
+): "SIMPLE" | "INTERMEDIATE" | "ADVANCED" {
   const lineCount = content.split("\n").length;
   if (lineCount <= 50) return "SIMPLE";
   if (lineCount <= 200) return "INTERMEDIATE";
@@ -26,7 +28,7 @@ function determineTier(content: string): "SIMPLE" | "INTERMEDIATE" | "ADVANCED" 
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: "Authentication required" },
@@ -63,7 +65,11 @@ export async function POST(request: NextRequest) {
     const validatedTags: string[] = [];
     if (tags && Array.isArray(tags)) {
       for (const tag of tags.slice(0, 10)) {
-        if (typeof tag === "string" && tag.trim().length > 0 && tag.trim().length <= 30) {
+        if (
+          typeof tag === "string" &&
+          tag.trim().length > 0 &&
+          tag.trim().length <= 30
+        ) {
           validatedTags.push(tag.trim().toLowerCase());
         }
       }

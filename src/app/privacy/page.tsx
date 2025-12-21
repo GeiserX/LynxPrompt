@@ -38,15 +38,15 @@ export default function PrivacyPage() {
             </div>
 
             {/* Content */}
-            <div className="prose prose-neutral dark:prose-invert max-w-none">
+            <div className="prose prose-neutral max-w-none dark:prose-invert">
               <section className="mb-8">
                 <h2 className="text-xl font-semibold">Introduction</h2>
                 <p className="mt-3 text-muted-foreground">
-                  LynxPrompt (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;)
-                  is operated by GeiserCloud. We respect your privacy and are
-                  committed to protecting your personal data. This privacy
-                  policy explains how we collect, use, and safeguard your
-                  information when you use our service.
+                  LynxPrompt (&quot;we&quot;, &quot;our&quot;, or
+                  &quot;us&quot;) is operated by GeiserCloud. We respect your
+                  privacy and are committed to protecting your personal data.
+                  This privacy policy explains how we collect, use, and
+                  safeguard your information when you use our service.
                 </p>
               </section>
 
@@ -118,7 +118,9 @@ export default function PrivacyPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-xl font-semibold">Data Storage & Security</h2>
+                <h2 className="text-xl font-semibold">
+                  Data Storage & Security
+                </h2>
                 <div className="mt-3 space-y-3 text-muted-foreground">
                   <p>
                     <strong className="text-foreground">Location:</strong> All
@@ -225,7 +227,9 @@ export default function PrivacyPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-xl font-semibold">Children&apos;s Privacy</h2>
+                <h2 className="text-xl font-semibold">
+                  Children&apos;s Privacy
+                </h2>
                 <p className="mt-3 text-muted-foreground">
                   LynxPrompt is not intended for children under 16. We do not
                   knowingly collect personal data from children under 16. If you
@@ -235,7 +239,9 @@ export default function PrivacyPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-xl font-semibold">Changes to This Policy</h2>
+                <h2 className="text-xl font-semibold">
+                  Changes to This Policy
+                </h2>
                 <p className="mt-3 text-muted-foreground">
                   We may update this privacy policy from time to time. We will
                   notify you of any significant changes by posting a notice on

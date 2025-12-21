@@ -38,7 +38,7 @@ export default function TermsPage() {
             </div>
 
             {/* Content */}
-            <div className="prose prose-neutral dark:prose-invert max-w-none">
+            <div className="prose prose-neutral max-w-none dark:prose-invert">
               <section className="mb-8">
                 <h2 className="text-xl font-semibold">Agreement to Terms</h2>
                 <p className="mt-3 text-muted-foreground">
@@ -49,7 +49,9 @@ export default function TermsPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-xl font-semibold">Description of Service</h2>
+                <h2 className="text-xl font-semibold">
+                  Description of Service
+                </h2>
                 <p className="mt-3 text-muted-foreground">
                   LynxPrompt is a platform that allows users to create, share,
                   and download AI IDE configuration files (prompts). Users can
@@ -60,12 +62,18 @@ export default function TermsPage() {
               <section className="mb-8">
                 <h2 className="text-xl font-semibold">User Accounts</h2>
                 <div className="mt-3 space-y-3 text-muted-foreground">
-                  <p>To use certain features, you must create an account. You agree to:</p>
+                  <p>
+                    To use certain features, you must create an account. You
+                    agree to:
+                  </p>
                   <ul className="list-inside list-disc space-y-2">
                     <li>Provide accurate and complete information</li>
                     <li>Maintain the security of your account credentials</li>
                     <li>Notify us immediately of any unauthorized access</li>
-                    <li>Accept responsibility for all activities under your account</li>
+                    <li>
+                      Accept responsibility for all activities under your
+                      account
+                    </li>
                   </ul>
                 </div>
               </section>
@@ -76,29 +84,43 @@ export default function TermsPage() {
                   <div>
                     <h3 className="font-medium text-foreground">For Sellers</h3>
                     <ul className="mt-2 list-inside list-disc space-y-1">
-                      <li>You must own or have rights to the content you sell</li>
-                      <li>Prompts must be original and not copied from other sources</li>
-                      <li>You may not include malicious code or harmful content</li>
+                      <li>
+                        You must own or have rights to the content you sell
+                      </li>
+                      <li>
+                        Prompts must be original and not copied from other
+                        sources
+                      </li>
+                      <li>
+                        You may not include malicious code or harmful content
+                      </li>
                       <li>Pricing must be fair and accurately described</li>
-                      <li>You are responsible for providing accurate descriptions</li>
+                      <li>
+                        You are responsible for providing accurate descriptions
+                      </li>
                     </ul>
                   </div>
 
                   <div>
                     <h3 className="font-medium text-foreground">For Buyers</h3>
                     <ul className="mt-2 list-inside list-disc space-y-1">
-                      <li>Purchases are for personal or business use as described</li>
+                      <li>
+                        Purchases are for personal or business use as described
+                      </li>
                       <li>You may not redistribute purchased prompts</li>
                       <li>Refunds are handled on a case-by-case basis</li>
                     </ul>
                   </div>
 
                   <div>
-                    <h3 className="font-medium text-foreground">Revenue Share</h3>
+                    <h3 className="font-medium text-foreground">
+                      Revenue Share
+                    </h3>
                     <p className="mt-2">
-                      Sellers receive 80% of each sale. LynxPrompt retains 20% to
-                      cover platform costs, payment processing, and maintenance.
-                      Payouts are processed according to our payout schedule.
+                      Sellers receive 80% of each sale. LynxPrompt retains 20%
+                      to cover platform costs, payment processing, and
+                      maintenance. Payouts are processed according to our payout
+                      schedule.
                     </p>
                   </div>
                 </div>
@@ -109,7 +131,9 @@ export default function TermsPage() {
                 <p className="mt-3 text-muted-foreground">You agree not to:</p>
                 <ul className="mt-3 list-inside list-disc space-y-2 text-muted-foreground">
                   <li>Use the service for any illegal purpose</li>
-                  <li>Upload content that infringes intellectual property rights</li>
+                  <li>
+                    Upload content that infringes intellectual property rights
+                  </li>
                   <li>Upload malicious code, viruses, or harmful content</li>
                   <li>Attempt to gain unauthorized access to our systems</li>
                   <li>Harass, abuse, or harm other users</li>
@@ -156,7 +180,9 @@ export default function TermsPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-xl font-semibold">Limitation of Liability</h2>
+                <h2 className="text-xl font-semibold">
+                  Limitation of Liability
+                </h2>
                 <p className="mt-3 text-muted-foreground">
                   LynxPrompt is provided &quot;as is&quot; without warranties of
                   any kind. We are not liable for any indirect, incidental, or
