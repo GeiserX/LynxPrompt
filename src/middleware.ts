@@ -79,11 +79,11 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
     "Content-Security-Policy",
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Next.js needs these
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://umami.geiser.cloud", // Next.js + Umami
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https://avatars.githubusercontent.com https://lh3.googleusercontent.com",
       "font-src 'self' data:",
-      "connect-src 'self'",
+      "connect-src 'self' https://umami.geiser.cloud", // Allow Umami tracking
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
