@@ -437,9 +437,7 @@ export async function getPlatformStats(
 /**
  * Get wizard funnel drop-off rates
  */
-export async function getWizardFunnel(
-  days: number = 30
-): Promise<
+export async function getWizardFunnel(days: number = 30): Promise<
   Array<{
     step: string;
     step_number: number;
