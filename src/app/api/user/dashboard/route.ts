@@ -89,7 +89,6 @@ export async function GET() {
         where: { userId },
         select: {
           provider: true,
-          createdAt: true,
         },
       }),
     ]);
@@ -113,7 +112,7 @@ export async function GET() {
         templatesCreated,
         totalDownloads: totalDownloads._sum.downloads || 0,
         totalFavorites,
-        linkedProviders: linkedAccounts.map((a) => a.provider),
+        linkedProviders: linkedAccounts.map((a: { provider: string }) => a.provider),
       },
       myTemplates,
       recentActivity: enrichedActivity,

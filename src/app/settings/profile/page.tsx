@@ -74,7 +74,6 @@ interface LinkedAccount {
   id: string;
   provider: string;
   providerAccountId: string;
-  createdAt: string;
 }
 
 interface AccountsData {
