@@ -1,12 +1,12 @@
 # =============================================================================
 # LynxPrompt Dockerfile
-# Multi-stage build optimized for amd64 production
+# Multi-stage build for production
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Base stage - shared dependencies (amd64 only)
+# Base stage - shared dependencies
 # -----------------------------------------------------------------------------
-FROM --platform=linux/amd64 node:20-alpine AS base
+FROM node:20-alpine AS base
 
 # Install dependencies for Prisma and other native modules
 RUN apk add --no-cache libc6-compat openssl
@@ -14,16 +14,15 @@ RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
 # -----------------------------------------------------------------------------
-# Dependencies stage - install dependencies with cache mount
+# Dependencies stage - install dependencies
 # -----------------------------------------------------------------------------
 FROM base AS deps
 
 # Copy package files
 COPY package.json package-lock.json* ./
 
-# Install dependencies with cache
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci --prefer-offline
+# Install dependencies
+RUN npm ci
 
 # -----------------------------------------------------------------------------
 # Builder stage - build the application
@@ -35,11 +34,13 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Generate Prisma clients and build in one layer
+# Generate Prisma clients
+RUN npx prisma generate --schema=prisma/schema-app.prisma
+RUN npx prisma generate --schema=prisma/schema-users.prisma
+
+# Build the application
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN npx prisma generate --schema=prisma/schema-app.prisma && \
-    npx prisma generate --schema=prisma/schema-users.prisma && \
-    npm run build
+RUN npm run build
 
 # -----------------------------------------------------------------------------
 # Production stage - minimal runtime image
@@ -52,8 +53,8 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Create non-root user for security
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
 # Copy necessary files from builder
 COPY --from=builder /app/public ./public
@@ -74,7 +75,8 @@ COPY --from=builder /app/node_modules/@prisma/client-users ./node_modules/@prism
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
 # Set correct permissions for prerender cache
-RUN mkdir .next && chown nextjs:nodejs .next
+RUN mkdir .next
+RUN chown nextjs:nodejs .next
 
 # Copy standalone build
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
