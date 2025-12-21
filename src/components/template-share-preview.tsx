@@ -231,30 +231,59 @@ export function TemplateSharePreview({
             </div>
           </div>
 
-          {/* What's Shared */}
-          <div className="mt-6 rounded-lg border bg-muted/30 p-4">
-            <h3 className="mb-3 flex items-center gap-2 font-medium">
-              <Globe className="h-4 w-4 text-primary" />
-              What will be shared publicly
-            </h3>
-            <ul className="space-y-2 text-sm">
-              <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                Template name and description
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                Template content (with placeholders)
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                Tags and category
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                Your username (as author)
-              </li>
-            </ul>
+          {/* Privacy Summary - Two columns */}
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {/* What's Shared */}
+            <div className="rounded-lg border border-green-500/30 bg-green-500/5 p-4">
+              <h3 className="mb-3 flex items-center gap-2 font-medium text-green-700 dark:text-green-400">
+                <Globe className="h-4 w-4" />
+                Will be shared publicly
+              </h3>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-500" />
+                  Template name and description
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-500" />
+                  Content with placeholders (e.g., {"{{APP_NAME}}"})
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-500" />
+                  Tags and category
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-500" />
+                  Your username (as author)
+                </li>
+              </ul>
+            </div>
+
+            {/* What's NOT Shared */}
+            <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-4">
+              <h3 className="mb-3 flex items-center gap-2 font-medium text-red-700 dark:text-red-400">
+                <Shield className="h-4 w-4" />
+                Kept private (NOT shared)
+              </h3>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-center gap-2">
+                  <X className="h-4 w-4 text-red-500" />
+                  Your actual values (app name, etc.)
+                </li>
+                <li className="flex items-center gap-2">
+                  <X className="h-4 w-4 text-red-500" />
+                  API keys, tokens, passwords
+                </li>
+                <li className="flex items-center gap-2">
+                  <X className="h-4 w-4 text-red-500" />
+                  Internal URLs and IP addresses
+                </li>
+                <li className="flex items-center gap-2">
+                  <X className="h-4 w-4 text-red-500" />
+                  Email addresses
+                </li>
+              </ul>
+            </div>
           </div>
 
           {/* Acknowledgment */}

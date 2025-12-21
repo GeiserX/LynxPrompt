@@ -20,9 +20,12 @@ model SystemTemplate {
   name        String
   description String?
   type        TemplateType
-  content     String       @db.Text
-  variables   Json?
-  usageCount  Int          @default(0)
+  content     String       @db.Text   // ALWAYS stored with placeholders like {{AUTHOR_NAME}}
+  variables   Json?                    // Default values for variables (NOT personal data)
+  
+  // Statistics (denormalized, updated via API)
+  downloads    Int          @default(0)
+  favorites    Int          @default(0)
   
   tier             TemplateTier @default(INTERMEDIATE)
   targetPlatform   String?
@@ -30,6 +33,9 @@ model SystemTemplate {
   tags             String[]
   category         String?
   difficulty       String?
+  
+  // Privacy: defines which fields contain personal data
+  // Format: { "AUTHOR_NAME": { "label": "Author Name", "private": true }, ... }
   sensitiveFields  Json?
   
   createdAt   DateTime     @default(now())
@@ -39,6 +45,8 @@ model SystemTemplate {
   @@index([tier])
   @@index([targetPlatform])
   @@index([category])
+  @@index([downloads])
+  @@index([favorites])
 }
 
 enum TemplateTier {

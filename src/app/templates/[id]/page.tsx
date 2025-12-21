@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { TemplateDownloadModal } from "@/components/template-download-modal";
 import {
@@ -62,10 +63,13 @@ interface TemplateData {
 export default function TemplateDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { data: session } = useSession();
   const [template, setTemplate] = useState<TemplateData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
 
   useEffect(() => {
     // Fetch template data
@@ -86,6 +90,52 @@ export default function TemplateDetailPage() {
     };
     fetchTemplate();
   }, [params.id, router]);
+
+  // Check if user has favorited this template
+  useEffect(() => {
+    const checkFavorite = async () => {
+      if (!session?.user || !params.id) return;
+      try {
+        const res = await fetch(`/api/templates/${params.id}/favorite`);
+        if (res.ok) {
+          const data = await res.json();
+          setIsFavorited(data.favorited);
+        }
+      } catch {
+        // Ignore errors
+      }
+    };
+    checkFavorite();
+  }, [params.id, session]);
+
+  const handleToggleFavorite = async () => {
+    if (!session?.user) {
+      router.push(`/auth/signin?callbackUrl=/templates/${params.id}`);
+      return;
+    }
+
+    setFavoriteLoading(true);
+    try {
+      const res = await fetch(`/api/templates/${params.id}/favorite`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setIsFavorited(data.favorited);
+        // Update local like count
+        if (template) {
+          setTemplate({
+            ...template,
+            likes: template.likes + (data.favorited ? 1 : -1),
+          });
+        }
+      }
+    } catch {
+      // Ignore errors
+    } finally {
+      setFavoriteLoading(false);
+    }
+  };
 
   const handleCopy = async () => {
     if (template?.content) {
@@ -249,9 +299,17 @@ export default function TemplateDetailPage() {
                   <Download className="mr-2 h-5 w-5" />
                   Download Template
                 </Button>
-                <Button variant="ghost" size="lg">
-                  <Heart className="mr-2 h-5 w-5" />
-                  Like
+                <Button
+                  variant={isFavorited ? "default" : "ghost"}
+                  size="lg"
+                  onClick={handleToggleFavorite}
+                  disabled={favoriteLoading}
+                  className={isFavorited ? "bg-red-500 hover:bg-red-600" : ""}
+                >
+                  <Heart
+                    className={`mr-2 h-5 w-5 ${isFavorited ? "fill-current" : ""}`}
+                  />
+                  {isFavorited ? "Liked" : "Like"}
                 </Button>
                 <Button variant="ghost" size="lg">
                   <Share2 className="mr-2 h-5 w-5" />
@@ -296,6 +354,7 @@ export default function TemplateDetailPage() {
           isOpen={showDownloadModal}
           onClose={() => setShowDownloadModal(false)}
           template={{
+            id: template.id, // Include ID for download tracking
             name: template.name,
             description: template.description,
             content: template.content,
