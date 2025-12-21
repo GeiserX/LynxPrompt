@@ -93,12 +93,14 @@ export default function DocsPage() {
             <div className="mt-6 space-y-6 text-muted-foreground">
               <p>
                 LynxPrompt helps you generate AI IDE configuration files for
-                tools like Cursor, Claude, GitHub Copilot, and Windsurf. Here&apos;s
-                how to get started:
+                tools like Cursor, Claude, GitHub Copilot, and Windsurf.
+                Here&apos;s how to get started:
               </p>
 
               <div className="rounded-lg border bg-card p-6">
-                <h3 className="font-semibold text-foreground">Step 1: Sign In</h3>
+                <h3 className="font-semibold text-foreground">
+                  Step 1: Sign In
+                </h3>
                 <p className="mt-2">
                   Create an account using GitHub, Google, or a magic link. This
                   lets you save your preferences and templates.
@@ -219,7 +221,8 @@ export default function DocsPage() {
             </h2>
             <div className="mt-6 space-y-4 text-muted-foreground">
               <p>
-                Have a great prompt? Share it with the community! Here&apos;s how:
+                Have a great prompt? Share it with the community! Here&apos;s
+                how:
               </p>
 
               <div className="rounded-lg border bg-card p-6">

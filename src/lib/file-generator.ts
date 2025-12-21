@@ -435,4 +435,3 @@ export function downloadZip(blob: Blob, projectName: string) {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
-

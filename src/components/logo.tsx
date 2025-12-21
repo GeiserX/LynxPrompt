@@ -29,4 +29,3 @@ export function Logo({ href = "/", className = "" }: LogoProps) {
 
   return logoContent;
 }
-
