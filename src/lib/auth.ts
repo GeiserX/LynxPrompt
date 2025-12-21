@@ -17,7 +17,8 @@ const rpID = process.env.NEXTAUTH_URL
 const rpOrigin = process.env.NEXTAUTH_URL || "http://localhost:3000";
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prismaUsers) as NextAuthOptions["adapter"],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  adapter: PrismaAdapter(prismaUsers as any) as NextAuthOptions["adapter"],
   providers: [
     GitHubProvider({
       clientId: process.env.GITHUB_CLIENT_ID!,
