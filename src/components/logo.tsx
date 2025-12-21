@@ -11,10 +11,11 @@ export function Logo({ href = "/", className = "" }: LogoProps) {
     <Image
       src="/logo.png"
       alt="LynxPrompt"
-      width={160}
-      height={32}
-      className={`h-8 w-auto ${className}`}
+      width={187}
+      height={40}
+      className={`h-10 w-auto ${className}`}
       priority
+      unoptimized
     />
   );
 
