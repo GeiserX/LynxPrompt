@@ -80,8 +80,17 @@ RUN adduser --system --uid 1001 nextjs
 # Copy necessary files from builder
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/package.json ./package.json
 
-# Copy Prisma engine files for both databases
+# Copy Prisma CLI and tsx for migrations and seeding
+COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+COPY --from=builder /app/node_modules/@prisma/engines ./node_modules/@prisma/engines
+COPY --from=builder /app/node_modules/tsx ./node_modules/tsx
+COPY --from=builder /app/node_modules/esbuild ./node_modules/esbuild
+COPY --from=builder /app/node_modules/get-tsconfig ./node_modules/get-tsconfig
+COPY --from=builder /app/node_modules/resolve-pkg-maps ./node_modules/resolve-pkg-maps
+
+# Copy Prisma client files for both databases
 COPY --from=builder /app/node_modules/@prisma/client-app ./node_modules/@prisma/client-app
 COPY --from=builder /app/node_modules/@prisma/client-users ./node_modules/@prisma/client-users
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
@@ -94,6 +103,10 @@ RUN chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Copy entrypoint script
+COPY --chown=nextjs:nodejs docker-entrypoint.sh ./
+RUN chmod +x docker-entrypoint.sh
+
 USER nextjs
 
 EXPOSE 3000
@@ -101,4 +114,4 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["node", "server.js"]
+CMD ["./docker-entrypoint.sh"]
