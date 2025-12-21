@@ -114,4 +114,6 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["./entrypoint.sh"]
+# Override base image entrypoint and use our script
+ENTRYPOINT []
+CMD ["/bin/sh", "./entrypoint.sh"]
