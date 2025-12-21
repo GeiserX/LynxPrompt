@@ -1,0 +1,186 @@
+// Prisma schema for APP DATA (System - Can be recreated from seed)
+// This database contains system templates, platforms, languages, and config
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/@prisma/client-app"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL_APP")
+}
+
+// ============================================================================
+// SYSTEM TEMPLATES - Official templates (NOT user templates)
+// ============================================================================
+
+model SystemTemplate {
+  id          String       @id @default(cuid())
+  name        String
+  description String?
+  type        TemplateType
+  content     String       @db.Text
+  variables   Json?
+  usageCount  Int          @default(0)
+  
+  tier             TemplateTier @default(INTERMEDIATE)
+  targetPlatform   String?
+  compatibleWith   String[]
+  tags             String[]
+  category         String?
+  difficulty       String?
+  sensitiveFields  Json?
+  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([type])
+  @@index([tier])
+  @@index([targetPlatform])
+  @@index([category])
+}
+
+enum TemplateTier {
+  SIMPLE
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum TemplateType {
+  LICENSE
+  FUNDING
+  CURSORRULES
+  CLAUDE_MD
+  COPILOT_INSTRUCTIONS
+  WINDSURF_RULES
+  GITIGNORE
+  README
+  CONTRIBUTING
+  CODE_OF_CONDUCT
+  SECURITY
+  DOCKERFILE
+  DOCKER_COMPOSE
+  GITHUB_ACTIONS
+  GITLAB_CI
+  EDITORCONFIG
+  PRETTIER
+  ESLINT
+  PRE_COMMIT
+  CUSTOM
+}
+
+// ============================================================================
+// WIZARD CONFIGURATION - Dynamic wizard steps
+// ============================================================================
+
+model WizardStep {
+  id          String   @id @default(cuid())
+  order       Int      @unique
+  name        String
+  title       String
+  description String?
+  icon        String?
+  isRequired  Boolean  @default(true)
+  isActive    Boolean  @default(true)
+  conditions  Json?
+  config      Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+// ============================================================================
+// DECISION RULES - If-then logic for suggestions
+// ============================================================================
+
+model DecisionRule {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  priority    Int      @default(0)
+  isActive    Boolean  @default(true)
+  condition   Json
+  action      Json
+  category    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+  @@index([isActive])
+  @@index([priority])
+}
+
+// ============================================================================
+// AI IDE PLATFORMS - Supported platforms configuration
+// ============================================================================
+
+model AIPlatform {
+  id                String   @id @default(cuid())
+  name              String   @unique
+  displayName       String
+  description       String?
+  configFile        String
+  configPath        String   @default("")
+  website           String?
+  docsUrl           String?
+  icon              String?
+  isActive          Boolean  @default(true)
+  templateStructure Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+// ============================================================================
+// PROGRAMMING LANGUAGES & FRAMEWORKS
+// ============================================================================
+
+model Language {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  displayName String
+  icon        String?
+  category    String?
+  isPopular   Boolean     @default(false)
+  suggestions Json?
+  frameworks  Framework[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([isPopular])
+}
+
+model Framework {
+  id          String   @id @default(cuid())
+  name        String
+  displayName String
+  languageId  String
+  icon        String?
+  category    String?
+  isPopular   Boolean  @default(false)
+  suggestions Json?
+  language    Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([name, languageId])
+  @@index([languageId])
+  @@index([isPopular])
+}
+
+// ============================================================================
+// ANALYTICS & USAGE TRACKING (anonymized)
+// ============================================================================
+
+model UsageEvent {
+  id        String   @id @default(cuid())
+  eventType String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([eventType])
+  @@index([createdAt])
+}

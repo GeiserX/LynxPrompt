@@ -1,20 +1,38 @@
 services:
   # ==========================================================================
-  # PostgreSQL Database
+  # APP Database - System templates, platforms, languages
   # ==========================================================================
-  db:
-    image: postgres:18-alpine
-    container_name: lynxprompt-db
+  db-app:
+    image: postgres:17-alpine
+    container_name: lynxprompt-db-app
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: lynxprompt
-    # No external port exposure - only app container needs access
+      POSTGRES_USER: lynxprompt_app
+      POSTGRES_PASSWORD: app_dev_password
+      POSTGRES_DB: lynxprompt_app
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_app_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U lynxprompt_app"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================================================
+  # USER Database - Users, sessions, preferences, projects (GOLDEN)
+  # ==========================================================================
+  db-users:
+    image: postgres:17-alpine
+    container_name: lynxprompt-db-users
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: lynxprompt_users
+      POSTGRES_PASSWORD: users_dev_password
+      POSTGRES_DB: lynxprompt_users
+    volumes:
+      - postgres_users_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lynxprompt_users"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -32,7 +50,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/lynxprompt?schema=public
+      - DATABASE_URL_APP=postgresql://lynxprompt_app:app_dev_password@db-app:5432/lynxprompt_app?schema=public
+      - DATABASE_URL_USERS=postgresql://lynxprompt_users:users_dev_password@db-users:5432/lynxprompt_users?schema=public
       - NEXTAUTH_URL=http://localhost:3000
       - NEXTAUTH_SECRET=development-secret-change-in-production
       - NODE_ENV=development
@@ -41,12 +60,15 @@ services:
       - /app/node_modules
       - /app/.next
     depends_on:
-      db:
+      db-app:
         condition: service_healthy
-    command: sh -c "npx prisma generate && npx prisma db push && npx prisma db seed && npm run dev"
+      db-users:
+        condition: service_healthy
+    command: sh -c "npm run db:generate && npm run db:push && npm run db:seed && npm run dev"
 
 volumes:
-  postgres_data:
+  postgres_app_data:
+  postgres_users_data:
 
 networks:
   default:

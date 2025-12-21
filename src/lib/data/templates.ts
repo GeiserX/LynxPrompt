@@ -1,4 +1,5 @@
-import { prisma } from "@/lib/db";
+import { prismaApp } from "@/lib/db-app";
+import { prismaUsers } from "@/lib/db-users";
 
 // =============================================================================
 // Template Types
@@ -283,11 +284,41 @@ export async function getTemplates(options?: {
     return templates.slice(offset, offset + limit);
   }
 
-  // Fetch from database - AI IDE configuration templates
-  const templates = await prisma.template.findMany({
+  // Map template types to platform names
+  const typeToPlatform: Record<string, string[]> = {
+    CURSORRULES: ["cursor"],
+    CLAUDE_MD: ["claude"],
+    COPILOT_INSTRUCTIONS: ["copilot"],
+    WINDSURF_RULES: ["windsurf"],
+  };
+
+  // Fetch system templates from APP database
+  const systemTemplates = await prismaApp.systemTemplate.findMany({
+    where: {
+      type: {
+        in: [
+          "CURSORRULES",
+          "CLAUDE_MD",
+          "COPILOT_INSTRUCTIONS",
+          "WINDSURF_RULES",
+        ],
+      },
+      ...(options?.search && {
+        OR: [
+          { name: { contains: options.search, mode: "insensitive" } },
+          { description: { contains: options.search, mode: "insensitive" } },
+        ],
+      }),
+    },
+    orderBy: [{ usageCount: "desc" }, { createdAt: "desc" }],
+    take: options?.limit || 50,
+    skip: options?.offset || 0,
+  });
+
+  // Fetch public user templates from USERS database
+  const userTemplates = await prismaUsers.userTemplate.findMany({
     where: {
       isPublic: true,
-      // Only fetch AI IDE config templates for the marketplace
       type: {
         in: [
           "CURSORRULES",
@@ -313,28 +344,21 @@ export async function getTemplates(options?: {
     skip: options?.offset || 0,
   });
 
-  // Map template types to platform names
-  const typeToPlatform: Record<string, string[]> = {
-    CURSORRULES: ["cursor"],
-    CLAUDE_MD: ["claude"],
-    COPILOT_INSTRUCTIONS: ["copilot"],
-    WINDSURF_RULES: ["windsurf"],
-  };
-
-  return templates.map((t) => ({
-    id: t.id,
+  // Map system templates
+  const mappedSystemTemplates: TemplateData[] = systemTemplates.map((t) => ({
+    id: `sys_${t.id}`, // Prefix to distinguish from user templates
     name: t.name,
     description: t.description || "",
     content: t.content,
-    author: t.user?.name || (t.isSystem ? "LynxPrompt" : "Anonymous"),
-    authorId: t.userId || undefined,
+    author: "LynxPrompt",
+    authorId: undefined,
     downloads: t.usageCount,
-    likes: 0, // TODO: implement likes system
+    likes: 0,
     tags: (t.tags as string[]) || extractTags(t.name, t.description || ""),
     platforms: t.compatibleWith?.length
       ? [t.targetPlatform, ...t.compatibleWith].filter((p): p is string => p !== null && p !== undefined)
       : typeToPlatform[t.type] || [],
-    isOfficial: t.isSystem,
+    isOfficial: true,
     createdAt: t.createdAt,
     tier: t.tier,
     targetPlatform: t.targetPlatform || undefined,
@@ -344,6 +368,37 @@ export async function getTemplates(options?: {
     category: t.category || undefined,
     difficulty: t.difficulty || undefined,
   }));
+
+  // Map user templates
+  const mappedUserTemplates: TemplateData[] = userTemplates.map((t) => ({
+    id: `usr_${t.id}`, // Prefix to distinguish from system templates
+    name: t.name,
+    description: t.description || "",
+    content: t.content,
+    author: t.user?.name || "Anonymous",
+    authorId: t.userId,
+    downloads: t.usageCount,
+    likes: 0,
+    tags: (t.tags as string[]) || extractTags(t.name, t.description || ""),
+    platforms: t.compatibleWith?.length
+      ? [t.targetPlatform, ...t.compatibleWith].filter((p): p is string => p !== null && p !== undefined)
+      : typeToPlatform[t.type] || [],
+    isOfficial: false,
+    createdAt: t.createdAt,
+    tier: t.tier,
+    targetPlatform: t.targetPlatform || undefined,
+    compatibleWith: (t.compatibleWith as string[] | null) || [],
+    variables: (t.variables as unknown as Record<string, string>) || {},
+    sensitiveFields: (t.sensitiveFields as unknown as Record<string, SensitiveField>) || {},
+    category: t.category || undefined,
+    difficulty: t.difficulty || undefined,
+  }));
+
+  // Combine and sort by downloads
+  const allTemplates = [...mappedSystemTemplates, ...mappedUserTemplates];
+  allTemplates.sort((a, b) => b.downloads - a.downloads);
+
+  return allTemplates.slice(0, options?.limit || 50);
 }
 
 /**
@@ -354,9 +409,13 @@ export async function getCategories(): Promise<CategoryData[]> {
     return MOCK_CATEGORIES;
   }
 
-  // For now, return static categories
-  // TODO: compute counts dynamically from database
-  const totalCount = await prisma.template.count({ where: { isPublic: true } });
+  // Count from both databases
+  const [systemCount, userCount] = await Promise.all([
+    prismaApp.systemTemplate.count(),
+    prismaUsers.userTemplate.count({ where: { isPublic: true } }),
+  ]);
+
+  const totalCount = systemCount + userCount;
 
   return [
     { id: "all", label: "All Templates", count: totalCount },
@@ -371,6 +430,7 @@ export async function getCategories(): Promise<CategoryData[]> {
 
 /**
  * Get a single template by ID with full content
+ * ID format: sys_<id> for system templates, usr_<id> for user templates
  */
 export async function getTemplateById(
   id: string
@@ -378,17 +438,6 @@ export async function getTemplateById(
   if (isMockMode()) {
     return MOCK_TEMPLATES.find((t) => t.id === id) || null;
   }
-
-  const template = await prisma.template.findUnique({
-    where: { id },
-    include: {
-      user: {
-        select: { name: true, id: true },
-      },
-    },
-  });
-
-  if (!template) return null;
 
   // Map template types to platform names
   const typeToPlatform: Record<string, string[]> = {
@@ -398,29 +447,106 @@ export async function getTemplateById(
     WINDSURF_RULES: ["windsurf"],
   };
 
-  return {
-    id: template.id,
-    name: template.name,
-    description: template.description || "",
-    content: template.content,
-    author: template.user?.name || (template.isSystem ? "LynxPrompt" : "Anonymous"),
-    authorId: template.userId || undefined,
-    downloads: template.usageCount,
-    likes: 0,
-    tags: (template.tags as string[]) || [],
-    platforms: template.compatibleWith?.length
-      ? [template.targetPlatform, ...(template.compatibleWith as string[])].filter((p): p is string => p !== null && p !== undefined)
-      : typeToPlatform[template.type] || [],
-    isOfficial: template.isSystem,
-    createdAt: template.createdAt,
-    tier: template.tier,
-    targetPlatform: template.targetPlatform || undefined,
-    compatibleWith: (template.compatibleWith as string[] | null) || [],
-    variables: (template.variables as unknown as Record<string, string>) || {},
-    sensitiveFields: (template.sensitiveFields as unknown as Record<string, SensitiveField>) || {},
-    category: template.category || undefined,
-    difficulty: template.difficulty || undefined,
-  };
+  // Check if it's a system or user template
+  if (id.startsWith("sys_")) {
+    const realId = id.replace("sys_", "");
+    const template = await prismaApp.systemTemplate.findUnique({
+      where: { id: realId },
+    });
+
+    if (!template) return null;
+
+    return {
+      id: `sys_${template.id}`,
+      name: template.name,
+      description: template.description || "",
+      content: template.content,
+      author: "LynxPrompt",
+      authorId: undefined,
+      downloads: template.usageCount,
+      likes: 0,
+      tags: (template.tags as string[]) || [],
+      platforms: template.compatibleWith?.length
+        ? [template.targetPlatform, ...(template.compatibleWith as string[])].filter((p): p is string => p !== null && p !== undefined)
+        : typeToPlatform[template.type] || [],
+      isOfficial: true,
+      createdAt: template.createdAt,
+      tier: template.tier,
+      targetPlatform: template.targetPlatform || undefined,
+      compatibleWith: (template.compatibleWith as string[] | null) || [],
+      variables: (template.variables as unknown as Record<string, string>) || {},
+      sensitiveFields: (template.sensitiveFields as unknown as Record<string, SensitiveField>) || {},
+      category: template.category || undefined,
+      difficulty: template.difficulty || undefined,
+    };
+  } else if (id.startsWith("usr_")) {
+    const realId = id.replace("usr_", "");
+    const template = await prismaUsers.userTemplate.findUnique({
+      where: { id: realId },
+      include: {
+        user: {
+          select: { name: true, id: true },
+        },
+      },
+    });
+
+    if (!template) return null;
+
+    return {
+      id: `usr_${template.id}`,
+      name: template.name,
+      description: template.description || "",
+      content: template.content,
+      author: template.user?.name || "Anonymous",
+      authorId: template.userId,
+      downloads: template.usageCount,
+      likes: 0,
+      tags: (template.tags as string[]) || [],
+      platforms: template.compatibleWith?.length
+        ? [template.targetPlatform, ...(template.compatibleWith as string[])].filter((p): p is string => p !== null && p !== undefined)
+        : typeToPlatform[template.type] || [],
+      isOfficial: false,
+      createdAt: template.createdAt,
+      tier: template.tier,
+      targetPlatform: template.targetPlatform || undefined,
+      compatibleWith: (template.compatibleWith as string[] | null) || [],
+      variables: (template.variables as unknown as Record<string, string>) || {},
+      sensitiveFields: (template.sensitiveFields as unknown as Record<string, SensitiveField>) || {},
+      category: template.category || undefined,
+      difficulty: template.difficulty || undefined,
+    };
+  }
+
+  // Fallback: try both databases (for backward compatibility)
+  const systemTemplate = await prismaApp.systemTemplate.findUnique({
+    where: { id },
+  });
+
+  if (systemTemplate) {
+    return {
+      id: `sys_${systemTemplate.id}`,
+      name: systemTemplate.name,
+      description: systemTemplate.description || "",
+      content: systemTemplate.content,
+      author: "LynxPrompt",
+      authorId: undefined,
+      downloads: systemTemplate.usageCount,
+      likes: 0,
+      tags: (systemTemplate.tags as string[]) || [],
+      platforms: typeToPlatform[systemTemplate.type] || [],
+      isOfficial: true,
+      createdAt: systemTemplate.createdAt,
+      tier: systemTemplate.tier,
+      targetPlatform: systemTemplate.targetPlatform || undefined,
+      compatibleWith: (systemTemplate.compatibleWith as string[] | null) || [],
+      variables: (systemTemplate.variables as unknown as Record<string, string>) || {},
+      sensitiveFields: (systemTemplate.sensitiveFields as unknown as Record<string, SensitiveField>) || {},
+      category: systemTemplate.category || undefined,
+      difficulty: systemTemplate.difficulty || undefined,
+    };
+  }
+
+  return null;
 }
 
 /**
@@ -433,8 +559,17 @@ export async function incrementTemplateUsage(id: string): Promise<void> {
     return;
   }
 
-  await prisma.template.update({
-    where: { id },
-    data: { usageCount: { increment: 1 } },
-  });
+  if (id.startsWith("sys_")) {
+    const realId = id.replace("sys_", "");
+    await prismaApp.systemTemplate.update({
+      where: { id: realId },
+      data: { usageCount: { increment: 1 } },
+    });
+  } else if (id.startsWith("usr_")) {
+    const realId = id.replace("usr_", "");
+    await prismaUsers.userTemplate.update({
+      where: { id: realId },
+      data: { usageCount: { increment: 1 } },
+    });
+  }
 }
