@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -61,6 +61,20 @@ interface Blueprint {
 }
 
 export default function BlueprintsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        </div>
+      }
+    >
+      <BlueprintsContent />
+    </Suspense>
+  );
+}
+
+function BlueprintsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { status } = useSession();
