@@ -1,12 +1,126 @@
 # LynxPrompt Roadmap
 
-This document tracks planned features and improvements for LynxPrompt.
+This document tracks planned features, improvements, and business decisions for LynxPrompt.
 
-## 🟢 Completed
+## 🏢 Business & Legal Foundation
+
+### Entity & Operator
+
+- **Trade Name**: GeiserCloud
+- **Operator**: Sergio Fernández Rubio (individual)
+- **Location**: Calle Tierno Galván 25, 30203 Cartagena, Murcia, Spain
+- **Status**: Planning to register as autónomo
+- **Contact**: privacy@lynxprompt.com
+
+### Marketplace Model
+
+LynxPrompt operates as a **hybrid platform**:
+
+1. **Platform/Intermediary**: Buyers purchase from Sellers, LynxPrompt facilitates
+2. **Subscription Access**: Max subscribers get unlimited access to all prompts
+
+#### Key Legal Structure
+
+- Contract for individual purchases: **Between Buyer and Seller**
+- LynxPrompt provides the platform, handles payments, takes commission
+- Sellers are responsible for their own income taxes
+- LynxPrompt handles VAT on platform fees (when registered as autónomo)
+
+### Payout Rules for Sellers
+
+| Setting            | Value                                      |
+| ------------------ | ------------------------------------------ |
+| Minimum payout     | €5                                         |
+| Payout method      | PayPal                                     |
+| Payout frequency   | Monthly (or on-demand when min reached)    |
+| Chargeback hold    | Funds held until chargeback window expires |
+| Revenue split      | 70% seller / 30% platform                  |
+
+### Refund Policy (EU Compliant)
+
+Per EU Consumer Rights Directive, digital content can waive 14-day withdrawal IF:
+
+- [x] Consumer gives **explicit consent** to immediate delivery
+- [x] Consumer **acknowledges** loss of withdrawal right
+
+**Implementation required:**
+- [ ] Checkout checkbox: "I consent to immediate access and acknowledge I lose my right of withdrawal"
+- [ ] Store consent with: user ID, timestamp, Terms version hash
+
+**Refund policy:**
+- No refunds after download/access (withdrawal waived)
+- Refunds considered for: non-delivery, broken access, material misrepresentation
+- No refunds for: changed mind after access, didn't read description
+
+---
+
+## 📜 Legal Compliance
+
+### Privacy Policy ✅ COMPLETED
+
+- [x] GDPR Article 6 legal basis (Contract + Legitimate Interest)
+- [x] Physical address disclosure
+- [x] "No DPO appointed" statement
+- [x] Third-party processors detailed (GitHub, Google, Stripe, Umami)
+- [x] Umami: self-hosted in EU, cookieless, legitimate interest basis
+- [x] International transfers + SCCs
+- [x] No automated decision-making statement
+- [x] US residents section ("we don't sell data")
+- [x] Service emails defined (login links, receipts, security notices)
+- [x] Data retention policy
+- [x] AEPD complaint rights
+
+### Terms of Service - Required Updates
+
+#### High Priority (Legal Risk)
+
+- [ ] **Marketplace role clarification**: Buyer-Seller contract, LynxPrompt as intermediary
+- [ ] **EU digital content withdrawal**: Explicit consent + acknowledgment clause
+- [ ] **Liability limitation carve-outs**: Fraud, wilful misconduct, gross negligence
+- [ ] **Governing law fix**: "Laws of Spain" (not "EU"), courts of Cartagena
+- [ ] **Consumer carve-out**: "EU consumers may benefit from mandatory protections"
+
+#### Marketplace Clauses
+
+- [ ] **Buyer license grant**: Non-exclusive, non-transferable, internal use only
+- [ ] **Seller warranties**: Own rights, no infringement, no malware, complies with AUP
+- [ ] **Content takedown**: Platform discretion to remove content
+- [ ] **AI/prompt disclaimer**: "Prompts may produce unexpected outputs, use at own risk"
+- [ ] **Buyer-Seller disputes**: Primarily between parties, platform may assist
+
+#### Payment & Payout Clauses
+
+- [ ] Refund criteria and timeframe
+- [ ] Payout schedule: monthly, min €5, PayPal
+- [ ] Chargeback holds
+- [ ] Seller tax responsibility
+
+#### Standard Clauses (Missing)
+
+- [ ] Eligibility/age (18+ or legal capacity)
+- [ ] Suspension/termination process
+- [ ] Data retention after termination
+- [ ] Service modification rights
+- [ ] Force majeure
+- [ ] Assignment
+- [ ] Severability
+- [ ] Entire agreement
+- [ ] No waiver
+
+#### Product/UI Changes for Legal
+
+- [ ] Signup: "I agree to Terms + Privacy" checkbox
+- [ ] Checkout: EU digital content waiver checkbox
+- [ ] Log: user ID, timestamp, Terms version hash for consent
+
+---
+
+## 🟢 Completed Features
 
 - [x] Project scaffolding with Next.js 15, React 19, TypeScript
 - [x] PostgreSQL database with Prisma ORM (dual-database architecture)
-- [x] ClickHouse for analytics
+- [x] ClickHouse for analytics (self-hosted EU)
+- [x] Umami analytics (self-hosted EU, cookieless)
 - [x] Authentication with NextAuth.js (GitHub, Google, Magic Link, Passkeys)
 - [x] Homepage with platform carousel
 - [x] Wizard flow for configuration generation
@@ -20,14 +134,21 @@ This document tracks planned features and improvements for LynxPrompt.
 - [x] Status page link (Uptime Kuma integration ready)
 - [x] Transparent logo for all backgrounds
 - [x] **Sign out button visible on all pages** (UserMenu component)
-- [x] **Dashboard redesign** - User stats, recent activity, quick actions, My Templates section
-- [x] **Account linking UI** - Link/unlink GitHub, Google, and Email accounts from settings
+- [x] **Dashboard redesign** - User stats, recent activity, quick actions, My Templates
+- [x] **Account linking UI** - Link/unlink GitHub, Google, and Email accounts
 - [x] "Share Your Template" quick action card on dashboard
 - [x] **Copy individual files to clipboard** in wizard preview
-- [x] **Preview generated content before download** with expandable file sections
+- [x] **Preview generated content before download**
 - [x] **Template sorting** - Sort by popularity (default), recent, downloads, favorites
-- [x] **Pricing page UI** - Beautiful tier comparison (Free/Pro/Max)
+- [x] **Pricing page UI** - Tier comparison (Free/Pro/Max)
 - [x] **Favorite templates** - Heart button + favorites shown in dashboard
+- [x] **Privacy Policy page** - GDPR compliant, comprehensive
+- [x] **Terms of Service page** - Basic version (needs marketplace updates)
+- [x] **About page** - Company info, mission, trust section
+- [x] **Docs/Help page** - Getting started, FAQ
+- [x] **Favicon** - Custom lynx logo in all sizes
+
+---
 
 ## 🔴 Planned Features
 
@@ -40,7 +161,7 @@ This document tracks planned features and improvements for LynxPrompt.
 - [x] Copy individual files to clipboard
 - [x] Preview generated content before download
 - [ ] Save wizard configurations as drafts
-- [ ] Import existing configs (upload your `.cursorrules` to create template)
+- [ ] Import existing configs (upload `.cursorrules` to create template)
 
 #### Wizard Tiers (Feature Gating)
 
@@ -76,7 +197,6 @@ This document tracks planned features and improvements for LynxPrompt.
 
 - Free users: Can share free templates only
 - Pro/Max users: Can share both free and paid templates
-- Consideration: Require subscription to monetize templates
 
 #### Template Upload Options
 
@@ -122,8 +242,6 @@ This document tracks planned features and improvements for LynxPrompt.
 
 ### Subscription Tiers
 
-#### Pricing Page Structure
-
 | Tier     | Price     | Features                                                       |
 | -------- | --------- | -------------------------------------------------------------- |
 | **Free** | €0/month  | Basic templates, limited wizard features                       |
@@ -153,13 +271,11 @@ This document tracks planned features and improvements for LynxPrompt.
 
 ### Spotify-Style Revenue Pool (for Max Subscribers)
 
-Max subscribers get access to ALL paid prompts. Revenue is redistributed using a **Spotify-like model**:
+Max subscribers get access to ALL paid prompts. Revenue is redistributed:
 
-#### How It Works
-
-1. **Pool Calculation**: Each month, 70% of Max subscription revenue goes into the "creator pool"
+1. **Pool Calculation**: 70% of Max subscription revenue → creator pool
 2. **Platform Cut**: 30% always goes to LynxPrompt
-3. **Distribution**: Creator pool is divided among authors based on **download share**
+3. **Distribution**: Based on download share
 4. **Formula**: `Author Payout = (Author's Downloads / Total Downloads) × Creator Pool`
 
 #### Example
@@ -172,69 +288,12 @@ Creator Pool (70%): €7,000
 Author A: 1,000 downloads (10% of total) → €700 payout
 Author B: 500 downloads (5% of total) → €350 payout
 Author C: 2,500 downloads (25% of total) → €1,750 payout
-...and so on
 ```
-
-#### Transparency for Authors
-
-- **Clear disclosure**: When uploading a paid template, authors are informed:
-  > "Max subscribers can access all paid templates. You'll receive a share of the subscription pool based on how often your templates are downloaded by Max users. Platform takes 30%, you keep 70% of your share."
-- Authors can opt-out and keep templates "purchase-only" (not included in Max)
 
 ### Payment Processing
 
-#### Multi-Currency & Crypto Support
-
-Need a payment processor that supports:
-
-- [ ] All major currencies (EUR, USD, GBP, etc.)
-- [ ] Cryptocurrency payments (BTC, ETH, USDC, etc.)
-- [ ] Automatic currency conversion
-- [ ] Low fees for international transactions
-
-#### Payment Processor Options
-
-| Provider              | Pros                          | Cons                        |
-| --------------------- | ----------------------------- | --------------------------- |
-| **Stripe**            | Best for cards, subscriptions | Limited crypto              |
-| **PayPal**            | Wide adoption                 | Higher fees, limited crypto |
-| **Paddle**            | Handles tax compliance (MoR)  | Higher cut                  |
-| **LemonSqueezy**      | Modern, handles taxes         | Newer, less known           |
-| **BTCPay Server**     | Self-hosted crypto            | No fiat, complex            |
-| **Coinbase Commerce** | Easy crypto                   | Crypto only                 |
-| **NOWPayments**       | Multi-crypto                  | Crypto only                 |
-
-**Recommended approach**:
-
-- Primary: **Stripe** (cards + subscriptions)
-- Secondary: **Coinbase Commerce** or **NOWPayments** (crypto)
-
-### Billing Data Management
-
-#### User Billing Profile
-
-Each user needs:
-
-- [ ] Billing name and address
-- [ ] Tax ID (VAT number for EU)
-- [ ] Preferred currency
-- [ ] Payout method (PayPal email, bank account, crypto wallet)
-- [ ] Payout threshold (minimum €50 before payout)
-- [ ] Payout schedule (monthly, on-demand)
-
-#### Transaction History
-
-- [ ] All purchases made
-- [ ] All earnings received
-- [ ] Pending payouts
-- [ ] Tax documents (invoices, 1099 for US)
-
-#### Author Payout System
-
-- [ ] Request payout when balance > €50
-- [ ] Automatic monthly payouts (if enabled)
-- [ ] Support for PayPal, bank transfer, crypto
-- [ ] Generate invoices for authors
+**Primary**: Stripe (cards + subscriptions)
+**Payouts**: PayPal (min €5, monthly or on-demand)
 
 ---
 
@@ -242,11 +301,12 @@ Each user needs:
 
 ### Phase 1: Foundation
 
-- [ ] Create Pricing page UI with tier comparison
+- [x] Create Pricing page UI with tier comparison
 - [ ] Implement subscription database schema (plans, subscriptions, invoices)
 - [ ] Integrate Stripe for card payments and subscriptions
 - [ ] Add subscription status to user session
 - [ ] Gate wizard features by subscription tier
+- [ ] **Checkout consent checkbox** (EU digital content waiver)
 
 ### Phase 2: Template Marketplace
 
@@ -263,53 +323,45 @@ Each user needs:
 - [ ] Spotify-style distribution algorithm
 - [ ] Author payout notifications
 
-### Phase 4: Multi-Payment Support
+### Phase 4: Payouts
 
-- [ ] Add crypto payment option (Coinbase Commerce / NOWPayments)
-- [ ] Multi-currency display and conversion
-- [ ] International tax handling (VAT for EU)
-
-### Phase 5: Payouts
-
-- [ ] Author payout request system
-- [ ] PayPal Mass Pay integration
-- [ ] Bank transfer option (via Stripe Connect)
-- [ ] Crypto payouts
-- [ ] Tax document generation
+- [ ] Author payout request system (min €5)
+- [ ] PayPal integration for payouts
+- [ ] Chargeback hold period before funds available
+- [ ] Payout history and status tracking
 
 ---
 
-### API
+## 🔧 API
 
-#### REST API (Planned)
+### REST API (Planned)
 
 ```
-GET    /api/templates          - List templates (with pagination, filters)
-GET    /api/templates/:id      - Get template details
-POST   /api/templates          - Create template (auth required)
-PUT    /api/templates/:id      - Update template (owner only)
-DELETE /api/templates/:id      - Delete template (owner only)
+GET    /api/templates              - List templates (with pagination, filters)
+GET    /api/templates/:id          - Get template details
+POST   /api/templates              - Create template (auth required)
+PUT    /api/templates/:id          - Update template (owner only)
+DELETE /api/templates/:id          - Delete template (owner only)
 GET    /api/templates/:id/download - Download template
-POST   /api/templates/:id/like - Like template (auth required)
+POST   /api/templates/:id/favorite - Toggle favorite (auth required)
 POST   /api/templates/:id/purchase - Purchase paid template
 
-GET    /api/user/preferences   - Get user preferences
-PUT    /api/user/preferences   - Update preferences
-GET    /api/user/templates     - Get user's templates
-GET    /api/user/purchases     - Get purchased templates
-GET    /api/user/earnings      - Get author earnings
-POST   /api/user/payout        - Request payout
-GET    /api/user/linked-accounts - Get linked auth providers
-POST   /api/user/link-account    - Link a new auth provider
-DELETE /api/user/unlink-account  - Unlink an auth provider
+GET    /api/user/preferences       - Get user preferences
+PUT    /api/user/preferences       - Update preferences
+GET    /api/user/templates         - Get user's templates
+GET    /api/user/purchases         - Get purchased templates
+GET    /api/user/earnings          - Get author earnings
+POST   /api/user/payout            - Request payout (min €5)
+GET    /api/user/linked-accounts   - Get linked auth providers
+POST   /api/user/link-account      - Link a new auth provider
+DELETE /api/user/unlink-account    - Unlink an auth provider
 
-GET    /api/billing/subscription - Get current subscription
-POST   /api/billing/subscribe    - Start subscription
-POST   /api/billing/cancel       - Cancel subscription
-GET    /api/billing/invoices     - Get invoices
-GET    /api/billing/history      - Transaction history
+GET    /api/billing/subscription   - Get current subscription
+POST   /api/billing/subscribe      - Start subscription
+POST   /api/billing/cancel         - Cancel subscription
+GET    /api/billing/invoices       - Get invoices
 
-POST   /api/generate           - Generate config files from wizard data
+POST   /api/generate               - Generate config files from wizard data
 ```
 
 ### Admin & Moderation
@@ -331,7 +383,9 @@ POST   /api/generate           - Generate config files from wizard data
 - [ ] Fraud detection for payments
 - [ ] Chargeback handling
 
-### Infrastructure
+---
+
+## 🏗️ Infrastructure
 
 - [ ] Redis for caching/sessions
 - [ ] S3/R2 for file storage (template assets, user uploads)
@@ -340,6 +394,16 @@ POST   /api/generate           - Generate config files from wizard data
 - [ ] CDN for static assets
 - [ ] Database backups automation
 - [ ] Payment webhook handlers
+
+### Current Infrastructure
+
+- [x] PostgreSQL (dual-database: app + users)
+- [x] ClickHouse (self-hosted EU, analytics)
+- [x] Umami (self-hosted EU, cookieless analytics)
+- [x] Docker deployment with GitOps (Portainer)
+- [x] Healthchecks with start_period for stability
+
+---
 
 ## 📋 Technical Debt
 
@@ -350,6 +414,9 @@ POST   /api/generate           - Generate config files from wizard data
 - [ ] SEO optimization (meta tags, structured data)
 - [ ] Mobile responsiveness improvements
 - [ ] Dark mode refinements
+- [ ] Fix unused import warnings
+
+---
 
 ## 💡 Future Ideas
 
@@ -368,6 +435,9 @@ POST   /api/generate           - Generate config files from wizard data
 - Affiliate program for promoters
 - Gift subscriptions
 - Annual subscription discount (2 months free)
-- **Local app integration**: Instead of downloading files, the IDE automatically receive configs directly from the web and creates files locally
+- **Local app integration**: IDE receives configs directly from web
 - **Restrict template sharing to subscribers** (future consideration)
 - Use gravatar for emails
+- DMCA/copyright complaints process
+- Bank transfer payouts (via Stripe Connect)
+- Crypto payments (Coinbase Commerce / NOWPayments)
