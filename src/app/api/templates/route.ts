@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, description, content, type, tags, isPublic = true } = body;
+    const { name, description, content, type, tags, isPublic = true, price, currency = "EUR" } = body;
 
     // Validation
     if (!name || typeof name !== "string" || name.trim().length < 3) {
@@ -192,6 +192,19 @@ export async function POST(request: NextRequest) {
     // Auto-determine tier based on content length
     const tier = determineTier(content);
 
+    // Validate price if provided (minimum €5 = 500 cents)
+    let validatedPrice: number | null = null;
+    if (price !== null && price !== undefined) {
+      const priceNum = parseInt(String(price), 10);
+      if (isNaN(priceNum) || priceNum < 500) {
+        return NextResponse.json(
+          { error: "Minimum price is €5.00 (500 cents)" },
+          { status: 400 }
+        );
+      }
+      validatedPrice = priceNum;
+    }
+
     // Create the template
     const template = await prismaUsers.userTemplate.create({
       data: {
@@ -205,6 +218,8 @@ export async function POST(request: NextRequest) {
         isPublic: Boolean(isPublic),
         downloads: 0,
         favorites: 0,
+        price: validatedPrice,
+        currency: currency || "EUR",
       },
     });
 
