@@ -5,3 +5,4 @@ entrypoint.sh text eol=lf
 # Default to auto detection for other files
 * text=auto
 
+
