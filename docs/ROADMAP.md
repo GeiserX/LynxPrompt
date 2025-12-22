@@ -493,15 +493,15 @@ POST   /api/generate               - Generate config files from wizard data
 
 ### Brand Positioning
 
-- [ ] **IDE-agnostic prompt rules**: Market as universal AI configuration, not IDE-specific
-- [ ] **"AI Config Site"**: Position as more than a marketplace - a comprehensive AI configuration platform
-- [ ] **Memory project compatibility**: Emphasize that this bootstraps new repos/codebases, reducing need for memory systems
-- [ ] **IDE logo stripe**: Like agents.md, show all compatible IDEs (Cursor, Claude Code, Copilot, Windsurf, Zed, etc.) with their logos
+- [x] **IDE-agnostic prompt rules**: Market as universal AI configuration, not IDE-specific
+- [x] **"AI Config Site"**: Position as more than a marketplace - a comprehensive AI configuration platform
+- [x] **Memory project compatibility**: Emphasize that this bootstraps new repos/codebases, reducing need for memory systems
+- [x] **IDE logo stripe**: Like agents.md, show all compatible IDEs (Cursor, Claude Code, Copilot, Windsurf, Zed, etc.) with their logos
 
 ### Visual Assets
 
 - [ ] **Logo in OAuth providers**: When logo is ready, add it to GitHub/Google login screens
-- [ ] **IDE compatibility section**: Add to main page AND docs - visual stripe of all supported IDEs with logos
+- [x] **IDE compatibility section**: Add to main page AND docs - visual stripe of all supported IDEs with logos
 
 ### Stripe Production Release
 
