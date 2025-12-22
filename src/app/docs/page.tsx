@@ -284,17 +284,17 @@ export default function DocsPage() {
             </h2>
             <div className="mt-6 space-y-4 text-muted-foreground">
               <p>
-                Turn your prompt engineering skills into income! When you share
-                premium prompts, you earn money every time someone purchases
-                them.
+                Turn your prompt engineering skills into income! Pro and Max
+                subscribers can create and sell premium prompts, earning money
+                every time someone purchases them.
               </p>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="rounded-lg border bg-card p-6">
-                  <h3 className="font-semibold text-foreground">80% Revenue</h3>
+                  <h3 className="font-semibold text-foreground">70% Revenue</h3>
                   <p className="mt-2 text-sm">
-                    You keep 80% of every sale. We only take 20% to cover
-                    platform and payment processing costs.
+                    You keep 70% of every sale. We take 30% to cover platform
+                    costs, payment processing, and maintenance.
                   </p>
                 </div>
                 <div className="rounded-lg border bg-card p-6">
@@ -302,15 +302,20 @@ export default function DocsPage() {
                     Set Your Price
                   </h3>
                   <p className="mt-2 text-sm">
-                    You decide how much your prompts are worth. Free, $1, $5,
-                    $20—it&apos;s up to you.
+                    You decide how much your prompts are worth. Set any price
+                    starting from €5 minimum.
                   </p>
                 </div>
               </div>
 
-              <p className="text-sm italic">
-                Note: Paid prompts and payouts are coming soon. Stay tuned!
-              </p>
+              <div className="rounded-lg border border-primary/50 bg-primary/5 p-4 text-sm">
+                <p>
+                  <strong className="text-foreground">Who can sell?</strong>{" "}
+                  Only Pro and Max subscribers can create and sell paid
+                  prompts. Free users can share free templates with the
+                  community.
+                </p>
+              </div>
             </div>
           </section>
 
@@ -320,30 +325,72 @@ export default function DocsPage() {
               <FileCode className="h-6 w-6 text-primary" />
               Supported Platforms
             </h2>
-            <div className="mt-6">
-              <div className="grid gap-4 sm:grid-cols-2">
+            <div className="mt-6 space-y-6">
+              <p className="text-muted-foreground">
+                LynxPrompt generates configuration files compatible with{" "}
+                <a
+                  href="https://agents.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  AGENTS.md
+                </a>
+                , the emerging open standard for AI coding agent instructions.
+                Your configs work across a growing ecosystem of AI IDEs and
+                tools:
+              </p>
+
+              {/* IDE Grid - agents.md style */}
+              <div className="rounded-xl border bg-card p-6">
+                <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
+                  <PlatformIcon name="Cursor" icon="⚡" />
+                  <PlatformIcon name="Claude" icon="🧠" />
+                  <PlatformIcon name="Copilot" icon="🤖" />
+                  <PlatformIcon name="Windsurf" icon="🏄" />
+                  <PlatformIcon name="VS Code" icon="💻" />
+                  <PlatformIcon name="Aider" icon="🎯" />
+                  <PlatformIcon name="Continue" icon="▶️" />
+                  <PlatformIcon name="Cody" icon="🔍" />
+                  <PlatformIcon name="Gemini" icon="💎" />
+                  <PlatformIcon name="Amazon Q" icon="☁️" />
+                  <PlatformIcon name="JetBrains" icon="🔧" />
+                  <PlatformIcon name="Zed" icon="⌨️" />
+                </div>
+              </div>
+
+              {/* Config files */}
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div className="rounded-lg border p-4">
-                  <h3 className="font-semibold">Cursor</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Generate <code>.cursorrules</code> files for Cursor IDE
+                  <code className="text-sm font-medium text-primary">
+                    AGENTS.md
+                  </code>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Universal agent instructions (60k+ projects)
                   </p>
                 </div>
                 <div className="rounded-lg border p-4">
-                  <h3 className="font-semibold">Claude</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Generate <code>CLAUDE.md</code> project instructions
+                  <code className="text-sm font-medium text-primary">
+                    .cursorrules
+                  </code>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Cursor IDE configuration
                   </p>
                 </div>
                 <div className="rounded-lg border p-4">
-                  <h3 className="font-semibold">GitHub Copilot</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Generate Copilot instruction files
+                  <code className="text-sm font-medium text-primary">
+                    CLAUDE.md
+                  </code>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Claude project instructions
                   </p>
                 </div>
                 <div className="rounded-lg border p-4">
-                  <h3 className="font-semibold">Windsurf</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Generate Windsurf rules and configurations
+                  <code className="text-sm font-medium text-primary">
+                    copilot-instructions.md
+                  </code>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    GitHub Copilot workspace config
                   </p>
                 </div>
               </div>
@@ -359,7 +406,7 @@ export default function DocsPage() {
             <div className="mt-6 space-y-6">
               <FaqItem
                 question="Is LynxPrompt free to use?"
-                answer="Yes! The basic features are free. You can use the wizard, download templates, and share your own prompts without paying anything. Premium features and paid prompts are optional."
+                answer="Yes! The basic features are free. You can use the basic wizard, download templates, and browse free community prompts. Premium features like advanced wizards and paid templates require a subscription."
               />
               <FaqItem
                 question="Do I need to create an account?"
@@ -375,7 +422,7 @@ export default function DocsPage() {
               />
               <FaqItem
                 question="How do I report a problem or request a feature?"
-                answer="Email us at support@lynxprompt.com or open an issue on our GitHub repository."
+                answer="Email us at support@lynxprompt.com. We read every message and prioritize feedback from the community."
               />
               <FaqItem
                 question="Is my data safe?"
@@ -481,6 +528,15 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
     <div className="rounded-lg border p-4">
       <h3 className="font-semibold">{question}</h3>
       <p className="mt-2 text-sm text-muted-foreground">{answer}</p>
+    </div>
+  );
+}
+
+function PlatformIcon({ name, icon }: { name: string; icon: string }) {
+  return (
+    <div className="flex flex-col items-center gap-2 rounded-lg p-3 text-center transition-colors hover:bg-muted">
+      <span className="text-2xl">{icon}</span>
+      <span className="text-xs font-medium text-muted-foreground">{name}</span>
     </div>
   );
 }
