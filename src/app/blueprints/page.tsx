@@ -320,7 +320,7 @@ function BlueprintsContent() {
               </div>
 
               <Button asChild className="w-full">
-                <Link href="/blueprints/create">
+                <Link href="/templates/create">
                   <Plus className="mr-2 h-4 w-4" />
                   Create Blueprint
                 </Link>
@@ -374,7 +374,7 @@ function BlueprintsContent() {
                   <Link
                     href={
                       status === "authenticated"
-                        ? "/blueprints/create"
+                        ? "/templates/create"
                         : "/auth/signin"
                     }
                   >
@@ -473,7 +473,7 @@ function BlueprintsContent() {
                           asChild
                           className={isPaid ? "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600" : ""}
                         >
-                          <Link href={`/blueprints/${blueprint.id}`}>
+                          <Link href={`/templates/${blueprint.id}`}>
                             {isPaid ? "Purchase" : "Use Blueprint"}
                           </Link>
                         </Button>
