@@ -38,3 +38,4 @@ repos:
       - id: no-commit-to-branch
         args: ['--branch', 'main']
         stages: [pre-commit]
+

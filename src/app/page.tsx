@@ -279,7 +279,6 @@ function LogoMarqueeRow() {
             src={logo.img} 
             alt={logo.name}
             className="h-8 w-8 object-contain"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
           />
           <span className="text-sm font-medium text-foreground">{logo.name}</span>
         </a>
@@ -317,7 +316,6 @@ function LogoMarqueeRow2() {
             src={logo.img} 
             alt={logo.name}
             className="h-8 w-8 object-contain"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
           />
           <span className="text-sm font-medium text-foreground">{logo.name}</span>
         </a>

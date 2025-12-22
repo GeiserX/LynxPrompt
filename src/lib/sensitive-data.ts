@@ -124,3 +124,4 @@ export function getSensitiveDataSummary(matches: SensitiveMatch[]): string {
   const types = [...new Set(matches.map(m => m.type))];
   return `Found ${matches.length} potential sensitive item${matches.length > 1 ? 's' : ''}: ${types.join(', ')}`;
 }
+
