@@ -1562,6 +1562,29 @@ function LoginRequired() {
 
 // NEW: Profile Setup Required Component
 function ProfileSetupRequired() {
+  const [skipping, setSkipping] = useState(false);
+
+  const handleSkip = async () => {
+    setSkipping(true);
+    try {
+      // Set profile as completed with defaults
+      await fetch("/api/user/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: "Developer",
+          persona: "fullstack",
+          skillLevel: "intermediate",
+          skipped: true,
+        }),
+      });
+      // Reload to continue with wizard
+      window.location.reload();
+    } catch {
+      setSkipping(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-muted/30">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
@@ -1577,42 +1600,66 @@ function ProfileSetupRequired() {
       </header>
 
       <div className="flex flex-1 items-center justify-center p-8">
-        <div className="mx-auto max-w-md text-center">
+        <div className="mx-auto max-w-lg text-center">
           <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-purple-500/20">
             <Settings className="h-10 w-10 text-primary" />
           </div>
 
-          <h1 className="text-3xl font-bold">Complete Your Profile</h1>
+          <h1 className="text-3xl font-bold">Personalize Your Experience</h1>
           <p className="mt-3 text-muted-foreground">
-            Before we set up your repository, tell us a bit about yourself. This
-            helps us personalize your AI configurations.
+            Tell us about yourself to get better AI configurations.
+            <strong className="block mt-2 text-foreground">This is optional — you can skip it!</strong>
           </p>
 
-          <div className="mt-8 space-y-4">
+          <div className="mt-8 space-y-3">
             <Button asChild size="lg" className="w-full">
-              <Link href="/settings/profile?onboarding=true">
+              <Link href="/settings?tab=profile&onboarding=true">
                 <Settings className="mr-2 h-5 w-5" />
-                Set Up Your Profile
+                Set Up Profile
               </Link>
+            </Button>
+            <Button
+              variant="ghost"
+              size="lg"
+              className="w-full"
+              onClick={handleSkip}
+              disabled={skipping}
+            >
+              {skipping ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Skipping...
+                </>
+              ) : (
+                "Skip for now"
+              )}
             </Button>
           </div>
 
           <div className="mt-8 rounded-xl border bg-card p-6 text-left">
-            <h3 className="font-semibold">What you&apos;ll set up:</h3>
+            <h3 className="font-semibold">Why set up your profile?</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Your persona (e.g., &quot;DevOps Engineer&quot;) is <strong>dynamically added</strong> to 
+              every blueprint you download. This helps AI assistants understand your background 
+              and tailor responses accordingly.
+            </p>
             <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <span>Your display name (used as author in templates)</span>
+                <span><strong>Display name</strong> — Your nickname or name (doesn&apos;t have to be real)</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <span>Developer type (backend, frontend, fullstack, etc.)</span>
+                <span><strong>Developer type</strong> — Backend, Frontend, DevOps, Data, etc.</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <span>Skill level (controls AI verbosity)</span>
+                <span><strong>Skill level</strong> — Controls how verbose AI explanations are</span>
               </li>
             </ul>
+            <p className="mt-4 text-xs text-muted-foreground">
+              🔒 This info is only used to personalize your downloads. We don&apos;t share it.
+            </p>
           </div>
         </div>
       </div>

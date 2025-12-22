@@ -531,8 +531,8 @@ To go live with Stripe payments:
 
 ### Onboarding
 
-- [ ] **Persona selection (optional)**: Clarify that persona is for dynamic template personalization
-  - Make it optional, not mandatory
+- [x] **Persona selection (optional)**: Clarify that persona is for dynamic template personalization
+  - Make it optional, not mandatory (added "Skip for now" button)
   - User may not want to share info
   - Also ask for display name/nickname (not real name required)
   - Explain: "Your persona (e.g., DevOps Engineer) is added to downloaded templates for personalization"
