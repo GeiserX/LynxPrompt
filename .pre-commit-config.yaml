@@ -1,0 +1,40 @@
+repos:
+  # Lint and format with ESLint/Prettier
+  - repo: local
+    hooks:
+      - id: lint
+        name: ESLint & TypeScript Check
+        entry: npm run lint
+        language: system
+        types: [typescript, tsx]
+        pass_filenames: false
+
+      - id: typecheck
+        name: TypeScript Type Check
+        entry: npx tsc --noEmit
+        language: system
+        types: [typescript, tsx]
+        pass_filenames: false
+
+      - id: build-check
+        name: Build Check
+        entry: npm run build
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+  # General file hygiene
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.md$'
+      - id: end-of-file-fixer
+        exclude: '\.md$'
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: no-commit-to-branch
+        args: ['--branch', 'main']
+        stages: [pre-commit]
