@@ -15,11 +15,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { plan } = (await request.json()) as { plan: SubscriptionPlan };
+    const { plan, euDigitalContentConsent } = (await request.json()) as { 
+      plan: SubscriptionPlan;
+      euDigitalContentConsent?: boolean;
+    };
 
     if (!plan || (plan !== "pro" && plan !== "max")) {
       return NextResponse.json(
         { error: "Invalid plan selected" },
+        { status: 400 }
+      );
+    }
+
+    // EU Digital Content Directive compliance
+    // User must consent to immediate access and waive 14-day withdrawal right
+    if (!euDigitalContentConsent) {
+      return NextResponse.json(
+        { error: "You must consent to immediate access and waive your withdrawal right to proceed." },
         { status: 400 }
       );
     }
@@ -95,11 +107,16 @@ export async function POST(request: NextRequest) {
       metadata: {
         userId: session.user.id,
         plan: plan,
+        // EU Digital Content Directive consent tracking
+        euDigitalContentConsent: "true",
+        consentTimestamp: new Date().toISOString(),
       },
       subscription_data: {
         metadata: {
           userId: session.user.id,
           plan: plan,
+          euDigitalContentConsent: "true",
+          consentTimestamp: new Date().toISOString(),
         },
       },
       // Allow promotion codes
