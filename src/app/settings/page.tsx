@@ -877,6 +877,7 @@ interface SubscriptionStatus {
   cancelAtPeriodEnd: boolean;
   hasStripeAccount: boolean;
   hasActiveSubscription: boolean;
+  isAdmin?: boolean;
 }
 
 const PLAN_DETAILS = {
@@ -1010,11 +1011,20 @@ function BillingSection({ setError, setSuccess: _setSuccess }: BillingSectionPro
               <PlanIcon className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-lg font-semibold">{planInfo.name}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-lg font-semibold">{planInfo.name}</p>
+                {subscription?.isAdmin && (
+                  <span className="rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                    Admin
+                  </span>
+                )}
+              </div>
               <p className="text-sm text-muted-foreground">
-                {planInfo.description}
+                {subscription?.isAdmin 
+                  ? "Full access granted as administrator"
+                  : planInfo.description}
               </p>
-              {subscription?.currentPeriodEnd && subscription.status === "active" && (
+              {!subscription?.isAdmin && subscription?.currentPeriodEnd && subscription.status === "active" && (
                 <p className="mt-1 text-xs text-muted-foreground">
                   {subscription.cancelAtPeriodEnd
                     ? `Cancels on ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`
@@ -1024,8 +1034,10 @@ function BillingSection({ setError, setSuccess: _setSuccess }: BillingSectionPro
             </div>
           </div>
           <div className="text-right">
-            <p className="text-lg font-semibold">{planInfo.price}</p>
-            {subscription?.status && subscription.status !== "active" && (
+            <p className="text-lg font-semibold">
+              {subscription?.isAdmin ? "Free" : planInfo.price}
+            </p>
+            {!subscription?.isAdmin && subscription?.status && subscription.status !== "active" && (
               <span className="rounded bg-yellow-500/10 px-2 py-0.5 text-xs text-yellow-600">
                 {subscription.status}
               </span>
@@ -1034,8 +1046,8 @@ function BillingSection({ setError, setSuccess: _setSuccess }: BillingSectionPro
         </div>
       </div>
 
-      {/* Upgrade Options */}
-      {currentPlan !== "max" && (
+      {/* Upgrade Options - Hide for admins (they already have MAX) */}
+      {currentPlan !== "max" && !subscription?.isAdmin && (
         <div className="rounded-xl border bg-card p-6">
           <h2 className="mb-4 font-semibold">Upgrade Your Plan</h2>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -1141,4 +1153,5 @@ function BillingSection({ setError, setSuccess: _setSuccess }: BillingSectionPro
     </div>
   );
 }
+
 

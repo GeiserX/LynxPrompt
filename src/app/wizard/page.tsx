@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -22,10 +22,11 @@ import {
   Settings,
   Loader2,
   Copy,
-  Eye,
   FileText,
   ChevronDown,
   ChevronUp,
+  Crown,
+  Zap,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
@@ -36,18 +37,45 @@ import {
   type GeneratedFile,
 } from "@/lib/file-generator";
 
-// New wizard steps - removed persona and skill level (now in profile)
-const WIZARD_STEPS = [
-  { id: "project", title: "Project Info", icon: FolderGit2 },
-  { id: "languages", title: "Tech Stack", icon: Code },
-  { id: "repository", title: "Repository", icon: GitBranch },
-  { id: "release_strategy", title: "Release Strategy", icon: Globe },
-  { id: "cicd", title: "CI/CD", icon: Rocket },
-  { id: "ai_behavior", title: "AI Rules", icon: Brain },
-  { id: "platforms", title: "Platforms", icon: Target },
-  { id: "feedback", title: "Anything Else?", icon: MessageSquare },
-  { id: "generate", title: "Generate", icon: Download },
+// Wizard tier definitions
+type WizardTier = "basic" | "intermediate" | "advanced";
+
+// New wizard steps with tier requirements
+const WIZARD_STEPS: {
+  id: string;
+  title: string;
+  icon: React.ComponentType<{ className?: string }>;
+  tier: WizardTier;
+}[] = [
+  { id: "project", title: "Project Info", icon: FolderGit2, tier: "basic" },
+  { id: "languages", title: "Tech Stack", icon: Code, tier: "basic" },
+  { id: "repository", title: "Repository", icon: GitBranch, tier: "intermediate" },
+  { id: "release_strategy", title: "Release Strategy", icon: Globe, tier: "intermediate" },
+  { id: "cicd", title: "CI/CD", icon: Rocket, tier: "advanced" },
+  { id: "ai_behavior", title: "AI Rules", icon: Brain, tier: "advanced" },
+  { id: "platforms", title: "Platforms", icon: Target, tier: "basic" },
+  { id: "feedback", title: "Anything Else?", icon: MessageSquare, tier: "advanced" },
+  { id: "generate", title: "Generate", icon: Download, tier: "basic" },
 ];
+
+// Get tier badge color and icon
+function getTierBadge(tier: WizardTier) {
+  switch (tier) {
+    case "intermediate":
+      return { color: "text-blue-500", bg: "bg-blue-500/10", label: "Pro", icon: Zap };
+    case "advanced":
+      return { color: "text-purple-500", bg: "bg-purple-500/10", label: "Max", icon: Crown };
+    default:
+      return null;
+  }
+}
+
+// Check if user can access a tier
+function canAccessTier(userTier: string, requiredTier: WizardTier): boolean {
+  const tierLevels = { free: 0, pro: 1, max: 2 };
+  const requiredLevels = { basic: 0, intermediate: 1, advanced: 2 };
+  return tierLevels[userTier as keyof typeof tierLevels] >= requiredLevels[requiredTier];
+}
 
 const RELEASE_STRATEGIES = [
   {
@@ -238,6 +266,8 @@ export default function WizardPage() {
   const [previewFiles, setPreviewFiles] = useState<GeneratedFile[]>([]);
   const [expandedFile, setExpandedFile] = useState<string | null>(null);
   const [copiedFile, setCopiedFile] = useState<string | null>(null);
+  const [userTier, setUserTier] = useState<string>("free");
+  const [tierLoading, setTierLoading] = useState(true);
   const [config, setConfig] = useState<WizardConfig>({
     projectName: "",
     projectDescription: "",
@@ -268,8 +298,35 @@ export default function WizardPage() {
     additionalFeedback: "",
   });
 
+  // Fetch user subscription tier
+  useEffect(() => {
+    const fetchTier = async () => {
+      if (status !== "authenticated") {
+        setTierLoading(false);
+        return;
+      }
+      try {
+        const res = await fetch("/api/billing/status");
+        if (res.ok) {
+          const data = await res.json();
+          setUserTier(data.plan || "free");
+        }
+      } catch {
+        // Default to free on error
+        setUserTier("free");
+      } finally {
+        setTierLoading(false);
+      }
+    };
+    fetchTier();
+  }, [status]);
+
+  // Get available steps based on user tier
+  const availableSteps = WIZARD_STEPS.filter(step => canAccessTier(userTier, step.tier));
+  const lockedSteps = WIZARD_STEPS.filter(step => !canAccessTier(userTier, step.tier));
+
   // Show loading state while checking auth
-  if (status === "loading") {
+  if (status === "loading" || tierLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="animate-pulse text-muted-foreground">Loading...</div>
@@ -289,7 +346,15 @@ export default function WizardPage() {
 
   const handleNext = () => {
     if (currentStep < WIZARD_STEPS.length - 1) {
-      const nextStep = currentStep + 1;
+      // Find next accessible step
+      let nextStep = currentStep + 1;
+      while (nextStep < WIZARD_STEPS.length && !canAccessTier(userTier, WIZARD_STEPS[nextStep].tier)) {
+        nextStep++;
+      }
+      if (nextStep >= WIZARD_STEPS.length) {
+        // Jump to generate step (always accessible)
+        nextStep = WIZARD_STEPS.length - 1;
+      }
       setCurrentStep(nextStep);
 
       // Generate preview files when entering the last step
@@ -343,7 +408,14 @@ export default function WizardPage() {
 
   const handleBack = () => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+      // Find previous accessible step
+      let prevStep = currentStep - 1;
+      while (prevStep >= 0 && !canAccessTier(userTier, WIZARD_STEPS[prevStep].tier)) {
+        prevStep--;
+      }
+      if (prevStep >= 0) {
+        setCurrentStep(prevStep);
+      }
     }
   };
 
@@ -465,38 +537,71 @@ export default function WizardPage() {
               const Icon = step.icon;
               const isActive = index === currentStep;
               const isCompleted = index < currentStep;
+              const isLocked = !canAccessTier(userTier, step.tier);
+              const tierBadge = getTierBadge(step.tier);
 
               return (
                 <button
                   key={step.id}
-                  onClick={() => setCurrentStep(index)}
+                  onClick={() => !isLocked && setCurrentStep(index)}
+                  disabled={isLocked}
                   className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors ${
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : isCompleted
-                        ? "bg-muted text-foreground"
-                        : "text-muted-foreground hover:bg-muted"
+                    isLocked
+                      ? "cursor-not-allowed opacity-50"
+                      : isActive
+                        ? "bg-primary text-primary-foreground"
+                        : isCompleted
+                          ? "bg-muted text-foreground"
+                          : "text-muted-foreground hover:bg-muted"
                   }`}
                 >
                   <div
                     className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                      isActive
-                        ? "bg-primary-foreground/20"
-                        : isCompleted
-                          ? "bg-primary/20"
-                          : "bg-muted"
+                      isLocked
+                        ? "bg-muted"
+                        : isActive
+                          ? "bg-primary-foreground/20"
+                          : isCompleted
+                            ? "bg-primary/20"
+                            : "bg-muted"
                     }`}
                   >
-                    {isCompleted ? (
+                    {isLocked ? (
+                      <Lock className="h-4 w-4" />
+                    ) : isCompleted ? (
                       <Check className="h-4 w-4 text-primary" />
                     ) : (
                       <Icon className="h-4 w-4" />
                     )}
                   </div>
-                  <span className="text-sm font-medium">{step.title}</span>
+                  <span className="flex-1 text-sm font-medium">{step.title}</span>
+                  {tierBadge && (
+                    <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${tierBadge.bg} ${tierBadge.color}`}>
+                      {tierBadge.label}
+                    </span>
+                  )}
                 </button>
               );
             })}
+
+            {/* Upgrade prompt if there are locked steps */}
+            {lockedSteps.length > 0 && (
+              <div className="mt-4 rounded-lg border border-dashed bg-muted/30 p-4">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Lock className="h-4 w-4 text-muted-foreground" />
+                  <span>{lockedSteps.length} step{lockedSteps.length > 1 ? "s" : ""} locked</span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Upgrade to unlock {userTier === "free" ? "Pro and Max" : "Max"} features
+                </p>
+                <Button asChild size="sm" className="mt-3 w-full">
+                  <Link href="/pricing">
+                    <Crown className="mr-2 h-4 w-4" />
+                    Upgrade
+                  </Link>
+                </Button>
+              </div>
+            )}
           </div>
         </aside>
 
