@@ -20,6 +20,7 @@ interface WizardConfig {
   customRegistry: string;
   deploymentTarget: string[];
   aiBehaviorRules: string[];
+  enableAutoUpdate?: boolean;
   platforms: string[];
   additionalFeedback: string;
 }
@@ -96,6 +97,22 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
   lines.push("- Add appropriate error handling");
   lines.push("- Consider security implications");
 
+  // Auto-update instruction
+  if (config.enableAutoUpdate) {
+    lines.push("");
+    lines.push("## Self-Improving Configuration");
+    lines.push("**IMPORTANT**: This configuration file is set to self-improve.");
+    lines.push("");
+    lines.push("As you work on this project, track the user's coding patterns, preferences, and decisions.");
+    lines.push("Periodically update this file to reflect what you learn about how the user works:");
+    lines.push("- Note preferred code styles and patterns that emerge");
+    lines.push("- Record decisions about architecture or tooling");
+    lines.push("- Add rules for common issues or mistakes to avoid");
+    lines.push("- Refine instructions based on user corrections");
+    lines.push("");
+    lines.push("Keep this file updated so future sessions start with better context.");
+  }
+
   return lines.join("\n");
 }
 
@@ -167,6 +184,21 @@ function generateClaudeMd(config: WizardConfig, user: UserProfile): string {
     lines.push("");
   }
 
+  // Auto-update instruction
+  if (config.enableAutoUpdate) {
+    lines.push("## Self-Improving Configuration");
+    lines.push("");
+    lines.push("**This file is set to self-improve.** As we work together:");
+    lines.push("");
+    lines.push("1. Track patterns in how I work and prefer to code");
+    lines.push("2. Note any corrections I make to your suggestions");
+    lines.push("3. Update this file periodically with what you learn");
+    lines.push("4. Add new rules or refine existing ones based on our interactions");
+    lines.push("");
+    lines.push("This helps future sessions start with better context about my preferences.");
+    lines.push("");
+  }
+
   return lines.join("\n");
 }
 
@@ -213,6 +245,14 @@ function generateCopilotInstructions(
   lines.push("- Follow existing patterns in the codebase");
   lines.push("- Use meaningful variable and function names");
   lines.push("- Add error handling where appropriate");
+
+  // Auto-update instruction
+  if (config.enableAutoUpdate) {
+    lines.push("");
+    lines.push("## Self-Improving Configuration");
+    lines.push("This file should be updated as the project evolves.");
+    lines.push("Track coding patterns and preferences, and refine these rules over time.");
+  }
 
   return lines.join("\n");
 }

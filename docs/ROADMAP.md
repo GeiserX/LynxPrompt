@@ -502,6 +502,7 @@ POST   /api/generate               - Generate config files from wizard data
 
 - [ ] **Logo in OAuth providers**: When logo is ready, add it to GitHub/Google login screens
 - [x] **IDE compatibility section**: Add to main page AND docs - visual stripe of all supported IDEs with logos
+- [ ] **Explainer video**: Create a ~1 minute video explaining the concept of LynxPrompt and how it works
 
 ### Stripe Production Release
 
@@ -554,20 +555,30 @@ To go live with Stripe payments:
   - Highlight detected patterns
   - Require confirmation to proceed
 
-- [ ] **Auto-update option**: Ask in wizard if blueprint should be updated per user usage
-  - "Keep this blueprint updated as you use it"
-  - Track common patterns and suggest improvements
+- [ ] **Auto-update option**: Ask in wizard if blueprint should include auto-update instruction
+  - Add instruction to blueprint: "Track user coding patterns and update this file accordingly"
+  - AI agents will then self-improve the config based on user behavior
+  - Question in wizard: "Should this blueprint include self-improvement instructions?"
 
 ### User Preferences
 
 - [ ] **License preferences**: Store preferred licenses per user
-  - User can set default license for all templates
-  - Edit licenses separately from templates
+  - Ask license preference per-repo during wizard
+  - Remember what was used before for next repos
+  - User can set default license in dashboard settings
+  - Edit licenses separately from templates in dashboard
 
 - [ ] **FUNDING.yml configuration**: 
-  - Only show if GitHub repository is selected
-  - Store separately so user can edit it independently
-  - Persist in user preferences
+  - Only ask if GitHub repository is selected in wizard
+  - Remember choice for subsequent prompts using GitHub
+  - Ask user if they want to reuse previous FUNDING.yml
+  - Store in user preferences (dashboard > Preferences > Static Files)
+  - User can manage/edit these static files in dashboard
+
+- [ ] **Static files management (Dashboard)**:
+  - LICENSE: View/edit saved license files
+  - FUNDING.yml: View/edit funding configuration
+  - Other reusable files that persist across projects
 
 ---
 
