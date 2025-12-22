@@ -86,3 +86,4 @@ export function getAvailableWizards(effectiveTier: SubscriptionTier): WizardTier
 export function isAdminRole(role: UserRole): boolean {
   return role === "ADMIN" || role === "SUPERADMIN";
 }
+
