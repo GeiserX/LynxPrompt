@@ -76,6 +76,10 @@ export default function PrivacyPage() {
                     </a>
                   </li>
                 </ul>
+                <p className="mt-3 text-sm">
+                  We have not appointed a Data Protection Officer (DPO). For all
+                  privacy inquiries, please contact us at the email above.
+                </p>
               </section>
 
               {/* Data We Collect */}
@@ -136,7 +140,11 @@ export default function PrivacyPage() {
                       <li>To create and manage your account</li>
                       <li>To provide our service and save your templates</li>
                       <li>To process payments through Stripe</li>
-                      <li>To send transactional emails (magic links, receipts)</li>
+                      <li>
+                        To send transactional emails (passwordless login links,
+                        payment receipts, critical security notices, service
+                        changes)
+                      </li>
                     </ul>
                   </div>
                   <div>
@@ -250,27 +258,27 @@ export default function PrivacyPage() {
 
                   <div className="rounded-lg border p-4">
                     <h3 className="font-medium text-foreground">
-                      Umami Analytics
+                      Umami Analytics (Self-Hosted)
                     </h3>
                     <p className="mt-1 text-sm">
-                      <strong>Data shared:</strong> Anonymized page views,
+                      <strong>Data collected:</strong> Anonymized page views,
                       device type, country (no personal identifiers)
                     </p>
                     <p className="text-sm">
                       <strong>Purpose:</strong> Privacy-focused usage analytics
                     </p>
                     <p className="text-sm">
-                      <strong>Note:</strong> Umami is cookieless and does not
-                      track individuals
+                      <strong>Hosting:</strong> Self-hosted on our EU servers
+                      (no data shared with third parties)
                     </p>
-                    <a
-                      href="https://umami.is/privacy"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline"
-                    >
-                      Umami Privacy Policy →
-                    </a>
+                    <p className="text-sm">
+                      <strong>Cookies:</strong> Cookieless - does not track
+                      individuals across sessions
+                    </p>
+                    <p className="text-sm">
+                      <strong>Legal basis:</strong> Legitimate interest (minimal,
+                      privacy-preserving analytics)
+                    </p>
                   </div>
                 </div>
               </section>
