@@ -37,88 +37,314 @@ export default function PrivacyPage() {
             </div>
 
             <div className="space-y-8 text-muted-foreground">
+              {/* Introduction */}
               <section>
                 <h2 className="mb-3 text-lg font-semibold text-foreground">
-                  Introduction
+                  1. Introduction
                 </h2>
                 <p>
-                  LynxPrompt is operated by GeiserCloud. We respect your privacy
-                  and are committed to protecting your personal data. This
-                  policy explains how we collect, use, and safeguard your
-                  information.
+                  LynxPrompt is operated by GeiserCloud, a company registered in
+                  Spain. We respect your privacy and are committed to protecting
+                  your personal data. This policy explains how we collect, use,
+                  and safeguard your information in compliance with the General
+                  Data Protection Regulation (GDPR) and other applicable privacy
+                  laws.
                 </p>
               </section>
 
+              {/* Data Controller */}
               <section>
                 <h2 className="mb-3 text-lg font-semibold text-foreground">
-                  Data We Collect
+                  2. Data Controller
                 </h2>
                 <p className="mb-2">
-                  <strong className="text-foreground">
-                    Account Information:
-                  </strong>{" "}
-                  Email address, name, and profile picture (as provided by your
-                  OAuth provider such as GitHub or Google).
+                  GeiserCloud is the data controller responsible for your
+                  personal data:
                 </p>
-                <p className="mb-2">
-                  <strong className="text-foreground">User Content:</strong>{" "}
-                  Templates and prompts you create, wizard configurations, and
-                  favorites.
-                </p>
-                <p>
-                  <strong className="text-foreground">Usage Data:</strong> Pages
-                  visited, features used, and device/browser information for
-                  service improvement.
-                </p>
-              </section>
-
-              <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">
-                  How We Use Your Data
-                </h2>
                 <ul className="list-inside list-disc space-y-1">
-                  <li>To provide and maintain our service</li>
-                  <li>To authenticate your account</li>
-                  <li>To save your preferences and templates</li>
-                  <li>To process payments (handled securely by Stripe)</li>
-                  <li>To improve our service based on usage patterns</li>
-                  <li>To communicate important service updates</li>
+                  <li>
+                    <strong>Address:</strong> Calle Tierno Galván 25, 30203
+                    Cartagena, Murcia, Spain
+                  </li>
+                  <li>
+                    <strong>Email:</strong>{" "}
+                    <a
+                      href="mailto:privacy@lynxprompt.com"
+                      className="text-primary hover:underline"
+                    >
+                      privacy@lynxprompt.com
+                    </a>
+                  </li>
                 </ul>
               </section>
 
+              {/* Data We Collect */}
               <section>
                 <h2 className="mb-3 text-lg font-semibold text-foreground">
-                  Data Storage & Security
+                  3. Data We Collect
                 </h2>
-                <p className="mb-2">
-                  All data is stored exclusively in the European Union. We use
-                  encrypted connections (HTTPS), secure OAuth authentication,
-                  and follow industry security best practices.
+                <p className="mb-3">
+                  We collect and process the following categories of personal
+                  data:
                 </p>
-                <p>
-                  We do not store payment card information. All payments are
-                  processed by Stripe, a PCI-DSS compliant payment processor.
+                <div className="space-y-3">
+                  <div>
+                    <strong className="text-foreground">
+                      Account Information:
+                    </strong>
+                    <ul className="ml-4 mt-1 list-inside list-disc">
+                      <li>Email address</li>
+                      <li>Name (if provided by your OAuth provider)</li>
+                      <li>Profile picture (if provided by your OAuth provider)</li>
+                      <li>OAuth provider identifiers (GitHub ID, Google ID)</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <strong className="text-foreground">User Content:</strong>
+                    <ul className="ml-4 mt-1 list-inside list-disc">
+                      <li>Templates and prompts you create</li>
+                      <li>Wizard configurations and preferences</li>
+                      <li>Favorites and download history</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <strong className="text-foreground">Usage Data:</strong>
+                    <ul className="ml-4 mt-1 list-inside list-disc">
+                      <li>Pages visited and features used</li>
+                      <li>Device type and browser information</li>
+                      <li>Anonymized analytics data (via Umami)</li>
+                    </ul>
+                  </div>
+                </div>
+              </section>
+
+              {/* Legal Basis */}
+              <section>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">
+                  4. Legal Basis for Processing
+                </h2>
+                <p className="mb-3">
+                  Under GDPR, we process your personal data based on the
+                  following legal grounds:
+                </p>
+                <div className="space-y-3">
+                  <div>
+                    <strong className="text-foreground">
+                      Contractual Necessity (Article 6(1)(b)):
+                    </strong>
+                    <ul className="ml-4 mt-1 list-inside list-disc">
+                      <li>To create and manage your account</li>
+                      <li>To provide our service and save your templates</li>
+                      <li>To process payments through Stripe</li>
+                      <li>To send transactional emails (magic links, receipts)</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <strong className="text-foreground">
+                      Legitimate Interest (Article 6(1)(f)):
+                    </strong>
+                    <ul className="ml-4 mt-1 list-inside list-disc">
+                      <li>To improve our service based on usage patterns</li>
+                      <li>To ensure security and prevent fraud</li>
+                      <li>To maintain and debug our systems</li>
+                    </ul>
+                  </div>
+                </div>
+                <p className="mt-3 text-sm">
+                  We do not send marketing emails and therefore do not rely on
+                  consent for email communications.
                 </p>
               </section>
 
+              {/* How We Use Your Data */}
               <section>
                 <h2 className="mb-3 text-lg font-semibold text-foreground">
-                  Third-Party Services
+                  5. How We Use Your Data
                 </h2>
-                <p>
-                  We use GitHub and Google for OAuth authentication, and Stripe
-                  for payment processing. Each service has its own privacy
-                  policy governing your data.
-                </p>
+                <ul className="list-inside list-disc space-y-1">
+                  <li>To provide and maintain our service</li>
+                  <li>To authenticate your account via OAuth providers</li>
+                  <li>To save your preferences, templates, and configurations</li>
+                  <li>To process payments securely through Stripe</li>
+                  <li>To analyze anonymized usage patterns for service improvement</li>
+                  <li>To send essential service communications</li>
+                </ul>
               </section>
 
+              {/* Third-Party Services */}
               <section>
                 <h2 className="mb-3 text-lg font-semibold text-foreground">
-                  Your Rights Under GDPR
+                  6. Third-Party Services & Data Sharing
+                </h2>
+                <p className="mb-3">
+                  We share data with the following third parties to provide our
+                  service:
+                </p>
+                <div className="space-y-4">
+                  <div className="rounded-lg border p-4">
+                    <h3 className="font-medium text-foreground">
+                      GitHub (Microsoft)
+                    </h3>
+                    <p className="mt-1 text-sm">
+                      <strong>Data shared:</strong> OAuth authentication tokens
+                    </p>
+                    <p className="text-sm">
+                      <strong>Purpose:</strong> Account authentication
+                    </p>
+                    <p className="text-sm">
+                      <strong>Location:</strong> USA (EU SCCs in place)
+                    </p>
+                    <a
+                      href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-primary hover:underline"
+                    >
+                      GitHub Privacy Statement →
+                    </a>
+                  </div>
+
+                  <div className="rounded-lg border p-4">
+                    <h3 className="font-medium text-foreground">Google</h3>
+                    <p className="mt-1 text-sm">
+                      <strong>Data shared:</strong> OAuth authentication tokens
+                    </p>
+                    <p className="text-sm">
+                      <strong>Purpose:</strong> Account authentication
+                    </p>
+                    <p className="text-sm">
+                      <strong>Location:</strong> USA/EU (EU SCCs in place)
+                    </p>
+                    <a
+                      href="https://policies.google.com/privacy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-primary hover:underline"
+                    >
+                      Google Privacy Policy →
+                    </a>
+                  </div>
+
+                  <div className="rounded-lg border p-4">
+                    <h3 className="font-medium text-foreground">Stripe</h3>
+                    <p className="mt-1 text-sm">
+                      <strong>Data shared:</strong> Email, payment information
+                      (processed directly by Stripe)
+                    </p>
+                    <p className="text-sm">
+                      <strong>Purpose:</strong> Payment processing
+                    </p>
+                    <p className="text-sm">
+                      <strong>Location:</strong> USA/EU (EU SCCs in place,
+                      PCI-DSS compliant)
+                    </p>
+                    <a
+                      href="https://stripe.com/privacy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-primary hover:underline"
+                    >
+                      Stripe Privacy Policy →
+                    </a>
+                  </div>
+
+                  <div className="rounded-lg border p-4">
+                    <h3 className="font-medium text-foreground">
+                      Umami Analytics
+                    </h3>
+                    <p className="mt-1 text-sm">
+                      <strong>Data shared:</strong> Anonymized page views,
+                      device type, country (no personal identifiers)
+                    </p>
+                    <p className="text-sm">
+                      <strong>Purpose:</strong> Privacy-focused usage analytics
+                    </p>
+                    <p className="text-sm">
+                      <strong>Note:</strong> Umami is cookieless and does not
+                      track individuals
+                    </p>
+                    <a
+                      href="https://umami.is/privacy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-primary hover:underline"
+                    >
+                      Umami Privacy Policy →
+                    </a>
+                  </div>
+                </div>
+              </section>
+
+              {/* International Transfers */}
+              <section>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">
+                  7. International Data Transfers
                 </h2>
                 <p className="mb-2">
-                  If you are in the European Union, you have rights under the
-                  General Data Protection Regulation (GDPR):
+                  Your data is primarily stored in the European Union. When data
+                  is transferred to third parties outside the EU (GitHub,
+                  Google, Stripe), we ensure appropriate safeguards are in
+                  place:
+                </p>
+                <ul className="list-inside list-disc space-y-1">
+                  <li>
+                    <strong>Standard Contractual Clauses (SCCs):</strong> Our
+                    third-party providers use EU-approved SCCs for international
+                    transfers
+                  </li>
+                  <li>
+                    <strong>Adequacy decisions:</strong> Where applicable, we
+                    rely on EU adequacy decisions
+                  </li>
+                  <li>
+                    <strong>Supplementary measures:</strong> Encryption and
+                    access controls protect data in transit
+                  </li>
+                </ul>
+              </section>
+
+              {/* Data Storage & Security */}
+              <section>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">
+                  8. Data Storage & Security
+                </h2>
+                <p className="mb-2">
+                  We implement appropriate technical and organizational measures
+                  to protect your data:
+                </p>
+                <ul className="list-inside list-disc space-y-1">
+                  <li>
+                    <strong>Location:</strong> All primary data is stored on
+                    servers located in the European Union
+                  </li>
+                  <li>
+                    <strong>Encryption:</strong> All data in transit is
+                    encrypted via TLS/HTTPS
+                  </li>
+                  <li>
+                    <strong>Authentication:</strong> Secure OAuth 2.0
+                    authentication via trusted providers
+                  </li>
+                  <li>
+                    <strong>Access control:</strong> Database access is
+                    restricted and password-protected
+                  </li>
+                  <li>
+                    <strong>Payments:</strong> We never store payment card
+                    details; all payment processing is handled by Stripe
+                    (PCI-DSS Level 1 certified)
+                  </li>
+                </ul>
+              </section>
+
+              {/* GDPR Rights */}
+              <section>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">
+                  9. Your Rights Under GDPR
+                </h2>
+                <p className="mb-2">
+                  If you are in the European Economic Area, you have the
+                  following rights:
                 </p>
                 <ul className="list-inside list-disc space-y-1">
                   <li>
@@ -131,76 +357,168 @@ export default function PrivacyPage() {
                   </li>
                   <li>
                     <strong>Erasure:</strong> Request deletion of your data
+                    (&quot;right to be forgotten&quot;)
+                  </li>
+                  <li>
+                    <strong>Restriction:</strong> Request limited processing of
+                    your data
                   </li>
                   <li>
                     <strong>Portability:</strong> Request your data in a
                     machine-readable format
                   </li>
                   <li>
-                    <strong>Objection:</strong> Object to certain types of
-                    processing
+                    <strong>Objection:</strong> Object to processing based on
+                    legitimate interest
                   </li>
                 </ul>
-              </section>
-
-              <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">
-                  Data Retention
-                </h2>
-                <p>
-                  We retain your data while your account is active. Upon account
-                  deletion, we will erase your personal data within one month,
-                  unless we are legally required to retain certain records.
-                </p>
-              </section>
-
-              <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">
-                  Cookies
-                </h2>
-                <p>
-                  We use essential cookies only for authentication and session
-                  management. We do not use tracking or advertising cookies.
-                </p>
-              </section>
-
-              <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">
-                  Age Requirement
-                </h2>
-                <p>
-                  LynxPrompt is intended for users aged 16 and older (or the
-                  applicable age of digital consent in your country, which
-                  ranges from 13 to 16 within the EU). We do not knowingly
-                  collect data from users below this age.
-                </p>
-              </section>
-
-              <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">
-                  Changes to This Policy
-                </h2>
-                <p>
-                  We may update this policy from time to time. Significant
-                  changes will be communicated via our website or email.
-                </p>
-              </section>
-
-              <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">
-                  Contact
-                </h2>
-                <p>
-                  For privacy-related questions or to exercise your rights,
-                  contact us at{" "}
+                <p className="mt-3">
+                  To exercise these rights, contact us at{" "}
                   <a
                     href="mailto:privacy@lynxprompt.com"
                     className="text-primary hover:underline"
                   >
                     privacy@lynxprompt.com
                   </a>
+                  . We will respond within one month of receiving your request.
+                </p>
+                <p className="mt-2 text-sm">
+                  You also have the right to lodge a complaint with your local
+                  supervisory authority. In Spain, this is the{" "}
+                  <a
+                    href="https://www.aepd.es"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    Agencia Española de Protección de Datos (AEPD)
+                  </a>
                   .
                 </p>
+              </section>
+
+              {/* US Users */}
+              <section>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">
+                  10. Information for US Residents
+                </h2>
+                <p className="mb-2">
+                  If you are a US resident, you may have additional rights under
+                  state privacy laws. While we do not currently meet the
+                  thresholds that trigger full CCPA/CPRA compliance, we extend
+                  the following rights to all users:
+                </p>
+                <ul className="list-inside list-disc space-y-1">
+                  <li>
+                    <strong>Right to Know:</strong> Request information about
+                    data we collect
+                  </li>
+                  <li>
+                    <strong>Right to Delete:</strong> Request deletion of your
+                    personal data
+                  </li>
+                  <li>
+                    <strong>Non-Discrimination:</strong> We will not
+                    discriminate against you for exercising your rights
+                  </li>
+                </ul>
+                <p className="mt-2 text-sm">
+                  Note: We do not sell personal information to third parties.
+                </p>
+              </section>
+
+              {/* Automated Decision-Making */}
+              <section>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">
+                  11. Automated Decision-Making
+                </h2>
+                <p>
+                  We do not use automated decision-making or profiling that
+                  produces legal or similarly significant effects on you. All
+                  significant decisions regarding your account are made by
+                  humans.
+                </p>
+              </section>
+
+              {/* Data Retention */}
+              <section>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">
+                  12. Data Retention
+                </h2>
+                <p>
+                  We retain your personal data for as long as your account is
+                  active. If you request account deletion, we will erase your
+                  personal data within one month, except where we are legally
+                  required to retain certain records (e.g., payment records for
+                  tax purposes, which may be retained for up to 7 years).
+                </p>
+              </section>
+
+              {/* Cookies */}
+              <section>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">
+                  13. Cookies
+                </h2>
+                <p>
+                  We use only essential cookies required for authentication and
+                  session management. We do not use advertising, tracking, or
+                  third-party marketing cookies. Our analytics provider (Umami)
+                  is cookieless and privacy-focused.
+                </p>
+              </section>
+
+              {/* Age Requirement */}
+              <section>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">
+                  14. Age Requirement
+                </h2>
+                <p>
+                  LynxPrompt is intended for users aged 16 and older (or the
+                  applicable age of digital consent in your country, which
+                  ranges from 13 to 16 within the EU). We do not knowingly
+                  collect data from users below this age. If you believe we have
+                  collected data from a minor, please contact us immediately.
+                </p>
+              </section>
+
+              {/* Changes */}
+              <section>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">
+                  15. Changes to This Policy
+                </h2>
+                <p>
+                  We may update this privacy policy from time to time.
+                  Significant changes will be communicated via our website or
+                  email. We encourage you to review this policy periodically.
+                </p>
+              </section>
+
+              {/* Contact */}
+              <section>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">
+                  16. Contact Us
+                </h2>
+                <p className="mb-3">
+                  For privacy-related questions, data requests, or to exercise
+                  your rights:
+                </p>
+                <div className="rounded-lg border p-4">
+                  <p>
+                    <strong className="text-foreground">GeiserCloud</strong>
+                  </p>
+                  <p>Calle Tierno Galván 25</p>
+                  <p>30203 Cartagena, Murcia</p>
+                  <p>Spain</p>
+                  <p className="mt-2">
+                    <strong>Email:</strong>{" "}
+                    <a
+                      href="mailto:privacy@lynxprompt.com"
+                      className="text-primary hover:underline"
+                    >
+                      privacy@lynxprompt.com
+                    </a>
+                  </p>
+                </div>
               </section>
             </div>
           </div>
