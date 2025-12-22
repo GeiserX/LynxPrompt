@@ -26,12 +26,13 @@ export default function DocsPage() {
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <Logo />
           <nav className="flex items-center gap-4">
-            <Link href="/docs" className="text-sm font-medium text-primary">
-              Docs
+            <Link href="/pricing" className="text-sm hover:underline">
+              Pricing
             </Link>
             <Link href="/templates" className="text-sm hover:underline">
               Templates
             </Link>
+            <span className="text-sm font-medium text-primary">Docs</span>
             <UserMenu />
           </nav>
         </div>
