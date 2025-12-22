@@ -505,8 +505,8 @@ export default function ShareTemplatePage() {
                           </div>
                           
                           {/* Revenue split info - shown only when setting price */}
-                          <div className="rounded-lg bg-green-50 p-3 dark:bg-green-900/20">
-                            <p className="text-sm text-green-800 dark:text-green-200">
+                          <div className="rounded-lg border-2 border-green-500 bg-green-500/10 p-3">
+                            <p className="text-sm font-medium text-green-700 dark:text-green-300">
                               <strong>You earn 70%</strong> of each sale (€{(price * 0.7).toFixed(2)}).
                               Platform fee: 30% (€{(price * 0.3).toFixed(2)}).
                             </p>
