@@ -21,11 +21,14 @@ export default function AboutPage() {
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <Logo />
           <nav className="flex items-center gap-4">
-            <Link href="/docs" className="text-sm hover:underline">
-              Docs
+            <Link href="/pricing" className="text-sm hover:underline">
+              Pricing
             </Link>
             <Link href="/templates" className="text-sm hover:underline">
               Templates
+            </Link>
+            <Link href="/docs" className="text-sm hover:underline">
+              Docs
             </Link>
             <UserMenu />
           </nav>
