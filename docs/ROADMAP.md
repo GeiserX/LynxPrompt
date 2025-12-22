@@ -352,6 +352,34 @@ Author C: 2,500 downloads (25% of total) → €1,750 payout
 - Wide acceptance among creators
 - Alternative: Stripe Connect (future consideration for direct bank transfers)
 
+### Currency Strategy
+
+**Base Currency**: EUR (Euros)
+
+**Why EUR, not multi-currency:**
+
+1. **Legal/Tax simplicity**: Spain-based autónomo — EUR makes VAT, invoicing, and accounting straightforward
+2. **Stripe handles conversion**: Users see their local currency at checkout (USD, GBP, etc.) — Stripe converts automatically
+3. **Single source of truth**: One price list, no exchange rate maintenance, no arbitrage issues
+4. **Stable global currency**: EUR is widely recognized; many SaaS (Notion, Linear) price in single currency
+
+**Current behavior:**
+- Pricing page shows EUR (€5, €20)
+- Stripe Checkout displays converted amount in user's card currency before payment
+- User's card is charged in their local currency (e.g., USD for US users)
+
+**Planned enhancement (UX improvement, not critical):**
+- [ ] **Approximate local prices on pricing page**: Detect user's locale via geo-IP or browser
+  - Show: "€20/month (~$22 USD)" for US visitors
+  - Sets expectations before checkout without committing to a second price point
+  - Update approximations periodically (monthly or on significant rate changes)
+  - Use a simple currency API or static approximations
+
+**Not planned (avoided complexity):**
+- ❌ Dual USD/EUR pricing (requires two Stripe products, rate sync, potential confusion)
+- ❌ Dynamic pricing based on location (legal/tax complexity, user trust issues)
+- ❌ Multiple currency products in Stripe (maintenance burden for small team)
+
 ---
 
 ## 🛒 Implementation Roadmap for Monetization
