@@ -147,6 +147,12 @@ Per EU Consumer Rights Directive, digital content can waive 14-day withdrawal IF
 - [x] **About page** - Company info, mission, trust section
 - [x] **Docs/Help page** - Getting started, FAQ
 - [x] **Favicon** - Custom lynx logo in all sizes
+- [x] **Gravatar integration** - Fallback avatar for magic link users (no local storage)
+- [x] **Unified Settings page** - Stripe-like sidebar with Profile/Accounts/Security/Billing tabs
+- [x] **Stripe billing integration** - Checkout, webhooks, customer portal ready
+- [x] **Renamed Templates to Agent Blueprints** - Matches AGENTS.md branding
+- [x] **Blueprints page improvements** - Working search, expandable platform filters, session-aware CTAs
+- [x] **Smart pricing page CTAs** - Logged-in users go to billing/dashboard instead of signin
 
 ---
 
@@ -211,7 +217,11 @@ Per EU Consumer Rights Directive, digital content can waive 14-day withdrawal IF
 - "Included in Max" option (earns from subscription pool)
 - "Purchase only" option (not included in Max pool)
 
-### Template System
+### Naming Convention
+
+> **Note:** "Templates" have been renamed to **"Agent Blueprints"** throughout the application to better align with the AGENTS.md standard and convey a more premium, structured approach to AI configuration files. The term "blueprints" suggests reusable architectural patterns rather than simple templates.
+
+### Blueprint System (formerly Template System)
 
 #### Composable Template Sections (Template Mixing)
 
@@ -251,11 +261,14 @@ Enable users to build custom configurations by cherry-picking sections from mult
 
 #### Search & Discovery
 
-- [ ] Advanced search with filters (platform, category, tags, price)
-- [ ] Sort by popularity, date, downloads, rating
+- [x] Basic search by name/description/tags
+- [x] Sort by popularity, date, downloads, favorites
+- [x] Platform filters with expand/collapse and search
+- [x] Category filtering in sidebar
+- [ ] Advanced search with filters (price range, author)
 - [ ] Pagination with infinite scroll
-- [ ] "Templates like this" recommendations
-- [ ] Trending templates section
+- [ ] "Blueprints like this" recommendations
+- [ ] Trending blueprints section
 
 #### Template Analytics
 
@@ -321,18 +334,30 @@ Author C: 2,500 downloads (25% of total) → €1,750 payout
 ### Payment Processing
 
 **Primary**: Stripe (cards + subscriptions)
-**Payouts**: PayPal (min €5, monthly or on-demand)
+- Best developer experience, excellent recurring billing
+- EU-friendly with SEPA support
+- Good webhook system for subscription lifecycle
+- Customer portal for self-service billing management
+
+**Payouts to Authors**: PayPal (min €5, monthly or on-demand)
+- Wide acceptance among creators
+- Alternative: Stripe Connect (future consideration for direct bank transfers)
 
 ---
 
 ## 🛒 Implementation Roadmap for Monetization
 
-### Phase 1: Foundation
+### Phase 1: Foundation ✅ IN PROGRESS
 
 - [x] Create Pricing page UI with tier comparison
-- [ ] Implement subscription database schema (plans, subscriptions, invoices)
-- [ ] Integrate Stripe for card payments and subscriptions
-- [ ] Add subscription status to user session
+- [x] Implement subscription database schema (plans, subscriptions, invoices)
+- [x] Integrate Stripe for card payments and subscriptions
+- [x] Stripe checkout flow with customer creation
+- [x] Stripe webhook handlers for subscription lifecycle
+- [x] Stripe customer portal integration
+- [x] Billing settings page with plan display and upgrade options
+- [ ] Add subscription status to user session (read from DB, display in UI)
+- [ ] Create Stripe products/prices in dashboard and configure env vars
 - [ ] Gate wizard features by subscription tier
 - [ ] **Checkout consent checkbox** (EU digital content waiver)
 
@@ -467,7 +492,7 @@ POST   /api/generate               - Generate config files from wizard data
 - Annual subscription discount (2 months free)
 - **Local app integration**: IDE receives configs directly from web
 - **Restrict template sharing to subscribers** (future consideration)
-- Use gravatar for emails
+- ~~Use gravatar for emails~~ ✅ DONE
 - DMCA/copyright complaints process
 - Bank transfer payouts (via Stripe Connect)
 - Crypto payments (Coinbase Commerce / NOWPayments)
