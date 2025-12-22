@@ -40,20 +40,20 @@ export default function HomePage() {
         <div className="flex max-w-3xl flex-col items-center gap-4">
           <div className="flex items-center gap-2 rounded-full border bg-muted px-4 py-1.5 text-sm">
             <MousePointer2 className="h-4 w-4" />
-            <span>Mouse-driven development setup</span>
+            <span>IDE-agnostic AI configuration platform</span>
           </div>
 
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-            Transform your dev setup into a{" "}
+            Your universal{" "}
             <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-              click experience
+              AI config hub
             </span>
           </h1>
 
           <p className="max-w-2xl text-lg text-muted-foreground">
-            Generate AI IDE configuration files for Cursor, Claude, Copilot, and
-            more. Smart conditional logic remembers your preferences and
-            streamlines repository setup.
+            Generate and share AI coding assistant rules that work across any IDE.
+            One configuration, every platform — Cursor, Claude, Copilot, and more.
+            Bootstrap new projects in seconds, not hours.
           </p>
 
           <div className="flex gap-4">
@@ -72,8 +72,8 @@ export default function HomePage() {
         <div className="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <FeatureCard
             icon={<Zap className="h-8 w-8" />}
-            title="Smart Defaults"
-            description="If-then logic suggests options based on your previous choices"
+            title="IDE-Agnostic Rules"
+            description="One config works everywhere — switch IDEs without rewriting your AI rules"
           />
           <FeatureCard
             icon={<Shield className="h-8 w-8" />}
@@ -82,14 +82,23 @@ export default function HomePage() {
           />
           <FeatureCard
             icon={<GitBranch className="h-8 w-8" />}
-            title="Multi-Platform"
-            description="Generate configs for Cursor, Claude, Copilot, Windsurf, and more"
+            title="Bootstrap Instantly"
+            description="Start new repos with your complete AI setup — less need for memory systems"
           />
           <FeatureCard
             icon={<Users className="h-8 w-8" />}
-            title="Template Marketplace"
-            description="Share and discover community templates for any workflow"
+            title="Blueprint Marketplace"
+            description="Share and discover community configs. Earn from your expertise."
           />
+        </div>
+
+        {/* Memory Projects Note */}
+        <div className="mt-8 max-w-2xl rounded-lg border bg-muted/30 p-4 text-center">
+          <p className="text-sm text-muted-foreground">
+            <strong className="text-foreground">Works alongside memory projects</strong> — LynxPrompt
+            bootstraps new codebases with your AI rules, reducing the need for LLM memory systems
+            to re-learn your preferences on every project.
+          </p>
         </div>
       </section>
 
@@ -98,17 +107,17 @@ export default function HomePage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-12 text-center">
             <h2 className="text-3xl font-bold tracking-tight">
-              Works with your favorite AI IDEs
+              One config, every AI-powered IDE
             </h2>
             <p className="mt-2 text-muted-foreground">
-              Generate perfectly crafted configuration files for each platform
+              Generate IDE-agnostic rules that work across all major AI coding assistants
             </p>
           </div>
 
           <PlatformCarousel />
 
-          {/* Compact compatibility grid */}
-          <div className="mx-auto mt-12 max-w-3xl">
+          {/* IDE Logo Stripe - like agents.md */}
+          <div className="mx-auto mt-12 max-w-4xl">
             <p className="mb-6 text-center text-sm text-muted-foreground">
               Compatible with{" "}
               <a
@@ -121,34 +130,40 @@ export default function HomePage() {
               </a>{" "}
               — the open standard used by 60k+ projects
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <CompatBadge name="Cursor" />
-              <CompatBadge name="Claude" />
-              <CompatBadge name="Copilot" />
-              <CompatBadge name="Windsurf" />
-              <CompatBadge name="VS Code" />
-              <CompatBadge name="Aider" />
-              <CompatBadge name="Continue" />
-              <CompatBadge name="Gemini" />
-              <CompatBadge name="Zed" />
-              <CompatBadge name="JetBrains" />
-              <span className="text-sm text-muted-foreground">+more</span>
+            
+            {/* IDE Logos Grid */}
+            <div className="flex flex-wrap items-center justify-center gap-6 rounded-xl border bg-background p-6">
+              <IDELogo name="Cursor" icon="⚡" url="https://cursor.sh" />
+              <IDELogo name="Claude Code" icon="🧠" url="https://claude.ai" />
+              <IDELogo name="GitHub Copilot" icon="🤖" url="https://github.com/features/copilot" />
+              <IDELogo name="Windsurf" icon="🏄" url="https://codeium.com/windsurf" />
+              <IDELogo name="VS Code" icon="💻" url="https://code.visualstudio.com" />
+              <IDELogo name="Zed" icon="⚡" url="https://zed.dev" />
+              <IDELogo name="JetBrains" icon="🔧" url="https://www.jetbrains.com" />
+              <IDELogo name="Aider" icon="🤝" url="https://aider.chat" />
+              <IDELogo name="Continue" icon="▶️" url="https://continue.dev" />
+              <IDELogo name="Gemini" icon="✨" url="https://gemini.google.com" />
+              <IDELogo name="Cline" icon="📟" url="https://github.com/cline/cline" />
+              <IDELogo name="Roo Code" icon="🦘" url="https://roo.dev" />
             </div>
+            
+            <p className="mt-4 text-center text-xs text-muted-foreground">
+              And any tool that supports AGENTS.md, .cursorrules, or custom AI instructions
+            </p>
           </div>
         </div>
       </section>
 
-      {/* Community Templates CTA */}
+      {/* Community Blueprints CTA */}
       <section className="container mx-auto px-4 py-20 sm:px-6 lg:px-8">
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 p-8 text-white sm:p-12">
           <div className="relative z-10">
             <h2 className="text-3xl font-bold">
-              Join the Template Marketplace
+              More than a marketplace — your AI config hub
             </h2>
             <p className="mt-2 max-w-xl text-white/80">
-              Share your AI configurations with the community. Discover
-              templates from developers worldwide and contribute your own
-              workflows.
+              Generate, share, and discover AI coding rules that work across every IDE.
+              Turn your expertise into blueprints that help other developers — and earn from it.
             </p>
             <div className="mt-6 flex flex-wrap gap-4">
               <Button
@@ -157,14 +172,14 @@ export default function HomePage() {
                 asChild
                 className="bg-white text-purple-600 hover:bg-white/90"
               >
-                <Link href="/templates">Explore Templates</Link>
+                <Link href="/blueprints">Explore Blueprints</Link>
               </Button>
               <Button
                 size="lg"
                 asChild
                 className="border-2 border-white bg-transparent text-white hover:bg-white/20"
               >
-                <Link href="/auth/signin">Start Contributing</Link>
+                <Link href="/auth/signin">Share Your Config</Link>
               </Button>
             </div>
           </div>
@@ -235,10 +250,17 @@ function FeatureCard({
   );
 }
 
-function CompatBadge({ name }: { name: string }) {
+function IDELogo({ name, icon, url }: { name: string; icon: string; url: string }) {
   return (
-    <span className="rounded-full border bg-background px-3 py-1 text-xs font-medium">
-      {name}
-    </span>
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex flex-col items-center gap-1 rounded-lg p-2 transition-colors hover:bg-muted"
+      title={name}
+    >
+      <span className="text-2xl">{icon}</span>
+      <span className="text-xs text-muted-foreground">{name}</span>
+    </a>
   );
 }
