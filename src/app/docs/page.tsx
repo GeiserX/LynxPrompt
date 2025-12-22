@@ -308,26 +308,26 @@ export default function DocsPage() {
                   Automatic Categorization
                 </h3>
                 <p className="mt-2">
-                  Your prompt is automatically categorized based on length:
+                  Your blueprint is automatically categorized based on complexity:
                 </p>
                 <ul className="mt-3 space-y-2">
                   <li className="flex items-center gap-2">
-                    <span className="rounded bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                    <span className="rounded border-2 border-green-500 bg-green-500/10 px-2 py-0.5 text-xs font-bold text-green-700 dark:border-green-400 dark:bg-green-500/20 dark:text-green-300">
                       Simple
                     </span>
-                    <span>Up to 50 lines</span>
+                    <span>Basic configurations</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="rounded bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+                    <span className="rounded border-2 border-blue-500 bg-blue-500/10 px-2 py-0.5 text-xs font-bold text-blue-700 dark:border-blue-400 dark:bg-blue-500/20 dark:text-blue-300">
                       Intermediate
                     </span>
-                    <span>51-200 lines</span>
+                    <span>Standard project setups</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="rounded bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                    <span className="rounded border-2 border-purple-500 bg-purple-500/10 px-2 py-0.5 text-xs font-bold text-purple-700 dark:border-purple-400 dark:bg-purple-500/20 dark:text-purple-300">
                       Advanced
                     </span>
-                    <span>200+ lines</span>
+                    <span>Comprehensive configurations</span>
                   </li>
                 </ul>
               </div>

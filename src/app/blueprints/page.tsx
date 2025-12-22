@@ -161,9 +161,9 @@ function BlueprintsContent() {
   };
 
   const tierColors: Record<string, string> = {
-    SIMPLE: "bg-green-500/10 text-green-600",
-    INTERMEDIATE: "bg-blue-500/10 text-blue-600",
-    ADVANCED: "bg-purple-500/10 text-purple-600",
+    SIMPLE: "border border-green-500 bg-green-500/10 text-green-700 dark:border-green-400 dark:text-green-300",
+    INTERMEDIATE: "border border-blue-500 bg-blue-500/10 text-blue-700 dark:border-blue-400 dark:text-blue-300",
+    ADVANCED: "border border-purple-500 bg-purple-500/10 text-purple-700 dark:border-purple-400 dark:text-purple-300",
   };
 
   const tierLabels: Record<string, string> = {
@@ -407,10 +407,10 @@ function BlueprintsContent() {
                             {blueprint.name}
                           </h3>
                           {/* Price badge */}
-                          <div className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                          <div className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${
                             isPaid 
                               ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white" 
-                              : "border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-400"
+                              : "border-2 border-green-500 bg-green-500/10 text-green-700 dark:border-green-400 dark:bg-green-500/20 dark:text-green-300"
                           }`}>
                             {formattedPrice}
                           </div>

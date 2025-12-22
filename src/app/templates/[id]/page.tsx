@@ -40,9 +40,9 @@ const platformInfo: Record<string, { name: string; file: string }> = {
 };
 
 const tierColors: Record<string, string> = {
-  SIMPLE: "bg-green-500/10 text-green-600 border-green-500/30",
-  INTERMEDIATE: "bg-blue-500/10 text-blue-600 border-blue-500/30",
-  ADVANCED: "bg-purple-500/10 text-purple-600 border-purple-500/30",
+  SIMPLE: "border-2 border-green-500 bg-green-500/10 text-green-700 dark:border-green-400 dark:text-green-300",
+  INTERMEDIATE: "border-2 border-blue-500 bg-blue-500/10 text-blue-700 dark:border-blue-400 dark:text-blue-300",
+  ADVANCED: "border-2 border-purple-500 bg-purple-500/10 text-purple-700 dark:border-purple-400 dark:text-purple-300",
 };
 
 const tierLabels: Record<string, string> = {
