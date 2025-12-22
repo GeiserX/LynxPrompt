@@ -83,6 +83,8 @@ export async function GET(request: NextRequest) {
         downloads: true,
         favorites: true,
         isOfficial: true,
+        price: true,
+        currency: true,
         createdAt: true,
         user: {
           select: {
@@ -114,6 +116,8 @@ export async function GET(request: NextRequest) {
       tags: t.tags || [],
       tier: t.tier,
       isOfficial: t.isOfficial || false,
+      price: t.price,
+      currency: t.currency || "EUR",
     }));
 
     const categories = [
