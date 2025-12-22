@@ -129,16 +129,26 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
     max: "MAX",
   };
 
-  // Get current period end from the first subscription item or subscription level
-  const currentPeriodEnd = subscription.items?.data[0]?.current_period_end 
-    ?? (subscription as unknown as { current_period_end?: number }).current_period_end;
+  // Get current period end - cast to access the property
+  const sub = subscription as unknown as { current_period_end?: number };
+  const currentPeriodEnd = sub.current_period_end;
+
+  // Determine effective plan based on subscription status
+  // If subscription is not active/trialing, user should be on FREE
+  const isActiveSubscription = 
+    subscription.status === "active" || 
+    subscription.status === "trialing";
+  
+  const effectivePlan: SubscriptionPlan = isActiveSubscription 
+    ? (planMap[plan] || "FREE") 
+    : "FREE";
 
   await prismaUsers.user.update({
     where: { id: user.id },
     data: {
       stripeSubscriptionId: subscription.id,
       stripeCustomerId: customerId,
-      subscriptionPlan: planMap[plan] || "FREE",
+      subscriptionPlan: effectivePlan,
       subscriptionStatus: subscription.status,
       currentPeriodEnd: currentPeriodEnd 
         ? new Date(currentPeriodEnd * 1000) 
@@ -147,7 +157,7 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
     },
   });
 
-  console.log(`Updated subscription for user ${user.id}: ${plan} (${subscription.status})`);
+  console.log(`Updated subscription for user ${user.id}: ${effectivePlan} (status: ${subscription.status})`);
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
@@ -193,17 +203,71 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
 
 async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
   const customerId = invoice.customer as string;
+  const inv = invoice as unknown as { subscription?: string; billing_reason?: string };
+  const subscriptionId = inv.subscription;
 
   const user = await prismaUsers.user.findFirst({
     where: { stripeCustomerId: customerId },
   });
 
-  if (user && user.subscriptionStatus === "past_due") {
+  if (!user) return;
+
+  // Update status if was past_due
+  if (user.subscriptionStatus === "past_due") {
     await prismaUsers.user.update({
       where: { id: user.id },
       data: { subscriptionStatus: "active" },
     });
     console.log(`Payment succeeded for user ${user.id}`);
+  }
+
+  // Check for scheduled downgrade on renewal invoices
+  if (subscriptionId && inv.billing_reason === "subscription_cycle") {
+    try {
+      const stripe = ensureStripe();
+      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+      
+      const scheduledDowngrade = subscription.metadata?.scheduledDowngrade;
+      const scheduledDowngradePrice = subscription.metadata?.scheduledDowngradePrice;
+      
+      if (scheduledDowngrade && scheduledDowngradePrice) {
+        // Apply the downgrade now
+        await stripe.subscriptions.update(subscriptionId, {
+          items: [
+            {
+              id: subscription.items.data[0].id,
+              price: scheduledDowngradePrice,
+            },
+          ],
+          proration_behavior: "none", // Already at new billing cycle
+          metadata: {
+            ...subscription.metadata,
+            scheduledDowngrade: null,
+            scheduledDowngradePrice: null,
+            plan: scheduledDowngrade,
+          },
+        });
+
+        // Update database
+        type SubscriptionPlan = "FREE" | "PRO" | "MAX";
+        const planMap: Record<string, SubscriptionPlan> = {
+          pro: "PRO",
+          max: "MAX",
+          free: "FREE",
+        };
+        
+        await prismaUsers.user.update({
+          where: { id: user.id },
+          data: {
+            subscriptionPlan: planMap[scheduledDowngrade] || "PRO",
+          },
+        });
+
+        console.log(`Applied scheduled downgrade to ${scheduledDowngrade} for user ${user.id}`);
+      }
+    } catch (error) {
+      console.error("Error applying scheduled downgrade:", error);
+    }
   }
 }
 
