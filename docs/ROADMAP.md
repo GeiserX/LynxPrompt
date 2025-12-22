@@ -538,17 +538,17 @@ To go live with Stripe payments:
 
 ### Dashboard
 
-- [ ] **Share prompt suggestion**: Suggest users share their prompts to earn money
+- [x] **Share prompt suggestion**: Suggest users share their prompts to earn money
   - Include prompts created with wizard
   - "Turn your prompts into passive income" CTA
 
 ### Blueprint Upload
 
-- [ ] **Revenue split visibility**: Show 70% author / 30% platform ONLY when user selects "Set Price" option
+- [x] **Revenue split visibility**: Show 70% author / 30% platform ONLY when user selects "Set Price" option
   - Don't show in pricing page or elsewhere
   - Show inline when configuring paid template
 
-- [ ] **Sensitive data detection**: Warn users before upload if passwords/API keys detected
+- [x] **Sensitive data detection**: Warn users before upload if passwords/API keys detected
   - Scan for: passwords, API keys, tokens, secrets, private keys
   - Show warning modal: "We detected potential sensitive data. Please review before sharing."
   - Highlight detected patterns

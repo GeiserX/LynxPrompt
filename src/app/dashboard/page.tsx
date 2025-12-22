@@ -137,10 +137,10 @@ export default function DashboardPage() {
       href: "/templates/create",
     },
     {
-      title: "Browse Templates",
-      description: "Explore community templates",
+      title: "Browse Blueprints",
+      description: "Explore community blueprints",
       icon: FileText,
-      href: "/templates",
+      href: "/blueprints",
     },
     {
       title: "Settings",
@@ -211,8 +211,8 @@ export default function DashboardPage() {
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <Logo />
           <nav className="flex items-center gap-4">
-            <Link href="/templates" className="text-sm hover:underline">
-              Templates
+            <Link href="/blueprints" className="text-sm hover:underline">
+              Blueprints
             </Link>
             <UserMenu />
           </nav>
@@ -602,27 +602,26 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Getting Started / Pro Tip */}
-              <div className="rounded-lg border bg-gradient-to-br from-purple-500/10 to-pink-500/10 p-6">
+              {/* Earn Money CTA */}
+              <div className="rounded-lg border bg-gradient-to-br from-green-500/10 to-emerald-500/10 p-6">
                 <div className="flex items-start gap-3">
-                  <div className="rounded-lg bg-primary/10 p-2">
-                    <Sparkles className="h-5 w-5 text-primary" />
+                  <div className="rounded-lg bg-green-500/10 p-2">
+                    <TrendingUp className="h-5 w-5 text-green-600" />
                   </div>
                   <div>
-                    <h3 className="font-semibold">Pro Tip</h3>
+                    <h3 className="font-semibold">Turn prompts into income</h3>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Share your AI configurations with the community and earn
-                      money when others use them!
+                      Have a great AI config? Share it and earn <strong>70% of each sale</strong>.
+                      Even wizard-generated configs can be shared!
                     </p>
                     <Button
                       asChild
-                      className="mt-4"
+                      className="mt-4 bg-green-600 hover:bg-green-700"
                       size="sm"
-                      variant="outline"
                     >
                       <Link href="/templates/create">
-                        Learn More
-                        <ExternalLink className="ml-2 h-3 w-3" />
+                        <Upload className="mr-2 h-4 w-4" />
+                        Share & Earn
                       </Link>
                     </Button>
                   </div>

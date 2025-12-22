@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -18,9 +18,13 @@ import {
   Layers,
   Settings2,
   Info,
+  AlertTriangle,
+  DollarSign,
+  Euro,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
+import { detectSensitiveData, type SensitiveMatch } from "@/lib/sensitive-data";
 
 const TEMPLATE_TYPES = [
   { value: "CURSORRULES", label: "Cursor Rules (.cursorrules)", icon: "🎯" },
@@ -77,15 +81,26 @@ export default function ShareTemplatePage() {
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [isPublic, setIsPublic] = useState(true);
+  const [isPaid, setIsPaid] = useState(false);
+  const [price, setPrice] = useState<number>(5);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<{ id: string; name: string } | null>(
     null
   );
+  const [sensitiveWarningDismissed, setSensitiveWarningDismissed] = useState(false);
 
   // Auto-detect tier based on content
   const detectedTier = content.trim() ? determineTier(content) : null;
   const lineCount = content.split("\n").filter((l) => l.trim()).length;
+
+  // Detect sensitive data in content
+  const sensitiveMatches = useMemo<SensitiveMatch[]>(() => {
+    if (!content.trim()) return [];
+    return detectSensitiveData(content);
+  }, [content]);
+
+  const hasSensitiveData = sensitiveMatches.length > 0 && !sensitiveWarningDismissed;
 
   // Redirect to sign in if not authenticated
   useEffect(() => {
@@ -149,6 +164,13 @@ export default function ShareTemplatePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check for sensitive data warnings
+    if (hasSensitiveData) {
+      setError("Please review the sensitive data warning below before submitting.");
+      return;
+    }
+    
     setError(null);
     setIsSubmitting(true);
 
@@ -163,6 +185,8 @@ export default function ShareTemplatePage() {
           type,
           tags,
           isPublic,
+          price: isPaid ? Math.round(price * 100) : null, // Convert to cents
+          currency: "EUR",
         }),
       });
 
@@ -447,8 +471,104 @@ export default function ShareTemplatePage() {
                       Make this prompt public in the marketplace
                     </label>
                   </div>
+
+                  {/* Pricing - only show if public */}
+                  {isPublic && (
+                    <div className="rounded-lg border bg-muted/30 p-4">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          id="isPaid"
+                          checked={isPaid}
+                          onChange={(e) => setIsPaid(e.target.checked)}
+                          className="h-4 w-4 rounded border-gray-300"
+                        />
+                        <label htmlFor="isPaid" className="text-sm font-medium">
+                          <DollarSign className="mr-1 inline h-4 w-4" />
+                          Set a price for this blueprint
+                        </label>
+                      </div>
+
+                      {isPaid && (
+                        <div className="mt-4 space-y-3">
+                          <div className="flex items-center gap-3">
+                            <Euro className="h-5 w-5 text-muted-foreground" />
+                            <input
+                              type="number"
+                              value={price}
+                              onChange={(e) => setPrice(Math.max(5, parseFloat(e.target.value) || 5))}
+                              min={5}
+                              step={0.5}
+                              className="w-24 rounded-lg border bg-background px-3 py-2 text-right focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            />
+                            <span className="text-sm text-muted-foreground">EUR (minimum €5)</span>
+                          </div>
+                          
+                          {/* Revenue split info - shown only when setting price */}
+                          <div className="rounded-lg bg-green-50 p-3 dark:bg-green-900/20">
+                            <p className="text-sm text-green-800 dark:text-green-200">
+                              <strong>You earn 70%</strong> of each sale (€{(price * 0.7).toFixed(2)}).
+                              Platform fee: 30% (€{(price * 0.3).toFixed(2)}).
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
+
+              {/* Sensitive Data Warning */}
+              {sensitiveMatches.length > 0 && (
+                <div className="rounded-xl border border-yellow-300 bg-yellow-50 p-6 dark:border-yellow-700 dark:bg-yellow-900/20">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="h-6 w-6 flex-shrink-0 text-yellow-600 dark:text-yellow-400" />
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-yellow-800 dark:text-yellow-200">
+                        Potential Sensitive Data Detected
+                      </h3>
+                      <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
+                        We found {sensitiveMatches.length} item{sensitiveMatches.length > 1 ? 's' : ''} that 
+                        might contain passwords, API keys, or other sensitive information. 
+                        Please review before sharing publicly.
+                      </p>
+                      
+                      <div className="mt-3 space-y-2">
+                        {sensitiveMatches.slice(0, 5).map((match, i) => (
+                          <div key={i} className="rounded bg-yellow-100 px-3 py-2 text-xs dark:bg-yellow-800/30">
+                            <span className="font-medium text-yellow-800 dark:text-yellow-200">
+                              Line {match.line} - {match.type}:
+                            </span>
+                            <code className="ml-2 text-yellow-700 dark:text-yellow-300">
+                              {match.snippet}
+                            </code>
+                          </div>
+                        ))}
+                        {sensitiveMatches.length > 5 && (
+                          <p className="text-xs text-yellow-600">
+                            ...and {sensitiveMatches.length - 5} more
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="mt-4 flex items-center gap-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSensitiveWarningDismissed(true)}
+                          className="border-yellow-400 text-yellow-700 hover:bg-yellow-100 dark:border-yellow-600 dark:text-yellow-300"
+                        >
+                          I've reviewed this, proceed anyway
+                        </Button>
+                        <span className="text-xs text-yellow-600 dark:text-yellow-400">
+                          or edit your content to remove sensitive data
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Submit */}
               <div className="flex justify-end gap-4">
