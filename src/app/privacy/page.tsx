@@ -26,177 +26,173 @@ export default function PrivacyPage() {
       <main className="flex-1">
         <div className="container mx-auto px-4 py-12 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl">
-            {/* Header */}
-            <div className="mb-12 text-center">
-              <Shield className="mx-auto h-12 w-12 text-primary" />
-              <h1 className="mt-4 text-4xl font-bold tracking-tight">
+            <div className="mb-10 text-center">
+              <Shield className="mx-auto h-10 w-10 text-primary" />
+              <h1 className="mt-4 text-3xl font-bold tracking-tight">
                 Privacy Policy
               </h1>
-              <p className="mt-2 text-muted-foreground">
+              <p className="mt-2 text-sm text-muted-foreground">
                 Last updated: December 2025
               </p>
             </div>
 
-            {/* Content */}
-            <div className="prose prose-neutral max-w-none dark:prose-invert">
-              <section className="mb-8">
-                <h2 className="text-xl font-semibold">Introduction</h2>
-                <p className="mt-3 text-muted-foreground">
-                  LynxPrompt (&quot;we&quot;, &quot;our&quot;, or
-                  &quot;us&quot;) is operated by GeiserCloud. We respect your
-                  privacy and are committed to protecting your personal data.
-                  This privacy policy explains how we collect, use, and
-                  safeguard your information when you use our service.
+            <div className="space-y-8 text-muted-foreground">
+              <section>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">
+                  Introduction
+                </h2>
+                <p>
+                  LynxPrompt is operated by GeiserCloud. We respect your privacy
+                  and are committed to protecting your personal data. This
+                  policy explains how we collect, use, and safeguard your
+                  information.
                 </p>
               </section>
 
-              <section className="mb-8">
-                <h2 className="text-xl font-semibold">Data Controller</h2>
-                <p className="mt-3 text-muted-foreground">
-                  GeiserCloud is the data controller responsible for your
-                  personal data. For any privacy-related questions, contact us
-                  at{" "}
-                  <a
-                    href="mailto:privacy@lynxprompt.com"
-                    className="text-primary hover:underline"
-                  >
-                    privacy@lynxprompt.com
-                  </a>
-                  .
+              <section>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">
+                  Data We Collect
+                </h2>
+                <p className="mb-2">
+                  <strong className="text-foreground">
+                    Account Information:
+                  </strong>{" "}
+                  Email address, name, and profile picture (as provided by your
+                  OAuth provider such as GitHub or Google).
+                </p>
+                <p className="mb-2">
+                  <strong className="text-foreground">User Content:</strong>{" "}
+                  Templates and prompts you create, wizard configurations, and
+                  favorites.
+                </p>
+                <p>
+                  <strong className="text-foreground">Usage Data:</strong> Pages
+                  visited, features used, and device/browser information for
+                  service improvement.
                 </p>
               </section>
 
-              <section className="mb-8">
-                <h2 className="text-xl font-semibold">Data We Collect</h2>
-                <div className="mt-3 space-y-4 text-muted-foreground">
-                  <div>
-                    <h3 className="font-medium text-foreground">
-                      Account Information
-                    </h3>
-                    <ul className="mt-2 list-inside list-disc space-y-1">
-                      <li>Email address</li>
-                      <li>Name (if provided by OAuth provider)</li>
-                      <li>Profile picture (if provided by OAuth provider)</li>
-                      <li>
-                        Authentication provider IDs (GitHub, Google account IDs)
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h3 className="font-medium text-foreground">
-                      User Content
-                    </h3>
-                    <ul className="mt-2 list-inside list-disc space-y-1">
-                      <li>Templates and prompts you create</li>
-                      <li>Wizard configurations and preferences</li>
-                      <li>Favorites and download history</li>
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h3 className="font-medium text-foreground">Usage Data</h3>
-                    <ul className="mt-2 list-inside list-disc space-y-1">
-                      <li>Pages visited and features used</li>
-                      <li>Template downloads and interactions</li>
-                      <li>Device type and browser information</li>
-                    </ul>
-                  </div>
-                </div>
-              </section>
-
-              <section className="mb-8">
-                <h2 className="text-xl font-semibold">How We Use Your Data</h2>
-                <ul className="mt-3 list-inside list-disc space-y-2 text-muted-foreground">
+              <section>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">
+                  How We Use Your Data
+                </h2>
+                <ul className="list-inside list-disc space-y-1">
                   <li>To provide and maintain our service</li>
                   <li>To authenticate your account</li>
                   <li>To save your preferences and templates</li>
-                  <li>To process payments (handled by Stripe)</li>
+                  <li>To process payments (handled securely by Stripe)</li>
                   <li>To improve our service based on usage patterns</li>
-                  <li>To communicate important updates about the service</li>
+                  <li>To communicate important service updates</li>
                 </ul>
               </section>
 
-              <section className="mb-8">
-                <h2 className="text-xl font-semibold">
+              <section>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">
                   Data Storage & Security
                 </h2>
-                <div className="mt-3 space-y-3 text-muted-foreground">
-                  <p>
-                    <strong className="text-foreground">Location:</strong> All
-                    data is stored exclusively in the European Union, ensuring
-                    compliance with GDPR and EU data protection regulations.
-                  </p>
-                  <p>
-                    <strong className="text-foreground">Security:</strong> We
-                    implement industry-standard security measures including
-                    encrypted connections (HTTPS), secure authentication via
-                    OAuth providers, and regular security audits.
-                  </p>
-                  <p>
-                    <strong className="text-foreground">Payments:</strong> We do
-                    not store payment card information. All payment processing
-                    is handled by Stripe, a PCI-DSS compliant payment processor.
-                  </p>
-                </div>
-              </section>
-
-              <section className="mb-8">
-                <h2 className="text-xl font-semibold">Third-Party Services</h2>
-                <div className="mt-3 space-y-3 text-muted-foreground">
-                  <p>We use the following third-party services:</p>
-                  <ul className="list-inside list-disc space-y-2">
-                    <li>
-                      <strong>GitHub OAuth</strong> - For authentication
-                    </li>
-                    <li>
-                      <strong>Google OAuth</strong> - For authentication
-                    </li>
-                    <li>
-                      <strong>Stripe</strong> - For payment processing
-                    </li>
-                  </ul>
-                  <p>
-                    Each of these services has their own privacy policy
-                    governing how they handle your data.
-                  </p>
-                </div>
-              </section>
-
-              <section className="mb-8">
-                <h2 className="text-xl font-semibold">Your Rights (GDPR)</h2>
-                <p className="mt-3 text-muted-foreground">
-                  Under the General Data Protection Regulation (GDPR), you have
-                  the following rights:
+                <p className="mb-2">
+                  All data is stored exclusively in the European Union. We use
+                  encrypted connections (HTTPS), secure OAuth authentication,
+                  and follow industry security best practices.
                 </p>
-                <ul className="mt-3 list-inside list-disc space-y-2 text-muted-foreground">
+                <p>
+                  We do not store payment card information. All payments are
+                  processed by Stripe, a PCI-DSS compliant payment processor.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">
+                  Third-Party Services
+                </h2>
+                <p>
+                  We use GitHub and Google for OAuth authentication, and Stripe
+                  for payment processing. Each service has its own privacy
+                  policy governing your data.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">
+                  Your Rights Under GDPR
+                </h2>
+                <p className="mb-2">
+                  If you are in the European Union, you have rights under the
+                  General Data Protection Regulation (GDPR):
+                </p>
+                <ul className="list-inside list-disc space-y-1">
                   <li>
-                    <strong>Access</strong> - Request a copy of your personal
+                    <strong>Access:</strong> Request a copy of your personal
                     data
                   </li>
                   <li>
-                    <strong>Rectification</strong> - Request correction of
+                    <strong>Rectification:</strong> Request correction of
                     inaccurate data
                   </li>
                   <li>
-                    <strong>Erasure</strong> - Request deletion of your data
-                    (&quot;right to be forgotten&quot;)
+                    <strong>Erasure:</strong> Request deletion of your data
                   </li>
                   <li>
-                    <strong>Portability</strong> - Request your data in a
+                    <strong>Portability:</strong> Request your data in a
                     machine-readable format
                   </li>
                   <li>
-                    <strong>Objection</strong> - Object to processing of your
-                    data
-                  </li>
-                  <li>
-                    <strong>Restriction</strong> - Request limited processing of
-                    your data
+                    <strong>Objection:</strong> Object to certain types of
+                    processing
                   </li>
                 </ul>
-                <p className="mt-3 text-muted-foreground">
-                  To exercise any of these rights, contact us at{" "}
+              </section>
+
+              <section>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">
+                  Data Retention
+                </h2>
+                <p>
+                  We retain your data while your account is active. Upon account
+                  deletion, we will erase your personal data within one month,
+                  unless we are legally required to retain certain records.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">
+                  Cookies
+                </h2>
+                <p>
+                  We use essential cookies only for authentication and session
+                  management. We do not use tracking or advertising cookies.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">
+                  Age Requirement
+                </h2>
+                <p>
+                  LynxPrompt is intended for users aged 16 and older (or the
+                  applicable age of digital consent in your country, which
+                  ranges from 13 to 16 within the EU). We do not knowingly
+                  collect data from users below this age.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">
+                  Changes to This Policy
+                </h2>
+                <p>
+                  We may update this policy from time to time. Significant
+                  changes will be communicated via our website or email.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">
+                  Contact
+                </h2>
+                <p>
+                  For privacy-related questions or to exercise your rights,
+                  contact us at{" "}
                   <a
                     href="mailto:privacy@lynxprompt.com"
                     className="text-primary hover:underline"
@@ -204,65 +200,6 @@ export default function PrivacyPage() {
                     privacy@lynxprompt.com
                   </a>
                   .
-                </p>
-              </section>
-
-              <section className="mb-8">
-                <h2 className="text-xl font-semibold">Data Retention</h2>
-                <p className="mt-3 text-muted-foreground">
-                  We retain your data for as long as your account is active. If
-                  you delete your account, we will delete your personal data
-                  within 30 days, except where we are required to retain it for
-                  legal or legitimate business purposes.
-                </p>
-              </section>
-
-              <section className="mb-8">
-                <h2 className="text-xl font-semibold">Cookies</h2>
-                <p className="mt-3 text-muted-foreground">
-                  We use essential cookies only to maintain your session and
-                  authentication state. We do not use tracking cookies or
-                  third-party advertising cookies.
-                </p>
-              </section>
-
-              <section className="mb-8">
-                <h2 className="text-xl font-semibold">
-                  Children&apos;s Privacy
-                </h2>
-                <p className="mt-3 text-muted-foreground">
-                  LynxPrompt is not intended for children under 16. We do not
-                  knowingly collect personal data from children under 16. If you
-                  believe we have collected data from a child, please contact us
-                  immediately.
-                </p>
-              </section>
-
-              <section className="mb-8">
-                <h2 className="text-xl font-semibold">
-                  Changes to This Policy
-                </h2>
-                <p className="mt-3 text-muted-foreground">
-                  We may update this privacy policy from time to time. We will
-                  notify you of any significant changes by posting a notice on
-                  our website or sending you an email.
-                </p>
-              </section>
-
-              <section className="mb-8">
-                <h2 className="text-xl font-semibold">Contact Us</h2>
-                <p className="mt-3 text-muted-foreground">
-                  If you have any questions about this privacy policy or our
-                  data practices, please contact us at:
-                </p>
-                <p className="mt-2 text-muted-foreground">
-                  <strong>Email:</strong>{" "}
-                  <a
-                    href="mailto:privacy@lynxprompt.com"
-                    className="text-primary hover:underline"
-                  >
-                    privacy@lynxprompt.com
-                  </a>
                 </p>
               </section>
             </div>
@@ -312,4 +249,3 @@ export default function PrivacyPage() {
     </div>
   );
 }
-
