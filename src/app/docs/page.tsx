@@ -25,8 +25,8 @@ export default function DocsPage() {
             <Link href="/pricing" className="text-sm hover:underline">
               Pricing
             </Link>
-            <Link href="/templates" className="text-sm hover:underline">
-              Templates
+            <Link href="/blueprints" className="text-sm hover:underline">
+              Blueprints
             </Link>
             <span className="text-sm font-medium text-primary">Docs</span>
             <UserMenu />
@@ -340,19 +340,22 @@ export default function DocsPage() {
               {/* IDE Grid - agents.md style */}
               <div className="rounded-xl border bg-card p-6">
                 <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
-                  <PlatformIcon name="Cursor" icon="⚡" />
-                  <PlatformIcon name="Claude" icon="🧠" />
-                  <PlatformIcon name="Copilot" icon="🤖" />
-                  <PlatformIcon name="Windsurf" icon="🏄" />
-                  <PlatformIcon name="VS Code" icon="💻" />
-                  <PlatformIcon name="Aider" icon="🎯" />
-                  <PlatformIcon name="Continue" icon="▶️" />
-                  <PlatformIcon name="Cody" icon="🔍" />
-                  <PlatformIcon name="Gemini" icon="💎" />
-                  <PlatformIcon name="Amazon Q" icon="☁️" />
-                  <PlatformIcon name="JetBrains" icon="🔧" />
-                  <PlatformIcon name="Zed" icon="⌨️" />
+                  <PlatformIcon name="Cursor" icon="⚡" url="https://cursor.sh" />
+                  <PlatformIcon name="Claude Code" icon="🧠" url="https://claude.ai" />
+                  <PlatformIcon name="Copilot" icon="🤖" url="https://github.com/features/copilot" />
+                  <PlatformIcon name="Windsurf" icon="🏄" url="https://codeium.com/windsurf" />
+                  <PlatformIcon name="VS Code" icon="💻" url="https://code.visualstudio.com" />
+                  <PlatformIcon name="Zed" icon="⚡" url="https://zed.dev" />
+                  <PlatformIcon name="Aider" icon="🤝" url="https://aider.chat" />
+                  <PlatformIcon name="Continue" icon="▶️" url="https://continue.dev" />
+                  <PlatformIcon name="Cline" icon="📟" url="https://github.com/cline/cline" />
+                  <PlatformIcon name="Roo Code" icon="🦘" url="https://roo.dev" />
+                  <PlatformIcon name="Gemini" icon="✨" url="https://gemini.google.com" />
+                  <PlatformIcon name="JetBrains" icon="🔧" url="https://www.jetbrains.com" />
                 </div>
+                <p className="mt-4 text-center text-xs text-muted-foreground">
+                  And any tool supporting AGENTS.md, .cursorrules, or custom AI instructions
+                </p>
               </div>
 
               {/* Config files */}
@@ -528,11 +531,31 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
   );
 }
 
-function PlatformIcon({ name, icon }: { name: string; icon: string }) {
-  return (
-    <div className="flex flex-col items-center gap-2 rounded-lg p-3 text-center transition-colors hover:bg-muted">
+function PlatformIcon({ name, icon, url }: { name: string; icon: string; url?: string }) {
+  const content = (
+    <>
       <span className="text-2xl">{icon}</span>
       <span className="text-xs font-medium text-muted-foreground">{name}</span>
+    </>
+  );
+  
+  if (url) {
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex flex-col items-center gap-2 rounded-lg p-3 text-center transition-colors hover:bg-muted"
+        title={name}
+      >
+        {content}
+      </a>
+    );
+  }
+  
+  return (
+    <div className="flex flex-col items-center gap-2 rounded-lg p-3 text-center transition-colors hover:bg-muted">
+      {content}
     </div>
   );
 }
