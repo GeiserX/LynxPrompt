@@ -483,6 +483,94 @@ POST   /api/generate               - Generate config files from wizard data
 
 ---
 
+## 🚀 Launch & Marketing
+
+### Beta Launch Strategy
+
+- [ ] **Reddit beta testers campaign**: 100 free 1-year subscriptions for first 100 users
+  - In exchange for: populating database, feedback, spreading the word
+  - Goal: Beta testers, platform refinement, initial content
+
+### Brand Positioning
+
+- [ ] **IDE-agnostic prompt rules**: Market as universal AI configuration, not IDE-specific
+- [ ] **"AI Config Site"**: Position as more than a marketplace - a comprehensive AI configuration platform
+- [ ] **Memory project compatibility**: Emphasize that this bootstraps new repos/codebases, reducing need for memory systems
+- [ ] **IDE logo stripe**: Like agents.md, show all compatible IDEs (Cursor, Claude Code, Copilot, Windsurf, Zed, etc.) with their logos
+
+### Visual Assets
+
+- [ ] **Logo in OAuth providers**: When logo is ready, add it to GitHub/Google login screens
+- [ ] **IDE compatibility section**: Add to main page AND docs - visual stripe of all supported IDEs with logos
+
+### Stripe Production Release
+
+To go live with Stripe payments:
+
+1. **Complete Stripe account verification**:
+   - Verify identity (ID upload)
+   - Verify business (if applicable)
+   - Add bank account for payouts
+
+2. **Switch API keys**:
+   - Replace `sk_test_xxx` with `sk_live_xxx` in production
+   - Replace `whsec_test_xxx` with production webhook secret
+   - Update price IDs to production price IDs
+
+3. **Configure webhook endpoint**:
+   - In Stripe Dashboard → Webhooks → Add endpoint
+   - URL: `https://lynxprompt.com/api/billing/webhook`
+   - Events: `checkout.session.completed`, `customer.subscription.*`, `invoice.*`
+
+4. **Test with real card** (small amounts) before announcing
+
+---
+
+## 📝 UX Improvements
+
+### Onboarding
+
+- [ ] **Persona selection (optional)**: Clarify that persona is for dynamic template personalization
+  - Make it optional, not mandatory
+  - User may not want to share info
+  - Also ask for display name/nickname (not real name required)
+  - Explain: "Your persona (e.g., DevOps Engineer) is added to downloaded templates for personalization"
+
+### Dashboard
+
+- [ ] **Share prompt suggestion**: Suggest users share their prompts to earn money
+  - Include prompts created with wizard
+  - "Turn your prompts into passive income" CTA
+
+### Blueprint Upload
+
+- [ ] **Revenue split visibility**: Show 70% author / 30% platform ONLY when user selects "Set Price" option
+  - Don't show in pricing page or elsewhere
+  - Show inline when configuring paid template
+
+- [ ] **Sensitive data detection**: Warn users before upload if passwords/API keys detected
+  - Scan for: passwords, API keys, tokens, secrets, private keys
+  - Show warning modal: "We detected potential sensitive data. Please review before sharing."
+  - Highlight detected patterns
+  - Require confirmation to proceed
+
+- [ ] **Auto-update option**: Ask in wizard if blueprint should be updated per user usage
+  - "Keep this blueprint updated as you use it"
+  - Track common patterns and suggest improvements
+
+### User Preferences
+
+- [ ] **License preferences**: Store preferred licenses per user
+  - User can set default license for all templates
+  - Edit licenses separately from templates
+
+- [ ] **FUNDING.yml configuration**: 
+  - Only show if GitHub repository is selected
+  - Store separately so user can edit it independently
+  - Persist in user preferences
+
+---
+
 ## 💡 Future Ideas
 
 - VS Code extension to sync templates
