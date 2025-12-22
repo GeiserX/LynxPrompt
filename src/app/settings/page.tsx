@@ -878,6 +878,7 @@ interface SubscriptionStatus {
   hasStripeAccount: boolean;
   hasActiveSubscription: boolean;
   isAdmin?: boolean;
+  pendingChange?: string | null;
 }
 
 const PLAN_DETAILS = {
@@ -904,7 +905,7 @@ const PLAN_DETAILS = {
   },
 };
 
-function BillingSection({ setError, setSuccess: _setSuccess }: BillingSectionProps) {
+function BillingSection({ setError, setSuccess }: BillingSectionProps) {
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [upgrading, setUpgrading] = useState<string | null>(null);
@@ -929,28 +930,55 @@ function BillingSection({ setError, setSuccess: _setSuccess }: BillingSectionPro
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleUpgrade = async (plan: string) => {
+  const handlePlanChange = async (plan: string) => {
     setUpgrading(plan);
     setError(null);
 
     try {
-      const res = await fetch("/api/billing/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan }),
-      });
+      // If user has active subscription, use change-plan API
+      if (subscription?.hasActiveSubscription) {
+        const res = await fetch("/api/billing/change-plan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ plan }),
+        });
 
-      if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed to create checkout session");
-      }
+        
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to change plan");
+        }
 
-      const { url } = await res.json();
-      if (url) {
-        window.location.href = url;
+        // Show success message based on upgrade/downgrade
+        if (data.type === "upgrade") {
+          setSuccess(`Upgraded to ${plan.toUpperCase()}! Changes are effective immediately.`);
+        } else if (data.type === "downgrade") {
+          const effectiveDate = new Date(data.effectiveDate).toLocaleDateString();
+          setSuccess(`Downgrade to ${plan.toUpperCase()} scheduled. You'll keep your current plan until ${effectiveDate}.`);
+        }
+
+        // Refresh subscription status
+        await fetchSubscription();
+      } else {
+        // No active subscription, use checkout
+        const res = await fetch("/api/billing/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ plan }),
+        });
+
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || "Failed to create checkout session");
+        }
+
+        const { url } = await res.json();
+        if (url) {
+          window.location.href = url;
+        }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to start upgrade");
+      setError(err instanceof Error ? err.message : "Failed to change plan");
     } finally {
       setUpgrading(null);
     }
@@ -1046,6 +1074,25 @@ function BillingSection({ setError, setSuccess: _setSuccess }: BillingSectionPro
         </div>
       </div>
 
+      {/* Pending Downgrade Notice */}
+      {subscription?.pendingChange && (
+        <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/5 p-6">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 text-yellow-600" />
+            <div>
+              <p className="font-semibold text-yellow-700 dark:text-yellow-400">
+                Downgrade Scheduled
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Your plan will change to {subscription.pendingChange.toUpperCase()} at the end of your billing period
+                {subscription.currentPeriodEnd && ` (${new Date(subscription.currentPeriodEnd).toLocaleDateString()})`}.
+                You&apos;ll keep {currentPlan.toUpperCase()} access until then.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Upgrade Options - Hide for admins (they already have MAX) */}
       {currentPlan !== "max" && !subscription?.isAdmin && (
         <div className="rounded-xl border bg-card p-6">
@@ -1053,7 +1100,7 @@ function BillingSection({ setError, setSuccess: _setSuccess }: BillingSectionPro
           <div className="grid gap-4 sm:grid-cols-2">
             {currentPlan === "free" && (
               <button
-                onClick={() => handleUpgrade("pro")}
+                onClick={() => handlePlanChange("pro")}
                 disabled={upgrading === "pro"}
                 className="flex items-start gap-4 rounded-lg border p-4 text-left transition-all hover:border-primary hover:bg-muted/50"
               >
@@ -1073,7 +1120,7 @@ function BillingSection({ setError, setSuccess: _setSuccess }: BillingSectionPro
               </button>
             )}
             <button
-              onClick={() => handleUpgrade("max")}
+              onClick={() => handlePlanChange("max")}
               disabled={upgrading === "max"}
               className="flex items-start gap-4 rounded-lg border border-purple-500/30 bg-gradient-to-br from-purple-500/5 to-pink-500/5 p-4 text-left transition-all hover:border-purple-500 hover:from-purple-500/10 hover:to-pink-500/10"
             >
@@ -1088,6 +1135,11 @@ function BillingSection({ setError, setSuccess: _setSuccess }: BillingSectionPro
                 <p className="mt-2 text-xs text-muted-foreground">
                   All features + access to ALL paid blueprints
                 </p>
+                {currentPlan === "pro" && subscription?.hasActiveSubscription && (
+                  <p className="mt-1 text-xs text-green-600">
+                    Unused Pro credit will be applied
+                  </p>
+                )}
               </div>
               <Button
                 size="sm"
@@ -1098,6 +1150,32 @@ function BillingSection({ setError, setSuccess: _setSuccess }: BillingSectionPro
               </Button>
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Downgrade Option - Only for Max users with active subscription */}
+      {currentPlan === "max" && !subscription?.isAdmin && subscription?.hasActiveSubscription && !subscription?.pendingChange && (
+        <div className="rounded-xl border bg-card p-6">
+          <h2 className="mb-4 font-semibold">Downgrade Plan</h2>
+          <button
+            onClick={() => handlePlanChange("pro")}
+            disabled={upgrading === "pro"}
+            className="flex w-full items-start gap-4 rounded-lg border p-4 text-left transition-all hover:border-primary hover:bg-muted/50"
+          >
+            <div className="rounded-lg bg-primary/10 p-2 text-primary">
+              <Zap className="h-5 w-5" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold">Downgrade to Pro</p>
+              <p className="text-sm text-muted-foreground">€5/month</p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Takes effect at the end of your billing period. You&apos;ll keep Max access until then.
+              </p>
+            </div>
+            <Button size="sm" variant="outline" disabled={!!upgrading}>
+              {upgrading === "pro" ? "..." : "Downgrade"}
+            </Button>
+          </button>
         </div>
       )}
 

@@ -37,8 +37,27 @@ export async function POST(request: NextRequest) {
     // Get or create Stripe customer
     const user = await prismaUsers.user.findUnique({
       where: { id: session.user.id },
-      select: { stripeCustomerId: true, email: true, name: true },
+      select: { 
+        stripeCustomerId: true, 
+        stripeSubscriptionId: true,
+        subscriptionStatus: true,
+        email: true, 
+        name: true 
+      },
     });
+
+    // If user already has an active subscription, they should use plan change API
+    if (user?.stripeSubscriptionId && 
+        (user.subscriptionStatus === "active" || user.subscriptionStatus === "trialing")) {
+      return NextResponse.json(
+        { 
+          error: "You already have an active subscription. Use the change plan option instead.",
+          hasActiveSubscription: true,
+          redirectTo: "/api/billing/change-plan"
+        },
+        { status: 400 }
+      );
+    }
 
     let customerId = user?.stripeCustomerId;
 
