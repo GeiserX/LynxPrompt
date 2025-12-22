@@ -32,6 +32,9 @@ export interface TemplateData {
   sensitiveFields?: Record<string, SensitiveField>;
   category?: string;
   difficulty?: string;
+  // Pricing
+  price?: number | null; // Price in cents, null/0 = free
+  currency?: string;
 }
 
 export interface CategoryData {
@@ -623,6 +626,8 @@ export async function getTemplateById(
         >) || {},
       category: template.category || undefined,
       difficulty: template.difficulty || undefined,
+      price: template.price,
+      currency: template.currency || "EUR",
     };
   }
 
