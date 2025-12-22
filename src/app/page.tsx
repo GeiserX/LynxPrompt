@@ -44,7 +44,8 @@ export default function HomePage() {
           </div>
 
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-            Your universal{" "}
+            Your universal
+            <br />
             <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
               AI config hub
             </span>
@@ -53,7 +54,7 @@ export default function HomePage() {
           <p className="max-w-2xl text-lg text-muted-foreground">
             Generate and share AI coding assistant rules that work across any IDE.
             One configuration, every platform — Cursor, Claude, Copilot, and more.
-            Bootstrap new projects in seconds, not hours.
+            Bootstrap new projects in minutes.
           </p>
 
           <div className="flex gap-4">
@@ -78,7 +79,7 @@ export default function HomePage() {
           <FeatureCard
             icon={<Shield className="h-8 w-8" />}
             title="Preference Memory"
-            description="Your LICENSE, FUNDING.yml, and settings remembered across projects"
+            description="Your files and settings remembered across projects — no re-configuration needed"
           />
           <FeatureCard
             icon={<GitBranch className="h-8 w-8" />}
@@ -116,8 +117,8 @@ export default function HomePage() {
 
           <PlatformCarousel />
 
-          {/* IDE Logo Stripe - like agents.md */}
-          <div className="mx-auto mt-12 max-w-4xl">
+          {/* IDE Logo Marquee - like agents.md */}
+          <div className="mx-auto mt-12 w-full max-w-6xl">
             <p className="mb-6 text-center text-sm text-muted-foreground">
               Compatible with{" "}
               <a
@@ -131,25 +132,24 @@ export default function HomePage() {
               — the open standard used by 60k+ projects
             </p>
             
-            {/* IDE Logos Grid */}
-            <div className="flex flex-wrap items-center justify-center gap-6 rounded-xl border bg-background p-6">
-              <IDELogo name="Cursor" icon="⚡" url="https://cursor.sh" />
-              <IDELogo name="Claude Code" icon="🧠" url="https://claude.ai" />
-              <IDELogo name="GitHub Copilot" icon="🤖" url="https://github.com/features/copilot" />
-              <IDELogo name="Windsurf" icon="🏄" url="https://codeium.com/windsurf" />
-              <IDELogo name="VS Code" icon="💻" url="https://code.visualstudio.com" />
-              <IDELogo name="Zed" icon="⚡" url="https://zed.dev" />
-              <IDELogo name="JetBrains" icon="🔧" url="https://www.jetbrains.com" />
-              <IDELogo name="Aider" icon="🤝" url="https://aider.chat" />
-              <IDELogo name="Continue" icon="▶️" url="https://continue.dev" />
-              <IDELogo name="Gemini" icon="✨" url="https://gemini.google.com" />
-              <IDELogo name="Cline" icon="📟" url="https://github.com/cline/cline" />
-              <IDELogo name="Roo Code" icon="🦘" url="https://roo.dev" />
+            {/* Scrolling Logo Marquee */}
+            <div className="relative overflow-hidden">
+              {/* Gradient overlays for fade effect */}
+              <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-20 bg-gradient-to-r from-muted/30 to-transparent" />
+              <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-20 bg-gradient-to-l from-muted/30 to-transparent" />
+              
+              {/* Row 1 - scrolling left */}
+              <div className="mb-4 flex animate-marquee items-center gap-8">
+                <LogoMarqueeRow />
+                <LogoMarqueeRow />
+              </div>
+              
+              {/* Row 2 - scrolling right */}
+              <div className="flex animate-marquee-reverse items-center gap-8">
+                <LogoMarqueeRow2 />
+                <LogoMarqueeRow2 />
+              </div>
             </div>
-            
-            <p className="mt-4 text-center text-xs text-muted-foreground">
-              And any tool that supports AGENTS.md, .cursorrules, or custom AI instructions
-            </p>
           </div>
         </div>
       </section>
@@ -250,17 +250,78 @@ function FeatureCard({
   );
 }
 
-function IDELogo({ name, icon, url }: { name: string; icon: string; url: string }) {
+// IDE Logos with actual images - Row 1
+function LogoMarqueeRow() {
+  const logos = [
+    { name: "Cursor", url: "https://cursor.sh", img: "https://agents.md/logos/cursor.svg" },
+    { name: "Claude Code", url: "https://claude.ai", img: "https://agents.md/logos/anthropic.svg" },
+    { name: "GitHub Copilot", url: "https://github.com/features/copilot", img: "https://agents.md/logos/github-copilot.svg" },
+    { name: "Windsurf", url: "https://codeium.com/windsurf", img: "https://agents.md/logos/windsurf.svg" },
+    { name: "VS Code", url: "https://code.visualstudio.com", img: "https://agents.md/logos/vscode.svg" },
+    { name: "Aider", url: "https://aider.chat", img: "https://agents.md/logos/aider.svg" },
+    { name: "RooCode", url: "https://roo.dev", img: "https://agents.md/logos/roocode.svg" },
+    { name: "Codex", url: "https://openai.com/codex", img: "https://agents.md/logos/openai.svg" },
+  ];
+  
   return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex flex-col items-center gap-1 rounded-lg p-2 transition-colors hover:bg-muted"
-      title={name}
-    >
-      <span className="text-2xl">{icon}</span>
-      <span className="text-xs text-muted-foreground">{name}</span>
-    </a>
+    <div className="flex shrink-0 items-center gap-8">
+      {logos.map((logo, i) => (
+        <a
+          key={`${logo.name}-${i}`}
+          href={logo.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex shrink-0 items-center gap-3 rounded-lg px-4 py-2 transition-colors hover:bg-muted"
+          title={logo.name}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img 
+            src={logo.img} 
+            alt={logo.name}
+            className="h-8 w-8 object-contain"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          />
+          <span className="text-sm font-medium text-foreground">{logo.name}</span>
+        </a>
+      ))}
+    </div>
+  );
+}
+
+// IDE Logos with actual images - Row 2
+function LogoMarqueeRow2() {
+  const logos = [
+    { name: "Zed", url: "https://zed.dev", img: "https://agents.md/logos/zed.svg" },
+    { name: "JetBrains", url: "https://www.jetbrains.com", img: "https://agents.md/logos/jetbrains.svg" },
+    { name: "Gemini CLI", url: "https://ai.google.dev/gemini-api/docs/agentic", img: "https://agents.md/logos/gemini.svg" },
+    { name: "Devin", url: "https://devin.ai", img: "https://agents.md/logos/devin.svg" },
+    { name: "Continue", url: "https://continue.dev", img: "https://agents.md/logos/continue.svg" },
+    { name: "Factory", url: "https://factory.ai", img: "https://agents.md/logos/factory.svg" },
+    { name: "Amp", url: "https://amp.dev", img: "https://agents.md/logos/amp.svg" },
+    { name: "Warp", url: "https://warp.dev", img: "https://agents.md/logos/warp.svg" },
+  ];
+  
+  return (
+    <div className="flex shrink-0 items-center gap-8">
+      {logos.map((logo, i) => (
+        <a
+          key={`${logo.name}-${i}`}
+          href={logo.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex shrink-0 items-center gap-3 rounded-lg px-4 py-2 transition-colors hover:bg-muted"
+          title={logo.name}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img 
+            src={logo.img} 
+            alt={logo.name}
+            className="h-8 w-8 object-contain"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          />
+          <span className="text-sm font-medium text-foreground">{logo.name}</span>
+        </a>
+      ))}
+    </div>
   );
 }

@@ -255,6 +255,7 @@ type WizardConfig = {
   containerRegistryOther: string;
   registryUsername: string;
   aiBehaviorRules: string[];
+  enableAutoUpdate: boolean;
   platforms: string[];
   additionalFeedback: string;
 };
@@ -294,6 +295,7 @@ export default function WizardPage() {
       "check_logs_after_build",
       "follow_existing_patterns",
     ],
+    enableAutoUpdate: false,
     platforms: ["cursor", "claude"],
     additionalFeedback: "",
   });
@@ -378,6 +380,7 @@ export default function WizardPage() {
           customRegistry: config.containerRegistryOther,
           deploymentTarget: [],
           aiBehaviorRules: config.aiBehaviorRules,
+          enableAutoUpdate: config.enableAutoUpdate,
           platforms: config.platforms,
           additionalFeedback: config.additionalFeedback,
         };
@@ -453,6 +456,7 @@ export default function WizardPage() {
         customRegistry: config.containerRegistryOther,
         deploymentTarget: [],
         aiBehaviorRules: config.aiBehaviorRules,
+        enableAutoUpdate: config.enableAutoUpdate,
         platforms: config.platforms,
         additionalFeedback: config.additionalFeedback,
       };
@@ -678,6 +682,8 @@ export default function WizardPage() {
                 <StepAIBehavior
                   selected={config.aiBehaviorRules}
                   onToggle={(v) => toggleArrayValue("aiBehaviorRules", v)}
+                  enableAutoUpdate={config.enableAutoUpdate}
+                  onAutoUpdateChange={(v) => setConfig({ ...config, enableAutoUpdate: v })}
                 />
               )}
               {currentStep === 6 && (
@@ -1140,9 +1146,13 @@ function StepCICD({
 function StepAIBehavior({
   selected,
   onToggle,
+  enableAutoUpdate,
+  onAutoUpdateChange,
 }: {
   selected: string[];
   onToggle: (v: string) => void;
+  enableAutoUpdate: boolean;
+  onAutoUpdateChange: (v: boolean) => void;
 }) {
   return (
     <div>
@@ -1186,6 +1196,39 @@ function StepAIBehavior({
             </div>
           </button>
         ))}
+      </div>
+
+      {/* Auto-Update Option */}
+      <div className="mt-8 rounded-xl border-2 border-dashed border-purple-300 bg-purple-50/50 p-6 dark:border-purple-700 dark:bg-purple-900/20">
+        <button
+          onClick={() => onAutoUpdateChange(!enableAutoUpdate)}
+          className="flex w-full items-start gap-4 text-left"
+        >
+          <div
+            className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
+              enableAutoUpdate
+                ? "border-purple-600 bg-purple-600 text-white"
+                : "border-purple-400"
+            }`}
+          >
+            {enableAutoUpdate && <Check className="h-3 w-3" />}
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-purple-900 dark:text-purple-100">
+                Enable Self-Improving Blueprint
+              </span>
+              <span className="rounded bg-purple-200 px-2 py-0.5 text-xs text-purple-700 dark:bg-purple-800 dark:text-purple-200">
+                Experimental
+              </span>
+            </div>
+            <p className="mt-1 text-sm text-purple-700 dark:text-purple-300">
+              Include an instruction for AI agents to track your coding patterns and automatically
+              update this configuration file as you work. The AI will learn from your preferences
+              and improve the rules over time.
+            </p>
+          </div>
+        </button>
       </div>
     </div>
   );
