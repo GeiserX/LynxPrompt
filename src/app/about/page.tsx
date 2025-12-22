@@ -57,10 +57,11 @@ export default function AboutPage() {
           <h2 className="text-2xl font-bold">The Story</h2>
           <div className="mt-6 space-y-4 text-muted-foreground">
             <p>
-              Every time I started a new project, I found myself copying and
-              tweaking the same <code>.cursorrules</code>,{" "}
-              <code>CLAUDE.md</code>, and IDE configuration files. It was
-              repetitive, error-prone, and frankly, boring.
+              I got tired of creating AI configuration files again and again,
+              reusing most of the same content every time. And while you can
+              grant memory to AI agents, there&apos;s nothing quite like a
+              well-written agent file that&apos;s always there for the AI to
+              consult—no context limits, no forgetting between sessions.
             </p>
             <p>
               I wanted something more than just another &quot;prompt sharing
@@ -92,8 +93,8 @@ export default function AboutPage() {
               <h2 className="mt-4 text-2xl font-bold">Our Mission</h2>
               <p className="mt-4 text-lg text-muted-foreground">
                 Make AI IDE configuration effortless. Create repo-ready prompts
-                in clicks, not hours. Enable developers to monetize their
-                expertise.
+                in clicks—no endless writing and copy-pasting. Enable developers
+                to monetize their expertise.
               </p>
             </div>
 
@@ -102,7 +103,7 @@ export default function AboutPage() {
                 <Zap className="mx-auto h-8 w-8 text-primary" />
                 <h3 className="mt-3 font-semibold">Speed</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Go from zero to configured repo in minutes, not hours
+                  Go from zero to configured repo in minutes
                 </p>
               </div>
               <div className="text-center">
@@ -190,7 +191,7 @@ export default function AboutPage() {
                 rel="noopener noreferrer"
                 className="text-primary hover:underline"
               >
-                Sergio Geiser
+                Sergio Fernández
               </a>
               , a developer passionate about self-hosting, automation, and
               making developer tools that just work.

@@ -213,6 +213,27 @@ Per EU Consumer Rights Directive, digital content can waive 14-day withdrawal IF
 
 ### Template System
 
+#### Composable Template Sections (Template Mixing)
+
+Enable users to build custom configurations by cherry-picking sections from multiple templates:
+
+- [ ] **Section-based template structure**: Templates divided into logical sections (deployment, commit rules, PR rules, code style, testing, security, etc.)
+- [ ] **Multi-template selector**: When downloading, select which sections to include from each template
+- [ ] **Default behavior**: "Select All" from a single template, with option to mix
+- [ ] **Section preview**: Preview each section before adding to final config
+- [ ] **Section compatibility**: Detect and warn about conflicting sections
+- [ ] **Favorite sections**: Save preferred sections for quick reuse
+- [ ] **Section attribution**: Track which sections came from which authors (for revenue pool)
+- [ ] **Custom section ordering**: Drag-and-drop to arrange sections in final output
+- [ ] **Section categories**: Standardized taxonomy (Deployment, Git Workflow, Code Style, Testing, Security, Documentation, AI Behavior, etc.)
+
+**Example workflow:**
+1. User finds Template A with great deployment rules
+2. User finds Template B with perfect commit conventions  
+3. User finds Template C with ideal PR guidelines
+4. User selects: Deployment → Template A, Commit Rules → Template B, PR Rules → Template C
+5. LynxPrompt generates a merged configuration file with all selected sections
+
 #### Template Management
 
 - [ ] Template versioning (keep history of changes)
