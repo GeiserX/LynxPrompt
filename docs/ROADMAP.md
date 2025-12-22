@@ -369,7 +369,7 @@ Author C: 2,500 downloads (25% of total) → €1,750 payout
 - [x] Wizard tier gating (Basic/Intermediate/Advanced steps)
 - [ ] Add subscription status to user session (read from DB, display in UI)
 - [ ] Create Stripe products/prices in dashboard and configure env vars
-- [ ] **Checkout consent checkbox** (EU digital content waiver)
+- [x] **Checkout consent checkbox** (EU digital content waiver)
 
 ### Phase 2: Template Marketplace
 
@@ -555,7 +555,7 @@ To go live with Stripe payments:
   - Highlight detected patterns
   - Require confirmation to proceed
 
-- [ ] **Auto-update option**: Ask in wizard if blueprint should include auto-update instruction
+- [x] **Auto-update option**: Ask in wizard if blueprint should include auto-update instruction
   - Add instruction to blueprint: "Track user coding patterns and update this file accordingly"
   - AI agents will then self-improve the config based on user behavior
   - Question in wizard: "Should this blueprint include self-improvement instructions?"
