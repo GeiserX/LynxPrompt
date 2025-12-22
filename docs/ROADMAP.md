@@ -70,44 +70,44 @@ Per EU Consumer Rights Directive, digital content can waive 14-day withdrawal IF
 - [x] Data retention policy
 - [x] AEPD complaint rights
 
-### Terms of Service - Required Updates
+### Terms of Service ✅ COMPLETED
 
 #### High Priority (Legal Risk)
 
-- [ ] **Marketplace role clarification**: Buyer-Seller contract, LynxPrompt as intermediary
-- [ ] **EU digital content withdrawal**: Explicit consent + acknowledgment clause
-- [ ] **Liability limitation carve-outs**: Fraud, wilful misconduct, gross negligence
-- [ ] **Governing law fix**: "Laws of Spain" (not "EU"), courts of Cartagena
-- [ ] **Consumer carve-out**: "EU consumers may benefit from mandatory protections"
+- [x] **Marketplace role clarification**: Buyer-Seller contract, LynxPrompt as intermediary
+- [x] **EU digital content withdrawal**: Explicit consent + acknowledgment clause
+- [x] **Liability limitation carve-outs**: Fraud, wilful misconduct, gross negligence
+- [x] **Governing law fix**: "Laws of Spain" (not "EU"), courts of Cartagena
+- [x] **Consumer carve-out**: "EU consumers may benefit from mandatory protections"
 
 #### Marketplace Clauses
 
-- [ ] **Buyer license grant**: Non-exclusive, non-transferable, internal use only
-- [ ] **Seller warranties**: Own rights, no infringement, no malware, complies with AUP
-- [ ] **Content takedown**: Platform discretion to remove content
-- [ ] **AI/prompt disclaimer**: "Prompts may produce unexpected outputs, use at own risk"
-- [ ] **Buyer-Seller disputes**: Primarily between parties, platform may assist
+- [x] **Buyer license grant**: Non-exclusive, non-transferable, internal use only
+- [x] **Seller warranties**: Own rights, no infringement, no malware, complies with AUP
+- [x] **Content takedown**: Platform discretion to remove content
+- [x] **AI/prompt disclaimer**: "Prompts may produce unexpected outputs, use at own risk"
+- [x] **Buyer-Seller disputes**: Primarily between parties, platform may assist
 
 #### Payment & Payout Clauses
 
-- [ ] Refund criteria and timeframe
-- [ ] Payout schedule: monthly, min €5, PayPal
-- [ ] Chargeback holds
-- [ ] Seller tax responsibility
+- [x] Refund criteria and timeframe
+- [x] Payout schedule: monthly, min €5, PayPal
+- [x] Chargeback holds
+- [x] Seller tax responsibility
 
-#### Standard Clauses (Missing)
+#### Standard Clauses
 
-- [ ] Eligibility/age (18+ or legal capacity)
-- [ ] Suspension/termination process
-- [ ] Data retention after termination
-- [ ] Service modification rights
-- [ ] Force majeure
-- [ ] Assignment
-- [ ] Severability
-- [ ] Entire agreement
-- [ ] No waiver
+- [x] Eligibility/age (18+ or legal capacity)
+- [x] Suspension/termination process
+- [x] Data retention after termination
+- [x] Service modification rights
+- [x] Force majeure
+- [x] Assignment
+- [x] Severability
+- [x] Entire agreement
+- [x] No waiver
 
-#### Product/UI Changes for Legal
+#### Product/UI Changes for Legal (Pending Implementation)
 
 - [ ] Signup: "I agree to Terms + Privacy" checkbox
 - [ ] Checkout: EU digital content waiver checkbox
@@ -143,7 +143,7 @@ Per EU Consumer Rights Directive, digital content can waive 14-day withdrawal IF
 - [x] **Pricing page UI** - Tier comparison (Free/Pro/Max)
 - [x] **Favorite templates** - Heart button + favorites shown in dashboard
 - [x] **Privacy Policy page** - GDPR compliant, comprehensive
-- [x] **Terms of Service page** - Basic version (needs marketplace updates)
+- [x] **Terms of Service page** - Full marketplace version with EU compliance
 - [x] **About page** - Company info, mission, trust section
 - [x] **Docs/Help page** - Getting started, FAQ
 - [x] **Favicon** - Custom lynx logo in all sizes
