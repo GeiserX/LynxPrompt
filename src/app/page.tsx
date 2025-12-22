@@ -118,40 +118,19 @@ export default function HomePage() {
 
           <PlatformCarousel />
 
-          {/* IDE Logo Marquee - like agents.md */}
-          <div className="mx-auto mt-12 w-full max-w-6xl">
-            <p className="mb-6 text-center text-sm text-muted-foreground">
-              Compatible with{" "}
-              <a
-                href="https://agents.md"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                AGENTS.md
-              </a>{" "}
-              — the open standard used by 60k+ projects
-            </p>
-            
-            {/* Scrolling Logo Marquee */}
-            <div className="relative overflow-hidden">
-              {/* Gradient overlays for fade effect */}
-              <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-20 bg-gradient-to-r from-muted/30 to-transparent" />
-              <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-20 bg-gradient-to-l from-muted/30 to-transparent" />
-              
-              {/* Row 1 - scrolling left */}
-              <div className="mb-4 flex animate-marquee items-center gap-8">
-                <LogoMarqueeRow />
-                <LogoMarqueeRow />
-              </div>
-              
-              {/* Row 2 - scrolling right */}
-              <div className="flex animate-marquee-reverse items-center gap-8">
-                <LogoMarqueeRow2 />
-                <LogoMarqueeRow2 />
-              </div>
-            </div>
-          </div>
+          {/* AGENTS.md compatibility note */}
+          <p className="mx-auto mt-12 text-center text-sm text-muted-foreground">
+            Compatible with{" "}
+            <a
+              href="https://agents.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              AGENTS.md
+            </a>{" "}
+            — the open standard used by 60k+ projects
+          </p>
         </div>
       </section>
 
@@ -251,62 +230,3 @@ function FeatureCard({
   );
 }
 
-// IDE Logos - Row 1 (text-based for reliability)
-function LogoMarqueeRow() {
-  const logos = [
-    { name: "Cursor", color: "bg-blue-500" },
-    { name: "Claude Code", color: "bg-orange-500" },
-    { name: "GitHub Copilot", color: "bg-gray-700" },
-    { name: "Windsurf", color: "bg-teal-500" },
-    { name: "VS Code", color: "bg-blue-600" },
-    { name: "Aider", color: "bg-green-500" },
-    { name: "RooCode", color: "bg-purple-500" },
-    { name: "Codex", color: "bg-emerald-600" },
-  ];
-  
-  return (
-    <div className="flex shrink-0 items-center gap-6">
-      {logos.map((logo, i) => (
-        <div
-          key={`${logo.name}-${i}`}
-          className="flex shrink-0 items-center gap-2.5 rounded-lg border bg-card px-4 py-2"
-        >
-          <div className={`h-6 w-6 rounded ${logo.color} flex items-center justify-center text-xs font-bold text-white`}>
-            {logo.name.charAt(0)}
-          </div>
-          <span className="text-sm font-medium">{logo.name}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// IDE Logos - Row 2 (text-based for reliability)
-function LogoMarqueeRow2() {
-  const logos = [
-    { name: "Zed", color: "bg-amber-500" },
-    { name: "JetBrains", color: "bg-pink-600" },
-    { name: "Gemini", color: "bg-blue-400" },
-    { name: "Devin", color: "bg-indigo-500" },
-    { name: "Continue", color: "bg-cyan-500" },
-    { name: "Factory", color: "bg-violet-500" },
-    { name: "Amp", color: "bg-rose-500" },
-    { name: "Warp", color: "bg-slate-600" },
-  ];
-  
-  return (
-    <div className="flex shrink-0 items-center gap-6">
-      {logos.map((logo, i) => (
-        <div
-          key={`${logo.name}-${i}`}
-          className="flex shrink-0 items-center gap-2.5 rounded-lg border bg-card px-4 py-2"
-        >
-          <div className={`h-6 w-6 rounded ${logo.color} flex items-center justify-center text-xs font-bold text-white`}>
-            {logo.name.charAt(0)}
-          </div>
-          <span className="text-sm font-medium">{logo.name}</span>
-        </div>
-      ))}
-    </div>
-  );
-}

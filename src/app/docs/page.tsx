@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +15,66 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
+
+// IDE Logos - Row 1
+function LogoMarqueeRow() {
+  const logos = [
+    { name: "Cursor", color: "bg-blue-500" },
+    { name: "Claude Code", color: "bg-orange-500" },
+    { name: "GitHub Copilot", color: "bg-gray-700" },
+    { name: "Windsurf", color: "bg-teal-500" },
+    { name: "VS Code", color: "bg-blue-600" },
+    { name: "Aider", color: "bg-green-500" },
+    { name: "RooCode", color: "bg-purple-500" },
+    { name: "Codex", color: "bg-emerald-600" },
+  ];
+  
+  return (
+    <div className="flex shrink-0 items-center gap-6">
+      {logos.map((logo, i) => (
+        <div
+          key={`${logo.name}-${i}`}
+          className="flex shrink-0 items-center gap-2.5 rounded-lg border bg-background px-4 py-2"
+        >
+          <div className={`h-6 w-6 rounded ${logo.color} flex items-center justify-center text-xs font-bold text-white`}>
+            {logo.name.charAt(0)}
+          </div>
+          <span className="text-sm font-medium">{logo.name}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// IDE Logos - Row 2
+function LogoMarqueeRow2() {
+  const logos = [
+    { name: "Zed", color: "bg-amber-500" },
+    { name: "JetBrains", color: "bg-pink-600" },
+    { name: "Gemini", color: "bg-blue-400" },
+    { name: "Devin", color: "bg-indigo-500" },
+    { name: "Continue", color: "bg-cyan-500" },
+    { name: "Factory", color: "bg-violet-500" },
+    { name: "Amp", color: "bg-rose-500" },
+    { name: "Warp", color: "bg-slate-600" },
+  ];
+  
+  return (
+    <div className="flex shrink-0 items-center gap-6">
+      {logos.map((logo, i) => (
+        <div
+          key={`${logo.name}-${i}`}
+          className="flex shrink-0 items-center gap-2.5 rounded-lg border bg-background px-4 py-2"
+        >
+          <div className={`h-6 w-6 rounded ${logo.color} flex items-center justify-center text-xs font-bold text-white`}>
+            {logo.name.charAt(0)}
+          </div>
+          <span className="text-sm font-medium">{logo.name}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function DocsPage() {
   return (
@@ -334,25 +396,27 @@ export default function DocsPage() {
                 </a>
                 , the emerging open standard for AI coding agent instructions.
                 Your configs work across a growing ecosystem of AI IDEs and
-                tools:
+                tools.
               </p>
 
-              {/* IDE Grid - agents.md style */}
-              <div className="rounded-xl border bg-card p-6">
-                <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
-                  <PlatformIcon name="Cursor" icon="⚡" url="https://cursor.sh" />
-                  <PlatformIcon name="Claude Code" icon="🧠" url="https://claude.ai" />
-                  <PlatformIcon name="Copilot" icon="🤖" url="https://github.com/features/copilot" />
-                  <PlatformIcon name="Windsurf" icon="🏄" url="https://codeium.com/windsurf" />
-                  <PlatformIcon name="VS Code" icon="💻" url="https://code.visualstudio.com" />
-                  <PlatformIcon name="Zed" icon="⚡" url="https://zed.dev" />
-                  <PlatformIcon name="Aider" icon="🤝" url="https://aider.chat" />
-                  <PlatformIcon name="Continue" icon="▶️" url="https://continue.dev" />
-                  <PlatformIcon name="Cline" icon="📟" url="https://github.com/cline/cline" />
-                  <PlatformIcon name="Roo Code" icon="🦘" url="https://roo.dev" />
-                  <PlatformIcon name="Gemini" icon="✨" url="https://gemini.google.com" />
-                  <PlatformIcon name="JetBrains" icon="🔧" url="https://www.jetbrains.com" />
+              {/* Scrolling Logo Marquee */}
+              <div className="relative overflow-hidden rounded-xl border bg-card py-6">
+                {/* Gradient overlays for fade effect */}
+                <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-16 bg-gradient-to-r from-card to-transparent" />
+                <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-16 bg-gradient-to-l from-card to-transparent" />
+                
+                {/* Row 1 - scrolling left */}
+                <div className="mb-4 flex animate-marquee items-center gap-6">
+                  <LogoMarqueeRow />
+                  <LogoMarqueeRow />
                 </div>
+                
+                {/* Row 2 - scrolling right */}
+                <div className="flex animate-marquee-reverse items-center gap-6">
+                  <LogoMarqueeRow2 />
+                  <LogoMarqueeRow2 />
+                </div>
+                
                 <p className="mt-4 text-center text-xs text-muted-foreground">
                   And any tool supporting AGENTS.md, .cursorrules, or custom AI instructions
                 </p>
@@ -531,32 +595,4 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
   );
 }
 
-function PlatformIcon({ name, icon, url }: { name: string; icon: string; url?: string }) {
-  const content = (
-    <>
-      <span className="text-2xl">{icon}</span>
-      <span className="text-xs font-medium text-muted-foreground">{name}</span>
-    </>
-  );
-  
-  if (url) {
-    return (
-      <a
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex flex-col items-center gap-2 rounded-lg p-3 text-center transition-colors hover:bg-muted"
-        title={name}
-      >
-        {content}
-      </a>
-    );
-  }
-  
-  return (
-    <div className="flex flex-col items-center gap-2 rounded-lg p-3 text-center transition-colors hover:bg-muted">
-      {content}
-    </div>
-  );
-}
 
