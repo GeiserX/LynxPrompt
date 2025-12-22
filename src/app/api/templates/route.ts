@@ -24,6 +24,120 @@ function determineTier(
   return "ADVANCED";
 }
 
+// GET: List templates with search and sort
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const sort = searchParams.get("sort") || "popular";
+    const search = searchParams.get("q") || "";
+    const category = searchParams.get("category");
+
+    // Build sort order
+    let orderBy: Record<string, "asc" | "desc"> = {};
+    switch (sort) {
+      case "popular":
+        orderBy = { downloads: "desc" };
+        break;
+      case "recent":
+        orderBy = { createdAt: "desc" };
+        break;
+      case "downloads":
+        orderBy = { downloads: "desc" };
+        break;
+      case "favorites":
+        orderBy = { favorites: "desc" };
+        break;
+      default:
+        orderBy = { downloads: "desc" };
+    }
+
+    // Build where clause
+    const where: Record<string, unknown> = {
+      isPublic: true,
+    };
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
+        { tags: { hasSome: [search.toLowerCase()] } },
+      ];
+    }
+
+    if (category && category !== "all") {
+      where.type = category.toUpperCase();
+    }
+
+    // Fetch templates
+    const templates = await prismaUsers.userTemplate.findMany({
+      where,
+      orderBy,
+      take: 50,
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        type: true,
+        tier: true,
+        tags: true,
+        downloads: true,
+        favorites: true,
+        isOfficial: true,
+        createdAt: true,
+        user: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    // Get category counts
+    const categoryCounts = await prismaUsers.userTemplate.groupBy({
+      by: ["type"],
+      where: { isPublic: true },
+      _count: { id: true },
+    });
+
+    const totalCount = await prismaUsers.userTemplate.count({
+      where: { isPublic: true },
+    });
+
+    // Format response
+    const formattedTemplates = templates.map((t) => ({
+      id: t.id,
+      name: t.name,
+      description: t.description || "",
+      author: t.user?.name || "Anonymous",
+      downloads: t.downloads,
+      likes: t.favorites,
+      tags: t.tags || [],
+      tier: t.tier,
+      isOfficial: t.isOfficial || false,
+    }));
+
+    const categories = [
+      { id: "all", label: "All Templates", count: totalCount },
+      ...categoryCounts.map((c) => ({
+        id: c.type.toLowerCase(),
+        label: c.type.replace(/_/g, " ").toLowerCase().replace(/^\w/, (l: string) => l.toUpperCase()),
+        count: c._count.id,
+      })),
+    ];
+
+    return NextResponse.json({
+      templates: formattedTemplates,
+      categories,
+    });
+  } catch (error) {
+    console.error("Error fetching templates:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch templates", templates: [], categories: [] },
+      { status: 500 }
+    );
+  }
+}
+
 // POST: Create a new user template
 export async function POST(request: NextRequest) {
   try {

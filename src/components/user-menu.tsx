@@ -12,6 +12,7 @@ import {
   ChevronDown,
   CreditCard,
 } from "lucide-react";
+import { getGravatarUrl } from "@/lib/utils";
 
 export function UserMenu() {
   const { data: session, status } = useSession();
@@ -51,17 +52,21 @@ export function UserMenu() {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 rounded-full border bg-background px-3 py-1.5 text-sm transition-colors hover:bg-muted"
       >
-        {session.user.image ? (
-          <img
-            src={session.user.image}
-            alt=""
-            className="h-6 w-6 rounded-full"
-          />
-        ) : (
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
-            <User className="h-3 w-3" />
-          </div>
-        )}
+        <img
+          src={
+            session.user.image ||
+            (session.user.email
+              ? getGravatarUrl(session.user.email, 48)
+              : undefined)
+          }
+          alt=""
+          className="h-6 w-6 rounded-full"
+          onError={(e) => {
+            // Fallback to identicon on error
+            const target = e.target as HTMLImageElement;
+            target.style.display = "none";
+          }}
+        />
         <span className="hidden max-w-[100px] truncate sm:inline">
           {session.user.name || session.user.email?.split("@")[0]}
         </span>
@@ -93,23 +98,15 @@ export function UserMenu() {
               Dashboard
             </Link>
             <Link
-              href="/settings/profile"
+              href="/settings?tab=profile"
               onClick={() => setIsOpen(false)}
               className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted"
             >
               <Settings className="h-4 w-4" />
-              Profile Settings
+              Settings
             </Link>
             <Link
-              href="/settings/security"
-              onClick={() => setIsOpen(false)}
-              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted"
-            >
-              <Shield className="h-4 w-4" />
-              Security
-            </Link>
-            <Link
-              href="/settings/billing"
+              href="/settings?tab=billing"
               onClick={() => setIsOpen(false)}
               className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted"
             >

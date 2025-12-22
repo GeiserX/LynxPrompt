@@ -1,3 +1,6 @@
+"use client";
+
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Check, X, Zap, Crown, Star, ArrowRight } from "lucide-react";
@@ -85,6 +88,20 @@ const COMPARISON_FEATURES = [
 ];
 
 export default function PricingPage() {
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === "authenticated";
+
+  // Dynamic CTA links based on auth status
+  const getCtaLink = (plan: string) => {
+    if (!isAuthenticated) {
+      return `/auth/signin${plan !== "free" ? `?plan=${plan}` : ""}`;
+    }
+    if (plan === "free") {
+      return "/dashboard";
+    }
+    return `/settings/billing?upgrade=${plan}`;
+  };
+
   return (
     <div className="flex min-h-screen flex-col">
       {/* Header */}
@@ -93,8 +110,8 @@ export default function PricingPage() {
           <Logo />
           <nav className="flex items-center gap-4">
             <span className="text-sm font-medium text-primary">Pricing</span>
-            <Link href="/templates" className="text-sm hover:underline">
-              Templates
+            <Link href="/blueprints" className="text-sm hover:underline">
+              Blueprints
             </Link>
             <Link href="/docs" className="text-sm hover:underline">
               Docs
@@ -212,8 +229,12 @@ export default function PricingPage() {
                     variant={tier.highlighted ? "default" : "outline"}
                     size="lg"
                   >
-                    <Link href={tier.ctaLink}>
-                      {tier.cta}
+                    <Link href={getCtaLink(tier.name.toLowerCase())}>
+                      {isAuthenticated && tier.name === "Free"
+                        ? "Go to Dashboard"
+                        : isAuthenticated
+                          ? `Upgrade to ${tier.name}`
+                          : tier.cta}
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>
@@ -381,14 +402,16 @@ export default function PricingPage() {
               size="lg"
               className="bg-white text-purple-600 hover:bg-white/90"
             >
-              <Link href="/auth/signin">Get Started Free</Link>
+              <Link href={isAuthenticated ? "/dashboard" : "/auth/signin"}>
+                {isAuthenticated ? "Go to Dashboard" : "Get Started Free"}
+              </Link>
             </Button>
             <Button
               asChild
               size="lg"
               className="border-2 border-white bg-transparent text-white hover:bg-white hover:text-purple-600"
             >
-              <Link href="/templates">Browse Templates</Link>
+              <Link href="/blueprints">Browse Blueprints</Link>
             </Button>
           </div>
         </div>

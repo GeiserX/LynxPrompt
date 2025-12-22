@@ -24,8 +24,8 @@ export default function HomePage() {
             <Link href="/pricing" className="text-sm hover:underline">
               Pricing
             </Link>
-            <Link href="/templates" className="text-sm hover:underline">
-              Templates
+            <Link href="/blueprints" className="text-sm hover:underline">
+              Blueprints
             </Link>
             <Link href="/docs" className="text-sm hover:underline">
               Docs
@@ -63,7 +63,7 @@ export default function HomePage() {
               </Link>
             </Button>
             <Button variant="outline" size="lg" asChild>
-              <Link href="/templates">Browse Templates</Link>
+              <Link href="/blueprints">Browse Blueprints</Link>
             </Button>
           </div>
         </div>

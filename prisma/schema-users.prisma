@@ -61,6 +61,14 @@ model User {
   skillLevel       String?   // novice, intermediate, senior
   profileCompleted Boolean   @default(false)  // Track if onboarding done
 
+  // Subscription & Billing (Stripe)
+  stripeCustomerId       String?   @unique // Stripe Customer ID
+  stripeSubscriptionId   String?   // Stripe Subscription ID
+  subscriptionPlan       SubscriptionPlan @default(FREE)
+  subscriptionStatus     String?   // active, canceled, past_due, unpaid, trialing
+  currentPeriodEnd       DateTime? // When current billing period ends
+  cancelAtPeriodEnd      Boolean   @default(false)
+
   // Relations
   accounts       Account[]
   sessions       Session[]
@@ -73,12 +81,20 @@ model User {
 
   @@index([email])
   @@index([role])
+  @@index([stripeCustomerId])
+  @@index([subscriptionPlan])
 }
 
 enum UserRole {
   USER
   ADMIN
   SUPERADMIN
+}
+
+enum SubscriptionPlan {
+  FREE
+  PRO
+  MAX
 }
 
 // ============================================================================
@@ -146,6 +162,7 @@ model UserTemplate {
   content     String       @db.Text   // ALWAYS stored with placeholders like {{AUTHOR_NAME}}
   variables   Json?                    // Default values for variables (NOT personal data)
   isPublic    Boolean      @default(false)
+  isOfficial  Boolean      @default(false)  // Official LynxPrompt templates
   
   // Statistics (denormalized for performance, updated via triggers/API)
   downloads    Int          @default(0)
