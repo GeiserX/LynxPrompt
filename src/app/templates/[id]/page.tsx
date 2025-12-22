@@ -16,6 +16,8 @@ import {
   Check,
   Eye,
   ExternalLink,
+  Lock,
+  ShoppingCart,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
@@ -53,7 +55,8 @@ interface TemplateData {
   id: string;
   name: string;
   description: string;
-  content: string;
+  content: string | null;
+  preview?: string;
   author: string;
   downloads: number;
   likes: number;
@@ -70,6 +73,10 @@ interface TemplateData {
   >;
   category?: string;
   difficulty?: string;
+  price?: number | null;
+  currency?: string;
+  isPaid?: boolean;
+  hasPurchased?: boolean;
 }
 
 export default function TemplateDetailPage() {
@@ -153,11 +160,49 @@ export default function TemplateDetailPage() {
     }
   };
 
+  const [purchasing, setPurchasing] = useState(false);
+
   const handleCopy = async () => {
-    if (template?.content) {
+    if (template?.content && template.hasPurchased !== false) {
       await navigator.clipboard.writeText(template.content);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }
+  };
+  
+  const handlePurchase = async () => {
+    if (!session?.user) {
+      router.push(`/auth/signin?callbackUrl=/templates/${params.id}`);
+      return;
+    }
+    
+    setPurchasing(true);
+    try {
+      // Extract real template ID (remove usr_ prefix)
+      const realTemplateId = (params.id as string).replace("usr_", "");
+      
+      const res = await fetch("/api/blueprints/purchase", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ templateId: realTemplateId }),
+      });
+      
+      const data = await res.json();
+      
+      if (data.url) {
+        // Redirect to Stripe Checkout
+        window.location.href = data.url;
+      } else if (data.alreadyOwned) {
+        // Already purchased - refresh to show content
+        window.location.reload();
+      } else {
+        alert(data.error || "Failed to start purchase");
+      }
+    } catch (error) {
+      console.error("Purchase error:", error);
+      alert("Failed to start purchase. Please try again.");
+    } finally {
+      setPurchasing(false);
     }
   };
 
@@ -208,6 +253,12 @@ export default function TemplateDetailPage() {
                         {tierLabels[template.tier]}
                       </span>
                     )}
+                    {/* Price badge */}
+                    {template.isPaid && (
+                      <span className="rounded-full bg-gradient-to-r from-purple-500 to-pink-500 px-3 py-1 text-sm font-semibold text-white">
+                        €{((template.price || 0) / 100).toFixed(0)}
+                      </span>
+                    )}
                   </div>
                   <p className="mt-2 text-muted-foreground">
                     by {template.author}
@@ -218,20 +269,37 @@ export default function TemplateDetailPage() {
                     )}
                   </p>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={handleCopy}>
-                    {copied ? (
-                      <Check className="mr-2 h-4 w-4" />
+                {/* Action buttons - different for paid/unpurchased */}
+                {template.isPaid && !template.hasPurchased ? (
+                  <Button 
+                    size="lg" 
+                    onClick={handlePurchase}
+                    disabled={purchasing}
+                    className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                  >
+                    {purchasing ? (
+                      <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                     ) : (
-                      <Copy className="mr-2 h-4 w-4" />
+                      <ShoppingCart className="mr-2 h-5 w-5" />
                     )}
-                    {copied ? "Copied!" : "Copy"}
+                    {purchasing ? "Processing..." : `Purchase for €${((template.price || 0) / 100).toFixed(0)}`}
                   </Button>
-                  <Button size="sm" onClick={() => setShowDownloadModal(true)}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Download
-                  </Button>
-                </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={handleCopy} disabled={!template.content}>
+                      {copied ? (
+                        <Check className="mr-2 h-4 w-4" />
+                      ) : (
+                        <Copy className="mr-2 h-4 w-4" />
+                      )}
+                      {copied ? "Copied!" : "Copy"}
+                    </Button>
+                    <Button size="sm" onClick={() => setShowDownloadModal(true)} disabled={!template.content}>
+                      <Download className="mr-2 h-4 w-4" />
+                      Download
+                    </Button>
+                  </div>
+                )}
               </div>
 
               <p className="mt-4 text-lg">{template.description}</p>
@@ -297,20 +365,60 @@ export default function TemplateDetailPage() {
             {/* Preview */}
             <div className="mb-8">
               <div className="mb-3 flex items-center justify-between">
-                <h2 className="font-semibold">Template Preview</h2>
+                <h2 className="font-semibold">
+                  {template.isPaid && !template.hasPurchased ? "Content Preview" : "Template Preview"}
+                </h2>
                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Eye className="h-3 w-3" />
-                  Read-only preview
+                  {template.isPaid && !template.hasPurchased ? (
+                    <>
+                      <Lock className="h-3 w-3" />
+                      Purchase to unlock full content
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="h-3 w-3" />
+                      Read-only preview
+                    </>
+                  )}
                 </span>
               </div>
-              <div className="rounded-xl border bg-muted/50 p-6">
-                <pre className="max-h-96 overflow-auto whitespace-pre-wrap text-sm">
-                  <code>{template.content}</code>
-                </pre>
-              </div>
+              {template.isPaid && !template.hasPurchased ? (
+                <div className="relative rounded-xl border bg-muted/50 p-6">
+                  {/* Blurred preview */}
+                  <pre className="max-h-64 overflow-hidden whitespace-pre-wrap text-sm opacity-50 blur-sm">
+                    <code>{template.preview}</code>
+                  </pre>
+                  {/* Overlay */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center rounded-xl bg-gradient-to-t from-background via-background/80 to-transparent">
+                    <Lock className="mb-3 h-8 w-8 text-muted-foreground" />
+                    <p className="mb-4 text-center text-muted-foreground">
+                      Full content is locked. Purchase to access.
+                    </p>
+                    <Button 
+                      onClick={handlePurchase}
+                      disabled={purchasing}
+                      className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                    >
+                      {purchasing ? (
+                        <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      ) : (
+                        <ShoppingCart className="mr-2 h-4 w-4" />
+                      )}
+                      {purchasing ? "Processing..." : `Purchase for €${((template.price || 0) / 100).toFixed(0)}`}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-xl border bg-muted/50 p-6">
+                  <pre className="max-h-96 overflow-auto whitespace-pre-wrap text-sm">
+                    <code>{template.content}</code>
+                  </pre>
+                </div>
+              )}
             </div>
 
-            {/* Actions */}
+            {/* Actions - only show full actions if purchased or free */}
+            {(!template.isPaid || template.hasPurchased) && (
             <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border bg-card p-6">
               <div className="flex items-center gap-4">
                 <Button
@@ -346,6 +454,7 @@ export default function TemplateDetailPage() {
                 <ExternalLink className="h-4 w-4" />
               </Link>
             </div>
+            )}
           </div>
         </div>
       </main>
@@ -370,13 +479,13 @@ export default function TemplateDetailPage() {
         </div>
       </footer>
 
-      {/* Download Modal */}
-      {template && (
+      {/* Download Modal - only if content is available (purchased or free) */}
+      {template && template.content && (
         <TemplateDownloadModal
           isOpen={showDownloadModal}
           onClose={() => setShowDownloadModal(false)}
           template={{
-            id: template.id, // Include ID for download tracking
+            id: template.id,
             name: template.name,
             description: template.description,
             content: template.content,
