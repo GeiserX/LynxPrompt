@@ -559,7 +559,7 @@ export default function ShareTemplatePage() {
                           onClick={() => setSensitiveWarningDismissed(true)}
                           className="border-yellow-400 text-yellow-700 hover:bg-yellow-100 dark:border-yellow-600 dark:text-yellow-300"
                         >
-                          I've reviewed this, proceed anyway
+                          I&apos;ve reviewed this, proceed anyway
                         </Button>
                         <span className="text-xs text-yellow-600 dark:text-yellow-400">
                           or edit your content to remove sensitive data

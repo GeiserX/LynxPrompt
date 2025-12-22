@@ -15,7 +15,6 @@ import {
   Heart,
   TrendingUp,
   Clock,
-  ExternalLink,
   Eye,
   Github,
   Mail,
