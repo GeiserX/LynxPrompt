@@ -82,9 +82,11 @@ function BlueprintsContent() {
   const { status } = useSession();
 
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
+  const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
   const [sortParam, setSortParam] = useState<SortOption>(
     (searchParams.get("sort") as SortOption) || "popular"
   );
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [showAllPlatforms, setShowAllPlatforms] = useState(false);
   const [platformSearch, setPlatformSearch] = useState("");
@@ -93,6 +95,14 @@ function BlueprintsContent() {
     { id: string; label: string; count: number }[]
   >([]);
   const [loading, setLoading] = useState(true);
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Filter platforms based on search
   const filteredPlatforms = ALL_PLATFORMS.filter((p) =>
@@ -109,7 +119,8 @@ function BlueprintsContent() {
       try {
         const params = new URLSearchParams();
         if (sortParam) params.set("sort", sortParam);
-        if (searchQuery) params.set("q", searchQuery);
+        if (debouncedSearch) params.set("q", debouncedSearch);
+        if (selectedCategory && selectedCategory !== "all") params.set("category", selectedCategory);
 
         const res = await fetch(`/api/templates?${params.toString()}`);
         if (res.ok) {
@@ -125,7 +136,7 @@ function BlueprintsContent() {
     };
 
     fetchData();
-  }, [sortParam, searchQuery]);
+  }, [sortParam, debouncedSearch, selectedCategory]);
 
   // Update URL when search/sort changes
   const updateURL = (newSort?: SortOption, newSearch?: string) => {
@@ -134,11 +145,6 @@ function BlueprintsContent() {
     if (newSearch !== undefined ? newSearch : searchQuery)
       params.set("q", newSearch !== undefined ? newSearch : searchQuery);
     router.push(`/blueprints?${params.toString()}`);
-  };
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateURL(undefined, searchQuery);
   };
 
   const handleSortChange = (newSort: SortOption) => {
@@ -199,35 +205,27 @@ function BlueprintsContent() {
               Find the perfect setup for any workflow.
             </p>
 
-            {/* Search */}
-            <form onSubmit={handleSearch} className="mt-8 flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search blueprints..."
-                  className="h-11 w-full rounded-lg border bg-background pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    aria-label="Clear search"
-                    onClick={() => {
-                      setSearchQuery("");
-                      updateURL(undefined, "");
-                    }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-              <Button type="submit" size="lg">
-                Search
-              </Button>
-            </form>
+            {/* Search - auto-searches as you type */}
+            <div className="relative mx-auto mt-8 max-w-xl">
+              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search blueprints..."
+                className="h-12 w-full rounded-full border bg-background pl-12 pr-12 text-base focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  aria-label="Clear search"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </section>
@@ -245,8 +243,9 @@ function BlueprintsContent() {
                   {categories.map((cat) => (
                     <button
                       key={cat.id}
+                      onClick={() => setSelectedCategory(cat.id)}
                       className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted ${
-                        cat.id === "all" ? "bg-muted font-medium" : ""
+                        selectedCategory === cat.id ? "bg-muted font-medium" : ""
                       }`}
                     >
                       <span>{cat.label}</span>
@@ -397,42 +396,43 @@ function BlueprintsContent() {
                       key={blueprint.id}
                       className={`group flex flex-col rounded-xl border transition-shadow hover:shadow-lg ${
                         isPaid 
-                          ? "border-purple-200 bg-gradient-to-br from-purple-50/50 to-pink-50/30 dark:border-purple-900/30 dark:from-purple-950/20 dark:to-pink-950/10" 
+                          ? "border-purple-200/50 bg-gradient-to-br from-purple-50/30 to-pink-50/20 dark:border-purple-800/30 dark:from-purple-950/10 dark:to-pink-950/5" 
                           : "bg-card"
                       }`}
                     >
                       <div className="flex-1 p-5">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-semibold group-hover:text-primary">
-                                {blueprint.name}
-                              </h3>
-                              {blueprint.tier && (
-                                <span
-                                  className={`rounded px-1.5 py-0.5 text-xs font-medium ${tierColors[blueprint.tier] || ""}`}
-                                >
-                                  {tierLabels[blueprint.tier]}
-                                </span>
-                              )}
-                            </div>
-                            <p className="mt-0.5 text-sm text-muted-foreground">
-                              by {blueprint.author}
-                              {blueprint.isOfficial && (
-                                <span className="ml-2 rounded bg-primary/10 px-1.5 py-0.5 text-xs text-primary">
-                                  Official
-                                </span>
-                              )}
-                            </p>
-                          </div>
+                        {/* Header: Name + Price */}
+                        <div className="flex items-start justify-between gap-3">
+                          <h3 className="font-semibold leading-tight group-hover:text-primary">
+                            {blueprint.name}
+                          </h3>
                           {/* Price badge */}
                           <div className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${
                             isPaid 
                               ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white" 
-                              : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                              : "border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-400"
                           }`}>
                             {formattedPrice}
                           </div>
+                        </div>
+                        
+                        {/* Author + Badges row */}
+                        <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                          <span className="text-sm text-muted-foreground">
+                            by {blueprint.author}
+                          </span>
+                          {blueprint.isOfficial && (
+                            <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
+                              Official
+                            </span>
+                          )}
+                          {blueprint.tier && (
+                            <span
+                              className={`rounded px-1.5 py-0.5 text-xs font-medium ${tierColors[blueprint.tier] || ""}`}
+                            >
+                              {tierLabels[blueprint.tier]}
+                            </span>
+                          )}
                         </div>
 
                         <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">

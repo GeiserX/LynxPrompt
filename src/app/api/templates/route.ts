@@ -105,9 +105,9 @@ export async function GET(request: NextRequest) {
       where: { isPublic: true },
     });
 
-    // Format response
+    // Format response - prefix IDs for the detail page to work
     const formattedTemplates = templates.map((t) => ({
-      id: t.id,
+      id: `usr_${t.id}`, // Prefix with usr_ for user templates
       name: t.name,
       description: t.description || "",
       author: t.user?.name || "Anonymous",
