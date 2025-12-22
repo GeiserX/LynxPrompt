@@ -160,3 +160,4 @@ function sanitizeString(
   // Remove any potential XSS/injection
   return str.replace(/[<>'"]/g, "").slice(0, maxLen);
 }
+
