@@ -63,7 +63,7 @@ interface Blueprint {
 export default function BlueprintsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
 
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const [sortParam, setSortParam] = useState<SortOption>(
@@ -516,3 +516,4 @@ export default function BlueprintsPage() {
     </div>
   );
 }
+

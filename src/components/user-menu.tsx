@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import {
   User,
   Settings,
-  Shield,
   LogOut,
   ChevronDown,
   CreditCard,

@@ -4,15 +4,11 @@ import {
   Sparkles,
   BookOpen,
   Wand2,
-  Download,
   Share2,
   DollarSign,
-  Heart,
-  Settings,
   HelpCircle,
   ArrowRight,
   FileCode,
-  Users,
   Zap,
 } from "lucide-react";
 import { Logo } from "@/components/logo";

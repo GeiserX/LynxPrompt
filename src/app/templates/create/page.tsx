@@ -66,7 +66,7 @@ function determineTier(content: string): {
 }
 
 export default function ShareTemplatePage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
