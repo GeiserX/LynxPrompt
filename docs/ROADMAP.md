@@ -441,3 +441,4 @@ POST   /api/generate               - Generate config files from wizard data
 - DMCA/copyright complaints process
 - Bank transfer payouts (via Stripe Connect)
 - Crypto payments (Coinbase Commerce / NOWPayments)
+- MULTILANG (only when future, not now, otherwise it's a mess)
