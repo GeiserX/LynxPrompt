@@ -110,7 +110,7 @@ Per EU Consumer Rights Directive, digital content can waive 14-day withdrawal IF
 #### Product/UI Changes for Legal (Pending Implementation)
 
 - [ ] Signup: "I agree to Terms + Privacy" checkbox
-- [ ] Checkout: EU digital content waiver checkbox
+- [x] Checkout: EU digital content waiver checkbox
 - [ ] Log: user ID, timestamp, Terms version hash for consent
 
 ---

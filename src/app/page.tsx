@@ -93,13 +93,14 @@ export default function HomePage() {
           />
         </div>
 
-        {/* Memory Projects Note */}
-        <div className="mt-8 max-w-2xl rounded-lg border bg-muted/30 p-4 text-center">
-          <p className="text-sm text-muted-foreground">
-            <strong className="text-foreground">Works alongside memory projects</strong> — LynxPrompt
-            bootstraps new codebases with your AI rules, reducing the need for LLM memory systems
-            to re-learn your preferences on every project.
-          </p>
+        {/* Memory Projects Compatibility */}
+        <div className="mt-12 flex items-center gap-4 text-sm text-muted-foreground">
+          <div className="h-px flex-1 bg-border" />
+          <span className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            Pairs with memory systems — bootstrap new projects with your AI rules pre-loaded
+          </span>
+          <div className="h-px flex-1 bg-border" />
         </div>
       </section>
 
@@ -250,75 +251,61 @@ function FeatureCard({
   );
 }
 
-// IDE Logos with actual images - Row 1
+// IDE Logos - Row 1 (text-based for reliability)
 function LogoMarqueeRow() {
   const logos = [
-    { name: "Cursor", url: "https://cursor.sh", img: "https://agents.md/logos/cursor.svg" },
-    { name: "Claude Code", url: "https://claude.ai", img: "https://agents.md/logos/anthropic.svg" },
-    { name: "GitHub Copilot", url: "https://github.com/features/copilot", img: "https://agents.md/logos/github-copilot.svg" },
-    { name: "Windsurf", url: "https://codeium.com/windsurf", img: "https://agents.md/logos/windsurf.svg" },
-    { name: "VS Code", url: "https://code.visualstudio.com", img: "https://agents.md/logos/vscode.svg" },
-    { name: "Aider", url: "https://aider.chat", img: "https://agents.md/logos/aider.svg" },
-    { name: "RooCode", url: "https://roo.dev", img: "https://agents.md/logos/roocode.svg" },
-    { name: "Codex", url: "https://openai.com/codex", img: "https://agents.md/logos/openai.svg" },
+    { name: "Cursor", color: "bg-blue-500" },
+    { name: "Claude Code", color: "bg-orange-500" },
+    { name: "GitHub Copilot", color: "bg-gray-700" },
+    { name: "Windsurf", color: "bg-teal-500" },
+    { name: "VS Code", color: "bg-blue-600" },
+    { name: "Aider", color: "bg-green-500" },
+    { name: "RooCode", color: "bg-purple-500" },
+    { name: "Codex", color: "bg-emerald-600" },
   ];
   
   return (
-    <div className="flex shrink-0 items-center gap-8">
+    <div className="flex shrink-0 items-center gap-6">
       {logos.map((logo, i) => (
-        <a
+        <div
           key={`${logo.name}-${i}`}
-          href={logo.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex shrink-0 items-center gap-3 rounded-lg px-4 py-2 transition-colors hover:bg-muted"
-          title={logo.name}
+          className="flex shrink-0 items-center gap-2.5 rounded-lg border bg-card px-4 py-2"
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img 
-            src={logo.img} 
-            alt={logo.name}
-            className="h-8 w-8 object-contain"
-          />
-          <span className="text-sm font-medium text-foreground">{logo.name}</span>
-        </a>
+          <div className={`h-6 w-6 rounded ${logo.color} flex items-center justify-center text-xs font-bold text-white`}>
+            {logo.name.charAt(0)}
+          </div>
+          <span className="text-sm font-medium">{logo.name}</span>
+        </div>
       ))}
     </div>
   );
 }
 
-// IDE Logos with actual images - Row 2
+// IDE Logos - Row 2 (text-based for reliability)
 function LogoMarqueeRow2() {
   const logos = [
-    { name: "Zed", url: "https://zed.dev", img: "https://agents.md/logos/zed.svg" },
-    { name: "JetBrains", url: "https://www.jetbrains.com", img: "https://agents.md/logos/jetbrains.svg" },
-    { name: "Gemini CLI", url: "https://ai.google.dev/gemini-api/docs/agentic", img: "https://agents.md/logos/gemini.svg" },
-    { name: "Devin", url: "https://devin.ai", img: "https://agents.md/logos/devin.svg" },
-    { name: "Continue", url: "https://continue.dev", img: "https://agents.md/logos/continue.svg" },
-    { name: "Factory", url: "https://factory.ai", img: "https://agents.md/logos/factory.svg" },
-    { name: "Amp", url: "https://amp.dev", img: "https://agents.md/logos/amp.svg" },
-    { name: "Warp", url: "https://warp.dev", img: "https://agents.md/logos/warp.svg" },
+    { name: "Zed", color: "bg-amber-500" },
+    { name: "JetBrains", color: "bg-pink-600" },
+    { name: "Gemini", color: "bg-blue-400" },
+    { name: "Devin", color: "bg-indigo-500" },
+    { name: "Continue", color: "bg-cyan-500" },
+    { name: "Factory", color: "bg-violet-500" },
+    { name: "Amp", color: "bg-rose-500" },
+    { name: "Warp", color: "bg-slate-600" },
   ];
   
   return (
-    <div className="flex shrink-0 items-center gap-8">
+    <div className="flex shrink-0 items-center gap-6">
       {logos.map((logo, i) => (
-        <a
+        <div
           key={`${logo.name}-${i}`}
-          href={logo.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex shrink-0 items-center gap-3 rounded-lg px-4 py-2 transition-colors hover:bg-muted"
-          title={logo.name}
+          className="flex shrink-0 items-center gap-2.5 rounded-lg border bg-card px-4 py-2"
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img 
-            src={logo.img} 
-            alt={logo.name}
-            className="h-8 w-8 object-contain"
-          />
-          <span className="text-sm font-medium text-foreground">{logo.name}</span>
-        </a>
+          <div className={`h-6 w-6 rounded ${logo.color} flex items-center justify-center text-xs font-bold text-white`}>
+            {logo.name.charAt(0)}
+          </div>
+          <span className="text-sm font-medium">{logo.name}</span>
+        </div>
       ))}
     </div>
   );

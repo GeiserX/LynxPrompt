@@ -58,6 +58,8 @@ interface Blueprint {
   tags: string[];
   tier?: string;
   isOfficial?: boolean;
+  price?: number | null; // Price in cents, null = free
+  currency?: string;
 }
 
 export default function BlueprintsPage() {
@@ -384,77 +386,101 @@ function BlueprintsContent() {
               </div>
             ) : (
               <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                {blueprints.map((blueprint) => (
-                  <div
-                    key={blueprint.id}
-                    className="group flex flex-col rounded-xl border bg-card transition-shadow hover:shadow-lg"
-                  >
-                    <div className="flex-1 p-5">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-semibold group-hover:text-primary">
-                              {blueprint.name}
-                            </h3>
-                            {blueprint.tier && (
-                              <span
-                                className={`rounded px-1.5 py-0.5 text-xs font-medium ${tierColors[blueprint.tier] || ""}`}
-                              >
-                                {tierLabels[blueprint.tier]}
-                              </span>
-                            )}
+                {blueprints.map((blueprint) => {
+                  const isPaid = blueprint.price && blueprint.price > 0;
+                  const formattedPrice = isPaid 
+                    ? `€${(blueprint.price! / 100).toFixed(0)}` 
+                    : "Free";
+                  
+                  return (
+                    <div
+                      key={blueprint.id}
+                      className={`group flex flex-col rounded-xl border transition-shadow hover:shadow-lg ${
+                        isPaid 
+                          ? "border-purple-200 bg-gradient-to-br from-purple-50/50 to-pink-50/30 dark:border-purple-900/30 dark:from-purple-950/20 dark:to-pink-950/10" 
+                          : "bg-card"
+                      }`}
+                    >
+                      <div className="flex-1 p-5">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-semibold group-hover:text-primary">
+                                {blueprint.name}
+                              </h3>
+                              {blueprint.tier && (
+                                <span
+                                  className={`rounded px-1.5 py-0.5 text-xs font-medium ${tierColors[blueprint.tier] || ""}`}
+                                >
+                                  {tierLabels[blueprint.tier]}
+                                </span>
+                              )}
+                            </div>
+                            <p className="mt-0.5 text-sm text-muted-foreground">
+                              by {blueprint.author}
+                              {blueprint.isOfficial && (
+                                <span className="ml-2 rounded bg-primary/10 px-1.5 py-0.5 text-xs text-primary">
+                                  Official
+                                </span>
+                              )}
+                            </p>
                           </div>
-                          <p className="mt-0.5 text-sm text-muted-foreground">
-                            by {blueprint.author}
-                            {blueprint.isOfficial && (
-                              <span className="ml-2 rounded bg-primary/10 px-1.5 py-0.5 text-xs text-primary">
-                                Official
-                              </span>
-                            )}
-                          </p>
+                          {/* Price badge */}
+                          <div className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                            isPaid 
+                              ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white" 
+                              : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                          }`}>
+                            {formattedPrice}
+                          </div>
+                        </div>
+
+                        <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">
+                          {blueprint.description}
+                        </p>
+
+                        <div className="mt-4 flex flex-wrap gap-1.5">
+                          {blueprint.tags.slice(0, 4).map((tag) => (
+                            <span
+                              key={tag}
+                              className="rounded-full bg-muted px-2 py-0.5 text-xs"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                          {blueprint.tags.length > 4 && (
+                            <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                              +{blueprint.tags.length - 4}
+                            </span>
+                          )}
                         </div>
                       </div>
 
-                      <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">
-                        {blueprint.description}
-                      </p>
-
-                      <div className="mt-4 flex flex-wrap gap-1.5">
-                        {blueprint.tags.slice(0, 4).map((tag) => (
-                          <span
-                            key={tag}
-                            className="rounded-full bg-muted px-2 py-0.5 text-xs"
-                          >
-                            {tag}
+                      <div className="flex items-center justify-between border-t px-5 py-3">
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Download className="h-4 w-4" />
+                            {blueprint.downloads.toLocaleString()}
                           </span>
-                        ))}
-                        {blueprint.tags.length > 4 && (
-                          <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                            +{blueprint.tags.length - 4}
+                          <span className="flex items-center gap-1">
+                            <Heart className="h-4 w-4" />
+                            {blueprint.likes}
                           </span>
-                        )}
+                        </div>
+                        <Button 
+                          variant={isPaid ? "default" : "ghost"} 
+                          size="sm" 
+                          asChild
+                          className={isPaid ? "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600" : ""}
+                        >
+                          <Link href={`/blueprints/${blueprint.id}`}>
+                            {isPaid ? "Purchase" : "Use Blueprint"}
+                          </Link>
+                        </Button>
                       </div>
                     </div>
-
-                    <div className="flex items-center justify-between border-t px-5 py-3">
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Download className="h-4 w-4" />
-                          {blueprint.downloads.toLocaleString()}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Heart className="h-4 w-4" />
-                          {blueprint.likes}
-                        </span>
-                      </div>
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/blueprints/${blueprint.id}`}>
-                          Use Blueprint
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
