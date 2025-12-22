@@ -12,6 +12,7 @@ const TIERS = [
     description: "Perfect for getting started with AI IDE configurations",
     icon: Zap,
     highlighted: false,
+    iconStyle: "default",
     features: [
       { text: "Basic template wizards", included: true },
       { text: "Download ZIP configs", included: true },
@@ -32,6 +33,7 @@ const TIERS = [
     description: "For developers who want more powerful configuration options",
     icon: Star,
     highlighted: true,
+    iconStyle: "primary",
     badge: "Most Popular",
     features: [
       { text: "Everything in Free", included: true },
@@ -53,6 +55,7 @@ const TIERS = [
       "Full access to everything, including all paid community templates",
     icon: Crown,
     highlighted: false,
+    iconStyle: "accent",
     features: [
       { text: "Everything in Pro", included: true },
       { text: "Advanced repo wizards", included: true },
@@ -144,17 +147,27 @@ export default function PricingPage() {
                 <div className="p-6">
                   <div className="flex items-center gap-3">
                     <div
-                      className={`rounded-lg p-2 ${
-                        tier.highlighted ? "bg-primary/10" : "bg-muted"
+                      className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                        tier.iconStyle === "accent"
+                          ? "bg-gradient-to-br from-purple-500 to-pink-500"
+                          : tier.iconStyle === "primary"
+                            ? "bg-primary"
+                            : "bg-muted"
                       }`}
                     >
                       <tier.icon
                         className={`h-5 w-5 ${
-                          tier.highlighted ? "text-primary" : ""
+                          tier.iconStyle === "accent" || tier.iconStyle === "primary"
+                            ? "text-white"
+                            : "text-foreground"
                         }`}
                       />
                     </div>
-                    <h3 className="text-xl font-semibold">{tier.name}</h3>
+                    <h3 className={`text-xl font-semibold ${
+                      tier.iconStyle === "accent" 
+                        ? "bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent"
+                        : ""
+                    }`}>{tier.name}</h3>
                   </div>
 
                   <div className="mt-4">
@@ -225,8 +238,8 @@ export default function PricingPage() {
                   <tr className="border-b">
                     <th className="pb-4 text-left font-medium">Feature</th>
                     <th className="pb-4 text-center font-medium">Free</th>
-                    <th className="pb-4 text-center font-medium">Pro</th>
-                    <th className="pb-4 text-center font-medium">Max</th>
+                    <th className="pb-4 text-center font-medium text-primary">Pro</th>
+                    <th className="pb-4 text-center font-medium bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">Max</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -373,8 +386,7 @@ export default function PricingPage() {
             <Button
               asChild
               size="lg"
-              variant="outline"
-              className="border-white text-white hover:bg-white/20"
+              className="border-2 border-white bg-transparent text-white hover:bg-white hover:text-purple-600"
             >
               <Link href="/templates">Browse Templates</Link>
             </Button>
