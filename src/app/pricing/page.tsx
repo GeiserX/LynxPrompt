@@ -152,7 +152,7 @@ export default function PricingPage() {
                           ? "bg-gradient-to-br from-purple-500 to-pink-500"
                           : tier.iconStyle === "primary"
                             ? "bg-primary"
-                            : "bg-muted"
+                            : "border-2 border-muted-foreground/30 bg-muted"
                       }`}
                     >
                       <tier.icon

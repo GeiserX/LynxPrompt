@@ -234,6 +234,13 @@ Enable users to build custom configurations by cherry-picking sections from mult
 4. User selects: Deployment → Template A, Commit Rules → Template B, PR Rules → Template C
 5. LynxPrompt generates a merged configuration file with all selected sections
 
+**Implementation approach (no AI required):**
+- Templates use standardized markdown headers (e.g., `## Deployment`, `## Commit Rules`, `## PR Guidelines`)
+- Parser splits templates into sections based on H2 headers
+- Users tag their templates with section categories during upload
+- System merges selected sections programmatically, handling conflicts via user selection
+- Similar to how AGENTS.md works: structured markdown that any tool can parse
+
 #### Template Management
 
 - [ ] Template versioning (keep history of changes)
@@ -410,7 +417,7 @@ POST   /api/generate               - Generate config files from wizard data
 
 - [ ] Redis for caching/sessions
 - [ ] S3/R2 for file storage (template assets, user uploads)
-- [ ] Sentry error tracking
+- [ ] GlitchTip error tracking (self-hosted, GDPR-friendly alternative to Sentry)
 - [ ] Status page (Uptime Kuma) at status.lynxprompt.com
 - [ ] CDN for static assets
 - [ ] Database backups automation
@@ -423,6 +430,8 @@ POST   /api/generate               - Generate config files from wizard data
 - [x] Umami (self-hosted EU, cookieless analytics)
 - [x] Docker deployment with GitOps (Portainer)
 - [x] Healthchecks with start_period for stability
+
+> **Note:** GlitchTip is preferred over Sentry for self-hosted error tracking. It integrates well with our existing ClickHouse setup and keeps all data in EU.
 
 ---
 

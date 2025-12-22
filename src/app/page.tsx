@@ -106,6 +106,35 @@ export default function HomePage() {
           </div>
 
           <PlatformCarousel />
+
+          {/* Compact compatibility grid */}
+          <div className="mx-auto mt-12 max-w-3xl">
+            <p className="mb-6 text-center text-sm text-muted-foreground">
+              Compatible with{" "}
+              <a
+                href="https://agents.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                AGENTS.md
+              </a>{" "}
+              — the open standard used by 60k+ projects
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <CompatBadge name="Cursor" />
+              <CompatBadge name="Claude" />
+              <CompatBadge name="Copilot" />
+              <CompatBadge name="Windsurf" />
+              <CompatBadge name="VS Code" />
+              <CompatBadge name="Aider" />
+              <CompatBadge name="Continue" />
+              <CompatBadge name="Gemini" />
+              <CompatBadge name="Zed" />
+              <CompatBadge name="JetBrains" />
+              <span className="text-sm text-muted-foreground">+more</span>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -203,5 +232,13 @@ function FeatureCard({
       <h3 className="font-semibold">{title}</h3>
       <p className="text-sm text-muted-foreground">{description}</p>
     </div>
+  );
+}
+
+function CompatBadge({ name }: { name: string }) {
+  return (
+    <span className="rounded-full border bg-background px-3 py-1 text-xs font-medium">
+      {name}
+    </span>
   );
 }
