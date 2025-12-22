@@ -368,12 +368,34 @@ Author C: 2,500 downloads (25% of total) → €1,750 payout
 - Stripe Checkout displays converted amount in user's card currency before payment
 - User's card is charged in their local currency (e.g., USD for US users)
 
-**Planned enhancement (UX improvement, not critical):**
-- [ ] **Approximate local prices on pricing page**: Detect user's locale via geo-IP or browser
+**Planned enhancement (UX improvement, not critical — far future):**
+- [ ] **Approximate local prices on pricing page**: Detect user's locale via browser
   - Show: "€20/month (~$22 USD)" for US visitors
   - Sets expectations before checkout without committing to a second price point
-  - Update approximations periodically (monthly or on significant rate changes)
-  - Use a simple currency API or static approximations
+
+**Implementation approach (Option A - static rates + browser locale):**
+```typescript
+// lib/currency.ts
+const EUR_RATES: Record<string, { rate: number; symbol: string }> = {
+  USD: { rate: 1.10, symbol: '$' },
+  GBP: { rate: 0.85, symbol: '£' },
+  CAD: { rate: 1.50, symbol: 'CA$' },
+  AUD: { rate: 1.65, symbol: 'A$' },
+};
+
+const LOCALE_TO_CURRENCY: Record<string, string> = {
+  'en-US': 'USD', 'en-GB': 'GBP', 'en-CA': 'CAD', 'en-AU': 'AUD',
+};
+
+export function getApproxPrice(eurAmount: number): string | null {
+  const currency = LOCALE_TO_CURRENCY[navigator.language];
+  if (!currency) return null;
+  const { rate, symbol } = EUR_RATES[currency];
+  return `~${symbol}${Math.round(eurAmount * rate)}`;
+}
+```
+- No API calls, no costs, privacy-friendly
+- Update rates manually once a month (approximations don't need precision)
 
 **Not planned (avoided complexity):**
 - ❌ Dual USD/EUR pricing (requires two Stripe products, rate sync, potential confusion)
