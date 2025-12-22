@@ -43,7 +43,13 @@ export async function POST(request: NextRequest) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        await handleCheckoutCompleted(session);
+        // Handle blueprint purchases (one-time payments)
+        if (session.metadata?.type === "blueprint_purchase") {
+          await handleBlueprintPurchase(session);
+        } else {
+          // Handle subscription checkout
+          await handleCheckoutCompleted(session);
+        }
         break;
       }
 
@@ -198,6 +204,54 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
       data: { subscriptionStatus: "active" },
     });
     console.log(`Payment succeeded for user ${user.id}`);
+  }
+}
+
+async function handleBlueprintPurchase(session: Stripe.Checkout.Session) {
+  const { templateId, userId, authorId, price, currency } = session.metadata || {};
+
+  if (!templateId || !userId || !price) {
+    console.error("Missing metadata in blueprint purchase session");
+    return;
+  }
+
+  const priceInCents = parseInt(price, 10);
+  
+  // Revenue split: 70% author, 30% platform
+  const authorShare = Math.floor(priceInCents * 0.7);
+  const platformFee = priceInCents - authorShare;
+
+  try {
+    // Create purchase record
+    await prismaUsers.blueprintPurchase.create({
+      data: {
+        userId,
+        templateId,
+        amount: priceInCents,
+        currency: currency || "EUR",
+        stripePaymentId: session.payment_intent as string,
+        authorShare,
+        platformFee,
+      },
+    });
+
+    // Update template revenue
+    await prismaUsers.userTemplate.update({
+      where: { id: templateId },
+      data: {
+        totalRevenue: { increment: priceInCents },
+        downloads: { increment: 1 },
+      },
+    });
+
+    console.log(`Blueprint purchase: ${templateId} by ${userId} for ${priceInCents} cents (author: ${authorShare}, platform: ${platformFee})`);
+  } catch (error) {
+    // Handle duplicate purchase (race condition)
+    if ((error as { code?: string }).code === "P2002") {
+      console.log(`Duplicate purchase attempt for ${templateId} by ${userId}`);
+    } else {
+      throw error;
+    }
   }
 }
 

@@ -78,6 +78,7 @@ model User {
   authenticators Authenticator[]
   favorites      TemplateFavorite[]
   downloads      TemplateDownload[]
+  purchases      BlueprintPurchase[]
 
   @@index([email])
   @@index([role])
@@ -168,6 +169,13 @@ model UserTemplate {
   downloads    Int          @default(0)
   favorites    Int          @default(0)
   
+  // Pricing (null = free, value in cents)
+  price        Int?         // Price in cents (e.g., 499 = €4.99). Null = free
+  currency     String       @default("EUR") // ISO currency code
+  
+  // Revenue tracking for authors (70% to author, 30% platform fee)
+  totalRevenue Int          @default(0)  // Total revenue in cents for this template
+  
   tier             TemplateTier @default(INTERMEDIATE)
   targetPlatform   String?
   compatibleWith   String[]
@@ -182,7 +190,8 @@ model UserTemplate {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  purchases BlueprintPurchase[]
 
   @@index([userId])
   @@index([type])
@@ -190,6 +199,36 @@ model UserTemplate {
   @@index([tier])
   @@index([downloads])
   @@index([favorites])
+  @@index([price])
+}
+
+// ============================================================================
+// BLUEPRINT PURCHASES - Track paid blueprint purchases
+// ============================================================================
+
+model BlueprintPurchase {
+  id            String   @id @default(cuid())
+  userId        String
+  templateId    String
+  
+  // Payment details
+  amount        Int      // Amount paid in cents
+  currency      String   // ISO currency code
+  stripePaymentId String? @unique // Stripe Payment Intent ID
+  
+  // Revenue split (stored for historical accuracy)
+  authorShare   Int      // 70% to author
+  platformFee   Int      // 30% platform fee
+  
+  createdAt     DateTime @default(now())
+  
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template UserTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, templateId]) // One purchase per user per template
+  @@index([userId])
+  @@index([templateId])
+  @@index([createdAt])
 }
 
 enum TemplateTier {
