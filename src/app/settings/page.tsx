@@ -126,7 +126,7 @@ function SettingsContent() {
   );
 
   // Profile state
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [_profile, setProfile] = useState<UserProfile | null>(null);
   const [displayName, setDisplayName] = useState("");
   const [persona, setPersona] = useState("");
   const [skillLevel, setSkillLevel] = useState("");
@@ -903,15 +903,11 @@ const PLAN_DETAILS = {
   },
 };
 
-function BillingSection({ setError, setSuccess }: BillingSectionProps) {
+function BillingSection({ setError, setSuccess: _setSuccess }: BillingSectionProps) {
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [upgrading, setUpgrading] = useState<string | null>(null);
   const [openingPortal, setOpeningPortal] = useState(false);
-
-  useEffect(() => {
-    fetchSubscription();
-  }, []);
 
   const fetchSubscription = async () => {
     try {
@@ -926,6 +922,11 @@ function BillingSection({ setError, setSuccess }: BillingSectionProps) {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchSubscription();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleUpgrade = async (plan: string) => {
     setUpgrading(plan);
@@ -1140,3 +1141,4 @@ function BillingSection({ setError, setSuccess }: BillingSectionProps) {
     </div>
   );
 }
+

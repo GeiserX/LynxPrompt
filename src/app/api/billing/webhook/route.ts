@@ -102,7 +102,7 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
   const customerId = subscription.customer as string;
 
   // Find user by customer ID or metadata
-  let user = await prismaUsers.user.findFirst({
+  const user = await prismaUsers.user.findFirst({
     where: userId ? { id: userId } : { stripeCustomerId: customerId },
   });
 
@@ -200,3 +200,4 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
     console.log(`Payment succeeded for user ${user.id}`);
   }
 }
+

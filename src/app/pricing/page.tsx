@@ -88,7 +88,7 @@ const COMPARISON_FEATURES = [
 ];
 
 export default function PricingPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const isAuthenticated = status === "authenticated";
 
   // Dynamic CTA links based on auth status
