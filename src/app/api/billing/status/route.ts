@@ -17,6 +17,7 @@ export async function GET() {
     const user = await prismaUsers.user.findUnique({
       where: { id: session.user.id },
       select: {
+        role: true,
         subscriptionPlan: true,
         subscriptionStatus: true,
         currentPeriodEnd: true,
@@ -33,13 +34,18 @@ export async function GET() {
       );
     }
 
+    // Admins and Superadmins get MAX tier for free
+    const isAdmin = user.role === "ADMIN" || user.role === "SUPERADMIN";
+    const effectivePlan = isAdmin ? "max" : user.subscriptionPlan.toLowerCase();
+
     return NextResponse.json({
-      plan: user.subscriptionPlan.toLowerCase(),
-      status: user.subscriptionStatus,
-      currentPeriodEnd: user.currentPeriodEnd,
-      cancelAtPeriodEnd: user.cancelAtPeriodEnd,
+      plan: effectivePlan,
+      status: isAdmin ? "active" : user.subscriptionStatus,
+      currentPeriodEnd: isAdmin ? null : user.currentPeriodEnd,
+      cancelAtPeriodEnd: isAdmin ? false : user.cancelAtPeriodEnd,
       hasStripeAccount: !!user.stripeCustomerId,
-      hasActiveSubscription: !!user.stripeSubscriptionId,
+      hasActiveSubscription: isAdmin || !!user.stripeSubscriptionId,
+      isAdmin, // Flag for UI to show "Admin" badge instead of plan
     });
   } catch (error) {
     console.error("Error fetching subscription status:", error);
@@ -49,4 +55,5 @@ export async function GET() {
     );
   }
 }
+
 

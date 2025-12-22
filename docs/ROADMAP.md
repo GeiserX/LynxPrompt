@@ -169,14 +169,23 @@ Per EU Consumer Rights Directive, digital content can waive 14-day withdrawal IF
 - [ ] Save wizard configurations as drafts
 - [ ] Import existing configs (upload `.cursorrules` to create template)
 
-#### Wizard Tiers (Feature Gating)
+#### Wizard Tiers (Feature Gating) ✅ IMPLEMENTED
 
 | Feature                                | Free | Pro | Max |
 | -------------------------------------- | ---- | --- | --- |
-| Basic templates                        | ✅   | ✅  | ✅  |
-| Intermediate repo wizards              | ❌   | ✅  | ✅  |
-| Advanced repo wizards                  | ❌   | ❌  | ✅  |
-| All community prompts (including paid) | ❌   | ❌  | ✅  |
+| Basic wizard steps                     | ✅   | ✅  | ✅  |
+| Intermediate wizard steps              | ❌   | ✅  | ✅  |
+| Advanced wizard steps                  | ❌   | ❌  | ✅  |
+| All community blueprints (including paid) | ❌   | ❌  | ✅  |
+
+**Wizard Step Tiers:**
+- **Basic** (Free): Project Info, Tech Stack, Platforms, Generate
+- **Intermediate** (Pro): + Repository, Release Strategy
+- **Advanced** (Max): + CI/CD, AI Rules, Feedback
+
+**Admin Privileges:**
+- ADMIN and SUPERADMIN roles automatically receive MAX tier (no payment required)
+- Displayed as "Admin" badge in billing section
 
 #### User Dashboard
 
@@ -356,9 +365,10 @@ Author C: 2,500 downloads (25% of total) → €1,750 payout
 - [x] Stripe webhook handlers for subscription lifecycle
 - [x] Stripe customer portal integration
 - [x] Billing settings page with plan display and upgrade options
+- [x] Admin/Superadmin get MAX tier automatically (no payment required)
+- [x] Wizard tier gating (Basic/Intermediate/Advanced steps)
 - [ ] Add subscription status to user session (read from DB, display in UI)
 - [ ] Create Stripe products/prices in dashboard and configure env vars
-- [ ] Gate wizard features by subscription tier
 - [ ] **Checkout consent checkbox** (EU digital content waiver)
 
 ### Phase 2: Template Marketplace
