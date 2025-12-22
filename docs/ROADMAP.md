@@ -582,6 +582,42 @@ To go live with Stripe payments:
 
 ---
 
+## 🔗 IDE Deep Linking (Research)
+
+Enable "click to install" functionality where downloading a blueprint automatically opens it in the user's IDE.
+
+### Supported URL Schemes
+
+| IDE | URL Scheme | Example |
+|-----|------------|---------|
+| **VS Code** | `vscode://file/{path}` | `vscode://file/c:/project/.cursorrules` |
+| **Cursor** | `cursor://file/{path}` | `cursor://file//path/to/file:line` |
+| **JetBrains** | `jetbrains://<ide>/navigate/reference?project=X&path=Y:line` | `jetbrains://idea/navigate/...` |
+| **Windsurf** | `windsurf:///{path}:line` | `windsurf:///path/to/file.txt:10` |
+
+### Implementation Plan
+
+- [ ] **Detect user's IDE** - Ask during profile setup or auto-detect
+- [ ] **Generate deep link URLs** - Based on selected platform
+- [ ] **"Open in IDE" button** - Next to download button on blueprint pages
+- [ ] **Browser permission** - User must allow opening external apps
+- [ ] **Fallback** - Regular download if deep link fails
+
+### Limitations
+
+- User must have IDE installed and registered as URL handler
+- Path must be known (user selects project folder or we use temp location)
+- Cross-platform complexity (paths differ on Windows/Mac/Linux)
+- Security: Users must trust the link source
+
+### Alternative: CLI Tool
+
+```bash
+npx lynxprompt init  # Download and place config in current directory
+```
+
+---
+
 ## 💡 Future Ideas
 
 - VS Code extension to sync templates
