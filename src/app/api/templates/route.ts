@@ -105,20 +105,44 @@ export async function GET(request: NextRequest) {
       where: { isPublic: true },
     });
 
+    // Check if user is MAX subscriber for discount
+    let isMaxUser = false;
+    const session = await getServerSession(authOptions);
+    if (session?.user?.id) {
+      const user = await prismaUsers.user.findUnique({
+        where: { id: session.user.id },
+        select: { subscriptionPlan: true, role: true },
+      });
+      isMaxUser = user?.subscriptionPlan === "MAX" || 
+                  user?.role === "ADMIN" || 
+                  user?.role === "SUPERADMIN";
+    }
+
+    // MAX subscribers get 10% discount
+    const MAX_DISCOUNT_PERCENT = 10;
+
     // Format response - prefix IDs for the detail page to work
-    const formattedTemplates = templates.map((t) => ({
-      id: `usr_${t.id}`, // Prefix with usr_ for user templates
-      name: t.name,
-      description: t.description || "",
-      author: t.user?.name || "Anonymous",
-      downloads: t.downloads,
-      likes: t.favorites,
-      tags: t.tags || [],
-      tier: t.tier,
-      isOfficial: t.isOfficial || false,
-      price: t.price,
-      currency: t.currency || "EUR",
-    }));
+    const formattedTemplates = templates.map((t) => {
+      const discountedPrice = isMaxUser && t.price 
+        ? Math.round(t.price * (1 - MAX_DISCOUNT_PERCENT / 100))
+        : null;
+      
+      return {
+        id: `usr_${t.id}`, // Prefix with usr_ for user templates
+        name: t.name,
+        description: t.description || "",
+        author: t.user?.name || "Anonymous",
+        downloads: t.downloads,
+        likes: t.favorites,
+        tags: t.tags || [],
+        tier: t.tier,
+        isOfficial: t.isOfficial || false,
+        price: t.price,
+        discountedPrice,
+        isMaxUser,
+        currency: t.currency || "EUR",
+      };
+    });
 
     const categories = [
       { id: "all", label: "All Templates", count: totalCount },

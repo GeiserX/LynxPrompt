@@ -17,7 +17,7 @@ This document tracks planned features, improvements, and business decisions for 
 LynxPrompt operates as a **hybrid platform**:
 
 1. **Platform/Intermediary**: Buyers purchase from Sellers, LynxPrompt facilitates
-2. **Subscription Access**: Max subscribers get unlimited access to all prompts
+2. **Max Subscriber Discount**: Max subscribers get 10% off all paid blueprints
 
 #### Key Legal Structure
 
@@ -242,7 +242,7 @@ Enable users to build custom configurations by cherry-picking sections from mult
 - [ ] **Section preview**: Preview each section before adding to final config
 - [ ] **Section compatibility**: Detect and warn about conflicting sections
 - [ ] **Favorite sections**: Save preferred sections for quick reuse
-- [ ] **Section attribution**: Track which sections came from which authors (for revenue pool)
+- [ ] **Section attribution**: Track which sections came from which authors
 - [ ] **Custom section ordering**: Drag-and-drop to arrange sections in final output
 - [ ] **Section categories**: Standardized taxonomy (Deployment, Git Workflow, Code Style, Testing, Security, Documentation, AI Behavior, etc.)
 
@@ -302,7 +302,7 @@ Enable users to build custom configurations by cherry-picking sections from mult
 
 - **Free users**: Access to basic templates only
 - **Pro users**: Access to intermediate wizard features for repos
-- **Max users**: Full access to advanced wizards AND all paid community prompts
+- **Max users**: Full access to advanced wizards + **10% discount on paid blueprints**
 
 ### Template Marketplace Pricing
 
@@ -314,30 +314,26 @@ Enable users to build custom configurations by cherry-picking sections from mult
 
 #### Revenue Split
 
-| Recipient                 | Percentage |
-| ------------------------- | ---------- |
-| **Platform (LynxPrompt)** | 30%        |
-| **Template Author**       | 70%        |
+| Recipient                 | Standard | With Max Discount |
+| ------------------------- | -------- | ----------------- |
+| **Template Author**       | 70%      | 70% (unchanged)   |
+| **Platform (LynxPrompt)** | 30%      | 20%               |
+| **Max Subscriber Saves**  | -        | 10%               |
 
-### Spotify-Style Revenue Pool (for Max Subscribers)
+### Max Subscriber Discount Model
 
-Max subscribers get access to ALL paid prompts. Revenue is redistributed:
+Max subscribers receive a **10% discount** on all paid blueprint purchases:
 
-1. **Pool Calculation**: 70% of Max subscription revenue → creator pool
-2. **Platform Cut**: 30% always goes to LynxPrompt
-3. **Distribution**: Based on download share
-4. **Formula**: `Author Payout = (Author's Downloads / Total Downloads) × Creator Pool`
+1. **Author Protection**: Authors always receive 70% of the ORIGINAL price
+2. **Platform Absorbs Discount**: LynxPrompt takes 20% instead of 30%
+3. **Simple & Predictable**: No complex pool calculations or download tracking
 
 #### Example
 
 ```
-Monthly Max Subscription Revenue: €10,000
-Platform Cut (30%): €3,000
-Creator Pool (70%): €7,000
-
-Author A: 1,000 downloads (10% of total) → €700 payout
-Author B: 500 downloads (5% of total) → €350 payout
-Author C: 2,500 downloads (25% of total) → €1,750 payout
+Blueprint Price: €10
+Standard Purchase: Author gets €7.00, Platform gets €3.00
+Max Subscriber Purchase: Author gets €7.00, Platform gets €2.00, User pays €9.00
 ```
 
 ### Payment Processing
@@ -431,9 +427,9 @@ export function getApproxPrice(eurAmount: number): string | null {
 
 ### Phase 3: Max Subscription Pool
 
-- [ ] Implement download tracking for paid templates
-- [ ] Monthly revenue pool calculation
-- [ ] Spotify-style distribution algorithm
+- [x] Implement download tracking for paid templates
+- [x] Max subscriber 10% discount on purchases
+- [ ] Author earnings dashboard
 - [ ] Author payout notifications
 
 ### Phase 4: Payouts

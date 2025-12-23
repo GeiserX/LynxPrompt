@@ -65,6 +65,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if user is MAX subscriber for discount
+    const user = await prismaUsers.user.findUnique({
+      where: { id: session.user.id },
+      select: { subscriptionPlan: true, role: true },
+    });
+    
+    const isMaxUser = user?.subscriptionPlan === "MAX" || 
+                      user?.role === "ADMIN" || 
+                      user?.role === "SUPERADMIN";
+    
+    // MAX subscribers get 10% discount (platform absorbs it, author still gets 70% of original)
+    const MAX_DISCOUNT_PERCENT = 10;
+    const originalPrice = template.price;
+    const discountedPrice = isMaxUser 
+      ? Math.round(originalPrice * (1 - MAX_DISCOUNT_PERCENT / 100))
+      : originalPrice;
+
     // Create Stripe Checkout session for one-time payment
     const stripe = ensureStripe();
     const authorName = template.user.displayName || template.user.name || "Author";
@@ -78,13 +95,15 @@ export async function POST(request: NextRequest) {
             currency: template.currency.toLowerCase(),
             product_data: {
               name: template.name,
-              description: `Blueprint by ${authorName}`,
+              description: isMaxUser 
+                ? `Blueprint by ${authorName} (10% Max subscriber discount applied)`
+                : `Blueprint by ${authorName}`,
               metadata: {
                 templateId: template.id,
                 authorId: template.userId,
               },
             },
-            unit_amount: template.price,
+            unit_amount: discountedPrice, // Charge discounted price
           },
           quantity: 1,
         },
@@ -94,7 +113,9 @@ export async function POST(request: NextRequest) {
         templateId: template.id,
         userId: session.user.id,
         authorId: template.userId,
-        price: template.price.toString(),
+        originalPrice: originalPrice.toString(), // Store original for author share calculation
+        paidPrice: discountedPrice.toString(),
+        isMaxDiscount: isMaxUser ? "true" : "false",
         currency: template.currency,
       },
       success_url: `${process.env.NEXTAUTH_URL}/blueprints/${templateId}?purchased=true`,

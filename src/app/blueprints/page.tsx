@@ -59,6 +59,8 @@ interface Blueprint {
   tier?: string;
   isOfficial?: boolean;
   price?: number | null; // Price in cents, null = free
+  discountedPrice?: number | null; // Discounted price for MAX users
+  isMaxUser?: boolean;
   currency?: string;
 }
 
@@ -387,9 +389,13 @@ function BlueprintsContent() {
               <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
                 {blueprints.map((blueprint) => {
                   const isPaid = blueprint.price && blueprint.price > 0;
-                  const formattedPrice = isPaid 
-                    ? `€${(blueprint.price! / 100).toFixed(0)}` 
-                    : "Free";
+                  const hasDiscount = isPaid && blueprint.discountedPrice && blueprint.discountedPrice < blueprint.price!;
+                  const displayPrice = hasDiscount 
+                    ? `€${(blueprint.discountedPrice! / 100).toFixed(0)}`
+                    : isPaid 
+                      ? `€${(blueprint.price! / 100).toFixed(0)}` 
+                      : "Free";
+                  const originalPrice = hasDiscount ? `€${(blueprint.price! / 100).toFixed(0)}` : null;
                   
                   return (
                     <div
@@ -412,7 +418,14 @@ function BlueprintsContent() {
                               ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white" 
                               : "border-2 border-green-500 bg-green-500/10 text-green-700 dark:border-green-400 dark:bg-green-500/20 dark:text-green-300"
                           }`}>
-                            {formattedPrice}
+                            {hasDiscount ? (
+                              <span className="flex items-center gap-1.5">
+                                <span className="line-through opacity-70">{originalPrice}</span>
+                                <span>{displayPrice}</span>
+                              </span>
+                            ) : (
+                              displayPrice
+                            )}
                           </div>
                         </div>
                         
