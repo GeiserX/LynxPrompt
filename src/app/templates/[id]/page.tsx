@@ -231,9 +231,9 @@ export default function TemplateDetailPage() {
           <Logo />
           <nav className="flex items-center gap-4">
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/templates">
+              <Link href="/dashboard">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Templates
+                Dashboard
               </Link>
             </Button>
             <ThemeToggle />
