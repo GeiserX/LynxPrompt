@@ -6,8 +6,8 @@ import type { NextRequest } from "next/server";
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
-const RATE_LIMIT_MAX_REQUESTS = 200; // 200 requests per minute for general
-const RATE_LIMIT_AUTH_MAX = 60; // 60 auth attempts per minute (session checks happen frequently)
+const RATE_LIMIT_MAX_REQUESTS = 1000; // 1000 requests per minute for general (SPAs make many requests)
+const RATE_LIMIT_AUTH_MAX = 120; // 120 auth attempts per minute (session checks happen frequently)
 const RATE_LIMIT_CLEANUP_INTERVAL = 5 * 60 * 1000; // Cleanup every 5 minutes
 
 // SECURITY: Prevent memory leak by cleaning up expired rate limit entries
