@@ -153,6 +153,20 @@ Per EU Consumer Rights Directive, digital content can waive 14-day withdrawal IF
 - [x] **Renamed Templates to Agent Blueprints** - Matches AGENTS.md branding
 - [x] **Blueprints page improvements** - Working search, expandable platform filters, session-aware CTAs
 - [x] **Smart pricing page CTAs** - Logged-in users go to billing/dashboard instead of signin
+- [x] **Dashboard "New Configuration (Wizard)"** - Clearer button label
+- [x] **Template creation UX improvements**:
+  - Better error visibility with icons and clear contrast
+  - Template variable `[[VARIABLE_NAME]]` detection with visual feedback
+  - Revenue split display with better contrast (€ amount shown)
+  - Paid blueprints restricted to PRO/MAX users (checkbox disabled for FREE)
+  - Descriptive API errors ("Only PRO or MAX subscribers can create paid blueprints")
+  - "View Template" link fixed (user- → usr_)
+- [x] **Public User Profiles**:
+  - Clickable author names on blueprints page → `/users/[id]`
+  - Public profile page showing user's public blueprints
+  - Profile visibility settings (public/private)
+  - Optional: show job title and skill level on profile
+  - Private blueprints never exposed
 
 ---
 

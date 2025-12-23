@@ -23,6 +23,9 @@ export async function GET() {
         persona: true,
         skillLevel: true,
         profileCompleted: true,
+        isProfilePublic: true,
+        showJobTitle: true,
+        showSkillLevel: true,
         createdAt: true,
       },
     });
@@ -51,7 +54,7 @@ export async function PUT(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { displayName, persona, skillLevel } = body;
+    const { displayName, persona, skillLevel, isProfilePublic, showJobTitle, showSkillLevel } = body;
 
     // Validate inputs
     const validPersonas = [
@@ -100,6 +103,9 @@ export async function PUT(request: NextRequest) {
         }),
         ...(persona && { persona }),
         ...(skillLevel && { skillLevel }),
+        ...(isProfilePublic !== undefined && { isProfilePublic: Boolean(isProfilePublic) }),
+        ...(showJobTitle !== undefined && { showJobTitle: Boolean(showJobTitle) }),
+        ...(showSkillLevel !== undefined && { showSkillLevel: Boolean(showSkillLevel) }),
         profileCompleted,
       },
       select: {
@@ -111,6 +117,9 @@ export async function PUT(request: NextRequest) {
         persona: true,
         skillLevel: true,
         profileCompleted: true,
+        isProfilePublic: true,
+        showJobTitle: true,
+        showSkillLevel: true,
       },
     });
 

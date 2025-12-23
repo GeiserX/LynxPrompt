@@ -61,6 +61,11 @@ model User {
   skillLevel       String?   // novice, intermediate, senior
   profileCompleted Boolean   @default(false)  // Track if onboarding done
 
+  // Public profile visibility settings
+  isProfilePublic  Boolean   @default(false)  // Allow others to view profile page
+  showJobTitle     Boolean   @default(false)  // Show persona/job title on public profile
+  showSkillLevel   Boolean   @default(false)  // Show skill level on public profile
+
   // Subscription & Billing (Stripe)
   stripeCustomerId       String?   @unique // Stripe Customer ID
   stripeSubscriptionId   String?   // Stripe Subscription ID

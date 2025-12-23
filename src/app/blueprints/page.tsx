@@ -57,6 +57,7 @@ interface Blueprint {
   name: string;
   description: string;
   author: string;
+  authorId?: string;
   downloads: number;
   likes: number;
   tags: string[];
@@ -477,9 +478,19 @@ function BlueprintsContent() {
                         
                         {/* Author + Badges row */}
                         <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                          <span className="text-sm text-muted-foreground">
-                            by {blueprint.author}
-                          </span>
+                          {blueprint.authorId ? (
+                            <Link
+                              href={`/users/${blueprint.authorId}`}
+                              className="text-sm text-muted-foreground hover:text-primary hover:underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              by {blueprint.author}
+                            </Link>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">
+                              by {blueprint.author}
+                            </span>
+                          )}
                           {blueprint.isOfficial && (
                             <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
                               Official

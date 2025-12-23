@@ -86,6 +86,9 @@ interface UserProfile {
   name: string | null;
   email: string | null;
   image: string | null;
+  isProfilePublic: boolean;
+  showJobTitle: boolean;
+  showSkillLevel: boolean;
 }
 
 interface LinkedAccount {
@@ -131,6 +134,9 @@ function SettingsContent() {
   const [displayName, setDisplayName] = useState("");
   const [persona, setPersona] = useState("");
   const [skillLevel, setSkillLevel] = useState("");
+  const [isProfilePublic, setIsProfilePublic] = useState(false);
+  const [showJobTitle, setShowJobTitle] = useState(false);
+  const [showSkillLevel, setShowSkillLevel] = useState(false);
 
   // Accounts state
   const [accounts, setAccounts] = useState<LinkedAccount[]>([]);
@@ -171,6 +177,9 @@ function SettingsContent() {
         setDisplayName(data.displayName || data.name || "");
         setPersona(data.persona || "");
         setSkillLevel(data.skillLevel || "");
+        setIsProfilePublic(data.isProfilePublic || false);
+        setShowJobTitle(data.showJobTitle || false);
+        setShowSkillLevel(data.showSkillLevel || false);
       }
 
       if (accountsRes.ok) {
@@ -201,7 +210,14 @@ function SettingsContent() {
       const res = await fetch("/api/user/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ displayName, persona, skillLevel }),
+        body: JSON.stringify({ 
+          displayName, 
+          persona, 
+          skillLevel,
+          isProfilePublic,
+          showJobTitle,
+          showSkillLevel,
+        }),
       });
 
       if (!res.ok) throw new Error("Failed to save profile");
@@ -577,6 +593,71 @@ function SettingsContent() {
                         )}
                       </button>
                     ))}
+                  </div>
+                </div>
+
+                {/* Public Profile Settings */}
+                <div className="rounded-xl border bg-card p-6">
+                  <div className="mb-4 flex items-center gap-3">
+                    <Shield className="h-5 w-5 text-primary" />
+                    <div>
+                      <h2 className="font-semibold">Public Profile</h2>
+                      <p className="text-sm text-muted-foreground">
+                        Control what others can see when they click on your name
+                      </p>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    {/* Make profile public */}
+                    <label className="flex cursor-pointer items-start gap-4 rounded-lg border p-4 transition-all hover:border-primary">
+                      <input
+                        type="checkbox"
+                        checked={isProfilePublic}
+                        onChange={(e) => setIsProfilePublic(e.target.checked)}
+                        className="mt-1 h-4 w-4 rounded border-gray-300"
+                      />
+                      <div className="flex-1">
+                        <span className="font-medium">Make profile public</span>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Allow others to view your profile page and your public blueprints. 
+                          Private blueprints are never shared.
+                        </p>
+                      </div>
+                    </label>
+
+                    {/* Show job title */}
+                    <label className={`flex cursor-pointer items-start gap-4 rounded-lg border p-4 transition-all hover:border-primary ${!isProfilePublic ? 'opacity-50' : ''}`}>
+                      <input
+                        type="checkbox"
+                        checked={showJobTitle}
+                        onChange={(e) => setShowJobTitle(e.target.checked)}
+                        disabled={!isProfilePublic}
+                        className="mt-1 h-4 w-4 rounded border-gray-300"
+                      />
+                      <div className="flex-1">
+                        <span className="font-medium">Show developer type</span>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Display your job title/developer type on your public profile
+                        </p>
+                      </div>
+                    </label>
+
+                    {/* Show skill level */}
+                    <label className={`flex cursor-pointer items-start gap-4 rounded-lg border p-4 transition-all hover:border-primary ${!isProfilePublic ? 'opacity-50' : ''}`}>
+                      <input
+                        type="checkbox"
+                        checked={showSkillLevel}
+                        onChange={(e) => setShowSkillLevel(e.target.checked)}
+                        disabled={!isProfilePublic}
+                        className="mt-1 h-4 w-4 rounded border-gray-300"
+                      />
+                      <div className="flex-1">
+                        <span className="font-medium">Show skill level</span>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Display your expertise level on your public profile
+                        </p>
+                      </div>
+                    </label>
                   </div>
                 </div>
 
