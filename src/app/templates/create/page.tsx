@@ -19,10 +19,13 @@ import {
   DollarSign,
   Euro,
   Lock,
+  Shield,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Footer } from "@/components/footer";
 import { UserMenu } from "@/components/user-menu";
+import { CodeEditor } from "@/components/code-editor";
+import { Turnstile } from "@/components/turnstile";
 import { detectSensitiveData, type SensitiveMatch } from "@/lib/sensitive-data";
 import { detectVariables } from "@/lib/file-generator";
 
@@ -60,6 +63,7 @@ export default function ShareTemplatePage() {
   const [sensitiveWarningDismissed, setSensitiveWarningDismissed] = useState(false);
   const [userPlan, setUserPlan] = useState<string>("FREE");
   const [loadingPlan, setLoadingPlan] = useState(true);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   // Fetch user subscription plan
   useEffect(() => {
@@ -159,12 +163,21 @@ export default function ShareTemplatePage() {
     }
   };
 
+  // Check if turnstile is required (FREE users)
+  const requiresTurnstile = userPlan === "FREE";
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Check for sensitive data warnings
     if (hasSensitiveData) {
       setError("Please review the sensitive data warning below before submitting.");
+      return;
+    }
+
+    // Check for turnstile token for FREE users
+    if (requiresTurnstile && !turnstileToken) {
+      setError("Please complete the security verification below.");
       return;
     }
     
@@ -184,6 +197,7 @@ export default function ShareTemplatePage() {
           isPublic,
           price: isPaid ? Math.round(price * 100) : null, // Convert to cents
           currency: "EUR",
+          turnstileToken: requiresTurnstile ? turnstileToken : undefined,
         }),
       });
 
@@ -322,13 +336,13 @@ export default function ShareTemplatePage() {
                   </p>
                 </div>
 
-                {/* Editor */}
-                <textarea
+                {/* Editor with line numbers */}
+                <CodeEditor
                   value={content}
-                  onChange={(e) => setContent(e.target.value)}
+                  onChange={setContent}
                   placeholder="Paste your .cursorrules, CLAUDE.md, or other AI IDE configuration here..."
-                  className="min-h-[300px] w-full rounded-lg border bg-muted/30 p-4 font-mono text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  required
+                  minHeight="300px"
+                  className="focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20"
                 />
 
                 {/* Template Variables Detected */}
@@ -599,6 +613,32 @@ export default function ShareTemplatePage() {
                 </div>
               )}
 
+              {/* Turnstile CAPTCHA for FREE users */}
+              {requiresTurnstile && !loadingPlan && (
+                <div className="rounded-xl border bg-card p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Shield className="h-5 w-5 text-primary" />
+                    <div>
+                      <h2 className="font-semibold">Security Verification</h2>
+                      <p className="text-sm text-muted-foreground">
+                        Please verify you&apos;re human to share your blueprint
+                      </p>
+                    </div>
+                  </div>
+                  <Turnstile
+                    onSuccess={(token) => setTurnstileToken(token)}
+                    onExpire={() => setTurnstileToken(null)}
+                    onError={() => setTurnstileToken(null)}
+                  />
+                  {turnstileToken && (
+                    <p className="mt-2 text-sm text-green-600 dark:text-green-400 flex items-center gap-1">
+                      <CheckCircle2 className="h-4 w-4" />
+                      Verification complete
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/* Submit */}
               <div className="flex justify-end gap-4">
                 <Button type="button" variant="outline" asChild>
@@ -606,7 +646,7 @@ export default function ShareTemplatePage() {
                 </Button>
                 <Button
                   type="submit"
-                  disabled={isSubmitting || !content.trim() || !name.trim()}
+                  disabled={isSubmitting || !content.trim() || !name.trim() || (requiresTurnstile && !turnstileToken)}
                 >
                   {isSubmitting ? (
                     <>
