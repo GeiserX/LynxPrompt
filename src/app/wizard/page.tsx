@@ -253,15 +253,14 @@ const PROJECT_TYPES = [
 ];
 
 // Platforms are the PRIMARY target, but files often work across multiple IDEs
-// Note: .cursorrules is deprecated, AGENTS.md is the modern standard
 const PLATFORMS = [
   {
     id: "cursor",
     name: "Cursor",
-    file: "AGENTS.md", // Modern standard, replaces deprecated .cursorrules
+    file: ".cursor/rules", // Cursor's native project rules format
     icon: "⚡",
     gradient: "from-blue-500 to-cyan-500",
-    note: "Universal AI agent file",
+    note: "Also supports AGENTS.md",
   },
   {
     id: "claude",
@@ -1385,8 +1384,8 @@ function StepPlatforms({
 
       <div className="mt-4 rounded-lg bg-muted/50 p-3">
         <p className="text-xs text-muted-foreground">
-          <strong>AGENTS.md</strong> is the universal standard for AI coding assistants. 
-          It works with Cursor, Claude, and other modern AI IDEs.
+          Each IDE has its native format. Cursor uses <strong>.cursor/rules/</strong>, 
+          Claude uses <strong>CLAUDE.md</strong>, etc. Your rules are optimized for each platform.
         </p>
       </div>
     </div>

@@ -394,12 +394,8 @@ export default function DocsPage() {
                 >
                   AGENTS.md
                 </a>
-                , the modern standard for AI coding agent instructions.
+                , the emerging standard for AI coding agent instructions.
                 Files are <strong>optimized for</strong> specific platforms but <strong>work across multiple IDEs</strong>.
-                For example, AGENTS.md works with Cursor, Claude, and other AI assistants.
-              </p>
-              <p className="mt-2 text-sm text-muted-foreground/80">
-                Note: <code className="text-xs">.cursorrules</code> is deprecated. We now generate <code className="text-xs">AGENTS.md</code> instead.
               </p>
 
               {/* Scrolling Logo Marquee */}
@@ -426,31 +422,26 @@ export default function DocsPage() {
               </div>
 
               {/* Config files */}
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
                   <div className="flex items-center gap-2">
                     <code className="text-sm font-medium text-primary">
                       AGENTS.md
                     </code>
                     <span className="rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-medium text-primary">
-                      Recommended
+                      Universal
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Universal standard for AI assistants (Cursor, Claude, etc.)
+                    Open standard — works everywhere
                   </p>
                 </div>
-                <div className="rounded-lg border p-4 opacity-60">
-                  <div className="flex items-center gap-2">
-                    <code className="text-sm font-medium text-muted-foreground line-through">
-                      .cursorrules
-                    </code>
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                      Deprecated
-                    </span>
-                  </div>
+                <div className="rounded-lg border p-4">
+                  <code className="text-sm font-medium text-primary">
+                    .cursor/rules
+                  </code>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Legacy Cursor format — use AGENTS.md instead
+                    Cursor IDE project rules
                   </p>
                 </div>
                 <div className="rounded-lg border p-4">
@@ -458,7 +449,7 @@ export default function DocsPage() {
                     CLAUDE.md
                   </code>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Claude project instructions
+                    Claude Code instructions
                   </p>
                 </div>
                 <div className="rounded-lg border p-4">
@@ -466,7 +457,23 @@ export default function DocsPage() {
                     copilot-instructions.md
                   </code>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    GitHub Copilot workspace config
+                    GitHub Copilot config
+                  </p>
+                </div>
+                <div className="rounded-lg border p-4">
+                  <code className="text-sm font-medium text-primary">
+                    .windsurfrules
+                  </code>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Windsurf (Codeium) rules
+                  </p>
+                </div>
+                <div className="rounded-lg border p-4">
+                  <code className="text-sm font-medium text-primary">
+                    .aider.conf.yml
+                  </code>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Aider terminal AI config
                   </p>
                 </div>
               </div>

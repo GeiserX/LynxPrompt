@@ -7,7 +7,7 @@ const PLATFORMS = [
   {
     name: "Cursor",
     description: "AI-first code editor",
-    configFile: ".cursorrules",
+    configFile: ".cursor/rules",
     gradient: "from-blue-500 to-cyan-500",
     icon: "⚡",
   },
