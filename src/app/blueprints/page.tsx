@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Footer } from "@/components/footer";
 
 // Real categories for blueprints
@@ -218,6 +219,7 @@ function BlueprintsContent() {
             <Link href="/docs" className="text-sm hover:underline">
               Docs
             </Link>
+            <ThemeToggle />
             <UserMenu />
           </nav>
         </div>

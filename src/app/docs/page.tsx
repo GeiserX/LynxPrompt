@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Footer } from "@/components/footer";
 
 // IDE Logos - Row 1
@@ -91,6 +92,7 @@ export default function DocsPage() {
               Blueprints
             </Link>
             <span className="text-sm font-medium text-primary">Docs</span>
+            <ThemeToggle />
             <UserMenu />
           </nav>
         </div>
@@ -433,7 +435,7 @@ export default function DocsPage() {
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Open standard — works everywhere
+                    Open standard — works &quot;everywhere&quot;
                   </p>
                 </div>
                 <div className="rounded-lg border p-4">

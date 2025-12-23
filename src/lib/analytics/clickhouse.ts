@@ -118,7 +118,7 @@ export async function initializeClickHouse(): Promise<void> {
     ) ENGINE = MergeTree()
     PARTITION BY toYYYYMM(timestamp)
     ORDER BY (event_type, timestamp)
-    TTL timestamp + INTERVAL 1 YEAR
+    TTL toDateTime(timestamp) + INTERVAL 1 YEAR
     SETTINGS index_granularity = 8192
   `;
 

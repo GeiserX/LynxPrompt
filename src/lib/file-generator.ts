@@ -80,8 +80,8 @@ const PLATFORM_FILES: Record<string, string> = {
 // Delimiter: [[variable_name]] - Chosen to avoid conflicts with {{}} templates
 // ============================================================================
 
-// Regular expression to detect template variables
-const VARIABLE_PATTERN = /\[\[([A-Z_][A-Z0-9_]*)\]\]/g;
+// Regular expression to detect template variables (accepts both uppercase and lowercase)
+const VARIABLE_PATTERN = /\[\[([A-Za-z_][A-Za-z0-9_]*)\]\]/g;
 
 // Common variable suggestions
 export const SUGGESTED_VARIABLES = [
@@ -100,15 +100,17 @@ export const SUGGESTED_VARIABLES = [
 /**
  * Detect all template variables in content
  * Variables use [[VARIABLE_NAME]] format
+ * All variable names are normalized to UPPERCASE internally
+ * So [[myVar]], [[MYVAR]], [[MyVar]] are all treated as [[MYVAR]]
  */
 export function detectVariables(content: string): string[] {
   const matches = content.match(VARIABLE_PATTERN);
   if (!matches) return [];
   
-  // Extract unique variable names (without brackets)
+  // Extract unique variable names (without brackets), normalized to UPPERCASE
   const variables = new Set<string>();
   for (const match of matches) {
-    const varName = match.replace(/\[\[|\]\]/g, "");
+    const varName = match.replace(/\[\[|\]\]/g, "").toUpperCase();
     variables.add(varName);
   }
   
@@ -117,13 +119,16 @@ export function detectVariables(content: string): string[] {
 
 /**
  * Replace variables in content with provided values
+ * Matches are case-insensitive: [[var]], [[VAR]], [[Var]] all work
+ * Values are looked up by UPPERCASE key
  */
 export function replaceVariables(
   content: string, 
   values: Record<string, string>
 ): string {
   return content.replace(VARIABLE_PATTERN, (match, varName) => {
-    return values[varName] !== undefined ? values[varName] : match;
+    const upperVarName = varName.toUpperCase();
+    return values[upperVarName] !== undefined ? values[upperVarName] : match;
   });
 }
 

@@ -34,6 +34,7 @@ import { signIn } from "next-auth/react";
 import { Logo } from "@/components/logo";
 import { Footer } from "@/components/footer";
 import { UserMenu } from "@/components/user-menu";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { getGravatarUrl } from "@/lib/utils";
 import { startRegistration } from "@simplewebauthn/browser";
 
@@ -409,6 +410,7 @@ function SettingsContent() {
                 Dashboard
               </Link>
             </Button>
+            <ThemeToggle />
             <UserMenu />
           </nav>
         </div>

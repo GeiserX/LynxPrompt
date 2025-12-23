@@ -14,7 +14,7 @@ function SignInContent() {
   const error = searchParams.get("error");
 
   // SECURITY: Validate callbackUrl to prevent open redirect attacks
-  const rawCallbackUrl = searchParams.get("callbackUrl") || "/wizard";
+  const rawCallbackUrl = searchParams.get("callbackUrl") || "/dashboard";
   const callbackUrl = (() => {
     // Only allow relative URLs or same-origin URLs
     if (rawCallbackUrl.startsWith("/") && !rawCallbackUrl.startsWith("//")) {
@@ -29,7 +29,7 @@ function SignInContent() {
     } catch {
       // Invalid URL, use default
     }
-    return "/wizard"; // Default safe redirect
+    return "/dashboard"; // Default safe redirect
   })();
 
   const [email, setEmail] = useState("");
@@ -39,8 +39,8 @@ function SignInContent() {
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [turnstileError, setTurnstileError] = useState<string | null>(null);
 
-  // Check if Turnstile is configured
-  const turnstileEnabled = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  // Turnstile is always enabled for magic link (component handles bypass internally)
+  const turnstileEnabled = true;
 
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -12,6 +12,7 @@ import {
 import { PlatformCarousel } from "@/components/platform-carousel";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Footer } from "@/components/footer";
 
 export default function HomePage() {
@@ -31,6 +32,7 @@ export default function HomePage() {
             <Link href="/docs" className="text-sm hover:underline">
               Docs
             </Link>
+            <ThemeToggle />
             <UserMenu />
           </nav>
         </div>

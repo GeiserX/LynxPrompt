@@ -25,6 +25,7 @@ import {
 import { Logo } from "@/components/logo";
 import { Footer } from "@/components/footer";
 import { UserMenu } from "@/components/user-menu";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 interface DashboardStats {
   templatesCreated: number;
@@ -131,10 +132,10 @@ export default function DashboardPage() {
       primary: true,
     },
     {
-      title: "Share Template",
+      title: "Share Blueprint",
       description: "Upload and monetize your prompts",
       icon: Upload,
-      href: "/templates/create",
+      href: "/blueprints/create",
     },
     {
       title: "Browse Blueprints",
@@ -214,6 +215,7 @@ export default function DashboardPage() {
             <Link href="/blueprints" className="text-sm hover:underline">
               Blueprints
             </Link>
+            <ThemeToggle />
             <UserMenu />
           </nav>
         </div>
@@ -230,7 +232,7 @@ export default function DashboardPage() {
                 {session?.user?.name ? `, ${session.user.name}` : ""}!
               </h1>
               <p className="mt-1 text-muted-foreground">
-                Here&apos;s what&apos;s happening with your templates
+                Here&apos;s what&apos;s happening with your blueprints
               </p>
             </div>
             <Button asChild>
@@ -250,7 +252,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">
-                    Templates Created
+                    Blueprints Created
                   </p>
                   <p className="text-2xl font-bold">
                     {loading ? "-" : stats.templatesCreated}
@@ -357,12 +359,12 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* My Templates */}
+              {/* My Blueprints */}
               <div>
                 <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-lg font-semibold">My Templates</h2>
+                  <h2 className="text-lg font-semibold">My Blueprints</h2>
                   <Button variant="ghost" size="sm" asChild>
-                    <Link href="/templates/create">
+                    <Link href="/blueprints/create">
                       <Plus className="mr-2 h-4 w-4" />
                       Create New
                     </Link>
@@ -383,14 +385,14 @@ export default function DashboardPage() {
                     <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
                       <FileText className="h-6 w-6 text-muted-foreground" />
                     </div>
-                    <h3 className="font-semibold">No templates yet</h3>
+                    <h3 className="font-semibold">No blueprints yet</h3>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Create your first template to share with the community
+                      Create your first blueprint to share with the community
                     </p>
                     <Button asChild className="mt-4" size="sm">
-                      <Link href="/templates/create">
+                      <Link href="/blueprints/create">
                         <Upload className="mr-2 h-4 w-4" />
-                        Share Template
+                        Share Blueprint
                       </Link>
                     </Button>
                   </div>
@@ -439,12 +441,12 @@ export default function DashboardPage() {
                 )}
               </div>
 
-              {/* Favorite Templates */}
+              {/* Favorite Blueprints */}
               <div>
                 <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-lg font-semibold">Favorite Templates</h2>
+                  <h2 className="text-lg font-semibold">Favorite Blueprints</h2>
                   <Button variant="ghost" size="sm" asChild>
-                    <Link href="/templates">
+                    <Link href="/blueprints">
                       Browse All
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
@@ -466,7 +468,7 @@ export default function DashboardPage() {
                     <Heart className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
                     <h3 className="font-medium">No favorites yet</h3>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Browse templates and click the heart to save them here
+                      Browse blueprints and click the heart to save them here
                     </p>
                     <Button
                       asChild
@@ -474,7 +476,7 @@ export default function DashboardPage() {
                       size="sm"
                       variant="outline"
                     >
-                      <Link href="/templates">Browse Templates</Link>
+                      <Link href="/blueprints">Browse Blueprints</Link>
                     </Button>
                   </div>
                 ) : (
@@ -619,7 +621,7 @@ export default function DashboardPage() {
                       className="mt-4 bg-green-600 hover:bg-green-700"
                       size="sm"
                     >
-                      <Link href="/templates/create">
+                      <Link href="/blueprints/create">
                         <Upload className="mr-2 h-4 w-4" />
                         Share & Earn
                       </Link>

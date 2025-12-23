@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   generateConfigFiles,
   downloadZip,
@@ -551,6 +552,7 @@ export default function WizardPage() {
                 Dashboard
               </Link>
             </Button>
+            <ThemeToggle />
             <UserMenu />
           </nav>
         </div>
