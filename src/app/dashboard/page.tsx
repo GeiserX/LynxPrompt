@@ -243,84 +243,6 @@ export default function DashboardPage() {
             </Button>
           </div>
 
-          {/* Stats Cards */}
-          <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-lg border bg-card p-6">
-              <div className="flex items-center gap-4">
-                <div className="rounded-lg bg-primary/10 p-3">
-                  <FileText className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">
-                    Blueprints Created
-                  </p>
-                  <p className="text-2xl font-bold">
-                    {loading ? "-" : stats.templatesCreated}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-lg border bg-card p-6">
-              <div className="flex items-center gap-4">
-                <div className="rounded-lg bg-green-500/10 p-3">
-                  <Download className="h-6 w-6 text-green-500" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">
-                    Total Downloads
-                  </p>
-                  <p className="text-2xl font-bold">
-                    {loading ? "-" : stats.totalDownloads}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-lg border bg-card p-6">
-              <div className="flex items-center gap-4">
-                <div className="rounded-lg bg-pink-500/10 p-3">
-                  <Heart className="h-6 w-6 text-pink-500" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">
-                    Favorites Given
-                  </p>
-                  <p className="text-2xl font-bold">
-                    {loading ? "-" : stats.totalFavorites}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-lg border bg-card p-6">
-              <div className="flex items-center gap-4">
-                <div className="rounded-lg bg-blue-500/10 p-3">
-                  <TrendingUp className="h-6 w-6 text-blue-500" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">
-                    Linked Accounts
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <p className="text-2xl font-bold">
-                      {loading ? "-" : stats.linkedProviders.length}
-                    </p>
-                    {!loading && stats.linkedProviders.length > 0 && (
-                      <div className="flex gap-1">
-                        {stats.linkedProviders.map((p) => (
-                          <span key={p} className="text-muted-foreground">
-                            {getProviderIcon(p)}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
           <div className="grid gap-8 lg:grid-cols-3">
             {/* Left Column: Quick Actions + My Templates */}
             <div className="space-y-8 lg:col-span-2">
@@ -640,6 +562,84 @@ export default function DashboardPage() {
                   Detailed analytics coming soon! Track your template
                   performance, downloads over time, and earnings.
                 </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Stats Cards - moved to end */}
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-lg border bg-card p-6">
+              <div className="flex items-center gap-4">
+                <div className="rounded-lg bg-primary/10 p-3">
+                  <FileText className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Blueprints Created
+                  </p>
+                  <p className="text-2xl font-bold">
+                    {loading ? "-" : stats.templatesCreated}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg border bg-card p-6">
+              <div className="flex items-center gap-4">
+                <div className="rounded-lg bg-green-500/10 p-3">
+                  <Download className="h-6 w-6 text-green-500" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Total Downloads
+                  </p>
+                  <p className="text-2xl font-bold">
+                    {loading ? "-" : stats.totalDownloads}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg border bg-card p-6">
+              <div className="flex items-center gap-4">
+                <div className="rounded-lg bg-pink-500/10 p-3">
+                  <Heart className="h-6 w-6 text-pink-500" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Favorites Given
+                  </p>
+                  <p className="text-2xl font-bold">
+                    {loading ? "-" : stats.totalFavorites}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg border bg-card p-6">
+              <div className="flex items-center gap-4">
+                <div className="rounded-lg bg-blue-500/10 p-3">
+                  <TrendingUp className="h-6 w-6 text-blue-500" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Linked Accounts
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-2xl font-bold">
+                      {loading ? "-" : stats.linkedProviders.length}
+                    </p>
+                    {!loading && stats.linkedProviders.length > 0 && (
+                      <div className="flex gap-1">
+                        {stats.linkedProviders.map((p) => (
+                          <span key={p} className="text-muted-foreground">
+                            {getProviderIcon(p)}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

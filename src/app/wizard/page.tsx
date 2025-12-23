@@ -27,6 +27,8 @@ import {
   ChevronUp,
   Crown,
   Zap,
+  Search,
+  Plus,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
@@ -123,6 +125,7 @@ const CONTAINER_REGISTRIES = [
 ];
 
 const LANGUAGES = [
+  // Popular
   { value: "typescript", label: "TypeScript", icon: "📘" },
   { value: "javascript", label: "JavaScript", icon: "📒" },
   { value: "python", label: "Python", icon: "🐍" },
@@ -134,21 +137,129 @@ const LANGUAGES = [
   { value: "ruby", label: "Ruby", icon: "💎" },
   { value: "swift", label: "Swift", icon: "🍎" },
   { value: "kotlin", label: "Kotlin", icon: "🎨" },
+  { value: "cpp", label: "C++", icon: "⚙️" },
+  // Additional
+  { value: "c", label: "C", icon: "🔧" },
+  { value: "scala", label: "Scala", icon: "🔴" },
+  { value: "elixir", label: "Elixir", icon: "💧" },
+  { value: "clojure", label: "Clojure", icon: "🔮" },
+  { value: "haskell", label: "Haskell", icon: "λ" },
+  { value: "fsharp", label: "F#", icon: "🟦" },
+  { value: "dart", label: "Dart", icon: "🎯" },
+  { value: "lua", label: "Lua", icon: "🌙" },
+  { value: "perl", label: "Perl", icon: "🐪" },
+  { value: "r", label: "R", icon: "📊" },
+  { value: "julia", label: "Julia", icon: "🔬" },
+  { value: "zig", label: "Zig", icon: "⚡" },
+  { value: "nim", label: "Nim", icon: "👑" },
+  { value: "ocaml", label: "OCaml", icon: "🐫" },
+  { value: "erlang", label: "Erlang", icon: "📞" },
+  { value: "groovy", label: "Groovy", icon: "🎵" },
+  { value: "objectivec", label: "Objective-C", icon: "📱" },
+  { value: "shell", label: "Shell/Bash", icon: "🐚" },
+  { value: "powershell", label: "PowerShell", icon: "💻" },
+  { value: "sql", label: "SQL", icon: "🗃️" },
+  { value: "solidity", label: "Solidity", icon: "⛓️" },
+  { value: "move", label: "Move", icon: "🔒" },
+  { value: "cairo", label: "Cairo", icon: "🏛️" },
+  { value: "wasm", label: "WebAssembly", icon: "🌐" },
 ];
 
 const FRAMEWORKS = [
+  // Frontend
   { value: "react", label: "React", icon: "⚛️" },
   { value: "nextjs", label: "Next.js", icon: "▲" },
   { value: "vue", label: "Vue.js", icon: "💚" },
+  { value: "nuxt", label: "Nuxt.js", icon: "💚" },
   { value: "angular", label: "Angular", icon: "🅰️" },
   { value: "svelte", label: "Svelte", icon: "🔥" },
+  { value: "sveltekit", label: "SvelteKit", icon: "🔥" },
+  { value: "solid", label: "SolidJS", icon: "💎" },
+  { value: "qwik", label: "Qwik", icon: "⚡" },
+  { value: "astro", label: "Astro", icon: "🚀" },
+  { value: "remix", label: "Remix", icon: "💿" },
+  { value: "gatsby", label: "Gatsby", icon: "🟣" },
+  // Backend Node
   { value: "express", label: "Express.js", icon: "📦" },
+  { value: "nestjs", label: "NestJS", icon: "🐱" },
+  { value: "fastify", label: "Fastify", icon: "🚀" },
+  { value: "hono", label: "Hono", icon: "🔥" },
+  { value: "koa", label: "Koa", icon: "🌿" },
+  // Python
   { value: "fastapi", label: "FastAPI", icon: "⚡" },
   { value: "django", label: "Django", icon: "🎸" },
   { value: "flask", label: "Flask", icon: "🌶️" },
+  { value: "starlette", label: "Starlette", icon: "⭐" },
+  { value: "tornado", label: "Tornado", icon: "🌪️" },
+  { value: "pyramid", label: "Pyramid", icon: "🔺" },
+  // Java/Kotlin
   { value: "spring", label: "Spring Boot", icon: "🌱" },
+  { value: "quarkus", label: "Quarkus", icon: "🔷" },
+  { value: "micronaut", label: "Micronaut", icon: "🔵" },
+  { value: "ktor", label: "Ktor", icon: "🎨" },
+  // .NET
   { value: "dotnet", label: ".NET", icon: "🔷" },
+  { value: "blazor", label: "Blazor", icon: "🔷" },
+  // Ruby
   { value: "rails", label: "Ruby on Rails", icon: "🛤️" },
+  { value: "sinatra", label: "Sinatra", icon: "🎤" },
+  { value: "hanami", label: "Hanami", icon: "🌸" },
+  // Go
+  { value: "gin", label: "Gin", icon: "🍸" },
+  { value: "fiber", label: "Fiber", icon: "⚡" },
+  { value: "echo", label: "Echo", icon: "📣" },
+  { value: "chi", label: "Chi", icon: "🐹" },
+  // Rust
+  { value: "actix", label: "Actix", icon: "🦀" },
+  { value: "axum", label: "Axum", icon: "🦀" },
+  { value: "rocket", label: "Rocket", icon: "🚀" },
+  { value: "warp", label: "Warp", icon: "🦀" },
+  // PHP
+  { value: "laravel", label: "Laravel", icon: "🐘" },
+  { value: "symfony", label: "Symfony", icon: "🎵" },
+  { value: "wordpress", label: "WordPress", icon: "📝" },
+  // Mobile
+  { value: "flutter", label: "Flutter", icon: "🦋" },
+  { value: "reactnative", label: "React Native", icon: "📱" },
+  { value: "swiftui", label: "SwiftUI", icon: "🍎" },
+  { value: "jetpackcompose", label: "Jetpack Compose", icon: "🤖" },
+  { value: "ionic", label: "Ionic", icon: "⚡" },
+  { value: "expo", label: "Expo", icon: "📱" },
+  // Desktop
+  { value: "electron", label: "Electron", icon: "⚡" },
+  { value: "tauri", label: "Tauri", icon: "🦀" },
+  // CSS/UI
+  { value: "tailwind", label: "Tailwind CSS", icon: "🎨" },
+  { value: "bootstrap", label: "Bootstrap", icon: "🅱️" },
+  { value: "chakra", label: "Chakra UI", icon: "⚡" },
+  { value: "mui", label: "Material UI", icon: "🎨" },
+  { value: "antdesign", label: "Ant Design", icon: "🐜" },
+  { value: "shadcn", label: "shadcn/ui", icon: "🎨" },
+  // State/Data
+  { value: "redux", label: "Redux", icon: "🔄" },
+  { value: "zustand", label: "Zustand", icon: "🐻" },
+  { value: "tanstack", label: "TanStack Query", icon: "🔮" },
+  { value: "trpc", label: "tRPC", icon: "🔗" },
+  { value: "graphql", label: "GraphQL", icon: "◼️" },
+  // Databases/ORMs
+  { value: "prisma", label: "Prisma", icon: "🔺" },
+  { value: "drizzle", label: "Drizzle", icon: "💧" },
+  { value: "typeorm", label: "TypeORM", icon: "📦" },
+  { value: "sequelize", label: "Sequelize", icon: "📦" },
+  { value: "mongoose", label: "Mongoose", icon: "🍃" },
+  { value: "sqlalchemy", label: "SQLAlchemy", icon: "🐍" },
+  // Testing
+  { value: "jest", label: "Jest", icon: "🃏" },
+  { value: "vitest", label: "Vitest", icon: "⚡" },
+  { value: "playwright", label: "Playwright", icon: "🎭" },
+  { value: "cypress", label: "Cypress", icon: "🌲" },
+  { value: "pytest", label: "pytest", icon: "🐍" },
+  // DevOps/Infra
+  { value: "docker", label: "Docker", icon: "🐳" },
+  { value: "kubernetes", label: "Kubernetes", icon: "☸️" },
+  { value: "terraform", label: "Terraform", icon: "🏗️" },
+  { value: "ansible", label: "Ansible", icon: "🔧" },
+  { value: "pulumi", label: "Pulumi", icon: "☁️" },
 ];
 
 const AI_BEHAVIOR_RULES = [
@@ -911,7 +1022,7 @@ function StepProject({
   );
 }
 
-// UPDATED: Tech Stack Step (renamed from Languages)
+// UPDATED: Tech Stack Step with search, load more, and AI decide that works with selections
 function StepTechStack({
   selectedLanguages,
   selectedFrameworks,
@@ -927,75 +1038,311 @@ function StepTechStack({
   onToggleFramework: (v: string) => void;
   onLetAiDecide: (v: boolean) => void;
 }) {
+  const [langSearch, setLangSearch] = useState("");
+  const [fwSearch, setFwSearch] = useState("");
+  const [showAllLangs, setShowAllLangs] = useState(false);
+  const [showAllFrameworks, setShowAllFrameworks] = useState(false);
+  const [customLanguage, setCustomLanguage] = useState("");
+  const [customFramework, setCustomFramework] = useState("");
+  const [showCustomLang, setShowCustomLang] = useState(false);
+  const [showCustomFw, setShowCustomFw] = useState(false);
+
+  const INITIAL_DISPLAY = 12;
+
+  // Filter languages
+  const filteredLanguages = LANGUAGES.filter(lang => 
+    lang.label.toLowerCase().includes(langSearch.toLowerCase()) ||
+    lang.value.toLowerCase().includes(langSearch.toLowerCase())
+  );
+  const displayedLanguages = showAllLangs || langSearch 
+    ? filteredLanguages 
+    : filteredLanguages.slice(0, INITIAL_DISPLAY);
+  const hasMoreLangs = !langSearch && filteredLanguages.length > INITIAL_DISPLAY;
+
+  // Filter frameworks
+  const filteredFrameworks = FRAMEWORKS.filter(fw => 
+    fw.label.toLowerCase().includes(fwSearch.toLowerCase()) ||
+    fw.value.toLowerCase().includes(fwSearch.toLowerCase())
+  );
+  const displayedFrameworks = showAllFrameworks || fwSearch 
+    ? filteredFrameworks 
+    : filteredFrameworks.slice(0, INITIAL_DISPLAY);
+  const hasMoreFws = !fwSearch && filteredFrameworks.length > INITIAL_DISPLAY;
+
+  const handleAddCustomLanguage = () => {
+    if (customLanguage.trim()) {
+      onToggleLanguage(`custom:${customLanguage.trim()}`);
+      setCustomLanguage("");
+      setShowCustomLang(false);
+    }
+  };
+
+  const handleAddCustomFramework = () => {
+    if (customFramework.trim()) {
+      onToggleFramework(`custom:${customFramework.trim()}`);
+      setCustomFramework("");
+      setShowCustomFw(false);
+    }
+  };
+
+  // Get custom items from selected
+  const customLangs = selectedLanguages.filter(l => l.startsWith("custom:")).map(l => l.replace("custom:", ""));
+  const customFws = selectedFrameworks.filter(f => f.startsWith("custom:")).map(f => f.replace("custom:", ""));
+
   return (
     <div>
       <h2 className="text-2xl font-bold">Select Your Tech Stack</h2>
       <p className="mt-2 text-muted-foreground">
-        Choose all the languages and frameworks you&apos;ll be using. Select
-        multiple!
+        Choose the languages and frameworks you&apos;ll be using. You can also let AI help with additional choices.
       </p>
 
-      {/* Languages */}
-      <div className="mt-6">
-        <h3 className="mb-3 font-semibold">Languages</h3>
-        <div className="grid grid-cols-3 gap-3">
-          {LANGUAGES.map((lang) => (
-            <button
-              key={lang.value}
-              onClick={() => onToggleLanguage(lang.value)}
-              disabled={letAiDecide}
-              className={`flex items-center gap-2 rounded-lg border p-3 text-left transition-all hover:border-primary disabled:opacity-50 ${
-                selectedLanguages.includes(lang.value) && !letAiDecide
-                  ? "border-primary bg-primary/5 ring-1 ring-primary"
-                  : ""
-              }`}
-            >
-              <span className="text-xl">{lang.icon}</span>
-              <span className="text-sm font-medium">{lang.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Frameworks */}
-      <div className="mt-6">
-        <h3 className="mb-3 font-semibold">Frameworks & Libraries</h3>
-        <div className="grid grid-cols-3 gap-3">
-          {FRAMEWORKS.map((fw) => (
-            <button
-              key={fw.value}
-              onClick={() => onToggleFramework(fw.value)}
-              disabled={letAiDecide}
-              className={`flex items-center gap-2 rounded-lg border p-3 text-left transition-all hover:border-primary disabled:opacity-50 ${
-                selectedFrameworks.includes(fw.value) && !letAiDecide
-                  ? "border-primary bg-primary/5 ring-1 ring-primary"
-                  : ""
-              }`}
-            >
-              <span className="text-xl">{fw.icon}</span>
-              <span className="text-sm font-medium">{fw.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
+      {/* Let AI Decide - Now works WITH selections */}
       <div className="mt-6">
         <button
           onClick={() => onLetAiDecide(!letAiDecide)}
-          className={`flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4 transition-all ${
+          className={`flex w-full items-center justify-center gap-2 rounded-lg border-2 p-4 transition-all ${
             letAiDecide
-              ? "border-primary bg-primary/5"
-              : "border-muted-foreground/30 hover:border-primary"
+              ? "border-primary bg-primary/5 ring-1 ring-primary"
+              : "border-dashed border-muted-foreground/30 hover:border-primary"
           }`}
         >
           <Brain className="h-5 w-5" />
           <span className="font-medium">
-            Let AI decide based on the project
+            Let AI help with additional technologies
           </span>
+          {letAiDecide && <Check className="h-4 w-4 text-primary" />}
         </button>
         <p className="mt-2 text-center text-sm text-muted-foreground">
-          AI will analyze your codebase and suggest additional technologies
+          {letAiDecide 
+            ? selectedLanguages.length > 0 || selectedFrameworks.length > 0
+              ? "AI will analyze your codebase and suggest additional technologies beyond your selections"
+              : "AI will analyze your codebase and suggest the best technologies for your project"
+            : "Enable this to let AI suggest technologies based on your codebase"}
         </p>
+      </div>
+
+      {/* Languages */}
+      <div className="mt-6">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="font-semibold">Languages</h3>
+          <span className="text-sm text-muted-foreground">
+            {selectedLanguages.length} selected
+          </span>
+        </div>
+
+        {/* Search */}
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text"
+            value={langSearch}
+            onChange={(e) => setLangSearch(e.target.value)}
+            placeholder="Search languages..."
+            className="w-full rounded-lg border bg-background py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+
+        {/* Grid with fade effect */}
+        <div className="relative">
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+            {displayedLanguages.map((lang) => (
+              <button
+                key={lang.value}
+                onClick={() => onToggleLanguage(lang.value)}
+                className={`flex items-center gap-2 rounded-lg border p-2.5 text-left transition-all hover:border-primary ${
+                  selectedLanguages.includes(lang.value)
+                    ? "border-primary bg-primary/5 ring-1 ring-primary"
+                    : ""
+                }`}
+              >
+                <span className="text-lg">{lang.icon}</span>
+                <span className="truncate text-sm font-medium">{lang.label}</span>
+              </button>
+            ))}
+
+            {/* Custom languages */}
+            {customLangs.map((lang) => (
+              <button
+                key={`custom:${lang}`}
+                onClick={() => onToggleLanguage(`custom:${lang}`)}
+                className="flex items-center gap-2 rounded-lg border border-primary bg-primary/5 p-2.5 text-left ring-1 ring-primary"
+              >
+                <span className="text-lg">📝</span>
+                <span className="truncate text-sm font-medium">{lang}</span>
+              </button>
+            ))}
+
+            {/* Add Other button */}
+            {!showCustomLang && (
+              <button
+                onClick={() => setShowCustomLang(true)}
+                className="flex items-center gap-2 rounded-lg border border-dashed p-2.5 text-left transition-all hover:border-primary"
+              >
+                <Plus className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Other...</span>
+              </button>
+            )}
+          </div>
+
+          {/* Fade overlay for load more */}
+          {hasMoreLangs && !showAllLangs && (
+            <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-background to-transparent" />
+          )}
+        </div>
+
+        {/* Custom language input */}
+        {showCustomLang && (
+          <div className="mt-2 flex gap-2">
+            <input
+              type="text"
+              value={customLanguage}
+              onChange={(e) => setCustomLanguage(e.target.value)}
+              placeholder="Enter language name..."
+              className="flex-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              autoFocus
+              onKeyDown={(e) => e.key === "Enter" && handleAddCustomLanguage()}
+            />
+            <button
+              onClick={handleAddCustomLanguage}
+              disabled={!customLanguage.trim()}
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+            >
+              Add
+            </button>
+            <button
+              onClick={() => { setShowCustomLang(false); setCustomLanguage(""); }}
+              className="rounded-lg border px-3 py-2 text-sm hover:bg-muted"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+
+        {/* Load more */}
+        {hasMoreLangs && (
+          <button
+            onClick={() => setShowAllLangs(!showAllLangs)}
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed py-2 text-sm text-muted-foreground transition-all hover:border-primary hover:text-primary"
+          >
+            {showAllLangs ? (
+              <>Show less <ChevronUp className="h-4 w-4" /></>
+            ) : (
+              <>Show {filteredLanguages.length - INITIAL_DISPLAY} more <ChevronDown className="h-4 w-4" /></>
+            )}
+          </button>
+        )}
+      </div>
+
+      {/* Frameworks */}
+      <div className="mt-6">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="font-semibold">Frameworks & Libraries</h3>
+          <span className="text-sm text-muted-foreground">
+            {selectedFrameworks.length} selected
+          </span>
+        </div>
+
+        {/* Search */}
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text"
+            value={fwSearch}
+            onChange={(e) => setFwSearch(e.target.value)}
+            placeholder="Search frameworks..."
+            className="w-full rounded-lg border bg-background py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+
+        {/* Grid with fade effect */}
+        <div className="relative">
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+            {displayedFrameworks.map((fw) => (
+              <button
+                key={fw.value}
+                onClick={() => onToggleFramework(fw.value)}
+                className={`flex items-center gap-2 rounded-lg border p-2.5 text-left transition-all hover:border-primary ${
+                  selectedFrameworks.includes(fw.value)
+                    ? "border-primary bg-primary/5 ring-1 ring-primary"
+                    : ""
+                }`}
+              >
+                <span className="text-lg">{fw.icon}</span>
+                <span className="truncate text-sm font-medium">{fw.label}</span>
+              </button>
+            ))}
+
+            {/* Custom frameworks */}
+            {customFws.map((fw) => (
+              <button
+                key={`custom:${fw}`}
+                onClick={() => onToggleFramework(`custom:${fw}`)}
+                className="flex items-center gap-2 rounded-lg border border-primary bg-primary/5 p-2.5 text-left ring-1 ring-primary"
+              >
+                <span className="text-lg">📝</span>
+                <span className="truncate text-sm font-medium">{fw}</span>
+              </button>
+            ))}
+
+            {/* Add Other button */}
+            {!showCustomFw && (
+              <button
+                onClick={() => setShowCustomFw(true)}
+                className="flex items-center gap-2 rounded-lg border border-dashed p-2.5 text-left transition-all hover:border-primary"
+              >
+                <Plus className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Other...</span>
+              </button>
+            )}
+          </div>
+
+          {/* Fade overlay for load more */}
+          {hasMoreFws && !showAllFrameworks && (
+            <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-background to-transparent" />
+          )}
+        </div>
+
+        {/* Custom framework input */}
+        {showCustomFw && (
+          <div className="mt-2 flex gap-2">
+            <input
+              type="text"
+              value={customFramework}
+              onChange={(e) => setCustomFramework(e.target.value)}
+              placeholder="Enter framework name..."
+              className="flex-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              autoFocus
+              onKeyDown={(e) => e.key === "Enter" && handleAddCustomFramework()}
+            />
+            <button
+              onClick={handleAddCustomFramework}
+              disabled={!customFramework.trim()}
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+            >
+              Add
+            </button>
+            <button
+              onClick={() => { setShowCustomFw(false); setCustomFramework(""); }}
+              className="rounded-lg border px-3 py-2 text-sm hover:bg-muted"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+
+        {/* Load more */}
+        {hasMoreFws && (
+          <button
+            onClick={() => setShowAllFrameworks(!showAllFrameworks)}
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed py-2 text-sm text-muted-foreground transition-all hover:border-primary hover:text-primary"
+          >
+            {showAllFrameworks ? (
+              <>Show less <ChevronUp className="h-4 w-4" /></>
+            ) : (
+              <>Show {filteredFrameworks.length - INITIAL_DISPLAY} more <ChevronDown className="h-4 w-4" /></>
+            )}
+          </button>
+        )}
       </div>
     </div>
   );

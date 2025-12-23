@@ -126,10 +126,12 @@ export async function GET(request: NextRequest) {
         price: true,
         currency: true,
         createdAt: true,
+        userId: true,
         user: {
           select: {
             name: true,
             displayName: true,
+            isProfilePublic: true,
           },
         },
       },
@@ -182,6 +184,7 @@ export async function GET(request: NextRequest) {
         name: t.name,
         description: t.description || "",
         author: t.user?.displayName || t.user?.name || "Anonymous",
+        authorId: t.user?.isProfilePublic ? t.userId : undefined,
         downloads: t.downloads,
         likes: t.favorites,
         tags: t.tags || [],
