@@ -5,8 +5,9 @@ import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Mail, Github, Chrome, ArrowLeft, Loader2 } from "lucide-react";
+import { Mail, Github, Chrome, ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { Turnstile } from "@/components/turnstile";
 
 function SignInContent() {
   const searchParams = useSearchParams();
@@ -35,13 +36,43 @@ function SignInContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileError, setTurnstileError] = useState<string | null>(null);
+
+  // Check if Turnstile is configured
+  const turnstileEnabled = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
+    setTurnstileError(null);
+
+    // Verify turnstile if enabled
+    if (turnstileEnabled && !turnstileToken) {
+      setTurnstileError("Please complete the security verification.");
+      return;
+    }
+
     setIsLoading(true);
     setLoadingProvider("email");
 
     try {
+      // Verify turnstile token first
+      if (turnstileEnabled && turnstileToken) {
+        const verifyRes = await fetch("/api/auth/verify-turnstile", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: turnstileToken }),
+        });
+
+        if (!verifyRes.ok) {
+          setTurnstileError("Security verification failed. Please try again.");
+          setIsLoading(false);
+          setLoadingProvider(null);
+          setTurnstileToken(null);
+          return;
+        }
+      }
+
       const result = await signIn("email", {
         email,
         callbackUrl,
@@ -197,10 +228,36 @@ function SignInContent() {
                       />
                     </div>
                   </div>
+
+                  {/* Turnstile CAPTCHA */}
+                  {turnstileEnabled && (
+                    <div className="mt-4">
+                      <Turnstile
+                        onSuccess={(token) => {
+                          setTurnstileToken(token);
+                          setTurnstileError(null);
+                        }}
+                        onExpire={() => setTurnstileToken(null)}
+                        onError={() => setTurnstileToken(null)}
+                      />
+                      {turnstileToken && (
+                        <p className="mt-2 text-sm text-green-600 dark:text-green-400 flex items-center gap-1">
+                          <CheckCircle2 className="h-4 w-4" />
+                          Verified
+                        </p>
+                      )}
+                      {turnstileError && (
+                        <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+                          {turnstileError}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   <Button
                     type="submit"
                     className="mt-4 w-full"
-                    disabled={isLoading || !email}
+                    disabled={isLoading || !email || (turnstileEnabled && !turnstileToken)}
                   >
                     {loadingProvider === "email" ? (
                       <>

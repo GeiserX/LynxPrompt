@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 
 // Template type options
 const TEMPLATE_TYPES = [
@@ -231,23 +232,42 @@ export async function POST(request: NextRequest) {
       tags, 
       isPublic = true, 
       price, 
-      currency = "EUR" 
+      currency = "EUR",
+      turnstileToken,
     } = body;
+
+    // Fetch user plan to check if turnstile verification is needed
+    const user = await prismaUsers.user.findUnique({
+      where: { id: session.user.id },
+      select: { subscriptionPlan: true, role: true },
+    });
+
+    const isPaidUser = 
+      user?.subscriptionPlan === "PRO" || 
+      user?.subscriptionPlan === "MAX" ||
+      user?.role === "ADMIN" ||
+      user?.role === "SUPERADMIN";
+
+    // Verify turnstile for FREE users
+    if (!isPaidUser && turnstileToken) {
+      const isValid = await verifyTurnstileToken(turnstileToken);
+      if (!isValid) {
+        return NextResponse.json(
+          { error: "Security verification failed. Please try again." },
+          { status: 400 }
+        );
+      }
+    } else if (!isPaidUser && process.env.TURNSTILE_SECRET_KEY) {
+      // Require turnstile for FREE users if configured
+      return NextResponse.json(
+        { error: "Security verification required." },
+        { status: 400 }
+      );
+    }
 
     // Check if user can create paid blueprints
     if (price !== null && price !== undefined && price > 0) {
-      const user = await prismaUsers.user.findUnique({
-        where: { id: session.user.id },
-        select: { subscriptionPlan: true, role: true },
-      });
-
-      const canCreatePaid = 
-        user?.subscriptionPlan === "PRO" || 
-        user?.subscriptionPlan === "MAX" ||
-        user?.role === "ADMIN" ||
-        user?.role === "SUPERADMIN";
-
-      if (!canCreatePaid) {
+      if (!isPaidUser) {
         return NextResponse.json(
           { error: "Only PRO or MAX subscribers can create paid blueprints. Upgrade your plan to unlock this feature." },
           { status: 403 }
@@ -343,8 +363,10 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error creating template:", error);
+    // Return more descriptive error for debugging
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "Failed to create template" },
+      { error: `Failed to create template: ${errorMessage}` },
       { status: 500 }
     );
   }
