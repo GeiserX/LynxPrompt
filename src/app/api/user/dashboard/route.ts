@@ -122,12 +122,33 @@ export async function GET() {
     ]);
 
     // Enrich activity with template names
-    const templateIds = [...new Set(recentActivity.map((a) => a.templateId))];
-    const templateNames = await prismaUsers.userTemplate.findMany({
-      where: { id: { in: templateIds } },
+    // Template IDs in downloads are stored WITH prefix (usr_xxx, sys_xxx)
+    // Need to strip prefix for database lookup, then map back
+    const userTemplateIds = recentActivity
+      .filter((a) => a.templateId.startsWith("usr_"))
+      .map((a) => a.templateId.replace(/^usr_/, ""));
+    const systemTemplateIds = recentActivity
+      .filter((a) => a.templateId.startsWith("sys_"))
+      .map((a) => a.templateId.replace(/^sys_/, ""));
+
+    // Fetch user templates
+    const userTemplateNames = await prismaUsers.userTemplate.findMany({
+      where: { id: { in: userTemplateIds } },
       select: { id: true, name: true },
     });
-    const templateNameMap = new Map(templateNames.map((t) => [t.id, t.name]));
+    
+    // Fetch system templates if any
+    const systemTemplateNames = systemTemplateIds.length > 0 
+      ? await prismaApp.systemTemplate.findMany({
+          where: { id: { in: systemTemplateIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+
+    // Create map with prefixed IDs
+    const templateNameMap = new Map<string, string>();
+    userTemplateNames.forEach((t) => templateNameMap.set(`usr_${t.id}`, t.name));
+    systemTemplateNames.forEach((t) => templateNameMap.set(`sys_${t.id}`, t.name));
 
     const enrichedActivity = recentActivity.map((activity) => ({
       ...activity,

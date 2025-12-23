@@ -9,11 +9,13 @@ interface WizardConfig {
   frameworks: string[];
   letAiDecide: boolean;
   repoHost: string;
+  repoHostOther?: string;
   repoUrl: string;
+  exampleRepoUrl?: string;
   isPublic: boolean;
   license: string;
   funding: boolean;
-  fundingUrl: string;
+  fundingYml?: string;
   releaseStrategy: string;
   customReleaseStrategy: string;
   cicd: string[];
@@ -172,6 +174,11 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
   lines.push("");
   lines.push("## Project Context");
   lines.push(`This is ${config.projectDescription || "a software project"}.`);
+  if (config.exampleRepoUrl) {
+    lines.push("");
+    lines.push(`**Reference Repository**: ${config.exampleRepoUrl}`);
+    lines.push("Use this repository as a reference for coding patterns, conventions, and architecture decisions.");
+  }
   lines.push("");
 
   if (config.languages.length > 0 || config.frameworks.length > 0 || config.letAiDecide) {
@@ -526,31 +533,22 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.`;
 
 // Generate FUNDING.yml
 function generateFunding(config: WizardConfig): string {
+  // If user provided custom FUNDING.yml content, use it directly
+  if (config.fundingYml && config.fundingYml.trim()) {
+    return config.fundingYml.trim();
+  }
+
+  // Otherwise, provide a template
   const lines: string[] = [];
   lines.push("# Funding links");
   lines.push(
     "# See https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository"
   );
   lines.push("");
-
-  if (config.fundingUrl) {
-    if (config.fundingUrl.includes("github.com/sponsors")) {
-      const username = config.fundingUrl.split("/").pop();
-      lines.push(`github: [${username}]`);
-    } else if (config.fundingUrl.includes("patreon.com")) {
-      const username = config.fundingUrl.split("/").pop();
-      lines.push(`patreon: ${username}`);
-    } else if (config.fundingUrl.includes("ko-fi.com")) {
-      const username = config.fundingUrl.split("/").pop();
-      lines.push(`ko_fi: ${username}`);
-    } else {
-      lines.push(`custom: ["${config.fundingUrl}"]`);
-    }
-  } else {
-    lines.push("# github: your-username");
-    lines.push("# patreon: your-username");
-    lines.push("# custom: ['https://your-donation-link.com']");
-  }
+  lines.push("# github: your-username");
+  lines.push("# patreon: your-username");
+  lines.push("# ko_fi: your-username");
+  lines.push("# custom: ['https://your-donation-link.com']");
 
   return lines.join("\n");
 }
@@ -564,8 +562,6 @@ function getRuleDescription(ruleId: string): string {
     run_tests_before_commit: "Ensure all tests pass before committing",
     security_audit_after_commit: "Perform security audit after every commit",
     bug_search_before_commit: "Search for potential bugs before committing",
-    prefer_simple_solutions:
-      "Favor straightforward implementations over complex ones",
     follow_existing_patterns:
       "Match the codebase's existing style and patterns",
     ask_before_large_refactors: "Confirm before making significant changes",

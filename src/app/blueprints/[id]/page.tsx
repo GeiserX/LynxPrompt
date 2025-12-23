@@ -96,6 +96,7 @@ export default function BlueprintDetailPage() {
   const [copied, setCopied] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [shareSuccess, setShareSuccess] = useState(false);
 
   useEffect(() => {
     // Fetch blueprint data
@@ -174,6 +175,42 @@ export default function BlueprintDetailPage() {
       await navigator.clipboard.writeText(blueprint.content);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleShare = async () => {
+    const shareUrl = window.location.href;
+    const shareData = {
+      title: blueprint?.name || "Blueprint",
+      text: blueprint?.description || "Check out this AI configuration blueprint!",
+      url: shareUrl,
+    };
+
+    // Try native share API first (mobile, some desktop browsers)
+    if (navigator.share && navigator.canShare?.(shareData)) {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch {
+        // User cancelled or error - fall back to clipboard
+      }
+    }
+
+    // Fall back to copying URL to clipboard
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setShareSuccess(true);
+      setTimeout(() => setShareSuccess(false), 2000);
+    } catch {
+      // Fallback for older browsers
+      const textArea = document.createElement("textarea");
+      textArea.value = shareUrl;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+      setShareSuccess(true);
+      setTimeout(() => setShareSuccess(false), 2000);
     }
   };
 
@@ -469,9 +506,13 @@ export default function BlueprintDetailPage() {
                   />
                   {isFavorited ? "Liked" : "Like"}
                 </Button>
-                <Button variant="ghost" size="lg">
-                  <Share2 className="mr-2 h-5 w-5" />
-                  Share
+                <Button variant="ghost" size="lg" onClick={handleShare}>
+                  {shareSuccess ? (
+                    <Check className="mr-2 h-5 w-5" />
+                  ) : (
+                    <Share2 className="mr-2 h-5 w-5" />
+                  )}
+                  {shareSuccess ? "Link Copied!" : "Share"}
                 </Button>
               </div>
               <Link

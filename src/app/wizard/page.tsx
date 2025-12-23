@@ -294,12 +294,6 @@ const AI_BEHAVIOR_RULES = [
     recommended: false,
   },
   {
-    id: "prefer_simple_solutions",
-    label: "Prefer Simple Solutions",
-    description: "Favor straightforward implementations",
-    recommended: true,
-  },
-  {
     id: "follow_existing_patterns",
     label: "Follow Existing Patterns",
     description: "Match the codebase's existing style",
@@ -409,11 +403,13 @@ type WizardConfig = {
   frameworks: string[];
   letAiDecide: boolean;
   repoHost: string;
+  repoHostOther: string;
   repoUrl: string;
+  exampleRepoUrl: string;
   isPublic: boolean;
   license: string;
   funding: boolean;
-  fundingUrl: string;
+  fundingYml: string;
   conventionalCommits: boolean;
   semver: boolean;
   releaseStrategy: string;
@@ -425,7 +421,7 @@ type WizardConfig = {
   registryUsername: string;
   aiBehaviorRules: string[];
   enableAutoUpdate: boolean;
-  platforms: string[];
+  platform: string;
   additionalFeedback: string;
 };
 
@@ -446,11 +442,13 @@ export default function WizardPage() {
     frameworks: [],
     letAiDecide: false,
     repoHost: "github",
+    repoHostOther: "",
     repoUrl: "",
+    exampleRepoUrl: "",
     isPublic: true,
     license: "mit",
     funding: false,
-    fundingUrl: "",
+    fundingYml: "",
     conventionalCommits: true,
     semver: true,
     releaseStrategy: "",
@@ -466,7 +464,7 @@ export default function WizardPage() {
       "follow_existing_patterns",
     ],
     enableAutoUpdate: false,
-    platforms: ["cursor", "claude"],
+    platform: "cursor",
     additionalFeedback: "",
   });
 
@@ -539,11 +537,13 @@ export default function WizardPage() {
           frameworks: config.frameworks,
           letAiDecide: config.letAiDecide,
           repoHost: config.repoHost,
+          repoHostOther: config.repoHostOther,
           repoUrl: config.repoUrl,
+          exampleRepoUrl: config.exampleRepoUrl,
           isPublic: config.isPublic,
           license: config.license,
           funding: config.funding,
-          fundingUrl: config.fundingUrl,
+          fundingYml: config.fundingYml,
           releaseStrategy: config.releaseStrategy,
           customReleaseStrategy: config.releaseStrategyOther,
           cicd: [config.cicd],
@@ -552,7 +552,7 @@ export default function WizardPage() {
           deploymentTarget: [],
           aiBehaviorRules: config.aiBehaviorRules,
           enableAutoUpdate: config.enableAutoUpdate,
-          platforms: config.platforms,
+          platforms: [config.platform],
           additionalFeedback: config.additionalFeedback,
         };
         const userProfile = {
@@ -594,7 +594,7 @@ export default function WizardPage() {
   };
 
   const toggleArrayValue = (
-    key: "languages" | "frameworks" | "aiBehaviorRules" | "platforms",
+    key: "languages" | "frameworks" | "aiBehaviorRules",
     value: string
   ) => {
     setConfig((prev) => ({
@@ -616,11 +616,13 @@ export default function WizardPage() {
         frameworks: config.frameworks,
         letAiDecide: config.letAiDecide,
         repoHost: config.repoHost,
+        repoHostOther: config.repoHostOther,
         repoUrl: config.repoUrl,
+        exampleRepoUrl: config.exampleRepoUrl,
         isPublic: config.isPublic,
         license: config.license,
         funding: config.funding,
-        fundingUrl: config.fundingUrl,
+        fundingYml: config.fundingYml,
         releaseStrategy: config.releaseStrategy,
         customReleaseStrategy: config.releaseStrategyOther,
         cicd: [config.cicd],
@@ -629,7 +631,7 @@ export default function WizardPage() {
         deploymentTarget: [],
         aiBehaviorRules: config.aiBehaviorRules,
         enableAutoUpdate: config.enableAutoUpdate,
-        platforms: config.platforms,
+        platforms: [config.platform],
         additionalFeedback: config.additionalFeedback,
       };
 
@@ -863,8 +865,8 @@ export default function WizardPage() {
               )}
               {currentStep === 6 && (
                 <StepPlatforms
-                  selected={config.platforms}
-                  onToggle={(v) => toggleArrayValue("platforms", v)}
+                  selected={config.platform}
+                  onSelect={(v) => setConfig({ ...config, platform: v })}
                 />
               )}
               {currentStep === 7 && (
@@ -1348,6 +1350,14 @@ function StepTechStack({
   );
 }
 
+const REPO_HOSTS = [
+  { id: "github", label: "GitHub", icon: "🐙" },
+  { id: "gitlab", label: "GitLab", icon: "🦊" },
+  { id: "gitea", label: "Gitea", icon: "🍵" },
+  { id: "bitbucket", label: "Bitbucket", icon: "🪣" },
+  { id: "other", label: "Other", icon: "📦" },
+];
+
 function StepRepository({
   config,
   onChange,
@@ -1363,6 +1373,38 @@ function StepRepository({
       </p>
 
       <div className="mt-6 space-y-6">
+        {/* Repository Host */}
+        <div>
+          <label className="text-sm font-medium">Repository Host</label>
+          <div className="mt-2 grid grid-cols-3 gap-2">
+            {REPO_HOSTS.map((host) => (
+              <button
+                key={host.id}
+                onClick={() => onChange({ repoHost: host.id })}
+                className={`flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm transition-all ${
+                  config.repoHost === host.id
+                    ? "border-primary bg-primary/5"
+                    : "hover:border-primary"
+                }`}
+              >
+                <span>{host.icon}</span>
+                <span>{host.label}</span>
+              </button>
+            ))}
+          </div>
+          {config.repoHost === "other" && (
+            <div className="mt-3">
+              <input
+                type="text"
+                value={config.repoHostOther || ""}
+                onChange={(e) => onChange({ repoHostOther: e.target.value })}
+                placeholder="e.g., Forgejo, Gogs, Azure DevOps..."
+                className="w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+          )}
+        </div>
+
         {/* License */}
         <div>
           <label className="text-sm font-medium">License</label>
@@ -1383,6 +1425,21 @@ function StepRepository({
               )
             )}
           </div>
+        </div>
+
+        {/* Example Repository URL */}
+        <div>
+          <label className="text-sm font-medium">Example Repository (optional)</label>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Share a public repository that&apos;s similar to what you&apos;re building. This helps AI understand your coding style better.
+          </p>
+          <input
+            type="text"
+            value={config.exampleRepoUrl || ""}
+            onChange={(e) => onChange({ exampleRepoUrl: e.target.value })}
+            placeholder="e.g., https://github.com/user/similar-project"
+            className="mt-2 w-full rounded-lg border bg-background px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+          />
         </div>
 
         {/* Toggles */}
@@ -1576,8 +1633,8 @@ function StepCICD({
           </>
         )}
 
-        {/* GitHub-specific: Funding */}
-        {config.cicd === "github_actions" && (
+        {/* GitHub-specific: Funding - only show when repo host is GitHub */}
+        {config.repoHost === "github" && (
           <div className="border-t pt-6">
             <h3 className="mb-3 font-semibold">GitHub Features</h3>
             <ToggleOption
@@ -1588,13 +1645,25 @@ function StepCICD({
             />
             {config.funding && (
               <div className="mt-4">
-                <label className="text-sm font-medium">Funding URL (optional)</label>
-                <input
-                  type="text"
-                  value={config.fundingUrl || ""}
-                  onChange={(e) => onChange({ fundingUrl: e.target.value })}
-                  placeholder="e.g., https://github.com/sponsors/yourusername"
-                  className="mt-2 w-full rounded-lg border bg-background px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                <label className="text-sm font-medium">FUNDING.yml Content</label>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Define your funding sources. See{" "}
+                  <a 
+                    href="https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    GitHub docs
+                  </a>{" "}
+                  for format examples.
+                </p>
+                <textarea
+                  value={config.fundingYml || ""}
+                  onChange={(e) => onChange({ fundingYml: e.target.value })}
+                  placeholder={`# Example FUNDING.yml\ngithub: [your-username]\npatreon: your-patreon\nko_fi: your-kofi`}
+                  rows={5}
+                  className="mt-2 w-full rounded-lg border bg-background px-4 py-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
             )}
@@ -1661,30 +1730,29 @@ function StepAIBehavior({
       </div>
 
       {/* Auto-Update Option */}
-      <div className="mt-8 rounded-xl border-2 border-dashed border-purple-300 bg-purple-50/50 p-6 dark:border-purple-700 dark:bg-purple-900/20">
+      <div className="mt-8">
         <button
           onClick={() => onAutoUpdateChange(!enableAutoUpdate)}
-          className="flex w-full items-start gap-4 text-left"
+          className={`flex w-full items-start gap-4 rounded-lg border p-4 text-left transition-all ${
+            enableAutoUpdate
+              ? "border-primary bg-primary/5"
+              : "hover:border-primary"
+          }`}
         >
           <div
             className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
               enableAutoUpdate
-                ? "border-purple-600 bg-purple-600 text-white"
-                : "border-purple-400"
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-muted-foreground"
             }`}
           >
             {enableAutoUpdate && <Check className="h-3 w-3" />}
           </div>
           <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-purple-900 dark:text-purple-100">
-                Enable Self-Improving Blueprint
-              </span>
-              <span className="rounded bg-purple-200 px-2 py-0.5 text-xs text-purple-700 dark:bg-purple-800 dark:text-purple-200">
-                Experimental
-              </span>
-            </div>
-            <p className="mt-1 text-sm text-purple-700 dark:text-purple-300">
+            <span className="font-semibold">
+              Enable Self-Improving Blueprint
+            </span>
+            <p className="mt-1 text-sm text-muted-foreground">
               Include an instruction for AI agents to track your coding patterns and automatically
               update this configuration file as you work. The AI will learn from your preferences
               and improve the rules over time.
@@ -1698,28 +1766,28 @@ function StepAIBehavior({
 
 function StepPlatforms({
   selected,
-  onToggle,
+  onSelect,
 }: {
-  selected: string[];
-  onToggle: (v: string) => void;
+  selected: string;
+  onSelect: (v: string) => void;
 }) {
   return (
     <div>
-      <h2 className="text-2xl font-bold">Select AI IDE Platforms</h2>
+      <h2 className="text-2xl font-bold">Select AI IDE Platform</h2>
       <p className="mt-2 text-muted-foreground">
-        Choose which platforms to generate configuration files for.
+        Choose which platform to generate the configuration file for.
       </p>
       <p className="mt-1 text-sm text-muted-foreground/80">
-        💡 These files are <strong>optimized for</strong> the selected platforms, but often work across multiple AI-powered IDEs.
+        💡 The file is <strong>optimized for</strong> the selected platform, but works across multiple AI-powered IDEs.
       </p>
 
       <div className="mt-6 grid grid-cols-2 gap-4">
         {PLATFORMS.map((platform) => (
           <button
             key={platform.id}
-            onClick={() => onToggle(platform.id)}
+            onClick={() => onSelect(platform.id)}
             className={`relative overflow-hidden rounded-xl border p-6 text-left transition-all ${
-              selected.includes(platform.id)
+              selected === platform.id
                 ? "border-primary ring-2 ring-primary"
                 : "hover:border-primary"
             }`}
@@ -1741,7 +1809,7 @@ function StepPlatforms({
                 )}
               </div>
             </div>
-            {selected.includes(platform.id) && (
+            {selected === platform.id && (
               <div className="absolute right-3 top-3">
                 <Check className="h-5 w-5 text-primary" />
               </div>
