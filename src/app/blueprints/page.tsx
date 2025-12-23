@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
-  Sparkles,
   Search,
   Download,
   Heart,
@@ -17,26 +16,30 @@ import {
   ChevronDown,
   ChevronUp,
   X,
+  Filter,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
 
-// All available platforms
-const ALL_PLATFORMS = [
-  "Cursor",
-  "Claude",
-  "GitHub Copilot",
-  "Windsurf",
-  "VS Code",
-  "Aider",
-  "Continue.dev",
-  "Cody",
-  "Gemini",
-  "Amazon Q",
-  "JetBrains AI",
-  "Zed",
-  "Tabnine",
-  "Void",
+// Real categories for blueprints
+const CATEGORIES = [
+  { id: "all", label: "All Blueprints" },
+  { id: "web", label: "Web Development" },
+  { id: "fullstack", label: "Full Stack" },
+  { id: "devops", label: "DevOps & Infra" },
+  { id: "mobile", label: "Mobile" },
+  { id: "saas", label: "SaaS" },
+  { id: "data", label: "Data & ML" },
+  { id: "api", label: "API & Backend" },
+  { id: "other", label: "Other" },
+];
+
+// Tier options for filtering
+const TIERS = [
+  { id: "all", label: "All Tiers" },
+  { id: "SIMPLE", label: "Simple", description: "Quick configs" },
+  { id: "INTERMEDIATE", label: "Intermediate", description: "Standard setups" },
+  { id: "ADVANCED", label: "Advanced", description: "Comprehensive configs" },
 ];
 
 const SORT_OPTIONS = [
@@ -57,11 +60,19 @@ interface Blueprint {
   likes: number;
   tags: string[];
   tier?: string;
+  category?: string;
   isOfficial?: boolean;
-  price?: number | null; // Price in cents, null = free
-  discountedPrice?: number | null; // Discounted price for MAX users
+  price?: number | null;
+  discountedPrice?: number | null;
   isMaxUser?: boolean;
   currency?: string;
+}
+
+interface ApiResponse {
+  templates: Blueprint[];
+  popularTags: string[];
+  total: number;
+  hasMore: boolean;
 }
 
 export default function BlueprintsPage() {
@@ -88,15 +99,16 @@ function BlueprintsContent() {
   const [sortParam, setSortParam] = useState<SortOption>(
     (searchParams.get("sort") as SortOption) || "popular"
   );
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
-  const [showAllPlatforms, setShowAllPlatforms] = useState(false);
-  const [platformSearch, setPlatformSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get("category") || "all");
+  const [selectedTier, setSelectedTier] = useState(searchParams.get("tier") || "all");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [showAllTags, setShowAllTags] = useState(false);
   const [blueprints, setBlueprints] = useState<Blueprint[]>([]);
-  const [categories, setCategories] = useState<
-    { id: string; label: string; count: number }[]
-  >([]);
+  const [popularTags, setPopularTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [total, setTotal] = useState(0);
 
   // Debounce search input
   useEffect(() => {
@@ -106,13 +118,10 @@ function BlueprintsContent() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Filter platforms based on search
-  const filteredPlatforms = ALL_PLATFORMS.filter((p) =>
-    p.toLowerCase().includes(platformSearch.toLowerCase())
-  );
-  const displayedPlatforms = showAllPlatforms
-    ? filteredPlatforms
-    : filteredPlatforms.slice(0, 5);
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, selectedCategory, selectedTier, selectedTags, sortParam]);
 
   // Fetch blueprints
   useEffect(() => {
@@ -123,13 +132,22 @@ function BlueprintsContent() {
         if (sortParam) params.set("sort", sortParam);
         if (debouncedSearch) params.set("q", debouncedSearch);
         if (selectedCategory && selectedCategory !== "all") params.set("category", selectedCategory);
-        if (selectedPlatforms.length > 0) params.set("platforms", selectedPlatforms.join(","));
+        if (selectedTier && selectedTier !== "all") params.set("tier", selectedTier);
+        if (selectedTags.length > 0) params.set("tags", selectedTags.join(","));
+        params.set("page", page.toString());
+        params.set("limit", "12");
 
         const res = await fetch(`/api/templates?${params.toString()}`);
         if (res.ok) {
-          const data = await res.json();
-          setBlueprints(data.templates || []);
-          setCategories(data.categories || []);
+          const data: ApiResponse = await res.json();
+          if (page === 1) {
+            setBlueprints(data.templates || []);
+          } else {
+            setBlueprints(prev => [...prev, ...(data.templates || [])]);
+          }
+          setPopularTags(data.popularTags || []);
+          setTotal(data.total || 0);
+          setHasMore(data.hasMore || false);
         }
       } catch (error) {
         console.error("Failed to fetch blueprints:", error);
@@ -139,7 +157,7 @@ function BlueprintsContent() {
     };
 
     fetchData();
-  }, [sortParam, debouncedSearch, selectedCategory, selectedPlatforms]);
+  }, [sortParam, debouncedSearch, selectedCategory, selectedTier, selectedTags, page]);
 
   // Update URL when search/sort changes
   const updateURL = (newSort?: SortOption, newSearch?: string) => {
@@ -155,12 +173,16 @@ function BlueprintsContent() {
     updateURL(newSort, undefined);
   };
 
-  const togglePlatform = (platform: string) => {
-    setSelectedPlatforms((prev) =>
-      prev.includes(platform)
-        ? prev.filter((p) => p !== platform)
-        : [...prev, platform]
+  const toggleTag = (tag: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag)
+        ? prev.filter((t) => t !== tag)
+        : [...prev, tag]
     );
+  };
+
+  const handleLoadMore = () => {
+    setPage(prev => prev + 1);
   };
 
   const tierColors: Record<string, string> = {
@@ -175,9 +197,12 @@ function BlueprintsContent() {
     ADVANCED: "Advanced",
   };
 
+  // Tags to display
+  const displayedTags = showAllTags ? popularTags : popularTags.slice(0, 8);
+
   return (
     <div className="flex min-h-screen flex-col">
-      {/* Header - same as main page */}
+      {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <Logo />
@@ -196,7 +221,7 @@ function BlueprintsContent() {
         </div>
       </header>
 
-      {/* Hero */}
+      {/* Hero Section */}
       <section className="border-b bg-gradient-to-b from-muted/50 to-background py-12">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
@@ -208,7 +233,7 @@ function BlueprintsContent() {
               Find the perfect setup for any workflow.
             </p>
 
-            {/* Search - auto-searches as you type */}
+            {/* Search */}
             <div className="relative mx-auto mt-8 max-w-xl">
               <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
               <input
@@ -241,9 +266,12 @@ function BlueprintsContent() {
             <div className="sticky top-24 space-y-6">
               {/* Categories */}
               <div>
-                <h3 className="mb-3 font-semibold">Categories</h3>
+                <h3 className="mb-3 flex items-center gap-2 font-semibold">
+                  <Filter className="h-4 w-4" />
+                  Category
+                </h3>
                 <nav className="space-y-1">
-                  {categories.map((cat) => (
+                  {CATEGORIES.map((cat) => (
                     <button
                       key={cat.id}
                       onClick={() => setSelectedCategory(cat.id)}
@@ -252,74 +280,79 @@ function BlueprintsContent() {
                       }`}
                     >
                       <span>{cat.label}</span>
-                      <span className="text-muted-foreground">{cat.count}</span>
                     </button>
                   ))}
                 </nav>
               </div>
 
-              {/* Platforms - Expandable */}
+              {/* Tier Filter */}
               <div>
-                <h3 className="mb-3 font-semibold">Platforms</h3>
-
-                {/* Platform search */}
-                {(showAllPlatforms || ALL_PLATFORMS.length > 5) && (
-                  <div className="mb-2">
-                    <input
-                      type="text"
-                      value={platformSearch}
-                      onChange={(e) => setPlatformSearch(e.target.value)}
-                      placeholder="Search platforms..."
-                      className="w-full rounded-md border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                    />
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  {displayedPlatforms.map((platform) => (
-                    <label
-                      key={platform}
-                      className="flex cursor-pointer items-center gap-2 text-sm"
+                <h3 className="mb-3 font-semibold">Complexity</h3>
+                <nav className="space-y-1">
+                  {TIERS.map((tier) => (
+                    <button
+                      key={tier.id}
+                      onClick={() => setSelectedTier(tier.id)}
+                      className={`flex w-full flex-col items-start rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted ${
+                        selectedTier === tier.id ? "bg-muted font-medium" : ""
+                      }`}
                     >
-                      <input
-                        type="checkbox"
-                        checked={selectedPlatforms.includes(platform)}
-                        onChange={() => togglePlatform(platform)}
-                        className="rounded"
-                      />
-                      <span>{platform}</span>
-                    </label>
+                      <span>{tier.label}</span>
+                      {tier.description && (
+                        <span className="text-xs text-muted-foreground">{tier.description}</span>
+                      )}
+                    </button>
                   ))}
-                </div>
-
-                {filteredPlatforms.length > 5 && (
-                  <button
-                    onClick={() => setShowAllPlatforms(!showAllPlatforms)}
-                    className="mt-2 flex items-center gap-1 text-sm text-primary hover:underline"
-                  >
-                    {showAllPlatforms ? (
-                      <>
-                        <ChevronUp className="h-4 w-4" />
-                        Show less
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDown className="h-4 w-4" />
-                        Show {filteredPlatforms.length - 5} more
-                      </>
-                    )}
-                  </button>
-                )}
-
-                {selectedPlatforms.length > 0 && (
-                  <button
-                    onClick={() => setSelectedPlatforms([])}
-                    className="mt-2 text-sm text-muted-foreground hover:text-foreground"
-                  >
-                    Clear filters
-                  </button>
-                )}
+                </nav>
               </div>
+
+              {/* Popular Tags */}
+              {popularTags.length > 0 && (
+                <div>
+                  <h3 className="mb-3 font-semibold">Tags</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {displayedTags.map((tag) => (
+                      <button
+                        key={tag}
+                        onClick={() => toggleTag(tag)}
+                        className={`rounded-full px-3 py-1 text-xs transition-colors ${
+                          selectedTags.includes(tag)
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted hover:bg-muted/80"
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                  {popularTags.length > 8 && (
+                    <button
+                      onClick={() => setShowAllTags(!showAllTags)}
+                      className="mt-2 flex items-center gap-1 text-sm text-primary hover:underline"
+                    >
+                      {showAllTags ? (
+                        <>
+                          <ChevronUp className="h-4 w-4" />
+                          Show less
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="h-4 w-4" />
+                          +{popularTags.length - 8} more
+                        </>
+                      )}
+                    </button>
+                  )}
+                  {selectedTags.length > 0 && (
+                    <button
+                      onClick={() => setSelectedTags([])}
+                      className="mt-2 text-sm text-muted-foreground hover:text-foreground"
+                    >
+                      Clear tags
+                    </button>
+                  )}
+                </div>
+              )}
 
               <Button asChild className="w-full">
                 <Link href="/templates/create">
@@ -333,16 +366,21 @@ function BlueprintsContent() {
           {/* Blueprints Grid */}
           <main className="flex-1">
             <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">
-                {sortParam === "popular"
-                  ? "Popular"
-                  : sortParam === "recent"
-                    ? "Recent"
-                    : sortParam === "downloads"
-                      ? "Most Downloaded"
-                      : "Most Favorited"}{" "}
-                Blueprints
-              </h2>
+              <div>
+                <h2 className="text-lg font-semibold">
+                  {sortParam === "popular"
+                    ? "Popular"
+                    : sortParam === "recent"
+                      ? "Recent"
+                      : sortParam === "downloads"
+                        ? "Most Downloaded"
+                        : "Most Favorited"}{" "}
+                  Blueprints
+                </h2>
+                {total > 0 && (
+                  <p className="text-sm text-muted-foreground">{total} blueprint{total !== 1 ? 's' : ''} found</p>
+                )}
+              </div>
               <div className="flex items-center gap-1 rounded-lg border bg-background p-1">
                 {SORT_OPTIONS.map((option) => (
                   <button
@@ -361,16 +399,18 @@ function BlueprintsContent() {
               </div>
             </div>
 
-            {loading ? (
+            {loading && page === 1 ? (
               <div className="flex items-center justify-center py-12">
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
               </div>
             ) : blueprints.length === 0 ? (
               <div className="rounded-lg border border-dashed p-12 text-center">
                 <Users className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-4 font-semibold">No blueprints yet</h3>
+                <h3 className="mt-4 font-semibold">No blueprints found</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Be the first to contribute a blueprint!
+                  {debouncedSearch || selectedCategory !== "all" || selectedTier !== "all" || selectedTags.length > 0
+                    ? "Try adjusting your filters"
+                    : "Be the first to contribute a blueprint!"}
                 </p>
                 <Button asChild className="mt-4">
                   <Link
@@ -395,7 +435,7 @@ function BlueprintsContent() {
                     ? `€${(blueprint.discountedPrice! / 100).toFixed(0)}`
                     : isPaid 
                       ? `€${(blueprint.price! / 100).toFixed(0)}` 
-                      : "Free";
+                      : null;
                   const originalPrice = hasDiscount ? `€${(blueprint.price! / 100).toFixed(0)}` : null;
                   
                   return (
@@ -417,15 +457,19 @@ function BlueprintsContent() {
                           <div className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${
                             isPaid 
                               ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white" 
-                              : "border-2 border-green-500 bg-green-500/10 text-green-700 dark:border-green-400 dark:bg-green-500/20 dark:text-green-300"
+                              : "border-2 border-emerald-600 bg-emerald-100 text-emerald-800 dark:border-emerald-400 dark:bg-emerald-900/50 dark:text-emerald-200"
                           }`}>
-                            {hasDiscount ? (
-                              <span className="flex items-center gap-1.5">
-                                <span className="line-through opacity-70">{originalPrice}</span>
-                                <span>{displayPrice}</span>
-                              </span>
+                            {isPaid ? (
+                              hasDiscount ? (
+                                <span className="flex items-center gap-1.5">
+                                  <span className="line-through opacity-70">{originalPrice}</span>
+                                  <span>{displayPrice}</span>
+                                </span>
+                              ) : (
+                                displayPrice
+                              )
                             ) : (
-                              displayPrice
+                              "Free"
                             )}
                           </div>
                         </div>
@@ -498,11 +542,16 @@ function BlueprintsContent() {
               </div>
             )}
 
-            {/* Load More */}
-            {blueprints.length > 0 && (
+            {/* Load More - only show if there are more */}
+            {hasMore && blueprints.length > 0 && (
               <div className="mt-8 text-center">
-                <Button variant="outline" size="lg">
-                  Load More Blueprints
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  onClick={handleLoadMore}
+                  disabled={loading}
+                >
+                  {loading ? "Loading..." : `Load More (${total - blueprints.length} remaining)`}
                 </Button>
               </div>
             )}
@@ -532,7 +581,7 @@ function BlueprintsContent() {
       <footer className="border-t py-8">
         <div className="container mx-auto flex flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:px-6 lg:px-8">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-muted-foreground" />
+            <img src="/favicon.ico" alt="LynxPrompt" className="h-4 w-4" />
             <p className="text-sm text-muted-foreground">
               © 2025 LynxPrompt by{" "}
               <a
@@ -570,6 +619,3 @@ function BlueprintsContent() {
     </div>
   );
 }
-
-
-
