@@ -469,7 +469,7 @@ export default function DocsPage() {
             <div className="mt-6 space-y-6">
               <FaqItem
                 question="Is LynxPrompt free to use?"
-                answer="Yes! The basic features are free. You can use the basic wizard, download templates, and browse free community prompts. Premium features like advanced wizards and paid templates require a subscription."
+                answer="Yes! The basic features are free. You can use the basic wizard, download templates, and browse free community blueprints. Premium features like advanced wizards require a subscription. Max subscribers also get 10% off paid blueprints."
               />
               <FaqItem
                 question="Do I need to create an account?"

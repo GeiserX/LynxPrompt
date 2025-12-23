@@ -272,18 +272,24 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
 }
 
 async function handleBlueprintPurchase(session: Stripe.Checkout.Session) {
-  const { templateId, userId, authorId, price, currency } = session.metadata || {};
+  const { templateId, userId, originalPrice, paidPrice, isMaxDiscount, currency } = session.metadata || {};
 
-  if (!templateId || !userId || !price) {
+  // Backwards compatibility with old purchases that only have 'price'
+  const price = originalPrice || session.metadata?.price;
+  const actualPaid = paidPrice || price;
+
+  if (!templateId || !userId || !price || !actualPaid) {
     console.error("Missing metadata in blueprint purchase session");
     return;
   }
 
-  const priceInCents = parseInt(price, 10);
+  const originalPriceInCents = parseInt(price, 10);
+  const paidPriceInCents = parseInt(actualPaid, 10);
   
-  // Revenue split: 70% author, 30% platform
-  const authorShare = Math.floor(priceInCents * 0.7);
-  const platformFee = priceInCents - authorShare;
+  // Author always gets 70% of ORIGINAL price (even if MAX user got discount)
+  const authorShare = Math.floor(originalPriceInCents * 0.7);
+  // Platform fee is what's left from what was paid
+  const platformFee = paidPriceInCents - authorShare;
 
   try {
     // Create purchase record
@@ -291,24 +297,24 @@ async function handleBlueprintPurchase(session: Stripe.Checkout.Session) {
       data: {
         userId,
         templateId,
-        amount: priceInCents,
+        amount: paidPriceInCents, // What was actually paid
         currency: currency || "EUR",
         stripePaymentId: session.payment_intent as string,
-        authorShare,
-        platformFee,
+        authorShare, // 70% of original price
+        platformFee, // Remaining (20% if discounted, 30% if not)
       },
     });
 
-    // Update template revenue
+    // Update template revenue with original price (for author earnings tracking)
     await prismaUsers.userTemplate.update({
       where: { id: templateId },
       data: {
-        totalRevenue: { increment: priceInCents },
+        totalRevenue: { increment: originalPriceInCents },
         downloads: { increment: 1 },
       },
     });
 
-    console.log(`Blueprint purchase: ${templateId} by ${userId} for ${priceInCents} cents (author: ${authorShare}, platform: ${platformFee})`);
+    console.log(`Blueprint purchase: ${templateId} by ${userId} - paid: ${paidPriceInCents} cents, original: ${originalPriceInCents} cents (author: ${authorShare}, platform: ${platformFee}, max discount: ${isMaxDiscount === "true"})`);
   } catch (error) {
     // Handle duplicate purchase (race condition)
     if ((error as { code?: string }).code === "P2002") {

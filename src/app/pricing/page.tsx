@@ -55,14 +55,14 @@ const TIERS = [
     price: "€20",
     period: "/month",
     description:
-      "Full access to everything, including all paid community templates",
+      "Full power with advanced features and discounts on paid blueprints",
     icon: Crown,
     highlighted: false,
     iconStyle: "accent",
     features: [
       { text: "Everything in Pro", included: true },
       { text: "Advanced repo wizards", included: true },
-      { text: "Access ALL paid templates", included: true },
+      { text: "10% off paid blueprints", included: true },
       { text: "Early access to features", included: true },
       { text: "Premium support", included: true },
       { text: "API access (coming soon)", included: true },
@@ -78,7 +78,7 @@ const COMPARISON_FEATURES = [
   { name: "Advanced wizards", free: false, pro: false, max: true },
   { name: "Download configs", free: true, pro: true, max: true },
   { name: "Browse free templates", free: true, pro: true, max: true },
-  { name: "Access paid templates", free: false, pro: false, max: true },
+  { name: "Paid blueprint discount", free: "-", pro: "-", max: "10% off" },
   { name: "Sell templates", free: false, pro: true, max: true },
   { name: "Revenue share", free: "-", pro: "70%", max: "70%" },
   { name: "Save drafts", free: false, pro: true, max: true },
@@ -340,31 +340,29 @@ export default function PricingPage() {
 
               <details className="group rounded-lg border bg-card">
                 <summary className="flex cursor-pointer items-center justify-between p-4 font-medium">
-                  How does the Max subscription work with paid templates?
+                  How does the Max subscription work with paid blueprints?
                   <span className="transition-transform group-open:rotate-180">
                     ↓
                   </span>
                 </summary>
                 <p className="border-t px-4 py-3 text-sm text-muted-foreground">
-                  Max subscribers get unlimited access to ALL paid templates in
-                  the marketplace. Template authors still earn from your usage -
-                  we distribute 70% of Max subscription revenue to creators
-                  based on download share (Spotify-style model).
+                  Max subscribers get a <strong>10% discount</strong> on all paid blueprints.
+                  The discount is applied at checkout. Authors still receive their full 70% cut -
+                  the discount comes from the platform fee (reduced from 30% to 20%).
                 </p>
               </details>
 
               <details className="group rounded-lg border bg-card">
                 <summary className="flex cursor-pointer items-center justify-between p-4 font-medium">
-                  Can I sell my own templates?
+                  Can I sell my own blueprints?
                   <span className="transition-transform group-open:rotate-180">
                     ↓
                   </span>
                 </summary>
                 <p className="border-t px-4 py-3 text-sm text-muted-foreground">
-                  Pro and Max users can create and sell templates. You keep 70%
-                  of direct purchases. For Max subscriber access, you earn from
-                  the monthly revenue pool based on how often your templates are
-                  downloaded.
+                  Pro and Max users can create and sell blueprints. You keep 70%
+                  of every sale. When a Max subscriber buys your blueprint at a discount,
+                  you still receive the same 70% of the original price.
                 </p>
               </details>
 

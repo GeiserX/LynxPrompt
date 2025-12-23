@@ -74,6 +74,9 @@ interface TemplateData {
   category?: string;
   difficulty?: string;
   price?: number | null;
+  discountedPrice?: number | null;
+  discountPercent?: number | null;
+  isMaxUser?: boolean;
   currency?: string;
   isPaid?: boolean;
   hasPurchased?: boolean;
@@ -256,7 +259,15 @@ export default function TemplateDetailPage() {
                     {/* Price badge */}
                     {template.isPaid && (
                       <span className="rounded-full bg-gradient-to-r from-purple-500 to-pink-500 px-3 py-1 text-sm font-semibold text-white">
-                        €{((template.price || 0) / 100).toFixed(0)}
+                        {template.discountedPrice && template.discountedPrice < (template.price || 0) ? (
+                          <>
+                            <span className="line-through opacity-70 mr-1">€{((template.price || 0) / 100).toFixed(0)}</span>
+                            €{(template.discountedPrice / 100).toFixed(0)}
+                            <span className="ml-1 text-xs">(-{template.discountPercent}%)</span>
+                          </>
+                        ) : (
+                          `€${((template.price || 0) / 100).toFixed(0)}`
+                        )}
                       </span>
                     )}
                   </div>
@@ -282,7 +293,9 @@ export default function TemplateDetailPage() {
                     ) : (
                       <ShoppingCart className="mr-2 h-5 w-5" />
                     )}
-                    {purchasing ? "Processing..." : `Purchase for €${((template.price || 0) / 100).toFixed(0)}`}
+                    {purchasing ? "Processing..." : template.discountedPrice && template.discountedPrice < (template.price || 0)
+                      ? `Purchase for €${(template.discountedPrice / 100).toFixed(0)} (was €${((template.price || 0) / 100).toFixed(0)})`
+                      : `Purchase for €${((template.price || 0) / 100).toFixed(0)}`}
                   </Button>
                 ) : (
                   <div className="flex gap-2">
@@ -404,7 +417,9 @@ export default function TemplateDetailPage() {
                       ) : (
                         <ShoppingCart className="mr-2 h-4 w-4" />
                       )}
-                      {purchasing ? "Processing..." : `Purchase for €${((template.price || 0) / 100).toFixed(0)}`}
+                      {purchasing ? "Processing..." : template.discountedPrice && template.discountedPrice < (template.price || 0)
+                        ? `Purchase for €${(template.discountedPrice / 100).toFixed(0)}`
+                        : `Purchase for €${((template.price || 0) / 100).toFixed(0)}`}
                     </Button>
                   </div>
                 </div>
