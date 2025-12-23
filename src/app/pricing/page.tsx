@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, Check, X, Zap, Crown, Star, ArrowRight } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Footer } from "@/components/footer";
 
 const TIERS = [
@@ -117,6 +118,7 @@ export default function PricingPage() {
             <Link href="/docs" className="text-sm hover:underline">
               Docs
             </Link>
+            <ThemeToggle />
             <UserMenu />
           </nav>
         </div>

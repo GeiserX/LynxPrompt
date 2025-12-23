@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Footer } from "@/components/footer";
 import {
   trackTemplateView,
@@ -235,6 +236,7 @@ export default function TemplateDetailPage() {
                 Templates
               </Link>
             </Button>
+            <ThemeToggle />
             <UserMenu />
           </nav>
         </div>

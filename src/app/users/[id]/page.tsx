@@ -19,6 +19,7 @@ import {
 import { Logo } from "@/components/logo";
 import { Footer } from "@/components/footer";
 import { UserMenu } from "@/components/user-menu";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 interface Template {
   id: string;
@@ -115,7 +116,10 @@ export default function UserProfilePage() {
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
           <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
             <Logo />
-            <UserMenu />
+            <div className="flex items-center gap-4">
+              <ThemeToggle />
+              <UserMenu />
+            </div>
           </div>
         </header>
         <main className="flex flex-1 items-center justify-center">
@@ -142,7 +146,10 @@ export default function UserProfilePage() {
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
           <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
             <Logo />
-            <UserMenu />
+            <div className="flex items-center gap-4">
+              <ThemeToggle />
+              <UserMenu />
+            </div>
           </div>
         </header>
         <main className="flex flex-1 items-center justify-center">
@@ -177,6 +184,7 @@ export default function UserProfilePage() {
                 Blueprints
               </Link>
             </Button>
+            <ThemeToggle />
             <UserMenu />
           </nav>
         </div>

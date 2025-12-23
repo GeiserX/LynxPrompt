@@ -22,7 +22,7 @@ FROM base AS deps
 COPY package.json package-lock.json* ./
 
 # Install dependencies
-RUN npm ci
+RUN npm install
 
 # -----------------------------------------------------------------------------
 # Builder stage - build the application
@@ -39,6 +39,7 @@ RUN npx prisma generate --schema=prisma/schema-app.prisma
 RUN npx prisma generate --schema=prisma/schema-users.prisma
 
 # Build the application
+# Note: NEXT_PUBLIC_* vars are fetched at runtime via /api/config/public
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 

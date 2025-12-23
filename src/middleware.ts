@@ -83,11 +83,12 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
     "Content-Security-Policy",
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://umami.geiser.cloud", // Next.js + Umami
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://umami.geiser.cloud https://challenges.cloudflare.com", // Next.js + Umami + Turnstile
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https://avatars.githubusercontent.com https://lh3.googleusercontent.com",
       "font-src 'self' data:",
-      "connect-src 'self' https://umami.geiser.cloud", // Allow Umami tracking
+      "connect-src 'self' https://umami.geiser.cloud https://challenges.cloudflare.com", // Umami + Turnstile
+      "frame-src 'self' https://challenges.cloudflare.com", // Turnstile iframe
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
