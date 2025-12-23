@@ -1,4 +1,4 @@
-import { PrismaClient, TemplateType, TemplateTier } from "@prisma/client-app";
+import { PrismaClient, TemplateType, TemplateTier } from "../src/generated/prisma-app/client";
 
 const prisma = new PrismaClient();
 

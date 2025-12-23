@@ -60,6 +60,7 @@ next-env.d.ts
 
 # Prisma
 prisma/migrations/**/migration_lock.toml
+src/generated/
 
 # Temporary files
 tmp/

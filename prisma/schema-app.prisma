@@ -2,13 +2,13 @@
 // This database contains system templates, platforms, languages, and config
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../node_modules/@prisma/client-app"
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma-app"
+  importFileExtension = ""
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL_APP")
 }
 
 // ============================================================================

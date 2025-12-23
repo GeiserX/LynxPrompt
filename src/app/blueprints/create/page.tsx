@@ -58,7 +58,7 @@ export default function ShareBlueprintPage() {
   const [price, setPrice] = useState<number>(5);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<{ id: string; name: string } | null>(
+  const [success, setSuccess] = useState<{ id: string; name: string; isPublic: boolean } | null>(
     null
   );
   const [sensitiveWarningDismissed, setSensitiveWarningDismissed] = useState(false);
@@ -214,7 +214,7 @@ export default function ShareBlueprintPage() {
         throw new Error(data.error || "Failed to create blueprint");
       }
 
-      setSuccess({ id: data.template.id, name: data.template.name });
+      setSuccess({ id: data.template.id, name: data.template.name, isPublic });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -248,10 +248,13 @@ export default function ShareBlueprintPage() {
             <div className="mb-6 inline-flex rounded-full border-2 border-green-500 bg-green-500/20 p-4 dark:border-green-400 dark:bg-green-500/30">
               <CheckCircle2 className="h-12 w-12 text-green-600 dark:text-green-300" />
             </div>
-            <h1 className="mb-2 text-2xl font-bold">Blueprint Shared!</h1>
+            <h1 className="mb-2 text-2xl font-bold">
+              {success.isPublic ? "Blueprint Shared!" : "Blueprint Created!"}
+            </h1>
             <p className="mb-6 text-muted-foreground">
-              Your blueprint &quot;{success.name}&quot; is now available in the
-              marketplace.
+              {success.isPublic
+                ? `Your blueprint "${success.name}" is now available in the marketplace.`
+                : `Your blueprint "${success.name}" has been saved privately.`}
             </p>
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
               <Button asChild>
@@ -713,3 +716,6 @@ export default function ShareBlueprintPage() {
     </div>
   );
 }
+
+
+

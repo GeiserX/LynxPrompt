@@ -2,13 +2,13 @@
 // This database contains all user-specific data that must be preserved
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../node_modules/@prisma/client-users"
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma-users"
+  importFileExtension = ""
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL_USERS")
 }
 
 // ============================================================================

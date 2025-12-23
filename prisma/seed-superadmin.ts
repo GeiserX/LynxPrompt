@@ -3,7 +3,7 @@
  * Run with: npx tsx prisma/seed-superadmin.ts <email>
  */
 
-import { PrismaClient } from "@prisma/client-users";
+import { PrismaClient } from "../src/generated/prisma-users/client";
 
 const prisma = new PrismaClient();
 
