@@ -22,6 +22,7 @@ export async function GET() {
       myTemplates,
       recentActivity,
       linkedAccounts,
+      purchasedBlueprints,
     ] = await Promise.all([
       // Count templates created by user
       prismaUsers.userTemplate.count({
@@ -93,6 +94,29 @@ export async function GET() {
         where: { userId },
         select: {
           provider: true,
+        },
+      }),
+
+      // Get purchased blueprints (max 6)
+      prismaUsers.blueprintPurchase.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: 6,
+        include: {
+          template: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+              downloads: true,
+              favorites: true,
+              tier: true,
+              price: true,
+              user: {
+                select: { name: true, displayName: true },
+              },
+            },
+          },
         },
       }),
     ]);
@@ -168,6 +192,21 @@ export async function GET() {
       })
     );
 
+    // Format purchased blueprints
+    const formattedPurchases = purchasedBlueprints
+      .filter(p => p.template) // Only include if template still exists
+      .map(p => ({
+        id: `usr_${p.template.id}`,
+        name: p.template.name,
+        description: p.template.description,
+        downloads: p.template.downloads,
+        favorites: p.template.favorites,
+        tier: p.template.tier,
+        price: p.template.price,
+        author: p.template.user?.displayName || p.template.user?.name || "Anonymous",
+        purchasedAt: p.createdAt,
+      }));
+
     return NextResponse.json({
       stats: {
         templatesCreated,
@@ -180,6 +219,7 @@ export async function GET() {
       myTemplates,
       recentActivity: enrichedActivity,
       favoriteTemplates: enrichedFavorites.filter((f) => f !== null),
+      purchasedBlueprints: formattedPurchases,
     });
   } catch (error) {
     console.error("Dashboard API error:", error);

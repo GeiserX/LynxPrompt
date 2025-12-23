@@ -157,10 +157,14 @@ export async function GET(request: NextRequest) {
       .slice(0, 20)
       .map(([tag]) => tag);
 
-    // Check if user is MAX subscriber for discount
+    // Check if user is MAX subscriber for discount and get purchased blueprints
     let isMaxUser = false;
+    let userId: string | null = null;
+    let purchasedIds: Set<string> = new Set();
+    
     const session = await getServerSession(authOptions);
     if (session?.user?.id) {
+      userId = session.user.id;
       const user = await prismaUsers.user.findUnique({
         where: { id: session.user.id },
         select: { subscriptionPlan: true, role: true },
@@ -168,6 +172,13 @@ export async function GET(request: NextRequest) {
       isMaxUser = user?.subscriptionPlan === "MAX" || 
                   user?.role === "ADMIN" || 
                   user?.role === "SUPERADMIN";
+      
+      // Get all blueprints this user has purchased
+      const purchases = await prismaUsers.blueprintPurchase.findMany({
+        where: { userId: session.user.id },
+        select: { templateId: true },
+      });
+      purchasedIds = new Set(purchases.map(p => p.templateId));
     }
 
     // MAX subscribers get 10% discount
@@ -178,6 +189,9 @@ export async function GET(request: NextRequest) {
       const discountedPrice = isMaxUser && t.price 
         ? Math.round(t.price * (1 - MAX_DISCOUNT_PERCENT / 100))
         : null;
+      
+      const isOwner = userId ? t.userId === userId : false;
+      const hasPurchased = purchasedIds.has(t.id);
       
       return {
         id: `usr_${t.id}`,
@@ -195,6 +209,8 @@ export async function GET(request: NextRequest) {
         discountedPrice,
         isMaxUser,
         currency: t.currency || "EUR",
+        isOwner,
+        hasPurchased,
       };
     });
 

@@ -21,6 +21,7 @@ import {
   Plus,
   BarChart3,
   Activity,
+  ShoppingBag,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Footer } from "@/components/footer";
@@ -65,11 +66,24 @@ interface FavoriteTemplate {
   author?: string;
 }
 
+interface PurchasedBlueprint {
+  id: string;
+  name: string;
+  description: string | null;
+  downloads: number;
+  favorites: number;
+  tier: string;
+  price: number;
+  author: string;
+  purchasedAt: string;
+}
+
 interface DashboardData {
   stats: DashboardStats;
   myTemplates: MyTemplate[];
   recentActivity: RecentActivity[];
   favoriteTemplates: FavoriteTemplate[];
+  purchasedBlueprints: PurchasedBlueprint[];
 }
 
 export default function DashboardPage() {
@@ -443,6 +457,54 @@ export default function DashboardPage() {
                   </div>
                 )}
               </div>
+
+              {/* Purchased Blueprints */}
+              {dashboardData?.purchasedBlueprints && dashboardData.purchasedBlueprints.length > 0 && (
+                <div>
+                  <div className="mb-4 flex items-center justify-between">
+                    <h2 className="text-lg font-semibold">Purchased Blueprints</h2>
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link href="/blueprints">
+                        Browse More
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {dashboardData.purchasedBlueprints.map((blueprint) => (
+                      <Link
+                        key={blueprint.id}
+                        href={`/blueprints/${blueprint.id}`}
+                        className="group rounded-lg border bg-card p-4 transition-colors hover:border-primary"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="min-w-0 flex-1">
+                            <h4 className="truncate font-medium group-hover:text-primary">
+                              {blueprint.name}
+                            </h4>
+                            <p className="mt-0.5 text-xs text-muted-foreground">
+                              by {blueprint.author}
+                            </p>
+                          </div>
+                          <span className="ml-2 rounded bg-gradient-to-r from-purple-500/10 to-pink-500/10 px-1.5 py-0.5 text-xs font-medium text-purple-600 dark:text-purple-400">
+                            €{(blueprint.price / 100).toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <ShoppingBag className="h-3 w-3" />
+                            Purchased
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Download className="h-3 w-3" />
+                            {blueprint.downloads}
+                          </span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Right Column: Activity Feed + Getting Started */}
