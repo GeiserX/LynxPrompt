@@ -54,7 +54,9 @@ export default function HomePage() {
           <p className="max-w-2xl text-lg text-muted-foreground">
             Generate and share AI coding assistant rules that work across any IDE.
             One configuration, every platform — Cursor, Claude, Copilot, and more.
-            Bootstrap new projects in minutes.
+          </p>
+          <p className="text-lg font-medium text-muted-foreground">
+            New project? <span className="text-primary">Ready in seconds.</span>
           </p>
 
           <div className="flex gap-4">
@@ -173,7 +175,7 @@ export default function HomePage() {
       <footer className="border-t py-8">
         <div className="container mx-auto flex flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:px-6 lg:px-8">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-muted-foreground" />
+            <img src="/favicon.ico" alt="LynxPrompt" className="h-4 w-4" />
             <p className="text-sm text-muted-foreground">
               © 2025 LynxPrompt by{" "}
               <a

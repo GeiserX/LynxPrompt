@@ -67,18 +67,12 @@ interface UserProfile {
 }
 
 // Platform file names
-// Note: .cursorrules is deprecated, AGENTS.md is the modern standard
 // These are the PRIMARY platforms, but files work across multiple IDEs
 const PLATFORM_FILES: Record<string, string> = {
-  cursor: "AGENTS.md", // Modern standard, replaces .cursorrules
+  cursor: ".cursor/rules/project.mdc", // Cursor's native project rules format
   claude: "CLAUDE.md",
   copilot: ".github/copilot-instructions.md",
   windsurf: ".windsurfrules",
-};
-
-// Legacy file support (for backwards compatibility)
-const LEGACY_FILES: Record<string, string> = {
-  cursor_legacy: ".cursorrules",
 };
 
 // ============================================================================
@@ -158,15 +152,18 @@ export function escapeVariables(content: string): string {
   return content.replace(/\\\[\\\[/g, "[[").replace(/\\\]\\\]/g, "]]");
 }
 
-// Generate AGENTS.md content (modern standard, works with Cursor, Claude, and others)
-// Note: This replaces .cursorrules which is deprecated
-function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
+// Generate Cursor project rules content (.cursor/rules/*.mdc format)
+// MDC format: Markdown with YAML frontmatter
+function generateCursorRules(config: WizardConfig, user: UserProfile): string {
   const lines: string[] = [];
 
-  lines.push(`# ${config.projectName || "Project"} - AI Agent Instructions`);
+  // MDC frontmatter
+  lines.push("---");
+  lines.push(`description: AI rules for ${config.projectName || "this project"}`);
+  lines.push("alwaysApply: true");
+  lines.push("---");
   lines.push("");
-  lines.push("> This file follows the [AGENTS.md](https://agents.md) standard.");
-  lines.push("> It provides instructions for AI coding assistants working on this project.");
+  lines.push(`# ${config.projectName || "Project"} - AI Rules`);
   lines.push("");
   lines.push("## Project Context");
   lines.push(`This is ${config.projectDescription || "a software project"}.`);
@@ -411,11 +408,10 @@ function generateWindsurfRules(
   config: WizardConfig,
   user: UserProfile
 ): string {
-  // Windsurf uses a similar format to AGENTS.md
-  return generateAgentsMd(config, user).replace(
-    "AI Agent Instructions",
-    "Windsurf AI Rules"
-  );
+  // Windsurf uses a similar format to Cursor rules
+  return generateCursorRules(config, user)
+    .replace(/^---[\s\S]*?---\n\n/, "") // Remove MDC frontmatter
+    .replace("AI Rules", "Windsurf AI Rules");
 }
 
 // Generate LICENSE file
@@ -564,8 +560,8 @@ export function generateAllFiles(
     let content = "";
     switch (platform) {
       case "cursor":
-        // Use AGENTS.md (modern standard) instead of deprecated .cursorrules
-        content = generateAgentsMd(config, user);
+        // Generate Cursor's native .mdc format for .cursor/rules/
+        content = generateCursorRules(config, user);
         break;
       case "claude":
         content = generateClaudeMd(config, user);
