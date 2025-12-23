@@ -1,7 +1,7 @@
 # LynxPrompt Dependencies Tracking
 
 > **Last Updated**: December 23, 2024  
-> **Current Version**: 0.9.0
+> **Current Version**: 0.10.0
 
 This document tracks all dependencies and their latest available versions.
 
@@ -69,8 +69,8 @@ This document tracks all dependencies and their latest available versions.
 
 | Service | Current | Latest | Notes |
 |---------|---------|--------|-------|
-| PostgreSQL | 17-alpine | ✅ Latest | Two instances (app + users) |
-| ClickHouse | 24-alpine | ✅ Latest | Analytics database |
+| PostgreSQL | 18.1-alpine3.23 | ✅ Latest | **Upgraded Dec 23, 2024** |
+| ClickHouse | 25.11.2.24-alpine | ✅ Latest | **Upgraded Dec 23, 2024** (v25.12 not on Alpine) |
 | Node.js (Docker) | 20-alpine | ✅ Latest | Runtime in container |
 
 ## Major Upgrade Notes (Dec 23, 2024)
@@ -78,10 +78,22 @@ This document tracks all dependencies and their latest available versions.
 ### ✅ Completed
 - **Tailwind CSS v4.0.6**: Migrated to CSS-first configuration, removed `tailwind.config.ts`, updated `globals.css` with `@import 'tailwindcss'` and `@theme` directive
 - **Zod v4.0.1**: No breaking changes detected in codebase, upgrade seamless
+- **PostgreSQL 18.1-alpine3.23**: Upgraded both app and users databases. **⚠️ Requires data migration from v17**
+- **ClickHouse 25.11.2.24-alpine**: Latest Alpine image (25.12 exists but only standard, not Alpine)
 - **Minor updates**: nodemailer (7.0.12), preact (10.28.0), prettier-plugin-tailwindcss (0.7.2), sonner (2.0.7)
 
 ### ❌ Not Completed
-- **Prisma v7**: Requires complex migration with new config files (`prisma.config.ts`), driver adapters, and datasource URL changes. Kept at v6.19.1 for stability.
+- **Prisma v7**: Attempted migration but TypeScript-only client output incompatible with Next.js Turbopack. Requires custom build pipeline. Kept at v6.19.1 for stability.
+
+### ⚠️ Important Note: PostgreSQL 18 Upgrade
+The PostgreSQL major version upgrade from 17 to 18 requires a data migration. The Docker containers cannot start with existing v17 data directories. To complete the upgrade:
+
+1. **Stop containers**: `docker-compose down`
+2. **Backup data**: Copy `/mnt/user/appdata/lynxprompt/postgres-*` directories
+3. **Option A - Fresh start** (if no critical data): Remove old volumes, let containers recreate
+4. **Option B - Migrate data**: Use `pg_upgrade` or `pg_dump/pg_restore` to migrate data from v17 to v18
+
+Current status: Containers built with Postgres 18 images, deployment pending manual data migration.
 
 ## Update Strategy
 
@@ -92,9 +104,10 @@ This document tracks all dependencies and their latest available versions.
 
 ## Next Steps
 
+- [ ] Complete PostgreSQL 18 data migration
 - [ ] Run `npm outdated` to check remaining packages
 - [ ] Update @radix-ui packages to latest
 - [ ] Update @tanstack/react-query to latest
 - [ ] Check if Stripe SDK has updates
 - [ ] Research next-auth v5 migration path
-- [ ] Monitor Prisma v7 for stability and plan migration
+- [ ] Monitor Prisma v7 for Next.js compatibility
