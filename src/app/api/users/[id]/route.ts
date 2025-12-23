@@ -22,6 +22,12 @@ export async function GET(
         isProfilePublic: true,
         showJobTitle: true,
         showSkillLevel: true,
+        socialGithub: true,
+        socialTwitter: true,
+        socialLinkedin: true,
+        socialWebsite: true,
+        socialYoutube: true,
+        socialBluesky: true,
         createdAt: true,
         templates: {
           where: {
@@ -77,6 +83,13 @@ export async function GET(
       persona: user.showJobTitle ? user.persona : null,
       // Only include skill level if user opted in
       skillLevel: user.showSkillLevel ? user.skillLevel : null,
+      // Social links (always shown if public profile)
+      socialGithub: user.socialGithub,
+      socialTwitter: user.socialTwitter,
+      socialLinkedin: user.socialLinkedin,
+      socialWebsite: user.socialWebsite,
+      socialYoutube: user.socialYoutube,
+      socialBluesky: user.socialBluesky,
       // Member since
       memberSince: user.createdAt,
       // Public templates

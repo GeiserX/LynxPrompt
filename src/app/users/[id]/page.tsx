@@ -15,6 +15,12 @@ import {
   Lock,
   FileText,
   Euro,
+  Github,
+  Twitter,
+  Linkedin,
+  Globe,
+  Youtube,
+  ExternalLink,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Footer } from "@/components/footer";
@@ -43,6 +49,12 @@ interface UserProfile {
   isProfilePublic: boolean;
   persona: string | null;
   skillLevel: string | null;
+  socialGithub: string | null;
+  socialTwitter: string | null;
+  socialLinkedin: string | null;
+  socialWebsite: string | null;
+  socialYoutube: string | null;
+  socialBluesky: string | null;
   memberSince: string;
   templates: Template[];
   templateCount: number;
@@ -248,6 +260,82 @@ export default function UserProfilePage() {
                   <div className="text-sm text-muted-foreground">Favorites</div>
                 </div>
               </div>
+
+              {/* Social Links */}
+              {(profile.socialGithub || profile.socialTwitter || profile.socialLinkedin || 
+                profile.socialWebsite || profile.socialYoutube || profile.socialBluesky) && (
+                <div className="mt-4 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
+                  {profile.socialGithub && (
+                    <a
+                      href={`https://github.com/${profile.socialGithub}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 rounded-full border bg-card px-3 py-1.5 text-sm transition-colors hover:border-primary hover:text-primary"
+                    >
+                      <Github className="h-4 w-4" />
+                      {profile.socialGithub}
+                    </a>
+                  )}
+                  {profile.socialTwitter && (
+                    <a
+                      href={`https://x.com/${profile.socialTwitter}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 rounded-full border bg-card px-3 py-1.5 text-sm transition-colors hover:border-primary hover:text-primary"
+                    >
+                      <Twitter className="h-4 w-4" />
+                      @{profile.socialTwitter}
+                    </a>
+                  )}
+                  {profile.socialLinkedin && (
+                    <a
+                      href={profile.socialLinkedin.startsWith("http") ? profile.socialLinkedin : `https://linkedin.com/in/${profile.socialLinkedin}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 rounded-full border bg-card px-3 py-1.5 text-sm transition-colors hover:border-primary hover:text-primary"
+                    >
+                      <Linkedin className="h-4 w-4" />
+                      LinkedIn
+                    </a>
+                  )}
+                  {profile.socialBluesky && (
+                    <a
+                      href={`https://bsky.app/profile/${profile.socialBluesky}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 rounded-full border bg-card px-3 py-1.5 text-sm transition-colors hover:border-primary hover:text-primary"
+                    >
+                      <svg className="h-4 w-4" viewBox="0 0 360 320" fill="currentColor">
+                        <path d="M180 142c-16.3-31.7-60.7-90.8-102-120C38.5-5.9 0 1.4 0 45.6c0 31.7 15.3 133.4 61.2 150.4 44.5 16.5 82.8-10 92.8-37.4 10 27.4 48.3 53.9 92.8 37.4C292.7 179 308 77.3 308 45.6c0-44.2-38.5-51.5-78-23.6-41.3 29.2-85.7 88.3-102 120h52z"/>
+                      </svg>
+                      @{profile.socialBluesky}
+                    </a>
+                  )}
+                  {profile.socialYoutube && (
+                    <a
+                      href={profile.socialYoutube}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 rounded-full border bg-card px-3 py-1.5 text-sm transition-colors hover:border-primary hover:text-primary"
+                    >
+                      <Youtube className="h-4 w-4" />
+                      YouTube
+                    </a>
+                  )}
+                  {profile.socialWebsite && (
+                    <a
+                      href={profile.socialWebsite}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 rounded-full border bg-card px-3 py-1.5 text-sm transition-colors hover:border-primary hover:text-primary"
+                    >
+                      <Globe className="h-4 w-4" />
+                      Website
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
