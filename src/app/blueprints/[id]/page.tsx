@@ -18,6 +18,7 @@ import {
   ExternalLink,
   Lock,
   ShoppingCart,
+  Pencil,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
@@ -82,6 +83,7 @@ interface TemplateData {
   currency?: string;
   isPaid?: boolean;
   hasPurchased?: boolean;
+  isOwner?: boolean;
 }
 
 export default function BlueprintDetailPage() {
@@ -302,6 +304,14 @@ export default function BlueprintDetailPage() {
                   </Button>
                 ) : (
                   <div className="flex gap-2">
+                    {blueprint.isOwner && (
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/blueprints/${params.id}/edit`}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Edit
+                        </Link>
+                      </Button>
+                    )}
                     <Button variant="outline" size="sm" onClick={handleCopy} disabled={!blueprint.content}>
                       {copied ? (
                         <Check className="mr-2 h-4 w-4" />

@@ -35,6 +35,8 @@ export interface TemplateData {
   // Pricing
   price?: number | null; // Price in cents, null/0 = free
   currency?: string;
+  // Visibility
+  isPublic?: boolean;
 }
 
 export interface CategoryData {
@@ -668,6 +670,7 @@ export async function getTemplateById(
       difficulty: template.difficulty || undefined,
       price: template.price,
       currency: template.currency || "EUR",
+      isPublic: template.isPublic,
     };
   }
 

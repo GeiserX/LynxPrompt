@@ -90,6 +90,12 @@ interface UserProfile {
   isProfilePublic: boolean;
   showJobTitle: boolean;
   showSkillLevel: boolean;
+  socialGithub: string | null;
+  socialTwitter: string | null;
+  socialLinkedin: string | null;
+  socialWebsite: string | null;
+  socialYoutube: string | null;
+  socialBluesky: string | null;
 }
 
 interface LinkedAccount {
@@ -138,6 +144,12 @@ function SettingsContent() {
   const [isProfilePublic, setIsProfilePublic] = useState(false);
   const [showJobTitle, setShowJobTitle] = useState(false);
   const [showSkillLevel, setShowSkillLevel] = useState(false);
+  const [socialGithub, setSocialGithub] = useState("");
+  const [socialTwitter, setSocialTwitter] = useState("");
+  const [socialLinkedin, setSocialLinkedin] = useState("");
+  const [socialWebsite, setSocialWebsite] = useState("");
+  const [socialYoutube, setSocialYoutube] = useState("");
+  const [socialBluesky, setSocialBluesky] = useState("");
 
   // Accounts state
   const [accounts, setAccounts] = useState<LinkedAccount[]>([]);
@@ -181,6 +193,12 @@ function SettingsContent() {
         setIsProfilePublic(data.isProfilePublic || false);
         setShowJobTitle(data.showJobTitle || false);
         setShowSkillLevel(data.showSkillLevel || false);
+        setSocialGithub(data.socialGithub || "");
+        setSocialTwitter(data.socialTwitter || "");
+        setSocialLinkedin(data.socialLinkedin || "");
+        setSocialWebsite(data.socialWebsite || "");
+        setSocialYoutube(data.socialYoutube || "");
+        setSocialBluesky(data.socialBluesky || "");
       }
 
       if (accountsRes.ok) {
@@ -218,6 +236,12 @@ function SettingsContent() {
           isProfilePublic,
           showJobTitle,
           showSkillLevel,
+          socialGithub,
+          socialTwitter,
+          socialLinkedin,
+          socialWebsite,
+          socialYoutube,
+          socialBluesky,
         }),
       });
 
@@ -670,6 +694,119 @@ function SettingsContent() {
                           </p>
                         </div>
                       </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Social Links Section */}
+                <div className="rounded-xl border bg-card p-6">
+                  <h2 className="mb-4 text-lg font-semibold">Social Links</h2>
+                  <p className="mb-4 text-sm text-muted-foreground">
+                    Add your social profiles to display on your public profile page
+                  </p>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {/* GitHub */}
+                    <div>
+                      <label className="mb-1 block text-sm font-medium">
+                        GitHub
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                          github.com/
+                        </span>
+                        <input
+                          type="text"
+                          value={socialGithub}
+                          onChange={(e) => setSocialGithub(e.target.value.replace(/^@/, ""))}
+                          placeholder="username"
+                          className="w-full rounded-lg border bg-background py-2 pl-28 pr-4 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Twitter/X */}
+                    <div>
+                      <label className="mb-1 block text-sm font-medium">
+                        Twitter / X
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                          x.com/
+                        </span>
+                        <input
+                          type="text"
+                          value={socialTwitter}
+                          onChange={(e) => setSocialTwitter(e.target.value.replace(/^@/, ""))}
+                          placeholder="username"
+                          className="w-full rounded-lg border bg-background py-2 pl-16 pr-4 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                        />
+                      </div>
+                    </div>
+
+                    {/* LinkedIn */}
+                    <div>
+                      <label className="mb-1 block text-sm font-medium">
+                        LinkedIn
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                          linkedin.com/in/
+                        </span>
+                        <input
+                          type="text"
+                          value={socialLinkedin}
+                          onChange={(e) => setSocialLinkedin(e.target.value)}
+                          placeholder="username"
+                          className="w-full rounded-lg border bg-background py-2 pl-32 pr-4 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Bluesky */}
+                    <div>
+                      <label className="mb-1 block text-sm font-medium">
+                        Bluesky
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                          @
+                        </span>
+                        <input
+                          type="text"
+                          value={socialBluesky}
+                          onChange={(e) => setSocialBluesky(e.target.value.replace(/^@/, ""))}
+                          placeholder="handle.bsky.social"
+                          className="w-full rounded-lg border bg-background py-2 pl-8 pr-4 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                        />
+                      </div>
+                    </div>
+
+                    {/* YouTube */}
+                    <div>
+                      <label className="mb-1 block text-sm font-medium">
+                        YouTube
+                      </label>
+                      <input
+                        type="url"
+                        value={socialYoutube}
+                        onChange={(e) => setSocialYoutube(e.target.value)}
+                        placeholder="https://youtube.com/@channel"
+                        className="w-full rounded-lg border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                      />
+                    </div>
+
+                    {/* Website */}
+                    <div>
+                      <label className="mb-1 block text-sm font-medium">
+                        Website
+                      </label>
+                      <input
+                        type="url"
+                        value={socialWebsite}
+                        onChange={(e) => setSocialWebsite(e.target.value)}
+                        placeholder="https://yourwebsite.com"
+                        className="w-full rounded-lg border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                      />
                     </div>
                   </div>
                 </div>

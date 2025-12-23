@@ -26,6 +26,12 @@ export async function GET() {
         isProfilePublic: true,
         showJobTitle: true,
         showSkillLevel: true,
+        socialGithub: true,
+        socialTwitter: true,
+        socialLinkedin: true,
+        socialWebsite: true,
+        socialYoutube: true,
+        socialBluesky: true,
         createdAt: true,
       },
     });
@@ -54,7 +60,20 @@ export async function PUT(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { displayName, persona, skillLevel, isProfilePublic, showJobTitle, showSkillLevel } = body;
+    const { 
+      displayName, 
+      persona, 
+      skillLevel, 
+      isProfilePublic, 
+      showJobTitle, 
+      showSkillLevel,
+      socialGithub,
+      socialTwitter,
+      socialLinkedin,
+      socialWebsite,
+      socialYoutube,
+      socialBluesky,
+    } = body;
 
     // Validate inputs
     const validPersonas = [
@@ -95,6 +114,22 @@ export async function PUT(request: NextRequest) {
       (sanitizedDisplayName || body.keepDisplayName) && persona && skillLevel
     );
 
+    // Sanitize social links (remove @ prefix, validate URLs, etc.)
+    const sanitizeSocialLink = (value: string | undefined, type: "username" | "url"): string | null | undefined => {
+      if (value === undefined) return undefined;
+      if (!value || value.trim() === "") return null;
+      const cleaned = value.trim();
+      if (type === "username") {
+        // Remove @ prefix and limit length
+        return cleaned.replace(/^@/, "").slice(0, 100);
+      }
+      // For URLs, ensure they start with http(s)://
+      if (type === "url" && cleaned && !cleaned.startsWith("http")) {
+        return `https://${cleaned}`;
+      }
+      return cleaned.slice(0, 500);
+    };
+
     const updatedUser = await prismaUsers.user.update({
       where: { id: session.user.id },
       data: {
@@ -106,6 +141,12 @@ export async function PUT(request: NextRequest) {
         ...(isProfilePublic !== undefined && { isProfilePublic: Boolean(isProfilePublic) }),
         ...(showJobTitle !== undefined && { showJobTitle: Boolean(showJobTitle) }),
         ...(showSkillLevel !== undefined && { showSkillLevel: Boolean(showSkillLevel) }),
+        ...(socialGithub !== undefined && { socialGithub: sanitizeSocialLink(socialGithub, "username") }),
+        ...(socialTwitter !== undefined && { socialTwitter: sanitizeSocialLink(socialTwitter, "username") }),
+        ...(socialLinkedin !== undefined && { socialLinkedin: sanitizeSocialLink(socialLinkedin, "url") }),
+        ...(socialWebsite !== undefined && { socialWebsite: sanitizeSocialLink(socialWebsite, "url") }),
+        ...(socialYoutube !== undefined && { socialYoutube: sanitizeSocialLink(socialYoutube, "url") }),
+        ...(socialBluesky !== undefined && { socialBluesky: sanitizeSocialLink(socialBluesky, "username") }),
         profileCompleted,
       },
       select: {
@@ -120,6 +161,12 @@ export async function PUT(request: NextRequest) {
         isProfilePublic: true,
         showJobTitle: true,
         showSkillLevel: true,
+        socialGithub: true,
+        socialTwitter: true,
+        socialLinkedin: true,
+        socialWebsite: true,
+        socialYoutube: true,
+        socialBluesky: true,
       },
     });
 
