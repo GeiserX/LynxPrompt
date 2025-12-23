@@ -18,6 +18,7 @@ import {
   AlertTriangle,
   DollarSign,
   Euro,
+  Lock,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Footer } from "@/components/footer";
@@ -57,6 +58,32 @@ export default function ShareTemplatePage() {
     null
   );
   const [sensitiveWarningDismissed, setSensitiveWarningDismissed] = useState(false);
+  const [userPlan, setUserPlan] = useState<string>("FREE");
+  const [loadingPlan, setLoadingPlan] = useState(true);
+
+  // Fetch user subscription plan
+  useEffect(() => {
+    const fetchPlan = async () => {
+      try {
+        const res = await fetch("/api/billing/status");
+        if (res.ok) {
+          const data = await res.json();
+          setUserPlan(data.plan || "FREE");
+        }
+      } catch {
+        // Default to FREE if fetch fails
+      } finally {
+        setLoadingPlan(false);
+      }
+    };
+    if (status === "authenticated") {
+      fetchPlan();
+    } else {
+      setLoadingPlan(false);
+    }
+  }, [status]);
+
+  const canCreatePaidBlueprints = userPlan === "PRO" || userPlan === "MAX";
 
   // Detect sensitive data in content
   const sensitiveMatches = useMemo<SensitiveMatch[]>(() => {
@@ -255,8 +282,13 @@ export default function ShareTemplatePage() {
             <form onSubmit={handleSubmit} className="space-y-8">
               {/* Error */}
               {error && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200">
-                  {error}
+                <div className="rounded-lg border-2 border-red-500 bg-red-100 p-4 dark:bg-red-950">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400" />
+                    <p className="font-medium text-red-800 dark:text-red-200">
+                      {error}
+                    </p>
+                  </div>
                 </div>
               )}
 
@@ -462,15 +494,31 @@ export default function ShareTemplatePage() {
                           id="isPaid"
                           checked={isPaid}
                           onChange={(e) => setIsPaid(e.target.checked)}
-                          className="h-4 w-4 rounded border-gray-300"
+                          disabled={!canCreatePaidBlueprints}
+                          className={`h-4 w-4 rounded border-gray-300 ${!canCreatePaidBlueprints ? 'opacity-50 cursor-not-allowed' : ''}`}
                         />
-                        <label htmlFor="isPaid" className="text-sm font-medium">
+                        <label 
+                          htmlFor="isPaid" 
+                          className={`text-sm font-medium ${!canCreatePaidBlueprints ? 'opacity-50' : ''}`}
+                        >
                           <DollarSign className="mr-1 inline h-4 w-4" />
                           Set a price for this blueprint
                         </label>
+                        {!canCreatePaidBlueprints && (
+                          <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
+                            <Lock className="h-3 w-3" />
+                            PRO or MAX required
+                          </span>
+                        )}
                       </div>
 
-                      {isPaid && (
+                      {!canCreatePaidBlueprints && (
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          Upgrade to <Link href="/pricing" className="text-primary hover:underline font-medium">PRO or MAX</Link> to create paid blueprints and earn 70% of each sale.
+                        </p>
+                      )}
+
+                      {isPaid && canCreatePaidBlueprints && (
                         <div className="mt-4 space-y-3">
                           <div className="flex items-center gap-3">
                             <Euro className="h-5 w-5 text-muted-foreground" />
@@ -486,10 +534,10 @@ export default function ShareTemplatePage() {
                           </div>
                           
                           {/* Revenue split info - shown only when setting price */}
-                          <div className="rounded-lg border-2 border-green-500 bg-green-500/10 p-3">
-                            <p className="text-sm font-medium text-green-700 dark:text-green-300">
-                              <strong>You earn 70%</strong> of each sale (€{(price * 0.7).toFixed(2)}).
-                              Platform fee: 30% (€{(price * 0.3).toFixed(2)}).
+                          <div className="rounded-lg border-2 border-emerald-600 bg-emerald-50 p-3 dark:bg-emerald-950">
+                            <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-100">
+                              💰 You earn 70% of each sale (€{(price * 0.7).toFixed(2)}).
+                              <span className="font-normal text-emerald-700 dark:text-emerald-200"> Platform fee: 30% (€{(price * 0.3).toFixed(2)}).</span>
                             </p>
                           </div>
                         </div>
