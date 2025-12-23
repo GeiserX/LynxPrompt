@@ -104,3 +104,6 @@ echo "1. Check application at https://lynxprompt.com"
 echo "2. If everything works, you can delete the backup:"
 echo "   rm -rf $BACKUP_DIR"
 echo "3. The old v17 data is preserved in the backup directory"
+
+
+

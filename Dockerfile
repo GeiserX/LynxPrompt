@@ -34,9 +34,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Generate Prisma clients
-RUN npx prisma generate --schema=prisma/schema-app.prisma
-RUN npx prisma generate --schema=prisma/schema-users.prisma
+# Generate Prisma clients (Prisma 7 with config files)
+RUN npx prisma generate --config=prisma/prisma.config-app.ts
+RUN npx prisma generate --config=prisma/prisma.config-users.ts
 
 # Build the application
 # Note: NEXT_PUBLIC_* vars are fetched at runtime via /api/config/public
@@ -70,10 +70,24 @@ COPY --from=builder /app/node_modules/esbuild ./node_modules/esbuild
 COPY --from=builder /app/node_modules/get-tsconfig ./node_modules/get-tsconfig
 COPY --from=builder /app/node_modules/resolve-pkg-maps ./node_modules/resolve-pkg-maps
 
-# Copy Prisma client files for both databases
-COPY --from=builder /app/node_modules/@prisma/client-app ./node_modules/@prisma/client-app
-COPY --from=builder /app/node_modules/@prisma/client-users ./node_modules/@prisma/client-users
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+# Copy Prisma generated clients (Prisma 7 - generated to src/generated/)
+COPY --from=builder /app/src/generated ./src/generated
+# Copy Prisma adapter runtime dependencies
+COPY --from=builder /app/node_modules/@prisma/adapter-pg ./node_modules/@prisma/adapter-pg
+COPY --from=builder /app/node_modules/@prisma/driver-adapter-utils ./node_modules/@prisma/driver-adapter-utils
+COPY --from=builder /app/node_modules/pg ./node_modules/pg
+COPY --from=builder /app/node_modules/pg-cloudflare ./node_modules/pg-cloudflare
+COPY --from=builder /app/node_modules/pg-connection-string ./node_modules/pg-connection-string
+COPY --from=builder /app/node_modules/pg-int8 ./node_modules/pg-int8
+COPY --from=builder /app/node_modules/pg-pool ./node_modules/pg-pool
+COPY --from=builder /app/node_modules/pg-protocol ./node_modules/pg-protocol
+COPY --from=builder /app/node_modules/pg-types ./node_modules/pg-types
+COPY --from=builder /app/node_modules/pgpass ./node_modules/pgpass
+COPY --from=builder /app/node_modules/postgres-array ./node_modules/postgres-array
+COPY --from=builder /app/node_modules/postgres-bytea ./node_modules/postgres-bytea
+COPY --from=builder /app/node_modules/postgres-date ./node_modules/postgres-date
+COPY --from=builder /app/node_modules/postgres-interval ./node_modules/postgres-interval
+COPY --from=builder /app/node_modules/split2 ./node_modules/split2
 
 # Set correct permissions for prerender cache
 RUN mkdir .next

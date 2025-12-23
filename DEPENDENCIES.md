@@ -15,7 +15,7 @@ This document tracks all dependencies and their latest available versions.
 | `@auth/prisma-adapter` | 2.11.1 | 🔍 Check | |
 | `@hookform/resolvers` | 3.9.1 | 🔍 Check | |
 | `@marsidev/react-turnstile` | 1.4.0 | 🔍 Check | Cloudflare Turnstile wrapper |
-| `@prisma/client` | 6.19.1 | ✅ Latest | Prisma v7 requires major migration |
+| `@prisma/client` | 7.2.0 | ✅ Latest | **Upgraded to v7!** |
 | `@radix-ui/*` | Various | 🔍 Check | UI component library |
 | `@simplewebauthn/browser` | 9.0.1 | 🔍 Check | Passkey authentication |
 | `@simplewebauthn/server` | 9.0.3 | 🔍 Check | Passkey authentication |
@@ -59,7 +59,7 @@ This document tracks all dependencies and their latest available versions.
 | `preact` | 10.28.0 | ✅ Latest | Updated Dec 23, 2024 |
 | `prettier` | 3.7.4 | 🔍 Check | |
 | `prettier-plugin-tailwindcss` | 0.7.2 | ✅ Latest | Updated Dec 23, 2024 |
-| `prisma` | 6.19.1 | ✅ Latest | Prisma v7 requires major migration |
+| `prisma` | 7.2.0 | ✅ Latest | **Upgraded to v7!** |
 | `tailwindcss` | 4.0.6 | ✅ Latest | **Upgraded to v4** Dec 23, 2024 |
 | `tsx` | 4.19.2 | 🔍 Check | TypeScript executor |
 | `typescript` | 5.9.3 | 🔍 Check | |
@@ -78,22 +78,30 @@ This document tracks all dependencies and their latest available versions.
 ### ✅ Completed
 - **Tailwind CSS v4.0.6**: Migrated to CSS-first configuration, removed `tailwind.config.ts`, updated `globals.css` with `@import 'tailwindcss'` and `@theme` directive
 - **Zod v4.0.1**: No breaking changes detected in codebase, upgrade seamless
-- **PostgreSQL 18.1-alpine3.23**: Upgraded both app and users databases. **⚠️ Requires data migration from v17**
-- **ClickHouse 25.11.2.24-alpine**: Latest Alpine image (25.12 exists but only standard, not Alpine)
+- **PostgreSQL 18.1-alpine3.23**: **COMPLETED** - Migrated from bind mounts to Docker volumes to avoid Unraid BTRFS bug. Data successfully migrated via pg_dump/pg_restore. Backup at `/mnt/user/appdata/lynxprompt/pg-migration-final/`
+- **ClickHouse 25.11.2.24-alpine**: **COMPLETED** - Latest Alpine image deployed (25.12 exists but only standard, not Alpine)
+  - ⚠️ **Known Issue**: ClickHouse 25.11 rejects ISO 8601 DateTime strings with 'Z' suffix. Analytics events fail but website works. Will fix in application code.
 - **Minor updates**: nodemailer (7.0.12), preact (10.28.0), prettier-plugin-tailwindcss (0.7.2), sonner (2.0.7)
 
-### ❌ Not Completed
-- **Prisma v7**: Attempted migration but TypeScript-only client output incompatible with Next.js Turbopack. Requires custom build pipeline. Kept at v6.19.1 for stability.
+### ✅ Additional Completed (Dec 23, 2024)
+- **Prisma v7.2.0**: Successfully upgraded using driver adapter approach:
+  - Generator: `provider = "prisma-client"` with `importFileExtension = ""`
+  - Output: `src/generated/prisma-app` and `src/generated/prisma-users`
+  - Runtime: `@prisma/adapter-pg` with `pg.Pool` for database connections
+  - Config: `prisma.config-app.ts` and `prisma.config-users.ts` for CLI commands
 
-### ⚠️ Important Note: PostgreSQL 18 Upgrade
-The PostgreSQL major version upgrade from 17 to 18 requires a data migration. The Docker containers cannot start with existing v17 data directories. To complete the upgrade:
+### ⚠️ Important Note: PostgreSQL 18 Upgrade - COMPLETED
 
-1. **Stop containers**: `docker-compose down`
-2. **Backup data**: Copy `/mnt/user/appdata/lynxprompt/postgres-*` directories
-3. **Option A - Fresh start** (if no critical data): Remove old volumes, let containers recreate
-4. **Option B - Migrate data**: Use `pg_upgrade` or `pg_dump/pg_restore` to migrate data from v17 to v18
-
-Current status: Containers built with Postgres 18 images, deployment pending manual data migration.
+The PostgreSQL major version upgrade from 17 to 18 has been **completed successfully** with the following approach:
+- **Migrated from bind mounts to Docker volumes** to avoid Unraid BTRFS mount propagation bug
+- Data migrated using `pg_dump`/`pg_restore` workflow
+- Full backup created at `/mnt/user/appdata/lynxprompt/pg-migration-final/` containing:
+  - `app.backup` (19KB)
+  - `users.backup` (46KB)
+  - `postgres-app-v17/` (42MB)
+  - `postgres-users-v17/` (691KB)
+- All containers running on PostgreSQL 18.1-alpine3.23
+- Website confirmed operational at https://lynxprompt.com
 
 ## Update Strategy
 
@@ -111,3 +119,6 @@ Current status: Containers built with Postgres 18 images, deployment pending man
 - [ ] Check if Stripe SDK has updates
 - [ ] Research next-auth v5 migration path
 - [ ] Monitor Prisma v7 for Next.js compatibility
+
+
+

@@ -10,3 +10,6 @@ export async function GET() {
     umamiWebsiteId: process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID || null,
   });
 }
+
+
+
