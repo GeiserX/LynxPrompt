@@ -252,13 +252,16 @@ const PROJECT_TYPES = [
   },
 ];
 
+// Platforms are the PRIMARY target, but files often work across multiple IDEs
+// Note: .cursorrules is deprecated, AGENTS.md is the modern standard
 const PLATFORMS = [
   {
     id: "cursor",
     name: "Cursor",
-    file: ".cursorrules",
+    file: "AGENTS.md", // Modern standard, replaces deprecated .cursorrules
     icon: "⚡",
     gradient: "from-blue-500 to-cyan-500",
+    note: "Universal AI agent file",
   },
   {
     id: "claude",
@@ -266,6 +269,7 @@ const PLATFORMS = [
     file: "CLAUDE.md",
     icon: "🧠",
     gradient: "from-orange-500 to-amber-500",
+    note: "Also works with Cursor",
   },
   {
     id: "copilot",
@@ -273,6 +277,7 @@ const PLATFORMS = [
     file: "copilot-instructions.md",
     icon: "🤖",
     gradient: "from-gray-600 to-gray-800",
+    note: "VS Code & JetBrains compatible",
   },
   {
     id: "windsurf",
@@ -280,6 +285,7 @@ const PLATFORMS = [
     file: ".windsurfrules",
     icon: "🏄",
     gradient: "from-teal-500 to-emerald-500",
+    note: "Codeium IDE",
   },
 ];
 
@@ -417,6 +423,7 @@ export default function WizardPage() {
         const wizardConfig = {
           projectName: config.projectName,
           projectDescription: config.projectDescription,
+          projectType: config.projectType,
           languages: config.languages,
           frameworks: config.frameworks,
           letAiDecide: config.letAiDecide,
@@ -493,6 +500,7 @@ export default function WizardPage() {
       const wizardConfig = {
         projectName: config.projectName,
         projectDescription: config.projectDescription,
+        projectType: config.projectType,
         languages: config.languages,
         frameworks: config.frameworks,
         letAiDecide: config.letAiDecide,
@@ -1334,6 +1342,9 @@ function StepPlatforms({
       <p className="mt-2 text-muted-foreground">
         Choose which platforms to generate configuration files for.
       </p>
+      <p className="mt-1 text-sm text-muted-foreground/80">
+        💡 These files are <strong>optimized for</strong> the selected platforms, but often work across multiple AI-powered IDEs.
+      </p>
 
       <div className="mt-6 grid grid-cols-2 gap-4">
         {PLATFORMS.map((platform) => (
@@ -1356,6 +1367,11 @@ function StepPlatforms({
                 <code className="text-xs text-muted-foreground">
                   {platform.file}
                 </code>
+                {platform.note && (
+                  <p className="mt-0.5 text-xs text-muted-foreground/70">
+                    {platform.note}
+                  </p>
+                )}
               </div>
             </div>
             {selected.includes(platform.id) && (
@@ -1365,6 +1381,13 @@ function StepPlatforms({
             )}
           </button>
         ))}
+      </div>
+
+      <div className="mt-4 rounded-lg bg-muted/50 p-3">
+        <p className="text-xs text-muted-foreground">
+          <strong>AGENTS.md</strong> is the universal standard for AI coding assistants. 
+          It works with Cursor, Claude, and other modern AI IDEs.
+        </p>
       </div>
     </div>
   );

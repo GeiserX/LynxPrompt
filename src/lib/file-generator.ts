@@ -67,18 +67,106 @@ interface UserProfile {
 }
 
 // Platform file names
+// Note: .cursorrules is deprecated, AGENTS.md is the modern standard
+// These are the PRIMARY platforms, but files work across multiple IDEs
 const PLATFORM_FILES: Record<string, string> = {
-  cursor: ".cursorrules",
+  cursor: "AGENTS.md", // Modern standard, replaces .cursorrules
   claude: "CLAUDE.md",
   copilot: ".github/copilot-instructions.md",
   windsurf: ".windsurfrules",
 };
 
-// Generate .cursorrules content
-function generateCursorRules(config: WizardConfig, user: UserProfile): string {
+// Legacy file support (for backwards compatibility)
+const LEGACY_FILES: Record<string, string> = {
+  cursor_legacy: ".cursorrules",
+};
+
+// ============================================================================
+// TEMPLATE VARIABLES SYSTEM
+// Delimiter: [[variable_name]] - Chosen to avoid conflicts with {{}} templates
+// ============================================================================
+
+// Regular expression to detect template variables
+const VARIABLE_PATTERN = /\[\[([A-Z_][A-Z0-9_]*)\]\]/g;
+
+// Common variable suggestions
+export const SUGGESTED_VARIABLES = [
+  { name: "PROJECT_NAME", description: "Name of the project", example: "my-awesome-app" },
+  { name: "CONFLUENCE_URL", description: "Confluence documentation URL", example: "https://company.atlassian.net/wiki" },
+  { name: "K8S_CLUSTER", description: "Kubernetes cluster name", example: "prod-cluster-eu-west-1" },
+  { name: "JIRA_PROJECT", description: "Jira project key", example: "PROJ" },
+  { name: "SLACK_CHANNEL", description: "Slack channel for notifications", example: "#team-dev" },
+  { name: "DOCKER_REGISTRY", description: "Docker registry URL", example: "gcr.io/my-project" },
+  { name: "API_BASE_URL", description: "Base API URL", example: "https://api.example.com" },
+  { name: "TEAM_NAME", description: "Team or department name", example: "Platform Team" },
+  { name: "REPO_URL", description: "Repository URL", example: "https://github.com/org/repo" },
+  { name: "CI_TOOL", description: "CI/CD tool name", example: "GitHub Actions" },
+];
+
+/**
+ * Detect all template variables in content
+ * Variables use [[VARIABLE_NAME]] format
+ */
+export function detectVariables(content: string): string[] {
+  const matches = content.match(VARIABLE_PATTERN);
+  if (!matches) return [];
+  
+  // Extract unique variable names (without brackets)
+  const variables = new Set<string>();
+  for (const match of matches) {
+    const varName = match.replace(/\[\[|\]\]/g, "");
+    variables.add(varName);
+  }
+  
+  return Array.from(variables);
+}
+
+/**
+ * Replace variables in content with provided values
+ */
+export function replaceVariables(
+  content: string, 
+  values: Record<string, string>
+): string {
+  return content.replace(VARIABLE_PATTERN, (match, varName) => {
+    return values[varName] !== undefined ? values[varName] : match;
+  });
+}
+
+/**
+ * Highlight variables in content for preview (returns HTML)
+ */
+export function highlightVariables(content: string): string {
+  return content.replace(
+    VARIABLE_PATTERN,
+    '<span class="variable-highlight bg-yellow-200 dark:bg-yellow-800 px-1 rounded font-mono text-sm">$&</span>'
+  );
+}
+
+/**
+ * Check if content contains any variables
+ */
+export function hasVariables(content: string): boolean {
+  return VARIABLE_PATTERN.test(content);
+}
+
+/**
+ * Escape literal brackets that should not be treated as variables
+ * Use \\[\\[ for literal [[
+ */
+export function escapeVariables(content: string): string {
+  return content.replace(/\\\[\\\[/g, "[[").replace(/\\\]\\\]/g, "]]");
+}
+
+// Generate AGENTS.md content (modern standard, works with Cursor, Claude, and others)
+// Note: This replaces .cursorrules which is deprecated
+function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
   const lines: string[] = [];
 
-  lines.push(`# ${config.projectName || "Project"} - Cursor AI Rules`);
+  lines.push(`# ${config.projectName || "Project"} - AI Agent Instructions`);
+  lines.push("");
+  lines.push("> This file follows the [AGENTS.md](https://agents.md) standard.");
+  lines.push("> It provides instructions for AI coding assistants working on this project.");
   lines.push("");
   lines.push("## Project Context");
   lines.push(`This is ${config.projectDescription || "a software project"}.`);
@@ -323,9 +411,9 @@ function generateWindsurfRules(
   config: WizardConfig,
   user: UserProfile
 ): string {
-  // Windsurf uses a similar format to Cursor
-  return generateCursorRules(config, user).replace(
-    "Cursor AI Rules",
+  // Windsurf uses a similar format to AGENTS.md
+  return generateAgentsMd(config, user).replace(
+    "AI Agent Instructions",
     "Windsurf AI Rules"
   );
 }
@@ -476,7 +564,8 @@ export function generateAllFiles(
     let content = "";
     switch (platform) {
       case "cursor":
-        content = generateCursorRules(config, user);
+        // Use AGENTS.md (modern standard) instead of deprecated .cursorrules
+        content = generateAgentsMd(config, user);
         break;
       case "claude":
         content = generateClaudeMd(config, user);
