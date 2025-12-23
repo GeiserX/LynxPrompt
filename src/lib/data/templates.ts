@@ -581,11 +581,21 @@ export async function getTemplateById(
     };
   } else if (id.startsWith("usr_")) {
     const realId = id.replace("usr_", "");
-    // SECURITY: Only fetch public templates - prevents IDOR vulnerability
+
+    // Get session to check if user owns this template
+    const session = await import("next-auth").then(({ getServerSession }) =>
+      import("@/lib/auth").then(({ authOptions }) =>
+        getServerSession(authOptions)
+      )
+    );
+
+    const userId = session?.user?.id;
+
+    // Allow access if template is public OR if user owns it
     const template = await prismaUsers.userTemplate.findFirst({
       where: {
         id: realId,
-        isPublic: true, // Only allow access to public templates
+        ...(userId ? {} : { isPublic: true }), // If no user session, only allow public
       },
       include: {
         user: {
@@ -593,6 +603,11 @@ export async function getTemplateById(
         },
       },
     });
+
+    // If template exists and user doesn't own it, check if it's public
+    if (template && userId && template.userId !== userId && !template.isPublic) {
+      return null; // Not owner and not public
+    }
 
     if (!template) return null;
 
