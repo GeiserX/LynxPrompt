@@ -27,22 +27,46 @@ import {
   X,
   Check,
   Loader2,
+  Search,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Footer } from "@/components/footer";
 import { UserMenu } from "@/components/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 
-// Developer persona options
+// Developer persona options - extensive list
 const PERSONA_OPTIONS = [
+  // Most common first
   { value: "frontend", label: "Frontend Developer", emoji: "🎨" },
   { value: "backend", label: "Backend Developer", emoji: "⚙️" },
   { value: "fullstack", label: "Full-Stack Developer", emoji: "🔄" },
   { value: "devops", label: "DevOps / SRE", emoji: "🚀" },
   { value: "mobile", label: "Mobile Developer", emoji: "📱" },
   { value: "data", label: "Data Engineer / Scientist", emoji: "📊" },
+  { value: "ml", label: "Machine Learning Engineer", emoji: "🤖" },
   { value: "security", label: "Security Engineer", emoji: "🔐" },
-  { value: "other", label: "Other", emoji: "💻" },
+  // Extended options
+  { value: "ios", label: "iOS Developer", emoji: "🍎" },
+  { value: "android", label: "Android Developer", emoji: "🤖" },
+  { value: "game", label: "Game Developer", emoji: "🎮" },
+  { value: "embedded", label: "Embedded Systems", emoji: "🔌" },
+  { value: "blockchain", label: "Blockchain / Web3", emoji: "⛓️" },
+  { value: "cloud", label: "Cloud Architect", emoji: "☁️" },
+  { value: "qa", label: "QA / Test Engineer", emoji: "🧪" },
+  { value: "platform", label: "Platform Engineer", emoji: "🏗️" },
+  { value: "solutions", label: "Solutions Architect", emoji: "📐" },
+  { value: "technical_lead", label: "Technical Lead", emoji: "👨‍💼" },
+  { value: "system", label: "Systems Programmer", emoji: "💾" },
+  { value: "database", label: "Database Administrator", emoji: "🗄️" },
+  { value: "network", label: "Network Engineer", emoji: "🌐" },
+  { value: "ai", label: "AI Engineer", emoji: "🧠" },
+  { value: "robotics", label: "Robotics Engineer", emoji: "🦾" },
+  { value: "graphics", label: "Graphics / 3D Developer", emoji: "🎬" },
+  { value: "audio", label: "Audio / DSP Engineer", emoji: "🎵" },
+  { value: "research", label: "Research Engineer", emoji: "🔬" },
+  { value: "student", label: "Student / Learning", emoji: "📚" },
+  { value: "hobbyist", label: "Hobbyist / Maker", emoji: "🛠️" },
+  { value: "other", label: "Other (specify)", emoji: "✏️" },
 ];
 
 // Skill level options
@@ -64,31 +88,56 @@ function WelcomeModal({
   const [step, setStep] = useState(1);
   const [displayName, setDisplayName] = useState(userName || "");
   const [persona, setPersona] = useState("");
+  const [customPersona, setCustomPersona] = useState("");
+  const [personaSearch, setPersonaSearch] = useState("");
+  const [showAllPersonas, setShowAllPersonas] = useState(false);
   const [skillLevel, setSkillLevel] = useState("");
   const [isPublic, setIsPublic] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  // Filter personas by search
+  const filteredPersonas = PERSONA_OPTIONS.filter(
+    (p) => p.label.toLowerCase().includes(personaSearch.toLowerCase())
+  );
+  
+  // Show first 8 or all if searching or expanded
+  const displayedPersonas = personaSearch || showAllPersonas 
+    ? filteredPersonas 
+    : filteredPersonas.slice(0, 8);
 
   const handleSave = async () => {
     setSaving(true);
+    setError("");
     try {
+      // Use custom persona if "other" selected
+      const finalPersona = persona === "other" && customPersona.trim() 
+        ? customPersona.trim() 
+        : persona || "fullstack";
+        
       const res = await fetch("/api/user/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           displayName: displayName.trim() || "Developer",
-          persona: persona || "fullstack",
+          persona: finalPersona,
           skillLevel: skillLevel || "intermediate",
           isProfilePublic: isPublic,
           showJobTitle: isPublic,
           showSkillLevel: isPublic,
         }),
       });
+      
       if (res.ok) {
         onComplete();
+      } else {
+        const data = await res.json();
+        setError(data.error || "Failed to save. Please try again.");
+        setSaving(false);
       }
-    } catch (error) {
-      console.error("Failed to save profile:", error);
-    } finally {
+    } catch (err) {
+      console.error("Failed to save profile:", err);
+      setError("Network error. Please try again.");
       setSaving(false);
     }
   };
@@ -158,29 +207,80 @@ function WelcomeModal({
           <div>
             <h2 className="text-xl font-bold text-center">What type of developer are you?</h2>
             <p className="mt-1 text-center text-sm text-muted-foreground">
-              This helps us tailor AI configurations for you
+              This info is included in your AI configuration files
             </p>
-            <div className="mt-6 grid grid-cols-2 gap-2">
-              {PERSONA_OPTIONS.map((option) => (
-                <button
-                  key={option.value}
-                  onClick={() => setPersona(option.value)}
-                  className={`rounded-lg border p-3 text-left transition-all hover:border-primary ${
-                    persona === option.value
-                      ? "border-primary bg-primary/10 ring-2 ring-primary/20"
-                      : "border-border"
-                  }`}
-                >
-                  <span className="text-lg">{option.emoji}</span>
-                  <span className="ml-2 text-sm font-medium">{option.label}</span>
-                </button>
-              ))}
+            
+            {/* Search box */}
+            <div className="relative mt-4">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                value={personaSearch}
+                onChange={(e) => setPersonaSearch(e.target.value)}
+                placeholder="Search roles..."
+                className="w-full rounded-lg border bg-background pl-10 pr-4 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              />
             </div>
+            
+            {/* Options grid with fade effect */}
+            <div className="relative mt-4">
+              <div className="grid grid-cols-2 gap-2 max-h-[240px] overflow-y-auto pr-1">
+                {displayedPersonas.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => {
+                      setPersona(option.value);
+                      if (option.value !== "other") setCustomPersona("");
+                    }}
+                    className={`rounded-lg border p-3 text-left transition-all hover:border-primary ${
+                      persona === option.value
+                        ? "border-primary bg-primary/10 ring-2 ring-primary/20"
+                        : "border-border"
+                    }`}
+                  >
+                    <span className="text-lg">{option.emoji}</span>
+                    <span className="ml-2 text-sm font-medium">{option.label}</span>
+                  </button>
+                ))}
+              </div>
+              
+              {/* Fade overlay when collapsed */}
+              {!personaSearch && filteredPersonas.length > 8 && !showAllPersonas && (
+                <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent" />
+              )}
+              
+              {/* Show more button */}
+              {!personaSearch && filteredPersonas.length > 8 && !showAllPersonas && (
+                <button
+                  onClick={() => setShowAllPersonas(true)}
+                  className="relative z-10 mt-2 w-full text-center text-sm text-primary hover:underline"
+                >
+                  Show {filteredPersonas.length - 8} more options...
+                </button>
+              )}
+            </div>
+            
+            {/* Custom input for "Other" */}
+            {persona === "other" && (
+              <input
+                type="text"
+                value={customPersona}
+                onChange={(e) => setCustomPersona(e.target.value)}
+                placeholder="Describe your role..."
+                className="mt-3 w-full rounded-lg border bg-background px-4 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                autoFocus
+              />
+            )}
+            
             <div className="mt-6 flex gap-3">
               <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
                 Back
               </Button>
-              <Button onClick={() => setStep(3)} className="flex-1" disabled={!persona}>
+              <Button 
+                onClick={() => setStep(3)} 
+                className="flex-1" 
+                disabled={!persona || (persona === "other" && !customPersona.trim())}
+              >
                 Continue
               </Button>
             </div>
@@ -192,7 +292,7 @@ function WelcomeModal({
           <div>
             <h2 className="text-xl font-bold text-center">What&apos;s your experience level?</h2>
             <p className="mt-1 text-center text-sm text-muted-foreground">
-              We&apos;ll adjust complexity accordingly
+              This helps AI assistants tailor their responses to you
             </p>
             <div className="mt-6 space-y-2">
               {SKILL_LEVELS.map((level) => (
@@ -251,6 +351,13 @@ function WelcomeModal({
                 <div className="text-xs text-muted-foreground">Share with community</div>
               </button>
             </div>
+            {/* Error message */}
+            {error && (
+              <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+                {error}
+              </div>
+            )}
+            
             <div className="mt-6 flex gap-3">
               <Button variant="outline" onClick={() => setStep(3)} className="flex-1">
                 Back
