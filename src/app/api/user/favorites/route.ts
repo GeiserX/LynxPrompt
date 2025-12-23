@@ -22,9 +22,12 @@ export async function GET() {
     // Fetch template details for each favorite
     const enrichedFavorites = await Promise.all(
       favorites.map(async (fav) => {
+        // Strip any existing prefix from templateId (handles legacy data)
+        const cleanTemplateId = fav.templateId.replace(/^(sys_|usr_)/, "");
+        
         if (fav.templateType === "system") {
           const template = await prismaApp.systemTemplate.findUnique({
-            where: { id: fav.templateId },
+            where: { id: cleanTemplateId },
             select: {
               id: true,
               name: true,
@@ -48,7 +51,7 @@ export async function GET() {
           }
         } else {
           const template = await prismaUsers.userTemplate.findUnique({
-            where: { id: fav.templateId },
+            where: { id: cleanTemplateId },
             include: {
               user: { select: { name: true } },
             },
@@ -90,14 +93,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { templateId, templateType } = await request.json();
+    const { templateId: rawTemplateId, templateType } = await request.json();
 
-    if (!templateId || !templateType) {
+    if (!rawTemplateId || !templateType) {
       return NextResponse.json(
         { error: "templateId and templateType are required" },
         { status: 400 }
       );
     }
+
+    // Strip prefix from templateId if present
+    const templateId = rawTemplateId.replace(/^(sys_|usr_)/, "");
 
     // Check if already favorited
     const existing = await prismaUsers.templateFavorite.findUnique({
