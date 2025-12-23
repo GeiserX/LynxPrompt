@@ -1,30 +1,22 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
-import { Sun, Moon, Monitor } from "lucide-react";
+import { Sun, Moon } from "lucide-react";
 
 export function ThemeToggle() {
-  const { theme, setTheme, resolvedTheme } = useTheme();
-  const [isOpen, setIsOpen] = useState(false);
+  const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
 
   // Avoid hydration mismatch
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Close menu when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  // Toggle between light and dark
+  const toggleTheme = () => {
+    setTheme(resolvedTheme === "dark" ? "light" : "dark");
+  };
 
   if (!mounted) {
     return (
@@ -32,46 +24,21 @@ export function ThemeToggle() {
     );
   }
 
-  const options = [
-    { value: "light", label: "Light", icon: Sun },
-    { value: "dark", label: "Dark", icon: Moon },
-    { value: "system", label: "System", icon: Monitor },
-  ];
-
-  const CurrentIcon = resolvedTheme === "dark" ? Moon : Sun;
+  const isDark = resolvedTheme === "dark";
 
   return (
-    <div className="relative" ref={menuRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex h-9 w-9 items-center justify-center rounded-md border bg-background transition-colors hover:bg-muted"
-        aria-label="Toggle theme"
-      >
-        <CurrentIcon className="h-4 w-4" />
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-36 rounded-lg border bg-background shadow-lg">
-          <div className="p-1">
-            {options.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => {
-                  setTheme(option.value);
-                  setIsOpen(false);
-                }}
-                className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted ${
-                  theme === option.value ? "bg-muted font-medium" : ""
-                }`}
-              >
-                <option.icon className="h-4 w-4" />
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </div>
+    <button
+      onClick={toggleTheme}
+      className="flex h-9 w-9 items-center justify-center rounded-md border bg-background transition-colors hover:bg-muted"
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+    >
+      {isDark ? (
+        <Sun className="h-4 w-4" />
+      ) : (
+        <Moon className="h-4 w-4" />
       )}
-    </div>
+    </button>
   );
 }
 
