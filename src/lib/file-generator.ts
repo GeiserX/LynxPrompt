@@ -174,13 +174,22 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
   lines.push(`This is ${config.projectDescription || "a software project"}.`);
   lines.push("");
 
-  if (config.languages.length > 0 || config.frameworks.length > 0) {
+  if (config.languages.length > 0 || config.frameworks.length > 0 || config.letAiDecide) {
     lines.push("## Tech Stack");
     if (config.languages.length > 0) {
-      lines.push(`- Languages: ${config.languages.join(", ")}`);
+      const langs = config.languages.map(l => l.startsWith("custom:") ? l.replace("custom:", "") : l);
+      lines.push(`- Languages: ${langs.join(", ")}`);
     }
     if (config.frameworks.length > 0) {
-      lines.push(`- Frameworks: ${config.frameworks.join(", ")}`);
+      const fws = config.frameworks.map(f => f.startsWith("custom:") ? f.replace("custom:", "") : f);
+      lines.push(`- Frameworks: ${fws.join(", ")}`);
+    }
+    if (config.letAiDecide) {
+      if (config.languages.length > 0 || config.frameworks.length > 0) {
+        lines.push("- **Note**: For technologies beyond those listed above, feel free to suggest and use what's best suited for the project based on codebase analysis.");
+      } else {
+        lines.push("- **Note**: Analyze the codebase and determine the appropriate languages and frameworks. You have full flexibility to choose what works best.");
+      }
     }
     lines.push("");
   }
@@ -259,17 +268,32 @@ function generateClaudeMd(config: WizardConfig, user: UserProfile): string {
   lines.push(config.projectDescription || "A software project.");
   lines.push("");
 
-  if (config.languages.length > 0 || config.frameworks.length > 0) {
+  if (config.languages.length > 0 || config.frameworks.length > 0 || config.letAiDecide) {
     lines.push("## Technology Stack");
     lines.push("");
     if (config.languages.length > 0) {
       lines.push("### Languages");
-      config.languages.forEach((lang) => lines.push(`- ${lang}`));
+      config.languages.forEach((lang) => {
+        const cleanLang = lang.startsWith("custom:") ? lang.replace("custom:", "") : lang;
+        lines.push(`- ${cleanLang}`);
+      });
       lines.push("");
     }
     if (config.frameworks.length > 0) {
       lines.push("### Frameworks & Libraries");
-      config.frameworks.forEach((fw) => lines.push(`- ${fw}`));
+      config.frameworks.forEach((fw) => {
+        const cleanFw = fw.startsWith("custom:") ? fw.replace("custom:", "") : fw;
+        lines.push(`- ${cleanFw}`);
+      });
+      lines.push("");
+    }
+    if (config.letAiDecide) {
+      lines.push("### AI Technology Selection");
+      if (config.languages.length > 0 || config.frameworks.length > 0) {
+        lines.push("For any technologies beyond those explicitly listed above, analyze the codebase and suggest appropriate solutions. You have flexibility to recommend and use additional tools that best fit the project's needs.");
+      } else {
+        lines.push("Analyze the codebase to determine the appropriate languages, frameworks, and tools. Use your best judgment based on the project structure and requirements.");
+      }
       lines.push("");
     }
   }
@@ -360,10 +384,19 @@ function generateCopilotInstructions(
   lines.push("");
 
   if (config.languages.length > 0) {
-    lines.push(`**Languages:** ${config.languages.join(", ")}`);
+    const langs = config.languages.map(l => l.startsWith("custom:") ? l.replace("custom:", "") : l);
+    lines.push(`**Languages:** ${langs.join(", ")}`);
   }
   if (config.frameworks.length > 0) {
-    lines.push(`**Frameworks:** ${config.frameworks.join(", ")}`);
+    const fws = config.frameworks.map(f => f.startsWith("custom:") ? f.replace("custom:", "") : f);
+    lines.push(`**Frameworks:** ${fws.join(", ")}`);
+  }
+  if (config.letAiDecide) {
+    if (config.languages.length > 0 || config.frameworks.length > 0) {
+      lines.push("**Additional Tech:** Feel free to suggest and use other technologies that fit the project beyond those listed.");
+    } else {
+      lines.push("**Tech Stack:** Analyze the codebase and determine appropriate technologies.");
+    }
   }
   lines.push("");
 
