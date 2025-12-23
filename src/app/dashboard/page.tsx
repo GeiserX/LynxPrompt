@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Wand2,
@@ -22,11 +23,270 @@ import {
   BarChart3,
   Activity,
   ShoppingBag,
+  User,
+  X,
+  Check,
+  Loader2,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Footer } from "@/components/footer";
 import { UserMenu } from "@/components/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
+
+// Developer persona options
+const PERSONA_OPTIONS = [
+  { value: "frontend", label: "Frontend Developer", emoji: "🎨" },
+  { value: "backend", label: "Backend Developer", emoji: "⚙️" },
+  { value: "fullstack", label: "Full-Stack Developer", emoji: "🔄" },
+  { value: "devops", label: "DevOps / SRE", emoji: "🚀" },
+  { value: "mobile", label: "Mobile Developer", emoji: "📱" },
+  { value: "data", label: "Data Engineer / Scientist", emoji: "📊" },
+  { value: "security", label: "Security Engineer", emoji: "🔐" },
+  { value: "other", label: "Other", emoji: "💻" },
+];
+
+// Skill level options
+const SKILL_LEVELS = [
+  { value: "beginner", label: "Beginner", description: "Learning the basics" },
+  { value: "intermediate", label: "Intermediate", description: "Building real projects" },
+  { value: "advanced", label: "Advanced", description: "Deep expertise" },
+  { value: "expert", label: "Expert", description: "Industry leader" },
+];
+
+// Welcome Modal Component
+function WelcomeModal({ 
+  onComplete, 
+  userName 
+}: { 
+  onComplete: () => void;
+  userName?: string | null;
+}) {
+  const [step, setStep] = useState(1);
+  const [displayName, setDisplayName] = useState(userName || "");
+  const [persona, setPersona] = useState("");
+  const [skillLevel, setSkillLevel] = useState("");
+  const [isPublic, setIsPublic] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/user/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: displayName.trim() || "Developer",
+          persona: persona || "fullstack",
+          skillLevel: skillLevel || "intermediate",
+          isProfilePublic: isPublic,
+          showJobTitle: isPublic,
+          showSkillLevel: isPublic,
+        }),
+      });
+      if (res.ok) {
+        onComplete();
+      }
+    } catch (error) {
+      console.error("Failed to save profile:", error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSkip = async () => {
+    setSaving(true);
+    try {
+      await fetch("/api/user/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: userName || "Developer",
+          persona: "fullstack",
+          skillLevel: "intermediate",
+          isProfilePublic: false,
+        }),
+      });
+      onComplete();
+    } catch {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="relative mx-4 w-full max-w-lg rounded-2xl bg-background p-8 shadow-2xl">
+        {/* Skip button */}
+        <button
+          onClick={handleSkip}
+          disabled={saving}
+          className="absolute right-4 top-4 rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
+        {/* Step 1: Name */}
+        {step === 1 && (
+          <div className="text-center">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-purple-500/20">
+              <Sparkles className="h-8 w-8 text-primary" />
+            </div>
+            <h2 className="text-2xl font-bold">Welcome to LynxPrompt! 👋</h2>
+            <p className="mt-2 text-muted-foreground">
+              Let&apos;s personalize your experience. What should we call you?
+            </p>
+            <input
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="Your name or nickname"
+              className="mt-6 w-full rounded-lg border bg-background px-4 py-3 text-center text-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              autoFocus
+            />
+            <Button
+              onClick={() => setStep(2)}
+              className="mt-6 w-full"
+              size="lg"
+            >
+              Continue
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        )}
+
+        {/* Step 2: Persona */}
+        {step === 2 && (
+          <div>
+            <h2 className="text-xl font-bold text-center">What type of developer are you?</h2>
+            <p className="mt-1 text-center text-sm text-muted-foreground">
+              This helps us tailor AI configurations for you
+            </p>
+            <div className="mt-6 grid grid-cols-2 gap-2">
+              {PERSONA_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => setPersona(option.value)}
+                  className={`rounded-lg border p-3 text-left transition-all hover:border-primary ${
+                    persona === option.value
+                      ? "border-primary bg-primary/10 ring-2 ring-primary/20"
+                      : "border-border"
+                  }`}
+                >
+                  <span className="text-lg">{option.emoji}</span>
+                  <span className="ml-2 text-sm font-medium">{option.label}</span>
+                </button>
+              ))}
+            </div>
+            <div className="mt-6 flex gap-3">
+              <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
+                Back
+              </Button>
+              <Button onClick={() => setStep(3)} className="flex-1" disabled={!persona}>
+                Continue
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Skill Level */}
+        {step === 3 && (
+          <div>
+            <h2 className="text-xl font-bold text-center">What&apos;s your experience level?</h2>
+            <p className="mt-1 text-center text-sm text-muted-foreground">
+              We&apos;ll adjust complexity accordingly
+            </p>
+            <div className="mt-6 space-y-2">
+              {SKILL_LEVELS.map((level) => (
+                <button
+                  key={level.value}
+                  onClick={() => setSkillLevel(level.value)}
+                  className={`w-full rounded-lg border p-4 text-left transition-all hover:border-primary ${
+                    skillLevel === level.value
+                      ? "border-primary bg-primary/10 ring-2 ring-primary/20"
+                      : "border-border"
+                  }`}
+                >
+                  <div className="font-medium">{level.label}</div>
+                  <div className="text-sm text-muted-foreground">{level.description}</div>
+                </button>
+              ))}
+            </div>
+            <div className="mt-6 flex gap-3">
+              <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
+                Back
+              </Button>
+              <Button onClick={() => setStep(4)} className="flex-1" disabled={!skillLevel}>
+                Continue
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: Public Profile */}
+        {step === 4 && (
+          <div className="text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-green-500/20 to-emerald-500/20">
+              <User className="h-7 w-7 text-green-600" />
+            </div>
+            <h2 className="text-xl font-bold">Make your profile public?</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Public profiles can share blueprints and be discovered by others
+            </p>
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={() => setIsPublic(false)}
+                className={`flex-1 rounded-lg border p-4 transition-all ${
+                  !isPublic ? "border-primary bg-primary/10 ring-2 ring-primary/20" : "border-border"
+                }`}
+              >
+                <div className="font-medium">Keep Private</div>
+                <div className="text-xs text-muted-foreground">Just for me</div>
+              </button>
+              <button
+                onClick={() => setIsPublic(true)}
+                className={`flex-1 rounded-lg border p-4 transition-all ${
+                  isPublic ? "border-primary bg-primary/10 ring-2 ring-primary/20" : "border-border"
+                }`}
+              >
+                <div className="font-medium">Make Public</div>
+                <div className="text-xs text-muted-foreground">Share with community</div>
+              </button>
+            </div>
+            <div className="mt-6 flex gap-3">
+              <Button variant="outline" onClick={() => setStep(3)} className="flex-1">
+                Back
+              </Button>
+              <Button onClick={handleSave} disabled={saving} className="flex-1">
+                {saving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Check className="mr-2 h-4 w-4" />
+                    Complete Setup
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Progress dots */}
+        <div className="mt-6 flex justify-center gap-2">
+          {[1, 2, 3, 4].map((s) => (
+            <div
+              key={s}
+              className={`h-2 w-2 rounded-full transition-all ${
+                s === step ? "w-6 bg-primary" : s < step ? "bg-primary/50" : "bg-muted"
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 interface DashboardStats {
   templatesCreated: number;
@@ -87,17 +347,23 @@ interface DashboardData {
 }
 
 export default function DashboardPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update: updateSession } = useSession();
+  const router = useRouter();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(
     null
   );
   const [loading, setLoading] = useState(true);
+  const [showWelcome, setShowWelcome] = useState(false);
 
   useEffect(() => {
     if (status === "authenticated") {
       fetchDashboardData();
+      // Show welcome modal if profile not completed
+      if (session?.user && !session.user.profileCompleted) {
+        setShowWelcome(true);
+      }
     }
-  }, [status]);
+  }, [status, session?.user?.profileCompleted]);
 
   const fetchDashboardData = async () => {
     try {
@@ -111,6 +377,14 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleWelcomeComplete = async () => {
+    setShowWelcome(false);
+    // Refresh the session to get updated profileCompleted
+    await updateSession();
+    // Refresh dashboard data
+    fetchDashboardData();
   };
 
   if (status === "loading") {
@@ -221,6 +495,14 @@ export default function DashboardPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
+      {/* Welcome Modal for new users */}
+      {showWelcome && (
+        <WelcomeModal 
+          onComplete={handleWelcomeComplete} 
+          userName={session?.user?.name}
+        />
+      )}
+
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
