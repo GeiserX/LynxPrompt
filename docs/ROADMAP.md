@@ -215,15 +215,6 @@ Per EU Consumer Rights Directive, digital content can waive 14-day withdrawal IF
 
 #### Who Can Share Templates
 
-**Current Plan (Phase 1)**:
-
-- All logged-in users can share templates (free or paid)
-- Users can upload their own prompts directly (title, tags, content)
-- Users can share templates created with the wizard
-- Sharing is available from the dashboard
-
-**Future (Phase 2)** - May restrict based on subscription:
-
 - Free users: Can share free templates only
 - Pro/Max users: Can share both free and paid templates
 

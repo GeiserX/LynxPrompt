@@ -142,7 +142,7 @@ function BlueprintsContent() {
         params.set("page", page.toString());
         params.set("limit", "12");
 
-        const res = await fetch(`/api/templates?${params.toString()}`);
+        const res = await fetch(`/api/blueprints?${params.toString()}`);
         if (res.ok) {
           const data: ApiResponse = await res.json();
           if (page === 1) {
@@ -195,7 +195,7 @@ function BlueprintsContent() {
 
     setTogglingFavorite(blueprintId);
     try {
-      const res = await fetch(`/api/templates/${blueprintId}/favorite`, {
+      const res = await fetch(`/api/blueprints/${blueprintId}/favorite`, {
         method: "POST",
       });
       if (res.ok) {
@@ -420,7 +420,7 @@ function BlueprintsContent() {
               )}
 
               <Button asChild className="w-full">
-                <Link href="/templates/create">
+                <Link href="/blueprints/create">
                   <Plus className="mr-2 h-4 w-4" />
                   Create Blueprint
                 </Link>
@@ -481,7 +481,7 @@ function BlueprintsContent() {
                   <Link
                     href={
                       status === "authenticated"
-                        ? "/templates/create"
+                        ? "/blueprints/create"
                         : "/auth/signin"
                     }
                   >
@@ -613,7 +613,7 @@ function BlueprintsContent() {
                           asChild
                           className={isPaid ? "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600" : ""}
                         >
-                          <Link href={`/templates/${blueprint.id}`}>
+                          <Link href={`/blueprints/${blueprint.id}`}>
                             {isPaid ? "Purchase" : "Use Blueprint"}
                           </Link>
                         </Button>

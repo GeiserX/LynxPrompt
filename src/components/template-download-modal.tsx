@@ -135,7 +135,7 @@ export function TemplateDownloadModal({
 
       // Also track in PostgreSQL for denormalized counts
       try {
-        await fetch(`/api/templates/${template.id}/download`, {
+        await fetch(`/api/blueprints/${template.id}/download`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ platform: selectedPlatform }),

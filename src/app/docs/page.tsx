@@ -190,7 +190,7 @@ export default function DocsPage() {
                     <Link href="/wizard">Start Wizard</Link>
                   </Button>
                   <Button asChild size="sm" variant="outline">
-                    <Link href="/templates">Browse Templates</Link>
+                    <Link href="/blueprints">Browse Blueprints</Link>
                   </Button>
                 </div>
               </div>
@@ -293,7 +293,7 @@ export default function DocsPage() {
                   <li>
                     Go to{" "}
                     <Link
-                      href="/templates/create"
+                      href="/blueprints/create"
                       className="text-primary hover:underline"
                     >
                       Share a Prompt
@@ -538,7 +538,7 @@ export default function DocsPage() {
                 variant="outline"
                 className="border-white bg-transparent text-white hover:bg-white/20"
               >
-                <Link href="/templates">Browse Templates</Link>
+                <Link href="/blueprints">Browse Blueprints</Link>
               </Button>
             </div>
           </section>

@@ -710,7 +710,7 @@ export async function getTemplateById(
 
 /**
  * Increment template download/usage count
- * @deprecated Use the /api/templates/[id]/download endpoint instead for proper tracking
+ * @deprecated Use the /api/blueprints/[id]/download endpoint instead for proper tracking
  */
 export async function incrementTemplateUsage(id: string): Promise<void> {
   if (isMockMode()) {

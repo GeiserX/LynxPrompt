@@ -269,7 +269,7 @@ export default function UserProfilePage() {
                 {profile.templates.map((template) => (
                   <Link
                     key={template.id}
-                    href={`/templates/${template.id}`}
+                    href={`/blueprints/${template.id}`}
                     className="group rounded-lg border bg-card p-4 transition-all hover:border-primary/50 hover:shadow-md"
                   >
                     <div className="flex items-start justify-between">
