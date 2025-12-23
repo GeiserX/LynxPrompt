@@ -112,6 +112,8 @@ function BlueprintsContent() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [total, setTotal] = useState(0);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [togglingFavorite, setTogglingFavorite] = useState<string | null>(null);
 
   // Debounce search input
   useEffect(() => {
@@ -161,6 +163,65 @@ function BlueprintsContent() {
 
     fetchData();
   }, [sortParam, debouncedSearch, selectedCategory, selectedTier, selectedTags, page]);
+
+  // Fetch user's favorites when logged in
+  useEffect(() => {
+    if (status === "authenticated") {
+      const fetchFavorites = async () => {
+        try {
+          const res = await fetch("/api/user/favorites");
+          if (res.ok) {
+            const data = await res.json();
+            const favoriteIds = new Set<string>(data.favorites?.map((f: { templateId: string }) => f.templateId) || []);
+            setFavorites(favoriteIds);
+          }
+        } catch (error) {
+          console.error("Failed to fetch favorites:", error);
+        }
+      };
+      fetchFavorites();
+    }
+  }, [status]);
+
+  // Toggle favorite function
+  const toggleFavorite = async (e: React.MouseEvent, blueprintId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (status !== "authenticated") {
+      router.push("/auth/signin");
+      return;
+    }
+
+    setTogglingFavorite(blueprintId);
+    try {
+      const res = await fetch(`/api/templates/${blueprintId}/favorite`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFavorites(prev => {
+          const next = new Set(prev);
+          if (data.favorited) {
+            next.add(blueprintId);
+          } else {
+            next.delete(blueprintId);
+          }
+          return next;
+        });
+        // Update the blueprint's likes count in the local state
+        setBlueprints(prev => prev.map(b => 
+          b.id === blueprintId 
+            ? { ...b, likes: b.likes + (data.favorited ? 1 : -1) }
+            : b
+        ));
+      }
+    } catch (error) {
+      console.error("Failed to toggle favorite:", error);
+    } finally {
+      setTogglingFavorite(null);
+    }
+  };
 
   // Update URL when search/sort changes
   const updateURL = (newSort?: SortOption, newSearch?: string) => {
@@ -534,10 +595,17 @@ function BlueprintsContent() {
                             <Download className="h-4 w-4" />
                             {blueprint.downloads.toLocaleString()}
                           </span>
-                          <span className="flex items-center gap-1">
-                            <Heart className="h-4 w-4" />
+                          <button
+                            onClick={(e) => toggleFavorite(e, blueprint.id)}
+                            disabled={togglingFavorite === blueprint.id}
+                            className={`flex items-center gap-1 transition-colors hover:text-red-500 ${
+                              favorites.has(blueprint.id) ? "text-red-500" : ""
+                            }`}
+                            title={favorites.has(blueprint.id) ? "Remove from favorites" : "Add to favorites"}
+                          >
+                            <Heart className={`h-4 w-4 ${favorites.has(blueprint.id) ? "fill-current" : ""}`} />
                             {blueprint.likes}
-                          </span>
+                          </button>
                         </div>
                         <Button 
                           variant={isPaid ? "default" : "ghost"} 

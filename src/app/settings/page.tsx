@@ -615,7 +615,15 @@ function SettingsContent() {
                       <input
                         type="checkbox"
                         checked={isProfilePublic}
-                        onChange={(e) => setIsProfilePublic(e.target.checked)}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setIsProfilePublic(checked);
+                          // Auto-enable child options when making profile public
+                          if (checked) {
+                            setShowJobTitle(true);
+                            setShowSkillLevel(true);
+                          }
+                        }}
                         className="mt-1 h-4 w-4 rounded border-gray-300"
                       />
                       <div className="flex-1">
@@ -627,39 +635,42 @@ function SettingsContent() {
                       </div>
                     </label>
 
-                    {/* Show job title */}
-                    <label className={`flex cursor-pointer items-start gap-4 rounded-lg border p-4 transition-all hover:border-primary ${!isProfilePublic ? 'opacity-50' : ''}`}>
-                      <input
-                        type="checkbox"
-                        checked={showJobTitle}
-                        onChange={(e) => setShowJobTitle(e.target.checked)}
-                        disabled={!isProfilePublic}
-                        className="mt-1 h-4 w-4 rounded border-gray-300"
-                      />
-                      <div className="flex-1">
-                        <span className="font-medium">Show developer type</span>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          Display your job title/developer type on your public profile
-                        </p>
-                      </div>
-                    </label>
+                    {/* Nested child options */}
+                    <div className={`ml-6 space-y-3 border-l-2 pl-4 ${!isProfilePublic ? 'opacity-40 pointer-events-none' : 'border-primary/30'}`}>
+                      {/* Show job title */}
+                      <label className="flex cursor-pointer items-start gap-4 rounded-lg border p-4 transition-all hover:border-primary">
+                        <input
+                          type="checkbox"
+                          checked={showJobTitle}
+                          onChange={(e) => setShowJobTitle(e.target.checked)}
+                          disabled={!isProfilePublic}
+                          className="mt-1 h-4 w-4 rounded border-gray-300"
+                        />
+                        <div className="flex-1">
+                          <span className="font-medium">Show developer type</span>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            Display your job title/developer type on your public profile
+                          </p>
+                        </div>
+                      </label>
 
-                    {/* Show skill level */}
-                    <label className={`flex cursor-pointer items-start gap-4 rounded-lg border p-4 transition-all hover:border-primary ${!isProfilePublic ? 'opacity-50' : ''}`}>
-                      <input
-                        type="checkbox"
-                        checked={showSkillLevel}
-                        onChange={(e) => setShowSkillLevel(e.target.checked)}
-                        disabled={!isProfilePublic}
-                        className="mt-1 h-4 w-4 rounded border-gray-300"
-                      />
-                      <div className="flex-1">
-                        <span className="font-medium">Show skill level</span>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          Display your expertise level on your public profile
-                        </p>
-                      </div>
-                    </label>
+                      {/* Show skill level */}
+                      <label className="flex cursor-pointer items-start gap-4 rounded-lg border p-4 transition-all hover:border-primary">
+                        <input
+                          type="checkbox"
+                          checked={showSkillLevel}
+                          onChange={(e) => setShowSkillLevel(e.target.checked)}
+                          disabled={!isProfilePublic}
+                          className="mt-1 h-4 w-4 rounded border-gray-300"
+                        />
+                        <div className="flex-1">
+                          <span className="font-medium">Show skill level</span>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            Display your expertise level on your public profile
+                          </p>
+                        </div>
+                      </label>
+                    </div>
                   </div>
                 </div>
 
