@@ -198,7 +198,8 @@ export async function GET(request: NextRequest) {
         name: t.name,
         description: t.description || "",
         author: t.user?.displayName || t.user?.name || "Anonymous",
-        authorId: t.user?.isProfilePublic ? t.userId : undefined,
+        // Show authorId if user has public profile OR if viewing own blueprint
+        authorId: (t.user?.isProfilePublic || t.userId === userId) ? t.userId : undefined,
         downloads: t.downloads,
         likes: t.favorites,
         tags: t.tags || [],
