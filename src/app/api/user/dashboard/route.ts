@@ -53,7 +53,10 @@ export async function GET() {
           isPublic: true,
           createdAt: true,
         },
-      }),
+      }).then(templates => templates.map(template => ({
+        ...template,
+        id: `usr_${template.id}`, // Add usr_ prefix for template detail routing
+      }))),
 
       // Get recent activity (downloads on user's templates + user's downloads)
       prismaUsers.templateDownload.findMany({
