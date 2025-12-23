@@ -125,3 +125,4 @@ export function getSensitiveDataSummary(matches: SensitiveMatch[]): string {
   return `Found ${matches.length} potential sensitive item${matches.length > 1 ? 's' : ''}: ${types.join(', ')}`;
 }
 
+
