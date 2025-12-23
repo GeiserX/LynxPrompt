@@ -200,9 +200,8 @@ export default function DocsPage() {
                   Step 3: Download & Use
                 </h3>
                 <p className="mt-2">
-                  Preview your generated files, copy individual ones to
-                  clipboard, or download everything as a ZIP. Drop the files
-                  into your repository and you&apos;re ready to go!
+                  Preview your generated files and copy them to your clipboard.
+                  Drop the files into your repository and you&apos;re ready to go!
                 </p>
               </div>
             </div>
@@ -216,60 +215,28 @@ export default function DocsPage() {
             </h2>
             <div className="mt-6 space-y-4 text-muted-foreground">
               <p>
-                The wizard guides you through creating configuration files
-                tailored to your project. Here&apos;s what each step covers:
+                The wizard is an interactive step-by-step guide that helps you
+                create AI IDE configuration files tailored to your specific project.
               </p>
 
-              <div className="space-y-3">
-                <div className="rounded-lg border p-4">
-                  <h3 className="font-semibold text-foreground">
-                    1. Project Basics
-                  </h3>
-                  <p className="mt-1 text-sm">
-                    Tell us your project name, description, and the AI platforms
-                    you use (Cursor, Claude, etc.)
-                  </p>
-                </div>
-
-                <div className="rounded-lg border p-4">
-                  <h3 className="font-semibold text-foreground">
-                    2. Tech Stack
-                  </h3>
-                  <p className="mt-1 text-sm">
-                    Select your programming languages, frameworks, and tools.
-                    We&apos;ll include relevant best practices.
-                  </p>
-                </div>
-
-                <div className="rounded-lg border p-4">
-                  <h3 className="font-semibold text-foreground">
-                    3. Coding Standards
-                  </h3>
-                  <p className="mt-1 text-sm">
-                    Choose your preferred code style, testing approach, and
-                    documentation standards.
-                  </p>
-                </div>
-
-                <div className="rounded-lg border p-4">
-                  <h3 className="font-semibold text-foreground">
-                    4. Additional Files
-                  </h3>
-                  <p className="mt-1 text-sm">
-                    Optionally add LICENSE, FUNDING.yml, .gitignore, and other
-                    repository files.
-                  </p>
-                </div>
-
-                <div className="rounded-lg border p-4">
-                  <h3 className="font-semibold text-foreground">
-                    5. Preview & Download
-                  </h3>
-                  <p className="mt-1 text-sm">
-                    Review all generated files, copy individual ones, or
-                    download as a ZIP bundle.
-                  </p>
-                </div>
+              <div className="rounded-lg border bg-card p-6">
+                <h3 className="font-semibold text-foreground">How it works</h3>
+                <p className="mt-2">
+                  Answer a series of questions about your project—your tech stack,
+                  coding standards, preferred AI platforms, and more. The wizard
+                  uses your answers to generate customized configuration files
+                  that are ready to drop into your repository.
+                </p>
+                <p className="mt-3">
+                  At the end, you can preview all generated files and copy them
+                  to your clipboard. The wizard is constantly being improved with
+                  new features and options.
+                </p>
+                <Button asChild size="sm" className="mt-4">
+                  <Link href="/wizard">
+                    Start the Wizard <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
               </div>
             </div>
           </section>
@@ -314,19 +281,19 @@ export default function DocsPage() {
                 </p>
                 <ul className="mt-3 space-y-2">
                   <li className="flex items-center gap-2">
-                    <span className="rounded border-2 border-green-500 bg-green-500/10 px-2 py-0.5 text-xs font-bold text-green-700 dark:border-green-400 dark:bg-green-500/20 dark:text-green-300">
+                    <span className="rounded border-2 border-green-600 bg-green-100 px-2 py-0.5 text-xs font-bold text-green-800 dark:border-green-400 dark:bg-green-500/20 dark:text-green-300">
                       Simple
                     </span>
                     <span>Basic configurations</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="rounded border-2 border-blue-500 bg-blue-500/10 px-2 py-0.5 text-xs font-bold text-blue-700 dark:border-blue-400 dark:bg-blue-500/20 dark:text-blue-300">
+                    <span className="rounded border-2 border-blue-600 bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-800 dark:border-blue-400 dark:bg-blue-500/20 dark:text-blue-300">
                       Intermediate
                     </span>
                     <span>Standard project setups</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="rounded border-2 border-purple-500 bg-purple-500/10 px-2 py-0.5 text-xs font-bold text-purple-700 dark:border-purple-400 dark:bg-purple-500/20 dark:text-purple-300">
+                    <span className="rounded border-2 border-purple-600 bg-purple-100 px-2 py-0.5 text-xs font-bold text-purple-800 dark:border-purple-400 dark:bg-purple-500/20 dark:text-purple-300">
                       Advanced
                     </span>
                     <span>Comprehensive configurations</span>
@@ -499,7 +466,7 @@ export default function DocsPage() {
               />
               <FaqItem
                 question="What file formats are supported?"
-                answer="We generate plain text files like .cursorrules, .md, .yml, and more. You can download individual files or get everything as a ZIP."
+                answer="We generate plain text files like .cursorrules, .md, .yml, and more. You can copy individual files to your clipboard."
               />
               <FaqItem
                 question="Can I edit templates after downloading?"

@@ -26,7 +26,7 @@ export default function AboutPage() {
               Pricing
             </Link>
             <Link href="/blueprints" className="text-sm hover:underline">
-              Templates
+              Blueprints
             </Link>
             <Link href="/docs" className="text-sm hover:underline">
               Docs
@@ -198,13 +198,18 @@ export default function AboutPage() {
               , a developer passionate about self-hosting, automation, and
               making developer tools that just work.
             </p>
-            <div className="mt-8 flex justify-center gap-4">
+            <div className="mt-8 flex flex-wrap justify-center gap-4">
               <Button asChild>
                 <Link href="/wizard">
-                  Try LynxPrompt <ArrowRight className="ml-2 h-4 w-4" />
+                  Try the LynxPrompt Wizard <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
               <Button variant="outline" asChild>
+                <Link href="/blueprints">
+                  Explore Blueprints
+                </Link>
+              </Button>
+              <Button variant="ghost" asChild>
                 <a
                   href="https://geiser.cloud"
                   target="_blank"
