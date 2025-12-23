@@ -23,6 +23,7 @@ import {
   Euro,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { Footer } from "@/components/footer";
 import { UserMenu } from "@/components/user-menu";
 import { detectSensitiveData, type SensitiveMatch } from "@/lib/sensitive-data";
 
@@ -597,25 +598,7 @@ export default function ShareTemplatePage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t py-8">
-        <div className="container mx-auto flex flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
-              © 2025 LynxPrompt by{" "}
-              <a
-                href="https://geiser.cloud"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:underline"
-              >
-                Geiser Cloud
-              </a>
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
