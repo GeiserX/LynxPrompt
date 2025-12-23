@@ -75,7 +75,7 @@ export async function PUT(request: NextRequest) {
       socialBluesky,
     } = body;
 
-    // Validate inputs
+    // Validate inputs - allow custom personas (for "other" option)
     const validPersonas = [
       "backend",
       "frontend",
@@ -87,12 +87,35 @@ export async function PUT(request: NextRequest) {
       "mobile",
       "data",
       "ml",
+      "security",
+      "ios",
+      "android",
+      "game",
+      "embedded",
+      "blockchain",
+      "cloud",
+      "qa",
+      "platform",
+      "solutions",
+      "technical_lead",
+      "system",
+      "database",
+      "network",
+      "ai",
+      "robotics",
+      "graphics",
+      "audio",
+      "research",
+      "student",
+      "hobbyist",
+      "other",
     ];
-    const validSkillLevels = ["novice", "intermediate", "senior"];
+    const validSkillLevels = ["beginner", "intermediate", "advanced", "expert", "novice", "senior"];
 
-    if (persona && !validPersonas.includes(persona)) {
+    // Allow any persona if it's reasonably short (for custom "other" input)
+    if (persona && !validPersonas.includes(persona) && persona.length > 100) {
       return NextResponse.json(
-        { error: "Invalid persona value" },
+        { error: "Persona value is too long" },
         { status: 400 }
       );
     }
