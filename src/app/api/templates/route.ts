@@ -234,6 +234,27 @@ export async function POST(request: NextRequest) {
       currency = "EUR" 
     } = body;
 
+    // Check if user can create paid blueprints
+    if (price !== null && price !== undefined && price > 0) {
+      const user = await prismaUsers.user.findUnique({
+        where: { id: session.user.id },
+        select: { subscriptionPlan: true, role: true },
+      });
+
+      const canCreatePaid = 
+        user?.subscriptionPlan === "PRO" || 
+        user?.subscriptionPlan === "MAX" ||
+        user?.role === "ADMIN" ||
+        user?.role === "SUPERADMIN";
+
+      if (!canCreatePaid) {
+        return NextResponse.json(
+          { error: "Only PRO or MAX subscribers can create paid blueprints. Upgrade your plan to unlock this feature." },
+          { status: 403 }
+        );
+      }
+    }
+
     // Validation
     if (!name || typeof name !== "string" || name.trim().length < 3) {
       return NextResponse.json(

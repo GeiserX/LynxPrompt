@@ -236,7 +236,7 @@ export default function DashboardPage() {
             <Button asChild>
               <Link href="/wizard">
                 <Plus className="mr-2 h-4 w-4" />
-                New Configuration
+                New Configuration (Wizard)
               </Link>
             </Button>
           </div>
