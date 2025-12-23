@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 
-// Redirect /templates to /blueprints
-export default function TemplatesPage() {
+export default function TemplatesRedirect() {
   redirect("/blueprints");
 }

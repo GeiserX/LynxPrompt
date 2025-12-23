@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 
-// Redirect to the new blueprints/create path
-export default function TemplatesCreateRedirect() {
+export default function TemplateCreateRedirect() {
   redirect("/blueprints/create");
 }
