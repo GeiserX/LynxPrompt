@@ -170,6 +170,18 @@ const AI_BEHAVIOR_RULES = [
     recommended: true,
   },
   {
+    id: "security_audit_after_commit",
+    label: "Security Audit After Commit",
+    description: "Perform security review after every commit",
+    recommended: false,
+  },
+  {
+    id: "bug_search_before_commit",
+    label: "Bug Search Before Commit",
+    description: "Search for potential bugs and issues before committing",
+    recommended: false,
+  },
+  {
     id: "prefer_simple_solutions",
     label: "Prefer Simple Solutions",
     description: "Favor straightforward implementations",
@@ -198,6 +210,45 @@ const AI_BEHAVIOR_RULES = [
     label: "Use Conventional Commits",
     description: "Follow conventional commit format",
     recommended: false,
+  },
+];
+
+// Project types define AI behavior flexibility
+const PROJECT_TYPES = [
+  {
+    id: "work",
+    label: "Work / Professional",
+    icon: "💼",
+    description: "Follow procedures strictly, don't deviate from established patterns",
+    aiNote: "Strict adherence to documented procedures. Don't make assumptions or go your own way.",
+  },
+  {
+    id: "open_source_small",
+    label: "Open Source (Small)",
+    icon: "🌱",
+    description: "Personal/hobby project, open to contributions",
+    aiNote: "Be thorough but pragmatic. Balance best practices with simplicity.",
+  },
+  {
+    id: "open_source_large",
+    label: "Open Source (Large)",
+    icon: "🌳",
+    description: "Established project with community, maintainers",
+    aiNote: "Follow existing conventions strictly. Document everything. Consider backward compatibility.",
+  },
+  {
+    id: "leisure",
+    label: "Leisure / Learning",
+    icon: "🎮",
+    description: "For fun, experimentation, or learning new things",
+    aiNote: "Be inventive and creative. Never delete files without explicit consent. Explain concepts as you go.",
+  },
+  {
+    id: "private_business",
+    label: "Private Business",
+    icon: "🏠",
+    description: "Side project or startup with commercial goals",
+    aiNote: "Balance speed with quality. Focus on MVP features. Document important decisions.",
   },
 ];
 
@@ -236,6 +287,7 @@ const PLATFORMS = [
 type WizardConfig = {
   projectName: string;
   projectDescription: string;
+  projectType: string; // work, leisure, open_source_small, etc.
   languages: string[];
   frameworks: string[];
   letAiDecide: boolean;
@@ -272,6 +324,7 @@ export default function WizardPage() {
   const [config, setConfig] = useState<WizardConfig>({
     projectName: "",
     projectDescription: "",
+    projectType: "leisure", // Default to leisure for most flexibility
     languages: [],
     frameworks: [],
     letAiDecide: false,
@@ -638,10 +691,12 @@ export default function WizardPage() {
                 <StepProject
                   name={config.projectName}
                   description={config.projectDescription}
+                  projectType={config.projectType}
                   onNameChange={(v) => setConfig({ ...config, projectName: v })}
                   onDescriptionChange={(v) =>
                     setConfig({ ...config, projectDescription: v })
                   }
+                  onProjectTypeChange={(v) => setConfig({ ...config, projectType: v })}
                 />
               )}
               {currentStep === 1 && (
@@ -761,13 +816,17 @@ export default function WizardPage() {
 function StepProject({
   name,
   description,
+  projectType,
   onNameChange,
   onDescriptionChange,
+  onProjectTypeChange,
 }: {
   name: string;
   description: string;
+  projectType: string;
   onNameChange: (v: string) => void;
   onDescriptionChange: (v: string) => void;
+  onProjectTypeChange: (v: string) => void;
 }) {
   return (
     <div>
@@ -803,12 +862,40 @@ function StepProject({
             className="w-full resize-none rounded-lg border bg-background px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
+
+        {/* Project Type - affects AI behavior */}
+        <div>
+          <label className="mb-2 block text-sm font-medium">
+            What type of project is this?
+          </label>
+          <p className="mb-3 text-sm text-muted-foreground">
+            This affects how the AI assistant behaves when helping you code.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {PROJECT_TYPES.map((type) => (
+              <button
+                key={type.id}
+                onClick={() => onProjectTypeChange(type.id)}
+                className={`flex flex-col items-start gap-1 rounded-lg border p-4 text-left transition-all ${
+                  projectType === type.id
+                    ? "border-primary bg-primary/5"
+                    : "hover:border-primary/50"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">{type.icon}</span>
+                  <span className="font-medium">{type.label}</span>
+                </div>
+                <p className="text-xs text-muted-foreground">{type.description}</p>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="mt-6 rounded-lg bg-muted/50 p-4">
         <p className="text-sm text-muted-foreground">
-          💡 The project name will be used to customize your AI configuration
-          files and make them specific to this repository.
+          💡 The project type affects AI behavior: <strong>Work</strong> projects get strict procedure following, while <strong>Leisure</strong> projects allow more creativity.
         </p>
       </div>
     </div>

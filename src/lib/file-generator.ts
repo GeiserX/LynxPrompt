@@ -4,6 +4,7 @@ import JSZip from "jszip";
 interface WizardConfig {
   projectName: string;
   projectDescription: string;
+  projectType?: string; // work, leisure, open_source_small, etc.
   languages: string[];
   frameworks: string[];
   letAiDecide: boolean;
@@ -24,6 +25,39 @@ interface WizardConfig {
   platforms: string[];
   additionalFeedback: string;
 }
+
+// Project type behavioral instructions
+const PROJECT_TYPE_INSTRUCTIONS: Record<string, string[]> = {
+  work: [
+    "**STRICT MODE**: This is a work project. Follow procedures exactly as documented.",
+    "Do not deviate from established patterns or make assumptions.",
+    "Always ask for clarification rather than guessing.",
+    "Document all decisions and changes thoroughly.",
+  ],
+  leisure: [
+    "**CREATIVE MODE**: This is a leisure/learning project.",
+    "Be inventive and suggest creative solutions.",
+    "**IMPORTANT**: Never delete files without explicit consent.",
+    "Take time to explain concepts and alternatives.",
+  ],
+  open_source_small: [
+    "This is a small open source project.",
+    "Balance best practices with pragmatic simplicity.",
+    "Keep documentation user-friendly for potential contributors.",
+  ],
+  open_source_large: [
+    "This is a large open source project with an established community.",
+    "Follow existing conventions strictly.",
+    "Consider backward compatibility for all changes.",
+    "Document everything thoroughly for maintainers and contributors.",
+  ],
+  private_business: [
+    "This is a private business project.",
+    "Balance development speed with code quality.",
+    "Focus on MVP features and iterate.",
+    "Document important architectural decisions.",
+  ],
+};
 
 interface UserProfile {
   displayName?: string | null;
@@ -88,6 +122,15 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
   if (config.additionalFeedback) {
     lines.push("## Additional Instructions");
     lines.push(config.additionalFeedback);
+    lines.push("");
+  }
+
+  // Project type specific instructions
+  if (config.projectType && PROJECT_TYPE_INSTRUCTIONS[config.projectType]) {
+    lines.push("## Project Context & AI Behavior");
+    PROJECT_TYPE_INSTRUCTIONS[config.projectType].forEach((instruction) => {
+      lines.push(`- ${instruction}`);
+    });
     lines.push("");
   }
 
@@ -169,6 +212,15 @@ function generateClaudeMd(config: WizardConfig, user: UserProfile): string {
     lines.push("");
   }
 
+  // Project type specific instructions
+  if (config.projectType && PROJECT_TYPE_INSTRUCTIONS[config.projectType]) {
+    lines.push("### Project Context");
+    PROJECT_TYPE_INSTRUCTIONS[config.projectType].forEach((instruction) => {
+      lines.push(`- ${instruction}`);
+    });
+    lines.push("");
+  }
+
   if (config.cicd.length > 0) {
     lines.push("### CI/CD & Deployment");
     lines.push(`This project uses: ${config.cicd.join(", ")}`);
@@ -245,6 +297,15 @@ function generateCopilotInstructions(
   lines.push("- Follow existing patterns in the codebase");
   lines.push("- Use meaningful variable and function names");
   lines.push("- Add error handling where appropriate");
+
+  // Project type specific instructions
+  if (config.projectType && PROJECT_TYPE_INSTRUCTIONS[config.projectType]) {
+    lines.push("");
+    lines.push("## Project Context");
+    PROJECT_TYPE_INSTRUCTIONS[config.projectType].forEach((instruction) => {
+      lines.push(`- ${instruction}`);
+    });
+  }
 
   // Auto-update instruction
   if (config.enableAutoUpdate) {
@@ -379,6 +440,8 @@ function getRuleDescription(ruleId: string): string {
       "Always run and test locally after making changes",
     check_logs_after_build: "Check logs when build or commit finishes",
     run_tests_before_commit: "Ensure all tests pass before committing",
+    security_audit_after_commit: "Perform security audit after every commit",
+    bug_search_before_commit: "Search for potential bugs before committing",
     prefer_simple_solutions:
       "Favor straightforward implementations over complex ones",
     follow_existing_patterns:

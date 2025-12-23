@@ -260,6 +260,38 @@ Enable users to build custom configurations by cherry-picking sections from mult
 - System merges selected sections programmatically, handling conflicts via user selection
 - Similar to how AGENTS.md works: structured markdown that any tool can parse
 
+#### Template Variables System
+
+Enable dynamic values in templates that users fill in when downloading:
+
+**Delimiter**: `[[variable_name]]` 
+- Chosen because `{{}}` conflicts with Vue, Angular, Handlebars, Jinja2, etc.
+- `[[]]` is distinctive and rarely used in code
+- Escape literal brackets with `\[\[` if needed
+
+**Features**:
+- [ ] **Variable detection**: Auto-detect `[[...]]` patterns in template content
+- [ ] **Download-time prompts**: When downloading, prompt user to fill in detected variables
+- [ ] **Variable highlighting**: Show variables highlighted in code preview (different color/background)
+- [ ] **Recent values storage**: Store last-used values per variable name in user preferences
+  - Stored in `Preference` table with category `"variables"`
+  - Treat sensitively (may contain API keys, URLs, cluster names)
+  - Allow user to clear stored values
+- [ ] **Wizard variable support**: Templates created via wizard can include variables
+- [ ] **Upload emphasis**: When uploading templates, emphasize use of variables for customization
+- [ ] **Common variable suggestions**: Suggest common variable names (e.g., `[[CONFLUENCE_URL]]`, `[[K8S_CLUSTER]]`, `[[PROJECT_NAME]]`)
+
+**Example**:
+```markdown
+## Deployment
+Deploy to [[K8S_CLUSTER]] cluster using Helm.
+Documentation at [[CONFLUENCE_URL]]/deployment-guide
+```
+
+When downloading, user sees:
+- "K8S_CLUSTER" → input field (suggested: previously used value)
+- "CONFLUENCE_URL" → input field (suggested: previously used value)
+
 #### Template Management
 
 - [ ] Template versioning (keep history of changes)
