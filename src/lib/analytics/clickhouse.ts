@@ -281,9 +281,11 @@ async function flushEvents(): Promise<void> {
     // Build INSERT query
     const values = eventsToFlush
       .map((e) => {
+        // Format timestamp for ClickHouse DateTime64(3) - remove 'Z' suffix
+        const ts = (e.timestamp || new Date()).toISOString().replace('Z', '').replace('T', ' ');
         return `(
           '${e.event_type}',
-          '${e.timestamp?.toISOString() || new Date().toISOString()}',
+          '${ts}',
           '${e.session_id || ""}',
           '${e.user_id || ""}',
           '${escapeSql(e.page_path || "")}',

@@ -6,8 +6,8 @@ import type { NextRequest } from "next/server";
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
-const RATE_LIMIT_MAX_REQUESTS = 100; // 100 requests per minute for general
-const RATE_LIMIT_AUTH_MAX = 30; // 30 auth attempts per minute (magic link flow needs several requests)
+const RATE_LIMIT_MAX_REQUESTS = 200; // 200 requests per minute for general
+const RATE_LIMIT_AUTH_MAX = 60; // 60 auth attempts per minute (session checks happen frequently)
 const RATE_LIMIT_CLEANUP_INTERVAL = 5 * 60 * 1000; // Cleanup every 5 minutes
 
 // SECURITY: Prevent memory leak by cleaning up expired rate limit entries
@@ -32,8 +32,10 @@ const protectedPaths = [
   "/api/auth/passkey/list",
 ];
 
-// Paths with stricter rate limiting (auth-related)
-const authPaths = ["/api/auth", "/auth/signin"];
+// Paths with stricter rate limiting (auth-related, but not session checks)
+const authPaths = ["/api/auth/signin", "/api/auth/callback", "/api/auth/signout", "/auth/signin"];
+// Session endpoint is called frequently - use general rate limit
+const sessionPath = "/api/auth/session";
 
 function getClientIP(request: NextRequest): string {
   const forwarded = request.headers.get("x-forwarded-for");
@@ -114,7 +116,9 @@ export function middleware(request: NextRequest) {
   cleanupRateLimitStore();
 
   // Rate limiting
-  const isAuthPath = authPaths.some((p) => pathname.startsWith(p));
+  // Session endpoint uses general rate limit (called frequently for session checks)
+  const isSessionPath = pathname === sessionPath;
+  const isAuthPath = !isSessionPath && authPaths.some((p) => pathname.startsWith(p));
   const rateLimitKey = `${clientIP}:${isAuthPath ? "auth" : "general"}`;
   const maxRequests = isAuthPath
     ? RATE_LIMIT_AUTH_MAX
