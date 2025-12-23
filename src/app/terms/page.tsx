@@ -16,7 +16,7 @@ export default function TermsPage() {
             <Link href="/pricing" className="text-sm hover:underline">
               Pricing
             </Link>
-            <Link href="/templates" className="text-sm hover:underline">
+            <Link href="/blueprints" className="text-sm hover:underline">
               Templates
             </Link>
             <Link href="/docs" className="text-sm hover:underline">

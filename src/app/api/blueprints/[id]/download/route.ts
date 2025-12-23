@@ -50,7 +50,7 @@ export async function POST(
   }
 }
 
-// GET /api/templates/[id]/download - Get download stats
+// GET /api/blueprints/[id]/download - Get download stats
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -94,4 +94,3 @@ export async function GET(
     return NextResponse.json({ total: 0, byPlatform: {} });
   }
 }
-

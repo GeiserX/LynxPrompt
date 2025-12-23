@@ -353,7 +353,7 @@ export default function DashboardPage() {
                           </div>
                         </div>
                         <Button variant="ghost" size="icon" asChild>
-                          <Link href={`/templates/${template.id}`}>
+                          <Link href={`/blueprints/${template.id}`}>
                             <Eye className="h-4 w-4" />
                           </Link>
                         </Button>
@@ -408,7 +408,7 @@ export default function DashboardPage() {
                       .map((template) => (
                         <Link
                           key={template.id}
-                          href={`/templates/${template.id}`}
+                          href={`/blueprints/${template.id}`}
                           className="group rounded-lg border bg-card p-4 transition-colors hover:border-primary"
                         >
                           <div className="flex items-start justify-between">

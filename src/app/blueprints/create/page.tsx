@@ -88,7 +88,7 @@ export default function ShareBlueprintPage() {
     }
   }, [status]);
 
-  const canCreatePaidBlueprints = userPlan === "PRO" || userPlan === "MAX";
+  const canCreatePaidBlueprints = userPlan === "pro" || userPlan === "max";
 
   // Detect sensitive data in content
   const sensitiveMatches = useMemo<SensitiveMatch[]>(() => {
@@ -192,7 +192,7 @@ export default function ShareBlueprintPage() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/templates", {
+      const response = await fetch("/api/blueprints", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -258,7 +258,7 @@ export default function ShareBlueprintPage() {
             </p>
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
               <Button asChild>
-                <Link href={`/templates/usr_${success.id}`}>
+                <Link href={`/blueprints/usr_${success.id}`}>
                   View Blueprint
                 </Link>
               </Button>
@@ -716,6 +716,7 @@ export default function ShareBlueprintPage() {
     </div>
   );
 }
+
 
 
 
