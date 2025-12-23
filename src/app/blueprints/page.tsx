@@ -123,6 +123,7 @@ function BlueprintsContent() {
         if (sortParam) params.set("sort", sortParam);
         if (debouncedSearch) params.set("q", debouncedSearch);
         if (selectedCategory && selectedCategory !== "all") params.set("category", selectedCategory);
+        if (selectedPlatforms.length > 0) params.set("platforms", selectedPlatforms.join(","));
 
         const res = await fetch(`/api/templates?${params.toString()}`);
         if (res.ok) {
@@ -138,7 +139,7 @@ function BlueprintsContent() {
     };
 
     fetchData();
-  }, [sortParam, debouncedSearch, selectedCategory]);
+  }, [sortParam, debouncedSearch, selectedCategory, selectedPlatforms]);
 
   // Update URL when search/sort changes
   const updateURL = (newSort?: SortOption, newSearch?: string) => {

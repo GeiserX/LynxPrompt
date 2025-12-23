@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
     const sort = searchParams.get("sort") || "popular";
     const search = searchParams.get("q") || "";
     const category = searchParams.get("category");
+    const platforms = searchParams.get("platforms");
 
     // Build sort order
     let orderBy: Record<string, "asc" | "desc"> = {};
@@ -68,6 +69,12 @@ export async function GET(request: NextRequest) {
       where.type = category.toUpperCase();
     }
 
+    // Filter by platforms (compatibleWith field)
+    if (platforms) {
+      const platformList = platforms.split(",").map(p => p.trim());
+      where.compatibleWith = { hasSome: platformList };
+    }
+
     // Fetch templates
     const templates = await prismaUsers.userTemplate.findMany({
       where,
@@ -85,6 +92,7 @@ export async function GET(request: NextRequest) {
         isOfficial: true,
         price: true,
         currency: true,
+        compatibleWith: true,
         createdAt: true,
         user: {
           select: {
