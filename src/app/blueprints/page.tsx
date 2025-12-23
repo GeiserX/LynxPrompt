@@ -69,6 +69,8 @@ interface Blueprint {
   discountedPrice?: number | null;
   isMaxUser?: boolean;
   currency?: string;
+  isOwner?: boolean;
+  hasPurchased?: boolean;
 }
 
 interface ApiResponse {
@@ -497,11 +499,11 @@ function BlueprintsContent() {
                   const isPaid = blueprint.price && blueprint.price > 0;
                   const hasDiscount = isPaid && blueprint.discountedPrice && blueprint.discountedPrice < blueprint.price!;
                   const displayPrice = hasDiscount 
-                    ? `€${(blueprint.discountedPrice! / 100).toFixed(0)}`
+                    ? `€${(blueprint.discountedPrice! / 100).toFixed(2)}`
                     : isPaid 
-                      ? `€${(blueprint.price! / 100).toFixed(0)}` 
+                      ? `€${(blueprint.price! / 100).toFixed(2)}` 
                       : null;
-                  const originalPrice = hasDiscount ? `€${(blueprint.price! / 100).toFixed(0)}` : null;
+                  const originalPrice = hasDiscount ? `€${(blueprint.price! / 100).toFixed(2)}` : null;
                   
                   return (
                     <div
@@ -614,7 +616,9 @@ function BlueprintsContent() {
                           className={isPaid ? "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600" : ""}
                         >
                           <Link href={`/blueprints/${blueprint.id}`}>
-                            {isPaid ? "Purchase" : "Use Blueprint"}
+                            {isPaid && !blueprint.isOwner && !blueprint.hasPurchased 
+                              ? "Purchase" 
+                              : "Use Blueprint"}
                           </Link>
                         </Button>
                       </div>
