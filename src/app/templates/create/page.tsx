@@ -14,9 +14,6 @@ import {
   X,
   Loader2,
   CheckCircle2,
-  Zap,
-  Layers,
-  Settings2,
   Info,
   AlertTriangle,
   DollarSign,
@@ -26,6 +23,7 @@ import { Logo } from "@/components/logo";
 import { Footer } from "@/components/footer";
 import { UserMenu } from "@/components/user-menu";
 import { detectSensitiveData, type SensitiveMatch } from "@/lib/sensitive-data";
+import { detectVariables } from "@/lib/file-generator";
 
 const TEMPLATE_TYPES = [
   { value: "CURSORRULES", label: "Cursor Rules (.cursorrules)", icon: "🎯" },
@@ -38,37 +36,6 @@ const TEMPLATE_TYPES = [
   { value: "WINDSURF_RULES", label: "Windsurf Rules", icon: "🏄" },
   { value: "CUSTOM", label: "Custom / Other", icon: "📄" },
 ] as const;
-
-function determineTier(content: string): {
-  tier: string;
-  label: string;
-  icon: React.ReactNode;
-  color: string;
-} {
-  const lineCount = content.split("\n").length;
-  if (lineCount <= 50) {
-    return {
-      tier: "SIMPLE",
-      label: "Simple",
-      icon: <Zap className="h-4 w-4" />,
-      color: "text-green-500",
-    };
-  }
-  if (lineCount <= 200) {
-    return {
-      tier: "INTERMEDIATE",
-      label: "Intermediate",
-      icon: <Layers className="h-4 w-4" />,
-      color: "text-yellow-500",
-    };
-  }
-  return {
-    tier: "ADVANCED",
-    label: "Advanced",
-    icon: <Settings2 className="h-4 w-4" />,
-    color: "text-purple-500",
-  };
-}
 
 export default function ShareTemplatePage() {
   const { status } = useSession();
@@ -91,14 +58,16 @@ export default function ShareTemplatePage() {
   );
   const [sensitiveWarningDismissed, setSensitiveWarningDismissed] = useState(false);
 
-  // Auto-detect tier based on content
-  const detectedTier = content.trim() ? determineTier(content) : null;
-  const lineCount = content.split("\n").filter((l) => l.trim()).length;
-
   // Detect sensitive data in content
   const sensitiveMatches = useMemo<SensitiveMatch[]>(() => {
     if (!content.trim()) return [];
     return detectSensitiveData(content);
+  }, [content]);
+
+  // Detect template variables [[VARIABLE_NAME]]
+  const detectedVariables = useMemo<string[]>(() => {
+    if (!content.trim()) return [];
+    return detectVariables(content);
   }, [content]);
 
   const hasSensitiveData = sensitiveMatches.length > 0 && !sensitiveWarningDismissed;
@@ -225,8 +194,8 @@ export default function ShareTemplatePage() {
 
         <main className="flex flex-1 items-center justify-center p-4">
           <div className="mx-auto max-w-md text-center">
-            <div className="mb-6 inline-flex rounded-full bg-green-100 p-4 dark:bg-green-900/30">
-              <CheckCircle2 className="h-12 w-12 text-green-600 dark:text-green-400" />
+            <div className="mb-6 inline-flex rounded-full border-2 border-green-500 bg-green-500/20 p-4 dark:border-green-400 dark:bg-green-500/30">
+              <CheckCircle2 className="h-12 w-12 text-green-600 dark:text-green-300" />
             </div>
             <h1 className="mb-2 text-2xl font-bold">Template Shared!</h1>
             <p className="mb-6 text-muted-foreground">
@@ -235,7 +204,7 @@ export default function ShareTemplatePage() {
             </p>
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
               <Button asChild>
-                <Link href={`/templates/user-${success.id}`}>
+                <Link href={`/templates/usr_${success.id}`}>
                   View Template
                 </Link>
               </Button>
@@ -330,18 +299,29 @@ export default function ShareTemplatePage() {
                   required
                 />
 
-                {/* Auto-detected tier */}
-                {detectedTier && (
-                  <div className="mt-4 flex items-center justify-between rounded-lg bg-muted/50 px-4 py-3">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Info className="h-4 w-4" />
-                      <span>{lineCount} lines</span>
-                    </div>
-                    <div
-                      className={`flex items-center gap-2 font-medium ${detectedTier.color}`}
-                    >
-                      {detectedTier.icon}
-                      <span>Auto-categorized as {detectedTier.label}</span>
+                {/* Template Variables Detected */}
+                {detectedVariables.length > 0 && (
+                  <div className="mt-4 rounded-lg border border-blue-300 bg-blue-50 p-4 dark:border-blue-700 dark:bg-blue-900/20">
+                    <div className="flex items-start gap-3">
+                      <Info className="h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400" />
+                      <div className="flex-1">
+                        <h4 className="font-medium text-blue-800 dark:text-blue-200">
+                          Template Variables Detected
+                        </h4>
+                        <p className="mt-1 text-sm text-blue-700 dark:text-blue-300">
+                          Users will be prompted to fill in these values when downloading:
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {detectedVariables.map((varName) => (
+                            <code
+                              key={varName}
+                              className="rounded bg-blue-100 px-2 py-1 font-mono text-sm text-blue-800 dark:bg-blue-800/50 dark:text-blue-200"
+                            >
+                              [[{varName}]]
+                            </code>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
