@@ -1388,12 +1388,6 @@ function StepRepository({
         {/* Toggles */}
         <div className="space-y-3">
           <ToggleOption
-            label="FUNDING.yml"
-            description="Add GitHub Sponsors and other funding links"
-            checked={config.funding}
-            onChange={(v) => onChange({ funding: v })}
-          />
-          <ToggleOption
             label="Conventional Commits"
             description="Use standardized commit message format"
             checked={config.conventionalCommits}
@@ -1580,6 +1574,31 @@ function StepCICD({
               </div>
             )}
           </>
+        )}
+
+        {/* GitHub-specific: Funding */}
+        {config.cicd === "github_actions" && (
+          <div className="border-t pt-6">
+            <h3 className="mb-3 font-semibold">GitHub Features</h3>
+            <ToggleOption
+              label="FUNDING.yml"
+              description="Add GitHub Sponsors and other funding links to your repo"
+              checked={config.funding}
+              onChange={(v) => onChange({ funding: v })}
+            />
+            {config.funding && (
+              <div className="mt-4">
+                <label className="text-sm font-medium">Funding URL (optional)</label>
+                <input
+                  type="text"
+                  value={config.fundingUrl || ""}
+                  onChange={(e) => onChange({ fundingUrl: e.target.value })}
+                  placeholder="e.g., https://github.com/sponsors/yourusername"
+                  className="mt-2 w-full rounded-lg border bg-background px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>
@@ -1963,12 +1982,12 @@ function ToggleOption({
       </div>
       <div
         className={`flex h-6 w-11 items-center rounded-full p-1 transition-colors ${
-          checked ? "bg-primary" : "bg-muted"
+          checked ? "bg-green-500" : "bg-muted"
         }`}
       >
         <div
-          className={`h-4 w-4 rounded-full bg-white transition-transform ${
-            checked ? "translate-x-5" : "translate-x-0"
+          className={`h-4 w-4 rounded-full shadow-sm transition-transform ${
+            checked ? "translate-x-5 bg-white" : "translate-x-0 bg-gray-400 dark:bg-gray-600"
           }`}
         />
       </div>
