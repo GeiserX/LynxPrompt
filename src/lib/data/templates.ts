@@ -582,7 +582,7 @@ export async function getTemplateById(
   } else if (id.startsWith("usr_")) {
     const realId = id.replace("usr_", "");
 
-    // Get session to check if user owns this template
+    // Get session to check if user owns this template or has purchased it
     const session = await import("next-auth").then(({ getServerSession }) =>
       import("@/lib/auth").then(({ authOptions }) =>
         getServerSession(authOptions)
@@ -591,7 +591,7 @@ export async function getTemplateById(
 
     const userId = session?.user?.id;
 
-    // Allow access if template is public OR if user owns it
+    // Allow access if template is public OR if user owns it OR if user has purchased it
     const template = await prismaUsers.userTemplate.findFirst({
       where: {
         id: realId,
@@ -604,9 +604,34 @@ export async function getTemplateById(
       },
     });
 
-    // If template exists and user doesn't own it, check if it's public
-    if (template && userId && template.userId !== userId && !template.isPublic) {
-      return null; // Not owner and not public
+    if (!template) return null;
+
+    // Check if user has access
+    let hasAccess = template.isPublic; // Public templates always accessible
+
+    if (userId) {
+      // User owns the template
+      if (template.userId === userId) {
+        hasAccess = true;
+      }
+      // Or user has purchased it
+      else if (template.price && template.price > 0) {
+        const purchase = await prismaUsers.blueprintPurchase.findUnique({
+          where: {
+            userId_templateId: {
+              userId: userId,
+              templateId: realId,
+            },
+          },
+        });
+        if (purchase) {
+          hasAccess = true;
+        }
+      }
+    }
+
+    if (!hasAccess) {
+      return null; // No access
     }
 
     if (!template) return null;
