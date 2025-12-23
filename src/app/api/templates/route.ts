@@ -5,33 +5,54 @@ import { prismaUsers } from "@/lib/db-users";
 
 // Template type options
 const TEMPLATE_TYPES = [
-  "CURSORRULES",
+  "CURSOR_RULES",
   "CLAUDE_MD",
   "COPILOT_INSTRUCTIONS",
   "WINDSURF_RULES",
+  "AGENTS_MD",
   "CUSTOM",
 ] as const;
 
 type TemplateType = (typeof TEMPLATE_TYPES)[number];
 
-// Determine tier based on line count
-function determineTier(
-  content: string
-): "SIMPLE" | "INTERMEDIATE" | "ADVANCED" {
-  const lineCount = content.split("\n").length;
-  if (lineCount <= 50) return "SIMPLE";
-  if (lineCount <= 200) return "INTERMEDIATE";
+/**
+ * Determine tier based on EFFECTIVE line count
+ * - Ignores empty lines
+ * - Ignores lines that are only whitespace
+ * - Ignores lines that are only comments (# or //)
+ */
+function determineTier(content: string): "SIMPLE" | "INTERMEDIATE" | "ADVANCED" {
+  const lines = content.split("\n");
+  let effectiveLines = 0;
+  
+  for (const line of lines) {
+    const trimmed = line.trim();
+    // Skip empty lines
+    if (!trimmed) continue;
+    // Skip comment-only lines
+    if (trimmed.startsWith("#") || trimmed.startsWith("//")) continue;
+    // Skip markdown headers that are empty (like "##" with nothing after)
+    if (/^#{1,6}\s*$/.test(trimmed)) continue;
+    effectiveLines++;
+  }
+  
+  if (effectiveLines <= 30) return "SIMPLE";
+  if (effectiveLines <= 100) return "INTERMEDIATE";
   return "ADVANCED";
 }
 
-// GET: List templates with search and sort
+// GET: List templates with search, sort, and pagination
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const sort = searchParams.get("sort") || "popular";
     const search = searchParams.get("q") || "";
     const category = searchParams.get("category");
-    const platforms = searchParams.get("platforms");
+    const tier = searchParams.get("tier");
+    const tagsParam = searchParams.get("tags");
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "12", 10);
+    const skip = (page - 1) * limit;
 
     // Build sort order
     let orderBy: Record<string, "asc" | "desc"> = {};
@@ -65,53 +86,73 @@ export async function GET(request: NextRequest) {
       ];
     }
 
+    // Filter by real category (web, devops, saas, etc.)
     if (category && category !== "all") {
-      where.type = category.toUpperCase();
+      where.category = category;
     }
 
-    // Filter by platforms (compatibleWith field)
-    if (platforms) {
-      const platformList = platforms.split(",").map(p => p.trim());
-      where.compatibleWith = { hasSome: platformList };
+    // Filter by tier
+    if (tier && tier !== "all") {
+      where.tier = tier;
     }
 
-    // Fetch templates
+    // Filter by tags
+    if (tagsParam) {
+      const tagsList = tagsParam.split(",").map(t => t.trim().toLowerCase());
+      where.tags = { hasSome: tagsList };
+    }
+
+    // Get total count for pagination
+    const total = await prismaUsers.userTemplate.count({ where });
+
+    // Fetch templates with pagination
     const templates = await prismaUsers.userTemplate.findMany({
       where,
       orderBy,
-      take: 50,
+      skip,
+      take: limit,
       select: {
         id: true,
         name: true,
         description: true,
         type: true,
         tier: true,
+        category: true,
         tags: true,
         downloads: true,
         favorites: true,
         isOfficial: true,
         price: true,
         currency: true,
-        compatibleWith: true,
         createdAt: true,
         user: {
           select: {
             name: true,
+            displayName: true,
           },
         },
       },
     });
 
-    // Get category counts
-    const categoryCounts = await prismaUsers.userTemplate.groupBy({
-      by: ["type"],
+    // Get popular tags from ALL public templates (for the filter sidebar)
+    const allTemplates = await prismaUsers.userTemplate.findMany({
       where: { isPublic: true },
-      _count: { id: true },
+      select: { tags: true },
     });
-
-    const totalCount = await prismaUsers.userTemplate.count({
-      where: { isPublic: true },
-    });
+    
+    // Count tag frequency
+    const tagCounts: Record<string, number> = {};
+    for (const t of allTemplates) {
+      for (const tag of t.tags || []) {
+        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+      }
+    }
+    
+    // Sort by frequency and get top 20
+    const popularTags = Object.entries(tagCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 20)
+      .map(([tag]) => tag);
 
     // Check if user is MAX subscriber for discount
     let isMaxUser = false;
@@ -129,21 +170,22 @@ export async function GET(request: NextRequest) {
     // MAX subscribers get 10% discount
     const MAX_DISCOUNT_PERCENT = 10;
 
-    // Format response - prefix IDs for the detail page to work
+    // Format response
     const formattedTemplates = templates.map((t) => {
       const discountedPrice = isMaxUser && t.price 
         ? Math.round(t.price * (1 - MAX_DISCOUNT_PERCENT / 100))
         : null;
       
       return {
-        id: `usr_${t.id}`, // Prefix with usr_ for user templates
+        id: `usr_${t.id}`,
         name: t.name,
         description: t.description || "",
-        author: t.user?.name || "Anonymous",
+        author: t.user?.displayName || t.user?.name || "Anonymous",
         downloads: t.downloads,
         likes: t.favorites,
         tags: t.tags || [],
         tier: t.tier,
+        category: t.category || "other",
         isOfficial: t.isOfficial || false,
         price: t.price,
         discountedPrice,
@@ -152,23 +194,16 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    const categories = [
-      { id: "all", label: "All Templates", count: totalCount },
-      ...categoryCounts.map((c) => ({
-        id: c.type.toLowerCase(),
-        label: c.type.replace(/_/g, " ").toLowerCase().replace(/^\w/, (l: string) => l.toUpperCase()),
-        count: c._count.id,
-      })),
-    ];
-
     return NextResponse.json({
       templates: formattedTemplates,
-      categories,
+      popularTags,
+      total,
+      hasMore: skip + templates.length < total,
     });
   } catch (error) {
     console.error("Error fetching templates:", error);
     return NextResponse.json(
-      { error: "Failed to fetch templates", templates: [], categories: [] },
+      { error: "Failed to fetch templates", templates: [], popularTags: [], total: 0, hasMore: false },
       { status: 500 }
     );
   }
@@ -187,7 +222,17 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, description, content, type, tags, isPublic = true, price, currency = "EUR" } = body;
+    const { 
+      name, 
+      description, 
+      content, 
+      type, 
+      category = "other",
+      tags, 
+      isPublic = true, 
+      price, 
+      currency = "EUR" 
+    } = body;
 
     // Validation
     if (!name || typeof name !== "string" || name.trim().length < 3) {
@@ -204,12 +249,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!type || !TEMPLATE_TYPES.includes(type as TemplateType)) {
-      return NextResponse.json(
-        { error: "Invalid template type" },
-        { status: 400 }
-      );
-    }
+    // Validate type - accept old formats and normalize
+    let normalizedType: TemplateType = "CUSTOM";
+    const upperType = (type || "").toUpperCase().replace(/-/g, "_");
+    if (upperType.includes("CURSOR")) normalizedType = "CURSOR_RULES";
+    else if (upperType.includes("CLAUDE")) normalizedType = "CLAUDE_MD";
+    else if (upperType.includes("COPILOT")) normalizedType = "COPILOT_INSTRUCTIONS";
+    else if (upperType.includes("WINDSURF")) normalizedType = "WINDSURF_RULES";
+    else if (upperType.includes("AGENT")) normalizedType = "AGENTS_MD";
+
+    // Validate category
+    const validCategories = ["web", "fullstack", "devops", "mobile", "saas", "data", "api", "other"];
+    const normalizedCategory = validCategories.includes(category) ? category : "other";
 
     // Validate tags (optional, max 10 tags, each max 30 chars)
     const validatedTags: string[] = [];
@@ -225,7 +276,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Auto-determine tier based on content length
+    // Auto-determine tier based on EFFECTIVE content lines
     const tier = determineTier(content);
 
     // Validate price if provided (minimum €5 = 500 cents)
@@ -248,7 +299,8 @@ export async function POST(request: NextRequest) {
         name: name.trim(),
         description: description?.trim() || null,
         content: content.trim(),
-        type: type as TemplateType,
+        type: normalizedType,
+        category: normalizedCategory,
         tier,
         tags: validatedTags,
         isPublic: Boolean(isPublic),
@@ -265,6 +317,7 @@ export async function POST(request: NextRequest) {
         id: template.id,
         name: template.name,
         tier: template.tier,
+        category: template.category,
       },
     });
   } catch (error) {
@@ -275,4 +328,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

@@ -240,10 +240,12 @@ enum TemplateTier {
 enum TemplateType {
   LICENSE
   FUNDING
-  CURSORRULES
+  CURSORRULES       // Legacy - keep for backwards compat
+  CURSOR_RULES      // New standard
   CLAUDE_MD
   COPILOT_INSTRUCTIONS
   WINDSURF_RULES
+  AGENTS_MD         // Universal AGENTS.md
   GITIGNORE
   README
   CONTRIBUTING
