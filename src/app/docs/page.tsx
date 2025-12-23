@@ -164,7 +164,7 @@ export default function DocsPage() {
                 </h3>
                 <p className="mt-2">
                   Create an account using GitHub, Google, or a magic link. This
-                  lets you save your preferences and templates.
+                  lets you save your preferences and blueprints.
                 </p>
                 <Button asChild size="sm" className="mt-4">
                   <Link href="/auth/signin">
@@ -175,14 +175,14 @@ export default function DocsPage() {
 
               <div className="rounded-lg border bg-card p-6">
                 <h3 className="font-semibold text-foreground">
-                  Step 2: Use the Wizard or Browse Templates
+                  Step 2: Use the Wizard or Browse Blueprints
                 </h3>
                 <p className="mt-2">
                   <strong>Wizard:</strong> Answer a few questions about your
                   project, and we&apos;ll generate custom configuration files.
                 </p>
                 <p className="mt-2">
-                  <strong>Templates:</strong> Browse community-created prompts
+                  <strong>Blueprints:</strong> Browse community-created prompts
                   and download ones that fit your workflow.
                 </p>
                 <div className="mt-4 flex gap-3">
@@ -339,7 +339,7 @@ export default function DocsPage() {
                 <p>
                   <strong className="text-foreground">Who can sell?</strong>{" "}
                   Only Pro and Max subscribers can create and sell paid
-                  prompts. Free users can share free templates with the
+                  prompts. Free users can share free blueprints with the
                   community.
                 </p>
               </div>
@@ -458,18 +458,18 @@ export default function DocsPage() {
             <div className="mt-6 space-y-6">
               <FaqItem
                 question="Is LynxPrompt free to use?"
-                answer="Yes! The basic features are free. You can use the basic wizard, download templates, and browse free community blueprints. Premium features like advanced wizards require a subscription. Max subscribers also get 10% off paid blueprints."
+                answer="Yes! The basic features are free. You can use the basic wizard, download blueprints, and browse free community blueprints. Premium features like advanced wizards require a subscription. Max subscribers also get 10% off paid blueprints."
               />
               <FaqItem
                 question="Do I need to create an account?"
-                answer="Not for basic browsing. But to save your preferences, create templates, and use the marketplace, you'll need a free account."
+                answer="Not for basic browsing. But to save your preferences, create blueprints, and use the marketplace, you'll need a free account."
               />
               <FaqItem
                 question="What file formats are supported?"
                 answer="We generate plain text files like .cursorrules, .md, .yml, and more. You can copy individual files to your clipboard."
               />
               <FaqItem
-                question="Can I edit templates after downloading?"
+                question="Can I edit blueprints after downloading?"
                 answer="Absolutely! All generated files are plain text. Edit them however you like to fit your specific needs."
               />
               <FaqItem

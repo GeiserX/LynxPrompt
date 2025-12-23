@@ -17,7 +17,7 @@ export default function TermsPage() {
               Pricing
             </Link>
             <Link href="/blueprints" className="text-sm hover:underline">
-              Templates
+              Blueprints
             </Link>
             <Link href="/docs" className="text-sm hover:underline">
               Docs
@@ -60,11 +60,11 @@ export default function TermsPage() {
               <section>
                 <h2 className="mb-3 text-lg font-semibold text-foreground">2. Description of Service</h2>
                 <p>
-                  LynxPrompt is a platform that allows users to create, share, buy, and sell AI IDE configuration files (&quot;prompts&quot; or &quot;templates&quot;). The service includes:
+                  LynxPrompt is a platform that allows users to create, share, buy, and sell AI IDE configuration files (&quot;prompts&quot; or &quot;blueprints&quot;). The service includes:
                 </p>
                 <ul className="mt-3 list-inside list-disc space-y-1">
                   <li>A wizard to generate configuration files</li>
-                  <li>A marketplace for buying and selling prompts/templates</li>
+                  <li>A marketplace for buying and selling prompts/blueprints</li>
                   <li>Subscription plans offering access to premium features and content</li>
                 </ul>
               </section>
@@ -111,7 +111,7 @@ export default function TermsPage() {
               <section>
                 <h2 className="mb-3 text-lg font-semibold text-foreground">6. License for Purchased Content</h2>
                 <p>
-                  Upon purchasing a prompt or template, the Seller grants you a:
+                  Upon purchasing a prompt or blueprint, the Seller grants you a:
                 </p>
                 <ul className="mt-3 list-inside list-disc space-y-1">
                   <li><strong>Non-exclusive</strong> license</li>

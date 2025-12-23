@@ -17,6 +17,7 @@ import {
   ChevronUp,
   X,
   Filter,
+  Wand2,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
@@ -427,6 +428,15 @@ function BlueprintsContent() {
                   Create Blueprint
                 </Link>
               </Button>
+              
+              {status === "authenticated" && (
+                <Button asChild variant="outline" className="w-full mt-2">
+                  <Link href="/wizard">
+                    <Wand2 className="mr-2 h-4 w-4" />
+                    Use Wizard
+                  </Link>
+                </Button>
+              )}
             </div>
           </aside>
 
@@ -546,7 +556,7 @@ function BlueprintsContent() {
                           {blueprint.authorId ? (
                             <Link
                               href={`/users/${blueprint.authorId}`}
-                              className="text-sm text-muted-foreground hover:text-primary hover:underline"
+                              className="relative z-10 text-sm text-muted-foreground hover:text-primary hover:underline cursor-pointer"
                               onClick={(e) => e.stopPropagation()}
                             >
                               by {blueprint.author}
@@ -598,15 +608,20 @@ function BlueprintsContent() {
                             {blueprint.downloads.toLocaleString()}
                           </span>
                           <button
-                            onClick={(e) => toggleFavorite(e, blueprint.id)}
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              toggleFavorite(e, blueprint.id);
+                            }}
                             disabled={togglingFavorite === blueprint.id}
-                            className={`flex items-center gap-1 transition-colors hover:text-red-500 ${
+                            className={`relative z-10 flex items-center gap-1 transition-colors hover:text-red-500 cursor-pointer disabled:opacity-50 ${
                               favorites.has(blueprint.id) ? "text-red-500" : ""
                             }`}
                             title={favorites.has(blueprint.id) ? "Remove from favorites" : "Add to favorites"}
                           >
-                            <Heart className={`h-4 w-4 ${favorites.has(blueprint.id) ? "fill-current" : ""}`} />
-                            {blueprint.likes}
+                            <Heart className={`h-4 w-4 pointer-events-none ${favorites.has(blueprint.id) ? "fill-current" : ""}`} />
+                            <span className="pointer-events-none">{blueprint.likes}</span>
                           </button>
                         </div>
                         <Button 
