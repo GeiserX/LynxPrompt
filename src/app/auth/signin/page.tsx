@@ -115,14 +115,14 @@ function SignInContent() {
             <span className="text-white/80">always at hand</span>
           </h1>
           <p className="mt-4 text-lg text-white/80">
-            Sign in to save your preferences, create custom templates, and share
+            Sign in to save your preferences, create custom blueprints, and share
             your configurations with the community.
           </p>
 
           <div className="mt-8 space-y-4">
             <Feature text="Save and sync your configurations" />
-            <Feature text="Access your templates from anywhere" />
-            <Feature text="Share and discover community templates" />
+            <Feature text="Access your blueprints from anywhere" />
+            <Feature text="Share and discover community blueprints" />
             <Feature text="Get personalized recommendations" />
           </div>
         </div>

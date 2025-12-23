@@ -19,14 +19,14 @@ const TIERS = [
     highlighted: false,
     iconStyle: "default",
     features: [
-      { text: "Basic template wizards", included: true },
-      { text: "Download ZIP configs", included: true },
-      { text: "Browse free templates", included: true },
+      { text: "Basic wizards", included: true },
+      { text: "Download configs", included: true },
+      { text: "Browse free blueprints", included: true },
       { text: "Community support", included: true },
       { text: "Intermediate wizards", included: false },
       { text: "Advanced wizards", included: false },
-      { text: "Access paid templates", included: false },
-      { text: "Sell your templates", included: false },
+      { text: "Access paid blueprints", included: false },
+      { text: "Sell your blueprints", included: false },
     ],
     cta: "Get Started",
     ctaLink: "/auth/signin",
@@ -45,9 +45,9 @@ const TIERS = [
       { text: "Intermediate repo wizards", included: true },
       { text: "Priority support", included: true },
       { text: "Save wizard drafts", included: true },
-      { text: "Sell templates (70% revenue)", included: true },
+      { text: "Sell blueprints (70% revenue)", included: true },
       { text: "Advanced wizards", included: false },
-      { text: "Access ALL paid templates", included: false },
+      { text: "Access ALL paid blueprints", included: false },
     ],
     cta: "Start Pro Trial",
     ctaLink: "/auth/signin?plan=pro",
@@ -79,9 +79,9 @@ const COMPARISON_FEATURES = [
   { name: "Intermediate wizards", free: false, pro: true, max: true },
   { name: "Advanced wizards", free: false, pro: false, max: true },
   { name: "Download configs", free: true, pro: true, max: true },
-  { name: "Browse free templates", free: true, pro: true, max: true },
+  { name: "Browse free blueprints", free: true, pro: true, max: true },
   { name: "Paid blueprint discount", free: "-", pro: "-", max: "10% off" },
-  { name: "Sell templates", free: false, pro: true, max: true },
+  { name: "Sell blueprints", free: false, pro: true, max: true },
   { name: "Revenue share", free: "-", pro: "70%", max: "70%" },
   { name: "Save drafts", free: false, pro: true, max: true },
   { name: "Priority support", free: false, pro: true, max: true },
@@ -343,7 +343,7 @@ export default function PricingPage() {
                 <p className="border-t px-4 py-3 text-sm text-muted-foreground">
                   You&apos;ll keep access to your current features until the end
                   of your billing period. After that, you&apos;ll move to the
-                  new plan. Your saved configurations and templates will remain.
+                  new plan. Your saved configurations and blueprints will remain.
                 </p>
               </details>
 

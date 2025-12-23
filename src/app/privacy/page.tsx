@@ -17,7 +17,7 @@ export default function PrivacyPage() {
               Pricing
             </Link>
             <Link href="/blueprints" className="text-sm hover:underline">
-              Templates
+              Blueprints
             </Link>
             <Link href="/docs" className="text-sm hover:underline">
               Docs
@@ -112,7 +112,7 @@ export default function PrivacyPage() {
                   <div>
                     <strong className="text-foreground">User Content:</strong>
                     <ul className="ml-4 mt-1 list-inside list-disc">
-                      <li>Templates and prompts you create</li>
+                      <li>Blueprints and prompts you create</li>
                       <li>Wizard configurations and preferences</li>
                       <li>Favorites and download history</li>
                     </ul>
@@ -144,7 +144,7 @@ export default function PrivacyPage() {
                     </strong>
                     <ul className="ml-4 mt-1 list-inside list-disc">
                       <li>To create and manage your account</li>
-                      <li>To provide our service and save your templates</li>
+                      <li>To provide our service and save your blueprints</li>
                       <li>To process payments through Stripe</li>
                       <li>
                         To send transactional emails (passwordless login links,
@@ -178,7 +178,7 @@ export default function PrivacyPage() {
                 <ul className="list-inside list-disc space-y-1">
                   <li>To provide and maintain our service</li>
                   <li>To authenticate your account via OAuth providers</li>
-                  <li>To save your preferences, templates, and configurations</li>
+                  <li>To save your preferences, blueprints, and configurations</li>
                   <li>To process payments securely through Stripe</li>
                   <li>To analyze anonymized usage patterns for service improvement</li>
                   <li>To send essential service communications</li>
