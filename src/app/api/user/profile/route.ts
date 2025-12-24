@@ -32,6 +32,8 @@ export async function GET() {
         socialWebsite: true,
         socialYoutube: true,
         socialBluesky: true,
+        socialMastodon: true,
+        socialDiscord: true,
         createdAt: true,
       },
     });
@@ -73,6 +75,8 @@ export async function PUT(request: NextRequest) {
       socialWebsite,
       socialYoutube,
       socialBluesky,
+      socialMastodon,
+      socialDiscord,
     } = body;
 
     // Validate inputs - allow custom personas (for "other" option)
@@ -170,6 +174,8 @@ export async function PUT(request: NextRequest) {
         ...(socialWebsite !== undefined && { socialWebsite: sanitizeSocialLink(socialWebsite, "url") }),
         ...(socialYoutube !== undefined && { socialYoutube: sanitizeSocialLink(socialYoutube, "url") }),
         ...(socialBluesky !== undefined && { socialBluesky: sanitizeSocialLink(socialBluesky, "username") }),
+        ...(socialMastodon !== undefined && { socialMastodon: sanitizeSocialLink(socialMastodon, "username") }),
+        ...(socialDiscord !== undefined && { socialDiscord: sanitizeSocialLink(socialDiscord, "username") }),
         profileCompleted,
       },
       select: {
@@ -190,6 +196,8 @@ export async function PUT(request: NextRequest) {
         socialWebsite: true,
         socialYoutube: true,
         socialBluesky: true,
+        socialMastodon: true,
+        socialDiscord: true,
       },
     });
 

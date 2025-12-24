@@ -28,13 +28,14 @@ import {
   Code,
   Shield,
   ClipboardList,
+  User,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
   generateConfigFiles,
-  downloadZip,
+  downloadConfigFile,
   generateAllFiles,
   type GeneratedFile,
 } from "@/lib/file-generator";
@@ -221,7 +222,6 @@ const AI_BEHAVIOR_RULES = [
   { id: "run_tests_before_commit", label: "Run Tests Before Commit", description: "Ensure tests pass before committing", recommended: true },
   { id: "follow_existing_patterns", label: "Follow Existing Patterns", description: "Match the codebase's existing style", recommended: true },
   { id: "ask_before_large_refactors", label: "Ask Before Large Refactors", description: "Confirm before significant changes", recommended: true },
-  { id: "use_conventional_commits", label: "Use Conventional Commits", description: "Follow conventional commit format", recommended: false },
   { id: "check_for_security_issues", label: "Check for Security Issues", description: "Review for common vulnerabilities", recommended: false },
 ];
 
@@ -323,8 +323,8 @@ type CodeStyleConfig = {
 };
 
 type TestingStrategyConfig = {
-  level: string;
-  coverage: string;
+  levels: string[];
+  coverage: number;
   frameworks: string[];
   notes: string;
   savePreferences: boolean;
@@ -335,12 +335,16 @@ type StaticFilesConfig = {
   fundingYml: string;
   fundingSave: boolean;
   editorconfig: boolean;
+  editorconfigCustom: string;
   editorconfigSave: boolean;
   contributing: boolean;
+  contributingCustom: string;
   contributingSave: boolean;
   codeOfConduct: boolean;
+  codeOfConductCustom: string;
   codeOfConductSave: boolean;
   security: boolean;
+  securityCustom: string;
   securitySave: boolean;
   gitignoreMode: "generate" | "custom" | "skip";
   gitignoreCustom: string;
@@ -377,6 +381,7 @@ type WizardConfig = {
   registryUsername: string;
   aiBehaviorRules: string[];
   enableAutoUpdate: boolean;
+  includePersonalData: boolean;
   platform: string;
   additionalFeedback: string;
   commands: CommandsConfig;
@@ -422,23 +427,28 @@ export default function WizardPage() {
     registryUsername: "",
     aiBehaviorRules: ["always_debug_after_build", "check_logs_after_build", "follow_existing_patterns"],
     enableAutoUpdate: false,
+    includePersonalData: true,
     platform: "cursor",
     additionalFeedback: "",
     commands: { build: "", test: "", lint: "", dev: "", additional: [], savePreferences: false },
     codeStyle: { naming: "camelCase", notes: "", savePreferences: false },
     boundaries: { always: [], ask: [], never: [], savePreferences: false },
-    testing: { level: "unit", coverage: "80%", frameworks: [], notes: "", savePreferences: false },
+    testing: { levels: ["unit"], coverage: 80, frameworks: [], notes: "", savePreferences: false },
     staticFiles: {
       funding: false,
       fundingYml: "",
       fundingSave: false,
       editorconfig: true,
+      editorconfigCustom: "",
       editorconfigSave: false,
       contributing: false,
+      contributingCustom: "",
       contributingSave: false,
       codeOfConduct: false,
+      codeOfConductCustom: "",
       codeOfConductSave: false,
       security: false,
+      securityCustom: "",
       securitySave: false,
       gitignoreMode: "generate",
       gitignoreCustom: "",
@@ -503,7 +513,7 @@ export default function WizardPage() {
           },
           testing: {
             ...prev.testing,
-            level: byCategory.testing?.level ?? prev.testing.level,
+            levels: byCategory.testing?.levels ?? prev.testing.levels,
             coverage: byCategory.testing?.coverage ?? prev.testing.coverage,
             frameworks: byCategory.testing?.frameworks ?? prev.testing.frameworks,
             notes: byCategory.testing?.notes ?? prev.testing.notes,
@@ -582,6 +592,7 @@ export default function WizardPage() {
       deploymentTarget: [],
       aiBehaviorRules: config.aiBehaviorRules,
       enableAutoUpdate: config.enableAutoUpdate,
+      includePersonalData: config.includePersonalData,
       platform: config.platform,
       platforms: [config.platform],
       additionalFeedback: config.additionalFeedback,
@@ -590,7 +601,7 @@ export default function WizardPage() {
       codeStyle: config.codeStyle,
       boundaries: config.boundaries,
       testingStrategy: {
-        level: config.testing.level,
+        levels: config.testing.levels,
         coverage: config.testing.coverage,
         frameworks: config.testing.frameworks,
         notes: config.testing.notes,
@@ -692,9 +703,9 @@ export default function WizardPage() {
     }
     if (config.testing.savePreferences) {
       payload.push(
-        { category: "testing", key: "level", value: config.testing.level },
-        { category: "testing", key: "coverage", value: config.testing.coverage },
-        { category: "testing", key: "frameworks", value: config.testing.frameworks },
+        { category: "testing", key: "levels", value: config.testing.levels.join(",") },
+        { category: "testing", key: "coverage", value: String(config.testing.coverage) },
+        { category: "testing", key: "frameworks", value: config.testing.frameworks.join(",") },
         { category: "testing", key: "notes", value: config.testing.notes },
       );
     }
@@ -725,13 +736,16 @@ export default function WizardPage() {
     setIsDownloading(true);
     try {
       await savePreferences();
-      const blob = await generateConfigFiles(buildGeneratorConfig(), {
+      const userProfile = {
         displayName: session.user.displayName,
         name: session.user.name,
         persona: session.user.persona,
         skillLevel: session.user.skillLevel,
-      });
-      downloadZip(blob, config.projectName);
+      };
+      const genConfig = buildGeneratorConfig();
+      const blob = await generateConfigFiles(genConfig, userProfile);
+      const files = generateAllFiles(genConfig, userProfile);
+      downloadConfigFile(blob, files);
     } catch (error) {
       console.error("Error generating files:", error);
       alert("Failed to generate files. Please try again.");
@@ -941,8 +955,12 @@ export default function WizardPage() {
                   onToggle={(v) => toggleArrayValue("aiBehaviorRules", v)}
                   enableAutoUpdate={config.enableAutoUpdate}
                   onAutoUpdateChange={(v) => setConfig({ ...config, enableAutoUpdate: v })}
+                  includePersonalData={config.includePersonalData}
+                  onIncludePersonalDataChange={(v) => setConfig({ ...config, includePersonalData: v })}
                   platform={config.platform}
                   onPlatformChange={(v) => setConfig({ ...config, platform: v })}
+                  userPersona={session.user.persona}
+                  userSkillLevel={session.user.skillLevel}
                 />
               )}
               {currentStep === 6 && (
@@ -1013,7 +1031,7 @@ export default function WizardPage() {
                     ) : (
                       <>
                         <Download className="mr-2 h-4 w-4" />
-                        Download All Files
+                        Download AI Config File
                       </>
                     )}
                   </Button>
@@ -1575,50 +1593,6 @@ function StepRepository({
           />
         </div>
 
-        {config.repoHost === "github" && config.isPublic && (
-          <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
-            <div className="flex items-center justify-between">
-              <p className="font-medium">FUNDING.yml</p>
-              <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                <input
-                  type="checkbox"
-                  checked={config.staticFiles.fundingSave}
-                  onChange={(e) =>
-                    onChange({
-                      staticFiles: { ...config.staticFiles, fundingSave: e.target.checked },
-                    })
-                  }
-                />
-                Save preference
-              </label>
-            </div>
-            <ToggleOption
-              label="Include FUNDING.yml"
-              description="Add sponsors/donation links"
-              checked={config.funding || config.staticFiles.funding}
-              onChange={(v) =>
-                onChange({
-                  funding: v,
-                  staticFiles: { ...config.staticFiles, funding: v },
-                })
-              }
-            />
-            {(config.funding || config.staticFiles.funding) && (
-              <textarea
-                value={config.staticFiles.fundingYml || config.fundingYml || ""}
-                onChange={(e) =>
-                  onChange({
-                    fundingYml: e.target.value,
-                    staticFiles: { ...config.staticFiles, fundingYml: e.target.value },
-                  })
-                }
-                placeholder={`# Example FUNDING.yml\ngithub: [your-username]\npatreon: your-patreon\nko_fi: your-kofi`}
-                rows={4}
-                className="w-full rounded-lg border bg-background px-4 py-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            )}
-          </div>
-        )}
       </div>
     </div>
   );
@@ -1629,22 +1603,62 @@ function StepAIBehavior({
   onToggle,
   enableAutoUpdate,
   onAutoUpdateChange,
+  includePersonalData,
+  onIncludePersonalDataChange,
   platform,
   onPlatformChange,
+  userPersona,
+  userSkillLevel,
 }: {
   selected: string[];
   onToggle: (v: string) => void;
   enableAutoUpdate: boolean;
   onAutoUpdateChange: (v: boolean) => void;
+  includePersonalData: boolean;
+  onIncludePersonalDataChange: (v: boolean) => void;
   platform: string;
   onPlatformChange: (v: string) => void;
+  userPersona?: string | null;
+  userSkillLevel?: string | null;
 }) {
+  const personaLabel = userPersona ? userPersona.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()) : "Not set";
+  const skillLabel = userSkillLevel ? userSkillLevel.replace(/\b\w/g, c => c.toUpperCase()) : "Not set";
+  
   return (
     <div>
       <h2 className="text-2xl font-bold">AI Behavior Rules</h2>
       <p className="mt-2 text-muted-foreground">
         Define how AI assistants should behave when helping you code.
       </p>
+      
+      {/* Personal Data Section */}
+      <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+        <div className="flex items-start gap-3">
+          <User className="h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
+          <div className="flex-1">
+            <h3 className="font-semibold text-blue-900 dark:text-blue-200">Include Your Profile in Blueprint</h3>
+            <p className="mt-1 text-sm text-blue-800 dark:text-blue-300">
+              Your developer role (<strong>{personaLabel}</strong>) and skill level (<strong>{skillLabel}</strong>) 
+              can be included in the generated config file. This helps the AI tailor its responses to your experience level.
+            </p>
+            <p className="mt-2 text-xs text-blue-700 dark:text-blue-400 italic">
+              Note: This information is only used in the downloaded config file — it doesn&apos;t affect the wizard itself.
+            </p>
+            <div className="mt-3 flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="includePersonalData"
+                checked={includePersonalData}
+                onChange={(e) => onIncludePersonalDataChange(e.target.checked)}
+                className="h-4 w-4 rounded border-blue-400"
+              />
+              <label htmlFor="includePersonalData" className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                Include my role &amp; skill level in the AI config file
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="mt-6 space-y-3">
         {AI_BEHAVIOR_RULES.map((rule) => (
@@ -1741,6 +1755,40 @@ function StepAIBehavior({
   );
 }
 
+const COMMON_COMMANDS = [
+  // Build commands
+  { cmd: "npm run build", category: "build" },
+  { cmd: "pnpm build", category: "build" },
+  { cmd: "yarn build", category: "build" },
+  { cmd: "next build", category: "build" },
+  { cmd: "vite build", category: "build" },
+  { cmd: "tsc", category: "build" },
+  // Test commands
+  { cmd: "npm test", category: "test" },
+  { cmd: "pnpm test", category: "test" },
+  { cmd: "npm test -- --coverage", category: "test" },
+  { cmd: "vitest", category: "test" },
+  { cmd: "jest", category: "test" },
+  { cmd: "pytest", category: "test" },
+  { cmd: "playwright test", category: "test" },
+  // Lint commands
+  { cmd: "npm run lint", category: "lint" },
+  { cmd: "eslint .", category: "lint" },
+  { cmd: "next lint", category: "lint" },
+  { cmd: "prettier --check .", category: "lint" },
+  { cmd: "ruff check .", category: "lint" },
+  // Dev commands
+  { cmd: "npm run dev", category: "dev" },
+  { cmd: "next dev", category: "dev" },
+  { cmd: "vite dev", category: "dev" },
+  { cmd: "pnpm dev", category: "dev" },
+  // Other common
+  { cmd: "npm run storybook", category: "other" },
+  { cmd: "docker compose up", category: "other" },
+  { cmd: "prisma db push", category: "other" },
+  { cmd: "prisma generate", category: "other" },
+];
+
 function StepCommands({
   config,
   onChange,
@@ -1748,28 +1796,50 @@ function StepCommands({
   config: CommandsConfig;
   onChange: (updates: Partial<CommandsConfig>) => void;
 }) {
-  const suggestions = [
-    { key: "build", label: "Build", placeholder: "next build / npm run build" },
-    { key: "test", label: "Test", placeholder: "npm test / pnpm test" },
-    { key: "lint", label: "Lint", placeholder: "next lint / eslint ." },
-    { key: "dev", label: "Dev", placeholder: "next dev / npm run dev" },
-  ] as const;
   const [search, setSearch] = useState("");
-  const filtered = suggestions.filter((s) =>
-    s.label.toLowerCase().includes(search.toLowerCase()) ||
-    (config as any)[s.key]?.toLowerCase?.().includes(search.toLowerCase())
-  );
   const [newCommand, setNewCommand] = useState("");
+  
+  const allSelected = [
+    ...(config.build ? [config.build] : []),
+    ...(config.test ? [config.test] : []),
+    ...(config.lint ? [config.lint] : []),
+    ...(config.dev ? [config.dev] : []),
+    ...config.additional,
+  ];
+  
+  const toggleCommand = (cmd: string, category: string) => {
+    if (category === "build") {
+      onChange({ build: config.build === cmd ? "" : cmd });
+    } else if (category === "test") {
+      onChange({ test: config.test === cmd ? "" : cmd });
+    } else if (category === "lint") {
+      onChange({ lint: config.lint === cmd ? "" : cmd });
+    } else if (category === "dev") {
+      onChange({ dev: config.dev === cmd ? "" : cmd });
+    } else {
+      const exists = config.additional.includes(cmd);
+      onChange({ additional: exists ? config.additional.filter(c => c !== cmd) : [...config.additional, cmd] });
+    }
+  };
+  
+  const isSelected = (cmd: string) => allSelected.includes(cmd);
+  
+  const filtered = COMMON_COMMANDS.filter(c => 
+    c.cmd.toLowerCase().includes(search.toLowerCase()) ||
+    c.category.toLowerCase().includes(search.toLowerCase())
+  );
+  
+  const categories = ["build", "test", "lint", "dev", "other"] as const;
 
   return (
     <div>
       <h2 className="text-2xl font-bold">Commands</h2>
       <p className="mt-2 text-muted-foreground">
-        Common project commands. These go into the generated instructions.
+        Select or add your project commands. Click to toggle.
       </p>
 
-      <div className="mt-4">
-        <div className="relative mb-3">
+      <div className="mt-4 space-y-4">
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             value={search}
@@ -1778,29 +1848,38 @@ function StepCommands({
             className="w-full rounded-lg border bg-background py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
-        <div className="space-y-3">
-          {filtered.map((cmd) => (
-            <div key={cmd.key} className="rounded-lg border p-3">
-              <label className="text-sm font-medium">{cmd.label}</label>
-              <input
-                type="text"
-                value={(config as any)[cmd.key] ?? ""}
-                onChange={(e) => onChange({ [cmd.key]: e.target.value } as any)}
-                placeholder={cmd.placeholder}
-                className="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
+        
+        {categories.map(cat => {
+          const cmds = filtered.filter(c => c.category === cat);
+          if (cmds.length === 0) return null;
+          return (
+            <div key={cat} className="rounded-lg border p-3">
+              <p className="mb-2 text-sm font-semibold capitalize">{cat}</p>
+              <div className="flex flex-wrap gap-2">
+                {cmds.map(c => (
+                  <button
+                    key={c.cmd}
+                    onClick={() => toggleCommand(c.cmd, c.category)}
+                    className={`rounded-full border px-3 py-1 text-xs font-mono transition-all ${
+                      isSelected(c.cmd) ? "border-primary bg-primary/10 text-primary" : "hover:border-primary"
+                    }`}
+                  >
+                    {c.cmd}
+                  </button>
+                ))}
+              </div>
             </div>
-          ))}
-        </div>
+          );
+        })}
 
-        <div className="mt-4 rounded-lg border p-3">
-          <label className="text-sm font-medium">Other commands</label>
+        <div className="rounded-lg border p-3">
+          <label className="text-sm font-medium">Add custom command</label>
           <div className="mt-2 flex gap-2">
             <input
               value={newCommand}
               onChange={(e) => setNewCommand(e.target.value)}
-              placeholder="e.g., npm run storybook"
-              className="flex-1 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              placeholder="e.g., npm run migrate"
+              className="flex-1 rounded-md border bg-background px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && newCommand.trim()) {
                   onChange({ additional: [...config.additional, newCommand.trim()] });
@@ -1819,29 +1898,22 @@ function StepCommands({
               Add
             </Button>
           </div>
-          {config.additional.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {config.additional.map((c, idx) => (
-                <span
-                  key={`${c}-${idx}`}
-                  className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-xs"
-                >
+        </div>
+
+        {allSelected.length > 0 && (
+          <div className="rounded-lg bg-muted/50 p-3">
+            <p className="mb-2 text-xs font-medium text-muted-foreground">Selected ({allSelected.length}):</p>
+            <div className="flex flex-wrap gap-2">
+              {allSelected.map((c, idx) => (
+                <span key={`${c}-${idx}`} className="rounded-full bg-primary/10 px-3 py-1 font-mono text-xs text-primary">
                   {c}
-                  <button
-                    className="text-muted-foreground hover:text-destructive"
-                    onClick={() =>
-                      onChange({ additional: config.additional.filter((_, i) => i !== idx) })
-                    }
-                  >
-                    ×
-                  </button>
                 </span>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        <label className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+        <label className="flex items-center gap-2 text-xs text-muted-foreground">
           <input
             type="checkbox"
             checked={config.savePreferences}
@@ -1916,12 +1988,30 @@ function StepCodeStyle({
 }
 
 const BOUNDARY_OPTIONS = [
-  "Rewrite large sections",
+  // File operations
   "Delete files",
+  "Create new files",
+  "Rename/move files",
+  // Code changes
+  "Rewrite large sections",
   "Refactor architecture",
   "Change dependencies",
+  "Modify database schema",
+  "Update API contracts",
+  // Infrastructure
   "Touch CI pipelines",
+  "Modify Docker config",
+  "Change environment vars",
+  // Documentation
   "Update docs automatically",
+  "Edit README",
+  "Modify comments",
+  // Security
+  "Handle secrets/credentials",
+  "Modify auth logic",
+  // Testing
+  "Delete failing tests",
+  "Skip tests temporarily",
 ];
 
 function StepBoundaries({
@@ -1981,6 +2071,13 @@ function StepBoundaries({
 
 const TEST_FRAMEWORKS = ["jest", "vitest", "playwright", "cypress", "pytest", "rtl", "msw"];
 
+const TEST_LEVELS = [
+  { id: "smoke", label: "Smoke", desc: "Quick sanity checks" },
+  { id: "unit", label: "Unit", desc: "Individual functions/components" },
+  { id: "integration", label: "Integration", desc: "Component interactions" },
+  { id: "e2e", label: "E2E", desc: "Full user flows" },
+];
+
 function StepTesting({
   config,
   onChange,
@@ -1990,6 +2087,14 @@ function StepTesting({
 }) {
   const [search, setSearch] = useState("");
   const filtered = TEST_FRAMEWORKS.filter((f) => f.toLowerCase().includes(search.toLowerCase()));
+  
+  const toggleLevel = (lvl: string) => {
+    const exists = config.levels.includes(lvl);
+    onChange({
+      levels: exists ? config.levels.filter((l) => l !== lvl) : [...config.levels, lvl],
+    });
+  };
+  
   const toggleFramework = (fw: string) => {
     const exists = config.frameworks.includes(fw);
     onChange({
@@ -2003,32 +2108,51 @@ function StepTesting({
       <p className="mt-2 text-muted-foreground">Document how tests should run and what good coverage looks like.</p>
 
       <div className="mt-4 space-y-4">
-        <div className="grid grid-cols-2 gap-2">
-          {["smoke", "unit", "integration", "e2e"].map((lvl) => (
-            <button
-              key={lvl}
-              onClick={() => onChange({ level: lvl })}
-              className={`rounded-md border px-3 py-2 text-sm ${
-                config.level === lvl ? "border-primary bg-primary/5" : "hover:border-primary"
-              }`}
-            >
-              {lvl.toUpperCase()}
-            </button>
-          ))}
-        </div>
         <div>
-          <label className="text-sm font-medium">Coverage target</label>
-          <input
-            type="text"
-            value={config.coverage}
-            onChange={(e) => onChange({ coverage: e.target.value })}
-            placeholder="e.g., 80%"
-            className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-          />
+          <label className="text-sm font-medium">Test Levels (select all that apply)</label>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            {TEST_LEVELS.map((lvl) => (
+              <button
+                key={lvl.id}
+                onClick={() => toggleLevel(lvl.id)}
+                className={`flex flex-col items-start rounded-md border p-3 text-left text-sm transition-all ${
+                  config.levels.includes(lvl.id) ? "border-primary bg-primary/5" : "hover:border-primary"
+                }`}
+              >
+                <div className="flex w-full items-center justify-between">
+                  <span className="font-medium">{lvl.label}</span>
+                  {config.levels.includes(lvl.id) && <Check className="h-4 w-4 text-primary" />}
+                </div>
+                <span className="text-xs text-muted-foreground">{lvl.desc}</span>
+              </button>
+            ))}
+          </div>
         </div>
+        
+        <div>
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium">Coverage target</label>
+            <span className="text-lg font-bold text-primary">{config.coverage}%</span>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="5"
+            value={config.coverage}
+            onChange={(e) => onChange({ coverage: parseInt(e.target.value, 10) })}
+            className="mt-2 w-full accent-primary"
+          />
+          <div className="mt-1 flex justify-between text-xs text-muted-foreground">
+            <span>0%</span>
+            <span>50%</span>
+            <span>100%</span>
+          </div>
+        </div>
+        
         <div>
           <label className="text-sm font-medium">Frameworks</label>
-          <div className="relative mb-2">
+          <div className="relative mb-2 mt-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
               value={search}
@@ -2051,6 +2175,7 @@ function StepTesting({
             ))}
           </div>
         </div>
+        
         <div>
           <label className="text-sm font-medium">Notes</label>
           <textarea
@@ -2058,9 +2183,10 @@ function StepTesting({
             onChange={(e) => onChange({ notes: e.target.value })}
             rows={3}
             placeholder="e.g., run e2e on main only, use msw for network mocking"
-            className="w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            className="mt-1 w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
+        
         <label className="flex items-center gap-2 text-xs text-muted-foreground">
           <input
             type="checkbox"
@@ -2070,6 +2196,80 @@ function StepTesting({
           Save testing defaults
         </label>
       </div>
+    </div>
+  );
+}
+
+function StaticFileEditor({
+  label,
+  description,
+  enabled,
+  onEnable,
+  content,
+  onContentChange,
+  saveChecked,
+  onSaveToggle,
+  placeholder,
+  rows = 4,
+}: {
+  label: string;
+  description: string;
+  enabled: boolean;
+  onEnable: (v: boolean) => void;
+  content?: string;
+  onContentChange?: (v: string) => void;
+  saveChecked: boolean;
+  onSaveToggle: (v: boolean) => void;
+  placeholder?: string;
+  rows?: number;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  
+  return (
+    <div className="rounded-lg border p-4">
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => onEnable(!enabled)}
+          className="flex items-center gap-3 text-left"
+        >
+          <div className={`flex h-5 w-5 items-center justify-center rounded border ${
+            enabled ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground"
+          }`}>
+            {enabled && <Check className="h-3 w-3" />}
+          </div>
+          <div>
+            <p className="font-medium">{label}</p>
+            <p className="text-xs text-muted-foreground">{description}</p>
+          </div>
+        </button>
+        <div className="flex items-center gap-2">
+          {enabled && onContentChange && (
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
+            >
+              {expanded ? "Hide editor" : "Edit"}
+            </button>
+          )}
+          <label className="flex items-center gap-2 text-xs text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={saveChecked}
+              onChange={(e) => onSaveToggle(e.target.checked)}
+            />
+            Save to profile
+          </label>
+        </div>
+      </div>
+      {enabled && expanded && onContentChange && (
+        <textarea
+          value={content || ""}
+          onChange={(e) => onContentChange(e.target.value)}
+          rows={rows}
+          placeholder={placeholder}
+          className="mt-3 w-full rounded-lg border bg-background px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+        />
+      )}
     </div>
   );
 }
@@ -2089,43 +2289,61 @@ function StepStaticFiles({
 }) {
   return (
     <div>
-      <h2 className="text-2xl font-bold">Static Files & Preferences</h2>
+      <h2 className="text-2xl font-bold">Static Files</h2>
       <p className="mt-2 text-muted-foreground">
-        Choose which helper files to generate and optionally save them as defaults.
+        Enable files to embed in your AI config. Click &quot;Edit&quot; to customize content.
       </p>
 
-      <div className="mt-4 space-y-4">
-        <ToggleWithSave
+      <div className="mt-4 space-y-3">
+        <StaticFileEditor
           label=".editorconfig"
           description="Consistent indentation and line endings"
-          checked={config.editorconfig}
+          enabled={config.editorconfig}
+          onEnable={(v) => onChange({ editorconfig: v })}
+          content={config.editorconfigCustom}
+          onContentChange={(v) => onChange({ editorconfigCustom: v })}
           saveChecked={config.editorconfigSave}
-          onToggle={(v) => onChange({ editorconfig: v })}
           onSaveToggle={(v) => onChange({ editorconfigSave: v })}
+          placeholder="root = true\n\n[*]\nindent_style = space\nindent_size = 2"
         />
-        <ToggleWithSave
+        
+        <StaticFileEditor
           label="CONTRIBUTING.md"
           description="Guidelines for contributors"
-          checked={config.contributing}
+          enabled={config.contributing}
+          onEnable={(v) => onChange({ contributing: v })}
+          content={config.contributingCustom}
+          onContentChange={(v) => onChange({ contributingCustom: v })}
           saveChecked={config.contributingSave}
-          onToggle={(v) => onChange({ contributing: v })}
           onSaveToggle={(v) => onChange({ contributingSave: v })}
+          placeholder="# Contributing\n\nThank you for your interest in contributing!"
+          rows={6}
         />
-        <ToggleWithSave
+        
+        <StaticFileEditor
           label="CODE_OF_CONDUCT.md"
           description="Community expectations"
-          checked={config.codeOfConduct}
+          enabled={config.codeOfConduct}
+          onEnable={(v) => onChange({ codeOfConduct: v })}
+          content={config.codeOfConductCustom}
+          onContentChange={(v) => onChange({ codeOfConductCustom: v })}
           saveChecked={config.codeOfConductSave}
-          onToggle={(v) => onChange({ codeOfConduct: v })}
           onSaveToggle={(v) => onChange({ codeOfConductSave: v })}
+          placeholder="# Code of Conduct\n\nWe are committed to providing a welcoming environment."
+          rows={6}
         />
-        <ToggleWithSave
+        
+        <StaticFileEditor
           label="SECURITY.md"
           description="How to report vulnerabilities"
-          checked={config.security}
+          enabled={config.security}
+          onEnable={(v) => onChange({ security: v })}
+          content={config.securityCustom}
+          onContentChange={(v) => onChange({ securityCustom: v })}
           saveChecked={config.securitySave}
-          onToggle={(v) => onChange({ security: v })}
           onSaveToggle={(v) => onChange({ securitySave: v })}
+          placeholder="# Security Policy\n\nTo report a vulnerability, please email security@example.com"
+          rows={5}
         />
 
         <div className="rounded-lg border p-4">
@@ -2140,7 +2358,7 @@ function StepStaticFiles({
                 checked={config.gitignoreSave}
                 onChange={(e) => onChange({ gitignoreSave: e.target.checked })}
               />
-              Save preference
+              Save to profile
             </label>
           </div>
           <div className="mt-2 grid grid-cols-3 gap-2">
@@ -2152,7 +2370,7 @@ function StepStaticFiles({
                   config.gitignoreMode === opt ? "border-primary bg-primary/5" : "hover:border-primary"
                 }`}
               >
-                {opt === "generate" ? "AI generate" : opt === "custom" ? "Provide custom" : "Skip"}
+                {opt === "generate" ? "AI generate" : opt === "custom" ? "Custom" : "Skip"}
               </button>
             ))}
           </div>
@@ -2160,53 +2378,87 @@ function StepStaticFiles({
             <textarea
               value={config.gitignoreCustom}
               onChange={(e) => onChange({ gitignoreCustom: e.target.value })}
-              rows={4}
-              placeholder="Enter custom .gitignore content"
-              className="mt-2 w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              rows={5}
+              placeholder="node_modules/\n.env\ndist/"
+              className="mt-2 w-full rounded-lg border bg-background px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           )}
         </div>
 
-        {(buildContainer || config.dockerignore) && (
+        <div className="rounded-lg border p-4">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => onChange({ dockerignore: !config.dockerignore })}
+              className="flex items-center gap-3 text-left"
+            >
+              <div className={`flex h-5 w-5 items-center justify-center rounded border ${
+                config.dockerignore ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground"
+              }`}>
+                {config.dockerignore && <Check className="h-3 w-3" />}
+              </div>
+              <div>
+                <p className="font-medium">.dockerignore</p>
+                <p className="text-xs text-muted-foreground">
+                  {buildContainer ? "Recommended for container builds" : "Exclude files from Docker context"}
+                </p>
+              </div>
+            </button>
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={config.dockerignoreSave}
+                onChange={(e) => onChange({ dockerignoreSave: e.target.checked })}
+              />
+              Save to profile
+            </label>
+          </div>
+          {config.dockerignore && (
+            <textarea
+              value={config.dockerignoreCustom}
+              onChange={(e) => onChange({ dockerignoreCustom: e.target.value })}
+              rows={4}
+              placeholder="node_modules/\n.git/\n*.log"
+              className="mt-3 w-full rounded-lg border bg-background px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          )}
+        </div>
+
+        {isGithub && isPublic && (
           <div className="rounded-lg border p-4">
             <div className="flex items-center justify-between">
-              <p className="font-medium">.dockerignore</p>
+              <button
+                onClick={() => onChange({ funding: !config.funding })}
+                className="flex items-center gap-3 text-left"
+              >
+                <div className={`flex h-5 w-5 items-center justify-center rounded border ${
+                  config.funding ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground"
+                }`}>
+                  {config.funding && <Check className="h-3 w-3" />}
+                </div>
+                <div>
+                  <p className="font-medium">FUNDING.yml</p>
+                  <p className="text-xs text-muted-foreground">GitHub Sponsors & donation links</p>
+                </div>
+              </button>
               <label className="flex items-center gap-2 text-xs text-muted-foreground">
                 <input
                   type="checkbox"
-                  checked={config.dockerignoreSave}
-                  onChange={(e) => onChange({ dockerignoreSave: e.target.checked })}
+                  checked={config.fundingSave}
+                  onChange={(e) => onChange({ fundingSave: e.target.checked })}
                 />
-                Save preference
+                Save to profile
               </label>
             </div>
-            <ToggleOption
-              label="Include .dockerignore"
-              description="Recommended when building container images"
-              checked={buildContainer || config.dockerignore}
-              onChange={(v) => onChange({ dockerignore: v })}
-            />
-            {(buildContainer || config.dockerignore) && (
+            {config.funding && (
               <textarea
-                value={config.dockerignoreCustom}
-                onChange={(e) => onChange({ dockerignoreCustom: e.target.value })}
-                rows={3}
-                placeholder="Optional custom .dockerignore content"
-                className="mt-2 w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                value={config.fundingYml}
+                onChange={(e) => onChange({ fundingYml: e.target.value })}
+                rows={4}
+                placeholder="github: [your-username]\npatreon: your-patreon\nko_fi: your-kofi"
+                className="mt-3 w-full rounded-lg border bg-background px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
             )}
           </div>
-        )}
-
-        {(isGithub && isPublic) && (
-          <ToggleWithSave
-            label="FUNDING.yml"
-            description="Ask to include funding if GitHub + public"
-            checked={config.funding}
-            saveChecked={config.fundingSave}
-            onToggle={(v) => onChange({ funding: v })}
-            onSaveToggle={(v) => onChange({ fundingSave: v })}
-          />
         )}
       </div>
     </div>

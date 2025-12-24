@@ -96,6 +96,8 @@ interface UserProfile {
   socialWebsite: string | null;
   socialYoutube: string | null;
   socialBluesky: string | null;
+  socialMastodon: string | null;
+  socialDiscord: string | null;
 }
 
 interface LinkedAccount {
@@ -150,6 +152,8 @@ function SettingsContent() {
   const [socialWebsite, setSocialWebsite] = useState("");
   const [socialYoutube, setSocialYoutube] = useState("");
   const [socialBluesky, setSocialBluesky] = useState("");
+  const [socialMastodon, setSocialMastodon] = useState("");
+  const [socialDiscord, setSocialDiscord] = useState("");
 
   // Accounts state
   const [accounts, setAccounts] = useState<LinkedAccount[]>([]);
@@ -199,6 +203,8 @@ function SettingsContent() {
         setSocialWebsite(data.socialWebsite || "");
         setSocialYoutube(data.socialYoutube || "");
         setSocialBluesky(data.socialBluesky || "");
+        setSocialMastodon(data.socialMastodon || "");
+        setSocialDiscord(data.socialDiscord || "");
       }
 
       if (accountsRes.ok) {
@@ -242,6 +248,8 @@ function SettingsContent() {
           socialWebsite,
           socialYoutube,
           socialBluesky,
+          socialMastodon,
+          socialDiscord,
         }),
       });
 
@@ -791,6 +799,39 @@ function SettingsContent() {
                         value={socialYoutube}
                         onChange={(e) => setSocialYoutube(e.target.value)}
                         placeholder="https://youtube.com/@channel"
+                        className="w-full rounded-lg border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                      />
+                    </div>
+
+                    {/* Mastodon */}
+                    <div>
+                      <label className="mb-1 block text-sm font-medium">
+                        Mastodon
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                          @
+                        </span>
+                        <input
+                          type="text"
+                          value={socialMastodon}
+                          onChange={(e) => setSocialMastodon(e.target.value.replace(/^@/, ""))}
+                          placeholder="user@mastodon.social"
+                          className="w-full rounded-lg border bg-background py-2 pl-8 pr-4 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Discord */}
+                    <div>
+                      <label className="mb-1 block text-sm font-medium">
+                        Discord
+                      </label>
+                      <input
+                        type="text"
+                        value={socialDiscord}
+                        onChange={(e) => setSocialDiscord(e.target.value)}
+                        placeholder="username"
                         className="w-full rounded-lg border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                       />
                     </div>

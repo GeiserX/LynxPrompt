@@ -54,6 +54,7 @@ export default function ShareBlueprintPage() {
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [isPublic, setIsPublic] = useState(false);
+  const [aiAssisted, setAiAssisted] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
   const [price, setPrice] = useState<number>(5);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -202,6 +203,7 @@ export default function ShareBlueprintPage() {
           type,
           tags,
           isPublic,
+          aiAssisted: isPublic ? aiAssisted : false, // Only relevant if sharing publicly
           price: isPaid ? Math.round(price * 100) : null, // Convert to cents
           currency: "EUR",
           turnstileToken: requiresTurnstile ? turnstileToken : undefined,
@@ -544,6 +546,35 @@ export default function ShareBlueprintPage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* AI-Assisted Disclosure - only show if sharing publicly */}
+                  {isPublic && (
+                    <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+                      <div className="flex items-start gap-3">
+                        <Sparkles className="h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
+                        <div className="flex-1">
+                          <h4 className="font-medium text-blue-900 dark:text-blue-200">
+                            Honest Disclosure
+                          </h4>
+                          <p className="mt-1 text-sm text-blue-800 dark:text-blue-300">
+                            Help build trust in our community by being transparent about how this blueprint was created.
+                          </p>
+                          <div className="mt-3 flex items-center gap-3">
+                            <input
+                              type="checkbox"
+                              id="aiAssisted"
+                              checked={aiAssisted}
+                              onChange={(e) => setAiAssisted(e.target.checked)}
+                              className="h-4 w-4 rounded border-blue-400"
+                            />
+                            <label htmlFor="aiAssisted" className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                              I used AI to help create this blueprint
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Pricing - only show if public */}
                   {isPublic && (
