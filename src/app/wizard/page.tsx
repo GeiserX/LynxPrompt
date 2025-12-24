@@ -1,34 +1,33 @@
-"use client";
+ "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
   ArrowRight,
-  Check,
-  Code,
-  GitBranch,
-  Rocket,
   Brain,
-  Download,
-  Target,
-  LogIn,
-  Lock,
-  Globe,
-  MessageSquare,
-  FolderGit2,
-  Settings,
-  Loader2,
-  Copy,
-  FileText,
+  Check,
   ChevronDown,
   ChevronUp,
+  Copy,
   Crown,
-  Zap,
+  Download,
+  FileText,
+  GitBranch,
+  Lock,
+  LogIn,
+  MessageSquare,
+  Settings,
+  Loader2,
   Search,
   Plus,
+  Sparkles,
+  Wand2,
+  Code,
+  Shield,
+  ClipboardList,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
@@ -40,89 +39,43 @@ import {
   type GeneratedFile,
 } from "@/lib/file-generator";
 
-// Wizard tier definitions
 type WizardTier = "basic" | "intermediate" | "advanced";
 
-// New wizard steps with tier requirements
 const WIZARD_STEPS: {
   id: string;
   title: string;
   icon: React.ComponentType<{ className?: string }>;
   tier: WizardTier;
 }[] = [
-  { id: "project", title: "Project Info", icon: FolderGit2, tier: "basic" },
-  { id: "languages", title: "Tech Stack", icon: Code, tier: "basic" },
-  { id: "repository", title: "Repository", icon: GitBranch, tier: "intermediate" },
-  { id: "release_strategy", title: "Release Strategy", icon: Globe, tier: "intermediate" },
-  { id: "cicd", title: "CI/CD", icon: Rocket, tier: "advanced" },
-  { id: "ai_behavior", title: "AI Rules", icon: Brain, tier: "advanced" },
-  { id: "platforms", title: "Platforms", icon: Target, tier: "basic" },
-  { id: "feedback", title: "Anything Else?", icon: MessageSquare, tier: "advanced" },
+  { id: "project", title: "Project Basics", icon: Sparkles, tier: "basic" },
+  { id: "tech", title: "Tech Stack", icon: Code, tier: "basic" },
+  { id: "repo", title: "Repository Setup", icon: GitBranch, tier: "basic" },
+  { id: "commands", title: "Commands", icon: ClipboardList, tier: "intermediate" },
+  { id: "code_style", title: "Code Style", icon: Wand2, tier: "intermediate" },
+  { id: "ai", title: "AI Behavior", icon: Brain, tier: "basic" },
+  { id: "boundaries", title: "Boundaries", icon: Shield, tier: "advanced" },
+  { id: "testing", title: "Testing Strategy", icon: Shield, tier: "advanced" },
+  { id: "static", title: "Static Files", icon: FileText, tier: "advanced" },
+  { id: "extra", title: "Anything Else?", icon: MessageSquare, tier: "basic" },
   { id: "generate", title: "Generate", icon: Download, tier: "basic" },
 ];
 
-// Get tier badge color and icon
 function getTierBadge(tier: WizardTier) {
   switch (tier) {
     case "intermediate":
-      return { color: "text-blue-500", bg: "bg-blue-500/10", label: "Pro", icon: Zap };
+      return { label: "Pro", className: "bg-blue-500/10 text-blue-500" };
     case "advanced":
-      return { color: "text-purple-500", bg: "bg-purple-500/10", label: "Max", icon: Crown };
+      return { label: "Max", className: "bg-purple-500/10 text-purple-500" };
     default:
       return null;
   }
 }
 
-// Check if user can access a tier
 function canAccessTier(userTier: string, requiredTier: WizardTier): boolean {
   const tierLevels = { free: 0, pro: 1, max: 2 };
   const requiredLevels = { basic: 0, intermediate: 1, advanced: 2 };
   return tierLevels[userTier as keyof typeof tierLevels] >= requiredLevels[requiredTier];
 }
-
-const RELEASE_STRATEGIES = [
-  {
-    value: "public_repo",
-    label: "Public Repository",
-    icon: "🌍",
-    description: "Open source project visible to everyone on GitHub/GitLab",
-  },
-  {
-    value: "private_repo",
-    label: "Private Repository",
-    icon: "🔒",
-    description: "Private codebase, accessible only to authorized team members",
-  },
-  {
-    value: "local_only",
-    label: "Local Only",
-    icon: "💻",
-    description: "No remote repository - commits stay on your machine only",
-  },
-  {
-    value: "enterprise",
-    label: "Enterprise/Internal",
-    icon: "🏢",
-    description: "Internal company project with self-hosted Git server",
-  },
-  {
-    value: "other",
-    label: "Other (specify)",
-    icon: "📝",
-    description: "Different setup like SVN, Mercurial, or custom workflow",
-  },
-];
-
-const CONTAINER_REGISTRIES = [
-  { value: "dockerhub", label: "Docker Hub", icon: "🐳" },
-  { value: "ghcr", label: "GitHub Container Registry", icon: "📦" },
-  { value: "quay", label: "Quay.io", icon: "🔴" },
-  { value: "ecr", label: "Amazon ECR", icon: "☁️" },
-  { value: "gcr", label: "Google Container Registry", icon: "🌐" },
-  { value: "acr", label: "Azure Container Registry", icon: "🔷" },
-  { value: "gitlab", label: "GitLab Container Registry", icon: "🦊" },
-  { value: "other", label: "Other (specify)", icon: "📝" },
-];
 
 const LANGUAGES = [
   // Popular
@@ -263,60 +216,13 @@ const FRAMEWORKS = [
 ];
 
 const AI_BEHAVIOR_RULES = [
-  {
-    id: "always_debug_after_build",
-    label: "Always Debug After Building",
-    description: "Run and test locally after making changes",
-    recommended: true,
-  },
-  {
-    id: "check_logs_after_build",
-    label: "Check Logs After Build/Commit",
-    description: "Automatically check logs when build or commit finishes",
-    recommended: true,
-  },
-  {
-    id: "run_tests_before_commit",
-    label: "Run Tests Before Commit",
-    description: "Ensure all tests pass before committing",
-    recommended: true,
-  },
-  {
-    id: "security_audit_after_commit",
-    label: "Security Audit After Commit",
-    description: "Perform security review after every commit",
-    recommended: false,
-  },
-  {
-    id: "bug_search_before_commit",
-    label: "Bug Search Before Commit",
-    description: "Search for potential bugs and issues before committing",
-    recommended: false,
-  },
-  {
-    id: "follow_existing_patterns",
-    label: "Follow Existing Patterns",
-    description: "Match the codebase's existing style",
-    recommended: true,
-  },
-  {
-    id: "ask_before_large_refactors",
-    label: "Ask Before Large Refactors",
-    description: "Confirm before significant changes",
-    recommended: true,
-  },
-  {
-    id: "check_for_security_issues",
-    label: "Check for Security Issues",
-    description: "Review for common vulnerabilities",
-    recommended: false,
-  },
-  {
-    id: "use_conventional_commits",
-    label: "Use Conventional Commits",
-    description: "Follow conventional commit format",
-    recommended: false,
-  },
+  { id: "always_debug_after_build", label: "Always Debug After Building", description: "Run and test locally after making changes", recommended: true },
+  { id: "check_logs_after_build", label: "Check Logs After Build/Commit", description: "Check logs when build or commit finishes", recommended: true },
+  { id: "run_tests_before_commit", label: "Run Tests Before Commit", description: "Ensure tests pass before committing", recommended: true },
+  { id: "follow_existing_patterns", label: "Follow Existing Patterns", description: "Match the codebase's existing style", recommended: true },
+  { id: "ask_before_large_refactors", label: "Ask Before Large Refactors", description: "Confirm before significant changes", recommended: true },
+  { id: "use_conventional_commits", label: "Use Conventional Commits", description: "Follow conventional commit format", recommended: false },
+  { id: "check_for_security_issues", label: "Check for Security Issues", description: "Review for common vulnerabilities", recommended: false },
 ];
 
 // Project types define AI behavior flexibility
@@ -394,11 +300,61 @@ const PLATFORMS = [
   },
 ];
 
-// Updated config type - removed persona and skillLevel (from profile now)
+type CommandsConfig = {
+  build: string;
+  test: string;
+  lint: string;
+  dev: string;
+  additional: string[];
+  savePreferences: boolean;
+};
+
+type BoundariesConfig = {
+  always: string[];
+  ask: string[];
+  never: string[];
+  savePreferences: boolean;
+};
+
+type CodeStyleConfig = {
+  naming: string;
+  notes: string;
+  savePreferences: boolean;
+};
+
+type TestingStrategyConfig = {
+  level: string;
+  coverage: string;
+  frameworks: string[];
+  notes: string;
+  savePreferences: boolean;
+};
+
+type StaticFilesConfig = {
+  funding: boolean;
+  fundingYml: string;
+  fundingSave: boolean;
+  editorconfig: boolean;
+  editorconfigSave: boolean;
+  contributing: boolean;
+  contributingSave: boolean;
+  codeOfConduct: boolean;
+  codeOfConductSave: boolean;
+  security: boolean;
+  securitySave: boolean;
+  gitignoreMode: "generate" | "custom" | "skip";
+  gitignoreCustom: string;
+  gitignoreSave: boolean;
+  dockerignore: boolean;
+  dockerignoreCustom: string;
+  dockerignoreSave: boolean;
+  licenseSave: boolean;
+};
+
 type WizardConfig = {
   projectName: string;
   projectDescription: string;
-  projectType: string; // work, leisure, open_source_small, etc.
+  projectType: string;
   languages: string[];
   frameworks: string[];
   letAiDecide: boolean;
@@ -408,12 +364,12 @@ type WizardConfig = {
   exampleRepoUrl: string;
   isPublic: boolean;
   license: string;
+  licenseSave: boolean;
   funding: boolean;
   fundingYml: string;
   conventionalCommits: boolean;
   semver: boolean;
-  releaseStrategy: string;
-  releaseStrategyOther: string;
+  dependabot: boolean;
   cicd: string;
   buildContainer: boolean;
   containerRegistry: string;
@@ -423,6 +379,11 @@ type WizardConfig = {
   enableAutoUpdate: boolean;
   platform: string;
   additionalFeedback: string;
+  commands: CommandsConfig;
+  codeStyle: CodeStyleConfig;
+  boundaries: BoundariesConfig;
+  testing: TestingStrategyConfig;
+  staticFiles: StaticFilesConfig;
 };
 
 export default function WizardPage() {
@@ -434,10 +395,11 @@ export default function WizardPage() {
   const [copiedFile, setCopiedFile] = useState<string | null>(null);
   const [userTier, setUserTier] = useState<string>("free");
   const [tierLoading, setTierLoading] = useState(true);
+  const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const [config, setConfig] = useState<WizardConfig>({
     projectName: "",
     projectDescription: "",
-    projectType: "leisure", // Default to leisure for most flexibility
+    projectType: "leisure",
     languages: [],
     frameworks: [],
     letAiDecide: false,
@@ -447,28 +409,47 @@ export default function WizardPage() {
     exampleRepoUrl: "",
     isPublic: true,
     license: "mit",
+    licenseSave: false,
     funding: false,
     fundingYml: "",
     conventionalCommits: true,
     semver: true,
-    releaseStrategy: "",
-    releaseStrategyOther: "",
+    dependabot: true,
     cicd: "github_actions",
     buildContainer: false,
     containerRegistry: "",
     containerRegistryOther: "",
     registryUsername: "",
-    aiBehaviorRules: [
-      "always_debug_after_build",
-      "check_logs_after_build",
-      "follow_existing_patterns",
-    ],
+    aiBehaviorRules: ["always_debug_after_build", "check_logs_after_build", "follow_existing_patterns"],
     enableAutoUpdate: false,
     platform: "cursor",
     additionalFeedback: "",
+    commands: { build: "", test: "", lint: "", dev: "", additional: [], savePreferences: false },
+    codeStyle: { naming: "camelCase", notes: "", savePreferences: false },
+    boundaries: { always: [], ask: [], never: [], savePreferences: false },
+    testing: { level: "unit", coverage: "80%", frameworks: [], notes: "", savePreferences: false },
+    staticFiles: {
+      funding: false,
+      fundingYml: "",
+      fundingSave: false,
+      editorconfig: true,
+      editorconfigSave: false,
+      contributing: false,
+      contributingSave: false,
+      codeOfConduct: false,
+      codeOfConductSave: false,
+      security: false,
+      securitySave: false,
+      gitignoreMode: "generate",
+      gitignoreCustom: "",
+      gitignoreSave: false,
+      dockerignore: false,
+      dockerignoreCustom: "",
+      dockerignoreSave: false,
+      licenseSave: false,
+    },
   });
 
-  // Fetch user subscription tier
   useEffect(() => {
     const fetchTier = async () => {
       if (status !== "authenticated") {
@@ -482,7 +463,6 @@ export default function WizardPage() {
           setUserTier(data.plan || "free");
         }
       } catch {
-        // Default to free on error
         setUserTier("free");
       } finally {
         setTierLoading(false);
@@ -491,9 +471,74 @@ export default function WizardPage() {
     fetchTier();
   }, [status]);
 
-  // Get available steps based on user tier
-  const availableSteps = WIZARD_STEPS.filter(step => canAccessTier(userTier, step.tier));
-  const lockedSteps = WIZARD_STEPS.filter(step => !canAccessTier(userTier, step.tier));
+  // Prefill from preferences
+  useEffect(() => {
+    const loadPrefs = async () => {
+      if (status !== "authenticated") {
+        setPreferencesLoaded(true);
+        return;
+      }
+      try {
+        const res = await fetch("/api/user/wizard-preferences");
+        if (!res.ok) throw new Error("pref fetch failed");
+        const data = await res.json();
+        const byCategory: Record<string, Record<string, any>> = {};
+        (data || []).forEach((pref: any) => {
+          if (!byCategory[pref.category]) byCategory[pref.category] = {};
+          byCategory[pref.category][pref.key] = pref.value;
+        });
+        setConfig((prev) => ({
+          ...prev,
+          commands: {
+            ...prev.commands,
+            build: byCategory.commands?.build ?? prev.commands.build,
+            test: byCategory.commands?.test ?? prev.commands.test,
+            lint: byCategory.commands?.lint ?? prev.commands.lint,
+            dev: byCategory.commands?.dev ?? prev.commands.dev,
+          },
+          codeStyle: {
+            ...prev.codeStyle,
+            naming: byCategory.codeStyle?.naming ?? prev.codeStyle.naming,
+            notes: byCategory.codeStyle?.notes ?? prev.codeStyle.notes,
+          },
+          testing: {
+            ...prev.testing,
+            level: byCategory.testing?.level ?? prev.testing.level,
+            coverage: byCategory.testing?.coverage ?? prev.testing.coverage,
+            frameworks: byCategory.testing?.frameworks ?? prev.testing.frameworks,
+            notes: byCategory.testing?.notes ?? prev.testing.notes,
+          },
+          staticFiles: {
+            ...prev.staticFiles,
+            funding: byCategory.static?.funding ?? prev.staticFiles.funding,
+            fundingYml: byCategory.static?.fundingYml ?? prev.staticFiles.fundingYml,
+            editorconfig: byCategory.static?.editorconfig ?? prev.staticFiles.editorconfig,
+            contributing: byCategory.static?.contributing ?? prev.staticFiles.contributing,
+            codeOfConduct: byCategory.static?.codeOfConduct ?? prev.staticFiles.codeOfConduct,
+            security: byCategory.static?.security ?? prev.staticFiles.security,
+            gitignoreMode: byCategory.static?.gitignoreMode ?? prev.staticFiles.gitignoreMode,
+            gitignoreCustom: byCategory.static?.gitignoreCustom ?? prev.staticFiles.gitignoreCustom,
+            dockerignore: byCategory.static?.dockerignore ?? prev.staticFiles.dockerignore,
+            dockerignoreCustom: byCategory.static?.dockerignoreCustom ?? prev.staticFiles.dockerignoreCustom,
+            licenseSave: byCategory.static?.licenseSave ?? prev.staticFiles.licenseSave,
+          },
+          license: byCategory.repo?.license ?? prev.license,
+          repoHost: byCategory.repo?.host ?? prev.repoHost,
+          isPublic: byCategory.repo?.isPublic ?? prev.isPublic,
+        }));
+      } catch {
+        // ignore
+      } finally {
+        setPreferencesLoaded(true);
+      }
+    };
+    loadPrefs();
+  }, [status]);
+
+  const lockedSteps = useMemo(
+    () => WIZARD_STEPS.filter((s) => !canAccessTier(userTier, s.tier)),
+    [userTier],
+  );
 
   // Show loading state while checking auth
   if (status === "loading" || tierLoading) {
@@ -514,59 +559,76 @@ export default function WizardPage() {
     return <ProfileSetupRequired />;
   }
 
-  const handleNext = () => {
-    if (currentStep < WIZARD_STEPS.length - 1) {
-      // Find next accessible step
-      let nextStep = currentStep + 1;
-      while (nextStep < WIZARD_STEPS.length && !canAccessTier(userTier, WIZARD_STEPS[nextStep].tier)) {
-        nextStep++;
-      }
-      if (nextStep >= WIZARD_STEPS.length) {
-        // Jump to generate step (always accessible)
-        nextStep = WIZARD_STEPS.length - 1;
-      }
-      setCurrentStep(nextStep);
+  const buildGeneratorConfig = () => {
+    return {
+      projectName: config.projectName,
+      projectDescription: config.projectDescription,
+      projectType: config.projectType,
+      languages: config.languages,
+      frameworks: config.frameworks,
+      letAiDecide: config.letAiDecide,
+      repoHost: config.repoHost,
+      repoHostOther: config.repoHostOther,
+      repoUrl: config.repoUrl,
+      exampleRepoUrl: config.exampleRepoUrl,
+      isPublic: config.isPublic,
+      license: config.license,
+      funding: config.funding,
+      fundingYml: config.fundingYml,
+      dependabot: config.dependabot,
+      cicd: [config.cicd],
+      containerRegistry: config.containerRegistry,
+      customRegistry: config.containerRegistryOther,
+      deploymentTarget: [],
+      aiBehaviorRules: config.aiBehaviorRules,
+      enableAutoUpdate: config.enableAutoUpdate,
+      platform: config.platform,
+      platforms: [config.platform],
+      additionalFeedback: config.additionalFeedback,
+      buildContainer: config.buildContainer,
+      commands: config.commands,
+      codeStyle: config.codeStyle,
+      boundaries: config.boundaries,
+      testingStrategy: {
+        level: config.testing.level,
+        coverage: config.testing.coverage,
+        frameworks: config.testing.frameworks,
+        notes: config.testing.notes,
+      },
+      staticFiles: {
+        funding: config.funding || config.staticFiles.funding,
+        fundingYml: config.staticFiles.fundingYml || config.fundingYml,
+        editorconfig: config.staticFiles.editorconfig,
+        contributing: config.staticFiles.contributing,
+        codeOfConduct: config.staticFiles.codeOfConduct,
+        security: config.staticFiles.security,
+        gitignoreMode: config.staticFiles.gitignoreMode,
+        gitignoreCustom: config.staticFiles.gitignoreCustom,
+        dockerignore: config.buildContainer || config.staticFiles.dockerignore,
+        dockerignoreCustom: config.staticFiles.dockerignoreCustom,
+        license: config.license,
+      },
+    };
+  };
 
-      // Generate preview files when entering the last step
-      if (nextStep === WIZARD_STEPS.length - 1) {
-        const wizardConfig = {
-          projectName: config.projectName,
-          projectDescription: config.projectDescription,
-          projectType: config.projectType,
-          languages: config.languages,
-          frameworks: config.frameworks,
-          letAiDecide: config.letAiDecide,
-          repoHost: config.repoHost,
-          repoHostOther: config.repoHostOther,
-          repoUrl: config.repoUrl,
-          exampleRepoUrl: config.exampleRepoUrl,
-          isPublic: config.isPublic,
-          license: config.license,
-          funding: config.funding,
-          fundingYml: config.fundingYml,
-          releaseStrategy: config.releaseStrategy,
-          customReleaseStrategy: config.releaseStrategyOther,
-          cicd: [config.cicd],
-          containerRegistry: config.containerRegistry,
-          customRegistry: config.containerRegistryOther,
-          deploymentTarget: [],
-          aiBehaviorRules: config.aiBehaviorRules,
-          enableAutoUpdate: config.enableAutoUpdate,
-          platforms: [config.platform],
-          additionalFeedback: config.additionalFeedback,
-        };
-        const userProfile = {
-          displayName: session.user.displayName,
-          name: session.user.name,
-          persona: session.user.persona,
-          skillLevel: session.user.skillLevel,
-        };
-        const files = generateAllFiles(wizardConfig, userProfile);
-        setPreviewFiles(files);
-        if (files.length > 0) {
-          setExpandedFile(files[0].fileName);
-        }
-      }
+  const handleNext = () => {
+    if (currentStep >= WIZARD_STEPS.length - 1) return;
+    let next = currentStep + 1;
+    while (next < WIZARD_STEPS.length && !canAccessTier(userTier, WIZARD_STEPS[next].tier)) {
+      next++;
+    }
+    if (next >= WIZARD_STEPS.length) next = WIZARD_STEPS.length - 1;
+    setCurrentStep(next);
+
+    if (next === WIZARD_STEPS.length - 1) {
+      const files = generateAllFiles(buildGeneratorConfig(), {
+        displayName: session.user.displayName,
+        name: session.user.name,
+        persona: session.user.persona,
+        skillLevel: session.user.skillLevel,
+      });
+      setPreviewFiles(files);
+      if (files.length > 0) setExpandedFile(files[0].fileName);
     }
   };
 
@@ -605,44 +667,70 @@ export default function WizardPage() {
     }));
   };
 
+  const savePreferences = async () => {
+    const payload: { category: string; key: string; value: any; isDefault?: boolean }[] = [];
+    if (config.commands.savePreferences) {
+      payload.push(
+        { category: "commands", key: "build", value: config.commands.build },
+        { category: "commands", key: "test", value: config.commands.test },
+        { category: "commands", key: "lint", value: config.commands.lint },
+        { category: "commands", key: "dev", value: config.commands.dev },
+      );
+    }
+    if (config.staticFiles.licenseSave) {
+      payload.push(
+        { category: "repo", key: "license", value: config.license, isDefault: true },
+        { category: "repo", key: "host", value: config.repoHost },
+        { category: "repo", key: "isPublic", value: config.isPublic },
+      );
+    }
+    if (config.codeStyle.savePreferences) {
+      payload.push(
+        { category: "codeStyle", key: "naming", value: config.codeStyle.naming },
+        { category: "codeStyle", key: "notes", value: config.codeStyle.notes },
+      );
+    }
+    if (config.testing.savePreferences) {
+      payload.push(
+        { category: "testing", key: "level", value: config.testing.level },
+        { category: "testing", key: "coverage", value: config.testing.coverage },
+        { category: "testing", key: "frameworks", value: config.testing.frameworks },
+        { category: "testing", key: "notes", value: config.testing.notes },
+      );
+    }
+    if (config.staticFiles.editorconfigSave || config.staticFiles.contributingSave || config.staticFiles.codeOfConductSave || config.staticFiles.securitySave || config.staticFiles.gitignoreSave || config.staticFiles.dockerignoreSave || config.staticFiles.fundingSave || config.staticFiles.licenseSave) {
+      payload.push(
+        { category: "static", key: "editorconfig", value: config.staticFiles.editorconfig },
+        { category: "static", key: "contributing", value: config.staticFiles.contributing },
+        { category: "static", key: "codeOfConduct", value: config.staticFiles.codeOfConduct },
+        { category: "static", key: "security", value: config.staticFiles.security },
+        { category: "static", key: "gitignoreMode", value: config.staticFiles.gitignoreMode },
+        { category: "static", key: "gitignoreCustom", value: config.staticFiles.gitignoreCustom },
+        { category: "static", key: "dockerignore", value: config.buildContainer || config.staticFiles.dockerignore },
+        { category: "static", key: "dockerignoreCustom", value: config.staticFiles.dockerignoreCustom },
+        { category: "static", key: "funding", value: config.funding || config.staticFiles.funding },
+        { category: "static", key: "fundingYml", value: config.staticFiles.fundingYml || config.fundingYml },
+        { category: "static", key: "licenseSave", value: config.staticFiles.licenseSave || config.licenseSave },
+      );
+    }
+    if (payload.length === 0) return;
+    await fetch("/api/user/wizard-preferences", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  };
+
   const handleDownload = async () => {
     setIsDownloading(true);
     try {
-      const wizardConfig = {
-        projectName: config.projectName,
-        projectDescription: config.projectDescription,
-        projectType: config.projectType,
-        languages: config.languages,
-        frameworks: config.frameworks,
-        letAiDecide: config.letAiDecide,
-        repoHost: config.repoHost,
-        repoHostOther: config.repoHostOther,
-        repoUrl: config.repoUrl,
-        exampleRepoUrl: config.exampleRepoUrl,
-        isPublic: config.isPublic,
-        license: config.license,
-        funding: config.funding,
-        fundingYml: config.fundingYml,
-        releaseStrategy: config.releaseStrategy,
-        customReleaseStrategy: config.releaseStrategyOther,
-        cicd: [config.cicd],
-        containerRegistry: config.containerRegistry,
-        customRegistry: config.containerRegistryOther,
-        deploymentTarget: [],
-        aiBehaviorRules: config.aiBehaviorRules,
-        enableAutoUpdate: config.enableAutoUpdate,
-        platforms: [config.platform],
-        additionalFeedback: config.additionalFeedback,
-      };
-
-      const userProfile = {
+      await savePreferences();
+      const blob = await generateConfigFiles(buildGeneratorConfig(), {
         displayName: session.user.displayName,
         name: session.user.name,
         persona: session.user.persona,
         skillLevel: session.user.skillLevel,
-      };
-
-      const blob = await generateConfigFiles(wizardConfig, userProfile);
+      });
       downloadZip(blob, config.projectName);
     } catch (error) {
       console.error("Error generating files:", error);
@@ -755,7 +843,7 @@ export default function WizardPage() {
                   </div>
                   <span className="flex-1 text-sm font-medium">{step.title}</span>
                   {tierBadge && (
-                    <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${tierBadge.bg} ${tierBadge.color}`}>
+                    <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${tierBadge.className}`}>
                       {tierBadge.label}
                     </span>
                   )}
@@ -815,9 +903,7 @@ export default function WizardPage() {
                   description={config.projectDescription}
                   projectType={config.projectType}
                   onNameChange={(v) => setConfig({ ...config, projectName: v })}
-                  onDescriptionChange={(v) =>
-                    setConfig({ ...config, projectDescription: v })
-                  }
+                  onDescriptionChange={(v) => setConfig({ ...config, projectDescription: v })}
                   onProjectTypeChange={(v) => setConfig({ ...config, projectType: v })}
                 />
               )}
@@ -828,9 +914,7 @@ export default function WizardPage() {
                   letAiDecide={config.letAiDecide}
                   onToggleLanguage={(v) => toggleArrayValue("languages", v)}
                   onToggleFramework={(v) => toggleArrayValue("frameworks", v)}
-                  onLetAiDecide={(v) =>
-                    setConfig({ ...config, letAiDecide: v })
-                  }
+                  onLetAiDecide={(v) => setConfig({ ...config, letAiDecide: v })}
                 />
               )}
               {currentStep === 2 && (
@@ -840,19 +924,15 @@ export default function WizardPage() {
                 />
               )}
               {currentStep === 3 && (
-                <StepReleaseStrategy
-                  value={config.releaseStrategy}
-                  otherValue={config.releaseStrategyOther}
-                  onChange={(v) => setConfig({ ...config, releaseStrategy: v })}
-                  onOtherChange={(v) =>
-                    setConfig({ ...config, releaseStrategyOther: v })
-                  }
+                <StepCommands
+                  config={config.commands}
+                  onChange={(updates) => setConfig({ ...config, commands: { ...config.commands, ...updates } })}
                 />
               )}
               {currentStep === 4 && (
-                <StepCICD
-                  config={config}
-                  onChange={(updates) => setConfig({ ...config, ...updates })}
+                <StepCodeStyle
+                  config={config.codeStyle}
+                  onChange={(updates) => setConfig({ ...config, codeStyle: { ...config.codeStyle, ...updates } })}
                 />
               )}
               {currentStep === 5 && (
@@ -861,32 +941,45 @@ export default function WizardPage() {
                   onToggle={(v) => toggleArrayValue("aiBehaviorRules", v)}
                   enableAutoUpdate={config.enableAutoUpdate}
                   onAutoUpdateChange={(v) => setConfig({ ...config, enableAutoUpdate: v })}
+                  platform={config.platform}
+                  onPlatformChange={(v) => setConfig({ ...config, platform: v })}
                 />
               )}
               {currentStep === 6 && (
-                <StepPlatforms
-                  selected={config.platform}
-                  onSelect={(v) => setConfig({ ...config, platform: v })}
+                <StepBoundaries
+                  config={config.boundaries}
+                  onChange={(updates) => setConfig({ ...config, boundaries: { ...config.boundaries, ...updates } })}
                 />
               )}
               {currentStep === 7 && (
-                <StepFeedback
-                  value={config.additionalFeedback}
-                  onChange={(v) =>
-                    setConfig({ ...config, additionalFeedback: v })
-                  }
+                <StepTesting
+                  config={config.testing}
+                  onChange={(updates) => setConfig({ ...config, testing: { ...config.testing, ...updates } })}
                 />
               )}
               {currentStep === 8 && (
+                <StepStaticFiles
+                  config={config.staticFiles}
+                  isGithub={config.repoHost === "github"}
+                  isPublic={config.isPublic}
+                  buildContainer={config.buildContainer}
+                  onChange={(updates) => setConfig({ ...config, staticFiles: { ...config.staticFiles, ...updates } })}
+                />
+              )}
+              {currentStep === 9 && (
+                <StepFeedback
+                  value={config.additionalFeedback}
+                  onChange={(v) => setConfig({ ...config, additionalFeedback: v })}
+                />
+              )}
+              {currentStep === 10 && (
                 <StepGenerate
                   config={config}
                   session={session}
                   previewFiles={previewFiles}
                   expandedFile={expandedFile}
                   copiedFile={copiedFile}
-                  onToggleExpand={(fileName) =>
-                    setExpandedFile(expandedFile === fileName ? null : fileName)
-                  }
+                  onToggleExpand={(fileName) => setExpandedFile(expandedFile === fileName ? null : fileName)}
                   onCopyFile={handleCopyFile}
                 />
               )}
@@ -1354,7 +1447,6 @@ const REPO_HOSTS = [
   { id: "github", label: "GitHub", icon: "🐙" },
   { id: "gitlab", label: "GitLab", icon: "🦊" },
   { id: "gitea", label: "Gitea", icon: "🍵" },
-  { id: "bitbucket", label: "Bitbucket", icon: "🪣" },
   { id: "other", label: "Other", icon: "📦" },
 ];
 
@@ -1369,22 +1461,19 @@ function StepRepository({
     <div>
       <h2 className="text-2xl font-bold">Repository Setup</h2>
       <p className="mt-2 text-muted-foreground">
-        Configure your repository essentials.
+        Configure host, visibility, and repo preferences.
       </p>
 
       <div className="mt-6 space-y-6">
-        {/* Repository Host */}
         <div>
           <label className="text-sm font-medium">Repository Host</label>
-          <div className="mt-2 grid grid-cols-3 gap-2">
+          <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
             {REPO_HOSTS.map((host) => (
               <button
                 key={host.id}
                 onClick={() => onChange({ repoHost: host.id })}
                 className={`flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm transition-all ${
-                  config.repoHost === host.id
-                    ? "border-primary bg-primary/5"
-                    : "hover:border-primary"
+                  config.repoHost === host.id ? "border-primary bg-primary/5" : "hover:border-primary"
                 }`}
               >
                 <span>{host.icon}</span>
@@ -1405,48 +1494,64 @@ function StepRepository({
           )}
         </div>
 
-        {/* License */}
-        <div>
-          <label className="text-sm font-medium">License</label>
-          <div className="mt-2 grid grid-cols-3 gap-2">
-            {["mit", "apache-2.0", "gpl-3.0", "bsd-3", "unlicense", "none"].map(
-              (license) => (
-                <button
-                  key={license}
-                  onClick={() => onChange({ license })}
-                  className={`rounded-md border px-3 py-2 text-sm transition-all ${
-                    config.license === license
-                      ? "border-primary bg-primary/5"
-                      : "hover:border-primary"
-                  }`}
-                >
-                  {license.toUpperCase()}
-                </button>
-              )
-            )}
-          </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Visibility</label>
+          <ToggleOption
+            label="Make repository public"
+            description="Public repos unlock funding and sharing."
+            checked={config.isPublic}
+            onChange={(v) => onChange({ isPublic: v })}
+          />
         </div>
 
-        {/* Example Repository URL */}
+        <div>
+          <label className="text-sm font-medium">License (preference)</label>
+          <div className="mt-2 grid grid-cols-3 gap-2">
+            {["mit", "apache-2.0", "gpl-3.0", "bsd-3", "unlicense", "none"].map((license) => (
+              <button
+                key={license}
+                onClick={() => onChange({ license })}
+                className={`rounded-md border px-3 py-2 text-sm transition-all ${
+                  config.license === license ? "border-primary bg-primary/5" : "hover:border-primary"
+                }`}
+              >
+                {license.toUpperCase()}
+              </button>
+            ))}
+          </div>
+          <label className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={config.staticFiles.licenseSave}
+              onChange={(e) =>
+                onChange({
+                  staticFiles: { ...config.staticFiles, licenseSave: e.target.checked },
+                  licenseSave: e.target.checked,
+                })
+              }
+            />
+            Save as default license preference
+          </label>
+        </div>
+
         <div>
           <label className="text-sm font-medium">Example Repository (optional)</label>
           <p className="mt-1 text-xs text-muted-foreground">
-            Share a public repository that&apos;s similar to what you&apos;re building. This helps AI understand your coding style better.
+            Provide a public repo similar to this project to guide AI on style and structure.
           </p>
           <input
             type="text"
             value={config.exampleRepoUrl || ""}
             onChange={(e) => onChange({ exampleRepoUrl: e.target.value })}
-            placeholder="e.g., https://github.com/user/similar-project"
+            placeholder="e.g., https://github.com/org/example"
             className="mt-2 w-full rounded-lg border bg-background px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
 
-        {/* Toggles */}
         <div className="space-y-3">
           <ToggleOption
             label="Conventional Commits"
-            description="Use standardized commit message format"
+            description="Use standardized commit messages"
             checked={config.conventionalCommits}
             onChange={(v) => onChange({ conventionalCommits: v })}
           />
@@ -1456,216 +1561,61 @@ function StepRepository({
             checked={config.semver}
             onChange={(v) => onChange({ semver: v })}
           />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function StepReleaseStrategy({
-  value,
-  otherValue,
-  onChange,
-  onOtherChange,
-}: {
-  value: string;
-  otherValue: string;
-  onChange: (v: string) => void;
-  onOtherChange: (v: string) => void;
-}) {
-  return (
-    <div>
-      <h2 className="text-2xl font-bold">Release Strategy</h2>
-      <p className="mt-2 text-muted-foreground">
-        How do you plan to release and manage your project?
-      </p>
-
-      <div className="mt-6 space-y-3">
-        {RELEASE_STRATEGIES.map((strategy) => (
-          <button
-            key={strategy.value}
-            onClick={() => onChange(strategy.value)}
-            className={`flex w-full items-start gap-4 rounded-lg border p-5 text-left transition-all hover:border-primary ${
-              value === strategy.value
-                ? "border-primary bg-primary/5 ring-1 ring-primary"
-                : ""
-            }`}
-          >
-            <span className="text-3xl">{strategy.icon}</span>
-            <div className="flex-1">
-              <span className="text-lg font-semibold">{strategy.label}</span>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {strategy.description}
-              </p>
-            </div>
-            {value === strategy.value && (
-              <Check className="h-5 w-5 text-primary" />
-            )}
-          </button>
-        ))}
-      </div>
-
-      {value === "other" && (
-        <div className="mt-4">
-          <label className="text-sm font-medium">Please specify:</label>
-          <input
-            type="text"
-            value={otherValue}
-            onChange={(e) => onOtherChange(e.target.value)}
-            placeholder="e.g., SVN, Mercurial, Perforce..."
-            className="mt-2 w-full rounded-lg border bg-background px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+          <ToggleOption
+            label="Dependabot / Updates"
+            description="Enable dependency updates (GitHub & GitLab)"
+            checked={config.dependabot}
+            onChange={(v) => onChange({ dependabot: v })}
+          />
+          <ToggleOption
+            label="Build container image"
+            description="Plan to build Docker images in this repo"
+            checked={config.buildContainer}
+            onChange={(v) => onChange({ buildContainer: v })}
           />
         </div>
-      )}
-    </div>
-  );
-}
 
-function StepCICD({
-  config,
-  onChange,
-}: {
-  config: WizardConfig;
-  onChange: (updates: Partial<WizardConfig>) => void;
-}) {
-  return (
-    <div>
-      <h2 className="text-2xl font-bold">CI/CD & Deployment</h2>
-      <p className="mt-2 text-muted-foreground">
-        Set up continuous integration and deployment.
-      </p>
-
-      <div className="mt-6 space-y-6">
-        <div>
-          <label className="text-sm font-medium">CI/CD Provider</label>
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            {[
-              { id: "github_actions", label: "GitHub Actions" },
-              { id: "gitlab_ci", label: "GitLab CI" },
-              { id: "circleci", label: "CircleCI" },
-              { id: "none", label: "None" },
-            ].map((provider) => (
-              <button
-                key={provider.id}
-                onClick={() => onChange({ cicd: provider.id })}
-                className={`rounded-md border px-3 py-2 text-sm transition-all ${
-                  config.cicd === provider.id
-                    ? "border-primary bg-primary/5"
-                    : "hover:border-primary"
-                }`}
-              >
-                {provider.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <ToggleOption
-          label="Build Container Image"
-          description="Do you plan to build a container image in this repo?"
-          checked={config.buildContainer}
-          onChange={(v) =>
-            onChange({
-              buildContainer: v,
-              containerRegistry: v ? config.containerRegistry : "",
-              registryUsername: v ? config.registryUsername : "",
-            })
-          }
-        />
-
-        {config.buildContainer && (
-          <>
-            <div>
-              <label className="text-sm font-medium">Container Registry</label>
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                {CONTAINER_REGISTRIES.map((registry) => (
-                  <button
-                    key={registry.value}
-                    onClick={() =>
-                      onChange({ containerRegistry: registry.value })
-                    }
-                    className={`flex items-center gap-2 rounded-lg border p-3 text-left transition-all ${
-                      config.containerRegistry === registry.value
-                        ? "border-primary bg-primary/5 ring-1 ring-primary"
-                        : "hover:border-primary"
-                    }`}
-                  >
-                    <span className="text-xl">{registry.icon}</span>
-                    <span className="text-sm font-medium">
-                      {registry.label}
-                    </span>
-                  </button>
-                ))}
-              </div>
+        {config.repoHost === "github" && config.isPublic && (
+          <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
+            <div className="flex items-center justify-between">
+              <p className="font-medium">FUNDING.yml</p>
+              <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={config.staticFiles.fundingSave}
+                  onChange={(e) =>
+                    onChange({
+                      staticFiles: { ...config.staticFiles, fundingSave: e.target.checked },
+                    })
+                  }
+                />
+                Save preference
+              </label>
             </div>
-
-            {config.containerRegistry === "other" && (
-              <div>
-                <label className="text-sm font-medium">Registry URL</label>
-                <input
-                  type="text"
-                  value={config.containerRegistryOther || ""}
-                  onChange={(e) =>
-                    onChange({ containerRegistryOther: e.target.value })
-                  }
-                  placeholder="e.g., registry.mycompany.com"
-                  className="mt-2 w-full rounded-lg border bg-background px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-            )}
-
-            {config.containerRegistry && (
-              <div>
-                <label className="text-sm font-medium">
-                  Registry Username / Handle
-                </label>
-                <input
-                  type="text"
-                  value={config.registryUsername || ""}
-                  onChange={(e) =>
-                    onChange({ registryUsername: e.target.value })
-                  }
-                  placeholder="e.g., myusername"
-                  className="mt-2 w-full rounded-lg border bg-background px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-            )}
-          </>
-        )}
-
-        {/* GitHub-specific: Funding - only show when repo host is GitHub */}
-        {config.repoHost === "github" && (
-          <div className="border-t pt-6">
-            <h3 className="mb-3 font-semibold">GitHub Features</h3>
             <ToggleOption
-              label="FUNDING.yml"
-              description="Add GitHub Sponsors and other funding links to your repo"
-              checked={config.funding}
-              onChange={(v) => onChange({ funding: v })}
+              label="Include FUNDING.yml"
+              description="Add sponsors/donation links"
+              checked={config.funding || config.staticFiles.funding}
+              onChange={(v) =>
+                onChange({
+                  funding: v,
+                  staticFiles: { ...config.staticFiles, funding: v },
+                })
+              }
             />
-            {config.funding && (
-              <div className="mt-4">
-                <label className="text-sm font-medium">FUNDING.yml Content</label>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Define your funding sources. See{" "}
-                  <a 
-                    href="https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline"
-                  >
-                    GitHub docs
-                  </a>{" "}
-                  for format examples.
-                </p>
-                <textarea
-                  value={config.fundingYml || ""}
-                  onChange={(e) => onChange({ fundingYml: e.target.value })}
-                  placeholder={`# Example FUNDING.yml\ngithub: [your-username]\npatreon: your-patreon\nko_fi: your-kofi`}
-                  rows={5}
-                  className="mt-2 w-full rounded-lg border bg-background px-4 py-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
+            {(config.funding || config.staticFiles.funding) && (
+              <textarea
+                value={config.staticFiles.fundingYml || config.fundingYml || ""}
+                onChange={(e) =>
+                  onChange({
+                    fundingYml: e.target.value,
+                    staticFiles: { ...config.staticFiles, fundingYml: e.target.value },
+                  })
+                }
+                placeholder={`# Example FUNDING.yml\ngithub: [your-username]\npatreon: your-patreon\nko_fi: your-kofi`}
+                rows={4}
+                className="w-full rounded-lg border bg-background px-4 py-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
             )}
           </div>
         )}
@@ -1679,11 +1629,15 @@ function StepAIBehavior({
   onToggle,
   enableAutoUpdate,
   onAutoUpdateChange,
+  platform,
+  onPlatformChange,
 }: {
   selected: string[];
   onToggle: (v: string) => void;
   enableAutoUpdate: boolean;
   onAutoUpdateChange: (v: boolean) => void;
+  platform: string;
+  onPlatformChange: (v: string) => void;
 }) {
   return (
     <div>
@@ -1729,6 +1683,29 @@ function StepAIBehavior({
         ))}
       </div>
 
+      <div className="mt-6">
+        <h3 className="font-semibold">Target AI IDE</h3>
+        <p className="text-sm text-muted-foreground">Choose one platform (files are optimized for it but remain portable).</p>
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          {[
+            { id: "cursor", label: "Cursor" },
+            { id: "claude", label: "Claude Code" },
+            { id: "copilot", label: "GitHub Copilot" },
+            { id: "windsurf", label: "Windsurf" },
+          ].map((p) => (
+            <button
+              key={p.id}
+              onClick={() => onPlatformChange(p.id)}
+              className={`rounded-md border px-3 py-2 text-sm ${
+                platform === p.id ? "border-primary bg-primary/5" : "hover:border-primary"
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Auto-Update Option */}
       <div className="mt-8">
         <button
@@ -1764,65 +1741,473 @@ function StepAIBehavior({
   );
 }
 
-function StepPlatforms({
-  selected,
-  onSelect,
+function StepCommands({
+  config,
+  onChange,
 }: {
-  selected: string;
-  onSelect: (v: string) => void;
+  config: CommandsConfig;
+  onChange: (updates: Partial<CommandsConfig>) => void;
 }) {
+  const suggestions = [
+    { key: "build", label: "Build", placeholder: "next build / npm run build" },
+    { key: "test", label: "Test", placeholder: "npm test / pnpm test" },
+    { key: "lint", label: "Lint", placeholder: "next lint / eslint ." },
+    { key: "dev", label: "Dev", placeholder: "next dev / npm run dev" },
+  ] as const;
+  const [search, setSearch] = useState("");
+  const filtered = suggestions.filter((s) =>
+    s.label.toLowerCase().includes(search.toLowerCase()) ||
+    (config as any)[s.key]?.toLowerCase?.().includes(search.toLowerCase())
+  );
+  const [newCommand, setNewCommand] = useState("");
+
   return (
     <div>
-      <h2 className="text-2xl font-bold">Select AI IDE Platform</h2>
+      <h2 className="text-2xl font-bold">Commands</h2>
       <p className="mt-2 text-muted-foreground">
-        Choose which platform to generate the configuration file for.
-      </p>
-      <p className="mt-1 text-sm text-muted-foreground/80">
-        💡 The file is <strong>optimized for</strong> the selected platform, but works across multiple AI-powered IDEs.
+        Common project commands. These go into the generated instructions.
       </p>
 
-      <div className="mt-6 grid grid-cols-2 gap-4">
-        {PLATFORMS.map((platform) => (
+      <div className="mt-4">
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search commands..."
+            className="w-full rounded-lg border bg-background py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+        <div className="space-y-3">
+          {filtered.map((cmd) => (
+            <div key={cmd.key} className="rounded-lg border p-3">
+              <label className="text-sm font-medium">{cmd.label}</label>
+              <input
+                type="text"
+                value={(config as any)[cmd.key] ?? ""}
+                onChange={(e) => onChange({ [cmd.key]: e.target.value } as any)}
+                placeholder={cmd.placeholder}
+                className="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 rounded-lg border p-3">
+          <label className="text-sm font-medium">Other commands</label>
+          <div className="mt-2 flex gap-2">
+            <input
+              value={newCommand}
+              onChange={(e) => setNewCommand(e.target.value)}
+              placeholder="e.g., npm run storybook"
+              className="flex-1 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && newCommand.trim()) {
+                  onChange({ additional: [...config.additional, newCommand.trim()] });
+                  setNewCommand("");
+                }
+              }}
+            />
+            <Button
+              variant="secondary"
+              disabled={!newCommand.trim()}
+              onClick={() => {
+                onChange({ additional: [...config.additional, newCommand.trim()] });
+                setNewCommand("");
+              }}
+            >
+              Add
+            </Button>
+          </div>
+          {config.additional.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {config.additional.map((c, idx) => (
+                <span
+                  key={`${c}-${idx}`}
+                  className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-xs"
+                >
+                  {c}
+                  <button
+                    className="text-muted-foreground hover:text-destructive"
+                    onClick={() =>
+                      onChange({ additional: config.additional.filter((_, i) => i !== idx) })
+                    }
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <label className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={config.savePreferences}
+            onChange={(e) => onChange({ savePreferences: e.target.checked })}
+          />
+          Save these commands as defaults
+        </label>
+      </div>
+    </div>
+  );
+}
+
+function StepCodeStyle({
+  config,
+  onChange,
+}: {
+  config: CodeStyleConfig;
+  onChange: (updates: Partial<CodeStyleConfig>) => void;
+}) {
+  const namingOptions = [
+    { id: "camelCase", label: "camelCase" },
+    { id: "snake_case", label: "snake_case" },
+    { id: "PascalCase", label: "PascalCase" },
+    { id: "kebab-case", label: "kebab-case" },
+  ];
+
+  return (
+    <div>
+      <h2 className="text-2xl font-bold">Code Style</h2>
+      <p className="mt-2 text-muted-foreground">
+        Capture naming and style conventions to guide AI output.
+      </p>
+
+      <div className="mt-4 space-y-4">
+        <div>
+          <label className="text-sm font-medium">Naming convention</label>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            {namingOptions.map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => onChange({ naming: opt.id })}
+                className={`rounded-md border px-3 py-2 text-sm ${
+                  config.naming === opt.id ? "border-primary bg-primary/5" : "hover:border-primary"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <label className="text-sm font-medium">Notes</label>
+          <textarea
+            value={config.notes}
+            onChange={(e) => onChange({ notes: e.target.value })}
+            placeholder="e.g., prefer named exports, keep functions pure, avoid default exports..."
+            rows={4}
+            className="w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={config.savePreferences}
+            onChange={(e) => onChange({ savePreferences: e.target.checked })}
+          />
+          Save as default code style
+        </label>
+      </div>
+    </div>
+  );
+}
+
+const BOUNDARY_OPTIONS = [
+  "Rewrite large sections",
+  "Delete files",
+  "Refactor architecture",
+  "Change dependencies",
+  "Touch CI pipelines",
+  "Update docs automatically",
+];
+
+function StepBoundaries({
+  config,
+  onChange,
+}: {
+  config: BoundariesConfig;
+  onChange: (updates: Partial<BoundariesConfig>) => void;
+}) {
+  const toggle = (bucket: "always" | "ask" | "never", value: string) => {
+    const current = config[bucket];
+    if (!current) return;
+    const exists = current.includes(value);
+    const updated = exists ? current.filter((v) => v !== value) : [...current, value];
+    onChange({ [bucket]: updated } as any);
+  };
+
+  const renderBucket = (title: string, bucket: "always" | "ask" | "never") => (
+    <div className="rounded-lg border p-3">
+      <p className="text-sm font-semibold">{title}</p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {BOUNDARY_OPTIONS.map((opt) => (
           <button
-            key={platform.id}
-            onClick={() => onSelect(platform.id)}
-            className={`relative overflow-hidden rounded-xl border p-6 text-left transition-all ${
-              selected === platform.id
-                ? "border-primary ring-2 ring-primary"
-                : "hover:border-primary"
+            key={`${bucket}-${opt}`}
+            onClick={() => toggle(bucket, opt)}
+            className={`rounded-full border px-3 py-1 text-xs ${
+              config[bucket]?.includes(opt) ? "border-primary bg-primary/10" : "hover:border-primary"
             }`}
           >
-            <div
-              className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${platform.gradient}`}
-            />
-            <div className="flex items-center gap-3">
-              <span className="text-3xl">{platform.icon}</span>
-              <div>
-                <h3 className="font-semibold">{platform.name}</h3>
-                <code className="text-xs text-muted-foreground">
-                  {platform.file}
-                </code>
-                {platform.note && (
-                  <p className="mt-0.5 text-xs text-muted-foreground/70">
-                    {platform.note}
-                  </p>
-                )}
-              </div>
-            </div>
-            {selected === platform.id && (
-              <div className="absolute right-3 top-3">
-                <Check className="h-5 w-5 text-primary" />
-              </div>
-            )}
+            {opt}
           </button>
         ))}
       </div>
+    </div>
+  );
 
-      <div className="mt-4 rounded-lg bg-muted/50 p-3">
-        <p className="text-xs text-muted-foreground">
-          Each IDE has its native format. Cursor uses <strong>.cursor/rules/</strong>, 
-          Claude uses <strong>CLAUDE.md</strong>, etc. Your rules are optimized for each platform.
-        </p>
+  return (
+    <div>
+      <h2 className="text-2xl font-bold">Boundaries</h2>
+      <p className="mt-2 text-muted-foreground">Define what AI should always do, ask first, or never do.</p>
+      <div className="mt-4 space-y-3">
+        {renderBucket("Always do", "always")}
+        {renderBucket("Ask first", "ask")}
+        {renderBucket("Never do", "never")}
+      </div>
+      <label className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+        <input
+          type="checkbox"
+          checked={config.savePreferences}
+          onChange={(e) => onChange({ savePreferences: e.target.checked })}
+        />
+        Save boundaries as defaults
+      </label>
+    </div>
+  );
+}
+
+const TEST_FRAMEWORKS = ["jest", "vitest", "playwright", "cypress", "pytest", "rtl", "msw"];
+
+function StepTesting({
+  config,
+  onChange,
+}: {
+  config: TestingStrategyConfig;
+  onChange: (updates: Partial<TestingStrategyConfig>) => void;
+}) {
+  const [search, setSearch] = useState("");
+  const filtered = TEST_FRAMEWORKS.filter((f) => f.toLowerCase().includes(search.toLowerCase()));
+  const toggleFramework = (fw: string) => {
+    const exists = config.frameworks.includes(fw);
+    onChange({
+      frameworks: exists ? config.frameworks.filter((f) => f !== fw) : [...config.frameworks, fw],
+    });
+  };
+
+  return (
+    <div>
+      <h2 className="text-2xl font-bold">Testing Strategy</h2>
+      <p className="mt-2 text-muted-foreground">Document how tests should run and what good coverage looks like.</p>
+
+      <div className="mt-4 space-y-4">
+        <div className="grid grid-cols-2 gap-2">
+          {["smoke", "unit", "integration", "e2e"].map((lvl) => (
+            <button
+              key={lvl}
+              onClick={() => onChange({ level: lvl })}
+              className={`rounded-md border px-3 py-2 text-sm ${
+                config.level === lvl ? "border-primary bg-primary/5" : "hover:border-primary"
+              }`}
+            >
+              {lvl.toUpperCase()}
+            </button>
+          ))}
+        </div>
+        <div>
+          <label className="text-sm font-medium">Coverage target</label>
+          <input
+            type="text"
+            value={config.coverage}
+            onChange={(e) => onChange({ coverage: e.target.value })}
+            placeholder="e.g., 80%"
+            className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium">Frameworks</label>
+          <div className="relative mb-2">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search testing frameworks..."
+              className="w-full rounded-lg border bg-background py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {filtered.map((fw) => (
+              <button
+                key={fw}
+                onClick={() => toggleFramework(fw)}
+                className={`rounded-full border px-3 py-1 text-xs ${
+                  config.frameworks.includes(fw) ? "border-primary bg-primary/10" : "hover:border-primary"
+                }`}
+              >
+                {fw}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <label className="text-sm font-medium">Notes</label>
+          <textarea
+            value={config.notes}
+            onChange={(e) => onChange({ notes: e.target.value })}
+            rows={3}
+            placeholder="e.g., run e2e on main only, use msw for network mocking"
+            className="w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={config.savePreferences}
+            onChange={(e) => onChange({ savePreferences: e.target.checked })}
+          />
+          Save testing defaults
+        </label>
+      </div>
+    </div>
+  );
+}
+
+function StepStaticFiles({
+  config,
+  isGithub,
+  isPublic,
+  buildContainer,
+  onChange,
+}: {
+  config: StaticFilesConfig;
+  isGithub: boolean;
+  isPublic: boolean;
+  buildContainer: boolean;
+  onChange: (updates: Partial<StaticFilesConfig>) => void;
+}) {
+  return (
+    <div>
+      <h2 className="text-2xl font-bold">Static Files & Preferences</h2>
+      <p className="mt-2 text-muted-foreground">
+        Choose which helper files to generate and optionally save them as defaults.
+      </p>
+
+      <div className="mt-4 space-y-4">
+        <ToggleWithSave
+          label=".editorconfig"
+          description="Consistent indentation and line endings"
+          checked={config.editorconfig}
+          saveChecked={config.editorconfigSave}
+          onToggle={(v) => onChange({ editorconfig: v })}
+          onSaveToggle={(v) => onChange({ editorconfigSave: v })}
+        />
+        <ToggleWithSave
+          label="CONTRIBUTING.md"
+          description="Guidelines for contributors"
+          checked={config.contributing}
+          saveChecked={config.contributingSave}
+          onToggle={(v) => onChange({ contributing: v })}
+          onSaveToggle={(v) => onChange({ contributingSave: v })}
+        />
+        <ToggleWithSave
+          label="CODE_OF_CONDUCT.md"
+          description="Community expectations"
+          checked={config.codeOfConduct}
+          saveChecked={config.codeOfConductSave}
+          onToggle={(v) => onChange({ codeOfConduct: v })}
+          onSaveToggle={(v) => onChange({ codeOfConductSave: v })}
+        />
+        <ToggleWithSave
+          label="SECURITY.md"
+          description="How to report vulnerabilities"
+          checked={config.security}
+          saveChecked={config.securitySave}
+          onToggle={(v) => onChange({ security: v })}
+          onSaveToggle={(v) => onChange({ securitySave: v })}
+        />
+
+        <div className="rounded-lg border p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">.gitignore</p>
+              <p className="text-xs text-muted-foreground">Generate or provide a custom one</p>
+            </div>
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={config.gitignoreSave}
+                onChange={(e) => onChange({ gitignoreSave: e.target.checked })}
+              />
+              Save preference
+            </label>
+          </div>
+          <div className="mt-2 grid grid-cols-3 gap-2">
+            {(["generate", "custom", "skip"] as const).map((opt) => (
+              <button
+                key={opt}
+                onClick={() => onChange({ gitignoreMode: opt })}
+                className={`rounded-md border px-3 py-2 text-sm ${
+                  config.gitignoreMode === opt ? "border-primary bg-primary/5" : "hover:border-primary"
+                }`}
+              >
+                {opt === "generate" ? "AI generate" : opt === "custom" ? "Provide custom" : "Skip"}
+              </button>
+            ))}
+          </div>
+          {config.gitignoreMode === "custom" && (
+            <textarea
+              value={config.gitignoreCustom}
+              onChange={(e) => onChange({ gitignoreCustom: e.target.value })}
+              rows={4}
+              placeholder="Enter custom .gitignore content"
+              className="mt-2 w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          )}
+        </div>
+
+        {(buildContainer || config.dockerignore) && (
+          <div className="rounded-lg border p-4">
+            <div className="flex items-center justify-between">
+              <p className="font-medium">.dockerignore</p>
+              <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={config.dockerignoreSave}
+                  onChange={(e) => onChange({ dockerignoreSave: e.target.checked })}
+                />
+                Save preference
+              </label>
+            </div>
+            <ToggleOption
+              label="Include .dockerignore"
+              description="Recommended when building container images"
+              checked={buildContainer || config.dockerignore}
+              onChange={(v) => onChange({ dockerignore: v })}
+            />
+            {(buildContainer || config.dockerignore) && (
+              <textarea
+                value={config.dockerignoreCustom}
+                onChange={(e) => onChange({ dockerignoreCustom: e.target.value })}
+                rows={3}
+                placeholder="Optional custom .dockerignore content"
+                className="mt-2 w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            )}
+          </div>
+        )}
+
+        {(isGithub && isPublic) && (
+          <ToggleWithSave
+            label="FUNDING.yml"
+            description="Ask to include funding if GitHub + public"
+            checked={config.funding}
+            saveChecked={config.fundingSave}
+            onToggle={(v) => onChange({ funding: v })}
+            onSaveToggle={(v) => onChange({ fundingSave: v })}
+          />
+        )}
       </div>
     </div>
   );
@@ -2060,6 +2445,45 @@ function ToggleOption({
         />
       </div>
     </button>
+  );
+}
+
+function ToggleWithSave({
+  label,
+  description,
+  checked,
+  saveChecked,
+  onToggle,
+  onSaveToggle,
+}: {
+  label: string;
+  description: string;
+  checked: boolean;
+  saveChecked: boolean;
+  onToggle: (v: boolean) => void;
+  onSaveToggle: (v: boolean) => void;
+}) {
+  return (
+    <div className="rounded-lg border p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="font-medium">{label}</p>
+          <p className="text-xs text-muted-foreground">{description}</p>
+        </div>
+        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+          <input type="checkbox" checked={saveChecked} onChange={(e) => onSaveToggle(e.target.checked)} />
+          Save
+        </label>
+      </div>
+      <div className="mt-3">
+        <ToggleOption
+          label={`Include ${label}`}
+          description=""
+          checked={checked}
+          onChange={onToggle}
+        />
+      </div>
+    </div>
   );
 }
 
