@@ -631,28 +631,60 @@ export default function WizardPage() {
           },
           testing: {
             ...prev.testing,
-            levels: byCategory.testing?.levels ?? prev.testing.levels,
-            coverage: byCategory.testing?.coverage ?? prev.testing.coverage,
-            frameworks: byCategory.testing?.frameworks ?? prev.testing.frameworks,
+            levels: byCategory.testing?.levels 
+              ? (typeof byCategory.testing.levels === 'string' 
+                  ? byCategory.testing.levels.split(',').filter(Boolean) 
+                  : byCategory.testing.levels)
+              : prev.testing.levels,
+            coverage: byCategory.testing?.coverage 
+              ? (typeof byCategory.testing.coverage === 'string' 
+                  ? parseInt(byCategory.testing.coverage, 10) 
+                  : byCategory.testing.coverage)
+              : prev.testing.coverage,
+            frameworks: byCategory.testing?.frameworks 
+              ? (typeof byCategory.testing.frameworks === 'string' 
+                  ? byCategory.testing.frameworks.split(',').filter(Boolean) 
+                  : byCategory.testing.frameworks)
+              : prev.testing.frameworks,
             notes: byCategory.testing?.notes ?? prev.testing.notes,
           },
           staticFiles: {
             ...prev.staticFiles,
-            funding: byCategory.static?.funding ?? prev.staticFiles.funding,
+            funding: byCategory.static?.funding !== undefined
+              ? (typeof byCategory.static.funding === 'string' 
+                  ? byCategory.static.funding === 'true' 
+                  : Boolean(byCategory.static.funding))
+              : prev.staticFiles.funding,
             fundingYml: byCategory.static?.fundingYml ?? prev.staticFiles.fundingYml,
-            editorconfig: byCategory.static?.editorconfig ?? prev.staticFiles.editorconfig,
+            editorconfig: byCategory.static?.editorconfig !== undefined
+              ? (typeof byCategory.static.editorconfig === 'string' 
+                  ? byCategory.static.editorconfig === 'true' 
+                  : Boolean(byCategory.static.editorconfig))
+              : prev.staticFiles.editorconfig,
             contributing: byCategory.static?.contributing ?? prev.staticFiles.contributing,
             codeOfConduct: byCategory.static?.codeOfConduct ?? prev.staticFiles.codeOfConduct,
             security: byCategory.static?.security ?? prev.staticFiles.security,
             gitignoreMode: byCategory.static?.gitignoreMode ?? prev.staticFiles.gitignoreMode,
             gitignoreCustom: byCategory.static?.gitignoreCustom ?? prev.staticFiles.gitignoreCustom,
-            dockerignore: byCategory.static?.dockerignore ?? prev.staticFiles.dockerignore,
+            dockerignore: byCategory.static?.dockerignore !== undefined
+              ? (typeof byCategory.static.dockerignore === 'string' 
+                  ? byCategory.static.dockerignore === 'true' 
+                  : Boolean(byCategory.static.dockerignore))
+              : prev.staticFiles.dockerignore,
             dockerignoreCustom: byCategory.static?.dockerignoreCustom ?? prev.staticFiles.dockerignoreCustom,
-            licenseSave: byCategory.static?.licenseSave ?? prev.staticFiles.licenseSave,
+            licenseSave: byCategory.static?.licenseSave !== undefined
+              ? (typeof byCategory.static.licenseSave === 'string' 
+                  ? byCategory.static.licenseSave === 'true' 
+                  : Boolean(byCategory.static.licenseSave))
+              : prev.staticFiles.licenseSave,
           },
           license: byCategory.repo?.license ?? prev.license,
           repoHost: byCategory.repo?.host ?? prev.repoHost,
-          isPublic: byCategory.repo?.isPublic ?? prev.isPublic,
+          isPublic: byCategory.repo?.isPublic !== undefined
+            ? (typeof byCategory.repo.isPublic === 'string' 
+                ? byCategory.repo.isPublic === 'true' 
+                : Boolean(byCategory.repo.isPublic))
+            : prev.isPublic,
         }));
       } catch {
         // ignore
