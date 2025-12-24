@@ -1,6 +1,59 @@
 // File generation utilities for the wizard
 import JSZip from "jszip";
 
+interface CommandsConfig {
+  build?: string;
+  test?: string;
+  lint?: string;
+  dev?: string;
+  additional?: string[];
+  savePreferences?: boolean;
+}
+
+interface BoundariesConfig {
+  always?: string[];
+  ask?: string[];
+  never?: string[];
+  savePreferences?: boolean;
+}
+
+interface CodeStyleConfig {
+  naming?: string;
+  patterns?: string;
+  notes?: string;
+  savePreferences?: boolean;
+}
+
+interface TestingStrategyConfig {
+  level?: string;
+  coverage?: string;
+  frameworks?: string[];
+  notes?: string;
+  savePreferences?: boolean;
+}
+
+interface StaticFilesConfig {
+  funding?: boolean;
+  fundingYml?: string;
+  fundingSave?: boolean;
+  editorconfig?: boolean;
+  editorconfigSave?: boolean;
+  contributing?: boolean;
+  contributingSave?: boolean;
+  codeOfConduct?: boolean;
+  codeOfConductSave?: boolean;
+  security?: boolean;
+  securitySave?: boolean;
+  gitignoreMode?: "generate" | "custom" | "skip";
+  gitignoreCustom?: string;
+  gitignoreSave?: boolean;
+  dockerignore?: boolean;
+  dockerignoreCustom?: string;
+  dockerignoreSave?: boolean;
+  license?: string;
+  licenseSave?: boolean;
+}
+
 interface WizardConfig {
   projectName: string;
   projectDescription: string;
@@ -14,18 +67,28 @@ interface WizardConfig {
   exampleRepoUrl?: string;
   isPublic: boolean;
   license: string;
+  licenseSave?: boolean;
   funding: boolean;
   fundingYml?: string;
-  releaseStrategy: string;
-  customReleaseStrategy: string;
+  releaseStrategy?: string;
+  customReleaseStrategy?: string;
   cicd: string[];
-  containerRegistry: string;
-  customRegistry: string;
-  deploymentTarget: string[];
+  dependabot?: boolean;
+  containerRegistry?: string;
+  customRegistry?: string;
+  deploymentTarget?: string[];
+  buildContainer?: boolean;
   aiBehaviorRules: string[];
   enableAutoUpdate?: boolean;
-  platforms: string[];
+  platform?: string;
+  platforms?: string[];
   additionalFeedback: string;
+  commands?: CommandsConfig;
+  boundaries?: BoundariesConfig;
+  codeStyle?: CodeStyleConfig;
+  testingStrategy?: TestingStrategyConfig;
+  staticFiles?: StaticFilesConfig;
+  saveAllPreferences?: boolean;
 }
 
 // Project type behavioral instructions
@@ -76,6 +139,13 @@ const PLATFORM_FILES: Record<string, string> = {
   copilot: ".github/copilot-instructions.md",
   windsurf: ".windsurfrules",
 };
+
+// Helper: normalize platforms array (supports legacy array or single string)
+function resolvePlatforms(config: WizardConfig): string[] {
+  if (Array.isArray(config.platforms)) return config.platforms;
+  if (config.platform) return [config.platform];
+  return ["cursor"];
+}
 
 // ============================================================================
 // TEMPLATE VARIABLES SYSTEM
@@ -214,6 +284,12 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     lines.push("- Assume expertise, minimal hand-holding");
     lines.push("- Focus on implementation, skip basics");
   }
+  if (config.codeStyle?.naming) {
+    lines.push(`- Naming: ${config.codeStyle.naming}`);
+  }
+  if (config.codeStyle?.notes) {
+    lines.push(`- Style notes: ${config.codeStyle.notes}`);
+  }
   lines.push("");
 
   if (config.aiBehaviorRules.length > 0) {
@@ -222,6 +298,45 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
       const ruleText = getRuleDescription(rule);
       if (ruleText) lines.push(`- ${ruleText}`);
     });
+    lines.push("");
+  }
+
+  if (config.boundaries) {
+    lines.push("## Boundaries");
+    if (config.boundaries.always?.length) {
+      lines.push("- Always do:");
+      config.boundaries.always.forEach(item => lines.push(`  - ${item}`));
+    }
+    if (config.boundaries.ask?.length) {
+      lines.push("- Ask first:");
+      config.boundaries.ask.forEach(item => lines.push(`  - ${item}`));
+    }
+    if (config.boundaries.never?.length) {
+      lines.push("- Never do:");
+      config.boundaries.never.forEach(item => lines.push(`  - ${item}`));
+    }
+    lines.push("");
+  }
+
+  if (config.commands) {
+    lines.push("## Commands");
+    if (config.commands.build) lines.push(`- Build: ${config.commands.build}`);
+    if (config.commands.test) lines.push(`- Test: ${config.commands.test}`);
+    if (config.commands.lint) lines.push(`- Lint: ${config.commands.lint}`);
+    if (config.commands.dev) lines.push(`- Dev: ${config.commands.dev}`);
+    if (config.commands.additional?.length) {
+      lines.push("- Other commands:");
+      config.commands.additional.forEach(cmd => lines.push(`  - ${cmd}`));
+    }
+    lines.push("");
+  }
+
+  if (config.testingStrategy) {
+    lines.push("## Testing Strategy");
+    if (config.testingStrategy.level) lines.push(`- Level: ${config.testingStrategy.level}`);
+    if (config.testingStrategy.frameworks?.length) lines.push(`- Frameworks: ${config.testingStrategy.frameworks.join(", ")}`);
+    if (config.testingStrategy.coverage) lines.push(`- Coverage target: ${config.testingStrategy.coverage}`);
+    if (config.testingStrategy.notes) lines.push(`- Notes: ${config.testingStrategy.notes}`);
     lines.push("");
   }
 
@@ -245,6 +360,22 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
   lines.push("- Write clean, maintainable code");
   lines.push("- Add appropriate error handling");
   lines.push("- Consider security implications");
+  if (config.dependabot) {
+    lines.push("- Enable automated dependency updates (Dependabot/GitLab equivalent).");
+  }
+
+  if (config.staticFiles) {
+    lines.push("");
+    lines.push("## Static Files");
+    lines.push("Ensure static repo helpers are generated as requested:");
+    if (config.staticFiles.editorconfig) lines.push("- Include .editorconfig aligned with project style.");
+    if (config.staticFiles.contributing) lines.push("- Include CONTRIBUTING.md with contribution guidelines.");
+    if (config.staticFiles.codeOfConduct) lines.push("- Include CODE_OF_CONDUCT.md.");
+    if (config.staticFiles.security) lines.push("- Include SECURITY.md with reporting instructions.");
+    if (config.staticFiles.gitignoreMode && config.staticFiles.gitignoreMode !== "skip") lines.push("- Add project-specific .gitignore.");
+    if (config.buildContainer || config.staticFiles.dockerignore) lines.push("- Add .dockerignore for container builds.");
+    if (config.funding) lines.push("- Add .github/FUNDING.yml when applicable.");
+  }
 
   // Auto-update instruction
   if (config.enableAutoUpdate) {
@@ -342,10 +473,60 @@ function generateClaudeMd(config: WizardConfig, user: UserProfile): string {
     lines.push("");
   }
 
+  if (config.commands) {
+    lines.push("### Commands");
+    if (config.commands.build) lines.push(`- Build: ${config.commands.build}`);
+    if (config.commands.test) lines.push(`- Test: ${config.commands.test}`);
+    if (config.commands.lint) lines.push(`- Lint: ${config.commands.lint}`);
+    if (config.commands.dev) lines.push(`- Dev: ${config.commands.dev}`);
+    if (config.commands.additional?.length) {
+      config.commands.additional.forEach(cmd => lines.push(`- ${cmd}`));
+    }
+    lines.push("");
+  }
+
+  if (config.codeStyle?.naming || config.codeStyle?.notes) {
+    lines.push("### Code Style");
+    if (config.codeStyle.naming) lines.push(`- Naming: ${config.codeStyle.naming}`);
+    if (config.codeStyle.notes) lines.push(`- Notes: ${config.codeStyle.notes}`);
+    lines.push("");
+  }
+
+  if (config.boundaries) {
+    lines.push("### Boundaries");
+    if (config.boundaries.always?.length) lines.push(`- Always: ${config.boundaries.always.join(", ")}`);
+    if (config.boundaries.ask?.length) lines.push(`- Ask first: ${config.boundaries.ask.join(", ")}`);
+    if (config.boundaries.never?.length) lines.push(`- Never: ${config.boundaries.never.join(", ")}`);
+    lines.push("");
+  }
+
+  if (config.testingStrategy) {
+    lines.push("### Testing Strategy");
+    if (config.testingStrategy.level) lines.push(`- Level: ${config.testingStrategy.level}`);
+    if (config.testingStrategy.frameworks?.length) lines.push(`- Frameworks: ${config.testingStrategy.frameworks.join(", ")}`);
+    if (config.testingStrategy.coverage) lines.push(`- Coverage: ${config.testingStrategy.coverage}`);
+    if (config.testingStrategy.notes) lines.push(`- Notes: ${config.testingStrategy.notes}`);
+    lines.push("");
+  }
+
+  if (config.staticFiles) {
+    lines.push("### Static Files");
+    const chosen: string[] = [];
+    if (config.staticFiles.editorconfig) chosen.push(".editorconfig");
+    if (config.staticFiles.contributing) chosen.push("CONTRIBUTING.md");
+    if (config.staticFiles.codeOfConduct) chosen.push("CODE_OF_CONDUCT.md");
+    if (config.staticFiles.security) chosen.push("SECURITY.md");
+    if (config.staticFiles.gitignoreMode && config.staticFiles.gitignoreMode !== "skip") chosen.push(".gitignore");
+    if (config.buildContainer || config.staticFiles.dockerignore) chosen.push(".dockerignore");
+    if (config.funding) chosen.push(".github/FUNDING.yml");
+    if (chosen.length) lines.push(`Generate: ${chosen.join(", ")}`);
+    lines.push("");
+  }
+
   if (config.cicd.length > 0) {
     lines.push("### CI/CD & Deployment");
     lines.push(`This project uses: ${config.cicd.join(", ")}`);
-    if (config.deploymentTarget.length > 0) {
+    if (config.deploymentTarget && config.deploymentTarget.length > 0) {
       lines.push(`Deployment targets: ${config.deploymentTarget.join(", ")}`);
     }
     lines.push("");
@@ -428,6 +609,22 @@ function generateCopilotInstructions(
   lines.push("- Use meaningful variable and function names");
   lines.push("- Add error handling where appropriate");
 
+  if (config.codeStyle?.naming) lines.push(`- Naming: ${config.codeStyle.naming}`);
+  if (config.codeStyle?.notes) lines.push(`- Notes: ${config.codeStyle.notes}`);
+
+  if (config.commands) {
+    lines.push("");
+    lines.push("## Commands");
+    if (config.commands.build) lines.push(`- Build: ${config.commands.build}`);
+    if (config.commands.test) lines.push(`- Test: ${config.commands.test}`);
+    if (config.commands.lint) lines.push(`- Lint: ${config.commands.lint}`);
+    if (config.commands.dev) lines.push(`- Dev: ${config.commands.dev}`);
+    if (config.commands.additional?.length) {
+      lines.push("- Other:");
+      config.commands.additional.forEach(cmd => lines.push(`  - ${cmd}`));
+    }
+  }
+
   // Project type specific instructions
   if (config.projectType && PROJECT_TYPE_INSTRUCTIONS[config.projectType]) {
     lines.push("");
@@ -443,6 +640,37 @@ function generateCopilotInstructions(
     lines.push("## Self-Improving Configuration");
     lines.push("This file should be updated as the project evolves.");
     lines.push("Track coding patterns and preferences, and refine these rules over time.");
+  }
+
+  if (config.boundaries) {
+    lines.push("");
+    lines.push("## Boundaries");
+    if (config.boundaries.always?.length) lines.push(`- Always: ${config.boundaries.always.join(", ")}`);
+    if (config.boundaries.ask?.length) lines.push(`- Ask first: ${config.boundaries.ask.join(", ")}`);
+    if (config.boundaries.never?.length) lines.push(`- Never: ${config.boundaries.never.join(", ")}`);
+  }
+
+  if (config.testingStrategy) {
+    lines.push("");
+    lines.push("## Testing Strategy");
+    if (config.testingStrategy.level) lines.push(`- Level: ${config.testingStrategy.level}`);
+    if (config.testingStrategy.frameworks?.length) lines.push(`- Frameworks: ${config.testingStrategy.frameworks.join(", ")}`);
+    if (config.testingStrategy.coverage) lines.push(`- Coverage: ${config.testingStrategy.coverage}`);
+    if (config.testingStrategy.notes) lines.push(`- Notes: ${config.testingStrategy.notes}`);
+  }
+
+  if (config.staticFiles) {
+    lines.push("");
+    lines.push("## Static Files");
+    const chosen: string[] = [];
+    if (config.staticFiles.editorconfig) chosen.push(".editorconfig");
+    if (config.staticFiles.contributing) chosen.push("CONTRIBUTING.md");
+    if (config.staticFiles.codeOfConduct) chosen.push("CODE_OF_CONDUCT.md");
+    if (config.staticFiles.security) chosen.push("SECURITY.md");
+    if (config.staticFiles.gitignoreMode && config.staticFiles.gitignoreMode !== "skip") chosen.push(".gitignore");
+    if (config.buildContainer || config.staticFiles.dockerignore) chosen.push(".dockerignore");
+    if (config.funding) chosen.push(".github/FUNDING.yml");
+    if (chosen.length) lines.push(`Generate: ${chosen.join(", ")}`);
   }
 
   return lines.join("\n");
@@ -572,6 +800,116 @@ function getRuleDescription(ruleId: string): string {
   return rules[ruleId] || ruleId;
 }
 
+// Basic .editorconfig generator
+function generateEditorconfig(): string {
+  return `root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{ts,tsx,js,jsx,json,yml,yaml,md}]
+indent_size = 2
+
+[*.py]
+indent_size = 4
+`;
+}
+
+function generateContributing(): string {
+  return `# Contributing
+
+Thank you for your interest in contributing! Please follow these guidelines:
+
+- Discuss major changes in an issue before starting.
+- Keep pull requests focused and small when possible.
+- Add tests for new functionality.
+- Follow existing code style and lint rules.
+- Update documentation where relevant.
+`;
+}
+
+function generateCodeOfConduct(): string {
+  return `# Code of Conduct
+
+We are committed to a welcoming and inclusive environment.
+
+- Be respectful and considerate.
+- Assume good intent and seek clarification before escalating.
+- No harassment, discrimination, or abusive behavior.
+- Report concerns to project maintainers.
+`;
+}
+
+function generateSecurity(): string {
+  return `# Security Policy
+
+- Please report vulnerabilities privately to the maintainers.
+- Do not open public issues for security findings.
+- Include reproduction steps and impact assessment when possible.
+`;
+}
+
+function generateGitignore(config: WizardConfig): string {
+  if (config.staticFiles?.gitignoreMode === "custom" && config.staticFiles?.gitignoreCustom?.trim()) {
+    return config.staticFiles.gitignoreCustom.trim();
+  }
+
+  const lines: string[] = [];
+  lines.push("# Dependencies");
+  lines.push("node_modules/");
+  lines.push("*.log");
+  lines.push("pnpm-lock.yaml");
+  lines.push("yarn.lock");
+  lines.push("package-lock.json");
+  lines.push("");
+  lines.push("# Build outputs");
+  lines.push("dist/");
+  lines.push(".next/");
+  lines.push("out/");
+  lines.push("coverage/");
+  lines.push("");
+  lines.push("# Env");
+  lines.push(".env");
+  lines.push(".env.*");
+
+  const langs = config.languages || [];
+  if (langs.includes("python")) {
+    lines.push("");
+    lines.push("# Python");
+    lines.push("__pycache__/");
+    lines.push("*.py[cod]");
+    lines.push(".venv/");
+    lines.push("env/");
+  }
+  if (langs.includes("go")) {
+    lines.push("");
+    lines.push("# Go");
+    lines.push("bin/");
+    lines.push("*.test");
+  }
+
+  return lines.join("\n");
+}
+
+function generateDockerignore(config: WizardConfig): string {
+  if (config.staticFiles?.dockerignoreCustom?.trim()) {
+    return config.staticFiles.dockerignoreCustom.trim();
+  }
+  return `.git
+node_modules
+dist
+.next
+.env
+*.log
+coverage
+`;
+}
+
 // Type for generated file
 export interface GeneratedFile {
   fileName: string;
@@ -587,7 +925,8 @@ export function generateAllFiles(
   const files: GeneratedFile[] = [];
 
   // Generate platform-specific files
-  config.platforms.forEach((platform) => {
+  const platforms = resolvePlatforms(config);
+  platforms.forEach((platform) => {
     const fileName = PLATFORM_FILES[platform];
     if (!fileName) return;
 
@@ -622,9 +961,29 @@ export function generateAllFiles(
   }
 
   // Generate FUNDING.yml if enabled
-  if (config.funding) {
+  if (config.funding || config.staticFiles?.funding) {
     const fundingContent = generateFunding(config);
     files.push({ fileName: ".github/FUNDING.yml", content: fundingContent });
+  }
+
+  // Static files (advanced)
+  if (config.staticFiles?.editorconfig) {
+    files.push({ fileName: ".editorconfig", content: generateEditorconfig() });
+  }
+  if (config.staticFiles?.contributing) {
+    files.push({ fileName: "CONTRIBUTING.md", content: generateContributing() });
+  }
+  if (config.staticFiles?.codeOfConduct) {
+    files.push({ fileName: "CODE_OF_CONDUCT.md", content: generateCodeOfConduct() });
+  }
+  if (config.staticFiles?.security) {
+    files.push({ fileName: "SECURITY.md", content: generateSecurity() });
+  }
+  if (config.staticFiles?.gitignoreMode && config.staticFiles.gitignoreMode !== "skip") {
+    files.push({ fileName: ".gitignore", content: generateGitignore(config) });
+  }
+  if (config.buildContainer || config.staticFiles?.dockerignore) {
+    files.push({ fileName: ".dockerignore", content: generateDockerignore(config) });
   }
 
   return files;
