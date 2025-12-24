@@ -469,12 +469,15 @@ export function getApproxPrice(eurAmount: number): string | null {
 - [ ] Author earnings dashboard
 - [ ] Author payout notifications
 
-### Phase 4: Payouts
+### Phase 4: Payouts ✅ PARTIAL
 
-- [ ] Author payout request system (min €5)
-- [ ] PayPal integration for payouts
+- [x] Author payout request system (min €10)
+- [x] PayPal email configuration in settings
+- [x] Payout history and status tracking
+- [x] Earnings dashboard (total, available, pending)
+- [ ] **PayPal Payouts API integration** (currently manual processing)
 - [ ] Chargeback hold period before funds available
-- [ ] Payout history and status tracking
+- [ ] Automated payout processing
 
 ---
 

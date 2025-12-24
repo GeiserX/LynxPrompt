@@ -11,6 +11,7 @@ import {
   ArrowRight,
   FileCode,
   Zap,
+  Sparkles,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
@@ -346,6 +347,53 @@ export default function DocsPage() {
             </div>
           </section>
 
+          {/* AI Features */}
+          <section id="ai-features" className="mt-16 scroll-mt-24">
+            <h2 className="flex items-center gap-2 text-2xl font-bold">
+              <Sparkles className="h-6 w-6 text-purple-500" />
+              AI-Powered Features
+            </h2>
+            <div className="mt-6 space-y-4 text-muted-foreground">
+              <p>
+                Max subscribers get access to AI-powered editing capabilities,
+                making it easier than ever to customize blueprints for your
+                specific needs.
+              </p>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-lg border bg-card p-6">
+                  <h3 className="font-semibold text-foreground">
+                    Edit Blueprints with AI
+                  </h3>
+                  <p className="mt-2 text-sm">
+                    Found a great blueprint but need tweaks? Simply describe
+                    what you want to change in natural language, like
+                    &quot;change GitHub to GitLab&quot; or &quot;add a testing
+                    section for Jest&quot;.
+                  </p>
+                </div>
+                <div className="rounded-lg border bg-card p-6">
+                  <h3 className="font-semibold text-foreground">
+                    Wizard AI Assistant
+                  </h3>
+                  <p className="mt-2 text-sm">
+                    In the wizard&apos;s &quot;Anything Else&quot; section, use
+                    AI to format your requirements. Just describe what you need,
+                    and AI will structure it properly for your config file.
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-purple-500/50 bg-purple-500/5 p-4 text-sm">
+                <p>
+                  <strong className="text-foreground">Max Exclusive:</strong>{" "}
+                  AI editing is available exclusively for Max subscribers.
+                  Upgrade to unlock these powerful editing capabilities.
+                </p>
+              </div>
+            </div>
+          </section>
+
           {/* Supported Platforms */}
           <section id="platforms" className="mt-16 scroll-mt-24">
             <h2 className="flex items-center gap-2 text-2xl font-bold">
@@ -470,7 +518,7 @@ export default function DocsPage() {
               />
               <FaqItem
                 question="Can I edit blueprints after downloading?"
-                answer="Absolutely! All generated files are plain text. Edit them however you like to fit your specific needs."
+                answer="Absolutely! All generated files are plain text. Edit them however you like. Max subscribers can also use AI-powered editing to modify blueprints with natural language instructions like 'change GitHub to GitLab' or 'add testing section'."
               />
               <FaqItem
                 question="How do I report a problem or request a feature?"

@@ -44,17 +44,27 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { preferences } = body as {
-      preferences: Array<{
-        category: string;
-        key: string;
-        value: string;
-        isDefault?: boolean;
-      }>;
-    };
-
-    if (!preferences || !Array.isArray(preferences)) {
+    
+    // Accept both formats: { preferences: [...] } or just [...]
+    let preferences: Array<{
+      category: string;
+      key: string;
+      value: string;
+      isDefault?: boolean;
+    }>;
+    
+    if (Array.isArray(body)) {
+      // Direct array format (from wizard's saveToProfileImmediately)
+      preferences = body;
+    } else if (body?.preferences && Array.isArray(body.preferences)) {
+      // Object format with preferences property
+      preferences = body.preferences;
+    } else {
       return NextResponse.json({ error: "Invalid preferences format" }, { status: 400 });
+    }
+
+    if (preferences.length === 0) {
+      return NextResponse.json({ saved: 0 });
     }
 
     // Upsert each preference
