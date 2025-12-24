@@ -610,8 +610,27 @@ export default function WizardPage() {
         const res = await fetch("/api/user/wizard-preferences");
         if (!res.ok) throw new Error("pref fetch failed");
         const data = await res.json();
+
+        // API returns an object grouped by category/key. Flatten it for easy use.
+        const prefsArray: Array<{ category: string; key: string; value: any }> = [];
+        if (Array.isArray(data)) {
+          data.forEach((pref: any) => prefsArray.push(pref));
+        } else if (data && typeof data === "object") {
+          Object.entries(data).forEach(([category, entries]) => {
+            if (entries && typeof entries === "object") {
+              Object.entries(entries as Record<string, any>).forEach(([key, val]) => {
+                prefsArray.push({
+                  category,
+                  key,
+                  value: (val as any)?.value ?? (val as any),
+                });
+              });
+            }
+          });
+        }
+
         const byCategory: Record<string, Record<string, any>> = {};
-        (data || []).forEach((pref: any) => {
+        prefsArray.forEach((pref: any) => {
           if (!byCategory[pref.category]) byCategory[pref.category] = {};
           byCategory[pref.category][pref.key] = pref.value;
         });
