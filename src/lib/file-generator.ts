@@ -79,6 +79,8 @@ interface WizardConfig {
   customReleaseStrategy?: string;
   cicd: string[];
   dependabot?: boolean;
+  conventionalCommits?: boolean;
+  semver?: boolean;
   containerRegistry?: string;
   customRegistry?: string;
   deploymentTarget?: string[];
@@ -431,6 +433,12 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
   lines.push("- Write clean, maintainable code");
   lines.push("- Add appropriate error handling");
   lines.push("- Consider security implications");
+  if (config.conventionalCommits) {
+    lines.push("- Use conventional commit messages (feat:, fix:, docs:, etc.)");
+  }
+  if (config.semver) {
+    lines.push("- Follow semantic versioning (MAJOR.MINOR.PATCH)");
+  }
   if (config.dependabot) {
     lines.push("- Enable automated dependency updates (Dependabot/GitLab equivalent).");
   }
