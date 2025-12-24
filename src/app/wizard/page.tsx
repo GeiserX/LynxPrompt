@@ -817,6 +817,8 @@ export default function WizardPage() {
       funding: config.funding,
       fundingYml: config.fundingYml,
       dependabot: config.dependabot,
+      conventionalCommits: config.conventionalCommits,
+      semver: config.semver,
       cicd: [config.cicd],
       containerRegistry: config.containerRegistry,
       customRegistry: config.containerRegistryOther,
