@@ -62,10 +62,10 @@ const TIERS = [
     features: [
       { text: "Everything in Pro", included: true },
       { text: "Advanced repo wizards", included: true },
+      { text: "AI-powered blueprint editing", included: true },
       { text: "10% off paid blueprints", included: true },
       { text: "Early access to features", included: true },
       { text: "Premium support", included: true },
-      { text: "API access (coming soon)", included: true },
     ],
     cta: "Go Max",
     ctaLink: "/auth/signin?plan=max",
@@ -76,6 +76,7 @@ const COMPARISON_FEATURES = [
   { name: "Basic wizards", free: true, pro: true, max: true },
   { name: "Intermediate wizards", free: false, pro: true, max: true },
   { name: "Advanced wizards", free: false, pro: false, max: true },
+  { name: "AI-powered editing", free: false, pro: false, max: true },
   { name: "Download configs", free: true, pro: true, max: true },
   { name: "Browse free blueprints", free: true, pro: true, max: true },
   { name: "Paid blueprint discount", free: "-", pro: "-", max: "10% off" },
@@ -84,7 +85,6 @@ const COMPARISON_FEATURES = [
   { name: "Save drafts", free: false, pro: true, max: true },
   { name: "Priority support", free: false, pro: true, max: true },
   { name: "Premium support", free: false, pro: false, max: true },
-  { name: "API access", free: false, pro: false, max: "Coming soon" },
 ];
 
 export default function PricingPage() {

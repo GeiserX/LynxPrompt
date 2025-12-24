@@ -354,12 +354,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate showcaseUrl if provided
+    // Accept common user input like "github.com/user/repo" by prepending https://
     let validatedShowcaseUrl: string | null = null;
     if (showcaseUrl && typeof showcaseUrl === "string" && showcaseUrl.trim()) {
       const trimmedUrl = showcaseUrl.trim();
+      const candidate = /^https?:\/\//i.test(trimmedUrl)
+        ? trimmedUrl
+        : `https://${trimmedUrl}`;
       try {
-        new URL(trimmedUrl);
-        validatedShowcaseUrl = trimmedUrl;
+        const url = new URL(candidate);
+        if (url.protocol === "http:" || url.protocol === "https:") {
+          validatedShowcaseUrl = candidate;
+        }
       } catch {
         // Invalid URL, ignore it
       }

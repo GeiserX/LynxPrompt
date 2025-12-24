@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
+import { AiEditPanel } from "@/components/ai-edit-panel";
 import {
   ArrowLeft,
   ArrowRight,
@@ -623,7 +624,7 @@ export default function WizardPage() {
     containerRegistry: "",
     containerRegistryOther: "",
     registryUsername: "",
-    aiBehaviorRules: ["always_debug_after_build", "check_logs_after_build", "follow_existing_patterns"],
+    aiBehaviorRules: ["always_debug_after_build", "check_logs_after_build", "run_tests_before_commit", "follow_existing_patterns", "ask_before_large_refactors"],
     enableAutoUpdate: false,
     includePersonalData: true,
     platform: "universal",
@@ -631,7 +632,7 @@ export default function WizardPage() {
     commands: { build: "", test: "", lint: "", dev: "", additional: [], savePreferences: false },
     codeStyle: { naming: "camelCase", notes: "", savePreferences: false },
     boundaries: { always: [], ask: [], never: [], savePreferences: false },
-    testing: { levels: [], coverage: 80, frameworks: [], notes: "", savePreferences: false },
+    testing: { levels: ["unit"], coverage: 80, frameworks: [], notes: "", savePreferences: false },
     staticFiles: {
       funding: false,
       fundingYml: "",
@@ -963,6 +964,20 @@ export default function WizardPage() {
     }));
   };
 
+  // Immediately save specific preferences to profile (called when "Save to profile" is checked)
+  const saveToProfileImmediately = async (items: { category: string; key: string; value: any }[]) => {
+    if (items.length === 0) return;
+    try {
+      await fetch("/api/user/wizard-preferences", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(items),
+      });
+    } catch (error) {
+      console.error("Failed to save to profile:", error);
+    }
+  };
+
   const savePreferences = async () => {
     const payload: { category: string; key: string; value: any; isDefault?: boolean }[] = [];
     if (config.commands.savePreferences) {
@@ -996,17 +1011,17 @@ export default function WizardPage() {
     }
     if (config.staticFiles.editorconfigSave || config.staticFiles.contributingSave || config.staticFiles.codeOfConductSave || config.staticFiles.securitySave || config.staticFiles.gitignoreSave || config.staticFiles.dockerignoreSave || config.staticFiles.fundingSave || config.staticFiles.licenseSave) {
       payload.push(
-        { category: "static", key: "editorconfig", value: config.staticFiles.editorconfig },
-        { category: "static", key: "contributing", value: config.staticFiles.contributing },
-        { category: "static", key: "codeOfConduct", value: config.staticFiles.codeOfConduct },
-        { category: "static", key: "security", value: config.staticFiles.security },
-        { category: "static", key: "gitignoreMode", value: config.staticFiles.gitignoreMode },
-        { category: "static", key: "gitignoreCustom", value: config.staticFiles.gitignoreCustom },
-        { category: "static", key: "dockerignore", value: config.buildContainer || config.staticFiles.dockerignore },
-        { category: "static", key: "dockerignoreCustom", value: config.staticFiles.dockerignoreCustom },
-        { category: "static", key: "funding", value: config.funding || config.staticFiles.funding },
-        { category: "static", key: "fundingYml", value: config.staticFiles.fundingYml || config.fundingYml },
-        { category: "static", key: "licenseSave", value: config.staticFiles.licenseSave || config.licenseSave },
+        { category: "staticFiles", key: "editorconfig", value: config.staticFiles.editorconfig },
+        { category: "staticFiles", key: "contributing", value: config.staticFiles.contributing },
+        { category: "staticFiles", key: "codeOfConduct", value: config.staticFiles.codeOfConduct },
+        { category: "staticFiles", key: "security", value: config.staticFiles.security },
+        { category: "staticFiles", key: "gitignoreMode", value: config.staticFiles.gitignoreMode },
+        { category: "staticFiles", key: "gitignoreCustom", value: config.staticFiles.gitignoreCustom },
+        { category: "staticFiles", key: "dockerignore", value: config.buildContainer || config.staticFiles.dockerignore },
+        { category: "staticFiles", key: "dockerignoreCustom", value: config.staticFiles.dockerignoreCustom },
+        { category: "staticFiles", key: "funding", value: config.funding || config.staticFiles.funding },
+        { category: "staticFiles", key: "fundingYml", value: config.staticFiles.fundingYml || config.fundingYml },
+        { category: "staticFiles", key: "licenseSave", value: config.staticFiles.licenseSave || config.licenseSave },
       );
     }
     if (payload.length === 0) return;
@@ -1368,12 +1383,14 @@ export default function WizardPage() {
                   isPublic={config.isPublic}
                   buildContainer={config.buildContainer}
                   onChange={(updates) => setConfig({ ...config, staticFiles: { ...config.staticFiles, ...updates } })}
+                  onImmediateSave={saveToProfileImmediately}
                 />
               )}
               {currentStep === 9 && (
                 <StepFeedback
                   value={config.additionalFeedback}
                   onChange={(v) => setConfig({ ...config, additionalFeedback: v })}
+                  userTier={userTier}
                 />
               )}
               {currentStep === 10 && (
@@ -1412,7 +1429,7 @@ export default function WizardPage() {
                       disabled={isDownloading || previewFiles.length === 0}
                     >
                       <Share2 className="mr-2 h-4 w-4" />
-                      Share as Blueprint
+                      Save as Blueprint
                     </Button>
                     <Button
                       className="bg-gradient-to-r from-purple-600 to-pink-600"
@@ -3047,10 +3064,10 @@ const TEST_FRAMEWORKS = [
 ];
 
 const TEST_LEVELS = [
-  { id: "smoke", label: "Smoke", desc: "Quick sanity checks" },
   { id: "unit", label: "Unit", desc: "Individual functions/components" },
   { id: "integration", label: "Integration", desc: "Component interactions" },
   { id: "e2e", label: "E2E", desc: "Full user flows" },
+  { id: "smoke", label: "Smoke", desc: "Quick sanity checks" },
 ];
 
 function StepTesting({
@@ -3222,6 +3239,7 @@ function StaticFileEditor({
   onContentChange,
   saveChecked,
   onSaveToggle,
+  onImmediateSave,
   placeholder,
   minHeight = "150px",
 }: {
@@ -3233,10 +3251,19 @@ function StaticFileEditor({
   onContentChange?: (v: string) => void;
   saveChecked: boolean;
   onSaveToggle: (v: boolean) => void;
+  onImmediateSave?: () => void;
   placeholder?: string;
   minHeight?: string;
 }) {
   const [expanded, setExpanded] = useState(false);
+  
+  const handleSaveToggle = (checked: boolean) => {
+    onSaveToggle(checked);
+    // If checking the box, immediately save to profile
+    if (checked && onImmediateSave) {
+      onImmediateSave();
+    }
+  };
   
   return (
     <div className="rounded-lg border p-4">
@@ -3268,7 +3295,7 @@ function StaticFileEditor({
             <input
               type="checkbox"
               checked={saveChecked}
-              onChange={(e) => onSaveToggle(e.target.checked)}
+              onChange={(e) => handleSaveToggle(e.target.checked)}
             />
             Save to profile
           </label>
@@ -3294,12 +3321,14 @@ function StepStaticFiles({
   isPublic,
   buildContainer,
   onChange,
+  onImmediateSave,
 }: {
   config: StaticFilesConfig;
   isGithub: boolean;
   isPublic: boolean;
   buildContainer: boolean;
   onChange: (updates: Partial<StaticFilesConfig>) => void;
+  onImmediateSave: (items: { category: string; key: string; value: any }[]) => void;
 }) {
   return (
     <div>
@@ -3318,6 +3347,10 @@ function StepStaticFiles({
           onContentChange={(v) => onChange({ editorconfigCustom: v })}
           saveChecked={config.editorconfigSave}
           onSaveToggle={(v) => onChange({ editorconfigSave: v })}
+          onImmediateSave={() => onImmediateSave([
+            { category: "staticFiles", key: "editorconfig", value: config.editorconfig },
+            { category: "staticFiles", key: "editorconfigCustom", value: config.editorconfigCustom },
+          ])}
           placeholder={`root = true
 
 [*]
@@ -3334,6 +3367,10 @@ indent_size = 2`}
           onContentChange={(v) => onChange({ contributingCustom: v })}
           saveChecked={config.contributingSave}
           onSaveToggle={(v) => onChange({ contributingSave: v })}
+          onImmediateSave={() => onImmediateSave([
+            { category: "staticFiles", key: "contributing", value: config.contributing },
+            { category: "staticFiles", key: "contributingCustom", value: config.contributingCustom },
+          ])}
           placeholder={`# Contributing
 
 Thank you for your interest in contributing!`}
@@ -3349,6 +3386,10 @@ Thank you for your interest in contributing!`}
           onContentChange={(v) => onChange({ codeOfConductCustom: v })}
           saveChecked={config.codeOfConductSave}
           onSaveToggle={(v) => onChange({ codeOfConductSave: v })}
+          onImmediateSave={() => onImmediateSave([
+            { category: "staticFiles", key: "codeOfConduct", value: config.codeOfConduct },
+            { category: "staticFiles", key: "codeOfConductCustom", value: config.codeOfConductCustom },
+          ])}
           placeholder={`# Code of Conduct
 
 We are committed to providing a welcoming environment.`}
@@ -3364,6 +3405,10 @@ We are committed to providing a welcoming environment.`}
           onContentChange={(v) => onChange({ securityCustom: v })}
           saveChecked={config.securitySave}
           onSaveToggle={(v) => onChange({ securitySave: v })}
+          onImmediateSave={() => onImmediateSave([
+            { category: "staticFiles", key: "security", value: config.security },
+            { category: "staticFiles", key: "securityCustom", value: config.securityCustom },
+          ])}
           placeholder={`# Security Policy
 
 To report a vulnerability, please email security@example.com`}
@@ -3380,7 +3425,15 @@ To report a vulnerability, please email security@example.com`}
               <input
                 type="checkbox"
                 checked={config.gitignoreSave}
-                onChange={(e) => onChange({ gitignoreSave: e.target.checked })}
+                onChange={(e) => {
+                  onChange({ gitignoreSave: e.target.checked });
+                  if (e.target.checked) {
+                    onImmediateSave([
+                      { category: "staticFiles", key: "gitignoreMode", value: config.gitignoreMode },
+                      { category: "staticFiles", key: "gitignoreCustom", value: config.gitignoreCustom },
+                    ]);
+                  }
+                }}
               />
               Save to profile
             </label>
@@ -3434,7 +3487,15 @@ dist/`}
               <input
                 type="checkbox"
                 checked={config.dockerignoreSave}
-                onChange={(e) => onChange({ dockerignoreSave: e.target.checked })}
+                onChange={(e) => {
+                  onChange({ dockerignoreSave: e.target.checked });
+                  if (e.target.checked) {
+                    onImmediateSave([
+                      { category: "staticFiles", key: "dockerignore", value: config.dockerignore },
+                      { category: "staticFiles", key: "dockerignoreCustom", value: config.dockerignoreCustom },
+                    ]);
+                  }
+                }}
               />
               Save to profile
             </label>
@@ -3474,7 +3535,15 @@ dist/`}
                 <input
                   type="checkbox"
                   checked={config.fundingSave}
-                  onChange={(e) => onChange({ fundingSave: e.target.checked })}
+                  onChange={(e) => {
+                    onChange({ fundingSave: e.target.checked });
+                    if (e.target.checked) {
+                      onImmediateSave([
+                        { category: "staticFiles", key: "funding", value: config.funding },
+                        { category: "staticFiles", key: "fundingYml", value: config.fundingYml },
+                      ]);
+                    }
+                  }}
                 />
                 Save to profile
               </label>
@@ -3501,10 +3570,14 @@ ko_fi: your-kofi`}
 function StepFeedback({
   value,
   onChange,
+  userTier,
 }: {
   value: string;
   onChange: (v: string) => void;
+  userTier: string;
 }) {
+  const isMaxUser = userTier === "max";
+  
   return (
     <div>
       <h2 className="text-2xl font-bold">Anything we&apos;ve missed?</h2>
@@ -3512,6 +3585,23 @@ function StepFeedback({
         Is there something specific you&apos;d like the AI to know about your
         project that we haven&apos;t asked? Add any additional context.
       </p>
+
+      {/* AI Assist Panel - MAX users only */}
+      {isMaxUser && (
+        <div className="mt-6 rounded-lg border border-purple-200 bg-purple-50/50 p-4 dark:border-purple-800 dark:bg-purple-900/20">
+          <div className="mb-3 flex items-center gap-2 text-sm font-medium text-purple-700 dark:text-purple-300">
+            <Sparkles className="h-4 w-4" />
+            AI Assistant
+          </div>
+          <AiEditPanel
+            currentContent={value}
+            onContentChange={onChange}
+            mode="wizard"
+            placeholder="Describe what you need, e.g., 'I want strict TypeScript, no any types'"
+            showReplaceWarning={!!value.trim()}
+          />
+        </div>
+      )}
 
       <div className="mt-6">
         <textarea

@@ -23,8 +23,26 @@ export async function GET(
       );
     }
 
+    // Ensure showcaseUrl is always returned (even if older codepaths didn't include it)
+    // This fixes cases where the URL exists in Postgres but isn't serialized to clients.
+    let showcaseUrl: string | null | undefined = (template as any).showcaseUrl;
+    if (showcaseUrl === undefined) {
+      if (id.startsWith("usr_")) {
+        const realId = id.replace("usr_", "");
+        const row = await prismaUsers.userTemplate.findUnique({
+          where: { id: realId },
+          select: { showcaseUrl: true },
+        });
+        showcaseUrl = row?.showcaseUrl ?? null;
+      } else {
+        showcaseUrl = null;
+      }
+    }
+
+    const templateWithShowcase = { ...template, showcaseUrl };
+
     // Check if this is a paid template
-    const isPaid = template.price && template.price > 0;
+    const isPaid = templateWithShowcase.price && templateWithShowcase.price > 0;
     let hasPurchased = false;
     let isMaxUser = false;
     let isOwner = false;
@@ -34,7 +52,7 @@ export async function GET(
 
     if (session?.user?.id) {
       // Check if user is the owner of this blueprint
-      if (template.authorId === session.user.id) {
+      if (templateWithShowcase.authorId === session.user.id) {
         isOwner = true;
         hasPurchased = true; // Owners always have access
       }
@@ -50,8 +68,10 @@ export async function GET(
                   user?.role === "SUPERADMIN";
 
       // Calculate discounted price for MAX users
-      if (isPaid && isMaxUser && template.price) {
-        discountedPrice = Math.round(template.price * (1 - MAX_DISCOUNT_PERCENT / 100));
+      if (isPaid && isMaxUser && templateWithShowcase.price) {
+        discountedPrice = Math.round(
+          templateWithShowcase.price * (1 - MAX_DISCOUNT_PERCENT / 100)
+        );
       }
 
       // Check purchase only if not owner and blueprint is paid
@@ -75,7 +95,7 @@ export async function GET(
     // If not purchased AND not owner, hide the content
     if (isPaid && !hasPurchased && !isOwner) {
       return NextResponse.json({
-        ...template,
+        ...templateWithShowcase,
         content: null, // Hide content
         isPaid: true,
         hasPurchased: false,
@@ -84,7 +104,11 @@ export async function GET(
         discountedPrice,
         discountPercent: isMaxUser ? MAX_DISCOUNT_PERCENT : null,
         // Show truncated preview (first 500 chars)
-        preview: template.content?.substring(0, 500) + (template.content && template.content.length > 500 ? "\n\n... [Purchase to view full content]" : ""),
+        preview:
+          templateWithShowcase.content?.substring(0, 500) +
+          (templateWithShowcase.content && templateWithShowcase.content.length > 500
+            ? "\n\n... [Purchase to view full content]"
+            : ""),
       });
     }
 
@@ -92,7 +116,7 @@ export async function GET(
     await incrementTemplateUsage(id);
 
     return NextResponse.json({
-      ...template,
+      ...templateWithShowcase,
       isPaid: isPaid || false,
       hasPurchased: hasPurchased || !isPaid,
       isOwner,
@@ -263,9 +287,16 @@ export async function PUT(
 
     if (showcaseUrl !== undefined) {
       if (showcaseUrl && typeof showcaseUrl === "string" && showcaseUrl.trim()) {
+        const trimmedUrl = showcaseUrl.trim();
+        const candidate = /^https?:\/\//i.test(trimmedUrl)
+          ? trimmedUrl
+          : `https://${trimmedUrl}`;
         try {
-          new URL(showcaseUrl.trim());
-          updateData.showcaseUrl = showcaseUrl.trim();
+          const url = new URL(candidate);
+          updateData.showcaseUrl =
+            url.protocol === "http:" || url.protocol === "https:"
+              ? candidate
+              : null;
         } catch {
           // Invalid URL, set to null
           updateData.showcaseUrl = null;

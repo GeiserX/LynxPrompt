@@ -430,7 +430,7 @@ export default function BlueprintDetailPage() {
 
               <p className="mt-4 text-lg">{blueprint.description}</p>
 
-              {/* Stats */}
+              {/* Stats + Showcase URL */}
               <div className="mt-6 flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1.5">
                   <Download className="h-4 w-4" />
@@ -450,22 +450,18 @@ export default function BlueprintDetailPage() {
                     {blueprint.difficulty} level
                   </span>
                 )}
-              </div>
-
-              {/* Showcase URL */}
-              {blueprint.showcaseUrl && (
-                <div className="mt-4">
+                {blueprint.showcaseUrl && (
                   <a
                     href={blueprint.showcaseUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 rounded-lg border bg-muted/30 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-muted/50"
+                    className="inline-flex items-center gap-1.5 text-primary hover:underline"
                   >
                     <ExternalLink className="h-4 w-4" />
-                    View Demo / Source
+                    Demo / Source
                   </a>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             {/* Originally Built For */}

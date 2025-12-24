@@ -291,6 +291,38 @@ export default function PrivacyPage() {
                       privacy-preserving analytics)
                     </p>
                   </div>
+
+                  <div className="rounded-lg border p-4">
+                    <h3 className="font-medium text-foreground">
+                      Anthropic (Claude AI)
+                    </h3>
+                    <p className="mt-1 text-sm">
+                      <strong>Data shared:</strong> Blueprint content you submit
+                      for AI-assisted editing (MAX subscription feature only)
+                    </p>
+                    <p className="text-sm">
+                      <strong>Purpose:</strong> AI-powered blueprint modification
+                    </p>
+                    <p className="text-sm">
+                      <strong>Location:</strong> USA (EU SCCs in place)
+                    </p>
+                    <p className="text-sm">
+                      <strong>Data retention:</strong> Anthropic does not train
+                      on API data; content processed transiently
+                    </p>
+                    <p className="text-sm">
+                      <strong>Legal basis:</strong> Contractual necessity (you
+                      initiate AI editing requests)
+                    </p>
+                    <a
+                      href="https://www.anthropic.com/privacy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 inline-block text-sm text-primary hover:underline"
+                    >
+                      Anthropic Privacy Policy →
+                    </a>
+                  </div>
                 </div>
               </section>
 
@@ -302,7 +334,7 @@ export default function PrivacyPage() {
                 <p className="mb-2">
                   Your data is primarily stored in the European Union. When data
                   is transferred to third parties outside the EU (GitHub,
-                  Google, Stripe), we ensure appropriate safeguards are in
+                  Google, Stripe, Anthropic), we ensure appropriate safeguards are in
                   place:
                 </p>
                 <ul className="list-inside list-disc space-y-1">

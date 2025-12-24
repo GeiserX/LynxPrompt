@@ -1136,6 +1136,27 @@ interface SubscriptionStatus {
   pendingChange?: string | null;
 }
 
+interface SellerEarnings {
+  totalEarnings: number;
+  totalSales: number;
+  availableBalance: number;
+  pendingPayoutAmount: number;
+  completedPayoutAmount: number;
+  paypalEmail: string | null;
+  minimumPayout: number;
+  currency: string;
+}
+
+interface PayoutHistory {
+  id: string;
+  amount: number;
+  currency: string;
+  paypalEmail: string;
+  status: string;
+  requestedAt: string;
+  processedAt: string | null;
+}
+
 const PLAN_DETAILS = {
   free: {
     name: "Free",
@@ -1166,6 +1187,15 @@ function BillingSection({ setError, setSuccess }: BillingSectionProps) {
   const [upgrading, setUpgrading] = useState<string | null>(null);
   const [openingPortal, setOpeningPortal] = useState(false);
   const [euConsent, setEuConsent] = useState(false);
+  
+  // Seller payout state
+  const [earnings, setEarnings] = useState<SellerEarnings | null>(null);
+  const [payoutHistory, setPayoutHistory] = useState<PayoutHistory[]>([]);
+  const [loadingEarnings, setLoadingEarnings] = useState(false);
+  const [paypalEmail, setPaypalEmail] = useState("");
+  const [savingPaypal, setSavingPaypal] = useState(false);
+  const [requestingPayout, setRequestingPayout] = useState(false);
+  const [showPayoutHistory, setShowPayoutHistory] = useState(false);
 
   const fetchSubscription = async () => {
     try {
@@ -1181,8 +1211,83 @@ function BillingSection({ setError, setSuccess }: BillingSectionProps) {
     }
   };
 
+  const fetchEarnings = async () => {
+    setLoadingEarnings(true);
+    try {
+      const [earningsRes, historyRes] = await Promise.all([
+        fetch("/api/seller/earnings"),
+        fetch("/api/seller/payout-request"),
+      ]);
+      
+      if (earningsRes.ok) {
+        const data = await earningsRes.json();
+        setEarnings(data);
+        setPaypalEmail(data.paypalEmail || "");
+      }
+      
+      if (historyRes.ok) {
+        const data = await historyRes.json();
+        setPayoutHistory(data.payouts || []);
+      }
+    } catch {
+      // Non-fatal - seller section just won't show data
+    } finally {
+      setLoadingEarnings(false);
+    }
+  };
+
+  const handleSavePaypalEmail = async () => {
+    setSavingPaypal(true);
+    setError(null);
+    
+    try {
+      const res = await fetch("/api/seller/payout-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paypalEmail: paypalEmail.trim() }),
+      });
+      
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to save PayPal email");
+      }
+      
+      setSuccess("PayPal email saved successfully!");
+      await fetchEarnings();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save PayPal email");
+    } finally {
+      setSavingPaypal(false);
+    }
+  };
+
+  const handleRequestPayout = async () => {
+    setRequestingPayout(true);
+    setError(null);
+    
+    try {
+      const res = await fetch("/api/seller/payout-request", {
+        method: "POST",
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to request payout");
+      }
+      
+      setSuccess(`Payout of €${(data.payout.amount / 100).toFixed(2)} requested successfully! We'll process it within 5 business days.`);
+      await fetchEarnings();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to request payout");
+    } finally {
+      setRequestingPayout(false);
+    }
+  };
+
   useEffect(() => {
     fetchSubscription();
+    fetchEarnings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1509,6 +1614,188 @@ function BillingSection({ setError, setSuccess }: BillingSectionProps) {
           Prices are in EUR and include VAT where applicable.
         </p>
       </div>
+
+      {/* Seller Payouts Section - Only for Pro/Max users who can sell */}
+      {(subscription?.plan === "pro" || subscription?.plan === "max" || subscription?.isAdmin) && (
+        <div className="mt-8 space-y-6 border-t pt-8">
+          <div>
+            <h1 className="text-2xl font-bold">Seller Payouts</h1>
+            <p className="text-muted-foreground">
+              Manage earnings from your blueprint sales
+            </p>
+          </div>
+
+          {/* Earnings Overview */}
+          <div className="rounded-xl border bg-card p-6">
+            <h2 className="mb-4 font-semibold">Earnings Overview</h2>
+            {loadingEarnings ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+              </div>
+            ) : earnings ? (
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="rounded-lg border bg-muted/30 p-4">
+                  <p className="text-sm text-muted-foreground">Total Earnings</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    €{(earnings.totalEarnings / 100).toFixed(2)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    from {earnings.totalSales} sales
+                  </p>
+                </div>
+                <div className="rounded-lg border bg-muted/30 p-4">
+                  <p className="text-sm text-muted-foreground">Available Balance</p>
+                  <p className="text-2xl font-bold">
+                    €{(earnings.availableBalance / 100).toFixed(2)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    ready for payout
+                  </p>
+                </div>
+                <div className="rounded-lg border bg-muted/30 p-4">
+                  <p className="text-sm text-muted-foreground">Paid Out</p>
+                  <p className="text-2xl font-bold text-muted-foreground">
+                    €{(earnings.completedPayoutAmount / 100).toFixed(2)}
+                  </p>
+                  {earnings.pendingPayoutAmount > 0 && (
+                    <p className="text-xs text-yellow-600">
+                      €{(earnings.pendingPayoutAmount / 100).toFixed(2)} pending
+                    </p>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground">
+                No earnings data available
+              </p>
+            )}
+          </div>
+
+          {/* PayPal Configuration */}
+          <div className="rounded-xl border bg-card p-6">
+            <h2 className="mb-4 font-semibold">Payout Settings</h2>
+            <p className="mb-4 text-sm text-muted-foreground">
+              Configure your PayPal email to receive payouts from blueprint sales.
+              We send payouts via PayPal within 5 business days of your request.
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="email"
+                value={paypalEmail}
+                onChange={(e) => setPaypalEmail(e.target.value)}
+                placeholder="your.paypal@email.com"
+                className="flex-1 rounded-lg border bg-background px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              <Button
+                onClick={handleSavePaypalEmail}
+                disabled={savingPaypal || !paypalEmail.trim()}
+              >
+                {savingPaypal ? "Saving..." : "Save"}
+              </Button>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Important: Use the email associated with your PayPal account.
+            </p>
+          </div>
+
+          {/* Request Payout */}
+          {earnings && earnings.paypalEmail && (
+            <div className="rounded-xl border bg-card p-6">
+              <h2 className="mb-4 font-semibold">Request Payout</h2>
+              <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-4">
+                <div>
+                  <p className="font-medium">Available Balance</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    €{(earnings.availableBalance / 100).toFixed(2)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Minimum payout: €{(earnings.minimumPayout / 100).toFixed(2)}
+                  </p>
+                </div>
+                <Button
+                  onClick={handleRequestPayout}
+                  disabled={
+                    requestingPayout ||
+                    earnings.availableBalance < earnings.minimumPayout ||
+                    earnings.pendingPayoutAmount > 0
+                  }
+                >
+                  {requestingPayout ? (
+                    "Requesting..."
+                  ) : earnings.pendingPayoutAmount > 0 ? (
+                    "Payout Pending"
+                  ) : (
+                    "Request Payout"
+                  )}
+                </Button>
+              </div>
+              {earnings.availableBalance < earnings.minimumPayout && earnings.availableBalance > 0 && (
+                <p className="mt-2 text-sm text-yellow-600">
+                  You need €{((earnings.minimumPayout - earnings.availableBalance) / 100).toFixed(2)} more to reach the minimum payout amount.
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Payout History */}
+          {payoutHistory.length > 0 && (
+            <div className="rounded-xl border bg-card p-6">
+              <button
+                onClick={() => setShowPayoutHistory(!showPayoutHistory)}
+                className="flex w-full items-center justify-between"
+              >
+                <h2 className="font-semibold">Payout History</h2>
+                <span className="text-sm text-muted-foreground">
+                  {showPayoutHistory ? "Hide" : "Show"} ({payoutHistory.length})
+                </span>
+              </button>
+              
+              {showPayoutHistory && (
+                <div className="mt-4 space-y-3">
+                  {payoutHistory.map((payout) => (
+                    <div
+                      key={payout.id}
+                      className="flex items-center justify-between rounded-lg border bg-muted/30 p-3"
+                    >
+                      <div>
+                        <p className="font-medium">
+                          €{(payout.amount / 100).toFixed(2)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(payout.requestedAt).toLocaleDateString()} → {payout.paypalEmail}
+                        </p>
+                      </div>
+                      <span
+                        className={`rounded px-2 py-0.5 text-xs font-medium ${
+                          payout.status === "COMPLETED"
+                            ? "bg-green-500/10 text-green-600"
+                            : payout.status === "PENDING" || payout.status === "PROCESSING"
+                            ? "bg-yellow-500/10 text-yellow-600"
+                            : payout.status === "FAILED"
+                            ? "bg-red-500/10 text-red-600"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {payout.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Seller Info */}
+          <div className="rounded-lg border border-muted/50 bg-muted/20 p-4">
+            <p className="text-xs text-muted-foreground">
+              <strong>Revenue split:</strong> You receive 70% of each blueprint sale.
+              LynxPrompt retains 30% as a platform fee.
+              Payouts are processed via PayPal within 5 business days after request.
+              Minimum payout is €10.00.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -89,6 +89,30 @@ const personaLabels: Record<string, string> = {
   other: "Developer",
 };
 
+// Profile avatar component with proper fallback handling
+function ProfileAvatar({ image, displayName }: { image: string | null; displayName: string }) {
+  const [imageError, setImageError] = useState(false);
+  
+  // Show initials fallback if no image or image failed to load
+  if (!image || imageError) {
+    return (
+      <div className="flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 text-4xl font-bold text-primary">
+        {displayName.charAt(0).toUpperCase()}
+      </div>
+    );
+  }
+  
+  return (
+    <img
+      src={image}
+      alt={displayName}
+      className="h-24 w-24 rounded-full border-4 border-primary/20 object-cover"
+      referrerPolicy="no-referrer"
+      onError={() => setImageError(true)}
+    />
+  );
+}
+
 export default function UserProfilePage() {
   const params = useParams();
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -212,28 +236,7 @@ export default function UserProfilePage() {
           <div className="mb-8 flex flex-col items-center text-center sm:flex-row sm:items-start sm:text-left">
             {/* Avatar */}
             <div className="mb-4 flex-shrink-0 sm:mb-0 sm:mr-6">
-              {profile.image ? (
-                <img
-                  src={profile.image}
-                  alt={profile.displayName}
-                  className="h-24 w-24 rounded-full border-4 border-primary/20 object-cover"
-                  referrerPolicy="no-referrer"
-                  crossOrigin="anonymous"
-                  onError={(e) => {
-                    // Hide broken image and show fallback
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = "none";
-                    const fallback = target.nextElementSibling as HTMLElement;
-                    if (fallback) fallback.style.display = "flex";
-                  }}
-                />
-              ) : null}
-              <div 
-                className="flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 text-4xl font-bold text-primary"
-                style={{ display: profile.image ? "none" : "flex" }}
-              >
-                {profile.displayName.charAt(0).toUpperCase()}
-              </div>
+              <ProfileAvatar image={profile.image} displayName={profile.displayName} />
             </div>
 
             {/* Profile Info */}

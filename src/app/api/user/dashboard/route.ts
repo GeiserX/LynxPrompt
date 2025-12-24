@@ -19,9 +19,9 @@ export async function GET() {
       templatesCreated,
       totalDownloads,
       totalFavorites,
+      favoritesReceived,
       myTemplates,
       recentActivity,
-      linkedAccounts,
       purchasedBlueprints,
     ] = await Promise.all([
       // Count templates created by user
@@ -38,6 +38,12 @@ export async function GET() {
       // Count favorites user has given
       prismaUsers.templateFavorite.count({
         where: { userId },
+      }),
+
+      // Sum of favorites received on user's templates
+      prismaUsers.userTemplate.aggregate({
+        where: { userId },
+        _sum: { favorites: true },
       }),
 
       // Get user's recent templates (max 5)
@@ -86,14 +92,6 @@ export async function GET() {
           platform: true,
           createdAt: true,
           userId: true,
-        },
-      }),
-
-      // Get linked accounts
-      prismaUsers.account.findMany({
-        where: { userId },
-        select: {
-          provider: true,
         },
       }),
 
@@ -233,9 +231,7 @@ export async function GET() {
         templatesCreated,
         totalDownloads: totalDownloads._sum.downloads || 0,
         totalFavorites,
-        linkedProviders: linkedAccounts.map(
-          (a: { provider: string }) => a.provider
-        ),
+        favoritesReceived: favoritesReceived._sum.favorites || 0,
       },
       myTemplates,
       recentActivity: enrichedActivity,

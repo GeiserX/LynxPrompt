@@ -84,6 +84,15 @@ model User {
   currentPeriodEnd       DateTime? // When current billing period ends
   cancelAtPeriodEnd      Boolean   @default(false)
 
+  // AI Usage Tracking (for MAX users)
+  aiTokensUsedThisPeriod Int       @default(0)   // Total tokens used this billing period
+  aiUsageResetAt         DateTime? // When to reset token count (aligned with billing period)
+  aiLastRequestAt        DateTime? // For rate limiting
+  aiRequestsThisMinute   Int       @default(0)   // Counter reset every minute
+
+  // Seller Payout Settings
+  paypalEmail    String?   // PayPal email for receiving payouts
+
   // Relations
   accounts       Account[]
   sessions       Session[]
@@ -94,6 +103,7 @@ model User {
   favorites      TemplateFavorite[]
   downloads      TemplateDownload[]
   purchases      BlueprintPurchase[]
+  payouts        Payout[]
 
   @@index([email])
   @@index([role])
@@ -221,6 +231,45 @@ model UserTemplate {
   @@index([downloads])
   @@index([favorites])
   @@index([price])
+}
+
+// ============================================================================
+// PAYOUTS - Track seller payouts
+// ============================================================================
+
+model Payout {
+  id            String       @id @default(cuid())
+  userId        String
+  
+  // Payout details
+  amount        Int          // Amount in cents
+  currency      String       @default("EUR")
+  paypalEmail   String       // PayPal email used (snapshot at time of payout)
+  
+  // Status tracking
+  status        PayoutStatus @default(PENDING)
+  
+  // External references
+  paypalTransactionId String?  // PayPal transaction ID once processed
+  notes         String?      // Admin notes
+  
+  // Timestamps
+  requestedAt   DateTime     @default(now())
+  processedAt   DateTime?    // When payout was completed
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([status])
+  @@index([requestedAt])
+}
+
+enum PayoutStatus {
+  PENDING     // Requested, awaiting processing
+  PROCESSING  // Currently being processed
+  COMPLETED   // Successfully sent
+  FAILED      // Failed to process
+  CANCELLED   // Cancelled by user or admin
 }
 
 // ============================================================================

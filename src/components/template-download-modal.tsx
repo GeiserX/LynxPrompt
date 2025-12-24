@@ -12,7 +12,9 @@ import {
   Eye,
   EyeOff,
   Info,
+  Pencil,
 } from "lucide-react";
+import Link from "next/link";
 import { trackTemplateDownload } from "@/lib/analytics/client";
 
 interface SensitiveField {
@@ -281,11 +283,23 @@ export function TemplateDownloadModal({
           {/* Variable Inputs - show all variables from template */}
           {(Object.keys(sensitiveFields).length > 0 || Object.keys(values).length > 0) && (
             <div className="mb-6">
-              <div className="mb-4 flex items-center gap-2">
-                <Info className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium">
-                  Customize for your project
-                </span>
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Info className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium">
+                    Customize for your project
+                  </span>
+                </div>
+                {template.id && (
+                  <Link
+                    href={`/blueprints/${template.id}/edit`}
+                    onClick={onClose}
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    <Pencil className="h-3 w-3" />
+                    Need different variables? Clone & Edit
+                  </Link>
+                )}
               </div>
               <div className="space-y-4 max-h-64 overflow-y-auto pr-2">
                 {/* First show sensitive/required fields */}
