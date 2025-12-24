@@ -67,6 +67,26 @@ export default function ShareBlueprintPage() {
   const [loadingPlan, setLoadingPlan] = useState(true);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
+  // Check for pre-populated content from wizard
+  useEffect(() => {
+    const wizardContent = sessionStorage.getItem("wizardBlueprintContent");
+    const wizardName = sessionStorage.getItem("wizardBlueprintName");
+    const wizardDescription = sessionStorage.getItem("wizardBlueprintDescription");
+    
+    if (wizardContent) {
+      setContent(wizardContent);
+      sessionStorage.removeItem("wizardBlueprintContent");
+    }
+    if (wizardName) {
+      setName(wizardName);
+      sessionStorage.removeItem("wizardBlueprintName");
+    }
+    if (wizardDescription) {
+      setDescription(wizardDescription);
+      sessionStorage.removeItem("wizardBlueprintDescription");
+    }
+  }, []);
+
   // Fetch user subscription plan
   useEffect(() => {
     const fetchPlan = async () => {

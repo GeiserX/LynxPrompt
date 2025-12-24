@@ -259,9 +259,9 @@ function BlueprintsContent() {
   };
 
   const tierColors: Record<string, string> = {
-    SIMPLE: "border border-green-500 bg-green-500/10 text-green-700 dark:border-green-400 dark:text-green-300",
-    INTERMEDIATE: "border border-blue-500 bg-blue-500/10 text-blue-700 dark:border-blue-400 dark:text-blue-300",
-    ADVANCED: "border border-purple-500 bg-purple-500/10 text-purple-700 dark:border-purple-400 dark:text-purple-300",
+    SIMPLE: "border-2 border-green-700 bg-green-200 text-green-900 dark:border-green-400 dark:bg-green-500/20 dark:text-green-300",
+    INTERMEDIATE: "border-2 border-blue-700 bg-blue-200 text-blue-900 dark:border-blue-400 dark:bg-blue-500/20 dark:text-blue-300",
+    ADVANCED: "border-2 border-purple-700 bg-purple-200 text-purple-900 dark:border-purple-400 dark:bg-purple-500/20 dark:text-purple-300",
   };
 
   const tierLabels: Record<string, string> = {
@@ -540,7 +540,7 @@ function BlueprintsContent() {
                           <div className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${
                             isPaid 
                               ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white" 
-                              : "border-2 border-emerald-600 bg-emerald-100 text-emerald-800 dark:border-emerald-400 dark:bg-emerald-900/50 dark:text-emerald-200"
+                              : "border-2 border-emerald-700 bg-emerald-200 text-emerald-900 dark:border-emerald-400 dark:bg-emerald-900/50 dark:text-emerald-200"
                           }`}>
                             {isPaid ? (
                               hasDiscount ? (
