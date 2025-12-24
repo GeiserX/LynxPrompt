@@ -331,6 +331,7 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     if (user.persona) {
       lines.push(`- Developer context: ${user.persona.replace(/_/g, " ")}`);
     }
+    lines.push(`- Skill level: ${user.skillLevel.charAt(0).toUpperCase() + user.skillLevel.slice(1)}`);
   }
   if (config.codeStyle?.naming) {
     lines.push(`- Naming: ${config.codeStyle.naming}`);
@@ -546,6 +547,7 @@ function generateClaudeMd(config: WizardConfig, user: UserProfile): string {
     if (user.persona) {
       lines.push(`I'm a ${user.persona.replace(/_/g, " ")}.`);
     }
+    lines.push(`My skill level: ${user.skillLevel.charAt(0).toUpperCase() + user.skillLevel.slice(1)}.`);
     lines.push("");
   }
 
@@ -738,6 +740,7 @@ function generateCopilotInstructions(
     if (user.persona) {
       lines.push(`- Developer context: ${user.persona.replace(/_/g, " ")}`);
     }
+    lines.push(`- Skill level: ${user.skillLevel.charAt(0).toUpperCase() + user.skillLevel.slice(1)}`);
     lines.push("");
   }
 
@@ -894,11 +897,11 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
       lines.push("- Explain non-obvious decisions, skip basics");
     } else {
       lines.push("- Be concise and direct");
-      lines.push("- Skip well-known patterns, focus on implementation");
     }
     if (user.persona) {
       lines.push(`- Developer context: ${user.persona.replace(/_/g, " ")}`);
     }
+    lines.push(`- Skill level: ${user.skillLevel.charAt(0).toUpperCase() + user.skillLevel.slice(1)}`);
     lines.push("");
   }
 
