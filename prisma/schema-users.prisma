@@ -73,6 +73,8 @@ model User {
   socialWebsite    String?   // Personal website URL
   socialYoutube    String?   // YouTube channel URL or username
   socialBluesky    String?   // Bluesky handle
+  socialMastodon   String?   // Mastodon handle (e.g., @user@instance.social)
+  socialDiscord    String?   // Discord username
 
   // Subscription & Billing (Stripe)
   stripeCustomerId       String?   @unique // Stripe Customer ID
@@ -199,6 +201,9 @@ model UserTemplate {
   // Privacy: defines which fields contain personal data and should be stripped when sharing
   // Format: { "AUTHOR_NAME": { "label": "Author Name", "private": true }, ... }
   sensitiveFields  Json?
+  
+  // AI disclosure: was this blueprint created with AI assistance?
+  aiAssisted       Boolean      @default(false)
   
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt

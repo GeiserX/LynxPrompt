@@ -123,6 +123,7 @@ export async function GET(request: NextRequest) {
         downloads: true,
         favorites: true,
         isOfficial: true,
+        aiAssisted: true,
         price: true,
         currency: true,
         createdAt: true,
@@ -206,6 +207,7 @@ export async function GET(request: NextRequest) {
         tier: t.tier,
         category: t.category || "other",
         isOfficial: t.isOfficial || false,
+        aiAssisted: t.aiAssisted || false,
         price: t.price,
         discountedPrice,
         isMaxUser,
@@ -251,6 +253,7 @@ export async function POST(request: NextRequest) {
       category = "other",
       tags, 
       isPublic = true, 
+      aiAssisted = false,
       price, 
       currency = "EUR",
       turnstileToken,
@@ -268,22 +271,18 @@ export async function POST(request: NextRequest) {
       user?.role === "ADMIN" ||
       user?.role === "SUPERADMIN";
 
-    // Verify turnstile for FREE users
-    if (!isPaidUser && turnstileToken) {
-      const isValid = await verifyTurnstileToken(turnstileToken);
-      if (!isValid) {
-        return NextResponse.json(
-          { error: "Security verification failed. Please try again." },
-          { status: 400 }
-        );
-      }
-    } else if (!isPaidUser && process.env.TURNSTILE_SECRET_KEY) {
-      // Require turnstile for FREE users if configured
-      return NextResponse.json(
-        { error: "Security verification required." },
-        { status: 400 }
-      );
-    }
+    // Turnstile verification is disabled for blueprint creation
+    // Only kept for sign-in flows
+    // If needed in future, uncomment:
+    // if (!isPaidUser && turnstileToken) {
+    //   const isValid = await verifyTurnstileToken(turnstileToken);
+    //   if (!isValid) {
+    //     return NextResponse.json(
+    //       { error: "Security verification failed. Please try again." },
+    //       { status: 400 }
+    //     );
+    //   }
+    // }
 
     // Check if user can create paid blueprints
     if (price !== null && price !== undefined && price > 0) {
@@ -365,6 +364,7 @@ export async function POST(request: NextRequest) {
         tier,
         tags: validatedTags,
         isPublic: Boolean(isPublic),
+        aiAssisted: Boolean(aiAssisted),
         downloads: 0,
         favorites: 0,
         price: validatedPrice,

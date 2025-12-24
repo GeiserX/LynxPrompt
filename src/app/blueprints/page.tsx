@@ -66,6 +66,7 @@ interface Blueprint {
   tier?: string;
   category?: string;
   isOfficial?: boolean;
+  aiAssisted?: boolean;
   price?: number | null;
   discountedPrice?: number | null;
   isMaxUser?: boolean;
@@ -581,6 +582,11 @@ function BlueprintsContent() {
                               className={`rounded px-1.5 py-0.5 text-xs font-medium ${tierColors[blueprint.tier] || ""}`}
                             >
                               {tierLabels[blueprint.tier]}
+                            </span>
+                          )}
+                          {blueprint.aiAssisted && (
+                            <span className="rounded bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                              AI-assisted
                             </span>
                           )}
                         </div>

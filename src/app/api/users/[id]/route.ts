@@ -28,6 +28,8 @@ export async function GET(
         socialWebsite: true,
         socialYoutube: true,
         socialBluesky: true,
+        socialMastodon: true,
+        socialDiscord: true,
         createdAt: true,
         templates: {
           where: {
@@ -90,6 +92,8 @@ export async function GET(
       socialWebsite: user.socialWebsite,
       socialYoutube: user.socialYoutube,
       socialBluesky: user.socialBluesky,
+      socialMastodon: user.socialMastodon,
+      socialDiscord: user.socialDiscord,
       // Member since
       memberSince: user.createdAt,
       // Public templates

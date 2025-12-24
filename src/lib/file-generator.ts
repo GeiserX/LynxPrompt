@@ -25,8 +25,8 @@ interface CodeStyleConfig {
 }
 
 interface TestingStrategyConfig {
-  level?: string;
-  coverage?: string;
+  levels?: string[];
+  coverage?: number;
   frameworks?: string[];
   notes?: string;
   savePreferences?: boolean;
@@ -37,12 +37,16 @@ interface StaticFilesConfig {
   fundingYml?: string;
   fundingSave?: boolean;
   editorconfig?: boolean;
+  editorconfigCustom?: string;
   editorconfigSave?: boolean;
   contributing?: boolean;
+  contributingCustom?: string;
   contributingSave?: boolean;
   codeOfConduct?: boolean;
+  codeOfConductCustom?: string;
   codeOfConductSave?: boolean;
   security?: boolean;
+  securityCustom?: string;
   securitySave?: boolean;
   gitignoreMode?: "generate" | "custom" | "skip";
   gitignoreCustom?: string;
@@ -80,6 +84,7 @@ interface WizardConfig {
   buildContainer?: boolean;
   aiBehaviorRules: string[];
   enableAutoUpdate?: boolean;
+  includePersonalData?: boolean;
   platform?: string;
   platforms?: string[];
   additionalFeedback: string;
@@ -272,17 +277,23 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
   }
 
   lines.push("## Code Style & Preferences");
-  if (user.skillLevel === "novice") {
-    lines.push("- Be verbose with explanations and comments");
-    lines.push("- Explain concepts as you implement them");
-    lines.push("- Ask clarifying questions when unsure");
-  } else if (user.skillLevel === "intermediate") {
-    lines.push("- Provide balanced explanations");
-    lines.push("- Focus on important decisions and trade-offs");
-  } else {
-    lines.push("- Be concise and direct");
-    lines.push("- Assume expertise, minimal hand-holding");
-    lines.push("- Focus on implementation, skip basics");
+  // Only include skill-based instructions if includePersonalData is true
+  if (config.includePersonalData !== false && user.skillLevel) {
+    if (user.skillLevel === "novice" || user.skillLevel === "beginner") {
+      lines.push("- Be verbose with explanations and comments");
+      lines.push("- Explain concepts as you implement them");
+      lines.push("- Ask clarifying questions when unsure");
+    } else if (user.skillLevel === "intermediate") {
+      lines.push("- Provide balanced explanations");
+      lines.push("- Focus on important decisions and trade-offs");
+    } else {
+      lines.push("- Be concise and direct");
+      lines.push("- Assume expertise, minimal hand-holding");
+      lines.push("- Focus on implementation, skip basics");
+    }
+    if (user.persona) {
+      lines.push(`- Developer context: ${user.persona.replace(/_/g, " ")}`);
+    }
   }
   if (config.codeStyle?.naming) {
     lines.push(`- Naming: ${config.codeStyle.naming}`);
@@ -333,9 +344,9 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
 
   if (config.testingStrategy) {
     lines.push("## Testing Strategy");
-    if (config.testingStrategy.level) lines.push(`- Level: ${config.testingStrategy.level}`);
+    if (config.testingStrategy.levels?.length) lines.push(`- Levels: ${config.testingStrategy.levels.join(", ")}`);
     if (config.testingStrategy.frameworks?.length) lines.push(`- Frameworks: ${config.testingStrategy.frameworks.join(", ")}`);
-    if (config.testingStrategy.coverage) lines.push(`- Coverage target: ${config.testingStrategy.coverage}`);
+    if (config.testingStrategy.coverage !== undefined) lines.push(`- Coverage target: ${config.testingStrategy.coverage}%`);
     if (config.testingStrategy.notes) lines.push(`- Notes: ${config.testingStrategy.notes}`);
     lines.push("");
   }
@@ -393,6 +404,12 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     lines.push("Keep this file updated so future sessions start with better context.");
   }
 
+  // Add embedded static files
+  const staticFilesSection = generateEmbeddedStaticFiles(config, user);
+  if (staticFilesSection) {
+    lines.push(staticFilesSection);
+  }
+
   return lines.join("\n");
 }
 
@@ -438,22 +455,28 @@ function generateClaudeMd(config: WizardConfig, user: UserProfile): string {
 
   lines.push("## Development Guidelines");
   lines.push("");
-  lines.push("### Communication Style");
-  if (user.skillLevel === "novice") {
-    lines.push("I'm newer to development. Please explain concepts thoroughly,");
-    lines.push(
-      "provide detailed comments in code, and walk me through your reasoning."
-    );
-  } else if (user.skillLevel === "intermediate") {
-    lines.push(
-      "I have solid experience. Balance explanations with efficiency -"
-    );
-    lines.push("explain non-obvious decisions but skip the basics.");
-  } else {
-    lines.push("I'm experienced. Be concise and direct. Skip explanations of");
-    lines.push("well-known patterns. Focus on implementation and edge cases.");
+  // Only include skill-based communication style if includePersonalData is true
+  if (config.includePersonalData !== false && user.skillLevel) {
+    lines.push("### Communication Style");
+    if (user.skillLevel === "novice" || user.skillLevel === "beginner") {
+      lines.push("I'm newer to development. Please explain concepts thoroughly,");
+      lines.push(
+        "provide detailed comments in code, and walk me through your reasoning."
+      );
+    } else if (user.skillLevel === "intermediate") {
+      lines.push(
+        "I have solid experience. Balance explanations with efficiency -"
+      );
+      lines.push("explain non-obvious decisions but skip the basics.");
+    } else {
+      lines.push("I'm experienced. Be concise and direct. Skip explanations of");
+      lines.push("well-known patterns. Focus on implementation and edge cases.");
+    }
+    if (user.persona) {
+      lines.push(`I'm a ${user.persona.replace(/_/g, " ")}.`);
+    }
+    lines.push("");
   }
-  lines.push("");
 
   if (config.aiBehaviorRules.length > 0) {
     lines.push("### Workflow Rules");
@@ -502,9 +525,9 @@ function generateClaudeMd(config: WizardConfig, user: UserProfile): string {
 
   if (config.testingStrategy) {
     lines.push("### Testing Strategy");
-    if (config.testingStrategy.level) lines.push(`- Level: ${config.testingStrategy.level}`);
+    if (config.testingStrategy.levels?.length) lines.push(`- Levels: ${config.testingStrategy.levels.join(", ")}`);
     if (config.testingStrategy.frameworks?.length) lines.push(`- Frameworks: ${config.testingStrategy.frameworks.join(", ")}`);
-    if (config.testingStrategy.coverage) lines.push(`- Coverage: ${config.testingStrategy.coverage}`);
+    if (config.testingStrategy.coverage !== undefined) lines.push(`- Coverage: ${config.testingStrategy.coverage}%`);
     if (config.testingStrategy.notes) lines.push(`- Notes: ${config.testingStrategy.notes}`);
     lines.push("");
   }
@@ -553,6 +576,12 @@ function generateClaudeMd(config: WizardConfig, user: UserProfile): string {
     lines.push("");
   }
 
+  // Add embedded static files
+  const staticFilesSection = generateEmbeddedStaticFiles(config, user);
+  if (staticFilesSection) {
+    lines.push(staticFilesSection);
+  }
+
   return lines.join("\n");
 }
 
@@ -591,19 +620,25 @@ function generateCopilotInstructions(
   lines.push("## Guidelines");
   lines.push("");
 
-  if (user.skillLevel === "novice") {
-    lines.push("- Provide detailed code comments");
-    lines.push("- Include examples where helpful");
-    lines.push("- Explain complex logic");
-  } else if (user.skillLevel === "senior") {
-    lines.push("- Be concise");
-    lines.push("- Skip obvious explanations");
-    lines.push("- Focus on clean, efficient code");
-  } else {
-    lines.push("- Balance between explanation and efficiency");
+  // Only include skill-based guidelines if includePersonalData is true
+  if (config.includePersonalData !== false && user.skillLevel) {
+    if (user.skillLevel === "novice" || user.skillLevel === "beginner") {
+      lines.push("- Provide detailed code comments");
+      lines.push("- Include examples where helpful");
+      lines.push("- Explain complex logic");
+    } else if (user.skillLevel === "senior" || user.skillLevel === "expert" || user.skillLevel === "advanced") {
+      lines.push("- Be concise");
+      lines.push("- Skip obvious explanations");
+      lines.push("- Focus on clean, efficient code");
+    } else {
+      lines.push("- Balance between explanation and efficiency");
+    }
+    if (user.persona) {
+      lines.push(`- Developer context: ${user.persona.replace(/_/g, " ")}`);
+    }
+    lines.push("");
   }
 
-  lines.push("");
   lines.push("## Code Style");
   lines.push("- Follow existing patterns in the codebase");
   lines.push("- Use meaningful variable and function names");
@@ -653,24 +688,21 @@ function generateCopilotInstructions(
   if (config.testingStrategy) {
     lines.push("");
     lines.push("## Testing Strategy");
-    if (config.testingStrategy.level) lines.push(`- Level: ${config.testingStrategy.level}`);
+    if (config.testingStrategy.levels?.length) lines.push(`- Levels: ${config.testingStrategy.levels.join(", ")}`);
     if (config.testingStrategy.frameworks?.length) lines.push(`- Frameworks: ${config.testingStrategy.frameworks.join(", ")}`);
-    if (config.testingStrategy.coverage) lines.push(`- Coverage: ${config.testingStrategy.coverage}`);
+    if (config.testingStrategy.coverage !== undefined) lines.push(`- Coverage: ${config.testingStrategy.coverage}%`);
     if (config.testingStrategy.notes) lines.push(`- Notes: ${config.testingStrategy.notes}`);
   }
 
   if (config.staticFiles) {
     lines.push("");
     lines.push("## Static Files");
-    const chosen: string[] = [];
-    if (config.staticFiles.editorconfig) chosen.push(".editorconfig");
-    if (config.staticFiles.contributing) chosen.push("CONTRIBUTING.md");
-    if (config.staticFiles.codeOfConduct) chosen.push("CODE_OF_CONDUCT.md");
-    if (config.staticFiles.security) chosen.push("SECURITY.md");
-    if (config.staticFiles.gitignoreMode && config.staticFiles.gitignoreMode !== "skip") chosen.push(".gitignore");
-    if (config.buildContainer || config.staticFiles.dockerignore) chosen.push(".dockerignore");
-    if (config.funding) chosen.push(".github/FUNDING.yml");
-    if (chosen.length) lines.push(`Generate: ${chosen.join(", ")}`);
+  }
+
+  // Add embedded static files
+  const staticFilesSection = generateEmbeddedStaticFiles(config, user);
+  if (staticFilesSection) {
+    lines.push(staticFilesSection);
   }
 
   return lines.join("\n");
@@ -910,6 +942,95 @@ coverage
 `;
 }
 
+// Generate embedded static files section for AI config
+function generateEmbeddedStaticFiles(config: WizardConfig, user: UserProfile): string {
+  const sections: string[] = [];
+  
+  // Editorconfig
+  if (config.staticFiles?.editorconfig) {
+    const content = config.staticFiles.editorconfigCustom?.trim() || generateEditorconfig();
+    sections.push(`### .editorconfig
+\`\`\`
+${content}
+\`\`\``);
+  }
+  
+  // Contributing
+  if (config.staticFiles?.contributing) {
+    const content = config.staticFiles.contributingCustom?.trim() || generateContributing();
+    sections.push(`### CONTRIBUTING.md
+\`\`\`markdown
+${content}
+\`\`\``);
+  }
+  
+  // Code of Conduct
+  if (config.staticFiles?.codeOfConduct) {
+    const content = config.staticFiles.codeOfConductCustom?.trim() || generateCodeOfConduct();
+    sections.push(`### CODE_OF_CONDUCT.md
+\`\`\`markdown
+${content}
+\`\`\``);
+  }
+  
+  // Security
+  if (config.staticFiles?.security) {
+    const content = config.staticFiles.securityCustom?.trim() || generateSecurity();
+    sections.push(`### SECURITY.md
+\`\`\`markdown
+${content}
+\`\`\``);
+  }
+  
+  // Gitignore
+  if (config.staticFiles?.gitignoreMode && config.staticFiles.gitignoreMode !== "skip") {
+    const content = generateGitignore(config);
+    sections.push(`### .gitignore
+\`\`\`
+${content}
+\`\`\``);
+  }
+  
+  // Dockerignore
+  if (config.staticFiles?.dockerignore) {
+    const content = generateDockerignore(config);
+    sections.push(`### .dockerignore
+\`\`\`
+${content}
+\`\`\``);
+  }
+  
+  // Funding
+  if (config.funding || config.staticFiles?.funding) {
+    const content = generateFunding(config);
+    sections.push(`### .github/FUNDING.yml
+\`\`\`yaml
+${content}
+\`\`\``);
+  }
+  
+  // License
+  if (config.license && config.license !== "none") {
+    const content = generateLicense(config.license, user);
+    if (content) {
+      sections.push(`### LICENSE
+\`\`\`
+${content}
+\`\`\``);
+    }
+  }
+  
+  if (sections.length === 0) return "";
+  
+  return `
+## Static Files to Generate
+
+When setting up this project, create the following files with the content below:
+
+${sections.join("\n\n")}
+`;
+}
+
 // Type for generated file
 export interface GeneratedFile {
   fileName: string;
@@ -917,100 +1038,77 @@ export interface GeneratedFile {
   platform?: string;
 }
 
-// Generate all files as an array (for preview)
+// Generate all files as an array (for preview) - now returns single AI config file with embedded static files
 export function generateAllFiles(
   config: WizardConfig,
   user: UserProfile
 ): GeneratedFile[] {
   const files: GeneratedFile[] = [];
 
-  // Generate platform-specific files
-  const platforms = resolvePlatforms(config);
-  platforms.forEach((platform) => {
-    const fileName = PLATFORM_FILES[platform];
-    if (!fileName) return;
+  // Generate only the single platform-specific AI config file (static files are embedded)
+  const platform = config.platform || "cursor";
+  const fileName = PLATFORM_FILES[platform];
+  if (!fileName) return files;
 
-    let content = "";
-    switch (platform) {
-      case "cursor":
-        // Generate Cursor's native .mdc format for .cursor/rules/
-        content = generateCursorRules(config, user);
-        break;
-      case "claude":
-        content = generateClaudeMd(config, user);
-        break;
-      case "copilot":
-        content = generateCopilotInstructions(config, user);
-        break;
-      case "windsurf":
-        content = generateWindsurfRules(config, user);
-        break;
-    }
-
-    if (content) {
-      files.push({ fileName, content, platform });
-    }
-  });
-
-  // Generate LICENSE if selected
-  if (config.license && config.license !== "none") {
-    const licenseContent = generateLicense(config.license, user);
-    if (licenseContent) {
-      files.push({ fileName: "LICENSE", content: licenseContent });
-    }
+  let content = "";
+  switch (platform) {
+    case "cursor":
+      content = generateCursorRules(config, user);
+      break;
+    case "claude":
+      content = generateClaudeMd(config, user);
+      break;
+    case "copilot":
+      content = generateCopilotInstructions(config, user);
+      break;
+    case "windsurf":
+      content = generateWindsurfRules(config, user);
+      break;
   }
 
-  // Generate FUNDING.yml if enabled
-  if (config.funding || config.staticFiles?.funding) {
-    const fundingContent = generateFunding(config);
-    files.push({ fileName: ".github/FUNDING.yml", content: fundingContent });
-  }
-
-  // Static files (advanced)
-  if (config.staticFiles?.editorconfig) {
-    files.push({ fileName: ".editorconfig", content: generateEditorconfig() });
-  }
-  if (config.staticFiles?.contributing) {
-    files.push({ fileName: "CONTRIBUTING.md", content: generateContributing() });
-  }
-  if (config.staticFiles?.codeOfConduct) {
-    files.push({ fileName: "CODE_OF_CONDUCT.md", content: generateCodeOfConduct() });
-  }
-  if (config.staticFiles?.security) {
-    files.push({ fileName: "SECURITY.md", content: generateSecurity() });
-  }
-  if (config.staticFiles?.gitignoreMode && config.staticFiles.gitignoreMode !== "skip") {
-    files.push({ fileName: ".gitignore", content: generateGitignore(config) });
-  }
-  if (config.buildContainer || config.staticFiles?.dockerignore) {
-    files.push({ fileName: ".dockerignore", content: generateDockerignore(config) });
+  if (content) {
+    files.push({ fileName, content, platform });
   }
 
   return files;
 }
 
-// Main function to generate all files and create ZIP
+// Main function to generate single config file
 export async function generateConfigFiles(
   config: WizardConfig,
   user: UserProfile
 ): Promise<Blob> {
-  const zip = new JSZip();
   const files = generateAllFiles(config, user);
-
-  files.forEach((file) => {
-    zip.file(file.fileName, file.content);
-  });
-
-  // Generate the ZIP blob
-  return await zip.generateAsync({ type: "blob" });
+  if (files.length === 0) {
+    return new Blob([""], { type: "text/plain" });
+  }
+  // Return single file as text blob
+  return new Blob([files[0].content], { type: "text/plain" });
 }
 
-// Trigger download
+// Trigger download - now downloads single file
 export function downloadZip(blob: Blob, projectName: string) {
+  const files = arguments[2] as GeneratedFile[] | undefined;
+  const fileName = files?.[0]?.fileName || "ai-config.md";
+  
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `${projectName || "config"}-files.zip`;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// Download with filename from files array
+export function downloadConfigFile(blob: Blob, files: GeneratedFile[]) {
+  const fileName = files[0]?.fileName || "ai-config.md";
+  
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

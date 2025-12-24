@@ -703,6 +703,7 @@ npx lynxprompt init  # Download and place config in current directory
 
 ## 💡 Future Ideas
 
+- **GitHub URL Import**: Share a public GitHub repository URL in the wizard and auto-prefill all settings based on the repo's structure (needs AI analysis of package.json, language detection, framework detection, etc.)
 - VS Code extension to sync templates
 - CLI tool for quick template downloads (`npx lynxprompt init`)
 - Team/organization features
