@@ -501,6 +501,17 @@ function generateClaudeMd(config: WizardConfig, user: UserProfile): string {
   lines.push("");
   lines.push("## Overview");
   lines.push(config.projectDescription || "A software project.");
+  
+  if (config.devOS) {
+    const osNames: Record<string, string> = {
+      linux: "Linux",
+      macos: "macOS",
+      windows: "Windows",
+      wsl: "Windows with WSL",
+      multi: "Multi-platform"
+    };
+    lines.push(`**Development Environment**: ${osNames[config.devOS] || config.devOS}`);
+  }
   lines.push("");
 
   if (config.languages.length > 0 || config.frameworks.length > 0 || config.letAiDecide) {
@@ -710,6 +721,17 @@ function generateCopilotInstructions(
   lines.push("");
   lines.push("## Context");
   lines.push(config.projectDescription || "A software project.");
+  
+  if (config.devOS) {
+    const osNames: Record<string, string> = {
+      linux: "Linux",
+      macos: "macOS",
+      windows: "Windows",
+      wsl: "Windows with WSL",
+      multi: "Multi-platform"
+    };
+    lines.push(`**Development Environment**: ${osNames[config.devOS] || config.devOS}`);
+  }
   lines.push("");
 
   if (config.languages.length > 0) {
@@ -860,6 +882,17 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
   lines.push("");
   lines.push("## Overview");
   lines.push(config.projectDescription || "A software project.");
+  
+  if (config.devOS) {
+    const osNames: Record<string, string> = {
+      linux: "Linux",
+      macos: "macOS",
+      windows: "Windows",
+      wsl: "Windows with WSL",
+      multi: "Multi-platform"
+    };
+    lines.push(`**Development Environment**: ${osNames[config.devOS] || config.devOS}`);
+  }
   lines.push("");
 
   if (config.languages.length > 0 || config.frameworks.length > 0 || config.letAiDecide) {
