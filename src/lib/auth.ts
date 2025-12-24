@@ -55,16 +55,43 @@ function html({
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sign in to LynxPrompt</title>
+  <style>
+    :root { color-scheme: light dark; supported-color-schemes: light dark; }
+    @media (prefers-color-scheme: dark) {
+      body, table, td {
+        background-color: #0f172a !important;
+        color: #e5e7eb !important;
+      }
+      a { color: #c4b5fd !important; }
+      .card {
+        background-color: #111827 !important;
+        color: #e5e7eb !important;
+      }
+      .muted { color: #cbd5e1 !important; }
+      .divider { border-top: 1px solid #1f2937 !important; }
+    }
+  </style>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
   <table role="presentation" style="width: 100%; border-collapse: collapse;">
     <tr>
       <td align="center" style="padding: 40px 0;">
-        <table role="presentation" style="width: 100%; max-width: 560px; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <table role="presentation" class="card" style="width: 100%; max-width: 560px; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
           <!-- Header with gradient -->
           <tr>
             <td style="background: linear-gradient(135deg, #9333ea 0%, #ec4899 100%); padding: 32px 40px; border-radius: 12px 12px 0 0; text-align: center;">
-              <img src="https://lynxprompt.com/logo.png" alt="LynxPrompt" style="height: 40px; width: auto;" />
+              <table role="presentation" style="display: inline-table; border-collapse: collapse;">
+                <tr>
+                  <td style="vertical-align: middle; padding-right: 8px;">
+                    <img src="https://lynxprompt.com/lynxprompt.png" alt="LynxPrompt" style="height: 40px; width: auto;" />
+                  </td>
+                  <td style="vertical-align: middle;">
+                    <span style="font-size: 24px; font-weight: 700; letter-spacing: -0.025em;">
+                      <span style="color: #ffffff;">Lynx</span><span style="color: #fce7f3;">Prompt</span>
+                    </span>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
           
@@ -75,7 +102,7 @@ function html({
                 Sign in to LynxPrompt
               </h1>
               
-              <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 24px; color: #52525b; text-align: center;">
+              <p class="muted" style="margin: 0 0 24px 0; font-size: 16px; line-height: 24px; color: #52525b; text-align: center;">
                 Click the button below to sign in to your account at <strong>${escapedHost}</strong>
               </p>
               
@@ -95,13 +122,13 @@ function html({
               </p>
               
               <!-- Divider -->
-              <hr style="margin: 32px 0; border: none; border-top: 1px solid #e4e4e7;" />
+              <hr class="divider" style="margin: 32px 0; border: none; border-top: 1px solid #e4e4e7;" />
               
-              <p style="margin: 0 0 8px 0; font-size: 13px; color: #a1a1aa; text-align: center;">
+              <p class="muted" style="margin: 0 0 8px 0; font-size: 13px; color: #a1a1aa; text-align: center;">
                 If you didn't request this email, you can safely ignore it.
               </p>
               
-              <p style="margin: 0; font-size: 13px; color: #a1a1aa; text-align: center;">
+              <p class="muted" style="margin: 0; font-size: 13px; color: #a1a1aa; text-align: center;">
                 Requested for: ${escapedEmail}
               </p>
             </td>

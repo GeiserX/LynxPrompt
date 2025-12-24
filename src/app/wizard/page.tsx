@@ -1,4 +1,4 @@
- "use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -35,6 +35,7 @@ import {
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { CodeEditor } from "@/components/code-editor";
 import {
   generateConfigFiles,
   downloadConfigFile,
@@ -61,6 +62,21 @@ const WIZARD_STEPS: {
   { id: "static", title: "Static Files", icon: FileText, tier: "advanced" },
   { id: "extra", title: "Anything Else?", icon: MessageSquare, tier: "basic" },
   { id: "generate", title: "Generate", icon: Download, tier: "basic" },
+];
+
+// Precomputed widths (Tailwind-safe arbitrary values) for the mobile progress bar
+const MOBILE_PROGRESS_WIDTHS = [
+  "w-[9%]",
+  "w-[18%]",
+  "w-[27%]",
+  "w-[36%]",
+  "w-[45%]",
+  "w-[55%]",
+  "w-[64%]",
+  "w-[73%]",
+  "w-[82%]",
+  "w-[91%]",
+  "w-[100%]",
 ];
 
 function getTierBadge(tier: WizardTier) {
@@ -377,12 +393,20 @@ const PROJECT_TYPES = [
 // Platforms are the PRIMARY target, but files often work across multiple IDEs
 const PLATFORMS = [
   {
+    id: "universal",
+    name: "Universal",
+    file: "AGENTS.md",
+    icon: "🌐",
+    gradient: "from-violet-500 to-purple-500",
+    note: "Works with all AI-enabled IDEs",
+  },
+  {
     id: "cursor",
     name: "Cursor",
-    file: ".cursor/rules", // Cursor's native project rules format
+    file: ".cursor/rules",
     icon: "⚡",
     gradient: "from-blue-500 to-cyan-500",
-    note: "Also supports AGENTS.md",
+    note: "Native project rules format",
   },
   {
     id: "claude",
@@ -395,10 +419,10 @@ const PLATFORMS = [
   {
     id: "copilot",
     name: "GitHub Copilot",
-    file: "copilot-instructions.md",
-    icon: "🤖",
+    file: ".github/copilot-instructions.md",
+    icon: "🐙",
     gradient: "from-gray-600 to-gray-800",
-    note: "VS Code & JetBrains compatible",
+    note: "VS Code & JetBrains",
   },
   {
     id: "windsurf",
@@ -407,6 +431,62 @@ const PLATFORMS = [
     icon: "🏄",
     gradient: "from-teal-500 to-emerald-500",
     note: "Codeium IDE",
+  },
+  {
+    id: "aider",
+    name: "Aider",
+    file: ".aider.conf.yml",
+    icon: "🤖",
+    gradient: "from-green-500 to-lime-500",
+    note: "CLI AI pair programming",
+  },
+  {
+    id: "continue",
+    name: "Continue",
+    file: ".continue/config.json",
+    icon: "➡️",
+    gradient: "from-blue-600 to-indigo-500",
+    note: "Open-source autopilot",
+  },
+  {
+    id: "cody",
+    name: "Sourcegraph Cody",
+    file: ".cody/config.json",
+    icon: "🔍",
+    gradient: "from-pink-500 to-rose-500",
+    note: "Context-aware AI",
+  },
+  {
+    id: "tabnine",
+    name: "Tabnine",
+    file: ".tabnine.yaml",
+    icon: "📝",
+    gradient: "from-cyan-500 to-blue-500",
+    note: "AI code completion",
+  },
+  {
+    id: "supermaven",
+    name: "Supermaven",
+    file: ".supermaven/config.json",
+    icon: "🦸",
+    gradient: "from-amber-500 to-orange-500",
+    note: "Fast AI completions",
+  },
+  {
+    id: "codegpt",
+    name: "CodeGPT",
+    file: ".codegpt/config.json",
+    icon: "💬",
+    gradient: "from-emerald-500 to-teal-500",
+    note: "VS Code AI assistant",
+  },
+  {
+    id: "void",
+    name: "Void",
+    file: ".void/config.json",
+    icon: "🕳️",
+    gradient: "from-slate-600 to-slate-800",
+    note: "Open-source Cursor alt",
   },
 ];
 
@@ -529,7 +609,7 @@ export default function WizardPage() {
     repoUrl: "",
     exampleRepoUrl: "",
     isPublic: true,
-    license: "mit",
+    license: "none",
     licenseOther: "",
     licenseSave: false,
     funding: false,
@@ -546,17 +626,17 @@ export default function WizardPage() {
     aiBehaviorRules: ["always_debug_after_build", "check_logs_after_build", "follow_existing_patterns"],
     enableAutoUpdate: false,
     includePersonalData: true,
-    platform: "cursor",
+    platform: "universal",
     additionalFeedback: "",
     commands: { build: "", test: "", lint: "", dev: "", additional: [], savePreferences: false },
     codeStyle: { naming: "camelCase", notes: "", savePreferences: false },
     boundaries: { always: [], ask: [], never: [], savePreferences: false },
-    testing: { levels: ["unit"], coverage: 80, frameworks: [], notes: "", savePreferences: false },
+    testing: { levels: [], coverage: 80, frameworks: [], notes: "", savePreferences: false },
     staticFiles: {
       funding: false,
       fundingYml: "",
       fundingSave: false,
-      editorconfig: true,
+      editorconfig: false,
       editorconfigCustom: "",
       editorconfigSave: false,
       contributing: false,
@@ -568,7 +648,7 @@ export default function WizardPage() {
       security: false,
       securityCustom: "",
       securitySave: false,
-      gitignoreMode: "generate",
+      gitignoreMode: "skip",
       gitignoreCustom: "",
       gitignoreSave: false,
       dockerignore: false,
@@ -719,25 +799,6 @@ export default function WizardPage() {
     [userTier],
   );
 
-  // Show loading state while checking auth
-  if (status === "loading" || tierLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
-      </div>
-    );
-  }
-
-  // Show login required screen if not authenticated
-  if (status === "unauthenticated" || !session) {
-    return <LoginRequired />;
-  }
-
-  // Check if profile is completed - redirect to profile setup if not
-  if (!session.user.profileCompleted) {
-    return <ProfileSetupRequired />;
-  }
-
   const buildGeneratorConfig = () => {
     return {
       projectName: config.projectName,
@@ -829,13 +890,31 @@ export default function WizardPage() {
         name: session.user.name,
         persona: session.user.persona,
         skillLevel: session.user.skillLevel,
+        tier: userTier, // Pass user tier to respect feature access
       });
       setPreviewFiles(files);
       if (files.length > 0 && !expandedFile) {
         setExpandedFile(files[0].fileName);
       }
     }
-  }, [currentStep, session?.user, config]);
+  }, [currentStep, session?.user, config, userTier]);
+
+  // Auth/loading gates must live after all hooks to keep hook order stable
+  if (status === "loading" || tierLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="animate-pulse text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  if (status === "unauthenticated" || !session) {
+    return <LoginRequired />;
+  }
+
+  if (!session.user.profileCompleted) {
+    return <ProfileSetupRequired />;
+  }
 
   const handleNext = () => {
     if (currentStep >= WIZARD_STEPS.length - 1) return;
@@ -956,6 +1035,7 @@ export default function WizardPage() {
         name: session.user.name,
         persona: session.user.persona,
         skillLevel: session.user.skillLevel,
+        tier: userTier, // Pass user tier to respect feature access
       };
       
       // Build config with variable replacements
@@ -1009,6 +1089,7 @@ export default function WizardPage() {
             <button
               onClick={() => setShowVariableModal(false)}
               className="absolute right-4 top-4 rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  aria-label="Close variable modal"
             >
               <X className="h-5 w-5" />
             </button>
@@ -1203,14 +1284,12 @@ export default function WizardPage() {
                   {WIZARD_STEPS[currentStep].title}
                 </span>
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full bg-primary transition-all"
-                  style={{
-                    width: `${((currentStep + 1) / WIZARD_STEPS.length) * 100}%`,
-                  }}
-                />
-              </div>
+              <progress
+                className="h-2 w-full overflow-hidden rounded-full bg-muted"
+                value={currentStep + 1}
+                max={WIZARD_STEPS.length}
+                aria-label="Wizard progress"
+              />
             </div>
 
             {/* Step Content */}
@@ -2216,16 +2295,16 @@ function StepAIBehavior({
       </p>
       
       {/* Personal Data Section */}
-      <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+      <div className="mt-6 rounded-lg border-2 border-blue-600 bg-white p-4 shadow-sm dark:border-blue-800 dark:bg-blue-900/20">
         <div className="flex items-start gap-3">
           <User className="h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
           <div className="flex-1">
-            <h3 className="font-semibold text-blue-900 dark:text-blue-200">Include Your Profile in Blueprint</h3>
-            <p className="mt-1 text-sm text-blue-800 dark:text-blue-300">
+            <h3 className="font-semibold text-gray-900 dark:text-blue-200">Include Your Profile in Blueprint</h3>
+            <p className="mt-1 text-sm text-gray-700 dark:text-blue-300">
               Your developer role (<strong>{personaLabel}</strong>) and skill level (<strong>{skillLabel}</strong>) 
               can be included in the generated config file. This helps the AI tailor its responses to your experience level.
             </p>
-            <p className="mt-2 text-xs text-blue-700 dark:text-blue-400 italic">
+            <p className="mt-2 text-xs text-gray-600 dark:text-blue-400 italic">
               Note: This information is only used in the downloaded config file — it doesn&apos;t affect the wizard itself.
             </p>
             <div className="mt-3 flex items-center gap-3">
@@ -2234,9 +2313,9 @@ function StepAIBehavior({
                 id="includePersonalData"
                 checked={includePersonalData}
                 onChange={(e) => onIncludePersonalDataChange(e.target.checked)}
-                className="h-4 w-4 rounded border-blue-400"
+                className="h-4 w-4 rounded border-blue-600 accent-blue-600"
               />
-              <label htmlFor="includePersonalData" className="text-sm font-medium text-blue-800 dark:text-blue-200">
+              <label htmlFor="includePersonalData" className="text-sm font-medium text-gray-800 dark:text-blue-200">
                 Include my role &amp; skill level in the AI config file
               </label>
             </div>
@@ -2745,8 +2824,8 @@ function StepCodeStyle({
       </p>
 
       {selectedLanguages.length === 0 && (
-        <div className="mt-4 rounded-lg border border-yellow-500/50 bg-yellow-50 p-3 dark:bg-yellow-900/20">
-          <p className="text-sm text-yellow-800 dark:text-yellow-200">
+        <div className="mt-4 rounded-lg border-2 border-amber-500 bg-white p-3 shadow-sm dark:border-yellow-500/50 dark:bg-yellow-900/20">
+          <p className="text-sm font-medium text-amber-800 dark:text-yellow-200">
             ⚠️ No languages selected. Go back to the Tech Stack step to select at least one language, 
             or enable "Let AI decide" for best results.
           </p>
@@ -2754,8 +2833,8 @@ function StepCodeStyle({
       )}
 
       {languageHint && (
-        <div className="mt-4 rounded-lg border border-blue-500/50 bg-blue-50 p-3 dark:bg-blue-900/20">
-          <p className="text-sm text-blue-800 dark:text-blue-200">
+        <div className="mt-4 rounded-lg border-2 border-blue-500 bg-white p-3 shadow-sm dark:border-blue-500/50 dark:bg-blue-900/20">
+          <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
             💡 {languageHint}
           </p>
         </div>
@@ -2980,7 +3059,18 @@ function StepTesting({
   onChange: (updates: Partial<TestingStrategyConfig>) => void;
 }) {
   const [search, setSearch] = useState("");
+  const [showAllFrameworks, setShowAllFrameworks] = useState(false);
+  
   const filtered = TEST_FRAMEWORKS.filter((f) => f.toLowerCase().includes(search.toLowerCase()));
+  // Show selected frameworks first, then others - limit to 16 initially
+  const sortedFiltered = useMemo(() => {
+    const selected = filtered.filter(fw => config.frameworks.includes(fw));
+    const unselected = filtered.filter(fw => !config.frameworks.includes(fw));
+    return [...selected, ...unselected];
+  }, [filtered, config.frameworks]);
+  
+  const visibleFrameworks = showAllFrameworks ? sortedFiltered : sortedFiltered.slice(0, 16);
+  const hasMoreFrameworks = sortedFiltered.length > 16 && !showAllFrameworks;
   
   const toggleLevel = (lvl: string) => {
     const exists = config.levels.includes(lvl);
@@ -3025,10 +3115,13 @@ function StepTesting({
         
         <div>
           <div className="flex items-center justify-between">
-            <label className="text-sm font-medium">Coverage target</label>
+            <label className="text-sm font-medium" htmlFor="coverage-target">
+              Coverage target
+            </label>
             <span className="text-lg font-bold text-primary">{config.coverage}%</span>
           </div>
           <input
+            id="coverage-target"
             type="range"
             min="0"
             max="100"
@@ -3050,23 +3143,47 @@ function StepTesting({
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setShowAllFrameworks(true); }}
               placeholder="Search testing frameworks..."
               className="w-full rounded-lg border bg-background py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
-          <div className="flex flex-wrap gap-2">
-            {filtered.map((fw) => (
+          <div className="relative">
+            <div className="flex flex-wrap gap-2">
+              {visibleFrameworks.map((fw) => (
+                <button
+                  key={fw}
+                  onClick={() => toggleFramework(fw)}
+                  className={`rounded-full border px-3 py-1 text-xs ${
+                    config.frameworks.includes(fw) ? "border-primary bg-primary/10" : "hover:border-primary"
+                  }`}
+                >
+                  {fw}
+                </button>
+              ))}
+            </div>
+            
+            {/* Blur overlay and Load More button */}
+            {hasMoreFrameworks && (
+              <div className="relative mt-2">
+                <div className="absolute -top-6 left-0 right-0 h-6 bg-gradient-to-t from-background/80 to-transparent pointer-events-none" />
+                <button
+                  onClick={() => setShowAllFrameworks(true)}
+                  className="w-full rounded-md border border-dashed border-muted-foreground/30 py-2 text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                >
+                  Show {sortedFiltered.length - 16} more frameworks...
+                </button>
+              </div>
+            )}
+            
+            {showAllFrameworks && sortedFiltered.length > 16 && (
               <button
-                key={fw}
-                onClick={() => toggleFramework(fw)}
-                className={`rounded-full border px-3 py-1 text-xs ${
-                  config.frameworks.includes(fw) ? "border-primary bg-primary/10" : "hover:border-primary"
-                }`}
+                onClick={() => setShowAllFrameworks(false)}
+                className="mt-2 w-full text-center text-xs text-muted-foreground hover:text-primary"
               >
-                {fw}
+                Show less
               </button>
-            ))}
+            )}
           </div>
         </div>
         
@@ -3104,7 +3221,7 @@ function StaticFileEditor({
   saveChecked,
   onSaveToggle,
   placeholder,
-  rows = 4,
+  minHeight = "150px",
 }: {
   label: string;
   description: string;
@@ -3115,7 +3232,7 @@ function StaticFileEditor({
   saveChecked: boolean;
   onSaveToggle: (v: boolean) => void;
   placeholder?: string;
-  rows?: number;
+  minHeight?: string;
 }) {
   const [expanded, setExpanded] = useState(false);
   
@@ -3156,13 +3273,14 @@ function StaticFileEditor({
         </div>
       </div>
       {enabled && expanded && onContentChange && (
-        <textarea
-          value={content || ""}
-          onChange={(e) => onContentChange(e.target.value)}
-          rows={rows}
-          placeholder={placeholder}
-          className="mt-3 w-full rounded-lg border bg-background px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-        />
+        <div className="mt-3">
+          <CodeEditor
+            value={content || ""}
+            onChange={onContentChange}
+            placeholder={placeholder}
+            minHeight={minHeight}
+          />
+        </div>
       )}
     </div>
   );
@@ -3198,7 +3316,11 @@ function StepStaticFiles({
           onContentChange={(v) => onChange({ editorconfigCustom: v })}
           saveChecked={config.editorconfigSave}
           onSaveToggle={(v) => onChange({ editorconfigSave: v })}
-          placeholder="root = true\n\n[*]\nindent_style = space\nindent_size = 2"
+          placeholder={`root = true
+
+[*]
+indent_style = space
+indent_size = 2`}
         />
         
         <StaticFileEditor
@@ -3210,8 +3332,10 @@ function StepStaticFiles({
           onContentChange={(v) => onChange({ contributingCustom: v })}
           saveChecked={config.contributingSave}
           onSaveToggle={(v) => onChange({ contributingSave: v })}
-          placeholder="# Contributing\n\nThank you for your interest in contributing!"
-          rows={6}
+          placeholder={`# Contributing
+
+Thank you for your interest in contributing!`}
+          minHeight="180px"
         />
         
         <StaticFileEditor
@@ -3223,8 +3347,10 @@ function StepStaticFiles({
           onContentChange={(v) => onChange({ codeOfConductCustom: v })}
           saveChecked={config.codeOfConductSave}
           onSaveToggle={(v) => onChange({ codeOfConductSave: v })}
-          placeholder="# Code of Conduct\n\nWe are committed to providing a welcoming environment."
-          rows={6}
+          placeholder={`# Code of Conduct
+
+We are committed to providing a welcoming environment.`}
+          minHeight="180px"
         />
         
         <StaticFileEditor
@@ -3236,8 +3362,10 @@ function StepStaticFiles({
           onContentChange={(v) => onChange({ securityCustom: v })}
           saveChecked={config.securitySave}
           onSaveToggle={(v) => onChange({ securitySave: v })}
-          placeholder="# Security Policy\n\nTo report a vulnerability, please email security@example.com"
-          rows={5}
+          placeholder={`# Security Policy
+
+To report a vulnerability, please email security@example.com`}
+          minHeight="150px"
         />
 
         <div className="rounded-lg border p-4">
@@ -3269,13 +3397,16 @@ function StepStaticFiles({
             ))}
           </div>
           {config.gitignoreMode === "custom" && (
-            <textarea
-              value={config.gitignoreCustom}
-              onChange={(e) => onChange({ gitignoreCustom: e.target.value })}
-              rows={5}
-              placeholder="node_modules/\n.env\ndist/"
-              className="mt-2 w-full rounded-lg border bg-background px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
+            <div className="mt-2">
+              <CodeEditor
+                value={config.gitignoreCustom || ""}
+                onChange={(v) => onChange({ gitignoreCustom: v })}
+                placeholder={`node_modules/
+.env
+dist/`}
+                minHeight="120px"
+              />
+            </div>
           )}
         </div>
 
@@ -3307,13 +3438,16 @@ function StepStaticFiles({
             </label>
           </div>
           {config.dockerignore && (
-            <textarea
-              value={config.dockerignoreCustom}
-              onChange={(e) => onChange({ dockerignoreCustom: e.target.value })}
-              rows={4}
-              placeholder="node_modules/\n.git/\n*.log"
-              className="mt-3 w-full rounded-lg border bg-background px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
+            <div className="mt-3">
+              <CodeEditor
+                value={config.dockerignoreCustom || ""}
+                onChange={(v) => onChange({ dockerignoreCustom: v })}
+                placeholder={`node_modules/
+.git/
+*.log`}
+                minHeight="100px"
+              />
+            </div>
           )}
         </div>
 
@@ -3344,13 +3478,16 @@ function StepStaticFiles({
               </label>
             </div>
             {config.funding && (
-              <textarea
-                value={config.fundingYml}
-                onChange={(e) => onChange({ fundingYml: e.target.value })}
-                rows={4}
-                placeholder="github: [your-username]\npatreon: your-patreon\nko_fi: your-kofi"
-                className="mt-3 w-full rounded-lg border bg-background px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
+              <div className="mt-3">
+                <CodeEditor
+                  value={config.fundingYml || ""}
+                  onChange={(v) => onChange({ fundingYml: v })}
+                  placeholder={`github: [your-username]
+patreon: your-patreon
+ko_fi: your-kofi`}
+                  minHeight="100px"
+                />
+              </div>
             )}
           </div>
         )}
@@ -3424,6 +3561,21 @@ function StepGenerate({
   onCopyFile: (fileName: string, content: string) => void;
   onPlatformChange: (v: string) => void;
 }) {
+  const [ideSearch, setIdeSearch] = useState("");
+  const [showAllIdes, setShowAllIdes] = useState(false);
+  
+  const filteredPlatforms = useMemo(() => {
+    const searchLower = ideSearch.toLowerCase();
+    return PLATFORMS.filter(
+      (p) =>
+        p.name.toLowerCase().includes(searchLower) ||
+        p.note.toLowerCase().includes(searchLower)
+    );
+  }, [ideSearch]);
+  
+  const visiblePlatforms = showAllIdes ? filteredPlatforms : filteredPlatforms.slice(0, 4);
+  const hasMore = filteredPlatforms.length > 4 && !showAllIdes;
+  
   return (
     <div>
       <h2 className="text-2xl font-bold">Preview & Download</h2>
@@ -3438,24 +3590,56 @@ function StepGenerate({
         <div className="rounded-lg border bg-muted/30 p-4">
           <h3 className="font-medium">Target AI IDE</h3>
           <p className="text-sm text-muted-foreground">Choose your AI IDE (files are optimized for it but remain portable).</p>
-          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {[
-              { id: "cursor", label: "Cursor", icon: "🔮" },
-              { id: "claude", label: "Claude Code", icon: "🤖" },
-              { id: "copilot", label: "GitHub Copilot", icon: "🐙" },
-              { id: "windsurf", label: "Windsurf", icon: "🏄" },
-            ].map((p) => (
+          
+          {/* Search box */}
+          <div className="relative mt-3 mb-3">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              value={ideSearch}
+              onChange={(e) => { setIdeSearch(e.target.value); setShowAllIdes(true); }}
+              placeholder="Search AI IDEs..."
+              className="w-full rounded-lg border bg-background py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          
+          <div className="relative">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {visiblePlatforms.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => onPlatformChange(p.id)}
+                  className={`flex flex-col items-center justify-center gap-1 rounded-md border px-3 py-3 text-sm transition-all ${
+                    config.platform === p.id ? "border-primary bg-primary/10 ring-1 ring-primary" : "hover:border-primary"
+                  }`}
+                >
+                  <span className="text-lg">{p.icon}</span>
+                  <span className="font-medium">{p.name}</span>
+                  <span className="text-[10px] text-muted-foreground">{p.note}</span>
+                </button>
+              ))}
+            </div>
+            
+            {/* Blur overlay and Load More button */}
+            {hasMore && (
+              <div className="relative mt-2">
+                <div className="absolute -top-8 left-0 right-0 h-8 bg-gradient-to-t from-background/80 to-transparent pointer-events-none" />
+                <button
+                  onClick={() => setShowAllIdes(true)}
+                  className="w-full rounded-md border border-dashed border-muted-foreground/30 py-2 text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                >
+                  Show {filteredPlatforms.length - 4} more IDEs...
+                </button>
+              </div>
+            )}
+            
+            {showAllIdes && filteredPlatforms.length > 4 && (
               <button
-                key={p.id}
-                onClick={() => onPlatformChange(p.id)}
-                className={`flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm transition-all ${
-                  config.platform === p.id ? "border-primary bg-primary/10" : "hover:border-primary"
-                }`}
+                onClick={() => setShowAllIdes(false)}
+                className="mt-2 w-full text-center text-xs text-muted-foreground hover:text-primary"
               >
-                <span>{p.icon}</span>
-                <span>{p.label}</span>
+                Show less
               </button>
-            ))}
+            )}
           </div>
         </div>
 
