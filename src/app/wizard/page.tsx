@@ -3412,11 +3412,11 @@ function StepGenerate({
         <div className="rounded-lg border bg-muted/30 p-4">
           <h3 className="font-medium">Using your profile settings:</h3>
           <div className="mt-2 flex gap-4 text-sm text-muted-foreground">
-            <span>Author: {session.user.displayName || session.user.name}</span>
+            <span>Author: {session.user.displayName || session.user.name || "User"}</span>
             <span>•</span>
-            <span className="capitalize">{session.user.persona}</span>
+            <span className="capitalize">{session.user.persona || "Developer"}</span>
             <span>•</span>
-            <span className="capitalize">{session.user.skillLevel} level</span>
+            <span className="capitalize">{session.user.skillLevel || "Intermediate"} level</span>
           </div>
         </div>
 
