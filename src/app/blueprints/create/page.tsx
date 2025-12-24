@@ -20,6 +20,7 @@ import {
   Euro,
   Lock,
   Shield,
+  ExternalLink,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Footer } from "@/components/footer";
@@ -57,6 +58,7 @@ export default function ShareBlueprintPage() {
   const [aiAssisted, setAiAssisted] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
   const [price, setPrice] = useState<number>(5);
+  const [showcaseUrl, setShowcaseUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<{ id: string; name: string; isPublic: boolean } | null>(
@@ -226,6 +228,7 @@ export default function ShareBlueprintPage() {
           aiAssisted: isPublic ? aiAssisted : false, // Only relevant if sharing publicly
           price: isPaid ? Math.round(price * 100) : null, // Convert to cents
           currency: "EUR",
+          showcaseUrl: showcaseUrl.trim() || null,
           turnstileToken: requiresTurnstile ? turnstileToken : undefined,
         }),
       });
@@ -459,6 +462,30 @@ export default function ShareBlueprintPage() {
                       rows={3}
                       maxLength={500}
                     />
+                  </div>
+
+                  {/* Showcase URL */}
+                  <div>
+                    <label
+                      htmlFor="showcaseUrl"
+                      className="mb-1 block text-sm font-medium"
+                    >
+                      <ExternalLink className="mr-1 inline h-4 w-4" />
+                      Showcase URL
+                    </label>
+                    <input
+                      id="showcaseUrl"
+                      type="url"
+                      value={showcaseUrl}
+                      onChange={(e) => setShowcaseUrl(e.target.value)}
+                      placeholder="https://github.com/user/repo or https://myapp.com"
+                      className="w-full rounded-lg border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      maxLength={500}
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Link to a live demo, GitHub repo, or website that showcases what this blueprint can build. 
+                      Especially recommended for paid blueprints to help buyers see the value.
+                    </p>
                   </div>
 
                   {/* Type */}

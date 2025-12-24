@@ -48,46 +48,34 @@ function html({
   const escapedEmail = `${email.replace(/\./g, "&#8203;.")}`;
   const escapedHost = `${host.replace(/\./g, "&#8203;.")}`;
 
+  // Email-safe design: Uses colors that work well in BOTH light and dark modes
+  // No media queries (unreliable in email clients), just solid colors that pop
   return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
   <title>Sign in to LynxPrompt</title>
-  <style>
-    :root { color-scheme: light dark; supported-color-schemes: light dark; }
-    @media (prefers-color-scheme: dark) {
-      body, table, td {
-        background-color: #0f172a !important;
-        color: #e5e7eb !important;
-      }
-      a { color: #c4b5fd !important; }
-      .card {
-        background-color: #111827 !important;
-        color: #e5e7eb !important;
-      }
-      .muted { color: #cbd5e1 !important; }
-      .divider { border-top: 1px solid #1f2937 !important; }
-    }
-  </style>
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
-  <table role="presentation" style="width: 100%; border-collapse: collapse;">
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #1a1a2e;">
+  <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #1a1a2e;">
     <tr>
-      <td align="center" style="padding: 40px 0;">
-        <table role="presentation" class="card" style="width: 100%; max-width: 560px; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" style="width: 100%; max-width: 520px; border-collapse: collapse; background-color: #16213e; border-radius: 16px; overflow: hidden;">
           <!-- Header with gradient -->
           <tr>
-            <td style="background: linear-gradient(135deg, #9333ea 0%, #ec4899 100%); padding: 32px 40px; border-radius: 12px 12px 0 0; text-align: center;">
+            <td style="background: linear-gradient(135deg, #9333ea 0%, #ec4899 100%); padding: 32px 40px; text-align: center;">
               <table role="presentation" style="display: inline-table; border-collapse: collapse;">
                 <tr>
-                  <td style="vertical-align: middle; padding-right: 8px;">
-                    <img src="https://lynxprompt.com/lynxprompt.png" alt="LynxPrompt" style="height: 40px; width: auto;" />
+                  <td style="vertical-align: middle; padding-right: 10px;">
+                    <img src="https://lynxprompt.com/lynxprompt.png" alt="LynxPrompt" width="44" height="44" style="display: block;" />
                   </td>
                   <td style="vertical-align: middle;">
-                    <span style="font-size: 24px; font-weight: 700; letter-spacing: -0.025em;">
-                      <span style="color: #ffffff;">Lynx</span><span style="color: #fce7f3;">Prompt</span>
+                    <span style="font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
+                      <span style="color: #ffffff;">Lynx</span><span style="color: #fcd34d;">Prompt</span>
                     </span>
                   </td>
                 </tr>
@@ -97,50 +85,57 @@ function html({
           
           <!-- Main content -->
           <tr>
-            <td style="padding: 40px;">
-              <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 700; color: #18181b; text-align: center;">
+            <td style="padding: 40px 32px;">
+              <h1 style="margin: 0 0 20px 0; font-size: 26px; font-weight: 700; color: #ffffff; text-align: center;">
                 Sign in to LynxPrompt
               </h1>
               
-              <p class="muted" style="margin: 0 0 24px 0; font-size: 16px; line-height: 24px; color: #52525b; text-align: center;">
-                Click the button below to sign in to your account at <strong>${escapedHost}</strong>
+              <p style="margin: 0 0 8px 0; font-size: 16px; line-height: 26px; color: #cbd5e1; text-align: center;">
+                Click the button below to sign in
+              </p>
+              <p style="margin: 0 0 32px 0; font-size: 16px; line-height: 26px; color: #cbd5e1; text-align: center;">
+                to your account at <strong style="color: #ffffff;">${escapedHost}</strong>
               </p>
               
-              <!-- CTA Button -->
+              <!-- CTA Button - High contrast purple/pink that stands out -->
               <table role="presentation" style="width: 100%; border-collapse: collapse;">
                 <tr>
-                  <td align="center" style="padding: 16px 0;">
-                    <a href="${url}" target="_blank" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #9333ea 0%, #ec4899 100%); color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 14px rgba(147, 51, 234, 0.4);">
-                      Sign in to LynxPrompt
+                  <td align="center" style="padding: 0;">
+                    <a href="${url}" target="_blank" style="display: inline-block; padding: 16px 40px; background-color: #a855f7; color: #ffffff; text-decoration: none; font-size: 17px; font-weight: 700; border-radius: 10px; border: 2px solid #c084fc;">
+                      Sign in to LynxPrompt →
                     </a>
                   </td>
                 </tr>
               </table>
               
-              <p style="margin: 24px 0 0 0; font-size: 14px; line-height: 20px; color: #71717a; text-align: center;">
-                This link will expire in 24 hours and can only be used once.
+              <p style="margin: 28px 0 0 0; font-size: 14px; line-height: 22px; color: #94a3b8; text-align: center;">
+                This link expires in 24 hours and can only be used once.
               </p>
               
               <!-- Divider -->
-              <hr class="divider" style="margin: 32px 0; border: none; border-top: 1px solid #e4e4e7;" />
+              <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 28px 0;">
+                <tr>
+                  <td style="border-top: 1px solid #334155;"></td>
+                </tr>
+              </table>
               
-              <p class="muted" style="margin: 0 0 8px 0; font-size: 13px; color: #a1a1aa; text-align: center;">
-                If you didn't request this email, you can safely ignore it.
+              <p style="margin: 0 0 6px 0; font-size: 13px; color: #64748b; text-align: center;">
+                Didn't request this? You can safely ignore this email.
               </p>
               
-              <p class="muted" style="margin: 0; font-size: 13px; color: #a1a1aa; text-align: center;">
-                Requested for: ${escapedEmail}
+              <p style="margin: 0; font-size: 13px; color: #64748b; text-align: center;">
+                Requested for: <span style="color: #94a3b8;">${escapedEmail}</span>
               </p>
             </td>
           </tr>
           
           <!-- Footer -->
           <tr>
-            <td style="padding: 24px 40px; background-color: #fafafa; border-radius: 0 0 12px 12px; text-align: center;">
-              <p style="margin: 0; font-size: 12px; color: #a1a1aa;">
-                © 2025 LynxPrompt by <a href="https://geiser.cloud" style="color: #9333ea; text-decoration: none;">Geiser Cloud</a>
+            <td style="padding: 20px 32px; background-color: #0f172a; text-align: center;">
+              <p style="margin: 0; font-size: 12px; color: #64748b;">
+                © 2025 LynxPrompt by <a href="https://geiser.cloud" style="color: #a855f7; text-decoration: none;">Geiser Cloud</a>
               </p>
-              <p style="margin: 8px 0 0 0; font-size: 12px; color: #a1a1aa;">
+              <p style="margin: 6px 0 0 0; font-size: 12px; color: #475569;">
                 AI IDE Configuration Generator
               </p>
             </td>

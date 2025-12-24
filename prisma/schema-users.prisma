@@ -205,6 +205,9 @@ model UserTemplate {
   // AI disclosure: was this blueprint created with AI assistance?
   aiAssisted       Boolean      @default(false)
   
+  // Showcase URL: link to demo, GitHub repo, or live app built with this blueprint
+  showcaseUrl      String?
+  
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 

@@ -256,6 +256,7 @@ export async function POST(request: NextRequest) {
       aiAssisted = false,
       price, 
       currency = "EUR",
+      showcaseUrl,
       turnstileToken,
     } = body;
 
@@ -352,6 +353,18 @@ export async function POST(request: NextRequest) {
       validatedPrice = priceNum;
     }
 
+    // Validate showcaseUrl if provided
+    let validatedShowcaseUrl: string | null = null;
+    if (showcaseUrl && typeof showcaseUrl === "string" && showcaseUrl.trim()) {
+      const trimmedUrl = showcaseUrl.trim();
+      try {
+        new URL(trimmedUrl);
+        validatedShowcaseUrl = trimmedUrl;
+      } catch {
+        // Invalid URL, ignore it
+      }
+    }
+
     // Create the blueprint
     const blueprint = await prismaUsers.userTemplate.create({
       data: {
@@ -369,6 +382,7 @@ export async function POST(request: NextRequest) {
         favorites: 0,
         price: validatedPrice,
         currency: currency || "EUR",
+        showcaseUrl: validatedShowcaseUrl,
       },
     });
 

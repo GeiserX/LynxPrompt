@@ -86,6 +86,7 @@ interface TemplateData {
   isPaid?: boolean;
   hasPurchased?: boolean;
   isOwner?: boolean;
+  showcaseUrl?: string | null;
 }
 
 export default function BlueprintDetailPage() {
@@ -450,6 +451,21 @@ export default function BlueprintDetailPage() {
                   </span>
                 )}
               </div>
+
+              {/* Showcase URL */}
+              {blueprint.showcaseUrl && (
+                <div className="mt-4">
+                  <a
+                    href={blueprint.showcaseUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-lg border bg-muted/30 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-muted/50"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    View Demo / Source
+                  </a>
+                </div>
+              )}
             </div>
 
             {/* Originally Built For */}

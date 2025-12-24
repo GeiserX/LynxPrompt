@@ -16,6 +16,7 @@ import {
   AlertTriangle,
   Euro,
   Trash2,
+  ExternalLink,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Footer } from "@/components/footer";
@@ -63,6 +64,7 @@ export default function EditBlueprintPage() {
   const [isPublic, setIsPublic] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
   const [price, setPrice] = useState<number>(5);
+  const [showcaseUrl, setShowcaseUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -98,6 +100,7 @@ export default function EditBlueprintPage() {
         setIsPublic(data.isPublic !== false);
         setIsPaid(data.price && data.price > 0);
         setPrice(data.price ? Math.round(data.price / 100) : 5);
+        setShowcaseUrl(data.showcaseUrl || "");
       } catch {
         router.push("/dashboard");
       } finally {
@@ -194,6 +197,7 @@ export default function EditBlueprintPage() {
           isPublic,
           price: isPaid && canCreatePaidBlueprints ? price * 100 : null,
           currency: "EUR",
+          showcaseUrl: showcaseUrl.trim() || null,
         }),
       });
 
@@ -332,6 +336,26 @@ export default function EditBlueprintPage() {
                   className="w-full rounded-lg border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary resize-none"
                   maxLength={500}
                 />
+              </div>
+
+              {/* Showcase URL */}
+              <div>
+                <label htmlFor="showcaseUrl" className="block text-sm font-medium mb-2">
+                  <ExternalLink className="mr-1 inline h-4 w-4" />
+                  Showcase URL
+                </label>
+                <input
+                  id="showcaseUrl"
+                  type="url"
+                  value={showcaseUrl}
+                  onChange={(e) => setShowcaseUrl(e.target.value)}
+                  placeholder="https://github.com/user/repo or https://myapp.com"
+                  className="w-full rounded-lg border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  maxLength={500}
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Link to a live demo, GitHub repo, or website that showcases what this blueprint can build.
+                </p>
               </div>
 
               {/* Type */}

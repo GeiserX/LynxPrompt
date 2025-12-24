@@ -199,6 +199,7 @@ export async function PUT(
       isPublic, 
       price, 
       currency,
+      showcaseUrl,
     } = body;
 
     // Build update data
@@ -258,6 +259,20 @@ export async function PUT(
 
     if (isPublic !== undefined) {
       updateData.isPublic = Boolean(isPublic);
+    }
+
+    if (showcaseUrl !== undefined) {
+      if (showcaseUrl && typeof showcaseUrl === "string" && showcaseUrl.trim()) {
+        try {
+          new URL(showcaseUrl.trim());
+          updateData.showcaseUrl = showcaseUrl.trim();
+        } catch {
+          // Invalid URL, set to null
+          updateData.showcaseUrl = null;
+        }
+      } else {
+        updateData.showcaseUrl = null;
+      }
     }
 
     if (price !== undefined) {
