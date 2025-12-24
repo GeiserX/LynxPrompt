@@ -182,7 +182,6 @@ function BlueprintsContent() {
                 ? data.map((f: { id: string }) => String(f.id)).filter(Boolean)
                 : []
             );
-            console.log("Loaded favorites:", Array.from(favoriteIds));
             setFavorites(favoriteIds);
           }
         } catch (error) {
