@@ -1044,11 +1044,18 @@ export default function DashboardPage() {
                             </div>
                           </div>
                         </div>
-                        <Button variant="ghost" size="icon" asChild>
-                          <Link href={`/blueprints/${template.id}`}>
-                            <Eye className="h-4 w-4" />
-                          </Link>
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="icon" asChild title="View">
+                            <Link href={`/blueprints/${template.id}`}>
+                              <Eye className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                          <Button variant="ghost" size="icon" asChild title="Edit">
+                            <Link href={`/blueprints/${template.id}/edit`}>
+                              <Pencil className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </div>
