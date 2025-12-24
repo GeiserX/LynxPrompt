@@ -29,6 +29,8 @@ import {
   Shield,
   ClipboardList,
   User,
+  Share2,
+  X,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
@@ -113,10 +115,20 @@ const LANGUAGES = [
   { value: "shell", label: "Shell/Bash", icon: "🐚" },
   { value: "powershell", label: "PowerShell", icon: "💻" },
   { value: "sql", label: "SQL", icon: "🗃️" },
+  // Blockchain
   { value: "solidity", label: "Solidity", icon: "⛓️" },
   { value: "move", label: "Move", icon: "🔒" },
   { value: "cairo", label: "Cairo", icon: "🏛️" },
   { value: "wasm", label: "WebAssembly", icon: "🌐" },
+  // IaC & DevOps Languages
+  { value: "hcl", label: "HCL (Terraform)", icon: "🏗️" },
+  { value: "yaml", label: "YAML", icon: "📄" },
+  { value: "jsonnet", label: "Jsonnet", icon: "🔧" },
+  { value: "dhall", label: "Dhall", icon: "⚙️" },
+  { value: "cue", label: "CUE", icon: "🔷" },
+  { value: "starlark", label: "Starlark", icon: "⭐" },
+  { value: "rego", label: "Rego (OPA)", icon: "🛡️" },
+  { value: "nix", label: "Nix", icon: "❄️" },
 ];
 
 const FRAMEWORKS = [
@@ -208,12 +220,110 @@ const FRAMEWORKS = [
   { value: "playwright", label: "Playwright", icon: "🎭" },
   { value: "cypress", label: "Cypress", icon: "🌲" },
   { value: "pytest", label: "pytest", icon: "🐍" },
-  // DevOps/Infra
+  // DevOps/Infra - Containers
   { value: "docker", label: "Docker", icon: "🐳" },
+  { value: "podman", label: "Podman", icon: "🦭" },
+  { value: "containerd", label: "containerd", icon: "📦" },
+  { value: "buildah", label: "Buildah", icon: "🔨" },
+  // Kubernetes & Orchestration
   { value: "kubernetes", label: "Kubernetes", icon: "☸️" },
+  { value: "helm", label: "Helm", icon: "⎈" },
+  { value: "kustomize", label: "Kustomize", icon: "📋" },
+  { value: "kubebuilder", label: "Kubebuilder", icon: "🔧" },
+  { value: "operatorsdk", label: "Operator SDK", icon: "⚙️" },
+  { value: "crossplane", label: "Crossplane", icon: "🔀" },
+  { value: "k3s", label: "K3s", icon: "☸️" },
+  { value: "kind", label: "Kind", icon: "📦" },
+  { value: "minikube", label: "Minikube", icon: "💻" },
+  { value: "rancher", label: "Rancher", icon: "🐄" },
+  { value: "openshift", label: "OpenShift", icon: "🎩" },
+  // IaC - Infrastructure as Code
   { value: "terraform", label: "Terraform", icon: "🏗️" },
-  { value: "ansible", label: "Ansible", icon: "🔧" },
+  { value: "terragrunt", label: "Terragrunt", icon: "🏗️" },
+  { value: "opentofu", label: "OpenTofu", icon: "🏗️" },
   { value: "pulumi", label: "Pulumi", icon: "☁️" },
+  { value: "cdktf", label: "CDK for Terraform", icon: "🏗️" },
+  { value: "awscdk", label: "AWS CDK", icon: "☁️" },
+  { value: "cloudformation", label: "CloudFormation", icon: "☁️" },
+  { value: "bicep", label: "Bicep (Azure)", icon: "💪" },
+  { value: "arm", label: "ARM Templates", icon: "☁️" },
+  { value: "gcp_dm", label: "GCP Deployment Manager", icon: "☁️" },
+  // Configuration Management
+  { value: "ansible", label: "Ansible", icon: "🔧" },
+  { value: "chef", label: "Chef", icon: "👨‍🍳" },
+  { value: "puppet", label: "Puppet", icon: "🎭" },
+  { value: "saltstack", label: "SaltStack", icon: "🧂" },
+  // GitOps
+  { value: "argocd", label: "ArgoCD", icon: "🐙" },
+  { value: "fluxcd", label: "FluxCD", icon: "🔄" },
+  { value: "jenkinsx", label: "Jenkins X", icon: "🔧" },
+  // Service Mesh & Networking
+  { value: "istio", label: "Istio", icon: "🕸️" },
+  { value: "linkerd", label: "Linkerd", icon: "🔗" },
+  { value: "consul", label: "Consul", icon: "🔍" },
+  { value: "envoy", label: "Envoy", icon: "📬" },
+  { value: "nginx", label: "NGINX", icon: "🌐" },
+  { value: "traefik", label: "Traefik", icon: "🚦" },
+  { value: "caddy", label: "Caddy", icon: "🔒" },
+  { value: "haproxy", label: "HAProxy", icon: "⚖️" },
+  // Observability & Monitoring
+  { value: "prometheus", label: "Prometheus", icon: "📊" },
+  { value: "grafana", label: "Grafana", icon: "📈" },
+  { value: "datadog", label: "Datadog", icon: "🐕" },
+  { value: "newrelic", label: "New Relic", icon: "📊" },
+  { value: "opentelemetry", label: "OpenTelemetry", icon: "🔭" },
+  { value: "jaeger", label: "Jaeger", icon: "🔍" },
+  { value: "zipkin", label: "Zipkin", icon: "🔍" },
+  { value: "elk", label: "ELK Stack", icon: "📋" },
+  { value: "loki", label: "Loki", icon: "📝" },
+  { value: "fluentd", label: "Fluentd", icon: "📤" },
+  { value: "fluentbit", label: "Fluent Bit", icon: "📤" },
+  { value: "vector", label: "Vector", icon: "➡️" },
+  // Secrets & Security
+  { value: "vault", label: "HashiCorp Vault", icon: "🔐" },
+  { value: "sops", label: "SOPS", icon: "🔒" },
+  { value: "externalsecrets", label: "External Secrets", icon: "🔑" },
+  { value: "sealedsecrets", label: "Sealed Secrets", icon: "📦" },
+  { value: "trivy", label: "Trivy", icon: "🛡️" },
+  { value: "snyk", label: "Snyk", icon: "🔍" },
+  { value: "falco", label: "Falco", icon: "🦅" },
+  { value: "opa", label: "Open Policy Agent", icon: "🛡️" },
+  { value: "kyverno", label: "Kyverno", icon: "🛡️" },
+  // CI/CD Tools
+  { value: "jenkins", label: "Jenkins", icon: "🔧" },
+  { value: "tekton", label: "Tekton", icon: "🔧" },
+  { value: "drone", label: "Drone CI", icon: "🐝" },
+  { value: "concourse", label: "Concourse", icon: "✈️" },
+  { value: "spinnaker", label: "Spinnaker", icon: "🎡" },
+  // Databases - DevOps perspective
+  { value: "postgresql", label: "PostgreSQL", icon: "🐘" },
+  { value: "mysql", label: "MySQL", icon: "🐬" },
+  { value: "mongodb", label: "MongoDB", icon: "🍃" },
+  { value: "redis", label: "Redis", icon: "🔴" },
+  { value: "elasticsearch", label: "Elasticsearch", icon: "🔍" },
+  { value: "cassandra", label: "Cassandra", icon: "👁️" },
+  { value: "cockroachdb", label: "CockroachDB", icon: "🪳" },
+  { value: "clickhouse", label: "ClickHouse", icon: "🏠" },
+  { value: "timescaledb", label: "TimescaleDB", icon: "⏱️" },
+  { value: "influxdb", label: "InfluxDB", icon: "📈" },
+  // Message Queues
+  { value: "kafka", label: "Apache Kafka", icon: "📨" },
+  { value: "rabbitmq", label: "RabbitMQ", icon: "🐰" },
+  { value: "nats", label: "NATS", icon: "📬" },
+  { value: "pulsar", label: "Apache Pulsar", icon: "⭐" },
+  { value: "sqs", label: "AWS SQS", icon: "📬" },
+  // ML/AI Ops
+  { value: "mlflow", label: "MLflow", icon: "🧪" },
+  { value: "kubeflow", label: "Kubeflow", icon: "☸️" },
+  { value: "airflow", label: "Apache Airflow", icon: "🌬️" },
+  { value: "dagster", label: "Dagster", icon: "📊" },
+  { value: "prefect", label: "Prefect", icon: "🔄" },
+  { value: "ray", label: "Ray", icon: "☀️" },
+  // Serverless
+  { value: "serverless", label: "Serverless Framework", icon: "⚡" },
+  { value: "sam", label: "AWS SAM", icon: "☁️" },
+  { value: "openfaas", label: "OpenFaaS", icon: "λ" },
+  { value: "knative", label: "Knative", icon: "☸️" },
 ];
 
 const AI_BEHAVIOR_RULES = [
@@ -359,6 +469,7 @@ type WizardConfig = {
   projectName: string;
   projectDescription: string;
   projectType: string;
+  devOS: string; // windows, macos, linux
   languages: string[];
   frameworks: string[];
   letAiDecide: boolean;
@@ -368,6 +479,7 @@ type WizardConfig = {
   exampleRepoUrl: string;
   isPublic: boolean;
   license: string;
+  licenseOther: string;
   licenseSave: boolean;
   funding: boolean;
   fundingYml: string;
@@ -375,6 +487,7 @@ type WizardConfig = {
   semver: boolean;
   dependabot: boolean;
   cicd: string;
+  deploymentTargets: string[];
   buildContainer: boolean;
   containerRegistry: string;
   containerRegistryOther: string;
@@ -401,10 +514,13 @@ export default function WizardPage() {
   const [userTier, setUserTier] = useState<string>("free");
   const [tierLoading, setTierLoading] = useState(true);
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
+  const [showVariableModal, setShowVariableModal] = useState(false);
+  const [variableValues, setVariableValues] = useState<Record<string, string>>({});
   const [config, setConfig] = useState<WizardConfig>({
     projectName: "",
     projectDescription: "",
     projectType: "leisure",
+    devOS: "linux",
     languages: [],
     frameworks: [],
     letAiDecide: false,
@@ -414,6 +530,7 @@ export default function WizardPage() {
     exampleRepoUrl: "",
     isPublic: true,
     license: "mit",
+    licenseOther: "",
     licenseSave: false,
     funding: false,
     fundingYml: "",
@@ -421,6 +538,7 @@ export default function WizardPage() {
     semver: true,
     dependabot: true,
     cicd: "github_actions",
+    deploymentTargets: [],
     buildContainer: false,
     containerRegistry: "",
     containerRegistryOther: "",
@@ -574,6 +692,7 @@ export default function WizardPage() {
       projectName: config.projectName,
       projectDescription: config.projectDescription,
       projectType: config.projectType,
+      devOS: config.devOS,
       languages: config.languages,
       frameworks: config.frameworks,
       letAiDecide: config.letAiDecide,
@@ -589,7 +708,7 @@ export default function WizardPage() {
       cicd: [config.cicd],
       containerRegistry: config.containerRegistry,
       customRegistry: config.containerRegistryOther,
-      deploymentTarget: [],
+      deploymentTarget: config.deploymentTargets,
       aiBehaviorRules: config.aiBehaviorRules,
       enableAutoUpdate: config.enableAutoUpdate,
       includePersonalData: config.includePersonalData,
@@ -622,6 +741,51 @@ export default function WizardPage() {
     };
   };
 
+  // Extract [[VARIABLE]] patterns from content
+  const extractVariables = (content: string): string[] => {
+    const regex = /\[\[([A-Z_][A-Z0-9_]*)\]\]/g;
+    const vars = new Set<string>();
+    let match;
+    while ((match = regex.exec(content)) !== null) {
+      vars.add(match[1]);
+    }
+    return Array.from(vars);
+  };
+
+  // Get all variables from all preview files
+  const allVariables = useMemo(() => {
+    const vars = new Set<string>();
+    previewFiles.forEach(file => {
+      extractVariables(file.content).forEach(v => vars.add(v));
+    });
+    // Also check additionalFeedback for variables
+    extractVariables(config.additionalFeedback).forEach(v => vars.add(v));
+    return Array.from(vars);
+  }, [previewFiles, config.additionalFeedback]);
+
+  // Replace variables in content
+  const replaceVariables = (content: string): string => {
+    return content.replace(/\[\[([A-Z_][A-Z0-9_]*)\]\]/g, (match, varName) => {
+      return variableValues[varName] || match;
+    });
+  };
+
+  // Generate preview when entering the generate step (regardless of how user got there)
+  useEffect(() => {
+    if (currentStep === WIZARD_STEPS.length - 1 && session?.user) {
+      const files = generateAllFiles(buildGeneratorConfig(), {
+        displayName: session.user.displayName,
+        name: session.user.name,
+        persona: session.user.persona,
+        skillLevel: session.user.skillLevel,
+      });
+      setPreviewFiles(files);
+      if (files.length > 0 && !expandedFile) {
+        setExpandedFile(files[0].fileName);
+      }
+    }
+  }, [currentStep, session?.user, config]);
+
   const handleNext = () => {
     if (currentStep >= WIZARD_STEPS.length - 1) return;
     let next = currentStep + 1;
@@ -630,17 +794,6 @@ export default function WizardPage() {
     }
     if (next >= WIZARD_STEPS.length) next = WIZARD_STEPS.length - 1;
     setCurrentStep(next);
-
-    if (next === WIZARD_STEPS.length - 1) {
-      const files = generateAllFiles(buildGeneratorConfig(), {
-        displayName: session.user.displayName,
-        name: session.user.name,
-        persona: session.user.persona,
-        skillLevel: session.user.skillLevel,
-      });
-      setPreviewFiles(files);
-      if (files.length > 0) setExpandedFile(files[0].fileName);
-    }
   };
 
   const handleCopyFile = async (fileName: string, content: string) => {
@@ -732,6 +885,17 @@ export default function WizardPage() {
     });
   };
 
+  // Check for unfilled variables before download
+  const handleDownloadClick = () => {
+    // Check if there are any unfilled variables
+    const unfilled = allVariables.filter(v => !variableValues[v]);
+    if (unfilled.length > 0) {
+      setShowVariableModal(true);
+      return;
+    }
+    handleDownload();
+  };
+
   const handleDownload = async () => {
     setIsDownloading(true);
     try {
@@ -742,20 +906,109 @@ export default function WizardPage() {
         persona: session.user.persona,
         skillLevel: session.user.skillLevel,
       };
+      
+      // Build config with variable replacements
       const genConfig = buildGeneratorConfig();
+      // Apply variable replacements to additionalFeedback
+      genConfig.additionalFeedback = replaceVariables(genConfig.additionalFeedback);
+      
       const blob = await generateConfigFiles(genConfig, userProfile);
-      const files = generateAllFiles(genConfig, userProfile);
-      downloadConfigFile(blob, files);
+      let files = generateAllFiles(genConfig, userProfile);
+      
+      // Replace variables in file contents
+      files = files.map(file => ({
+        ...file,
+        content: replaceVariables(file.content),
+      }));
+      
+      // Create new blob with replaced content
+      const finalBlob = files.length > 0 
+        ? new Blob([files[0].content], { type: "text/plain" })
+        : blob;
+      
+      downloadConfigFile(finalBlob, files);
     } catch (error) {
       console.error("Error generating files:", error);
       alert("Failed to generate files. Please try again.");
     } finally {
       setIsDownloading(false);
+      setShowVariableModal(false);
     }
+  };
+
+  // Handle saving as blueprint
+  const handleShareAsBlueprint = () => {
+    // Get the generated content
+    if (previewFiles.length === 0) return;
+    const content = replaceVariables(previewFiles[0].content);
+    // Store in sessionStorage for the create page to pick up
+    sessionStorage.setItem("wizardBlueprintContent", content);
+    sessionStorage.setItem("wizardBlueprintName", config.projectName || "My AI Config");
+    sessionStorage.setItem("wizardBlueprintDescription", config.projectDescription || "Generated with the LynxPrompt wizard");
+    // Navigate to create blueprint page
+    window.location.href = "/blueprints/create";
   };
 
   return (
     <div className="flex min-h-screen flex-col bg-muted/30">
+      {/* Variable Fill Modal */}
+      {showVariableModal && allVariables.length > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="relative mx-4 w-full max-w-lg rounded-2xl bg-background p-6 shadow-2xl">
+            <button
+              onClick={() => setShowVariableModal(false)}
+              className="absolute right-4 top-4 rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            
+            <h2 className="text-xl font-bold">Fill in Variables</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Your config contains template variables. Please fill them in:
+            </p>
+            
+            <div className="mt-4 max-h-[60vh] space-y-4 overflow-y-auto">
+              {allVariables.map(varName => (
+                <div key={varName}>
+                  <label className="text-sm font-medium">
+                    <code className="rounded bg-primary/10 px-2 py-0.5 text-primary">[[{varName}]]</code>
+                  </label>
+                  <input
+                    type="text"
+                    value={variableValues[varName] || ""}
+                    onChange={(e) => setVariableValues(prev => ({ ...prev, [varName]: e.target.value }))}
+                    placeholder={`Enter value for ${varName}`}
+                    className="mt-1 w-full rounded-lg border bg-background px-4 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+              ))}
+            </div>
+            
+            <div className="mt-6 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowVariableModal(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleDownload}
+                disabled={isDownloading || allVariables.some(v => !variableValues[v])}
+              >
+                {isDownloading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Download className="mr-2 h-4 w-4" />
+                    Download
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -916,9 +1169,11 @@ export default function WizardPage() {
                   name={config.projectName}
                   description={config.projectDescription}
                   projectType={config.projectType}
+                  devOS={config.devOS}
                   onNameChange={(v) => setConfig({ ...config, projectName: v })}
                   onDescriptionChange={(v) => setConfig({ ...config, projectDescription: v })}
                   onProjectTypeChange={(v) => setConfig({ ...config, projectType: v })}
+                  onDevOSChange={(v) => setConfig({ ...config, devOS: v })}
                 />
               )}
               {currentStep === 1 && (
@@ -947,6 +1202,7 @@ export default function WizardPage() {
                 <StepCodeStyle
                   config={config.codeStyle}
                   onChange={(updates) => setConfig({ ...config, codeStyle: { ...config.codeStyle, ...updates } })}
+                  selectedLanguages={config.languages}
                 />
               )}
               {currentStep === 5 && (
@@ -957,8 +1213,6 @@ export default function WizardPage() {
                   onAutoUpdateChange={(v) => setConfig({ ...config, enableAutoUpdate: v })}
                   includePersonalData={config.includePersonalData}
                   onIncludePersonalDataChange={(v) => setConfig({ ...config, includePersonalData: v })}
-                  platform={config.platform}
-                  onPlatformChange={(v) => setConfig({ ...config, platform: v })}
                   userPersona={session.user.persona}
                   userSkillLevel={session.user.skillLevel}
                 />
@@ -999,6 +1253,7 @@ export default function WizardPage() {
                   copiedFile={copiedFile}
                   onToggleExpand={(fileName) => setExpandedFile(expandedFile === fileName ? null : fileName)}
                   onCopyFile={handleCopyFile}
+                  onPlatformChange={(v) => setConfig({ ...config, platform: v })}
                 />
               )}
 
@@ -1018,23 +1273,33 @@ export default function WizardPage() {
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 ) : (
-                  <Button
-                    className="bg-gradient-to-r from-purple-600 to-pink-600"
-                    onClick={handleDownload}
-                    disabled={isDownloading}
-                  >
-                    {isDownloading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Download className="mr-2 h-4 w-4" />
-                        Download AI Config File
-                      </>
-                    )}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={handleShareAsBlueprint}
+                      disabled={isDownloading || previewFiles.length === 0}
+                    >
+                      <Share2 className="mr-2 h-4 w-4" />
+                      Share as Blueprint
+                    </Button>
+                    <Button
+                      className="bg-gradient-to-r from-purple-600 to-pink-600"
+                      onClick={handleDownloadClick}
+                      disabled={isDownloading}
+                    >
+                      {isDownloading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Download className="mr-2 h-4 w-4" />
+                          Download AI Config File
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
@@ -1046,20 +1311,32 @@ export default function WizardPage() {
 }
 
 // NEW: Project Info Step
+const DEV_OS_OPTIONS = [
+  { id: "linux", label: "Linux", icon: "🐧", desc: "Ubuntu, Debian, Fedora, Arch..." },
+  { id: "macos", label: "macOS", icon: "🍎", desc: "Mac with zsh/bash" },
+  { id: "windows", label: "Windows", icon: "🪟", desc: "PowerShell, CMD, or WSL" },
+  { id: "wsl", label: "Windows + WSL", icon: "🐧🪟", desc: "Windows with Linux subsystem" },
+  { id: "multi", label: "Multi-platform", icon: "🌐", desc: "Cross-platform commands" },
+];
+
 function StepProject({
   name,
   description,
   projectType,
+  devOS,
   onNameChange,
   onDescriptionChange,
   onProjectTypeChange,
+  onDevOSChange,
 }: {
   name: string;
   description: string;
   projectType: string;
+  devOS: string;
   onNameChange: (v: string) => void;
   onDescriptionChange: (v: string) => void;
   onProjectTypeChange: (v: string) => void;
+  onDevOSChange: (v: string) => void;
 }) {
   return (
     <div>
@@ -1094,6 +1371,32 @@ function StepProject({
             rows={3}
             className="w-full resize-none rounded-lg border bg-background px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
           />
+        </div>
+
+        {/* Development Environment */}
+        <div>
+          <label className="mb-2 block text-sm font-medium">
+            Development Environment
+          </label>
+          <p className="mb-3 text-sm text-muted-foreground">
+            What OS are you developing on? This helps generate compatible commands.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {DEV_OS_OPTIONS.map((os) => (
+              <button
+                key={os.id}
+                onClick={() => onDevOSChange(os.id)}
+                className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition-all ${
+                  devOS === os.id
+                    ? "border-primary bg-primary/10"
+                    : "hover:border-primary"
+                }`}
+              >
+                <span>{os.icon}</span>
+                <span>{os.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Project Type - affects AI behavior */}
@@ -1465,7 +1768,93 @@ const REPO_HOSTS = [
   { id: "github", label: "GitHub", icon: "🐙" },
   { id: "gitlab", label: "GitLab", icon: "🦊" },
   { id: "gitea", label: "Gitea", icon: "🍵" },
+  { id: "forgejo", label: "Forgejo", icon: "🔧" },
+  { id: "bitbucket", label: "Bitbucket", icon: "🪣" },
+  { id: "codeberg", label: "Codeberg", icon: "🏔️" },
+  { id: "sourcehut", label: "SourceHut", icon: "📦" },
+  { id: "gogs", label: "Gogs", icon: "🐙" },
+  { id: "aws_codecommit", label: "AWS CodeCommit", icon: "☁️" },
+  { id: "azure_devops", label: "Azure DevOps", icon: "☁️" },
+  { id: "gerrit", label: "Gerrit", icon: "🔍" },
+  { id: "phabricator", label: "Phabricator", icon: "📦" },
   { id: "other", label: "Other", icon: "📦" },
+];
+
+const CICD_OPTIONS = [
+  { id: "github_actions", label: "GitHub Actions", icon: "🐙" },
+  { id: "gitlab_ci", label: "GitLab CI/CD", icon: "🦊" },
+  { id: "jenkins", label: "Jenkins", icon: "🔧" },
+  { id: "circleci", label: "CircleCI", icon: "🔵" },
+  { id: "travis", label: "Travis CI", icon: "🔨" },
+  { id: "azure_pipelines", label: "Azure Pipelines", icon: "☁️" },
+  { id: "aws_codepipeline", label: "AWS CodePipeline", icon: "☁️" },
+  { id: "gcp_cloudbuild", label: "GCP Cloud Build", icon: "☁️" },
+  { id: "bitbucket_pipelines", label: "Bitbucket Pipelines", icon: "🪣" },
+  { id: "drone", label: "Drone CI", icon: "🐝" },
+  { id: "tekton", label: "Tekton", icon: "🔧" },
+  { id: "argocd", label: "ArgoCD", icon: "🐙" },
+  { id: "fluxcd", label: "FluxCD", icon: "🔄" },
+  { id: "concourse", label: "Concourse", icon: "✈️" },
+  { id: "buildkite", label: "Buildkite", icon: "🔨" },
+  { id: "semaphore", label: "Semaphore", icon: "🚦" },
+  { id: "harness", label: "Harness", icon: "🏗️" },
+  { id: "spinnaker", label: "Spinnaker", icon: "🎡" },
+  { id: "woodpecker", label: "Woodpecker", icon: "🐦" },
+  { id: "none", label: "None / Manual", icon: "🔧" },
+];
+
+const DEPLOYMENT_TARGETS = [
+  // Major Cloud Providers
+  { id: "aws", label: "AWS", icon: "☁️" },
+  { id: "gcp", label: "Google Cloud", icon: "☁️" },
+  { id: "azure", label: "Microsoft Azure", icon: "☁️" },
+  // Kubernetes Platforms
+  { id: "kubernetes", label: "Kubernetes (self-hosted)", icon: "☸️" },
+  { id: "eks", label: "AWS EKS", icon: "☸️" },
+  { id: "gke", label: "GCP GKE", icon: "☸️" },
+  { id: "aks", label: "Azure AKS", icon: "☸️" },
+  { id: "openshift", label: "OpenShift", icon: "🎩" },
+  { id: "rancher", label: "Rancher", icon: "🐄" },
+  // PaaS & Serverless
+  { id: "vercel", label: "Vercel", icon: "▲" },
+  { id: "netlify", label: "Netlify", icon: "🌐" },
+  { id: "heroku", label: "Heroku", icon: "🟣" },
+  { id: "railway", label: "Railway", icon: "🚂" },
+  { id: "render", label: "Render", icon: "🔷" },
+  { id: "flyio", label: "Fly.io", icon: "🪁" },
+  { id: "cloudflare", label: "Cloudflare", icon: "☁️" },
+  // VPS & Bare Metal
+  { id: "digitalocean", label: "DigitalOcean", icon: "🌊" },
+  { id: "linode", label: "Linode/Akamai", icon: "🖥️" },
+  { id: "vultr", label: "Vultr", icon: "🖥️" },
+  { id: "hetzner", label: "Hetzner", icon: "🖥️" },
+  { id: "ovh", label: "OVH", icon: "🖥️" },
+  { id: "scaleway", label: "Scaleway", icon: "🖥️" },
+  { id: "upcloud", label: "UpCloud", icon: "🖥️" },
+  { id: "baremetal", label: "Bare Metal / On-Prem", icon: "🏠" },
+  // Serverless Functions
+  { id: "lambda", label: "AWS Lambda", icon: "λ" },
+  { id: "cloud_functions", label: "GCP Cloud Functions", icon: "λ" },
+  { id: "azure_functions", label: "Azure Functions", icon: "λ" },
+  { id: "cloudflare_workers", label: "Cloudflare Workers", icon: "⚡" },
+  { id: "deno_deploy", label: "Deno Deploy", icon: "🦕" },
+  // Edge
+  { id: "edge", label: "Edge (CDN)", icon: "🌐" },
+];
+
+const CONTAINER_REGISTRIES = [
+  { id: "dockerhub", label: "Docker Hub", icon: "🐳" },
+  { id: "ghcr", label: "GitHub Container Registry", icon: "🐙" },
+  { id: "ecr", label: "AWS ECR", icon: "☁️" },
+  { id: "gcr", label: "Google Container Registry", icon: "☁️" },
+  { id: "gar", label: "Google Artifact Registry", icon: "☁️" },
+  { id: "acr", label: "Azure Container Registry", icon: "☁️" },
+  { id: "quay", label: "Quay.io", icon: "📦" },
+  { id: "harbor", label: "Harbor", icon: "⚓" },
+  { id: "gitlab_registry", label: "GitLab Container Registry", icon: "🦊" },
+  { id: "jfrog", label: "JFrog Artifactory", icon: "🐸" },
+  { id: "nexus", label: "Sonatype Nexus", icon: "📦" },
+  { id: "custom", label: "Custom / Self-hosted", icon: "🏠" },
 ];
 
 function StepRepository({
@@ -1525,18 +1914,41 @@ function StepRepository({
         <div>
           <label className="text-sm font-medium">License (preference)</label>
           <div className="mt-2 grid grid-cols-3 gap-2">
-            {["mit", "apache-2.0", "gpl-3.0", "bsd-3", "unlicense", "none"].map((license) => (
+            {[
+              { id: "mit", label: "MIT" },
+              { id: "apache-2.0", label: "Apache 2.0" },
+              { id: "gpl-3.0", label: "GPL 3.0" },
+              { id: "lgpl-3.0", label: "LGPL 3.0" },
+              { id: "agpl-3.0", label: "AGPL 3.0" },
+              { id: "bsd-2", label: "BSD 2-Clause" },
+              { id: "bsd-3", label: "BSD 3-Clause" },
+              { id: "mpl-2.0", label: "MPL 2.0" },
+              { id: "isc", label: "ISC" },
+              { id: "unlicense", label: "Unlicense" },
+              { id: "cc0", label: "CC0" },
+              { id: "none", label: "None" },
+              { id: "other", label: "Other" },
+            ].map((license) => (
               <button
-                key={license}
-                onClick={() => onChange({ license })}
+                key={license.id}
+                onClick={() => onChange({ license: license.id })}
                 className={`rounded-md border px-3 py-2 text-sm transition-all ${
-                  config.license === license ? "border-primary bg-primary/5" : "hover:border-primary"
+                  config.license === license.id ? "border-primary bg-primary/5" : "hover:border-primary"
                 }`}
               >
-                {license.toUpperCase()}
+                {license.label}
               </button>
             ))}
           </div>
+          {config.license === "other" && (
+            <input
+              type="text"
+              value={config.licenseOther || ""}
+              onChange={(e) => onChange({ licenseOther: e.target.value })}
+              placeholder="e.g., Proprietary, WTFPL, CC BY 4.0..."
+              className="mt-2 w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          )}
           <label className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
             <input
               type="checkbox"
@@ -1579,19 +1991,144 @@ function StepRepository({
             checked={config.semver}
             onChange={(v) => onChange({ semver: v })}
           />
-          <ToggleOption
-            label="Dependabot / Updates"
-            description="Enable dependency updates (GitHub & GitLab)"
-            checked={config.dependabot}
-            onChange={(v) => onChange({ dependabot: v })}
-          />
-          <ToggleOption
-            label="Build container image"
-            description="Plan to build Docker images in this repo"
-            checked={config.buildContainer}
-            onChange={(v) => onChange({ buildContainer: v })}
-          />
+          {(config.repoHost === "github" || config.repoHost === "gitlab") && (
+            <ToggleOption
+              label="Dependabot / Updates"
+              description="Enable dependency updates (GitHub & GitLab only)"
+              checked={config.dependabot}
+              onChange={(v) => onChange({ dependabot: v })}
+            />
+          )}
         </div>
+
+        {/* CI/CD Selection */}
+        <div>
+          <label className="block text-sm font-medium">CI/CD Platform</label>
+          <p className="text-xs text-muted-foreground mb-2">Select your continuous integration/deployment tool</p>
+          <div className="flex flex-wrap gap-2">
+            {CICD_OPTIONS.slice(0, 8).map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => onChange({ cicd: opt.id })}
+                className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all ${
+                  config.cicd === opt.id ? "border-primary bg-primary/10" : "hover:border-primary"
+                }`}
+              >
+                <span>{opt.icon}</span>
+                <span>{opt.label}</span>
+              </button>
+            ))}
+          </div>
+          <details className="mt-2">
+            <summary className="cursor-pointer text-xs text-muted-foreground hover:text-primary">Show more CI/CD options...</summary>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {CICD_OPTIONS.slice(8).map((opt) => (
+                <button
+                  key={opt.id}
+                  onClick={() => onChange({ cicd: opt.id })}
+                  className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all ${
+                    config.cicd === opt.id ? "border-primary bg-primary/10" : "hover:border-primary"
+                  }`}
+                >
+                  <span>{opt.icon}</span>
+                  <span>{opt.label}</span>
+                </button>
+              ))}
+            </div>
+          </details>
+        </div>
+
+        {/* Deployment Targets */}
+        <div>
+          <label className="block text-sm font-medium">Deployment Targets</label>
+          <p className="text-xs text-muted-foreground mb-2">Where will this project be deployed? (select all that apply)</p>
+          <div className="flex flex-wrap gap-2">
+            {DEPLOYMENT_TARGETS.slice(0, 12).map((target) => (
+              <button
+                key={target.id}
+                onClick={() => {
+                  const exists = config.deploymentTargets.includes(target.id);
+                  onChange({ 
+                    deploymentTargets: exists 
+                      ? config.deploymentTargets.filter(t => t !== target.id)
+                      : [...config.deploymentTargets, target.id]
+                  });
+                }}
+                className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all ${
+                  config.deploymentTargets.includes(target.id) ? "border-primary bg-primary/10" : "hover:border-primary"
+                }`}
+              >
+                <span>{target.icon}</span>
+                <span>{target.label}</span>
+                {config.deploymentTargets.includes(target.id) && <span>✓</span>}
+              </button>
+            ))}
+          </div>
+          <details className="mt-2">
+            <summary className="cursor-pointer text-xs text-muted-foreground hover:text-primary">Show more deployment targets...</summary>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {DEPLOYMENT_TARGETS.slice(12).map((target) => (
+                <button
+                  key={target.id}
+                  onClick={() => {
+                    const exists = config.deploymentTargets.includes(target.id);
+                    onChange({ 
+                      deploymentTargets: exists 
+                        ? config.deploymentTargets.filter(t => t !== target.id)
+                        : [...config.deploymentTargets, target.id]
+                    });
+                  }}
+                  className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all ${
+                    config.deploymentTargets.includes(target.id) ? "border-primary bg-primary/10" : "hover:border-primary"
+                  }`}
+                >
+                  <span>{target.icon}</span>
+                  <span>{target.label}</span>
+                  {config.deploymentTargets.includes(target.id) && <span>✓</span>}
+                </button>
+              ))}
+            </div>
+          </details>
+        </div>
+
+        {/* Container Build Options */}
+        <ToggleOption
+          label="Build container image"
+          description="Plan to build Docker images in this repo"
+          checked={config.buildContainer}
+          onChange={(v) => onChange({ buildContainer: v })}
+        />
+
+        {/* Container Registry Selection - shown if buildContainer is true */}
+        {config.buildContainer && (
+          <div className="ml-4 border-l-2 border-primary/30 pl-4">
+            <label className="block text-sm font-medium">Container Registry</label>
+            <p className="text-xs text-muted-foreground mb-2">Where will you push your container images?</p>
+            <div className="flex flex-wrap gap-2">
+              {CONTAINER_REGISTRIES.map((reg) => (
+                <button
+                  key={reg.id}
+                  onClick={() => onChange({ containerRegistry: reg.id })}
+                  className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all ${
+                    config.containerRegistry === reg.id ? "border-primary bg-primary/10" : "hover:border-primary"
+                  }`}
+                >
+                  <span>{reg.icon}</span>
+                  <span>{reg.label}</span>
+                </button>
+              ))}
+            </div>
+            {config.containerRegistry === "custom" && (
+              <input
+                type="text"
+                value={config.containerRegistryOther}
+                onChange={(e) => onChange({ containerRegistryOther: e.target.value })}
+                placeholder="e.g., registry.example.com"
+                className="mt-2 w-full rounded-lg border bg-background px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            )}
+          </div>
+        )}
 
       </div>
     </div>
@@ -1605,8 +2142,6 @@ function StepAIBehavior({
   onAutoUpdateChange,
   includePersonalData,
   onIncludePersonalDataChange,
-  platform,
-  onPlatformChange,
   userPersona,
   userSkillLevel,
 }: {
@@ -1616,8 +2151,6 @@ function StepAIBehavior({
   onAutoUpdateChange: (v: boolean) => void;
   includePersonalData: boolean;
   onIncludePersonalDataChange: (v: boolean) => void;
-  platform: string;
-  onPlatformChange: (v: string) => void;
   userPersona?: string | null;
   userSkillLevel?: string | null;
 }) {
@@ -1697,29 +2230,6 @@ function StepAIBehavior({
         ))}
       </div>
 
-      <div className="mt-6">
-        <h3 className="font-semibold">Target AI IDE</h3>
-        <p className="text-sm text-muted-foreground">Choose one platform (files are optimized for it but remain portable).</p>
-        <div className="mt-2 grid grid-cols-2 gap-2">
-          {[
-            { id: "cursor", label: "Cursor" },
-            { id: "claude", label: "Claude Code" },
-            { id: "copilot", label: "GitHub Copilot" },
-            { id: "windsurf", label: "Windsurf" },
-          ].map((p) => (
-            <button
-              key={p.id}
-              onClick={() => onPlatformChange(p.id)}
-              className={`rounded-md border px-3 py-2 text-sm ${
-                platform === p.id ? "border-primary bg-primary/5" : "hover:border-primary"
-              }`}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Auto-Update Option */}
       <div className="mt-8">
         <button
@@ -1756,37 +2266,203 @@ function StepAIBehavior({
 }
 
 const COMMON_COMMANDS = [
-  // Build commands
+  // Build commands - JavaScript/Node
   { cmd: "npm run build", category: "build" },
   { cmd: "pnpm build", category: "build" },
   { cmd: "yarn build", category: "build" },
+  { cmd: "bun run build", category: "build" },
   { cmd: "next build", category: "build" },
   { cmd: "vite build", category: "build" },
   { cmd: "tsc", category: "build" },
-  // Test commands
+  { cmd: "tsc --noEmit", category: "build" },
+  { cmd: "esbuild", category: "build" },
+  { cmd: "rollup -c", category: "build" },
+  { cmd: "webpack", category: "build" },
+  { cmd: "parcel build", category: "build" },
+  // Build - Python
+  { cmd: "python setup.py build", category: "build" },
+  { cmd: "pip install -e .", category: "build" },
+  { cmd: "poetry build", category: "build" },
+  { cmd: "pdm build", category: "build" },
+  { cmd: "hatch build", category: "build" },
+  // Build - Go
+  { cmd: "go build", category: "build" },
+  { cmd: "go build ./...", category: "build" },
+  { cmd: "go install", category: "build" },
+  // Build - Rust
+  { cmd: "cargo build", category: "build" },
+  { cmd: "cargo build --release", category: "build" },
+  // Build - Java/JVM
+  { cmd: "mvn package", category: "build" },
+  { cmd: "mvn clean install", category: "build" },
+  { cmd: "gradle build", category: "build" },
+  { cmd: "./gradlew build", category: "build" },
+  // Build - .NET
+  { cmd: "dotnet build", category: "build" },
+  { cmd: "dotnet publish", category: "build" },
+  // Build - Containers
+  { cmd: "docker build -t app .", category: "build" },
+  { cmd: "docker compose build", category: "build" },
+  { cmd: "podman build -t app .", category: "build" },
+  { cmd: "buildah bud -t app .", category: "build" },
+  // Build - IaC
+  { cmd: "terraform init", category: "build" },
+  { cmd: "terraform plan", category: "build" },
+  { cmd: "terragrunt run-all plan", category: "build" },
+  { cmd: "pulumi preview", category: "build" },
+  { cmd: "cdk synth", category: "build" },
+  { cmd: "helm package .", category: "build" },
+  
+  // Test commands - JavaScript
   { cmd: "npm test", category: "test" },
   { cmd: "pnpm test", category: "test" },
+  { cmd: "yarn test", category: "test" },
+  { cmd: "bun test", category: "test" },
   { cmd: "npm test -- --coverage", category: "test" },
   { cmd: "vitest", category: "test" },
+  { cmd: "vitest run", category: "test" },
+  { cmd: "vitest --coverage", category: "test" },
   { cmd: "jest", category: "test" },
-  { cmd: "pytest", category: "test" },
+  { cmd: "jest --coverage", category: "test" },
+  { cmd: "mocha", category: "test" },
+  { cmd: "ava", category: "test" },
+  // Test - E2E
   { cmd: "playwright test", category: "test" },
-  // Lint commands
+  { cmd: "cypress run", category: "test" },
+  { cmd: "cypress open", category: "test" },
+  { cmd: "puppeteer", category: "test" },
+  // Test - Python
+  { cmd: "pytest", category: "test" },
+  { cmd: "pytest --cov", category: "test" },
+  { cmd: "pytest -v", category: "test" },
+  { cmd: "python -m unittest", category: "test" },
+  { cmd: "tox", category: "test" },
+  { cmd: "nox", category: "test" },
+  // Test - Go
+  { cmd: "go test ./...", category: "test" },
+  { cmd: "go test -v ./...", category: "test" },
+  { cmd: "go test -cover ./...", category: "test" },
+  // Test - Rust
+  { cmd: "cargo test", category: "test" },
+  { cmd: "cargo test --all", category: "test" },
+  // Test - Java
+  { cmd: "mvn test", category: "test" },
+  { cmd: "gradle test", category: "test" },
+  { cmd: "./gradlew test", category: "test" },
+  // Test - .NET
+  { cmd: "dotnet test", category: "test" },
+  // Test - Infrastructure
+  { cmd: "terratest", category: "test" },
+  { cmd: "conftest test", category: "test" },
+  { cmd: "inspec exec", category: "test" },
+  { cmd: "molecule test", category: "test" },
+  { cmd: "kitchen test", category: "test" },
+  { cmd: "helm unittest", category: "test" },
+  // Test - Load/Performance
+  { cmd: "k6 run", category: "test" },
+  { cmd: "locust", category: "test" },
+  { cmd: "artillery run", category: "test" },
+  
+  // Lint commands - JavaScript
   { cmd: "npm run lint", category: "lint" },
   { cmd: "eslint .", category: "lint" },
+  { cmd: "eslint . --fix", category: "lint" },
   { cmd: "next lint", category: "lint" },
   { cmd: "prettier --check .", category: "lint" },
+  { cmd: "prettier --write .", category: "lint" },
+  { cmd: "biome check", category: "lint" },
+  { cmd: "oxlint", category: "lint" },
+  // Lint - Python
   { cmd: "ruff check .", category: "lint" },
+  { cmd: "ruff format .", category: "lint" },
+  { cmd: "black --check .", category: "lint" },
+  { cmd: "flake8", category: "lint" },
+  { cmd: "pylint", category: "lint" },
+  { cmd: "mypy .", category: "lint" },
+  { cmd: "pyright", category: "lint" },
+  // Lint - Go
+  { cmd: "go fmt ./...", category: "lint" },
+  { cmd: "golangci-lint run", category: "lint" },
+  { cmd: "go vet ./...", category: "lint" },
+  // Lint - Rust
+  { cmd: "cargo fmt --check", category: "lint" },
+  { cmd: "cargo clippy", category: "lint" },
+  // Lint - Shell
+  { cmd: "shellcheck *.sh", category: "lint" },
+  // Lint - IaC
+  { cmd: "terraform fmt -check", category: "lint" },
+  { cmd: "terraform validate", category: "lint" },
+  { cmd: "tflint", category: "lint" },
+  { cmd: "checkov", category: "lint" },
+  { cmd: "trivy config .", category: "lint" },
+  { cmd: "ansible-lint", category: "lint" },
+  { cmd: "yamllint .", category: "lint" },
+  { cmd: "helm lint", category: "lint" },
+  { cmd: "kubeval", category: "lint" },
+  { cmd: "kubeconform", category: "lint" },
+  // Lint - Docker
+  { cmd: "hadolint Dockerfile", category: "lint" },
+  { cmd: "dockle", category: "lint" },
+  
   // Dev commands
   { cmd: "npm run dev", category: "dev" },
-  { cmd: "next dev", category: "dev" },
-  { cmd: "vite dev", category: "dev" },
   { cmd: "pnpm dev", category: "dev" },
-  // Other common
+  { cmd: "yarn dev", category: "dev" },
+  { cmd: "bun dev", category: "dev" },
+  { cmd: "next dev", category: "dev" },
+  { cmd: "next dev --turbo", category: "dev" },
+  { cmd: "vite", category: "dev" },
+  { cmd: "vite dev", category: "dev" },
+  { cmd: "nuxt dev", category: "dev" },
+  { cmd: "remix dev", category: "dev" },
+  { cmd: "astro dev", category: "dev" },
+  // Dev - Python
+  { cmd: "python app.py", category: "dev" },
+  { cmd: "flask run", category: "dev" },
+  { cmd: "uvicorn main:app --reload", category: "dev" },
+  { cmd: "python manage.py runserver", category: "dev" },
+  // Dev - Go
+  { cmd: "go run .", category: "dev" },
+  { cmd: "air", category: "dev" },
+  // Dev - Rust
+  { cmd: "cargo run", category: "dev" },
+  { cmd: "cargo watch -x run", category: "dev" },
+  // Dev - Containers
+  { cmd: "docker compose up", category: "dev" },
+  { cmd: "docker compose up -d", category: "dev" },
+  { cmd: "docker compose watch", category: "dev" },
+  { cmd: "podman-compose up", category: "dev" },
+  // Dev - Kubernetes
+  { cmd: "kubectl port-forward", category: "dev" },
+  { cmd: "skaffold dev", category: "dev" },
+  { cmd: "tilt up", category: "dev" },
+  { cmd: "telepresence connect", category: "dev" },
+  
+  // Other/Misc commands
   { cmd: "npm run storybook", category: "other" },
-  { cmd: "docker compose up", category: "other" },
   { cmd: "prisma db push", category: "other" },
   { cmd: "prisma generate", category: "other" },
+  { cmd: "prisma migrate dev", category: "other" },
+  { cmd: "drizzle-kit push", category: "other" },
+  { cmd: "npm run typecheck", category: "other" },
+  { cmd: "npm run format", category: "other" },
+  { cmd: "pre-commit run --all-files", category: "other" },
+  // Deploy
+  { cmd: "terraform apply", category: "other" },
+  { cmd: "pulumi up", category: "other" },
+  { cmd: "cdk deploy", category: "other" },
+  { cmd: "ansible-playbook", category: "other" },
+  { cmd: "helm install", category: "other" },
+  { cmd: "helm upgrade --install", category: "other" },
+  { cmd: "kubectl apply -f", category: "other" },
+  { cmd: "argocd app sync", category: "other" },
+  { cmd: "flux reconcile", category: "other" },
+  // Clean
+  { cmd: "npm run clean", category: "other" },
+  { cmd: "rm -rf node_modules", category: "other" },
+  { cmd: "docker system prune", category: "other" },
+  { cmd: "go clean -cache", category: "other" },
+  { cmd: "cargo clean", category: "other" },
 ];
 
 function StepCommands({
@@ -1796,8 +2472,9 @@ function StepCommands({
   config: CommandsConfig;
   onChange: (updates: Partial<CommandsConfig>) => void;
 }) {
-  const [search, setSearch] = useState("");
+  const [searches, setSearches] = useState<Record<string, string>>({ build: "", test: "", lint: "", dev: "", other: "" });
   const [newCommand, setNewCommand] = useState("");
+  const [expandedCategories, setExpandedCategories] = useState<string[]>(["build", "test", "lint", "dev"]);
   
   const allSelected = [
     ...(config.build ? [config.build] : []),
@@ -1824,50 +2501,88 @@ function StepCommands({
   
   const isSelected = (cmd: string) => allSelected.includes(cmd);
   
-  const filtered = COMMON_COMMANDS.filter(c => 
-    c.cmd.toLowerCase().includes(search.toLowerCase()) ||
-    c.category.toLowerCase().includes(search.toLowerCase())
-  );
+  const toggleCategory = (cat: string) => {
+    setExpandedCategories(prev => 
+      prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
+    );
+  };
   
-  const categories = ["build", "test", "lint", "dev", "other"] as const;
+  const categories = [
+    { id: "build", label: "Build", desc: "Compile / bundle" },
+    { id: "test", label: "Test", desc: "Run tests" },
+    { id: "lint", label: "Lint", desc: "Check code quality" },
+    { id: "dev", label: "Dev", desc: "Development server" },
+    { id: "other", label: "Other", desc: "Deploy, clean, etc." },
+  ] as const;
 
   return (
     <div>
       <h2 className="text-2xl font-bold">Commands</h2>
       <p className="mt-2 text-muted-foreground">
-        Select or add your project commands. Click to toggle.
+        Select your project commands for each category. Each has its own search.
       </p>
 
-      <div className="mt-4 space-y-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search commands..."
-            className="w-full rounded-lg border bg-background py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-        </div>
-        
+      <div className="mt-4 space-y-3">
         {categories.map(cat => {
-          const cmds = filtered.filter(c => c.category === cat);
-          if (cmds.length === 0) return null;
+          const catCmds = COMMON_COMMANDS.filter(c => c.category === cat.id);
+          const search = searches[cat.id] || "";
+          const filteredCmds = catCmds.filter(c => 
+            c.cmd.toLowerCase().includes(search.toLowerCase())
+          );
+          const isExpanded = expandedCategories.includes(cat.id);
+          const selectedInCat = cat.id === "build" ? config.build 
+            : cat.id === "test" ? config.test 
+            : cat.id === "lint" ? config.lint 
+            : cat.id === "dev" ? config.dev 
+            : null;
+          
           return (
-            <div key={cat} className="rounded-lg border p-3">
-              <p className="mb-2 text-sm font-semibold capitalize">{cat}</p>
-              <div className="flex flex-wrap gap-2">
-                {cmds.map(c => (
-                  <button
-                    key={c.cmd}
-                    onClick={() => toggleCommand(c.cmd, c.category)}
-                    className={`rounded-full border px-3 py-1 text-xs font-mono transition-all ${
-                      isSelected(c.cmd) ? "border-primary bg-primary/10 text-primary" : "hover:border-primary"
-                    }`}
-                  >
-                    {c.cmd}
-                  </button>
-                ))}
-              </div>
+            <div key={cat.id} className="rounded-lg border overflow-hidden">
+              <button
+                onClick={() => toggleCategory(cat.id)}
+                className="flex w-full items-center justify-between bg-muted/30 px-4 py-3 hover:bg-muted/50"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="font-semibold">{cat.label}</span>
+                  <span className="text-xs text-muted-foreground">{cat.desc}</span>
+                  {selectedInCat && (
+                    <code className="rounded bg-primary/10 px-2 py-0.5 text-xs text-primary">{selectedInCat}</code>
+                  )}
+                </div>
+                {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </button>
+              
+              {isExpanded && (
+                <div className="p-3 border-t">
+                  <div className="relative mb-3">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      value={search}
+                      onChange={(e) => setSearches(prev => ({ ...prev, [cat.id]: e.target.value }))}
+                      placeholder={`Search ${cat.label.toLowerCase()} commands...`}
+                      className="w-full rounded-lg border bg-background py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
+                    {filteredCmds.slice(0, 20).map(c => (
+                      <button
+                        key={c.cmd}
+                        onClick={() => toggleCommand(c.cmd, c.category)}
+                        className={`rounded-full border px-3 py-1 text-xs font-mono transition-all ${
+                          isSelected(c.cmd) ? "border-primary bg-primary/10 text-primary" : "hover:border-primary"
+                        }`}
+                      >
+                        {c.cmd}
+                      </button>
+                    ))}
+                    {filteredCmds.length > 20 && (
+                      <span className="text-xs text-muted-foreground self-center">
+                        +{filteredCmds.length - 20} more (use search)
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}
@@ -1900,14 +2615,19 @@ function StepCommands({
           </div>
         </div>
 
-        {allSelected.length > 0 && (
+        {config.additional.length > 0 && (
           <div className="rounded-lg bg-muted/50 p-3">
-            <p className="mb-2 text-xs font-medium text-muted-foreground">Selected ({allSelected.length}):</p>
+            <p className="mb-2 text-xs font-medium text-muted-foreground">Custom commands:</p>
             <div className="flex flex-wrap gap-2">
-              {allSelected.map((c, idx) => (
-                <span key={`${c}-${idx}`} className="rounded-full bg-primary/10 px-3 py-1 font-mono text-xs text-primary">
-                  {c}
-                </span>
+              {config.additional.map((c, idx) => (
+                <button
+                  key={`${c}-${idx}`}
+                  onClick={() => onChange({ additional: config.additional.filter((_, i) => i !== idx) })}
+                  className="rounded-full bg-primary/10 px-3 py-1 font-mono text-xs text-primary hover:bg-red-100 hover:text-red-600"
+                  title="Click to remove"
+                >
+                  {c} ×
+                </button>
               ))}
             </div>
           </div>
@@ -1929,16 +2649,42 @@ function StepCommands({
 function StepCodeStyle({
   config,
   onChange,
+  selectedLanguages,
 }: {
   config: CodeStyleConfig;
   onChange: (updates: Partial<CodeStyleConfig>) => void;
+  selectedLanguages: string[];
 }) {
   const namingOptions = [
-    { id: "camelCase", label: "camelCase" },
-    { id: "snake_case", label: "snake_case" },
-    { id: "PascalCase", label: "PascalCase" },
-    { id: "kebab-case", label: "kebab-case" },
+    { id: "language_default", label: "Follow language conventions", desc: "Use idiomatic style for selected language(s)" },
+    { id: "camelCase", label: "camelCase", desc: "JavaScript, TypeScript, Java" },
+    { id: "snake_case", label: "snake_case", desc: "Python, Ruby, Rust, Go" },
+    { id: "PascalCase", label: "PascalCase", desc: "C#, .NET classes" },
+    { id: "kebab-case", label: "kebab-case", desc: "CSS, HTML attributes, URLs" },
   ];
+
+  // Get language-specific hints
+  const getLanguageHint = () => {
+    if (selectedLanguages.length === 0) return null;
+    const hints: Record<string, string> = {
+      python: "Python typically uses snake_case for functions/variables, PascalCase for classes",
+      typescript: "TypeScript typically uses camelCase for variables, PascalCase for types/interfaces",
+      javascript: "JavaScript typically uses camelCase for variables, PascalCase for classes",
+      go: "Go uses camelCase for private, PascalCase for exported",
+      rust: "Rust uses snake_case for functions/variables, PascalCase for types",
+      java: "Java uses camelCase for methods/variables, PascalCase for classes",
+      csharp: "C# uses PascalCase for public members, camelCase with _ prefix for private",
+      ruby: "Ruby uses snake_case for methods/variables, PascalCase for classes",
+      php: "PHP uses camelCase or snake_case depending on framework (PSR-12 recommends camelCase)",
+      kotlin: "Kotlin uses camelCase for functions/variables, PascalCase for classes",
+    };
+    for (const lang of selectedLanguages) {
+      if (hints[lang]) return hints[lang];
+    }
+    return null;
+  };
+
+  const languageHint = getLanguageHint();
 
   return (
     <div>
@@ -1947,33 +2693,60 @@ function StepCodeStyle({
         Capture naming and style conventions to guide AI output.
       </p>
 
+      {selectedLanguages.length === 0 && (
+        <div className="mt-4 rounded-lg border border-yellow-500/50 bg-yellow-50 p-3 dark:bg-yellow-900/20">
+          <p className="text-sm text-yellow-800 dark:text-yellow-200">
+            ⚠️ No languages selected. Go back to the Tech Stack step to select at least one language, 
+            or enable "Let AI decide" for best results.
+          </p>
+        </div>
+      )}
+
+      {languageHint && (
+        <div className="mt-4 rounded-lg border border-blue-500/50 bg-blue-50 p-3 dark:bg-blue-900/20">
+          <p className="text-sm text-blue-800 dark:text-blue-200">
+            💡 {languageHint}
+          </p>
+        </div>
+      )}
+
       <div className="mt-4 space-y-4">
         <div>
           <label className="text-sm font-medium">Naming convention</label>
-          <div className="mt-2 grid grid-cols-2 gap-2">
+          <div className="mt-2 space-y-2">
             {namingOptions.map((opt) => (
               <button
                 key={opt.id}
                 onClick={() => onChange({ naming: opt.id })}
-                className={`rounded-md border px-3 py-2 text-sm ${
+                className={`flex w-full items-start gap-3 rounded-lg border p-3 text-left transition-all ${
                   config.naming === opt.id ? "border-primary bg-primary/5" : "hover:border-primary"
                 }`}
               >
-                {opt.label}
+                <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+                  config.naming === opt.id ? "border-primary bg-primary text-white" : "border-muted-foreground"
+                }`}>
+                  {config.naming === opt.id && <Check className="h-3 w-3" />}
+                </div>
+                <div>
+                  <span className="font-medium">{opt.label}</span>
+                  <p className="text-xs text-muted-foreground">{opt.desc}</p>
+                </div>
               </button>
             ))}
           </div>
         </div>
+        
         <div>
-          <label className="text-sm font-medium">Notes</label>
+          <label className="text-sm font-medium">Additional style notes</label>
           <textarea
             value={config.notes}
             onChange={(e) => onChange({ notes: e.target.value })}
-            placeholder="e.g., prefer named exports, keep functions pure, avoid default exports..."
+            placeholder="e.g., prefer named exports, keep functions pure, avoid default exports, max line length 100..."
             rows={4}
-            className="w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            className="mt-2 w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
+        
         <label className="flex items-center gap-2 text-xs text-muted-foreground">
           <input
             type="checkbox"
@@ -2029,33 +2802,66 @@ function StepBoundaries({
     onChange({ [bucket]: updated } as any);
   };
 
-  const renderBucket = (title: string, bucket: "always" | "ask" | "never") => (
-    <div className="rounded-lg border p-3">
-      <p className="text-sm font-semibold">{title}</p>
-      <div className="mt-2 flex flex-wrap gap-2">
-        {BOUNDARY_OPTIONS.map((opt) => (
-          <button
-            key={`${bucket}-${opt}`}
-            onClick={() => toggle(bucket, opt)}
-            className={`rounded-full border px-3 py-1 text-xs ${
-              config[bucket]?.includes(opt) ? "border-primary bg-primary/10" : "hover:border-primary"
-            }`}
-          >
-            {opt}
-          </button>
-        ))}
+  // Get options already selected in other buckets
+  const getUsedOptions = (excludeBucket: "always" | "ask" | "never") => {
+    const used = new Set<string>();
+    if (excludeBucket !== "always") config.always?.forEach(o => used.add(o));
+    if (excludeBucket !== "ask") config.ask?.forEach(o => used.add(o));
+    if (excludeBucket !== "never") config.never?.forEach(o => used.add(o));
+    return used;
+  };
+
+  const renderBucket = (title: string, bucket: "always" | "ask" | "never", description: string) => {
+    const usedInOther = getUsedOptions(bucket);
+    const availableOptions = BOUNDARY_OPTIONS.filter(opt => !usedInOther.has(opt));
+    const selectedInBucket = config[bucket] || [];
+    
+    return (
+      <div className="rounded-lg border p-3">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold">{title}</p>
+          <span className="text-xs text-muted-foreground">{description}</span>
+        </div>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {availableOptions.length === 0 && selectedInBucket.length === 0 ? (
+            <p className="text-xs text-muted-foreground italic">All options assigned to other categories</p>
+          ) : (
+            <>
+              {/* Show selected items first */}
+              {selectedInBucket.map((opt) => (
+                <button
+                  key={`${bucket}-${opt}`}
+                  onClick={() => toggle(bucket, opt)}
+                  className="rounded-full border border-primary bg-primary/10 px-3 py-1 text-xs"
+                >
+                  {opt} ✓
+                </button>
+              ))}
+              {/* Show available unselected items */}
+              {availableOptions.filter(opt => !selectedInBucket.includes(opt)).map((opt) => (
+                <button
+                  key={`${bucket}-${opt}`}
+                  onClick={() => toggle(bucket, opt)}
+                  className="rounded-full border px-3 py-1 text-xs hover:border-primary"
+                >
+                  {opt}
+                </button>
+              ))}
+            </>
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div>
       <h2 className="text-2xl font-bold">Boundaries</h2>
-      <p className="mt-2 text-muted-foreground">Define what AI should always do, ask first, or never do.</p>
+      <p className="mt-2 text-muted-foreground">Define what AI should always do, ask first, or never do. Each option can only be in one category.</p>
       <div className="mt-4 space-y-3">
-        {renderBucket("Always do", "always")}
-        {renderBucket("Ask first", "ask")}
-        {renderBucket("Never do", "never")}
+        {renderBucket("Always do", "always", "AI will do these automatically")}
+        {renderBucket("Ask first", "ask", "AI will ask before doing")}
+        {renderBucket("Never do", "never", "AI will refuse to do")}
       </div>
       <label className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
         <input
@@ -2063,13 +2869,50 @@ function StepBoundaries({
           checked={config.savePreferences}
           onChange={(e) => onChange({ savePreferences: e.target.checked })}
         />
-        Save boundaries as defaults
+        Save boundaries as defaults in my profile
       </label>
     </div>
   );
 }
 
-const TEST_FRAMEWORKS = ["jest", "vitest", "playwright", "cypress", "pytest", "rtl", "msw"];
+const TEST_FRAMEWORKS = [
+  // JavaScript/TypeScript
+  "jest", "vitest", "mocha", "ava", "tap", "bun:test",
+  // E2E/Integration
+  "playwright", "cypress", "puppeteer", "selenium", "webdriverio", "testcafe",
+  // React/Frontend
+  "rtl", "enzyme", "storybook", "chromatic",
+  // API/Mocking
+  "msw", "supertest", "pact", "dredd", "karate", "postman", "insomnia",
+  // Python
+  "pytest", "unittest", "nose2", "hypothesis", "behave", "robot",
+  // Go
+  "go-test", "testify", "ginkgo", "gomega",
+  // Java/JVM
+  "junit", "testng", "mockito", "spock", "cucumber-jvm",
+  // Ruby
+  "rspec", "minitest", "capybara", "factory_bot",
+  // .NET
+  "xunit", "nunit", "mstest", "specflow",
+  // Infrastructure/DevOps
+  "terratest", "conftest", "opa", "inspec", "serverspec", "molecule", "kitchen", "goss",
+  // Kubernetes
+  "kubetest", "kuttl", "chainsaw", "helm-unittest",
+  // Security
+  "owasp-zap", "burpsuite", "nuclei", "semgrep",
+  // Load/Performance
+  "k6", "locust", "jmeter", "artillery", "gatling", "vegeta", "wrk", "ab",
+  // Chaos Engineering
+  "chaos-mesh", "litmus", "gremlin", "toxiproxy",
+  // Contract Testing
+  "pact", "spring-cloud-contract", "specmatic",
+  // BDD
+  "cucumber", "behave", "gauge", "concordion",
+  // Mutation Testing
+  "stryker", "pitest", "mutmut",
+  // Fuzzing
+  "go-fuzz", "afl", "libfuzzer", "jazzer",
+];
 
 const TEST_LEVELS = [
   { id: "smoke", label: "Smoke", desc: "Quick sanity checks" },
@@ -2193,7 +3036,7 @@ function StepTesting({
             checked={config.savePreferences}
             onChange={(e) => onChange({ savePreferences: e.target.checked })}
           />
-          Save testing defaults
+          Save testing defaults to profile
         </label>
       </div>
     </div>
@@ -2512,6 +3355,7 @@ function StepGenerate({
   copiedFile,
   onToggleExpand,
   onCopyFile,
+  onPlatformChange,
 }: {
   config: WizardConfig;
   session: {
@@ -2527,6 +3371,7 @@ function StepGenerate({
   copiedFile: string | null;
   onToggleExpand: (fileName: string) => void;
   onCopyFile: (fileName: string, content: string) => void;
+  onPlatformChange: (v: string) => void;
 }) {
   return (
     <div>
@@ -2538,6 +3383,31 @@ function StepGenerate({
       </p>
 
       <div className="mt-6 space-y-4">
+        {/* Target AI IDE Selection */}
+        <div className="rounded-lg border bg-muted/30 p-4">
+          <h3 className="font-medium">Target AI IDE</h3>
+          <p className="text-sm text-muted-foreground">Choose your AI IDE (files are optimized for it but remain portable).</p>
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {[
+              { id: "cursor", label: "Cursor", icon: "🔮" },
+              { id: "claude", label: "Claude Code", icon: "🤖" },
+              { id: "copilot", label: "GitHub Copilot", icon: "🐙" },
+              { id: "windsurf", label: "Windsurf", icon: "🏄" },
+            ].map((p) => (
+              <button
+                key={p.id}
+                onClick={() => onPlatformChange(p.id)}
+                className={`flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm transition-all ${
+                  config.platform === p.id ? "border-primary bg-primary/10" : "hover:border-primary"
+                }`}
+              >
+                <span>{p.icon}</span>
+                <span>{p.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Profile info used */}
         <div className="rounded-lg border bg-muted/30 p-4">
           <h3 className="font-medium">Using your profile settings:</h3>
@@ -2555,6 +3425,13 @@ function StepGenerate({
           <h3 className="font-medium">
             Generated Files ({previewFiles.length}):
           </h3>
+          {previewFiles.length === 0 ? (
+            <div className="rounded-lg border bg-muted/50 p-4 text-center">
+              <p className="text-sm text-muted-foreground">
+                Generating preview... If this persists, try going back and selecting options.
+              </p>
+            </div>
+          ) : null}
           {previewFiles.map((file) => (
             <div
               key={file.fileName}

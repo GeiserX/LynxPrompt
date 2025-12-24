@@ -62,6 +62,7 @@ interface WizardConfig {
   projectName: string;
   projectDescription: string;
   projectType?: string; // work, leisure, open_source_small, etc.
+  devOS?: string; // linux, macos, windows, wsl, multi
   languages: string[];
   frameworks: string[];
   letAiDecide: boolean;
@@ -249,6 +250,25 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
   lines.push("");
   lines.push("## Project Context");
   lines.push(`This is ${config.projectDescription || "a software project"}.`);
+  if (config.devOS) {
+    const osNames: Record<string, string> = {
+      linux: "Linux",
+      macos: "macOS",
+      windows: "Windows",
+      wsl: "Windows with WSL (Windows Subsystem for Linux)",
+      multi: "Multi-platform (use cross-platform compatible commands)"
+    };
+    lines.push(`**Development Environment**: ${osNames[config.devOS] || config.devOS}`);
+    if (config.devOS === "windows") {
+      lines.push("- Use PowerShell or CMD compatible commands");
+      lines.push("- Use backslashes for file paths or forward slashes for cross-platform compatibility");
+    } else if (config.devOS === "wsl") {
+      lines.push("- Prefer Linux commands (bash/zsh) but be aware of Windows/Linux path translations");
+    } else if (config.devOS === "multi") {
+      lines.push("- Use cross-platform commands that work on Windows, macOS, and Linux");
+      lines.push("- Prefer npm scripts or Makefile targets over platform-specific commands");
+    }
+  }
   if (config.exampleRepoUrl) {
     lines.push("");
     lines.push(`**Reference Repository**: ${config.exampleRepoUrl}`);

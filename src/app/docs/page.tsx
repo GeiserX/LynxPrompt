@@ -281,19 +281,19 @@ export default function DocsPage() {
                 </p>
                 <ul className="mt-3 space-y-2">
                   <li className="flex items-center gap-2">
-                    <span className="rounded border-2 border-green-600 bg-green-100 px-2 py-0.5 text-xs font-bold text-green-800 dark:border-green-400 dark:bg-green-500/20 dark:text-green-300">
+                    <span className="rounded border-2 border-green-700 bg-green-200 px-2 py-0.5 text-xs font-bold text-green-900 dark:border-green-400 dark:bg-green-500/20 dark:text-green-300">
                       Simple
                     </span>
                     <span>Basic configurations</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="rounded border-2 border-blue-600 bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-800 dark:border-blue-400 dark:bg-blue-500/20 dark:text-blue-300">
+                    <span className="rounded border-2 border-blue-700 bg-blue-200 px-2 py-0.5 text-xs font-bold text-blue-900 dark:border-blue-400 dark:bg-blue-500/20 dark:text-blue-300">
                       Intermediate
                     </span>
                     <span>Standard project setups</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="rounded border-2 border-purple-600 bg-purple-100 px-2 py-0.5 text-xs font-bold text-purple-800 dark:border-purple-400 dark:bg-purple-500/20 dark:text-purple-300">
+                    <span className="rounded border-2 border-purple-700 bg-purple-200 px-2 py-0.5 text-xs font-bold text-purple-900 dark:border-purple-400 dark:bg-purple-500/20 dark:text-purple-300">
                       Advanced
                     </span>
                     <span>Comprehensive configurations</span>
