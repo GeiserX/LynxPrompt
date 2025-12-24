@@ -482,12 +482,12 @@ export default function ShareBlueprintPage() {
                       ))}
                     </select>
                     {/* Interoperability notice */}
-                    <div className="mt-2 rounded-lg border border-sky-500 bg-sky-100 p-3 dark:border-sky-700 dark:bg-sky-900/20">
+                    <div className="mt-2 rounded-lg border border-sky-300 bg-white p-3 shadow-sm dark:border-sky-700 dark:bg-sky-900/20">
                       <div className="flex items-start gap-2">
                         <Info className="h-4 w-4 flex-shrink-0 text-sky-700 dark:text-sky-400 mt-0.5" />
-                        <p className="text-xs text-sky-900 dark:text-sky-300">
-                          <strong>Note:</strong> This is just to identify the original format. 
-                          All blueprints are <strong>interchangeable and compatible across all AI IDEs</strong> — 
+                        <p className="text-xs text-slate-800 dark:text-sky-300">
+                          <strong className="text-slate-900 dark:text-sky-200">Note:</strong> This is just to identify the original format. 
+                          All blueprints are <strong className="text-slate-900 dark:text-sky-200">interchangeable and compatible across all AI IDEs</strong> — 
                           Cursor, Claude, Copilot, Windsurf, Cline, and more. 
                           Users can download in any format they need.
                         </p>
@@ -541,14 +541,14 @@ export default function ShareBlueprintPage() {
                   </div>
 
                   {/* Visibility - Sharing Section */}
-                  <div className="rounded-lg border-2 border-dashed border-amber-600 bg-amber-100 p-4 dark:border-amber-600 dark:bg-amber-900/20">
+                  <div className="rounded-lg border-2 border-dashed border-amber-300 bg-white p-4 shadow-sm dark:border-amber-600 dark:bg-amber-900/20">
                     <div className="flex items-start gap-3">
                       <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-700 dark:text-amber-400 mt-0.5" />
                       <div className="flex-1">
                         <h4 className="font-medium text-amber-900 dark:text-amber-200">
                           Share with the Community?
                         </h4>
-                        <p className="mt-1 text-sm text-amber-900 dark:text-amber-300">
+                        <p className="mt-1 text-sm text-amber-800 dark:text-amber-300">
                           By default, your blueprint is private. Check below to share it publicly in the marketplace.
                         </p>
                         <div className="mt-3 flex items-center gap-3">

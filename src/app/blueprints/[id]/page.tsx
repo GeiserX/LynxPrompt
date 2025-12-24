@@ -19,6 +19,8 @@ import {
   Lock,
   ShoppingCart,
   Pencil,
+  Files,
+  Loader2,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
@@ -43,9 +45,9 @@ const platformInfo: Record<string, { name: string; file: string }> = {
 };
 
 const tierColors: Record<string, string> = {
-  SIMPLE: "border-2 border-green-700 bg-green-200 text-green-900 dark:border-green-400 dark:bg-green-500/20 dark:text-green-300",
-  INTERMEDIATE: "border-2 border-blue-700 bg-blue-200 text-blue-900 dark:border-blue-400 dark:bg-blue-500/20 dark:text-blue-300",
-  ADVANCED: "border-2 border-purple-700 bg-purple-200 text-purple-900 dark:border-purple-400 dark:bg-purple-500/20 dark:text-purple-300",
+  SIMPLE: "bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-sm dark:from-green-600 dark:to-emerald-600",
+  INTERMEDIATE: "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-sm dark:from-blue-600 dark:to-indigo-600",
+  ADVANCED: "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-sm dark:from-purple-600 dark:to-pink-600",
 };
 
 const tierLabels: Record<string, string> = {
@@ -169,6 +171,52 @@ export default function BlueprintDetailPage() {
   };
 
   const [purchasing, setPurchasing] = useState(false);
+  const [cloning, setCloning] = useState(false);
+
+  const handleCloneToEdit = async () => {
+    if (!session?.user) {
+      router.push(`/auth/signin?callbackUrl=/blueprints/${params.id}`);
+      return;
+    }
+
+    if (!blueprint?.content) {
+      alert("Cannot clone: Blueprint content not available");
+      return;
+    }
+
+    setCloning(true);
+    try {
+      // Create a copy of the blueprint in user's templates
+      const res = await fetch("/api/blueprints", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: `${blueprint.name} (Copy)`,
+          description: blueprint.description || "",
+          content: blueprint.content,
+          type: "CUSTOM",
+          category: blueprint.category || "other",
+          tags: blueprint.tags || [],
+          isPublic: false, // Start as private
+          aiAssisted: false,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.template?.id) {
+        // Redirect to edit the new copy
+        router.push(`/blueprints/usr_${data.template.id}/edit`);
+      } else {
+        alert(data.error || "Failed to clone blueprint");
+      }
+    } catch (error) {
+      console.error("Clone error:", error);
+      alert("Failed to clone blueprint. Please try again.");
+    } finally {
+      setCloning(false);
+    }
+  };
 
   const handleCopy = async () => {
     if (blueprint?.content && blueprint.hasPurchased !== false) {
@@ -340,13 +388,27 @@ export default function BlueprintDetailPage() {
                       : `Purchase for €${((blueprint.price || 0) / 100).toFixed(2)}`}
                   </Button>
                 ) : (
-                  <div className="flex gap-2">
-                    {blueprint.isOwner && (
+                  <div className="flex flex-wrap gap-2">
+                    {blueprint.isOwner ? (
                       <Button variant="outline" size="sm" asChild>
                         <Link href={`/blueprints/${params.id}/edit`}>
                           <Pencil className="mr-2 h-4 w-4" />
                           Edit
                         </Link>
+                      </Button>
+                    ) : (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={handleCloneToEdit} 
+                        disabled={!blueprint.content || cloning}
+                      >
+                        {cloning ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Files className="mr-2 h-4 w-4" />
+                        )}
+                        {cloning ? "Cloning..." : "Clone & Edit"}
                       </Button>
                     )}
                     <Button variant="outline" size="sm" onClick={handleCopy} disabled={!blueprint.content}>

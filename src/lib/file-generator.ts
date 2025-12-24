@@ -135,15 +135,32 @@ interface UserProfile {
   name?: string | null;
   persona?: string | null;
   skillLevel?: string | null;
+  tier?: string; // "free" | "pro" | "max"
+}
+
+// Tier access helper - checks if user tier can access a feature tier
+function canAccessFeature(userTier: string | undefined, featureTier: "basic" | "intermediate" | "advanced"): boolean {
+  const tierLevels: Record<string, number> = { free: 0, pro: 1, max: 2 };
+  const featureLevels: Record<string, number> = { basic: 0, intermediate: 1, advanced: 2 };
+  const userLevel = tierLevels[userTier || "free"] ?? 0;
+  return userLevel >= featureLevels[featureTier];
 }
 
 // Platform file names
 // These are the PRIMARY platforms, but files work across multiple IDEs
 const PLATFORM_FILES: Record<string, string> = {
-  cursor: ".cursor/rules/project.mdc", // Cursor's native project rules format
+  universal: "AGENTS.md",
+  cursor: ".cursor/rules/project.mdc",
   claude: "CLAUDE.md",
   copilot: ".github/copilot-instructions.md",
   windsurf: ".windsurfrules",
+  aider: ".aider.conf.yml",
+  continue: ".continue/config.json",
+  cody: ".cody/config.json",
+  tabnine: ".tabnine.yaml",
+  supermaven: ".supermaven/config.json",
+  codegpt: ".codegpt/config.json",
+  void: ".void/config.json",
 };
 
 // Helper: normalize platforms array (supports legacy array or single string)
@@ -332,42 +349,64 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     lines.push("");
   }
 
-  if (config.boundaries) {
+  // Only include Boundaries section if user actually specified boundaries AND has Max tier access
+  const hasBoundaries = config.boundaries && (
+    (config.boundaries.always?.length ?? 0) > 0 ||
+    (config.boundaries.ask?.length ?? 0) > 0 ||
+    (config.boundaries.never?.length ?? 0) > 0
+  );
+  if (hasBoundaries && canAccessFeature(user.tier, "advanced")) {
     lines.push("## Boundaries");
-    if (config.boundaries.always?.length) {
+    if (config.boundaries!.always?.length) {
       lines.push("- Always do:");
-      config.boundaries.always.forEach(item => lines.push(`  - ${item}`));
+      config.boundaries!.always.forEach(item => lines.push(`  - ${item}`));
     }
-    if (config.boundaries.ask?.length) {
+    if (config.boundaries!.ask?.length) {
       lines.push("- Ask first:");
-      config.boundaries.ask.forEach(item => lines.push(`  - ${item}`));
+      config.boundaries!.ask.forEach(item => lines.push(`  - ${item}`));
     }
-    if (config.boundaries.never?.length) {
+    if (config.boundaries!.never?.length) {
       lines.push("- Never do:");
-      config.boundaries.never.forEach(item => lines.push(`  - ${item}`));
+      config.boundaries!.never.forEach(item => lines.push(`  - ${item}`));
     }
     lines.push("");
   }
 
-  if (config.commands) {
+  // Only include Commands section if user actually specified commands AND has Pro tier access
+  const hasCommands = config.commands && (
+    config.commands.build ||
+    config.commands.test ||
+    config.commands.lint ||
+    config.commands.dev ||
+    (config.commands.additional?.length ?? 0) > 0
+  );
+  if (hasCommands && canAccessFeature(user.tier, "intermediate")) {
     lines.push("## Commands");
-    if (config.commands.build) lines.push(`- Build: ${config.commands.build}`);
-    if (config.commands.test) lines.push(`- Test: ${config.commands.test}`);
-    if (config.commands.lint) lines.push(`- Lint: ${config.commands.lint}`);
-    if (config.commands.dev) lines.push(`- Dev: ${config.commands.dev}`);
-    if (config.commands.additional?.length) {
+    if (config.commands!.build) lines.push(`- Build: ${config.commands!.build}`);
+    if (config.commands!.test) lines.push(`- Test: ${config.commands!.test}`);
+    if (config.commands!.lint) lines.push(`- Lint: ${config.commands!.lint}`);
+    if (config.commands!.dev) lines.push(`- Dev: ${config.commands!.dev}`);
+    if (config.commands!.additional?.length) {
       lines.push("- Other commands:");
-      config.commands.additional.forEach(cmd => lines.push(`  - ${cmd}`));
+      config.commands!.additional.forEach(cmd => lines.push(`  - ${cmd}`));
     }
     lines.push("");
   }
 
-  if (config.testingStrategy) {
+  // Only include Testing Strategy if user explicitly configured it AND has Max tier access
+  const hasTestingConfig = config.testingStrategy && (
+    (config.testingStrategy.levels?.length ?? 0) > 0 ||
+    (config.testingStrategy.frameworks?.length ?? 0) > 0 ||
+    config.testingStrategy.notes ||
+    // Only include coverage if it's not the default 80
+    (config.testingStrategy.coverage !== undefined && config.testingStrategy.coverage !== 80)
+  );
+  if (hasTestingConfig && canAccessFeature(user.tier, "advanced")) {
     lines.push("## Testing Strategy");
-    if (config.testingStrategy.levels?.length) lines.push(`- Levels: ${config.testingStrategy.levels.join(", ")}`);
-    if (config.testingStrategy.frameworks?.length) lines.push(`- Frameworks: ${config.testingStrategy.frameworks.join(", ")}`);
-    if (config.testingStrategy.coverage !== undefined) lines.push(`- Coverage target: ${config.testingStrategy.coverage}%`);
-    if (config.testingStrategy.notes) lines.push(`- Notes: ${config.testingStrategy.notes}`);
+    if (config.testingStrategy!.levels?.length) lines.push(`- Levels: ${config.testingStrategy!.levels.join(", ")}`);
+    if (config.testingStrategy!.frameworks?.length) lines.push(`- Frameworks: ${config.testingStrategy!.frameworks.join(", ")}`);
+    if (config.testingStrategy!.coverage !== undefined) lines.push(`- Coverage target: ${config.testingStrategy!.coverage}%`);
+    if (config.testingStrategy!.notes) lines.push(`- Notes: ${config.testingStrategy!.notes}`);
     lines.push("");
   }
 
@@ -395,16 +434,26 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     lines.push("- Enable automated dependency updates (Dependabot/GitLab equivalent).");
   }
 
-  if (config.staticFiles) {
+  // Only include Static Files summary if user explicitly enabled any AND has Max tier access
+  const hasStaticFiles = config.staticFiles && (
+    config.staticFiles.editorconfig ||
+    config.staticFiles.contributing ||
+    config.staticFiles.codeOfConduct ||
+    config.staticFiles.security ||
+    (config.staticFiles.gitignoreMode && config.staticFiles.gitignoreMode !== "skip") ||
+    config.staticFiles.dockerignore ||
+    config.funding
+  );
+  if (hasStaticFiles && canAccessFeature(user.tier, "advanced")) {
     lines.push("");
     lines.push("## Static Files");
     lines.push("Ensure static repo helpers are generated as requested:");
-    if (config.staticFiles.editorconfig) lines.push("- Include .editorconfig aligned with project style.");
-    if (config.staticFiles.contributing) lines.push("- Include CONTRIBUTING.md with contribution guidelines.");
-    if (config.staticFiles.codeOfConduct) lines.push("- Include CODE_OF_CONDUCT.md.");
-    if (config.staticFiles.security) lines.push("- Include SECURITY.md with reporting instructions.");
-    if (config.staticFiles.gitignoreMode && config.staticFiles.gitignoreMode !== "skip") lines.push("- Add project-specific .gitignore.");
-    if (config.buildContainer || config.staticFiles.dockerignore) lines.push("- Add .dockerignore for container builds.");
+    if (config.staticFiles!.editorconfig) lines.push("- Include .editorconfig aligned with project style.");
+    if (config.staticFiles!.contributing) lines.push("- Include CONTRIBUTING.md with contribution guidelines.");
+    if (config.staticFiles!.codeOfConduct) lines.push("- Include CODE_OF_CONDUCT.md.");
+    if (config.staticFiles!.security) lines.push("- Include SECURITY.md with reporting instructions.");
+    if (config.staticFiles!.gitignoreMode && config.staticFiles!.gitignoreMode !== "skip") lines.push("- Add project-specific .gitignore.");
+    if (config.buildContainer || config.staticFiles!.dockerignore) lines.push("- Add .dockerignore for container builds.");
     if (config.funding) lines.push("- Add .github/FUNDING.yml when applicable.");
   }
 
@@ -424,10 +473,12 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     lines.push("Keep this file updated so future sessions start with better context.");
   }
 
-  // Add embedded static files
-  const staticFilesSection = generateEmbeddedStaticFiles(config, user);
-  if (staticFilesSection) {
-    lines.push(staticFilesSection);
+  // Add embedded static files (only for Max tier)
+  if (canAccessFeature(user.tier, "advanced")) {
+    const staticFilesSection = generateEmbeddedStaticFiles(config, user);
+    if (staticFilesSection) {
+      lines.push(staticFilesSection);
+    }
   }
 
   return lines.join("\n");
@@ -516,51 +567,80 @@ function generateClaudeMd(config: WizardConfig, user: UserProfile): string {
     lines.push("");
   }
 
-  if (config.commands) {
-    lines.push("### Commands");
-    if (config.commands.build) lines.push(`- Build: ${config.commands.build}`);
-    if (config.commands.test) lines.push(`- Test: ${config.commands.test}`);
-    if (config.commands.lint) lines.push(`- Lint: ${config.commands.lint}`);
-    if (config.commands.dev) lines.push(`- Dev: ${config.commands.dev}`);
-    if (config.commands.additional?.length) {
-      config.commands.additional.forEach(cmd => lines.push(`- ${cmd}`));
+  // Commands section - requires Pro tier
+  if (config.commands && canAccessFeature(user.tier, "intermediate")) {
+    const hasCommandsClaude = config.commands.build || config.commands.test || 
+      config.commands.lint || config.commands.dev || (config.commands.additional?.length ?? 0) > 0;
+    if (hasCommandsClaude) {
+      lines.push("### Commands");
+      if (config.commands.build) lines.push(`- Build: ${config.commands.build}`);
+      if (config.commands.test) lines.push(`- Test: ${config.commands.test}`);
+      if (config.commands.lint) lines.push(`- Lint: ${config.commands.lint}`);
+      if (config.commands.dev) lines.push(`- Dev: ${config.commands.dev}`);
+      if (config.commands.additional?.length) {
+        config.commands.additional.forEach(cmd => lines.push(`- ${cmd}`));
+      }
+      lines.push("");
     }
-    lines.push("");
   }
 
-  if (config.codeStyle?.naming || config.codeStyle?.notes) {
+  // Code Style - requires Pro tier
+  if ((config.codeStyle?.naming || config.codeStyle?.notes) && canAccessFeature(user.tier, "intermediate")) {
     lines.push("### Code Style");
     if (config.codeStyle.naming) lines.push(`- Naming: ${config.codeStyle.naming}`);
     if (config.codeStyle.notes) lines.push(`- Notes: ${config.codeStyle.notes}`);
     lines.push("");
   }
 
-  if (config.boundaries) {
+  // Boundaries - requires Max tier
+  const hasBoundariesClaude = config.boundaries && (
+    (config.boundaries.always?.length ?? 0) > 0 ||
+    (config.boundaries.ask?.length ?? 0) > 0 ||
+    (config.boundaries.never?.length ?? 0) > 0
+  );
+  if (hasBoundariesClaude && canAccessFeature(user.tier, "advanced")) {
     lines.push("### Boundaries");
-    if (config.boundaries.always?.length) lines.push(`- Always: ${config.boundaries.always.join(", ")}`);
-    if (config.boundaries.ask?.length) lines.push(`- Ask first: ${config.boundaries.ask.join(", ")}`);
-    if (config.boundaries.never?.length) lines.push(`- Never: ${config.boundaries.never.join(", ")}`);
+    if (config.boundaries!.always?.length) lines.push(`- Always: ${config.boundaries!.always.join(", ")}`);
+    if (config.boundaries!.ask?.length) lines.push(`- Ask first: ${config.boundaries!.ask.join(", ")}`);
+    if (config.boundaries!.never?.length) lines.push(`- Never: ${config.boundaries!.never.join(", ")}`);
     lines.push("");
   }
 
-  if (config.testingStrategy) {
+  // Testing Strategy - requires Max tier
+  const hasTestingClaude = config.testingStrategy && (
+    (config.testingStrategy.levels?.length ?? 0) > 0 ||
+    (config.testingStrategy.frameworks?.length ?? 0) > 0 ||
+    config.testingStrategy.notes ||
+    (config.testingStrategy.coverage !== undefined && config.testingStrategy.coverage !== 80)
+  );
+  if (hasTestingClaude && canAccessFeature(user.tier, "advanced")) {
     lines.push("### Testing Strategy");
-    if (config.testingStrategy.levels?.length) lines.push(`- Levels: ${config.testingStrategy.levels.join(", ")}`);
-    if (config.testingStrategy.frameworks?.length) lines.push(`- Frameworks: ${config.testingStrategy.frameworks.join(", ")}`);
-    if (config.testingStrategy.coverage !== undefined) lines.push(`- Coverage: ${config.testingStrategy.coverage}%`);
-    if (config.testingStrategy.notes) lines.push(`- Notes: ${config.testingStrategy.notes}`);
+    if (config.testingStrategy!.levels?.length) lines.push(`- Levels: ${config.testingStrategy!.levels.join(", ")}`);
+    if (config.testingStrategy!.frameworks?.length) lines.push(`- Frameworks: ${config.testingStrategy!.frameworks.join(", ")}`);
+    if (config.testingStrategy!.coverage !== undefined) lines.push(`- Coverage: ${config.testingStrategy!.coverage}%`);
+    if (config.testingStrategy!.notes) lines.push(`- Notes: ${config.testingStrategy!.notes}`);
     lines.push("");
   }
 
-  if (config.staticFiles) {
+  // Static Files - requires Max tier
+  const hasStaticClaude = config.staticFiles && (
+    config.staticFiles.editorconfig ||
+    config.staticFiles.contributing ||
+    config.staticFiles.codeOfConduct ||
+    config.staticFiles.security ||
+    (config.staticFiles.gitignoreMode && config.staticFiles.gitignoreMode !== "skip") ||
+    config.staticFiles.dockerignore ||
+    config.funding
+  );
+  if (hasStaticClaude && canAccessFeature(user.tier, "advanced")) {
     lines.push("### Static Files");
     const chosen: string[] = [];
-    if (config.staticFiles.editorconfig) chosen.push(".editorconfig");
-    if (config.staticFiles.contributing) chosen.push("CONTRIBUTING.md");
-    if (config.staticFiles.codeOfConduct) chosen.push("CODE_OF_CONDUCT.md");
-    if (config.staticFiles.security) chosen.push("SECURITY.md");
-    if (config.staticFiles.gitignoreMode && config.staticFiles.gitignoreMode !== "skip") chosen.push(".gitignore");
-    if (config.buildContainer || config.staticFiles.dockerignore) chosen.push(".dockerignore");
+    if (config.staticFiles!.editorconfig) chosen.push(".editorconfig");
+    if (config.staticFiles!.contributing) chosen.push("CONTRIBUTING.md");
+    if (config.staticFiles!.codeOfConduct) chosen.push("CODE_OF_CONDUCT.md");
+    if (config.staticFiles!.security) chosen.push("SECURITY.md");
+    if (config.staticFiles!.gitignoreMode && config.staticFiles!.gitignoreMode !== "skip") chosen.push(".gitignore");
+    if (config.buildContainer || config.staticFiles!.dockerignore) chosen.push(".dockerignore");
     if (config.funding) chosen.push(".github/FUNDING.yml");
     if (chosen.length) lines.push(`Generate: ${chosen.join(", ")}`);
     lines.push("");
@@ -596,10 +676,12 @@ function generateClaudeMd(config: WizardConfig, user: UserProfile): string {
     lines.push("");
   }
 
-  // Add embedded static files
-  const staticFilesSection = generateEmbeddedStaticFiles(config, user);
-  if (staticFilesSection) {
-    lines.push(staticFilesSection);
+  // Add embedded static files (only for Max tier)
+  if (canAccessFeature(user.tier, "advanced")) {
+    const staticFilesSection = generateEmbeddedStaticFiles(config, user);
+    if (staticFilesSection) {
+      lines.push(staticFilesSection);
+    }
   }
 
   return lines.join("\n");
@@ -664,19 +746,27 @@ function generateCopilotInstructions(
   lines.push("- Use meaningful variable and function names");
   lines.push("- Add error handling where appropriate");
 
-  if (config.codeStyle?.naming) lines.push(`- Naming: ${config.codeStyle.naming}`);
-  if (config.codeStyle?.notes) lines.push(`- Notes: ${config.codeStyle.notes}`);
+  // Code style preferences - requires Pro tier
+  if (canAccessFeature(user.tier, "intermediate")) {
+    if (config.codeStyle?.naming) lines.push(`- Naming: ${config.codeStyle.naming}`);
+    if (config.codeStyle?.notes) lines.push(`- Notes: ${config.codeStyle.notes}`);
+  }
 
-  if (config.commands) {
-    lines.push("");
-    lines.push("## Commands");
-    if (config.commands.build) lines.push(`- Build: ${config.commands.build}`);
-    if (config.commands.test) lines.push(`- Test: ${config.commands.test}`);
-    if (config.commands.lint) lines.push(`- Lint: ${config.commands.lint}`);
-    if (config.commands.dev) lines.push(`- Dev: ${config.commands.dev}`);
-    if (config.commands.additional?.length) {
-      lines.push("- Other:");
-      config.commands.additional.forEach(cmd => lines.push(`  - ${cmd}`));
+  // Commands - requires Pro tier
+  if (config.commands && canAccessFeature(user.tier, "intermediate")) {
+    const hasCommandsCopilot = config.commands.build || config.commands.test || 
+      config.commands.lint || config.commands.dev || (config.commands.additional?.length ?? 0) > 0;
+    if (hasCommandsCopilot) {
+      lines.push("");
+      lines.push("## Commands");
+      if (config.commands.build) lines.push(`- Build: ${config.commands.build}`);
+      if (config.commands.test) lines.push(`- Test: ${config.commands.test}`);
+      if (config.commands.lint) lines.push(`- Lint: ${config.commands.lint}`);
+      if (config.commands.dev) lines.push(`- Dev: ${config.commands.dev}`);
+      if (config.commands.additional?.length) {
+        lines.push("- Other:");
+        config.commands.additional.forEach(cmd => lines.push(`  - ${cmd}`));
+      }
     }
   }
 
@@ -697,32 +787,42 @@ function generateCopilotInstructions(
     lines.push("Track coding patterns and preferences, and refine these rules over time.");
   }
 
-  if (config.boundaries) {
+  // Boundaries - requires Max tier
+  const hasBoundariesCopilot = config.boundaries && (
+    (config.boundaries.always?.length ?? 0) > 0 ||
+    (config.boundaries.ask?.length ?? 0) > 0 ||
+    (config.boundaries.never?.length ?? 0) > 0
+  );
+  if (hasBoundariesCopilot && canAccessFeature(user.tier, "advanced")) {
     lines.push("");
     lines.push("## Boundaries");
-    if (config.boundaries.always?.length) lines.push(`- Always: ${config.boundaries.always.join(", ")}`);
-    if (config.boundaries.ask?.length) lines.push(`- Ask first: ${config.boundaries.ask.join(", ")}`);
-    if (config.boundaries.never?.length) lines.push(`- Never: ${config.boundaries.never.join(", ")}`);
+    if (config.boundaries!.always?.length) lines.push(`- Always: ${config.boundaries!.always.join(", ")}`);
+    if (config.boundaries!.ask?.length) lines.push(`- Ask first: ${config.boundaries!.ask.join(", ")}`);
+    if (config.boundaries!.never?.length) lines.push(`- Never: ${config.boundaries!.never.join(", ")}`);
   }
 
-  if (config.testingStrategy) {
+  // Testing Strategy - requires Max tier
+  const hasTestingCopilot = config.testingStrategy && (
+    (config.testingStrategy.levels?.length ?? 0) > 0 ||
+    (config.testingStrategy.frameworks?.length ?? 0) > 0 ||
+    config.testingStrategy.notes ||
+    (config.testingStrategy.coverage !== undefined && config.testingStrategy.coverage !== 80)
+  );
+  if (hasTestingCopilot && canAccessFeature(user.tier, "advanced")) {
     lines.push("");
     lines.push("## Testing Strategy");
-    if (config.testingStrategy.levels?.length) lines.push(`- Levels: ${config.testingStrategy.levels.join(", ")}`);
-    if (config.testingStrategy.frameworks?.length) lines.push(`- Frameworks: ${config.testingStrategy.frameworks.join(", ")}`);
-    if (config.testingStrategy.coverage !== undefined) lines.push(`- Coverage: ${config.testingStrategy.coverage}%`);
-    if (config.testingStrategy.notes) lines.push(`- Notes: ${config.testingStrategy.notes}`);
+    if (config.testingStrategy!.levels?.length) lines.push(`- Levels: ${config.testingStrategy!.levels.join(", ")}`);
+    if (config.testingStrategy!.frameworks?.length) lines.push(`- Frameworks: ${config.testingStrategy!.frameworks.join(", ")}`);
+    if (config.testingStrategy!.coverage !== undefined) lines.push(`- Coverage: ${config.testingStrategy!.coverage}%`);
+    if (config.testingStrategy!.notes) lines.push(`- Notes: ${config.testingStrategy!.notes}`);
   }
 
-  if (config.staticFiles) {
-    lines.push("");
-    lines.push("## Static Files");
-  }
-
-  // Add embedded static files
-  const staticFilesSection = generateEmbeddedStaticFiles(config, user);
-  if (staticFilesSection) {
-    lines.push(staticFilesSection);
+  // Add embedded static files (only for Max tier)
+  if (canAccessFeature(user.tier, "advanced")) {
+    const staticFilesSection = generateEmbeddedStaticFiles(config, user);
+    if (staticFilesSection) {
+      lines.push(staticFilesSection);
+    }
   }
 
   return lines.join("\n");
@@ -737,6 +837,340 @@ function generateWindsurfRules(
   return generateCursorRules(config, user)
     .replace(/^---[\s\S]*?---\n\n/, "") // Remove MDC frontmatter
     .replace("AI Rules", "Windsurf AI Rules");
+}
+
+// Generate Universal AGENTS.md - works with any AI IDE
+function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
+  const lines: string[] = [];
+
+  lines.push(`# ${config.projectName || "Project"} - AI Agent Instructions`);
+  lines.push("");
+  lines.push("> **Universal AI Configuration** - Compatible with Cursor, Claude Code, GitHub Copilot, and other AI IDEs.");
+  lines.push("");
+  lines.push("## Overview");
+  lines.push(config.projectDescription || "A software project.");
+  lines.push("");
+
+  if (config.languages.length > 0 || config.frameworks.length > 0 || config.letAiDecide) {
+    lines.push("## Technology Stack");
+    lines.push("");
+    if (config.languages.length > 0) {
+      lines.push("### Languages");
+      config.languages.forEach((lang) => {
+        const cleanLang = lang.startsWith("custom:") ? lang.replace("custom:", "") : lang;
+        lines.push(`- ${cleanLang}`);
+      });
+      lines.push("");
+    }
+    if (config.frameworks.length > 0) {
+      lines.push("### Frameworks & Libraries");
+      config.frameworks.forEach((fw) => {
+        const cleanFw = fw.startsWith("custom:") ? fw.replace("custom:", "") : fw;
+        lines.push(`- ${cleanFw}`);
+      });
+      lines.push("");
+    }
+    if (config.letAiDecide) {
+      lines.push("### AI Technology Selection");
+      if (config.languages.length > 0 || config.frameworks.length > 0) {
+        lines.push("For technologies beyond those listed, analyze the codebase and suggest appropriate solutions.");
+      } else {
+        lines.push("Analyze the codebase to determine appropriate languages, frameworks, and tools.");
+      }
+      lines.push("");
+    }
+  }
+
+  lines.push("## Development Guidelines");
+  lines.push("");
+  
+  if (config.includePersonalData !== false && user.skillLevel) {
+    lines.push("### Communication Style");
+    if (user.skillLevel === "novice" || user.skillLevel === "beginner") {
+      lines.push("- Explain concepts thoroughly with detailed comments");
+      lines.push("- Walk through reasoning step by step");
+    } else if (user.skillLevel === "intermediate") {
+      lines.push("- Balance explanations with efficiency");
+      lines.push("- Explain non-obvious decisions, skip basics");
+    } else {
+      lines.push("- Be concise and direct");
+      lines.push("- Skip well-known patterns, focus on implementation");
+    }
+    if (user.persona) {
+      lines.push(`- Developer context: ${user.persona.replace(/_/g, " ")}`);
+    }
+    lines.push("");
+  }
+
+  if (config.aiBehaviorRules.length > 0) {
+    lines.push("### Workflow Rules");
+    config.aiBehaviorRules.forEach((rule) => {
+      const ruleText = getRuleDescription(rule);
+      if (ruleText) lines.push(`- ${ruleText}`);
+    });
+    lines.push("");
+  }
+
+  if (config.projectType && PROJECT_TYPE_INSTRUCTIONS[config.projectType]) {
+    lines.push("### Project Context");
+    PROJECT_TYPE_INSTRUCTIONS[config.projectType].forEach((instruction) => {
+      lines.push(`- ${instruction}`);
+    });
+    lines.push("");
+  }
+
+  // Commands - requires Pro tier
+  if (config.commands && canAccessFeature(user.tier, "intermediate") && (config.commands.build || config.commands.test || config.commands.lint || config.commands.dev || config.commands.additional?.length)) {
+    lines.push("### Commands");
+    if (config.commands.build) lines.push(`- Build: \`${config.commands.build}\``);
+    if (config.commands.test) lines.push(`- Test: \`${config.commands.test}\``);
+    if (config.commands.lint) lines.push(`- Lint: \`${config.commands.lint}\``);
+    if (config.commands.dev) lines.push(`- Dev: \`${config.commands.dev}\``);
+    if (config.commands.additional?.length) {
+      config.commands.additional.forEach(cmd => lines.push(`- \`${cmd}\``));
+    }
+    lines.push("");
+  }
+
+  // Code Style - requires Pro tier
+  if ((config.codeStyle?.naming || config.codeStyle?.notes) && canAccessFeature(user.tier, "intermediate")) {
+    lines.push("### Code Style");
+    if (config.codeStyle.naming) lines.push(`- Naming convention: ${config.codeStyle.naming}`);
+    if (config.codeStyle.notes) lines.push(`- ${config.codeStyle.notes}`);
+    lines.push("");
+  }
+
+  // Boundaries - requires Max tier
+  const hasBoundariesAgents = config.boundaries && (
+    (config.boundaries.always?.length ?? 0) > 0 ||
+    (config.boundaries.ask?.length ?? 0) > 0 ||
+    (config.boundaries.never?.length ?? 0) > 0
+  );
+  if (hasBoundariesAgents && canAccessFeature(user.tier, "advanced")) {
+    lines.push("### Boundaries");
+    if (config.boundaries!.always?.length) lines.push(`- ✅ Always: ${config.boundaries!.always.join(", ")}`);
+    if (config.boundaries!.ask?.length) lines.push(`- ❓ Ask first: ${config.boundaries!.ask.join(", ")}`);
+    if (config.boundaries!.never?.length) lines.push(`- 🚫 Never: ${config.boundaries!.never.join(", ")}`);
+    lines.push("");
+  }
+
+  // Testing Strategy - requires Max tier
+  const hasTestingAgents = config.testingStrategy && (
+    (config.testingStrategy.levels?.length ?? 0) > 0 ||
+    (config.testingStrategy.frameworks?.length ?? 0) > 0 ||
+    config.testingStrategy.notes ||
+    (config.testingStrategy.coverage !== undefined && config.testingStrategy.coverage !== 80)
+  );
+  if (hasTestingAgents && canAccessFeature(user.tier, "advanced")) {
+    lines.push("### Testing Strategy");
+    if (config.testingStrategy!.levels?.length) lines.push(`- Test levels: ${config.testingStrategy!.levels.join(", ")}`);
+    if (config.testingStrategy!.frameworks?.length) lines.push(`- Frameworks: ${config.testingStrategy!.frameworks.join(", ")}`);
+    if (config.testingStrategy!.coverage !== undefined) lines.push(`- Coverage target: ${config.testingStrategy!.coverage}%`);
+    if (config.testingStrategy!.notes) lines.push(`- ${config.testingStrategy!.notes}`);
+    lines.push("");
+  }
+
+  if (config.cicd.length > 0) {
+    lines.push("### CI/CD & Deployment");
+    lines.push(`- CI/CD: ${config.cicd.join(", ")}`);
+    if (config.deploymentTarget && config.deploymentTarget.length > 0) {
+      lines.push(`- Targets: ${config.deploymentTarget.join(", ")}`);
+    }
+    lines.push("");
+  }
+
+  if (config.additionalFeedback) {
+    lines.push("## Additional Notes");
+    lines.push(config.additionalFeedback);
+    lines.push("");
+  }
+
+  if (config.enableAutoUpdate) {
+    lines.push("## Self-Improving Configuration");
+    lines.push("");
+    lines.push("This file should evolve as we work together:");
+    lines.push("1. Track coding patterns and preferences");
+    lines.push("2. Note corrections made to suggestions");
+    lines.push("3. Update periodically with learned preferences");
+    lines.push("");
+  }
+
+  // Add embedded static files (only for Max tier)
+  if (canAccessFeature(user.tier, "advanced")) {
+    const staticFilesSection = generateEmbeddedStaticFiles(config, user);
+    if (staticFilesSection) {
+      lines.push(staticFilesSection);
+    }
+  }
+
+  return lines.join("\n");
+}
+
+// Generate Aider config (.aider.conf.yml)
+function generateAiderConfig(config: WizardConfig, user: UserProfile): string {
+  const lines: string[] = [];
+  lines.push("# Aider AI Pair Programming Configuration");
+  lines.push("# See: https://aider.chat/docs/config.html");
+  lines.push("");
+  lines.push("# Auto-commit changes");
+  lines.push("auto-commits: true");
+  lines.push("");
+  lines.push("# Include project context");
+  if (config.projectDescription) {
+    lines.push(`# Project: ${config.projectDescription}`);
+  }
+  lines.push("");
+  lines.push("# Coding guidelines (add as conventions file)");
+  lines.push("# Create .aider/conventions.md with:");
+  lines.push("#");
+  if (config.codeStyle?.naming) {
+    lines.push(`#   - Naming: ${config.codeStyle.naming}`);
+  }
+  if (config.aiBehaviorRules.length > 0) {
+    lines.push("#   - Rules:");
+    config.aiBehaviorRules.forEach((rule) => {
+      const ruleText = getRuleDescription(rule);
+      if (ruleText) lines.push(`#     - ${ruleText}`);
+    });
+  }
+  lines.push("");
+  lines.push("# Map repository files to help Aider understand structure");
+  lines.push("map-tokens: 1024");
+  
+  return lines.join("\n");
+}
+
+// Generate Continue config (.continue/config.json)
+function generateContinueConfig(config: WizardConfig, user: UserProfile): string {
+  const continueConfig = {
+    models: [],
+    customCommands: [] as Array<{ name: string; prompt: string }>,
+    systemMessage: `You are an AI assistant helping with ${config.projectName || "this project"}. ${config.projectDescription || ""}\n\nGuidelines:\n${config.aiBehaviorRules.map(r => `- ${getRuleDescription(r)}`).join("\n")}`,
+    contextProviders: [
+      { name: "code", params: {} },
+      { name: "docs", params: {} }
+    ]
+  };
+  
+  if (config.commands?.test) {
+    continueConfig.customCommands.push({
+      name: "test",
+      prompt: `Run the test command: ${config.commands.test}`
+    });
+  }
+  if (config.commands?.build) {
+    continueConfig.customCommands.push({
+      name: "build",
+      prompt: `Run the build command: ${config.commands.build}`
+    });
+  }
+  
+  return JSON.stringify(continueConfig, null, 2);
+}
+
+// Generate Cody config (.cody/config.json)
+function generateCodyConfig(config: WizardConfig, user: UserProfile): string {
+  const codyConfig = {
+    chat: {
+      preInstruction: `Project: ${config.projectName || "Software Project"}\n${config.projectDescription || ""}\n\nFollow these guidelines:\n${config.aiBehaviorRules.map(r => `- ${getRuleDescription(r)}`).join("\n")}`,
+    },
+    autocomplete: {
+      enabled: true
+    },
+    codeActions: {
+      enabled: true
+    }
+  };
+  
+  return JSON.stringify(codyConfig, null, 2);
+}
+
+// Generate TabNine config (.tabnine.yaml)
+function generateTabnineConfig(config: WizardConfig): string {
+  const lines: string[] = [];
+  lines.push("# TabNine Configuration");
+  lines.push("# See: https://www.tabnine.com/");
+  lines.push("");
+  lines.push("version: 1");
+  lines.push("");
+  lines.push("# Enable/disable features");
+  lines.push("enable_telemetry: false");
+  lines.push("");
+  lines.push("# Language preferences");
+  if (config.languages.length > 0) {
+    lines.push("languages:");
+    config.languages.forEach(lang => {
+      const cleanLang = lang.startsWith("custom:") ? lang.replace("custom:", "") : lang;
+      lines.push(`  - ${cleanLang.toLowerCase()}`);
+    });
+  }
+  lines.push("");
+  lines.push("# Project context");
+  lines.push(`# ${config.projectDescription || "Software project"}`);
+  
+  return lines.join("\n");
+}
+
+// Generate Supermaven config (.supermaven/config.json)
+function generateSupermavenConfig(config: WizardConfig, user: UserProfile): string {
+  const supermavenConfig = {
+    project: config.projectName || "project",
+    description: config.projectDescription || "",
+    guidelines: config.aiBehaviorRules.map(r => getRuleDescription(r)),
+    codeStyle: {
+      naming: config.codeStyle?.naming || "camelCase",
+      notes: config.codeStyle?.notes || ""
+    }
+  };
+  
+  return JSON.stringify(supermavenConfig, null, 2);
+}
+
+// Generate CodeGPT config (.codegpt/config.json)
+function generateCodeGPTConfig(config: WizardConfig, user: UserProfile): string {
+  const codegptConfig = {
+    version: "1.0",
+    project: {
+      name: config.projectName || "Project",
+      description: config.projectDescription || ""
+    },
+    assistant: {
+      systemPrompt: `You are helping with ${config.projectName || "a software project"}. ${config.projectDescription || ""}\n\nGuidelines:\n${config.aiBehaviorRules.map(r => `- ${getRuleDescription(r)}`).join("\n")}`,
+      codeStyle: config.codeStyle?.naming || "camelCase"
+    },
+    commands: {
+      build: config.commands?.build || "",
+      test: config.commands?.test || "",
+      lint: config.commands?.lint || ""
+    }
+  };
+  
+  return JSON.stringify(codegptConfig, null, 2);
+}
+
+// Generate Void config (.void/config.json) - Open source Cursor alternative
+function generateVoidConfig(config: WizardConfig, user: UserProfile): string {
+  // Void uses similar format to Cursor, generate as JSON with rules
+  const voidConfig = {
+    version: 1,
+    rules: {
+      project: config.projectName || "Project",
+      description: config.projectDescription || "",
+      behavior: config.aiBehaviorRules.map(r => getRuleDescription(r)),
+      codeStyle: {
+        naming: config.codeStyle?.naming || "camelCase",
+        notes: config.codeStyle?.notes || ""
+      },
+      commands: {
+        build: config.commands?.build || "",
+        test: config.commands?.test || "",
+        lint: config.commands?.lint || "",
+        dev: config.commands?.dev || ""
+      }
+    }
+  };
+  
+  return JSON.stringify(voidConfig, null, 2);
 }
 
 // Generate LICENSE file
@@ -962,93 +1396,142 @@ coverage
 `;
 }
 
+// License type display names
+const LICENSE_NAMES: Record<string, string> = {
+  mit: "MIT",
+  apache: "Apache 2.0",
+  gpl3: "GPL v3",
+  bsd2: "BSD 2-Clause",
+  bsd3: "BSD 3-Clause",
+  isc: "ISC",
+  unlicense: "Unlicense",
+  proprietary: "Proprietary",
+};
+
 // Generate embedded static files section for AI config
+// Only embeds files with USER-PROVIDED custom content; otherwise gives instructions
 function generateEmbeddedStaticFiles(config: WizardConfig, user: UserProfile): string {
-  const sections: string[] = [];
+  const instructions: string[] = [];
+  const customFiles: string[] = [];
   
-  // Editorconfig
+  // Editorconfig - only if explicitly enabled AND has custom content
   if (config.staticFiles?.editorconfig) {
-    const content = config.staticFiles.editorconfigCustom?.trim() || generateEditorconfig();
-    sections.push(`### .editorconfig
+    if (config.staticFiles.editorconfigCustom?.trim()) {
+      customFiles.push(`### .editorconfig
 \`\`\`
-${content}
+${config.staticFiles.editorconfigCustom.trim()}
 \`\`\``);
+    } else {
+      instructions.push("- Generate `.editorconfig` with standard settings for the project's languages.");
+    }
   }
   
-  // Contributing
+  // Contributing - only if enabled
   if (config.staticFiles?.contributing) {
-    const content = config.staticFiles.contributingCustom?.trim() || generateContributing();
-    sections.push(`### CONTRIBUTING.md
+    if (config.staticFiles.contributingCustom?.trim()) {
+      customFiles.push(`### CONTRIBUTING.md
 \`\`\`markdown
-${content}
+${config.staticFiles.contributingCustom.trim()}
 \`\`\``);
+    } else {
+      instructions.push("- Generate `CONTRIBUTING.md` with standard contribution guidelines.");
+    }
   }
   
-  // Code of Conduct
+  // Code of Conduct - only if enabled
   if (config.staticFiles?.codeOfConduct) {
-    const content = config.staticFiles.codeOfConductCustom?.trim() || generateCodeOfConduct();
-    sections.push(`### CODE_OF_CONDUCT.md
+    if (config.staticFiles.codeOfConductCustom?.trim()) {
+      customFiles.push(`### CODE_OF_CONDUCT.md
 \`\`\`markdown
-${content}
+${config.staticFiles.codeOfConductCustom.trim()}
 \`\`\``);
+    } else {
+      instructions.push("- Generate `CODE_OF_CONDUCT.md` based on Contributor Covenant or similar.");
+    }
   }
   
-  // Security
+  // Security - only if enabled
   if (config.staticFiles?.security) {
-    const content = config.staticFiles.securityCustom?.trim() || generateSecurity();
-    sections.push(`### SECURITY.md
+    if (config.staticFiles.securityCustom?.trim()) {
+      customFiles.push(`### SECURITY.md
 \`\`\`markdown
-${content}
+${config.staticFiles.securityCustom.trim()}
 \`\`\``);
+    } else {
+      instructions.push("- Generate `SECURITY.md` with vulnerability reporting instructions.");
+    }
   }
   
-  // Gitignore
-  if (config.staticFiles?.gitignoreMode && config.staticFiles.gitignoreMode !== "skip") {
-    const content = generateGitignore(config);
-    sections.push(`### .gitignore
+  // Gitignore - describe what to use rather than embed full content
+  if (config.staticFiles?.gitignoreMode === "custom" && config.staticFiles.gitignoreCustom?.trim()) {
+    customFiles.push(`### .gitignore
 \`\`\`
-${content}
+${config.staticFiles.gitignoreCustom.trim()}
 \`\`\``);
+  } else if (config.staticFiles?.gitignoreMode === "generate") {
+    const langs = config.languages || [];
+    const frameworks = config.frameworks || [];
+    if (config.letAiDecide && langs.length === 0 && frameworks.length === 0) {
+      instructions.push("- Generate appropriate `.gitignore` based on detected project languages and frameworks.");
+    } else if (langs.length > 0 || frameworks.length > 0) {
+      const techs = [...langs, ...frameworks].map(t => t.startsWith("custom:") ? t.replace("custom:", "") : t);
+      instructions.push(`- Generate appropriate \`.gitignore\` for: ${techs.join(", ")}.`);
+    }
   }
   
   // Dockerignore
   if (config.staticFiles?.dockerignore) {
-    const content = generateDockerignore(config);
-    sections.push(`### .dockerignore
+    if (config.staticFiles.dockerignoreCustom?.trim()) {
+      customFiles.push(`### .dockerignore
 \`\`\`
-${content}
+${config.staticFiles.dockerignoreCustom.trim()}
 \`\`\``);
+    } else {
+      instructions.push("- Generate `.dockerignore` excluding build artifacts, node_modules, .env files, and other non-essential files.");
+    }
   }
   
   // Funding
   if (config.funding || config.staticFiles?.funding) {
-    const content = generateFunding(config);
-    sections.push(`### .github/FUNDING.yml
+    const fundingContent = config.fundingYml?.trim() || config.staticFiles?.fundingYml?.trim();
+    if (fundingContent) {
+      customFiles.push(`### .github/FUNDING.yml
 \`\`\`yaml
-${content}
+${fundingContent}
 \`\`\``);
-  }
-  
-  // License
-  if (config.license && config.license !== "none") {
-    const content = generateLicense(config.license, user);
-    if (content) {
-      sections.push(`### LICENSE
-\`\`\`
-${content}
-\`\`\``);
+    } else {
+      instructions.push("- Generate `.github/FUNDING.yml` template for sponsorship links.");
     }
   }
   
-  if (sections.length === 0) return "";
+  // License - just reference the type, don't embed full text
+  if (config.license && config.license !== "none") {
+    const licenseName = LICENSE_NAMES[config.license] || config.license;
+    const author = user.displayName || user.name || "the project author";
+    instructions.push(`- This project uses the **${licenseName}** license. Generate \`LICENSE\` file if not present, with copyright holder: ${author}.`);
+  }
   
-  return `
-## Static Files to Generate
+  if (instructions.length === 0 && customFiles.length === 0) return "";
+  
+  const parts: string[] = [];
+  
+  if (instructions.length > 0) {
+    parts.push(`## Static Files
 
-When setting up this project, create the following files with the content below:
+Generate the following files if they don't exist:
 
-${sections.join("\n\n")}
-`;
+${instructions.join("\n")}`);
+  }
+  
+  if (customFiles.length > 0) {
+    parts.push(`## Custom Static Files
+
+Create these files with the exact content provided:
+
+${customFiles.join("\n\n")}`);
+  }
+  
+  return "\n" + parts.join("\n\n") + "\n";
 }
 
 // Type for generated file
@@ -1072,6 +1555,9 @@ export function generateAllFiles(
 
   let content = "";
   switch (platform) {
+    case "universal":
+      content = generateAgentsMd(config, user);
+      break;
     case "cursor":
       content = generateCursorRules(config, user);
       break;
@@ -1083,6 +1569,27 @@ export function generateAllFiles(
       break;
     case "windsurf":
       content = generateWindsurfRules(config, user);
+      break;
+    case "aider":
+      content = generateAiderConfig(config, user);
+      break;
+    case "continue":
+      content = generateContinueConfig(config, user);
+      break;
+    case "cody":
+      content = generateCodyConfig(config, user);
+      break;
+    case "tabnine":
+      content = generateTabnineConfig(config);
+      break;
+    case "supermaven":
+      content = generateSupermavenConfig(config, user);
+      break;
+    case "codegpt":
+      content = generateCodeGPTConfig(config, user);
+      break;
+    case "void":
+      content = generateVoidConfig(config, user);
       break;
   }
 
