@@ -34,13 +34,21 @@ export const metadata: Metadata = {
   authors: [{ name: "LynxPrompt Contributors" }],
   icons: {
     icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
       { url: "/favicon-16.png", sizes: "16x16", type: "image/png" },
       { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
       { url: "/favicon-48.png", sizes: "48x48", type: "image/png" },
+      { url: "/favicon-96.png", sizes: "96x96", type: "image/png" },
     ],
     apple: [
       { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
     ],
+  },
+  manifest: "/site.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "LynxPrompt",
   },
   openGraph: {
     title: "LynxPrompt - AI IDE Configuration Generator",

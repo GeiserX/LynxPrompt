@@ -28,20 +28,25 @@ export default function PrivacyPage() {
         </div>
       </header>
 
+      {/* Hero */}
+      <section className="border-b bg-gradient-to-b from-muted/50 to-background">
+        <div className="container mx-auto px-4 py-16 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-3xl text-center">
+            <Shield className="mx-auto h-12 w-12 text-primary" />
+            <h1 className="mt-4 text-4xl font-bold tracking-tight">
+              Privacy Policy
+            </h1>
+            <p className="mt-3 text-lg text-muted-foreground">
+              Last updated: December 2025
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Content */}
       <main className="flex-1">
         <div className="container mx-auto px-4 py-12 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl">
-            <div className="mb-10 text-center">
-              <Shield className="mx-auto h-10 w-10 text-primary" />
-              <h1 className="mt-4 text-3xl font-bold tracking-tight">
-                Privacy Policy
-              </h1>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Last updated: December 2025
-              </p>
-            </div>
-
             <div className="space-y-8 text-muted-foreground">
               {/* Introduction */}
               <section>

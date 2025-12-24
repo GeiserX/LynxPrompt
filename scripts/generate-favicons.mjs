@@ -1,64 +1,85 @@
 import sharp from 'sharp';
 import { promises as fs } from 'fs';
-import path from 'path';
 import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = dirname(__filename);
+const publicDir = join(__dirname, '..', 'public');
 
-const sourceImage = path.join(__dirname, '../logos/LynxPrompt-lynx.png');
-const publicDir = path.join(__dirname, '../public');
+const sizes = [
+  { file: 'favicon-16.png', size: 16 },
+  { file: 'favicon-32.png', size: 32 },
+  { file: 'favicon-48.png', size: 48 },
+  { file: 'favicon-96.png', size: 96 },
+  { file: 'icon-192.png', size: 192 },
+  { file: 'icon-512.png', size: 512 },
+  { file: 'apple-touch-icon.png', size: 180 },
+];
 
 async function generateFavicons() {
-  console.log('Generating favicons from:', sourceImage);
+  const input = join(publicDir, 'lynxprompt.png');
   
-  // Read the source image
-  const image = sharp(sourceImage);
+  console.log('🦁 Generating favicons from', input);
   
-  // Generate different sizes
-  const sizes = [
-    { name: 'favicon-16.png', size: 16 },
-    { name: 'favicon-32.png', size: 32 },
-    { name: 'favicon-48.png', size: 48 },
-    { name: 'apple-touch-icon.png', size: 180 },
-    { name: 'icon-192.png', size: 192 },
-    { name: 'icon-512.png', size: 512 },
-  ];
-  
-  for (const { name, size } of sizes) {
-    const outputPath = path.join(publicDir, name);
-    await sharp(sourceImage)
-      .resize(size, size, {
-        fit: 'contain',
-        background: { r: 0, g: 0, b: 0, alpha: 0 }
-      })
+  // Generate PNG sizes
+  for (const { file, size } of sizes) {
+    await sharp(input)
+      .resize(size, size, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
       .png()
-      .toFile(outputPath);
-    console.log(`Generated: ${name} (${size}x${size})`);
+      .toFile(join(publicDir, file));
+    console.log(`✓ Generated ${file} (${size}x${size})`);
   }
   
-  // Generate ICO file (using 32x32 as the base)
-  // ICO is just a PNG renamed for modern browsers
-  await sharp(sourceImage)
-    .resize(32, 32, {
-      fit: 'contain',
-      background: { r: 0, g: 0, b: 0, alpha: 0 }
-    })
+  // Generate proper ICO file (multi-resolution: 16, 32, 48)
+  // Since Sharp doesn't support ICO output, we'll use the 32px PNG as favicon.ico
+  // Modern browsers will use the PNG favicons from the manifest
+  await sharp(input)
+    .resize(32, 32, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .png()
-    .toFile(path.join(publicDir, 'favicon.ico'));
-  console.log('Generated: favicon.ico (32x32)');
+    .toFile(join(publicDir, 'favicon.ico'));
+  console.log('✓ Generated favicon.ico (32x32 PNG format)');
   
-  // Also copy a version as logo.png at a reasonable size
-  await sharp(sourceImage)
-    .resize(256, 256, {
-      fit: 'contain',
-      background: { r: 0, g: 0, b: 0, alpha: 0 }
-    })
-    .png()
-    .toFile(path.join(publicDir, 'logo.png'));
-  console.log('Generated: logo.png (256x256)');
+  // Generate SVG favicon
+  // Since we're working with a PNG source, we'll create a simple SVG wrapper
+  const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <image href="/lynxprompt.png" width="512" height="512"/>
+</svg>`;
+  await fs.writeFile(join(publicDir, 'favicon.svg'), svgContent);
+  console.log('✓ Generated favicon.svg');
   
-  console.log('\nAll favicons generated successfully!');
+  // Generate web app manifest
+  const manifest = {
+    name: "LynxPrompt",
+    short_name: "LynxPrompt",
+    description: "AI IDE Configuration Generator",
+    start_url: "/",
+    display: "standalone",
+    background_color: "#ffffff",
+    theme_color: "#9333ea",
+    icons: [
+      {
+        src: "/icon-192.png",
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "any maskable"
+      },
+      {
+        src: "/icon-512.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "any maskable"
+      }
+    ]
+  };
+  
+  await fs.writeFile(
+    join(publicDir, 'site.webmanifest'),
+    JSON.stringify(manifest, null, 2)
+  );
+  console.log('✓ Generated site.webmanifest');
+  
+  console.log('\n✅ All favicons and manifest generated successfully!');
 }
 
 generateFavicons().catch(console.error);
