@@ -2295,16 +2295,16 @@ function StepAIBehavior({
       </p>
       
       {/* Personal Data Section */}
-      <div className="mt-6 rounded-lg border-2 border-blue-600 bg-white p-4 shadow-sm dark:border-blue-800 dark:bg-blue-900/20">
+      <div className="mt-6 rounded-lg border-2 border-blue-600 bg-blue-50 p-4 shadow-sm dark:border-blue-800 dark:bg-blue-900/20">
         <div className="flex items-start gap-3">
-          <User className="h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
+          <User className="h-5 w-5 flex-shrink-0 text-blue-700 dark:text-blue-400 mt-0.5" />
           <div className="flex-1">
-            <h3 className="font-semibold text-gray-900 dark:text-blue-200">Include Your Profile in Blueprint</h3>
-            <p className="mt-1 text-sm text-gray-700 dark:text-blue-300">
+            <h3 className="font-semibold text-blue-900 dark:text-blue-200">Include Your Profile in Blueprint</h3>
+            <p className="mt-1 text-sm text-blue-800 dark:text-blue-300">
               Your developer role (<strong>{personaLabel}</strong>) and skill level (<strong>{skillLabel}</strong>) 
               can be included in the generated config file. This helps the AI tailor its responses to your experience level.
             </p>
-            <p className="mt-2 text-xs text-gray-600 dark:text-blue-400 italic">
+            <p className="mt-2 text-xs text-blue-700 dark:text-blue-400 italic">
               Note: This information is only used in the downloaded config file — it doesn&apos;t affect the wizard itself.
             </p>
             <div className="mt-3 flex items-center gap-3">
@@ -2315,7 +2315,7 @@ function StepAIBehavior({
                 onChange={(e) => onIncludePersonalDataChange(e.target.checked)}
                 className="h-4 w-4 rounded border-blue-600 accent-blue-600"
               />
-              <label htmlFor="includePersonalData" className="text-sm font-medium text-gray-800 dark:text-blue-200">
+              <label htmlFor="includePersonalData" className="text-sm font-medium text-blue-900 dark:text-blue-200">
                 Include my role &amp; skill level in the AI config file
               </label>
             </div>
