@@ -179,9 +179,10 @@ function BlueprintsContent() {
             // API returns array directly, with 'id' field (e.g., 'usr_xxx' or 'sys_xxx')
             const favoriteIds = new Set<string>(
               Array.isArray(data) 
-                ? data.map((f: { id: string }) => f.id)
+                ? data.map((f: { id: string }) => String(f.id)).filter(Boolean)
                 : []
             );
+            console.log("Loaded favorites:", Array.from(favoriteIds));
             setFavorites(favoriteIds);
           }
         } catch (error) {
@@ -189,6 +190,9 @@ function BlueprintsContent() {
         }
       };
       fetchFavorites();
+    } else {
+      // Clear favorites if not authenticated
+      setFavorites(new Set());
     }
   }, [status]);
 
