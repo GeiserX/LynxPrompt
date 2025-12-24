@@ -37,19 +37,20 @@ interface TemplateDownloadModalProps {
   targetPlatform?: string; // Override the default platform
 }
 
-// All supported platforms for download
+// All supported platforms for download (matches wizard's 12 platforms)
 const allPlatforms = [
-  { id: "cursor", name: "Cursor", file: ".cursorrules" },
-  { id: "claude_code", name: "Claude Code", file: "CLAUDE.md" },
-  {
-    id: "github_copilot",
-    name: "GitHub Copilot",
-    file: ".github/copilot-instructions.md",
-  },
+  { id: "universal", name: "Universal (AGENTS.md)", file: "AGENTS.md" },
+  { id: "cursor", name: "Cursor", file: ".cursor/rules" },
+  { id: "claude", name: "Claude Code", file: "CLAUDE.md" },
+  { id: "copilot", name: "GitHub Copilot", file: ".github/copilot-instructions.md" },
   { id: "windsurf", name: "Windsurf", file: ".windsurfrules" },
-  { id: "continue_dev", name: "Continue.dev", file: ".continuerc.json" },
-  { id: "cody", name: "Sourcegraph Cody", file: ".cody/instructions.md" },
   { id: "aider", name: "Aider", file: ".aider.conf.yml" },
+  { id: "continue", name: "Continue", file: ".continue/config.json" },
+  { id: "cody", name: "Sourcegraph Cody", file: ".cody/config.json" },
+  { id: "tabnine", name: "Tabnine", file: ".tabnine.yaml" },
+  { id: "supermaven", name: "Supermaven", file: ".supermaven/config.json" },
+  { id: "codegpt", name: "CodeGPT", file: ".codegpt/config.json" },
+  { id: "void", name: "Void", file: ".void/config.json" },
 ];
 
 const platformInfo: Record<string, { name: string; file: string }> =
@@ -67,17 +68,40 @@ export function TemplateDownloadModal({
   const [values, setValues] = useState<Record<string, string>>({});
   const [copied, setCopied] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const [selectedPlatform, setSelectedPlatform] = useState(
-    targetPlatform || template.targetPlatform || "cursor"
-  );
+  // Map database platform values to our platform IDs
+  const platformIdMap: Record<string, string> = {
+    "AGENTS_MD": "universal",
+    "CURSOR_RULES": "cursor",
+    "CLAUDE_MD": "claude",
+    "COPILOT_INSTRUCTIONS": "copilot",
+    "WINDSURF_RULES": "windsurf",
+    // Legacy mappings
+    "claude_code": "claude",
+    "github_copilot": "copilot",
+    "continue_dev": "continue",
+  };
+  
+  const getInitialPlatform = () => {
+    const rawPlatform = targetPlatform || template.targetPlatform || "universal";
+    return platformIdMap[rawPlatform] || rawPlatform;
+  };
+  
+  const [selectedPlatform, setSelectedPlatform] = useState(getInitialPlatform());
 
   // Initialize values from template variables AND user session data
   useEffect(() => {
     const initialValues: Record<string, string> = {};
 
     // Start with template variables
+    // Handle both simple values {"KEY": "value"} and object values {"KEY": {"label": "...", "default": "value"}}
     if (template.variables) {
-      Object.assign(initialValues, template.variables);
+      for (const [key, val] of Object.entries(template.variables)) {
+        if (typeof val === "string") {
+          initialValues[key] = val;
+        } else if (val && typeof val === "object" && "default" in val) {
+          initialValues[key] = (val as { default: string }).default || "";
+        }
+      }
     }
 
     // Auto-fill author-related fields from session if user is logged in
@@ -104,16 +128,32 @@ export function TemplateDownloadModal({
 
   if (!isOpen) return null;
 
-  const sensitiveFields = template.sensitiveFields || {};
+  // Normalize sensitiveFields to handle both formats:
+  // {"KEY": {"label": "...", "required": true}} OR {"KEY": {"label": "...", "private": true}}
+  const rawSensitiveFields = template.sensitiveFields || {};
+  const sensitiveFields: Record<string, SensitiveField> = {};
+  
+  for (const [key, val] of Object.entries(rawSensitiveFields)) {
+    if (val && typeof val === "object") {
+      const fieldObj = val as unknown as Record<string, unknown>;
+      sensitiveFields[key] = {
+        label: (fieldObj.label as string) || key,
+        required: Boolean(fieldObj.required || fieldObj.private),
+        placeholder: (fieldObj.placeholder as string) || (fieldObj.default as string) || "",
+      };
+    }
+  }
+  
   const hasRequiredFields = Object.entries(sensitiveFields).some(
     ([key, field]) => field.required && !values[key]
   );
 
   // Process template content with variable substitution
+  // Uses [[VARIABLE]] syntax only
   const processedContent = Object.entries(values).reduce(
     (content, [key, value]) => {
-      const regex = new RegExp(`\\{\\{${key}\\}\\}`, "g");
-      return content.replace(regex, value || `{{${key}}}`);
+      const regex = new RegExp(`\\[\\[${key}\\]\\]`, "gi");
+      return content.replace(regex, value || `[[${key}]]`);
     },
     template.content
   );
@@ -238,8 +278,8 @@ export function TemplateDownloadModal({
             </p>
           </div>
 
-          {/* Variable Inputs */}
-          {Object.keys(sensitiveFields).length > 0 && (
+          {/* Variable Inputs - show all variables from template */}
+          {(Object.keys(sensitiveFields).length > 0 || Object.keys(values).length > 0) && (
             <div className="mb-6">
               <div className="mb-4 flex items-center gap-2">
                 <Info className="h-4 w-4 text-primary" />
@@ -247,7 +287,8 @@ export function TemplateDownloadModal({
                   Customize for your project
                 </span>
               </div>
-              <div className="space-y-4">
+              <div className="space-y-4 max-h-64 overflow-y-auto pr-2">
+                {/* First show sensitive/required fields */}
                 {Object.entries(sensitiveFields).map(([key, field]) => (
                   <div key={key}>
                     <label className="mb-1 block text-sm font-medium">
@@ -267,6 +308,34 @@ export function TemplateDownloadModal({
                     />
                   </div>
                 ))}
+                {/* Then show other variables not in sensitiveFields */}
+                {Object.entries(template.variables || {})
+                  .filter(([key]) => !sensitiveFields[key])
+                  .map(([key, val]) => {
+                    const valObj = val as Record<string, unknown> | string;
+                    const label = typeof valObj === "object" && valObj?.label 
+                      ? (valObj.label as string) 
+                      : key.replace(/_/g, " ");
+                    const placeholder = typeof valObj === "object" && valObj?.default 
+                      ? (valObj.default as string) 
+                      : "";
+                    return (
+                      <div key={key}>
+                        <label className="mb-1 block text-sm font-medium">
+                          {label}
+                        </label>
+                        <input
+                          type="text"
+                          value={values[key] || ""}
+                          onChange={(e) =>
+                            setValues((v) => ({ ...v, [key]: e.target.value }))
+                          }
+                          placeholder={placeholder}
+                          className="w-full rounded-lg border bg-background px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                      </div>
+                    );
+                  })}
               </div>
             </div>
           )}
@@ -305,7 +374,7 @@ export function TemplateDownloadModal({
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Fill in all required fields to download the complete template.
-                  Variables like {"{{APP_NAME}}"} will remain as placeholders.
+                  Variables like {"[[APP_NAME]]"} will remain as placeholders.
                 </p>
               </div>
             </div>
