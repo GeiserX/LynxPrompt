@@ -1052,10 +1052,10 @@ export default function WizardPage() {
                 )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium">
-                    {session.user.displayName || session.user.name}
+                    {session.user.displayName || session.user.name || "User"}
                   </p>
                   <p className="truncate text-xs capitalize text-muted-foreground">
-                    {session.user.persona} • {session.user.skillLevel}
+                    {session.user.persona || "Developer"} • {session.user.skillLevel || "Intermediate"}
                   </p>
                 </div>
               </div>
