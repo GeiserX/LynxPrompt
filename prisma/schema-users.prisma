@@ -90,6 +90,12 @@ model User {
   aiLastRequestAt        DateTime? // For rate limiting
   aiRequestsThisMinute   Int       @default(0)   // Counter reset every minute
 
+  // Legal Consent Tracking (GDPR/EU compliance)
+  termsAcceptedAt        DateTime? // When user accepted Terms of Service
+  termsVersion           String?   // Version of Terms accepted (e.g., "2025-12")
+  privacyAcceptedAt      DateTime? // When user accepted Privacy Policy
+  privacyVersion         String?   // Version of Privacy Policy accepted
+
   // Seller Payout Settings
   paypalEmail    String?   // PayPal email for receiving payouts
 

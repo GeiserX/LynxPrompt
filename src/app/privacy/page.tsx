@@ -326,6 +326,37 @@ export default function PrivacyPage() {
                       Anthropic Privacy Policy →
                     </a>
                   </div>
+
+                  <div className="rounded-lg border p-4">
+                    <h3 className="font-medium text-foreground">
+                      GlitchTip (Self-Hosted)
+                    </h3>
+                    <p className="mt-1 text-sm">
+                      <strong>Data collected:</strong> Error messages, stack traces,
+                      browser/device information, URL where error occurred
+                    </p>
+                    <p className="text-sm">
+                      <strong>Purpose:</strong> Error tracking to identify and fix
+                      bugs, improve application stability
+                    </p>
+                    <p className="text-sm">
+                      <strong>Hosting:</strong> Self-hosted on our EU servers (no
+                      data shared with third parties)
+                    </p>
+                    <p className="text-sm">
+                      <strong>Data retention:</strong> Error data automatically
+                      deleted after 90 days
+                    </p>
+                    <p className="text-sm">
+                      <strong>Legal basis:</strong> Legitimate interest (maintaining
+                      service quality and fixing bugs)
+                    </p>
+                    <p className="text-sm">
+                      <strong>Note:</strong> Error reports may contain information
+                      about your actions when an error occurred, but we do not use
+                      this for user profiling
+                    </p>
+                  </div>
                 </div>
               </section>
 
