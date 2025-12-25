@@ -89,7 +89,7 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https://avatars.githubusercontent.com https://lh3.googleusercontent.com https://*.gravatar.com https://gravatar.com",
       "font-src 'self' data:",
-      "connect-src 'self' https://umami.geiser.cloud https://challenges.cloudflare.com", // Umami + Turnstile
+      "connect-src 'self' https://umami.geiser.cloud https://challenges.cloudflare.com https://glitchtip.lynxprompt.com", // Umami + Turnstile + GlitchTip
       "frame-src 'self' https://challenges.cloudflare.com", // Turnstile iframe
       "frame-ancestors 'none'",
       "base-uri 'self'",

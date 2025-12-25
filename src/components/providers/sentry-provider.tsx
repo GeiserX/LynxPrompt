@@ -49,7 +49,6 @@ export function SentryProvider({ children }: { children: React.ReactNode }) {
       },
     });
 
-    console.log("[GlitchTip] Sentry initialized");
   }, []);
 
   return <>{children}</>;
