@@ -1,8 +1,7 @@
 "use client";
 
-import Image from "next/image";
-
 // AI coding tools that support AGENTS.md or similar project-level instructions
+// Row 1 - scrolls right (reverse direction)
 const AGENTS_ROW_1 = [
   {
     name: "Cursor",
@@ -10,23 +9,16 @@ const AGENTS_ROW_1 = [
     logo: "/logos/agents/cursor.svg",
   },
   {
-    name: "GitHub Copilot",
+    name: "Coding agent",
     href: "https://gh.io/coding-agent-docs",
     logo: "/logos/agents/copilot.svg",
-    subtitle: "Coding agent",
     parent: "GitHub Copilot",
   },
   {
     name: "Windsurf",
     href: "https://windsurf.com",
-    logo: "/logos/agents/windsurf.svg",
-    subtitle: "from Cognition",
-  },
-  {
-    name: "Claude Code",
-    href: "https://claude.ai",
-    logo: "/logos/agents/claude.svg",
-    subtitle: "from Anthropic",
+    logo: "/logos/agents/windsurf-light.svg",
+    parent: "Cognition",
   },
   {
     name: "RooCode",
@@ -58,8 +50,14 @@ const AGENTS_ROW_1 = [
     href: "https://opencode.ai/docs/rules/",
     logo: "/logos/agents/opencode.svg",
   },
+  {
+    name: "Ona",
+    href: "https://ona.com",
+    logo: "/logos/agents/ona-light.svg",
+  },
 ];
 
+// Row 2 - scrolls left
 const AGENTS_ROW_2 = [
   {
     name: "Aider",
@@ -70,30 +68,30 @@ const AGENTS_ROW_2 = [
     name: "Gemini CLI",
     href: "https://github.com/google-gemini/gemini-cli",
     logo: "/logos/agents/gemini.svg",
-    subtitle: "from Google",
+    parent: "Google",
   },
   {
     name: "VS Code",
     href: "https://code.visualstudio.com/docs/editor/artificial-intelligence",
-    logo: "/logos/agents/vscode.svg",
+    logo: "/logos/agents/vscode-light.svg",
   },
   {
     name: "Codex",
     href: "https://openai.com/codex/",
     logo: "/logos/agents/codex.svg",
-    subtitle: "from OpenAI",
+    parent: "OpenAI",
   },
   {
     name: "Jules",
     href: "https://jules.google",
     logo: "/logos/agents/jules.svg",
-    subtitle: "from Google",
+    parent: "Google",
   },
   {
     name: "Devin",
     href: "https://devin.ai",
-    logo: "/logos/agents/devin.svg",
-    subtitle: "from Cognition",
+    logo: "/logos/agents/devin-light.svg",
+    parent: "Cognition",
   },
   {
     name: "Factory",
@@ -115,13 +113,17 @@ const AGENTS_ROW_2 = [
     href: "https://semgrep.dev",
     logo: "/logos/agents/semgrep.svg",
   },
+  {
+    name: "UiPath",
+    href: "https://uipath.github.io/uipath-python",
+    logo: "/logos/agents/uipath.svg",
+  },
 ];
 
 interface AgentItem {
   name: string;
   href: string;
   logo: string;
-  subtitle?: string;
   parent?: string;
 }
 
@@ -131,25 +133,33 @@ function AgentLink({ agent }: { agent: AgentItem }) {
       href={agent.href}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex h-20 min-w-[260px] items-center gap-4 pr-8 transition-transform hover:scale-105"
+      className="flex h-20 min-w-[240px] flex-shrink-0 items-center gap-4 px-4 transition-opacity hover:opacity-70"
     >
-      <div className="flex h-14 w-14 items-center justify-center">
-        <Image
-          src={agent.logo}
-          alt={`${agent.name} logo`}
-          width={56}
-          height={56}
-          className="h-14 w-14 object-contain"
+      <div className="flex h-12 w-12 items-center justify-center">
+        {/* Using mask-image technique like agents.md for theme compatibility */}
+        <span
+          aria-hidden="true"
+          className="block h-12 w-12 bg-gray-700 dark:bg-gray-300"
+          style={{
+            maskImage: `url(${agent.logo})`,
+            WebkitMaskImage: `url(${agent.logo})`,
+            maskRepeat: "no-repeat",
+            WebkitMaskRepeat: "no-repeat",
+            maskSize: "contain",
+            WebkitMaskSize: "contain",
+            maskPosition: "center center",
+            WebkitMaskPosition: "center center",
+          }}
         />
       </div>
       <div className="flex flex-col justify-center text-left">
         <span className="text-lg font-semibold leading-tight text-foreground">
-          {agent.parent || agent.name}
+          {agent.name}
         </span>
-        {agent.subtitle && (
+        {agent.parent && (
           <span className="text-sm text-muted-foreground">
             <span className="font-light">from</span>{" "}
-            <span className="font-semibold">{agent.subtitle.replace("from ", "")}</span>
+            <span className="font-semibold">{agent.parent}</span>
           </span>
         )}
       </div>
@@ -158,46 +168,43 @@ function AgentLink({ agent }: { agent: AgentItem }) {
 }
 
 export function AgentsMarquee() {
-  // Duplicate the arrays for seamless infinite scroll
-  const row1Items = [...AGENTS_ROW_1, ...AGENTS_ROW_1];
-  const row2Items = [...AGENTS_ROW_2, ...AGENTS_ROW_2];
-
   return (
-    <div className="flex w-full flex-col gap-4" id="supported-agents">
-      {/* Row 1 - scrolls left */}
-      <div className="w-full overflow-hidden">
-        <div
-          className="logo-marquee-track flex items-center gap-6 py-3"
-          style={
-            {
-              "--marquee-duration": "60s",
-              animationPlayState: "running",
-            } as React.CSSProperties
-          }
-        >
-          {row1Items.map((agent, idx) => (
-            <AgentLink key={`${agent.name}-${idx}`} agent={agent} />
+    <div className="flex w-full flex-col gap-2" id="supported-agents">
+      {/* Row 1 - scrolls right (using reverse animation) */}
+      <div className="relative w-full overflow-hidden">
+        {/* Fade edges */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-muted/30 to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-muted/30 to-transparent" />
+        
+        <div className="marquee-row-reverse flex w-max">
+          {/* First copy */}
+          {AGENTS_ROW_1.map((agent, idx) => (
+            <AgentLink key={`row1-a-${idx}`} agent={agent} />
+          ))}
+          {/* Second copy for seamless loop */}
+          {AGENTS_ROW_1.map((agent, idx) => (
+            <AgentLink key={`row1-b-${idx}`} agent={agent} />
           ))}
         </div>
       </div>
 
-      {/* Row 2 - scrolls right (reverse) */}
-      <div className="w-full overflow-hidden">
-        <div
-          className="logo-marquee-track-reverse flex items-center gap-6 py-3"
-          style={
-            {
-              "--marquee-duration": "70s",
-              animationPlayState: "running",
-            } as React.CSSProperties
-          }
-        >
-          {row2Items.map((agent, idx) => (
-            <AgentLink key={`${agent.name}-${idx}`} agent={agent} />
+      {/* Row 2 - scrolls left */}
+      <div className="relative w-full overflow-hidden">
+        {/* Fade edges */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-muted/30 to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-muted/30 to-transparent" />
+        
+        <div className="marquee-row flex w-max">
+          {/* First copy */}
+          {AGENTS_ROW_2.map((agent, idx) => (
+            <AgentLink key={`row2-a-${idx}`} agent={agent} />
+          ))}
+          {/* Second copy for seamless loop */}
+          {AGENTS_ROW_2.map((agent, idx) => (
+            <AgentLink key={`row2-b-${idx}`} agent={agent} />
           ))}
         </div>
       </div>
     </div>
   );
 }
-

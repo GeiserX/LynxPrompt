@@ -178,16 +178,34 @@
   animation-play-state: paused;
 }
 
-/* Agents.md style marquee */
-.logo-marquee-track {
-  animation: marquee var(--marquee-duration, 60s) linear infinite;
+/* Agents.md style marquee - truly infinite seamless scroll */
+@keyframes marquee-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
-.logo-marquee-track-reverse {
-  animation: marquee-reverse var(--marquee-duration, 60s) linear infinite;
+@keyframes marquee-scroll-reverse {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
 }
 
-.logo-marquee-track:hover,
-.logo-marquee-track-reverse:hover {
+.marquee-row {
+  animation: marquee-scroll 35s linear infinite;
+}
+
+.marquee-row-reverse {
+  animation: marquee-scroll-reverse 40s linear infinite;
+}
+
+.marquee-row:hover,
+.marquee-row-reverse:hover {
   animation-play-state: paused;
 }
