@@ -381,7 +381,7 @@ export default function ShareBlueprintPage() {
                   <div className="mb-3 rounded-lg border border-purple-300 bg-purple-100 p-3 dark:border-purple-500/50 dark:bg-purple-900/30">
                     <div className="mb-2 flex items-center gap-2 text-sm">
                       <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-300" />
-                      <span className="text-purple-800 dark:text-purple-200">AI-Powered Editing</span>
+                      <span className="font-medium text-purple-800 dark:text-purple-200">AI-Powered Editing</span>
                     </div>
                     <AiEditPanel
                       currentContent={content}
@@ -589,7 +589,7 @@ export default function ShareBlueprintPage() {
                     <div className="flex items-start gap-3">
                       <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-600 dark:text-amber-300 mt-0.5" />
                       <div className="flex-1">
-                        <h4 className="text-amber-900 dark:text-amber-100">
+                        <h4 className="font-medium text-amber-900 dark:text-amber-100">
                           Share with the Community?
                         </h4>
                         <p className="mt-1 text-sm text-amber-800 dark:text-amber-200">
@@ -617,7 +617,7 @@ export default function ShareBlueprintPage() {
                       <div className="flex items-start gap-3">
                         <Sparkles className="h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-300 mt-0.5" />
                         <div className="flex-1">
-                          <h4 className="text-blue-900 dark:text-blue-100">
+                          <h4 className="font-medium text-blue-900 dark:text-blue-100">
                             Honest Disclosure
                           </h4>
                           <p className="mt-1 text-sm text-blue-800 dark:text-blue-200">
@@ -689,10 +689,10 @@ export default function ShareBlueprintPage() {
                           </div>
                           
                           {/* Revenue split info - shown only when setting price */}
-                          <div className="rounded-lg border-2 border-emerald-600 bg-emerald-50 p-3 dark:bg-emerald-950">
-                            <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-100">
+                          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-500/50 dark:bg-emerald-900/30">
+                            <p className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
                               💰 You earn 70% of each sale (€{(price * 0.7).toFixed(2)}).
-                              <span className="font-normal text-emerald-700 dark:text-emerald-200"> Platform fee: 30% (€{(price * 0.3).toFixed(2)}).</span>
+                              <span className="font-normal text-emerald-700 dark:text-emerald-300"> Platform fee: 30% (€{(price * 0.3).toFixed(2)}).</span>
                             </p>
                           </div>
                         </div>

@@ -9,7 +9,7 @@ import {
   ArrowRight,
   Users,
 } from "lucide-react";
-import { PlatformCarousel } from "@/components/platform-carousel";
+import { AgentsMarquee } from "@/components/agents-marquee";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -121,7 +121,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <PlatformCarousel />
+          <AgentsMarquee />
 
           {/* AGENTS.md compatibility note */}
           <p className="mx-auto mt-12 text-center text-sm text-muted-foreground">

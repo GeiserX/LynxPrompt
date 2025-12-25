@@ -177,3 +177,17 @@
 .animate-marquee-reverse:hover {
   animation-play-state: paused;
 }
+
+/* Agents.md style marquee */
+.logo-marquee-track {
+  animation: marquee var(--marquee-duration, 60s) linear infinite;
+}
+
+.logo-marquee-track-reverse {
+  animation: marquee-reverse var(--marquee-duration, 60s) linear infinite;
+}
+
+.logo-marquee-track:hover,
+.logo-marquee-track-reverse:hover {
+  animation-play-state: paused;
+}
