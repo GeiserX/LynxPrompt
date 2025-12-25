@@ -4091,6 +4091,13 @@ function StepGenerate({
                   {FRAMEWORKS.find((f) => f.value === fw)?.label || fw}
                 </span>
               ))}
+              {config.database && (
+                <span
+                  className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs text-emerald-600"
+                >
+                  🗄️ {DATABASES.find((db) => db.value === config.database)?.label || config.database.replace("custom:", "")}
+                </span>
+              )}
             </div>
           </div>
 

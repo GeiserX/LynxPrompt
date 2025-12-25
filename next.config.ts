@@ -36,8 +36,6 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "2mb",
     },
-    // Required for Sentry client instrumentation in App Router
-    instrumentationHook: true,
   },
 
   // Security: Disable x-powered-by header
