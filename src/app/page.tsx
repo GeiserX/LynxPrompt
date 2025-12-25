@@ -171,6 +171,57 @@ export default function HomePage() {
           {/* Decorative elements */}
           <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
           <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
+          {/* City skyline silhouette - fading from bottom right */}
+          <div 
+            className="pointer-events-none absolute bottom-0 right-0 h-48 w-80 sm:h-56 sm:w-96"
+            style={{
+              maskImage: 'linear-gradient(to top left, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.2) 40%, transparent 70%)',
+              WebkitMaskImage: 'linear-gradient(to top left, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.2) 40%, transparent 70%)',
+            }}
+          >
+            <svg 
+              viewBox="0 0 400 200" 
+              className="h-full w-full"
+              preserveAspectRatio="xMaxYMax slice"
+            >
+              {/* City skyline buildings */}
+              <g fill="white" opacity="0.25">
+                {/* Tall building with antenna */}
+                <rect x="350" y="40" width="30" height="160" />
+                <rect x="360" y="20" width="10" height="20" />
+                <rect x="363" y="0" width="4" height="20" />
+                {/* Building windows */}
+                <rect x="355" y="50" width="6" height="8" fill="white" opacity="0.5" />
+                <rect x="365" y="50" width="6" height="8" fill="white" opacity="0.5" />
+                <rect x="355" y="65" width="6" height="8" fill="white" opacity="0.5" />
+                <rect x="365" y="65" width="6" height="8" fill="white" opacity="0.5" />
+                <rect x="355" y="80" width="6" height="8" fill="white" opacity="0.5" />
+                <rect x="365" y="80" width="6" height="8" fill="white" opacity="0.5" />
+                
+                {/* Medium building with stepped top */}
+                <rect x="310" y="80" width="35" height="120" />
+                <rect x="315" y="65" width="25" height="15" />
+                <rect x="320" y="55" width="15" height="10" />
+                
+                {/* Short wide building */}
+                <rect x="260" y="120" width="45" height="80" />
+                <rect x="265" y="110" width="35" height="10" />
+                
+                {/* Twin towers */}
+                <rect x="220" y="70" width="15" height="130" />
+                <rect x="240" y="85" width="15" height="115" />
+                
+                {/* Small buildings */}
+                <rect x="185" y="130" width="30" height="70" />
+                <rect x="150" y="145" width="30" height="55" />
+                <rect x="120" y="155" width="25" height="45" />
+                <rect x="90" y="165" width="25" height="35" />
+                <rect x="60" y="175" width="25" height="25" />
+                <rect x="30" y="180" width="25" height="20" />
+                <rect x="5" y="185" width="20" height="15" />
+              </g>
+            </svg>
+          </div>
         </div>
       </section>
 
