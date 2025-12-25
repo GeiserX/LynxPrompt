@@ -182,17 +182,3 @@ model Framework {
   @@index([languageId])
   @@index([isPopular])
 }
-
-// ============================================================================
-// ANALYTICS & USAGE TRACKING (anonymized)
-// ============================================================================
-
-model UsageEvent {
-  id        String   @id @default(cuid())
-  eventType String
-  metadata  Json?
-  createdAt DateTime @default(now())
-
-  @@index([eventType])
-  @@index([createdAt])
-}
