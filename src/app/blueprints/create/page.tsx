@@ -378,9 +378,9 @@ export default function ShareBlueprintPage() {
 
                 {/* AI Edit Panel - MAX users only */}
                 {userPlan === "max" && (
-                  <div className="mb-3 rounded-lg border border-purple-200 bg-white p-3 shadow-sm dark:border-purple-500/50 dark:bg-purple-900/30">
+                  <div className="mb-3 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-purple-500/30 dark:bg-purple-900/20">
                     <div className="mb-2 flex items-center gap-2 text-sm font-black">
-                      <Sparkles className="h-4 w-4 text-purple-800 dark:text-purple-300" />
+                      <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-300" />
                       <span className="text-gray-900 dark:text-purple-200">AI-Powered Editing</span>
                     </div>
                     <AiEditPanel
@@ -526,10 +526,10 @@ export default function ShareBlueprintPage() {
                       ))}
                     </select>
                     {/* Interoperability notice */}
-                    <div className="mt-2 rounded-lg border border-sky-200 bg-white p-3 shadow-sm dark:border-sky-500/50 dark:bg-sky-900/30">
+                    <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-sky-500/30 dark:bg-sky-900/20">
                       <div className="flex items-start gap-2">
-                        <Info className="h-4 w-4 flex-shrink-0 text-sky-800 dark:text-sky-300 mt-0.5" />
-                        <p className="text-xs font-bold text-gray-900 dark:text-sky-200">
+                        <Info className="h-4 w-4 flex-shrink-0 text-sky-600 dark:text-sky-300 mt-0.5" />
+                        <p className="text-xs font-bold text-gray-800 dark:text-sky-200">
                           <span className="font-black text-gray-900 dark:text-sky-100">Note:</span> This is just to identify the original format.
                           All blueprints are <span className="font-black text-gray-900 dark:text-sky-100">interchangeable and compatible across all AI IDEs</span> —
                           Cursor, Claude, Copilot, Windsurf, Cline, and more.
@@ -585,14 +585,14 @@ export default function ShareBlueprintPage() {
                   </div>
 
                   {/* Visibility - Sharing Section */}
-                  <div className="rounded-lg border border-amber-200 bg-white p-4 shadow-sm dark:border-amber-500/50 dark:bg-amber-900/30">
+                  <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-amber-500/30 dark:bg-amber-900/20">
                     <div className="flex items-start gap-3">
-                      <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-800 dark:text-amber-300 mt-0.5" />
+                      <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-600 dark:text-amber-300 mt-0.5" />
                       <div className="flex-1">
                         <h4 className="font-black text-gray-900 dark:text-amber-100">
                           Share with the Community?
                         </h4>
-                        <p className="mt-1 text-sm font-bold text-gray-900 dark:text-amber-200">
+                        <p className="mt-1 text-sm font-bold text-gray-700 dark:text-amber-200">
                           By default, your blueprint is private. Check below to share it publicly in the marketplace.
                         </p>
                         <div className="mt-3 flex items-center gap-3">
@@ -601,7 +601,7 @@ export default function ShareBlueprintPage() {
                             id="isPublic"
                             checked={isPublic}
                             onChange={(e) => setIsPublic(e.target.checked)}
-                            className="h-4 w-4 rounded border-amber-700 dark:border-amber-400"
+                            className="h-4 w-4 rounded border-gray-400 dark:border-amber-400"
                           />
                           <label htmlFor="isPublic" className="text-sm font-black text-gray-900 dark:text-amber-100">
                             Yes, make this blueprint public in the marketplace
@@ -613,14 +613,14 @@ export default function ShareBlueprintPage() {
 
                   {/* AI-Assisted Disclosure - only show if sharing publicly */}
                   {isPublic && (
-                    <div className="rounded-lg border border-blue-200 bg-white p-4 shadow-sm dark:border-blue-500/50 dark:bg-blue-900/30">
+                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-blue-500/30 dark:bg-blue-900/20">
                       <div className="flex items-start gap-3">
-                        <Sparkles className="h-5 w-5 flex-shrink-0 text-blue-800 dark:text-blue-300 mt-0.5" />
+                        <Sparkles className="h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-300 mt-0.5" />
                         <div className="flex-1">
                           <h4 className="font-black text-gray-900 dark:text-blue-100">
                             Honest Disclosure
                           </h4>
-                          <p className="mt-1 text-sm font-bold text-gray-900 dark:text-blue-200">
+                          <p className="mt-1 text-sm font-bold text-gray-700 dark:text-blue-200">
                             Help build trust in our community by being transparent about how this blueprint was created.
                           </p>
                           <div className="mt-3 flex items-center gap-3">
@@ -629,7 +629,7 @@ export default function ShareBlueprintPage() {
                               id="aiAssisted"
                               checked={aiAssisted}
                               onChange={(e) => setAiAssisted(e.target.checked)}
-                              className="h-4 w-4 rounded border-blue-600 dark:border-blue-400"
+                              className="h-4 w-4 rounded border-gray-400 dark:border-blue-400"
                             />
                             <label htmlFor="aiAssisted" className="text-sm font-black text-gray-900 dark:text-blue-100">
                               I used AI to help create this blueprint
