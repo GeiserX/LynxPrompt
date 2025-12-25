@@ -377,11 +377,11 @@ export default function EditBlueprintPage() {
                     </option>
                   ))}
                 </select>
-                <div className="mt-2 rounded-lg border-2 border-sky-700 bg-sky-100 p-3 shadow-md dark:border-sky-700 dark:bg-sky-900/20">
+                <div className="mt-2 rounded-lg border-2 border-sky-700 bg-sky-200 p-3 shadow-md dark:border-sky-500/50 dark:bg-sky-900/30">
                   <div className="flex items-start gap-2">
-                    <Info className="h-4 w-4 flex-shrink-0 text-sky-700 dark:text-sky-400 mt-0.5" />
-                    <p className="text-xs font-medium text-sky-900 dark:text-sky-300">
-                      <span className="font-black text-sky-950 dark:text-sky-200">Note:</span> This is just to identify the original format. All blueprints are <span className="font-black text-sky-950 dark:text-sky-200">interchangeable and compatible across all AI IDEs</span> — Cursor, Claude, Copilot, Windsurf, Cline, and more. Users can download in any format they need.
+                    <Info className="h-4 w-4 flex-shrink-0 text-sky-800 dark:text-sky-300 mt-0.5" />
+                    <p className="text-xs font-bold text-sky-950 dark:text-sky-200">
+                      <span className="font-black text-sky-950 dark:text-sky-100">Note:</span> This is just to identify the original format. All blueprints are <span className="font-black text-sky-950 dark:text-sky-100">interchangeable and compatible across all AI IDEs</span> — Cursor, Claude, Copilot, Windsurf, Cline, and more. Users can download in any format they need.
                     </p>
                   </div>
                 </div>
@@ -414,10 +414,10 @@ export default function EditBlueprintPage() {
                 
                 {/* AI Edit Panel - MAX users only */}
                 {userPlan === "max" && (
-                  <div className="mb-3 rounded-lg border-2 border-purple-600 bg-purple-50 p-3 shadow-md dark:border-purple-800 dark:bg-purple-900/20">
-                    <div className="mb-2 flex items-center gap-2 text-sm font-bold">
-                      <Sparkles className="h-4 w-4 text-purple-700 dark:text-purple-400" />
-                      <span className="text-purple-900 dark:text-purple-300">AI-Powered Editing</span>
+                  <div className="mb-3 rounded-lg border-2 border-purple-700 bg-purple-200 p-3 shadow-md dark:border-purple-500/50 dark:bg-purple-900/30">
+                    <div className="mb-2 flex items-center gap-2 text-sm font-black">
+                      <Sparkles className="h-4 w-4 text-purple-800 dark:text-purple-300" />
+                      <span className="text-purple-950 dark:text-purple-200">AI-Powered Editing</span>
                     </div>
                     <AiEditPanel
                       currentContent={content}
