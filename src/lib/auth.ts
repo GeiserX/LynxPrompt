@@ -282,17 +282,27 @@ export const authOptions: NextAuthOptions = {
         });
       }
       
-      // Check if user has accepted terms - redirect new users to accept-terms page
+      // Auto-accept terms for existing users who haven't accepted yet
+      // (They agreed by signing in with the ToS notice displayed on signin page)
+      // Note: New users get terms set in createUser event
       if (user.id) {
         const dbUser = await prismaUsers.user.findUnique({
           where: { id: user.id },
           select: { termsAcceptedAt: true },
         });
         
-        // If user hasn't accepted terms, redirect them to accept-terms page
-        // The user IS signed in at this point, just redirected to a different page
         if (!dbUser?.termsAcceptedAt) {
-          return "/auth/accept-terms";
+          const now = new Date();
+          await prismaUsers.user.update({
+            where: { id: user.id },
+            data: {
+              termsAcceptedAt: now,
+              termsVersion: "2025-12",
+              privacyAcceptedAt: now,
+              privacyVersion: "2025-12",
+            },
+          });
+          console.log(`[Auth] Terms auto-accepted for existing user ${user.id} (agreed via signin page notice)`);
         }
       }
       
@@ -374,10 +384,24 @@ export const authOptions: NextAuthOptions = {
     },
   },
   events: {
-    // Note: Consent is now handled via the /auth/accept-terms page
-    // New users without termsAcceptedAt are redirected there from the signIn callback
+    // Log consent when new user is created
+    // By signing in with the ToS notice displayed, they agree to the terms
     async createUser({ user }) {
-      console.log(`[Auth] New user created: ${user.id} - will be redirected to accept terms`);
+      const now = new Date();
+      const termsVersion = "2025-12";
+      const privacyVersion = "2025-12";
+      
+      await prismaUsers.user.update({
+        where: { id: user.id },
+        data: {
+          termsAcceptedAt: now,
+          termsVersion: termsVersion,
+          privacyAcceptedAt: now,
+          privacyVersion: privacyVersion,
+        },
+      });
+      
+      console.log(`[Auth] New user ${user.id} created with terms v${termsVersion} accepted at ${now.toISOString()}`);
     },
   },
   session: {
