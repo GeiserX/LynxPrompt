@@ -9,6 +9,12 @@ const AGENTS_ROW_1 = [
     logo: "/logos/agents/cursor.svg",
   },
   {
+    name: "Claude Code",
+    href: "https://docs.anthropic.com/en/docs/claude-code",
+    logo: "/logos/agents/claude.svg",
+    parent: "Anthropic",
+  },
+  {
     name: "Coding agent",
     href: "https://gh.io/coding-agent-docs",
     logo: "/logos/agents/copilot.svg",

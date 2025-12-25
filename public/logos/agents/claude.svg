@@ -1,6 +1,7 @@
 <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="64" height="64" rx="12" fill="#d97706"/>
-  <circle cx="32" cy="32" r="18" fill="#fff"/>
-  <circle cx="32" cy="32" r="8" fill="#d97706"/>
+  <!-- Claude Code / Anthropic - stylized "A" with spark -->
+  <path d="M32 8L52 52H40L36 42H28L24 52H12L32 8ZM32 22L26 36H38L32 22Z" fill="black"/>
+  <!-- Spark/asterisk accent -->
+  <circle cx="48" cy="14" r="3" fill="black"/>
+  <path d="M48 8V12M48 16V20M44 14H40M52 14H56M45 11L47 13M49 15L51 17M51 11L49 13M47 15L45 17" stroke="black" stroke-width="1.5" stroke-linecap="round"/>
 </svg>
-

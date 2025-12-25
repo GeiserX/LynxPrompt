@@ -114,10 +114,10 @@ export default function HomePage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-12 text-center">
             <h2 className="text-3xl font-bold tracking-tight">
-              One config, every AI-powered IDE
+              One config works across many agents
             </h2>
             <p className="mt-2 text-muted-foreground">
-              Generate IDE-agnostic rules that work across all major AI coding assistants
+              Your configurations are compatible with a growing ecosystem of AI coding agents and tools
             </p>
           </div>
 
