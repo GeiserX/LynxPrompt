@@ -146,7 +146,7 @@ function SignInContent() {
       <div className="flex flex-1 flex-col">
         {/* Mobile header */}
         <div className="flex items-center justify-between border-b p-4 lg:hidden">
-          <div className="w-fit rounded-lg bg-white dark:bg-black px-2 py-1.5">
+          <div className="w-fit rounded-lg bg-background px-2 py-1.5">
             <Logo />
           </div>
         </div>
