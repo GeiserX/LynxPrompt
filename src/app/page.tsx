@@ -175,8 +175,8 @@ export default function HomePage() {
           <div 
             className="pointer-events-none absolute bottom-0 right-0 h-48 w-80 sm:h-56 sm:w-96"
             style={{
-              maskImage: 'linear-gradient(to top left, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.2) 40%, transparent 70%)',
-              WebkitMaskImage: 'linear-gradient(to top left, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.2) 40%, transparent 70%)',
+              maskImage: 'linear-gradient(to top left, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 50%, transparent 80%)',
+              WebkitMaskImage: 'linear-gradient(to top left, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 50%, transparent 80%)',
             }}
           >
             <svg 
@@ -185,31 +185,52 @@ export default function HomePage() {
               preserveAspectRatio="xMaxYMax slice"
             >
               {/* City skyline buildings */}
-              <g fill="white" opacity="0.25">
+              <g fill="white" opacity="0.45">
                 {/* Tall building with antenna */}
                 <rect x="350" y="40" width="30" height="160" />
                 <rect x="360" y="20" width="10" height="20" />
                 <rect x="363" y="0" width="4" height="20" />
-                {/* Building windows */}
-                <rect x="355" y="50" width="6" height="8" fill="white" opacity="0.5" />
-                <rect x="365" y="50" width="6" height="8" fill="white" opacity="0.5" />
-                <rect x="355" y="65" width="6" height="8" fill="white" opacity="0.5" />
-                <rect x="365" y="65" width="6" height="8" fill="white" opacity="0.5" />
-                <rect x="355" y="80" width="6" height="8" fill="white" opacity="0.5" />
-                <rect x="365" y="80" width="6" height="8" fill="white" opacity="0.5" />
+                {/* Building windows - lit up */}
+                <rect x="355" y="50" width="6" height="8" fill="#fef08a" opacity="0.8" />
+                <rect x="365" y="50" width="6" height="8" fill="#fef08a" opacity="0.6" />
+                <rect x="355" y="65" width="6" height="8" fill="#fef08a" opacity="0.7" />
+                <rect x="365" y="65" width="6" height="8" fill="#fef08a" opacity="0.9" />
+                <rect x="355" y="80" width="6" height="8" fill="#fef08a" opacity="0.5" />
+                <rect x="365" y="80" width="6" height="8" fill="#fef08a" opacity="0.8" />
+                <rect x="355" y="95" width="6" height="8" fill="#fef08a" opacity="0.6" />
+                <rect x="365" y="95" width="6" height="8" fill="#fef08a" opacity="0.4" />
+                <rect x="355" y="110" width="6" height="8" fill="#fef08a" opacity="0.7" />
+                <rect x="365" y="110" width="6" height="8" fill="#fef08a" opacity="0.5" />
                 
                 {/* Medium building with stepped top */}
                 <rect x="310" y="80" width="35" height="120" />
                 <rect x="315" y="65" width="25" height="15" />
                 <rect x="320" y="55" width="15" height="10" />
+                {/* Windows for medium building */}
+                <rect x="315" y="90" width="5" height="6" fill="#fef08a" opacity="0.7" />
+                <rect x="325" y="90" width="5" height="6" fill="#fef08a" opacity="0.5" />
+                <rect x="335" y="90" width="5" height="6" fill="#fef08a" opacity="0.8" />
+                <rect x="315" y="105" width="5" height="6" fill="#fef08a" opacity="0.4" />
+                <rect x="325" y="105" width="5" height="6" fill="#fef08a" opacity="0.9" />
+                <rect x="335" y="105" width="5" height="6" fill="#fef08a" opacity="0.6" />
                 
                 {/* Short wide building */}
                 <rect x="260" y="120" width="45" height="80" />
                 <rect x="265" y="110" width="35" height="10" />
+                {/* Windows */}
+                <rect x="268" y="130" width="8" height="10" fill="#fef08a" opacity="0.6" />
+                <rect x="282" y="130" width="8" height="10" fill="#fef08a" opacity="0.8" />
+                <rect x="268" y="150" width="8" height="10" fill="#fef08a" opacity="0.5" />
+                <rect x="282" y="150" width="8" height="10" fill="#fef08a" opacity="0.7" />
                 
                 {/* Twin towers */}
                 <rect x="220" y="70" width="15" height="130" />
                 <rect x="240" y="85" width="15" height="115" />
+                {/* Windows */}
+                <rect x="224" y="80" width="4" height="5" fill="#fef08a" opacity="0.7" />
+                <rect x="224" y="95" width="4" height="5" fill="#fef08a" opacity="0.5" />
+                <rect x="244" y="95" width="4" height="5" fill="#fef08a" opacity="0.8" />
+                <rect x="244" y="110" width="4" height="5" fill="#fef08a" opacity="0.6" />
                 
                 {/* Small buildings */}
                 <rect x="185" y="130" width="30" height="70" />
@@ -219,6 +240,11 @@ export default function HomePage() {
                 <rect x="60" y="175" width="25" height="25" />
                 <rect x="30" y="180" width="25" height="20" />
                 <rect x="5" y="185" width="20" height="15" />
+                {/* A few windows on smaller buildings */}
+                <rect x="190" y="140" width="5" height="6" fill="#fef08a" opacity="0.6" />
+                <rect x="200" y="140" width="5" height="6" fill="#fef08a" opacity="0.8" />
+                <rect x="155" y="155" width="5" height="6" fill="#fef08a" opacity="0.5" />
+                <rect x="165" y="155" width="5" height="6" fill="#fef08a" opacity="0.7" />
               </g>
             </svg>
           </div>

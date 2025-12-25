@@ -131,13 +131,13 @@ export function Turnstile({ onSuccess, onError, onExpire, className }: Turnstile
     );
   }
 
-  // Success state
+  // Success state - compact indicator
   if (status === "success") {
     return (
       <div className={className}>
-        <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
-          <CheckCircle2 className="h-4 w-4" />
-          <span>Verification complete</span>
+        <div className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          <span>Verified</span>
         </div>
       </div>
     );
