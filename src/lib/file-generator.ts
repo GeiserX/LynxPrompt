@@ -175,11 +175,16 @@ function resolvePlatforms(config: WizardConfig): string[] {
 
 // ============================================================================
 // TEMPLATE VARIABLES SYSTEM
-// Delimiter: [[variable_name]] - Chosen to avoid conflicts with {{}} templates
+// Delimiter: [[variable_name]] or [[variable_name|default_value]]
+// Chosen to avoid conflicts with {{}} templates (Vue, Angular, Handlebars, etc.)
 // ============================================================================
 
-// Regular expression to detect template variables (accepts both uppercase and lowercase)
-const VARIABLE_PATTERN = /\[\[([A-Za-z_][A-Za-z0-9_]*)\]\]/g;
+// Regular expression to detect template variables with optional defaults
+// Matches: [[VAR_NAME]] or [[VAR_NAME|default value]]
+const VARIABLE_PATTERN = /\[\[([A-Za-z_][A-Za-z0-9_]*)(?:\|([^\]]*))?\]\]/g;
+
+// Pattern for simple detection (without capturing defaults)
+const VARIABLE_SIMPLE_PATTERN = /\[\[([A-Za-z_][A-Za-z0-9_]*)(?:\|[^\]]*)?\]\]/g;
 
 // Common variable suggestions
 export const SUGGESTED_VARIABLES = [
@@ -196,19 +201,29 @@ export const SUGGESTED_VARIABLES = [
 ];
 
 /**
+ * Parsed variable with name and optional creator-provided default
+ */
+export interface ParsedVariable {
+  name: string;
+  creatorDefault?: string;
+}
+
+/**
  * Detect all template variables in content
- * Variables use [[VARIABLE_NAME]] format
+ * Variables use [[VARIABLE_NAME]] or [[VARIABLE_NAME|default]] format
  * All variable names are normalized to UPPERCASE internally
  * So [[myVar]], [[MYVAR]], [[MyVar]] are all treated as [[MYVAR]]
  */
 export function detectVariables(content: string): string[] {
-  const matches = content.match(VARIABLE_PATTERN);
+  const matches = content.match(VARIABLE_SIMPLE_PATTERN);
   if (!matches) return [];
   
-  // Extract unique variable names (without brackets), normalized to UPPERCASE
+  // Extract unique variable names (without brackets/defaults), normalized to UPPERCASE
   const variables = new Set<string>();
   for (const match of matches) {
-    const varName = match.replace(/\[\[|\]\]/g, "").toUpperCase();
+    // Remove [[ and ]], then split by | and take the first part (variable name)
+    const inner = match.replace(/\[\[|\]\]/g, "");
+    const varName = inner.split("|")[0].toUpperCase();
     variables.add(varName);
   }
   
@@ -216,17 +231,52 @@ export function detectVariables(content: string): string[] {
 }
 
 /**
+ * Parse variables with their creator-provided defaults
+ * Returns a map of variable names to their defaults (if any)
+ */
+export function parseVariablesWithDefaults(content: string): Record<string, string | undefined> {
+  const result: Record<string, string | undefined> = {};
+  let match;
+  
+  // Reset regex state
+  const regex = new RegExp(VARIABLE_PATTERN.source, "g");
+  
+  while ((match = regex.exec(content)) !== null) {
+    const varName = match[1].toUpperCase();
+    const defaultValue = match[2]; // May be undefined if no | was present
+    
+    // Only set the default if this variable hasn't been seen yet,
+    // or if this instance has a default and the previous one didn't
+    if (!(varName in result) || (defaultValue !== undefined && result[varName] === undefined)) {
+      result[varName] = defaultValue;
+    }
+  }
+  
+  return result;
+}
+
+/**
  * Replace variables in content with provided values
  * Matches are case-insensitive: [[var]], [[VAR]], [[Var]] all work
+ * Handles both [[VAR]] and [[VAR|default]] syntax
  * Values are looked up by UPPERCASE key
  */
 export function replaceVariables(
   content: string, 
   values: Record<string, string>
 ): string {
-  return content.replace(VARIABLE_PATTERN, (match, varName) => {
+  return content.replace(VARIABLE_PATTERN, (match, varName, defaultVal) => {
     const upperVarName = varName.toUpperCase();
-    return values[upperVarName] !== undefined ? values[upperVarName] : match;
+    // If we have a user-provided value, use it
+    if (values[upperVarName] !== undefined && values[upperVarName] !== "") {
+      return values[upperVarName];
+    }
+    // If there's a default in the pattern and no user value, use the default
+    if (defaultVal !== undefined) {
+      return defaultVal;
+    }
+    // Otherwise keep the original pattern (without default syntax for cleaner output)
+    return `[[${upperVarName}]]`;
   });
 }
 
@@ -244,7 +294,8 @@ export function highlightVariables(content: string): string {
  * Check if content contains any variables
  */
 export function hasVariables(content: string): boolean {
-  return VARIABLE_PATTERN.test(content);
+  // Use a fresh regex to avoid state issues with global flag
+  return /\[\[([A-Za-z_][A-Za-z0-9_]*)(?:\|[^\]]*)?\]\]/.test(content);
 }
 
 /**

@@ -93,7 +93,7 @@ export const docsConfig: DocsSection[] = [
       {
         title: "Template Variables",
         href: "/docs/blueprints/variables",
-        description: "Using [[VARIABLE]] placeholders",
+        description: "Using [[VARIABLE]] and [[VARIABLE|default]] placeholders",
       },
     ],
   },

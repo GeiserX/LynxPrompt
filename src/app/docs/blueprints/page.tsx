@@ -55,7 +55,7 @@ export default function BlueprintsOverviewPage() {
             <div>
               <p className="font-medium">Template Variables</p>
               <p className="text-sm text-muted-foreground">
-                Using [[VARIABLE]] placeholders
+                Using [[VARIABLE]] and [[VARIABLE|default]] placeholders
               </p>
             </div>
           </Link>

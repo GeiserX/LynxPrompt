@@ -281,6 +281,21 @@ export const authOptions: NextAuthOptions = {
           data: { role: "SUPERADMIN" },
         });
       }
+      
+      // Check if user has accepted terms - redirect new users to accept-terms page
+      if (user.id) {
+        const dbUser = await prismaUsers.user.findUnique({
+          where: { id: user.id },
+          select: { termsAcceptedAt: true },
+        });
+        
+        // If user hasn't accepted terms, redirect them to accept-terms page
+        // The user IS signed in at this point, just redirected to a different page
+        if (!dbUser?.termsAcceptedAt) {
+          return "/auth/accept-terms";
+        }
+      }
+      
       return true;
     },
     async session({ session, user, token }) {
@@ -359,25 +374,10 @@ export const authOptions: NextAuthOptions = {
     },
   },
   events: {
-    // Log consent timestamp when new user is created
-    // Since the sign-in page requires accepting Terms + Privacy checkbox,
-    // any new user creation means consent was given
+    // Note: Consent is now handled via the /auth/accept-terms page
+    // New users without termsAcceptedAt are redirected there from the signIn callback
     async createUser({ user }) {
-      const now = new Date();
-      const termsVersion = "2025-12"; // Must match sign-in page version
-      const privacyVersion = "2025-12";
-      
-      await prismaUsers.user.update({
-        where: { id: user.id },
-        data: {
-          termsAcceptedAt: now,
-          termsVersion: termsVersion,
-          privacyAcceptedAt: now,
-          privacyVersion: privacyVersion,
-        },
-      });
-      
-      console.log(`[Auth] Consent logged for new user ${user.id} at ${now.toISOString()}, Terms v${termsVersion}, Privacy v${privacyVersion}`);
+      console.log(`[Auth] New user created: ${user.id} - will be redirected to accept terms`);
     },
   },
   session: {
