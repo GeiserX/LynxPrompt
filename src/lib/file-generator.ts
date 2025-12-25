@@ -288,6 +288,24 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
       lines.push("- Prefer npm scripts or Makefile targets over platform-specific commands");
     }
   }
+  if (config.repoHost) {
+    const hostNames: Record<string, string> = {
+      github: "GitHub",
+      gitlab: "GitLab",
+      bitbucket: "Bitbucket",
+      gitea: "Gitea",
+      forgejo: "Forgejo",
+      codeberg: "Codeberg",
+      sourcehut: "SourceHut",
+      gogs: "Gogs",
+      aws_codecommit: "AWS CodeCommit",
+      azure_devops: "Azure DevOps",
+      gerrit: "Gerrit",
+      phabricator: "Phabricator",
+      other: config.repoHostOther || "Other",
+    };
+    lines.push(`**Repository Host**: ${hostNames[config.repoHost] || config.repoHost}`);
+  }
   if (config.exampleRepoUrl) {
     lines.push("");
     lines.push(`**Reference Repository**: ${config.exampleRepoUrl}`);
@@ -543,6 +561,24 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
       multi: "Multi-platform"
     };
     lines.push(`**Development Environment**: ${osNames[config.devOS] || config.devOS}`);
+  }
+  if (config.repoHost) {
+    const hostNames: Record<string, string> = {
+      github: "GitHub",
+      gitlab: "GitLab",
+      bitbucket: "Bitbucket",
+      gitea: "Gitea",
+      forgejo: "Forgejo",
+      codeberg: "Codeberg",
+      sourcehut: "SourceHut",
+      gogs: "Gogs",
+      aws_codecommit: "AWS CodeCommit",
+      azure_devops: "Azure DevOps",
+      gerrit: "Gerrit",
+      phabricator: "Phabricator",
+      other: config.repoHostOther || "Other",
+    };
+    lines.push(`**Repository Host**: ${hostNames[config.repoHost] || config.repoHost}`);
   }
   lines.push("");
 

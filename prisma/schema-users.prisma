@@ -104,6 +104,7 @@ model User {
   downloads      TemplateDownload[]
   purchases      BlueprintPurchase[]
   payouts        Payout[]
+  blogPosts      BlogPost[]
 
   @@index([email])
   @@index([role])
@@ -410,4 +411,37 @@ model GeneratedFile {
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
+}
+
+// ============================================================================
+// BLOG POSTS - Admin-managed blog content
+// ============================================================================
+
+model BlogPost {
+  id          String     @id @default(cuid())
+  slug        String     @unique
+  title       String
+  excerpt     String?    @db.Text
+  content     String     @db.Text  // Markdown content
+  coverImage  String?    // URL to cover image
+  
+  authorId    String
+  author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  status      BlogStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  tags        String[]
+  
+  @@index([status])
+  @@index([publishedAt])
+  @@index([authorId])
+  @@index([slug])
+}
+
+enum BlogStatus {
+  DRAFT
+  PUBLISHED
 }

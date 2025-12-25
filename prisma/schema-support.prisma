@@ -1,0 +1,176 @@
+// Prisma schema for SUPPORT/FORUM DATA
+// This database contains feedback, bug reports, and feature suggestions
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma-support"
+  importFileExtension = ""
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================================
+// CATEGORIES - Sections like Bugs, Suggestions, etc.
+// ============================================================================
+
+model SupportCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  icon        String?  // Lucide icon name
+  color       String?  // Tailwind color class
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  posts SupportPost[]
+
+  @@index([isActive])
+  @@index([order])
+}
+
+// ============================================================================
+// TAGS - Configurable tags for posts
+// ============================================================================
+
+model SupportTag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  color     String?  // Tailwind color class
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  posts SupportPostTag[]
+
+  @@index([isActive])
+}
+
+// ============================================================================
+// POSTS - Main feedback items (bugs, suggestions, questions)
+// ============================================================================
+
+model SupportPost {
+  id          String       @id @default(cuid())
+  categoryId  String
+  
+  // Author info (stored for display, linked to users DB by userId)
+  userId      String
+  userName    String?      // Cached for display
+  userImage   String?      // Cached for display
+  userPlan    String       @default("FREE") // FREE, PRO, MAX - for badge display
+  
+  // Post content
+  title       String
+  content     String       @db.Text
+  
+  // Status management
+  status      PostStatus   @default(OPEN)
+  isPinned    Boolean      @default(false)
+  
+  // Statistics (denormalized for performance)
+  voteCount   Int          @default(0)
+  commentCount Int         @default(0)
+  
+  // Timestamps
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  resolvedAt  DateTime?    // When marked as resolved/completed
+
+  category  SupportCategory  @relation(fields: [categoryId], references: [id])
+  tags      SupportPostTag[]
+  votes     SupportVote[]
+  comments  SupportComment[]
+
+  @@index([categoryId])
+  @@index([userId])
+  @@index([status])
+  @@index([isPinned])
+  @@index([voteCount])
+  @@index([createdAt])
+}
+
+enum PostStatus {
+  OPEN           // New/active
+  IN_PROGRESS    // Being worked on
+  COMPLETED      // Implemented/fixed
+  CLOSED         // Closed without action
+  DUPLICATE      // Duplicate of another post
+}
+
+// ============================================================================
+// POST TAGS - Many-to-many relationship
+// ============================================================================
+
+model SupportPostTag {
+  id        String   @id @default(cuid())
+  postId    String
+  tagId     String
+  createdAt DateTime @default(now())
+
+  post SupportPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag  SupportTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, tagId])
+  @@index([postId])
+  @@index([tagId])
+}
+
+// ============================================================================
+// VOTES - Upvotes on posts
+// ============================================================================
+
+model SupportVote {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post SupportPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId]) // One vote per user per post
+  @@index([postId])
+  @@index([userId])
+}
+
+// ============================================================================
+// COMMENTS - Replies to posts (from users or admins)
+// ============================================================================
+
+model SupportComment {
+  id        String   @id @default(cuid())
+  postId    String
+  parentId  String?  // For nested replies (optional)
+  
+  // Author info
+  userId    String
+  userName  String?
+  userImage String?
+  userRole  String   @default("USER") // USER, ADMIN, SUPERADMIN
+  userPlan  String   @default("FREE")
+  
+  // Comment content
+  content   String   @db.Text
+  
+  // Official response flag (for admin replies)
+  isOfficial Boolean @default(false)
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post   SupportPost      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parent SupportComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies SupportComment[] @relation("CommentReplies")
+
+  @@index([postId])
+  @@index([parentId])
+  @@index([userId])
+  @@index([createdAt])
+}
+

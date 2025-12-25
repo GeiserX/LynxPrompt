@@ -292,6 +292,9 @@ function BlueprintsContent() {
             <Link href="/docs" className="text-sm hover:underline">
               Docs
             </Link>
+            <Link href="/blog" className="text-sm hover:underline">
+              Blog
+            </Link>
             <ThemeToggle />
             <UserMenu />
           </nav>
@@ -431,21 +434,23 @@ function BlueprintsContent() {
                 </div>
               )}
 
-              <Button asChild className="w-full">
-                <Link href="/blueprints/create">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Blueprint
-                </Link>
-              </Button>
-              
-              {status === "authenticated" && (
-                <Button asChild variant="outline" className="w-full mt-2">
-                  <Link href="/wizard">
-                    <Wand2 className="mr-2 h-4 w-4" />
-                    Use Wizard
+              <div className="space-y-1">
+                <Button asChild className="w-full">
+                  <Link href="/blueprints/create">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create Blueprint
                   </Link>
                 </Button>
-              )}
+                
+                {status === "authenticated" && (
+                  <Button asChild variant="outline" className="w-full">
+                    <Link href="/wizard">
+                      <Wand2 className="mr-2 h-4 w-4" />
+                      Use Wizard
+                    </Link>
+                  </Button>
+                )}
+              </div>
             </div>
           </aside>
 

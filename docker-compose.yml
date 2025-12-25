@@ -38,6 +38,25 @@ services:
       retries: 5
 
   # ==========================================================================
+  # SUPPORT Database - Feedback forum (bugs, suggestions, votes)
+  # ==========================================================================
+  db-support:
+    image: postgres:17-alpine
+    container_name: lynxprompt-db-support
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: lynxprompt_support
+      POSTGRES_PASSWORD: support_dev_password
+      POSTGRES_DB: lynxprompt_support
+    volumes:
+      - postgres_support_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lynxprompt_support"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================================================
   # LynxPrompt Application (Development)
   # ==========================================================================
   app:
@@ -52,6 +71,7 @@ services:
     environment:
       - DATABASE_URL_APP=postgresql://lynxprompt_app:app_dev_password@db-app:5432/lynxprompt_app?schema=public
       - DATABASE_URL_USERS=postgresql://lynxprompt_users:users_dev_password@db-users:5432/lynxprompt_users?schema=public
+      - DATABASE_URL_SUPPORT=postgresql://lynxprompt_support:support_dev_password@db-support:5432/lynxprompt_support?schema=public
       - NEXTAUTH_URL=http://localhost:3000
       - NEXTAUTH_SECRET=development-secret-change-in-production
       - NODE_ENV=development
@@ -64,11 +84,14 @@ services:
         condition: service_healthy
       db-users:
         condition: service_healthy
+      db-support:
+        condition: service_healthy
     command: sh -c "npm run db:generate && npm run db:push && npm run db:seed && npm run dev"
 
 volumes:
   postgres_app_data:
   postgres_users_data:
+  postgres_support_data:
 
 networks:
   default:
