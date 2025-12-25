@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { AiEditPanel } from "@/components/ai-edit-panel";
 import {
   ArrowLeft,
   ArrowRight,
@@ -624,7 +623,7 @@ export default function WizardPage() {
     containerRegistry: "",
     containerRegistryOther: "",
     registryUsername: "",
-    aiBehaviorRules: ["always_debug_after_build", "check_logs_after_build", "run_tests_before_commit", "follow_existing_patterns", "ask_before_large_refactors"],
+    aiBehaviorRules: ["always_debug_after_build", "check_logs_after_build", "follow_existing_patterns"],
     enableAutoUpdate: false,
     includePersonalData: true,
     platform: "universal",
@@ -632,7 +631,7 @@ export default function WizardPage() {
     commands: { build: "", test: "", lint: "", dev: "", additional: [], savePreferences: false },
     codeStyle: { naming: "camelCase", notes: "", savePreferences: false },
     boundaries: { always: [], ask: [], never: [], savePreferences: false },
-    testing: { levels: ["unit"], coverage: 80, frameworks: [], notes: "", savePreferences: false },
+    testing: { levels: [], coverage: 80, frameworks: [], notes: "", savePreferences: false },
     staticFiles: {
       funding: false,
       fundingYml: "",
@@ -818,8 +817,6 @@ export default function WizardPage() {
       funding: config.funding,
       fundingYml: config.fundingYml,
       dependabot: config.dependabot,
-      conventionalCommits: config.conventionalCommits,
-      semver: config.semver,
       cicd: [config.cicd],
       containerRegistry: config.containerRegistry,
       customRegistry: config.containerRegistryOther,
@@ -964,20 +961,6 @@ export default function WizardPage() {
     }));
   };
 
-  // Immediately save specific preferences to profile (called when "Save to profile" is checked)
-  const saveToProfileImmediately = async (items: { category: string; key: string; value: any }[]) => {
-    if (items.length === 0) return;
-    try {
-      await fetch("/api/user/wizard-preferences", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(items),
-      });
-    } catch (error) {
-      console.error("Failed to save to profile:", error);
-    }
-  };
-
   const savePreferences = async () => {
     const payload: { category: string; key: string; value: any; isDefault?: boolean }[] = [];
     if (config.commands.savePreferences) {
@@ -1011,17 +994,17 @@ export default function WizardPage() {
     }
     if (config.staticFiles.editorconfigSave || config.staticFiles.contributingSave || config.staticFiles.codeOfConductSave || config.staticFiles.securitySave || config.staticFiles.gitignoreSave || config.staticFiles.dockerignoreSave || config.staticFiles.fundingSave || config.staticFiles.licenseSave) {
       payload.push(
-        { category: "staticFiles", key: "editorconfig", value: config.staticFiles.editorconfig },
-        { category: "staticFiles", key: "contributing", value: config.staticFiles.contributing },
-        { category: "staticFiles", key: "codeOfConduct", value: config.staticFiles.codeOfConduct },
-        { category: "staticFiles", key: "security", value: config.staticFiles.security },
-        { category: "staticFiles", key: "gitignoreMode", value: config.staticFiles.gitignoreMode },
-        { category: "staticFiles", key: "gitignoreCustom", value: config.staticFiles.gitignoreCustom },
-        { category: "staticFiles", key: "dockerignore", value: config.buildContainer || config.staticFiles.dockerignore },
-        { category: "staticFiles", key: "dockerignoreCustom", value: config.staticFiles.dockerignoreCustom },
-        { category: "staticFiles", key: "funding", value: config.funding || config.staticFiles.funding },
-        { category: "staticFiles", key: "fundingYml", value: config.staticFiles.fundingYml || config.fundingYml },
-        { category: "staticFiles", key: "licenseSave", value: config.staticFiles.licenseSave || config.licenseSave },
+        { category: "static", key: "editorconfig", value: config.staticFiles.editorconfig },
+        { category: "static", key: "contributing", value: config.staticFiles.contributing },
+        { category: "static", key: "codeOfConduct", value: config.staticFiles.codeOfConduct },
+        { category: "static", key: "security", value: config.staticFiles.security },
+        { category: "static", key: "gitignoreMode", value: config.staticFiles.gitignoreMode },
+        { category: "static", key: "gitignoreCustom", value: config.staticFiles.gitignoreCustom },
+        { category: "static", key: "dockerignore", value: config.buildContainer || config.staticFiles.dockerignore },
+        { category: "static", key: "dockerignoreCustom", value: config.staticFiles.dockerignoreCustom },
+        { category: "static", key: "funding", value: config.funding || config.staticFiles.funding },
+        { category: "static", key: "fundingYml", value: config.staticFiles.fundingYml || config.fundingYml },
+        { category: "static", key: "licenseSave", value: config.staticFiles.licenseSave || config.licenseSave },
       );
     }
     if (payload.length === 0) return;
@@ -1383,14 +1366,12 @@ export default function WizardPage() {
                   isPublic={config.isPublic}
                   buildContainer={config.buildContainer}
                   onChange={(updates) => setConfig({ ...config, staticFiles: { ...config.staticFiles, ...updates } })}
-                  onImmediateSave={saveToProfileImmediately}
                 />
               )}
               {currentStep === 9 && (
                 <StepFeedback
                   value={config.additionalFeedback}
                   onChange={(v) => setConfig({ ...config, additionalFeedback: v })}
-                  userTier={userTier}
                 />
               )}
               {currentStep === 10 && (
@@ -1429,7 +1410,7 @@ export default function WizardPage() {
                       disabled={isDownloading || previewFiles.length === 0}
                     >
                       <Share2 className="mr-2 h-4 w-4" />
-                      Save as Blueprint
+                      Share as Blueprint
                     </Button>
                     <Button
                       className="bg-gradient-to-r from-purple-600 to-pink-600"
@@ -2314,16 +2295,16 @@ function StepAIBehavior({
       </p>
       
       {/* Personal Data Section */}
-      <div className="mt-6 rounded-lg border-2 border-blue-600 bg-blue-50 p-4 shadow-sm dark:border-blue-800 dark:bg-blue-900/20">
+      <div className="mt-6 rounded-lg border-2 border-blue-600 bg-white p-4 shadow-sm dark:border-blue-800 dark:bg-blue-900/20">
         <div className="flex items-start gap-3">
-          <User className="h-5 w-5 flex-shrink-0 text-blue-700 dark:text-blue-400 mt-0.5" />
+          <User className="h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
           <div className="flex-1">
-            <h3 className="font-semibold text-blue-900 dark:text-blue-200">Include Your Profile in Blueprint</h3>
-            <p className="mt-1 text-sm text-blue-800 dark:text-blue-300">
+            <h3 className="font-semibold text-gray-900 dark:text-blue-200">Include Your Profile in Blueprint</h3>
+            <p className="mt-1 text-sm text-gray-700 dark:text-blue-300">
               Your developer role (<strong>{personaLabel}</strong>) and skill level (<strong>{skillLabel}</strong>) 
               can be included in the generated config file. This helps the AI tailor its responses to your experience level.
             </p>
-            <p className="mt-2 text-xs text-blue-700 dark:text-blue-400 italic">
+            <p className="mt-2 text-xs text-gray-600 dark:text-blue-400 italic">
               Note: This information is only used in the downloaded config file — it doesn&apos;t affect the wizard itself.
             </p>
             <div className="mt-3 flex items-center gap-3">
@@ -2334,7 +2315,7 @@ function StepAIBehavior({
                 onChange={(e) => onIncludePersonalDataChange(e.target.checked)}
                 className="h-4 w-4 rounded border-blue-600 accent-blue-600"
               />
-              <label htmlFor="includePersonalData" className="text-sm font-medium text-blue-900 dark:text-blue-200">
+              <label htmlFor="includePersonalData" className="text-sm font-medium text-gray-800 dark:text-blue-200">
                 Include my role &amp; skill level in the AI config file
               </label>
             </div>
@@ -3064,10 +3045,10 @@ const TEST_FRAMEWORKS = [
 ];
 
 const TEST_LEVELS = [
+  { id: "smoke", label: "Smoke", desc: "Quick sanity checks" },
   { id: "unit", label: "Unit", desc: "Individual functions/components" },
   { id: "integration", label: "Integration", desc: "Component interactions" },
   { id: "e2e", label: "E2E", desc: "Full user flows" },
-  { id: "smoke", label: "Smoke", desc: "Quick sanity checks" },
 ];
 
 function StepTesting({
@@ -3239,7 +3220,6 @@ function StaticFileEditor({
   onContentChange,
   saveChecked,
   onSaveToggle,
-  onImmediateSave,
   placeholder,
   minHeight = "150px",
 }: {
@@ -3251,19 +3231,10 @@ function StaticFileEditor({
   onContentChange?: (v: string) => void;
   saveChecked: boolean;
   onSaveToggle: (v: boolean) => void;
-  onImmediateSave?: () => void;
   placeholder?: string;
   minHeight?: string;
 }) {
   const [expanded, setExpanded] = useState(false);
-  
-  const handleSaveToggle = (checked: boolean) => {
-    onSaveToggle(checked);
-    // If checking the box, immediately save to profile
-    if (checked && onImmediateSave) {
-      onImmediateSave();
-    }
-  };
   
   return (
     <div className="rounded-lg border p-4">
@@ -3295,7 +3266,7 @@ function StaticFileEditor({
             <input
               type="checkbox"
               checked={saveChecked}
-              onChange={(e) => handleSaveToggle(e.target.checked)}
+              onChange={(e) => onSaveToggle(e.target.checked)}
             />
             Save to profile
           </label>
@@ -3321,14 +3292,12 @@ function StepStaticFiles({
   isPublic,
   buildContainer,
   onChange,
-  onImmediateSave,
 }: {
   config: StaticFilesConfig;
   isGithub: boolean;
   isPublic: boolean;
   buildContainer: boolean;
   onChange: (updates: Partial<StaticFilesConfig>) => void;
-  onImmediateSave: (items: { category: string; key: string; value: any }[]) => void;
 }) {
   return (
     <div>
@@ -3347,10 +3316,6 @@ function StepStaticFiles({
           onContentChange={(v) => onChange({ editorconfigCustom: v })}
           saveChecked={config.editorconfigSave}
           onSaveToggle={(v) => onChange({ editorconfigSave: v })}
-          onImmediateSave={() => onImmediateSave([
-            { category: "staticFiles", key: "editorconfig", value: config.editorconfig },
-            { category: "staticFiles", key: "editorconfigCustom", value: config.editorconfigCustom },
-          ])}
           placeholder={`root = true
 
 [*]
@@ -3367,10 +3332,6 @@ indent_size = 2`}
           onContentChange={(v) => onChange({ contributingCustom: v })}
           saveChecked={config.contributingSave}
           onSaveToggle={(v) => onChange({ contributingSave: v })}
-          onImmediateSave={() => onImmediateSave([
-            { category: "staticFiles", key: "contributing", value: config.contributing },
-            { category: "staticFiles", key: "contributingCustom", value: config.contributingCustom },
-          ])}
           placeholder={`# Contributing
 
 Thank you for your interest in contributing!`}
@@ -3386,10 +3347,6 @@ Thank you for your interest in contributing!`}
           onContentChange={(v) => onChange({ codeOfConductCustom: v })}
           saveChecked={config.codeOfConductSave}
           onSaveToggle={(v) => onChange({ codeOfConductSave: v })}
-          onImmediateSave={() => onImmediateSave([
-            { category: "staticFiles", key: "codeOfConduct", value: config.codeOfConduct },
-            { category: "staticFiles", key: "codeOfConductCustom", value: config.codeOfConductCustom },
-          ])}
           placeholder={`# Code of Conduct
 
 We are committed to providing a welcoming environment.`}
@@ -3405,10 +3362,6 @@ We are committed to providing a welcoming environment.`}
           onContentChange={(v) => onChange({ securityCustom: v })}
           saveChecked={config.securitySave}
           onSaveToggle={(v) => onChange({ securitySave: v })}
-          onImmediateSave={() => onImmediateSave([
-            { category: "staticFiles", key: "security", value: config.security },
-            { category: "staticFiles", key: "securityCustom", value: config.securityCustom },
-          ])}
           placeholder={`# Security Policy
 
 To report a vulnerability, please email security@example.com`}
@@ -3425,15 +3378,7 @@ To report a vulnerability, please email security@example.com`}
               <input
                 type="checkbox"
                 checked={config.gitignoreSave}
-                onChange={(e) => {
-                  onChange({ gitignoreSave: e.target.checked });
-                  if (e.target.checked) {
-                    onImmediateSave([
-                      { category: "staticFiles", key: "gitignoreMode", value: config.gitignoreMode },
-                      { category: "staticFiles", key: "gitignoreCustom", value: config.gitignoreCustom },
-                    ]);
-                  }
-                }}
+                onChange={(e) => onChange({ gitignoreSave: e.target.checked })}
               />
               Save to profile
             </label>
@@ -3487,15 +3432,7 @@ dist/`}
               <input
                 type="checkbox"
                 checked={config.dockerignoreSave}
-                onChange={(e) => {
-                  onChange({ dockerignoreSave: e.target.checked });
-                  if (e.target.checked) {
-                    onImmediateSave([
-                      { category: "staticFiles", key: "dockerignore", value: config.dockerignore },
-                      { category: "staticFiles", key: "dockerignoreCustom", value: config.dockerignoreCustom },
-                    ]);
-                  }
-                }}
+                onChange={(e) => onChange({ dockerignoreSave: e.target.checked })}
               />
               Save to profile
             </label>
@@ -3535,15 +3472,7 @@ dist/`}
                 <input
                   type="checkbox"
                   checked={config.fundingSave}
-                  onChange={(e) => {
-                    onChange({ fundingSave: e.target.checked });
-                    if (e.target.checked) {
-                      onImmediateSave([
-                        { category: "staticFiles", key: "funding", value: config.funding },
-                        { category: "staticFiles", key: "fundingYml", value: config.fundingYml },
-                      ]);
-                    }
-                  }}
+                  onChange={(e) => onChange({ fundingSave: e.target.checked })}
                 />
                 Save to profile
               </label>
@@ -3570,14 +3499,10 @@ ko_fi: your-kofi`}
 function StepFeedback({
   value,
   onChange,
-  userTier,
 }: {
   value: string;
   onChange: (v: string) => void;
-  userTier: string;
 }) {
-  const isMaxUser = userTier === "max";
-  
   return (
     <div>
       <h2 className="text-2xl font-bold">Anything we&apos;ve missed?</h2>
@@ -3585,23 +3510,6 @@ function StepFeedback({
         Is there something specific you&apos;d like the AI to know about your
         project that we haven&apos;t asked? Add any additional context.
       </p>
-
-      {/* AI Assist Panel - MAX users only */}
-      {isMaxUser && (
-        <div className="mt-6 rounded-lg border border-purple-200 bg-purple-50/50 p-4 dark:border-purple-800 dark:bg-purple-900/20">
-          <div className="mb-3 flex items-center gap-2 text-sm font-medium text-purple-700 dark:text-purple-300">
-            <Sparkles className="h-4 w-4" />
-            AI Assistant
-          </div>
-          <AiEditPanel
-            currentContent={value}
-            onContentChange={onChange}
-            mode="wizard"
-            placeholder="Describe what you need, e.g., 'I want strict TypeScript, no any types'"
-            showReplaceWarning={!!value.trim()}
-          />
-        </div>
-      )}
 
       <div className="mt-6">
         <textarea
