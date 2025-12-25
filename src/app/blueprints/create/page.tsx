@@ -378,10 +378,10 @@ export default function ShareBlueprintPage() {
 
                 {/* AI Edit Panel - MAX users only */}
                 {userPlan === "max" && (
-                  <div className="mb-3 rounded-lg border-2 border-purple-700 bg-purple-200 p-3 shadow-md dark:border-purple-800 dark:bg-purple-900/20">
-                    <div className="mb-2 flex items-center gap-2 text-sm font-bold text-black dark:text-purple-300">
+                  <div className="mb-3 rounded-lg border-2 border-purple-600 bg-purple-50 p-3 shadow-md dark:border-purple-800 dark:bg-purple-900/20">
+                    <div className="mb-2 flex items-center gap-2 text-sm font-bold">
                       <Sparkles className="h-4 w-4 text-purple-700 dark:text-purple-400" />
-                      AI-Powered Editing
+                      <span className="text-purple-900 dark:text-purple-300">AI-Powered Editing</span>
                     </div>
                     <AiEditPanel
                       currentContent={content}
@@ -526,12 +526,12 @@ export default function ShareBlueprintPage() {
                       ))}
                     </select>
                     {/* Interoperability notice */}
-                    <div className="mt-2 rounded-lg border-2 border-sky-700 bg-sky-200 p-3 shadow-md dark:border-sky-700 dark:bg-sky-900/20">
+                    <div className="mt-2 rounded-lg border-2 border-sky-700 bg-sky-100 p-3 shadow-md dark:border-sky-700 dark:bg-sky-900/20">
                       <div className="flex items-start gap-2">
-                        <Info className="h-4 w-4 flex-shrink-0 text-sky-800 dark:text-sky-400 mt-0.5" />
-                        <p className="text-xs font-medium text-gray-900 dark:text-sky-300">
-                          <strong className="font-black text-black dark:text-sky-200">Note:</strong> This is just to identify the original format. 
-                          All blueprints are <strong className="font-black text-black dark:text-sky-200">interchangeable and compatible across all AI IDEs</strong> — 
+                        <Info className="h-4 w-4 flex-shrink-0 text-sky-700 dark:text-sky-400 mt-0.5" />
+                        <p className="text-xs font-medium text-sky-900 dark:text-sky-300">
+                          <span className="font-black text-sky-950 dark:text-sky-200">Note:</span> This is just to identify the original format. 
+                          All blueprints are <span className="font-black text-sky-950 dark:text-sky-200">interchangeable and compatible across all AI IDEs</span> — 
                           Cursor, Claude, Copilot, Windsurf, Cline, and more. 
                           Users can download in any format they need.
                         </p>
@@ -585,14 +585,14 @@ export default function ShareBlueprintPage() {
                   </div>
 
                   {/* Visibility - Sharing Section */}
-                  <div className="rounded-lg border-2 border-amber-700 bg-amber-200 p-4 shadow-md dark:border-amber-600 dark:bg-amber-900/20">
+                  <div className="rounded-lg border-2 border-amber-600 bg-amber-50 p-4 shadow-md dark:border-amber-600 dark:bg-amber-900/20">
                     <div className="flex items-start gap-3">
-                      <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-800 dark:text-amber-400 mt-0.5" />
+                      <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-700 dark:text-amber-400 mt-0.5" />
                       <div className="flex-1">
-                        <h4 className="font-black text-black dark:text-amber-200">
+                        <h4 className="font-black text-amber-900 dark:text-amber-200">
                           Share with the Community?
                         </h4>
-                        <p className="mt-1 text-sm font-medium text-gray-900 dark:text-amber-300">
+                        <p className="mt-1 text-sm font-medium text-amber-800 dark:text-amber-300">
                           By default, your blueprint is private. Check below to share it publicly in the marketplace.
                         </p>
                         <div className="mt-3 flex items-center gap-3">
@@ -603,7 +603,7 @@ export default function ShareBlueprintPage() {
                             onChange={(e) => setIsPublic(e.target.checked)}
                             className="h-4 w-4 rounded border-amber-700"
                           />
-                          <label htmlFor="isPublic" className="text-sm font-bold text-black dark:text-amber-200">
+                          <label htmlFor="isPublic" className="text-sm font-bold text-amber-900 dark:text-amber-200">
                             Yes, make this blueprint public in the marketplace
                           </label>
                         </div>
