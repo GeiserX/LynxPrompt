@@ -3,7 +3,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prismaUsers } from "@/lib/db-users";
+import { prismaBlog } from "@/lib/db-blog";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
@@ -103,18 +103,8 @@ export default async function BlogPostPage({ params }: PageProps) {
     : false;
 
   // Fetch the post
-  const post = await prismaUsers.blogPost.findUnique({
+  const post = await prismaBlog.blogPost.findUnique({
     where: { slug },
-    include: {
-      author: {
-        select: {
-          id: true,
-          name: true,
-          displayName: true,
-          image: true,
-        },
-      },
-    },
   });
 
   // 404 if not found or draft (unless admin)
@@ -131,7 +121,7 @@ export default async function BlogPostPage({ params }: PageProps) {
     });
   };
 
-  const authorName = post.author.displayName || post.author.name || "Anonymous";
+  const authorName = post.authorName || "Anonymous";
   const contentHtml = markdownToHtml(post.content);
 
   return (
@@ -202,19 +192,9 @@ export default async function BlogPostPage({ params }: PageProps) {
             {/* Meta */}
             <div className="mt-6 flex flex-wrap items-center gap-4 border-b pb-6 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
-                {post.author.image ? (
-                  <Image
-                    src={post.author.image}
-                    alt={authorName}
-                    width={32}
-                    height={32}
-                    className="rounded-full"
-                  />
-                ) : (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
-                    <User className="h-4 w-4" />
-                  </div>
-                )}
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
+                  <User className="h-4 w-4" />
+                </div>
                 <span>{authorName}</span>
               </div>
               <div className="flex items-center gap-2">
@@ -277,4 +257,3 @@ export default async function BlogPostPage({ params }: PageProps) {
     </div>
   );
 }
-

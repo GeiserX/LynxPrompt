@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prismaUsers } from "@/lib/db-users";
+import { prismaBlog } from "@/lib/db-blog";
 import { isAdminRole, UserRole } from "@/lib/subscription";
 
 // GET: Get single blog post by slug
@@ -18,18 +18,8 @@ export async function GET(
       ? isAdminRole(session.user.role as UserRole)
       : false;
 
-    const post = await prismaUsers.blogPost.findUnique({
+    const post = await prismaBlog.blogPost.findUnique({
       where: { slug },
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            displayName: true,
-            image: true,
-          },
-        },
-      },
     });
 
     if (!post) {
@@ -41,7 +31,16 @@ export async function GET(
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    return NextResponse.json(post);
+    // Return with author object for frontend compatibility
+    return NextResponse.json({
+      ...post,
+      author: {
+        id: post.authorId,
+        name: post.authorName,
+        displayName: post.authorName,
+        image: null,
+      },
+    });
   } catch (error) {
     console.error("Error fetching blog post:", error);
     return NextResponse.json(
@@ -74,7 +73,7 @@ export async function PUT(
     }
 
     // Check if post exists
-    const existingPost = await prismaUsers.blogPost.findUnique({
+    const existingPost = await prismaBlog.blogPost.findUnique({
       where: { slug },
     });
 
@@ -104,22 +103,21 @@ export async function PUT(
       }
     }
 
-    const post = await prismaUsers.blogPost.update({
+    const post = await prismaBlog.blogPost.update({
       where: { slug },
       data: updateData,
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            displayName: true,
-            image: true,
-          },
-        },
-      },
     });
 
-    return NextResponse.json(post);
+    // Return with author object for frontend compatibility
+    return NextResponse.json({
+      ...post,
+      author: {
+        id: post.authorId,
+        name: post.authorName,
+        displayName: post.authorName,
+        image: null,
+      },
+    });
   } catch (error) {
     console.error("Error updating blog post:", error);
     return NextResponse.json(
@@ -152,7 +150,7 @@ export async function DELETE(
     }
 
     // Check if post exists
-    const existingPost = await prismaUsers.blogPost.findUnique({
+    const existingPost = await prismaBlog.blogPost.findUnique({
       where: { slug },
     });
 
@@ -160,7 +158,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    await prismaUsers.blogPost.delete({
+    await prismaBlog.blogPost.delete({
       where: { slug },
     });
 
@@ -173,4 +171,3 @@ export async function DELETE(
     );
   }
 }
-

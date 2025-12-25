@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prismaUsers } from "@/lib/db-users";
+import { prismaBlog } from "@/lib/db-blog";
 import { isAdminRole, UserRole } from "@/lib/subscription";
 
 // Helper to generate slug from title
@@ -37,10 +37,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Get total count
-    const total = await prismaUsers.blogPost.count({ where });
+    const total = await prismaBlog.blogPost.count({ where });
 
     // Get posts with pagination
-    const posts = await prismaUsers.blogPost.findMany({
+    const posts = await prismaBlog.blogPost.findMany({
       where,
       orderBy: { publishedAt: "desc" },
       skip,
@@ -55,19 +55,24 @@ export async function GET(request: NextRequest) {
         publishedAt: true,
         createdAt: true,
         tags: true,
-        author: {
-          select: {
-            id: true,
-            name: true,
-            displayName: true,
-            image: true,
-          },
-        },
+        authorId: true,
+        authorName: true,
       },
     });
 
+    // Transform to include author object for frontend compatibility
+    const transformedPosts = posts.map(post => ({
+      ...post,
+      author: {
+        id: post.authorId,
+        name: post.authorName,
+        displayName: post.authorName,
+        image: null,
+      },
+    }));
+
     return NextResponse.json({
-      posts,
+      posts: transformedPosts,
       total,
       hasMore: skip + posts.length < total,
       page,
@@ -114,7 +119,7 @@ export async function POST(request: NextRequest) {
     let slug = generateSlug(title);
     
     // Check if slug exists, if so add a number
-    const existingSlug = await prismaUsers.blogPost.findUnique({
+    const existingSlug = await prismaBlog.blogPost.findUnique({
       where: { slug },
     });
     
@@ -123,8 +128,11 @@ export async function POST(request: NextRequest) {
       slug = `${slug}-${timestamp}`;
     }
 
+    // Get author name from session
+    const authorName = session.user.name || session.user.email || "Admin";
+
     // Create the post
-    const post = await prismaUsers.blogPost.create({
+    const post = await prismaBlog.blogPost.create({
       data: {
         slug,
         title,
@@ -136,20 +144,20 @@ export async function POST(request: NextRequest) {
         status: status || "DRAFT",
         publishedAt: status === "PUBLISHED" ? new Date() : null,
         authorId: session.user.id,
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            displayName: true,
-            image: true,
-          },
-        },
+        authorName,
       },
     });
 
-    return NextResponse.json(post, { status: 201 });
+    // Return with author object for frontend compatibility
+    return NextResponse.json({
+      ...post,
+      author: {
+        id: post.authorId,
+        name: post.authorName,
+        displayName: post.authorName,
+        image: null,
+      },
+    }, { status: 201 });
   } catch (error) {
     console.error("Error creating blog post:", error);
     return NextResponse.json(
@@ -158,4 +166,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
