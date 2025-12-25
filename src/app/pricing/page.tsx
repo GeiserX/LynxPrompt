@@ -4,9 +4,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Check, X, Zap, Crown, Star, ArrowRight } from "lucide-react";
-import { Logo } from "@/components/logo";
-import { UserMenu } from "@/components/user-menu";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
 
 const TIERS = [
@@ -105,25 +103,7 @@ export default function PricingPage() {
   return (
     <div className="flex min-h-screen flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Logo />
-          <nav className="flex items-center gap-4">
-            <span className="text-sm font-medium text-primary">Pricing</span>
-            <Link href="/blueprints" className="text-sm hover:underline">
-              Blueprints
-            </Link>
-            <Link href="/docs" className="text-sm hover:underline">
-              Docs
-            </Link>
-            <Link href="/blog" className="text-sm hover:underline">
-              Blog
-            </Link>
-            <ThemeToggle />
-            <UserMenu />
-          </nav>
-        </div>
-      </header>
+      <PageHeader currentPage="pricing" />
 
       {/* Hero */}
       <section className="border-b bg-gradient-to-b from-muted/50 to-background py-16">

@@ -33,9 +33,7 @@ import {
   Share2,
   X,
 } from "lucide-react";
-import { Logo } from "@/components/logo";
-import { UserMenu } from "@/components/user-menu";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { PageHeader } from "@/components/page-header";
 import { CodeEditor } from "@/components/code-editor";
 import {
   generateConfigFiles,
@@ -1143,21 +1141,7 @@ export default function WizardPage() {
       )}
 
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Logo />
-          <nav className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/dashboard">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Dashboard
-              </Link>
-            </Button>
-            <ThemeToggle />
-            <UserMenu />
-          </nav>
-        </div>
-      </header>
+      <PageHeader currentPage="wizard" breadcrumbLabel="Wizard" />
 
       <div className="container mx-auto flex flex-1 gap-8 px-4 py-8 sm:px-6 lg:px-8">
         {/* Sidebar - Step Navigation */}
