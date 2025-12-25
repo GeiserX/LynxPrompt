@@ -39,7 +39,7 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <section className="container mx-auto flex flex-col items-center justify-center gap-8 px-4 py-24 text-center sm:px-6 lg:px-8">
+      <section className="container mx-auto flex flex-col items-center justify-center gap-8 px-4 py-16 text-center sm:px-6 lg:px-8">
         <div className="flex max-w-3xl flex-col items-center gap-4">
           <div className="flex items-center gap-2 rounded-full border bg-muted px-4 py-1.5 text-sm">
             <MousePointer2 className="h-4 w-4" />
@@ -55,14 +55,14 @@ export default function HomePage() {
           </h1>
 
           <p className="max-w-2xl text-lg text-muted-foreground">
-            Generate and share AI coding assistant rules that work across any IDE.
-            One configuration, every platform — Cursor, Claude, Copilot, and more.
+            Create universal instructions for AI coding agents and tools.
+            Write once, use across Cursor, Claude Code, Copilot, and many more.
           </p>
           <p className="text-lg font-medium text-muted-foreground">
             New project? <span className="text-primary">Ready in seconds.</span>
           </p>
 
-          <div className="flex gap-4">
+          <div className="mt-6 flex gap-4">
             <Button asChild size="lg">
               <Link href="/wizard">
                 Start Building <ArrowRight className="ml-2 h-4 w-4" />
@@ -79,7 +79,7 @@ export default function HomePage() {
           <FeatureCard
             icon={<Zap className="h-8 w-8" />}
             title="IDE-Agnostic Rules"
-            description="One config works everywhere — switch IDEs without rewriting your AI rules"
+            description="One config works everywhere — switch IDEs & tools without rewriting your AI rules"
           />
           <FeatureCard
             icon={<Shield className="h-8 w-8" />}
@@ -99,7 +99,7 @@ export default function HomePage() {
         </div>
 
         {/* Memory Projects Compatibility */}
-        <div className="mt-12 flex items-center gap-4 text-sm text-muted-foreground">
+        <div className="mt-8 flex items-center gap-4 text-sm text-muted-foreground">
           <div className="h-px flex-1 bg-border" />
           <span className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
@@ -110,7 +110,7 @@ export default function HomePage() {
       </section>
 
       {/* Supported Platforms - Carousel */}
-      <section className="border-y bg-muted/30 py-20">
+      <section className="border-y bg-muted/30 py-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-12 text-center">
             <h2 className="text-3xl font-bold tracking-tight">
