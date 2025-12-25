@@ -271,6 +271,9 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
   }
 }
 
+// Platform owner email - payments go directly to the platform's Stripe account
+const PLATFORM_OWNER_EMAIL = "dev@lynxprompt.com";
+
 async function handleBlueprintPurchase(session: Stripe.Checkout.Session) {
   const { templateId, userId, originalPrice, paidPrice, isMaxDiscount, currency } = session.metadata || {};
 
@@ -286,8 +289,18 @@ async function handleBlueprintPurchase(session: Stripe.Checkout.Session) {
   const originalPriceInCents = parseInt(price, 10);
   const paidPriceInCents = parseInt(actualPaid, 10);
   
-  // Author always gets 70% of ORIGINAL price (even if MAX user got discount)
-  const authorShare = Math.floor(originalPriceInCents * 0.7);
+  // Check if the template belongs to the platform owner
+  // For platform owner blueprints, all revenue stays with platform (no payout needed)
+  const template = await prismaUsers.userTemplate.findUnique({
+    where: { id: templateId },
+    select: { user: { select: { email: true } } },
+  });
+  
+  const isPlatformOwnerTemplate = template?.user?.email === PLATFORM_OWNER_EMAIL;
+  
+  // Author gets 70% of ORIGINAL price, UNLESS it's the platform owner's template
+  // Platform owner's revenue goes directly to Stripe (no payout needed)
+  const authorShare = isPlatformOwnerTemplate ? 0 : Math.floor(originalPriceInCents * 0.7);
   // Platform fee is what's left from what was paid
   const platformFee = paidPriceInCents - authorShare;
 

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MessageSquareHeart } from "lucide-react";
 
 export function Footer() {
   return (
@@ -53,6 +54,13 @@ export function Footer() {
                 Status
               </a>
             </div>
+          <Link
+            href="/support"
+            className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
+          >
+            <MessageSquareHeart className="h-4 w-4" />
+            Support
+          </Link>
           <a
             href="https://x.com/LynxPrompt"
             target="_blank"

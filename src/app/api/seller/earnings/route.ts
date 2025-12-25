@@ -3,6 +3,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 
+// Platform owner email - payments go directly to platform's Stripe account
+const PLATFORM_OWNER_EMAIL = "dev@lynxprompt.com";
+
 // GET /api/seller/earnings - Get seller earnings summary
 export async function GET() {
   try {
@@ -13,6 +16,21 @@ export async function GET() {
     }
 
     const userId = session.user.id;
+
+    // Check if platform owner - their revenue goes directly to Stripe
+    if (session.user.email === PLATFORM_OWNER_EMAIL) {
+      return NextResponse.json({
+        totalEarnings: 0,
+        totalSales: 0,
+        availableBalance: 0,
+        pendingPayoutAmount: 0,
+        completedPayoutAmount: 0,
+        paypalEmail: null,
+        minimumPayout: 1000,
+        currency: "EUR",
+        isPlatformOwner: true, // Signal to UI
+      });
+    }
 
     // Get all purchases of user's templates (earnings from sales)
     const [salesData, pendingPayouts, completedPayouts, user] = await Promise.all([

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
+import { AiEditPanel } from "@/components/ai-edit-panel";
 import {
   ArrowLeft,
   ArrowRight,
@@ -1372,6 +1373,7 @@ export default function WizardPage() {
                 <StepFeedback
                   value={config.additionalFeedback}
                   onChange={(v) => setConfig({ ...config, additionalFeedback: v })}
+                  userTier={userTier}
                 />
               )}
               {currentStep === 10 && (
@@ -3499,10 +3501,14 @@ ko_fi: your-kofi`}
 function StepFeedback({
   value,
   onChange,
+  userTier,
 }: {
   value: string;
   onChange: (v: string) => void;
+  userTier: string;
 }) {
+  const isMaxUser = userTier === "max";
+  
   return (
     <div>
       <h2 className="text-2xl font-bold">Anything we&apos;ve missed?</h2>
@@ -3510,6 +3516,23 @@ function StepFeedback({
         Is there something specific you&apos;d like the AI to know about your
         project that we haven&apos;t asked? Add any additional context.
       </p>
+
+      {/* AI Assist Panel - MAX users only */}
+      {isMaxUser && (
+        <div className="mt-6 rounded-lg border border-purple-200 bg-white p-4 shadow-sm dark:border-purple-800 dark:bg-purple-900/20">
+          <div className="mb-3 flex items-center gap-2 text-sm font-medium text-purple-700 dark:text-purple-300">
+            <Sparkles className="h-4 w-4" />
+            AI Assistant
+          </div>
+          <AiEditPanel
+            currentContent={value}
+            onContentChange={onChange}
+            mode="wizard"
+            placeholder="Describe what you need, e.g., 'I want strict TypeScript, no any types'"
+            showReplaceWarning={!!value.trim()}
+          />
+        </div>
+      )}
 
       <div className="mt-6">
         <textarea

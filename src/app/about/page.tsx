@@ -31,6 +31,9 @@ export default function AboutPage() {
             <Link href="/docs" className="text-sm hover:underline">
               Docs
             </Link>
+            <Link href="/blog" className="text-sm hover:underline">
+              Blog
+            </Link>
             <ThemeToggle />
             <UserMenu />
           </nav>

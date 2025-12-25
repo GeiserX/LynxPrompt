@@ -5,6 +5,9 @@ import { prismaUsers } from "@/lib/db-users";
 
 const MINIMUM_PAYOUT = 1000; // €10.00 in cents
 
+// Platform owner email - payments go directly to platform's Stripe account, no payouts needed
+const PLATFORM_OWNER_EMAIL = "dev@lynxprompt.com";
+
 // GET /api/seller/payout-request - Get payout history
 export async function GET() {
   try {
@@ -41,11 +44,19 @@ export async function POST(req: Request) {
 
     const userId = session.user.id;
 
-    // Get user's PayPal email
+    // Get user's PayPal email and check if platform owner
     const user = await prismaUsers.user.findUnique({
       where: { id: userId },
-      select: { paypalEmail: true },
+      select: { paypalEmail: true, email: true },
     });
+
+    // Platform owner's payments go directly to Stripe account - no payouts needed
+    if (user?.email === PLATFORM_OWNER_EMAIL) {
+      return NextResponse.json(
+        { error: "Platform owner payments go directly to Stripe. No payout required." },
+        { status: 400 }
+      );
+    }
 
     if (!user?.paypalEmail) {
       return NextResponse.json(

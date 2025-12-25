@@ -37,6 +37,7 @@ COPY . .
 # Generate Prisma clients (Prisma 7 with config files)
 RUN npx prisma generate --config=prisma/prisma.config-app.ts
 RUN npx prisma generate --config=prisma/prisma.config-users.ts
+RUN npx prisma generate --config=prisma/prisma.config-support.ts
 
 # Build the application
 # Note: NEXT_PUBLIC_* vars are fetched at runtime via /api/config/public
