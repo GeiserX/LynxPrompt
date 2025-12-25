@@ -65,6 +65,7 @@ interface WizardConfig {
   devOS?: string; // linux, macos, windows, wsl, multi
   languages: string[];
   frameworks: string[];
+  database?: string; // preferred database
   letAiDecide: boolean;
   repoHost: string;
   repoHostOther?: string;
@@ -313,7 +314,7 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
   }
   lines.push("");
 
-  if (config.languages.length > 0 || config.frameworks.length > 0 || config.letAiDecide) {
+  if (config.languages.length > 0 || config.frameworks.length > 0 || config.database || config.letAiDecide) {
     lines.push("## Tech Stack");
     if (config.languages.length > 0) {
       const langs = config.languages.map(l => l.startsWith("custom:") ? l.replace("custom:", "") : l);
@@ -322,6 +323,10 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     if (config.frameworks.length > 0) {
       const fws = config.frameworks.map(f => f.startsWith("custom:") ? f.replace("custom:", "") : f);
       lines.push(`- Frameworks: ${fws.join(", ")}`);
+    }
+    if (config.database) {
+      const db = config.database.startsWith("custom:") ? config.database.replace("custom:", "") : config.database;
+      lines.push(`- Database: ${db}`);
     }
     if (config.letAiDecide) {
       if (config.languages.length > 0 || config.frameworks.length > 0) {
@@ -582,7 +587,7 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
   }
   lines.push("");
 
-  if (config.languages.length > 0 || config.frameworks.length > 0 || config.letAiDecide) {
+  if (config.languages.length > 0 || config.frameworks.length > 0 || config.database || config.letAiDecide) {
     lines.push("## Technology Stack");
     lines.push("");
     if (config.languages.length > 0) {
@@ -599,6 +604,12 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
         const cleanFw = fw.startsWith("custom:") ? fw.replace("custom:", "") : fw;
         lines.push(`- ${cleanFw}`);
       });
+      lines.push("");
+    }
+    if (config.database) {
+      const db = config.database.startsWith("custom:") ? config.database.replace("custom:", "") : config.database;
+      lines.push("### Database");
+      lines.push(`- ${db}`);
       lines.push("");
     }
     if (config.letAiDecide) {

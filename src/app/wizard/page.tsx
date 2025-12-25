@@ -341,6 +341,135 @@ const FRAMEWORKS = [
   { value: "knative", label: "Knative", icon: "☸️" },
 ];
 
+// Databases - organized by category for better UX
+const DATABASES = [
+  // === OPEN SOURCE RELATIONAL ===
+  { value: "postgresql", label: "PostgreSQL", icon: "🐘", category: "opensource" },
+  { value: "mysql", label: "MySQL", icon: "🐬", category: "opensource" },
+  { value: "mariadb", label: "MariaDB", icon: "🦭", category: "opensource" },
+  { value: "sqlite", label: "SQLite", icon: "📦", category: "opensource" },
+  { value: "cockroachdb", label: "CockroachDB", icon: "🪳", category: "opensource" },
+  { value: "yugabytedb", label: "YugabyteDB", icon: "🔵", category: "opensource" },
+  { value: "tidb", label: "TiDB", icon: "⚡", category: "opensource" },
+  { value: "vitess", label: "Vitess", icon: "🟢", category: "opensource" },
+  // === OPEN SOURCE NOSQL - Document ===
+  { value: "mongodb", label: "MongoDB", icon: "🍃", category: "opensource" },
+  { value: "couchdb", label: "CouchDB", icon: "🛋️", category: "opensource" },
+  { value: "arangodb", label: "ArangoDB", icon: "🥑", category: "opensource" },
+  { value: "ferretdb", label: "FerretDB", icon: "🐻", category: "opensource" },
+  { value: "pouchdb", label: "PouchDB", icon: "📱", category: "opensource" },
+  // === OPEN SOURCE NOSQL - Key-Value ===
+  { value: "redis", label: "Redis", icon: "🔴", category: "opensource" },
+  { value: "valkey", label: "Valkey", icon: "🔑", category: "opensource" },
+  { value: "keydb", label: "KeyDB", icon: "🗝️", category: "opensource" },
+  { value: "dragonfly", label: "Dragonfly", icon: "🐉", category: "opensource" },
+  { value: "memcached", label: "Memcached", icon: "💾", category: "opensource" },
+  { value: "etcd", label: "etcd", icon: "🔧", category: "opensource" },
+  // === OPEN SOURCE NOSQL - Wide Column ===
+  { value: "cassandra", label: "Apache Cassandra", icon: "👁️", category: "opensource" },
+  { value: "scylladb", label: "ScyllaDB", icon: "🦂", category: "opensource" },
+  { value: "hbase", label: "Apache HBase", icon: "🐘", category: "opensource" },
+  // === OPEN SOURCE NOSQL - Graph ===
+  { value: "neo4j", label: "Neo4j", icon: "🔗", category: "opensource" },
+  { value: "dgraph", label: "Dgraph", icon: "📊", category: "opensource" },
+  { value: "janusgraph", label: "JanusGraph", icon: "🪐", category: "opensource" },
+  { value: "agensgraph", label: "AgensGraph", icon: "🌐", category: "opensource" },
+  // === OPEN SOURCE - Time Series ===
+  { value: "timescaledb", label: "TimescaleDB", icon: "⏱️", category: "opensource" },
+  { value: "influxdb", label: "InfluxDB", icon: "📈", category: "opensource" },
+  { value: "questdb", label: "QuestDB", icon: "🏎️", category: "opensource" },
+  { value: "victoriametrics", label: "VictoriaMetrics", icon: "📊", category: "opensource" },
+  { value: "prometheus", label: "Prometheus", icon: "🔥", category: "opensource" },
+  // === OPEN SOURCE - Analytics/OLAP ===
+  { value: "clickhouse", label: "ClickHouse", icon: "🏠", category: "opensource" },
+  { value: "apache_druid", label: "Apache Druid", icon: "🧙", category: "opensource" },
+  { value: "apache_pinot", label: "Apache Pinot", icon: "🎯", category: "opensource" },
+  { value: "duckdb", label: "DuckDB", icon: "🦆", category: "opensource" },
+  { value: "starrocks", label: "StarRocks", icon: "⭐", category: "opensource" },
+  // === OPEN SOURCE - Search ===
+  { value: "elasticsearch", label: "Elasticsearch", icon: "🔍", category: "opensource" },
+  { value: "opensearch", label: "OpenSearch", icon: "🔎", category: "opensource" },
+  { value: "meilisearch", label: "Meilisearch", icon: "⚡", category: "opensource" },
+  { value: "typesense", label: "Typesense", icon: "🔤", category: "opensource" },
+  { value: "solr", label: "Apache Solr", icon: "☀️", category: "opensource" },
+  { value: "zinc", label: "Zinc", icon: "🔬", category: "opensource" },
+  // === OPEN SOURCE - Vector/AI ===
+  { value: "milvus", label: "Milvus", icon: "🧠", category: "opensource" },
+  { value: "weaviate", label: "Weaviate", icon: "🕸️", category: "opensource" },
+  { value: "qdrant", label: "Qdrant", icon: "🎯", category: "opensource" },
+  { value: "chroma", label: "Chroma", icon: "🎨", category: "opensource" },
+  { value: "pgvector", label: "pgvector", icon: "🐘", category: "opensource" },
+  // === OPEN SOURCE - Message Queues (often used as DBs) ===
+  { value: "kafka", label: "Apache Kafka", icon: "📨", category: "opensource" },
+  { value: "rabbitmq", label: "RabbitMQ", icon: "🐰", category: "opensource" },
+  { value: "nats", label: "NATS", icon: "📬", category: "opensource" },
+  { value: "pulsar", label: "Apache Pulsar", icon: "💫", category: "opensource" },
+  { value: "redpanda", label: "Redpanda", icon: "🐼", category: "opensource" },
+  // === OPEN SOURCE - Embedded/Edge ===
+  { value: "leveldb", label: "LevelDB", icon: "📚", category: "opensource" },
+  { value: "rocksdb", label: "RocksDB", icon: "🪨", category: "opensource" },
+  { value: "badger", label: "Badger", icon: "🦡", category: "opensource" },
+  { value: "surrealdb", label: "SurrealDB", icon: "🌊", category: "opensource" },
+  { value: "rqlite", label: "rqlite", icon: "📡", category: "opensource" },
+  // === CLOUD MANAGED - AWS ===
+  { value: "aws_rds", label: "AWS RDS", icon: "☁️", category: "cloud" },
+  { value: "aws_aurora", label: "AWS Aurora", icon: "🌅", category: "cloud" },
+  { value: "aws_dynamodb", label: "AWS DynamoDB", icon: "⚡", category: "cloud" },
+  { value: "aws_redshift", label: "AWS Redshift", icon: "📊", category: "cloud" },
+  { value: "aws_neptune", label: "AWS Neptune", icon: "🔱", category: "cloud" },
+  { value: "aws_timestream", label: "AWS Timestream", icon: "⏰", category: "cloud" },
+  { value: "aws_documentdb", label: "AWS DocumentDB", icon: "📄", category: "cloud" },
+  { value: "aws_elasticache", label: "AWS ElastiCache", icon: "💨", category: "cloud" },
+  { value: "aws_memorydb", label: "AWS MemoryDB", icon: "🧠", category: "cloud" },
+  // === CLOUD MANAGED - GCP ===
+  { value: "gcp_cloudsql", label: "GCP Cloud SQL", icon: "☁️", category: "cloud" },
+  { value: "gcp_spanner", label: "GCP Spanner", icon: "🔧", category: "cloud" },
+  { value: "gcp_firestore", label: "GCP Firestore", icon: "🔥", category: "cloud" },
+  { value: "gcp_bigtable", label: "GCP Bigtable", icon: "📊", category: "cloud" },
+  { value: "gcp_bigquery", label: "GCP BigQuery", icon: "🔍", category: "cloud" },
+  { value: "gcp_memorystore", label: "GCP Memorystore", icon: "💾", category: "cloud" },
+  { value: "gcp_alloydb", label: "GCP AlloyDB", icon: "🔷", category: "cloud" },
+  // === CLOUD MANAGED - Azure ===
+  { value: "azure_sql", label: "Azure SQL", icon: "☁️", category: "cloud" },
+  { value: "azure_cosmosdb", label: "Azure Cosmos DB", icon: "🌌", category: "cloud" },
+  { value: "azure_synapse", label: "Azure Synapse", icon: "🔗", category: "cloud" },
+  { value: "azure_cache", label: "Azure Cache for Redis", icon: "💨", category: "cloud" },
+  { value: "azure_postgresql", label: "Azure PostgreSQL", icon: "🐘", category: "cloud" },
+  { value: "azure_mysql", label: "Azure MySQL", icon: "🐬", category: "cloud" },
+  // === CLOUD MANAGED - Other ===
+  { value: "planetscale", label: "PlanetScale", icon: "🪐", category: "cloud" },
+  { value: "neon", label: "Neon", icon: "💡", category: "cloud" },
+  { value: "supabase", label: "Supabase", icon: "⚡", category: "cloud" },
+  { value: "turso", label: "Turso", icon: "🚀", category: "cloud" },
+  { value: "xata", label: "Xata", icon: "✨", category: "cloud" },
+  { value: "upstash", label: "Upstash", icon: "🔺", category: "cloud" },
+  { value: "railway_postgres", label: "Railway Postgres", icon: "🚂", category: "cloud" },
+  { value: "render_postgres", label: "Render Postgres", icon: "🔷", category: "cloud" },
+  { value: "digitalocean_dbaas", label: "DigitalOcean DBaaS", icon: "🌊", category: "cloud" },
+  { value: "aiven", label: "Aiven", icon: "🔴", category: "cloud" },
+  { value: "mongodb_atlas", label: "MongoDB Atlas", icon: "🍃", category: "cloud" },
+  { value: "elastic_cloud", label: "Elastic Cloud", icon: "🔍", category: "cloud" },
+  { value: "redis_cloud", label: "Redis Cloud", icon: "🔴", category: "cloud" },
+  { value: "fauna", label: "Fauna", icon: "🦎", category: "cloud" },
+  { value: "pinecone", label: "Pinecone", icon: "🌲", category: "cloud" },
+  { value: "snowflake", label: "Snowflake", icon: "❄️", category: "cloud" },
+  { value: "databricks", label: "Databricks", icon: "🧱", category: "cloud" },
+  { value: "cockroach_cloud", label: "CockroachDB Cloud", icon: "🪳", category: "cloud" },
+  { value: "timescale_cloud", label: "Timescale Cloud", icon: "⏱️", category: "cloud" },
+  { value: "clickhouse_cloud", label: "ClickHouse Cloud", icon: "🏠", category: "cloud" },
+  // === CLOSED SOURCE / PROPRIETARY ===
+  { value: "oracle", label: "Oracle Database", icon: "🔶", category: "proprietary" },
+  { value: "mssql", label: "Microsoft SQL Server", icon: "🟦", category: "proprietary" },
+  { value: "db2", label: "IBM Db2", icon: "🔷", category: "proprietary" },
+  { value: "teradata", label: "Teradata", icon: "🟠", category: "proprietary" },
+  { value: "sap_hana", label: "SAP HANA", icon: "🔵", category: "proprietary" },
+  { value: "informix", label: "IBM Informix", icon: "📊", category: "proprietary" },
+  { value: "sybase", label: "SAP ASE (Sybase)", icon: "🔷", category: "proprietary" },
+  { value: "singlestore", label: "SingleStore", icon: "⚡", category: "proprietary" },
+  { value: "marklogic", label: "MarkLogic", icon: "📁", category: "proprietary" },
+  { value: "intersystems_cache", label: "InterSystems Caché", icon: "💎", category: "proprietary" },
+];
+
 const AI_BEHAVIOR_RULES = [
   { id: "always_debug_after_build", label: "Always Debug After Building", description: "Run and test locally after making changes", recommended: true },
   { id: "check_logs_after_build", label: "Check Logs After Build/Commit", description: "Check logs when build or commit finishes", recommended: true },
@@ -551,6 +680,7 @@ type WizardConfig = {
   devOS: string; // windows, macos, linux
   languages: string[];
   frameworks: string[];
+  database: string; // preferred database
   letAiDecide: boolean;
   repoHost: string;
   repoHostOther: string;
@@ -602,6 +732,7 @@ export default function WizardPage() {
     devOS: "linux",
     languages: [],
     frameworks: [],
+    database: "",
     letAiDecide: false,
     repoHost: "github",
     repoHostOther: "",
@@ -1295,9 +1426,11 @@ export default function WizardPage() {
                 <StepTechStack
                   selectedLanguages={config.languages}
                   selectedFrameworks={config.frameworks}
+                  selectedDatabase={config.database}
                   letAiDecide={config.letAiDecide}
                   onToggleLanguage={(v) => toggleArrayValue("languages", v)}
                   onToggleFramework={(v) => toggleArrayValue("frameworks", v)}
+                  onDatabaseChange={(v) => setConfig({ ...config, database: v })}
                   onLetAiDecide={(v) => setConfig({ ...config, letAiDecide: v })}
                 />
               )}
@@ -1558,26 +1691,34 @@ function StepProject({
 function StepTechStack({
   selectedLanguages,
   selectedFrameworks,
+  selectedDatabase,
   letAiDecide,
   onToggleLanguage,
   onToggleFramework,
+  onDatabaseChange,
   onLetAiDecide,
 }: {
   selectedLanguages: string[];
   selectedFrameworks: string[];
+  selectedDatabase: string;
   letAiDecide: boolean;
   onToggleLanguage: (v: string) => void;
   onToggleFramework: (v: string) => void;
+  onDatabaseChange: (v: string) => void;
   onLetAiDecide: (v: boolean) => void;
 }) {
   const [langSearch, setLangSearch] = useState("");
   const [fwSearch, setFwSearch] = useState("");
+  const [dbSearch, setDbSearch] = useState("");
   const [showAllLangs, setShowAllLangs] = useState(false);
   const [showAllFrameworks, setShowAllFrameworks] = useState(false);
+  const [showAllDatabases, setShowAllDatabases] = useState(false);
   const [customLanguage, setCustomLanguage] = useState("");
   const [customFramework, setCustomFramework] = useState("");
+  const [customDatabase, setCustomDatabase] = useState("");
   const [showCustomLang, setShowCustomLang] = useState(false);
   const [showCustomFw, setShowCustomFw] = useState(false);
+  const [showCustomDb, setShowCustomDb] = useState(false);
 
   const INITIAL_DISPLAY = 12;
 
@@ -1601,6 +1742,20 @@ function StepTechStack({
     : filteredFrameworks.slice(0, INITIAL_DISPLAY);
   const hasMoreFws = !fwSearch && filteredFrameworks.length > INITIAL_DISPLAY;
 
+  // Filter databases - grouped by category
+  const filteredDatabases = DATABASES.filter(db => 
+    db.label.toLowerCase().includes(dbSearch.toLowerCase()) ||
+    db.value.toLowerCase().includes(dbSearch.toLowerCase())
+  );
+  // Group by category for display
+  const openSourceDbs = filteredDatabases.filter(db => db.category === "opensource");
+  const cloudDbs = filteredDatabases.filter(db => db.category === "cloud");
+  const proprietaryDbs = filteredDatabases.filter(db => db.category === "proprietary");
+  const displayedOpenSource = showAllDatabases || dbSearch ? openSourceDbs : openSourceDbs.slice(0, 12);
+  const displayedCloud = showAllDatabases || dbSearch ? cloudDbs : cloudDbs.slice(0, 8);
+  const displayedProprietary = showAllDatabases || dbSearch ? proprietaryDbs : proprietaryDbs.slice(0, 4);
+  const hasMoreDbs = !dbSearch && (openSourceDbs.length > 12 || cloudDbs.length > 8 || proprietaryDbs.length > 4);
+
   const handleAddCustomLanguage = () => {
     if (customLanguage.trim()) {
       onToggleLanguage(`custom:${customLanguage.trim()}`);
@@ -1617,9 +1772,19 @@ function StepTechStack({
     }
   };
 
+  const handleAddCustomDatabase = () => {
+    if (customDatabase.trim()) {
+      onDatabaseChange(`custom:${customDatabase.trim()}`);
+      setCustomDatabase("");
+      setShowCustomDb(false);
+    }
+  };
+
   // Get custom items from selected
   const customLangs = selectedLanguages.filter(l => l.startsWith("custom:")).map(l => l.replace("custom:", ""));
   const customFws = selectedFrameworks.filter(f => f.startsWith("custom:")).map(f => f.replace("custom:", ""));
+  const isCustomDb = selectedDatabase.startsWith("custom:");
+  const customDbName = isCustomDb ? selectedDatabase.replace("custom:", "") : "";
 
   return (
     <div>
@@ -1872,6 +2037,177 @@ function StepTechStack({
               <>Show less <ChevronUp className="h-4 w-4" /></>
             ) : (
               <>Show {filteredFrameworks.length - INITIAL_DISPLAY} more <ChevronDown className="h-4 w-4" /></>
+            )}
+          </button>
+        )}
+      </div>
+
+      {/* Database Preference */}
+      <div className="mt-6">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="font-semibold">Database Preference</h3>
+          <span className="text-sm text-muted-foreground">
+            {selectedDatabase ? "1 selected" : "Optional"}
+          </span>
+        </div>
+
+        <p className="mb-3 text-sm text-muted-foreground">
+          Select your preferred database (optional). This helps AI understand your data storage preferences.
+        </p>
+
+        {/* Search */}
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text"
+            value={dbSearch}
+            onChange={(e) => setDbSearch(e.target.value)}
+            placeholder="Search databases..."
+            className="w-full rounded-lg border bg-background py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+
+        {/* Open Source Databases */}
+        {displayedOpenSource.length > 0 && (
+          <div className="mb-4">
+            <h4 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              🌿 Open Source
+            </h4>
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+              {displayedOpenSource.map((db) => (
+                <button
+                  key={db.value}
+                  onClick={() => onDatabaseChange(selectedDatabase === db.value ? "" : db.value)}
+                  className={`flex items-center gap-2 rounded-lg border p-2.5 text-left transition-all hover:border-primary ${
+                    selectedDatabase === db.value
+                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                      : ""
+                  }`}
+                >
+                  <span className="text-lg">{db.icon}</span>
+                  <span className="truncate text-sm font-medium">{db.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Cloud Managed Databases */}
+        {displayedCloud.length > 0 && (
+          <div className="mb-4">
+            <h4 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              ☁️ Cloud Managed
+            </h4>
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+              {displayedCloud.map((db) => (
+                <button
+                  key={db.value}
+                  onClick={() => onDatabaseChange(selectedDatabase === db.value ? "" : db.value)}
+                  className={`flex items-center gap-2 rounded-lg border p-2.5 text-left transition-all hover:border-primary ${
+                    selectedDatabase === db.value
+                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                      : ""
+                  }`}
+                >
+                  <span className="text-lg">{db.icon}</span>
+                  <span className="truncate text-sm font-medium">{db.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Proprietary/Closed Source Databases */}
+        {displayedProprietary.length > 0 && (
+          <div className="mb-4">
+            <h4 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              🔒 Proprietary / Enterprise
+            </h4>
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+              {displayedProprietary.map((db) => (
+                <button
+                  key={db.value}
+                  onClick={() => onDatabaseChange(selectedDatabase === db.value ? "" : db.value)}
+                  className={`flex items-center gap-2 rounded-lg border p-2.5 text-left transition-all hover:border-primary ${
+                    selectedDatabase === db.value
+                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                      : ""
+                  }`}
+                >
+                  <span className="text-lg">{db.icon}</span>
+                  <span className="truncate text-sm font-medium">{db.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Custom database display */}
+        {isCustomDb && (
+          <div className="mb-4">
+            <h4 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Custom
+            </h4>
+            <button
+              onClick={() => onDatabaseChange("")}
+              className="flex items-center gap-2 rounded-lg border border-primary bg-primary/5 p-2.5 text-left ring-1 ring-primary"
+            >
+              <span className="text-lg">📝</span>
+              <span className="truncate text-sm font-medium">{customDbName}</span>
+              <X className="ml-auto h-4 w-4 text-muted-foreground hover:text-foreground" />
+            </button>
+          </div>
+        )}
+
+        {/* Add Other button */}
+        {!showCustomDb && !isCustomDb && (
+          <button
+            onClick={() => setShowCustomDb(true)}
+            className="flex items-center gap-2 rounded-lg border border-dashed p-2.5 text-left transition-all hover:border-primary"
+          >
+            <Plus className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Other database...</span>
+          </button>
+        )}
+
+        {/* Custom database input */}
+        {showCustomDb && (
+          <div className="mt-2 flex gap-2">
+            <input
+              type="text"
+              value={customDatabase}
+              onChange={(e) => setCustomDatabase(e.target.value)}
+              placeholder="Enter database name..."
+              className="flex-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              autoFocus
+              onKeyDown={(e) => e.key === "Enter" && handleAddCustomDatabase()}
+            />
+            <button
+              onClick={handleAddCustomDatabase}
+              disabled={!customDatabase.trim()}
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+            >
+              Add
+            </button>
+            <button
+              onClick={() => { setShowCustomDb(false); setCustomDatabase(""); }}
+              className="rounded-lg border px-3 py-2 text-sm hover:bg-muted"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+
+        {/* Load more */}
+        {hasMoreDbs && (
+          <button
+            onClick={() => setShowAllDatabases(!showAllDatabases)}
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed py-2 text-sm text-muted-foreground transition-all hover:border-primary hover:text-primary"
+          >
+            {showAllDatabases ? (
+              <>Show less <ChevronUp className="h-4 w-4" /></>
+            ) : (
+              <>Show all databases <ChevronDown className="h-4 w-4" /></>
             )}
           </button>
         )}

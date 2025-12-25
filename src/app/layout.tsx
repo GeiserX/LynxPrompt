@@ -4,6 +4,7 @@ import Script from "next/script";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { AnalyticsProvider } from "@/components/providers/analytics-provider";
+import { SentryProvider } from "@/components/providers/sentry-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { CookieBanner } from "@/components/cookie-banner";
 import "./globals.css";
@@ -86,7 +87,9 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <AnalyticsProvider>{children}</AnalyticsProvider>
+            <SentryProvider>
+              <AnalyticsProvider>{children}</AnalyticsProvider>
+            </SentryProvider>
             <Toaster />
             <CookieBanner />
           </ThemeProvider>
