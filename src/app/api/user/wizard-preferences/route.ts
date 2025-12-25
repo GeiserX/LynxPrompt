@@ -39,11 +39,13 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
+    console.log("[wizard-preferences POST] session user id:", session?.user?.id);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await req.json();
+    console.log("[wizard-preferences POST] received body:", JSON.stringify(body, null, 2));
     
     // Accept both formats: { preferences: [...] } or just [...]
     let preferences: Array<{
@@ -94,9 +96,10 @@ export async function POST(req: Request) {
       )
     );
 
+    console.log("[wizard-preferences POST] saved", results.length, "preferences");
     return NextResponse.json({ saved: results.length });
   } catch (error) {
-    console.error("Error saving wizard preferences:", error);
+    console.error("[wizard-preferences POST] Error saving wizard preferences:", error);
     return NextResponse.json({ error: "Failed to save preferences" }, { status: 500 });
   }
 }

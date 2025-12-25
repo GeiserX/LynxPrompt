@@ -1122,6 +1122,15 @@ export default function WizardPage() {
   };
 
   const savePreferences = async () => {
+    console.log("[savePreferences] Function called!");
+    console.log("[savePreferences] fundingSave:", config.staticFiles.fundingSave);
+    console.log("[savePreferences] editorconfigSave:", config.staticFiles.editorconfigSave);
+    console.log("[savePreferences] contributingSave:", config.staticFiles.contributingSave);
+    console.log("[savePreferences] codeOfConductSave:", config.staticFiles.codeOfConductSave);
+    console.log("[savePreferences] securitySave:", config.staticFiles.securitySave);
+    console.log("[savePreferences] gitignoreSave:", config.staticFiles.gitignoreSave);
+    console.log("[savePreferences] dockerignoreSave:", config.staticFiles.dockerignoreSave);
+    console.log("[savePreferences] licenseSave:", config.staticFiles.licenseSave);
     const payload: { category: string; key: string; value: any; isDefault?: boolean }[] = [];
     if (config.commands.savePreferences) {
       payload.push(
@@ -1201,12 +1210,22 @@ export default function WizardPage() {
         { category: "repo", key: "license", value: config.license },
       );
     }
-    if (payload.length === 0) return;
-    await fetch("/api/user/wizard-preferences", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    console.log("[savePreferences] payload to save:", payload);
+    if (payload.length === 0) {
+      console.log("[savePreferences] No preferences to save, payload is empty");
+      return;
+    }
+    try {
+      const response = await fetch("/api/user/wizard-preferences", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json();
+      console.log("[savePreferences] API response:", result);
+    } catch (error) {
+      console.error("[savePreferences] Error saving preferences:", error);
+    }
   };
 
   // Check for unfilled variables before download
@@ -3758,6 +3777,47 @@ To report a vulnerability, please email security@example.com`}
           minHeight="150px"
         />
 
+        {isGithub && isPublic && (
+          <div className="rounded-lg border p-4">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => onChange({ funding: !config.funding })}
+                className="flex items-center gap-3 text-left"
+              >
+                <div className={`flex h-5 w-5 items-center justify-center rounded border ${
+                  config.funding ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground"
+                }`}>
+                  {config.funding && <Check className="h-3 w-3" />}
+                </div>
+                <div>
+                  <p className="font-medium">FUNDING.yml</p>
+                  <p className="text-xs text-muted-foreground">GitHub Sponsors & donation links</p>
+                </div>
+              </button>
+              <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={config.fundingSave}
+                  onChange={(e) => onChange({ fundingSave: e.target.checked })}
+                />
+                Save to profile
+              </label>
+            </div>
+            {config.funding && (
+              <div className="mt-3">
+                <CodeEditor
+                  value={config.fundingYml || ""}
+                  onChange={(v) => onChange({ fundingYml: v })}
+                  placeholder={`github: [your-username]
+patreon: your-patreon
+ko_fi: your-kofi`}
+                  minHeight="100px"
+                />
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="rounded-lg border p-4">
           <div className="flex items-center justify-between">
             <div>
@@ -3799,47 +3859,6 @@ dist/`}
             </div>
           )}
         </div>
-
-        {isGithub && isPublic && (
-          <div className="rounded-lg border p-4">
-            <div className="flex items-center justify-between">
-              <button
-                onClick={() => onChange({ funding: !config.funding })}
-                className="flex items-center gap-3 text-left"
-              >
-                <div className={`flex h-5 w-5 items-center justify-center rounded border ${
-                  config.funding ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground"
-                }`}>
-                  {config.funding && <Check className="h-3 w-3" />}
-                </div>
-                <div>
-                  <p className="font-medium">FUNDING.yml</p>
-                  <p className="text-xs text-muted-foreground">GitHub Sponsors & donation links</p>
-                </div>
-              </button>
-              <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                <input
-                  type="checkbox"
-                  checked={config.fundingSave}
-                  onChange={(e) => onChange({ fundingSave: e.target.checked })}
-                />
-                Save to profile
-              </label>
-            </div>
-            {config.funding && (
-              <div className="mt-3">
-                <CodeEditor
-                  value={config.fundingYml || ""}
-                  onChange={(v) => onChange({ fundingYml: v })}
-                  placeholder={`github: [your-username]
-patreon: your-patreon
-ko_fi: your-kofi`}
-                  minHeight="100px"
-                />
-              </div>
-            )}
-          </div>
-        )}
 
         <div className="rounded-lg border p-4">
           <div className="flex items-center justify-between">
