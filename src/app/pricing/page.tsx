@@ -392,8 +392,85 @@ export default function PricingPage() {
       </section>
 
       {/* CTA */}
-      <section className="border-t bg-gradient-to-r from-purple-600 to-pink-600 py-16 text-white">
-        <div className="container mx-auto px-4 text-center sm:px-6 lg:px-8">
+      <section className="relative overflow-hidden border-t bg-gradient-to-r from-purple-600 to-pink-600 py-16 text-white">
+        {/* Decorative blurs */}
+        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
+        {/* Hexagon pattern - left side */}
+        <div 
+          className="pointer-events-none absolute inset-y-0 left-0 w-1/3 overflow-hidden"
+          style={{
+            maskImage: 'linear-gradient(to right, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 40%, transparent 80%)',
+            WebkitMaskImage: 'linear-gradient(to right, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 40%, transparent 80%)',
+          }}
+        >
+          <svg 
+            viewBox="0 0 200 300" 
+            className="h-full w-full"
+            preserveAspectRatio="xMinYMid slice"
+          >
+            <defs>
+              <pattern id="hexPattern-pricing-left" width="46" height="80" patternUnits="userSpaceOnUse" patternTransform="scale(1.2)">
+                <polygon 
+                  points="23,0 46,13 46,40 23,53 0,40 0,13" 
+                  fill="none" 
+                  stroke="white" 
+                  strokeWidth="1.5"
+                  opacity="0.35"
+                />
+                <polygon 
+                  points="23,27 46,40 46,67 23,80 0,67 0,40" 
+                  fill="none" 
+                  stroke="white" 
+                  strokeWidth="1.5"
+                  opacity="0.35"
+                />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#hexPattern-pricing-left)" />
+            <polygon points="45,30 68,43 68,70 45,83 22,70 22,43" fill="white" opacity="0.15" />
+            <polygon points="91,70 114,83 114,110 91,123 68,110 68,83" fill="white" opacity="0.1" />
+            <polygon points="22,110 45,123 45,150 22,163 -1,150 -1,123" fill="white" opacity="0.12" />
+          </svg>
+        </div>
+        {/* Hexagon pattern - right side */}
+        <div 
+          className="pointer-events-none absolute inset-y-0 right-0 w-1/3 overflow-hidden"
+          style={{
+            maskImage: 'linear-gradient(to left, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 40%, transparent 80%)',
+            WebkitMaskImage: 'linear-gradient(to left, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 40%, transparent 80%)',
+          }}
+        >
+          <svg 
+            viewBox="0 0 200 300" 
+            className="h-full w-full"
+            preserveAspectRatio="xMaxYMid slice"
+          >
+            <defs>
+              <pattern id="hexPattern-pricing-right" width="46" height="80" patternUnits="userSpaceOnUse" patternTransform="scale(1.2)">
+                <polygon 
+                  points="23,0 46,13 46,40 23,53 0,40 0,13" 
+                  fill="none" 
+                  stroke="white" 
+                  strokeWidth="1.5"
+                  opacity="0.35"
+                />
+                <polygon 
+                  points="23,27 46,40 46,67 23,80 0,67 0,40" 
+                  fill="none" 
+                  stroke="white" 
+                  strokeWidth="1.5"
+                  opacity="0.35"
+                />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#hexPattern-pricing-right)" />
+            <polygon points="155,50 178,63 178,90 155,103 132,90 132,63" fill="white" opacity="0.15" />
+            <polygon points="109,90 132,103 132,130 109,143 86,130 86,103" fill="white" opacity="0.1" />
+            <polygon points="178,130 201,143 201,170 178,183 155,170 155,143" fill="white" opacity="0.12" />
+          </svg>
+        </div>
+        <div className="container relative z-10 mx-auto px-4 text-center sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold">
             Ready to supercharge your AI coding?
           </h2>
