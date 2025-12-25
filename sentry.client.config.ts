@@ -4,9 +4,13 @@
 
 import * as Sentry from "@sentry/nextjs";
 
+// GlitchTip DSN - hardcoded for client-side (NEXT_PUBLIC_* vars are build-time only)
+const SENTRY_DSN =
+  process.env.NEXT_PUBLIC_SENTRY_DSN ||
+  "https://84ae8dcc6c4b4028ade54aea25172088@glitchtip.lynxprompt.com/1";
+
 Sentry.init({
-  // GlitchTip DSN - configured via environment variable
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  dsn: SENTRY_DSN,
 
   // Only enable in production
   enabled: process.env.NODE_ENV === "production",
