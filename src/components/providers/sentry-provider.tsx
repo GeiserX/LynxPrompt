@@ -49,6 +49,10 @@ export function SentryProvider({ children }: { children: React.ReactNode }) {
       },
     });
 
+    // Expose Sentry globally for console testing
+    if (typeof window !== "undefined") {
+      (window as typeof window & { Sentry: typeof Sentry }).Sentry = Sentry;
+    }
   }, []);
 
   return <>{children}</>;
