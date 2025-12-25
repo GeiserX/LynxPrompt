@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -12,6 +12,9 @@ import {
   Image as ImageIcon,
   Tag,
   X,
+  Upload,
+  Link as LinkIcon,
+  Loader2,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
@@ -22,11 +25,15 @@ import { toast } from "sonner";
 export default function NewBlogPostPage() {
   const router = useRouter();
   const { data: session, status: sessionStatus } = useSession();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [title, setTitle] = useState("");
   const [excerpt, setExcerpt] = useState("");
   const [content, setContent] = useState("");
   const [coverImage, setCoverImage] = useState("");
+  const [coverImageCaption, setCoverImageCaption] = useState("");
+  const [imageMode, setImageMode] = useState<"upload" | "url">("upload");
+  const [uploading, setUploading] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [saving, setSaving] = useState(false);
@@ -62,6 +69,54 @@ export default function NewBlogPostPage() {
     }
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Invalid file type. Allowed: JPEG, PNG, GIF, WebP");
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File too large. Maximum size is 5MB");
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload/blog", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setCoverImage(data.url);
+        toast.success("Image uploaded successfully");
+      } else {
+        const error = await res.json();
+        toast.error(error.error || "Failed to upload image");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Failed to upload image");
+    } finally {
+      setUploading(false);
+      // Reset input so same file can be selected again
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
   const handleSave = async (status: "DRAFT" | "PUBLISHED") => {
     if (!title.trim()) {
       toast.error("Title is required");
@@ -84,6 +139,7 @@ export default function NewBlogPostPage() {
           excerpt: excerpt.trim() || null,
           content: content.trim(),
           coverImage: coverImage.trim() || null,
+          coverImageCaption: coverImageCaption.trim() || null,
           tags,
           status,
         }),
@@ -218,32 +274,121 @@ export default function NewBlogPostPage() {
 
             {/* Cover Image */}
             <div>
-              <label
-                htmlFor="coverImage"
-                className="mb-2 flex items-center gap-2 text-sm font-medium"
-              >
+              <label className="mb-2 flex items-center gap-2 text-sm font-medium">
                 <ImageIcon className="h-4 w-4" />
-                Cover Image URL
+                Cover Image
               </label>
-              <input
-                id="coverImage"
-                type="url"
-                value={coverImage}
-                onChange={(e) => setCoverImage(e.target.value)}
-                placeholder="https://example.com/image.jpg"
-                className="w-full rounded-lg border bg-background px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-              {coverImage && (
-                <div className="mt-2 overflow-hidden rounded-lg border">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={coverImage}
-                    alt="Cover preview"
-                    className="h-48 w-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
+
+              {/* Mode Toggle */}
+              <div className="mb-3 flex gap-2">
+                <Button
+                  type="button"
+                  variant={imageMode === "upload" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setImageMode("upload")}
+                >
+                  <Upload className="mr-2 h-4 w-4" />
+                  Upload
+                </Button>
+                <Button
+                  type="button"
+                  variant={imageMode === "url" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setImageMode("url")}
+                >
+                  <LinkIcon className="mr-2 h-4 w-4" />
+                  URL
+                </Button>
+              </div>
+
+              {/* Upload Mode */}
+              {imageMode === "upload" && (
+                <div className="space-y-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif,image/webp"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    id="coverImageUpload"
                   />
+                  <label
+                    htmlFor="coverImageUpload"
+                    className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-8 transition-colors hover:border-primary hover:bg-primary/5 ${
+                      uploading ? "pointer-events-none opacity-50" : ""
+                    }`}
+                  >
+                    {uploading ? (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <span>Uploading...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-5 w-5 text-muted-foreground" />
+                        <span className="text-muted-foreground">
+                          Click to upload an image (max 5MB)
+                        </span>
+                      </>
+                    )}
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    Supported formats: JPEG, PNG, GIF, WebP
+                  </p>
+                </div>
+              )}
+
+              {/* URL Mode */}
+              {imageMode === "url" && (
+                <input
+                  id="coverImage"
+                  type="url"
+                  value={coverImage}
+                  onChange={(e) => setCoverImage(e.target.value)}
+                  placeholder="https://example.com/image.jpg"
+                  className="w-full rounded-lg border bg-background px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              )}
+
+              {/* Image Preview */}
+              {coverImage && (
+                <div className="mt-3 space-y-2">
+                  <div className="relative overflow-hidden rounded-lg border">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={coverImage}
+                      alt="Cover preview"
+                      className="h-48 w-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setCoverImage("")}
+                      className="absolute right-2 top-2 rounded-full bg-background/80 p-1.5 text-foreground/70 backdrop-blur-sm transition-colors hover:bg-background hover:text-foreground"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  {/* Caption Input */}
+                  <div>
+                    <label
+                      htmlFor="coverImageCaption"
+                      className="mb-1 block text-xs font-medium text-muted-foreground"
+                    >
+                      Image Caption (optional)
+                    </label>
+                    <input
+                      id="coverImageCaption"
+                      type="text"
+                      value={coverImageCaption}
+                      onChange={(e) => setCoverImageCaption(e.target.value)}
+                      placeholder="Describe the image..."
+                      className="w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
                 </div>
               )}
             </div>

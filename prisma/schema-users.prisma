@@ -429,7 +429,8 @@ model BlogPost {
   title       String
   excerpt     String?    @db.Text
   content     String     @db.Text  // Markdown content
-  coverImage  String?    // URL to cover image
+  coverImage  String?    // URL to cover image (can be external URL or uploaded path)
+  coverImageCaption String?  // Caption/alt text for cover image
   
   authorId    String
   author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
