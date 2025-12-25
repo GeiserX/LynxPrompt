@@ -83,7 +83,7 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { title, excerpt, content, coverImage, tags, status } = body;
+    const { title, excerpt, content, coverImage, coverImageCaption, tags, status } = body;
 
     // Build update data
     const updateData: Record<string, unknown> = {};
@@ -92,6 +92,7 @@ export async function PUT(
     if (excerpt !== undefined) updateData.excerpt = excerpt;
     if (content !== undefined) updateData.content = content;
     if (coverImage !== undefined) updateData.coverImage = coverImage;
+    if (coverImageCaption !== undefined) updateData.coverImageCaption = coverImageCaption;
     if (tags !== undefined) updateData.tags = tags;
     
     // Handle status change
