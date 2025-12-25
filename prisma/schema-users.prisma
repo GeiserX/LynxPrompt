@@ -28,6 +28,10 @@ model Account {
   scope             String?
   id_token          String? @db.Text
   session_state     String?
+  
+  // Provider-specific identifiers (captured at sign-in time)
+  providerEmail     String?  // Email from OAuth provider (e.g., Google email)
+  providerUsername  String?  // Username from OAuth provider (e.g., GitHub username)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -40,6 +44,11 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
+  
+  // Passkey 2FA verification state
+  passkeyVerified   Boolean   @default(false)  // Whether passkey was verified for this session
+  passkeyVerifiedAt DateTime?                  // When passkey was last verified
+  
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])

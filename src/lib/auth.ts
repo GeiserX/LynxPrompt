@@ -232,11 +232,9 @@ export const authOptions: NextAuthOptions = {
               expectedChallenge: credentials.challenge,
               expectedOrigin: rpOrigin,
               expectedRPID: rpID,
-              authenticator: {
-                credentialID: Uint8Array.from(
-                  Buffer.from(authenticator.credentialID, "base64url")
-                ),
-                credentialPublicKey: authenticator.credentialPublicKey,
+              credential: {
+                id: authenticator.credentialID,
+                publicKey: authenticator.credentialPublicKey,
                 counter: Number(authenticator.counter),
               },
             });
@@ -272,7 +270,7 @@ export const authOptions: NextAuthOptions = {
     error: "/auth/error",
   },
   callbacks: {
-    async signIn({ user }) {
+    async signIn({ user, account, profile }) {
       // Auto-promote superadmin on first sign-in
       const superadminEmail = process.env.SUPERADMIN_EMAIL;
       if (superadminEmail && user.email === superadminEmail) {
@@ -306,6 +304,51 @@ export const authOptions: NextAuthOptions = {
         }
       }
       
+      // Backfill provider details for existing accounts that don't have them
+      // This handles accounts created before we started storing provider details
+      if (account && profile && (account.provider === "github" || account.provider === "google")) {
+        try {
+          const existingAccount = await prismaUsers.account.findUnique({
+            where: {
+              provider_providerAccountId: {
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+              },
+            },
+            select: { providerEmail: true, providerUsername: true },
+          });
+          
+          // Only update if details are missing
+          if (existingAccount && (!existingAccount.providerEmail && !existingAccount.providerUsername)) {
+            let providerEmail: string | null = null;
+            let providerUsername: string | null = null;
+            
+            if (account.provider === "github") {
+              providerUsername = (profile as { login?: string }).login || null;
+              providerEmail = (profile as { email?: string }).email || null;
+            } else if (account.provider === "google") {
+              providerEmail = (profile as { email?: string }).email || null;
+            }
+            
+            if (providerEmail || providerUsername) {
+              await prismaUsers.account.update({
+                where: {
+                  provider_providerAccountId: {
+                    provider: account.provider,
+                    providerAccountId: account.providerAccountId,
+                  },
+                },
+                data: { providerEmail, providerUsername },
+              });
+              console.log(`[Auth] Backfilled provider details for ${account.provider}: email=${providerEmail}, username=${providerUsername}`);
+            }
+          }
+        } catch (error) {
+          // Don't fail sign-in if backfill fails
+          console.error(`[Auth] Failed to backfill provider details:`, error);
+        }
+      }
+      
       return true;
     },
     async session({ session, user, token }) {
@@ -324,6 +367,7 @@ export const authOptions: NextAuthOptions = {
                 persona: true,
                 skillLevel: true,
                 profileCompleted: true,
+                authenticators: { select: { id: true } },
               },
             });
             session.user.role = dbUser?.role || "USER";
@@ -331,6 +375,20 @@ export const authOptions: NextAuthOptions = {
             session.user.persona = dbUser?.persona || null;
             session.user.skillLevel = dbUser?.skillLevel || null;
             session.user.profileCompleted = dbUser?.profileCompleted || false;
+            
+            // Check if user has passkeys and if verification is needed
+            const hasPasskeys = (dbUser?.authenticators?.length ?? 0) > 0;
+            session.user.hasPasskeys = hasPasskeys;
+            
+            // If user has passkeys, check if this session is verified
+            if (hasPasskeys) {
+              // We need to check the session record for passkeyVerified
+              // This is a bit tricky - we don't have the session token here
+              // So we'll add a flag that middleware can use to check
+              session.user.requiresPasskeyCheck = true;
+            } else {
+              session.user.requiresPasskeyCheck = false;
+            }
           } catch (error) {
             // Log but don't fail the session - use defaults
             console.error("Error fetching user details for session:", error);
@@ -339,6 +397,8 @@ export const authOptions: NextAuthOptions = {
             session.user.persona = null;
             session.user.skillLevel = null;
             session.user.profileCompleted = false;
+            session.user.hasPasskeys = false;
+            session.user.requiresPasskeyCheck = false;
           }
         }
         // For JWT sessions (Passkey)
@@ -350,6 +410,9 @@ export const authOptions: NextAuthOptions = {
           session.user.skillLevel = (token.skillLevel as string) || null;
           session.user.profileCompleted =
             (token.profileCompleted as boolean) || false;
+          // Passkey login sessions are already verified
+          session.user.hasPasskeys = true;
+          session.user.requiresPasskeyCheck = false;
         }
       }
       return session;
@@ -402,6 +465,39 @@ export const authOptions: NextAuthOptions = {
       });
       
       console.log(`[Auth] New user ${user.id} created with terms v${termsVersion} accepted at ${now.toISOString()}`);
+    },
+    // Store provider-specific identifiers when account is linked
+    async linkAccount({ account, profile }) {
+      let providerEmail: string | null = null;
+      let providerUsername: string | null = null;
+
+      // Extract provider-specific identifiers from OAuth profile
+      if (account.provider === "github" && profile) {
+        // GitHub profile has 'login' as username
+        providerUsername = (profile as { login?: string }).login || null;
+        // GitHub may also have email
+        providerEmail = (profile as { email?: string }).email || null;
+      } else if (account.provider === "google" && profile) {
+        // Google profile has email
+        providerEmail = (profile as { email?: string }).email || null;
+      }
+
+      // Update the account with provider details
+      if (providerEmail || providerUsername) {
+        await prismaUsers.account.update({
+          where: {
+            provider_providerAccountId: {
+              provider: account.provider,
+              providerAccountId: account.providerAccountId,
+            },
+          },
+          data: {
+            providerEmail,
+            providerUsername,
+          },
+        });
+        console.log(`[Auth] Stored provider details for ${account.provider}: email=${providerEmail}, username=${providerUsername}`);
+      }
     },
   },
   session: {

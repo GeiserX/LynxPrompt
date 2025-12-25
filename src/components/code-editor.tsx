@@ -108,8 +108,8 @@ export function CodeEditor({
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(
-        /\[\[([A-Za-z_][A-Za-z0-9_]*)\]\]/g,
-        '<mark class="bg-amber-300 dark:bg-amber-700 text-amber-900 dark:text-amber-100 rounded px-0.5">[[$1]]</mark>'
+        /\[\[([A-Za-z_][A-Za-z0-9_]*)(?:\|[^\]]*)?\]\]/g,
+        '<mark class="bg-amber-300 dark:bg-amber-700 text-amber-900 dark:text-amber-100 rounded px-0.5">$&</mark>'
       ) + "\n";
   };
 

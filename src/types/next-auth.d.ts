@@ -14,6 +14,9 @@ declare module "next-auth" {
       persona?: string | null;
       skillLevel?: string | null;
       profileCompleted?: boolean;
+      // Passkey 2FA fields
+      hasPasskeys?: boolean;
+      requiresPasskeyCheck?: boolean;
     };
   }
 

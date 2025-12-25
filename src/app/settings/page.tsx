@@ -31,6 +31,9 @@ import {
   Zap,
   Variable,
   X,
+  FileCode,
+  Pencil,
+  Loader2,
 } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { Logo } from "@/components/logo";
@@ -77,6 +80,7 @@ const SKILL_LEVELS = [
 const SECTIONS = [
   { id: "profile", label: "Profile", icon: User },
   { id: "variables", label: "Saved Variables", icon: Variable },
+  { id: "files", label: "Saved Files", icon: FileCode },
   { id: "accounts", label: "Linked Accounts", icon: Link2 },
   { id: "security", label: "Security", icon: Shield },
   { id: "billing", label: "Billing", icon: CreditCard },
@@ -878,6 +882,11 @@ function SettingsContent() {
             {/* Variables Section */}
             {activeSection === "variables" && (
               <SavedVariablesSection />
+            )}
+
+            {/* Files Section */}
+            {activeSection === "files" && (
+              <SavedFilesSection />
             )}
 
             {/* Accounts Section */}
@@ -2151,6 +2160,264 @@ function SavedVariablesSection() {
   );
 }
 
+// Static file display names
+const STATIC_FILE_NAMES: Record<string, string> = {
+  funding: "FUNDING.yml",
+  editorconfig: ".editorconfig",
+  contributing: "CONTRIBUTING.md",
+  codeOfConduct: "CODE_OF_CONDUCT.md",
+  security: "SECURITY.md",
+  gitignore: ".gitignore",
+  dockerignore: ".dockerignore",
+};
 
+// Saved Files Section Component
+interface SavedFile {
+  key: string;
+  value: string;
+  isDefault: boolean;
+}
 
+function SavedFilesSection() {
+  const [files, setFiles] = useState<SavedFile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
+  const fetchFiles = async () => {
+    try {
+      const res = await fetch("/api/user/wizard-preferences");
+      if (res.ok) {
+        const data = await res.json();
+        // Get only staticFiles category
+        const staticFiles = data.staticFiles || {};
+        const fileList = Object.entries(staticFiles).map(([key, val]) => ({
+          key,
+          value: (val as { value: string; isDefault: boolean }).value,
+          isDefault: (val as { value: string; isDefault: boolean }).isDefault,
+        }));
+        // Sort by display name
+        fileList.sort((a, b) => 
+          (STATIC_FILE_NAMES[a.key] || a.key).localeCompare(STATIC_FILE_NAMES[b.key] || b.key)
+        );
+        setFiles(fileList);
+      }
+    } catch {
+      setError("Failed to load saved files");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFiles();
+  }, []);
+
+  const handleSave = async (key: string, value: string) => {
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/user/wizard-preferences", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          preferences: [{
+            category: "staticFiles",
+            key,
+            value,
+            isDefault: files.find(f => f.key === key)?.isDefault ?? false,
+          }]
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to save");
+      }
+      setSuccess("File saved!");
+      setEditingKey(null);
+      await fetchFiles();
+      setTimeout(() => setSuccess(null), 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (key: string) => {
+    const displayName = STATIC_FILE_NAMES[key] || key;
+    if (!confirm(`Delete saved "${displayName}"? This cannot be undone.`)) return;
+    setDeleting(key);
+    setError(null);
+    try {
+      const res = await fetch(`/api/user/wizard-preferences?category=staticFiles&key=${key}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Failed to delete");
+      setSuccess("File deleted");
+      await fetchFiles();
+      setTimeout(() => setSuccess(null), 2000);
+    } catch {
+      setError("Failed to delete file");
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">Saved Files</h1>
+        <p className="text-muted-foreground">
+          Static files saved from the wizard. These will be pre-filled when you use the wizard.
+        </p>
+      </div>
+
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200">
+          {success}
+        </div>
+      )}
+
+      {/* Info Box */}
+      <div className="rounded-xl border border-sky-200 bg-white p-4 shadow-sm dark:border-sky-500/50 dark:bg-sky-900/30">
+        <div className="flex items-start gap-3">
+          <FileCode className="h-5 w-5 flex-shrink-0 text-sky-700 dark:text-sky-400 mt-0.5" />
+          <div>
+            <p className="text-sm font-bold text-gray-900 dark:text-sky-200">
+              How saved files work
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              When you generate configurations in the wizard and choose to &quot;Save to profile&quot;, your static files 
+              (like <code className="rounded bg-muted px-1.5 py-0.5 text-xs">FUNDING.yml</code>, <code className="rounded bg-muted px-1.5 py-0.5 text-xs">.editorconfig</code>) 
+              are stored here. Next time you use the wizard, these values will be pre-filled automatically.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Files List */}
+      <div className="rounded-xl border bg-card p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="font-semibold">Your Saved Files</h2>
+        </div>
+
+        {files.length === 0 ? (
+          <div className="rounded-lg border border-dashed bg-muted/30 p-8 text-center">
+            <FileCode className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
+            <p className="text-muted-foreground">No saved files yet</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Use the wizard and save your configurations to store files here.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {files.map((file) => {
+              const displayName = STATIC_FILE_NAMES[file.key] || file.key;
+              const isEditing = editingKey === file.key;
+              const isLongContent = file.value.length > 100 || file.value.includes('\n');
+
+              return (
+                <div
+                  key={file.key}
+                  className="rounded-lg border bg-muted/30 p-4"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <code className="rounded bg-muted px-2 py-1 text-sm font-medium text-primary">
+                          {displayName}
+                        </code>
+                        {file.isDefault && (
+                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                            Default
+                          </span>
+                        )}
+                      </div>
+                      
+                      {isEditing ? (
+                        <div className="mt-3">
+                          <textarea
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            className="w-full h-48 rounded-lg border bg-background px-3 py-2 text-sm font-mono focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                            autoFocus
+                          />
+                          <div className="mt-2 flex gap-2">
+                            <Button size="sm" onClick={() => handleSave(file.key, editValue)} disabled={saving}>
+                              {saving ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Save className="h-3 w-3 mr-1" />}
+                              Save
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => setEditingKey(null)}>
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mt-2">
+                          {isLongContent ? (
+                            <pre className="text-xs text-muted-foreground bg-background/50 rounded-lg p-3 overflow-x-auto max-h-32 overflow-y-auto font-mono border">
+                              {file.value.length > 500 ? file.value.slice(0, 500) + '\n...' : file.value}
+                            </pre>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">{file.value}</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {!isEditing && (
+                      <div className="flex gap-1 shrink-0">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8"
+                          onClick={() => {
+                            setEditingKey(file.key);
+                            setEditValue(file.value);
+                          }}
+                        >
+                          <Pencil className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                          onClick={() => handleDelete(file.key)}
+                          disabled={deleting === file.key}
+                        >
+                          {deleting === file.key ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-3 w-3" />
+                          )}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
