@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { CodeEditor } from "@/components/code-editor";
+import { Logo } from "@/components/logo";
 import {
   generateConfigFiles,
   downloadConfigFile,
@@ -983,9 +984,9 @@ export default function WizardPage() {
     };
   };
 
-  // Extract [[VARIABLE]] patterns from content
+  // Extract [[VARIABLE]] or [[VARIABLE|default]] patterns from content
   const extractVariables = (content: string): string[] => {
-    const regex = /\[\[([A-Z_][A-Z0-9_]*)\]\]/g;
+    const regex = /\[\[([A-Z_][A-Z0-9_]*)(?:\|[^\]]*)?\]\]/g;
     const vars = new Set<string>();
     let match;
     while ((match = regex.exec(content)) !== null) {
@@ -1005,10 +1006,17 @@ export default function WizardPage() {
     return Array.from(vars);
   }, [previewFiles, config.additionalFeedback]);
 
-  // Replace variables in content
-  const replaceVariables = (content: string): string => {
-    return content.replace(/\[\[([A-Z_][A-Z0-9_]*)\]\]/g, (match, varName) => {
-      return variableValues[varName] || match;
+  // Replace variables in content (handles [[VAR]] and [[VAR|default]] syntax)
+  const replaceVariablesInContent = (content: string): string => {
+    return content.replace(/\[\[([A-Z_][A-Z0-9_]*)(?:\|([^\]]*))?\]\]/g, (match, varName, defaultVal) => {
+      const userValue = variableValues[varName];
+      if (userValue !== undefined && userValue !== "") {
+        return userValue;
+      }
+      if (defaultVal !== undefined) {
+        return defaultVal;
+      }
+      return match;
     });
   };
 
@@ -1171,7 +1179,7 @@ export default function WizardPage() {
       // Build config with variable replacements
       const genConfig = buildGeneratorConfig();
       // Apply variable replacements to additionalFeedback
-      genConfig.additionalFeedback = replaceVariables(genConfig.additionalFeedback);
+      genConfig.additionalFeedback = replaceVariablesInContent(genConfig.additionalFeedback);
       
       const blob = await generateConfigFiles(genConfig, userProfile);
       let files = generateAllFiles(genConfig, userProfile);
@@ -1179,7 +1187,7 @@ export default function WizardPage() {
       // Replace variables in file contents
       files = files.map(file => ({
         ...file,
-        content: replaceVariables(file.content),
+        content: replaceVariablesInContent(file.content),
       }));
       
       // Create new blob with replaced content
@@ -1201,7 +1209,7 @@ export default function WizardPage() {
   const handleShareAsBlueprint = () => {
     // Get the generated content
     if (previewFiles.length === 0) return;
-    const content = replaceVariables(previewFiles[0].content);
+    const content = replaceVariablesInContent(previewFiles[0].content);
     // Store in sessionStorage for the create page to pick up
     sessionStorage.setItem("wizardBlueprintContent", content);
     sessionStorage.setItem("wizardBlueprintName", config.projectName || "My AI Config");

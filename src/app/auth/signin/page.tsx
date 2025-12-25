@@ -38,7 +38,6 @@ function SignInContent() {
   const [emailSent, setEmailSent] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [turnstileError, setTurnstileError] = useState<string | null>(null);
-  const [termsAccepted, setTermsAccepted] = useState(false);
 
   // Turnstile is always enabled for magic link (component handles bypass internally)
   const turnstileEnabled = true;
@@ -46,8 +45,6 @@ function SignInContent() {
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
     setTurnstileError(null);
-
-    if (!termsAccepted) return;
 
     // Verify turnstile if enabled
     if (turnstileEnabled && !turnstileToken) {
@@ -94,8 +91,6 @@ function SignInContent() {
   };
 
   const handleOAuth = async (provider: "github" | "google") => {
-    if (!termsAccepted) return;
-    
     setIsLoading(true);
     setLoadingProvider(provider);
 
@@ -151,7 +146,7 @@ function SignInContent() {
       <div className="flex flex-1 flex-col">
         {/* Mobile header */}
         <div className="flex items-center justify-between border-b p-4 lg:hidden">
-          <div className="w-fit rounded-lg bg-slate-100 dark:bg-slate-200 px-2 py-1.5">
+          <div className="w-fit rounded-lg bg-white dark:bg-black px-2 py-1.5">
             <Logo />
           </div>
         </div>
@@ -189,7 +184,7 @@ function SignInContent() {
                     variant="outline"
                     className="w-full justify-start gap-3"
                     onClick={() => handleOAuth("github")}
-                    disabled={isLoading || !termsAccepted}
+                    disabled={isLoading}
                   >
                     {loadingProvider === "github" ? (
                       <Loader2 className="h-5 w-5 animate-spin" />
@@ -202,7 +197,7 @@ function SignInContent() {
                     variant="outline"
                     className="w-full justify-start gap-3"
                     onClick={() => handleOAuth("google")}
-                    disabled={isLoading || !termsAccepted}
+                    disabled={isLoading}
                   >
                     {loadingProvider === "google" ? (
                       <Loader2 className="h-5 w-5 animate-spin" />
@@ -241,7 +236,7 @@ function SignInContent() {
                   <Button
                     type="submit"
                     className="mt-4 w-full"
-                    disabled={isLoading || !email || !termsAccepted || (turnstileEnabled && !turnstileToken)}
+                    disabled={isLoading || !email || (turnstileEnabled && !turnstileToken)}
                   >
                     {loadingProvider === "email" ? (
                       <>
@@ -273,28 +268,17 @@ function SignInContent() {
                   )}
                 </form>
 
-                {/* Legal Consent Checkbox - Required for EU compliance */}
-                <div className="mt-8 flex items-start gap-3">
-                  <input
-                    type="checkbox"
-                    id="terms-consent"
-                    checked={termsAccepted}
-                    onChange={(e) => setTermsAccepted(e.target.checked)}
-                    className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                    disabled={isLoading}
-                  />
-                  <label htmlFor="terms-consent" className="text-sm text-muted-foreground">
-                    I have read and agree to the{" "}
-                    <Link href="/terms" target="_blank" className="text-primary hover:underline">
-                      Terms of Service
-                    </Link>{" "}
-                    and{" "}
-                    <Link href="/privacy" target="_blank" className="text-primary hover:underline">
-                      Privacy Policy
-                    </Link>
-                    <span className="text-destructive">*</span>
-                  </label>
-                </div>
+                {/* Terms notice - consent required for new users on separate page */}
+                <p className="mt-8 text-center text-xs text-muted-foreground">
+                  By signing in, you agree to our{" "}
+                  <Link href="/terms" target="_blank" className="text-primary hover:underline">
+                    Terms of Service
+                  </Link>{" "}
+                  and{" "}
+                  <Link href="/privacy" target="_blank" className="text-primary hover:underline">
+                    Privacy Policy
+                  </Link>
+                </p>
               </>
             ) : (
               <div className="text-center">

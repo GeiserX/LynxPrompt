@@ -29,6 +29,8 @@ import {
   Star,
   Crown,
   Zap,
+  Variable,
+  X,
 } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { Logo } from "@/components/logo";
@@ -74,6 +76,7 @@ const SKILL_LEVELS = [
 
 const SECTIONS = [
   { id: "profile", label: "Profile", icon: User },
+  { id: "variables", label: "Saved Variables", icon: Variable },
   { id: "accounts", label: "Linked Accounts", icon: Link2 },
   { id: "security", label: "Security", icon: Shield },
   { id: "billing", label: "Billing", icon: CreditCard },
@@ -104,6 +107,8 @@ interface LinkedAccount {
   id: string;
   provider: string;
   providerAccountId: string;
+  providerEmail: string | null;
+  providerUsername: string | null;
 }
 
 interface Passkey {
@@ -870,6 +875,11 @@ function SettingsContent() {
               </div>
             )}
 
+            {/* Variables Section */}
+            {activeSection === "variables" && (
+              <SavedVariablesSection />
+            )}
+
             {/* Accounts Section */}
             {activeSection === "accounts" && (
               <div className="space-y-6">
@@ -910,43 +920,53 @@ function SettingsContent() {
                   )}
 
                   {/* OAuth accounts */}
-                  {accounts.map((account) => (
-                    <div
-                      key={account.id}
-                      className="mt-3 flex items-center justify-between rounded-lg border bg-background p-4"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="rounded-lg bg-muted p-2">
-                          {getProviderIcon(account.provider)}
-                        </div>
-                        <div>
-                          <p className="font-medium">
-                            {account.provider.charAt(0).toUpperCase() +
-                              account.provider.slice(1)}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            Connected
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleUnlinkAccount(account.provider)}
-                        disabled={unlinking === account.provider}
-                        className="text-destructive hover:text-destructive"
+                  {accounts.map((account) => {
+                    // Determine the display identifier for the account
+                    let accountIdentifier: string | null = null;
+                    if (account.provider === "github" && account.providerUsername) {
+                      accountIdentifier = `@${account.providerUsername}`;
+                    } else if (account.provider === "google" && account.providerEmail) {
+                      accountIdentifier = account.providerEmail;
+                    }
+                    
+                    return (
+                      <div
+                        key={account.id}
+                        className="mt-3 flex items-center justify-between rounded-lg border bg-background p-4"
                       >
-                        {unlinking === account.provider ? (
-                          "Unlinking..."
-                        ) : (
-                          <>
-                            <Unlink className="mr-2 h-4 w-4" />
-                            Unlink
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  ))}
+                        <div className="flex items-center gap-3">
+                          <div className="rounded-lg bg-muted p-2">
+                            {getProviderIcon(account.provider)}
+                          </div>
+                          <div>
+                            <p className="font-medium">
+                              {account.provider.charAt(0).toUpperCase() +
+                                account.provider.slice(1)}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {accountIdentifier || "Connected"}
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleUnlinkAccount(account.provider)}
+                          disabled={unlinking === account.provider}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          {unlinking === account.provider ? (
+                            "Unlinking..."
+                          ) : (
+                            <>
+                              <Unlink className="mr-2 h-4 w-4" />
+                              Unlink
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    );
+                  })}
 
                   {/* Link new accounts */}
                   {unlinkedProviders.length > 0 && (
@@ -1796,6 +1816,337 @@ function BillingSection({ setError, setSuccess }: BillingSectionProps) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// Saved Variables Section Component
+interface SavedVariable {
+  key: string;
+  value: string;
+}
+
+function SavedVariablesSection() {
+  const [variables, setVariables] = useState<SavedVariable[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const [showAddNew, setShowAddNew] = useState(false);
+  const [newKey, setNewKey] = useState("");
+  const [newValue, setNewValue] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  const fetchVariables = async () => {
+    try {
+      const res = await fetch("/api/user/variables");
+      if (res.ok) {
+        const data = await res.json();
+        const vars = Object.entries(data.variables || {}).map(([key, value]) => ({
+          key,
+          value: value as string,
+        }));
+        // Sort alphabetically
+        vars.sort((a, b) => a.key.localeCompare(b.key));
+        setVariables(vars);
+      }
+    } catch {
+      setError("Failed to load saved variables");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchVariables();
+  }, []);
+
+  const handleSave = async (key: string, value: string) => {
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/user/variables", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key, value }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to save");
+      }
+      setSuccess("Variable saved!");
+      setEditingKey(null);
+      setShowAddNew(false);
+      setNewKey("");
+      setNewValue("");
+      await fetchVariables();
+      setTimeout(() => setSuccess(null), 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (key: string) => {
+    if (!confirm(`Delete variable "${key}"? This cannot be undone.`)) return;
+    setDeleting(key);
+    setError(null);
+    try {
+      const res = await fetch("/api/user/variables", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key }),
+      });
+      if (!res.ok) throw new Error("Failed to delete");
+      setSuccess("Variable deleted");
+      await fetchVariables();
+      setTimeout(() => setSuccess(null), 2000);
+    } catch {
+      setError("Failed to delete variable");
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">Saved Variables</h1>
+        <p className="text-muted-foreground">
+          Default values for blueprint variables. These will be pre-filled when you download blueprints.
+        </p>
+      </div>
+
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200">
+          {success}
+        </div>
+      )}
+
+      {/* Info Box */}
+      <div className="rounded-xl border border-sky-200 bg-white p-4 shadow-sm dark:border-sky-500/50 dark:bg-sky-900/30">
+        <div className="flex items-start gap-3">
+          <Variable className="h-5 w-5 flex-shrink-0 text-sky-700 dark:text-sky-400 mt-0.5" />
+          <div>
+            <p className="text-sm font-bold text-gray-900 dark:text-sky-200">
+              How variables work
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Blueprints can contain variables like <code className="rounded bg-muted px-1.5 py-0.5 text-xs">[[PROJECT_NAME]]</code>. 
+              When you download a blueprint, your saved values will be automatically filled in.
+              Blueprint creators can also set defaults using <code className="rounded bg-muted px-1.5 py-0.5 text-xs">[[VAR|default]]</code> syntax — 
+              your saved values take priority over creator defaults.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Variables List */}
+      <div className="rounded-xl border bg-card p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="font-semibold">Your Saved Variables</h2>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setShowAddNew(true)}
+            disabled={showAddNew}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add Variable
+          </Button>
+        </div>
+
+        {/* Add New Form */}
+        {showAddNew && (
+          <div className="mb-4 rounded-lg border bg-muted/30 p-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-sm font-medium">Variable Name</label>
+                <input
+                  type="text"
+                  value={newKey}
+                  onChange={(e) => setNewKey(e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, "_"))}
+                  placeholder="PROJECT_NAME"
+                  className="w-full rounded-lg border bg-background px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">Default Value</label>
+                <input
+                  type="text"
+                  value={newValue}
+                  onChange={(e) => setNewValue(e.target.value)}
+                  placeholder="My Project"
+                  className="w-full rounded-lg border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+            </div>
+            <div className="mt-3 flex justify-end gap-2">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setShowAddNew(false);
+                  setNewKey("");
+                  setNewValue("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => handleSave(newKey, newValue)}
+                disabled={!newKey.trim() || !newValue.trim() || saving}
+              >
+                {saving ? "Saving..." : "Save"}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Variables Table */}
+        {variables.length === 0 ? (
+          <div className="rounded-lg border border-dashed bg-muted/30 p-8 text-center">
+            <Variable className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
+            <p className="text-muted-foreground">No saved variables yet</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Variables will appear here when you save them while downloading blueprints.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {variables.map((variable) => (
+              <div
+                key={variable.key}
+                className="flex items-center justify-between rounded-lg border bg-muted/30 p-3"
+              >
+                {editingKey === variable.key ? (
+                  <div className="flex flex-1 items-center gap-2">
+                    <code className="rounded bg-muted px-2 py-1 text-sm font-medium">
+                      {variable.key}
+                    </code>
+                    <input
+                      type="text"
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      className="flex-1 rounded-lg border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                      autoFocus
+                    />
+                    <Button
+                      size="sm"
+                      onClick={() => handleSave(variable.key, editValue)}
+                      disabled={saving || !editValue.trim()}
+                    >
+                      {saving ? "..." : "Save"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setEditingKey(null)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <code className="rounded bg-muted px-2 py-1 text-sm font-medium text-primary">
+                        [[{variable.key}]]
+                      </code>
+                      <span className="text-sm text-muted-foreground">→</span>
+                      <span className="text-sm">{variable.value}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setEditingKey(variable.key);
+                          setEditValue(variable.value);
+                        }}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleDelete(variable.key)}
+                        disabled={deleting === variable.key}
+                        className="text-red-500 hover:bg-red-50 hover:text-red-600"
+                      >
+                        {deleting === variable.key ? (
+                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-red-500 border-t-transparent" />
+                        ) : (
+                          <X className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Common Variables Suggestions */}
+      <div className="rounded-xl border bg-card p-6">
+        <h2 className="mb-4 font-semibold">Common Variable Names</h2>
+        <p className="mb-3 text-sm text-muted-foreground">
+          Click to add any of these commonly used variables:
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { key: "PROJECT_NAME", hint: "Name of your project" },
+            { key: "AUTHOR_NAME", hint: "Your name for attribution" },
+            { key: "TEAM_NAME", hint: "Team or org name" },
+            { key: "REPO_URL", hint: "Repository URL" },
+            { key: "K8S_CLUSTER", hint: "Kubernetes cluster" },
+            { key: "CONFLUENCE_URL", hint: "Documentation URL" },
+            { key: "SLACK_CHANNEL", hint: "Team Slack channel" },
+            { key: "API_BASE_URL", hint: "Base API URL" },
+          ].map((suggestion) => {
+            const exists = variables.some((v) => v.key === suggestion.key);
+            return (
+              <button
+                key={suggestion.key}
+                onClick={() => {
+                  if (!exists) {
+                    setShowAddNew(true);
+                    setNewKey(suggestion.key);
+                  }
+                }}
+                disabled={exists}
+                className={`rounded-lg border px-3 py-1.5 text-sm transition-colors ${
+                  exists
+                    ? "border-green-500/30 bg-green-500/10 text-green-600 cursor-default"
+                    : "hover:border-primary hover:bg-muted"
+                }`}
+                title={suggestion.hint}
+              >
+                {exists && <Check className="mr-1 inline h-3 w-3" />}
+                {suggestion.key}
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

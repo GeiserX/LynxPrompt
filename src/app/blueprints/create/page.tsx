@@ -403,8 +403,8 @@ export default function ShareBlueprintPage() {
 
                 {/* Variable syntax help */}
                 <p className="mt-3 text-xs text-muted-foreground">
-                  💡 <strong>Tip:</strong> Use <code className="rounded bg-muted px-1 py-0.5 font-mono">[[VARIABLE_NAME]]</code> syntax 
-                  to create template variables. Variables are case-insensitive (e.g., <code className="rounded bg-muted px-1 py-0.5 font-mono">[[myVar]]</code> and <code className="rounded bg-muted px-1 py-0.5 font-mono">[[MYVAR]]</code> are the same).
+                  💡 <strong>Tip:</strong> Use <code className="rounded bg-muted px-1 py-0.5 font-mono">[[VARIABLE_NAME]]</code> or <code className="rounded bg-muted px-1 py-0.5 font-mono">[[VARIABLE_NAME|default]]</code> syntax 
+                  to create template variables with optional defaults. Variables are case-insensitive.
                   Users will be prompted to fill these in when downloading.
                 </p>
 
@@ -429,6 +429,12 @@ export default function ShareBlueprintPage() {
                               [[{varName}]]
                             </code>
                           ))}
+                        </div>
+                        <div className="mt-3 rounded border border-blue-400/50 bg-blue-50 p-2 dark:bg-blue-800/30">
+                          <p className="text-xs text-blue-800 dark:text-blue-200">
+                            💡 <strong>Set defaults</strong> with <code className="rounded bg-blue-200 px-1 py-0.5 font-mono text-xs dark:bg-blue-700">[[VAR|default]]</code> syntax.
+                            Example: <code className="rounded bg-blue-200 px-1 py-0.5 font-mono text-xs dark:bg-blue-700">[[FRAMEWORK|Next.js]]</code>
+                          </p>
                         </div>
                       </div>
                     </div>

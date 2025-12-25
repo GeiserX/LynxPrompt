@@ -478,16 +478,27 @@ export default function EditBlueprintPage() {
 
               {/* Detected Variables */}
               {detectedVariables.length > 0 && (
-                <div className="rounded-lg border border-sky-200 bg-white p-3 shadow-sm dark:border-sky-700 dark:bg-sky-900/20">
+                <div className="rounded-lg border border-sky-200 bg-white p-4 shadow-sm dark:border-sky-700 dark:bg-sky-900/20">
                   <div className="flex items-start gap-2">
                     <Info className="h-4 w-4 flex-shrink-0 text-sky-700 dark:text-sky-400 mt-0.5" />
-                    <div>
+                    <div className="space-y-2">
                       <p className="text-xs text-foreground">
                         <strong>Variables detected:</strong> {detectedVariables.join(", ")}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="text-xs text-muted-foreground">
                         Users will be prompted to fill these when downloading.
                       </p>
+                      <div className="rounded-lg border bg-muted/50 p-3 mt-2">
+                        <p className="text-xs font-medium text-foreground mb-1">
+                          💡 Pro tip: Set default values for your variables
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Use <code className="rounded bg-background px-1.5 py-0.5 font-mono">[[VAR_NAME|default value]]</code> syntax to pre-fill values for users.
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Example: <code className="rounded bg-background px-1.5 py-0.5 font-mono">[[FRAMEWORK|Next.js]]</code> will show "Next.js" as the default.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -689,4 +700,5 @@ export default function EditBlueprintPage() {
     </div>
   );
 }
+
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,9 +13,11 @@ import {
   EyeOff,
   Info,
   Pencil,
+  Save,
 } from "lucide-react";
 import Link from "next/link";
 import { trackTemplateDownload } from "@/lib/analytics/client";
+import { parseVariablesWithDefaults } from "@/lib/file-generator";
 
 interface SensitiveField {
   label: string;
@@ -68,8 +70,12 @@ export function TemplateDownloadModal({
 }: TemplateDownloadModalProps) {
   const { data: session } = useSession();
   const [values, setValues] = useState<Record<string, string>>({});
+  const [userSavedVars, setUserSavedVars] = useState<Record<string, string>>({});
+  const [creatorDefaults, setCreatorDefaults] = useState<Record<string, string>>({});
   const [copied, setCopied] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [savingVar, setSavingVar] = useState<string | null>(null);
+  
   // Map database platform values to our platform IDs
   const platformIdMap: Record<string, string> = {
     "AGENTS_MD": "universal",
@@ -90,43 +96,114 @@ export function TemplateDownloadModal({
   
   const [selectedPlatform, setSelectedPlatform] = useState(getInitialPlatform());
 
-  // Initialize values from template variables AND user session data
+  // Fetch user's saved variable preferences
+  const fetchUserVariables = useCallback(async () => {
+    if (!session?.user) return;
+    try {
+      const res = await fetch("/api/user/variables");
+      if (res.ok) {
+        const data = await res.json();
+        setUserSavedVars(data.variables || {});
+      }
+    } catch {
+      // Non-fatal - just won't have saved preferences
+    }
+  }, [session?.user]);
+
+  // Save a variable to user preferences
+  const saveVariable = async (varName: string, value: string) => {
+    if (!session?.user || !value.trim()) return;
+    setSavingVar(varName);
+    try {
+      await fetch("/api/user/variables", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: varName, value: value.trim() }),
+      });
+      setUserSavedVars(prev => ({ ...prev, [varName]: value.trim() }));
+    } catch {
+      // Non-fatal
+    } finally {
+      setSavingVar(null);
+    }
+  };
+
+  // Fetch user variables on mount
+  useEffect(() => {
+    fetchUserVariables();
+  }, [fetchUserVariables]);
+
+  // Initialize values from: 1) User saved, 2) Creator defaults, 3) Template variables
   useEffect(() => {
     const initialValues: Record<string, string> = {};
+    const parsedDefaults: Record<string, string> = {};
 
-    // Start with template variables
+    // 1. Parse creator defaults from content using [[VAR|default]] syntax
+    const contentDefaults = parseVariablesWithDefaults(template.content);
+    for (const [key, defaultVal] of Object.entries(contentDefaults)) {
+      if (defaultVal !== undefined) {
+        parsedDefaults[key] = defaultVal;
+      }
+    }
+
+    // 2. Also check legacy template.variables for defaults
     // Handle both simple values {"KEY": "value"} and object values {"KEY": {"label": "...", "default": "value"}}
     if (template.variables) {
       for (const [key, val] of Object.entries(template.variables)) {
-        if (typeof val === "string") {
-          initialValues[key] = val;
+        const upperKey = key.toUpperCase();
+        if (typeof val === "string" && val && !(upperKey in parsedDefaults)) {
+          parsedDefaults[upperKey] = val;
         } else if (val && typeof val === "object" && "default" in val) {
-          initialValues[key] = (val as { default: string }).default || "";
+          const def = (val as { default: string }).default;
+          if (def && !(upperKey in parsedDefaults)) {
+            parsedDefaults[upperKey] = def;
+          }
         }
       }
     }
 
+    setCreatorDefaults(parsedDefaults);
+
+    // 3. Apply values in priority order: user saved > creator default > empty
+    // First, set all detected variables
+    for (const varName of Object.keys(contentDefaults)) {
+      initialValues[varName] = ""; // Start empty
+    }
+
+    // Apply creator defaults (lowest priority)
+    for (const [key, val] of Object.entries(parsedDefaults)) {
+      if (val) {
+        initialValues[key] = val;
+      }
+    }
+
+    // Apply user saved variables (highest priority - overwrites creator defaults)
+    for (const [key, val] of Object.entries(userSavedVars)) {
+      const upperKey = key.toUpperCase();
+      if (upperKey in initialValues && val) {
+        initialValues[upperKey] = val;
+      }
+    }
+
     // Auto-fill author-related fields from session if user is logged in
+    // Only if not already filled by user saved vars or creator defaults
     if (session?.user) {
       const authorName = session.user.displayName || session.user.name || "";
 
       // Common author field names that templates might use
       const authorFields = [
         "AUTHOR_NAME",
-        "author",
         "AUTHOR",
-        "authorName",
-        "author_name",
       ];
       for (const field of authorFields) {
-        if (!initialValues[field] && authorName) {
+        if (field in initialValues && !initialValues[field] && authorName) {
           initialValues[field] = authorName;
         }
       }
     }
 
     setValues(initialValues);
-  }, [template.variables, session]);
+  }, [template.content, template.variables, userSavedVars, session]);
 
   if (!isOpen) return null;
 
@@ -151,14 +228,24 @@ export function TemplateDownloadModal({
   );
 
   // Process template content with variable substitution
-  // Uses [[VARIABLE]] syntax only
-  const processedContent = Object.entries(values).reduce(
-    (content, [key, value]) => {
-      const regex = new RegExp(`\\[\\[${key}\\]\\]`, "gi");
-      return content.replace(regex, value || `[[${key}]]`);
-    },
-    template.content
-  );
+  // Uses [[VARIABLE]] or [[VARIABLE|default]] syntax
+  const processedContent = (() => {
+    let content = template.content;
+    // Replace all variable patterns (with or without defaults)
+    const regex = /\[\[([A-Za-z_][A-Za-z0-9_]*)(?:\|([^\]]*))?\]\]/g;
+    return content.replace(regex, (match, varName, defaultVal) => {
+      const upperName = varName.toUpperCase();
+      const userValue = values[upperName];
+      // Priority: user-entered value > creator default > keep placeholder
+      if (userValue !== undefined && userValue !== "") {
+        return userValue;
+      }
+      if (defaultVal !== undefined) {
+        return defaultVal;
+      }
+      return `[[${upperName}]]`;
+    });
+  })();
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(processedContent);
@@ -323,30 +410,58 @@ export function TemplateDownloadModal({
                   </div>
                 ))}
                 {/* Then show other variables not in sensitiveFields */}
-                {Object.entries(template.variables || {})
-                  .filter(([key]) => !sensitiveFields[key])
-                  .map(([key, val]) => {
-                    const valObj = val as Record<string, unknown> | string;
-                    const label = typeof valObj === "object" && valObj?.label 
-                      ? (valObj.label as string) 
-                      : key.replace(/_/g, " ");
-                    const placeholder = typeof valObj === "object" && valObj?.default 
-                      ? (valObj.default as string) 
-                      : "";
+                {Object.keys(values)
+                  .filter((key) => !sensitiveFields[key])
+                  .map((key) => {
+                    const creatorDefault = creatorDefaults[key];
+                    const userSaved = userSavedVars[key.toUpperCase()];
+                    const label = key.replace(/_/g, " ");
                     return (
                       <div key={key}>
-                        <label className="mb-1 block text-sm font-medium">
-                          {label}
-                        </label>
-                        <input
-                          type="text"
-                          value={values[key] || ""}
-                          onChange={(e) =>
-                            setValues((v) => ({ ...v, [key]: e.target.value }))
-                          }
-                          placeholder={placeholder}
-                          className="w-full rounded-lg border bg-background px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                        />
+                        <div className="mb-1 flex items-center justify-between">
+                          <label className="block text-sm font-medium">
+                            {label}
+                          </label>
+                          <div className="flex items-center gap-2">
+                            {creatorDefault && !userSaved && (
+                              <span className="text-xs text-muted-foreground">
+                                Creator default
+                              </span>
+                            )}
+                            {userSaved && (
+                              <span className="text-xs text-green-600">
+                                ✓ Saved
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={values[key] || ""}
+                            onChange={(e) =>
+                              setValues((v) => ({ ...v, [key]: e.target.value }))
+                            }
+                            placeholder={creatorDefault || `Enter ${label.toLowerCase()}`}
+                            className="flex-1 rounded-lg border bg-background px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                          />
+                          {session?.user && values[key] && values[key] !== userSaved && (
+                            <button
+                              type="button"
+                              onClick={() => saveVariable(key, values[key])}
+                              disabled={savingVar === key}
+                              className="flex items-center gap-1 rounded-lg border px-2 py-1 text-xs hover:bg-muted transition-colors disabled:opacity-50"
+                              title="Save for future blueprints"
+                            >
+                              {savingVar === key ? (
+                                <span className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                              ) : (
+                                <Save className="h-3 w-3" />
+                              )}
+                              Save
+                            </button>
+                          )}
+                        </div>
                       </div>
                     );
                   })}

@@ -170,7 +170,7 @@ export async function PUT(request: NextRequest) {
         ...(showSkillLevel !== undefined && { showSkillLevel: Boolean(showSkillLevel) }),
         ...(socialGithub !== undefined && { socialGithub: sanitizeSocialLink(socialGithub, "username") }),
         ...(socialTwitter !== undefined && { socialTwitter: sanitizeSocialLink(socialTwitter, "username") }),
-        ...(socialLinkedin !== undefined && { socialLinkedin: sanitizeSocialLink(socialLinkedin, "url") }),
+        ...(socialLinkedin !== undefined && { socialLinkedin: sanitizeSocialLink(socialLinkedin, "username") }),
         ...(socialWebsite !== undefined && { socialWebsite: sanitizeSocialLink(socialWebsite, "url") }),
         ...(socialYoutube !== undefined && { socialYoutube: sanitizeSocialLink(socialYoutube, "url") }),
         ...(socialBluesky !== undefined && { socialBluesky: sanitizeSocialLink(socialBluesky, "username") }),
