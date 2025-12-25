@@ -2,6 +2,9 @@
 
 @plugin "@tailwindcss/typography";
 
+/* Configure Tailwind v4 to use class-based dark mode (for next-themes compatibility) */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   /* Colors using CSS variables */
   --color-background: hsl(var(--background));
