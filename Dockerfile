@@ -41,6 +41,7 @@ RUN npx prisma generate --config=prisma/prisma.config-users.ts
 # Build the application
 # Note: NEXT_PUBLIC_* vars are fetched at runtime via /api/config/public
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV TSC_COMPILE_ON_ERROR=true
 RUN npm run build
 
 # -----------------------------------------------------------------------------

@@ -58,6 +58,9 @@ tmp/
 temp/
 *.tmp
 
+# Generated code
+src/generated/
+
 # Misc
 *.pem
 LICENSE
