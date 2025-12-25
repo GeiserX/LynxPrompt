@@ -6,11 +6,14 @@ import { verifyTurnstileToken } from "@/lib/turnstile";
 
 // Blueprint type options
 const BLUEPRINT_TYPES = [
-  "CURSOR_RULES",
+  "AGENTS_MD",
   "CLAUDE_MD",
   "COPILOT_INSTRUCTIONS",
   "WINDSURF_RULES",
-  "AGENTS_MD",
+  "CLINE_RULES",
+  "CODEX_MD",
+  "CURSOR_RULES",
+  "CURSORRULES", // Legacy - backwards compat
   "CUSTOM",
 ] as const;
 
