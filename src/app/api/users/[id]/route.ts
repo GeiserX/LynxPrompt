@@ -1,5 +1,14 @@
 import { NextResponse } from "next/server";
+import { createHash } from "crypto";
 import { prismaUsers } from "@/lib/db-users";
+
+// Generate Gravatar URL from email (server-side)
+function getGravatarUrl(email: string, size: number = 96): string {
+  const hash = createHash("md5")
+    .update(email.toLowerCase().trim())
+    .digest("hex");
+  return `https://www.gravatar.com/avatar/${hash}?s=${size}&d=identicon`;
+}
 
 // GET /api/users/[id] - Get public user profile
 export async function GET(
@@ -16,6 +25,7 @@ export async function GET(
         id: true,
         displayName: true,
         name: true,
+        email: true, // Needed for Gravatar fallback (not exposed to client)
         image: true,
         persona: true,
         skillLevel: true,
@@ -76,10 +86,13 @@ export async function GET(
     }
 
     // Profile is public - return allowed fields
+    // Use OAuth image if available, otherwise generate Gravatar from email
+    const profileImage = user.image || (user.email ? getGravatarUrl(user.email) : null);
+    
     const publicProfile = {
       id: user.id,
       displayName: user.displayName || user.name || "Anonymous",
-      image: user.image,
+      image: profileImage,
       isProfilePublic: true,
       // Only include job title if user opted in
       persona: user.showJobTitle ? user.persona : null,
