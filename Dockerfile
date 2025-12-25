@@ -21,8 +21,8 @@ FROM base AS deps
 # Copy package files
 COPY package.json package-lock.json* ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies (--legacy-peer-deps for @sentry/nextjs compatibility with Next.js 16)
+RUN npm install --legacy-peer-deps
 
 # -----------------------------------------------------------------------------
 # Builder stage - build the application

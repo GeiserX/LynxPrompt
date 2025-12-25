@@ -358,6 +358,28 @@ export const authOptions: NextAuthOptions = {
       return baseUrl;
     },
   },
+  events: {
+    // Log consent timestamp when new user is created
+    // Since the sign-in page requires accepting Terms + Privacy checkbox,
+    // any new user creation means consent was given
+    async createUser({ user }) {
+      const now = new Date();
+      const termsVersion = "2025-12"; // Must match sign-in page version
+      const privacyVersion = "2025-12";
+      
+      await prismaUsers.user.update({
+        where: { id: user.id },
+        data: {
+          termsAcceptedAt: now,
+          termsVersion: termsVersion,
+          privacyAcceptedAt: now,
+          privacyVersion: privacyVersion,
+        },
+      });
+      
+      console.log(`[Auth] Consent logged for new user ${user.id} at ${now.toISOString()}, Terms v${termsVersion}, Privacy v${privacyVersion}`);
+    },
+  },
   session: {
     strategy: "database",
     maxAge: 30 * 24 * 60 * 60, // 30 days

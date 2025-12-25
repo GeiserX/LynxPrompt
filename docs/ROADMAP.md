@@ -566,6 +566,7 @@ POST   /api/generate               - Generate config files from wizard data
 - [ ] Mobile responsiveness improvements
 - [ ] Dark mode refinements
 - [ ] Fix unused import warnings
+- [ ] **Remove `--legacy-peer-deps` from npm install**: Currently required because `@sentry/nextjs` doesn't support Next.js 16 yet (peer dependency conflict). Once Sentry releases a version supporting Next.js 16, update `@sentry/nextjs` and remove `--legacy-peer-deps` from both local install commands and the Dockerfile
 
 ---
 
