@@ -69,6 +69,10 @@ export default function ShareBlueprintPage() {
   const [userPlan, setUserPlan] = useState<string>("FREE");
   const [loadingPlan, setLoadingPlan] = useState(true);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  
+  // Server-side sensitive data detection
+  const [serverSensitiveData, setServerSensitiveData] = useState<SensitiveMatch[] | null>(null);
+  const [showServerSensitiveModal, setShowServerSensitiveModal] = useState(false);
 
   // Check for pre-populated content from wizard
   useEffect(() => {
@@ -197,21 +201,7 @@ export default function ShareBlueprintPage() {
   // Turnstile is disabled for blueprint creation (only used on sign-in)
   const requiresTurnstile = false;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Check for sensitive data warnings
-    if (hasSensitiveData) {
-      setError("Please review the sensitive data warning below before submitting.");
-      return;
-    }
-
-    // Check for turnstile token for FREE users
-    if (requiresTurnstile && !turnstileToken) {
-      setError("Please complete the security verification below.");
-      return;
-    }
-    
+  const submitBlueprint = async (acknowledgedSensitiveData: boolean = false) => {
     setError(null);
     setIsSubmitting(true);
 
@@ -231,10 +221,19 @@ export default function ShareBlueprintPage() {
           currency: "EUR",
           showcaseUrl: showcaseUrl.trim() || null,
           turnstileToken: requiresTurnstile ? turnstileToken : undefined,
+          sensitiveDataAcknowledged: acknowledgedSensitiveData,
         }),
       });
 
       const data = await response.json();
+
+      // Handle server-side sensitive data detection (409 Conflict)
+      if (response.status === 409 && data.requiresAcknowledgment) {
+        setServerSensitiveData(data.sensitiveData);
+        setShowServerSensitiveModal(true);
+        setIsSubmitting(false);
+        return;
+      }
 
       if (!response.ok) {
         throw new Error(data.error || "Failed to create blueprint");
@@ -246,6 +245,31 @@ export default function ShareBlueprintPage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Check for client-side sensitive data warnings first
+    if (hasSensitiveData) {
+      setError("Please review the sensitive data warning below before submitting.");
+      return;
+    }
+
+    // Check for turnstile token for FREE users
+    if (requiresTurnstile && !turnstileToken) {
+      setError("Please complete the security verification below.");
+      return;
+    }
+    
+    await submitBlueprint(false);
+  };
+
+  // Handle acknowledgment from server-side sensitive data modal
+  const handleServerSensitiveAcknowledge = async () => {
+    setShowServerSensitiveModal(false);
+    setServerSensitiveData(null);
+    await submitBlueprint(true);
   };
 
   if (status === "loading") {
@@ -300,6 +324,86 @@ export default function ShareBlueprintPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
+      {/* Server-side Sensitive Data Warning Modal */}
+      {showServerSensitiveModal && serverSensitiveData && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-hidden rounded-2xl bg-background shadow-2xl">
+            {/* Modal Header */}
+            <div className="flex items-center gap-3 border-b bg-yellow-50 px-6 py-4 dark:bg-yellow-900/20">
+              <AlertTriangle className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+              <div>
+                <h2 className="text-lg font-semibold text-yellow-800 dark:text-yellow-200">
+                  Sensitive Data Detected
+                </h2>
+                <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                  Our server detected potential sensitive information
+                </p>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="max-h-[50vh] overflow-y-auto p-6">
+              <p className="mb-4 text-sm text-muted-foreground">
+                We found <strong>{serverSensitiveData.length}</strong> item{serverSensitiveData.length > 1 ? 's' : ''} that 
+                might contain passwords, API keys, or other sensitive information. 
+                This blueprint will be <strong>publicly visible</strong>.
+              </p>
+              
+              <div className="space-y-2">
+                {serverSensitiveData.map((match, i) => (
+                  <div key={i} className="rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-3 dark:border-yellow-700 dark:bg-yellow-900/30">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                        Line {match.line} — {match.type}
+                      </span>
+                    </div>
+                    <code className="mt-1 block text-xs text-yellow-700 dark:text-yellow-300 break-all">
+                      {match.snippet}
+                    </code>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 rounded-lg border bg-muted/50 p-4">
+                <p className="text-sm text-muted-foreground">
+                  <strong>Note:</strong> If these are false positives (e.g., example placeholders, 
+                  documentation patterns), you can safely proceed. Otherwise, please go back and 
+                  remove sensitive data before sharing publicly.
+                </p>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end gap-3 border-t px-6 py-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowServerSensitiveModal(false);
+                  setServerSensitiveData(null);
+                }}
+              >
+                Go Back & Edit
+              </Button>
+              <Button
+                variant="default"
+                className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                onClick={handleServerSensitiveAcknowledge}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Publishing...
+                  </>
+                ) : (
+                  "I've Reviewed, Publish Anyway"
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">

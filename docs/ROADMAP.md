@@ -211,6 +211,12 @@ Per EU Consumer Rights Directive, digital content can waive 14-day withdrawal IF
 - [ ] Payout requests and history
 - [x] **My Templates section** - list of user's shared templates with stats
 
+#### Security Enhancements
+
+- [ ] **Passkey 2FA on new locations/devices**: Require passkey verification when logging in from a new browser, IP, or device (same browser/IP/device skips 2FA)
+- [ ] Device/location tracking for 2FA decisions
+- [ ] Session management (view and revoke active sessions)
+
 ### Template Sharing & Selling
 
 #### Who Can Share Templates
@@ -728,5 +734,5 @@ npx lynxprompt init  # Download and place config in current directory
 - ~~Use gravatar for emails~~ ✅ DONE
 - DMCA/copyright complaints process
 - Bank transfer payouts (via Stripe Connect)
-- Crypto payments (Coinbase Commerce / NOWPayments)
+- **Cryptocurrency payments (Bitcoin, Ethereum, USDC) via Coinbase Commerce** - Coming soon
 - MULTILANG (only when future, not now, otherwise it's a mess)

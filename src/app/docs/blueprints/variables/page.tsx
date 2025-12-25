@@ -271,6 +271,11 @@ Slack channel: #[[SLACK_CHANNEL|dev-team]]`}</code>
                 [[projectName]]
               </code>
             </p>
+            <p className="mt-2 text-xs text-muted-foreground italic">
+              Note: Lowercase variables are automatically converted to uppercase internally, 
+              so <code className="rounded bg-muted px-1 py-0.5 text-xs">[[myVar]]</code> and{" "}
+              <code className="rounded bg-muted px-1 py-0.5 text-xs">[[MYVAR]]</code> are treated identically.
+            </p>
           </div>
           <div className="rounded-lg border bg-card p-4">
             <h3 className="font-medium">Be Descriptive</h3>

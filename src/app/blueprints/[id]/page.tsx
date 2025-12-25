@@ -21,6 +21,7 @@ import {
   Pencil,
   Files,
   Loader2,
+  Trash2,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
@@ -173,6 +174,8 @@ export default function BlueprintDetailPage() {
 
   const [purchasing, setPurchasing] = useState(false);
   const [cloning, setCloning] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleCloneToEdit = async () => {
     if (!session?.user) {
@@ -299,6 +302,35 @@ export default function BlueprintDetailPage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!session?.user || !blueprint?.isOwner) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/blueprints/${params.id}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        // Redirect to blueprints page after deletion
+        router.push("/blueprints");
+      } else {
+        alert(data.error || "Failed to delete blueprint");
+        setShowDeleteConfirm(false);
+      }
+    } catch (error) {
+      console.error("Delete error:", error);
+      alert("Failed to delete blueprint. Please try again.");
+      setShowDeleteConfirm(false);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -391,12 +423,23 @@ export default function BlueprintDetailPage() {
                 ) : (
                   <div className="flex flex-wrap gap-2">
                     {blueprint.isOwner ? (
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/blueprints/${params.id}/edit`}>
-                          <Pencil className="mr-2 h-4 w-4" />
-                          Edit
-                        </Link>
-                      </Button>
+                      <>
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={`/blueprints/${params.id}/edit`}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Edit
+                          </Link>
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => setShowDeleteConfirm(true)}
+                          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </Button>
+                      </>
                     ) : (
                       <Button 
                         variant="outline" 
@@ -620,6 +663,44 @@ export default function BlueprintDetailPage() {
             compatibleWith: blueprint.compatibleWith,
           }}
         />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="mx-4 w-full max-w-md rounded-lg bg-background p-6 shadow-xl">
+            <h3 className="text-lg font-semibold">Delete Blueprint</h3>
+            <p className="mt-2 text-muted-foreground">
+              Are you sure you want to delete &quot;{blueprint.name}&quot;? This action cannot be undone.
+            </p>
+            <div className="mt-4 flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={deleting}
+              >
+                {deleting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

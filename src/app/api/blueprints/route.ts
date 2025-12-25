@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { verifyTurnstileToken } from "@/lib/turnstile";
+import { detectSensitiveData, type SensitiveMatch } from "@/lib/sensitive-data";
 
 // Blueprint type options
 const BLUEPRINT_TYPES = [
@@ -261,6 +262,7 @@ export async function POST(request: NextRequest) {
       currency = "EUR",
       showcaseUrl,
       turnstileToken,
+      sensitiveDataAcknowledged = false, // User acknowledged sensitive data warning
     } = body;
 
     // Fetch user plan to check if turnstile verification is needed
@@ -342,6 +344,23 @@ export async function POST(request: NextRequest) {
 
     // Auto-determine tier based on EFFECTIVE content lines
     const tier = determineTier(content);
+
+    // Check for sensitive data in public blueprints
+    // Only block if user hasn't acknowledged the warning
+    if (isPublic && !sensitiveDataAcknowledged) {
+      const sensitiveMatches = detectSensitiveData(content);
+      if (sensitiveMatches.length > 0) {
+        return NextResponse.json(
+          {
+            error: "Sensitive data detected",
+            requiresAcknowledgment: true,
+            sensitiveData: sensitiveMatches,
+            message: `Found ${sensitiveMatches.length} potential sensitive item(s). Please review and confirm you want to proceed.`,
+          },
+          { status: 409 } // Conflict - requires user action
+        );
+      }
+    }
 
     // Validate price if provided (minimum €5 = 500 cents)
     let validatedPrice: number | null = null;
