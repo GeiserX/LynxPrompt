@@ -45,21 +45,29 @@ export async function GET(request: NextRequest) {
       where.status = status;
     }
 
-    // Build orderBy
-    let orderBy: Record<string, string>[];
+    // Define closed statuses that should go to bottom
+    const CLOSED_STATUSES = ["CLOSED", "COMPLETED", "DUPLICATE"];
+
+    // Build orderBy - for "newest" sort, don't push closed items to bottom
+    // For other sorts, push closed items to the end
+    let orderBy: Record<string, unknown>[];
     switch (sortBy) {
       case "newest":
+        // When sorting by newest, maintain chronological order for all statuses
         orderBy = [{ isPinned: "desc" }, { createdAt: "desc" }];
         break;
       case "oldest":
+        // Push closed statuses to bottom, then sort by oldest first
         orderBy = [{ isPinned: "desc" }, { createdAt: "asc" }];
         break;
       case "votes":
       default:
+        // Push closed statuses to bottom, then sort by votes
         orderBy = [{ isPinned: "desc" }, { voteCount: "desc" }, { createdAt: "desc" }];
     }
 
-    const [posts, total] = await Promise.all([
+    // Fetch posts with standard ordering
+    const [allPosts, total] = await Promise.all([
       prismaSupport.supportPost.findMany({
         where,
         orderBy,
@@ -79,6 +87,15 @@ export async function GET(request: NextRequest) {
       }),
       prismaSupport.supportPost.count({ where }),
     ]);
+
+    // For non-newest sorts, reorder to push closed statuses to bottom
+    // This is done client-side for the current page to maintain pagination
+    let posts = allPosts;
+    if (sortBy !== "newest") {
+      const activePosts = allPosts.filter((p) => !CLOSED_STATUSES.includes(p.status));
+      const closedPosts = allPosts.filter((p) => CLOSED_STATUSES.includes(p.status));
+      posts = [...activePosts, ...closedPosts];
+    }
 
     // Check if user has voted on each post
     const postIds = posts.map((p) => p.id);

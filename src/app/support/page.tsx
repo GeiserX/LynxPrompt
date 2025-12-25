@@ -15,6 +15,7 @@ import {
   Lightbulb,
   HelpCircle,
   ChevronUp,
+  ChevronDown,
   Clock,
   TrendingUp,
   Pin,
@@ -26,6 +27,7 @@ import {
   Filter,
   Search,
   Trash2,
+  X,
 } from "lucide-react";
 
 interface Category {
@@ -105,6 +107,11 @@ function SupportPageContent() {
   const [loading, setLoading] = useState(true);
   const [voting, setVoting] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [statusMenuOpen, setStatusMenuOpen] = useState<string | null>(null);
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(
+    searchParams.get("status")
+  );
 
   const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "SUPERADMIN";
 
@@ -139,7 +146,7 @@ function SupportPageContent() {
     if (sessionStatus === "authenticated") {
       fetchPosts();
     }
-  }, [selectedCategory, selectedTag, sortBy, sessionStatus]);
+  }, [selectedCategory, selectedTag, selectedStatus, sortBy, sessionStatus]);
 
   async function fetchData() {
     try {
@@ -170,6 +177,7 @@ function SupportPageContent() {
       const params = new URLSearchParams();
       if (selectedCategory) params.set("category", selectedCategory);
       if (selectedTag) params.set("tag", selectedTag);
+      if (selectedStatus) params.set("status", selectedStatus);
       params.set("sort", sortBy);
       params.set("page", "1");
 
@@ -226,10 +234,35 @@ function SupportPageContent() {
     }
   }
 
-  function updateUrl(category: string | null, tag: string | null, sort: string) {
+  async function handleStatusChange(postId: string, newStatus: string) {
+    setUpdatingStatus(postId);
+    try {
+      const res = await fetch(`/api/support/admin/posts/${postId}/status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPosts((prev) =>
+          prev.map((p) =>
+            p.id === postId ? { ...p, status: data.status } : p
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error updating status:", error);
+    } finally {
+      setUpdatingStatus(null);
+      setStatusMenuOpen(null);
+    }
+  }
+
+  function updateUrl(category: string | null, tag: string | null, status: string | null, sort: string) {
     const params = new URLSearchParams();
     if (category) params.set("category", category);
     if (tag) params.set("tag", tag);
+    if (status) params.set("status", status);
     params.set("sort", sort);
     router.push(`/support?${params}`);
   }
@@ -341,7 +374,7 @@ function SupportPageContent() {
               <button
                 onClick={() => {
                   setSelectedCategory(null);
-                  updateUrl(null, selectedTag, sortBy);
+                  updateUrl(null, selectedTag, selectedStatus, sortBy);
                 }}
                 className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                   !selectedCategory
@@ -356,7 +389,7 @@ function SupportPageContent() {
                   key={cat.id}
                   onClick={() => {
                     setSelectedCategory(cat.slug);
-                    updateUrl(cat.slug, selectedTag, sortBy);
+                    updateUrl(cat.slug, selectedTag, selectedStatus, sortBy);
                   }}
                   className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                     selectedCategory === cat.slug
@@ -370,6 +403,76 @@ function SupportPageContent() {
               ))}
             </div>
 
+            {/* Status Filter */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Status:</span>
+              <div className="relative">
+                <button
+                  onClick={() => setStatusMenuOpen(statusMenuOpen === "filter" ? null : "filter")}
+                  className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm transition-colors ${
+                    selectedStatus ? "border-primary bg-primary/10" : "hover:bg-muted"
+                  }`}
+                >
+                  {selectedStatus ? (
+                    <>
+                      {STATUS_BADGES[selectedStatus]?.icon}
+                      <span>{STATUS_BADGES[selectedStatus]?.label}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Filter className="h-3.5 w-3.5" />
+                      <span>All</span>
+                    </>
+                  )}
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </button>
+                {statusMenuOpen === "filter" && (
+                  <div className="absolute right-0 top-full z-10 mt-1 w-40 rounded-lg border bg-popover p-1 shadow-lg">
+                    <button
+                      onClick={() => {
+                        setSelectedStatus(null);
+                        updateUrl(selectedCategory, selectedTag, null, sortBy);
+                        setStatusMenuOpen(null);
+                      }}
+                      className={`flex w-full items-center gap-2 rounded px-3 py-2 text-sm hover:bg-muted ${
+                        !selectedStatus ? "bg-muted" : ""
+                      }`}
+                    >
+                      All Statuses
+                    </button>
+                    {Object.entries(STATUS_BADGES).map(([key, badge]) => (
+                      <button
+                        key={key}
+                        onClick={() => {
+                          setSelectedStatus(key);
+                          updateUrl(selectedCategory, selectedTag, key, sortBy);
+                          setStatusMenuOpen(null);
+                        }}
+                        className={`flex w-full items-center gap-2 rounded px-3 py-2 text-sm hover:bg-muted ${
+                          selectedStatus === key ? "bg-muted" : ""
+                        }`}
+                      >
+                        {badge.icon}
+                        {badge.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {selectedStatus && (
+                <button
+                  onClick={() => {
+                    setSelectedStatus(null);
+                    updateUrl(selectedCategory, selectedTag, null, sortBy);
+                  }}
+                  className="rounded p-1 hover:bg-muted"
+                  title="Clear status filter"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+
             {/* Sort */}
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Sort by:</span>
@@ -377,7 +480,7 @@ function SupportPageContent() {
                 <button
                   onClick={() => {
                     setSortBy("votes");
-                    updateUrl(selectedCategory, selectedTag, "votes");
+                    updateUrl(selectedCategory, selectedTag, selectedStatus, "votes");
                   }}
                   className={`flex items-center gap-1 rounded px-2 py-1 text-sm transition-colors ${
                     sortBy === "votes" ? "bg-primary text-primary-foreground" : "hover:bg-muted"
@@ -389,7 +492,7 @@ function SupportPageContent() {
                 <button
                   onClick={() => {
                     setSortBy("newest");
-                    updateUrl(selectedCategory, selectedTag, "newest");
+                    updateUrl(selectedCategory, selectedTag, selectedStatus, "newest");
                   }}
                   className={`flex items-center gap-1 rounded px-2 py-1 text-sm transition-colors ${
                     sortBy === "newest" ? "bg-primary text-primary-foreground" : "hover:bg-muted"
@@ -520,15 +623,55 @@ function SupportPageContent() {
                           )}
                         </div>
 
-                        {/* Status & Admin Delete */}
+                        {/* Status & Admin Controls */}
                         <div className="flex items-center gap-2">
-                          {STATUS_BADGES[post.status] && (
-                            <span
-                              className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${STATUS_BADGES[post.status].className}`}
-                            >
-                              {STATUS_BADGES[post.status].icon}
-                              {STATUS_BADGES[post.status].label}
-                            </span>
+                          {isAdmin ? (
+                            <div className="relative">
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setStatusMenuOpen(statusMenuOpen === post.id ? null : post.id);
+                                }}
+                                disabled={updatingStatus === post.id}
+                                className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium transition-colors hover:ring-2 hover:ring-primary/20 ${STATUS_BADGES[post.status]?.className}`}
+                              >
+                                {updatingStatus === post.id ? (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  STATUS_BADGES[post.status]?.icon
+                                )}
+                                {STATUS_BADGES[post.status]?.label}
+                                <ChevronDown className="h-3 w-3" />
+                              </button>
+                              {statusMenuOpen === post.id && (
+                                <div className="absolute right-0 top-full z-10 mt-1 w-36 rounded-lg border bg-popover p-1 shadow-lg">
+                                  {Object.entries(STATUS_BADGES).map(([key, badge]) => (
+                                    <button
+                                      key={key}
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        handleStatusChange(post.id, key);
+                                      }}
+                                      className={`flex w-full items-center gap-2 rounded px-3 py-1.5 text-xs hover:bg-muted ${
+                                        post.status === key ? "bg-muted" : ""
+                                      }`}
+                                    >
+                                      {badge.icon}
+                                      {badge.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            STATUS_BADGES[post.status] && (
+                              <span
+                                className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${STATUS_BADGES[post.status].className}`}
+                              >
+                                {STATUS_BADGES[post.status].icon}
+                                {STATUS_BADGES[post.status].label}
+                              </span>
+                            )
                           )}
                           {isAdmin && (
                             <button
