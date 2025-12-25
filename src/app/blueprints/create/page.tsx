@@ -66,6 +66,7 @@ export default function ShareBlueprintPage() {
     null
   );
   const [sensitiveWarningDismissed, setSensitiveWarningDismissed] = useState(false);
+  const [acknowledgedSensitiveSignature, setAcknowledgedSensitiveSignature] = useState<string | null>(null);
   const [userPlan, setUserPlan] = useState<string>("FREE");
   const [loadingPlan, setLoadingPlan] = useState(true);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
@@ -123,6 +124,20 @@ export default function ShareBlueprintPage() {
     if (!content.trim()) return [];
     return detectSensitiveData(content);
   }, [content]);
+
+  // Generate a signature of current sensitive matches to detect changes
+  const sensitiveSignature = useMemo(() => {
+    if (sensitiveMatches.length === 0) return '';
+    return sensitiveMatches.map(m => `${m.line}:${m.type}:${m.snippet}`).join('|');
+  }, [sensitiveMatches]);
+
+  // Reset acknowledgment if sensitive data changes (new items detected)
+  useEffect(() => {
+    if (sensitiveWarningDismissed && acknowledgedSensitiveSignature !== sensitiveSignature) {
+      setSensitiveWarningDismissed(false);
+      setAcknowledgedSensitiveSignature(null);
+    }
+  }, [sensitiveSignature, sensitiveWarningDismissed, acknowledgedSensitiveSignature]);
 
   // Detect template variables [[VARIABLE_NAME]]
   const detectedVariables = useMemo<string[]>(() => {
@@ -814,51 +829,99 @@ export default function ShareBlueprintPage() {
 
               {/* Sensitive Data Warning */}
               {sensitiveMatches.length > 0 && (
-                <div className="rounded-xl border border-yellow-300 bg-yellow-50 p-6 dark:border-yellow-700 dark:bg-yellow-900/20">
+                <div className={`rounded-xl border p-6 transition-colors ${
+                  sensitiveWarningDismissed
+                    ? 'border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-900/20'
+                    : 'border-yellow-300 bg-yellow-50 dark:border-yellow-700 dark:bg-yellow-900/20'
+                }`}>
                   <div className="flex items-start gap-3">
-                    <AlertTriangle className="h-6 w-6 flex-shrink-0 text-yellow-600 dark:text-yellow-400" />
+                    {sensitiveWarningDismissed ? (
+                      <CheckCircle2 className="h-6 w-6 flex-shrink-0 text-green-600 dark:text-green-400" />
+                    ) : (
+                      <AlertTriangle className="h-6 w-6 flex-shrink-0 text-yellow-600 dark:text-yellow-400" />
+                    )}
                     <div className="flex-1">
-                      <h3 className="font-semibold text-yellow-800 dark:text-yellow-200">
-                        Potential Sensitive Data Detected
+                      <h3 className={`font-semibold ${
+                        sensitiveWarningDismissed
+                          ? 'text-green-800 dark:text-green-200'
+                          : 'text-yellow-800 dark:text-yellow-200'
+                      }`}>
+                        {sensitiveWarningDismissed
+                          ? 'Sensitive Data Warning Acknowledged'
+                          : 'Potential Sensitive Data Detected'}
                       </h3>
-                      <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
-                        We found {sensitiveMatches.length} item{sensitiveMatches.length > 1 ? 's' : ''} that 
-                        might contain passwords, API keys, or other sensitive information. 
-                        Please review before sharing publicly.
+                      <p className={`mt-1 text-sm ${
+                        sensitiveWarningDismissed
+                          ? 'text-green-700 dark:text-green-300'
+                          : 'text-yellow-700 dark:text-yellow-300'
+                      }`}>
+                        {sensitiveWarningDismissed
+                          ? `You've confirmed reviewing ${sensitiveMatches.length} potential sensitive item${sensitiveMatches.length > 1 ? 's' : ''}. You can proceed with creating the blueprint.`
+                          : `We found ${sensitiveMatches.length} item${sensitiveMatches.length > 1 ? 's' : ''} that might contain passwords, API keys, or other sensitive information. Please review before sharing publicly.`}
                       </p>
                       
                       <div className="mt-3 space-y-2">
-                        {sensitiveMatches.slice(0, 5).map((match, i) => (
-                          <div key={i} className="rounded bg-yellow-100 px-3 py-2 text-xs dark:bg-yellow-800/30">
-                            <span className="font-medium text-yellow-800 dark:text-yellow-200">
-                              Line {match.line} - {match.type}:
+                        {sensitiveMatches.map((match, i) => (
+                          <div key={i} className={`rounded px-3 py-2 text-xs ${
+                            sensitiveWarningDismissed
+                              ? 'bg-green-100 dark:bg-green-800/30'
+                              : 'bg-yellow-100 dark:bg-yellow-800/30'
+                          }`}>
+                            <span className={`font-medium ${
+                              sensitiveWarningDismissed
+                                ? 'text-green-800 dark:text-green-200'
+                                : 'text-yellow-800 dark:text-yellow-200'
+                            }`}>
+                              Line {match.line} — {match.type}:
                             </span>
-                            <code className="ml-2 text-yellow-700 dark:text-yellow-300">
+                            <code className={`ml-2 ${
+                              sensitiveWarningDismissed
+                                ? 'text-green-700 dark:text-green-300'
+                                : 'text-yellow-700 dark:text-yellow-300'
+                            }`}>
                               {match.snippet}
                             </code>
                           </div>
                         ))}
-                        {sensitiveMatches.length > 5 && (
-                          <p className="text-xs text-yellow-600">
-                            ...and {sensitiveMatches.length - 5} more
-                          </p>
-                        )}
                       </div>
 
-                      <div className="mt-4 flex items-center gap-3">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSensitiveWarningDismissed(true)}
-                          className="border-yellow-400 text-yellow-700 hover:bg-yellow-100 dark:border-yellow-600 dark:text-yellow-300"
-                        >
-                          I&apos;ve reviewed this, proceed anyway
-                        </Button>
-                        <span className="text-xs text-yellow-600 dark:text-yellow-400">
-                          or edit your content to remove sensitive data
-                        </span>
-                      </div>
+                      {sensitiveWarningDismissed ? (
+                        <div className="mt-4 flex items-center gap-3">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSensitiveWarningDismissed(false);
+                              setAcknowledgedSensitiveSignature(null);
+                            }}
+                            className="border-green-400 text-green-700 hover:bg-green-100 dark:border-green-600 dark:text-green-300"
+                          >
+                            Undo acknowledgment
+                          </Button>
+                          <span className="text-xs text-green-600 dark:text-green-400">
+                            if you want to edit the content first
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="mt-4 flex items-center gap-3">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSensitiveWarningDismissed(true);
+                              setAcknowledgedSensitiveSignature(sensitiveSignature);
+                            }}
+                            className="border-yellow-400 text-yellow-700 hover:bg-yellow-100 dark:border-yellow-600 dark:text-yellow-300"
+                          >
+                            I&apos;ve reviewed this, proceed anyway
+                          </Button>
+                          <span className="text-xs text-yellow-600 dark:text-yellow-400">
+                            or edit your content to remove sensitive data
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

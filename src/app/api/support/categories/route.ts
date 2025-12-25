@@ -1,15 +1,9 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismaSupport } from "@/lib/db-support";
 
+// Public endpoint - no auth required
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const categories = await prismaSupport.supportCategory.findMany({
       where: { isActive: true },
       orderBy: { order: "asc" },

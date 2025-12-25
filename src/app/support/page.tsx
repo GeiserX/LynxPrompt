@@ -132,18 +132,15 @@ function SupportPageContent() {
   const [newPostType, setNewPostType] = useState<"bug" | "feature" | "question" | "feedback" | null>(null);
 
   useEffect(() => {
-    if (sessionStatus === "unauthenticated") {
-      router.push("/auth/signin?callbackUrl=/support");
-      return;
-    }
-
-    if (sessionStatus === "authenticated") {
+    // Load data regardless of auth status - support page is public
+    if (sessionStatus !== "loading") {
       fetchData();
     }
-  }, [sessionStatus, router]);
+  }, [sessionStatus]);
 
   useEffect(() => {
-    if (sessionStatus === "authenticated") {
+    // Fetch posts when filters change (regardless of auth)
+    if (sessionStatus !== "loading") {
       fetchPosts();
     }
   }, [selectedCategory, selectedTag, selectedStatus, sortBy, sessionStatus]);
@@ -275,9 +272,14 @@ function SupportPageContent() {
     );
   }
 
-  if (sessionStatus === "unauthenticated") {
-    return null;
-  }
+  // Helper to handle auth-required actions
+  const handleAuthAction = (action: () => void) => {
+    if (sessionStatus === "unauthenticated") {
+      router.push("/auth/signin?callbackUrl=/support");
+    } else {
+      action();
+    }
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -318,10 +320,10 @@ function SupportPageContent() {
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Button
-                onClick={() => {
+                onClick={() => handleAuthAction(() => {
                   setNewPostType("bug");
                   setShowNewPostModal(true);
-                }}
+                })}
                 variant="outline"
                 className="gap-2 border-red-500/50 text-red-600 hover:bg-red-500/10 dark:text-red-400"
               >
@@ -329,20 +331,20 @@ function SupportPageContent() {
                 Report a Bug
               </Button>
               <Button
-                onClick={() => {
+                onClick={() => handleAuthAction(() => {
                   setNewPostType("feature");
                   setShowNewPostModal(true);
-                }}
+                })}
                 className="gap-2"
               >
                 <Lightbulb className="h-4 w-4" />
                 Suggest a Feature
               </Button>
               <Button
-                onClick={() => {
+                onClick={() => handleAuthAction(() => {
                   setNewPostType("question");
                   setShowNewPostModal(true);
-                }}
+                })}
                 variant="outline"
                 className="gap-2 border-blue-500/50 text-blue-600 hover:bg-blue-500/10 dark:text-blue-400"
               >
@@ -350,10 +352,10 @@ function SupportPageContent() {
                 Ask a Question
               </Button>
               <Button
-                onClick={() => {
+                onClick={() => handleAuthAction(() => {
                   setNewPostType("feedback");
                   setShowNewPostModal(true);
-                }}
+                })}
                 variant="outline"
                 className="gap-2 border-green-500/50 text-green-600 hover:bg-green-500/10 dark:text-green-400"
               >
@@ -518,10 +520,10 @@ function SupportPageContent() {
                 Be the first to share feedback or report a bug!
               </p>
               <Button
-                onClick={() => {
+                onClick={() => handleAuthAction(() => {
                   setNewPostType("feature");
                   setShowNewPostModal(true);
-                }}
+                })}
                 className="mt-4"
               >
                 Create Post
@@ -539,7 +541,7 @@ function SupportPageContent() {
                   <div className="flex items-start gap-4 p-4">
                     {/* Vote button */}
                     <button
-                      onClick={() => handleVote(post.id)}
+                      onClick={() => handleAuthAction(() => handleVote(post.id))}
                       disabled={voting === post.id}
                       className={`flex flex-col items-center rounded-lg border px-3 py-2 transition-colors ${
                         post.hasVoted

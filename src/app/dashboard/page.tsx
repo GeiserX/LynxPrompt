@@ -307,7 +307,7 @@ export default function DashboardPage() {
       {/* Delete Blueprint Confirmation Modal */}
       {deleteModalTemplate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="mx-4 w-full max-w-md rounded-xl bg-background p-6 shadow-xl">
+          <div className="mx-4 w-full max-w-md rounded-xl bg-background p-6 shadow-xl text-foreground">
             <h3 className="text-lg font-bold text-destructive">Delete Blueprint?</h3>
             <p className="mt-2 text-sm text-muted-foreground">
               Are you sure you want to delete &quot;{deleteModalTemplate.name}&quot;? This action cannot be undone.

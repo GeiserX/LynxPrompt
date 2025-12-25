@@ -3,15 +3,14 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaSupport } from "@/lib/db-support";
 
+// Public endpoint - no auth required for reading
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Session is optional - used only for hasVoted status
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     const { id } = await params;
 
@@ -40,19 +39,23 @@ export async function GET(
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    // Check if user has voted
-    const vote = await prismaSupport.supportVote.findUnique({
-      where: {
-        postId_userId: {
-          postId: id,
-          userId: session.user.id,
+    // Check if user has voted (only if authenticated)
+    let hasVoted = false;
+    if (session?.user?.id) {
+      const vote = await prismaSupport.supportVote.findUnique({
+        where: {
+          postId_userId: {
+            postId: id,
+            userId: session.user.id,
+          },
         },
-      },
-    });
+      });
+      hasVoted = !!vote;
+    }
 
     return NextResponse.json({
       ...post,
-      hasVoted: !!vote,
+      hasVoted,
     });
   } catch (error) {
     console.error("Error fetching post:", error);
