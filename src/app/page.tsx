@@ -10,36 +10,14 @@ import {
   Users,
 } from "lucide-react";
 import { AgentsMarquee } from "@/components/agents-marquee";
-import { Logo } from "@/components/logo";
-import { UserMenu } from "@/components/user-menu";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
 
 export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Logo />
-          <nav className="flex items-center gap-4">
-            <Link href="/pricing" className="text-sm hover:underline">
-              Pricing
-            </Link>
-            <Link href="/blueprints" className="text-sm hover:underline">
-              Blueprints
-            </Link>
-            <Link href="/docs" className="text-sm hover:underline">
-              Docs
-            </Link>
-            <Link href="/blog" className="text-sm hover:underline">
-              Blog
-            </Link>
-            <ThemeToggle />
-            <UserMenu />
-          </nav>
-        </div>
-      </header>
+      <PageHeader showBreadcrumb={false} />
 
       {/* Hero Section */}
       <section className="container mx-auto flex flex-col items-center justify-center gap-8 px-4 py-16 text-center sm:px-6 lg:px-8">
