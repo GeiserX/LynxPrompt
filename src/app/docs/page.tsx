@@ -17,66 +17,7 @@ import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Footer } from "@/components/footer";
-
-// IDE Logos - Row 1
-function LogoMarqueeRow() {
-  const logos = [
-    { name: "Cursor", color: "bg-blue-500" },
-    { name: "Claude Code", color: "bg-orange-500" },
-    { name: "GitHub Copilot", color: "bg-gray-700" },
-    { name: "Windsurf", color: "bg-teal-500" },
-    { name: "VS Code", color: "bg-blue-600" },
-    { name: "Aider", color: "bg-green-500" },
-    { name: "RooCode", color: "bg-purple-500" },
-    { name: "Codex", color: "bg-emerald-600" },
-  ];
-  
-  return (
-    <div className="flex shrink-0 items-center gap-6">
-      {logos.map((logo, i) => (
-        <div
-          key={`${logo.name}-${i}`}
-          className="flex shrink-0 items-center gap-2.5 rounded-lg border bg-background px-4 py-2"
-        >
-          <div className={`h-6 w-6 rounded ${logo.color} flex items-center justify-center text-xs font-bold text-white`}>
-            {logo.name.charAt(0)}
-          </div>
-          <span className="text-sm font-medium">{logo.name}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// IDE Logos - Row 2
-function LogoMarqueeRow2() {
-  const logos = [
-    { name: "Zed", color: "bg-amber-500" },
-    { name: "JetBrains", color: "bg-pink-600" },
-    { name: "Gemini", color: "bg-blue-400" },
-    { name: "Devin", color: "bg-indigo-500" },
-    { name: "Continue", color: "bg-cyan-500" },
-    { name: "Factory", color: "bg-violet-500" },
-    { name: "Amp", color: "bg-rose-500" },
-    { name: "Warp", color: "bg-slate-600" },
-  ];
-  
-  return (
-    <div className="flex shrink-0 items-center gap-6">
-      {logos.map((logo, i) => (
-        <div
-          key={`${logo.name}-${i}`}
-          className="flex shrink-0 items-center gap-2.5 rounded-lg border bg-background px-4 py-2"
-        >
-          <div className={`h-6 w-6 rounded ${logo.color} flex items-center justify-center text-xs font-bold text-white`}>
-            {logo.name.charAt(0)}
-          </div>
-          <span className="text-sm font-medium">{logo.name}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
+import { AgentsMarquee } from "@/components/agents-marquee";
 
 export default function DocsPage() {
   return (
@@ -417,21 +358,7 @@ export default function DocsPage() {
 
               {/* Scrolling Logo Marquee */}
               <div className="relative overflow-hidden rounded-xl border bg-card py-6">
-                {/* Gradient overlays for fade effect */}
-                <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-16 bg-gradient-to-r from-card to-transparent" />
-                <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-16 bg-gradient-to-l from-card to-transparent" />
-                
-                {/* Row 1 - scrolling left */}
-                <div className="mb-4 flex animate-marquee items-center gap-6">
-                  <LogoMarqueeRow />
-                  <LogoMarqueeRow />
-                </div>
-                
-                {/* Row 2 - scrolling right */}
-                <div className="flex animate-marquee-reverse items-center gap-6">
-                  <LogoMarqueeRow2 />
-                  <LogoMarqueeRow2 />
-                </div>
+                <AgentsMarquee />
                 
                 <p className="mt-4 text-center text-xs text-muted-foreground">
                   And any tool supporting AGENTS.md, .cursorrules, or custom AI instructions
