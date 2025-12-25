@@ -71,6 +71,7 @@ interface WizardConfig {
   repoHostOther?: string;
   repoUrl: string;
   exampleRepoUrl?: string;
+  documentationUrl?: string; // external docs (Confluence, Notion, etc.)
   isPublic: boolean;
   license: string;
   licenseSave?: boolean;
@@ -299,6 +300,70 @@ export function hasVariables(content: string): boolean {
 }
 
 /**
+ * Duplicate variable default info for warnings
+ */
+export interface DuplicateVariableDefault {
+  variableName: string;
+  occurrences: Array<{ line: number; defaultValue: string }>;
+}
+
+/**
+ * Detect variables that have multiple different default values
+ * 
+ * Rules:
+ * - [[VAR]] and [[VAR]] → No warning (repeated without defaults)
+ * - [[VAR]] and [[VAR|default]] → No warning (pick the one with default)
+ * - [[VAR|default1]] and [[VAR|default2]] → Warning! Different defaults
+ * - [[VAR|default]] and [[VAR|default]] → No warning (same default)
+ * 
+ * Returns array of variables that have conflicting defaults, with line numbers
+ */
+export function detectDuplicateVariableDefaults(content: string): DuplicateVariableDefault[] {
+  const lines = content.split("\n");
+  const variableOccurrences: Record<string, Array<{ line: number; defaultValue: string }>> = {};
+  
+  // Pattern to match variables with defaults only
+  const patternWithDefault = /\[\[([A-Za-z_][A-Za-z0-9_]*)\|([^\]]*)\]\]/g;
+  
+  lines.forEach((lineContent, index) => {
+    const lineNumber = index + 1;
+    let match;
+    
+    // Reset regex state
+    const regex = new RegExp(patternWithDefault.source, "g");
+    
+    while ((match = regex.exec(lineContent)) !== null) {
+      const varName = match[1].toUpperCase();
+      const defaultValue = match[2];
+      
+      if (!variableOccurrences[varName]) {
+        variableOccurrences[varName] = [];
+      }
+      
+      variableOccurrences[varName].push({ line: lineNumber, defaultValue });
+    }
+  });
+  
+  // Find variables with multiple DIFFERENT defaults
+  const duplicates: DuplicateVariableDefault[] = [];
+  
+  for (const [varName, occurrences] of Object.entries(variableOccurrences)) {
+    // Get unique default values
+    const uniqueDefaults = new Set(occurrences.map(o => o.defaultValue));
+    
+    // Only warn if there are multiple DIFFERENT default values
+    if (uniqueDefaults.size > 1) {
+      duplicates.push({
+        variableName: varName,
+        occurrences: occurrences,
+      });
+    }
+  }
+  
+  return duplicates;
+}
+
+/**
  * Escape literal brackets that should not be treated as variables
  * Use \\[\\[ for literal [[
  */
@@ -362,6 +427,11 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     lines.push("");
     lines.push(`**Reference Repository**: ${config.exampleRepoUrl}`);
     lines.push("Use this repository as a reference for coding patterns, conventions, and architecture decisions.");
+  }
+  if (config.documentationUrl) {
+    lines.push("");
+    lines.push(`**External Documentation**: ${config.documentationUrl}`);
+    lines.push("Refer to this documentation for additional project context, architecture decisions, and team guidelines.");
   }
   lines.push("");
 
@@ -635,6 +705,9 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
       other: config.repoHostOther || "Other",
     };
     lines.push(`**Repository Host**: ${hostNames[config.repoHost] || config.repoHost}`);
+  }
+  if (config.documentationUrl) {
+    lines.push(`**External Documentation**: ${config.documentationUrl}`);
   }
   lines.push("");
 

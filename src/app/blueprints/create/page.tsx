@@ -30,7 +30,7 @@ import { CodeEditor } from "@/components/code-editor";
 import { AiEditPanel } from "@/components/ai-edit-panel";
 import { Turnstile } from "@/components/turnstile";
 import { detectSensitiveData, type SensitiveMatch } from "@/lib/sensitive-data";
-import { detectVariables } from "@/lib/file-generator";
+import { detectVariables, detectDuplicateVariableDefaults, type DuplicateVariableDefault } from "@/lib/file-generator";
 
 // All supported IDE types - blueprints are interchangeable across all platforms
 const BLUEPRINT_TYPES = [
@@ -66,7 +66,8 @@ export default function ShareBlueprintPage() {
     null
   );
   const [sensitiveWarningDismissed, setSensitiveWarningDismissed] = useState(false);
-  const [acknowledgedSensitiveSignature, setAcknowledgedSensitiveSignature] = useState<string | null>(null);
+  const [acknowledgedMatchCount, setAcknowledgedMatchCount] = useState<number>(0);
+  const [acknowledgedContentHash, setAcknowledgedContentHash] = useState<string>("");
   const [userPlan, setUserPlan] = useState<string>("FREE");
   const [loadingPlan, setLoadingPlan] = useState(true);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
@@ -125,24 +126,37 @@ export default function ShareBlueprintPage() {
     return detectSensitiveData(content);
   }, [content]);
 
-  // Generate a signature of current sensitive matches to detect changes
-  const sensitiveSignature = useMemo(() => {
-    if (sensitiveMatches.length === 0) return '';
-    return sensitiveMatches.map(m => `${m.line}:${m.type}:${m.snippet}`).join('|');
-  }, [sensitiveMatches]);
+  // Simple hash of content for change detection
+  const contentHash = useMemo(() => {
+    return content.length.toString() + ':' + content.slice(0, 100);
+  }, [content]);
 
-  // Reset acknowledgment if sensitive data changes (new items detected)
+  // Reset acknowledgment if content changes after acknowledgment (new sensitive data might be added)
   useEffect(() => {
-    if (sensitiveWarningDismissed && acknowledgedSensitiveSignature !== sensitiveSignature) {
-      setSensitiveWarningDismissed(false);
-      setAcknowledgedSensitiveSignature(null);
+    if (sensitiveWarningDismissed) {
+      // Reset if: more matches found, OR content changed since acknowledgment
+      const shouldReset = 
+        sensitiveMatches.length > acknowledgedMatchCount ||
+        contentHash !== acknowledgedContentHash;
+      
+      if (shouldReset) {
+        setSensitiveWarningDismissed(false);
+        setAcknowledgedMatchCount(0);
+        setAcknowledgedContentHash("");
+      }
     }
-  }, [sensitiveSignature, sensitiveWarningDismissed, acknowledgedSensitiveSignature]);
+  }, [sensitiveMatches.length, contentHash, sensitiveWarningDismissed, acknowledgedMatchCount, acknowledgedContentHash]);
 
   // Detect template variables [[VARIABLE_NAME]]
   const detectedVariables = useMemo<string[]>(() => {
     if (!content.trim()) return [];
     return detectVariables(content);
+  }, [content]);
+
+  // Detect duplicate variable defaults (e.g., [[VAR|default1]] and [[VAR|default2]])
+  const duplicateVariableDefaults = useMemo<DuplicateVariableDefault[]>(() => {
+    if (!content.trim()) return [];
+    return detectDuplicateVariableDefaults(content);
   }, [content]);
 
   const hasSensitiveData = sensitiveMatches.length > 0 && !sensitiveWarningDismissed;
@@ -559,6 +573,39 @@ export default function ShareBlueprintPage() {
                     </div>
                   </div>
                 )}
+
+                {/* Duplicate Variable Defaults Warning */}
+                {duplicateVariableDefaults.length > 0 && (
+                  <div className="mt-4 rounded-lg border border-amber-500 bg-amber-100 p-4 dark:border-amber-600 dark:bg-amber-900/20">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-700 dark:text-amber-400" />
+                      <div className="flex-1">
+                        <h4 className="font-medium text-amber-900 dark:text-amber-200">
+                          Duplicate Variable Defaults Detected
+                        </h4>
+                        <p className="mt-1 text-sm text-amber-800 dark:text-amber-300">
+                          The following variables have different default values. The first default found will be used:
+                        </p>
+                        <div className="mt-2 space-y-2">
+                          {duplicateVariableDefaults.map((dup) => (
+                            <div key={dup.variableName} className="rounded bg-amber-200/50 px-3 py-2 dark:bg-amber-800/30">
+                              <code className="font-mono text-sm font-semibold text-amber-900 dark:text-amber-200">
+                                [[{dup.variableName}]]
+                              </code>
+                              <ul className="mt-1 space-y-0.5 text-xs text-amber-800 dark:text-amber-300">
+                                {dup.occurrences.map((occ, idx) => (
+                                  <li key={idx}>
+                                    Line {occ.line}: <code className="rounded bg-amber-300/50 px-1 py-0.5 font-mono dark:bg-amber-700/50">{occ.defaultValue || "(empty)"}</code>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Details Section */}
@@ -893,7 +940,8 @@ export default function ShareBlueprintPage() {
                             size="sm"
                             onClick={() => {
                               setSensitiveWarningDismissed(false);
-                              setAcknowledgedSensitiveSignature(null);
+                              setAcknowledgedMatchCount(0);
+                              setAcknowledgedContentHash("");
                             }}
                             className="border-green-400 text-green-700 hover:bg-green-100 dark:border-green-600 dark:text-green-300"
                           >
@@ -911,7 +959,8 @@ export default function ShareBlueprintPage() {
                             size="sm"
                             onClick={() => {
                               setSensitiveWarningDismissed(true);
-                              setAcknowledgedSensitiveSignature(sensitiveSignature);
+                              setAcknowledgedMatchCount(sensitiveMatches.length);
+                              setAcknowledgedContentHash(contentHash);
                             }}
                             className="border-yellow-400 text-yellow-700 hover:bg-yellow-100 dark:border-yellow-600 dark:text-yellow-300"
                           >

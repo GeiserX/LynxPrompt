@@ -665,10 +665,10 @@ export default function DashboardPage() {
             {/* Right Column: Activity Feed + Getting Started */}
             <div className="space-y-8">
               {/* Saved Preferences & Static Files */}
-              <div>
+              <div className="rounded-lg border bg-card overflow-hidden">
                 <button
                   onClick={() => setShowPreferences(!showPreferences)}
-                  className="mb-4 flex w-full items-center justify-between rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50"
+                  className="flex w-full items-center justify-between p-4 transition-colors hover:bg-muted/50"
                 >
                   <div className="flex items-center gap-3">
                     <div className="rounded-lg bg-muted p-2">
@@ -690,27 +690,29 @@ export default function DashboardPage() {
                 </button>
 
                 {showPreferences && (
-                  preferencesLoading ? (
-                    <div className="space-y-3">
-                      {[1, 2].map((i) => (
-                        <div key={i} className="h-16 animate-pulse rounded-lg bg-muted" />
-                      ))}
-                    </div>
-                  ) : (
-                    <PreferencesPanel 
-                      preferences={preferences}
-                      onUpdate={handleUpdatePreference}
-                      onDelete={handleDeletePreference}
-                    />
-                  )
+                  <div className="border-t max-h-80 overflow-y-auto">
+                    {preferencesLoading ? (
+                      <div className="space-y-3 p-4">
+                        {[1, 2].map((i) => (
+                          <div key={i} className="h-16 animate-pulse rounded-lg bg-muted" />
+                        ))}
+                      </div>
+                    ) : (
+                      <PreferencesPanel 
+                        preferences={preferences}
+                        onUpdate={handleUpdatePreference}
+                        onDelete={handleDeletePreference}
+                      />
+                    )}
+                  </div>
                 )}
               </div>
 
               {/* Saved Variables */}
-              <div>
+              <div className="rounded-lg border bg-card overflow-hidden">
                 <button
                   onClick={() => setShowVariables(!showVariables)}
-                  className="mb-4 flex w-full items-center justify-between rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50"
+                  className="flex w-full items-center justify-between p-4 transition-colors hover:bg-muted/50"
                 >
                   <div className="flex items-center gap-3">
                     <div className="rounded-lg bg-muted p-2">
@@ -732,45 +734,49 @@ export default function DashboardPage() {
                 </button>
 
                 {showVariables && (
-                  variablesLoading ? (
-                    <div className="space-y-3">
-                      {[1, 2].map((i) => (
-                        <div key={i} className="h-12 animate-pulse rounded-lg bg-muted" />
-                      ))}
-                    </div>
-                  ) : Object.keys(variables).length === 0 ? (
-                    <div className="rounded-lg border bg-card p-6 text-center">
-                      <Variable className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
-                      <h3 className="font-medium">No saved variables yet</h3>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        When you download blueprints, save your variable values for quick reuse
-                      </p>
-                      <Button asChild className="mt-4" size="sm" variant="outline">
-                        <Link href="/settings?tab=variables">Manage Variables</Link>
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {Object.entries(variables).slice(0, 5).map(([key, value]) => (
-                        <div key={key} className="rounded-lg border bg-card p-3">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0 flex-1">
-                              <code className="text-sm font-medium text-primary">[[{key}]]</code>
-                              <p className="mt-0.5 text-sm text-muted-foreground truncate">{value}</p>
+                  <div className="border-t max-h-80 overflow-y-auto">
+                    {variablesLoading ? (
+                      <div className="space-y-3 p-4">
+                        {[1, 2].map((i) => (
+                          <div key={i} className="h-12 animate-pulse rounded-lg bg-muted" />
+                        ))}
+                      </div>
+                    ) : Object.keys(variables).length === 0 ? (
+                      <div className="p-6 text-center">
+                        <Variable className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
+                        <h3 className="font-medium">No saved variables yet</h3>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          When you download blueprints, save your variable values for quick reuse
+                        </p>
+                        <Button asChild className="mt-4" size="sm" variant="outline">
+                          <Link href="/settings?tab=variables">Manage Variables</Link>
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="divide-y">
+                        {Object.entries(variables).slice(0, 10).map(([key, value]) => (
+                          <div key={key} className="p-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0 flex-1">
+                                <code className="text-sm font-medium text-primary">[[{key}]]</code>
+                                <p className="mt-0.5 text-sm text-muted-foreground truncate">{value}</p>
+                              </div>
                             </div>
                           </div>
+                        ))}
+                        {Object.keys(variables).length > 10 && (
+                          <div className="p-3 text-center text-xs text-muted-foreground bg-muted/30">
+                            +{Object.keys(variables).length - 10} more
+                          </div>
+                        )}
+                        <div className="p-3 bg-muted/30">
+                          <Button asChild className="w-full" size="sm" variant="outline">
+                            <Link href="/settings?tab=variables">Manage All Variables</Link>
+                          </Button>
                         </div>
-                      ))}
-                      {Object.keys(variables).length > 5 && (
-                        <p className="text-center text-xs text-muted-foreground">
-                          +{Object.keys(variables).length - 5} more
-                        </p>
-                      )}
-                      <Button asChild className="mt-2 w-full" size="sm" variant="outline">
-                        <Link href="/settings?tab=variables">Manage All Variables</Link>
-                      </Button>
-                    </div>
-                  )
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
 

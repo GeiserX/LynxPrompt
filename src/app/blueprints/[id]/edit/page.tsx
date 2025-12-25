@@ -18,6 +18,7 @@ import {
   Trash2,
   ExternalLink,
   Sparkles,
+  FileText,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Footer } from "@/components/footer";
@@ -26,7 +27,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { CodeEditor } from "@/components/code-editor";
 import { AiEditPanel } from "@/components/ai-edit-panel";
 import { detectSensitiveData, type SensitiveMatch } from "@/lib/sensitive-data";
-import { detectVariables } from "@/lib/file-generator";
+import { detectVariables, detectDuplicateVariableDefaults, type DuplicateVariableDefault } from "@/lib/file-generator";
 
 // All supported IDE types
 const BLUEPRINT_TYPES = [
@@ -157,6 +158,12 @@ export default function EditBlueprintPage() {
   const detectedVariables = useMemo<string[]>(() => {
     if (!content.trim()) return [];
     return detectVariables(content);
+  }, [content]);
+
+  // Detect duplicate variable defaults (e.g., [[VAR|default1]] and [[VAR|default2]])
+  const duplicateVariableDefaults = useMemo<DuplicateVariableDefault[]>(() => {
+    if (!content.trim()) return [];
+    return detectDuplicateVariableDefaults(content);
   }, [content]);
 
   const hasSensitiveData = sensitiveMatches.length > 0 && !sensitiveWarningDismissed;
@@ -405,126 +412,32 @@ export default function EditBlueprintPage() {
               </div>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Error message */}
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {/* Error */}
               {error && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-                  <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-                </div>
-              )}
-
-              {/* Name */}
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium mb-2">
-                  Blueprint Title *
-                </label>
-                <input
-                  id="name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g., Next.js Full-Stack Development"
-                  className="w-full rounded-lg border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  required
-                  minLength={3}
-                  maxLength={100}
-                />
-              </div>
-
-              {/* Description */}
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium mb-2">
-                  Description
-                </label>
-                <textarea
-                  id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Describe what your blueprint is for..."
-                  rows={3}
-                  className="w-full rounded-lg border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary resize-none"
-                  maxLength={500}
-                />
-              </div>
-
-              {/* Showcase URL */}
-              <div>
-                <label htmlFor="showcaseUrl" className="block text-sm font-medium mb-2">
-                  <ExternalLink className="mr-1 inline h-4 w-4" />
-                  Showcase URL
-                </label>
-                <input
-                  id="showcaseUrl"
-                  type="url"
-                  value={showcaseUrl}
-                  onChange={(e) => setShowcaseUrl(e.target.value)}
-                  placeholder="https://github.com/user/repo or https://myapp.com"
-                  className="w-full rounded-lg border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  maxLength={500}
-                />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Link to a live demo, GitHub repo, or website that showcases what this blueprint can build.
-                </p>
-              </div>
-
-              {/* Type */}
-              <div>
-                <label htmlFor="type" className="block text-sm font-medium mb-2">
-                  Original Format
-                </label>
-                <select
-                  id="type"
-                  value={type}
-                  onChange={(e) => setType(e.target.value)}
-                  className="w-full rounded-lg border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                >
-                  {BLUEPRINT_TYPES.map((t) => (
-                    <option key={t.value} value={t.value}>
-                      {t.icon} {t.label}
-                    </option>
-                  ))}
-                </select>
-                <div className="mt-2 rounded-lg border border-sky-200 bg-white p-3 shadow-sm dark:border-sky-500/50 dark:bg-sky-900/30">
-                  <div className="flex items-start gap-2">
-                    <Info className="h-4 w-4 flex-shrink-0 text-sky-800 dark:text-sky-300 mt-0.5" />
-                    <p className="text-xs font-bold text-gray-900 dark:text-sky-200">
-                      <span className="font-black text-gray-900 dark:text-sky-100">Note:</span> This is just to identify the original format. All blueprints are <span className="font-black text-gray-900 dark:text-sky-100">interchangeable and compatible across all AI IDEs</span> — Cursor, Claude, Copilot, Windsurf, Cline, and more. Users can download in any format they need.
+                <div className="rounded-lg border-2 border-red-500 bg-red-100 p-4 dark:bg-red-950">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400" />
+                    <p className="font-medium text-red-800 dark:text-red-200">
+                      {error}
                     </p>
                   </div>
                 </div>
-              </div>
+              )}
 
-              {/* Category */}
-              <div>
-                <label htmlFor="category" className="block text-sm font-medium mb-2">
-                  Category
-                </label>
-                <select
-                  id="category"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full rounded-lg border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                >
-                  {CATEGORIES.map((c) => (
-                    <option key={c.value} value={c.value}>
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {/* Content Section */}
+              <div className="rounded-xl border bg-card p-6">
+                <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+                  <FileText className="h-5 w-5 text-primary" />
+                  Blueprint Content
+                </h2>
 
-              {/* Content */}
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Blueprint Content *
-                </label>
-                
                 {/* AI Edit Panel - MAX users only */}
                 {userPlan === "max" && (
-                  <div className="mb-3 rounded-lg border border-purple-200 bg-white p-3 shadow-sm dark:border-purple-500/50 dark:bg-purple-900/30">
-                    <div className="mb-2 flex items-center gap-2 text-sm font-black">
-                      <Sparkles className="h-4 w-4 text-purple-800 dark:text-purple-300" />
-                      <span className="text-gray-900 dark:text-purple-200">AI-Powered Editing</span>
+                  <div className="mb-3 rounded-lg border border-purple-300 bg-purple-100 p-3 dark:border-purple-500/50 dark:bg-purple-900/30">
+                    <div className="mb-2 flex items-center gap-2 text-sm">
+                      <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-300" />
+                      <span className="font-medium text-purple-800 dark:text-purple-200">AI-Powered Editing</span>
                     </div>
                     <AiEditPanel
                       currentContent={content}
@@ -535,190 +448,389 @@ export default function EditBlueprintPage() {
                   </div>
                 )}
 
+                {/* Editor with line numbers */}
                 <CodeEditor
                   value={content}
                   onChange={setContent}
+                  placeholder="Paste your AI IDE configuration here (.cursorrules, CLAUDE.md, AGENTS.md, etc.)..."
                   minHeight="300px"
-                  placeholder="Paste your rules file content here..."
+                  className="focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20"
                 />
-                {content && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {content.split("\n").length} lines
-                  </p>
+
+                {/* Variable syntax help */}
+                <p className="mt-3 text-xs text-muted-foreground">
+                  💡 <strong>Tip:</strong> Use <code className="rounded bg-muted px-1 py-0.5 font-mono">[[VARIABLE_NAME]]</code> or <code className="rounded bg-muted px-1 py-0.5 font-mono">[[VARIABLE_NAME|default]]</code> syntax 
+                  to create template variables with optional defaults. Variables are case-insensitive.
+                  Users will be prompted to fill these in when downloading.
+                </p>
+
+                {/* Template Variables Detected */}
+                {detectedVariables.length > 0 && (
+                  <div className="mt-4 rounded-lg border border-blue-500 bg-blue-100 p-4 dark:border-blue-700 dark:bg-blue-900/20">
+                    <div className="flex items-start gap-3">
+                      <Info className="h-5 w-5 flex-shrink-0 text-blue-700 dark:text-blue-400" />
+                      <div className="flex-1">
+                        <h4 className="font-medium text-blue-900 dark:text-blue-200">
+                          Template Variables Detected
+                        </h4>
+                        <p className="mt-1 text-sm text-blue-800 dark:text-blue-300">
+                          Users will be prompted to fill in these values when downloading:
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {detectedVariables.map((varName) => (
+                            <code
+                              key={varName}
+                              className="rounded bg-blue-200 px-2 py-1 font-mono text-sm text-blue-900 dark:bg-blue-800/50 dark:text-blue-200"
+                            >
+                              [[{varName}]]
+                            </code>
+                          ))}
+                        </div>
+                        <div className="mt-3 rounded border border-blue-400/50 bg-blue-50 p-2 dark:bg-blue-800/30">
+                          <p className="text-xs text-blue-800 dark:text-blue-200">
+                            💡 <strong>Set defaults</strong> with <code className="rounded bg-blue-200 px-1 py-0.5 font-mono text-xs dark:bg-blue-700">[[VAR|default]]</code> syntax.
+                            Example: <code className="rounded bg-blue-200 px-1 py-0.5 font-mono text-xs dark:bg-blue-700">[[FRAMEWORK|Next.js]]</code>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Duplicate Variable Defaults Warning */}
+                {duplicateVariableDefaults.length > 0 && (
+                  <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-600 dark:bg-amber-900/20">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="h-4 w-4 flex-shrink-0 text-amber-700 dark:text-amber-400 mt-0.5" />
+                      <div className="space-y-2">
+                        <p className="text-xs font-medium text-amber-900 dark:text-amber-200">
+                          Duplicate Variable Defaults Detected
+                        </p>
+                        <p className="text-xs text-amber-800 dark:text-amber-300">
+                          The following variables have different default values. The first default found will be used:
+                        </p>
+                        <div className="space-y-2">
+                          {duplicateVariableDefaults.map((dup) => (
+                            <div key={dup.variableName} className="rounded bg-amber-100/50 px-3 py-2 dark:bg-amber-800/30">
+                              <code className="font-mono text-xs font-semibold text-amber-900 dark:text-amber-200">
+                                [[{dup.variableName}]]
+                              </code>
+                              <ul className="mt-1 space-y-0.5 text-xs text-amber-800 dark:text-amber-300">
+                                {dup.occurrences.map((occ, idx) => (
+                                  <li key={idx}>
+                                    Line {occ.line}: <code className="rounded bg-amber-200/50 px-1 py-0.5 font-mono dark:bg-amber-700/50">{occ.defaultValue || "(empty)"}</code>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
 
-              {/* Sensitive Data Warning */}
-              {sensitiveMatches.length > 0 && !sensitiveWarningDismissed && (
-                <div className="rounded-lg border-2 border-yellow-500 bg-yellow-50 p-4 dark:bg-yellow-900/20">
-                  <div className="flex items-start gap-3">
-                    <AlertTriangle className="h-5 w-5 flex-shrink-0 text-yellow-600 dark:text-yellow-400" />
-                    <div className="flex-1">
-                      <h4 className="font-medium text-yellow-800 dark:text-yellow-200">
-                        Potential Sensitive Data Detected
-                      </h4>
-                      <ul className="mt-2 space-y-1 text-sm text-yellow-700 dark:text-yellow-300">
-                        {sensitiveMatches.map((match, i) => (
-                          <li key={i}>
-                            • Line {match.line}: {match.type} detected
-                          </li>
-                        ))}
-                      </ul>
-                      <p className="mt-2 text-sm text-yellow-600 dark:text-yellow-400">
-                        Please ensure you&apos;ve removed any secrets, API keys, or personal information.
-                      </p>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="mt-3"
-                        onClick={() => setSensitiveWarningDismissed(true)}
-                      >
-                        I&apos;ve reviewed and it&apos;s safe
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
+              {/* Details Section */}
+              <div className="rounded-xl border bg-card p-6">
+                <h2 className="mb-4 text-lg font-semibold">Details</h2>
 
-              {/* Detected Variables */}
-              {detectedVariables.length > 0 && (
-                <div className="rounded-lg border border-sky-200 bg-white p-4 shadow-sm dark:border-sky-700 dark:bg-sky-900/20">
-                  <div className="flex items-start gap-2">
-                    <Info className="h-4 w-4 flex-shrink-0 text-sky-700 dark:text-sky-400 mt-0.5" />
-                    <div className="space-y-2">
-                      <p className="text-xs text-foreground">
-                        <strong>Variables detected:</strong> {detectedVariables.join(", ")}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Users will be prompted to fill these when downloading.
-                      </p>
-                      <div className="rounded-lg border bg-muted/50 p-3 mt-2">
-                        <p className="text-xs font-medium text-foreground mb-1">
-                          💡 Pro tip: Set default values for your variables
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Use <code className="rounded bg-background px-1.5 py-0.5 font-mono">[[VAR_NAME|default value]]</code> syntax to pre-fill values for users.
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Example: <code className="rounded bg-background px-1.5 py-0.5 font-mono">[[FRAMEWORK|Next.js]]</code> will show "Next.js" as the default.
+                <div className="space-y-4">
+                  {/* Title */}
+                  <div>
+                    <label
+                      htmlFor="name"
+                      className="mb-1 block text-sm font-medium"
+                    >
+                      Title <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="name"
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="e.g., React TypeScript Best Practices"
+                      className="w-full rounded-lg border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      required
+                      minLength={3}
+                      maxLength={100}
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label
+                      htmlFor="description"
+                      className="mb-1 block text-sm font-medium"
+                    >
+                      Description
+                    </label>
+                    <textarea
+                      id="description"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="Briefly describe what this blueprint does and when to use it..."
+                      className="w-full rounded-lg border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      rows={3}
+                      maxLength={500}
+                    />
+                  </div>
+
+                  {/* Showcase URL */}
+                  <div>
+                    <label
+                      htmlFor="showcaseUrl"
+                      className="mb-1 block text-sm font-medium"
+                    >
+                      <ExternalLink className="mr-1 inline h-4 w-4" />
+                      Showcase URL
+                    </label>
+                    <input
+                      id="showcaseUrl"
+                      type="url"
+                      value={showcaseUrl}
+                      onChange={(e) => setShowcaseUrl(e.target.value)}
+                      placeholder="https://github.com/user/repo or https://myapp.com"
+                      className="w-full rounded-lg border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      maxLength={500}
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Link to a live demo, GitHub repo, or website that showcases what this blueprint can build. 
+                      Especially recommended for paid blueprints to help buyers see the value.
+                    </p>
+                  </div>
+
+                  {/* Type */}
+                  <div>
+                    <label
+                      htmlFor="type"
+                      className="mb-1 block text-sm font-medium"
+                    >
+                      Origin Format <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="type"
+                      value={type}
+                      onChange={(e) => setType(e.target.value)}
+                      className="w-full rounded-lg border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    >
+                      {BLUEPRINT_TYPES.map((t) => (
+                        <option key={t.value} value={t.value}>
+                          {t.icon} {t.label}
+                        </option>
+                      ))}
+                    </select>
+                    {/* Interoperability notice */}
+                    <div className="mt-2 rounded-lg border border-sky-200 bg-sky-50 p-3 dark:border-sky-500/50 dark:bg-sky-900/30">
+                      <div className="flex items-start gap-2">
+                        <Info className="h-4 w-4 flex-shrink-0 text-sky-600 dark:text-sky-300 mt-0.5" />
+                        <p className="text-xs text-sky-800 dark:text-sky-200">
+                          <span className="font-medium text-sky-900 dark:text-sky-100">Note:</span> This is just to identify the original format.
+                          All blueprints are interchangeable and compatible across all AI IDEs —
+                          Cursor, Claude, Copilot, Windsurf, Cline, and more.
+                          Users can download in any format they need.
                         </p>
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
 
-              {/* Tags */}
-              <div>
-                <label htmlFor="tags" className="block text-sm font-medium mb-2">
-                  Tags (max 10)
-                </label>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Tag className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <input
-                      id="tags"
-                      type="text"
-                      value={tagInput}
-                      onChange={(e) => setTagInput(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      placeholder="Add a tag and press Enter"
-                      className="w-full rounded-lg border bg-background pl-10 pr-4 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                      maxLength={30}
-                    />
+                  {/* Category */}
+                  <div>
+                    <label
+                      htmlFor="category"
+                      className="mb-1 block text-sm font-medium"
+                    >
+                      Category
+                    </label>
+                    <select
+                      id="category"
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                      className="w-full rounded-lg border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    >
+                      {CATEGORIES.map((c) => (
+                        <option key={c.value} value={c.value}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                  <Button type="button" variant="outline" onClick={addTag}>
-                    Add
-                  </Button>
-                </div>
-                {tags.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm"
-                      >
-                        {tag}
-                        <button
-                          type="button"
-                          onClick={() => removeTag(tag)}
-                          className="hover:text-destructive"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
 
-              {/* Visibility */}
-              <div className="rounded-lg border border-amber-200 bg-white p-4 shadow-sm dark:border-amber-500/50 dark:bg-amber-900/30">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-800 dark:text-amber-300 mt-0.5" />
-                  <div className="flex-1">
-                    <h4 className="font-black text-gray-900 dark:text-amber-100">Share with the Community?</h4>
-                    <p className="mt-1 text-sm font-bold text-gray-900 dark:text-amber-200">
-                      By default, your blueprint is private. Check below to share it publicly in the marketplace.
-                    </p>
-                    <div className="mt-3 flex items-center gap-3">
+                  {/* Tags */}
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">
+                      <Tag className="mr-1 inline h-4 w-4" />
+                      Tags (up to 10)
+                    </label>
+                    <div className="flex gap-2">
                       <input
-                        type="checkbox"
-                        id="isPublic"
-                        checked={isPublic}
-                        onChange={(e) => setIsPublic(e.target.checked)}
-                        className="h-4 w-4 rounded border-amber-700 dark:border-amber-400"
+                        type="text"
+                        value={tagInput}
+                        onChange={(e) => setTagInput(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Add a tag and press Enter"
+                        className="flex-1 rounded-lg border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        maxLength={30}
                       />
-                      <label htmlFor="isPublic" className="text-sm font-black text-gray-900 dark:text-amber-100">
-                        Yes, make this blueprint public in the marketplace
-                      </label>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={addTag}
+                      >
+                        Add
+                      </Button>
+                    </div>
+                    {tags.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm text-primary"
+                          >
+                            {tag}
+                            <button
+                              type="button"
+                              onClick={() => removeTag(tag)}
+                              className="hover:text-primary/70"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Visibility - Sharing Section */}
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/50 dark:bg-amber-900/30">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-600 dark:text-amber-300 mt-0.5" />
+                      <div className="flex-1">
+                        <h4 className="font-medium text-amber-900 dark:text-amber-100">
+                          Share with the Community?
+                        </h4>
+                        <p className="mt-1 text-sm text-amber-800 dark:text-amber-200">
+                          By default, your blueprint is private. Check below to share it publicly in the marketplace.
+                        </p>
+                        <div className="mt-3 flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            id="isPublic"
+                            checked={isPublic}
+                            onChange={(e) => setIsPublic(e.target.checked)}
+                            className="h-4 w-4 rounded border-amber-300 dark:border-amber-400"
+                          />
+                          <label htmlFor="isPublic" className="text-sm text-amber-900 dark:text-amber-100">
+                            Yes, make this blueprint public in the marketplace
+                          </label>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
 
-              {/* Pricing (for PRO/MAX users) */}
-              {isPublic && (
-                <div className="rounded-lg border p-4">
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={isPaid}
-                      onChange={(e) => setIsPaid(e.target.checked)}
-                      disabled={!canCreatePaidBlueprints}
-                      className="h-5 w-5 rounded border-gray-300 mt-0.5"
-                    />
-                    <div className="flex-1">
-                      <span className="font-medium">Set a price for this blueprint</span>
+                  {/* Pricing - only show if public */}
+                  {isPublic && (
+                    <div className="rounded-lg border bg-muted/30 p-4">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          id="isPaid"
+                          checked={isPaid}
+                          onChange={(e) => setIsPaid(e.target.checked)}
+                          disabled={!canCreatePaidBlueprints}
+                          className={`h-4 w-4 rounded border-gray-300 ${!canCreatePaidBlueprints ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        />
+                        <label 
+                          htmlFor="isPaid" 
+                          className={`text-sm font-medium ${!canCreatePaidBlueprints ? 'opacity-50' : ''}`}
+                        >
+                          <Euro className="mr-1 inline h-4 w-4" />
+                          Set a price for this blueprint
+                        </label>
+                        {!canCreatePaidBlueprints && (
+                          <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
+                            PRO or MAX required
+                          </span>
+                        )}
+                      </div>
+
                       {!canCreatePaidBlueprints && (
-                        <p className="text-sm text-amber-600 dark:text-amber-400 mt-1">
-                          PRO or MAX required - Upgrade to create paid blueprints
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          Upgrade to <Link href="/pricing" className="text-primary hover:underline font-medium">PRO or MAX</Link> to create paid blueprints and earn 70% of each sale.
                         </p>
                       )}
-                      {canCreatePaidBlueprints && isPaid && (
-                        <div className="mt-3">
-                          <label className="text-sm text-muted-foreground">
-                            Price (€ EUR, minimum €5)
-                          </label>
-                          <div className="relative mt-1 w-32">
-                            <Euro className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+
+                      {isPaid && canCreatePaidBlueprints && (
+                        <div className="mt-4 space-y-3">
+                          <div className="flex items-center gap-3">
+                            <Euro className="h-5 w-5 text-muted-foreground" />
                             <input
                               type="number"
-                              min={5}
-                              max={999}
                               value={price}
-                              onChange={(e) => setPrice(Math.max(5, parseInt(e.target.value) || 5))}
-                              className="w-full rounded-lg border bg-background pl-10 pr-4 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                              onChange={(e) => setPrice(Math.max(5, parseFloat(e.target.value) || 5))}
+                              min={5}
+                              step={0.5}
+                              className="w-24 rounded-lg border bg-background px-3 py-2 text-right focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                             />
+                            <span className="text-sm text-muted-foreground">EUR (minimum €5)</span>
                           </div>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            You earn 70% (€{(price * 0.7).toFixed(2)}) per sale
-                          </p>
+                          
+                          {/* Revenue split info - shown only when setting price */}
+                          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-500/50 dark:bg-emerald-900/30">
+                            <p className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
+                              💰 You earn 70% of each sale (€{(price * 0.7).toFixed(2)}).
+                              <span className="font-normal text-emerald-700 dark:text-emerald-300"> Platform fee: 30% (€{(price * 0.3).toFixed(2)}).</span>
+                            </p>
+                          </div>
                         </div>
                       )}
                     </div>
-                  </label>
+                  )}
+                </div>
+              </div>
+
+              {/* Sensitive Data Warning */}
+              {sensitiveMatches.length > 0 && !sensitiveWarningDismissed && (
+                <div className="rounded-xl border-2 border-yellow-300 bg-yellow-50 p-6 dark:border-yellow-700 dark:bg-yellow-900/20">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="h-6 w-6 flex-shrink-0 text-yellow-600 dark:text-yellow-400" />
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-yellow-800 dark:text-yellow-200">
+                        Potential Sensitive Data Detected
+                      </h3>
+                      <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
+                        We found {sensitiveMatches.length} item{sensitiveMatches.length > 1 ? 's' : ''} that might contain passwords, API keys, or other sensitive information. Please review before sharing publicly.
+                      </p>
+                      
+                      <div className="mt-3 space-y-2">
+                        {sensitiveMatches.map((match, i) => (
+                          <div key={i} className="rounded px-3 py-2 text-xs bg-yellow-100 dark:bg-yellow-800/30">
+                            <span className="font-medium text-yellow-800 dark:text-yellow-200">
+                              Line {match.line} — {match.type}:
+                            </span>
+                            <code className="ml-2 text-yellow-700 dark:text-yellow-300">
+                              {match.snippet}
+                            </code>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="mt-4 flex items-center gap-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSensitiveWarningDismissed(true)}
+                          className="border-yellow-400 text-yellow-700 hover:bg-yellow-100 dark:border-yellow-600 dark:text-yellow-300"
+                        >
+                          I&apos;ve reviewed this, proceed anyway
+                        </Button>
+                        <span className="text-xs text-yellow-600 dark:text-yellow-400">
+                          or edit your content to remove sensitive data
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 

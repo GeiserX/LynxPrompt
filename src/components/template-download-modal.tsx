@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,10 +14,11 @@ import {
   Info,
   Pencil,
   Save,
+  AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
 import { trackTemplateDownload } from "@/lib/analytics/client";
-import { parseVariablesWithDefaults } from "@/lib/file-generator";
+import { parseVariablesWithDefaults, detectDuplicateVariableDefaults, type DuplicateVariableDefault } from "@/lib/file-generator";
 
 interface SensitiveField {
   label: string;
@@ -132,6 +133,12 @@ export function TemplateDownloadModal({
   useEffect(() => {
     fetchUserVariables();
   }, [fetchUserVariables]);
+
+  // Detect duplicate variable defaults in the template
+  const duplicateVariableDefaults = useMemo<DuplicateVariableDefault[]>(() => {
+    if (!template.content?.trim()) return [];
+    return detectDuplicateVariableDefaults(template.content);
+  }, [template.content]);
 
   // Initialize values from: 1) User saved, 2) Creator defaults, 3) Template variables
   useEffect(() => {
@@ -465,6 +472,31 @@ export function TemplateDownloadModal({
                       </div>
                     );
                   })}
+              </div>
+            </div>
+          )}
+
+          {/* Duplicate Variable Defaults Warning */}
+          {duplicateVariableDefaults.length > 0 && (
+            <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-600 dark:bg-amber-900/20">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-600 dark:text-amber-400" />
+                <div className="flex-1">
+                  <h4 className="text-sm font-medium text-amber-900 dark:text-amber-200">
+                    Note: Multiple Default Values
+                  </h4>
+                  <p className="mt-1 text-xs text-amber-800 dark:text-amber-300">
+                    This blueprint has variables with different default values. The first default found is used:
+                  </p>
+                  <div className="mt-2 space-y-1.5">
+                    {duplicateVariableDefaults.map((dup) => (
+                      <div key={dup.variableName} className="text-xs text-amber-800 dark:text-amber-300">
+                        <code className="font-mono font-semibold">[[{dup.variableName}]]</code>
+                        <span className="ml-1">— lines {dup.occurrences.map(o => o.line).join(", ")}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           )}
