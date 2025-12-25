@@ -24,6 +24,9 @@ import {
   Loader2,
   FolderCog,
   Pencil,
+  Variable,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { Footer } from "@/components/footer";
 import { PageHeader } from "@/components/page-header";
@@ -100,6 +103,9 @@ export default function DashboardPage() {
   const [preferences, setPreferences] = useState<Record<string, Record<string, { value: string; isDefault: boolean }>>>({});
   const [preferencesLoading, setPreferencesLoading] = useState(true);
   const [showPreferences, setShowPreferences] = useState(false);
+  const [variables, setVariables] = useState<Record<string, string>>({});
+  const [variablesLoading, setVariablesLoading] = useState(true);
+  const [showVariables, setShowVariables] = useState(false);
   const [deleteModalTemplate, setDeleteModalTemplate] = useState<MyTemplate | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -108,6 +114,7 @@ export default function DashboardPage() {
     if (status === "authenticated") {
       fetchDashboardData();
       fetchPreferences();
+      fetchVariables();
       // Show welcome modal if profile not completed
       if (session?.user && !session.user.profileCompleted) {
         setShowWelcome(true);
@@ -140,6 +147,20 @@ export default function DashboardPage() {
       console.error("Failed to fetch preferences:", error);
     } finally {
       setPreferencesLoading(false);
+    }
+  };
+
+  const fetchVariables = async () => {
+    try {
+      const res = await fetch("/api/user/variables");
+      if (res.ok) {
+        const data = await res.json();
+        setVariables(data.variables || {});
+      }
+    } catch (error) {
+      console.error("Failed to fetch variables:", error);
+    } finally {
+      setVariablesLoading(false);
     }
   };
 
@@ -645,17 +666,28 @@ export default function DashboardPage() {
             <div className="space-y-8">
               {/* Saved Preferences & Static Files */}
               <div>
-                <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-lg font-semibold">Wizard Preferences</h2>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => setShowPreferences(!showPreferences)}
-                  >
-                    <FolderCog className="mr-2 h-4 w-4" />
-                    {showPreferences ? "Hide" : "Manage"}
-                  </Button>
-                </div>
+                <button
+                  onClick={() => setShowPreferences(!showPreferences)}
+                  className="mb-4 flex w-full items-center justify-between rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-muted p-2">
+                      <FolderCog className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div className="text-left">
+                      <h2 className="text-sm font-semibold">Wizard Preferences</h2>
+                      <p className="text-xs text-muted-foreground">
+                        {preferencesLoading 
+                          ? "Loading..."
+                          : Object.keys(preferences).length > 0 
+                            ? `${Object.values(preferences).reduce((acc, cat) => acc + Object.keys(cat).length, 0)} saved items`
+                            : "No saved preferences"
+                        }
+                      </p>
+                    </div>
+                  </div>
+                  {showPreferences ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                </button>
 
                 {showPreferences && (
                   preferencesLoading ? (
@@ -672,26 +704,73 @@ export default function DashboardPage() {
                     />
                   )
                 )}
+              </div>
 
-                {!showPreferences && (
-                  <div className="rounded-lg border bg-card p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="rounded-lg bg-muted p-2">
-                        <FolderCog className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">
-                          {Object.keys(preferences).length > 0 
-                            ? `${Object.values(preferences).reduce((acc, cat) => acc + Object.keys(cat).length, 0)} saved items`
-                            : "No saved preferences"
-                          }
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Static files, licenses, and wizard settings
-                        </p>
-                      </div>
+              {/* Saved Variables */}
+              <div>
+                <button
+                  onClick={() => setShowVariables(!showVariables)}
+                  className="mb-4 flex w-full items-center justify-between rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-muted p-2">
+                      <Variable className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div className="text-left">
+                      <h2 className="text-sm font-semibold">Saved Variables</h2>
+                      <p className="text-xs text-muted-foreground">
+                        {variablesLoading 
+                          ? "Loading..."
+                          : Object.keys(variables).length > 0 
+                            ? `${Object.keys(variables).length} saved variable${Object.keys(variables).length !== 1 ? 's' : ''}`
+                            : "No saved variables"
+                        }
+                      </p>
                     </div>
                   </div>
+                  {showVariables ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                </button>
+
+                {showVariables && (
+                  variablesLoading ? (
+                    <div className="space-y-3">
+                      {[1, 2].map((i) => (
+                        <div key={i} className="h-12 animate-pulse rounded-lg bg-muted" />
+                      ))}
+                    </div>
+                  ) : Object.keys(variables).length === 0 ? (
+                    <div className="rounded-lg border bg-card p-6 text-center">
+                      <Variable className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
+                      <h3 className="font-medium">No saved variables yet</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        When you download blueprints, save your variable values for quick reuse
+                      </p>
+                      <Button asChild className="mt-4" size="sm" variant="outline">
+                        <Link href="/settings?tab=variables">Manage Variables</Link>
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {Object.entries(variables).slice(0, 5).map(([key, value]) => (
+                        <div key={key} className="rounded-lg border bg-card p-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <code className="text-sm font-medium text-primary">[[{key}]]</code>
+                              <p className="mt-0.5 text-sm text-muted-foreground truncate">{value}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      {Object.keys(variables).length > 5 && (
+                        <p className="text-center text-xs text-muted-foreground">
+                          +{Object.keys(variables).length - 5} more
+                        </p>
+                      )}
+                      <Button asChild className="mt-2 w-full" size="sm" variant="outline">
+                        <Link href="/settings?tab=variables">Manage All Variables</Link>
+                      </Button>
+                    </div>
+                  )
                 )}
               </div>
 

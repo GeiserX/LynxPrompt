@@ -121,7 +121,7 @@ function SignInContent() {
     <div className="flex min-h-screen">
       {/* Left side - Branding */}
       <div className="hidden flex-1 flex-col justify-between bg-gradient-to-br from-purple-600 to-pink-600 p-12 text-white lg:flex">
-        <div className="w-fit rounded-xl bg-white/90 px-3 py-2 shadow-lg backdrop-blur-sm">
+        <div className="w-fit rounded-xl bg-white/90 px-3 py-2 shadow-lg backdrop-blur-sm dark:bg-neutral-900/90">
           <Logo />
         </div>
 

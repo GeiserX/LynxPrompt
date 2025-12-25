@@ -291,6 +291,22 @@ function BlueprintsContent() {
               Find the perfect setup for any workflow.
             </p>
 
+            {/* CTA Buttons */}
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+              <Button asChild>
+                <Link href="/blueprints/create">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Blueprint
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/wizard">
+                  <Wand2 className="mr-2 h-4 w-4" />
+                  Use Wizard
+                </Link>
+              </Button>
+            </div>
+
             {/* Search */}
             <div className="relative mx-auto mt-8 max-w-xl">
               <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />

@@ -3,43 +3,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 
-// Helper to fetch GitHub username using access token
-async function fetchGitHubUsername(accessToken: string): Promise<string | null> {
-  try {
-    const response = await fetch("https://api.github.com/user", {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: "application/vnd.github.v3+json",
-      },
-    });
-    if (response.ok) {
-      const data = await response.json();
-      return data.login || null;
-    }
-  } catch {
-    // Token may be expired or invalid
-  }
-  return null;
-}
-
-// Helper to fetch Google email using access token
-async function fetchGoogleEmail(accessToken: string): Promise<string | null> {
-  try {
-    const response = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-    if (response.ok) {
-      const data = await response.json();
-      return data.email || null;
-    }
-  } catch {
-    // Token may be expired or invalid
-  }
-  return null;
-}
-
 // GET linked accounts
 export async function GET() {
   try {
@@ -49,13 +12,15 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Fetch accounts with stored provider details
     const accounts = await prismaUsers.account.findMany({
       where: { userId: session.user.id },
       select: {
         id: true,
         provider: true,
         providerAccountId: true,
-        access_token: true,
+        providerEmail: true,
+        providerUsername: true,
       },
     });
 
@@ -65,32 +30,8 @@ export async function GET() {
       select: { email: true, emailVerified: true },
     });
 
-    // Fetch provider-specific identifiers (username/email)
-    const accountsWithDetails = await Promise.all(
-      accounts.map(async (account) => {
-        let providerEmail: string | null = null;
-        let providerUsername: string | null = null;
-
-        if (account.access_token) {
-          if (account.provider === "github") {
-            providerUsername = await fetchGitHubUsername(account.access_token);
-          } else if (account.provider === "google") {
-            providerEmail = await fetchGoogleEmail(account.access_token);
-          }
-        }
-
-        return {
-          id: account.id,
-          provider: account.provider,
-          providerAccountId: account.providerAccountId,
-          providerEmail,
-          providerUsername,
-        };
-      })
-    );
-
     return NextResponse.json({
-      accounts: accountsWithDetails,
+      accounts,
       email: user?.email,
       emailVerified: !!user?.emailVerified,
     });

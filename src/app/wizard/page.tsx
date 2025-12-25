@@ -3643,8 +3643,6 @@ function StaticFileEditor({
   placeholder?: string;
   minHeight?: string;
 }) {
-  const [expanded, setExpanded] = useState(false);
-  
   return (
     <div className="rounded-lg border p-4">
       <div className="flex items-center justify-between">
@@ -3662,26 +3660,16 @@ function StaticFileEditor({
             <p className="text-xs text-muted-foreground">{description}</p>
           </div>
         </button>
-        <div className="flex items-center gap-2">
-          {enabled && onContentChange && (
-            <button
-              onClick={() => setExpanded(!expanded)}
-              className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
-            >
-              {expanded ? "Hide editor" : "Edit"}
-            </button>
-          )}
-          <label className="flex items-center gap-2 text-xs text-muted-foreground">
-            <input
-              type="checkbox"
-              checked={saveChecked}
-              onChange={(e) => onSaveToggle(e.target.checked)}
-            />
-            Save to profile
-          </label>
-        </div>
+        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={saveChecked}
+            onChange={(e) => onSaveToggle(e.target.checked)}
+          />
+          Save to profile
+        </label>
       </div>
-      {enabled && expanded && onContentChange && (
+      {enabled && onContentChange && (
         <div className="mt-3">
           <CodeEditor
             value={content || ""}
@@ -3712,7 +3700,7 @@ function StepStaticFiles({
     <div>
       <h2 className="text-2xl font-bold">Static Files</h2>
       <p className="mt-2 text-muted-foreground">
-        Enable files to embed in your AI config. Click &quot;Edit&quot; to customize content.
+        Enable files to embed in your AI config.
       </p>
 
       <div className="mt-4 space-y-3">
