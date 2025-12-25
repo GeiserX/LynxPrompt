@@ -99,7 +99,7 @@ export function PreferencesPanel({
   
   if (categories.length === 0) {
     return (
-      <div className="rounded-lg border bg-card p-6 text-center">
+      <div className="p-6 text-center">
         <FolderCog className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
         <h3 className="font-medium">No saved preferences yet</h3>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -113,7 +113,7 @@ export function PreferencesPanel({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="divide-y">
       {categories.map(category => {
         const categoryConfig = PREFERENCE_CATEGORIES[category] || PREFERENCE_CATEGORIES.general;
         const CategoryIcon = categoryConfig.icon;
@@ -121,17 +121,17 @@ export function PreferencesPanel({
         const isExpanded = expandedCategories.includes(category);
 
         return (
-          <div key={category} className="rounded-lg border bg-card overflow-hidden">
+          <div key={category}>
             <button
               onClick={() => toggleCategory(category)}
-              className="flex w-full items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+              className="flex w-full items-center justify-between p-3 hover:bg-muted/50 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-muted p-2">
-                  <CategoryIcon className="h-4 w-4" />
+                <div className="rounded bg-muted p-1.5">
+                  <CategoryIcon className="h-3.5 w-3.5" />
                 </div>
                 <div className="text-left">
-                  <h4 className="font-medium">{categoryConfig.label}</h4>
+                  <h4 className="font-medium text-sm">{categoryConfig.label}</h4>
                   <p className="text-xs text-muted-foreground">{items.length} saved item{items.length !== 1 ? 's' : ''}</p>
                 </div>
               </div>
@@ -139,14 +139,14 @@ export function PreferencesPanel({
             </button>
             
             {isExpanded && (
-              <div className="border-t divide-y">
+              <div className="border-t bg-muted/30 divide-y">
                 {items.map(([key, { value, isDefault }]) => {
                   const isEditing = editingItem?.category === category && editingItem?.key === key;
                   const displayName = getDisplayName(category, key);
                   const isLongContent = value.length > 100 || value.includes('\n');
 
                   return (
-                    <div key={key} className="p-4">
+                    <div key={key} className="p-3">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">

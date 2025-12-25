@@ -687,6 +687,7 @@ type WizardConfig = {
   repoHostOther: string;
   repoUrl: string;
   exampleRepoUrl: string;
+  documentationUrl: string; // external docs (Confluence, Notion, etc.)
   isPublic: boolean;
   license: string;
   licenseOther: string;
@@ -739,6 +740,7 @@ export default function WizardPage() {
     repoHostOther: "",
     repoUrl: "",
     exampleRepoUrl: "",
+    documentationUrl: "",
     isPublic: true,
     license: "none",
     licenseOther: "",
@@ -2517,6 +2519,20 @@ function StepRepository({
           />
         </div>
 
+        <div>
+          <label className="text-sm font-medium">External Documentation (optional)</label>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Link to Confluence, Notion, GitBook, or internal wiki for additional context.
+          </p>
+          <input
+            type="text"
+            value={config.documentationUrl || ""}
+            onChange={(e) => onChange({ documentationUrl: e.target.value })}
+            placeholder="e.g., https://company.atlassian.net/wiki/spaces/PROJECT"
+            className="mt-2 w-full rounded-lg border bg-background px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+
         <div className="space-y-3">
           <ToggleOption
             label="Conventional Commits"
@@ -3945,11 +3961,30 @@ function StepFeedback({
         <h4 className="font-medium">💡 Suggestions:</h4>
         <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
           <li>• Specific coding standards or style guides</li>
-          <li>
-            • Architectural patterns (microservices, monolith, serverless)
-          </li>
-          <li>• Special deployment requirements</li>
-          <li>• Team-specific workflows</li>
+          <li>• Architectural patterns (microservices, monolith, serverless)</li>
+          <li>• Special deployment requirements or procedures</li>
+          <li>• Team-specific workflows or conventions</li>
+        </ul>
+        
+        <h4 className="mt-4 font-medium">⚠️ Known Issues / Gotchas:</h4>
+        <p className="mt-1 text-xs text-muted-foreground">Document quirks so AI doesn&apos;t repeat mistakes:</p>
+        <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+          <li>• Platform-specific bugs or workarounds</li>
+          <li>• &quot;If you see X error, do Y instead&quot;</li>
+          <li>• Dependencies that need special handling</li>
+          <li>• Things AI assistants commonly get wrong in this project</li>
+        </ul>
+        
+        <h4 className="mt-4 font-medium">🔑 Things You Might Not Have Thought Of:</h4>
+        <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+          <li>• Environment variable naming patterns</li>
+          <li>• Database migration procedures</li>
+          <li>• Important files the AI should read first</li>
+          <li>• Things to NEVER delete or modify</li>
+          <li>• Preferred error handling patterns</li>
+          <li>• Logging conventions or required log formats</li>
+          <li>• Performance constraints or SLAs</li>
+          <li>• Security requirements (auth flow, data handling)</li>
         </ul>
       </div>
     </div>
