@@ -125,19 +125,23 @@ export default function AccountSetupPage() {
             </div>
           </div>
 
-          <div className="rounded-xl border bg-card p-6">
-            <div className="flex items-start gap-4">
-              <div className="rounded-lg bg-muted p-2">
-                <KeyRound className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold">Passkeys (WebAuthn)</h3>
-                <p className="mt-1 text-muted-foreground">
-                  Use biometric authentication (Face ID, Touch ID, Windows
-                  Hello) for the most secure login experience. Passkeys can be
-                  added after creating your account.
-                </p>
-              </div>
+        </div>
+
+        <div className="mt-6 rounded-xl border border-primary/20 bg-primary/5 p-6">
+          <div className="flex items-start gap-4">
+            <div className="rounded-lg bg-primary/10 p-2">
+              <KeyRound className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-semibold">Passkeys (Two-Factor Authentication)</h3>
+              <p className="mt-1 text-muted-foreground">
+                Passkeys add an extra layer of security to your account using
+                biometric authentication (Face ID, Touch ID, Windows Hello).
+                After signing in with any of the methods above, you may be
+                prompted to verify with your passkey when accessing from a new
+                device or location. You can register passkeys in your account
+                settings after creating your account.
+              </p>
             </div>
           </div>
         </div>

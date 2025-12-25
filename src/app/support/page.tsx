@@ -25,6 +25,7 @@ import {
   ArrowRight,
   Filter,
   Search,
+  Trash2,
 } from "lucide-react";
 
 interface Category {
@@ -87,6 +88,7 @@ const STATUS_BADGES: Record<string, { label: string; className: string; icon: Re
 };
 
 const PLAN_BADGES: Record<string, { label: string; className: string }> = {
+  FREE: { label: "Free", className: "bg-gray-500/20 text-gray-600 dark:text-gray-400" },
   PRO: { label: "Pro", className: "bg-gradient-to-r from-blue-500 to-indigo-500 text-white" },
   MAX: { label: "Max", className: "bg-gradient-to-r from-purple-500 to-pink-500 text-white" },
 };
@@ -102,6 +104,9 @@ function SupportPageContent() {
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, pages: 0 });
   const [loading, setLoading] = useState(true);
   const [voting, setVoting] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "SUPERADMIN";
 
   // Filters
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
@@ -117,7 +122,7 @@ function SupportPageContent() {
 
   // Modal state
   const [showNewPostModal, setShowNewPostModal] = useState(false);
-  const [newPostType, setNewPostType] = useState<"bug" | "feature" | null>(null);
+  const [newPostType, setNewPostType] = useState<"bug" | "feature" | "question" | "feedback" | null>(null);
 
   useEffect(() => {
     if (sessionStatus === "unauthenticated") {
@@ -204,6 +209,23 @@ function SupportPageContent() {
     }
   }
 
+  async function handleDelete(postId: string) {
+    if (!confirm("Are you sure you want to delete this post?")) return;
+    setDeleting(postId);
+    try {
+      const res = await fetch(`/api/support/posts/${postId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setPosts((prev) => prev.filter((p) => p.id !== postId));
+      }
+    } catch (error) {
+      console.error("Error deleting:", error);
+    } finally {
+      setDeleting(null);
+    }
+  }
+
   function updateUrl(category: string | null, tag: string | null, sort: string) {
     const params = new URLSearchParams();
     if (category) params.set("category", category);
@@ -261,14 +283,14 @@ function SupportPageContent() {
             <p className="mt-3 text-muted-foreground">
               Report bugs, suggest features, and help shape the future of LynxPrompt.
             </p>
-            <div className="mt-6 flex justify-center gap-3">
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Button
                 onClick={() => {
                   setNewPostType("bug");
                   setShowNewPostModal(true);
                 }}
                 variant="outline"
-                className="gap-2"
+                className="gap-2 border-red-500/50 text-red-600 hover:bg-red-500/10 dark:text-red-400"
               >
                 <Bug className="h-4 w-4" />
                 Report a Bug
@@ -282,6 +304,28 @@ function SupportPageContent() {
               >
                 <Lightbulb className="h-4 w-4" />
                 Suggest a Feature
+              </Button>
+              <Button
+                onClick={() => {
+                  setNewPostType("question");
+                  setShowNewPostModal(true);
+                }}
+                variant="outline"
+                className="gap-2 border-blue-500/50 text-blue-600 hover:bg-blue-500/10 dark:text-blue-400"
+              >
+                <HelpCircle className="h-4 w-4" />
+                Ask a Question
+              </Button>
+              <Button
+                onClick={() => {
+                  setNewPostType("feedback");
+                  setShowNewPostModal(true);
+                }}
+                variant="outline"
+                className="gap-2 border-green-500/50 text-green-600 hover:bg-green-500/10 dark:text-green-400"
+              >
+                <MessageSquare className="h-4 w-4" />
+                General Feedback
               </Button>
             </div>
           </div>
@@ -476,15 +520,34 @@ function SupportPageContent() {
                           )}
                         </div>
 
-                        {/* Status */}
-                        {STATUS_BADGES[post.status] && (
-                          <span
-                            className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${STATUS_BADGES[post.status].className}`}
-                          >
-                            {STATUS_BADGES[post.status].icon}
-                            {STATUS_BADGES[post.status].label}
-                          </span>
-                        )}
+                        {/* Status & Admin Delete */}
+                        <div className="flex items-center gap-2">
+                          {STATUS_BADGES[post.status] && (
+                            <span
+                              className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${STATUS_BADGES[post.status].className}`}
+                            >
+                              {STATUS_BADGES[post.status].icon}
+                              {STATUS_BADGES[post.status].label}
+                            </span>
+                          )}
+                          {isAdmin && (
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleDelete(post.id);
+                              }}
+                              disabled={deleting === post.id}
+                              className="rounded p-1.5 text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                              title="Delete post"
+                            >
+                              {deleting === post.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -512,7 +575,6 @@ function SupportPageContent() {
       {showNewPostModal && (
         <NewPostModal
           type={newPostType}
-          categories={categories}
           tags={tags}
           onClose={() => {
             setShowNewPostModal(false);
@@ -529,27 +591,58 @@ function SupportPageContent() {
   );
 }
 
+const TYPE_TO_CATEGORY: Record<string, string> = {
+  bug: "bugs",
+  feature: "features",
+  question: "questions",
+  feedback: "feedback",
+};
+
+const TYPE_LABELS: Record<string, string> = {
+  bug: "Report a Bug",
+  feature: "Suggest a Feature",
+  question: "Ask a Question",
+  feedback: "Share Feedback",
+};
+
+const TYPE_PLACEHOLDERS: Record<string, { title: string; content: string }> = {
+  bug: {
+    title: "Briefly describe the bug",
+    content: "Steps to reproduce:\n1. \n2. \n\nExpected behavior:\n\nActual behavior:",
+  },
+  feature: {
+    title: "Briefly describe your suggestion",
+    content: "Describe your feature request in detail...",
+  },
+  question: {
+    title: "What would you like to know?",
+    content: "Ask your question here. Be as specific as possible for better answers.",
+  },
+  feedback: {
+    title: "What's on your mind?",
+    content: "Share your thoughts, suggestions, or general feedback about LynxPrompt...",
+  },
+};
+
 function NewPostModal({
   type,
-  categories,
   tags,
   onClose,
   onSuccess,
 }: {
-  type: "bug" | "feature" | null;
-  categories: Category[];
+  type: "bug" | "feature" | "question" | "feedback" | null;
   tags: Tag[];
   onClose: () => void;
   onSuccess: () => void;
 }) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState(
-    type === "bug" ? "bugs" : type === "feature" ? "features" : ""
-  );
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Get the category slug from the type
+  const categorySlug = type ? TYPE_TO_CATEGORY[type] : "";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -563,7 +656,7 @@ function NewPostModal({
         body: JSON.stringify({
           title,
           content,
-          categorySlug: selectedCategory,
+          categorySlug,
           tagSlugs: selectedTags,
         }),
       });
@@ -581,12 +674,14 @@ function NewPostModal({
     }
   }
 
+  const placeholders = type ? TYPE_PLACEHOLDERS[type] : { title: "", content: "" };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-background p-6 shadow-xl">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold">
-            {type === "bug" ? "Report a Bug" : type === "feature" ? "Suggest a Feature" : "New Post"}
+            {type ? TYPE_LABELS[type] : "New Post"}
           </h2>
           <button
             onClick={onClose}
@@ -597,24 +692,6 @@ function NewPostModal({
         </div>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          {/* Category */}
-          <div>
-            <label className="text-sm font-medium">Category</label>
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              required
-              className="mt-1 w-full rounded-lg border bg-background px-3 py-2"
-            >
-              <option value="">Select a category</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.slug}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
           {/* Title */}
           <div>
             <label className="text-sm font-medium">Title</label>
@@ -623,11 +700,7 @@ function NewPostModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              placeholder={
-                type === "bug"
-                  ? "Briefly describe the bug"
-                  : "Briefly describe your suggestion"
-              }
+              placeholder={placeholders.title}
               className="mt-1 w-full rounded-lg border bg-background px-3 py-2"
             />
           </div>
@@ -640,11 +713,7 @@ function NewPostModal({
               onChange={(e) => setContent(e.target.value)}
               required
               rows={6}
-              placeholder={
-                type === "bug"
-                  ? "Steps to reproduce:\n1. \n2. \n\nExpected behavior:\n\nActual behavior:"
-                  : "Describe your feature request in detail..."
-              }
+              placeholder={placeholders.content}
               className="mt-1 w-full rounded-lg border bg-background px-3 py-2"
             />
           </div>

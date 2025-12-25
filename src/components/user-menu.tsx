@@ -9,7 +9,6 @@ import {
   Settings,
   LogOut,
   ChevronDown,
-  CreditCard,
 } from "lucide-react";
 import { getGravatarUrl } from "@/lib/utils";
 
@@ -97,20 +96,12 @@ export function UserMenu() {
               Dashboard
             </Link>
             <Link
-              href="/settings?tab=profile"
+              href="/settings"
               onClick={() => setIsOpen(false)}
               className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted"
             >
               <Settings className="h-4 w-4" />
               Settings
-            </Link>
-            <Link
-              href="/settings?tab=billing"
-              onClick={() => setIsOpen(false)}
-              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted"
-            >
-              <CreditCard className="h-4 w-4" />
-              Billing
             </Link>
           </div>
 

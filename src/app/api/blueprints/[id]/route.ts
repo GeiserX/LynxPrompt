@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getTemplateById, incrementTemplateUsage } from "@/lib/data/templates";
 import { prismaUsers } from "@/lib/db-users";
+import { detectSensitiveData } from "@/lib/sensitive-data";
 
 // MAX subscribers get 10% discount on paid blueprints
 const MAX_DISCOUNT_PERCENT = 10;
@@ -227,6 +228,7 @@ export async function PUT(
       price, 
       currency,
       showcaseUrl,
+      sensitiveDataAcknowledged = false, // User acknowledged sensitive data warning
     } = body;
 
     // Build update data
@@ -344,6 +346,33 @@ export async function PUT(
 
     if (currency !== undefined) {
       updateData.currency = currency || "EUR";
+    }
+
+    // Check for sensitive data in public blueprints
+    // Use the new content if provided, otherwise check if making existing content public
+    const contentToCheck = content?.trim() || (await prismaUsers.userTemplate.findUnique({
+      where: { id: realId },
+      select: { content: true },
+    }))?.content;
+
+    const willBePublic = isPublic !== undefined ? Boolean(isPublic) : (await prismaUsers.userTemplate.findUnique({
+      where: { id: realId },
+      select: { isPublic: true },
+    }))?.isPublic;
+
+    if (willBePublic && contentToCheck && !sensitiveDataAcknowledged) {
+      const sensitiveMatches = detectSensitiveData(contentToCheck);
+      if (sensitiveMatches.length > 0) {
+        return NextResponse.json(
+          {
+            error: "Sensitive data detected",
+            requiresAcknowledgment: true,
+            sensitiveData: sensitiveMatches,
+            message: `Found ${sensitiveMatches.length} potential sensitive item(s). Please review and confirm you want to proceed.`,
+          },
+          { status: 409 } // Conflict - requires user action
+        );
+      }
     }
 
     // Update the blueprint

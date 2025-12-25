@@ -51,7 +51,7 @@ interface StaticFilesConfig {
   gitignoreMode?: "generate" | "custom" | "skip";
   gitignoreCustom?: string;
   gitignoreSave?: boolean;
-  dockerignore?: boolean;
+  dockerignoreMode?: "generate" | "custom" | "skip";
   dockerignoreCustom?: string;
   dockerignoreSave?: boolean;
   license?: string;
@@ -65,7 +65,7 @@ interface WizardConfig {
   devOS?: string; // linux, macos, windows, wsl, multi
   languages: string[];
   frameworks: string[];
-  database?: string; // preferred database
+  databases?: string[]; // preferred databases (multi-select)
   letAiDecide: boolean;
   repoHost: string;
   repoHostOther?: string;
@@ -365,7 +365,7 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
   }
   lines.push("");
 
-  if (config.languages.length > 0 || config.frameworks.length > 0 || config.database || config.letAiDecide) {
+  if (config.languages.length > 0 || config.frameworks.length > 0 || (config.databases && config.databases.length > 0) || config.letAiDecide) {
     lines.push("## Tech Stack");
     if (config.languages.length > 0) {
       const langs = config.languages.map(l => l.startsWith("custom:") ? l.replace("custom:", "") : l);
@@ -375,9 +375,9 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
       const fws = config.frameworks.map(f => f.startsWith("custom:") ? f.replace("custom:", "") : f);
       lines.push(`- Frameworks: ${fws.join(", ")}`);
     }
-    if (config.database) {
-      const db = config.database.startsWith("custom:") ? config.database.replace("custom:", "") : config.database;
-      lines.push(`- Database: ${db}`);
+    if (config.databases && config.databases.length > 0) {
+      const dbs = config.databases.map(d => d.startsWith("custom:") ? d.replace("custom:", "") : d);
+      lines.push(`- Database${config.databases.length > 1 ? 's' : ''}: ${dbs.join(", ")}`);
     }
     if (config.letAiDecide) {
       if (config.languages.length > 0 || config.frameworks.length > 0) {
@@ -524,7 +524,7 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     config.staticFiles.codeOfConduct ||
     config.staticFiles.security ||
     (config.staticFiles.gitignoreMode && config.staticFiles.gitignoreMode !== "skip") ||
-    config.staticFiles.dockerignore ||
+    (config.staticFiles.dockerignoreMode && config.staticFiles.dockerignoreMode !== "skip") ||
     config.funding
   );
   if (hasStaticFiles && canAccessFeature(user.tier, "advanced")) {
@@ -536,7 +536,7 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     if (config.staticFiles!.codeOfConduct) lines.push("- Include CODE_OF_CONDUCT.md.");
     if (config.staticFiles!.security) lines.push("- Include SECURITY.md with reporting instructions.");
     if (config.staticFiles!.gitignoreMode && config.staticFiles!.gitignoreMode !== "skip") lines.push("- Add project-specific .gitignore.");
-    if (config.buildContainer || config.staticFiles!.dockerignore) lines.push("- Add .dockerignore for container builds.");
+    if (config.buildContainer || (config.staticFiles!.dockerignoreMode && config.staticFiles!.dockerignoreMode !== "skip")) lines.push("- Add .dockerignore for container builds.");
     if (config.funding) lines.push("- Add .github/FUNDING.yml when applicable.");
   }
 
@@ -638,7 +638,7 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
   }
   lines.push("");
 
-  if (config.languages.length > 0 || config.frameworks.length > 0 || config.database || config.letAiDecide) {
+  if (config.languages.length > 0 || config.frameworks.length > 0 || (config.databases && config.databases.length > 0) || config.letAiDecide) {
     lines.push("## Technology Stack");
     lines.push("");
     if (config.languages.length > 0) {
@@ -657,10 +657,12 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
       });
       lines.push("");
     }
-    if (config.database) {
-      const db = config.database.startsWith("custom:") ? config.database.replace("custom:", "") : config.database;
-      lines.push("### Database");
-      lines.push(`- ${db}`);
+    if (config.databases && config.databases.length > 0) {
+      lines.push(`### Database${config.databases.length > 1 ? 's' : ''}`);
+      config.databases.forEach((db) => {
+        const cleanDb = db.startsWith("custom:") ? db.replace("custom:", "") : db;
+        lines.push(`- ${cleanDb}`);
+      });
       lines.push("");
     }
     if (config.letAiDecide) {
@@ -1273,14 +1275,24 @@ ${config.staticFiles.gitignoreCustom.trim()}
   }
   
   // Dockerignore
-  if (config.staticFiles?.dockerignore) {
-    if (config.staticFiles.dockerignoreCustom?.trim()) {
+  if (config.staticFiles?.dockerignoreMode && config.staticFiles.dockerignoreMode !== "skip") {
+    if (config.staticFiles.dockerignoreMode === "custom" && config.staticFiles.dockerignoreCustom?.trim()) {
       customFiles.push(`### .dockerignore
 \`\`\`
 ${config.staticFiles.dockerignoreCustom.trim()}
 \`\`\``);
     } else {
-      instructions.push("- Generate `.dockerignore` excluding build artifacts, node_modules, .env files, and other non-essential files.");
+      // "generate" mode or custom without content
+      const langs = config.languages || [];
+      const frameworks = config.frameworks || [];
+      if (config.letAiDecide && langs.length === 0 && frameworks.length === 0) {
+        instructions.push("- Generate appropriate `.dockerignore` based on detected project languages and frameworks.");
+      } else if (langs.length > 0 || frameworks.length > 0) {
+        const techs = [...langs, ...frameworks].map(t => t.startsWith("custom:") ? t.replace("custom:", "") : t);
+        instructions.push(`- Generate appropriate \`.dockerignore\` for: ${techs.join(", ")}.`);
+      } else {
+        instructions.push("- Generate `.dockerignore` excluding build artifacts, node_modules, .env files, and other non-essential files.");
+      }
     }
   }
   

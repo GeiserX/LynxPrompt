@@ -96,7 +96,8 @@ export default function BlueprintsOverviewPage() {
       <section className="space-y-4">
         <h2 className="text-2xl font-bold">Blueprint Categories</h2>
         <p className="text-muted-foreground">
-          Blueprints are automatically categorized based on their complexity:
+          Blueprints are automatically categorized based on their complexity,
+          calculated using internal metrics:
         </p>
         <div className="space-y-3">
           <div className="flex items-center gap-4 rounded-lg border bg-card p-4">
@@ -106,7 +107,7 @@ export default function BlueprintsOverviewPage() {
             <div>
               <p className="font-medium">Basic Configurations</p>
               <p className="text-sm text-muted-foreground">
-                Under 50 lines, quick setups for simple projects
+                Quick setups for simple projects
               </p>
             </div>
           </div>
@@ -117,7 +118,7 @@ export default function BlueprintsOverviewPage() {
             <div>
               <p className="font-medium">Standard Project Setups</p>
               <p className="text-sm text-muted-foreground">
-                50-200 lines, comprehensive rules for most projects
+                Comprehensive rules for most projects
               </p>
             </div>
           </div>
@@ -128,7 +129,7 @@ export default function BlueprintsOverviewPage() {
             <div>
               <p className="font-medium">Comprehensive Configurations</p>
               <p className="text-sm text-muted-foreground">
-                200+ lines, detailed rules for complex projects
+                Detailed rules for complex projects
               </p>
             </div>
           </div>

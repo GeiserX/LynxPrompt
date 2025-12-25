@@ -668,7 +668,7 @@ type StaticFilesConfig = {
   gitignoreMode: "generate" | "custom" | "skip";
   gitignoreCustom: string;
   gitignoreSave: boolean;
-  dockerignore: boolean;
+  dockerignoreMode: "generate" | "custom" | "skip";
   dockerignoreCustom: string;
   dockerignoreSave: boolean;
   licenseSave: boolean;
@@ -681,7 +681,7 @@ type WizardConfig = {
   devOS: string; // windows, macos, linux
   languages: string[];
   frameworks: string[];
-  database: string; // preferred database
+  databases: string[]; // preferred databases (multi-select)
   letAiDecide: boolean;
   repoHost: string;
   repoHostOther: string;
@@ -733,7 +733,7 @@ export default function WizardPage() {
     devOS: "linux",
     languages: [],
     frameworks: [],
-    database: "",
+    databases: [],
     letAiDecide: false,
     repoHost: "github",
     repoHostOther: "",
@@ -782,7 +782,7 @@ export default function WizardPage() {
       gitignoreMode: "skip",
       gitignoreCustom: "",
       gitignoreSave: false,
-      dockerignore: false,
+      dockerignoreMode: "skip",
       dockerignoreCustom: "",
       dockerignoreSave: false,
       licenseSave: false,
@@ -886,22 +886,41 @@ export default function WizardPage() {
                   : Boolean(byCategory.static.funding))
               : prev.staticFiles.funding,
             fundingYml: byCategory.static?.fundingYml ?? prev.staticFiles.fundingYml,
+            fundingSave: byCategory.static?.fundingYml ? true : prev.staticFiles.fundingSave,
             editorconfig: byCategory.static?.editorconfig !== undefined
               ? (typeof byCategory.static.editorconfig === 'string' 
                   ? byCategory.static.editorconfig === 'true' 
                   : Boolean(byCategory.static.editorconfig))
               : prev.staticFiles.editorconfig,
-            contributing: byCategory.static?.contributing ?? prev.staticFiles.contributing,
-            codeOfConduct: byCategory.static?.codeOfConduct ?? prev.staticFiles.codeOfConduct,
-            security: byCategory.static?.security ?? prev.staticFiles.security,
+            editorconfigCustom: byCategory.static?.editorconfigCustom ?? prev.staticFiles.editorconfigCustom,
+            editorconfigSave: byCategory.static?.editorconfigCustom ? true : prev.staticFiles.editorconfigSave,
+            contributing: byCategory.static?.contributing !== undefined
+              ? (typeof byCategory.static.contributing === 'string' 
+                  ? byCategory.static.contributing === 'true' 
+                  : Boolean(byCategory.static.contributing))
+              : prev.staticFiles.contributing,
+            contributingCustom: byCategory.static?.contributingCustom ?? prev.staticFiles.contributingCustom,
+            contributingSave: byCategory.static?.contributingCustom ? true : prev.staticFiles.contributingSave,
+            codeOfConduct: byCategory.static?.codeOfConduct !== undefined
+              ? (typeof byCategory.static.codeOfConduct === 'string' 
+                  ? byCategory.static.codeOfConduct === 'true' 
+                  : Boolean(byCategory.static.codeOfConduct))
+              : prev.staticFiles.codeOfConduct,
+            codeOfConductCustom: byCategory.static?.codeOfConductCustom ?? prev.staticFiles.codeOfConductCustom,
+            codeOfConductSave: byCategory.static?.codeOfConductCustom ? true : prev.staticFiles.codeOfConductSave,
+            security: byCategory.static?.security !== undefined
+              ? (typeof byCategory.static.security === 'string' 
+                  ? byCategory.static.security === 'true' 
+                  : Boolean(byCategory.static.security))
+              : prev.staticFiles.security,
+            securityCustom: byCategory.static?.securityCustom ?? prev.staticFiles.securityCustom,
+            securitySave: byCategory.static?.securityCustom ? true : prev.staticFiles.securitySave,
             gitignoreMode: byCategory.static?.gitignoreMode ?? prev.staticFiles.gitignoreMode,
             gitignoreCustom: byCategory.static?.gitignoreCustom ?? prev.staticFiles.gitignoreCustom,
-            dockerignore: byCategory.static?.dockerignore !== undefined
-              ? (typeof byCategory.static.dockerignore === 'string' 
-                  ? byCategory.static.dockerignore === 'true' 
-                  : Boolean(byCategory.static.dockerignore))
-              : prev.staticFiles.dockerignore,
+            gitignoreSave: byCategory.static?.gitignoreCustom ? true : prev.staticFiles.gitignoreSave,
+            dockerignoreMode: byCategory.static?.dockerignoreMode ?? prev.staticFiles.dockerignoreMode,
             dockerignoreCustom: byCategory.static?.dockerignoreCustom ?? prev.staticFiles.dockerignoreCustom,
+            dockerignoreSave: byCategory.static?.dockerignoreCustom ? true : prev.staticFiles.dockerignoreSave,
             licenseSave: byCategory.static?.licenseSave !== undefined
               ? (typeof byCategory.static.licenseSave === 'string' 
                   ? byCategory.static.licenseSave === 'true' 
@@ -938,6 +957,7 @@ export default function WizardPage() {
       devOS: config.devOS,
       languages: config.languages,
       frameworks: config.frameworks,
+      databases: config.databases,
       letAiDecide: config.letAiDecide,
       repoHost: config.repoHost,
       repoHostOther: config.repoHostOther,
@@ -977,7 +997,7 @@ export default function WizardPage() {
         security: config.staticFiles.security,
         gitignoreMode: config.staticFiles.gitignoreMode,
         gitignoreCustom: config.staticFiles.gitignoreCustom,
-        dockerignore: config.buildContainer || config.staticFiles.dockerignore,
+        dockerignoreMode: config.buildContainer ? (config.staticFiles.dockerignoreMode === "skip" ? "generate" : config.staticFiles.dockerignoreMode) : config.staticFiles.dockerignoreMode,
         dockerignoreCustom: config.staticFiles.dockerignoreCustom,
         license: config.license,
       },
@@ -1031,7 +1051,9 @@ export default function WizardPage() {
         tier: userTier, // Pass user tier to respect feature access
       });
       setPreviewFiles(files);
-      if (files.length > 0 && !expandedFile) {
+      // When files change (e.g., IDE switch), always keep the first file expanded
+      // This ensures the user always sees content, even after switching platforms
+      if (files.length > 0) {
         setExpandedFile(files[0].fileName);
       }
     }
@@ -1088,7 +1110,7 @@ export default function WizardPage() {
   };
 
   const toggleArrayValue = (
-    key: "languages" | "frameworks" | "aiBehaviorRules",
+    key: "languages" | "frameworks" | "databases" | "aiBehaviorRules",
     value: string
   ) => {
     setConfig((prev) => ({
@@ -1130,19 +1152,53 @@ export default function WizardPage() {
         { category: "testing", key: "notes", value: config.testing.notes },
       );
     }
-    if (config.staticFiles.editorconfigSave || config.staticFiles.contributingSave || config.staticFiles.codeOfConductSave || config.staticFiles.securitySave || config.staticFiles.gitignoreSave || config.staticFiles.dockerignoreSave || config.staticFiles.fundingSave || config.staticFiles.licenseSave) {
+    // Save each static file individually based on its save flag
+    if (config.staticFiles.editorconfigSave) {
       payload.push(
-        { category: "static", key: "editorconfig", value: config.staticFiles.editorconfig },
-        { category: "static", key: "contributing", value: config.staticFiles.contributing },
-        { category: "static", key: "codeOfConduct", value: config.staticFiles.codeOfConduct },
-        { category: "static", key: "security", value: config.staticFiles.security },
+        { category: "static", key: "editorconfig", value: String(config.staticFiles.editorconfig) },
+        { category: "static", key: "editorconfigCustom", value: config.staticFiles.editorconfigCustom || "" },
+      );
+    }
+    if (config.staticFiles.contributingSave) {
+      payload.push(
+        { category: "static", key: "contributing", value: String(config.staticFiles.contributing) },
+        { category: "static", key: "contributingCustom", value: config.staticFiles.contributingCustom || "" },
+      );
+    }
+    if (config.staticFiles.codeOfConductSave) {
+      payload.push(
+        { category: "static", key: "codeOfConduct", value: String(config.staticFiles.codeOfConduct) },
+        { category: "static", key: "codeOfConductCustom", value: config.staticFiles.codeOfConductCustom || "" },
+      );
+    }
+    if (config.staticFiles.securitySave) {
+      payload.push(
+        { category: "static", key: "security", value: String(config.staticFiles.security) },
+        { category: "static", key: "securityCustom", value: config.staticFiles.securityCustom || "" },
+      );
+    }
+    if (config.staticFiles.gitignoreSave) {
+      payload.push(
         { category: "static", key: "gitignoreMode", value: config.staticFiles.gitignoreMode },
-        { category: "static", key: "gitignoreCustom", value: config.staticFiles.gitignoreCustom },
-        { category: "static", key: "dockerignore", value: config.buildContainer || config.staticFiles.dockerignore },
-        { category: "static", key: "dockerignoreCustom", value: config.staticFiles.dockerignoreCustom },
-        { category: "static", key: "funding", value: config.funding || config.staticFiles.funding },
-        { category: "static", key: "fundingYml", value: config.staticFiles.fundingYml || config.fundingYml },
-        { category: "static", key: "licenseSave", value: config.staticFiles.licenseSave || config.licenseSave },
+        { category: "static", key: "gitignoreCustom", value: config.staticFiles.gitignoreCustom || "" },
+      );
+    }
+    if (config.staticFiles.dockerignoreSave) {
+      payload.push(
+        { category: "static", key: "dockerignoreMode", value: config.staticFiles.dockerignoreMode },
+        { category: "static", key: "dockerignoreCustom", value: config.staticFiles.dockerignoreCustom || "" },
+      );
+    }
+    if (config.staticFiles.fundingSave) {
+      payload.push(
+        { category: "static", key: "funding", value: String(config.funding || config.staticFiles.funding) },
+        { category: "static", key: "fundingYml", value: config.staticFiles.fundingYml || config.fundingYml || "" },
+      );
+    }
+    if (config.staticFiles.licenseSave) {
+      payload.push(
+        { category: "static", key: "licenseSave", value: String(config.staticFiles.licenseSave || config.licenseSave) },
+        { category: "repo", key: "license", value: config.license },
       );
     }
     if (payload.length === 0) return;
@@ -1434,11 +1490,11 @@ export default function WizardPage() {
                 <StepTechStack
                   selectedLanguages={config.languages}
                   selectedFrameworks={config.frameworks}
-                  selectedDatabase={config.database}
+                  selectedDatabases={config.databases}
                   letAiDecide={config.letAiDecide}
                   onToggleLanguage={(v) => toggleArrayValue("languages", v)}
                   onToggleFramework={(v) => toggleArrayValue("frameworks", v)}
-                  onDatabaseChange={(v) => setConfig({ ...config, database: v })}
+                  onToggleDatabase={(v) => toggleArrayValue("databases", v)}
                   onLetAiDecide={(v) => setConfig({ ...config, letAiDecide: v })}
                 />
               )}
@@ -1699,20 +1755,20 @@ function StepProject({
 function StepTechStack({
   selectedLanguages,
   selectedFrameworks,
-  selectedDatabase,
+  selectedDatabases,
   letAiDecide,
   onToggleLanguage,
   onToggleFramework,
-  onDatabaseChange,
+  onToggleDatabase,
   onLetAiDecide,
 }: {
   selectedLanguages: string[];
   selectedFrameworks: string[];
-  selectedDatabase: string;
+  selectedDatabases: string[];
   letAiDecide: boolean;
   onToggleLanguage: (v: string) => void;
   onToggleFramework: (v: string) => void;
-  onDatabaseChange: (v: string) => void;
+  onToggleDatabase: (v: string) => void;
   onLetAiDecide: (v: boolean) => void;
 }) {
   const [langSearch, setLangSearch] = useState("");
@@ -1782,7 +1838,7 @@ function StepTechStack({
 
   const handleAddCustomDatabase = () => {
     if (customDatabase.trim()) {
-      onDatabaseChange(`custom:${customDatabase.trim()}`);
+      onToggleDatabase(`custom:${customDatabase.trim()}`);
       setCustomDatabase("");
       setShowCustomDb(false);
     }
@@ -1791,8 +1847,7 @@ function StepTechStack({
   // Get custom items from selected
   const customLangs = selectedLanguages.filter(l => l.startsWith("custom:")).map(l => l.replace("custom:", ""));
   const customFws = selectedFrameworks.filter(f => f.startsWith("custom:")).map(f => f.replace("custom:", ""));
-  const isCustomDb = selectedDatabase.startsWith("custom:");
-  const customDbName = isCustomDb ? selectedDatabase.replace("custom:", "") : "";
+  const customDbs = selectedDatabases.filter(d => d.startsWith("custom:")).map(d => d.replace("custom:", ""));
 
   return (
     <div>
@@ -2055,12 +2110,12 @@ function StepTechStack({
         <div className="mb-3 flex items-center justify-between">
           <h3 className="font-semibold">Database Preference</h3>
           <span className="text-sm text-muted-foreground">
-            {selectedDatabase ? "1 selected" : "Optional"}
+            {selectedDatabases.length > 0 ? `${selectedDatabases.length} selected` : "Optional"}
           </span>
         </div>
 
         <p className="mb-3 text-sm text-muted-foreground">
-          Select your preferred database (optional). This helps AI understand your data storage preferences.
+          Select your preferred databases (optional). You can select multiple. This helps AI understand your data storage preferences.
         </p>
 
         {/* Search */}
@@ -2085,9 +2140,9 @@ function StepTechStack({
               {displayedOpenSource.map((db) => (
                 <button
                   key={db.value}
-                  onClick={() => onDatabaseChange(selectedDatabase === db.value ? "" : db.value)}
+                  onClick={() => onToggleDatabase(db.value)}
                   className={`flex items-center gap-2 rounded-lg border p-2.5 text-left transition-all hover:border-primary ${
-                    selectedDatabase === db.value
+                    selectedDatabases.includes(db.value)
                       ? "border-primary bg-primary/5 ring-1 ring-primary"
                       : ""
                   }`}
@@ -2110,9 +2165,9 @@ function StepTechStack({
               {displayedCloud.map((db) => (
                 <button
                   key={db.value}
-                  onClick={() => onDatabaseChange(selectedDatabase === db.value ? "" : db.value)}
+                  onClick={() => onToggleDatabase(db.value)}
                   className={`flex items-center gap-2 rounded-lg border p-2.5 text-left transition-all hover:border-primary ${
-                    selectedDatabase === db.value
+                    selectedDatabases.includes(db.value)
                       ? "border-primary bg-primary/5 ring-1 ring-primary"
                       : ""
                   }`}
@@ -2135,9 +2190,9 @@ function StepTechStack({
               {displayedProprietary.map((db) => (
                 <button
                   key={db.value}
-                  onClick={() => onDatabaseChange(selectedDatabase === db.value ? "" : db.value)}
+                  onClick={() => onToggleDatabase(db.value)}
                   className={`flex items-center gap-2 rounded-lg border p-2.5 text-left transition-all hover:border-primary ${
-                    selectedDatabase === db.value
+                    selectedDatabases.includes(db.value)
                       ? "border-primary bg-primary/5 ring-1 ring-primary"
                       : ""
                   }`}
@@ -2151,24 +2206,29 @@ function StepTechStack({
         )}
 
         {/* Custom database display */}
-        {isCustomDb && (
+        {customDbs.length > 0 && (
           <div className="mb-4">
             <h4 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Custom
             </h4>
-            <button
-              onClick={() => onDatabaseChange("")}
-              className="flex items-center gap-2 rounded-lg border border-primary bg-primary/5 p-2.5 text-left ring-1 ring-primary"
-            >
-              <span className="text-lg">📝</span>
-              <span className="truncate text-sm font-medium">{customDbName}</span>
-              <X className="ml-auto h-4 w-4 text-muted-foreground hover:text-foreground" />
-            </button>
+            <div className="flex flex-wrap gap-2">
+              {customDbs.map((dbName) => (
+                <button
+                  key={dbName}
+                  onClick={() => onToggleDatabase(`custom:${dbName}`)}
+                  className="flex items-center gap-2 rounded-lg border border-primary bg-primary/5 p-2.5 text-left ring-1 ring-primary"
+                >
+                  <span className="text-lg">📝</span>
+                  <span className="truncate text-sm font-medium">{dbName}</span>
+                  <X className="ml-auto h-4 w-4 text-muted-foreground hover:text-foreground" />
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
         {/* Add Other button */}
-        {!showCustomDb && !isCustomDb && (
+        {!showCustomDb && (
           <button
             onClick={() => setShowCustomDb(true)}
             className="flex items-center gap-2 rounded-lg border border-dashed p-2.5 text-left transition-all hover:border-primary"
@@ -3740,47 +3800,6 @@ dist/`}
           )}
         </div>
 
-        <div className="rounded-lg border p-4">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => onChange({ dockerignore: !config.dockerignore })}
-              className="flex items-center gap-3 text-left"
-            >
-              <div className={`flex h-5 w-5 items-center justify-center rounded border ${
-                config.dockerignore ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground"
-              }`}>
-                {config.dockerignore && <Check className="h-3 w-3" />}
-              </div>
-              <div>
-                <p className="font-medium">.dockerignore</p>
-                <p className="text-xs text-muted-foreground">
-                  {buildContainer ? "Recommended for container builds" : "Exclude files from Docker context"}
-                </p>
-              </div>
-            </button>
-            <label className="flex items-center gap-2 text-xs text-muted-foreground">
-              <input
-                type="checkbox"
-                checked={config.dockerignoreSave}
-                onChange={(e) => onChange({ dockerignoreSave: e.target.checked })}
-              />
-              Save to profile
-            </label>
-          </div>
-          {config.dockerignore && (
-            <div className="mt-3">
-              <CodeEditor
-                value={config.dockerignoreCustom || ""}
-                onChange={(v) => onChange({ dockerignoreCustom: v })}
-                placeholder={`node_modules/
-.git/
-*.log`}
-                minHeight="100px"
-              />
-            </div>
-          )}
-        </div>
-
         {isGithub && isPublic && (
           <div className="rounded-lg border p-4">
             <div className="flex items-center justify-between">
@@ -3821,6 +3840,50 @@ ko_fi: your-kofi`}
             )}
           </div>
         )}
+
+        <div className="rounded-lg border p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">.dockerignore</p>
+              <p className="text-xs text-muted-foreground">
+                {buildContainer ? "Recommended for container builds" : "Exclude files from Docker context"}
+              </p>
+            </div>
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={config.dockerignoreSave}
+                onChange={(e) => onChange({ dockerignoreSave: e.target.checked })}
+              />
+              Save to profile
+            </label>
+          </div>
+          <div className="mt-2 grid grid-cols-3 gap-2">
+            {(["generate", "custom", "skip"] as const).map((opt) => (
+              <button
+                key={opt}
+                onClick={() => onChange({ dockerignoreMode: opt })}
+                className={`rounded-md border px-3 py-2 text-sm ${
+                  config.dockerignoreMode === opt ? "border-primary bg-primary/5" : "hover:border-primary"
+                }`}
+              >
+                {opt === "generate" ? "AI generate" : opt === "custom" ? "Custom" : "Skip"}
+              </button>
+            ))}
+          </div>
+          {config.dockerignoreMode === "custom" && (
+            <div className="mt-2">
+              <CodeEditor
+                value={config.dockerignoreCustom || ""}
+                onChange={(v) => onChange({ dockerignoreCustom: v })}
+                placeholder={`node_modules/
+.git/
+*.log`}
+                minHeight="120px"
+              />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -4099,13 +4162,14 @@ function StepGenerate({
                   {FRAMEWORKS.find((f) => f.value === fw)?.label || fw}
                 </span>
               ))}
-              {config.database && (
+              {config.databases.map((db) => (
                 <span
+                  key={db}
                   className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs text-emerald-600"
                 >
-                  🗄️ {DATABASES.find((db) => db.value === config.database)?.label || config.database.replace("custom:", "")}
+                  🗄️ {DATABASES.find((d) => d.value === db)?.label || db.replace("custom:", "")}
                 </span>
-              )}
+              ))}
             </div>
           </div>
 
