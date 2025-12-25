@@ -693,6 +693,9 @@ export default function DashboardPage() {
   const [preferences, setPreferences] = useState<Record<string, Record<string, { value: string; isDefault: boolean }>>>({});
   const [preferencesLoading, setPreferencesLoading] = useState(true);
   const [showPreferences, setShowPreferences] = useState(false);
+  const [deleteModalTemplate, setDeleteModalTemplate] = useState<MyTemplate | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -781,6 +784,35 @@ export default function DashboardPage() {
     fetchDashboardData();
   };
 
+  const handleDeleteBlueprint = async () => {
+    if (!deleteModalTemplate) return;
+    
+    setIsDeleting(true);
+    setDeleteError(null);
+    
+    try {
+      const response = await fetch(`/api/blueprints/${deleteModalTemplate.id}`, {
+        method: "DELETE",
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        setDeleteError(data.error || "Failed to delete blueprint");
+        setIsDeleting(false);
+        return;
+      }
+      
+      // Success - close modal and refresh data
+      setDeleteModalTemplate(null);
+      setIsDeleting(false);
+      fetchDashboardData();
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "An error occurred");
+      setIsDeleting(false);
+    }
+  };
+
   if (status === "loading") {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -863,6 +895,49 @@ export default function DashboardPage() {
           onComplete={handleWelcomeComplete} 
           userName={session?.user?.name}
         />
+      )}
+
+      {/* Delete Blueprint Confirmation Modal */}
+      {deleteModalTemplate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="mx-4 w-full max-w-md rounded-xl bg-background p-6 shadow-xl">
+            <h3 className="text-lg font-bold text-destructive">Delete Blueprint?</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Are you sure you want to delete &quot;{deleteModalTemplate.name}&quot;? This action cannot be undone.
+            </p>
+            {deleteError && (
+              <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
+                <p className="text-sm text-red-600 dark:text-red-400">{deleteError}</p>
+              </div>
+            )}
+            <div className="mt-6 flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setDeleteModalTemplate(null);
+                  setDeleteError(null);
+                }}
+                disabled={isDeleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteBlueprint}
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  "Delete Forever"
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Header */}
@@ -1020,6 +1095,18 @@ export default function DashboardPage() {
                             <Link href={`/blueprints/${template.id}/edit`}>
                               <Pencil className="h-4 w-4" />
                             </Link>
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            title="Delete"
+                            onClick={() => {
+                              setDeleteError(null);
+                              setDeleteModalTemplate(template);
+                            }}
+                            className="text-muted-foreground hover:text-destructive"
+                          >
+                            <X className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>

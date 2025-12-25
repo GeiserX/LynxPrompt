@@ -418,6 +418,21 @@ export async function DELETE(
       );
     }
 
+    // Check if blueprint has been purchased by another user
+    const purchaseCount = await prismaUsers.blueprintPurchase.count({
+      where: {
+        templateId: realId,
+        userId: { not: session.user.id }, // Exclude owner's own purchase if any
+      },
+    });
+
+    if (purchaseCount > 0) {
+      return NextResponse.json(
+        { error: "Cannot delete this blueprint as it has been purchased by other users" },
+        { status: 403 }
+      );
+    }
+
     // Delete the blueprint
     await prismaUsers.userTemplate.delete({
       where: { id: realId },

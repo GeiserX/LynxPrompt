@@ -142,15 +142,15 @@ export default function HomePage() {
       {/* Community Blueprints CTA */}
       <section className="container mx-auto px-4 py-20 sm:px-6 lg:px-8">
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 p-8 text-white sm:p-12">
-          <div className="relative z-10">
+          <div className="relative z-10 text-center">
             <h2 className="text-3xl font-bold">
               More than a marketplace — your AI config hub
             </h2>
-            <p className="mt-2 max-w-xl text-white/80">
+            <p className="mx-auto mt-2 max-w-xl text-white/80">
               Generate, share, and discover AI coding rules that work across every IDE.
               Turn your expertise into blueprints that help other developers — and earn from it.
             </p>
-            <div className="mt-6 flex flex-wrap gap-4">
+            <div className="mt-6 flex flex-wrap justify-center gap-4">
               <Button
                 variant="secondary"
                 size="lg"
@@ -171,81 +171,88 @@ export default function HomePage() {
           {/* Decorative elements */}
           <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
           <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
-          {/* City skyline silhouette - fading from bottom right */}
+          {/* Hexagon pattern - left side, fading to center */}
           <div 
-            className="pointer-events-none absolute bottom-0 right-0 h-48 w-80 sm:h-56 sm:w-96"
+            className="pointer-events-none absolute inset-y-0 left-0 w-1/3 overflow-hidden"
             style={{
-              maskImage: 'linear-gradient(to top left, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 50%, transparent 80%)',
-              WebkitMaskImage: 'linear-gradient(to top left, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 50%, transparent 80%)',
+              maskImage: 'linear-gradient(to right, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 40%, transparent 80%)',
+              WebkitMaskImage: 'linear-gradient(to right, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 40%, transparent 80%)',
             }}
           >
             <svg 
-              viewBox="0 0 400 200" 
+              viewBox="0 0 200 300" 
               className="h-full w-full"
-              preserveAspectRatio="xMaxYMax slice"
+              preserveAspectRatio="xMinYMid slice"
             >
-              {/* City skyline buildings */}
-              <g fill="white" opacity="0.45">
-                {/* Tall building with antenna */}
-                <rect x="350" y="40" width="30" height="160" />
-                <rect x="360" y="20" width="10" height="20" />
-                <rect x="363" y="0" width="4" height="20" />
-                {/* Building windows - lit up */}
-                <rect x="355" y="50" width="6" height="8" fill="#fef08a" opacity="0.8" />
-                <rect x="365" y="50" width="6" height="8" fill="#fef08a" opacity="0.6" />
-                <rect x="355" y="65" width="6" height="8" fill="#fef08a" opacity="0.7" />
-                <rect x="365" y="65" width="6" height="8" fill="#fef08a" opacity="0.9" />
-                <rect x="355" y="80" width="6" height="8" fill="#fef08a" opacity="0.5" />
-                <rect x="365" y="80" width="6" height="8" fill="#fef08a" opacity="0.8" />
-                <rect x="355" y="95" width="6" height="8" fill="#fef08a" opacity="0.6" />
-                <rect x="365" y="95" width="6" height="8" fill="#fef08a" opacity="0.4" />
-                <rect x="355" y="110" width="6" height="8" fill="#fef08a" opacity="0.7" />
-                <rect x="365" y="110" width="6" height="8" fill="#fef08a" opacity="0.5" />
-                
-                {/* Medium building with stepped top */}
-                <rect x="310" y="80" width="35" height="120" />
-                <rect x="315" y="65" width="25" height="15" />
-                <rect x="320" y="55" width="15" height="10" />
-                {/* Windows for medium building */}
-                <rect x="315" y="90" width="5" height="6" fill="#fef08a" opacity="0.7" />
-                <rect x="325" y="90" width="5" height="6" fill="#fef08a" opacity="0.5" />
-                <rect x="335" y="90" width="5" height="6" fill="#fef08a" opacity="0.8" />
-                <rect x="315" y="105" width="5" height="6" fill="#fef08a" opacity="0.4" />
-                <rect x="325" y="105" width="5" height="6" fill="#fef08a" opacity="0.9" />
-                <rect x="335" y="105" width="5" height="6" fill="#fef08a" opacity="0.6" />
-                
-                {/* Short wide building */}
-                <rect x="260" y="120" width="45" height="80" />
-                <rect x="265" y="110" width="35" height="10" />
-                {/* Windows */}
-                <rect x="268" y="130" width="8" height="10" fill="#fef08a" opacity="0.6" />
-                <rect x="282" y="130" width="8" height="10" fill="#fef08a" opacity="0.8" />
-                <rect x="268" y="150" width="8" height="10" fill="#fef08a" opacity="0.5" />
-                <rect x="282" y="150" width="8" height="10" fill="#fef08a" opacity="0.7" />
-                
-                {/* Twin towers */}
-                <rect x="220" y="70" width="15" height="130" />
-                <rect x="240" y="85" width="15" height="115" />
-                {/* Windows */}
-                <rect x="224" y="80" width="4" height="5" fill="#fef08a" opacity="0.7" />
-                <rect x="224" y="95" width="4" height="5" fill="#fef08a" opacity="0.5" />
-                <rect x="244" y="95" width="4" height="5" fill="#fef08a" opacity="0.8" />
-                <rect x="244" y="110" width="4" height="5" fill="#fef08a" opacity="0.6" />
-                
-                {/* Small buildings */}
-                <rect x="185" y="130" width="30" height="70" />
-                <rect x="150" y="145" width="30" height="55" />
-                <rect x="120" y="155" width="25" height="45" />
-                <rect x="90" y="165" width="25" height="35" />
-                <rect x="60" y="175" width="25" height="25" />
-                <rect x="30" y="180" width="25" height="20" />
-                <rect x="5" y="185" width="20" height="15" />
-                {/* A few windows on smaller buildings */}
-                <rect x="190" y="140" width="5" height="6" fill="#fef08a" opacity="0.6" />
-                <rect x="200" y="140" width="5" height="6" fill="#fef08a" opacity="0.8" />
-                <rect x="155" y="155" width="5" height="6" fill="#fef08a" opacity="0.5" />
-                <rect x="165" y="155" width="5" height="6" fill="#fef08a" opacity="0.7" />
-              </g>
+              <defs>
+                <pattern id="hexPattern-left" width="46" height="80" patternUnits="userSpaceOnUse" patternTransform="scale(1.2)">
+                  {/* Main hexagon */}
+                  <polygon 
+                    points="23,0 46,13 46,40 23,53 0,40 0,13" 
+                    fill="none" 
+                    stroke="white" 
+                    strokeWidth="1.5"
+                    opacity="0.35"
+                  />
+                  {/* Offset hexagon */}
+                  <polygon 
+                    points="23,27 46,40 46,67 23,80 0,67 0,40" 
+                    fill="none" 
+                    stroke="white" 
+                    strokeWidth="1.5"
+                    opacity="0.35"
+                  />
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#hexPattern-left)" />
+              {/* Glowing accent hexagons */}
+              <polygon points="45,30 68,43 68,70 45,83 22,70 22,43" fill="white" opacity="0.15" />
+              <polygon points="91,70 114,83 114,110 91,123 68,110 68,83" fill="white" opacity="0.1" />
+              <polygon points="22,110 45,123 45,150 22,163 -1,150 -1,123" fill="white" opacity="0.12" />
+              <polygon points="68,150 91,163 91,190 68,203 45,190 45,163" fill="white" opacity="0.08" />
+              <polygon points="45,190 68,203 68,230 45,243 22,230 22,203" fill="white" opacity="0.1" />
+            </svg>
+          </div>
+          {/* Hexagon pattern - right side, fading to center */}
+          <div 
+            className="pointer-events-none absolute inset-y-0 right-0 w-1/3 overflow-hidden"
+            style={{
+              maskImage: 'linear-gradient(to left, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 40%, transparent 80%)',
+              WebkitMaskImage: 'linear-gradient(to left, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 40%, transparent 80%)',
+            }}
+          >
+            <svg 
+              viewBox="0 0 200 300" 
+              className="h-full w-full"
+              preserveAspectRatio="xMaxYMid slice"
+            >
+              <defs>
+                <pattern id="hexPattern-right" width="46" height="80" patternUnits="userSpaceOnUse" patternTransform="scale(1.2)">
+                  {/* Main hexagon */}
+                  <polygon 
+                    points="23,0 46,13 46,40 23,53 0,40 0,13" 
+                    fill="none" 
+                    stroke="white" 
+                    strokeWidth="1.5"
+                    opacity="0.35"
+                  />
+                  {/* Offset hexagon */}
+                  <polygon 
+                    points="23,27 46,40 46,67 23,80 0,67 0,40" 
+                    fill="none" 
+                    stroke="white" 
+                    strokeWidth="1.5"
+                    opacity="0.35"
+                  />
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#hexPattern-right)" />
+              {/* Glowing accent hexagons */}
+              <polygon points="155,50 178,63 178,90 155,103 132,90 132,63" fill="white" opacity="0.15" />
+              <polygon points="109,90 132,103 132,130 109,143 86,130 86,103" fill="white" opacity="0.1" />
+              <polygon points="178,130 201,143 201,170 178,183 155,170 155,143" fill="white" opacity="0.12" />
+              <polygon points="132,170 155,183 155,210 132,223 109,210 109,183" fill="white" opacity="0.08" />
+              <polygon points="155,210 178,223 178,250 155,263 132,250 132,223" fill="white" opacity="0.1" />
             </svg>
           </div>
         </div>
