@@ -5,7 +5,7 @@ import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Mail, Github, Chrome, ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
+import { Mail, Github, Chrome, ArrowLeft, Loader2 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Turnstile } from "@/components/turnstile";
 
@@ -229,31 +229,6 @@ function SignInContent() {
                     </div>
                   </div>
 
-                  {/* Turnstile CAPTCHA */}
-                  {turnstileEnabled && (
-                    <div className="mt-4">
-                      <Turnstile
-                        onSuccess={(token) => {
-                          setTurnstileToken(token);
-                          setTurnstileError(null);
-                        }}
-                        onExpire={() => setTurnstileToken(null)}
-                        onError={() => setTurnstileToken(null)}
-                      />
-                      {turnstileToken && (
-                        <p className="mt-2 text-sm text-green-600 dark:text-green-400 flex items-center gap-1">
-                          <CheckCircle2 className="h-4 w-4" />
-                          Verified
-                        </p>
-                      )}
-                      {turnstileError && (
-                        <p className="mt-2 text-sm text-red-600 dark:text-red-400">
-                          {turnstileError}
-                        </p>
-                      )}
-                    </div>
-                  )}
-
                   <Button
                     type="submit"
                     className="mt-4 w-full"
@@ -268,6 +243,25 @@ function SignInContent() {
                       "Send magic link"
                     )}
                   </Button>
+
+                  {/* Turnstile CAPTCHA */}
+                  {turnstileEnabled && (
+                    <div className="mt-4">
+                      <Turnstile
+                        onSuccess={(token) => {
+                          setTurnstileToken(token);
+                          setTurnstileError(null);
+                        }}
+                        onExpire={() => setTurnstileToken(null)}
+                        onError={() => setTurnstileToken(null)}
+                      />
+                      {turnstileError && (
+                        <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+                          {turnstileError}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </form>
 
                 <p className="mt-8 text-center text-sm text-muted-foreground">

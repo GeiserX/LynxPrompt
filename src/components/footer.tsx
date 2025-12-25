@@ -18,35 +18,41 @@ export function Footer() {
             </a>
           </p>
         </div>
-        <div className="flex items-center gap-6">
-          <div className="flex gap-4">
-            <Link
-              href="/privacy"
-              className="text-sm text-muted-foreground hover:underline"
-            >
-              Privacy
-            </Link>
-            <Link
-              href="/terms"
-              className="text-sm text-muted-foreground hover:underline"
-            >
-              Terms
-            </Link>
-            <Link
-              href="/about"
-              className="text-sm text-muted-foreground hover:underline"
-            >
-              About
-            </Link>
-            <a
-              href="https://status.lynxprompt.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-muted-foreground hover:underline"
-            >
-              Status
-            </a>
-          </div>
+          <div className="flex items-center gap-6">
+            <div className="flex flex-wrap gap-4">
+              <Link
+                href="/privacy"
+                className="text-sm text-muted-foreground hover:underline"
+              >
+                Privacy
+              </Link>
+              <Link
+                href="/terms"
+                className="text-sm text-muted-foreground hover:underline"
+              >
+                Terms
+              </Link>
+              <Link
+                href="/cookies"
+                className="text-sm text-muted-foreground hover:underline"
+              >
+                Cookies
+              </Link>
+              <Link
+                href="/about"
+                className="text-sm text-muted-foreground hover:underline"
+              >
+                About
+              </Link>
+              <a
+                href="https://status.lynxprompt.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-muted-foreground hover:underline"
+              >
+                Status
+              </a>
+            </div>
           <a
             href="https://x.com/LynxPrompt"
             target="_blank"

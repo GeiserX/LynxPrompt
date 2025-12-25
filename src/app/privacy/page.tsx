@@ -511,10 +511,30 @@ export default function PrivacyPage() {
                   13. Cookies
                 </h2>
                 <p>
-                  We use only essential cookies required for authentication and
-                  session management. We do not use advertising, tracking, or
-                  third-party marketing cookies. Our analytics provider (Umami)
-                  is cookieless and privacy-focused.
+                  We use only essential cookies required for authentication,
+                  session management, and security. This includes:
+                </p>
+                <ul className="mt-3 list-inside list-disc space-y-1">
+                  <li>
+                    <strong>Authentication cookies</strong> – To keep you logged
+                    in and protect against CSRF attacks
+                  </li>
+                  <li>
+                    <strong>Security cookies</strong> – Cloudflare Turnstile
+                    sets cookies to protect against bots and automated attacks
+                  </li>
+                </ul>
+                <p className="mt-3">
+                  We do not use advertising, tracking, or third-party marketing
+                  cookies. Our analytics provider (Umami) is cookieless and
+                  privacy-focused.
+                </p>
+                <p className="mt-3">
+                  For a detailed breakdown of all cookies used, see our{" "}
+                  <Link href="/cookies" className="text-primary hover:underline">
+                    Cookie Policy
+                  </Link>
+                  .
                 </p>
               </section>
 
