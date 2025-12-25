@@ -4,16 +4,12 @@ import { authOptions } from "@/lib/auth";
 import { prismaSupport } from "@/lib/db-support";
 import { prismaUsers } from "@/lib/db-users";
 
+// Public endpoint - no auth required for reading comments
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const { id } = await params;
 
     const comments = await prismaSupport.supportComment.findMany({

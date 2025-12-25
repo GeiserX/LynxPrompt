@@ -668,7 +668,7 @@ export default function BlueprintDetailPage() {
       {/* Delete Confirmation Dialog */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="mx-4 w-full max-w-md rounded-lg bg-background p-6 shadow-xl">
+          <div className="mx-4 w-full max-w-md rounded-lg bg-background p-6 shadow-xl text-foreground">
             <h3 className="text-lg font-semibold">Delete Blueprint</h3>
             <p className="mt-2 text-muted-foreground">
               Are you sure you want to delete &quot;{blueprint.name}&quot;? This action cannot be undone.

@@ -116,15 +116,20 @@ export default function PostDetailPage({
   const isAuthor = session?.user?.id === post?.userId;
 
   useEffect(() => {
-    if (sessionStatus === "unauthenticated") {
-      router.push("/auth/signin?callbackUrl=/support/" + resolvedParams.id);
-      return;
-    }
-
-    if (sessionStatus === "authenticated") {
+    // Load post regardless of auth status - support posts are public
+    if (sessionStatus !== "loading") {
       fetchPost();
     }
-  }, [sessionStatus, router, resolvedParams.id]);
+  }, [sessionStatus, resolvedParams.id]);
+
+  // Helper to handle auth-required actions
+  const handleAuthAction = (action: () => void) => {
+    if (sessionStatus === "unauthenticated") {
+      router.push("/auth/signin?callbackUrl=/support/" + resolvedParams.id);
+    } else {
+      action();
+    }
+  };
 
   async function fetchPost() {
     setLoading(true);
@@ -295,7 +300,7 @@ export default function PostDetailPage({
               <div className="flex items-start gap-4">
                 {/* Vote */}
                 <button
-                  onClick={handleVote}
+                  onClick={() => handleAuthAction(handleVote)}
                   disabled={voting}
                   className={`flex flex-col items-center rounded-lg border px-4 py-3 transition-colors ${
                     post.hasVoted
@@ -445,37 +450,52 @@ export default function PostDetailPage({
               {post.comments.length} {post.comments.length === 1 ? "Comment" : "Comments"}
             </h2>
 
-            {/* Comment form */}
-            <form onSubmit={handleSubmitComment} className="mb-6">
-              <div className="flex gap-3">
-                <div className="flex-1">
-                  <textarea
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="Write a comment..."
-                    rows={3}
-                    className="w-full rounded-lg border bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
-                  />
+            {/* Comment form - only show when authenticated */}
+            {sessionStatus === "authenticated" ? (
+              <form onSubmit={handleSubmitComment} className="mb-6">
+                <div className="flex gap-3">
+                  <div className="flex-1">
+                    <textarea
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="Write a comment..."
+                      rows={3}
+                      className="w-full rounded-lg border bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    disabled={!newComment.trim() || submittingComment}
+                    className="self-end"
+                  >
+                    {submittingComment ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                  </Button>
                 </div>
-                <Button
-                  type="submit"
-                  disabled={!newComment.trim() || submittingComment}
-                  className="self-end"
-                >
-                  {submittingComment ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-              {isAdmin && (
-                <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
-                  <Shield className="h-3 w-3" />
-                  Your response will be marked as official
+                {isAdmin && (
+                  <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+                    <Shield className="h-3 w-3" />
+                    Your response will be marked as official
+                  </p>
+                )}
+              </form>
+            ) : (
+              <div className="mb-6 rounded-lg border bg-muted/50 p-4 text-center">
+                <p className="text-sm text-muted-foreground">
+                  <Button
+                    variant="link"
+                    className="h-auto p-0 text-primary"
+                    onClick={() => router.push("/auth/signin?callbackUrl=/support/" + resolvedParams.id)}
+                  >
+                    Sign in
+                  </Button>{" "}
+                  to leave a comment
                 </p>
-              )}
-            </form>
+              </div>
+            )}
 
             {/* Comments list */}
             <div className="space-y-4">

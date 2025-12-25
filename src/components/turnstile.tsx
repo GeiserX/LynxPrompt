@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useTheme } from "next-themes";
-import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import Script from "next/script";
 
 declare global {
@@ -131,18 +131,6 @@ export function Turnstile({ onSuccess, onError, onExpire, className }: Turnstile
     );
   }
 
-  // Success state - compact indicator
-  if (status === "success") {
-    return (
-      <div className={className}>
-        <div className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
-          <CheckCircle2 className="h-3.5 w-3.5" />
-          <span>Verified</span>
-        </div>
-      </div>
-    );
-  }
-
   // Error state
   if (status === "error") {
     return (
@@ -155,7 +143,7 @@ export function Turnstile({ onSuccess, onError, onExpire, className }: Turnstile
     );
   }
 
-  // Ready - render the widget
+  // Ready or success - keep showing the Cloudflare widget (it has its own success indicator)
   return (
     <div className={className}>
       <Script

@@ -4,12 +4,11 @@ import { authOptions } from "@/lib/auth";
 import { prismaSupport } from "@/lib/db-support";
 import { prismaUsers } from "@/lib/db-users";
 
+// Public endpoint - no auth required for reading
 export async function GET(request: NextRequest) {
   try {
+    // Session is optional - used only for hasVoted status
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     const { searchParams } = new URL(request.url);
     const categorySlug = searchParams.get("category");
@@ -97,15 +96,18 @@ export async function GET(request: NextRequest) {
       posts = [...activePosts, ...closedPosts];
     }
 
-    // Check if user has voted on each post
-    const postIds = posts.map((p) => p.id);
-    const userVotes = await prismaSupport.supportVote.findMany({
-      where: {
-        postId: { in: postIds },
-        userId: session.user.id,
-      },
-    });
-    const votedPostIds = new Set(userVotes.map((v) => v.postId));
+    // Check if user has voted on each post (only if authenticated)
+    let votedPostIds = new Set<string>();
+    if (session?.user?.id) {
+      const postIds = posts.map((p) => p.id);
+      const userVotes = await prismaSupport.supportVote.findMany({
+        where: {
+          postId: { in: postIds },
+          userId: session.user.id,
+        },
+      });
+      votedPostIds = new Set(userVotes.map((v) => v.postId));
+    }
 
     const postsWithVoteStatus = posts.map((post) => ({
       ...post,

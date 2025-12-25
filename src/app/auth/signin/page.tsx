@@ -38,6 +38,7 @@ function SignInContent() {
   const [emailSent, setEmailSent] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [turnstileError, setTurnstileError] = useState<string | null>(null);
+  const [magicLinkError, setMagicLinkError] = useState<string | null>(null);
 
   // Turnstile is always enabled for magic link (component handles bypass internally)
   const turnstileEnabled = true;
@@ -45,6 +46,7 @@ function SignInContent() {
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
     setTurnstileError(null);
+    setMagicLinkError(null);
 
     // Verify turnstile if enabled
     if (turnstileEnabled && !turnstileToken) {
@@ -79,11 +81,23 @@ function SignInContent() {
         redirect: false,
       });
 
+      // Debug: Log the signIn result
+      console.log("Magic link signIn result:", JSON.stringify(result, null, 2));
+
       if (result?.ok) {
         setEmailSent(true);
+      } else if (result?.error) {
+        // Show user-friendly error message
+        console.error("Magic link signIn error:", result.error);
+        setMagicLinkError("Could not send magic link. Please try again later or use another sign-in method.");
+      } else {
+        // Unknown error - signIn returned but neither ok nor error
+        console.error("Magic link signIn failed with no error message. Result:", result);
+        setMagicLinkError("Something went wrong. Please try again.");
       }
     } catch (error) {
       console.error("Magic link error:", error);
+      setMagicLinkError("Could not send magic link. Please try again later.");
     } finally {
       setIsLoading(false);
       setLoadingProvider(null);
@@ -264,6 +278,13 @@ function SignInContent() {
                           {turnstileError}
                         </p>
                       )}
+                    </div>
+                  )}
+
+                  {/* Magic link error */}
+                  {magicLinkError && (
+                    <div className="mt-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+                      {magicLinkError}
                     </div>
                   )}
                 </form>

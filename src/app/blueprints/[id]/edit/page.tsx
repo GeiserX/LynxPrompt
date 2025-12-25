@@ -767,7 +767,7 @@ export default function EditBlueprintPage() {
           {/* Delete Confirmation Modal */}
           {showDeleteConfirm && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-              <div className="mx-4 w-full max-w-md rounded-xl bg-background p-6 shadow-xl">
+              <div className="mx-4 w-full max-w-md rounded-xl bg-background p-6 shadow-xl text-foreground">
                 <h3 className="text-lg font-bold text-destructive">Delete Blueprint?</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
                   This action cannot be undone. The blueprint will be permanently deleted.

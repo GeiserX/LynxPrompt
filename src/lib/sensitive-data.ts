@@ -107,9 +107,13 @@ export function detectSensitiveData(content: string): SensitiveMatch[] {
     }
   }
   
-  // Remove duplicates based on line and type
+  // Remove duplicates based on line, type, AND snippet (to show different items on same line)
   const unique = matches.filter((match, index, self) =>
-    index === self.findIndex(m => m.line === match.line && m.type === match.type)
+    index === self.findIndex(m => 
+      m.line === match.line && 
+      m.type === match.type && 
+      m.snippet === match.snippet
+    )
   );
   
   return unique;
