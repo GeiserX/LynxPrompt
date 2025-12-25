@@ -128,7 +128,7 @@ function SignInContent() {
         </div>
 
         <p className="text-sm text-white/60">
-          © 2025 LynxPrompt by{" "}
+          Â© 2025 LynxPrompt by{" "}
           <a
             href="https://geiser.cloud"
             target="_blank"
