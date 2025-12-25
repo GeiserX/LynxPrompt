@@ -58,10 +58,14 @@ enum TemplateTier {
 enum TemplateType {
   LICENSE
   FUNDING
-  CURSORRULES
+  CURSORRULES       // Legacy - keep for backwards compat
+  CURSOR_RULES      // New standard (still deprecated in favor of AGENTS_MD)
   CLAUDE_MD
   COPILOT_INSTRUCTIONS
   WINDSURF_RULES
+  AGENTS_MD         // Universal AGENTS.md - Recommended
+  CLINE_RULES
+  CODEX_MD
   GITIGNORE
   README
   CONTRIBUTING

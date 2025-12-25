@@ -30,11 +30,13 @@ import { detectVariables } from "@/lib/file-generator";
 
 // All supported IDE types
 const BLUEPRINT_TYPES = [
-  { value: "CURSOR_RULES", label: "Cursor Rules (.cursorrules)", icon: "🎯" },
+  { value: "AGENTS_MD", label: "Universal (AGENTS.md) — Recommended", icon: "📋" },
   { value: "CLAUDE_MD", label: "Claude Code (CLAUDE.md)", icon: "🤖" },
-  { value: "AGENTS_MD", label: "Universal (AGENTS.md)", icon: "📋" },
   { value: "COPILOT_INSTRUCTIONS", label: "GitHub Copilot (.github/copilot-instructions.md)", icon: "✈️" },
   { value: "WINDSURF_RULES", label: "Windsurf Rules (.windsurfrules)", icon: "🏄" },
+  { value: "CLINE_RULES", label: "Cline Rules (.clinerules)", icon: "⚡" },
+  { value: "CODEX_MD", label: "OpenAI Codex (CODEX.md)", icon: "🧠" },
+  { value: "CURSOR_RULES", label: "Cursor Rules (.cursorrules) — Deprecated", icon: "🎯" },
   { value: "CUSTOM", label: "Custom / Other", icon: "📄" },
 ] as const;
 

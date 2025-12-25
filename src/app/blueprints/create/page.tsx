@@ -34,13 +34,13 @@ import { detectVariables } from "@/lib/file-generator";
 
 // All supported IDE types - blueprints are interchangeable across all platforms
 const BLUEPRINT_TYPES = [
-  { value: "CURSORRULES", label: "Cursor Rules (.cursorrules)", icon: "🎯" },
+  { value: "AGENTS_MD", label: "Universal (AGENTS.md) — Recommended", icon: "📋" },
   { value: "CLAUDE_MD", label: "Claude Code (CLAUDE.md)", icon: "🤖" },
-  { value: "AGENTS_MD", label: "Universal (AGENTS.md)", icon: "📋" },
   { value: "COPILOT_INSTRUCTIONS", label: "GitHub Copilot (.github/copilot-instructions.md)", icon: "✈️" },
   { value: "WINDSURF_RULES", label: "Windsurf Rules (.windsurfrules)", icon: "🏄" },
   { value: "CLINE_RULES", label: "Cline Rules (.clinerules)", icon: "⚡" },
   { value: "CODEX_MD", label: "OpenAI Codex (CODEX.md)", icon: "🧠" },
+  { value: "CURSOR_RULES", label: "Cursor Rules (.cursorrules) — Deprecated", icon: "🎯" },
   { value: "CUSTOM", label: "Custom / Other", icon: "📄" },
 ] as const;
 
@@ -52,7 +52,7 @@ export default function ShareBlueprintPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [content, setContent] = useState("");
-  const [type, setType] = useState<string>("CURSORRULES");
+  const [type, setType] = useState<string>("AGENTS_MD");
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [isPublic, setIsPublic] = useState(false);
@@ -530,7 +530,7 @@ export default function ShareBlueprintPage() {
                       <div className="flex items-start gap-2">
                         <Info className="h-4 w-4 flex-shrink-0 text-sky-600 dark:text-sky-300 mt-0.5" />
                         <p className="text-xs text-sky-800 dark:text-sky-200">
-                          <span className="text-sky-900 dark:text-sky-100">Note:</span> This is just to identify the original format.
+                          <span className="font-medium text-sky-900 dark:text-sky-100">Note:</span> This is just to identify the original format.
                           All blueprints are interchangeable and compatible across all AI IDEs —
                           Cursor, Claude, Copilot, Windsurf, Cline, and more.
                           Users can download in any format they need.

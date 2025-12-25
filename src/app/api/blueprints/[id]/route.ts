@@ -135,11 +135,14 @@ export async function GET(
 
 // Blueprint type options for validation
 const BLUEPRINT_TYPES = [
-  "CURSOR_RULES",
+  "AGENTS_MD",
   "CLAUDE_MD",
   "COPILOT_INSTRUCTIONS",
   "WINDSURF_RULES",
-  "AGENTS_MD",
+  "CLINE_RULES",
+  "CODEX_MD",
+  "CURSOR_RULES",
+  "CURSORRULES", // Legacy - backwards compat
   "CUSTOM",
 ] as const;
 
