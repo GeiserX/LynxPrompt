@@ -1,0 +1,48 @@
+// Prisma schema for BLOG DATA
+// Blog posts and related content
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma-blog"
+  importFileExtension = ""
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================================
+// BLOG POSTS - Admin-managed blog content
+// ============================================================================
+
+model BlogPost {
+  id          String     @id @default(cuid())
+  slug        String     @unique
+  title       String
+  excerpt     String?    @db.Text
+  content     String     @db.Text  // Markdown content
+  coverImage  String?    // URL to cover image (can be external URL or uploaded path)
+  coverImageCaption String?  // Caption/alt text for cover image
+  
+  // Author info stored directly (no foreign key to users DB)
+  authorId    String     // User ID from users database
+  authorName  String?    // Cached author name for display
+  
+  status      BlogStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  tags        String[]
+  
+  @@index([status])
+  @@index([publishedAt])
+  @@index([authorId])
+  @@index([slug])
+}
+
+enum BlogStatus {
+  DRAFT
+  PUBLISHED
+}
+
