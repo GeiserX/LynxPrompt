@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions, webAuthnConfig } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
-import { generateRegistrationOptions } from "@simplewebauthn/server";
-import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
+import {
+  generateRegistrationOptions,
+  type AuthenticatorTransportFuture,
+} from "@simplewebauthn/server";
 
 export async function POST() {
   try {
