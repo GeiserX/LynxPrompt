@@ -324,8 +324,8 @@ When downloading, user sees:
 - [x] Sort by popularity, date, downloads, favorites
 - [x] Platform filters with expand/collapse and search
 - [x] Category filtering in sidebar
+- [x] Pagination with infinite scroll
 - [ ] Advanced search with filters (price range, author)
-- [ ] Pagination with infinite scroll
 - [ ] "Blueprints like this" recommendations
 - [ ] Trending blueprints section
 
@@ -493,7 +493,7 @@ export function getApproxPrice(eurAmount: number): string | null {
 
 ## 🛒 Implementation Roadmap for Monetization
 
-### Phase 1: Foundation ✅ IN PROGRESS
+### Phase 1: Foundation ✅ COMPLETED
 
 - [x] Create Pricing page UI with tier comparison
 - [x] Implement subscription database schema (plans, subscriptions, invoices)
@@ -504,17 +504,17 @@ export function getApproxPrice(eurAmount: number): string | null {
 - [x] Billing settings page with plan display and upgrade options
 - [x] Admin/Superadmin get MAX tier automatically (no payment required)
 - [x] Wizard tier gating (Basic/Intermediate/Advanced steps)
-- [ ] Add subscription status to user session (read from DB, display in UI)
-- [ ] Create Stripe products/prices in dashboard and configure env vars
+- [x] Add subscription status to user session (read from DB, display in UI)
+- [x] Create Stripe products/prices in dashboard and configure env vars
 - [x] **Checkout consent checkbox** (EU digital content waiver)
 
-### Phase 2: Template Marketplace
+### Phase 2: Template Marketplace ✅ COMPLETED
 
-- [ ] Allow authors to set template prices (min €5)
-- [ ] Individual template purchase flow
-- [ ] Revenue tracking per template
-- [ ] Author earnings dashboard
-- [ ] **Template upload flow** (direct upload, from wizard, import)
+- [x] Allow authors to set template prices (min €5)
+- [x] Individual template purchase flow (Stripe Checkout)
+- [x] Revenue tracking per template (authorShare, totalRevenue)
+- [x] Author earnings dashboard (Settings → Seller Payouts)
+- [x] **Template upload flow** (direct upload, from wizard)
 
 ### Phase 3: Max Subscription Pool
 

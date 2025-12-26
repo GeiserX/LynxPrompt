@@ -29,6 +29,8 @@ import {
   Users,
   Crown,
   Building2,
+  Save,
+  Trash2,
 } from "lucide-react";
 import { Footer } from "@/components/footer";
 import { PageHeader } from "@/components/page-header";
@@ -74,6 +76,19 @@ interface FavoriteTemplate {
   tier: string;
   isOfficial: boolean;
   author?: string;
+}
+
+interface WizardDraft {
+  id: string;
+  name: string;
+  step: number;
+  projectName: string;
+  projectType: string;
+  languages: string[];
+  frameworks: string[];
+  platform: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface PurchasedBlueprint {
@@ -155,6 +170,12 @@ export default function DashboardPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [billingStatus, setBillingStatus] = useState<BillingStatus | null>(null);
+  
+  // Wizard drafts
+  const [drafts, setDrafts] = useState<WizardDraft[]>([]);
+  const [draftsLoading, setDraftsLoading] = useState(true);
+  const [showDrafts, setShowDrafts] = useState(false);
+  const [isDeletingDraft, setIsDeletingDraft] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -162,6 +183,7 @@ export default function DashboardPage() {
       fetchPreferences();
       fetchVariables();
       fetchBillingStatus();
+      fetchDrafts();
       // Show welcome modal if profile not completed
       if (session?.user && !session.user.profileCompleted) {
         setShowWelcome(true);
@@ -220,6 +242,41 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error("Failed to fetch billing status:", error);
+    }
+  };
+
+  const fetchDrafts = async () => {
+    try {
+      const res = await fetch("/api/wizard/drafts");
+      if (res.ok) {
+        const data = await res.json();
+        setDrafts(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch drafts:", error);
+    } finally {
+      setDraftsLoading(false);
+    }
+  };
+
+  const handleDeleteDraft = async (draftId: string) => {
+    if (!confirm("Are you sure you want to delete this draft?")) return;
+    
+    setIsDeletingDraft(draftId);
+    try {
+      const res = await fetch(`/api/wizard/drafts/${draftId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setDrafts(prev => prev.filter(d => d.id !== draftId));
+      } else {
+        alert("Failed to delete draft");
+      }
+    } catch (error) {
+      console.error("Failed to delete draft:", error);
+      alert("Failed to delete draft");
+    } finally {
+      setIsDeletingDraft(null);
     }
   };
 
@@ -538,6 +595,86 @@ export default function DashboardPage() {
                   ))}
                 </div>
               </div>
+
+              {/* Wizard Drafts */}
+              {drafts.length > 0 && (
+                <div>
+                  <button
+                    onClick={() => setShowDrafts(!showDrafts)}
+                    className="mb-4 flex w-full items-center justify-between text-left"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Save className="h-5 w-5 text-muted-foreground" />
+                      <h2 className="text-lg font-semibold">Saved Drafts</h2>
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
+                        {drafts.length}
+                      </span>
+                    </div>
+                    {showDrafts ? (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </button>
+                  
+                  {showDrafts && (
+                    <div className="space-y-3">
+                      {draftsLoading ? (
+                        <div className="h-20 animate-pulse rounded-lg bg-muted" />
+                      ) : (
+                        drafts.map((draft) => (
+                          <div
+                            key={draft.id}
+                            className="group flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <h3 className="font-medium truncate">{draft.name}</h3>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {draft.projectName || "Untitled"} • Step {draft.step + 1}/11
+                              </p>
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {draft.languages?.slice(0, 3).map((lang: string) => (
+                                  <span
+                                    key={lang}
+                                    className="text-xs px-2 py-0.5 rounded bg-muted"
+                                  >
+                                    {lang}
+                                  </span>
+                                ))}
+                                {(draft.languages?.length ?? 0) > 3 && (
+                                  <span className="text-xs px-2 py-0.5 rounded bg-muted">
+                                    +{draft.languages.length - 3}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0 ml-4">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteDraft(draft.id)}
+                                disabled={isDeletingDraft === draft.id}
+                                className="h-8 w-8 p-0 text-destructive hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                {isDeletingDraft === draft.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="h-4 w-4" />
+                                )}
+                              </Button>
+                              <Button size="sm" asChild>
+                                <Link href={`/wizard?draft=${draft.id}`}>
+                                  Continue
+                                </Link>
+                              </Button>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Team Blueprints - Only for TEAMS users */}
               {billingStatus?.isTeamsUser && billingStatus?.team && (
