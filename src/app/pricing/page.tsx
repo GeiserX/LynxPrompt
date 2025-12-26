@@ -371,8 +371,13 @@ export default function PricingPage() {
               Feature Comparison
             </h2>
 
-            <div className="overflow-x-auto">
-              <table className="w-full table-fixed">
+            {/* Mobile scroll hint */}
+            <p className="mb-3 text-center text-xs text-muted-foreground sm:hidden">
+              ← Scroll to see all plans →
+            </p>
+
+            <div className="overflow-x-auto rounded-lg border bg-card">
+              <table className="w-full min-w-[600px]">
                 <colgroup>
                   <col className="w-[32%]" />
                   <col className="w-[17%]" />
@@ -381,19 +386,19 @@ export default function PricingPage() {
                   <col className="w-[17%]" />
                 </colgroup>
                 <thead>
-                  <tr className="border-b">
-                    <th className="pb-4 text-left font-medium">Feature</th>
-                    <th className="pb-4 text-center font-medium">Free</th>
-                    <th className="pb-4 text-center font-medium text-primary">Pro</th>
-                    <th className="pb-4 text-center font-medium bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">Max</th>
-                    <th className="pb-4 text-center font-medium bg-gradient-to-r from-teal-500 to-cyan-500 bg-clip-text text-transparent">Teams</th>
+                  <tr className="border-b bg-muted/50">
+                    <th className="px-4 py-3 text-left font-medium">Feature</th>
+                    <th className="px-3 py-3 text-center font-medium">Free</th>
+                    <th className="px-3 py-3 text-center font-medium text-primary">Pro</th>
+                    <th className="px-3 py-3 text-center font-medium bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">Max</th>
+                    <th className="px-3 py-3 text-center font-medium bg-gradient-to-r from-teal-500 to-cyan-500 bg-clip-text text-transparent">Teams</th>
                   </tr>
                 </thead>
                 <tbody>
                   {COMPARISON_FEATURES.map((feature, idx) => (
-                    <tr key={idx} className="border-b">
-                      <td className="py-3 text-sm">{feature.name}</td>
-                      <td className="py-3 text-center">
+                    <tr key={idx} className="border-b last:border-b-0">
+                      <td className="px-4 py-3 text-sm">{feature.name}</td>
+                      <td className="px-3 py-3 text-center">
                         {typeof feature.free === "boolean" ? (
                           feature.free ? (
                             <Check className="mx-auto h-4 w-4 text-green-500" />
@@ -406,7 +411,7 @@ export default function PricingPage() {
                           </span>
                         )}
                       </td>
-                      <td className="py-3 text-center">
+                      <td className="px-3 py-3 text-center">
                         {typeof feature.pro === "boolean" ? (
                           feature.pro ? (
                             <Check className="mx-auto h-4 w-4 text-green-500" />
@@ -419,7 +424,7 @@ export default function PricingPage() {
                           </span>
                         )}
                       </td>
-                      <td className="py-3 text-center">
+                      <td className="px-3 py-3 text-center">
                         {typeof feature.max === "boolean" ? (
                           feature.max ? (
                             <Check className="mx-auto h-4 w-4 text-green-500" />
@@ -432,7 +437,7 @@ export default function PricingPage() {
                           </span>
                         )}
                       </td>
-                      <td className="py-3 text-center">
+                      <td className="px-3 py-3 text-center">
                         {typeof feature.teams === "boolean" ? (
                           feature.teams ? (
                             <Check className="mx-auto h-4 w-4 text-teal-500" />

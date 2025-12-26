@@ -161,13 +161,13 @@ export default function HomePage() {
         </div>
 
         {/* Memory Projects Compatibility */}
-        <div className="mt-8 flex items-center gap-4 text-sm text-muted-foreground">
-          <div className="h-px flex-1 bg-border" />
-          <span className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" />
-            Pairs with memory systems — bootstrap new projects with your AI rules pre-loaded
+        <div className="mt-8 flex items-center justify-center gap-4 text-sm text-muted-foreground">
+          <div className="hidden h-px flex-1 bg-border sm:block" />
+          <span className="flex items-center gap-2 text-center">
+            <Sparkles className="h-4 w-4 shrink-0 text-primary" />
+            <span className="max-w-xs sm:max-w-none">Pairs with memory systems — bootstrap new projects with your AI rules pre-loaded</span>
           </span>
-          <div className="h-px flex-1 bg-border" />
+          <div className="hidden h-px flex-1 bg-border sm:block" />
         </div>
       </section>
 

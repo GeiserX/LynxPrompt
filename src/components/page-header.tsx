@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { Menu, X } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -34,6 +36,8 @@ export function PageHeader({
   navContent,
   showBreadcrumb = true,
 }: PageHeaderProps) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   // Generate display label for breadcrumb
   const displayLabel = breadcrumbLabel || (currentPage ? currentPage.charAt(0).toUpperCase() + currentPage.slice(1) : "");
   
@@ -60,6 +64,7 @@ export function PageHeader({
           )}
         </div>
         <nav className="flex items-center gap-4">
+          {/* Desktop navigation links */}
           {filteredNavItems.map((item) => (
             <Link
               key={item.href}
@@ -72,8 +77,38 @@ export function PageHeader({
           {navContent}
           <ThemeToggle />
           <UserMenu />
+          {/* Mobile menu button */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground sm:hidden"
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+          >
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </nav>
       </div>
+
+      {/* Mobile navigation menu */}
+      {mobileMenuOpen && (
+        <div className="border-t bg-background sm:hidden">
+          <nav className="container mx-auto flex flex-col px-4 py-3">
+            {NAV_ITEMS.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className={`rounded-md px-3 py-2.5 text-sm font-medium transition-colors hover:bg-muted ${
+                  currentPage && item.href === `/${currentPage}`
+                    ? "bg-muted text-foreground"
+                    : "text-muted-foreground"
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+      )}
     </header>
   );
 }

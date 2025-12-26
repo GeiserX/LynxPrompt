@@ -108,6 +108,7 @@ function BlueprintsContent() {
   const [selectedTier, setSelectedTier] = useState(searchParams.get("tier") || "all");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showAllTags, setShowAllTags] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [blueprints, setBlueprints] = useState<Blueprint[]>([]);
   const [popularTags, setPopularTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -332,10 +333,139 @@ function BlueprintsContent() {
         </div>
       </section>
 
+      {/* Mobile Filter Sheet */}
+      {showMobileFilters && (
+        <div
+          className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm lg:hidden"
+          onClick={() => setShowMobileFilters(false)}
+        >
+          <div
+            className="fixed inset-y-0 left-0 w-80 max-w-[90vw] overflow-y-auto border-r bg-background p-4 shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Filters</h2>
+              <button
+                onClick={() => setShowMobileFilters(false)}
+                className="rounded-md p-1.5 hover:bg-muted"
+                aria-label="Close filters"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Mobile Filter Content */}
+            <div className="space-y-6">
+              {/* Categories */}
+              <div>
+                <h3 className="mb-3 flex items-center gap-2 font-semibold">
+                  <Filter className="h-4 w-4" />
+                  Category
+                </h3>
+                <nav className="space-y-1">
+                  {CATEGORIES.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => {
+                        setSelectedCategory(cat.id);
+                      }}
+                      className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted ${
+                        selectedCategory === cat.id ? "bg-muted font-medium" : ""
+                      }`}
+                    >
+                      <span>{cat.label}</span>
+                    </button>
+                  ))}
+                </nav>
+              </div>
+
+              {/* Tier Filter */}
+              <div>
+                <h3 className="mb-3 font-semibold">Complexity</h3>
+                <nav className="space-y-1">
+                  {TIERS.map((tier) => (
+                    <button
+                      key={tier.id}
+                      onClick={() => {
+                        setSelectedTier(tier.id);
+                      }}
+                      className={`flex w-full flex-col items-start rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted ${
+                        selectedTier === tier.id ? "bg-muted font-medium" : ""
+                      }`}
+                    >
+                      <span>{tier.label}</span>
+                      {tier.description && (
+                        <span className="text-xs text-muted-foreground">{tier.description}</span>
+                      )}
+                    </button>
+                  ))}
+                </nav>
+              </div>
+
+              {/* Popular Tags */}
+              {popularTags.length > 0 && (
+                <div>
+                  <h3 className="mb-3 font-semibold">Tags</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {displayedTags.map((tag) => (
+                      <button
+                        key={tag}
+                        onClick={() => toggleTag(tag)}
+                        className={`rounded-full px-3 py-1 text-xs transition-colors ${
+                          selectedTags.includes(tag)
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted hover:bg-muted/80"
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                  {popularTags.length > 8 && (
+                    <button
+                      onClick={() => setShowAllTags(!showAllTags)}
+                      className="mt-2 flex items-center gap-1 text-sm text-primary hover:underline"
+                    >
+                      {showAllTags ? (
+                        <>
+                          <ChevronUp className="h-4 w-4" />
+                          Show less
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="h-4 w-4" />
+                          +{popularTags.length - 8} more
+                        </>
+                      )}
+                    </button>
+                  )}
+                  {selectedTags.length > 0 && (
+                    <button
+                      onClick={() => setSelectedTags([])}
+                      className="mt-2 text-sm text-muted-foreground hover:text-foreground"
+                    >
+                      Clear tags
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Apply button */}
+              <Button
+                className="w-full"
+                onClick={() => setShowMobileFilters(false)}
+              >
+                Apply Filters
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
       <div className="container mx-auto flex-1 px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex gap-8">
-          {/* Sidebar */}
+          {/* Sidebar - Desktop only */}
           <aside className="hidden w-64 shrink-0 lg:block">
             <div className="sticky top-24 space-y-6">
               {/* Categories */}
@@ -450,21 +580,36 @@ function BlueprintsContent() {
 
           {/* Blueprints Grid */}
           <main className="flex-1">
-            <div className="mb-6 flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-semibold">
-                  {sortParam === "popular"
-                    ? "Popular"
-                    : sortParam === "recent"
-                      ? "Recent"
-                      : sortParam === "downloads"
-                        ? "Most Downloaded"
-                        : "Most Favorited"}{" "}
-                  Blueprints
-                </h2>
-                {total > 0 && (
-                  <p className="text-sm text-muted-foreground">{total} blueprint{total !== 1 ? 's' : ''} found</p>
-                )}
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                {/* Mobile filter button */}
+                <button
+                  onClick={() => setShowMobileFilters(true)}
+                  className="flex items-center gap-2 rounded-lg border bg-background px-3 py-2 text-sm font-medium transition-colors hover:bg-muted lg:hidden"
+                >
+                  <Filter className="h-4 w-4" />
+                  Filters
+                  {(selectedCategory !== "all" || selectedTier !== "all" || selectedTags.length > 0) && (
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+                      {(selectedCategory !== "all" ? 1 : 0) + (selectedTier !== "all" ? 1 : 0) + selectedTags.length}
+                    </span>
+                  )}
+                </button>
+                <div>
+                  <h2 className="text-lg font-semibold">
+                    {sortParam === "popular"
+                      ? "Popular"
+                      : sortParam === "recent"
+                        ? "Recent"
+                        : sortParam === "downloads"
+                          ? "Most Downloaded"
+                          : "Most Favorited"}{" "}
+                    Blueprints
+                  </h2>
+                  {total > 0 && (
+                    <p className="text-sm text-muted-foreground">{total} blueprint{total !== 1 ? 's' : ''} found</p>
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-1 rounded-lg border bg-background p-1">
                 {SORT_OPTIONS.map((option) => (
