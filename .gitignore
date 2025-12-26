@@ -82,3 +82,4 @@ ehthumbs.db
 
 # Docker
 docker-compose.override.yml
+AGENTS.md
