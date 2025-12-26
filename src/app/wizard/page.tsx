@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { Suspense, useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
@@ -789,7 +789,7 @@ interface WizardDraftSummary {
   platform: string;
 }
 
-export default function WizardPage() {
+function WizardPageContent() {
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const [currentStep, setCurrentStep] = useState(0);
@@ -2334,6 +2334,24 @@ ${curlCommand}
           </div>
         </main>
       </div>
+    </div>
+  );
+}
+
+// Default export with Suspense boundary for useSearchParams
+export default function WizardPage() {
+  return (
+    <Suspense fallback={<WizardLoadingFallback />}>
+      <WizardPageContent />
+    </Suspense>
+  );
+}
+
+// Loading fallback for the wizard page
+function WizardLoadingFallback() {
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="animate-pulse text-muted-foreground">Loading wizard...</div>
     </div>
   );
 }
