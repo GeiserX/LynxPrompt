@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
+import { ensureStripe, STRIPE_PRICE_IDS } from "@/lib/stripe";
 import { z } from "zod";
 
 // Validation schema for team creation
@@ -10,6 +11,7 @@ const createTeamSchema = z.object({
   slug: z.string().min(2).max(50).regex(/^[a-z0-9-]+$/, {
     message: "Slug must be lowercase alphanumeric with hyphens only",
   }),
+  interval: z.enum(["monthly", "annual"]).optional().default("monthly"),
 });
 
 /**
@@ -57,7 +59,7 @@ export async function GET() {
 }
 
 /**
- * POST /api/teams - Create a new team
+ * POST /api/teams - Create a new team (redirects to Stripe checkout)
  */
 export async function POST(request: NextRequest) {
   try {
@@ -76,7 +78,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name, slug } = validation.data;
+    const { name, slug, interval } = validation.data;
+
+    // Check if user is already in a team
+    const existingMembership = await prismaUsers.teamMember.findFirst({
+      where: { userId: session.user.id },
+      include: { team: true },
+    });
+
+    if (existingMembership) {
+      return NextResponse.json(
+        { 
+          error: `You are already a member of "${existingMembership.team.name}". Leave that team first to create a new one.`,
+          existingTeam: existingMembership.team.slug,
+        },
+        { status: 409 }
+      );
+    }
 
     // Check if slug is already taken
     const existingTeam = await prismaUsers.team.findUnique({
@@ -85,71 +103,84 @@ export async function POST(request: NextRequest) {
 
     if (existingTeam) {
       return NextResponse.json(
-        { error: "Team slug is already taken" },
+        { error: "Team URL is already taken. Please choose a different one." },
         { status: 409 }
       );
     }
 
-    // Create team and add creator as admin
-    const team = await prismaUsers.team.create({
-      data: {
-        name,
-        slug,
-        maxSeats: 3, // Minimum seats
-        billingCycleStart: new Date(), // Billing starts now
-        members: {
-          create: {
-            userId: session.user.id,
-            role: "ADMIN",
-            isActiveThisCycle: true, // Creator is immediately active
-            lastActiveAt: new Date(),
-          },
-        },
-      },
-      include: {
-        members: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                image: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    // Update user's subscription plan to TEAMS
-    await prismaUsers.user.update({
+    // Get or create Stripe customer
+    const stripe = ensureStripe();
+    let stripeCustomerId = await prismaUsers.user.findUnique({
       where: { id: session.user.id },
-      data: {
-        subscriptionPlan: "TEAMS",
+      select: { stripeCustomerId: true },
+    }).then(u => u?.stripeCustomerId);
+
+    if (!stripeCustomerId) {
+      const customer = await stripe.customers.create({
+        email: session.user.email,
+        name: session.user.name || undefined,
+        metadata: {
+          userId: session.user.id,
+        },
+      });
+      stripeCustomerId = customer.id;
+
+      await prismaUsers.user.update({
+        where: { id: session.user.id },
+        data: { stripeCustomerId },
+      });
+    }
+
+    // Determine price ID based on interval
+    const priceId = interval === "annual" 
+      ? STRIPE_PRICE_IDS.teams_seat_annual 
+      : STRIPE_PRICE_IDS.teams_seat_monthly;
+
+    if (!priceId) {
+      return NextResponse.json(
+        { error: "Teams pricing not configured. Please contact support." },
+        { status: 500 }
+      );
+    }
+
+    // Create Stripe checkout session for Teams subscription (3 seats minimum)
+    const checkoutSession = await stripe.checkout.sessions.create({
+      customer: stripeCustomerId,
+      mode: "subscription",
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price: priceId,
+          quantity: 3, // Minimum 3 seats
+        },
+      ],
+      subscription_data: {
+        metadata: {
+          teamName: name,
+          teamSlug: slug,
+          creatorUserId: session.user.id,
+          type: "teams",
+        },
       },
+      metadata: {
+        teamName: name,
+        teamSlug: slug,
+        creatorUserId: session.user.id,
+        type: "teams",
+      },
+      success_url: `${process.env.NEXTAUTH_URL}/teams/${slug}?success=true`,
+      cancel_url: `${process.env.NEXTAUTH_URL}/teams?cancelled=true`,
+      allow_promotion_codes: true,
     });
 
     return NextResponse.json({
-      team: {
-        id: team.id,
-        name: team.name,
-        slug: team.slug,
-        maxSeats: team.maxSeats,
-        billingCycleStart: team.billingCycleStart,
-        members: team.members.map((m) => ({
-          id: m.id,
-          role: m.role,
-          user: m.user,
-          joinedAt: m.joinedAt,
-        })),
-      },
-      message: "Team created successfully. You can now invite members.",
+      checkoutUrl: checkoutSession.url,
+      sessionId: checkoutSession.id,
     });
   } catch (error) {
     console.error("Error creating team:", error);
     return NextResponse.json(
-      { error: "Failed to create team" },
+      { error: "Failed to create team. Please try again." },
       { status: 500 }
     );
   }

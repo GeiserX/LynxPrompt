@@ -103,6 +103,12 @@ export async function POST(request: NextRequest) {
 }
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+  // Check if this is a Teams checkout
+  if (session.metadata?.type === "teams") {
+    await handleTeamsCheckoutCompleted(session);
+    return;
+  }
+
   const userId = session.metadata?.userId;
   if (!userId) {
     console.error("No userId in checkout session metadata");
@@ -111,6 +117,73 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
   // Subscription will be updated by subscription.created/updated webhook
   console.log(`Checkout completed for user ${userId}`);
+}
+
+async function handleTeamsCheckoutCompleted(session: Stripe.Checkout.Session) {
+  const { teamName, teamSlug, creatorUserId } = session.metadata || {};
+  const subscriptionId = session.subscription as string;
+  const customerId = session.customer as string;
+
+  if (!teamName || !teamSlug || !creatorUserId) {
+    console.error("Missing team metadata in checkout session", session.metadata);
+    return;
+  }
+
+  // Check if team already exists (in case of duplicate webhook)
+  const existingTeam = await prismaUsers.team.findUnique({
+    where: { slug: teamSlug },
+  });
+
+  if (existingTeam) {
+    console.log(`Team ${teamSlug} already exists, skipping creation`);
+    return;
+  }
+
+  // Get subscription details for billing info
+  const stripe = ensureStripe();
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  
+  // Get the interval from the subscription
+  const interval = subscription.items.data[0]?.plan?.interval === "year" ? "annual" : "monthly";
+
+  // Create the team
+  const team = await prismaUsers.team.create({
+    data: {
+      name: teamName,
+      slug: teamSlug,
+      stripeCustomerId: customerId,
+      stripeSubscriptionId: subscriptionId,
+      subscriptionInterval: interval,
+      maxSeats: subscription.items.data[0]?.quantity || 3,
+      billingCycleStart: new Date(),
+      members: {
+        create: {
+          userId: creatorUserId,
+          role: "ADMIN",
+          isActiveThisCycle: true,
+          lastActiveAt: new Date(),
+        },
+      },
+    },
+  });
+
+  // Update the subscription metadata with the team ID
+  await stripe.subscriptions.update(subscriptionId, {
+    metadata: {
+      teamId: team.id,
+      teamSlug: team.slug,
+    },
+  });
+
+  // Update the creator's subscription plan to TEAMS
+  await prismaUsers.user.update({
+    where: { id: creatorUserId },
+    data: {
+      subscriptionPlan: "TEAMS",
+    },
+  });
+
+  console.log(`Team "${teamName}" created successfully with ID ${team.id}`);
 }
 
 async function handleSubscriptionChange(subscription: Stripe.Subscription) {
