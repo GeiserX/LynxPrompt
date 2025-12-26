@@ -9,11 +9,6 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
 
-  // Skip ESLint during build (already runs in pre-commit hooks)
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-
   // Enable standalone output for Docker production builds
   output: "standalone",
 
