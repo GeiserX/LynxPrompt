@@ -10,6 +10,7 @@ import {
   LogOut,
   ChevronDown,
   Users,
+  BarChart3,
 } from "lucide-react";
 import { getGravatarUrl } from "@/lib/utils";
 
@@ -119,6 +120,16 @@ export function UserMenu() {
               <User className="h-4 w-4" />
               Dashboard
             </Link>
+            {session.user.role === "SUPERADMIN" && (
+              <Link
+                href="/admin/stats"
+                onClick={() => setIsOpen(false)}
+                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-purple-600 dark:text-purple-400 transition-colors hover:bg-muted"
+              >
+                <BarChart3 className="h-4 w-4" />
+                Stats
+              </Link>
+            )}
             {billingStatus?.isTeamsUser && billingStatus?.team && (
               <Link
                 href={`/teams/${billingStatus.team.slug}`}
