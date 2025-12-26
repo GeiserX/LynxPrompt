@@ -3960,7 +3960,6 @@ function StepFeedback({
       <div className="mt-4 rounded-lg bg-muted/50 p-4">
         <h4 className="font-medium">💡 Suggestions:</h4>
         <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
-          <li>• Specific coding standards or style guides</li>
           <li>• Architectural patterns (microservices, monolith, serverless)</li>
           <li>• Special deployment requirements or procedures</li>
           <li>• Team-specific workflows or conventions</li>
@@ -3980,7 +3979,6 @@ function StepFeedback({
           <li>• Environment variable naming patterns</li>
           <li>• Database migration procedures</li>
           <li>• Important files the AI should read first</li>
-          <li>• Things to NEVER delete or modify</li>
           <li>• Preferred error handling patterns</li>
           <li>• Logging conventions or required log formats</li>
           <li>• Performance constraints or SLAs</li>

@@ -198,12 +198,33 @@ export default function BlogPage() {
 
                     {/* Meta */}
                     <div className="mt-4 flex items-center justify-between border-t pt-4">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Calendar className="h-4 w-4" />
-                        <time dateTime={post.publishedAt || post.createdAt}>
-                          {formatDate(post.publishedAt || post.createdAt)}
-                        </time>
-                      </div>
+                      <Link
+                        href={`/users/${post.author.id}`}
+                        className="flex items-center gap-2 transition-colors hover:text-primary"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {post.author.image ? (
+                          <img
+                            src={post.author.image}
+                            alt={post.author.displayName || post.author.name || "Author"}
+                            className="h-8 w-8 rounded-full object-cover"
+                            referrerPolicy="no-referrer"
+                          />
+                        ) : (
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">
+                            {(post.author.displayName || post.author.name || "A").charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium">
+                            {post.author.displayName || post.author.name || "Anonymous"}
+                          </span>
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Calendar className="h-3 w-3" />
+                            {formatDate(post.publishedAt || post.createdAt)}
+                          </span>
+                        </div>
+                      </Link>
                       <Button variant="ghost" size="sm" asChild>
                         <Link href={`/blog/${post.slug}`}>
                           Read <ArrowRight className="ml-1 h-4 w-4" />
