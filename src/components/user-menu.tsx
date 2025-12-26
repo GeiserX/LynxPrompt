@@ -9,13 +9,36 @@ import {
   Settings,
   LogOut,
   ChevronDown,
+  Users,
 } from "lucide-react";
 import { getGravatarUrl } from "@/lib/utils";
+
+interface BillingStatus {
+  plan: string;
+  isTeamsUser?: boolean;
+  team?: {
+    id: string;
+    name: string;
+    slug: string;
+    role: string;
+  } | null;
+}
 
 export function UserMenu() {
   const { data: session, status } = useSession();
   const [isOpen, setIsOpen] = useState(false);
+  const [billingStatus, setBillingStatus] = useState<BillingStatus | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  
+  // Fetch billing status to check for Teams
+  useEffect(() => {
+    if (status === "authenticated") {
+      fetch("/api/billing/status")
+        .then(res => res.json())
+        .then(data => setBillingStatus(data))
+        .catch(() => {});
+    }
+  }, [status]);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -95,6 +118,19 @@ export function UserMenu() {
               <User className="h-4 w-4" />
               Dashboard
             </Link>
+            {billingStatus?.isTeamsUser && billingStatus?.team && (
+              <Link
+                href={`/teams/${billingStatus.team.slug}`}
+                onClick={() => setIsOpen(false)}
+                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted"
+              >
+                <Users className="h-4 w-4 text-teal-500" />
+                <span>Team: {billingStatus.team.name}</span>
+                {billingStatus.team.role === "ADMIN" && (
+                  <span className="ml-auto text-xs text-teal-600 dark:text-teal-400">Admin</span>
+                )}
+              </Link>
+            )}
             <Link
               href="/settings"
               onClick={() => setIsOpen(false)}

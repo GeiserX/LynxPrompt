@@ -26,6 +26,19 @@ export async function GET() {
         cancelAtPeriodEnd: true,
         stripeCustomerId: true,
         stripeSubscriptionId: true,
+        teamMemberships: {
+          include: {
+            team: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                stripeSubscriptionId: true,
+                billingCycleStart: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -36,16 +49,30 @@ export async function GET() {
       );
     }
 
+    // Check if user is part of a team
+    const teamMembership = user.teamMemberships[0];
+    const isTeamsUser = user.subscriptionPlan === "TEAMS" || !!teamMembership;
+    
     // Admins and Superadmins get MAX tier for free
     const isAdmin = user.role === "ADMIN" || user.role === "SUPERADMIN";
-    const effectivePlan = isAdmin ? "max" : user.subscriptionPlan.toLowerCase();
+    
+    // Determine effective plan
+    let effectivePlan: string;
+    if (isAdmin) {
+      effectivePlan = "max";
+    } else if (isTeamsUser) {
+      effectivePlan = "teams";
+    } else {
+      effectivePlan = user.subscriptionPlan.toLowerCase();
+    }
 
     // Check for pending changes if user has active subscription
     let pendingChange: string | null = null;
     let actualCurrentPlan = effectivePlan;
     let billingInterval: "monthly" | "annual" = (user.subscriptionInterval as "monthly" | "annual") || "monthly";
     
-    if (!isAdmin && user.stripeSubscriptionId) {
+    // For non-Teams, non-Admin users with Stripe subscription
+    if (!isAdmin && !isTeamsUser && user.stripeSubscriptionId) {
       try {
         const stripe = ensureStripe();
         const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
@@ -67,18 +94,29 @@ export async function GET() {
       }
     }
 
+    // Teams users are considered active if they're part of a team (billing is handled at team level)
+    const hasActiveSubscription = isAdmin || isTeamsUser || (!!user.stripeSubscriptionId && 
+      (user.subscriptionStatus === "active" || user.subscriptionStatus === "trialing"));
+
     return NextResponse.json({
       plan: actualCurrentPlan,
       interval: billingInterval,
-      status: isAdmin ? "active" : user.subscriptionStatus,
-      currentPeriodEnd: isAdmin ? null : user.currentPeriodEnd,
-      cancelAtPeriodEnd: isAdmin ? false : user.cancelAtPeriodEnd,
+      status: isAdmin || isTeamsUser ? "active" : user.subscriptionStatus,
+      currentPeriodEnd: isAdmin ? null : (isTeamsUser ? teamMembership?.team?.billingCycleStart : user.currentPeriodEnd),
+      cancelAtPeriodEnd: isAdmin || isTeamsUser ? false : user.cancelAtPeriodEnd,
       hasStripeAccount: !!user.stripeCustomerId,
-      hasActiveSubscription: isAdmin || (!!user.stripeSubscriptionId && 
-        (user.subscriptionStatus === "active" || user.subscriptionStatus === "trialing")),
+      hasActiveSubscription,
       isAdmin, // Flag for UI to show "Admin" badge instead of plan
+      isTeamsUser, // Flag for UI to show "Teams" badge
       pendingChange, // For showing scheduled downgrades
       isAnnual: billingInterval === "annual", // Convenience flag for UI
+      // Teams-specific data
+      team: isTeamsUser && teamMembership ? {
+        id: teamMembership.team.id,
+        name: teamMembership.team.name,
+        slug: teamMembership.team.slug,
+        role: teamMembership.role,
+      } : null,
     });
   } catch (error) {
     console.error("Error fetching subscription status:", error);

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LynxPrompt - Temporarily Unavailable</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    
+    .container {
+      max-width: 28rem;
+      width: 100%;
+      text-align: center;
+    }
+    
+    .logo {
+      width: 4rem;
+      height: 4rem;
+      background: linear-gradient(135deg, #fbbf24 0%, #f97316 100%);
+      border-radius: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem;
+      box-shadow: 0 10px 25px -5px rgba(251, 191, 36, 0.2);
+    }
+    
+    .logo svg {
+      width: 2rem;
+      height: 2rem;
+      color: #0f172a;
+    }
+    
+    .status-code {
+      font-size: 6rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, #fbbf24 0%, #f97316 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+    
+    h1 {
+      color: #fff;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    
+    p {
+      color: #94a3b8;
+      font-size: 1rem;
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    
+    .buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    @media (min-width: 640px) {
+      .buttons {
+        flex-direction: row;
+        justify-content: center;
+      }
+    }
+    
+    .btn {
+      display: inline-block;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 0.5rem;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #fbbf24 0%, #f97316 100%);
+      color: #0f172a;
+      box-shadow: 0 10px 25px -5px rgba(251, 191, 36, 0.2);
+    }
+    
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #fcd34d 0%, #fb923c 100%);
+    }
+    
+    .btn-secondary {
+      background: rgba(51, 65, 85, 0.5);
+      color: #fff;
+      border: 1px solid #475569;
+    }
+    
+    .btn-secondary:hover {
+      background: rgba(51, 65, 85, 0.8);
+    }
+    
+    .status-link {
+      color: #94a3b8;
+      font-size: 0.875rem;
+    }
+    
+    .status-link a {
+      color: #fbbf24;
+      text-decoration: underline;
+    }
+    
+    .status-link a:hover {
+      color: #fcd34d;
+    }
+    
+    .refresh-note {
+      color: #64748b;
+      font-size: 0.75rem;
+      margin-top: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+        <path d="M2 17l10 5 10-5"/>
+        <path d="M2 12l10 5 10-5"/>
+      </svg>
+    </div>
+    
+    <div class="status-code">503</div>
+    <h1>We'll be right back</h1>
+    <p>LynxPrompt is temporarily unavailable due to high demand. Our team is working on it. Please try again in a few moments.</p>
+    
+    <div class="buttons">
+      <a href="/" class="btn btn-primary" onclick="location.reload(); return false;">Refresh Page</a>
+      <a href="https://status.lynxprompt.com" class="btn btn-secondary" target="_blank">Check Status</a>
+    </div>
+    
+    <p class="status-link">
+      Follow <a href="https://status.lynxprompt.com" target="_blank">status.lynxprompt.com</a> for real-time updates.
+    </p>
+    
+    <p class="refresh-note">This page will auto-refresh in <span id="countdown">30</span> seconds.</p>
+  </div>
+  
+  <script>
+    // Auto-refresh countdown
+    let seconds = 30;
+    const countdownEl = document.getElementById('countdown');
+    
+    setInterval(() => {
+      seconds--;
+      countdownEl.textContent = seconds;
+      if (seconds <= 0) {
+        location.reload();
+      }
+    }, 1000);
+  </script>
+</body>
+</html>
+
