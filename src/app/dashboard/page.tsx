@@ -51,6 +51,7 @@ interface MyTemplate {
   downloads: number;
   favorites: number;
   isPublic: boolean;
+  visibility: "PRIVATE" | "TEAM" | "PUBLIC";
   createdAt: string;
 }
 
@@ -87,12 +88,38 @@ interface PurchasedBlueprint {
   purchasedAt: string;
 }
 
+interface TeamBlueprint {
+  id: string;
+  name: string;
+  type: string;
+  downloads: number;
+  favorites: number;
+  isPublic: boolean;
+  createdAt: string;
+  author: string;
+}
+
+interface TeamPurchase {
+  id: string;
+  name: string;
+  description: string | null;
+  downloads: number;
+  favorites: number;
+  tier: string;
+  price: number;
+  author: string;
+  purchasedAt: string;
+  purchasedBy: string;
+}
+
 interface DashboardData {
   stats: DashboardStats;
   myTemplates: MyTemplate[];
   recentActivity: RecentActivity[];
   favoriteTemplates: FavoriteTemplate[];
   purchasedBlueprints: PurchasedBlueprint[];
+  teamBlueprints: TeamBlueprint[];
+  teamPurchases: TeamPurchase[];
 }
 
 interface BillingStatus {
@@ -512,6 +539,122 @@ export default function DashboardPage() {
                 </div>
               </div>
 
+              {/* Team Blueprints - Only for TEAMS users */}
+              {billingStatus?.isTeamsUser && billingStatus?.team && (
+                <div className="mb-8">
+                  <div className="mb-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-lg font-semibold">Team Blueprints</h2>
+                      <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-800 dark:bg-teal-900/30 dark:text-teal-300">
+                        {billingStatus.team.name}
+                      </span>
+                    </div>
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link href="/blueprints/create">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Share with Team
+                      </Link>
+                    </Button>
+                  </div>
+
+                  {loading ? (
+                    <div className="space-y-3">
+                      {[1, 2].map((i) => (
+                        <div key={i} className="h-20 animate-pulse rounded-lg bg-muted" />
+                      ))}
+                    </div>
+                  ) : (!dashboardData?.teamBlueprints || dashboardData.teamBlueprints.length === 0) && 
+                       (!dashboardData?.teamPurchases || dashboardData.teamPurchases.length === 0) ? (
+                    <div className="rounded-lg border border-teal-500/20 bg-gradient-to-r from-teal-500/5 to-background p-8 text-center">
+                      <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-teal-500/10">
+                        <Users className="h-6 w-6 text-teal-500" />
+                      </div>
+                      <h3 className="font-semibold">No team blueprints yet</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Share blueprints with your team by selecting &quot;Team&quot; visibility when creating, or purchase blueprints to share with everyone.
+                      </p>
+                      <Button asChild className="mt-4" size="sm" variant="outline">
+                        <Link href="/blueprints/create">
+                          <Upload className="mr-2 h-4 w-4" />
+                          Share with Team
+                        </Link>
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {/* Team-shared blueprints (created by team members) */}
+                      {dashboardData?.teamBlueprints?.map((blueprint) => (
+                        <div
+                          key={blueprint.id}
+                          className="flex items-center justify-between rounded-lg border border-teal-500/20 bg-gradient-to-r from-teal-500/5 to-background p-4 transition-colors hover:border-teal-500/40"
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="rounded-lg bg-teal-500/10 p-2">
+                              <FileText className="h-5 w-5 text-teal-500" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium">{blueprint.name}</h4>
+                              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <Users className="h-3 w-3" />
+                                  {blueprint.author}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Download className="h-3 w-3" />
+                                  {blueprint.downloads}
+                                </span>
+                                <span className="rounded-full bg-teal-500/10 px-2 py-0.5 text-xs text-teal-600 dark:text-teal-400">
+                                  Team Shared
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <Button variant="ghost" size="icon" asChild title="View">
+                            <Link href={`/blueprints/${blueprint.id}`}>
+                              <Eye className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </div>
+                      ))}
+
+                      {/* Team-purchased blueprints */}
+                      {dashboardData?.teamPurchases?.map((purchase) => (
+                        <div
+                          key={purchase.id}
+                          className="flex items-center justify-between rounded-lg border border-purple-500/20 bg-gradient-to-r from-purple-500/5 to-background p-4 transition-colors hover:border-purple-500/40"
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="rounded-lg bg-purple-500/10 p-2">
+                              <ShoppingBag className="h-5 w-5 text-purple-500" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium">{purchase.name}</h4>
+                              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  by {purchase.author}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Download className="h-3 w-3" />
+                                  {purchase.downloads}
+                                </span>
+                                <span className="rounded-full bg-purple-500/10 px-2 py-0.5 text-xs text-purple-600 dark:text-purple-400">
+                                  Team Purchase
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <Button variant="ghost" size="icon" asChild title="View">
+                            <Link href={`/blueprints/${purchase.id}`}>
+                              <Eye className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* My Blueprints */}
               <div>
                 <div className="mb-4 flex items-center justify-between">
@@ -573,12 +716,14 @@ export default function DashboardPage() {
                               </span>
                               <span
                                 className={`rounded-full px-2 py-0.5 text-xs ${
-                                  template.isPublic
+                                  template.visibility === "PUBLIC"
                                     ? "bg-green-500/10 text-green-600"
+                                    : template.visibility === "TEAM"
+                                    ? "bg-teal-500/10 text-teal-600"
                                     : "bg-yellow-500/10 text-yellow-600"
                                 }`}
                               >
-                                {template.isPublic ? "Public" : "Private"}
+                                {template.visibility === "PUBLIC" ? "Public" : template.visibility === "TEAM" ? "Team" : "Private"}
                               </span>
                             </div>
                           </div>
