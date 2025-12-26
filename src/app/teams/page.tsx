@@ -72,22 +72,25 @@ export default function TeamsPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [teamName, setTeamName] = useState("");
   const [teamSlug, setTeamSlug] = useState("");
+  const [seats, setSeats] = useState(3); // Minimum 3 seats
+  const [billingInterval, setBillingInterval] = useState<"monthly" | "annual">("monthly");
   const [error, setError] = useState<string | null>(null);
+
+  // Calculate price based on seats and interval
+  const pricePerSeat = billingInterval === "annual" ? 27 : 30; // 10% off for annual
+  const totalPrice = seats * pricePerSeat;
+  const billingPeriod = billingInterval === "annual" ? "/year" : "/month";
 
   const handleCreateTeam = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsCreating(true);
     setError(null);
 
-    // Get interval from URL params
-    const urlParams = new URLSearchParams(window.location.search);
-    const interval = urlParams.get("interval") === "annual" ? "annual" : "monthly";
-
     try {
       const response = await fetch("/api/teams", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: teamName, slug: teamSlug, interval }),
+        body: JSON.stringify({ name: teamName, slug: teamSlug, interval: billingInterval, seats }),
       });
 
       const data = await response.json();
@@ -266,10 +269,10 @@ export default function TeamsPage() {
                 Create Your Team
               </h2>
               <p className="mb-8 text-center text-muted-foreground">
-                You&apos;ll be redirected to complete payment. Starts at €90/month (3 seats).
+                Configure your team and proceed to payment.
               </p>
 
-              <form onSubmit={handleCreateTeam} className="space-y-4">
+              <form onSubmit={handleCreateTeam} className="space-y-5">
                 <div>
                   <label htmlFor="teamName" className="mb-1 block text-sm font-medium">
                     Team Name
@@ -311,6 +314,87 @@ export default function TeamsPage() {
                   </p>
                 </div>
 
+                {/* Billing Interval Toggle */}
+                <div>
+                  <label className="mb-2 block text-sm font-medium">Billing Period</label>
+                  <div className="flex rounded-lg border p-1">
+                    <button
+                      type="button"
+                      onClick={() => setBillingInterval("monthly")}
+                      className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                        billingInterval === "monthly"
+                          ? "bg-gradient-to-r from-teal-500 to-cyan-500 text-white"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Monthly
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBillingInterval("annual")}
+                      className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                        billingInterval === "annual"
+                          ? "bg-gradient-to-r from-teal-500 to-cyan-500 text-white"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Annual <span className="ml-1 text-xs opacity-80">(save 10%)</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Seats Selector */}
+                <div>
+                  <label htmlFor="seats" className="mb-2 block text-sm font-medium">
+                    Number of Seats
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setSeats(Math.max(3, seats - 1))}
+                      disabled={seats <= 3}
+                      className="flex h-10 w-10 items-center justify-center rounded-lg border bg-muted text-lg font-medium transition-colors hover:bg-muted/80 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      −
+                    </button>
+                    <input
+                      id="seats"
+                      type="number"
+                      min={3}
+                      value={seats}
+                      onChange={(e) => setSeats(Math.max(3, parseInt(e.target.value) || 3))}
+                      className="w-20 rounded-lg border bg-background px-3 py-2 text-center text-lg font-semibold focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setSeats(seats + 1)}
+                      className="flex h-10 w-10 items-center justify-center rounded-lg border bg-muted text-lg font-medium transition-colors hover:bg-muted/80"
+                    >
+                      +
+                    </button>
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Minimum 3 seats. You can add more anytime (prorated).
+                  </p>
+                </div>
+
+                {/* Price Summary */}
+                <div className="rounded-lg border bg-gradient-to-r from-teal-500/5 to-cyan-500/5 p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">
+                      {seats} seats × €{pricePerSeat}{billingPeriod.replace("/", "/")}
+                    </span>
+                    <span className="text-2xl font-bold text-teal-600 dark:text-teal-400">
+                      €{totalPrice}{billingPeriod}
+                    </span>
+                  </div>
+                  {billingInterval === "annual" && (
+                    <p className="mt-1 text-xs text-teal-600 dark:text-teal-400">
+                      You save €{seats * 3 * 12}/year with annual billing!
+                    </p>
+                  )}
+                </div>
+
                 {error && (
                   <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
                     {error}
@@ -329,7 +413,7 @@ export default function TeamsPage() {
                     </>
                   ) : (
                     <>
-                      Create Team
+                      Create Team & Pay €{totalPrice}
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </>
                   )}

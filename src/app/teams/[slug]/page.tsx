@@ -46,7 +46,9 @@ interface TeamInvitation {
   id: string;
   email: string;
   role: "ADMIN" | "MEMBER";
+  status: "PENDING" | "ACCEPTED" | "REVOKED" | "EXPIRED";
   expires: string;
+  expiresAt?: string;
   createdAt: string;
 }
 
@@ -56,6 +58,7 @@ interface Team {
   slug: string;
   logo: string | null;
   maxSeats: number;
+  subscriptionInterval: "monthly" | "annual" | null;
   aiUsageLimitPerUser: number;
   createdAt: string;
   members: TeamMember[];
@@ -150,6 +153,12 @@ export default function TeamManagementPage() {
     }
   };
 
+  const [showPaymentPrompt, setShowPaymentPrompt] = useState(false);
+  const [paymentDetails, setPaymentDetails] = useState<{
+    additionalSeatsNeeded: number;
+    pendingEmail: string;
+  } | null>(null);
+
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!team || !inviteEmail.trim()) return;
@@ -157,6 +166,7 @@ export default function TeamManagementPage() {
     setInviting(true);
     setInviteError(null);
     setInviteSuccess(null);
+    setShowPaymentPrompt(false);
 
     try {
       const res = await fetch(`/api/teams/${team.id}/invitations`, {
@@ -166,6 +176,17 @@ export default function TeamManagementPage() {
       });
 
       const data = await res.json();
+
+      if (res.status === 402 && data.code === "SEATS_REQUIRED") {
+        // Need to purchase additional seat
+        setPaymentDetails({
+          additionalSeatsNeeded: data.details.additionalSeatsNeeded,
+          pendingEmail: inviteEmail,
+        });
+        setShowPaymentPrompt(true);
+        setInviting(false);
+        return;
+      }
 
       if (!res.ok) {
         throw new Error(data.error || "Failed to send invitation");
@@ -179,6 +200,15 @@ export default function TeamManagementPage() {
     } finally {
       setInviting(false);
     }
+  };
+
+  const handlePurchaseSeats = async () => {
+    if (!team || !paymentDetails) return;
+    
+    // Redirect to billing page to add seats
+    // After seat increase, they can retry the invitation
+    const newSeats = (team.maxSeats || 3) + paymentDetails.additionalSeatsNeeded;
+    router.push(`/teams/${team.slug}?tab=billing&seats=${newSeats}`);
   };
 
   const handleCopyInviteLink = async (token: string) => {
@@ -503,20 +533,49 @@ export default function TeamManagementPage() {
                     {inviteSuccess && (
                       <p className="text-sm text-green-500">{inviteSuccess}</p>
                     )}
+                    
+                    {showPaymentPrompt && paymentDetails && (
+                      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
+                        <p className="mb-3 text-sm text-amber-800 dark:text-amber-200">
+                          You need to purchase {paymentDetails.additionalSeatsNeeded} additional seat{paymentDetails.additionalSeatsNeeded > 1 ? "s" : ""} to invite <strong>{paymentDetails.pendingEmail}</strong>.
+                        </p>
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            onClick={handlePurchaseSeats}
+                            size="sm"
+                            className="bg-amber-600 hover:bg-amber-700"
+                          >
+                            <CreditCard className="mr-2 h-4 w-4" />
+                            Purchase Seat ({team?.subscriptionInterval === "annual" ? "€27/seat (annual)" : "€30/seat"})
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowPaymentPrompt(false)}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    )}
 
-                    <Button type="submit" disabled={inviting} className="w-full">
-                      {inviting ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Sending...
-                        </>
-                      ) : (
-                        <>
-                          <Mail className="mr-2 h-4 w-4" />
-                          Send Invitation
-                        </>
-                      )}
-                    </Button>
+                    {!showPaymentPrompt && (
+                      <Button type="submit" disabled={inviting} className="w-full">
+                        {inviting ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <Mail className="mr-2 h-4 w-4" />
+                            Send Invitation
+                          </>
+                        )}
+                      </Button>
+                    )}
                   </form>
                 </div>
               )}
@@ -534,7 +593,16 @@ export default function TeamManagementPage() {
                     <span className="font-medium text-teal-600 dark:text-teal-400">Teams</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Max Seats</span>
+                    <span className="text-muted-foreground">Billing</span>
+                    <span className="font-medium capitalize">
+                      {team?.subscriptionInterval || "monthly"}
+                      {team?.subscriptionInterval === "annual" && (
+                        <span className="ml-1 text-xs text-teal-600 dark:text-teal-400">(10% off)</span>
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Paid Seats</span>
                     <span className="font-medium">{team?.maxSeats}</span>
                   </div>
                   <div className="flex justify-between">
@@ -542,8 +610,10 @@ export default function TeamManagementPage() {
                     <span className="font-medium">{team?.members?.length || 0}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">AI Limit/User</span>
-                    <span className="font-medium">€{((team?.aiUsageLimitPerUser || 1500) / 100).toFixed(0)}/month</span>
+                    <span className="text-muted-foreground">Available Seats</span>
+                    <span className="font-medium">
+                      {Math.max(0, (team?.maxSeats || 0) - (team?.members?.length || 0) - (team?.invitations?.filter(i => i.status === "PENDING")?.length || 0))}
+                    </span>
                   </div>
                 </div>
               </div>

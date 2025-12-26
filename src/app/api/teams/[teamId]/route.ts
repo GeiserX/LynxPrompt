@@ -104,6 +104,7 @@ export async function GET(
         slug: team.slug,
         logo: team.logo,
         maxSeats: team.maxSeats,
+        subscriptionInterval: team.subscriptionInterval, // "monthly" or "annual"
         billingCycleStart: team.billingCycleStart,
         stripeCustomerId: team.stripeCustomerId,
         stripeSubscriptionId: team.stripeSubscriptionId,
