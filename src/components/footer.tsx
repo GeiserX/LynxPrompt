@@ -44,6 +44,18 @@ export function Footer() {
               Cookies
             </Link>
             <Link
+              href="/security"
+              className="text-muted-foreground hover:underline"
+            >
+              Security
+            </Link>
+            <Link
+              href="/dpa"
+              className="text-muted-foreground hover:underline"
+            >
+              DPA
+            </Link>
+            <Link
               href="/about"
               className="text-muted-foreground hover:underline"
             >

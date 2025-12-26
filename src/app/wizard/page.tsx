@@ -4735,42 +4735,53 @@ function StepGenerate({
         </div>
 
         {/* API Sync Option - Pro+ only */}
-        {["pro", "max", "teams"].includes(userTier) && (
-          <div className={`rounded-lg border-2 p-4 transition-colors ${enableApiSync ? "border-blue-500 bg-blue-50 dark:border-blue-600 dark:bg-blue-950/30" : "border-dashed border-muted-foreground/30"}`}>
+        {["pro", "max", "teams"].includes(userTier.toLowerCase()) && (
+          <div className={`rounded-lg border-2 p-4 transition-colors ${enableApiSync ? "border-primary bg-primary/5" : "border-dashed border-primary/40 bg-primary/5"}`}>
             <div className="flex items-start gap-4">
               <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <label className="font-medium">
-                    🔄 Auto-sync via API
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="rounded bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">
+                    PRO
+                  </span>
+                  <label className="font-semibold">
+                    🔄 Auto-update this template via API
                   </label>
                   {enableApiSync && (
-                    <span className="rounded-full bg-blue-500 px-2 py-0.5 text-xs font-medium text-white">
-                      Enabled
+                    <span className="rounded-full bg-green-500 px-2 py-0.5 text-xs font-medium text-white">
+                      ✓ Enabled
                     </span>
                   )}
                 </div>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Save this config as a private blueprint and include API sync instructions in the downloaded file.
-                  Update it anytime from the command line or CI/CD.
+                <p className="mt-2 text-sm text-muted-foreground">
+                  When enabled, downloading will automatically save this as a private template in your dashboard. 
+                  The downloaded file will include the <code className="rounded bg-muted px-1 text-xs">bp_</code> blueprint ID 
+                  and curl/PowerShell commands to update it via API from the command line or CI/CD.
                 </p>
                 {enableApiSync && (
-                  <div className="mt-3 rounded-md bg-blue-100 p-3 text-xs text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
-                    <strong>Note:</strong> Downloading will auto-save this as a private template in your dashboard.
-                    The file will include the blueprint ID and curl commands to update it via API.
-                    <br /><br />
-                    <strong>Requires:</strong> An API token with &quot;Edit blueprints&quot; permission.{" "}
-                    <a href="/settings?tab=api-tokens" target="_blank" className="underline hover:text-blue-600">
-                      Generate one here →
-                    </a>
+                  <div className="mt-3 rounded-md bg-primary/10 border border-primary/20 p-3 text-xs">
+                    <strong>📋 What happens when you download:</strong>
+                    <ul className="mt-2 ml-4 list-disc space-y-1 text-muted-foreground">
+                      <li>Config is saved as a private blueprint in your dashboard</li>
+                      <li>Blueprint ID (<code className="rounded bg-muted px-1">bp_xxx</code>) is included in the file header</li>
+                      <li>API sync commands are added for your selected OS</li>
+                      <li>Variables without defaults must be filled before download</li>
+                    </ul>
+                    <div className="mt-3 pt-2 border-t border-primary/20">
+                      <strong>⚠️ Requires:</strong> An API token with &quot;Edit blueprints&quot; permission.{" "}
+                      <a href="/settings" target="_blank" className="text-primary underline hover:no-underline">
+                        Generate token in Settings →
+                      </a>
+                    </div>
                   </div>
                 )}
               </div>
               <button
                 onClick={() => onApiSyncChange(!enableApiSync)}
-                className={`relative h-6 w-11 rounded-full transition-colors ${enableApiSync ? "bg-blue-500" : "bg-muted"}`}
+                className={`relative h-7 w-12 rounded-full transition-colors ${enableApiSync ? "bg-primary" : "bg-muted"}`}
+                aria-label="Toggle API sync"
               >
                 <span
-                  className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${enableApiSync ? "translate-x-5" : "translate-x-0.5"}`}
+                  className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform ${enableApiSync ? "translate-x-5" : "translate-x-0.5"}`}
                 />
               </button>
             </div>
