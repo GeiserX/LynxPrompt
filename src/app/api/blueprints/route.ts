@@ -256,7 +256,9 @@ export async function POST(request: NextRequest) {
       type, 
       category = "other",
       tags, 
-      isPublic = true, 
+      isPublic = true,
+      visibility = "PRIVATE", // PRIVATE, TEAM, or PUBLIC
+      teamId = null, // If visibility is TEAM, this should be set
       aiAssisted = false,
       price, 
       currency = "EUR",
@@ -264,6 +266,28 @@ export async function POST(request: NextRequest) {
       turnstileToken,
       sensitiveDataAcknowledged = false, // User acknowledged sensitive data warning
     } = body;
+    
+    // Validate visibility
+    const validVisibilities = ["PRIVATE", "TEAM", "PUBLIC"];
+    const normalizedVisibility = validVisibilities.includes(visibility) ? visibility : "PRIVATE";
+    
+    // If visibility is TEAM, verify user belongs to the team
+    if (normalizedVisibility === "TEAM" && teamId) {
+      const membership = await prismaUsers.teamMember.findUnique({
+        where: {
+          teamId_userId: { teamId, userId: session.user.id },
+        },
+      });
+      if (!membership) {
+        return NextResponse.json(
+          { error: "You are not a member of this team" },
+          { status: 403 }
+        );
+      }
+    }
+    
+    // For backwards compatibility: derive isPublic from visibility
+    const effectiveIsPublic = normalizedVisibility === "PUBLIC" || isPublic;
 
     // Fetch user plan to check if turnstile verification is needed
     const user = await prismaUsers.user.findUnique({
@@ -347,7 +371,7 @@ export async function POST(request: NextRequest) {
 
     // Check for sensitive data in public blueprints
     // Only block if user hasn't acknowledged the warning
-    if (isPublic && !sensitiveDataAcknowledged) {
+    if (effectiveIsPublic && !sensitiveDataAcknowledged) {
       const sensitiveMatches = detectSensitiveData(content);
       if (sensitiveMatches.length > 0) {
         return NextResponse.json(
@@ -404,7 +428,9 @@ export async function POST(request: NextRequest) {
         category: normalizedCategory,
         tier,
         tags: validatedTags,
-        isPublic: Boolean(isPublic),
+        isPublic: effectiveIsPublic,
+        visibility: normalizedVisibility as "PRIVATE" | "TEAM" | "PUBLIC",
+        teamId: normalizedVisibility === "TEAM" ? teamId : null,
         aiAssisted: Boolean(aiAssisted),
         downloads: 0,
         favorites: 0,

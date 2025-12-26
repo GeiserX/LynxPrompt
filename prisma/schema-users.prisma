@@ -108,6 +108,9 @@ model User {
   // Seller Payout Settings
   paypalEmail    String?   // PayPal email for receiving payouts
 
+  // Activity tracking (for Teams billing - track last login)
+  lastLoginAt    DateTime? // Last time user logged in (updated on session creation)
+
   // Relations
   accounts       Account[]
   sessions       Session[]
@@ -119,11 +122,13 @@ model User {
   downloads      TemplateDownload[]
   purchases      BlueprintPurchase[]
   payouts        Payout[]
+  teamMemberships TeamMember[] // Teams user belongs to
 
   @@index([email])
   @@index([role])
   @@index([stripeCustomerId])
   @@index([subscriptionPlan])
+  @@index([lastLoginAt])
 }
 
 enum UserRole {
@@ -136,6 +141,168 @@ enum SubscriptionPlan {
   FREE
   PRO
   MAX
+  TEAMS
+}
+
+// ============================================================================
+// TEAMS - Enterprise team management
+// ============================================================================
+
+enum TeamRole {
+  ADMIN   // Can invite/remove members, manage billing, configure SSO
+  MEMBER  // Regular team member with Teams tier access
+}
+
+enum TeamInvitationStatus {
+  PENDING   // Invitation sent, awaiting acceptance
+  ACCEPTED  // User accepted and joined
+  EXPIRED   // Invitation expired (7 days default)
+  REVOKED   // Admin revoked before acceptance
+}
+
+enum SSOProvider {
+  SAML      // SAML 2.0 (Okta, Azure AD, OneLogin, etc.)
+  OIDC      // OpenID Connect (Google Workspace, Auth0, etc.)
+  LDAP      // LDAP/Active Directory direct connection
+}
+
+enum BlueprintVisibility {
+  PRIVATE   // Only the author can see/access
+  TEAM      // All team members can see/access
+  PUBLIC    // Anyone can see/access (subject to pricing)
+}
+
+model Team {
+  id            String   @id @default(cuid())
+  name          String   // Company/team display name
+  slug          String   @unique // URL-friendly identifier (e.g., "acme-corp")
+  
+  // Billing - handled by team admin(s)
+  stripeCustomerId     String?   @unique // Stripe Customer ID for the team
+  stripeSubscriptionId String?   // Stripe Subscription ID (per-seat)
+  billingCycleStart    DateTime? // When current billing cycle started
+  maxSeats             Int       @default(3) // Prepaid seats (minimum 3)
+  
+  // AI Usage Settings (Teams get higher limits)
+  aiUsageLimitPerUser  Int       @default(1500) // €15 = 1500 cents max AI spend per user/month
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  members       TeamMember[]
+  invitations   TeamInvitation[]
+  ssoConfig     TeamSSOConfig?
+  billingRecords TeamBillingRecord[]
+  blueprints    UserTemplate[]  // Team-shared blueprints
+  purchases     BlueprintPurchase[]  // Templates purchased by team members (shared with all)
+  
+  @@index([slug])
+  @@index([stripeCustomerId])
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  teamId    String
+  userId    String
+  role      TeamRole @default(MEMBER)
+  
+  // Activity tracking for billing
+  joinedAt      DateTime  @default(now())
+  lastActiveAt  DateTime? // Last login while in this team (for billing)
+  
+  // Billing status
+  isActiveThisCycle Boolean @default(false) // Has logged in this billing cycle
+  
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([teamId, userId]) // User can only be in a team once
+  @@index([teamId])
+  @@index([userId])
+  @@index([lastActiveAt])
+}
+
+model TeamInvitation {
+  id        String   @id @default(cuid())
+  teamId    String
+  email     String   // Email to invite
+  role      TeamRole @default(MEMBER) // Role to assign when accepted
+  
+  // Invitation token (sent via magic link)
+  token     String   @unique @default(cuid())
+  expiresAt DateTime // Default: 7 days from creation
+  
+  // Status tracking
+  status    TeamInvitationStatus @default(PENDING)
+  
+  // Audit
+  invitedBy String   // User ID of admin who sent invite
+  createdAt DateTime @default(now())
+  acceptedAt DateTime?
+  
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  
+  @@index([teamId])
+  @@index([email])
+  @@index([token])
+  @@index([status])
+}
+
+model TeamSSOConfig {
+  id        String   @id @default(cuid())
+  teamId    String   @unique
+  
+  // SSO Provider Configuration
+  provider  SSOProvider
+  enabled   Boolean  @default(false)
+  
+  // Provider-specific configuration (JSON)
+  // For SAML: { entityId, ssoUrl, certificate, signatureAlgorithm, etc. }
+  // For OIDC: { issuer, clientId, clientSecret, authorizationUrl, tokenUrl, etc. }
+  // For LDAP: { host, port, baseDn, bindDn, bindPassword, userFilter, etc. }
+  config    Json
+  
+  // Optional: restrict to specific email domains
+  allowedDomains String[] // e.g., ["acme.com", "acme.co.uk"]
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  lastSyncAt DateTime? // Last successful SSO sync
+  
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+}
+
+model TeamBillingRecord {
+  id        String   @id @default(cuid())
+  teamId    String
+  
+  // Billing period
+  periodStart DateTime
+  periodEnd   DateTime
+  
+  // Seat counts for this period
+  totalSeats     Int // Max seats configured
+  activeSeats    Int // Users who logged in during period
+  billedSeats    Int // MAX(activeSeats, 3) - what was actually charged
+  
+  // Financial
+  amountBilled   Int // Total amount in cents (billedSeats × €30)
+  currency       String @default("EUR")
+  stripeInvoiceId String? // Reference to Stripe invoice
+  
+  // Credits (for unused seats from previous cycle)
+  creditApplied  Int @default(0) // Credit in cents applied to this invoice
+  creditGenerated Int @default(0) // Credit generated for next cycle (if active < billed)
+  
+  createdAt DateTime @default(now())
+  
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  
+  @@index([teamId])
+  @@index([periodStart])
+  @@index([periodEnd])
 }
 
 // ============================================================================
@@ -202,8 +369,15 @@ model UserTemplate {
   type        TemplateType
   content     String       @db.Text   // ALWAYS stored with placeholders like {{AUTHOR_NAME}}
   variables   Json?                    // Default values for variables (NOT personal data)
-  isPublic    Boolean      @default(false)
-  isOfficial  Boolean      @default(false)  // Official LynxPrompt templates
+  
+  // Visibility: PRIVATE (author only), TEAM (team members), PUBLIC (everyone)
+  // Replaces isPublic - migration: isPublic=true → PUBLIC, isPublic=false → PRIVATE
+  visibility   BlueprintVisibility @default(PRIVATE)
+  isPublic     Boolean      @default(false) // DEPRECATED: Use visibility instead. Kept for backwards compat.
+  isOfficial   Boolean      @default(false)  // Official LynxPrompt templates
+  
+  // Team ownership (optional - if set, blueprint belongs to team)
+  teamId       String?      // If set, this is a team blueprint
   
   // Statistics (denormalized for performance, updated via triggers/API)
   downloads    Int          @default(0)
@@ -237,11 +411,14 @@ model UserTemplate {
   updatedAt   DateTime     @updatedAt
 
   user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team      Team?              @relation(fields: [teamId], references: [id], onDelete: SetNull)
   purchases BlueprintPurchase[]
 
   @@index([userId])
   @@index([type])
   @@index([isPublic])
+  @@index([visibility])
+  @@index([teamId])
   @@index([tier])
   @@index([downloads])
   @@index([favorites])
@@ -296,6 +473,10 @@ model BlueprintPurchase {
   userId        String
   templateId    String
   
+  // Team purchase: if set, the blueprint is available to all team members
+  // When a team user purchases, the purchase is made for the team
+  teamId        String?
+  
   // Payment details
   amount        Int      // Amount paid in cents
   currency      String   // ISO currency code
@@ -309,9 +490,12 @@ model BlueprintPurchase {
   
   user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   template UserTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  team     Team?        @relation(fields: [teamId], references: [id], onDelete: SetNull)
   
-  @@unique([userId, templateId]) // One purchase per user per template
+  @@unique([userId, templateId]) // One purchase per user per template (for individual users)
+  @@unique([teamId, templateId]) // One purchase per team per template
   @@index([userId])
+  @@index([teamId])
   @@index([templateId])
   @@index([createdAt])
 }

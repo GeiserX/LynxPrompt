@@ -1,35 +1,13 @@
 import Link from "next/link";
 import { Shield } from "lucide-react";
-import { Logo } from "@/components/logo";
-import { UserMenu } from "@/components/user-menu";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
 
 export default function PrivacyPage() {
   return (
     <div className="flex min-h-screen flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Logo />
-          <nav className="flex items-center gap-4">
-            <Link href="/pricing" className="text-sm hover:underline">
-              Pricing
-            </Link>
-            <Link href="/blueprints" className="text-sm hover:underline">
-              Blueprints
-            </Link>
-            <Link href="/docs" className="text-sm hover:underline">
-              Docs
-            </Link>
-            <Link href="/blog" className="text-sm hover:underline">
-              Blog
-            </Link>
-            <ThemeToggle />
-            <UserMenu />
-          </nav>
-        </div>
-      </header>
+      <PageHeader currentPage="privacy" breadcrumbLabel="Privacy" />
 
       {/* Hero */}
       <section className="border-b bg-gradient-to-b from-muted/50 to-background">
@@ -131,6 +109,15 @@ export default function PrivacyPage() {
                       <li>Pages visited and features used</li>
                       <li>Device type and browser information</li>
                       <li>Anonymized analytics data (via Umami)</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <strong className="text-foreground">Teams Data (Teams subscribers only):</strong>
+                    <ul className="ml-4 mt-1 list-inside list-disc">
+                      <li>Team membership and role information</li>
+                      <li>Last login timestamps (for active user billing)</li>
+                      <li>Team-shared blueprints and configurations</li>
+                      <li>SSO configuration data (if configured by team admin)</li>
                     </ul>
                   </div>
                 </div>
@@ -355,6 +342,37 @@ export default function PrivacyPage() {
                       <strong>Note:</strong> Error reports may contain information
                       about your actions when an error occurred, but we do not use
                       this for user profiling
+                    </p>
+                  </div>
+
+                  <div className="rounded-lg border p-4">
+                    <h3 className="font-medium text-foreground">
+                      Enterprise SSO Providers (Teams only)
+                    </h3>
+                    <p className="mt-1 text-sm">
+                      <strong>Data shared:</strong> Authentication tokens, user
+                      identifiers as configured by your organization
+                    </p>
+                    <p className="text-sm">
+                      <strong>Purpose:</strong> Single Sign-On authentication for
+                      Teams subscribers
+                    </p>
+                    <p className="text-sm">
+                      <strong>Providers supported:</strong> SAML 2.0 (Okta, Azure AD,
+                      OneLogin), OpenID Connect, LDAP/Active Directory
+                    </p>
+                    <p className="text-sm">
+                      <strong>Configuration:</strong> Your team administrator
+                      configures the SSO connection; we only store the minimum data
+                      needed to authenticate users
+                    </p>
+                    <p className="text-sm">
+                      <strong>Data retention:</strong> SSO configuration data is
+                      deleted when the team is deleted or SSO is disabled
+                    </p>
+                    <p className="text-sm">
+                      <strong>Legal basis:</strong> Contractual necessity (you or
+                      your organization configured SSO)
                     </p>
                   </div>
                 </div>

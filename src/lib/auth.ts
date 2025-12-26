@@ -309,6 +309,21 @@ export const authOptions: NextAuthOptions = {
           });
           console.log(`[Auth] Terms auto-accepted for existing user ${user.id} (agreed via signin page notice)`);
         }
+        
+        // Update lastActiveAt for team members on sign-in
+        // This is used to track "active" users for billing purposes
+        try {
+          await prismaUsers.teamMember.updateMany({
+            where: { userId: user.id },
+            data: { 
+              lastActiveAt: new Date(),
+              isActiveThisCycle: true,
+            },
+          });
+        } catch (error) {
+          // Don't fail sign-in if this fails
+          console.error(`[Auth] Failed to update team member activity:`, error);
+        }
       }
       
       // Backfill provider details for existing accounts that don't have them

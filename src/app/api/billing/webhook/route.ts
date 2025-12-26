@@ -56,13 +56,23 @@ export async function POST(request: NextRequest) {
       case "customer.subscription.created":
       case "customer.subscription.updated": {
         const subscription = event.data.object as Stripe.Subscription;
-        await handleSubscriptionChange(subscription);
+        // Check if this is a Teams subscription (has teamId in metadata)
+        if (subscription.metadata?.teamId) {
+          await handleTeamsSubscriptionChange(subscription);
+        } else {
+          await handleSubscriptionChange(subscription);
+        }
         break;
       }
 
       case "customer.subscription.deleted": {
         const subscription = event.data.object as Stripe.Subscription;
-        await handleSubscriptionDeleted(subscription);
+        // Check if this is a Teams subscription
+        if (subscription.metadata?.teamId) {
+          await handleTeamsSubscriptionDeleted(subscription);
+        } else {
+          await handleSubscriptionDeleted(subscription);
+        }
         break;
       }
 
@@ -275,7 +285,7 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
 const PLATFORM_OWNER_EMAIL = "dev@lynxprompt.com";
 
 async function handleBlueprintPurchase(session: Stripe.Checkout.Session) {
-  const { templateId, userId, originalPrice, paidPrice, isMaxDiscount, currency } = session.metadata || {};
+  const { templateId, userId, originalPrice, paidPrice, isMaxDiscount, currency, teamId } = session.metadata || {};
 
   // Backwards compatibility with old purchases that only have 'price'
   const price = originalPrice || session.metadata?.price;
@@ -305,17 +315,33 @@ async function handleBlueprintPurchase(session: Stripe.Checkout.Session) {
   const platformFee = paidPriceInCents - authorShare;
 
   try {
-    // Create purchase record
+    // Create purchase record - if teamId is present, this is a team purchase
+    const purchaseData: {
+      userId: string;
+      templateId: string;
+      amount: number;
+      currency: string;
+      stripePaymentId: string;
+      authorShare: number;
+      platformFee: number;
+      teamId?: string;
+    } = {
+      userId,
+      templateId,
+      amount: paidPriceInCents, // What was actually paid
+      currency: currency || "EUR",
+      stripePaymentId: session.payment_intent as string,
+      authorShare, // 70% of original price
+      platformFee, // Remaining (20% if discounted, 30% if not)
+    };
+    
+    // If purchased by a team member, add teamId (makes it available to entire team)
+    if (teamId) {
+      purchaseData.teamId = teamId;
+    }
+    
     await prismaUsers.blueprintPurchase.create({
-      data: {
-        userId,
-        templateId,
-        amount: paidPriceInCents, // What was actually paid
-        currency: currency || "EUR",
-        stripePaymentId: session.payment_intent as string,
-        authorShare, // 70% of original price
-        platformFee, // Remaining (20% if discounted, 30% if not)
-      },
+      data: purchaseData,
     });
 
     // Update template revenue with original price (for author earnings tracking)
@@ -327,7 +353,8 @@ async function handleBlueprintPurchase(session: Stripe.Checkout.Session) {
       },
     });
 
-    console.log(`Blueprint purchase: ${templateId} by ${userId} - paid: ${paidPriceInCents} cents, original: ${originalPriceInCents} cents (author: ${authorShare}, platform: ${platformFee}, max discount: ${isMaxDiscount === "true"})`);
+    const teamInfo = teamId ? ` (team: ${teamId})` : "";
+    console.log(`Blueprint purchase: ${templateId} by ${userId}${teamInfo} - paid: ${paidPriceInCents} cents, original: ${originalPriceInCents} cents (author: ${authorShare}, platform: ${platformFee}, max discount: ${isMaxDiscount === "true"})`);
   } catch (error) {
     // Handle duplicate purchase (race condition)
     if ((error as { code?: string }).code === "P2002") {
@@ -336,6 +363,99 @@ async function handleBlueprintPurchase(session: Stripe.Checkout.Session) {
       throw error;
     }
   }
+}
+
+/**
+ * Handle Teams subscription changes
+ */
+async function handleTeamsSubscriptionChange(subscription: Stripe.Subscription) {
+  const teamId = subscription.metadata?.teamId;
+  const customerId = subscription.customer as string;
+
+  // Find team by teamId or customer ID
+  const team = await prismaUsers.team.findFirst({
+    where: teamId ? { id: teamId } : { stripeCustomerId: customerId },
+  });
+
+  if (!team) {
+    console.error(`Team not found for subscription ${subscription.id}`);
+    return;
+  }
+
+  // Get seat count from subscription
+  const seatCount = subscription.items.data[0]?.quantity || 3;
+  
+  // Get current period info
+  const sub = subscription as unknown as { current_period_start?: number; current_period_end?: number };
+  const billingCycleStart = sub.current_period_start 
+    ? new Date(sub.current_period_start * 1000) 
+    : null;
+
+  await prismaUsers.team.update({
+    where: { id: team.id },
+    data: {
+      stripeSubscriptionId: subscription.id,
+      stripeCustomerId: customerId,
+      maxSeats: seatCount,
+      billingCycleStart,
+    },
+  });
+
+  // If subscription became active, mark team members as TEAMS plan
+  if (subscription.status === "active") {
+    const members = await prismaUsers.teamMember.findMany({
+      where: { teamId: team.id },
+      select: { userId: true },
+    });
+    
+    // Update all team members to TEAMS plan
+    await prismaUsers.user.updateMany({
+      where: { id: { in: members.map(m => m.userId) } },
+      data: { subscriptionPlan: "TEAMS" },
+    });
+    
+    console.log(`Team ${team.id} activated: ${members.length} members upgraded to TEAMS plan`);
+  }
+
+  console.log(`Updated Teams subscription for team ${team.id}: ${seatCount} seats (status: ${subscription.status})`);
+}
+
+/**
+ * Handle Teams subscription deletion
+ */
+async function handleTeamsSubscriptionDeleted(subscription: Stripe.Subscription) {
+  const customerId = subscription.customer as string;
+
+  const team = await prismaUsers.team.findFirst({
+    where: { stripeCustomerId: customerId },
+  });
+
+  if (!team) {
+    console.error(`Team not found for customer ${customerId}`);
+    return;
+  }
+
+  // Get all team members
+  const members = await prismaUsers.teamMember.findMany({
+    where: { teamId: team.id },
+    select: { userId: true },
+  });
+
+  // Downgrade all team members to FREE plan
+  await prismaUsers.user.updateMany({
+    where: { id: { in: members.map(m => m.userId) } },
+    data: { subscriptionPlan: "FREE" },
+  });
+
+  await prismaUsers.team.update({
+    where: { id: team.id },
+    data: {
+      stripeSubscriptionId: null,
+      billingCycleStart: null,
+    },
+  });
+
+  console.log(`Teams subscription canceled for team ${team.id}: ${members.length} members downgraded to FREE`);
 }
 
 

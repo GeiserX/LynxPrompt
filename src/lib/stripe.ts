@@ -22,9 +22,11 @@ export function ensureStripe(): Stripe {
 export const STRIPE_PRICE_IDS = {
   pro_monthly: process.env.STRIPE_PRICE_PRO_MONTHLY || "",
   max_monthly: process.env.STRIPE_PRICE_MAX_MONTHLY || "",
+  // Teams uses per-seat pricing - this is the price per seat
+  teams_seat_monthly: process.env.STRIPE_PRICE_TEAMS_SEAT_MONTHLY || "",
 } as const;
 
-export type SubscriptionPlan = "free" | "pro" | "max";
+export type SubscriptionPlan = "free" | "pro" | "max" | "teams";
 
 export interface SubscriptionInfo {
   plan: SubscriptionPlan;
@@ -35,10 +37,19 @@ export interface SubscriptionInfo {
   stripeSubscriptionId: string | null;
 }
 
+export interface TeamsSubscriptionInfo extends SubscriptionInfo {
+  plan: "teams";
+  teamId: string;
+  totalSeats: number;
+  activeSeats: number;
+  billingCycleStart: Date | null;
+}
+
 // Map Stripe price ID to plan name
 export function getPlanFromPriceId(priceId: string): SubscriptionPlan {
   if (priceId === STRIPE_PRICE_IDS.max_monthly) return "max";
   if (priceId === STRIPE_PRICE_IDS.pro_monthly) return "pro";
+  if (priceId === STRIPE_PRICE_IDS.teams_seat_monthly) return "teams";
   return "free";
 }
 
@@ -49,9 +60,16 @@ export function getPriceIdForPlan(plan: SubscriptionPlan): string | null {
       return STRIPE_PRICE_IDS.pro_monthly;
     case "max":
       return STRIPE_PRICE_IDS.max_monthly;
+    case "teams":
+      return STRIPE_PRICE_IDS.teams_seat_monthly;
     default:
       return null;
   }
+}
+
+// Teams-specific: Calculate seats to bill (minimum 3)
+export function calculateBillableSeats(activeSeats: number): number {
+  return Math.max(activeSeats, 3);
 }
 
 

@@ -335,17 +335,53 @@ When downloading, user sees:
 
 ### Subscription Tiers
 
-| Tier     | Price     | Features                                                       |
-| -------- | --------- | -------------------------------------------------------------- |
-| **Free** | €0/month  | Basic templates, limited wizard features                       |
-| **Pro**  | €5/month  | Intermediate repo wizards, priority support                    |
-| **Max**  | €20/month | Advanced wizards + ALL community prompts (including paid ones) |
+| Tier      | Price          | Features                                                       |
+| --------- | -------------- | -------------------------------------------------------------- |
+| **Free**  | €0/month       | Basic templates, limited wizard features                       |
+| **Pro**   | €5/month       | Intermediate repo wizards, priority support                    |
+| **Max**   | €20/month      | Advanced wizards + ALL community prompts (including paid ones) |
+| **Teams** | €30/seat/month | Everything in Max + team features, SSO, centralized billing    |
 
 #### Key Subscription Rules
 
 - **Free users**: Access to basic templates only
 - **Pro users**: Access to intermediate wizard features for repos
 - **Max users**: Full access to advanced wizards + **10% discount on paid blueprints**
+- **Teams users**: All Max features + team-shared blueprints + SSO + €15/user AI budget
+
+### Teams Tier Details ✅ NEW
+
+| Setting | Value |
+|---------|-------|
+| Price | €30/seat/month |
+| Minimum seats | 3 |
+| Maximum seats | Unlimited |
+| Color | Teal/Cyan gradient |
+| AI usage limit | €15/user/month |
+
+#### Teams Features
+
+- **Team-shared blueprints**: Share blueprints privately within your team
+- **Blueprint visibility**: Private, Team, or Public options
+- **SSO authentication**: SAML 2.0, OpenID Connect, LDAP/Active Directory
+- **Centralized billing**: One admin pays for all seats
+- **Active user billing**: Only pay for users who logged in during the billing period
+- **Roles**: ADMIN (full control) and MEMBER (team access)
+- **Multiple admins**: Teams can have multiple administrators
+- **Pro-rated billing**: Adding seats mid-cycle charges prorated amount
+- **Credits**: Unused seats generate credits for next cycle
+
+#### Teams Billing Logic
+
+```
+Monthly Bill = €30 × MAX(active_users, 3)
+
+Where:
+- active_users = users who logged in during the billing period
+- Minimum 3 seats always billed (even if only 2 active)
+- Mid-cycle additions: (€30 / 30 days) × days_remaining × new_seats
+- Credits: (billed_seats - active_seats) × €30 → next cycle
+```
 
 ### Template Marketplace Pricing
 
