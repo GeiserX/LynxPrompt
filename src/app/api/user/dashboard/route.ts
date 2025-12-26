@@ -4,6 +4,39 @@ import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { prismaApp } from "@/lib/db-app";
 
+/**
+ * Get team membership for a user
+ */
+async function getUserTeamInfo(userId: string) {
+  const membership = await prismaUsers.teamMember.findFirst({
+    where: { userId },
+    include: {
+      team: {
+        include: {
+          members: {
+            select: { userId: true },
+            take: 100, // Limit for performance
+          },
+          _count: {
+            select: { members: true },
+          },
+        },
+      },
+    },
+  });
+  
+  if (!membership) return null;
+  
+  return {
+    teamId: membership.team.id,
+    teamName: membership.team.name,
+    teamSlug: membership.team.slug,
+    role: membership.role,
+    memberCount: membership.team._count.members,
+    memberIds: membership.team.members.map(m => m.userId),
+  };
+}
+
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
@@ -13,6 +46,9 @@ export async function GET() {
     }
 
     const userId = session.user.id;
+    
+    // Check if user is part of a team
+    const teamInfo = await getUserTeamInfo(userId);
 
     // Get user stats in parallel
     const [
@@ -95,9 +131,9 @@ export async function GET() {
         },
       }),
 
-      // Get purchased blueprints (max 6)
+      // Get purchased blueprints (individual purchases, max 6)
       prismaUsers.blueprintPurchase.findMany({
-        where: { userId },
+        where: { userId, teamId: null }, // Only individual purchases
         orderBy: { createdAt: "desc" },
         take: 6,
         include: {
@@ -118,6 +154,70 @@ export async function GET() {
         },
       }),
     ]);
+    
+    // Team-specific data (if user is in a team)
+    let teamBlueprints: typeof myTemplates = [];
+    let teamPurchases: typeof purchasedBlueprints = [];
+    
+    if (teamInfo) {
+      // Get team-shared blueprints (created by team members and marked as TEAM visibility)
+      teamBlueprints = await prismaUsers.userTemplate.findMany({
+        where: {
+          userId: { in: teamInfo.memberIds },
+          visibility: "TEAM",
+          teamId: teamInfo.teamId,
+        },
+        orderBy: { createdAt: "desc" },
+        take: 6,
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          downloads: true,
+          favorites: true,
+          isPublic: true,
+          createdAt: true,
+          user: {
+            select: { name: true, displayName: true },
+          },
+        },
+      }).then(templates => templates.map(template => ({
+        id: `usr_${template.id}`,
+        name: template.name,
+        type: template.type,
+        downloads: template.downloads,
+        favorites: template.favorites,
+        isPublic: template.isPublic,
+        createdAt: template.createdAt,
+        author: template.user?.displayName || template.user?.name || "Team member",
+      })));
+      
+      // Get team-purchased blueprints (shared with entire team)
+      teamPurchases = await prismaUsers.blueprintPurchase.findMany({
+        where: { teamId: teamInfo.teamId },
+        orderBy: { createdAt: "desc" },
+        take: 6,
+        include: {
+          template: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+              downloads: true,
+              favorites: true,
+              tier: true,
+              price: true,
+              user: {
+                select: { name: true, displayName: true },
+              },
+            },
+          },
+          user: {
+            select: { name: true, displayName: true },
+          },
+        },
+      });
+    }
 
     // Enrich activity with template names
     // Template IDs in downloads are stored WITH prefix (usr_xxx, sys_xxx)
@@ -225,6 +325,22 @@ export async function GET() {
         author: p.template.user?.displayName || p.template.user?.name || "Anonymous",
         purchasedAt: p.createdAt,
       }));
+    
+    // Format team-purchased blueprints
+    const formattedTeamPurchases = teamPurchases
+      .filter(p => p.template)
+      .map(p => ({
+        id: `usr_${p.template.id}`,
+        name: p.template.name,
+        description: p.template.description,
+        downloads: p.template.downloads,
+        favorites: p.template.favorites,
+        tier: p.template.tier,
+        price: p.template.price,
+        author: p.template.user?.displayName || p.template.user?.name || "Anonymous",
+        purchasedAt: p.createdAt,
+        purchasedBy: p.user?.displayName || p.user?.name || "Team member",
+      }));
 
     return NextResponse.json({
       stats: {
@@ -237,6 +353,16 @@ export async function GET() {
       recentActivity: enrichedActivity,
       favoriteTemplates: enrichedFavorites.filter((f) => f !== null),
       purchasedBlueprints: formattedPurchases,
+      // Team data (only included if user is in a team)
+      team: teamInfo ? {
+        id: teamInfo.teamId,
+        name: teamInfo.teamName,
+        slug: teamInfo.teamSlug,
+        role: teamInfo.role,
+        memberCount: teamInfo.memberCount,
+      } : null,
+      teamBlueprints: teamInfo ? teamBlueprints : [],
+      teamPurchases: teamInfo ? formattedTeamPurchases : [],
     });
   } catch (error) {
     console.error("Dashboard API error:", error);

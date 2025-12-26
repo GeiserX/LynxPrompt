@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Check, X, Zap, Crown, Star, ArrowRight } from "lucide-react";
+import { Sparkles, Check, X, Zap, Crown, Star, ArrowRight, Users } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
 
@@ -68,21 +68,47 @@ const TIERS = [
     cta: "Go Max",
     ctaLink: "/auth/signin?plan=max",
   },
+  {
+    name: "Teams",
+    price: "€30",
+    period: "/seat/month",
+    description:
+      "For organizations that need centralized management and SSO",
+    icon: Users,
+    highlighted: false,
+    iconStyle: "teams",
+    badge: "Enterprise",
+    features: [
+      { text: "Everything in Max", included: true },
+      { text: "Team-shared blueprints", included: true },
+      { text: "SSO (SAML, OIDC, LDAP)", included: true },
+      { text: "Centralized billing", included: true },
+      { text: "Only pay for active users", included: true },
+      { text: "€15/user AI budget", included: true },
+    ],
+    cta: "Contact Sales",
+    ctaLink: "/teams",
+  },
 ];
 
 const COMPARISON_FEATURES = [
-  { name: "Basic wizards", free: true, pro: true, max: true },
-  { name: "Intermediate wizards", free: false, pro: true, max: true },
-  { name: "Advanced wizards", free: false, pro: false, max: true },
-  { name: "AI-powered editing", free: false, pro: false, max: true },
-  { name: "Download configs", free: true, pro: true, max: true },
-  { name: "Browse free blueprints", free: true, pro: true, max: true },
-  { name: "Paid blueprint discount", free: "-", pro: "-", max: "10% off" },
-  { name: "Sell blueprints", free: false, pro: true, max: true },
-  { name: "Revenue share", free: "-", pro: "70%", max: "70%" },
-  { name: "Save drafts", free: false, pro: true, max: true },
-  { name: "Priority support", free: false, pro: true, max: true },
-  { name: "Premium support", free: false, pro: false, max: true },
+  { name: "Basic wizards", free: true, pro: true, max: true, teams: true },
+  { name: "Intermediate wizards", free: false, pro: true, max: true, teams: true },
+  { name: "Advanced wizards", free: false, pro: false, max: true, teams: true },
+  { name: "AI-powered editing", free: false, pro: false, max: true, teams: true },
+  { name: "Download configs", free: true, pro: true, max: true, teams: true },
+  { name: "Browse free blueprints", free: true, pro: true, max: true, teams: true },
+  { name: "Paid blueprint discount", free: "-", pro: "-", max: "10% off", teams: "10% off" },
+  { name: "Sell blueprints", free: false, pro: true, max: true, teams: true },
+  { name: "Revenue share", free: "-", pro: "70%", max: "70%", teams: "70%" },
+  { name: "Save drafts", free: false, pro: true, max: true, teams: true },
+  { name: "Priority support", free: false, pro: true, max: true, teams: true },
+  { name: "Premium support", free: false, pro: false, max: true, teams: true },
+  { name: "Team-shared blueprints", free: false, pro: false, max: false, teams: true },
+  { name: "SSO (SAML/OIDC/LDAP)", free: false, pro: false, max: false, teams: true },
+  { name: "Centralized billing", free: false, pro: false, max: false, teams: true },
+  { name: "Active user billing only", free: "-", pro: "-", max: "-", teams: true },
+  { name: "AI usage limit", free: "-", pro: "-", max: "Standard", teams: "€15/user" },
 ];
 
 export default function PricingPage() {
@@ -91,6 +117,9 @@ export default function PricingPage() {
 
   // Dynamic CTA links based on auth status
   const getCtaLink = (plan: string) => {
+    if (plan === "teams") {
+      return "/teams"; // Teams has its own signup flow
+    }
     if (!isAuthenticated) {
       return `/auth/signin${plan !== "free" ? `?plan=${plan}` : ""}`;
     }
@@ -127,19 +156,25 @@ export default function PricingPage() {
       {/* Pricing Cards */}
       <section className="py-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-3">
+          <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-2 lg:grid-cols-4">
             {TIERS.map((tier) => (
               <div
                 key={tier.name}
                 className={`relative flex flex-col rounded-2xl border ${
                   tier.highlighted
                     ? "border-primary bg-primary/5 shadow-lg shadow-primary/10"
-                    : "bg-card"
+                    : tier.iconStyle === "teams"
+                      ? "border-teal-500/50 bg-gradient-to-b from-teal-500/5 to-cyan-500/5"
+                      : "bg-card"
                 }`}
               >
                 {tier.badge && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
+                    <span className={`rounded-full px-3 py-1 text-xs font-medium ${
+                      tier.iconStyle === "teams"
+                        ? "bg-gradient-to-r from-teal-500 to-cyan-500 text-white"
+                        : "bg-primary text-primary-foreground"
+                    }`}>
                       {tier.badge}
                     </span>
                   </div>
@@ -151,14 +186,16 @@ export default function PricingPage() {
                       className={`flex h-10 w-10 items-center justify-center rounded-full ${
                         tier.iconStyle === "accent"
                           ? "bg-gradient-to-br from-purple-500 to-pink-500"
-                          : tier.iconStyle === "primary"
-                            ? "bg-primary"
-                            : "border-2 border-muted-foreground/30 bg-muted"
+                          : tier.iconStyle === "teams"
+                            ? "bg-gradient-to-br from-teal-500 to-cyan-500"
+                            : tier.iconStyle === "primary"
+                              ? "bg-primary"
+                              : "border-2 border-muted-foreground/30 bg-muted"
                       }`}
                     >
                       <tier.icon
                         className={`h-5 w-5 ${
-                          tier.iconStyle === "accent" || tier.iconStyle === "primary"
+                          tier.iconStyle === "accent" || tier.iconStyle === "primary" || tier.iconStyle === "teams"
                             ? "text-white"
                             : "text-foreground"
                         }`}
@@ -167,7 +204,9 @@ export default function PricingPage() {
                     <h3 className={`text-xl font-semibold ${
                       tier.iconStyle === "accent" 
                         ? "bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent"
-                        : ""
+                        : tier.iconStyle === "teams"
+                          ? "bg-gradient-to-r from-teal-500 to-cyan-500 bg-clip-text text-transparent"
+                          : ""
                     }`}>{tier.name}</h3>
                   </div>
 
@@ -240,10 +279,11 @@ export default function PricingPage() {
             <div className="overflow-x-auto">
               <table className="w-full table-fixed">
                 <colgroup>
-                  <col className="w-[40%]" />
-                  <col className="w-[20%]" />
-                  <col className="w-[20%]" />
-                  <col className="w-[20%]" />
+                  <col className="w-[32%]" />
+                  <col className="w-[17%]" />
+                  <col className="w-[17%]" />
+                  <col className="w-[17%]" />
+                  <col className="w-[17%]" />
                 </colgroup>
                 <thead>
                   <tr className="border-b">
@@ -251,6 +291,7 @@ export default function PricingPage() {
                     <th className="pb-4 text-center font-medium">Free</th>
                     <th className="pb-4 text-center font-medium text-primary">Pro</th>
                     <th className="pb-4 text-center font-medium bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">Max</th>
+                    <th className="pb-4 text-center font-medium bg-gradient-to-r from-teal-500 to-cyan-500 bg-clip-text text-transparent">Teams</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -293,6 +334,19 @@ export default function PricingPage() {
                         ) : (
                           <span className="text-sm text-muted-foreground">
                             {feature.max}
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 text-center">
+                        {typeof feature.teams === "boolean" ? (
+                          feature.teams ? (
+                            <Check className="mx-auto h-4 w-4 text-teal-500" />
+                          ) : (
+                            <X className="mx-auto h-4 w-4 text-muted-foreground/50" />
+                          )
+                        ) : (
+                          <span className="text-sm text-muted-foreground">
+                            {feature.teams}
                           </span>
                         )}
                       </td>
@@ -367,6 +421,52 @@ export default function PricingPage() {
                   We accept all major credit cards via Stripe. Cryptocurrency
                   payments (Bitcoin, Ethereum, USDC) are coming soon via
                   Coinbase Commerce.
+                </p>
+              </details>
+
+              <details className="group rounded-lg border bg-card">
+                <summary className="flex cursor-pointer items-center justify-between p-4 font-medium">
+                  How does Teams billing work?
+                  <span className="transition-transform group-open:rotate-180">
+                    ↓
+                  </span>
+                </summary>
+                <p className="border-t px-4 py-3 text-sm text-muted-foreground">
+                  Teams is billed at <strong>€30 per seat per month</strong>, with a minimum of 3 seats.
+                  You only pay for <strong>active users</strong> — team members who haven&apos;t logged in 
+                  during the billing cycle aren&apos;t charged. If you add users mid-cycle, you pay a 
+                  prorated amount for the remaining days. Unused seat credits roll over to the next cycle.
+                </p>
+              </details>
+
+              <details className="group rounded-lg border bg-card">
+                <summary className="flex cursor-pointer items-center justify-between p-4 font-medium">
+                  What SSO providers does Teams support?
+                  <span className="transition-transform group-open:rotate-180">
+                    ↓
+                  </span>
+                </summary>
+                <p className="border-t px-4 py-3 text-sm text-muted-foreground">
+                  Teams supports <strong>SAML 2.0</strong> (Okta, Azure AD, OneLogin), 
+                  <strong> OpenID Connect</strong> (Google Workspace, Auth0), and 
+                  <strong> LDAP/Active Directory</strong>. Team admins can configure SSO 
+                  from the team settings dashboard. You can also restrict sign-ups to 
+                  specific email domains.
+                </p>
+              </details>
+
+              <details className="group rounded-lg border bg-card">
+                <summary className="flex cursor-pointer items-center justify-between p-4 font-medium">
+                  Can team members share blueprints privately?
+                  <span className="transition-transform group-open:rotate-180">
+                    ↓
+                  </span>
+                </summary>
+                <p className="border-t px-4 py-3 text-sm text-muted-foreground">
+                  Yes! Team members can set blueprints to three visibility levels: 
+                  <strong> Private</strong> (only you), <strong>Team</strong> (all team members), 
+                  or <strong>Public</strong> (everyone). Team blueprints are perfect for sharing 
+                  internal coding standards, company-specific configurations, and proprietary workflows.
                 </p>
               </details>
             </div>

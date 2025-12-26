@@ -21,6 +21,8 @@ import {
   Lock,
   Shield,
   ExternalLink,
+  Users,
+  Globe,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Footer } from "@/components/footer";
@@ -55,8 +57,12 @@ export default function ShareBlueprintPage() {
   const [type, setType] = useState<string>("AGENTS_MD");
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>([]);
-  const [isPublic, setIsPublic] = useState(false);
+  const [visibility, setVisibility] = useState<"PRIVATE" | "TEAM" | "PUBLIC">("PRIVATE");
   const [aiAssisted, setAiAssisted] = useState(false);
+  const [teamInfo, setTeamInfo] = useState<{ id: string; name: string; slug: string } | null>(null);
+  
+  // Computed isPublic for backwards compatibility
+  const isPublic = visibility === "PUBLIC";
   const [isPaid, setIsPaid] = useState(false);
   const [price, setPrice] = useState<number>(5);
   const [showcaseUrl, setShowcaseUrl] = useState("");
@@ -96,14 +102,24 @@ export default function ShareBlueprintPage() {
     }
   }, []);
 
-  // Fetch user subscription plan
+  // Fetch user subscription plan and team info
   useEffect(() => {
-    const fetchPlan = async () => {
+    const fetchPlanAndTeam = async () => {
       try {
-        const res = await fetch("/api/billing/status");
-        if (res.ok) {
-          const data = await res.json();
+        // Fetch billing status
+        const billingRes = await fetch("/api/billing/status");
+        if (billingRes.ok) {
+          const data = await billingRes.json();
           setUserPlan(data.plan || "FREE");
+        }
+        
+        // Fetch team info (if user is in a team)
+        const dashboardRes = await fetch("/api/user/dashboard");
+        if (dashboardRes.ok) {
+          const data = await dashboardRes.json();
+          if (data.team) {
+            setTeamInfo(data.team);
+          }
         }
       } catch {
         // Default to FREE if fetch fails
@@ -112,7 +128,7 @@ export default function ShareBlueprintPage() {
       }
     };
     if (status === "authenticated") {
-      fetchPlan();
+      fetchPlanAndTeam();
     } else {
       setLoadingPlan(false);
     }
@@ -244,7 +260,9 @@ export default function ShareBlueprintPage() {
           content: content.trim(),
           type,
           tags,
-          isPublic,
+          isPublic, // For backwards compatibility
+          visibility, // New visibility field (PRIVATE, TEAM, PUBLIC)
+          teamId: visibility === "TEAM" ? teamInfo?.id : null, // Set teamId if sharing with team
           aiAssisted: isPublic ? aiAssisted : false, // Only relevant if sharing publicly
           price: isPaid ? Math.round(price * 100) : null, // Convert to cents
           currency: "EUR",
@@ -762,21 +780,60 @@ export default function ShareBlueprintPage() {
                       <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-600 dark:text-amber-300 mt-0.5" />
                       <div className="flex-1">
                         <h4 className="font-medium text-amber-900 dark:text-amber-100">
-                          Share with the Community?
+                          Blueprint Visibility
                         </h4>
                         <p className="mt-1 text-sm text-amber-800 dark:text-amber-200">
-                          By default, your blueprint is private. Check below to share it publicly in the marketplace.
+                          Choose who can see and use this blueprint.
                         </p>
-                        <div className="mt-3 flex items-center gap-3">
-                          <input
-                            type="checkbox"
-                            id="isPublic"
-                            checked={isPublic}
-                            onChange={(e) => setIsPublic(e.target.checked)}
-                            className="h-4 w-4 rounded border-amber-300 dark:border-amber-400"
-                          />
-                          <label htmlFor="isPublic" className="text-sm text-amber-900 dark:text-amber-100">
-                            Yes, make this blueprint public in the marketplace
+                        <div className="mt-3 space-y-2">
+                          {/* Private option */}
+                          <label className="flex items-center gap-3 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="visibility"
+                              value="PRIVATE"
+                              checked={visibility === "PRIVATE"}
+                              onChange={() => setVisibility("PRIVATE")}
+                              className="h-4 w-4 border-amber-300 dark:border-amber-400 text-amber-600"
+                            />
+                            <span className="text-sm text-amber-900 dark:text-amber-100">
+                              <Lock className="mr-1 inline h-4 w-4" />
+                              Private — Only you can see and use this
+                            </span>
+                          </label>
+                          
+                          {/* Team option - only show if user is in a team */}
+                          {teamInfo && (
+                            <label className="flex items-center gap-3 cursor-pointer">
+                              <input
+                                type="radio"
+                                name="visibility"
+                                value="TEAM"
+                                checked={visibility === "TEAM"}
+                                onChange={() => setVisibility("TEAM")}
+                                className="h-4 w-4 border-amber-300 dark:border-amber-400 text-teal-600"
+                              />
+                              <span className="text-sm text-amber-900 dark:text-amber-100">
+                                <Users className="mr-1 inline h-4 w-4" />
+                                Team — Share with {teamInfo.name}
+                              </span>
+                            </label>
+                          )}
+                          
+                          {/* Public option */}
+                          <label className="flex items-center gap-3 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="visibility"
+                              value="PUBLIC"
+                              checked={visibility === "PUBLIC"}
+                              onChange={() => setVisibility("PUBLIC")}
+                              className="h-4 w-4 border-amber-300 dark:border-amber-400 text-green-600"
+                            />
+                            <span className="text-sm text-amber-900 dark:text-amber-100">
+                              <Globe className="mr-1 inline h-4 w-4" />
+                              Public — Share in the marketplace for everyone
+                            </span>
                           </label>
                         </div>
                       </div>

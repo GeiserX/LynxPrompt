@@ -1,35 +1,13 @@
 import Link from "next/link";
 import { FileText } from "lucide-react";
-import { Logo } from "@/components/logo";
-import { UserMenu } from "@/components/user-menu";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
 
 export default function TermsPage() {
   return (
     <div className="flex min-h-screen flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Logo />
-          <nav className="flex items-center gap-4">
-            <Link href="/pricing" className="text-sm hover:underline">
-              Pricing
-            </Link>
-            <Link href="/blueprints" className="text-sm hover:underline">
-              Blueprints
-            </Link>
-            <Link href="/docs" className="text-sm hover:underline">
-              Docs
-            </Link>
-            <Link href="/blog" className="text-sm hover:underline">
-              Blog
-            </Link>
-            <ThemeToggle />
-            <UserMenu />
-          </nav>
-        </div>
-      </header>
+      <PageHeader currentPage="terms" breadcrumbLabel="Terms" />
 
       {/* Hero */}
       <section className="border-b bg-gradient-to-b from-muted/50 to-background">
@@ -89,8 +67,52 @@ export default function TermsPage() {
                   <li>LynxPrompt facilitates the transaction, handles payments, and takes a platform commission</li>
                 </ul>
                 <p className="mt-3">
-                  For subscription services (Free, Pro, Max tiers), the contract is directly between you and LynxPrompt.
+                  For subscription services (Free, Pro, Max, and Teams tiers), the contract is directly between you and LynxPrompt.
                 </p>
+              </section>
+
+              {/* 3.1 Teams Subscription */}
+              <section>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">3.1 Teams Subscription</h2>
+                <p>
+                  The Teams subscription is designed for organizations and includes the following terms:
+                </p>
+                <ul className="mt-3 list-inside list-disc space-y-1">
+                  <li><strong>Seat-based pricing:</strong> Teams is billed at €30 per seat per month, with a minimum of 3 seats</li>
+                  <li><strong>Active user billing:</strong> You are only charged for users who logged in during the billing period. Users who did not log in are not counted toward billing (minimum 3 always applies)</li>
+                  <li><strong>Team Administrator:</strong> The person who creates the team is the initial administrator and is responsible for billing</li>
+                  <li><strong>Member management:</strong> Team administrators can invite members, assign roles, and remove members at any time</li>
+                  <li><strong>Pro-rated billing:</strong> If you add seats mid-cycle, you pay a pro-rated amount for the remaining days in the billing period</li>
+                  <li><strong>Credits:</strong> Unused seats generate credits that are applied to your next billing cycle</li>
+                </ul>
+              </section>
+
+              {/* 3.2 Teams SSO */}
+              <section>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">3.2 Enterprise SSO (Teams only)</h2>
+                <p>
+                  Teams subscribers may configure Single Sign-On (SSO) authentication:
+                </p>
+                <ul className="mt-3 list-inside list-disc space-y-1">
+                  <li><strong>Supported providers:</strong> SAML 2.0, OpenID Connect, and LDAP/Active Directory</li>
+                  <li><strong>Configuration responsibility:</strong> Team administrators are responsible for correctly configuring SSO. LynxPrompt is not responsible for misconfiguration</li>
+                  <li><strong>Domain restrictions:</strong> You may restrict team membership to specific email domains</li>
+                  <li><strong>Data handling:</strong> SSO credentials are handled according to your identity provider&apos;s policies. We store only the minimum data necessary to authenticate users</li>
+                </ul>
+              </section>
+
+              {/* 3.3 Team-Shared Blueprints */}
+              <section>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">3.3 Team-Shared Blueprints</h2>
+                <p>
+                  Teams members can share blueprints within their team:
+                </p>
+                <ul className="mt-3 list-inside list-disc space-y-1">
+                  <li><strong>Visibility levels:</strong> Blueprints can be Private (author only), Team (all team members), or Public (everyone)</li>
+                  <li><strong>Ownership:</strong> Team blueprints belong to the team. If a member leaves, team-shared blueprints remain with the team</li>
+                  <li><strong>Confidentiality:</strong> Team members must not share team-internal blueprints outside the team without authorization</li>
+                  <li><strong>Team deletion:</strong> If a team is deleted, team-shared blueprints are deleted. Members should export any content they wish to keep before team deletion</li>
+                </ul>
               </section>
 
               {/* 4. Eligibility */}

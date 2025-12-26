@@ -5,8 +5,52 @@ import { prismaUsers } from "@/lib/db-users";
 import { ensureStripe } from "@/lib/stripe";
 
 /**
+ * Helper: Get user's team membership (if any)
+ */
+async function getUserTeam(userId: string) {
+  const membership = await prismaUsers.teamMember.findFirst({
+    where: { userId },
+    include: { team: { select: { id: true, name: true } } },
+  });
+  return membership;
+}
+
+/**
+ * Helper: Check if blueprint is already purchased (individually or by team)
+ */
+async function checkExistingPurchase(userId: string, templateId: string, teamId?: string | null) {
+  // Check individual purchase
+  const individualPurchase = await prismaUsers.blueprintPurchase.findUnique({
+    where: {
+      userId_templateId: { userId, templateId },
+    },
+  });
+  
+  if (individualPurchase) {
+    return { purchased: true, source: "individual" as const };
+  }
+  
+  // Check team purchase
+  if (teamId) {
+    const teamPurchase = await prismaUsers.blueprintPurchase.findFirst({
+      where: {
+        teamId,
+        templateId,
+      },
+    });
+    
+    if (teamPurchase) {
+      return { purchased: true, source: "team" as const };
+    }
+  }
+  
+  return { purchased: false, source: null };
+}
+
+/**
  * POST /api/blueprints/purchase
  * Create a Stripe Checkout session for a paid blueprint
+ * For Teams users: purchase is shared with the entire team
  */
 export async function POST(request: NextRequest) {
   try {
@@ -48,43 +92,58 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if already purchased
-    const existingPurchase = await prismaUsers.blueprintPurchase.findUnique({
-      where: {
-        userId_templateId: {
-          userId: session.user.id,
-          templateId,
-        },
-      },
-    });
+    // Check if user is part of a team
+    const teamMembership = await getUserTeam(session.user.id);
+    const teamId = teamMembership?.team?.id || null;
+    const teamName = teamMembership?.team?.name || null;
 
-    if (existingPurchase) {
+    // Check if already purchased (individually or by team)
+    const purchaseCheck = await checkExistingPurchase(session.user.id, templateId, teamId);
+    
+    if (purchaseCheck.purchased) {
       return NextResponse.json(
-        { error: "Already purchased", alreadyOwned: true },
+        { 
+          error: purchaseCheck.source === "team" 
+            ? "Your team already owns this blueprint" 
+            : "Already purchased",
+          alreadyOwned: true,
+          source: purchaseCheck.source,
+        },
         { status: 400 }
       );
     }
 
-    // Check if user is MAX subscriber for discount
+    // Check if user is MAX/Teams subscriber for discount
     const user = await prismaUsers.user.findUnique({
       where: { id: session.user.id },
       select: { subscriptionPlan: true, role: true },
     });
     
-    const isMaxUser = user?.subscriptionPlan === "MAX" || 
-                      user?.role === "ADMIN" || 
-                      user?.role === "SUPERADMIN";
+    const isMaxOrTeamsUser = user?.subscriptionPlan === "MAX" || 
+                             user?.subscriptionPlan === "TEAMS" ||
+                             user?.role === "ADMIN" || 
+                             user?.role === "SUPERADMIN";
     
-    // MAX subscribers get 10% discount (platform absorbs it, author still gets 70% of original)
+    // MAX/Teams subscribers get 10% discount (platform absorbs it, author still gets 70% of original)
     const MAX_DISCOUNT_PERCENT = 10;
     const originalPrice = template.price;
-    const discountedPrice = isMaxUser 
+    const discountedPrice = isMaxOrTeamsUser 
       ? Math.round(originalPrice * (1 - MAX_DISCOUNT_PERCENT / 100))
       : originalPrice;
 
     // Create Stripe Checkout session for one-time payment
     const stripe = ensureStripe();
     const authorName = template.user.displayName || template.user.name || "Author";
+    
+    // Description includes team info and discount
+    let description = `Blueprint by ${authorName}`;
+    if (teamName && isMaxOrTeamsUser) {
+      description = `Blueprint by ${authorName} (10% Teams discount, shared with ${teamName})`;
+    } else if (teamName) {
+      description = `Blueprint by ${authorName} (shared with ${teamName})`;
+    } else if (isMaxOrTeamsUser) {
+      description = `Blueprint by ${authorName} (10% Max subscriber discount applied)`;
+    }
 
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -95,12 +154,11 @@ export async function POST(request: NextRequest) {
             currency: template.currency.toLowerCase(),
             product_data: {
               name: template.name,
-              description: isMaxUser 
-                ? `Blueprint by ${authorName} (10% Max subscriber discount applied)`
-                : `Blueprint by ${authorName}`,
+              description,
               metadata: {
                 templateId: template.id,
                 authorId: template.userId,
+                teamId: teamId || "",
               },
             },
             unit_amount: discountedPrice, // Charge discounted price
@@ -113,9 +171,10 @@ export async function POST(request: NextRequest) {
         templateId: template.id,
         userId: session.user.id,
         authorId: template.userId,
+        teamId: teamId || "", // Include team for webhook processing
         originalPrice: originalPrice.toString(), // Store original for author share calculation
         paidPrice: discountedPrice.toString(),
-        isMaxDiscount: isMaxUser ? "true" : "false",
+        isMaxDiscount: isMaxOrTeamsUser ? "true" : "false",
         currency: template.currency,
       },
       success_url: `${process.env.NEXTAUTH_URL}/blueprints/${templateId}?purchased=true`,
@@ -134,7 +193,7 @@ export async function POST(request: NextRequest) {
 
 /**
  * GET /api/blueprints/purchase?templateId=xxx
- * Check if user has purchased a blueprint
+ * Check if user has purchased a blueprint (individually or via team)
  */
 export async function GET(request: NextRequest) {
   try {
@@ -154,18 +213,41 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const purchase = await prismaUsers.blueprintPurchase.findUnique({
-      where: {
-        userId_templateId: {
-          userId: session.user.id,
-          templateId,
-        },
-      },
-    });
+    // Check if user is part of a team
+    const teamMembership = await getUserTeam(session.user.id);
+    const teamId = teamMembership?.team?.id || null;
+
+    // Check for purchase (individual or team)
+    const purchaseCheck = await checkExistingPurchase(session.user.id, templateId, teamId);
+    
+    if (purchaseCheck.purchased) {
+      // Get purchase date
+      let purchaseDate = null;
+      if (purchaseCheck.source === "individual") {
+        const purchase = await prismaUsers.blueprintPurchase.findUnique({
+          where: { userId_templateId: { userId: session.user.id, templateId } },
+          select: { createdAt: true },
+        });
+        purchaseDate = purchase?.createdAt;
+      } else if (purchaseCheck.source === "team" && teamId) {
+        const purchase = await prismaUsers.blueprintPurchase.findFirst({
+          where: { teamId, templateId },
+          select: { createdAt: true },
+        });
+        purchaseDate = purchase?.createdAt;
+      }
+      
+      return NextResponse.json({
+        purchased: true,
+        purchaseDate,
+        source: purchaseCheck.source, // "individual" or "team"
+        teamName: purchaseCheck.source === "team" ? teamMembership?.team?.name : null,
+      });
+    }
 
     return NextResponse.json({
-      purchased: !!purchase,
-      purchaseDate: purchase?.createdAt || null,
+      purchased: false,
+      purchaseDate: null,
     });
   } catch (error) {
     console.error("Check purchase error:", error);
