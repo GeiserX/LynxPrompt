@@ -37,6 +37,10 @@ import {
   Loader2,
   Camera,
   ImageIcon,
+  Code,
+  Copy,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { Logo } from "@/components/logo";
@@ -86,6 +90,7 @@ const SECTIONS = [
   { id: "files", label: "Saved Files", icon: FileCode },
   { id: "accounts", label: "Linked Accounts", icon: Link2 },
   { id: "security", label: "Security", icon: Shield },
+  { id: "api-tokens", label: "API Tokens", icon: Code },
   { id: "billing", label: "Billing", icon: CreditCard },
 ];
 
@@ -1314,6 +1319,11 @@ function SettingsContent() {
                   </div>
                 </div>
               </div>
+            )}
+
+            {/* API Tokens Section */}
+            {activeSection === "api-tokens" && (
+              <ApiTokensSection error={error} setError={setError} success={success} setSuccess={setSuccess} />
             )}
 
             {/* Billing Section */}
@@ -2663,6 +2673,445 @@ function SavedFilesSection() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// API Tokens Section Component
+interface ApiTokensSectionProps {
+  error: string | null;
+  setError: (error: string | null) => void;
+  success: string | null;
+  setSuccess: (success: string | null) => void;
+}
+
+interface ApiToken {
+  id: string;
+  name: string;
+  lastFourChars: string;
+  role: string;
+  roleDisplay: string;
+  expiresAt: string;
+  isExpired: boolean;
+  lastUsedAt: string | null;
+  createdAt: string;
+}
+
+const ROLE_OPTIONS = [
+  { value: "BLUEPRINTS_FULL", label: "Blueprints (Full Access)", description: "Create, read, update, delete blueprints" },
+  { value: "BLUEPRINTS_READONLY", label: "Blueprints (Read Only)", description: "List and download blueprints only" },
+  { value: "PROFILE_FULL", label: "Profile (Full Access)", description: "Read and update profile information" },
+  { value: "FULL", label: "Full Access", description: "All permissions including profile and blueprints" },
+];
+
+const EXPIRATION_OPTIONS = [
+  { value: 7, label: "1 week" },
+  { value: 30, label: "1 month" },
+  { value: 90, label: "3 months" },
+  { value: 180, label: "6 months" },
+  { value: 365, label: "1 year" },
+];
+
+function ApiTokensSection({ setError, setSuccess }: ApiTokensSectionProps) {
+  const [tokens, setTokens] = useState<ApiToken[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [revoking, setRevoking] = useState<string | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newTokenName, setNewTokenName] = useState("");
+  const [newTokenRole, setNewTokenRole] = useState("BLUEPRINTS_FULL");
+  const [newTokenExpiration, setNewTokenExpiration] = useState(7);
+  const [createdToken, setCreatedToken] = useState<string | null>(null);
+  const [showToken, setShowToken] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [subscriptionPlan, setSubscriptionPlan] = useState<string>("FREE");
+
+  useEffect(() => {
+    fetchTokens();
+    fetchSubscription();
+  }, []);
+
+  const fetchSubscription = async () => {
+    try {
+      const res = await fetch("/api/billing/status");
+      if (res.ok) {
+        const data = await res.json();
+        setSubscriptionPlan(data.plan || "FREE");
+      }
+    } catch {
+      // Ignore errors
+    }
+  };
+
+  const fetchTokens = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/user/api-tokens");
+      if (res.ok) {
+        const data = await res.json();
+        setTokens(data.tokens || []);
+      } else if (res.status === 403) {
+        // User doesn't have access - that's fine, show upgrade message
+        setTokens([]);
+      } else {
+        setError("Failed to fetch API tokens");
+      }
+    } catch {
+      setError("Failed to fetch API tokens");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreate = async () => {
+    if (!newTokenName.trim()) {
+      setError("Token name is required");
+      return;
+    }
+
+    setCreating(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/user/api-tokens", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newTokenName.trim(),
+          role: newTokenRole,
+          expirationDays: newTokenExpiration,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Failed to create token");
+        return;
+      }
+
+      setCreatedToken(data.token);
+      setShowToken(true);
+      setSuccess("Token created successfully! Copy it now - it won't be shown again.");
+      setNewTokenName("");
+      setShowCreateForm(false);
+      fetchTokens();
+    } catch {
+      setError("Failed to create token");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleRevoke = async (id: string) => {
+    setRevoking(id);
+    setError(null);
+
+    try {
+      const res = await fetch(`/api/user/api-tokens/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || "Failed to revoke token");
+        return;
+      }
+
+      setSuccess("Token revoked successfully");
+      fetchTokens();
+    } catch {
+      setError("Failed to revoke token");
+    } finally {
+      setRevoking(null);
+    }
+  };
+
+  const copyToken = () => {
+    if (createdToken) {
+      navigator.clipboard.writeText(createdToken);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const canUseApi = ["PRO", "MAX", "TEAMS"].includes(subscriptionPlan);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">API Tokens</h1>
+        <p className="text-muted-foreground">
+          Manage API tokens for programmatic access to your blueprints
+        </p>
+      </div>
+
+      {!canUseApi ? (
+        <div className="rounded-xl border bg-card p-6">
+          <div className="flex items-start gap-4">
+            <div className="rounded-lg bg-amber-500/10 p-2">
+              <Crown className="h-6 w-6 text-amber-500" />
+            </div>
+            <div>
+              <h2 className="font-semibold">API Access Requires Pro or Higher</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                API tokens allow you to programmatically manage your blueprints via the command line or CI/CD pipelines.
+                Upgrade to Pro, Max, or Teams to unlock API access.
+              </p>
+              <Link href="/pricing">
+                <Button className="mt-4" size="sm">
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  View Plans
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Created Token Display */}
+          {createdToken && (
+            <div className="rounded-xl border border-green-500/50 bg-green-500/10 p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-green-700 dark:text-green-400">
+                    Token Created Successfully!
+                  </h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Copy this token now. For security, it won&apos;t be shown again.
+                  </p>
+                  <div className="mt-3 flex items-center gap-2">
+                    <code className="flex-1 rounded-lg bg-background px-3 py-2 font-mono text-sm">
+                      {showToken ? createdToken : "•".repeat(40)}
+                    </code>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={() => setShowToken(!showToken)}
+                    >
+                      {showToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant={copied ? "default" : "outline"}
+                      onClick={copyToken}
+                    >
+                      {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setCreatedToken(null)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Tokens List */}
+          <div className="rounded-xl border bg-card p-6">
+            <div className="mb-6 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Key className="h-5 w-5 text-primary" />
+                <div>
+                  <h2 className="font-semibold">Your API Tokens</h2>
+                  <p className="text-sm text-muted-foreground">
+                    {tokens.length} active token{tokens.length !== 1 ? "s" : ""}
+                  </p>
+                </div>
+              </div>
+              <Button onClick={() => setShowCreateForm(true)} size="sm">
+                <Plus className="mr-2 h-4 w-4" />
+                New Token
+              </Button>
+            </div>
+
+            {/* Create Form */}
+            {showCreateForm && (
+              <div className="mb-6 rounded-lg border bg-muted/30 p-4">
+                <h3 className="mb-4 font-medium">Create New Token</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">Token Name</label>
+                    <input
+                      type="text"
+                      value={newTokenName}
+                      onChange={(e) => setNewTokenName(e.target.value)}
+                      placeholder="e.g., CLI Tool, CI/CD Pipeline"
+                      className="w-full rounded-lg border bg-background px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">Permissions</label>
+                    <select
+                      value={newTokenRole}
+                      onChange={(e) => setNewTokenRole(e.target.value)}
+                      className="w-full rounded-lg border bg-background px-3 py-2 text-sm"
+                    >
+                      {ROLE_OPTIONS.map((role) => (
+                        <option key={role.value} value={role.value}>
+                          {role.label}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {ROLE_OPTIONS.find(r => r.value === newTokenRole)?.description}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">Expiration</label>
+                    <select
+                      value={newTokenExpiration}
+                      onChange={(e) => setNewTokenExpiration(Number(e.target.value))}
+                      className="w-full rounded-lg border bg-background px-3 py-2 text-sm"
+                    >
+                      {EXPIRATION_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleCreate}
+                      disabled={creating || !newTokenName.trim()}
+                    >
+                      {creating ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Plus className="mr-2 h-4 w-4" />
+                      )}
+                      Create Token
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setShowCreateForm(false);
+                        setNewTokenName("");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Tokens List */}
+            {tokens.length === 0 ? (
+              <div className="py-8 text-center text-muted-foreground">
+                <Code className="mx-auto mb-2 h-8 w-8 opacity-50" />
+                <p>No API tokens yet</p>
+                <p className="text-sm">Create a token to access your blueprints via API</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {tokens.map((token) => (
+                  <div
+                    key={token.id}
+                    className={`flex items-center justify-between rounded-lg border p-4 ${
+                      token.isExpired ? "border-red-500/30 bg-red-500/5" : "bg-muted/30"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Key className={`h-5 w-5 ${token.isExpired ? "text-red-500" : "text-muted-foreground"}`} />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{token.name}</span>
+                          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
+                            ...{token.lastFourChars}
+                          </code>
+                          {token.isExpired && (
+                            <span className="rounded bg-red-500/10 px-1.5 py-0.5 text-xs text-red-500">
+                              Expired
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          <span>{token.roleDisplay}</span>
+                          <span>•</span>
+                          <span>
+                            {token.isExpired ? "Expired" : "Expires"}{" "}
+                            {new Date(token.expiresAt).toLocaleDateString()}
+                          </span>
+                          {token.lastUsedAt && (
+                            <>
+                              <span>•</span>
+                              <span>Last used {new Date(token.lastUsedAt).toLocaleDateString()}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleRevoke(token.id)}
+                      disabled={revoking === token.id}
+                    >
+                      {revoking === token.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Trash2 className="mr-2 h-3 w-3" />
+                          Revoke
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* API Documentation */}
+          <div className="rounded-xl border bg-card p-6">
+            <h2 className="mb-4 font-semibold">API Usage</h2>
+            <div className="space-y-4 text-sm">
+              <div>
+                <h3 className="font-medium">Authentication</h3>
+                <p className="text-muted-foreground">
+                  Include your token in the Authorization header:
+                </p>
+                <code className="mt-2 block rounded-lg bg-muted px-3 py-2 font-mono text-xs">
+                  Authorization: Bearer lp_your_token_here
+                </code>
+              </div>
+              <div>
+                <h3 className="font-medium">List Blueprints</h3>
+                <code className="mt-2 block rounded-lg bg-muted px-3 py-2 font-mono text-xs">
+                  curl -H &quot;Authorization: Bearer $TOKEN&quot; https://lynxprompt.com/api/v1/blueprints
+                </code>
+              </div>
+              <div>
+                <h3 className="font-medium">Update Blueprint</h3>
+                <code className="mt-2 block rounded-lg bg-muted px-3 py-2 font-mono text-xs overflow-x-auto">
+                  curl -X PUT -H &quot;Authorization: Bearer $TOKEN&quot; -H &quot;Content-Type: application/json&quot; \<br />
+                  &nbsp;&nbsp;-d &apos;{`{"content": "your updated content"}`}&apos; \<br />
+                  &nbsp;&nbsp;https://lynxprompt.com/api/v1/blueprints/bp_your_blueprint_id
+                </code>
+              </div>
+              <p className="text-muted-foreground">
+                <Link href="/docs/api" className="text-primary hover:underline">
+                  View full API documentation →
+                </Link>
+              </p>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

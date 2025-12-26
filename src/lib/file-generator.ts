@@ -1985,10 +1985,64 @@ export interface GeneratedFile {
   platform?: string;
 }
 
+// Generate API sync header for files with auto-update enabled
+function generateApiSyncHeader(blueprintId: string, platform: string): string {
+  const lines: string[] = [];
+  
+  // Add comment style based on platform
+  const isJsonPlatform = ["continue", "cody", "supermaven", "codegpt", "void"].includes(platform);
+  const isYamlPlatform = ["aider", "tabnine"].includes(platform);
+  
+  if (isJsonPlatform) {
+    // JSON files - add as a _sync property at the top level
+    return ""; // JSON platforms will handle this differently
+  } else if (isYamlPlatform) {
+    lines.push("# ══════════════════════════════════════════════════════════════════");
+    lines.push("# LynxPrompt API Sync");
+    lines.push(`# Blueprint ID: ${blueprintId}`);
+    lines.push("#");
+    lines.push("# To update this file on LynxPrompt, run:");
+    lines.push(`# curl -X PUT https://lynxprompt.com/api/v1/blueprints/${blueprintId} \\`);
+    lines.push('#      -H "Authorization: Bearer $LYNXPROMPT_API_TOKEN" \\');
+    lines.push('#      -H "Content-Type: application/json" \\');
+    lines.push(`#      -d '{"content": "'"$(cat ${getFileName(platform)})"'"}'`);
+    lines.push("# ══════════════════════════════════════════════════════════════════");
+    lines.push("");
+  } else {
+    // Markdown-based platforms (cursor, claude, copilot, windsurf, universal)
+    lines.push("<!--");
+    lines.push("══════════════════════════════════════════════════════════════════");
+    lines.push("LynxPrompt API Sync");
+    lines.push(`Blueprint ID: ${blueprintId}`);
+    lines.push("");
+    lines.push("To update this file on LynxPrompt, run:");
+    lines.push(`curl -X PUT https://lynxprompt.com/api/v1/blueprints/${blueprintId} \\`);
+    lines.push('     -H "Authorization: Bearer $LYNXPROMPT_API_TOKEN" \\');
+    lines.push('     -H "Content-Type: application/json" \\');
+    lines.push(`     -d '{"content": "'"$(cat ${getFileName(platform)} | jq -Rs .)"'"}'`);
+    lines.push("══════════════════════════════════════════════════════════════════");
+    lines.push("-->");
+    lines.push("");
+  }
+  
+  return lines.join("\n");
+}
+
+// Helper to get file name for a platform
+function getFileName(platform: string): string {
+  return PLATFORM_FILES[platform] || "ai-config.md";
+}
+
+// Options for file generation
+export interface GenerateFilesOptions {
+  blueprintId?: string; // If provided, adds API sync header to the file
+}
+
 // Generate all files as an array (for preview) - now returns single AI config file with embedded static files
 export function generateAllFiles(
   config: WizardConfig,
-  user: UserProfile
+  user: UserProfile,
+  options?: GenerateFilesOptions
 ): GeneratedFile[] {
   const files: GeneratedFile[] = [];
 
@@ -2035,6 +2089,14 @@ export function generateAllFiles(
     case "void":
       content = generateVoidConfig(config, user);
       break;
+  }
+
+  // Add API sync header if blueprintId is provided and enableAutoUpdate is true
+  if (content && options?.blueprintId && config.enableAutoUpdate) {
+    const syncHeader = generateApiSyncHeader(options.blueprintId, platform);
+    if (syncHeader) {
+      content = syncHeader + content;
+    }
   }
 
   if (content) {

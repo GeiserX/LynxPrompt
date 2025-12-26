@@ -11,6 +11,7 @@ import {
   Sparkles,
   Laptop,
   HelpCircle,
+  Key,
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
@@ -25,6 +26,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Sparkles,
   Laptop,
   HelpCircle,
+  Key,
 };
 
 interface DocsSidebarProps {
