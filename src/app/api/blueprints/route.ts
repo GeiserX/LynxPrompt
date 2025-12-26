@@ -458,7 +458,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create the blueprint
+    // Create the blueprint with version 1
     const blueprint = await prismaUsers.userTemplate.create({
       data: {
         userId: session.user.id,
@@ -478,6 +478,21 @@ export async function POST(request: NextRequest) {
         price: validatedPrice,
         currency: currency || "EUR",
         showcaseUrl: validatedShowcaseUrl,
+        currentVersion: 1,
+        publishedVersion: effectiveIsPublic ? 1 : null, // Set publishedVersion if public
+      },
+    });
+
+    // Create the initial version record
+    await prismaUsers.userTemplateVersion.create({
+      data: {
+        templateId: blueprint.id,
+        version: 1,
+        content: content.trim(),
+        variables: null,
+        changelog: "Initial version",
+        isPublished: effectiveIsPublic,
+        createdBy: session.user.id,
       },
     });
 
@@ -488,6 +503,7 @@ export async function POST(request: NextRequest) {
         name: blueprint.name,
         tier: blueprint.tier,
         category: blueprint.category,
+        version: 1,
       },
     });
   } catch (error) {

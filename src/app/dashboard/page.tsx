@@ -31,6 +31,7 @@ import {
   Building2,
   Save,
   Trash2,
+  GitBranch,
 } from "lucide-react";
 import { Footer } from "@/components/footer";
 import { PageHeader } from "@/components/page-header";
@@ -55,6 +56,8 @@ interface MyTemplate {
   isPublic: boolean;
   visibility: "PRIVATE" | "TEAM" | "PUBLIC";
   createdAt: string;
+  version?: number;
+  publishedVersion?: number | null;
 }
 
 interface RecentActivity {
@@ -101,6 +104,8 @@ interface PurchasedBlueprint {
   price: number;
   author: string;
   purchasedAt: string;
+  purchasedVersion?: number;
+  currentVersion?: number;
 }
 
 interface TeamBlueprint {
@@ -841,7 +846,15 @@ export default function DashboardPage() {
                             <FileText className="h-5 w-5" />
                           </div>
                           <div>
-                            <h4 className="font-medium">{template.name}</h4>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-medium">{template.name}</h4>
+                              {template.version && template.version > 0 && (
+                                <span className="flex items-center gap-0.5 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                                  <GitBranch className="h-3 w-3" />
+                                  v{template.version}
+                                </span>
+                              )}
+                            </div>
                             <div className="flex items-center gap-3 text-sm text-muted-foreground">
                               <span className="flex items-center gap-1">
                                 <Download className="h-3 w-3" />
@@ -989,37 +1002,50 @@ export default function DashboardPage() {
                     </Button>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    {dashboardData.purchasedBlueprints.map((blueprint) => (
-                      <Link
-                        key={blueprint.id}
-                        href={`/blueprints/${blueprint.id}`}
-                        className="group rounded-lg border bg-card p-4 transition-colors hover:border-primary"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="min-w-0 flex-1">
-                            <h4 className="truncate font-medium group-hover:text-primary">
-                              {blueprint.name}
-                            </h4>
-                            <p className="mt-0.5 text-xs text-muted-foreground">
-                              by {blueprint.author}
-                            </p>
+                    {dashboardData.purchasedBlueprints.map((blueprint) => {
+                      const hasUpdate = blueprint.currentVersion && blueprint.purchasedVersion && 
+                                        blueprint.currentVersion > blueprint.purchasedVersion;
+                      return (
+                        <Link
+                          key={blueprint.id}
+                          href={`/blueprints/${blueprint.id}`}
+                          className={`group rounded-lg border bg-card p-4 transition-colors hover:border-primary ${
+                            hasUpdate ? "border-blue-500/50" : ""
+                          }`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                <h4 className="truncate font-medium group-hover:text-primary">
+                                  {blueprint.name}
+                                </h4>
+                                {hasUpdate && (
+                                  <span className="shrink-0 rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-600 dark:text-blue-400">
+                                    Update v{blueprint.currentVersion}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="mt-0.5 text-xs text-muted-foreground">
+                                by {blueprint.author}
+                              </p>
+                            </div>
+                            <span className="ml-2 rounded bg-gradient-to-r from-purple-500/10 to-pink-500/10 px-1.5 py-0.5 text-xs font-medium text-purple-600 dark:text-purple-400">
+                              €{(blueprint.price / 100).toFixed(2)}
+                            </span>
                           </div>
-                          <span className="ml-2 rounded bg-gradient-to-r from-purple-500/10 to-pink-500/10 px-1.5 py-0.5 text-xs font-medium text-purple-600 dark:text-purple-400">
-                            €{(blueprint.price / 100).toFixed(2)}
-                          </span>
-                        </div>
-                        <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <ShoppingBag className="h-3 w-3" />
-                            Purchased
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Download className="h-3 w-3" />
-                            {blueprint.downloads}
-                          </span>
-                        </div>
-                      </Link>
-                    ))}
+                          <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <ShoppingBag className="h-3 w-3" />
+                              v{blueprint.purchasedVersion || 1}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Download className="h-3 w-3" />
+                              {blueprint.downloads}
+                            </span>
+                          </div>
+                        </Link>
+                      );
+                    })}
                   </div>
                 </div>
               )}

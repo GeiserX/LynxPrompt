@@ -378,7 +378,11 @@ async function handleBlueprintPurchase(session: Stripe.Checkout.Session) {
   // For platform owner blueprints, all revenue stays with platform (no payout needed)
   const template = await prismaUsers.userTemplate.findUnique({
     where: { id: templateId },
-    select: { user: { select: { email: true } } },
+    select: { 
+      user: { select: { email: true } },
+      currentVersion: true,
+      publishedVersion: true,
+    },
   });
   
   const isPlatformOwnerTemplate = template?.user?.email === PLATFORM_OWNER_EMAIL;
@@ -388,6 +392,20 @@ async function handleBlueprintPurchase(session: Stripe.Checkout.Session) {
   const authorShare = isPlatformOwnerTemplate ? 0 : Math.floor(originalPriceInCents * 0.7);
   // Platform fee is what's left from what was paid
   const platformFee = paidPriceInCents - authorShare;
+
+  // Get current version info for the purchase record
+  const purchaseVersion = template?.publishedVersion || template?.currentVersion || 1;
+  
+  // Find the version record ID for linking
+  const versionRecord = await prismaUsers.userTemplateVersion.findUnique({
+    where: {
+      templateId_version: {
+        templateId,
+        version: purchaseVersion,
+      },
+    },
+    select: { id: true },
+  });
 
   try {
     // Create purchase record - if teamId is present, this is a team purchase
@@ -400,6 +418,8 @@ async function handleBlueprintPurchase(session: Stripe.Checkout.Session) {
       authorShare: number;
       platformFee: number;
       teamId?: string;
+      versionId?: string;
+      versionNumber?: number;
     } = {
       userId,
       templateId,
@@ -408,6 +428,8 @@ async function handleBlueprintPurchase(session: Stripe.Checkout.Session) {
       stripePaymentId: session.payment_intent as string,
       authorShare, // 70% of original price
       platformFee, // Remaining (20% if discounted, 30% if not)
+      versionId: versionRecord?.id || undefined,
+      versionNumber: purchaseVersion,
     };
     
     // If purchased by a team member, add teamId (makes it available to entire team)

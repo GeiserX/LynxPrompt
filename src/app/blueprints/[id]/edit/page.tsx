@@ -19,6 +19,8 @@ import {
   ExternalLink,
   Sparkles,
   FileText,
+  GitBranch,
+  Upload,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Footer } from "@/components/footer";
@@ -79,6 +81,12 @@ export default function EditBlueprintPage() {
   const [userPlan, setUserPlan] = useState<string>("FREE");
   const [loadingPlan, setLoadingPlan] = useState(true);
   
+  // Versioning state
+  const [currentVersion, setCurrentVersion] = useState(1);
+  const [originalContent, setOriginalContent] = useState("");
+  const [publishNewVersion, setPublishNewVersion] = useState(false);
+  const [changelog, setChangelog] = useState("");
+  
   // Server-side sensitive data detection
   const [serverSensitiveData, setServerSensitiveData] = useState<SensitiveMatch[] | null>(null);
   const [showServerSensitiveModal, setShowServerSensitiveModal] = useState(false);
@@ -103,6 +111,7 @@ export default function EditBlueprintPage() {
         setName(data.name || "");
         setDescription(data.description || "");
         setContent(data.content || "");
+        setOriginalContent(data.content || ""); // Store original for comparison
         setType(data.targetPlatform?.toUpperCase() || "CURSOR_RULES");
         setCategory(data.category || "other");
         setTags(data.tags || []);
@@ -110,6 +119,7 @@ export default function EditBlueprintPage() {
         setIsPaid(data.price && data.price > 0);
         setPrice(data.price ? Math.round(data.price / 100) : 5);
         setShowcaseUrl(data.showcaseUrl || "");
+        setCurrentVersion(data.currentVersion || 1);
       } catch {
         router.push("/dashboard");
       } finally {
@@ -187,6 +197,9 @@ export default function EditBlueprintPage() {
     }
   };
 
+  // Check if content has changed
+  const contentHasChanged = content.trim() !== originalContent.trim();
+
   const submitBlueprint = async (acknowledgedSensitiveData: boolean = false) => {
     setError(null);
     setIsSubmitting(true);
@@ -207,6 +220,8 @@ export default function EditBlueprintPage() {
           currency: "EUR",
           showcaseUrl: showcaseUrl.trim() || null,
           sensitiveDataAcknowledged: acknowledgedSensitiveData,
+          publishNewVersion: publishNewVersion && contentHasChanged,
+          changelog: changelog.trim() || null,
         }),
       });
 
@@ -701,6 +716,64 @@ export default function EditBlueprintPage() {
                     )}
                   </div>
 
+                  {/* Version Publishing Section */}
+                  <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-500/50 dark:bg-blue-900/30">
+                    <div className="flex items-start gap-3">
+                      <GitBranch className="h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-300 mt-0.5" />
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-medium text-blue-900 dark:text-blue-100">
+                            Version Control
+                          </h4>
+                          <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-800 dark:bg-blue-800/50 dark:text-blue-200">
+                            Current: v{currentVersion}
+                          </span>
+                        </div>
+                        
+                        {contentHasChanged ? (
+                          <>
+                            <p className="mt-1 text-sm text-blue-800 dark:text-blue-200">
+                              Content has changed. Would you like to publish this as a new version?
+                            </p>
+                            <div className="mt-3 flex items-center gap-3">
+                              <input
+                                type="checkbox"
+                                id="publishNewVersion"
+                                checked={publishNewVersion}
+                                onChange={(e) => setPublishNewVersion(e.target.checked)}
+                                className="h-4 w-4 rounded border-blue-300 dark:border-blue-400"
+                              />
+                              <label htmlFor="publishNewVersion" className="text-sm text-blue-900 dark:text-blue-100">
+                                Publish as v{currentVersion + 1}
+                              </label>
+                            </div>
+                            
+                            {publishNewVersion && (
+                              <div className="mt-3">
+                                <label htmlFor="changelog" className="block text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
+                                  Changelog (optional)
+                                </label>
+                                <textarea
+                                  id="changelog"
+                                  value={changelog}
+                                  onChange={(e) => setChangelog(e.target.value)}
+                                  placeholder="Describe what changed in this version..."
+                                  className="w-full rounded-lg border border-blue-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-blue-600 dark:bg-blue-900/30 dark:text-blue-100"
+                                  rows={2}
+                                  maxLength={500}
+                                />
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <p className="mt-1 text-sm text-blue-800/70 dark:text-blue-200/70">
+                            No content changes detected. Saving will update metadata only.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Visibility - Sharing Section */}
                   <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/50 dark:bg-amber-900/30">
                     <div className="flex items-start gap-3">
@@ -858,11 +931,17 @@ export default function EditBlueprintPage() {
                   <Button
                     type="submit"
                     disabled={isSubmitting || !name.trim() || !content.trim()}
+                    className={publishNewVersion && contentHasChanged ? "bg-blue-600 hover:bg-blue-700" : ""}
                   >
                     {isSubmitting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Saving...
+                        {publishNewVersion && contentHasChanged ? "Publishing..." : "Saving..."}
+                      </>
+                    ) : publishNewVersion && contentHasChanged ? (
+                      <>
+                        <Upload className="mr-2 h-4 w-4" />
+                        Publish v{currentVersion + 1}
                       </>
                     ) : (
                       <>

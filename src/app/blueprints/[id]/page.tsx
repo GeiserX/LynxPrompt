@@ -22,6 +22,10 @@ import {
   Files,
   Loader2,
   Trash2,
+  GitBranch,
+  History,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
@@ -89,6 +93,16 @@ interface TemplateData {
   hasPurchased?: boolean;
   isOwner?: boolean;
   showcaseUrl?: string | null;
+  currentVersion?: number;
+  publishedVersion?: number | null;
+}
+
+interface VersionInfo {
+  id: string;
+  version: number;
+  changelog: string | null;
+  isPublished: boolean;
+  createdAt: string;
 }
 
 export default function BlueprintDetailPage() {
@@ -177,6 +191,29 @@ export default function BlueprintDetailPage() {
   const [cloning, setCloning] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [versionHistory, setVersionHistory] = useState<VersionInfo[]>([]);
+  const [versionLoading, setVersionLoading] = useState(false);
+
+  // Fetch version history when expanded
+  useEffect(() => {
+    const fetchVersionHistory = async () => {
+      if (!showVersionHistory || !params.id) return;
+      setVersionLoading(true);
+      try {
+        const res = await fetch(`/api/blueprints/${params.id}/versions`);
+        if (res.ok) {
+          const data = await res.json();
+          setVersionHistory(data.versions || []);
+        }
+      } catch {
+        // Ignore errors
+      } finally {
+        setVersionLoading(false);
+      }
+    };
+    fetchVersionHistory();
+  }, [showVersionHistory, params.id]);
 
   const handleCloneToEdit = async () => {
     if (!session?.user) {
@@ -380,6 +417,13 @@ export default function BlueprintDetailPage() {
                         {tierLabels[blueprint.tier]}
                       </span>
                     )}
+                    {/* Version badge */}
+                    {blueprint.currentVersion && blueprint.currentVersion > 0 && (
+                      <span className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-sm font-medium text-muted-foreground">
+                        <GitBranch className="h-3.5 w-3.5" />
+                        v{blueprint.currentVersion}
+                      </span>
+                    )}
                     {/* Price badge */}
                     {blueprint.isPaid && (
                       <span className="rounded-full bg-gradient-to-r from-purple-500 to-pink-500 px-3 py-1 text-sm font-semibold text-white">
@@ -416,21 +460,28 @@ export default function BlueprintDetailPage() {
                 </div>
                 {/* Action buttons - different for paid/unpurchased */}
                 {blueprint.isPaid && !blueprint.hasPurchased ? (
-                  <Button
-                    size="lg"
-                    onClick={handlePurchase}
-                    disabled={purchasing}
-                    className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                  >
-                    {purchasing ? (
-                      <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    ) : (
-                      <ShoppingCart className="mr-2 h-5 w-5" />
+                  <div className="flex flex-col items-end gap-2">
+                    <Button
+                      size="lg"
+                      onClick={handlePurchase}
+                      disabled={purchasing}
+                      className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                    >
+                      {purchasing ? (
+                        <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      ) : (
+                        <ShoppingCart className="mr-2 h-5 w-5" />
+                      )}
+                      {purchasing ? "Processing..." : blueprint.discountedPrice && blueprint.discountedPrice < (blueprint.price || 0)
+                        ? `Purchase for €${(blueprint.discountedPrice / 100).toFixed(2)} (was €${((blueprint.price || 0) / 100).toFixed(2)})`
+                        : `Purchase for €${((blueprint.price || 0) / 100).toFixed(2)}`}
+                    </Button>
+                    {blueprint.currentVersion && blueprint.currentVersion > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        Purchasing version {blueprint.publishedVersion || blueprint.currentVersion}
+                      </span>
                     )}
-                    {purchasing ? "Processing..." : blueprint.discountedPrice && blueprint.discountedPrice < (blueprint.price || 0)
-                      ? `Purchase for €${(blueprint.discountedPrice / 100).toFixed(2)} (was €${((blueprint.price || 0) / 100).toFixed(2)})`
-                      : `Purchase for €${((blueprint.price || 0) / 100).toFixed(2)}`}
-                  </Button>
+                  </div>
                 ) : (
                   <div className="flex flex-wrap gap-2">
                     {blueprint.isOwner ? (
@@ -533,6 +584,87 @@ export default function BlueprintDetailPage() {
                     downloading.
                   </span>
                 </p>
+              </div>
+            )}
+
+            {/* Version History - Collapsible */}
+            {blueprint.currentVersion && blueprint.currentVersion > 0 && (
+              <div className="mb-8">
+                <button
+                  onClick={() => setShowVersionHistory(!showVersionHistory)}
+                  className="flex w-full items-center justify-between rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-muted p-2">
+                      <History className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="font-semibold">Version History</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Current: v{blueprint.currentVersion}
+                        {blueprint.publishedVersion && blueprint.publishedVersion !== blueprint.currentVersion && (
+                          <span className="ml-2">(Published: v{blueprint.publishedVersion})</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  {showVersionHistory ? (
+                    <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                  )}
+                </button>
+                
+                {showVersionHistory && (
+                  <div className="mt-2 rounded-lg border bg-card p-4">
+                    {versionLoading ? (
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                      </div>
+                    ) : versionHistory.length === 0 ? (
+                      <p className="py-4 text-center text-sm text-muted-foreground">
+                        No version history available
+                      </p>
+                    ) : (
+                      <div className="space-y-3">
+                        {versionHistory.map((version) => (
+                          <div
+                            key={version.id}
+                            className={`rounded-lg border p-3 ${
+                              version.version === blueprint.currentVersion
+                                ? "border-primary bg-primary/5"
+                                : "bg-muted/30"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold">v{version.version}</span>
+                                {version.version === blueprint.currentVersion && (
+                                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                                    Current
+                                  </span>
+                                )}
+                                {version.isPublished && (
+                                  <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600">
+                                    Published
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(version.createdAt).toLocaleDateString()}
+                              </span>
+                            </div>
+                            {version.changelog && (
+                              <p className="mt-2 text-sm text-muted-foreground">
+                                {version.changelog}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
