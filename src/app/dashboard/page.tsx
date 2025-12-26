@@ -664,120 +664,126 @@ export default function DashboardPage() {
 
             {/* Right Column: Activity Feed + Getting Started */}
             <div className="space-y-8">
-              {/* Saved Preferences & Static Files */}
-              <div className="rounded-lg border bg-card overflow-hidden">
-                <button
-                  onClick={() => setShowPreferences(!showPreferences)}
-                  className="flex w-full items-center justify-between p-4 transition-colors hover:bg-muted/50"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-muted p-2">
-                      <FolderCog className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    <div className="text-left">
-                      <h2 className="text-sm font-semibold">Wizard Preferences</h2>
-                      <p className="text-xs text-muted-foreground">
-                        {preferencesLoading 
-                          ? "Loading..."
-                          : Object.keys(preferences).length > 0 
-                            ? `${Object.values(preferences).reduce((acc, cat) => acc + Object.keys(cat).length, 0)} saved items`
-                            : "No saved preferences"
-                        }
-                      </p>
-                    </div>
-                  </div>
-                  {showPreferences ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-                </button>
-
-                {showPreferences && (
-                  <div className="border-t max-h-80 overflow-y-auto">
-                    {preferencesLoading ? (
-                      <div className="space-y-3 p-4">
-                        {[1, 2].map((i) => (
-                          <div key={i} className="h-16 animate-pulse rounded-lg bg-muted" />
-                        ))}
-                      </div>
-                    ) : (
-                      <PreferencesPanel 
-                        preferences={preferences}
-                        onUpdate={handleUpdatePreference}
-                        onDelete={handleDeletePreference}
-                      />
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Saved Variables */}
-              <div className="rounded-lg border bg-card overflow-hidden">
-                <button
-                  onClick={() => setShowVariables(!showVariables)}
-                  className="flex w-full items-center justify-between p-4 transition-colors hover:bg-muted/50"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-muted p-2">
-                      <Variable className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    <div className="text-left">
-                      <h2 className="text-sm font-semibold">Saved Variables</h2>
-                      <p className="text-xs text-muted-foreground">
-                        {variablesLoading 
-                          ? "Loading..."
-                          : Object.keys(variables).length > 0 
-                            ? `${Object.keys(variables).length} saved variable${Object.keys(variables).length !== 1 ? 's' : ''}`
-                            : "No saved variables"
-                        }
-                      </p>
-                    </div>
-                  </div>
-                  {showVariables ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-                </button>
-
-                {showVariables && (
-                  <div className="border-t max-h-80 overflow-y-auto">
-                    {variablesLoading ? (
-                      <div className="space-y-3 p-4">
-                        {[1, 2].map((i) => (
-                          <div key={i} className="h-12 animate-pulse rounded-lg bg-muted" />
-                        ))}
-                      </div>
-                    ) : Object.keys(variables).length === 0 ? (
-                      <div className="p-6 text-center">
-                        <Variable className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
-                        <h3 className="font-medium">No saved variables yet</h3>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          When you download blueprints, save your variable values for quick reuse
-                        </p>
-                        <Button asChild className="mt-4" size="sm" variant="outline">
-                          <Link href="/settings?tab=variables">Manage Variables</Link>
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="divide-y">
-                        {Object.entries(variables).slice(0, 10).map(([key, value]) => (
-                          <div key={key} className="p-3">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="min-w-0 flex-1">
-                                <code className="text-sm font-medium text-primary">[[{key}]]</code>
-                                <p className="mt-0.5 text-sm text-muted-foreground truncate">{value}</p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                        {Object.keys(variables).length > 10 && (
-                          <div className="p-3 text-center text-xs text-muted-foreground bg-muted/30">
-                            +{Object.keys(variables).length - 10} more
-                          </div>
-                        )}
-                        <div className="p-3 bg-muted/30">
-                          <Button asChild className="w-full" size="sm" variant="outline">
-                            <Link href="/settings?tab=variables">Manage All Variables</Link>
-                          </Button>
+              {/* Wizard Settings Section */}
+              <div>
+                <h2 className="mb-4 text-lg font-semibold">Wizard Settings</h2>
+                <div className="space-y-3">
+                  {/* Saved Preferences & Static Files */}
+                  <div className="rounded-lg border bg-card overflow-hidden">
+                    <button
+                      onClick={() => setShowPreferences(!showPreferences)}
+                      className="flex w-full items-center justify-between p-4 transition-colors hover:bg-muted/50"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="rounded-lg bg-muted p-2">
+                          <FolderCog className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                        <div className="text-left">
+                          <h3 className="text-sm font-semibold">Wizard Preferences</h3>
+                          <p className="text-xs text-muted-foreground">
+                            {preferencesLoading 
+                              ? "Loading..."
+                              : Object.keys(preferences).length > 0 
+                                ? `${Object.values(preferences).reduce((acc, cat) => acc + Object.keys(cat).length, 0)} saved items`
+                                : "No saved preferences"
+                            }
+                          </p>
                         </div>
                       </div>
+                      {showPreferences ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                    </button>
+
+                    {showPreferences && (
+                      <div className="border-t max-h-80 overflow-y-auto">
+                        {preferencesLoading ? (
+                          <div className="space-y-3 p-4">
+                            {[1, 2].map((i) => (
+                              <div key={i} className="h-16 animate-pulse rounded-lg bg-muted" />
+                            ))}
+                          </div>
+                        ) : (
+                          <PreferencesPanel 
+                            preferences={preferences}
+                            onUpdate={handleUpdatePreference}
+                            onDelete={handleDeletePreference}
+                          />
+                        )}
+                      </div>
                     )}
                   </div>
-                )}
+
+                  {/* Saved Variables */}
+                  <div className="rounded-lg border bg-card overflow-hidden">
+                    <button
+                      onClick={() => setShowVariables(!showVariables)}
+                      className="flex w-full items-center justify-between p-4 transition-colors hover:bg-muted/50"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="rounded-lg bg-muted p-2">
+                          <Variable className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                        <div className="text-left">
+                          <h3 className="text-sm font-semibold">Saved Variables</h3>
+                          <p className="text-xs text-muted-foreground">
+                            {variablesLoading 
+                              ? "Loading..."
+                              : Object.keys(variables).length > 0 
+                                ? `${Object.keys(variables).length} saved variable${Object.keys(variables).length !== 1 ? 's' : ''}`
+                                : "No saved variables"
+                            }
+                          </p>
+                        </div>
+                      </div>
+                      {showVariables ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                    </button>
+
+                    {showVariables && (
+                      <div className="border-t max-h-80 overflow-y-auto">
+                        {variablesLoading ? (
+                          <div className="space-y-3 p-4">
+                            {[1, 2].map((i) => (
+                              <div key={i} className="h-12 animate-pulse rounded-lg bg-muted" />
+                            ))}
+                          </div>
+                        ) : Object.keys(variables).length === 0 ? (
+                          <div className="p-6 text-center">
+                            <Variable className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
+                            <h3 className="font-medium">No saved variables yet</h3>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              When you download blueprints, save your variable values for quick reuse
+                            </p>
+                            <Button asChild className="mt-4" size="sm" variant="outline">
+                              <Link href="/settings?tab=variables">Manage Variables</Link>
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="divide-y">
+                            {Object.entries(variables).slice(0, 10).map(([key, value]) => (
+                              <div key={key} className="p-3">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="min-w-0 flex-1">
+                                    <code className="text-sm font-medium text-primary">[[{key}]]</code>
+                                    <p className="mt-0.5 text-sm text-muted-foreground truncate">{value}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                            {Object.keys(variables).length > 10 && (
+                              <div className="p-3 text-center text-xs text-muted-foreground bg-muted/30">
+                                +{Object.keys(variables).length - 10} more
+                              </div>
+                            )}
+                            <div className="p-3 bg-muted/30">
+                              <Button asChild className="w-full" size="sm" variant="outline">
+                                <Link href="/settings?tab=variables">Manage All Variables</Link>
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Recent Activity */}

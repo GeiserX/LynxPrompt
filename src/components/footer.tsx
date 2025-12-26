@@ -45,6 +45,12 @@ export function Footer() {
               >
                 About
               </Link>
+              <Link
+                href="/contact"
+                className="text-sm text-muted-foreground hover:underline"
+              >
+                Contact
+              </Link>
               <a
                 href="https://status.lynxprompt.com"
                 target="_blank"
