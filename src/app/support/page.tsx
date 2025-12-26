@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -26,6 +26,7 @@ import {
   Search,
   Trash2,
   X,
+  Pencil,
 } from "lucide-react";
 
 interface Category {
@@ -129,6 +130,21 @@ function SupportPageContent() {
   // Modal state
   const [showNewPostModal, setShowNewPostModal] = useState(false);
   const [newPostType, setNewPostType] = useState<"bug" | "feature" | "question" | "feedback" | null>(null);
+
+  // Click outside handler for dropdowns
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      // Close status menu when clicking outside
+      if (statusMenuOpen) {
+        const target = e.target as HTMLElement;
+        if (!target.closest('[data-dropdown-menu]')) {
+          setStatusMenuOpen(null);
+        }
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [statusMenuOpen]);
 
   useEffect(() => {
     // Load data regardless of auth status - support page is public
@@ -386,7 +402,7 @@ function SupportPageContent() {
             {/* Status Filter */}
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Status:</span>
-              <div className="relative">
+              <div className="relative" data-dropdown-menu>
                 <button
                   onClick={() => setStatusMenuOpen(statusMenuOpen === "filter" ? null : "filter")}
                   className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm transition-colors ${
@@ -407,7 +423,7 @@ function SupportPageContent() {
                   <ChevronDown className="h-3.5 w-3.5" />
                 </button>
                 {statusMenuOpen === "filter" && (
-                  <div className="absolute right-0 top-full z-10 mt-1 w-40 rounded-lg border bg-popover p-1 shadow-lg">
+                  <div data-dropdown-menu className="absolute right-0 top-full z-10 mt-1 w-40 rounded-lg border bg-popover p-1 shadow-lg">
                     <button
                       onClick={() => {
                         setSelectedStatus(null);
@@ -612,10 +628,10 @@ function SupportPageContent() {
                           )}
                         </div>
 
-                        {/* Status & Admin Controls */}
+                        {/* Status & Admin/Author Controls */}
                         <div className="flex items-center gap-2">
-                          {isAdmin ? (
-                            <div className="relative">
+                          {(isAdmin || session?.user?.id === post.userId) ? (
+                            <div className="relative" data-dropdown-menu>
                               <button
                                 onClick={(e) => {
                                   e.preventDefault();
@@ -633,7 +649,7 @@ function SupportPageContent() {
                                 <ChevronDown className="h-3 w-3" />
                               </button>
                               {statusMenuOpen === post.id && (
-                                <div className="absolute right-0 top-full z-10 mt-1 w-36 rounded-lg border bg-popover p-1 shadow-lg">
+                                <div data-dropdown-menu className="absolute right-0 top-full z-10 mt-1 w-36 rounded-lg border bg-popover p-1 shadow-lg">
                                   {Object.entries(STATUS_BADGES).map(([key, badge]) => (
                                     <button
                                       key={key}
@@ -662,7 +678,19 @@ function SupportPageContent() {
                               </span>
                             )
                           )}
-                          {isAdmin && (
+                          {/* Edit button - for author or admin */}
+                          {(isAdmin || session?.user?.id === post.userId) && (
+                            <Link
+                              href={`/support/${post.id}?edit=true`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="rounded p-1.5 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                              title="Edit post"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Link>
+                          )}
+                          {/* Delete button - for author or admin */}
+                          {(isAdmin || session?.user?.id === post.userId) && (
                             <button
                               onClick={(e) => {
                                 e.preventDefault();

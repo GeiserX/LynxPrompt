@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, use, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Logo } from "@/components/logo";
@@ -97,7 +97,7 @@ const PLAN_BADGES: Record<string, { label: string; className: string }> = {
   MAX: { label: "Max", className: "bg-gradient-to-r from-purple-500 to-pink-500 text-white" },
 };
 
-export default function PostDetailPage({
+function PostDetailPageContent({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -105,6 +105,7 @@ export default function PostDetailPage({
   const resolvedParams = use(params);
   const { data: session, status: sessionStatus } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
@@ -112,9 +113,38 @@ export default function PostDetailPage({
   const [newComment, setNewComment] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
   const [showAdminMenu, setShowAdminMenu] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
+  const [submittingEdit, setSubmittingEdit] = useState(false);
 
   const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "SUPERADMIN";
   const isAuthor = session?.user?.id === post?.userId;
+
+  // Click outside handler for admin menu
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (showAdminMenu) {
+        const target = e.target as HTMLElement;
+        if (!target.closest('[data-admin-menu]')) {
+          setShowAdminMenu(false);
+        }
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showAdminMenu]);
+
+  // Check if edit mode was requested from URL
+  useEffect(() => {
+    if (searchParams.get("edit") === "true" && post && (isAdmin || isAuthor)) {
+      setEditTitle(post.title);
+      setEditContent(post.content);
+      setShowEditModal(true);
+      // Remove the query param from URL
+      router.replace(`/support/${resolvedParams.id}`, { scroll: false });
+    }
+  }, [searchParams, post, isAdmin, isAuthor, router, resolvedParams.id]);
 
   useEffect(() => {
     // Load post regardless of auth status - support posts are public
@@ -243,6 +273,37 @@ export default function PostDetailPage({
     }
   }
 
+  async function handleEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!post) return;
+    setSubmittingEdit(true);
+    try {
+      const res = await fetch(`/api/support/posts/${post.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: editTitle, content: editContent }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setPost((prev) => prev ? { ...prev, title: updated.title, content: updated.content } : null);
+        setShowEditModal(false);
+      }
+    } catch (error) {
+      console.error("Error editing post:", error);
+    } finally {
+      setSubmittingEdit(false);
+    }
+  }
+
+  function openEditModal() {
+    if (post) {
+      setEditTitle(post.title);
+      setEditContent(post.content);
+      setShowEditModal(true);
+    }
+    setShowAdminMenu(false);
+  }
+
   if (sessionStatus === "loading" || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -338,7 +399,7 @@ export default function PostDetailPage({
 
                     {/* Admin/Author menu */}
                     {(isAdmin || isAuthor) && (
-                      <div className="relative flex-shrink-0">
+                      <div className="relative flex-shrink-0" data-admin-menu>
                         <button
                           onClick={() => setShowAdminMenu(!showAdminMenu)}
                           className="rounded-lg p-2 hover:bg-muted"
@@ -357,6 +418,11 @@ export default function PostDetailPage({
                                   {post.isPinned ? "Unpin" : "Pin"} Post
                                 </button>
                                 <div className="my-1 border-t" />
+                              </>
+                            )}
+                            {/* Status options for admin or author */}
+                            {(isAdmin || isAuthor) && (
+                              <>
                                 <div className="px-3 py-1 text-xs text-muted-foreground">
                                   Set Status
                                 </div>
@@ -375,16 +441,21 @@ export default function PostDetailPage({
                                   )
                                 )}
                                 <div className="my-1 border-t" />
+                                <button
+                                  onClick={openEditModal}
+                                  className="flex w-full items-center gap-2 rounded px-3 py-2 text-sm hover:bg-muted"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                  Edit Post
+                                </button>
+                                <button
+                                  onClick={handleDelete}
+                                  className="flex w-full items-center gap-2 rounded px-3 py-2 text-sm text-red-500 hover:bg-red-500/10"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  Delete Post
+                                </button>
                               </>
-                            )}
-                            {(isAdmin || isAuthor) && (
-                              <button
-                                onClick={handleDelete}
-                                className="flex w-full items-center gap-2 rounded px-3 py-2 text-sm text-red-500 hover:bg-red-500/10"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                                Delete Post
-                              </button>
                             )}
                           </div>
                         )}
@@ -520,7 +591,82 @@ export default function PostDetailPage({
       </main>
 
       <Footer />
+
+      {/* Edit Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-background p-6 shadow-xl">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold">Edit Post</h2>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleEdit} className="mt-6 space-y-4">
+              <div>
+                <label className="text-sm font-medium">Title</label>
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  required
+                  className="mt-1 w-full rounded-lg border bg-background px-3 py-2"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Description</label>
+                <textarea
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  required
+                  rows={6}
+                  className="mt-1 w-full rounded-lg border bg-background px-3 py-2"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <Button type="button" variant="outline" onClick={() => setShowEditModal(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={submittingEdit}>
+                  {submittingEdit ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+export default function PostDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      }
+    >
+      <PostDetailPageContent params={params} />
+    </Suspense>
   );
 }
 

@@ -154,8 +154,9 @@ export async function PATCH(
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    // Check ownership
-    if (post.userId !== session.user.id) {
+    // Check ownership or admin
+    const isAdmin = session.user.role === "ADMIN" || session.user.role === "SUPERADMIN";
+    if (post.userId !== session.user.id && !isAdmin) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
