@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { ensureStripe, getPlanFromPriceId } from "@/lib/stripe";
+import { ensureStripe, getPlanFromPriceId, getIntervalFromPriceId } from "@/lib/stripe";
 import { prismaUsers } from "@/lib/db-users";
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -127,9 +127,10 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
     return;
   }
 
-  // Get the plan from the first subscription item
+  // Get the plan and interval from the first subscription item
   const priceId = subscription.items.data[0]?.price?.id;
   const plan = priceId ? getPlanFromPriceId(priceId) : "free";
+  const interval = priceId ? getIntervalFromPriceId(priceId) : "monthly";
 
   // Map subscription status
   type SubscriptionPlan = "FREE" | "PRO" | "MAX";
@@ -160,6 +161,7 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
       stripeCustomerId: customerId,
       subscriptionPlan: effectivePlan,
       subscriptionStatus: subscription.status,
+      subscriptionInterval: interval,
       currentPeriodEnd: currentPeriodEnd 
         ? new Date(currentPeriodEnd * 1000) 
         : null,
@@ -167,7 +169,7 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
     },
   });
 
-  console.log(`Updated subscription for user ${user.id}: ${effectivePlan} (status: ${subscription.status})`);
+  console.log(`Updated subscription for user ${user.id}: ${effectivePlan} ${interval} (status: ${subscription.status})`);
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {

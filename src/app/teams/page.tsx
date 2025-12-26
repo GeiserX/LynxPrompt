@@ -59,10 +59,10 @@ const TEAMS_FEATURES = [
 ];
 
 const PRICING_DETAILS = [
-  { label: "Price per seat", value: "€30/month" },
+  { label: "Price per seat", value: "€30/month or €324/year (10% off)" },
   { label: "Minimum seats", value: "3" },
   { label: "Maximum seats", value: "Unlimited" },
-  { label: "Billing cycle", value: "Monthly" },
+  { label: "Billing cycle", value: "Monthly or Annual" },
   { label: "Active user billing", value: "Yes — only pay for logins" },
   { label: "Pro-rated additions", value: "Yes — pay for remaining days" },
 ];

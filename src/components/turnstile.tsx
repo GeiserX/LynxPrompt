@@ -94,11 +94,8 @@ export function Turnstile({ onSuccess, onError, onExpire, className }: Turnstile
       return true;
     } catch (err) {
       console.error("Turnstile render error:", err);
-      if (!hasSucceeded.current) {
-        hasSucceeded.current = true;
-        setStatus("success");
-        onSuccess("bypass-render-error");
-      }
+      setStatus("error");
+      onError?.();
       return false;
     }
   }, [siteKey, resolvedTheme, onSuccess, onError, onExpire]);
@@ -122,21 +119,6 @@ export function Turnstile({ onSuccess, onError, onExpire, className }: Turnstile
       }
     }
   }, [scriptLoaded, siteKey, status, renderWidget, retryCount]);
-
-  // Fallback: If still loading after 8 seconds, auto-bypass (for paid users the server will handle verification)
-  useEffect(() => {
-    if (status === "loading" || (status === "ready" && !widgetIdRef.current)) {
-      const timeout = setTimeout(() => {
-        if (!hasSucceeded.current && !widgetIdRef.current) {
-          console.warn("Turnstile: Timeout - auto-bypassing");
-          hasSucceeded.current = true;
-          setStatus("success");
-          onSuccess("bypass-timeout");
-        }
-      }, 8000);
-      return () => clearTimeout(timeout);
-    }
-  }, [status, onSuccess]);
 
   // Cleanup
   useEffect(() => {

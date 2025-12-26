@@ -1338,6 +1338,7 @@ interface BillingSectionProps {
 
 interface SubscriptionStatus {
   plan: string;
+  interval?: "monthly" | "annual";
   status: string | null;
   currentPeriodEnd: string | null;
   cancelAtPeriodEnd: boolean;
@@ -1345,6 +1346,7 @@ interface SubscriptionStatus {
   hasActiveSubscription: boolean;
   isAdmin?: boolean;
   pendingChange?: string | null;
+  isAnnual?: boolean;
 }
 
 interface SellerEarnings {
@@ -1373,6 +1375,7 @@ const PLAN_DETAILS = {
     name: "Free",
     description: "Basic features for getting started",
     price: "€0",
+    priceAnnual: "€0",
     icon: Star,
     color: "text-muted-foreground",
   },
@@ -1380,6 +1383,7 @@ const PLAN_DETAILS = {
     name: "Pro",
     description: "For developers who want more powerful configuration options",
     price: "€5/month",
+    priceAnnual: "€54/year",
     icon: Zap,
     color: "text-primary",
   },
@@ -1387,6 +1391,7 @@ const PLAN_DETAILS = {
     name: "Max",
     description: "Full access to everything, including all paid community blueprints",
     price: "€20/month",
+    priceAnnual: "€216/year",
     icon: Crown,
     color: "text-purple-500",
   },
@@ -1634,14 +1639,22 @@ function BillingSection({ setError, setSuccess }: BillingSectionProps) {
                   {subscription.cancelAtPeriodEnd
                     ? `Cancels on ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`
                     : `Renews on ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`}
+                  {subscription?.isAnnual && !subscription.cancelAtPeriodEnd && (
+                    <span className="ml-1">(Annual commitment)</span>
+                  )}
                 </p>
               )}
             </div>
           </div>
           <div className="text-right">
             <p className="text-lg font-semibold">
-              {subscription?.isAdmin ? "Free" : planInfo.price}
+              {subscription?.isAdmin ? "Free" : (subscription?.isAnnual ? planInfo.priceAnnual : planInfo.price)}
             </p>
+            {!subscription?.isAdmin && subscription?.isAnnual && (
+              <span className="rounded bg-green-500/10 px-2 py-0.5 text-xs text-green-600">
+                Annual (10% off)
+              </span>
+            )}
             {!subscription?.isAdmin && subscription?.status && subscription.status !== "active" && (
               <span className="rounded bg-yellow-500/10 px-2 py-0.5 text-xs text-yellow-600">
                 {subscription.status}
@@ -1821,7 +1834,8 @@ function BillingSection({ setError, setSuccess }: BillingSectionProps) {
       <div className="rounded-lg border border-muted/50 bg-muted/20 p-4">
         <p className="text-xs text-muted-foreground">
           <strong>Secure payments by Stripe.</strong> We never store your card details.
-          All subscriptions are billed monthly and can be canceled anytime.
+          Monthly subscriptions can be canceled anytime. Annual subscriptions commit for the full year 
+          and cannot be canceled mid-cycle (you keep access until the period ends).
           Prices are in EUR and include VAT where applicable.
         </p>
       </div>

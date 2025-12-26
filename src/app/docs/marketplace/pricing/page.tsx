@@ -175,8 +175,11 @@ export default function PricingPage() {
           <div className="rounded-lg border bg-card p-4">
             <h3 className="font-medium">Can I cancel anytime?</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Yes, you can cancel your subscription at any time. You&apos;ll
+              <strong>Monthly:</strong> Yes, cancel anytime. You&apos;ll
               retain access until the end of your billing period.
+              <br /><br />
+              <strong>Annual:</strong> Annual plans are a yearly commitment and cannot be canceled 
+              mid-cycle. You keep access until the year ends.
             </p>
           </div>
           <div className="rounded-lg border bg-card p-4">
@@ -189,8 +192,9 @@ export default function PricingPage() {
           <div className="rounded-lg border bg-card p-4">
             <h3 className="font-medium">Do you offer annual billing?</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Not yet, but annual billing with a discount is planned for the
-              future.
+              Yes! Annual billing offers a <strong>10% discount</strong>. Select &quot;Annual&quot; 
+              on the pricing page to see discounted prices. Annual subscriptions cannot be canceled 
+              mid-cycle but provide significant savings.
             </p>
           </div>
           <div className="rounded-lg border bg-card p-4">

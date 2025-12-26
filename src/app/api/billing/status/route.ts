@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
-import { ensureStripe, getPlanFromPriceId } from "@/lib/stripe";
+import { ensureStripe, getPlanFromPriceId, getIntervalFromPriceId } from "@/lib/stripe";
 
 export async function GET() {
   try {
@@ -21,6 +21,7 @@ export async function GET() {
         role: true,
         subscriptionPlan: true,
         subscriptionStatus: true,
+        subscriptionInterval: true,
         currentPeriodEnd: true,
         cancelAtPeriodEnd: true,
         stripeCustomerId: true,
@@ -42,16 +43,18 @@ export async function GET() {
     // Check for pending changes if user has active subscription
     let pendingChange: string | null = null;
     let actualCurrentPlan = effectivePlan;
+    let billingInterval: "monthly" | "annual" = (user.subscriptionInterval as "monthly" | "annual") || "monthly";
     
     if (!isAdmin && user.stripeSubscriptionId) {
       try {
         const stripe = ensureStripe();
         const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
         
-        // Get the currently active plan from Stripe
+        // Get the currently active plan and interval from Stripe
         const currentPriceId = subscription.items.data[0]?.price?.id;
         if (currentPriceId) {
           actualCurrentPlan = getPlanFromPriceId(currentPriceId);
+          billingInterval = getIntervalFromPriceId(currentPriceId);
         }
 
         // Check for scheduled downgrade in metadata
@@ -66,6 +69,7 @@ export async function GET() {
 
     return NextResponse.json({
       plan: actualCurrentPlan,
+      interval: billingInterval,
       status: isAdmin ? "active" : user.subscriptionStatus,
       currentPeriodEnd: isAdmin ? null : user.currentPeriodEnd,
       cancelAtPeriodEnd: isAdmin ? false : user.cancelAtPeriodEnd,
@@ -74,6 +78,7 @@ export async function GET() {
         (user.subscriptionStatus === "active" || user.subscriptionStatus === "trialing")),
       isAdmin, // Flag for UI to show "Admin" badge instead of plan
       pendingChange, // For showing scheduled downgrades
+      isAnnual: billingInterval === "annual", // Convenience flag for UI
     });
   } catch (error) {
     console.error("Error fetching subscription status:", error);

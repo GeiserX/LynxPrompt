@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { ensureStripe, getPriceIdForPlan, type SubscriptionPlan } from "@/lib/stripe";
+import { ensureStripe, getPriceIdForPlan, type SubscriptionPlan, type BillingInterval } from "@/lib/stripe";
 import { prismaUsers } from "@/lib/db-users";
 
 export async function POST(request: NextRequest) {
@@ -15,10 +15,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { plan, euDigitalContentConsent } = (await request.json()) as { 
+    const { plan, interval, euDigitalContentConsent } = (await request.json()) as { 
       plan: SubscriptionPlan;
+      interval?: BillingInterval;
       euDigitalContentConsent?: boolean;
     };
+
+    // Default to monthly if not specified
+    const billingInterval: BillingInterval = interval === "annual" ? "annual" : "monthly";
 
     if (!plan || (plan !== "pro" && plan !== "max")) {
       return NextResponse.json(
@@ -36,10 +40,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const priceId = getPriceIdForPlan(plan);
+    const priceId = getPriceIdForPlan(plan, billingInterval);
     if (!priceId) {
       return NextResponse.json(
-        { error: "Stripe price not configured for this plan" },
+        { error: `Stripe price not configured for ${plan} ${billingInterval} plan` },
         { status: 500 }
       );
     }
@@ -107,6 +111,7 @@ export async function POST(request: NextRequest) {
       metadata: {
         userId: session.user.id,
         plan: plan,
+        interval: billingInterval,
         // EU Digital Content Directive consent tracking
         euDigitalContentConsent: "true",
         consentTimestamp: new Date().toISOString(),
@@ -115,6 +120,7 @@ export async function POST(request: NextRequest) {
         metadata: {
           userId: session.user.id,
           plan: plan,
+          interval: billingInterval,
           euDigitalContentConsent: "true",
           consentTimestamp: new Date().toISOString(),
         },

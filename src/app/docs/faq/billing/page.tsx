@@ -34,7 +34,7 @@ export default function BillingFAQPage() {
         <div className="rounded-lg border bg-card p-4">
           <h3 className="font-semibold">Can I cancel my subscription?</h3>
           <p className="mt-2 text-muted-foreground">
-            Yes, you can cancel anytime from{" "}
+            <strong>Monthly subscriptions:</strong> Yes, you can cancel anytime from{" "}
             <Link
               href="/settings/billing"
               className="text-primary hover:underline"
@@ -42,6 +42,10 @@ export default function BillingFAQPage() {
               Settings → Billing
             </Link>
             . You&apos;ll retain access until the end of your billing period.
+            <br /><br />
+            <strong>Annual subscriptions:</strong> Annual plans are a yearly commitment and cannot be 
+            canceled mid-cycle. You keep full access until the year ends, but no refunds are provided for 
+            the remaining period.
           </p>
         </div>
 
@@ -77,8 +81,17 @@ export default function BillingFAQPage() {
         <div className="rounded-lg border bg-card p-4">
           <h3 className="font-semibold">Do you offer annual billing?</h3>
           <p className="mt-2 text-muted-foreground">
-            Not yet, but annual billing with a discount is planned for the
-            future.
+            Yes! You can choose between monthly and annual billing on our{" "}
+            <Link href="/pricing" className="text-primary hover:underline">
+              pricing page
+            </Link>
+            . Annual plans offer a <strong>10% discount</strong> compared to monthly billing:
+            <br /><br />
+            <strong>Pro:</strong> €54/year (€4.50/month) vs €5/month<br />
+            <strong>Max:</strong> €216/year (€18/month) vs €20/month<br />
+            <strong>Teams:</strong> €324/seat/year (€27/seat/month) vs €30/seat/month
+            <br /><br />
+            Note: Annual subscriptions are a yearly commitment and cannot be canceled or refunded mid-cycle.
           </p>
         </div>
 
