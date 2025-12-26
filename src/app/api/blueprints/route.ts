@@ -162,7 +162,7 @@ export async function GET(request: NextRequest) {
       .slice(0, 20)
       .map(([tag]) => tag);
 
-    // Check if user is MAX subscriber for discount and get purchased blueprints
+    // Check if user is MAX/TEAMS subscriber for discount and get purchased blueprints
     let isMaxUser = false;
     let userId: string | null = null;
     let purchasedIds: Set<string> = new Set();
@@ -174,16 +174,35 @@ export async function GET(request: NextRequest) {
         where: { id: session.user.id },
         select: { subscriptionPlan: true, role: true },
       });
+      
+      // MAX and TEAMS users get 10% discount
       isMaxUser = user?.subscriptionPlan === "MAX" || 
+                  user?.subscriptionPlan === "TEAMS" ||
                   user?.role === "ADMIN" || 
                   user?.role === "SUPERADMIN";
       
-      // Get all blueprints this user has purchased
-      const purchases = await prismaUsers.blueprintPurchase.findMany({
+      // Get user's team membership
+      const teamMembership = await prismaUsers.teamMember.findFirst({
+        where: { userId: session.user.id },
+        select: { teamId: true },
+      });
+      const userTeamId = teamMembership?.teamId;
+      
+      // Get all blueprints this user has purchased (individual + team purchases)
+      const individualPurchases = await prismaUsers.blueprintPurchase.findMany({
         where: { userId: session.user.id },
         select: { templateId: true },
       });
-      purchasedIds = new Set(purchases.map(p => p.templateId));
+      purchasedIds = new Set(individualPurchases.map(p => p.templateId));
+      
+      // Also get team purchases if user is in a team
+      if (userTeamId) {
+        const teamPurchases = await prismaUsers.blueprintPurchase.findMany({
+          where: { teamId: userTeamId },
+          select: { templateId: true },
+        });
+        teamPurchases.forEach(p => purchasedIds.add(p.templateId));
+      }
     }
 
     // MAX subscribers get 10% discount

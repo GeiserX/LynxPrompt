@@ -64,6 +64,7 @@ interface TemplateData {
   content: string | null;
   preview?: string;
   author: string;
+  authorId?: string;
   downloads: number;
   likes: number;
   tags: string[];
@@ -395,7 +396,17 @@ export default function BlueprintDetailPage() {
                     )}
                   </div>
                   <p className="mt-2 text-muted-foreground">
-                    by {blueprint.author}
+                    by{" "}
+                    {blueprint.authorId ? (
+                      <Link
+                        href={`/users/${blueprint.authorId}`}
+                        className="hover:text-primary hover:underline"
+                      >
+                        {blueprint.author}
+                      </Link>
+                    ) : (
+                      blueprint.author
+                    )}
                     {blueprint.isOfficial && (
                       <span className="ml-2 rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                         Official
