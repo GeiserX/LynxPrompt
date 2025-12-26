@@ -823,7 +823,7 @@ export default function WizardPage() {
     containerRegistryOther: "",
     registryUsername: "",
     aiBehaviorRules: ["always_debug_after_build", "check_logs_after_build", "follow_existing_patterns"],
-    importantFiles: [],
+    importantFiles: ["readme", "package_json", "changelog", "contributing", "makefile", "dockerfile", "docker_compose", "env_example", "openapi", "architecture_md", "api_docs", "database_schema"],
     importantFilesOther: "",
     enableAutoUpdate: false,
     includePersonalData: true,
@@ -3289,6 +3289,38 @@ function StepAIBehavior({
         ))}
       </div>
 
+      {/* Self-Improving Blueprint Option */}
+      <div className="mt-8">
+        <button
+          onClick={() => onAutoUpdateChange(!enableAutoUpdate)}
+          className={`flex w-full items-start gap-4 rounded-lg border p-4 text-left transition-all ${
+            enableAutoUpdate
+              ? "border-primary bg-primary/5"
+              : "hover:border-primary"
+          }`}
+        >
+          <div
+            className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
+              enableAutoUpdate
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-muted-foreground"
+            }`}
+          >
+            {enableAutoUpdate && <Check className="h-3 w-3" />}
+          </div>
+          <div className="flex-1">
+            <span className="font-semibold">
+              Enable Self-Improving Blueprint
+            </span>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Include an instruction for AI agents to track your coding patterns and automatically
+              update this configuration file as you work. The AI will learn from your preferences
+              and improve the rules over time.
+            </p>
+          </div>
+        </button>
+      </div>
+
       {/* Important Files to Read First */}
       <div className="mt-8">
         <h3 className="font-semibold">Important Files to Read First</h3>
@@ -3321,38 +3353,6 @@ function StepAIBehavior({
             className="mt-1 w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
-      </div>
-
-      {/* Auto-Update Option */}
-      <div className="mt-8">
-        <button
-          onClick={() => onAutoUpdateChange(!enableAutoUpdate)}
-          className={`flex w-full items-start gap-4 rounded-lg border p-4 text-left transition-all ${
-            enableAutoUpdate
-              ? "border-primary bg-primary/5"
-              : "hover:border-primary"
-          }`}
-        >
-          <div
-            className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
-              enableAutoUpdate
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-muted-foreground"
-            }`}
-          >
-            {enableAutoUpdate && <Check className="h-3 w-3" />}
-          </div>
-          <div className="flex-1">
-            <span className="font-semibold">
-              Enable Self-Improving Blueprint
-            </span>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Include an instruction for AI agents to track your coding patterns and automatically
-              update this configuration file as you work. The AI will learn from your preferences
-              and improve the rules over time.
-            </p>
-          </div>
-        </button>
       </div>
     </div>
   );
