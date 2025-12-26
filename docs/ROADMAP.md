@@ -61,7 +61,7 @@ Per EU Consumer Rights Directive, digital content can waive 14-day withdrawal IF
 - [x] GDPR Article 6 legal basis (Contract + Legitimate Interest)
 - [x] Physical address disclosure
 - [x] "No DPO appointed" statement
-- [x] Third-party processors detailed (GitHub, Google, Stripe, Umami)
+- [x] Third-party processors detailed (GitHub, Google, Stripe, Umami, Anthropic, GlitchTip)
 - [x] Umami: self-hosted in EU, cookieless, legitimate interest basis
 - [x] International transfers + SCCs
 - [x] No automated decision-making statement
@@ -69,6 +69,13 @@ Per EU Consumer Rights Directive, digital content can waive 14-day withdrawal IF
 - [x] Service emails defined (login links, receipts, security notices)
 - [x] Data retention policy
 - [x] AEPD complaint rights
+
+### Security & Trust Pages ✅ COMPLETED
+
+- [x] **Security page** (`/security`) - Infrastructure, encryption, authentication, compliance overview
+- [x] **Data Processing Agreement** (`/dpa`) - GDPR Article 28 compliant DPA for business customers
+- [x] **Subprocessor list** - Documented in Privacy Policy Section 6
+- [x] Footer links to Security and DPA pages
 
 ### Terms of Service ✅ COMPLETED
 
@@ -109,9 +116,9 @@ Per EU Consumer Rights Directive, digital content can waive 14-day withdrawal IF
 
 #### Product/UI Changes for Legal (Pending Implementation)
 
-- [ ] Signup: "I agree to Terms + Privacy" checkbox
+- [ ] Signup: "I agree to Terms + Privacy" checkbox (OAuth providers handle this implicitly via their ToS)
 - [x] Checkout: EU digital content waiver checkbox
-- [ ] Log: user ID, timestamp, Terms version hash for consent
+- [ ] Log: user ID, timestamp, Terms version hash for consent (currently stores consent in purchase record)
 
 ---
 
@@ -585,19 +592,31 @@ POST   /api/generate               - Generate config files from wizard data
 
 - [ ] Redis for caching/sessions
 - [ ] S3/R2 for file storage (template assets, user uploads)
-- [ ] GlitchTip error tracking (self-hosted, GDPR-friendly alternative to Sentry)
-- [ ] Status page (Uptime Kuma) at status.lynxprompt.com
+- [x] GlitchTip error tracking (self-hosted at glitchtip.lynxprompt.com)
+- [x] Status page (Uptime Kuma) at status.lynxprompt.com
 - [ ] CDN for static assets
 - [ ] Database backups automation
-- [ ] Payment webhook handlers
+- [x] Payment webhook handlers (Stripe)
 
 ### Current Infrastructure
 
-- [x] PostgreSQL (dual-database: app + users)
+- [x] PostgreSQL (4 databases: app, users, blog, support)
 - [x] ClickHouse (self-hosted EU, analytics)
 - [x] Umami (self-hosted EU, cookieless analytics)
 - [x] Docker deployment with GitOps (Portainer)
-- [x] Healthchecks with start_period for stability
+- [x] Cloudflare DDoS protection and WAF
+- [x] TLS 1.3 encryption in transit
+- [x] Network isolation (databases not exposed to internet)
+
+### Security Enhancements (Planned)
+
+- [ ] **PostgreSQL column-level encryption (pgcrypto)**
+  - Encrypt sensitive columns (passkey credentials, OAuth tokens, etc.)
+  - Implementation: Enable pgcrypto extension, encrypt/decrypt in Prisma queries
+  - Priority: Medium (data is already protected by network isolation)
+- [ ] Filesystem-level encryption for database volumes (Unraid encrypted share)
+- [ ] Annual third-party penetration test
+- [ ] Bug bounty program (HackerOne or similar)
 
 > **Note:** GlitchTip is preferred over Sentry for self-hosted error tracking. It integrates well with our existing ClickHouse setup and keeps all data in EU.
 
