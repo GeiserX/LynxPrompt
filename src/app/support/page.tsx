@@ -55,6 +55,7 @@ interface Post {
   voteCount: number;
   commentCount: number;
   createdAt: string;
+  userId: string;
   userName: string | null;
   userImage: string | null;
   userPlan: string;
@@ -582,12 +583,17 @@ function SupportPageContent() {
                               {post.category.name}
                             </span>
                             <span>•</span>
-                            <span className="flex items-center gap-1">
+                            <Link
+                              href={`/users/${post.userId}`}
+                              className="flex items-center gap-1 hover:text-primary hover:underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               {post.userImage ? (
                                 <img
                                   src={post.userImage}
                                   alt=""
                                   className="h-4 w-4 rounded-full"
+                                  referrerPolicy="no-referrer"
                                 />
                               ) : null}
                               {post.userName || "Anonymous"}
@@ -598,7 +604,7 @@ function SupportPageContent() {
                                   {PLAN_BADGES[post.userPlan].label}
                                 </span>
                               )}
-                            </span>
+                            </Link>
                             <span>•</span>
                             <span>
                               {new Date(post.createdAt).toLocaleDateString()}
