@@ -593,7 +593,7 @@ export async function getTemplateById(
 
     const userId = session?.user?.id;
 
-    // Allow access if template is public OR if user owns it OR if user has purchased it
+    // Allow access if template is public OR if user owns it OR if user has purchased it OR team access
     const template = await prismaUsers.userTemplate.findFirst({
       where: {
         id: realId,
@@ -616,18 +616,44 @@ export async function getTemplateById(
       if (template.userId === userId) {
         hasAccess = true;
       }
-      // Or user has purchased it
-      else if (template.price && template.price > 0) {
-        const purchase = await prismaUsers.blueprintPurchase.findUnique({
-          where: {
-            userId_templateId: {
-              userId: userId,
+      // Check team-based access
+      else {
+        // Get user's team membership
+        const teamMembership = await prismaUsers.teamMember.findFirst({
+          where: { userId },
+          select: { teamId: true },
+        });
+        const userTeamId = teamMembership?.teamId;
+
+        // Check if this is a TEAM visibility blueprint in user's team
+        if (template.visibility === "TEAM" && template.teamId && userTeamId === template.teamId) {
+          hasAccess = true;
+        }
+        // Check for team purchase (blueprint purchased for the team)
+        else if (userTeamId) {
+          const teamPurchase = await prismaUsers.blueprintPurchase.findFirst({
+            where: {
+              teamId: userTeamId,
               templateId: realId,
             },
-          },
-        });
-        if (purchase) {
-          hasAccess = true;
+          });
+          if (teamPurchase) {
+            hasAccess = true;
+          }
+        }
+        // Check individual purchase
+        if (!hasAccess && template.price && template.price > 0) {
+          const purchase = await prismaUsers.blueprintPurchase.findUnique({
+            where: {
+              userId_templateId: {
+                userId: userId,
+                templateId: realId,
+              },
+            },
+          });
+          if (purchase) {
+            hasAccess = true;
+          }
         }
       }
     }
@@ -635,8 +661,6 @@ export async function getTemplateById(
     if (!hasAccess) {
       return null; // No access
     }
-
-    if (!template) return null;
 
     return {
       id: `usr_${template.id}`,

@@ -58,17 +58,26 @@ export async function GET(
         hasPurchased = true; // Owners always have access
       }
 
-      // Check user's subscription plan
+      // Check user's subscription plan and team membership
       const user = await prismaUsers.user.findUnique({
         where: { id: session.user.id },
         select: { subscriptionPlan: true, role: true },
       });
 
+      // Get user's team membership
+      const teamMembership = await prismaUsers.teamMember.findFirst({
+        where: { userId: session.user.id },
+        select: { teamId: true },
+      });
+      const userTeamId = teamMembership?.teamId;
+
+      // MAX and TEAMS users get 10% discount (also admins/superadmins)
       isMaxUser = user?.subscriptionPlan === "MAX" ||
+                  user?.subscriptionPlan === "TEAMS" ||
                   user?.role === "ADMIN" ||
                   user?.role === "SUPERADMIN";
 
-      // Calculate discounted price for MAX users
+      // Calculate discounted price for MAX/TEAMS users
       if (isPaid && isMaxUser && templateWithShowcase.price) {
         discountedPrice = Math.round(
           templateWithShowcase.price * (1 - MAX_DISCOUNT_PERCENT / 100)
@@ -80,7 +89,8 @@ export async function GET(
         // Extract real template ID (remove usr_ prefix)
         const realTemplateId = id.startsWith("usr_") ? id.replace("usr_", "") : id;
 
-        const purchase = await prismaUsers.blueprintPurchase.findUnique({
+        // Check individual purchase
+        const individualPurchase = await prismaUsers.blueprintPurchase.findUnique({
           where: {
             userId_templateId: {
               userId: session.user.id,
@@ -89,7 +99,21 @@ export async function GET(
           },
         });
 
-        hasPurchased = !!purchase;
+        if (individualPurchase) {
+          hasPurchased = true;
+        }
+        // Check team purchase
+        else if (userTeamId) {
+          const teamPurchase = await prismaUsers.blueprintPurchase.findFirst({
+            where: {
+              teamId: userTeamId,
+              templateId: realTemplateId,
+            },
+          });
+          if (teamPurchase) {
+            hasPurchased = true;
+          }
+        }
       }
     }
 
