@@ -4,13 +4,13 @@ import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaBlog } from "@/lib/db-blog";
+import { prismaUsers } from "@/lib/db-users";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
   Calendar,
   Edit,
   Tag,
-  User,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
@@ -121,7 +121,14 @@ export default async function BlogPostPage({ params }: PageProps) {
     });
   };
 
-  const authorName = post.authorName || "Anonymous";
+  // Fetch author details from users database
+  const author = await prismaUsers.user.findUnique({
+    where: { id: post.authorId },
+    select: { name: true, displayName: true, image: true },
+  });
+
+  const authorName = author?.displayName || author?.name || post.authorName || "Anonymous";
+  const authorImage = author?.image || null;
   const contentHtml = markdownToHtml(post.content);
 
   return (
@@ -191,12 +198,24 @@ export default async function BlogPostPage({ params }: PageProps) {
 
             {/* Meta */}
             <div className="mt-6 flex flex-wrap items-center gap-4 border-b pb-6 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
-                  <User className="h-4 w-4" />
-                </div>
-                <span>{authorName}</span>
-              </div>
+              <Link
+                href={`/users/${post.authorId}`}
+                className="flex items-center gap-2 transition-colors hover:text-primary"
+              >
+                {authorImage ? (
+                  <img
+                    src={authorImage}
+                    alt={authorName}
+                    className="h-10 w-10 rounded-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-lg font-medium text-primary">
+                    {authorName.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span className="font-medium">{authorName}</span>
+              </Link>
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
                 <time dateTime={(post.publishedAt || post.createdAt).toISOString()}>

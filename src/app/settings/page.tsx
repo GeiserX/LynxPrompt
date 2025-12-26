@@ -2193,8 +2193,8 @@ function SavedFilesSection() {
       const res = await fetch("/api/user/wizard-preferences");
       if (res.ok) {
         const data = await res.json();
-        // Get only staticFiles category
-        const staticFiles = data.staticFiles || {};
+        // Get only static files category (wizard saves under "static" key)
+        const staticFiles = data.static || {};
         const fileList = Object.entries(staticFiles).map(([key, val]) => ({
           key,
           value: (val as { value: string; isDefault: boolean }).value,
@@ -2226,7 +2226,7 @@ function SavedFilesSection() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           preferences: [{
-            category: "staticFiles",
+            category: "static",
             key,
             value,
             isDefault: files.find(f => f.key === key)?.isDefault ?? false,
@@ -2254,7 +2254,7 @@ function SavedFilesSection() {
     setDeleting(key);
     setError(null);
     try {
-      const res = await fetch(`/api/user/wizard-preferences?category=staticFiles&key=${key}`, {
+      const res = await fetch(`/api/user/wizard-preferences?category=static&key=${key}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Failed to delete");

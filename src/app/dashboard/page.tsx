@@ -17,7 +17,6 @@ import {
   Clock,
   Eye,
   Plus,
-  BarChart3,
   Activity,
   ShoppingBag,
   X,
@@ -32,6 +31,7 @@ import { Footer } from "@/components/footer";
 import { PageHeader } from "@/components/page-header";
 import { WelcomeModal } from "@/components/dashboard/welcome-modal";
 import { PreferencesPanel } from "@/components/dashboard/preferences-panel";
+import { AnalyticsSection } from "@/components/dashboard/analytics-section";
 
 
 interface DashboardStats {
@@ -885,17 +885,8 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Analytics Preview */}
-              <div className="rounded-lg border bg-card p-6">
-                <div className="mb-4 flex items-center justify-between">
-                  <h3 className="font-semibold">Analytics</h3>
-                  <BarChart3 className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Detailed analytics coming soon! Track your template
-                  performance, downloads over time, and earnings.
-                </p>
-              </div>
+              {/* Analytics Section */}
+              <AnalyticsSection />
             </div>
           </div>
 

@@ -22,7 +22,7 @@ import {
 
 // Category display config
 const PREFERENCE_CATEGORIES: Record<string, { label: string; icon: React.ElementType; description: string }> = {
-  staticFiles: { label: "Static Files", icon: FileCode, description: "FUNDING.yml, .editorconfig, etc." },
+  static: { label: "Static Files", icon: FileCode, description: "FUNDING.yml, .editorconfig, etc." },
   license: { label: "License", icon: Scale, description: "Default license preference" },
   testing: { label: "Testing", icon: Shield, description: "Testing strategy preferences" },
   codeStyle: { label: "Code Style", icon: BookOpen, description: "Naming conventions, formatting" },
@@ -53,7 +53,7 @@ export function PreferencesPanel({
   onUpdate,
   onDelete,
 }: PreferencesPanelProps) {
-  const [expandedCategories, setExpandedCategories] = useState<string[]>(["staticFiles"]);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>(["static"]);
   const [editingItem, setEditingItem] = useState<{ category: string; key: string } | null>(null);
   const [editValue, setEditValue] = useState("");
   const [saving, setSaving] = useState(false);
@@ -88,7 +88,7 @@ export function PreferencesPanel({
   };
 
   const getDisplayName = (category: string, key: string): string => {
-    if (category === "staticFiles") {
+    if (category === "static") {
       return STATIC_FILE_NAMES[key] || key;
     }
     // Convert camelCase to Title Case

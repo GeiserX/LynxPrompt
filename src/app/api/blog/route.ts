@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaBlog } from "@/lib/db-blog";
+import { prismaUsers } from "@/lib/db-users";
 import { isAdminRole, UserRole } from "@/lib/subscription";
 
 // Helper to generate slug from title
@@ -60,16 +61,27 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    // Fetch author images from users database
+    const authorIds = [...new Set(posts.map(post => post.authorId))];
+    const users = await prismaUsers.user.findMany({
+      where: { id: { in: authorIds } },
+      select: { id: true, name: true, displayName: true, image: true },
+    });
+    const userMap = new Map(users.map(u => [u.id, u]));
+
     // Transform to include author object for frontend compatibility
-    const transformedPosts = posts.map(post => ({
-      ...post,
-      author: {
-        id: post.authorId,
-        name: post.authorName,
-        displayName: post.authorName,
-        image: null,
-      },
-    }));
+    const transformedPosts = posts.map(post => {
+      const user = userMap.get(post.authorId);
+      return {
+        ...post,
+        author: {
+          id: post.authorId,
+          name: user?.name || post.authorName,
+          displayName: user?.displayName || post.authorName,
+          image: user?.image || null,
+        },
+      };
+    });
 
     return NextResponse.json({
       posts: transformedPosts,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaBlog } from "@/lib/db-blog";
+import { prismaUsers } from "@/lib/db-users";
 import { isAdminRole, UserRole } from "@/lib/subscription";
 
 // GET: Get single blog post by slug
@@ -31,14 +32,20 @@ export async function GET(
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
+    // Fetch author image from users database
+    const user = await prismaUsers.user.findUnique({
+      where: { id: post.authorId },
+      select: { name: true, displayName: true, image: true },
+    });
+
     // Return with author object for frontend compatibility
     return NextResponse.json({
       ...post,
       author: {
         id: post.authorId,
-        name: post.authorName,
-        displayName: post.authorName,
-        image: null,
+        name: user?.name || post.authorName,
+        displayName: user?.displayName || post.authorName,
+        image: user?.image || null,
       },
     });
   } catch (error) {

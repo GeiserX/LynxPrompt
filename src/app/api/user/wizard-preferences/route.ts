@@ -11,8 +11,13 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Exclude blueprint_variables category - those are managed separately via /api/user/variables
+    // and displayed in the "Saved Variables" section, not "Wizard Preferences"
     const preferences = await prismaUsers.preference.findMany({
-      where: { userId: session.user.id },
+      where: { 
+        userId: session.user.id,
+        category: { not: "blueprint_variables" },
+      },
     });
 
     // Convert to a structured object
