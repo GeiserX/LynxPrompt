@@ -519,6 +519,48 @@ const PROJECT_TYPES = [
   },
 ];
 
+// Architecture patterns for project structure
+const ARCHITECTURE_PATTERNS = [
+  { id: "monolith", label: "Monolith" },
+  { id: "modular_monolith", label: "Modular Monolith" },
+  { id: "microservices", label: "Microservices" },
+  { id: "serverless", label: "Serverless" },
+  { id: "event_driven", label: "Event-Driven" },
+  { id: "layered", label: "Layered / N-Tier" },
+  { id: "hexagonal", label: "Hexagonal / Ports & Adapters" },
+  { id: "clean", label: "Clean Architecture" },
+  { id: "cqrs", label: "CQRS" },
+  { id: "mvc", label: "MVC / MVVM" },
+  { id: "other", label: "Other" },
+];
+
+// Important files AI should read first (NOT AI config files - those are what we're creating)
+const IMPORTANT_FILES = [
+  { id: "readme", label: "README.md", icon: "📖" },
+  { id: "package_json", label: "package.json", icon: "📦" },
+  { id: "changelog", label: "CHANGELOG.md", icon: "📝" },
+  { id: "contributing", label: "CONTRIBUTING.md", icon: "🤝" },
+  { id: "makefile", label: "Makefile", icon: "🔧" },
+  { id: "dockerfile", label: "Dockerfile", icon: "🐳" },
+  { id: "docker_compose", label: "docker-compose.yml", icon: "🐳" },
+  { id: "env_example", label: ".env.example", icon: "🔐" },
+  { id: "openapi", label: "openapi.yaml / swagger.json", icon: "📡" },
+  { id: "architecture_md", label: "ARCHITECTURE.md", icon: "🏗️" },
+  { id: "api_docs", label: "API documentation", icon: "📚" },
+  { id: "database_schema", label: "Database schema / migrations", icon: "🗄️" },
+];
+
+// Error handling patterns
+const ERROR_HANDLING_PATTERNS = [
+  { id: "try_catch", label: "Try-Catch Everywhere" },
+  { id: "result_types", label: "Result / Either Types" },
+  { id: "error_boundaries", label: "Error Boundaries (React)" },
+  { id: "global_handler", label: "Global Error Handler" },
+  { id: "middleware", label: "Middleware-based" },
+  { id: "exceptions", label: "Custom Exceptions / Errors" },
+  { id: "other", label: "Other" },
+];
+
 // Platforms are the PRIMARY target, but files often work across multiple IDEs
 const PLATFORMS = [
   {
@@ -637,6 +679,9 @@ type BoundariesConfig = {
 
 type CodeStyleConfig = {
   naming: string;
+  errorHandling: string;
+  errorHandlingOther: string;
+  loggingConventions: string;
   notes: string;
   savePreferences: boolean;
 };
@@ -665,6 +710,9 @@ type StaticFilesConfig = {
   security: boolean;
   securityCustom: string;
   securitySave: boolean;
+  roadmap: boolean;
+  roadmapCustom: string;
+  roadmapSave: boolean;
   gitignoreMode: "generate" | "custom" | "skip";
   gitignoreCustom: string;
   gitignoreSave: boolean;
@@ -678,6 +726,8 @@ type WizardConfig = {
   projectName: string;
   projectDescription: string;
   projectType: string;
+  architecturePattern: string;
+  architecturePatternOther: string;
   devOS: string; // windows, macos, linux
   languages: string[];
   frameworks: string[];
@@ -691,7 +741,10 @@ type WizardConfig = {
   isPublic: boolean;
   license: string;
   licenseOther: string;
+  licenseNotes: string;
   licenseSave: boolean;
+  repoHosts: string[];
+  multiRepoReason: string;
   funding: boolean;
   fundingYml: string;
   conventionalCommits: boolean;
@@ -704,9 +757,12 @@ type WizardConfig = {
   containerRegistryOther: string;
   registryUsername: string;
   aiBehaviorRules: string[];
+  importantFiles: string[];
+  importantFilesOther: string;
   enableAutoUpdate: boolean;
   includePersonalData: boolean;
   platform: string;
+  blueprintMode: boolean; // Generate with [[VARIABLE|default]] for blueprint templates
   additionalFeedback: string;
   commands: CommandsConfig;
   codeStyle: CodeStyleConfig;
@@ -731,6 +787,8 @@ export default function WizardPage() {
     projectName: "",
     projectDescription: "",
     projectType: "leisure",
+    architecturePattern: "",
+    architecturePatternOther: "",
     devOS: "linux",
     languages: [],
     frameworks: [],
@@ -744,7 +802,10 @@ export default function WizardPage() {
     isPublic: true,
     license: "none",
     licenseOther: "",
+    licenseNotes: "",
     licenseSave: false,
+    repoHosts: [],
+    multiRepoReason: "",
     funding: false,
     fundingYml: "",
     conventionalCommits: true,
@@ -757,12 +818,15 @@ export default function WizardPage() {
     containerRegistryOther: "",
     registryUsername: "",
     aiBehaviorRules: ["always_debug_after_build", "check_logs_after_build", "follow_existing_patterns"],
+    importantFiles: [],
+    importantFilesOther: "",
     enableAutoUpdate: false,
     includePersonalData: true,
     platform: "universal",
+    blueprintMode: false,
     additionalFeedback: "",
     commands: { build: "", test: "", lint: "", dev: "", additional: [], savePreferences: false },
-    codeStyle: { naming: "camelCase", notes: "", savePreferences: false },
+    codeStyle: { naming: "camelCase", errorHandling: "", errorHandlingOther: "", loggingConventions: "", notes: "", savePreferences: false },
     boundaries: { always: [], ask: [], never: [], savePreferences: false },
     testing: { levels: [], coverage: 80, frameworks: [], notes: "", savePreferences: false },
     staticFiles: {
@@ -781,6 +845,9 @@ export default function WizardPage() {
       security: false,
       securityCustom: "",
       securitySave: false,
+      roadmap: true,
+      roadmapCustom: "",
+      roadmapSave: false,
       gitignoreMode: "skip",
       gitignoreCustom: "",
       gitignoreSave: false,
@@ -953,50 +1020,98 @@ export default function WizardPage() {
 
   const buildGeneratorConfig = () => {
     return {
+      // Project basics
       projectName: config.projectName,
       projectDescription: config.projectDescription,
       projectType: config.projectType,
+      architecturePattern: config.architecturePattern,
+      architecturePatternOther: config.architecturePatternOther,
       devOS: config.devOS,
+      
+      // Tech stack
       languages: config.languages,
       frameworks: config.frameworks,
       databases: config.databases,
       letAiDecide: config.letAiDecide,
+      
+      // Repository
       repoHost: config.repoHost,
       repoHostOther: config.repoHostOther,
+      repoHosts: config.repoHosts,
+      multiRepoReason: config.multiRepoReason,
       repoUrl: config.repoUrl,
       exampleRepoUrl: config.exampleRepoUrl,
+      documentationUrl: config.documentationUrl,
       isPublic: config.isPublic,
+      
+      // License
       license: config.license,
-      funding: config.funding,
-      fundingYml: config.fundingYml,
+      licenseOther: config.licenseOther,
+      licenseNotes: config.licenseNotes,
+      
+      // Git workflow
+      conventionalCommits: config.conventionalCommits,
+      semver: config.semver,
       dependabot: config.dependabot,
-      cicd: [config.cicd],
+      
+      // CI/CD & Deployment
+      cicd: config.cicd ? [config.cicd] : [],
+      deploymentTarget: config.deploymentTargets,
+      buildContainer: config.buildContainer,
       containerRegistry: config.containerRegistry,
       customRegistry: config.containerRegistryOther,
-      deploymentTarget: config.deploymentTargets,
+      
+      // Funding
+      funding: config.funding,
+      fundingYml: config.fundingYml,
+      
+      // AI behavior
       aiBehaviorRules: config.aiBehaviorRules,
+      importantFiles: config.importantFiles,
+      importantFilesOther: config.importantFilesOther,
       enableAutoUpdate: config.enableAutoUpdate,
       includePersonalData: config.includePersonalData,
+      
+      // Platform & output
       platform: config.platform,
       platforms: [config.platform],
+      blueprintMode: config.blueprintMode,
       additionalFeedback: config.additionalFeedback,
-      buildContainer: config.buildContainer,
+      
+      // Commands
       commands: config.commands,
-      codeStyle: config.codeStyle,
+      
+      // Code style (including error handling other)
+      codeStyle: {
+        ...config.codeStyle,
+        errorHandlingOther: config.codeStyle.errorHandlingOther,
+      },
+      
+      // Boundaries
       boundaries: config.boundaries,
+      
+      // Testing strategy
       testingStrategy: {
         levels: config.testing.levels,
         coverage: config.testing.coverage,
         frameworks: config.testing.frameworks,
         notes: config.testing.notes,
       },
+      
+      // Static files
       staticFiles: {
         funding: config.funding || config.staticFiles.funding,
         fundingYml: config.staticFiles.fundingYml || config.fundingYml,
         editorconfig: config.staticFiles.editorconfig,
+        editorconfigCustom: config.staticFiles.editorconfigCustom,
         contributing: config.staticFiles.contributing,
+        contributingCustom: config.staticFiles.contributingCustom,
         codeOfConduct: config.staticFiles.codeOfConduct,
+        codeOfConductCustom: config.staticFiles.codeOfConductCustom,
         security: config.staticFiles.security,
+        securityCustom: config.staticFiles.securityCustom,
+        roadmap: config.staticFiles.roadmap,
+        roadmapCustom: config.staticFiles.roadmapCustom,
         gitignoreMode: config.staticFiles.gitignoreMode,
         gitignoreCustom: config.staticFiles.gitignoreCustom,
         dockerignoreMode: config.buildContainer ? (config.staticFiles.dockerignoreMode === "skip" ? "generate" : config.staticFiles.dockerignoreMode) : config.staticFiles.dockerignoreMode,
@@ -1017,6 +1132,21 @@ export default function WizardPage() {
     return Array.from(vars);
   };
 
+  // Extract variables WITH their defaults - returns { name, default } pairs
+  const extractVariablesWithDefaults = (content: string): Array<{ name: string; defaultVal: string | undefined }> => {
+    const regex = /\[\[([A-Z_][A-Z0-9_]*)(?:\|([^\]]*))?\]\]/g;
+    const vars = new Map<string, string | undefined>();
+    let match;
+    while ((match = regex.exec(content)) !== null) {
+      const [, varName, defaultVal] = match;
+      // Keep the first default we find (don't overwrite if already exists with a default)
+      if (!vars.has(varName) || (vars.get(varName) === undefined && defaultVal !== undefined)) {
+        vars.set(varName, defaultVal);
+      }
+    }
+    return Array.from(vars.entries()).map(([name, defaultVal]) => ({ name, defaultVal }));
+  };
+
   // Get all variables from all preview files
   const allVariables = useMemo(() => {
     const vars = new Set<string>();
@@ -1026,6 +1156,33 @@ export default function WizardPage() {
     // Also check additionalFeedback for variables
     extractVariables(config.additionalFeedback).forEach(v => vars.add(v));
     return Array.from(vars);
+  }, [previewFiles, config.additionalFeedback]);
+
+  // Get variables that have NO default (these need user input)
+  const variablesWithoutDefaults = useMemo(() => {
+    const allVarsWithDefaults: Array<{ name: string; defaultVal: string | undefined }> = [];
+    previewFiles.forEach(file => {
+      extractVariablesWithDefaults(file.content).forEach(v => allVarsWithDefaults.push(v));
+    });
+    extractVariablesWithDefaults(config.additionalFeedback).forEach(v => allVarsWithDefaults.push(v));
+    
+    // Build a map of variable -> has default
+    const varDefaultMap = new Map<string, boolean>();
+    allVarsWithDefaults.forEach(({ name, defaultVal }) => {
+      if (varDefaultMap.has(name)) {
+        // If already has a default, keep it true; only set false if currently false and no default
+        if (defaultVal !== undefined) {
+          varDefaultMap.set(name, true);
+        }
+      } else {
+        varDefaultMap.set(name, defaultVal !== undefined);
+      }
+    });
+    
+    // Return names that have no default
+    return Array.from(varDefaultMap.entries())
+      .filter(([, hasDefault]) => !hasDefault)
+      .map(([name]) => name);
   }, [previewFiles, config.additionalFeedback]);
 
   // Replace variables in content (handles [[VAR]] and [[VAR|default]] syntax)
@@ -1112,7 +1269,7 @@ export default function WizardPage() {
   };
 
   const toggleArrayValue = (
-    key: "languages" | "frameworks" | "databases" | "aiBehaviorRules",
+    key: "languages" | "frameworks" | "databases" | "aiBehaviorRules" | "importantFiles",
     value: string
   ) => {
     setConfig((prev) => ({
@@ -1232,9 +1389,9 @@ export default function WizardPage() {
 
   // Check for unfilled variables before download
   const handleDownloadClick = () => {
-    // Check if there are any unfilled variables
-    const unfilled = allVariables.filter(v => !variableValues[v]);
-    if (unfilled.length > 0) {
+    // Only prompt for variables that have no default AND no user-provided value
+    const unfilledWithoutDefaults = variablesWithoutDefaults.filter(v => !variableValues[v]);
+    if (unfilledWithoutDefaults.length > 0) {
       setShowVariableModal(true);
       return;
     }
@@ -1298,7 +1455,7 @@ export default function WizardPage() {
   return (
     <div className="flex min-h-screen flex-col bg-muted/30">
       {/* Variable Fill Modal */}
-      {showVariableModal && allVariables.length > 0 && (
+      {showVariableModal && variablesWithoutDefaults.length > 0 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="relative mx-4 w-full max-w-lg rounded-2xl bg-background p-6 shadow-2xl">
             <button
@@ -1309,16 +1466,17 @@ export default function WizardPage() {
               <X className="h-5 w-5" />
             </button>
             
-            <h2 className="text-xl font-bold">Fill in Variables</h2>
+            <h2 className="text-xl font-bold">Fill in Required Variables</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Your config contains template variables. Please fill them in:
+              These variables don&apos;t have default values. Please provide values for them:
             </p>
             
             <div className="mt-4 max-h-[60vh] space-y-4 overflow-y-auto">
-              {allVariables.map(varName => (
+              {variablesWithoutDefaults.map(varName => (
                 <div key={varName}>
                   <label className="text-sm font-medium">
-                    <code className="rounded bg-primary/10 px-2 py-0.5 text-primary">[[{varName}]]</code>
+                    <code className="rounded bg-amber-200 px-2 py-0.5 text-amber-800 dark:bg-amber-800 dark:text-amber-200">[[{varName}]]</code>
+                    <span className="ml-2 text-xs text-destructive">(no default)</span>
                   </label>
                   <input
                     type="text"
@@ -1337,7 +1495,7 @@ export default function WizardPage() {
               </Button>
               <Button 
                 onClick={handleDownload}
-                disabled={isDownloading || allVariables.some(v => !variableValues[v])}
+                disabled={isDownloading || variablesWithoutDefaults.some(v => !variableValues[v])}
               >
                 {isDownloading ? (
                   <>
@@ -1500,11 +1658,17 @@ export default function WizardPage() {
                   name={config.projectName}
                   description={config.projectDescription}
                   projectType={config.projectType}
+                  architecturePattern={config.architecturePattern}
+                  architecturePatternOther={config.architecturePatternOther}
                   devOS={config.devOS}
+                  blueprintMode={config.blueprintMode}
                   onNameChange={(v) => setConfig({ ...config, projectName: v })}
                   onDescriptionChange={(v) => setConfig({ ...config, projectDescription: v })}
                   onProjectTypeChange={(v) => setConfig({ ...config, projectType: v })}
+                  onArchitecturePatternChange={(v) => setConfig({ ...config, architecturePattern: v })}
+                  onArchitecturePatternOtherChange={(v) => setConfig({ ...config, architecturePatternOther: v })}
                   onDevOSChange={(v) => setConfig({ ...config, devOS: v })}
+                  onBlueprintModeChange={(v) => setConfig({ ...config, blueprintMode: v })}
                 />
               )}
               {currentStep === 1 && (
@@ -1542,6 +1706,10 @@ export default function WizardPage() {
                 <StepAIBehavior
                   selected={config.aiBehaviorRules}
                   onToggle={(v) => toggleArrayValue("aiBehaviorRules", v)}
+                  importantFiles={config.importantFiles}
+                  importantFilesOther={config.importantFilesOther}
+                  onImportantFilesToggle={(v) => toggleArrayValue("importantFiles", v)}
+                  onImportantFilesOtherChange={(v) => setConfig({ ...config, importantFilesOther: v })}
                   enableAutoUpdate={config.enableAutoUpdate}
                   onAutoUpdateChange={(v) => setConfig({ ...config, enableAutoUpdate: v })}
                   includePersonalData={config.includePersonalData}
@@ -1585,6 +1753,7 @@ export default function WizardPage() {
                   previewFiles={previewFiles}
                   expandedFile={expandedFile}
                   copiedFile={copiedFile}
+                  blueprintMode={config.blueprintMode}
                   onToggleExpand={(fileName) => setExpandedFile(expandedFile === fileName ? null : fileName)}
                   onCopyFile={handleCopyFile}
                   onPlatformChange={(v) => setConfig({ ...config, platform: v })}
@@ -1657,20 +1826,32 @@ function StepProject({
   name,
   description,
   projectType,
+  architecturePattern,
+  architecturePatternOther,
   devOS,
+  blueprintMode,
   onNameChange,
   onDescriptionChange,
   onProjectTypeChange,
+  onArchitecturePatternChange,
+  onArchitecturePatternOtherChange,
   onDevOSChange,
+  onBlueprintModeChange,
 }: {
   name: string;
   description: string;
   projectType: string;
+  architecturePattern: string;
+  architecturePatternOther: string;
   devOS: string;
+  blueprintMode: boolean;
   onNameChange: (v: string) => void;
   onDescriptionChange: (v: string) => void;
   onProjectTypeChange: (v: string) => void;
+  onArchitecturePatternChange: (v: string) => void;
+  onArchitecturePatternOtherChange: (v: string) => void;
   onDevOSChange: (v: string) => void;
+  onBlueprintModeChange: (v: boolean) => void;
 }) {
   return (
     <div>
@@ -1681,6 +1862,51 @@ function StepProject({
       </p>
 
       <div className="mt-6 space-y-6">
+        {/* Blueprint Template Mode - at the beginning */}
+        <div className={`rounded-lg border-2 p-4 transition-colors ${blueprintMode ? "border-amber-500 bg-amber-50 dark:border-amber-600 dark:bg-amber-950/30" : "border-dashed border-muted-foreground/30"}`}>
+          <div className="flex items-start gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium">
+                  🧩 Create as Blueprint Template?
+                </label>
+                {blueprintMode && (
+                  <span className="rounded-full bg-amber-500 px-2 py-0.5 text-xs font-medium text-white">
+                    Enabled
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Enable this to share your config as a reusable template. Values will be converted to{" "}
+                <code className="rounded bg-amber-200 px-1 py-0.5 font-mono text-xs dark:bg-amber-800">[[VARIABLE|default]]</code>{" "}
+                placeholders that others can customize.{" "}
+                <a
+                  href="/docs/blueprints/variables"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline hover:no-underline"
+                >
+                  Learn more →
+                </a>
+              </p>
+              {blueprintMode && (
+                <div className="mt-3 rounded-md bg-amber-100 p-3 text-xs text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
+                  <strong>Note:</strong> The preview will show variables like <code className="font-mono">[[PROJECT_NAME|{name || "my-app"}]]</code>.
+                  When downloading, defaults are applied so the file works immediately.
+                </div>
+              )}
+            </div>
+            <button
+              onClick={() => onBlueprintModeChange(!blueprintMode)}
+              className={`relative h-6 w-11 rounded-full transition-colors ${blueprintMode ? "bg-amber-500" : "bg-muted"}`}
+            >
+              <span
+                className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${blueprintMode ? "translate-x-5" : "translate-x-0.5"}`}
+              />
+            </button>
+          </div>
+        </div>
+
         <div>
           <label className="mb-2 block text-sm font-medium">
             Project Name <span className="text-destructive">*</span>
@@ -1760,6 +1986,40 @@ function StepProject({
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Architecture Pattern */}
+        <div>
+          <label className="mb-2 block text-sm font-medium">
+            Architecture Pattern (optional)
+          </label>
+          <p className="mb-3 text-sm text-muted-foreground">
+            What architectural approach does this project follow?
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {ARCHITECTURE_PATTERNS.map((pattern) => (
+              <button
+                key={pattern.id}
+                onClick={() => onArchitecturePatternChange(pattern.id)}
+                className={`rounded-full border px-4 py-2 text-sm transition-all ${
+                  architecturePattern === pattern.id
+                    ? "border-primary bg-primary/10"
+                    : "hover:border-primary"
+                }`}
+              >
+                {pattern.label}
+              </button>
+            ))}
+          </div>
+          {architecturePattern === "other" && (
+            <input
+              type="text"
+              value={architecturePatternOther}
+              onChange={(e) => onArchitecturePatternOtherChange(e.target.value)}
+              placeholder="e.g., CQRS, Hexagonal, Clean Architecture..."
+              className="mt-3 w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          )}
         </div>
       </div>
 
@@ -2405,6 +2665,29 @@ function StepRepository({
   config: WizardConfig;
   onChange: (updates: Partial<WizardConfig>) => void;
 }) {
+  const toggleRepoHost = (hostId: string) => {
+    const currentHosts = config.repoHosts || [];
+    const isSelected = currentHosts.includes(hostId);
+    
+    if (isSelected) {
+      // Deselect
+      const newHosts = currentHosts.filter((h) => h !== hostId);
+      onChange({ 
+        repoHosts: newHosts,
+        repoHost: newHosts[0] || "github" // Keep single host for backward compat
+      });
+    } else {
+      // Select
+      const newHosts = [...currentHosts, hostId];
+      onChange({ 
+        repoHosts: newHosts,
+        repoHost: newHosts[0] // Keep single host for backward compat
+      });
+    }
+  };
+  
+  const selectedHosts = config.repoHosts?.length ? config.repoHosts : (config.repoHost ? [config.repoHost] : []);
+  
   return (
     <div>
       <h2 className="text-2xl font-bold">Repository Setup</h2>
@@ -2414,14 +2697,15 @@ function StepRepository({
 
       <div className="mt-6 space-y-6">
         <div>
-          <label className="text-sm font-medium">Repository Host</label>
+          <label className="text-sm font-medium">Repository Host(s)</label>
+          <p className="text-xs text-muted-foreground mt-1">Select one or more platforms where this code will be hosted</p>
           <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
             {REPO_HOSTS.map((host) => (
               <button
                 key={host.id}
-                onClick={() => onChange({ repoHost: host.id })}
+                onClick={() => toggleRepoHost(host.id)}
                 className={`flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm transition-all ${
-                  config.repoHost === host.id ? "border-primary bg-primary/5" : "hover:border-primary"
+                  selectedHosts.includes(host.id) ? "border-primary bg-primary/5" : "hover:border-primary"
                 }`}
               >
                 <span>{host.icon}</span>
@@ -2429,7 +2713,7 @@ function StepRepository({
               </button>
             ))}
           </div>
-          {config.repoHost === "other" && (
+          {selectedHosts.includes("other") && (
             <div className="mt-3">
               <input
                 type="text"
@@ -2437,6 +2721,19 @@ function StepRepository({
                 onChange={(e) => onChange({ repoHostOther: e.target.value })}
                 placeholder="e.g., Forgejo, Gogs, Azure DevOps..."
                 className="w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+          )}
+          {selectedHosts.length >= 2 && (
+            <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30">
+              <label className="text-sm font-medium text-amber-800 dark:text-amber-200">Why multiple repositories?</label>
+              <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">Help the AI understand how you use each platform</p>
+              <input
+                type="text"
+                value={config.multiRepoReason || ""}
+                onChange={(e) => onChange({ multiRepoReason: e.target.value })}
+                placeholder="e.g., GitHub for code, Gitea for deployment"
+                className="mt-2 w-full rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 dark:border-amber-700 dark:bg-amber-950/50"
               />
             </div>
           )}
@@ -2489,6 +2786,18 @@ function StepRepository({
               placeholder="e.g., Proprietary, WTFPL, CC BY 4.0..."
               className="mt-2 w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
+          )}
+          {config.license && config.license !== "none" && (
+            <div className="mt-3">
+              <label className="text-xs text-muted-foreground">Additional license notes (optional)</label>
+              <input
+                type="text"
+                value={config.licenseNotes || ""}
+                onChange={(e) => onChange({ licenseNotes: e.target.value })}
+                placeholder="e.g., I want to avoid commercial usage, Include copyright notice in files..."
+                className="mt-1 w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
           )}
           <label className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
             <input
@@ -2693,6 +3002,10 @@ function StepRepository({
 function StepAIBehavior({
   selected,
   onToggle,
+  importantFiles,
+  importantFilesOther,
+  onImportantFilesToggle,
+  onImportantFilesOtherChange,
   enableAutoUpdate,
   onAutoUpdateChange,
   includePersonalData,
@@ -2702,6 +3015,10 @@ function StepAIBehavior({
 }: {
   selected: string[];
   onToggle: (v: string) => void;
+  importantFiles: string[];
+  importantFilesOther: string;
+  onImportantFilesToggle: (v: string) => void;
+  onImportantFilesOtherChange: (v: string) => void;
   enableAutoUpdate: boolean;
   onAutoUpdateChange: (v: boolean) => void;
   includePersonalData: boolean;
@@ -2783,6 +3100,40 @@ function StepAIBehavior({
             </div>
           </button>
         ))}
+      </div>
+
+      {/* Important Files to Read First */}
+      <div className="mt-8">
+        <h3 className="font-semibold">Important Files to Read First</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Select files the AI should read to understand your project context. These are typically documentation, configuration, or architecture files.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {IMPORTANT_FILES.map((file) => (
+            <button
+              key={file.id}
+              onClick={() => onImportantFilesToggle(file.id)}
+              className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-all ${
+                importantFiles.includes(file.id)
+                  ? "border-primary bg-primary/10"
+                  : "hover:border-primary"
+              }`}
+            >
+              <span>{file.icon}</span>
+              <span>{file.label}</span>
+            </button>
+          ))}
+        </div>
+        <div className="mt-3">
+          <label className="text-xs text-muted-foreground">Other important files (comma-separated)</label>
+          <input
+            type="text"
+            value={importantFilesOther}
+            onChange={(e) => onImportantFilesOtherChange(e.target.value)}
+            placeholder="e.g., src/config/index.ts, docs/api.md, prisma/schema.prisma"
+            className="mt-1 w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
       </div>
 
       {/* Auto-Update Option */}
@@ -3291,6 +3642,49 @@ function StepCodeStyle({
           </div>
         </div>
         
+        {/* Error Handling Pattern */}
+        <div>
+          <label className="text-sm font-medium">Error Handling Pattern</label>
+          <p className="mt-1 text-xs text-muted-foreground">How should errors be handled in this project?</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {ERROR_HANDLING_PATTERNS.map((pattern) => (
+              <button
+                key={pattern.id}
+                onClick={() => onChange({ errorHandling: pattern.id })}
+                className={`rounded-full border px-3 py-1.5 text-sm transition-all ${
+                  config.errorHandling === pattern.id
+                    ? "border-primary bg-primary/10"
+                    : "hover:border-primary"
+                }`}
+              >
+                {pattern.label}
+              </button>
+            ))}
+          </div>
+          {config.errorHandling === "other" && (
+            <input
+              type="text"
+              value={config.errorHandlingOther}
+              onChange={(e) => onChange({ errorHandlingOther: e.target.value })}
+              placeholder="e.g., Domain-specific errors, Monad-based, Custom error classes..."
+              className="mt-2 w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          )}
+        </div>
+
+        {/* Logging Conventions */}
+        <div>
+          <label className="text-sm font-medium">Logging Conventions</label>
+          <p className="mt-1 text-xs text-muted-foreground">Describe your logging approach (optional)</p>
+          <input
+            type="text"
+            value={config.loggingConventions}
+            onChange={(e) => onChange({ loggingConventions: e.target.value })}
+            placeholder="e.g., Use console.log for dev, structured JSON in prod, pino logger, log levels..."
+            className="mt-2 w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+
         <div>
           <label className="text-sm font-medium">Additional style notes</label>
           <textarea
@@ -3780,6 +4174,27 @@ We are committed to providing a welcoming environment.`}
 To report a vulnerability, please email security@example.com`}
           minHeight="150px"
         />
+        
+        <StaticFileEditor
+          label="ROADMAP.md"
+          description="Project roadmap and planned features"
+          enabled={config.roadmap}
+          onEnable={(v) => onChange({ roadmap: v })}
+          content={config.roadmapCustom}
+          onContentChange={(v) => onChange({ roadmapCustom: v })}
+          saveChecked={config.roadmapSave}
+          onSaveToggle={(v) => onChange({ roadmapSave: v })}
+          placeholder={`# Roadmap
+
+## Planned Features
+- [ ] Feature 1
+- [ ] Feature 2
+
+## Future Ideas
+- Idea 1
+- Idea 2`}
+          minHeight="180px"
+        />
 
         {isGithub && isPublic && (
           <div className="rounded-lg border p-4">
@@ -3960,7 +4375,6 @@ function StepFeedback({
       <div className="mt-4 rounded-lg bg-muted/50 p-4">
         <h4 className="font-medium">💡 Suggestions:</h4>
         <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
-          <li>• Architectural patterns (microservices, monolith, serverless)</li>
           <li>• Special deployment requirements or procedures</li>
           <li>• Team-specific workflows or conventions</li>
         </ul>
@@ -3978,9 +4392,6 @@ function StepFeedback({
         <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
           <li>• Environment variable naming patterns</li>
           <li>• Database migration procedures</li>
-          <li>• Important files the AI should read first</li>
-          <li>• Preferred error handling patterns</li>
-          <li>• Logging conventions or required log formats</li>
           <li>• Performance constraints or SLAs</li>
           <li>• Security requirements (auth flow, data handling)</li>
         </ul>
@@ -3995,6 +4406,7 @@ function StepGenerate({
   previewFiles,
   expandedFile,
   copiedFile,
+  blueprintMode,
   onToggleExpand,
   onCopyFile,
   onPlatformChange,
@@ -4011,6 +4423,7 @@ function StepGenerate({
   previewFiles: GeneratedFile[];
   expandedFile: string | null;
   copiedFile: string | null;
+  blueprintMode: boolean;
   onToggleExpand: (fileName: string) => void;
   onCopyFile: (fileName: string, content: string) => void;
   onPlatformChange: (v: string) => void;
@@ -4038,6 +4451,25 @@ function StepGenerate({
         <strong>{config.projectName || "your project"}</strong>. Click to expand
         and copy individual files.
       </p>
+
+      {/* Blueprint Mode Notice */}
+      {blueprintMode && (
+        <div className="mt-4 rounded-lg border-2 border-amber-500 bg-amber-50 p-4 dark:border-amber-600 dark:bg-amber-950/30">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">🧩</span>
+            <div>
+              <h4 className="font-medium text-amber-800 dark:text-amber-200">Blueprint Template Mode Active</h4>
+              <p className="mt-1 text-sm text-amber-700 dark:text-amber-300">
+                Your configuration includes <code className="rounded bg-amber-200 px-1 py-0.5 font-mono text-xs dark:bg-amber-800">[[VARIABLE|default]]</code> placeholders 
+                (highlighted in amber) that others can customize when using this template.
+              </p>
+              <p className="mt-2 text-sm text-amber-700 dark:text-amber-300">
+                <strong>Preview:</strong> Shows variable placeholders • <strong>Download:</strong> Replaces variables with their default values so the file works immediately.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="mt-6 space-y-4">
         {/* Target AI IDE Selection */}
@@ -4172,8 +4604,19 @@ function StepGenerate({
               {/* File Content Preview */}
               {expandedFile === file.fileName && (
                 <div className="border-t bg-background">
-                  <pre className="max-h-64 overflow-auto p-4 text-xs">
-                    <code>{file.content}</code>
+                  <pre className="max-h-64 overflow-auto p-4 text-xs font-mono">
+                    <code 
+                      dangerouslySetInnerHTML={{
+                        __html: file.content
+                          .replace(/&/g, "&amp;")
+                          .replace(/</g, "&lt;")
+                          .replace(/>/g, "&gt;")
+                          .replace(
+                            /\[\[([A-Za-z_][A-Za-z0-9_]*)(?:\|([^\]]*))?\]\]/g,
+                            '<mark class="bg-amber-300 dark:bg-amber-700 text-amber-900 dark:text-amber-100 rounded px-0.5 font-semibold">$&</mark>'
+                          )
+                      }}
+                    />
                   </pre>
                 </div>
               )}

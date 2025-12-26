@@ -19,6 +19,9 @@ interface BoundariesConfig {
 
 interface CodeStyleConfig {
   naming?: string;
+  errorHandling?: string;
+  errorHandlingOther?: string;
+  loggingConventions?: string;
   patterns?: string;
   notes?: string;
   savePreferences?: boolean;
@@ -48,6 +51,9 @@ interface StaticFilesConfig {
   security?: boolean;
   securityCustom?: string;
   securitySave?: boolean;
+  roadmap?: boolean;
+  roadmapCustom?: string;
+  roadmapSave?: boolean;
   gitignoreMode?: "generate" | "custom" | "skip";
   gitignoreCustom?: string;
   gitignoreSave?: boolean;
@@ -62,6 +68,8 @@ interface WizardConfig {
   projectName: string;
   projectDescription: string;
   projectType?: string; // work, leisure, open_source_small, etc.
+  architecturePattern?: string;
+  architecturePatternOther?: string;
   devOS?: string; // linux, macos, windows, wsl, multi
   languages: string[];
   frameworks: string[];
@@ -74,7 +82,11 @@ interface WizardConfig {
   documentationUrl?: string; // external docs (Confluence, Notion, etc.)
   isPublic: boolean;
   license: string;
+  licenseOther?: string;
+  licenseNotes?: string;
   licenseSave?: boolean;
+  repoHosts?: string[];
+  multiRepoReason?: string;
   funding: boolean;
   fundingYml?: string;
   releaseStrategy?: string;
@@ -88,10 +100,13 @@ interface WizardConfig {
   deploymentTarget?: string[];
   buildContainer?: boolean;
   aiBehaviorRules: string[];
+  importantFiles?: string[];
+  importantFilesOther?: string;
   enableAutoUpdate?: boolean;
   includePersonalData?: boolean;
   platform?: string;
   platforms?: string[];
+  blueprintMode?: boolean;
   additionalFeedback: string;
   commands?: CommandsConfig;
   boundaries?: BoundariesConfig;
@@ -99,6 +114,35 @@ interface WizardConfig {
   testingStrategy?: TestingStrategyConfig;
   staticFiles?: StaticFilesConfig;
   saveAllPreferences?: boolean;
+}
+
+// Blueprint variable helpers
+// Converts a value to [[VARIABLE|default]] format when blueprint mode is enabled
+function bpVar(
+  blueprintMode: boolean | undefined,
+  varName: string,
+  defaultValue: string
+): string {
+  if (!blueprintMode) return defaultValue;
+  // If default is empty, just use [[VAR]]
+  if (!defaultValue || defaultValue.trim() === "") {
+    return `[[${varName}]]`;
+  }
+  return `[[${varName}|${defaultValue}]]`;
+}
+
+// For multiple values (arrays), creates comma-separated variable or value
+function bpVarArray(
+  blueprintMode: boolean | undefined,
+  varName: string,
+  values: string[]
+): string {
+  const joined = values.join(", ");
+  if (!blueprintMode) return joined;
+  if (!joined || joined.trim() === "") {
+    return `[[${varName}]]`;
+  }
+  return `[[${varName}|${joined}]]`;
 }
 
 // Project type behavioral instructions
@@ -375,124 +419,262 @@ export function escapeVariables(content: string): string {
 // MDC format: Markdown with YAML frontmatter
 function generateCursorRules(config: WizardConfig, user: UserProfile): string {
   const lines: string[] = [];
+  const bp = config.blueprintMode;
 
   // MDC frontmatter
   lines.push("---");
-  lines.push(`description: AI rules for ${config.projectName || "this project"}`);
+  lines.push(`description: AI rules for ${bpVar(bp, "PROJECT_NAME", config.projectName || "this project")}`);
   lines.push("alwaysApply: true");
   lines.push("---");
   lines.push("");
-  lines.push(`# ${config.projectName || "Project"} - AI Rules`);
+  lines.push(`# ${bpVar(bp, "PROJECT_NAME", config.projectName || "Project")} - AI Rules`);
   lines.push("");
-  lines.push("## Project Context");
-  lines.push(`This is ${config.projectDescription || "a software project"}.`);
+  lines.push("## Project Overview");
+  lines.push("");
+  lines.push(`**Description**: ${bpVar(bp, "PROJECT_DESCRIPTION", config.projectDescription || "A software project.")}`);
+  lines.push("");
+  if (config.architecturePattern) {
+    const archLabels: Record<string, string> = {
+      monolith: "Monolith - single deployable unit",
+      modular_monolith: "Modular Monolith - organized into modules but deployed as one unit",
+      microservices: "Microservices - independently deployable services",
+      serverless: "Serverless - function-as-a-service architecture",
+      event_driven: "Event-Driven - components communicate via events",
+      layered: "Layered / N-Tier - separated into presentation, business, data layers",
+      hexagonal: "Hexagonal / Ports & Adapters - domain at center, adapters at edges",
+      clean: "Clean Architecture - dependency rule points inward",
+      cqrs: "CQRS - separate read and write models",
+      mvc: "MVC / MVVM - Model-View-Controller or Model-View-ViewModel",
+      other: config.architecturePatternOther || "Custom architecture",
+    };
+    lines.push(`**Architecture Pattern**: ${archLabels[config.architecturePattern] || config.architecturePattern}`);
+  }
+  if (config.isPublic !== undefined) {
+    lines.push(`**Visibility**: ${config.isPublic ? "Public repository" : "Private repository"}`);
+  }
   if (config.devOS) {
     const osNames: Record<string, string> = {
       linux: "Linux",
       macos: "macOS",
       windows: "Windows",
       wsl: "Windows with WSL (Windows Subsystem for Linux)",
-      multi: "Multi-platform (use cross-platform compatible commands)"
+      multi: "Multi-platform"
     };
-    lines.push(`**Development Environment**: ${osNames[config.devOS] || config.devOS}`);
-    if (config.devOS === "windows") {
-      lines.push("- Use PowerShell or CMD compatible commands");
-      lines.push("- Use backslashes for file paths or forward slashes for cross-platform compatibility");
-    } else if (config.devOS === "wsl") {
-      lines.push("- Prefer Linux commands (bash/zsh) but be aware of Windows/Linux path translations");
-    } else if (config.devOS === "multi") {
-      lines.push("- Use cross-platform commands that work on Windows, macOS, and Linux");
-      lines.push("- Prefer npm scripts or Makefile targets over platform-specific commands");
-    }
-  }
-  if (config.repoHost) {
-    const hostNames: Record<string, string> = {
-      github: "GitHub",
-      gitlab: "GitLab",
-      bitbucket: "Bitbucket",
-      gitea: "Gitea",
-      forgejo: "Forgejo",
-      codeberg: "Codeberg",
-      sourcehut: "SourceHut",
-      gogs: "Gogs",
-      aws_codecommit: "AWS CodeCommit",
-      azure_devops: "Azure DevOps",
-      gerrit: "Gerrit",
-      phabricator: "Phabricator",
-      other: config.repoHostOther || "Other",
-    };
-    lines.push(`**Repository Host**: ${hostNames[config.repoHost] || config.repoHost}`);
-  }
-  if (config.exampleRepoUrl) {
-    lines.push("");
-    lines.push(`**Reference Repository**: ${config.exampleRepoUrl}`);
-    lines.push("Use this repository as a reference for coding patterns, conventions, and architecture decisions.");
-  }
-  if (config.documentationUrl) {
-    lines.push("");
-    lines.push(`**External Documentation**: ${config.documentationUrl}`);
-    lines.push("Refer to this documentation for additional project context, architecture decisions, and team guidelines.");
+    lines.push(`**Development OS**: ${osNames[config.devOS] || config.devOS}`);
   }
   lines.push("");
 
-  if (config.languages.length > 0 || config.frameworks.length > 0 || (config.databases && config.databases.length > 0) || config.letAiDecide) {
-    lines.push("## Tech Stack");
-    if (config.languages.length > 0) {
-      const langs = config.languages.map(l => l.startsWith("custom:") ? l.replace("custom:", "") : l);
-      lines.push(`- Languages: ${langs.join(", ")}`);
+  // Repository information
+  const hasRepoInfo = config.repoUrl || config.repoHosts?.length || config.repoHost;
+  if (hasRepoInfo) {
+    lines.push("### Repository");
+    if (config.repoUrl) {
+      lines.push(`- **URL**: ${config.repoUrl}`);
     }
-    if (config.frameworks.length > 0) {
-      const fws = config.frameworks.map(f => f.startsWith("custom:") ? f.replace("custom:", "") : f);
-      lines.push(`- Frameworks: ${fws.join(", ")}`);
-    }
-    if (config.databases && config.databases.length > 0) {
-      const dbs = config.databases.map(d => d.startsWith("custom:") ? d.replace("custom:", "") : d);
-      lines.push(`- Database${config.databases.length > 1 ? 's' : ''}: ${dbs.join(", ")}`);
-    }
-    if (config.letAiDecide) {
-      if (config.languages.length > 0 || config.frameworks.length > 0) {
-        lines.push("- **Note**: For technologies beyond those listed above, feel free to suggest and use what's best suited for the project based on codebase analysis.");
-      } else {
-        lines.push("- **Note**: Analyze the codebase and determine the appropriate languages and frameworks. You have full flexibility to choose what works best.");
+    if (config.repoHosts?.length || config.repoHost) {
+      const hostNames: Record<string, string> = {
+        github: "GitHub",
+        gitlab: "GitLab",
+        bitbucket: "Bitbucket",
+        gitea: "Gitea",
+        forgejo: "Forgejo",
+        codeberg: "Codeberg",
+        sourcehut: "SourceHut",
+        gogs: "Gogs",
+        aws_codecommit: "AWS CodeCommit",
+        azure_devops: "Azure DevOps",
+        gerrit: "Gerrit",
+        phabricator: "Phabricator",
+        other: config.repoHostOther || "Other",
+      };
+      const hosts = config.repoHosts?.length ? config.repoHosts : [config.repoHost];
+      const hostLabels = hosts.map(h => hostNames[h] || h).join(", ");
+      lines.push(`- **Platform${hosts.length > 1 ? 's' : ''}**: ${hostLabels}`);
+      if (hosts.length > 1 && config.multiRepoReason) {
+        lines.push(`- **Why multiple platforms**: ${config.multiRepoReason}`);
       }
     }
     lines.push("");
   }
 
-  lines.push("## Code Style & Preferences");
-  // Only include skill-based instructions if includePersonalData is true
-  if (config.includePersonalData !== false && user.skillLevel) {
-    if (user.skillLevel === "novice" || user.skillLevel === "beginner") {
-      lines.push("- Be verbose with explanations and comments");
-      lines.push("- Explain concepts as you implement them");
-      lines.push("- Ask clarifying questions when unsure");
-    } else if (user.skillLevel === "intermediate") {
-      lines.push("- Provide balanced explanations");
-      lines.push("- Focus on important decisions and trade-offs");
-    } else {
-      lines.push("- Be concise and direct");
-      lines.push("- Assume expertise, minimal hand-holding");
-      lines.push("- Focus on implementation, skip basics");
+  // Development environment details
+  if (config.devOS) {
+    lines.push("### Development Environment");
+    if (config.devOS === "windows") {
+      lines.push("- Use PowerShell or CMD compatible commands");
+      lines.push("- Use backslashes for paths, or forward slashes for cross-platform compatibility");
+    } else if (config.devOS === "wsl") {
+      lines.push("- Prefer Linux commands (bash/zsh)");
+      lines.push("- Be aware of Windows/Linux path translations when needed");
+    } else if (config.devOS === "multi") {
+      lines.push("- Use cross-platform commands that work on Windows, macOS, and Linux");
+      lines.push("- Prefer npm scripts or Makefile targets over platform-specific commands");
+    } else if (config.devOS === "linux") {
+      lines.push("- Use standard Unix/Linux commands (bash, zsh)");
+    } else if (config.devOS === "macos") {
+      lines.push("- Use standard Unix commands, macOS-specific tools are acceptable");
     }
-    if (user.persona) {
-      lines.push(`- Developer context: ${user.persona.replace(/_/g, " ")}`);
+    lines.push("");
+  }
+
+  // Reference materials
+  if (config.exampleRepoUrl || config.documentationUrl) {
+    lines.push("### Reference Materials");
+    if (config.exampleRepoUrl) {
+      lines.push(`- **Example Repository**: ${bpVar(bp, "EXAMPLE_REPO_URL", config.exampleRepoUrl)}`);
+      lines.push("  Use this as a reference for coding patterns, conventions, and architecture decisions.");
     }
-    lines.push(`- Skill level: ${user.skillLevel.charAt(0).toUpperCase() + user.skillLevel.slice(1)}`);
+    if (config.documentationUrl) {
+      lines.push(`- **External Documentation**: ${bpVar(bp, "DOCUMENTATION_URL", config.documentationUrl)}`);
+      lines.push("  Refer to this for additional project context, architecture decisions, and team guidelines.");
+    }
+    lines.push("");
   }
-  if (config.codeStyle?.naming) {
-    lines.push(`- Naming: ${config.codeStyle.naming}`);
+
+  if (config.languages.length > 0 || config.frameworks.length > 0 || (config.databases && config.databases.length > 0) || config.letAiDecide) {
+    lines.push("## Technology Stack");
+    lines.push("");
+    lines.push("This project uses the following technologies. Please ensure all code follows the conventions and best practices for these:");
+    lines.push("");
+    if (config.languages.length > 0) {
+      const langs = config.languages.map(l => l.startsWith("custom:") ? l.replace("custom:", "") : l);
+      lines.push(`**Programming Languages**: ${bpVarArray(bp, "LANGUAGES", langs)}`);
+    }
+    if (config.frameworks.length > 0) {
+      const fws = config.frameworks.map(f => f.startsWith("custom:") ? f.replace("custom:", "") : f);
+      lines.push(`**Frameworks & Libraries**: ${bpVarArray(bp, "FRAMEWORKS", fws)}`);
+    }
+    if (config.databases && config.databases.length > 0) {
+      const dbs = config.databases.map(d => d.startsWith("custom:") ? d.replace("custom:", "") : d);
+      lines.push(`**Database${config.databases.length > 1 ? 's' : ''}**: ${bpVarArray(bp, "DATABASES", dbs)}`);
+    }
+    if (config.letAiDecide) {
+      lines.push("");
+      if (config.languages.length > 0 || config.frameworks.length > 0) {
+        lines.push("**AI Flexibility**: For technologies not listed above, you may suggest and use what's best suited for the project based on codebase analysis.");
+      } else {
+        lines.push("**AI Flexibility**: Analyze the codebase to determine appropriate languages and frameworks. You have full flexibility to choose what works best.");
+      }
+    }
+    lines.push("");
   }
-  if (config.codeStyle?.notes) {
-    lines.push(`- Style notes: ${config.codeStyle.notes}`);
-  }
+
+  lines.push("## Code Style & Conventions");
   lines.push("");
+  lines.push("Follow these coding style guidelines when writing or modifying code:");
+  lines.push("");
+  
+  // Developer profile (if included)
+  if (config.includePersonalData !== false && user.skillLevel) {
+    lines.push("### Developer Profile");
+    if (user.persona) {
+      lines.push(`- **Developer Type**: ${user.persona.replace(/_/g, " ")}`);
+    }
+    lines.push(`- **Experience Level**: ${user.skillLevel.charAt(0).toUpperCase() + user.skillLevel.slice(1)}`);
+    lines.push("");
+    lines.push("### Communication Style");
+    if (user.skillLevel === "novice" || user.skillLevel === "beginner") {
+      lines.push("- Be verbose with explanations and add helpful comments");
+      lines.push("- Explain concepts and reasoning as you implement them");
+      lines.push("- Ask clarifying questions when requirements are unclear");
+    } else if (user.skillLevel === "intermediate") {
+      lines.push("- Provide balanced explanations, not too verbose");
+      lines.push("- Focus on important decisions, trade-offs, and non-obvious choices");
+    } else {
+      lines.push("- Be concise and direct in communications");
+      lines.push("- Assume expertise - minimal hand-holding needed");
+      lines.push("- Focus on implementation details, skip explanations of basics");
+    }
+    lines.push("");
+  }
+
+  // Naming conventions
+  if (config.codeStyle?.naming) {
+    const namingDescriptions: Record<string, string> = {
+      language_default: "Follow the idiomatic naming conventions of each language",
+      camelCase: "Use camelCase for variables and functions (e.g., myVariable, getUserName)",
+      snake_case: "Use snake_case for variables and functions (e.g., my_variable, get_user_name)",
+      PascalCase: "Use PascalCase for classes and types (e.g., MyClass, UserProfile)",
+      "kebab-case": "Use kebab-case for file names and URLs (e.g., my-component, user-profile)",
+    };
+    lines.push("### Naming Conventions");
+    lines.push(`**Style**: ${namingDescriptions[config.codeStyle.naming] || config.codeStyle.naming}`);
+    lines.push("");
+  }
+
+  // Error handling
+  if (config.codeStyle?.errorHandling) {
+    const errorDescriptions: Record<string, string> = {
+      try_catch: "Wrap risky operations in try-catch blocks and handle errors appropriately",
+      result_types: "Use Result/Either types to represent success or failure (no exceptions for control flow)",
+      error_boundaries: "Use React Error Boundaries to catch rendering errors in component trees",
+      global_handler: "Use a centralized global error handler for consistent error processing",
+      middleware: "Handle errors through middleware layers (e.g., Express error middleware)",
+      exceptions: "Use custom exception/error classes with meaningful error messages and types",
+      other: config.codeStyle.errorHandlingOther || "Follow the project's custom error handling approach",
+    };
+    lines.push("### Error Handling");
+    lines.push(`**Approach**: ${errorDescriptions[config.codeStyle.errorHandling] || config.codeStyle.errorHandling}`);
+    lines.push("");
+  }
+
+  // Logging
+  if (config.codeStyle?.loggingConventions) {
+    lines.push("### Logging Conventions");
+    lines.push(`**Guidelines**: ${config.codeStyle.loggingConventions}`);
+    lines.push("");
+  }
+
+  // Additional style notes
+  if (config.codeStyle?.notes) {
+    lines.push("### Additional Style Notes");
+    lines.push(config.codeStyle.notes);
+    lines.push("");
+  }
 
   if (config.aiBehaviorRules.length > 0) {
-    lines.push("## AI Behavior Rules");
+    lines.push("## AI Behavior Guidelines");
+    lines.push("");
+    lines.push("When assisting with this project, follow these specific rules:");
+    lines.push("");
     config.aiBehaviorRules.forEach((rule) => {
       const ruleText = getRuleDescription(rule);
       if (ruleText) lines.push(`- ${ruleText}`);
     });
+    lines.push("");
+  }
+
+  // Important files to read first
+  const importantFileLabels: Record<string, string> = {
+    readme: "README.md - Project overview and setup instructions",
+    package_json: "package.json - Dependencies and scripts",
+    changelog: "CHANGELOG.md - Version history and changes",
+    contributing: "CONTRIBUTING.md - Contribution guidelines",
+    makefile: "Makefile - Build and task automation",
+    dockerfile: "Dockerfile - Container build instructions",
+    docker_compose: "docker-compose.yml - Multi-container setup",
+    env_example: ".env.example - Environment variable reference",
+    openapi: "openapi.yaml / swagger.json - API specification",
+    architecture_md: "ARCHITECTURE.md - System architecture docs",
+    api_docs: "API documentation files",
+    database_schema: "Database schema / migration files",
+  };
+  const hasImportantFiles = (config.importantFiles?.length ?? 0) > 0 || config.importantFilesOther?.trim();
+  if (hasImportantFiles) {
+    lines.push("## Important Files to Read First");
+    lines.push("");
+    lines.push("Before making significant changes, read these files to understand the project context:");
+    lines.push("");
+    if (config.importantFiles?.length) {
+      config.importantFiles.forEach(f => {
+        lines.push(`- ${importantFileLabels[f] || f}`);
+      });
+    }
+    if (config.importantFilesOther?.trim()) {
+      config.importantFilesOther.split(",").map(f => f.trim()).filter(Boolean).forEach(f => {
+        lines.push(`- ${f}`);
+      });
+    }
     lines.push("");
   }
 
@@ -503,20 +685,25 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     (config.boundaries.never?.length ?? 0) > 0
   );
   if (hasBoundaries && canAccessFeature(user.tier, "advanced")) {
-    lines.push("## Boundaries");
+    lines.push("## Boundaries & Permissions");
+    lines.push("");
+    lines.push("These are explicit boundaries for AI actions on this project:");
+    lines.push("");
     if (config.boundaries!.always?.length) {
-      lines.push("- Always do:");
-      config.boundaries!.always.forEach(item => lines.push(`  - ${item}`));
+      lines.push("### ✅ ALWAYS DO (no need to ask)");
+      config.boundaries!.always.forEach(item => lines.push(`- ${item}`));
+      lines.push("");
     }
     if (config.boundaries!.ask?.length) {
-      lines.push("- Ask first:");
-      config.boundaries!.ask.forEach(item => lines.push(`  - ${item}`));
+      lines.push("### ❓ ASK FIRST (get confirmation before doing)");
+      config.boundaries!.ask.forEach(item => lines.push(`- ${item}`));
+      lines.push("");
     }
     if (config.boundaries!.never?.length) {
-      lines.push("- Never do:");
-      config.boundaries!.never.forEach(item => lines.push(`  - ${item}`));
+      lines.push("### 🚫 NEVER DO (strictly prohibited)");
+      config.boundaries!.never.forEach(item => lines.push(`- ${item}`));
+      lines.push("");
     }
-    lines.push("");
   }
 
   // Only include Commands section if user actually specified commands AND has Pro tier access
@@ -528,14 +715,18 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     (config.commands.additional?.length ?? 0) > 0
   );
   if (hasCommands && canAccessFeature(user.tier, "intermediate")) {
-    lines.push("## Commands");
-    if (config.commands!.build) lines.push(`- Build: ${config.commands!.build}`);
-    if (config.commands!.test) lines.push(`- Test: ${config.commands!.test}`);
-    if (config.commands!.lint) lines.push(`- Lint: ${config.commands!.lint}`);
-    if (config.commands!.dev) lines.push(`- Dev: ${config.commands!.dev}`);
+    lines.push("## Project Commands");
+    lines.push("");
+    lines.push("Use these commands when working on this project:");
+    lines.push("");
+    if (config.commands!.build) lines.push(`- **Build**: \`${bpVar(bp, "BUILD_COMMAND", config.commands!.build)}\``);
+    if (config.commands!.test) lines.push(`- **Test**: \`${bpVar(bp, "TEST_COMMAND", config.commands!.test)}\``);
+    if (config.commands!.lint) lines.push(`- **Lint**: \`${bpVar(bp, "LINT_COMMAND", config.commands!.lint)}\``);
+    if (config.commands!.dev) lines.push(`- **Dev server**: \`${bpVar(bp, "DEV_COMMAND", config.commands!.dev)}\``);
     if (config.commands!.additional?.length) {
-      lines.push("- Other commands:");
-      config.commands!.additional.forEach(cmd => lines.push(`  - ${cmd}`));
+      lines.push("");
+      lines.push("**Other useful commands**:");
+      config.commands!.additional.forEach(cmd => lines.push(`- \`${cmd}\``));
     }
     lines.push("");
   }
@@ -549,43 +740,142 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     (config.testingStrategy.coverage !== undefined && config.testingStrategy.coverage !== 80)
   );
   if (hasTestingConfig && canAccessFeature(user.tier, "advanced")) {
-    lines.push("## Testing Strategy");
-    if (config.testingStrategy!.levels?.length) lines.push(`- Levels: ${config.testingStrategy!.levels.join(", ")}`);
-    if (config.testingStrategy!.frameworks?.length) lines.push(`- Frameworks: ${config.testingStrategy!.frameworks.join(", ")}`);
-    if (config.testingStrategy!.coverage !== undefined) lines.push(`- Coverage target: ${config.testingStrategy!.coverage}%`);
-    if (config.testingStrategy!.notes) lines.push(`- Notes: ${config.testingStrategy!.notes}`);
+    lines.push("## Testing Requirements");
     lines.push("");
-  }
-
-  if (config.additionalFeedback) {
-    lines.push("## Additional Instructions");
-    lines.push(config.additionalFeedback);
+    lines.push("When writing or modifying code, ensure adequate test coverage:");
+    lines.push("");
+    if (config.testingStrategy!.levels?.length) {
+      const levelDescriptions: Record<string, string> = {
+        unit: "Unit tests - test individual functions/methods in isolation",
+        integration: "Integration tests - test how components work together",
+        e2e: "End-to-end tests - test complete user flows",
+        performance: "Performance tests - test speed and resource usage",
+        security: "Security tests - test for vulnerabilities",
+      };
+      lines.push("**Testing Levels**:");
+      config.testingStrategy!.levels.forEach(level => {
+        lines.push(`- ${levelDescriptions[level] || level}`);
+      });
+      lines.push("");
+    }
+    if (config.testingStrategy!.frameworks?.length) {
+      lines.push(`**Testing Frameworks**: ${config.testingStrategy!.frameworks.join(", ")}`);
+    }
+    if (config.testingStrategy!.coverage !== undefined) {
+      lines.push(`**Coverage Target**: ${config.testingStrategy!.coverage}% minimum`);
+    }
+    if (config.testingStrategy!.notes) {
+      lines.push("");
+      lines.push("**Additional testing notes**:");
+      lines.push(config.testingStrategy!.notes);
+    }
     lines.push("");
   }
 
   // Project type specific instructions
   if (config.projectType && PROJECT_TYPE_INSTRUCTIONS[config.projectType]) {
-    lines.push("## Project Context & AI Behavior");
+    const projectTypeLabels: Record<string, string> = {
+      work: "Work / Professional Project",
+      leisure: "Personal / Hobby Project",
+      open_source_small: "Open Source (Small)",
+      open_source_enterprise: "Open Source (Enterprise-grade)",
+      startup: "Startup / MVP",
+      enterprise: "Enterprise / Corporate",
+      educational: "Educational / Learning",
+      prototype: "Prototype / Proof of Concept",
+    };
+    lines.push("## Project Type Context");
+    lines.push("");
+    lines.push(`This is a **${projectTypeLabels[config.projectType] || config.projectType}**. Keep these guidelines in mind:`);
+    lines.push("");
     PROJECT_TYPE_INSTRUCTIONS[config.projectType].forEach((instruction) => {
       lines.push(`- ${instruction}`);
     });
     lines.push("");
   }
 
+  if (config.additionalFeedback) {
+    lines.push("## Custom Instructions");
+    lines.push("");
+    lines.push("The project owner has provided these additional instructions:");
+    lines.push("");
+    lines.push(config.additionalFeedback);
+    lines.push("");
+  }
+
+  // CI/CD & Infrastructure section
+  const hasCiCd = config.cicd?.length > 0 || config.deploymentTarget?.length || config.buildContainer || config.containerRegistry;
+  if (hasCiCd) {
+    lines.push("## CI/CD & Infrastructure");
+    lines.push("");
+    if (config.cicd?.length > 0) {
+      const cicdLabels: Record<string, string> = {
+        github_actions: "GitHub Actions",
+        gitlab_ci: "GitLab CI/CD",
+        jenkins: "Jenkins",
+        circleci: "CircleCI",
+        travis: "Travis CI",
+        azure_pipelines: "Azure Pipelines",
+        aws_codepipeline: "AWS CodePipeline",
+        bitbucket_pipelines: "Bitbucket Pipelines",
+        drone: "Drone CI",
+        none: "Manual deployment",
+      };
+      const cicdNames = config.cicd.map(c => cicdLabels[c] || c).join(", ");
+      lines.push(`**CI/CD Platform**: ${cicdNames}`);
+    }
+    if (config.deploymentTarget && config.deploymentTarget.length > 0) {
+      const deployLabels: Record<string, string> = {
+        aws: "AWS",
+        gcp: "Google Cloud",
+        azure: "Microsoft Azure",
+        kubernetes: "Kubernetes",
+        vercel: "Vercel",
+        netlify: "Netlify",
+        heroku: "Heroku",
+        railway: "Railway",
+        flyio: "Fly.io",
+        digitalocean: "DigitalOcean",
+        baremetal: "Bare Metal / On-Prem",
+      };
+      const deployNames = config.deploymentTarget.map(d => deployLabels[d] || d).join(", ");
+      lines.push(`**Deployment Target${config.deploymentTarget.length > 1 ? 's' : ''}**: ${deployNames}`);
+    }
+    if (config.buildContainer) {
+      lines.push(`**Container Builds**: This project builds Docker/OCI container images`);
+      if (config.containerRegistry) {
+        const registryLabels: Record<string, string> = {
+          dockerhub: "Docker Hub",
+          ghcr: "GitHub Container Registry (ghcr.io)",
+          ecr: "AWS ECR",
+          gcr: "Google Container Registry",
+          acr: "Azure Container Registry",
+          custom: config.customRegistry || "Custom registry",
+        };
+        lines.push(`**Container Registry**: ${registryLabels[config.containerRegistry] || config.containerRegistry}`);
+      }
+    }
+    lines.push("");
+  }
+
   lines.push("## Best Practices");
-  lines.push("- Follow existing code patterns in the repository");
-  lines.push("- Write clean, maintainable code");
-  lines.push("- Add appropriate error handling");
-  lines.push("- Consider security implications");
+  lines.push("");
+  lines.push("Always follow these guidelines when working on this project:");
+  lines.push("");
+  lines.push("- **Follow existing patterns**: Match the codebase's existing style and conventions");
+  lines.push("- **Write clean code**: Prioritize readability and maintainability");
+  lines.push("- **Handle errors properly**: Don't ignore errors, handle them appropriately");
+  lines.push("- **Consider security**: Review code for potential security vulnerabilities");
   if (config.conventionalCommits) {
-    lines.push("- Use conventional commit messages (feat:, fix:, docs:, etc.)");
+    lines.push("- **Conventional commits**: Use conventional commit messages (feat:, fix:, docs:, chore:, refactor:, test:, style:)");
   }
   if (config.semver) {
-    lines.push("- Follow semantic versioning (MAJOR.MINOR.PATCH)");
+    lines.push("- **Semantic versioning**: Follow semver (MAJOR.MINOR.PATCH) for version numbers");
   }
   if (config.dependabot) {
-    lines.push("- Enable automated dependency updates (Dependabot/GitLab equivalent).");
+    lines.push("- **Dependency updates**: Keep dependencies updated (Dependabot/Renovate is configured)");
   }
+  lines.push("");
 
   // Only include Static Files summary if user explicitly enabled any AND has Max tier access
   const hasStaticFiles = config.staticFiles && (
@@ -593,21 +883,24 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     config.staticFiles.contributing ||
     config.staticFiles.codeOfConduct ||
     config.staticFiles.security ||
+    config.staticFiles.roadmap ||
     (config.staticFiles.gitignoreMode && config.staticFiles.gitignoreMode !== "skip") ||
     (config.staticFiles.dockerignoreMode && config.staticFiles.dockerignoreMode !== "skip") ||
     config.funding
   );
   if (hasStaticFiles && canAccessFeature(user.tier, "advanced")) {
+    lines.push("## Repository Files to Generate/Maintain");
     lines.push("");
-    lines.push("## Static Files");
-    lines.push("Ensure static repo helpers are generated as requested:");
-    if (config.staticFiles!.editorconfig) lines.push("- Include .editorconfig aligned with project style.");
-    if (config.staticFiles!.contributing) lines.push("- Include CONTRIBUTING.md with contribution guidelines.");
-    if (config.staticFiles!.codeOfConduct) lines.push("- Include CODE_OF_CONDUCT.md.");
-    if (config.staticFiles!.security) lines.push("- Include SECURITY.md with reporting instructions.");
-    if (config.staticFiles!.gitignoreMode && config.staticFiles!.gitignoreMode !== "skip") lines.push("- Add project-specific .gitignore.");
-    if (config.buildContainer || (config.staticFiles!.dockerignoreMode && config.staticFiles!.dockerignoreMode !== "skip")) lines.push("- Add .dockerignore for container builds.");
-    if (config.funding) lines.push("- Add .github/FUNDING.yml when applicable.");
+    lines.push("When requested, create or update these repository files:");
+    lines.push("");
+    if (config.staticFiles!.editorconfig) lines.push("- **.editorconfig** - Editor configuration aligned with project style");
+    if (config.staticFiles!.contributing) lines.push("- **CONTRIBUTING.md** - Contribution guidelines for the project");
+    if (config.staticFiles!.codeOfConduct) lines.push("- **CODE_OF_CONDUCT.md** - Community code of conduct");
+    if (config.staticFiles!.security) lines.push("- **SECURITY.md** - Security policy and vulnerability reporting instructions");
+    if (config.staticFiles!.roadmap) lines.push("- **ROADMAP.md** - Project roadmap with planned features and future ideas");
+    if (config.staticFiles!.gitignoreMode && config.staticFiles!.gitignoreMode !== "skip") lines.push("- **.gitignore** - Git ignore file for this project's tech stack");
+    if (config.buildContainer || (config.staticFiles!.dockerignoreMode && config.staticFiles!.dockerignoreMode !== "skip")) lines.push("- **.dockerignore** - Docker ignore file for container builds");
+    if (config.funding) lines.push("- **.github/FUNDING.yml** - GitHub funding/sponsors configuration");
   }
 
   // Auto-update instruction
@@ -670,72 +963,131 @@ function generateWindsurfRules(
 // Generate Universal AGENTS.md - works with any AI IDE
 function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
   const lines: string[] = [];
+  const bp = config.blueprintMode;
 
-  lines.push(`# ${config.projectName || "Project"} - AI Agent Instructions`);
+  lines.push(`# ${bpVar(bp, "PROJECT_NAME", config.projectName || "Project")} - AI Agent Instructions`);
   lines.push("");
   lines.push("> **Universal AI Configuration** - Compatible with Cursor, Claude Code, GitHub Copilot, and other AI IDEs.");
   lines.push("");
-  lines.push("## Overview");
-  lines.push(config.projectDescription || "A software project.");
+  
+  // Project Overview
+  lines.push("## Project Overview");
+  lines.push("");
+  lines.push(`**Description**: ${bpVar(bp, "PROJECT_DESCRIPTION", config.projectDescription || "A software project.")}`);
+  lines.push("");
+  
+  if (config.architecturePattern) {
+    const archLabels: Record<string, string> = {
+      monolith: "Monolith - single deployable unit",
+      modular_monolith: "Modular Monolith - organized into modules but deployed as one unit",
+      microservices: "Microservices - independently deployable services",
+      serverless: "Serverless - function-as-a-service architecture",
+      event_driven: "Event-Driven - components communicate via events",
+      layered: "Layered / N-Tier - separated into presentation, business, data layers",
+      hexagonal: "Hexagonal / Ports & Adapters - domain at center, adapters at edges",
+      clean: "Clean Architecture - dependency rule points inward",
+      cqrs: "CQRS - separate read and write models",
+      mvc: "MVC / MVVM - Model-View-Controller or Model-View-ViewModel",
+      other: config.architecturePatternOther || "Custom architecture",
+    };
+    lines.push(`**Architecture Pattern**: ${archLabels[config.architecturePattern] || config.architecturePattern}`);
+  }
+  
+  if (config.isPublic !== undefined) {
+    lines.push(`**Visibility**: ${config.isPublic ? "Public repository" : "Private repository"}`);
+  }
   
   if (config.devOS) {
     const osNames: Record<string, string> = {
       linux: "Linux",
       macos: "macOS",
       windows: "Windows",
-      wsl: "Windows with WSL",
+      wsl: "Windows with WSL (Windows Subsystem for Linux)",
       multi: "Multi-platform"
     };
-    lines.push(`**Development Environment**: ${osNames[config.devOS] || config.devOS}`);
-  }
-  if (config.repoHost) {
-    const hostNames: Record<string, string> = {
-      github: "GitHub",
-      gitlab: "GitLab",
-      bitbucket: "Bitbucket",
-      gitea: "Gitea",
-      forgejo: "Forgejo",
-      codeberg: "Codeberg",
-      sourcehut: "SourceHut",
-      gogs: "Gogs",
-      aws_codecommit: "AWS CodeCommit",
-      azure_devops: "Azure DevOps",
-      gerrit: "Gerrit",
-      phabricator: "Phabricator",
-      other: config.repoHostOther || "Other",
-    };
-    lines.push(`**Repository Host**: ${hostNames[config.repoHost] || config.repoHost}`);
-  }
-  if (config.documentationUrl) {
-    lines.push(`**External Documentation**: ${config.documentationUrl}`);
+    lines.push(`**Development OS**: ${osNames[config.devOS] || config.devOS}`);
   }
   lines.push("");
+  
+  // Repository information
+  const hasRepoInfoAgents = config.repoUrl || config.repoHosts?.length || config.repoHost;
+  if (hasRepoInfoAgents) {
+    lines.push("### Repository");
+    if (config.repoUrl) {
+      lines.push(`- **URL**: ${config.repoUrl}`);
+    }
+    if (config.repoHosts?.length || config.repoHost) {
+      const hostNames: Record<string, string> = {
+        github: "GitHub",
+        gitlab: "GitLab",
+        bitbucket: "Bitbucket",
+        gitea: "Gitea",
+        forgejo: "Forgejo",
+        codeberg: "Codeberg",
+        sourcehut: "SourceHut",
+        gogs: "Gogs",
+        aws_codecommit: "AWS CodeCommit",
+        azure_devops: "Azure DevOps",
+        gerrit: "Gerrit",
+        phabricator: "Phabricator",
+        other: config.repoHostOther || "Other",
+      };
+      const hosts = config.repoHosts?.length ? config.repoHosts : [config.repoHost];
+      const hostLabels = hosts.map(h => hostNames[h] || h).join(", ");
+      lines.push(`- **Platform${hosts.length > 1 ? 's' : ''}**: ${hostLabels}`);
+      if (hosts.length > 1 && config.multiRepoReason) {
+        lines.push(`- **Why multiple platforms**: ${config.multiRepoReason}`);
+      }
+    }
+    lines.push("");
+  }
+  
+  // Reference materials
+  if (config.exampleRepoUrl || config.documentationUrl) {
+    lines.push("### Reference Materials");
+    if (config.exampleRepoUrl) {
+      lines.push(`- **Example Repository**: ${bpVar(bp, "EXAMPLE_REPO_URL", config.exampleRepoUrl)}`);
+    }
+    if (config.documentationUrl) {
+      lines.push(`- **External Documentation**: ${bpVar(bp, "DOCUMENTATION_URL", config.documentationUrl)}`);
+    }
+    lines.push("");
+  }
 
   if (config.languages.length > 0 || config.frameworks.length > 0 || (config.databases && config.databases.length > 0) || config.letAiDecide) {
     lines.push("## Technology Stack");
     lines.push("");
     if (config.languages.length > 0) {
-      lines.push("### Languages");
-      config.languages.forEach((lang) => {
-        const cleanLang = lang.startsWith("custom:") ? lang.replace("custom:", "") : lang;
-        lines.push(`- ${cleanLang}`);
-      });
+      const langs = config.languages.map(l => l.startsWith("custom:") ? l.replace("custom:", "") : l);
+      if (bp) {
+        lines.push(`### Languages`);
+        lines.push(`${bpVarArray(bp, "LANGUAGES", langs)}`);
+      } else {
+        lines.push("### Languages");
+        langs.forEach((lang) => lines.push(`- ${lang}`));
+      }
       lines.push("");
     }
     if (config.frameworks.length > 0) {
-      lines.push("### Frameworks & Libraries");
-      config.frameworks.forEach((fw) => {
-        const cleanFw = fw.startsWith("custom:") ? fw.replace("custom:", "") : fw;
-        lines.push(`- ${cleanFw}`);
-      });
+      const fws = config.frameworks.map(f => f.startsWith("custom:") ? f.replace("custom:", "") : f);
+      if (bp) {
+        lines.push(`### Frameworks & Libraries`);
+        lines.push(`${bpVarArray(bp, "FRAMEWORKS", fws)}`);
+      } else {
+        lines.push("### Frameworks & Libraries");
+        fws.forEach((fw) => lines.push(`- ${fw}`));
+      }
       lines.push("");
     }
     if (config.databases && config.databases.length > 0) {
-      lines.push(`### Database${config.databases.length > 1 ? 's' : ''}`);
-      config.databases.forEach((db) => {
-        const cleanDb = db.startsWith("custom:") ? db.replace("custom:", "") : db;
-        lines.push(`- ${cleanDb}`);
-      });
+      const dbs = config.databases.map(d => d.startsWith("custom:") ? d.replace("custom:", "") : d);
+      if (bp) {
+        lines.push(`### Database${config.databases.length > 1 ? 's' : ''}`);
+        lines.push(`${bpVarArray(bp, "DATABASES", dbs)}`);
+      } else {
+        lines.push(`### Database${config.databases.length > 1 ? 's' : ''}`);
+        dbs.forEach((db) => lines.push(`- ${db}`));
+      }
       lines.push("");
     }
     if (config.letAiDecide) {
@@ -779,6 +1131,38 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
     lines.push("");
   }
 
+  // Important files to read first
+  const importantFileLabelsAgents: Record<string, string> = {
+    readme: "README.md",
+    package_json: "package.json",
+    changelog: "CHANGELOG.md",
+    contributing: "CONTRIBUTING.md",
+    makefile: "Makefile",
+    dockerfile: "Dockerfile",
+    docker_compose: "docker-compose.yml",
+    env_example: ".env.example",
+    openapi: "openapi.yaml / swagger.json",
+    architecture_md: "ARCHITECTURE.md",
+    api_docs: "API documentation",
+    database_schema: "Database schema / migrations",
+  };
+  const hasImportantFilesAgents = (config.importantFiles?.length ?? 0) > 0 || config.importantFilesOther?.trim();
+  if (hasImportantFilesAgents) {
+    lines.push("### Important Files to Read First");
+    lines.push("Before making changes, read these files to understand the project:");
+    if (config.importantFiles?.length) {
+      config.importantFiles.forEach(f => {
+        lines.push(`- ${importantFileLabelsAgents[f] || f}`);
+      });
+    }
+    if (config.importantFilesOther?.trim()) {
+      config.importantFilesOther.split(",").map(f => f.trim()).filter(Boolean).forEach(f => {
+        lines.push(`- ${f}`);
+      });
+    }
+    lines.push("");
+  }
+
   if (config.projectType && PROJECT_TYPE_INSTRUCTIONS[config.projectType]) {
     lines.push("### Project Context");
     PROJECT_TYPE_INSTRUCTIONS[config.projectType].forEach((instruction) => {
@@ -790,10 +1174,10 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
   // Commands - requires Pro tier
   if (config.commands && canAccessFeature(user.tier, "intermediate") && (config.commands.build || config.commands.test || config.commands.lint || config.commands.dev || config.commands.additional?.length)) {
     lines.push("### Commands");
-    if (config.commands.build) lines.push(`- Build: \`${config.commands.build}\``);
-    if (config.commands.test) lines.push(`- Test: \`${config.commands.test}\``);
-    if (config.commands.lint) lines.push(`- Lint: \`${config.commands.lint}\``);
-    if (config.commands.dev) lines.push(`- Dev: \`${config.commands.dev}\``);
+    if (config.commands.build) lines.push(`- Build: \`${bpVar(bp, "BUILD_COMMAND", config.commands.build)}\``);
+    if (config.commands.test) lines.push(`- Test: \`${bpVar(bp, "TEST_COMMAND", config.commands.test)}\``);
+    if (config.commands.lint) lines.push(`- Lint: \`${bpVar(bp, "LINT_COMMAND", config.commands.lint)}\``);
+    if (config.commands.dev) lines.push(`- Dev: \`${bpVar(bp, "DEV_COMMAND", config.commands.dev)}\``);
     if (config.commands.additional?.length) {
       config.commands.additional.forEach(cmd => lines.push(`- \`${cmd}\``));
     }
@@ -801,10 +1185,37 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
   }
 
   // Code Style - requires Pro tier
-  if ((config.codeStyle?.naming || config.codeStyle?.notes) && canAccessFeature(user.tier, "intermediate")) {
-    lines.push("### Code Style");
-    if (config.codeStyle.naming) lines.push(`- Naming convention: ${config.codeStyle.naming}`);
-    if (config.codeStyle.notes) lines.push(`- ${config.codeStyle.notes}`);
+  const hasCodeStyle = config.codeStyle?.naming || config.codeStyle?.errorHandling || config.codeStyle?.loggingConventions || config.codeStyle?.notes;
+  if (hasCodeStyle && canAccessFeature(user.tier, "intermediate")) {
+    lines.push("### Code Style & Conventions");
+    if (config.codeStyle?.naming) {
+      const namingDescriptions: Record<string, string> = {
+        language_default: "Follow the idiomatic naming conventions of each language",
+        camelCase: "camelCase for variables and functions (e.g., myVariable, getUserName)",
+        snake_case: "snake_case for variables and functions (e.g., my_variable, get_user_name)",
+        PascalCase: "PascalCase for classes and types (e.g., MyClass, UserProfile)",
+        "kebab-case": "kebab-case for file names and URLs (e.g., my-component, user-profile)",
+      };
+      lines.push(`- **Naming**: ${namingDescriptions[config.codeStyle.naming] || config.codeStyle.naming}`);
+    }
+    if (config.codeStyle?.errorHandling) {
+      const errorDescriptions: Record<string, string> = {
+        try_catch: "Try-Catch blocks for handling errors",
+        result_types: "Result / Either types (no exceptions for control flow)",
+        error_boundaries: "Error Boundaries (React) for catching rendering errors",
+        global_handler: "Global Error Handler for centralized error processing",
+        middleware: "Middleware-based error handling",
+        exceptions: "Custom Exceptions / Error classes with meaningful types",
+        other: config.codeStyle.errorHandlingOther || "Custom error handling approach",
+      };
+      lines.push(`- **Error Handling**: ${errorDescriptions[config.codeStyle.errorHandling] || config.codeStyle.errorHandling}`);
+    }
+    if (config.codeStyle?.loggingConventions) {
+      lines.push(`- **Logging**: ${config.codeStyle.loggingConventions}`);
+    }
+    if (config.codeStyle?.notes) {
+      lines.push(`- **Additional Notes**: ${config.codeStyle.notes}`);
+    }
     lines.push("");
   }
 
@@ -815,10 +1226,22 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
     (config.boundaries.never?.length ?? 0) > 0
   );
   if (hasBoundariesAgents && canAccessFeature(user.tier, "advanced")) {
-    lines.push("### Boundaries");
-    if (config.boundaries!.always?.length) lines.push(`- ✅ Always: ${config.boundaries!.always.join(", ")}`);
-    if (config.boundaries!.ask?.length) lines.push(`- ❓ Ask first: ${config.boundaries!.ask.join(", ")}`);
-    if (config.boundaries!.never?.length) lines.push(`- 🚫 Never: ${config.boundaries!.never.join(", ")}`);
+    lines.push("### Boundaries & Permissions");
+    lines.push("");
+    if (config.boundaries!.always?.length) {
+      lines.push("**✅ ALWAYS do (no need to ask)**:");
+      config.boundaries!.always.forEach(item => lines.push(`- ${item}`));
+    }
+    if (config.boundaries!.ask?.length) {
+      lines.push("");
+      lines.push("**❓ ASK first before doing**:");
+      config.boundaries!.ask.forEach(item => lines.push(`- ${item}`));
+    }
+    if (config.boundaries!.never?.length) {
+      lines.push("");
+      lines.push("**🚫 NEVER do (strictly prohibited)**:");
+      config.boundaries!.never.forEach(item => lines.push(`- ${item}`));
+    }
     lines.push("");
   }
 
@@ -830,25 +1253,109 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
     (config.testingStrategy.coverage !== undefined && config.testingStrategy.coverage !== 80)
   );
   if (hasTestingAgents && canAccessFeature(user.tier, "advanced")) {
-    lines.push("### Testing Strategy");
-    if (config.testingStrategy!.levels?.length) lines.push(`- Test levels: ${config.testingStrategy!.levels.join(", ")}`);
-    if (config.testingStrategy!.frameworks?.length) lines.push(`- Frameworks: ${config.testingStrategy!.frameworks.join(", ")}`);
-    if (config.testingStrategy!.coverage !== undefined) lines.push(`- Coverage target: ${config.testingStrategy!.coverage}%`);
-    if (config.testingStrategy!.notes) lines.push(`- ${config.testingStrategy!.notes}`);
-    lines.push("");
-  }
-
-  if (config.cicd.length > 0) {
-    lines.push("### CI/CD & Deployment");
-    lines.push(`- CI/CD: ${config.cicd.join(", ")}`);
-    if (config.deploymentTarget && config.deploymentTarget.length > 0) {
-      lines.push(`- Targets: ${config.deploymentTarget.join(", ")}`);
+    lines.push("### Testing Requirements");
+    if (config.testingStrategy!.levels?.length) {
+      const levelDescriptions: Record<string, string> = {
+        unit: "Unit tests (individual functions/methods)",
+        integration: "Integration tests (component interactions)",
+        e2e: "End-to-end tests (complete user flows)",
+        performance: "Performance tests (speed/resources)",
+        security: "Security tests (vulnerabilities)",
+      };
+      lines.push("**Testing Levels**:");
+      config.testingStrategy!.levels.forEach(level => {
+        lines.push(`- ${levelDescriptions[level] || level}`);
+      });
+    }
+    if (config.testingStrategy!.frameworks?.length) {
+      lines.push(`**Frameworks**: ${config.testingStrategy!.frameworks.join(", ")}`);
+    }
+    if (config.testingStrategy!.coverage !== undefined) {
+      lines.push(`**Coverage Target**: ${config.testingStrategy!.coverage}% minimum`);
+    }
+    if (config.testingStrategy!.notes) {
+      lines.push(`**Notes**: ${config.testingStrategy!.notes}`);
     }
     lines.push("");
   }
 
+  // CI/CD & Infrastructure section
+  const hasCiCdAgents = config.cicd?.length > 0 || config.deploymentTarget?.length || config.buildContainer || config.containerRegistry;
+  if (hasCiCdAgents) {
+    lines.push("### CI/CD & Infrastructure");
+    if (config.cicd?.length > 0) {
+      const cicdLabels: Record<string, string> = {
+        github_actions: "GitHub Actions",
+        gitlab_ci: "GitLab CI/CD",
+        jenkins: "Jenkins",
+        circleci: "CircleCI",
+        travis: "Travis CI",
+        azure_pipelines: "Azure Pipelines",
+        aws_codepipeline: "AWS CodePipeline",
+        bitbucket_pipelines: "Bitbucket Pipelines",
+        drone: "Drone CI",
+        none: "Manual deployment",
+      };
+      const cicdNames = config.cicd.map(c => cicdLabels[c] || c).join(", ");
+      lines.push(`- **CI/CD Platform**: ${cicdNames}`);
+    }
+    if (config.deploymentTarget && config.deploymentTarget.length > 0) {
+      const deployLabels: Record<string, string> = {
+        aws: "AWS",
+        gcp: "Google Cloud",
+        azure: "Microsoft Azure",
+        kubernetes: "Kubernetes",
+        vercel: "Vercel",
+        netlify: "Netlify",
+        heroku: "Heroku",
+        railway: "Railway",
+        flyio: "Fly.io",
+        digitalocean: "DigitalOcean",
+        baremetal: "Bare Metal / On-Prem",
+      };
+      const deployNames = config.deploymentTarget.map(d => deployLabels[d] || d).join(", ");
+      lines.push(`- **Deployment Target${config.deploymentTarget.length > 1 ? 's' : ''}**: ${deployNames}`);
+    }
+    if (config.buildContainer) {
+      lines.push(`- **Container Builds**: Project builds Docker/OCI container images`);
+      if (config.containerRegistry) {
+        const registryLabels: Record<string, string> = {
+          dockerhub: "Docker Hub",
+          ghcr: "GitHub Container Registry (ghcr.io)",
+          ecr: "AWS ECR",
+          gcr: "Google Container Registry",
+          acr: "Azure Container Registry",
+          custom: config.customRegistry || "Custom registry",
+        };
+        lines.push(`- **Container Registry**: ${registryLabels[config.containerRegistry] || config.containerRegistry}`);
+      }
+    }
+    lines.push("");
+  }
+
+  // Best practices
+  lines.push("## Best Practices");
+  lines.push("");
+  lines.push("- **Follow existing patterns**: Match the codebase's existing style and conventions");
+  lines.push("- **Write clean code**: Prioritize readability and maintainability");
+  lines.push("- **Handle errors properly**: Don't ignore errors, handle them appropriately");
+  lines.push("- **Consider security**: Review code for potential security vulnerabilities");
+  if (config.conventionalCommits) {
+    lines.push("- **Conventional commits**: Use conventional commit messages (feat:, fix:, docs:, chore:, refactor:, test:, style:)");
+  }
+  if (config.semver) {
+    lines.push("- **Semantic versioning**: Follow semver (MAJOR.MINOR.PATCH) for version numbers");
+  }
+  if (config.dependabot) {
+    lines.push("- **Dependency updates**: Keep dependencies updated (Dependabot/Renovate is configured)");
+  }
+  lines.push("");
+
   if (config.additionalFeedback) {
-    lines.push("## Additional Notes");
+    lines.push("## Custom Instructions");
+    lines.push("");
+    lines.push("The project owner has provided these additional instructions:");
+    lines.push("");
     lines.push(config.additionalFeedback);
     lines.push("");
   }
@@ -1290,7 +1797,7 @@ function generateEmbeddedStaticFiles(config: WizardConfig, user: UserProfile): s
 ${config.staticFiles.editorconfigCustom.trim()}
 \`\`\``);
     } else {
-      instructions.push("- Generate `.editorconfig` with standard settings for the project's languages.");
+      instructions.push("- **`.editorconfig`**: Generate with standard settings for consistent code formatting across editors (indent style, line endings, trim trailing whitespace).");
     }
   }
   
@@ -1302,7 +1809,7 @@ ${config.staticFiles.editorconfigCustom.trim()}
 ${config.staticFiles.contributingCustom.trim()}
 \`\`\``);
     } else {
-      instructions.push("- Generate `CONTRIBUTING.md` with standard contribution guidelines.");
+      instructions.push("- **`CONTRIBUTING.md`**: Generate with contribution guidelines including how to submit issues, pull requests, coding standards, and development setup.");
     }
   }
   
@@ -1314,7 +1821,7 @@ ${config.staticFiles.contributingCustom.trim()}
 ${config.staticFiles.codeOfConductCustom.trim()}
 \`\`\``);
     } else {
-      instructions.push("- Generate `CODE_OF_CONDUCT.md` based on Contributor Covenant or similar.");
+      instructions.push("- **`CODE_OF_CONDUCT.md`**: Generate based on the Contributor Covenant or similar community standards document.");
     }
   }
   
@@ -1326,7 +1833,7 @@ ${config.staticFiles.codeOfConductCustom.trim()}
 ${config.staticFiles.securityCustom.trim()}
 \`\`\``);
     } else {
-      instructions.push("- Generate `SECURITY.md` with vulnerability reporting instructions.");
+      instructions.push("- **`SECURITY.md`**: Generate with security policy, supported versions, and instructions for reporting vulnerabilities privately.");
     }
   }
   
@@ -1340,10 +1847,10 @@ ${config.staticFiles.gitignoreCustom.trim()}
     const langs = config.languages || [];
     const frameworks = config.frameworks || [];
     if (config.letAiDecide && langs.length === 0 && frameworks.length === 0) {
-      instructions.push("- Generate appropriate `.gitignore` based on detected project languages and frameworks.");
+      instructions.push("- **`.gitignore`**: Generate based on detected project languages and frameworks. Include IDE files, build artifacts, dependencies, and environment files.");
     } else if (langs.length > 0 || frameworks.length > 0) {
       const techs = [...langs, ...frameworks].map(t => t.startsWith("custom:") ? t.replace("custom:", "") : t);
-      instructions.push(`- Generate appropriate \`.gitignore\` for: ${techs.join(", ")}.`);
+      instructions.push(`- **\`.gitignore\`**: Generate for ${techs.join(", ")}. Include IDE files, build artifacts, dependencies, and environment files.`);
     }
   }
   
@@ -1359,12 +1866,12 @@ ${config.staticFiles.dockerignoreCustom.trim()}
       const langs = config.languages || [];
       const frameworks = config.frameworks || [];
       if (config.letAiDecide && langs.length === 0 && frameworks.length === 0) {
-        instructions.push("- Generate appropriate `.dockerignore` based on detected project languages and frameworks.");
+        instructions.push("- **`.dockerignore`**: Generate based on detected project languages. Exclude .git, node_modules, .env files, build artifacts, and documentation to keep images small.");
       } else if (langs.length > 0 || frameworks.length > 0) {
         const techs = [...langs, ...frameworks].map(t => t.startsWith("custom:") ? t.replace("custom:", "") : t);
-        instructions.push(`- Generate appropriate \`.dockerignore\` for: ${techs.join(", ")}.`);
+        instructions.push(`- **\`.dockerignore\`**: Generate for ${techs.join(", ")}. Exclude .git, dependencies, .env files, build artifacts, and documentation to keep images small.`);
       } else {
-        instructions.push("- Generate `.dockerignore` excluding build artifacts, node_modules, .env files, and other non-essential files.");
+        instructions.push("- **`.dockerignore`**: Generate excluding .git, node_modules, .env files, build artifacts, and non-essential files to keep container images small.");
       }
     }
   }
@@ -1378,15 +1885,34 @@ ${config.staticFiles.dockerignoreCustom.trim()}
 ${fundingContent}
 \`\`\``);
     } else {
-      instructions.push("- Generate `.github/FUNDING.yml` template for sponsorship links.");
+      instructions.push("- **`.github/FUNDING.yml`**: Generate template with common sponsorship platforms (GitHub Sponsors, Ko-fi, Patreon, etc.).");
     }
   }
   
-  // License - just reference the type, don't embed full text
+  // Roadmap - only if enabled
+  if (config.staticFiles?.roadmap) {
+    if (config.staticFiles.roadmapCustom?.trim()) {
+      customFiles.push(`### ROADMAP.md
+\`\`\`markdown
+${config.staticFiles.roadmapCustom.trim()}
+\`\`\``);
+    } else {
+      instructions.push("- **`ROADMAP.md`**: Create and maintain with planned features, milestones, and future ideas. Organize by timeline (Q1, Q2, etc.) or priority. Keep updated as the project evolves.");
+    }
+  }
+  
+  // License - improved text with optional notes
   if (config.license && config.license !== "none") {
-    const licenseName = LICENSE_NAMES[config.license] || config.license;
+    // Get license name, using licenseOther for custom licenses
+    const licenseName = config.license === "other" 
+      ? (config.licenseOther || "a custom license")
+      : (LICENSE_NAMES[config.license] || config.license);
     const author = user.displayName || user.name || "the project author";
-    instructions.push(`- This project uses the **${licenseName}** license. Generate \`LICENSE\` file if not present, with copyright holder: ${author}.`);
+    let licenseInstruction = `- This repository uses the **${licenseName}** license. If the \`LICENSE\` file doesn't exist yet, please create it with copyright holder: ${author}.`;
+    if (config.licenseNotes?.trim()) {
+      licenseInstruction += ` Additional licensing notes: ${config.licenseNotes.trim()}`;
+    }
+    instructions.push(licenseInstruction);
   }
   
   if (instructions.length === 0 && customFiles.length === 0) return "";
@@ -1394,17 +1920,17 @@ ${fundingContent}
   const parts: string[] = [];
   
   if (instructions.length > 0) {
-    parts.push(`## Static Files
+    parts.push(`## Repository Files to Generate
 
-Generate the following files if they don't exist:
+When requested or when missing, create these files following these guidelines:
 
 ${instructions.join("\n")}`);
   }
   
   if (customFiles.length > 0) {
-    parts.push(`## Custom Static Files
+    parts.push(`## Custom File Templates
 
-Create these files with the exact content provided:
+Create these files with the exact content provided below. These are user-specified templates:
 
 ${customFiles.join("\n\n")}`);
   }
