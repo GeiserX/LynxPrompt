@@ -20,6 +20,7 @@ interface BillingStatus {
     id: string;
     name: string;
     slug: string;
+    logo: string | null;
     role: string;
   } | null;
 }
@@ -124,8 +125,16 @@ export function UserMenu() {
                 onClick={() => setIsOpen(false)}
                 className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted"
               >
-                <Users className="h-4 w-4 text-teal-500" />
-                <span>Team: {billingStatus.team.name}</span>
+                {billingStatus.team.logo ? (
+                  <img
+                    src={billingStatus.team.logo}
+                    alt={billingStatus.team.name}
+                    className="h-4 w-4 rounded object-contain"
+                  />
+                ) : (
+                  <Users className="h-4 w-4 text-teal-500" />
+                )}
+                <span className="truncate">{billingStatus.team.name}</span>
                 {billingStatus.team.role === "ADMIN" && (
                   <span className="ml-auto text-xs text-teal-600 dark:text-teal-400">Admin</span>
                 )}

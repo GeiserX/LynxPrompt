@@ -105,6 +105,7 @@ interface BillingStatus {
     id: string;
     name: string;
     slug: string;
+    logo: string | null;
     role: string;
   } | null;
 }
@@ -430,9 +431,18 @@ export default function DashboardPage() {
               <div className="p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-teal-500 to-cyan-500 text-white shadow-lg">
-                      <Building2 className="h-6 w-6" />
-                    </div>
+                    {billingStatus.team.logo ? (
+                      <img
+                        src={billingStatus.team.logo}
+                        alt={billingStatus.team.name}
+                        className="h-12 w-12 rounded-lg object-contain bg-muted shadow-lg"
+                        style={{ maxWidth: "48px", maxHeight: "48px" }}
+                      />
+                    ) : (
+                      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-teal-500 to-cyan-500 text-white shadow-lg">
+                        <Building2 className="h-6 w-6" />
+                      </div>
+                    )}
                     <div>
                       <div className="flex items-center gap-2">
                         <h2 className="text-lg font-semibold">{billingStatus.team.name}</h2>

@@ -177,6 +177,7 @@ model Team {
   id            String   @id @default(cuid())
   name          String   // Company/team display name
   slug          String   @unique // URL-friendly identifier (e.g., "acme-corp")
+  logo          String?  // Team logo URL (uploaded image)
   
   // Billing - handled by team admin(s)
   stripeCustomerId     String?   @unique // Stripe Customer ID for the team
