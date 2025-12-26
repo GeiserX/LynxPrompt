@@ -1986,8 +1986,10 @@ export interface GeneratedFile {
 }
 
 // Generate API sync header for files with auto-update enabled
-function generateApiSyncHeader(blueprintId: string, platform: string): string {
+// devOS: linux, macos, windows, wsl, multi
+function generateApiSyncHeader(blueprintId: string, platform: string, devOS: string = "linux"): string {
   const lines: string[] = [];
+  const fileName = getFileName(platform);
   
   // Add comment style based on platform
   const isJsonPlatform = ["continue", "cody", "supermaven", "codegpt", "void"].includes(platform);
@@ -1996,16 +1998,43 @@ function generateApiSyncHeader(blueprintId: string, platform: string): string {
   if (isJsonPlatform) {
     // JSON files - add as a _sync property at the top level
     return ""; // JSON platforms will handle this differently
-  } else if (isYamlPlatform) {
+  }
+  
+  // Generate OS-specific curl command
+  let curlCommand = "";
+  if (devOS === "windows") {
+    // PowerShell for Windows
+    curlCommand = `$content = (Get-Content "${fileName}" -Raw) -replace '"', '\\"'
+Invoke-RestMethod -Uri "https://lynxprompt.com/api/v1/blueprints/${blueprintId}" \`
+  -Method PUT -Headers @{ "Authorization" = "Bearer $env:LYNXPROMPT_API_TOKEN" } \`
+  -Body (@{ content = $content } | ConvertTo-Json)`;
+  } else if (devOS === "multi") {
+    // Show both Unix and Windows commands
+    curlCommand = `# Linux/macOS:
+curl -X PUT https://lynxprompt.com/api/v1/blueprints/${blueprintId} \\
+  -H "Authorization: Bearer $LYNXPROMPT_API_TOKEN" \\
+  -H "Content-Type: application/json" \\
+  -d "{\\"content\\": $(cat ${fileName} | jq -Rs .)}"
+
+# Windows PowerShell:
+$c = Get-Content "${fileName}" -Raw; Invoke-RestMethod -Uri "https://lynxprompt.com/api/v1/blueprints/${blueprintId}" -Method PUT -Headers @{ Authorization = "Bearer $env:LYNXPROMPT_API_TOKEN" } -Body (@{ content = $c } | ConvertTo-Json)`;
+  } else {
+    // Linux, macOS, WSL - bash-style
+    curlCommand = `curl -X PUT https://lynxprompt.com/api/v1/blueprints/${blueprintId} \\
+  -H "Authorization: Bearer $LYNXPROMPT_API_TOKEN" \\
+  -H "Content-Type: application/json" \\
+  -d "{\\"content\\": $(cat ${fileName} | jq -Rs .)}"`;
+  }
+  
+  if (isYamlPlatform) {
     lines.push("# ══════════════════════════════════════════════════════════════════");
     lines.push("# LynxPrompt API Sync");
     lines.push(`# Blueprint ID: ${blueprintId}`);
     lines.push("#");
-    lines.push("# To update this file on LynxPrompt, run:");
-    lines.push(`# curl -X PUT https://lynxprompt.com/api/v1/blueprints/${blueprintId} \\`);
-    lines.push('#      -H "Authorization: Bearer $LYNXPROMPT_API_TOKEN" \\');
-    lines.push('#      -H "Content-Type: application/json" \\');
-    lines.push(`#      -d '{"content": "'"$(cat ${getFileName(platform)})"'"}'`);
+    lines.push("# To update this file on LynxPrompt:");
+    curlCommand.split("\n").forEach(line => lines.push(`# ${line}`));
+    lines.push("#");
+    lines.push("# Docs: https://lynxprompt.com/docs/api");
     lines.push("# ══════════════════════════════════════════════════════════════════");
     lines.push("");
   } else {
@@ -2015,11 +2044,10 @@ function generateApiSyncHeader(blueprintId: string, platform: string): string {
     lines.push("LynxPrompt API Sync");
     lines.push(`Blueprint ID: ${blueprintId}`);
     lines.push("");
-    lines.push("To update this file on LynxPrompt, run:");
-    lines.push(`curl -X PUT https://lynxprompt.com/api/v1/blueprints/${blueprintId} \\`);
-    lines.push('     -H "Authorization: Bearer $LYNXPROMPT_API_TOKEN" \\');
-    lines.push('     -H "Content-Type: application/json" \\');
-    lines.push(`     -d '{"content": "'"$(cat ${getFileName(platform)} | jq -Rs .)"'"}'`);
+    lines.push("To update this file on LynxPrompt:");
+    lines.push(curlCommand);
+    lines.push("");
+    lines.push("Docs: https://lynxprompt.com/docs/api");
     lines.push("══════════════════════════════════════════════════════════════════");
     lines.push("-->");
     lines.push("");
@@ -2093,7 +2121,7 @@ export function generateAllFiles(
 
   // Add API sync header if blueprintId is provided and enableAutoUpdate is true
   if (content && options?.blueprintId && config.enableAutoUpdate) {
-    const syncHeader = generateApiSyncHeader(options.blueprintId, platform);
+    const syncHeader = generateApiSyncHeader(options.blueprintId, platform, config.devOS || "linux");
     if (syncHeader) {
       content = syncHeader + content;
     }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import {
   Zap,
   Wand2,
@@ -11,6 +12,12 @@ import {
   BookOpen,
 } from "lucide-react";
 import { docsConfig } from "@/lib/docs-config";
+
+export const metadata: Metadata = {
+  title: "Documentation",
+  description:
+    "Complete guide to LynxPrompt. Learn to create AI IDE configurations, use the wizard, browse blueprints, and integrate with Cursor, Claude Code, Copilot, and more.",
+};
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Zap,

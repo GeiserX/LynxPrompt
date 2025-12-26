@@ -1,7 +1,27 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { Shield } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy",
+  description:
+    "LynxPrompt Privacy Policy. Learn how we collect, use, and protect your data. GDPR compliant, EU data hosting.",
+  keywords: ["privacy policy", "GDPR", "data protection", "LynxPrompt privacy"],
+  openGraph: {
+    title: "Privacy Policy - LynxPrompt",
+    description: "Learn how LynxPrompt handles your data. GDPR compliant.",
+    type: "website",
+  },
+  alternates: {
+    canonical: "https://lynxprompt.com/privacy",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
 
 export default function PrivacyPage() {
   return (

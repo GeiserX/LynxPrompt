@@ -20,7 +20,11 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LynxPrompt - AI IDE Configuration Generator",
+  metadataBase: new URL("https://lynxprompt.com"),
+  title: {
+    default: "LynxPrompt - AI IDE Configuration Generator",
+    template: "%s | LynxPrompt",
+  },
   description:
     "Transform your development setup into a mouse-click experience. Generate .cursorrules, CLAUDE.md, and more with smart conditional logic.",
   keywords: [
@@ -32,8 +36,14 @@ export const metadata: Metadata = {
     "configuration",
     "prompt",
     "developer tools",
+    "AI coding",
+    "IDE rules",
+    "AGENTS.md",
+    "cursorrules",
   ],
-  authors: [{ name: "LynxPrompt Contributors" }],
+  authors: [{ name: "GeiserCloud", url: "https://geiser.cloud" }],
+  creator: "GeiserCloud",
+  publisher: "LynxPrompt",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -56,13 +66,48 @@ export const metadata: Metadata = {
   openGraph: {
     title: "LynxPrompt - AI IDE Configuration Generator",
     description:
-      "Transform your development setup into a mouse-click experience.",
+      "Transform your development setup into a mouse-click experience. Generate .cursorrules, CLAUDE.md, and more.",
     type: "website",
+    siteName: "LynxPrompt",
+    locale: "en_US",
+    url: "https://lynxprompt.com",
+    images: [
+      {
+        url: "/lynxprompt.png",
+        width: 1200,
+        height: 630,
+        alt: "LynxPrompt - AI IDE Configuration Generator",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "LynxPrompt - AI IDE Configuration Generator",
+    description:
+      "Transform your development setup into a mouse-click experience. Generate .cursorrules, CLAUDE.md, and more.",
+    images: ["/lynxprompt.png"],
+    creator: "@geaboron",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
   alternates: {
+    canonical: "https://lynxprompt.com",
     types: {
       "application/rss+xml": "/api/blog/rss",
     },
+  },
+  verification: {
+    // Add verification codes when available
+    // google: "your-google-verification-code",
   },
 };
 
@@ -74,11 +119,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Umami Analytics - respects DNT, privacy-focused */}
+        {/* Umami Analytics - privacy-focused, cookieless */}
         {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (
           <Script
             src="https://umami.geiser.cloud/script.js"
             data-website-id={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
+            data-do-not-track="false"
             strategy="afterInteractive"
           />
         )}

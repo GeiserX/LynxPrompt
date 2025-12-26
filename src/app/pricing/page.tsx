@@ -9,6 +9,8 @@ import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
 import { PLAN_PRICES } from "@/lib/stripe";
 
+// Note: Metadata is handled in layout.tsx for client components
+
 type BillingInterval = "monthly" | "annual";
 
 // Format price showing decimals only when needed (e.g., €4.50 but €5)
@@ -74,10 +76,10 @@ const getTiers = (interval: BillingInterval) => [
     features: [
       { text: "Everything in Free", included: true },
       { text: "Intermediate repo wizards", included: true },
+      { text: "API access for blueprints", included: true },
       { text: "Priority support", included: true },
       { text: "Save wizard drafts", included: true },
       { text: "Sell blueprints (70% revenue)", included: true },
-      { text: "Advanced wizards", included: false },
     ],
     cta: "Start Pro Trial",
     ctaLink: `/auth/signin?plan=pro&interval=${interval}`,
@@ -134,6 +136,7 @@ const COMPARISON_FEATURES = [
   { name: "Intermediate wizards", free: false, pro: true, max: true, teams: true },
   { name: "Advanced wizards", free: false, pro: false, max: true, teams: true },
   { name: "AI-powered editing", free: false, pro: false, max: true, teams: true },
+  { name: "API access", free: false, pro: true, max: true, teams: true },
   { name: "Download configs", free: true, pro: true, max: true, teams: true },
   { name: "Browse free blueprints", free: true, pro: true, max: true, teams: true },
   { name: "Paid blueprint discount", free: "-", pro: "-", max: "10% off", teams: "10% off" },
@@ -574,6 +577,26 @@ export default function PricingPage() {
                   <strong> Private</strong> (only you), <strong>Team</strong> (all team members), 
                   or <strong>Public</strong> (everyone). Team blueprints are perfect for sharing 
                   internal coding standards, company-specific configurations, and proprietary workflows.
+                </p>
+              </details>
+
+              <details className="group rounded-lg border bg-card">
+                <summary className="flex cursor-pointer items-center justify-between p-4 font-medium">
+                  What can I do with API access?
+                  <span className="transition-transform group-open:rotate-180">
+                    ↓
+                  </span>
+                </summary>
+                <p className="border-t px-4 py-3 text-sm text-muted-foreground">
+                  Pro, Max, and Teams subscribers get <strong>API access</strong> to programmatically 
+                  manage their blueprints. You can list, create, update, and delete blueprints via 
+                  REST API, making it easy to sync your AI config files from CI/CD pipelines or 
+                  scripts. Use the wizard&apos;s &quot;Auto update via API&quot; feature to auto-generate 
+                  sync commands in your downloaded files. See our{" "}
+                  <Link href="/docs/api" className="text-primary hover:underline">
+                    API documentation
+                  </Link>{" "}
+                  for details.
                 </p>
               </details>
             </div>

@@ -1527,9 +1527,51 @@ export default function WizardPage() {
     }
   };
   
-  // Generate API sync header for the downloaded file
+  // Generate API sync header for the downloaded file - OS-specific commands
   const generateApiSyncHeader = (blueprintId: string, fileName: string) => {
     const bpId = blueprintId.startsWith("bp_") ? blueprintId : `bp_${blueprintId}`;
+    const devOS = config.devOS || "linux";
+    
+    // Generate OS-specific curl command
+    let curlCommand = "";
+    
+    if (devOS === "windows") {
+      // PowerShell command for Windows
+      curlCommand = `#   # PowerShell (Windows)
+#   $content = (Get-Content "${fileName}" -Raw) -replace '"', '\\"'
+#   $body = @{ content = $content } | ConvertTo-Json
+#   Invoke-RestMethod -Uri "https://lynxprompt.com/api/v1/blueprints/${bpId}" \`
+#     -Method PUT \`
+#     -Headers @{ "Authorization" = "Bearer $env:LYNXPROMPT_API_TOKEN"; "Content-Type" = "application/json" } \`
+#     -Body $body`;
+    } else if (devOS === "wsl") {
+      // WSL uses bash but might need Windows path awareness
+      curlCommand = `#   # Bash (WSL/Linux)
+#   curl -X PUT "https://lynxprompt.com/api/v1/blueprints/${bpId}" \\
+#     -H "Authorization: Bearer \$LYNXPROMPT_API_TOKEN" \\
+#     -H "Content-Type: application/json" \\
+#     -d "{\\"content\\": \\"$(cat ${fileName} | jq -Rs .)\\"}"\n#
+#   # Note: Install jq if not present: sudo apt install jq`;
+    } else if (devOS === "multi") {
+      // Show both options for cross-platform
+      curlCommand = `#   # Linux/macOS (bash):
+#   curl -X PUT "https://lynxprompt.com/api/v1/blueprints/${bpId}" \\
+#     -H "Authorization: Bearer \$LYNXPROMPT_API_TOKEN" \\
+#     -H "Content-Type: application/json" \\
+#     -d "{\\"content\\": \\"$(cat ${fileName} | jq -Rs .)\\"}"\n#
+#   # Windows (PowerShell):
+#   $content = (Get-Content "${fileName}" -Raw) -replace '"', '\\"'
+#   Invoke-RestMethod -Uri "https://lynxprompt.com/api/v1/blueprints/${bpId}" \`
+#     -Method PUT -Headers @{ "Authorization" = "Bearer \$env:LYNXPROMPT_API_TOKEN" } \`
+#     -Body (@{ content = $content } | ConvertTo-Json)`;
+    } else {
+      // Linux/macOS default - use jq for proper JSON escaping
+      curlCommand = `#   curl -X PUT "https://lynxprompt.com/api/v1/blueprints/${bpId}" \\
+#     -H "Authorization: Bearer \$LYNXPROMPT_API_TOKEN" \\
+#     -H "Content-Type: application/json" \\
+#     -d "{\\"content\\": \\"$(cat ${fileName} | jq -Rs .)\\"}"`;
+    }
+    
     return `# ${config.projectName || fileName}
 #
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1538,12 +1580,10 @@ export default function WizardPage() {
 # 
 # This file is synced with LynxPrompt. To update it via API:
 #
-#   curl -X PUT "https://lynxprompt.com/api/v1/blueprints/${bpId}" \\
-#     -H "Authorization: Bearer YOUR_API_TOKEN" \\
-#     -H "Content-Type: application/json" \\
-#     -d "{\\"content\\": \\"$(cat ${fileName} | sed 's/"/\\\\"/g' | tr '\\n' ' ')\\"}"\n#
-# To generate an API token, visit:
-#   https://lynxprompt.com/settings?tab=api-tokens
+${curlCommand}
+#
+# Generate an API token at: https://lynxprompt.com/settings
+# Docs: https://lynxprompt.com/docs/api
 #
 # Note: Requires an API token with "Edit blueprints" permission.
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
