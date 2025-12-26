@@ -6,8 +6,8 @@ import type { NextRequest } from "next/server";
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
-const RATE_LIMIT_MAX_REQUESTS = 1000; // 1000 requests per minute for general (SPAs make many requests)
-const RATE_LIMIT_AUTH_MAX = 120; // 120 auth attempts per minute (session checks happen frequently)
+const RATE_LIMIT_MAX_REQUESTS = 5000; // 5000 requests per minute for general (SPAs make many requests)
+const RATE_LIMIT_AUTH_MAX = 300; // 300 auth attempts per minute (session checks happen frequently)
 const RATE_LIMIT_CLEANUP_INTERVAL = 5 * 60 * 1000; // Cleanup every 5 minutes
 
 // SECURITY: Prevent memory leak by cleaning up expired rate limit entries
@@ -125,9 +125,53 @@ export function proxy(request: NextRequest) {
     : RATE_LIMIT_MAX_REQUESTS;
 
   if (isRateLimited(rateLimitKey, maxRequests)) {
-    return new NextResponse("Too Many Requests", {
+    // Return JSON for API routes, HTML for page routes
+    if (pathname.startsWith("/api/")) {
+      return new NextResponse(
+        JSON.stringify({ error: "Too many requests. Please slow down." }),
+        {
+          status: 429,
+          headers: {
+            "Content-Type": "application/json",
+            "Retry-After": "60",
+            "X-RateLimit-Limit": maxRequests.toString(),
+            "X-RateLimit-Remaining": "0",
+          },
+        }
+      );
+    }
+    // HTML response for page routes
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Slow Down - LynxPrompt</title>
+  <style>
+    body { min-height: 100vh; background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); font-family: system-ui, sans-serif; display: flex; align-items: center; justify-content: center; margin: 0; }
+    .container { text-align: center; padding: 2rem; }
+    .code { font-size: 5rem; font-weight: 900; background: linear-gradient(135deg, #fbbf24, #f97316); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    h1 { color: #fff; margin: 0.5rem 0; }
+    p { color: #94a3b8; margin-bottom: 1.5rem; }
+    .btn { display: inline-block; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #fbbf24, #f97316); color: #0f172a; font-weight: 600; border-radius: 0.5rem; text-decoration: none; }
+    .timer { color: #64748b; font-size: 0.875rem; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="code">429</div>
+    <h1>Slow down!</h1>
+    <p>You're making requests too quickly. Please wait a moment.</p>
+    <a href="/" class="btn" onclick="location.reload(); return false;">Try Again</a>
+    <p class="timer">Auto-refresh in <span id="cd">10</span>s</p>
+  </div>
+  <script>let s=10;setInterval(()=>{s--;document.getElementById('cd').textContent=s;if(s<=0)location.reload();},1000);</script>
+</body>
+</html>`;
+    return new NextResponse(html, {
       status: 429,
       headers: {
+        "Content-Type": "text/html",
         "Retry-After": "60",
         "X-RateLimit-Limit": maxRequests.toString(),
         "X-RateLimit-Remaining": "0",
