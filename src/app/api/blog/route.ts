@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { createHash } from "crypto";
 import { authOptions } from "@/lib/auth";
 import { prismaBlog } from "@/lib/db-blog";
 import { prismaUsers } from "@/lib/db-users";
 import { isAdminRole, UserRole } from "@/lib/subscription";
+
+// Generate Gravatar URL from email (server-side)
+function getGravatarUrl(email: string, size: number = 96): string {
+  const hash = createHash("md5")
+    .update(email.toLowerCase().trim())
+    .digest("hex");
+  return `https://www.gravatar.com/avatar/${hash}?s=${size}&d=identicon`;
+}
 
 // Helper to generate slug from title
 function generateSlug(title: string): string {
@@ -65,20 +74,22 @@ export async function GET(request: NextRequest) {
     const authorIds = [...new Set(posts.map(post => post.authorId))];
     const users = await prismaUsers.user.findMany({
       where: { id: { in: authorIds } },
-      select: { id: true, name: true, displayName: true, image: true },
+      select: { id: true, name: true, displayName: true, image: true, email: true },
     });
     const userMap = new Map(users.map(u => [u.id, u]));
 
     // Transform to include author object for frontend compatibility
     const transformedPosts = posts.map(post => {
       const user = userMap.get(post.authorId);
+      // Use OAuth image if available, otherwise generate Gravatar from email
+      const authorImage = user?.image || (user?.email ? getGravatarUrl(user.email) : null);
       return {
         ...post,
         author: {
           id: post.authorId,
           name: user?.name || post.authorName,
           displayName: user?.displayName || post.authorName,
-          image: user?.image || null,
+          image: authorImage,
         },
       };
     });

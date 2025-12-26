@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
+import { createHash } from "crypto";
 import { authOptions } from "@/lib/auth";
 import { prismaBlog } from "@/lib/db-blog";
 import { prismaUsers } from "@/lib/db-users";
@@ -17,6 +18,14 @@ import { UserMenu } from "@/components/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Footer } from "@/components/footer";
 import { isAdminRole, UserRole } from "@/lib/subscription";
+
+// Generate Gravatar URL from email (server-side)
+function getGravatarUrl(email: string, size: number = 96): string {
+  const hash = createHash("md5")
+    .update(email.toLowerCase().trim())
+    .digest("hex");
+  return `https://www.gravatar.com/avatar/${hash}?s=${size}&d=identicon`;
+}
 
 // Force dynamic rendering since we need session checks
 export const dynamic = "force-dynamic";
@@ -124,11 +133,12 @@ export default async function BlogPostPage({ params }: PageProps) {
   // Fetch author details from users database
   const author = await prismaUsers.user.findUnique({
     where: { id: post.authorId },
-    select: { name: true, displayName: true, image: true },
+    select: { name: true, displayName: true, image: true, email: true },
   });
 
   const authorName = author?.displayName || author?.name || post.authorName || "Anonymous";
-  const authorImage = author?.image || null;
+  // Use OAuth image if available, otherwise generate Gravatar from email
+  const authorImage = author?.image || (author?.email ? getGravatarUrl(author.email) : null);
   const contentHtml = markdownToHtml(post.content);
 
   return (
