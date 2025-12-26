@@ -26,6 +26,9 @@ import {
   Variable,
   ChevronDown,
   ChevronRight,
+  Users,
+  Crown,
+  Building2,
 } from "lucide-react";
 import { Footer } from "@/components/footer";
 import { PageHeader } from "@/components/page-header";
@@ -92,6 +95,20 @@ interface DashboardData {
   purchasedBlueprints: PurchasedBlueprint[];
 }
 
+interface BillingStatus {
+  plan: string;
+  status: string;
+  isAdmin?: boolean;
+  isTeamsUser?: boolean;
+  hasActiveSubscription?: boolean;
+  team?: {
+    id: string;
+    name: string;
+    slug: string;
+    role: string;
+  } | null;
+}
+
 export default function DashboardPage() {
   const { data: session, status, update: updateSession } = useSession();
   const router = useRouter();
@@ -109,12 +126,14 @@ export default function DashboardPage() {
   const [deleteModalTemplate, setDeleteModalTemplate] = useState<MyTemplate | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [billingStatus, setBillingStatus] = useState<BillingStatus | null>(null);
 
   useEffect(() => {
     if (status === "authenticated") {
       fetchDashboardData();
       fetchPreferences();
       fetchVariables();
+      fetchBillingStatus();
       // Show welcome modal if profile not completed
       if (session?.user && !session.user.profileCompleted) {
         setShowWelcome(true);
@@ -161,6 +180,18 @@ export default function DashboardPage() {
       console.error("Failed to fetch variables:", error);
     } finally {
       setVariablesLoading(false);
+    }
+  };
+
+  const fetchBillingStatus = async () => {
+    try {
+      const res = await fetch("/api/billing/status");
+      if (res.ok) {
+        const data = await res.json();
+        setBillingStatus(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch billing status:", error);
     }
   };
 
@@ -392,6 +423,46 @@ export default function DashboardPage() {
               </Link>
             </Button>
           </div>
+
+          {/* Teams Banner - Only for Teams users */}
+          {billingStatus?.isTeamsUser && billingStatus?.team && (
+            <div className="mb-8 overflow-hidden rounded-xl border border-teal-500/20 bg-gradient-to-r from-teal-500/10 via-cyan-500/5 to-background">
+              <div className="p-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-teal-500 to-cyan-500 text-white shadow-lg">
+                      <Building2 className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-lg font-semibold">{billingStatus.team.name}</h2>
+                        <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-800 dark:bg-teal-900/30 dark:text-teal-300">
+                          Teams Plan
+                        </span>
+                        {billingStatus.team.role === "ADMIN" && (
+                          <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                            <Crown className="h-3 w-3" />
+                            Admin
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {billingStatus.team.role === "ADMIN" 
+                          ? "Manage your team members, billing, and shared blueprints" 
+                          : "Access shared team blueprints and collaboration features"}
+                      </p>
+                    </div>
+                  </div>
+                  <Button asChild variant="outline" className="border-teal-500/30 hover:bg-teal-500/10">
+                    <Link href={`/teams/${billingStatus.team.slug}`}>
+                      <Users className="mr-2 h-4 w-4 text-teal-500" />
+                      {billingStatus.team.role === "ADMIN" ? "Manage Team" : "View Team"}
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="grid gap-8 lg:grid-cols-3">
             {/* Left Column: Quick Actions + My Templates */}

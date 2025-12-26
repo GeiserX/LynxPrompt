@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
   Sparkles,
   User,
+  Users,
   Shield,
   CreditCard,
   Key,
@@ -1395,6 +1396,14 @@ const PLAN_DETAILS = {
     icon: Crown,
     color: "text-purple-500",
   },
+  teams: {
+    name: "Teams",
+    description: "Team collaboration with shared blueprints and enterprise SSO",
+    price: "€30/seat/month",
+    priceAnnual: "€30/seat/month",
+    icon: Users,
+    color: "text-teal-500",
+  },
 };
 
 function BillingSection({ setError, setSuccess }: BillingSectionProps) {
@@ -1683,8 +1692,8 @@ function BillingSection({ setError, setSuccess }: BillingSectionProps) {
         </div>
       )}
 
-      {/* EU Digital Content Consent - Only for new subscriptions */}
-      {currentPlan !== "max" && !subscription?.isAdmin && !subscription?.hasActiveSubscription && (
+      {/* EU Digital Content Consent - Only for new subscriptions (not for Teams or Max users) */}
+      {currentPlan !== "max" && currentPlan !== "teams" && !subscription?.isAdmin && !subscription?.isTeamsUser && !subscription?.hasActiveSubscription && (
         <div className="rounded-xl border bg-card p-6">
           <div className="flex items-start gap-3">
             <input
@@ -1703,8 +1712,8 @@ function BillingSection({ setError, setSuccess }: BillingSectionProps) {
         </div>
       )}
 
-      {/* Upgrade Options - Hide for admins (they already have MAX) */}
-      {currentPlan !== "max" && !subscription?.isAdmin && (
+      {/* Upgrade Options - Hide for admins (they already have MAX), Max users, and Teams users (billing at team level) */}
+      {currentPlan !== "max" && currentPlan !== "teams" && !subscription?.isAdmin && !subscription?.isTeamsUser && (
         <div className="rounded-xl border bg-card p-6">
           <h2 className="mb-4 font-semibold">Upgrade Your Plan</h2>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -1763,8 +1772,39 @@ function BillingSection({ setError, setSuccess }: BillingSectionProps) {
         </div>
       )}
 
-      {/* Downgrade Option - Only for Max users with active subscription */}
-      {currentPlan === "max" && !subscription?.isAdmin && subscription?.hasActiveSubscription && !subscription?.pendingChange && (
+      {/* Teams Plan Info - Only for Teams users */}
+      {subscription?.isTeamsUser && subscription?.team && (
+        <div className="rounded-xl border border-teal-500/20 bg-gradient-to-br from-teal-500/5 to-cyan-500/5 p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-gradient-to-br from-teal-500 to-cyan-500 p-2 text-white">
+                <Users className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-semibold">Team: {subscription.team.name}</p>
+                <p className="text-sm text-muted-foreground">
+                  Role: {subscription.team.role === "ADMIN" ? "Administrator" : "Member"}
+                </p>
+              </div>
+            </div>
+            <Link
+              href={`/teams/${subscription.team.slug}`}
+              className="inline-flex items-center gap-2 rounded-lg border border-teal-500/30 px-4 py-2 text-sm font-medium text-teal-600 transition-colors hover:bg-teal-500/10 dark:text-teal-400"
+            >
+              <Users className="h-4 w-4" />
+              {subscription.team.role === "ADMIN" ? "Manage Team" : "View Team"}
+            </Link>
+          </div>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Your subscription is managed at the team level. {subscription.team.role === "ADMIN" 
+              ? "You can manage members and billing from the team page." 
+              : "Contact your team admin for billing inquiries."}
+          </p>
+        </div>
+      )}
+
+      {/* Downgrade Option - Only for Max users with active subscription (not Teams) */}
+      {currentPlan === "max" && !subscription?.isAdmin && !subscription?.isTeamsUser && subscription?.hasActiveSubscription && !subscription?.pendingChange && (
         <div className="rounded-xl border bg-card p-6">
           <h2 className="mb-4 font-semibold">Downgrade Plan</h2>
           <button
