@@ -2835,7 +2835,7 @@ function ApiTokensSection({ setError, setSuccess }: ApiTokensSectionProps) {
     }
   };
 
-  const canUseApi = ["PRO", "MAX", "TEAMS"].includes(subscriptionPlan);
+  const canUseApi = ["PRO", "MAX", "TEAMS"].includes(subscriptionPlan.toUpperCase());
 
   if (loading) {
     return (
