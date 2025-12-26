@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { createHash } from "crypto";
 import { authOptions } from "@/lib/auth";
 import { prismaSupport } from "@/lib/db-support";
 import { prismaUsers } from "@/lib/db-users";
+
+// Generate Gravatar URL from email
+function getGravatarUrl(email: string, size: number = 96): string {
+  const hash = createHash("md5")
+    .update(email.toLowerCase().trim())
+    .digest("hex");
+  return `https://www.gravatar.com/avatar/${hash}?s=${size}&d=identicon`;
+}
 
 // Public endpoint - no auth required for reading
 export async function GET(request: NextRequest) {
@@ -109,10 +118,33 @@ export async function GET(request: NextRequest) {
       votedPostIds = new Set(userVotes.map((v) => v.postId));
     }
 
-    const postsWithVoteStatus = posts.map((post) => ({
-      ...post,
-      hasVoted: votedPostIds.has(post.id),
-    }));
+    // Fetch fresh user data from users database for all post authors
+    const userIds = [...new Set(posts.map((p) => p.userId))];
+    const users = await prismaUsers.user.findMany({
+      where: { id: { in: userIds } },
+      select: {
+        id: true,
+        name: true,
+        displayName: true,
+        email: true,
+        image: true,
+        subscriptionPlan: true,
+      },
+    });
+    const userMap = new Map(users.map((u) => [u.id, u]));
+
+    const postsWithVoteStatus = posts.map((post) => {
+      const user = userMap.get(post.userId);
+      // Use OAuth image, fallback to Gravatar, then null
+      const userImage = user?.image || (user?.email ? getGravatarUrl(user.email) : null);
+      return {
+        ...post,
+        userName: user?.displayName || user?.name || post.userName,
+        userImage,
+        userPlan: user?.subscriptionPlan || post.userPlan,
+        hasVoted: votedPostIds.has(post.id),
+      };
+    });
 
     return NextResponse.json({
       posts: postsWithVoteStatus,

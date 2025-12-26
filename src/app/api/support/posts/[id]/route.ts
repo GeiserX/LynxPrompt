@@ -1,7 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { createHash } from "crypto";
 import { authOptions } from "@/lib/auth";
 import { prismaSupport } from "@/lib/db-support";
+import { prismaUsers } from "@/lib/db-users";
+
+// Generate Gravatar URL from email
+function getGravatarUrl(email: string, size: number = 96): string {
+  const hash = createHash("md5")
+    .update(email.toLowerCase().trim())
+    .digest("hex");
+  return `https://www.gravatar.com/avatar/${hash}?s=${size}&d=identicon`;
+}
 
 // Public endpoint - no auth required for reading
 export async function GET(
@@ -53,10 +63,65 @@ export async function GET(
       hasVoted = !!vote;
     }
 
-    return NextResponse.json({
-      ...post,
-      hasVoted,
+    // Fetch fresh user data for post author and all commenters
+    const allUserIds = [
+      post.userId,
+      ...post.comments.map((c) => c.userId),
+      ...post.comments.flatMap((c) => c.replies?.map((r) => r.userId) || []),
+    ];
+    const uniqueUserIds = [...new Set(allUserIds)];
+    
+    const users = await prismaUsers.user.findMany({
+      where: { id: { in: uniqueUserIds } },
+      select: {
+        id: true,
+        name: true,
+        displayName: true,
+        email: true,
+        image: true,
+        subscriptionPlan: true,
+        role: true,
+      },
     });
+    const userMap = new Map(users.map((u) => [u.id, u]));
+
+    // Helper to get user image with fallback
+    const getUserImage = (userId: string) => {
+      const user = userMap.get(userId);
+      return user?.image || (user?.email ? getGravatarUrl(user.email) : null);
+    };
+
+    // Enrich post with fresh user data
+    const postUser = userMap.get(post.userId);
+    const enrichedPost = {
+      ...post,
+      userName: postUser?.displayName || postUser?.name || post.userName,
+      userImage: getUserImage(post.userId),
+      userPlan: postUser?.subscriptionPlan || post.userPlan,
+      comments: post.comments.map((comment) => {
+        const commentUser = userMap.get(comment.userId);
+        return {
+          ...comment,
+          userName: commentUser?.displayName || commentUser?.name || comment.userName,
+          userImage: getUserImage(comment.userId),
+          userPlan: commentUser?.subscriptionPlan || comment.userPlan,
+          userRole: commentUser?.role || comment.userRole,
+          replies: comment.replies?.map((reply) => {
+            const replyUser = userMap.get(reply.userId);
+            return {
+              ...reply,
+              userName: replyUser?.displayName || replyUser?.name || reply.userName,
+              userImage: getUserImage(reply.userId),
+              userPlan: replyUser?.subscriptionPlan || reply.userPlan,
+              userRole: replyUser?.role || reply.userRole,
+            };
+          }) || [],
+        };
+      }),
+      hasVoted,
+    };
+
+    return NextResponse.json(enrichedPost);
   } catch (error) {
     console.error("Error fetching post:", error);
     return NextResponse.json(
