@@ -94,6 +94,7 @@ export async function GET() {
           downloads: true,
           favorites: true,
           isPublic: true,
+          visibility: true,
           createdAt: true,
         },
       }).then(templates => templates.map(template => ({
