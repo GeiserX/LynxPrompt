@@ -79,11 +79,15 @@ export default function TeamsPage() {
     setIsCreating(true);
     setError(null);
 
+    // Get interval from URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const interval = urlParams.get("interval") === "annual" ? "annual" : "monthly";
+
     try {
       const response = await fetch("/api/teams", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: teamName, slug: teamSlug }),
+        body: JSON.stringify({ name: teamName, slug: teamSlug, interval }),
       });
 
       const data = await response.json();
@@ -93,8 +97,12 @@ export default function TeamsPage() {
         return;
       }
 
-      // Redirect to team management
-      window.location.href = `/teams/${data.team.slug}/manage`;
+      // Redirect to Stripe checkout
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      } else {
+        setError("Failed to create checkout session");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -258,7 +266,7 @@ export default function TeamsPage() {
                 Create Your Team
               </h2>
               <p className="mb-8 text-center text-muted-foreground">
-                Start your 14-day free trial. No credit card required.
+                You&apos;ll be redirected to complete payment. Starts at €90/month (3 seats).
               </p>
 
               <form onSubmit={handleCreateTeam} className="space-y-4">
