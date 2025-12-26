@@ -447,7 +447,8 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
       mvc: "MVC / MVVM - Model-View-Controller or Model-View-ViewModel",
       other: config.architecturePatternOther || "Custom architecture",
     };
-    lines.push(`**Architecture Pattern**: ${archLabels[config.architecturePattern] || config.architecturePattern}`);
+    const archValue = archLabels[config.architecturePattern] || config.architecturePattern;
+    lines.push(`**Architecture Pattern**: ${bpVar(bp, "ARCHITECTURE_PATTERN", archValue)}`);
   }
   if (config.isPublic !== undefined) {
     lines.push(`**Visibility**: ${config.isPublic ? "Public repository" : "Private repository"}`);
@@ -469,7 +470,7 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
   if (hasRepoInfo) {
     lines.push("### Repository");
     if (config.repoUrl) {
-      lines.push(`- **URL**: ${config.repoUrl}`);
+      lines.push(`- **URL**: ${bpVar(bp, "REPO_URL", config.repoUrl)}`);
     }
     if (config.repoHosts?.length || config.repoHost) {
       const hostNames: Record<string, string> = {
@@ -489,7 +490,7 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
       };
       const hosts = config.repoHosts?.length ? config.repoHosts : [config.repoHost];
       const hostLabels = hosts.map(h => hostNames[h] || h).join(", ");
-      lines.push(`- **Platform${hosts.length > 1 ? 's' : ''}**: ${hostLabels}`);
+      lines.push(`- **Platform${hosts.length > 1 ? 's' : ''}**: ${bpVar(bp, "REPO_HOST", hostLabels)}`);
       if (hosts.length > 1 && config.multiRepoReason) {
         lines.push(`- **Why multiple platforms**: ${config.multiRepoReason}`);
       }
@@ -567,6 +568,8 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
   // Developer profile (if included)
   if (config.includePersonalData !== false && user.skillLevel) {
     lines.push("### Developer Profile");
+    const authorName = user.displayName || user.name || "Developer";
+    lines.push(`- **Author**: ${bpVar(bp, "AUTHOR_NAME", authorName)}`);
     if (user.persona) {
       lines.push(`- **Developer Type**: ${user.persona.replace(/_/g, " ")}`);
     }
@@ -597,8 +600,9 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
       PascalCase: "Use PascalCase for classes and types (e.g., MyClass, UserProfile)",
       "kebab-case": "Use kebab-case for file names and URLs (e.g., my-component, user-profile)",
     };
+    const namingValue = namingDescriptions[config.codeStyle.naming] || config.codeStyle.naming;
     lines.push("### Naming Conventions");
-    lines.push(`**Style**: ${namingDescriptions[config.codeStyle.naming] || config.codeStyle.naming}`);
+    lines.push(`**Style**: ${bpVar(bp, "NAMING_CONVENTION", namingValue)}`);
     lines.push("");
   }
 
@@ -613,22 +617,23 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
       exceptions: "Use custom exception/error classes with meaningful error messages and types",
       other: config.codeStyle.errorHandlingOther || "Follow the project's custom error handling approach",
     };
+    const errorValue = errorDescriptions[config.codeStyle.errorHandling] || config.codeStyle.errorHandling;
     lines.push("### Error Handling");
-    lines.push(`**Approach**: ${errorDescriptions[config.codeStyle.errorHandling] || config.codeStyle.errorHandling}`);
+    lines.push(`**Approach**: ${bpVar(bp, "ERROR_HANDLING", errorValue)}`);
     lines.push("");
   }
 
   // Logging
   if (config.codeStyle?.loggingConventions) {
     lines.push("### Logging Conventions");
-    lines.push(`**Guidelines**: ${config.codeStyle.loggingConventions}`);
+    lines.push(`**Guidelines**: ${bpVar(bp, "LOGGING_CONVENTIONS", config.codeStyle.loggingConventions)}`);
     lines.push("");
   }
 
   // Additional style notes
   if (config.codeStyle?.notes) {
     lines.push("### Additional Style Notes");
-    lines.push(config.codeStyle.notes);
+    lines.push(bpVar(bp, "CODE_STYLE_NOTES", config.codeStyle.notes));
     lines.push("");
   }
 
@@ -665,15 +670,21 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     lines.push("");
     lines.push("Before making significant changes, read these files to understand the project context:");
     lines.push("");
+    const allFiles: string[] = [];
     if (config.importantFiles?.length) {
       config.importantFiles.forEach(f => {
-        lines.push(`- ${importantFileLabels[f] || f}`);
+        allFiles.push(importantFileLabels[f] || f);
       });
     }
     if (config.importantFilesOther?.trim()) {
       config.importantFilesOther.split(",").map(f => f.trim()).filter(Boolean).forEach(f => {
-        lines.push(`- ${f}`);
+        allFiles.push(f);
       });
+    }
+    if (bp && allFiles.length > 0) {
+      lines.push(bpVar(bp, "IMPORTANT_FILES", allFiles.join(", ")));
+    } else {
+      allFiles.forEach(f => lines.push(`- ${f}`));
     }
     lines.push("");
   }
@@ -691,17 +702,32 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     lines.push("");
     if (config.boundaries!.always?.length) {
       lines.push("### ✅ ALWAYS DO (no need to ask)");
-      config.boundaries!.always.forEach(item => lines.push(`- ${item}`));
+      const alwaysItems = config.boundaries!.always.join(", ");
+      if (bp) {
+        lines.push(bpVar(bp, "ALWAYS_DO", alwaysItems));
+      } else {
+        config.boundaries!.always.forEach(item => lines.push(`- ${item}`));
+      }
       lines.push("");
     }
     if (config.boundaries!.ask?.length) {
       lines.push("### ❓ ASK FIRST (get confirmation before doing)");
-      config.boundaries!.ask.forEach(item => lines.push(`- ${item}`));
+      const askItems = config.boundaries!.ask.join(", ");
+      if (bp) {
+        lines.push(bpVar(bp, "ASK_FIRST", askItems));
+      } else {
+        config.boundaries!.ask.forEach(item => lines.push(`- ${item}`));
+      }
       lines.push("");
     }
     if (config.boundaries!.never?.length) {
       lines.push("### 🚫 NEVER DO (strictly prohibited)");
-      config.boundaries!.never.forEach(item => lines.push(`- ${item}`));
+      const neverItems = config.boundaries!.never.join(", ");
+      if (bp) {
+        lines.push(bpVar(bp, "NEVER_DO", neverItems));
+      } else {
+        config.boundaries!.never.forEach(item => lines.push(`- ${item}`));
+      }
       lines.push("");
     }
   }
@@ -759,15 +785,16 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
       lines.push("");
     }
     if (config.testingStrategy!.frameworks?.length) {
-      lines.push(`**Testing Frameworks**: ${config.testingStrategy!.frameworks.join(", ")}`);
+      const frameworksValue = config.testingStrategy!.frameworks.join(", ");
+      lines.push(`**Testing Frameworks**: ${bpVar(bp, "TEST_FRAMEWORKS", frameworksValue)}`);
     }
     if (config.testingStrategy!.coverage !== undefined) {
-      lines.push(`**Coverage Target**: ${config.testingStrategy!.coverage}% minimum`);
+      lines.push(`**Coverage Target**: ${bpVar(bp, "TEST_COVERAGE", String(config.testingStrategy!.coverage))}% minimum`);
     }
     if (config.testingStrategy!.notes) {
       lines.push("");
       lines.push("**Additional testing notes**:");
-      lines.push(config.testingStrategy!.notes);
+      lines.push(bpVar(bp, "TEST_NOTES", config.testingStrategy!.notes));
     }
     lines.push("");
   }
@@ -786,7 +813,8 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     };
     lines.push("## Project Type Context");
     lines.push("");
-    lines.push(`This is a **${projectTypeLabels[config.projectType] || config.projectType}**. Keep these guidelines in mind:`);
+    const projectTypeValue = projectTypeLabels[config.projectType] || config.projectType;
+    lines.push(`This is a **${bpVar(bp, "PROJECT_TYPE", projectTypeValue)}**. Keep these guidelines in mind:`);
     lines.push("");
     PROJECT_TYPE_INSTRUCTIONS[config.projectType].forEach((instruction) => {
       lines.push(`- ${instruction}`);
@@ -799,7 +827,7 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     lines.push("");
     lines.push("The project owner has provided these additional instructions:");
     lines.push("");
-    lines.push(config.additionalFeedback);
+    lines.push(bpVar(bp, "ADDITIONAL_INSTRUCTIONS", config.additionalFeedback));
     lines.push("");
   }
 
@@ -822,7 +850,7 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
         none: "Manual deployment",
       };
       const cicdNames = config.cicd.map(c => cicdLabels[c] || c).join(", ");
-      lines.push(`**CI/CD Platform**: ${cicdNames}`);
+      lines.push(`**CI/CD Platform**: ${bpVar(bp, "CICD_PLATFORM", cicdNames)}`);
     }
     if (config.deploymentTarget && config.deploymentTarget.length > 0) {
       const deployLabels: Record<string, string> = {
@@ -839,7 +867,7 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
         baremetal: "Bare Metal / On-Prem",
       };
       const deployNames = config.deploymentTarget.map(d => deployLabels[d] || d).join(", ");
-      lines.push(`**Deployment Target${config.deploymentTarget.length > 1 ? 's' : ''}**: ${deployNames}`);
+      lines.push(`**Deployment Target${config.deploymentTarget.length > 1 ? 's' : ''}**: ${bpVar(bp, "DEPLOYMENT_TARGETS", deployNames)}`);
     }
     if (config.buildContainer) {
       lines.push(`**Container Builds**: This project builds Docker/OCI container images`);
@@ -852,7 +880,8 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
           acr: "Azure Container Registry",
           custom: config.customRegistry || "Custom registry",
         };
-        lines.push(`**Container Registry**: ${registryLabels[config.containerRegistry] || config.containerRegistry}`);
+        const registryValue = registryLabels[config.containerRegistry] || config.containerRegistry;
+        lines.push(`**Container Registry**: ${bpVar(bp, "CONTAINER_REGISTRY", registryValue)}`);
       }
     }
     lines.push("");
@@ -921,7 +950,7 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
 
   // Add embedded static files (only for Max tier)
   if (canAccessFeature(user.tier, "advanced")) {
-    const staticFilesSection = generateEmbeddedStaticFiles(config, user);
+    const staticFilesSection = generateEmbeddedStaticFiles(config, user, bp);
     if (staticFilesSection) {
       lines.push(staticFilesSection);
     }
@@ -990,7 +1019,8 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
       mvc: "MVC / MVVM - Model-View-Controller or Model-View-ViewModel",
       other: config.architecturePatternOther || "Custom architecture",
     };
-    lines.push(`**Architecture Pattern**: ${archLabels[config.architecturePattern] || config.architecturePattern}`);
+    const archValue = archLabels[config.architecturePattern] || config.architecturePattern;
+    lines.push(`**Architecture Pattern**: ${bpVar(bp, "ARCHITECTURE_PATTERN", archValue)}`);
   }
   
   if (config.isPublic !== undefined) {
@@ -1150,15 +1180,21 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
   if (hasImportantFilesAgents) {
     lines.push("### Important Files to Read First");
     lines.push("Before making changes, read these files to understand the project:");
+    const allFilesAgents: string[] = [];
     if (config.importantFiles?.length) {
       config.importantFiles.forEach(f => {
-        lines.push(`- ${importantFileLabelsAgents[f] || f}`);
+        allFilesAgents.push(importantFileLabelsAgents[f] || f);
       });
     }
     if (config.importantFilesOther?.trim()) {
       config.importantFilesOther.split(",").map(f => f.trim()).filter(Boolean).forEach(f => {
-        lines.push(`- ${f}`);
+        allFilesAgents.push(f);
       });
+    }
+    if (bp && allFilesAgents.length > 0) {
+      lines.push(bpVar(bp, "IMPORTANT_FILES", allFilesAgents.join(", ")));
+    } else {
+      allFilesAgents.forEach(f => lines.push(`- ${f}`));
     }
     lines.push("");
   }
@@ -1356,7 +1392,7 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
     lines.push("");
     lines.push("The project owner has provided these additional instructions:");
     lines.push("");
-    lines.push(config.additionalFeedback);
+    lines.push(bpVar(bp, "ADDITIONAL_INSTRUCTIONS", config.additionalFeedback));
     lines.push("");
   }
 
@@ -1372,7 +1408,7 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
 
   // Add embedded static files (only for Max tier)
   if (canAccessFeature(user.tier, "advanced")) {
-    const staticFilesSection = generateEmbeddedStaticFiles(config, user);
+    const staticFilesSection = generateEmbeddedStaticFiles(config, user, bp);
     if (staticFilesSection) {
       lines.push(staticFilesSection);
     }
@@ -1785,7 +1821,8 @@ const LICENSE_NAMES: Record<string, string> = {
 
 // Generate embedded static files section for AI config
 // Only embeds files with USER-PROVIDED custom content; otherwise gives instructions
-function generateEmbeddedStaticFiles(config: WizardConfig, user: UserProfile): string {
+function generateEmbeddedStaticFiles(config: WizardConfig, user: UserProfile, blueprintMode: boolean = false): string {
+  const bp = blueprintMode;
   const instructions: string[] = [];
   const customFiles: string[] = [];
   
@@ -1908,9 +1945,12 @@ ${config.staticFiles.roadmapCustom.trim()}
       ? (config.licenseOther || "a custom license")
       : (LICENSE_NAMES[config.license] || config.license);
     const author = user.displayName || user.name || "the project author";
-    let licenseInstruction = `- This repository uses the **${licenseName}** license. If the \`LICENSE\` file doesn't exist yet, please create it with copyright holder: ${author}.`;
+    const licenseNameVar = bpVar(bp, "LICENSE_TYPE", licenseName);
+    const authorVar = bpVar(bp, "AUTHOR_NAME", author);
+    let licenseInstruction = `- This repository uses the **${licenseNameVar}** license. If the \`LICENSE\` file doesn't exist yet, please create it with copyright holder: ${authorVar}.`;
     if (config.licenseNotes?.trim()) {
-      licenseInstruction += ` Additional licensing notes: ${config.licenseNotes.trim()}`;
+      const notesVar = bpVar(bp, "LICENSE_NOTES", config.licenseNotes.trim());
+      licenseInstruction += ` Additional licensing notes: ${notesVar}`;
     }
     instructions.push(licenseInstruction);
   }
