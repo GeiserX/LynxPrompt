@@ -46,6 +46,7 @@ interface Tag {
 interface Comment {
   id: string;
   content: string;
+  userId: string;
   userName: string | null;
   userImage: string | null;
   userRole: string;
@@ -400,12 +401,16 @@ export default function PostDetailPage({
                       {post.category.name}
                     </span>
                     <span>•</span>
-                    <span className="flex items-center gap-1.5">
+                    <Link
+                      href={`/users/${post.userId}`}
+                      className="flex items-center gap-1.5 hover:text-primary hover:underline"
+                    >
                       {post.userImage ? (
                         <img
                           src={post.userImage}
                           alt=""
                           className="h-5 w-5 rounded-full"
+                          referrerPolicy="no-referrer"
                         />
                       ) : null}
                       {post.userName || "Anonymous"}
@@ -416,7 +421,7 @@ export default function PostDetailPage({
                           {PLAN_BADGES[post.userPlan].label}
                         </span>
                       )}
-                    </span>
+                    </Link>
                     <span>•</span>
                     <span>{new Date(post.createdAt).toLocaleDateString()}</span>
                   </div>
@@ -522,22 +527,25 @@ function CommentCard({ comment }: { comment: Comment }) {
       }`}
     >
       <div className="flex items-start gap-3">
-        {comment.userImage ? (
-          <img
-            src={comment.userImage}
-            alt=""
-            className="h-8 w-8 rounded-full"
-          />
-        ) : (
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-medium">
-            {comment.userName?.[0]?.toUpperCase() || "?"}
-          </div>
-        )}
+        <Link href={`/users/${comment.userId}`} className="flex-shrink-0">
+          {comment.userImage ? (
+            <img
+              src={comment.userImage}
+              alt=""
+              className="h-8 w-8 rounded-full hover:ring-2 hover:ring-primary/50"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-medium hover:ring-2 hover:ring-primary/50">
+              {comment.userName?.[0]?.toUpperCase() || "?"}
+            </div>
+          )}
+        </Link>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="font-medium">
+            <Link href={`/users/${comment.userId}`} className="font-medium hover:text-primary hover:underline">
               {comment.userName || "Anonymous"}
-            </span>
+            </Link>
             {isStaff && (
               <span className="flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
                 <Shield className="h-3 w-3" />
