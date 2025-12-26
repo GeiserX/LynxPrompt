@@ -102,6 +102,7 @@ export async function GET(
         id: team.id,
         name: team.name,
         slug: team.slug,
+        logo: team.logo,
         maxSeats: team.maxSeats,
         billingCycleStart: team.billingCycleStart,
         stripeCustomerId: team.stripeCustomerId,

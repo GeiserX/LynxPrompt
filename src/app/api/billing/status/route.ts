@@ -33,6 +33,7 @@ export async function GET() {
                 id: true,
                 name: true,
                 slug: true,
+                logo: true,
                 stripeSubscriptionId: true,
                 billingCycleStart: true,
               },
@@ -115,6 +116,7 @@ export async function GET() {
         id: teamMembership.team.id,
         name: teamMembership.team.name,
         slug: teamMembership.team.slug,
+        logo: teamMembership.team.logo,
         role: teamMembership.role,
       } : null,
     });

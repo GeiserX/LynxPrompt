@@ -23,6 +23,8 @@ import {
   Shield,
   Copy,
   Check,
+  Camera,
+  ImageIcon,
 } from "lucide-react";
 
 interface TeamMember {
@@ -52,6 +54,7 @@ interface Team {
   id: string;
   name: string;
   slug: string;
+  logo: string | null;
   maxSeats: number;
   aiUsageLimitPerUser: number;
   createdAt: string;
@@ -80,6 +83,10 @@ export default function TeamManagementPage() {
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
+  
+  // Logo upload state
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -200,6 +207,56 @@ export default function TeamManagementPage() {
     }
   };
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!team || !e.target.files?.[0]) return;
+    
+    const file = e.target.files[0];
+    setLogoError(null);
+    setUploadingLogo(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch(`/api/teams/${team.id}/logo`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to upload logo");
+      }
+
+      // Refresh team data to get new logo URL
+      fetchTeam();
+    } catch (err) {
+      setLogoError(err instanceof Error ? err.message : "Failed to upload logo");
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  const handleLogoRemove = async () => {
+    if (!team || !confirm("Remove team logo?")) return;
+
+    try {
+      const res = await fetch(`/api/teams/${team.id}/logo`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to remove logo");
+      }
+
+      fetchTeam();
+    } catch (err) {
+      setLogoError(err instanceof Error ? err.message : "Failed to remove logo");
+    }
+  };
+
   if (status === "loading" || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -258,14 +315,45 @@ export default function TeamManagementPage() {
           {/* Team Header */}
           <div className="mb-8 flex items-start justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 text-white">
-                <Building2 className="h-8 w-8" />
+              {/* Team Logo */}
+              <div className="relative group">
+                {team?.logo ? (
+                  <img
+                    src={team.logo}
+                    alt={team.name}
+                    className="h-16 w-16 rounded-xl object-contain bg-muted"
+                    style={{ maxWidth: "64px", maxHeight: "64px" }}
+                  />
+                ) : (
+                  <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 text-white">
+                    <Building2 className="h-8 w-8" />
+                  </div>
+                )}
+                {userRole === "ADMIN" && (
+                  <label className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-xl bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                      disabled={uploadingLogo}
+                    />
+                    {uploadingLogo ? (
+                      <Loader2 className="h-6 w-6 animate-spin text-white" />
+                    ) : (
+                      <Camera className="h-6 w-6 text-white" />
+                    )}
+                  </label>
+                )}
               </div>
               <div>
                 <h1 className="text-2xl font-bold">{team?.name}</h1>
                 <p className="text-muted-foreground">
                   {team?._count?.members || team?.members?.length || 0} members • {team?.maxSeats} max seats
                 </p>
+                {logoError && (
+                  <p className="text-sm text-red-500">{logoError}</p>
+                )}
               </div>
             </div>
             {userRole === "ADMIN" && (
