@@ -595,7 +595,11 @@ function SupportPageContent() {
                                   className="h-4 w-4 rounded-full"
                                   referrerPolicy="no-referrer"
                                 />
-                              ) : null}
+                              ) : (
+                                <div className="flex h-4 w-4 items-center justify-center rounded-full bg-muted text-[8px] font-medium">
+                                  {post.userName?.[0]?.toUpperCase() || "?"}
+                                </div>
+                              )}
                               {post.userName || "Anonymous"}
                               {PLAN_BADGES[post.userPlan] && (
                                 <span

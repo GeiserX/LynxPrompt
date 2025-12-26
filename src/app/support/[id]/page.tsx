@@ -392,6 +392,40 @@ export default function PostDetailPage({
                     )}
                   </div>
 
+                  {/* Author */}
+                  <Link
+                    href={`/users/${post.userId}`}
+                    className="mt-3 inline-flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-2 transition-colors hover:border-primary/50 hover:bg-muted"
+                  >
+                    {post.userImage ? (
+                      <img
+                        src={post.userImage}
+                        alt=""
+                        className="h-8 w-8 rounded-full"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">
+                        {post.userName?.[0]?.toUpperCase() || "?"}
+                      </div>
+                    )}
+                    <div className="flex flex-col">
+                      <span className="flex items-center gap-1.5 font-medium">
+                        {post.userName || "Anonymous"}
+                        {PLAN_BADGES[post.userPlan] && (
+                          <span
+                            className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${PLAN_BADGES[post.userPlan].className}`}
+                          >
+                            {PLAN_BADGES[post.userPlan].label}
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(post.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </Link>
+
                   {/* Meta */}
                   <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1.5">
@@ -400,30 +434,6 @@ export default function PostDetailPage({
                       )}
                       {post.category.name}
                     </span>
-                    <span>•</span>
-                    <Link
-                      href={`/users/${post.userId}`}
-                      className="flex items-center gap-1.5 hover:text-primary hover:underline"
-                    >
-                      {post.userImage ? (
-                        <img
-                          src={post.userImage}
-                          alt=""
-                          className="h-5 w-5 rounded-full"
-                          referrerPolicy="no-referrer"
-                        />
-                      ) : null}
-                      {post.userName || "Anonymous"}
-                      {PLAN_BADGES[post.userPlan] && (
-                        <span
-                          className={`rounded px-1.5 py-0.5 text-xs font-bold ${PLAN_BADGES[post.userPlan].className}`}
-                        >
-                          {PLAN_BADGES[post.userPlan].label}
-                        </span>
-                      )}
-                    </Link>
-                    <span>•</span>
-                    <span>{new Date(post.createdAt).toLocaleDateString()}</span>
                   </div>
 
                   {/* Tags */}
