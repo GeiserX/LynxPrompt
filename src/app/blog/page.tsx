@@ -12,6 +12,7 @@ import {
   Plus,
   Settings,
   Tag,
+  Rss,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
@@ -102,22 +103,35 @@ export default function BlogPage() {
               Updates, tutorials, and insights about AI coding assistants and
               LynxPrompt.
             </p>
-            {isAdmin && (
-              <div className="mt-6 flex justify-center gap-3">
-                <Button asChild>
-                  <Link href="/blog/admin/new">
-                    <Plus className="mr-2 h-4 w-4" />
-                    New Post
-                  </Link>
-                </Button>
-                <Button variant="outline" asChild>
-                  <Link href="/blog/admin">
-                    <Settings className="mr-2 h-4 w-4" />
-                    Manage Posts
-                  </Link>
-                </Button>
-              </div>
-            )}
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              {isAdmin && (
+                <>
+                  <Button asChild>
+                    <Link href="/blog/admin/new">
+                      <Plus className="mr-2 h-4 w-4" />
+                      New Post
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link href="/blog/admin">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Manage Posts
+                    </Link>
+                  </Button>
+                </>
+              )}
+              <Button variant="outline" asChild>
+                <a
+                  href="/api/blog/rss"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Subscribe via RSS"
+                >
+                  <Rss className="mr-2 h-4 w-4" />
+                  RSS Feed
+                </a>
+              </Button>
+            </div>
           </div>
         </div>
       </section>

@@ -9,6 +9,11 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
 
+  // Skip ESLint during build (already runs in pre-commit hooks)
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
   // Enable standalone output for Docker production builds
   output: "standalone",
 
@@ -36,6 +41,26 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "2mb",
     },
+    // Optimize imports for large icon/component libraries (faster builds)
+    optimizePackageImports: [
+      "lucide-react",
+      "@radix-ui/react-accordion",
+      "@radix-ui/react-alert-dialog",
+      "@radix-ui/react-checkbox",
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-dropdown-menu",
+      "@radix-ui/react-label",
+      "@radix-ui/react-popover",
+      "@radix-ui/react-progress",
+      "@radix-ui/react-radio-group",
+      "@radix-ui/react-select",
+      "@radix-ui/react-separator",
+      "@radix-ui/react-slot",
+      "@radix-ui/react-switch",
+      "@radix-ui/react-tabs",
+      "@radix-ui/react-toast",
+      "@radix-ui/react-tooltip",
+    ],
   },
 
   // Security: Disable x-powered-by header

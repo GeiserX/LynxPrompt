@@ -59,6 +59,11 @@ export const metadata: Metadata = {
       "Transform your development setup into a mouse-click experience.",
     type: "website",
   },
+  alternates: {
+    types: {
+      "application/rss+xml": "/api/blog/rss",
+    },
+  },
 };
 
 export default function RootLayout({
