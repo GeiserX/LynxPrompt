@@ -61,6 +61,9 @@ temp/
 # Generated code
 src/generated/
 
+# Stripe product images (separate tool, has its own node_modules)
+stripe-product-images/
+
 # Misc
 *.pem
 LICENSE

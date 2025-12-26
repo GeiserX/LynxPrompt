@@ -1,6 +1,10 @@
+# syntax=docker/dockerfile:1
 # =============================================================================
 # LynxPrompt Dockerfile
-# Multi-stage build for production
+# Multi-stage build for production (optimized with BuildKit)
+# =============================================================================
+# Build with: docker build --platform linux/amd64 -t <tag> .
+# Requires: DOCKER_BUILDKIT=1 (default in modern Docker)
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -14,15 +18,17 @@ RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
 # -----------------------------------------------------------------------------
-# Dependencies stage - install dependencies
+# Dependencies stage - install dependencies with npm ci (faster, deterministic)
 # -----------------------------------------------------------------------------
 FROM base AS deps
 
 # Copy package files
 COPY package.json package-lock.json* ./
 
-# Install dependencies (--legacy-peer-deps for @sentry/nextjs compatibility with Next.js 16)
-RUN npm install --legacy-peer-deps
+# Install dependencies using npm ci (faster for CI/Docker)
+# Uses BuildKit cache mount for npm cache (~30-50% faster on rebuilds)
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --legacy-peer-deps
 
 # -----------------------------------------------------------------------------
 # Builder stage - build the application
@@ -34,17 +40,19 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Generate Prisma clients (Prisma 7 with config files)
-RUN npx prisma generate --config=prisma/prisma.config-app.ts
-RUN npx prisma generate --config=prisma/prisma.config-users.ts
-RUN npx prisma generate --config=prisma/prisma.config-blog.ts
-RUN npx prisma generate --config=prisma/prisma.config-support.ts
+# Generate all 4 Prisma clients in parallel (Prisma 7 with driver adapters)
+RUN npx prisma generate --config=prisma/prisma.config-app.ts & \
+    npx prisma generate --config=prisma/prisma.config-users.ts & \
+    npx prisma generate --config=prisma/prisma.config-blog.ts & \
+    npx prisma generate --config=prisma/prisma.config-support.ts & \
+    wait
 
-# Build the application
+# Build the application with Next.js build cache
 # Note: NEXT_PUBLIC_* vars are fetched at runtime via /api/config/public
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV TSC_COMPILE_ON_ERROR=true
-RUN npm run build
+RUN --mount=type=cache,target=/app/.next/cache \
+    npm run build
 
 # -----------------------------------------------------------------------------
 # Production stage - minimal runtime image

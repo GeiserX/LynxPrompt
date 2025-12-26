@@ -6,9 +6,14 @@ import { z } from "zod";
 
 // Validation schema for sending invitations
 const sendInvitationsSchema = z.object({
-  emails: z.array(z.string().email()).min(1).max(50), // Max 50 invites at once
+  // Support both single email and array
+  email: z.string().email().optional(),
+  emails: z.array(z.string().email()).max(50).optional(),
   role: z.enum(["ADMIN", "MEMBER"]).default("MEMBER"),
-});
+}).refine(
+  (data) => data.email || (data.emails && data.emails.length > 0),
+  { message: "At least one email is required" }
+);
 
 /**
  * Helper: Check if user is a team admin
@@ -103,7 +108,16 @@ export async function POST(
       );
     }
 
-    const { emails, role } = validation.data;
+    const { email, emails: emailsArray, role } = validation.data;
+    
+    // Combine single email and array into one list
+    const emails: string[] = [];
+    if (email) emails.push(email);
+    if (emailsArray) emails.push(...emailsArray);
+    
+    if (emails.length === 0) {
+      return NextResponse.json({ error: "At least one email is required" }, { status: 400 });
+    }
 
     // Get team info for the invitation email
     const team = await prismaUsers.team.findUnique({
@@ -120,14 +134,25 @@ export async function POST(
     const pendingInvitations = await prismaUsers.teamInvitation.count({
       where: { teamId, status: "PENDING" },
     });
-    const availableSeats = team.maxSeats - currentMembers - pendingInvitations;
+    const paidSeats = team.maxSeats;
+    const usedSeats = currentMembers + pendingInvitations;
+    const availableSeats = paidSeats - usedSeats;
 
     if (emails.length > availableSeats) {
+      // Return a specific code so frontend knows to prompt for payment
       return NextResponse.json(
         {
-          error: `Not enough seats. Available: ${availableSeats}, Requested: ${emails.length}. Increase max seats first.`,
+          error: "Additional seats required",
+          code: "SEATS_REQUIRED",
+          details: {
+            paidSeats,
+            usedSeats,
+            availableSeats,
+            requestedSeats: emails.length,
+            additionalSeatsNeeded: emails.length - availableSeats,
+          },
         },
-        { status: 400 }
+        { status: 402 } // 402 Payment Required
       );
     }
 

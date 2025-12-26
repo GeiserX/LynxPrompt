@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Heart,
@@ -18,13 +19,39 @@ export default function AboutPage() {
       {/* Header */}
       <PageHeader currentPage="about" breadcrumbLabel="About" />
 
-      {/* Hero */}
-      <section className="border-b bg-gradient-to-b from-muted/50 to-background">
-        <div className="container mx-auto px-4 py-20 sm:px-6 lg:px-8">
+      {/* Hero with Logo Showcase */}
+      <section className="relative overflow-hidden border-b bg-gradient-to-b from-muted/50 to-background">
+        {/* Background glow effect */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[600px] h-[600px] bg-gradient-to-r from-purple-600/20 via-pink-600/20 to-purple-600/20 rounded-full blur-3xl animate-glow-pulse" />
+        </div>
+        
+        <div className="container relative mx-auto px-4 py-20 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-              About LynxPrompt
+            {/* Floating Logo */}
+            <div className="mb-8 flex justify-center">
+              <div className="relative animate-float">
+                {/* Logo glow ring */}
+                <div className="absolute -inset-4 bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 rounded-full opacity-30 blur-xl animate-glow-pulse" />
+                <Image
+                  src="/lynxprompt.png"
+                  alt="LynxPrompt Logo"
+                  width={180}
+                  height={180}
+                  className="relative z-10 drop-shadow-2xl"
+                  priority
+                  unoptimized
+                />
+              </div>
+            </div>
+            
+            {/* Animated Brand Name */}
+            <h1 className="text-5xl sm:text-6xl md:text-7xl font-black tracking-tight mb-6">
+              <span className="inline-block bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 bg-clip-text text-transparent animate-shimmer bg-[length:200%_auto]">
+                LynxPrompt
+              </span>
             </h1>
+            
             <p className="mt-6 text-xl text-muted-foreground">
               Born from a simple frustration: setting up AI IDE configurations
               for every new repository is tedious. We built LynxPrompt to make

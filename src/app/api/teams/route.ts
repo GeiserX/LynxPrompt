@@ -5,6 +5,8 @@ import { prismaUsers } from "@/lib/db-users";
 import { ensureStripe, STRIPE_PRICE_IDS } from "@/lib/stripe";
 import { z } from "zod";
 
+const MIN_SEATS = 3;
+
 // Validation schema for team creation
 const createTeamSchema = z.object({
   name: z.string().min(2).max(100),
@@ -12,6 +14,7 @@ const createTeamSchema = z.object({
     message: "Slug must be lowercase alphanumeric with hyphens only",
   }),
   interval: z.enum(["monthly", "annual"]).optional().default("monthly"),
+  seats: z.number().min(MIN_SEATS, `Minimum ${MIN_SEATS} seats required`).optional().default(MIN_SEATS),
 });
 
 /**
@@ -78,7 +81,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name, slug, interval } = validation.data;
+    const { name, slug, interval, seats } = validation.data;
 
     // Check if user is already in a team
     const existingMembership = await prismaUsers.teamMember.findFirst({
@@ -143,7 +146,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create Stripe checkout session for Teams subscription (3 seats minimum)
+    // Create Stripe checkout session for Teams subscription
     const checkoutSession = await stripe.checkout.sessions.create({
       customer: stripeCustomerId,
       mode: "subscription",
@@ -151,7 +154,7 @@ export async function POST(request: NextRequest) {
       line_items: [
         {
           price: priceId,
-          quantity: 3, // Minimum 3 seats
+          quantity: seats,
         },
       ],
       subscription_data: {
@@ -160,6 +163,7 @@ export async function POST(request: NextRequest) {
           teamSlug: slug,
           creatorUserId: session.user.id,
           type: "teams",
+          seats: seats.toString(),
         },
       },
       metadata: {
@@ -167,6 +171,7 @@ export async function POST(request: NextRequest) {
         teamSlug: slug,
         creatorUserId: session.user.id,
         type: "teams",
+        seats: seats.toString(),
       },
       success_url: `${process.env.NEXTAUTH_URL}/teams/${slug}?success=true`,
       cancel_url: `${process.env.NEXTAUTH_URL}/teams?cancelled=true`,
