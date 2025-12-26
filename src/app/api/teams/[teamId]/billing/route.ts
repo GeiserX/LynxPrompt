@@ -338,9 +338,37 @@ export async function PATCH(
     }
 
     const currentSeats = subscription.items.data[0]?.quantity || TEAMS_MIN_SEATS;
+    const isIncreasing = seats > currentSeats;
+    const seatDifference = seats - currentSeats;
+
+    // Calculate if this is the same day as billing cycle start
+    const now = new Date();
+    const cycleStart = team.billingCycleStart ? new Date(team.billingCycleStart) : new Date();
+    
+    // Check if same day (comparing year, month, day)
+    const isSameDayAsCycleStart = 
+      now.getFullYear() === cycleStart.getFullYear() &&
+      now.getMonth() === cycleStart.getMonth() &&
+      now.getDate() === cycleStart.getDate();
+
+    // Determine proration behavior:
+    // - Increasing seats on same day as cycle start: no proration (full price)
+    // - Increasing seats mid-cycle: prorate
+    // - Decreasing seats: no proration, takes effect next cycle
+    let prorationBehavior: "create_prorations" | "none" | "always_invoice" = "none";
+    
+    if (isIncreasing) {
+      if (isSameDayAsCycleStart) {
+        // Same day = full price, use always_invoice to charge immediately
+        prorationBehavior = "always_invoice";
+      } else {
+        // Mid-cycle = prorate
+        prorationBehavior = "create_prorations";
+      }
+    }
+    // Decreasing: prorationBehavior stays "none" (no refund, change takes effect at renewal)
 
     // Update subscription quantity
-    // Stripe handles prorating automatically
     await stripe.subscriptions.update(team.stripeSubscriptionId, {
       items: [
         {
@@ -348,7 +376,7 @@ export async function PATCH(
           quantity: seats,
         },
       ],
-      proration_behavior: seats > currentSeats ? "create_prorations" : "none",
+      proration_behavior: prorationBehavior,
       metadata: {
         ...subscription.metadata,
         seats: seats.toString(),
@@ -361,35 +389,42 @@ export async function PATCH(
       data: { maxSeats: seats },
     });
 
-    // Calculate proration info for response
-    const isIncreasing = seats > currentSeats;
-    let proratedAmount = 0;
+    // Calculate amount for response
+    let chargeAmount = 0;
+    let chargeNote = "";
 
-    if (isIncreasing && team.billingCycleStart) {
-      const now = new Date();
-      const cycleStart = new Date(team.billingCycleStart);
-      const cycleEnd = new Date(cycleStart);
-      cycleEnd.setMonth(cycleEnd.getMonth() + 1);
+    if (isIncreasing) {
+      if (isSameDayAsCycleStart) {
+        // Full price for new seats
+        chargeAmount = seatDifference * TEAMS_PRICE_PER_SEAT;
+        chargeNote = "Full amount charged for new seats (same day as billing cycle start)";
+      } else {
+        // Calculate prorated amount
+        const cycleEnd = new Date(cycleStart);
+        cycleEnd.setMonth(cycleEnd.getMonth() + 1);
+        
+        const totalDays = Math.ceil((cycleEnd.getTime() - cycleStart.getTime()) / (1000 * 60 * 60 * 24));
+        const daysRemaining = Math.ceil((cycleEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
-      const totalDays = Math.ceil((cycleEnd.getTime() - cycleStart.getTime()) / (1000 * 60 * 60 * 24));
-      const daysRemaining = Math.ceil((cycleEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-
-      proratedAmount = calculateProratedAmount(
-        Math.max(0, daysRemaining),
-        totalDays,
-        seats - currentSeats
-      );
+        chargeAmount = calculateProratedAmount(
+          Math.max(0, daysRemaining),
+          totalDays,
+          seatDifference
+        );
+        chargeNote = `Prorated amount charged for ${daysRemaining} remaining days`;
+      }
+    } else {
+      chargeNote = "Seat reduction will take effect at the next billing cycle. No refund for current period.";
     }
 
     return NextResponse.json({
       message: `Seat count updated from ${currentSeats} to ${seats}`,
       previousSeats: currentSeats,
       newSeats: seats,
-      proratedAmount: isIncreasing ? proratedAmount : 0,
-      proratedAmountFormatted: isIncreasing ? `€${(proratedAmount / 100).toFixed(2)}` : "€0.00",
-      note: isIncreasing 
-        ? "A prorated amount will be charged for the remaining billing period"
-        : "Seat reduction will take effect at the next billing cycle",
+      chargeAmount: isIncreasing ? chargeAmount : 0,
+      chargeAmountFormatted: isIncreasing ? `€${(chargeAmount / 100).toFixed(2)}` : "€0.00",
+      note: chargeNote,
+      isSameDayAsCycleStart,
     });
   } catch (error) {
     console.error("Error updating seats:", error);
