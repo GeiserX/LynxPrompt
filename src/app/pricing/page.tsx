@@ -84,7 +84,7 @@ const TIERS = [
       { text: "SSO (SAML, OIDC, LDAP)", included: true },
       { text: "Centralized billing", included: true },
       { text: "Only pay for active users", included: true },
-      { text: "€15/user AI budget", included: true },
+      { text: "Extended AI usage", included: true },
     ],
     cta: "Contact Sales",
     ctaLink: "/teams",
@@ -108,7 +108,7 @@ const COMPARISON_FEATURES = [
   { name: "SSO (SAML/OIDC/LDAP)", free: false, pro: false, max: false, teams: true },
   { name: "Centralized billing", free: false, pro: false, max: false, teams: true },
   { name: "Active user billing only", free: "-", pro: "-", max: "-", teams: true },
-  { name: "AI usage limit", free: "-", pro: "-", max: "Standard", teams: "€15/user" },
+  { name: "AI usage limit", free: "-", pro: "-", max: "Standard", teams: "Extended" },
 ];
 
 export default function PricingPage() {

@@ -54,7 +54,7 @@ const TEAMS_FEATURES = [
     icon: BarChart3,
     title: "Generous AI Limits",
     description:
-      "€15/user/month AI usage budget — 50% more than individual Max plans. Perfect for AI-heavy workflows.",
+      "Extended AI usage limits for AI-heavy workflows across your team.",
   },
 ];
 
@@ -235,7 +235,7 @@ export default function TeamsPage() {
                     "SAML/OIDC/LDAP SSO",
                     "Multiple team admins",
                     "Priority support",
-                    "€15/user AI budget",
+                    "Extended AI usage",
                   ].map((item) => (
                     <li key={item} className="flex items-center gap-2 text-sm">
                       <Check className="h-4 w-4 text-teal-500" />
