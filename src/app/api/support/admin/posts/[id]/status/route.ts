@@ -15,11 +15,6 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check admin role
-    if (session.user.role !== "ADMIN" && session.user.role !== "SUPERADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
     const { id } = await params;
     const body = await request.json();
     const { status } = body;
@@ -38,6 +33,13 @@ export async function POST(
 
     if (!post) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
+    // Check admin role or post ownership
+    const isAdmin = session.user.role === "ADMIN" || session.user.role === "SUPERADMIN";
+    const isAuthor = post.userId === session.user.id;
+    if (!isAdmin && !isAuthor) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // Update status
