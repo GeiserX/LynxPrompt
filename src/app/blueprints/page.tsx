@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -117,6 +117,10 @@ function BlueprintsContent() {
   const [total, setTotal] = useState(0);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [togglingFavorite, setTogglingFavorite] = useState<string | null>(null);
+  
+  // Infinite scroll refs
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Debounce search input
   useEffect(() => {
@@ -256,9 +260,38 @@ function BlueprintsContent() {
     );
   };
 
-  const handleLoadMore = () => {
-    setPage(prev => prev + 1);
-  };
+  // Infinite scroll: load more when sentinel is visible
+  const handleLoadMore = useCallback(() => {
+    if (!isLoadingMore && hasMore && !loading) {
+      setIsLoadingMore(true);
+      setPage(prev => prev + 1);
+    }
+  }, [isLoadingMore, hasMore, loading]);
+
+  // Reset isLoadingMore when loading completes
+  useEffect(() => {
+    if (!loading) {
+      setIsLoadingMore(false);
+    }
+  }, [loading]);
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const sentinel = loadMoreRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading && !isLoadingMore) {
+          handleLoadMore();
+        }
+      },
+      { rootMargin: "200px" } // Start loading before user reaches the end
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loading, isLoadingMore, handleLoadMore]);
 
   const tierColors: Record<string, string> = {
     SIMPLE: "bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-sm dark:from-green-600 dark:to-emerald-600",
@@ -801,17 +834,23 @@ function BlueprintsContent() {
               </div>
             )}
 
-            {/* Load More - only show if there are more */}
-            {hasMore && blueprints.length > 0 && (
-              <div className="mt-8 text-center">
-                <Button 
-                  variant="outline" 
-                  size="lg" 
-                  onClick={handleLoadMore}
-                  disabled={loading}
-                >
-                  {loading ? "Loading..." : `Load More (${total - blueprints.length} remaining)`}
-                </Button>
+            {/* Infinite scroll sentinel + loading indicator */}
+            {blueprints.length > 0 && (
+              <div ref={loadMoreRef} className="mt-8 flex flex-col items-center justify-center py-4">
+                {(loading && page > 1) || isLoadingMore ? (
+                  <div className="flex items-center gap-3">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                    <span className="text-sm text-muted-foreground">Loading more blueprints...</span>
+                  </div>
+                ) : hasMore ? (
+                  <span className="text-sm text-muted-foreground">
+                    {total - blueprints.length} more blueprint{total - blueprints.length !== 1 ? 's' : ''} available
+                  </span>
+                ) : (
+                  <span className="text-sm text-muted-foreground">
+                    You&apos;ve reached the end • {total} blueprint{total !== 1 ? 's' : ''} total
+                  </span>
+                )}
               </div>
             )}
           </main>

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { AiEditPanel } from "@/components/ai-edit-panel";
 import {
@@ -32,6 +33,9 @@ import {
   User,
   Share2,
   X,
+  Save,
+  FolderOpen,
+  Trash2,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { CodeEditor } from "@/components/code-editor";
@@ -772,8 +776,22 @@ type WizardConfig = {
   staticFiles: StaticFilesConfig;
 };
 
+interface WizardDraftSummary {
+  id: string;
+  name: string;
+  step: number;
+  createdAt: string;
+  updatedAt: string;
+  projectName: string;
+  projectType: string;
+  languages: string[];
+  frameworks: string[];
+  platform: string;
+}
+
 export default function WizardPage() {
   const { data: session, status } = useSession();
+  const searchParams = useSearchParams();
   const [currentStep, setCurrentStep] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
   const [previewFiles, setPreviewFiles] = useState<GeneratedFile[]>([]);
@@ -788,6 +806,17 @@ export default function WizardPage() {
   const [existingBlueprintId, setExistingBlueprintId] = useState<string | null>(null);
   const [isSavingBlueprint, setIsSavingBlueprint] = useState(false);
   const [savedBlueprintId, setSavedBlueprintId] = useState<string | null>(null);
+  
+  // Draft state
+  const [showDraftModal, setShowDraftModal] = useState(false);
+  const [showLoadDraftModal, setShowLoadDraftModal] = useState(false);
+  const [draftName, setDraftName] = useState("");
+  const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
+  const [drafts, setDrafts] = useState<WizardDraftSummary[]>([]);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [isLoadingDraft, setIsLoadingDraft] = useState(false);
+  const [isDeletingDraft, setIsDeletingDraft] = useState<string | null>(null);
+  const [draftLoaded, setDraftLoaded] = useState(false);
   const [config, setConfig] = useState<WizardConfig>({
     projectName: "",
     projectDescription: "",
@@ -863,6 +892,138 @@ export default function WizardPage() {
       licenseSave: false,
     },
   });
+
+  // Fetch user's drafts
+  const fetchDrafts = useCallback(async () => {
+    if (status !== "authenticated") return;
+    try {
+      const res = await fetch("/api/wizard/drafts");
+      if (res.ok) {
+        const data = await res.json();
+        setDrafts(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch drafts:", error);
+    }
+  }, [status]);
+
+  // Load draft from URL param on mount
+  useEffect(() => {
+    const loadDraftFromParam = async () => {
+      const draftId = searchParams.get("draft");
+      if (!draftId || status !== "authenticated" || draftLoaded) return;
+      
+      setIsLoadingDraft(true);
+      try {
+        const res = await fetch(`/api/wizard/drafts/${draftId}`);
+        if (res.ok) {
+          const draft = await res.json();
+          setConfig(draft.config as WizardConfig);
+          setCurrentStep(draft.step);
+          setCurrentDraftId(draft.id);
+          setDraftName(draft.name);
+          setDraftLoaded(true);
+        }
+      } catch (error) {
+        console.error("Failed to load draft:", error);
+      } finally {
+        setIsLoadingDraft(false);
+      }
+    };
+    
+    loadDraftFromParam();
+  }, [searchParams, status, draftLoaded]);
+
+  // Fetch drafts when modal opens
+  useEffect(() => {
+    if (showLoadDraftModal) {
+      fetchDrafts();
+    }
+  }, [showLoadDraftModal, fetchDrafts]);
+
+  // Save draft function
+  const handleSaveDraft = async () => {
+    if (!draftName.trim()) return;
+    
+    setIsSavingDraft(true);
+    try {
+      const res = await fetch("/api/wizard/drafts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: currentDraftId,
+          name: draftName.trim(),
+          step: currentStep,
+          config,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setCurrentDraftId(data.id);
+        setShowDraftModal(false);
+        // Optionally show success message
+      } else {
+        const error = await res.json();
+        alert(error.error || "Failed to save draft");
+      }
+    } catch (error) {
+      console.error("Failed to save draft:", error);
+      alert("Failed to save draft. Please try again.");
+    } finally {
+      setIsSavingDraft(false);
+    }
+  };
+
+  // Load draft function
+  const handleLoadDraft = async (draftId: string) => {
+    setIsLoadingDraft(true);
+    try {
+      const res = await fetch(`/api/wizard/drafts/${draftId}`);
+      if (res.ok) {
+        const draft = await res.json();
+        setConfig(draft.config as WizardConfig);
+        setCurrentStep(draft.step);
+        setCurrentDraftId(draft.id);
+        setDraftName(draft.name);
+        setShowLoadDraftModal(false);
+      } else {
+        alert("Failed to load draft");
+      }
+    } catch (error) {
+      console.error("Failed to load draft:", error);
+      alert("Failed to load draft. Please try again.");
+    } finally {
+      setIsLoadingDraft(false);
+    }
+  };
+
+  // Delete draft function
+  const handleDeleteDraft = async (draftId: string) => {
+    if (!confirm("Are you sure you want to delete this draft?")) return;
+    
+    setIsDeletingDraft(draftId);
+    try {
+      const res = await fetch(`/api/wizard/drafts/${draftId}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        setDrafts(prev => prev.filter(d => d.id !== draftId));
+        if (currentDraftId === draftId) {
+          setCurrentDraftId(null);
+          setDraftName("");
+        }
+      } else {
+        alert("Failed to delete draft");
+      }
+    } catch (error) {
+      console.error("Failed to delete draft:", error);
+      alert("Failed to delete draft. Please try again.");
+    } finally {
+      setIsDeletingDraft(null);
+    }
+  };
 
   useEffect(() => {
     const fetchTier = async () => {
@@ -1698,6 +1859,159 @@ ${curlCommand}
         </div>
       )}
 
+      {/* Save Draft Modal */}
+      {showDraftModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="relative mx-4 w-full max-w-md rounded-2xl bg-background p-6 shadow-2xl">
+            <button
+              onClick={() => setShowDraftModal(false)}
+              className="absolute right-4 top-4 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <h2 className="text-xl font-bold">
+              {currentDraftId ? "Update Draft" : "Save Draft"}
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Save your progress and continue later. Your configuration will be preserved at step {currentStep + 1}.
+            </p>
+            
+            <div className="mt-4">
+              <label className="block text-sm font-medium mb-2">
+                Draft Name
+              </label>
+              <input
+                type="text"
+                value={draftName}
+                onChange={(e) => setDraftName(e.target.value)}
+                placeholder="My Project Config"
+                className="w-full rounded-lg border bg-background px-4 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                autoFocus
+              />
+            </div>
+            
+            <div className="mt-6 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowDraftModal(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSaveDraft}
+                disabled={isSavingDraft || !draftName.trim()}
+              >
+                {isSavingDraft ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    {currentDraftId ? "Update" : "Save"}
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Load Draft Modal */}
+      {showLoadDraftModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="relative mx-4 w-full max-w-lg rounded-2xl bg-background p-6 shadow-2xl">
+            <button
+              onClick={() => setShowLoadDraftModal(false)}
+              className="absolute right-4 top-4 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <h2 className="text-xl font-bold">Load Draft</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Resume a saved configuration. Loading a draft will replace your current progress.
+            </p>
+            
+            <div className="mt-4 max-h-80 overflow-y-auto">
+              {drafts.length === 0 ? (
+                <div className="py-8 text-center text-muted-foreground">
+                  <FolderOpen className="mx-auto h-12 w-12 opacity-50" />
+                  <p className="mt-2">No saved drafts yet</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {drafts.map((draft) => (
+                    <div
+                      key={draft.id}
+                      className={`rounded-lg border p-4 transition-colors hover:bg-muted/50 ${
+                        currentDraftId === draft.id ? "border-primary bg-primary/5" : ""
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium truncate">{draft.name}</h3>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {draft.projectName || "Untitled Project"} • Step {draft.step + 1}
+                          </p>
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {draft.languages?.slice(0, 3).map((lang: string) => (
+                              <span
+                                key={lang}
+                                className="text-xs px-2 py-0.5 rounded bg-muted"
+                              >
+                                {lang}
+                              </span>
+                            ))}
+                            {(draft.languages?.length ?? 0) > 3 && (
+                              <span className="text-xs px-2 py-0.5 rounded bg-muted">
+                                +{draft.languages.length - 3}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Updated {new Date(draft.updatedAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDeleteDraft(draft.id)}
+                            disabled={isDeletingDraft === draft.id}
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                          >
+                            {isDeletingDraft === draft.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => handleLoadDraft(draft.id)}
+                            disabled={isLoadingDraft}
+                          >
+                            {isLoadingDraft ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              "Load"
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            <div className="mt-6 flex justify-end">
+              <Button variant="outline" onClick={() => setShowLoadDraftModal(false)}>
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <PageHeader currentPage="wizard" breadcrumbLabel="Wizard" />
 
@@ -1949,14 +2263,38 @@ ${curlCommand}
 
               {/* Navigation */}
               <div className="mt-8 flex justify-between">
-                <Button
-                  variant="outline"
-                  onClick={handleBack}
-                  disabled={currentStep === 0}
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={handleBack}
+                    disabled={currentStep === 0}
+                  >
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back
+                  </Button>
+                  {/* Draft buttons */}
+                  <Button
+                    variant="ghost"
+                    onClick={() => setShowLoadDraftModal(true)}
+                    title="Load Draft"
+                  >
+                    <FolderOpen className="h-4 w-4" />
+                    <span className="sr-only">Load Draft</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      if (!draftName && config.projectName) {
+                        setDraftName(config.projectName);
+                      }
+                      setShowDraftModal(true);
+                    }}
+                    title="Save Draft"
+                  >
+                    <Save className="h-4 w-4" />
+                    <span className="sr-only">Save Draft</span>
+                  </Button>
+                </div>
                 {currentStep < WIZARD_STEPS.length - 1 ? (
                   <Button onClick={handleNext}>
                     Next

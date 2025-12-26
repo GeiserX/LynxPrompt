@@ -49,9 +49,16 @@ model Session {
   passkeyVerified   Boolean   @default(false)  // Whether passkey was verified for this session
   passkeyVerifiedAt DateTime?                  // When passkey was last verified
   
+  // Device fingerprint for 2FA on new devices
+  deviceHash    String?   // SHA-256 hash of user-agent + screen resolution + timezone
+  deviceName    String?   // Human-readable device name (e.g., "Chrome on macOS")
+  ipHash        String?   // Hash of IP address (for privacy)
+  isNewDevice   Boolean   @default(true)  // True until passkey verified on this device
+  
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([deviceHash])
 }
 
 model User {
@@ -125,6 +132,8 @@ model User {
   payouts        Payout[]
   teamMemberships TeamMember[] // Teams user belongs to
   apiTokens      ApiToken[]    // API tokens for programmatic access
+  knownDevices   KnownDevice[] // Trusted devices for 2FA
+  wizardDrafts   WizardDraft[] // Saved wizard configurations
 
   @@index([email])
   @@index([role])
@@ -337,6 +346,46 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+// ============================================================================
+// KNOWN DEVICES - Trusted devices for passkey 2FA bypass
+// ============================================================================
+
+model KnownDevice {
+  id          String   @id @default(cuid())
+  userId      String
+  deviceHash  String   // SHA-256 hash of device fingerprint
+  deviceName  String   // Human-readable name (e.g., "Chrome on macOS")
+  ipHash      String?  // Hash of IP when device was trusted
+  lastSeenAt  DateTime @default(now())
+  trustedAt   DateTime @default(now()) // When user verified passkey on this device
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, deviceHash]) // One entry per device per user
+  @@index([userId])
+  @@index([deviceHash])
+}
+
+// ============================================================================
+// WIZARD DRAFTS - Saved wizard configurations
+// ============================================================================
+
+model WizardDraft {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String   // User-given name (e.g., "My React Project")
+  step        Int      // Current step index (0-10)
+  config      Json     // Full WizardConfig object
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([updatedAt])
 }
 
 // ============================================================================
