@@ -319,26 +319,26 @@ export default function PostDetailPage({
                 </button>
 
                 <div className="min-w-0 flex-1">
-                  {/* Title */}
+                  {/* Title row with status and admin menu */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         {post.isPinned && (
                           <Pin className="h-4 w-4 text-primary" />
                         )}
+                        <h1 className="text-xl font-bold sm:text-2xl">{post.title}</h1>
                         <span
-                          className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${STATUS_BADGES[post.status]?.className}`}
+                          className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGES[post.status]?.className}`}
                         >
                           {STATUS_BADGES[post.status]?.icon}
                           {STATUS_BADGES[post.status]?.label}
                         </span>
                       </div>
-                      <h1 className="mt-2 text-2xl font-bold">{post.title}</h1>
                     </div>
 
                     {/* Admin/Author menu */}
                     {(isAdmin || isAuthor) && (
-                      <div className="relative">
+                      <div className="relative flex-shrink-0">
                         <button
                           onClick={() => setShowAdminMenu(!showAdminMenu)}
                           className="rounded-lg p-2 hover:bg-muted"
@@ -392,63 +392,60 @@ export default function PostDetailPage({
                     )}
                   </div>
 
-                  {/* Author */}
-                  <Link
-                    href={`/users/${post.userId}`}
-                    className="mt-3 inline-flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-2 transition-colors hover:border-primary/50 hover:bg-muted"
-                  >
-                    {post.userImage ? (
-                      <img
-                        src={post.userImage}
-                        alt=""
-                        className="h-8 w-8 rounded-full"
-                        referrerPolicy="no-referrer"
-                      />
-                    ) : (
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">
-                        {post.userName?.[0]?.toUpperCase() || "?"}
-                      </div>
-                    )}
-                    <div className="flex flex-col">
-                      <span className="flex items-center gap-1.5 font-medium">
-                        {post.userName || "Anonymous"}
-                        {PLAN_BADGES[post.userPlan] && (
-                          <span
-                            className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${PLAN_BADGES[post.userPlan].className}`}
-                          >
-                            {PLAN_BADGES[post.userPlan].label}
-                          </span>
-                        )}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(post.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </Link>
-
-                  {/* Meta */}
-                  <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1.5">
+                  {/* Meta row: Author + Category + Tags - all horizontal */}
+                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
+                    {/* Author */}
+                    <Link
+                      href={`/users/${post.userId}`}
+                      className="flex items-center gap-1.5 hover:text-primary"
+                    >
+                      {post.userImage ? (
+                        <img
+                          src={post.userImage}
+                          alt=""
+                          className="h-5 w-5 rounded-full"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
+                          {post.userName?.[0]?.toUpperCase() || "?"}
+                        </div>
+                      )}
+                      <span className="font-medium">{post.userName || "Anonymous"}</span>
+                      {PLAN_BADGES[post.userPlan] && (
+                        <span
+                          className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${PLAN_BADGES[post.userPlan].className}`}
+                        >
+                          {PLAN_BADGES[post.userPlan].label}
+                        </span>
+                      )}
+                    </Link>
+                    <span className="text-muted-foreground">•</span>
+                    <span className="flex items-center gap-1 text-muted-foreground">
                       {CATEGORY_ICONS[post.category.slug] || (
                         <MessageSquare className="h-4 w-4" />
                       )}
                       {post.category.name}
                     </span>
+                    <span className="text-muted-foreground">•</span>
+                    <span className="text-muted-foreground">
+                      {new Date(post.createdAt).toLocaleDateString()}
+                    </span>
+                    {/* Tags inline */}
+                    {post.tags.length > 0 && (
+                      <>
+                        <span className="text-muted-foreground">•</span>
+                        {post.tags.map(({ tag }) => (
+                          <span
+                            key={tag.id}
+                            className="rounded-full bg-muted px-2 py-0.5 text-xs"
+                          >
+                            {tag.name}
+                          </span>
+                        ))}
+                      </>
+                    )}
                   </div>
-
-                  {/* Tags */}
-                  {post.tags.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {post.tags.map(({ tag }) => (
-                        <span
-                          key={tag.id}
-                          className="rounded-full bg-muted px-2.5 py-1 text-xs"
-                        >
-                          {tag.name}
-                        </span>
-                      ))}
-                    </div>
-                  )}
                 </div>
               </div>
 
