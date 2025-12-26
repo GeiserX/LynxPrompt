@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
 import {
   Heart,
@@ -12,6 +13,35 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
+
+export const metadata: Metadata = {
+  title: "About",
+  description:
+    "LynxPrompt: Born from a simple frustration—setting up AI IDE configurations for every new repository is tedious. Built by GeiserCloud to make it effortless.",
+  keywords: [
+    "LynxPrompt",
+    "about LynxPrompt",
+    "GeiserCloud",
+    "AI IDE configuration",
+    "developer tools",
+  ],
+  openGraph: {
+    title: "About LynxPrompt",
+    description:
+      "Born from a simple frustration—setting up AI IDE configurations is tedious. We built LynxPrompt to make it effortless.",
+    type: "website",
+    images: [{ url: "/lynxprompt.png", alt: "LynxPrompt Logo" }],
+  },
+  twitter: {
+    card: "summary",
+    title: "About LynxPrompt",
+    description:
+      "Born from frustration—AI IDE configs are tedious. LynxPrompt makes it effortless.",
+  },
+  alternates: {
+    canonical: "https://lynxprompt.com/about",
+  },
+};
 
 export default function AboutPage() {
   return (

@@ -1,5 +1,19 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { FileCode, ExternalLink } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "AGENTS.md - Universal AI Configuration",
+  description:
+    "AGENTS.md is the universal standard for AI coding agents. Used by 60k+ projects, it works across Cursor, Claude Code, Copilot, and more.",
+  keywords: [
+    "AGENTS.md",
+    "universal AI config",
+    "AI coding standard",
+    "agents.md specification",
+    "AI IDE configuration",
+  ],
+};
 
 export default function AgentsMdPlatformPage() {
   return (

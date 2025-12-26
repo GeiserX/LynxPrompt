@@ -3,6 +3,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { createHash } from "crypto";
+import type { Metadata } from "next";
 import { authOptions } from "@/lib/auth";
 import { prismaBlog } from "@/lib/db-blog";
 import { prismaUsers } from "@/lib/db-users";
@@ -18,6 +19,64 @@ import { UserMenu } from "@/components/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Footer } from "@/components/footer";
 import { isAdminRole, UserRole } from "@/lib/subscription";
+
+// SEO: Generate dynamic metadata for blog posts
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const post = await prismaBlog.blogPost.findUnique({
+    where: { slug },
+    select: {
+      title: true,
+      excerpt: true,
+      coverImage: true,
+      publishedAt: true,
+      authorName: true,
+      tags: true,
+      status: true,
+    },
+  });
+
+  if (!post || post.status === "DRAFT") {
+    return {
+      title: "Post Not Found",
+      description: "The blog post you're looking for doesn't exist.",
+    };
+  }
+
+  const description =
+    post.excerpt || `Read "${post.title}" on the LynxPrompt blog.`;
+
+  return {
+    title: post.title,
+    description,
+    authors: post.authorName ? [{ name: post.authorName }] : undefined,
+    keywords: post.tags.length > 0 ? post.tags : undefined,
+    openGraph: {
+      title: post.title,
+      description,
+      type: "article",
+      publishedTime: post.publishedAt?.toISOString(),
+      authors: post.authorName ? [post.authorName] : undefined,
+      tags: post.tags,
+      images: post.coverImage
+        ? [{ url: post.coverImage, alt: post.title }]
+        : undefined,
+    },
+    twitter: {
+      card: post.coverImage ? "summary_large_image" : "summary",
+      title: post.title,
+      description,
+      images: post.coverImage ? [post.coverImage] : undefined,
+    },
+    alternates: {
+      canonical: `https://lynxprompt.com/blog/${slug}`,
+    },
+  };
+}
 
 // Generate Gravatar URL from email (server-side)
 function getGravatarUrl(email: string, size: number = 96): string {
@@ -141,8 +200,42 @@ export default async function BlogPostPage({ params }: PageProps) {
   const authorImage = author?.image || (author?.email ? getGravatarUrl(author.email) : null);
   const contentHtml = markdownToHtml(post.content);
 
+  // JSON-LD Article Schema for SEO
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: post.title,
+    description: post.excerpt || post.title,
+    image: post.coverImage || "https://lynxprompt.com/lynxprompt.png",
+    datePublished: (post.publishedAt || post.createdAt).toISOString(),
+    dateModified: post.updatedAt?.toISOString() || (post.publishedAt || post.createdAt).toISOString(),
+    author: {
+      "@type": "Person",
+      name: authorName,
+      url: `https://lynxprompt.com/users/${post.authorId}`,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "LynxPrompt",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://lynxprompt.com/lynxprompt.png",
+      },
+    },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `https://lynxprompt.com/blog/${slug}`,
+    },
+    keywords: post.tags.join(", "),
+  };
+
   return (
     <div className="flex min-h-screen flex-col">
+      {/* JSON-LD Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">

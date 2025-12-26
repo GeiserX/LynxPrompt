@@ -301,6 +301,65 @@ export default function BlueprintsApiDocsPage() {
         </div>
       </section>
 
+      {/* Platform-specific examples */}
+      <section className="space-y-4">
+        <h2 className="text-2xl font-bold">Platform-Specific Commands</h2>
+        <p className="text-muted-foreground">
+          Here are examples for updating blueprints from different operating systems:
+        </p>
+
+        {/* Linux/macOS */}
+        <div className="space-y-2">
+          <h4 className="font-semibold">Linux / macOS (bash)</h4>
+          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+            <pre className="text-sm text-zinc-100">
+              <code>{`# Set your API token
+export LYNXPROMPT_API_TOKEN="lp_your_token_here"
+
+# Update blueprint from file
+curl -X PUT https://lynxprompt.com/api/v1/blueprints/bp_your_id \\
+     -H "Authorization: Bearer $LYNXPROMPT_API_TOKEN" \\
+     -H "Content-Type: application/json" \\
+     -d "{\\"content\\": $(cat .cursor/rules | jq -Rs .)}"
+`}</code>
+            </pre>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Requires <code className="rounded bg-muted px-1.5 py-0.5">jq</code> for JSON escaping. 
+            Install with <code className="rounded bg-muted px-1.5 py-0.5">brew install jq</code> (macOS) or 
+            <code className="rounded bg-muted px-1.5 py-0.5">sudo apt install jq</code> (Linux).
+          </p>
+        </div>
+
+        {/* Windows PowerShell */}
+        <div className="space-y-2">
+          <h4 className="font-semibold">Windows (PowerShell)</h4>
+          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+            <pre className="text-sm text-zinc-100">
+              <code>{`# Set your API token
+$env:LYNXPROMPT_API_TOKEN = "lp_your_token_here"
+
+# Read file and update blueprint
+$content = (Get-Content ".cursor\\rules" -Raw) -replace '"', '\\"'
+$body = @{ content = $content } | ConvertTo-Json
+Invoke-RestMethod -Uri "https://lynxprompt.com/api/v1/blueprints/bp_your_id" \`
+  -Method PUT \`
+  -Headers @{ "Authorization" = "Bearer $env:LYNXPROMPT_API_TOKEN"; "Content-Type" = "application/json" } \`
+  -Body $body
+`}</code>
+            </pre>
+          </div>
+        </div>
+
+        {/* WSL */}
+        <div className="space-y-2">
+          <h4 className="font-semibold">WSL (Windows Subsystem for Linux)</h4>
+          <p className="text-sm text-muted-foreground">
+            Use the same commands as Linux/macOS. To access Windows files, use <code className="rounded bg-muted px-1.5 py-0.5">/mnt/c/...</code> paths.
+          </p>
+        </div>
+      </section>
+
       {/* Syncing from CI/CD */}
       <section className="space-y-4">
         <h2 className="text-2xl font-bold">Syncing from CI/CD</h2>
@@ -331,7 +390,7 @@ jobs:
           curl -X PUT https://lynxprompt.com/api/v1/blueprints/bp_your_id \\
                -H "Authorization: Bearer \${{ secrets.LYNXPROMPT_API_TOKEN }}" \\
                -H "Content-Type: application/json" \\
-               -d "{\\"content\\": \\"$(cat .cursor/rules | jq -Rs .)\\"}"
+               -d "{\\"content\\": $(cat .cursor/rules | jq -Rs .)}"
 `}</code>
           </pre>
         </div>

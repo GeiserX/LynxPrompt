@@ -1,6 +1,13 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
 import { Zap, ArrowRight, UserPlus, Wand2, Download } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Getting Started",
+  description:
+    "Get started with LynxPrompt in minutes. Learn how to create your first AI IDE configuration for Cursor, Claude Code, Copilot, and more.",
+};
 
 export default function GettingStartedPage() {
   return (

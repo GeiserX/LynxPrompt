@@ -1,4 +1,18 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "GitHub Copilot Configuration",
+  description:
+    "Configure GitHub Copilot with copilot-instructions.md. Customize AI suggestions, set up project context, and optimize your Copilot experience.",
+  keywords: [
+    "GitHub Copilot",
+    "copilot-instructions.md",
+    "Copilot configuration",
+    "AI pair programming",
+    "VS Code Copilot",
+  ],
+};
 
 export default function CopilotPlatformPage() {
   return (

@@ -13,9 +13,90 @@ import { AgentsMarquee } from "@/components/agents-marquee";
 import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
 
+// JSON-LD Structured Data for Homepage
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "LynxPrompt",
+  alternateName: "GeiserCloud",
+  url: "https://lynxprompt.com",
+  logo: "https://lynxprompt.com/lynxprompt.png",
+  description:
+    "AI IDE configuration generator and marketplace. Create universal instructions for Cursor, Claude Code, Copilot, and more.",
+  foundingDate: "2024",
+  sameAs: [
+    "https://github.com/GeiserX/LynxPrompt",
+    "https://geiser.cloud",
+  ],
+  contactPoint: {
+    "@type": "ContactPoint",
+    email: "support@lynxprompt.com",
+    contactType: "customer support",
+  },
+};
+
+const softwareJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "LynxPrompt",
+  applicationCategory: "DeveloperApplication",
+  operatingSystem: "Web",
+  description:
+    "Transform your development setup into a mouse-click experience. Generate .cursorrules, CLAUDE.md, copilot-instructions.md, and more.",
+  url: "https://lynxprompt.com",
+  author: {
+    "@type": "Organization",
+    name: "GeiserCloud",
+  },
+  offers: {
+    "@type": "AggregateOffer",
+    priceCurrency: "EUR",
+    lowPrice: "0",
+    highPrice: "30",
+    offerCount: "4",
+  },
+  featureList: [
+    "IDE-agnostic AI configuration",
+    "Wizard-based setup",
+    "Blueprint marketplace",
+    "Team collaboration",
+    "SSO support",
+  ],
+  screenshot: "https://lynxprompt.com/lynxprompt.png",
+};
+
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "LynxPrompt",
+  url: "https://lynxprompt.com",
+  description: "AI IDE Configuration Generator & Marketplace",
+  potentialAction: {
+    "@type": "SearchAction",
+    target: {
+      "@type": "EntryPoint",
+      urlTemplate: "https://lynxprompt.com/blueprints?search={search_term_string}",
+    },
+    "query-input": "required name=search_term_string",
+  },
+};
+
 export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
+      {/* JSON-LD Structured Data for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+      />
       {/* Header */}
       <PageHeader showBreadcrumb={false} />
 

@@ -1,4 +1,18 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Claude Code Configuration",
+  description:
+    "Configure Claude Code with CLAUDE.md files. Set up project context, coding preferences, and AI behavior for Anthropic's Claude coding assistant.",
+  keywords: [
+    "Claude Code",
+    "CLAUDE.md",
+    "Anthropic",
+    "AI coding assistant",
+    "Claude configuration",
+  ],
+};
 
 export default function ClaudeCodePlatformPage() {
   return (

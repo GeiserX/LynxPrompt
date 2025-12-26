@@ -1,5 +1,19 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { FileCode } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Cursor Configuration",
+  description:
+    "Learn how to configure Cursor IDE with .cursorrules. Create AI behavior rules, set up project context, and optimize your Cursor experience.",
+  keywords: [
+    "Cursor IDE",
+    "cursorrules",
+    ".cursor/rules",
+    "Cursor configuration",
+    "AI code editor",
+  ],
+};
 
 export default function CursorPlatformPage() {
   return (
