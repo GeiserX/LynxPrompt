@@ -12,6 +12,13 @@ import {
   type VerifiedAuthenticationResponse,
 } from "@simplewebauthn/server";
 import { createTransport } from "nodemailer";
+import { createHash } from "crypto";
+
+// Generate Gravatar URL from email
+function getGravatarUrl(email: string): string {
+  const hash = createHash("md5").update(email.toLowerCase().trim()).digest("hex");
+  return `https://www.gravatar.com/avatar/${hash}?d=identicon&s=200`;
+}
 
 // Custom email template for magic links
 async function sendVerificationRequest(
@@ -362,6 +369,8 @@ export const authOptions: NextAuthOptions = {
             const dbUser = await prismaUsers.user.findUnique({
               where: { id: user.id },
               select: {
+                email: true,
+                image: true,
                 role: true,
                 displayName: true,
                 persona: true,
@@ -370,6 +379,10 @@ export const authOptions: NextAuthOptions = {
                 authenticators: { select: { id: true } },
               },
             });
+            
+            // Use stored image (GitHub/Google avatar) or fall back to Gravatar for email users
+            session.user.image = dbUser?.image || (dbUser?.email ? getGravatarUrl(dbUser.email) : null);
+            
             session.user.role = dbUser?.role || "USER";
             session.user.displayName = dbUser?.displayName || null;
             session.user.persona = dbUser?.persona || null;
@@ -404,6 +417,8 @@ export const authOptions: NextAuthOptions = {
         // For JWT sessions (Passkey)
         if (token && !user) {
           session.user.id = token.sub as string;
+          // Use stored image or generate Gravatar from email
+          session.user.image = (token.image as string) || (session.user.email ? getGravatarUrl(session.user.email) : null);
           session.user.role = (token.role as string) || "USER";
           session.user.displayName = (token.displayName as string) || null;
           session.user.persona = (token.persona as string) || null;
@@ -423,6 +438,7 @@ export const authOptions: NextAuthOptions = {
         const dbUser = await prismaUsers.user.findUnique({
           where: { id: user.id },
           select: {
+            image: true,
             role: true,
             displayName: true,
             persona: true,
@@ -430,6 +446,7 @@ export const authOptions: NextAuthOptions = {
             profileCompleted: true,
           },
         });
+        token.image = dbUser?.image || null;
         token.role = dbUser?.role || "USER";
         token.displayName = dbUser?.displayName || null;
         token.persona = dbUser?.persona || null;
