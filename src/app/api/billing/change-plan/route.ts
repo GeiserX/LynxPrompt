@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { ensureStripe, getPriceIdForPlan, getPlanFromPriceId, type SubscriptionPlan } from "@/lib/stripe";
+import { ensureStripe, getPriceIdForPlan, getPlanFromPriceId, getIntervalFromPriceId, type SubscriptionPlan } from "@/lib/stripe";
 import { prismaUsers } from "@/lib/db-users";
 
 /**
@@ -72,9 +72,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get current plan from subscription
+    // Get current plan and interval from subscription
     const currentPriceId = subscription.items.data[0]?.price?.id;
     const currentPlan = currentPriceId ? getPlanFromPriceId(currentPriceId) : "free";
+    const currentInterval = currentPriceId ? getIntervalFromPriceId(currentPriceId) : "monthly";
 
     if (currentPlan === plan) {
       return NextResponse.json(
@@ -90,7 +91,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const newPriceId = getPriceIdForPlan(plan);
+    // Keep the same billing interval when changing plans
+    const newPriceId = getPriceIdForPlan(plan, currentInterval);
     if (!newPriceId) {
       return NextResponse.json(
         { error: "Target plan price not configured" },
@@ -99,7 +101,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Determine if this is an upgrade or downgrade
-    const planOrder = { free: 0, pro: 1, max: 2 };
+    const planOrder: Record<string, number> = { free: 0, pro: 1, max: 2, teams: 3 };
     const isUpgrade = planOrder[plan] > planOrder[currentPlan];
 
     if (isUpgrade) {
@@ -234,9 +236,11 @@ export async function GET() {
     const scheduledDowngrade = subscription.metadata?.scheduledDowngrade;
     const currentPriceId = subscription.items.data[0]?.price?.id;
     const currentPlan = currentPriceId ? getPlanFromPriceId(currentPriceId) : "free";
+    const interval = currentPriceId ? getIntervalFromPriceId(currentPriceId) : "monthly";
 
     return NextResponse.json({
       currentPlan,
+      interval,
       status: subscription.status,
       currentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
       cancelAtPeriodEnd: subscription.cancel_at_period_end,

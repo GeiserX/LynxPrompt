@@ -1,17 +1,42 @@
 "use client";
 
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Check, X, Zap, Crown, Star, ArrowRight, Users } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
+import { PLAN_PRICES } from "@/lib/stripe";
 
-const TIERS = [
+type BillingInterval = "monthly" | "annual";
+
+// Prices in cents from stripe.ts
+const getPriceDisplay = (plan: "pro" | "max" | "teams", interval: BillingInterval) => {
+  const prices = PLAN_PRICES[plan];
+  if (interval === "annual") {
+    // Show monthly equivalent for annual
+    const monthlyEquivalent = prices.annual / 12;
+    return `€${(monthlyEquivalent / 100).toFixed(0)}`;
+  }
+  return `€${(prices.monthly / 100).toFixed(0)}`;
+};
+
+const getOriginalMonthlyPrice = (plan: "pro" | "max" | "teams") => {
+  return `€${(PLAN_PRICES[plan].monthly / 100).toFixed(0)}`;
+};
+
+const getAnnualTotal = (plan: "pro" | "max" | "teams") => {
+  return `€${(PLAN_PRICES[plan].annual / 100).toFixed(0)}`;
+};
+
+const getTiers = (interval: BillingInterval) => [
   {
     name: "Free",
     price: "€0",
     period: "forever",
+    originalPrice: null,
+    annualTotal: null,
     description: "Perfect for getting started with AI IDE configurations",
     icon: Zap,
     highlighted: false,
@@ -30,8 +55,10 @@ const TIERS = [
   },
   {
     name: "Pro",
-    price: "€5",
+    price: getPriceDisplay("pro", interval),
     period: "/month",
+    originalPrice: interval === "annual" ? getOriginalMonthlyPrice("pro") : null,
+    annualTotal: interval === "annual" ? getAnnualTotal("pro") : null,
     description: "For developers who want more powerful configuration options",
     icon: Star,
     highlighted: true,
@@ -46,12 +73,14 @@ const TIERS = [
       { text: "Advanced wizards", included: false },
     ],
     cta: "Start Pro Trial",
-    ctaLink: "/auth/signin?plan=pro",
+    ctaLink: `/auth/signin?plan=pro&interval=${interval}`,
   },
   {
     name: "Max",
-    price: "€20",
+    price: getPriceDisplay("max", interval),
     period: "/month",
+    originalPrice: interval === "annual" ? getOriginalMonthlyPrice("max") : null,
+    annualTotal: interval === "annual" ? getAnnualTotal("max") : null,
     description:
       "Full power with advanced features and discounts on paid blueprints",
     icon: Crown,
@@ -66,12 +95,14 @@ const TIERS = [
       { text: "Premium support", included: true },
     ],
     cta: "Go Max",
-    ctaLink: "/auth/signin?plan=max",
+    ctaLink: `/auth/signin?plan=max&interval=${interval}`,
   },
   {
     name: "Teams",
-    price: "€30",
+    price: getPriceDisplay("teams", interval),
     period: "/seat/month",
+    originalPrice: interval === "annual" ? getOriginalMonthlyPrice("teams") : null,
+    annualTotal: interval === "annual" ? `${getAnnualTotal("teams")}/seat` : null,
     description:
       "For organizations that need centralized management and SSO",
     icon: Users,
@@ -114,19 +145,22 @@ const COMPARISON_FEATURES = [
 export default function PricingPage() {
   const { status } = useSession();
   const isAuthenticated = status === "authenticated";
+  const [billingInterval, setBillingInterval] = useState<BillingInterval>("monthly");
+  
+  const TIERS = getTiers(billingInterval);
 
-  // Dynamic CTA links based on auth status
+  // Dynamic CTA links based on auth status and billing interval
   const getCtaLink = (plan: string) => {
     if (plan === "teams") {
-      return "/teams"; // Teams has its own signup flow
+      return `/teams?interval=${billingInterval}`; // Teams has its own signup flow
     }
     if (!isAuthenticated) {
-      return `/auth/signin${plan !== "free" ? `?plan=${plan}` : ""}`;
+      return `/auth/signin${plan !== "free" ? `?plan=${plan}&interval=${billingInterval}` : ""}`;
     }
     if (plan === "free") {
       return "/dashboard";
     }
-    return `/settings/billing?upgrade=${plan}`;
+    return `/settings/billing?upgrade=${plan}&interval=${billingInterval}`;
   };
 
   return (
@@ -147,8 +181,48 @@ export default function PricingPage() {
             </h1>
             <p className="mt-4 text-lg text-muted-foreground">
               Start free and upgrade as you grow. All plans include core
-              features. Cancel anytime.
+              features.
             </p>
+            
+            {/* Billing Interval Toggle */}
+            <div className="mt-8 flex items-center justify-center gap-4">
+              <div className="relative inline-flex rounded-full border bg-muted/50 p-1">
+                <button
+                  onClick={() => setBillingInterval("monthly")}
+                  className={`relative rounded-full px-5 py-2 text-sm font-medium transition-all ${
+                    billingInterval === "monthly"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Monthly
+                </button>
+                <button
+                  onClick={() => setBillingInterval("annual")}
+                  className={`relative rounded-full px-5 py-2 text-sm font-medium transition-all ${
+                    billingInterval === "annual"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Annual
+                </button>
+              </div>
+              {billingInterval === "annual" && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-green-500/10 px-3 py-1 text-sm font-medium text-green-600 dark:text-green-400">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
+                  </span>
+                  Save 10%
+                </span>
+              )}
+            </div>
+            {billingInterval === "annual" && (
+              <p className="mt-3 text-sm text-muted-foreground">
+                Billed annually. Annual subscriptions cannot be canceled mid-cycle.
+              </p>
+            )}
           </div>
         </div>
       </section>
@@ -211,9 +285,20 @@ export default function PricingPage() {
                   </div>
 
                   <div className="mt-4">
+                    {tier.originalPrice && (
+                      <span className="mr-2 text-lg text-muted-foreground line-through">
+                        {tier.originalPrice}
+                      </span>
+                    )}
                     <span className="text-4xl font-bold">{tier.price}</span>
                     <span className="text-muted-foreground">{tier.period}</span>
                   </div>
+                  
+                  {tier.annualTotal && (
+                    <p className="mt-1 text-xs text-green-600 dark:text-green-400">
+                      {tier.annualTotal} billed annually
+                    </p>
+                  )}
 
                   <p className="mt-2 text-sm text-muted-foreground">
                     {tier.description}
@@ -368,6 +453,21 @@ export default function PricingPage() {
             </h2>
 
             <div className="space-y-4">
+              <details className="group rounded-lg border bg-card">
+                <summary className="flex cursor-pointer items-center justify-between p-4 font-medium">
+                  What&apos;s the difference between monthly and annual billing?
+                  <span className="transition-transform group-open:rotate-180">
+                    ↓
+                  </span>
+                </summary>
+                <p className="border-t px-4 py-3 text-sm text-muted-foreground">
+                  Annual billing offers a <strong>10% discount</strong> on all paid plans.
+                  Monthly subscriptions can be canceled anytime. Annual subscriptions are a 
+                  yearly commitment — you get the discount but cannot cancel mid-cycle (you 
+                  keep full access until the year ends).
+                </p>
+              </details>
+
               <details className="group rounded-lg border bg-card">
                 <summary className="flex cursor-pointer items-center justify-between p-4 font-medium">
                   What happens if I downgrade my plan?

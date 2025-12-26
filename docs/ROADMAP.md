@@ -335,12 +335,12 @@ When downloading, user sees:
 
 ### Subscription Tiers
 
-| Tier      | Price          | Features                                                       |
-| --------- | -------------- | -------------------------------------------------------------- |
-| **Free**  | €0/month       | Basic templates, limited wizard features                       |
-| **Pro**   | €5/month       | Intermediate repo wizards, priority support                    |
-| **Max**   | €20/month      | Advanced wizards + ALL community prompts (including paid ones) |
-| **Teams** | €30/seat/month | Everything in Max + team features, SSO, centralized billing    |
+| Tier      | Monthly        | Annual (10% off) | Features                                                       |
+| --------- | -------------- | ---------------- | -------------------------------------------------------------- |
+| **Free**  | €0/month       | €0/year          | Basic templates, limited wizard features                       |
+| **Pro**   | €5/month       | €54/year         | Intermediate repo wizards, priority support                    |
+| **Max**   | €20/month      | €216/year        | Advanced wizards + ALL community prompts (including paid ones) |
+| **Teams** | €30/seat/month | €324/seat/year   | Everything in Max + team features, SSO, centralized billing    |
 
 #### Key Subscription Rules
 
@@ -348,6 +348,11 @@ When downloading, user sees:
 - **Pro users**: Access to intermediate wizard features for repos
 - **Max users**: Full access to advanced wizards + **10% discount on paid blueprints**
 - **Teams users**: All Max features + team-shared blueprints + SSO + €15/user AI budget
+
+#### Billing Intervals
+
+- **Monthly**: Can be canceled anytime. Access continues until end of billing period.
+- **Annual**: 10% discount. Cannot be canceled mid-cycle (yearly commitment). Access continues until year ends.
 
 ### Teams Tier Details ✅ NEW
 
@@ -764,7 +769,7 @@ npx lynxprompt init  # Download and place config in current directory
 - Template changelogs
 - Affiliate program for promoters
 - Gift subscriptions
-- Annual subscription discount (2 months free)
+- ~~Annual subscription discount (2 months free)~~ ✅ DONE (10% discount = ~1.2 months free)
 - **Local app integration**: IDE receives configs directly from web
 - **Restrict template sharing to subscribers** (future consideration)
 - ~~Use gravatar for emails~~ ✅ DONE

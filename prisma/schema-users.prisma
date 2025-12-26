@@ -90,6 +90,7 @@ model User {
   stripeSubscriptionId   String?   // Stripe Subscription ID
   subscriptionPlan       SubscriptionPlan @default(FREE)
   subscriptionStatus     String?   // active, canceled, past_due, unpaid, trialing
+  subscriptionInterval   String?   // monthly or annual
   currentPeriodEnd       DateTime? // When current billing period ends
   cancelAtPeriodEnd      Boolean   @default(false)
 
@@ -180,6 +181,7 @@ model Team {
   // Billing - handled by team admin(s)
   stripeCustomerId     String?   @unique // Stripe Customer ID for the team
   stripeSubscriptionId String?   // Stripe Subscription ID (per-seat)
+  subscriptionInterval String?   // monthly or annual
   billingCycleStart    DateTime? // When current billing cycle started
   maxSeats             Int       @default(3) // Prepaid seats (minimum 3)
   

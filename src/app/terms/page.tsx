@@ -87,9 +87,24 @@ export default function TermsPage() {
                 </ul>
               </section>
 
-              {/* 3.2 Teams SSO */}
+              {/* 3.2 Billing Intervals & Cancellation */}
               <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">3.2 Enterprise SSO (Teams only)</h2>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">3.2 Billing Intervals & Cancellation</h2>
+                <p>
+                  Subscriptions are available in two billing intervals:
+                </p>
+                <ul className="mt-3 list-inside list-disc space-y-1">
+                  <li><strong>Monthly billing:</strong> Billed each month. You may cancel at any time. Access continues until the end of the current billing period.</li>
+                  <li><strong>Annual billing:</strong> Billed once per year at a 10% discount. <strong>Annual subscriptions are a yearly commitment and cannot be canceled or refunded mid-cycle.</strong> You retain full access until the annual period ends.</li>
+                </ul>
+                <p className="mt-3">
+                  To change or cancel your subscription, visit Settings → Billing. Downgrades take effect at the end of your current billing period.
+                </p>
+              </section>
+
+              {/* 3.3 Teams SSO */}
+              <section>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">3.3 Enterprise SSO (Teams only)</h2>
                 <p>
                   Teams subscribers may configure Single Sign-On (SSO) authentication:
                 </p>
@@ -101,9 +116,9 @@ export default function TermsPage() {
                 </ul>
               </section>
 
-              {/* 3.3 Team-Shared Blueprints */}
+              {/* 3.4 Team-Shared Blueprints */}
               <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">3.3 Team-Shared Blueprints</h2>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">3.4 Team-Shared Blueprints</h2>
                 <p>
                   Teams members can share blueprints within their team:
                 </p>
