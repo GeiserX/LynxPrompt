@@ -27,20 +27,27 @@ export async function GET(
     // Ensure showcaseUrl is always returned (even if older codepaths didn't include it)
     // This fixes cases where the URL exists in Postgres but isn't serialized to clients.
     let showcaseUrl: string | null | undefined = (template as any).showcaseUrl;
-    if (showcaseUrl === undefined) {
-      if (id.startsWith("usr_")) {
-        const realId = id.replace("usr_", "");
-        const row = await prismaUsers.userTemplate.findUnique({
-          where: { id: realId },
-          select: { showcaseUrl: true },
-        });
+    let currentVersion = 1;
+    let publishedVersion: number | null = null;
+    
+    if (id.startsWith("usr_")) {
+      const realId = id.replace("usr_", "");
+      const row = await prismaUsers.userTemplate.findUnique({
+        where: { id: realId },
+        select: { showcaseUrl: true, currentVersion: true, publishedVersion: true },
+      });
+      if (showcaseUrl === undefined) {
         showcaseUrl = row?.showcaseUrl ?? null;
-      } else {
+      }
+      currentVersion = row?.currentVersion ?? 1;
+      publishedVersion = row?.publishedVersion ?? null;
+    } else {
+      if (showcaseUrl === undefined) {
         showcaseUrl = null;
       }
     }
 
-    const templateWithShowcase = { ...template, showcaseUrl };
+    const templateWithShowcase = { ...template, showcaseUrl, currentVersion, publishedVersion };
 
     // Check if this is a paid template
     const isPaid = templateWithShowcase.price && templateWithShowcase.price > 0;
@@ -223,7 +230,7 @@ export async function PUT(
     // Check if user owns this blueprint
     const existingBlueprint = await prismaUsers.userTemplate.findUnique({
       where: { id: realId },
-      select: { userId: true },
+      select: { userId: true, currentVersion: true, content: true, isPublic: true },
     });
 
     if (!existingBlueprint) {
@@ -253,6 +260,8 @@ export async function PUT(
       currency,
       showcaseUrl,
       sensitiveDataAcknowledged = false, // User acknowledged sensitive data warning
+      publishNewVersion = false, // If true, create a new version
+      changelog, // Optional changelog for new version
     } = body;
 
     // Build update data
@@ -399,11 +408,43 @@ export async function PUT(
       }
     }
 
+    // Check if content changed and if we should create a new version
+    const contentChanged = content !== undefined && content.trim() !== existingBlueprint.content;
+    const shouldCreateVersion = publishNewVersion && contentChanged;
+    
+    // Calculate new version number
+    const newVersion = shouldCreateVersion ? existingBlueprint.currentVersion + 1 : existingBlueprint.currentVersion;
+    
+    // Add version info to update data if creating new version
+    if (shouldCreateVersion) {
+      updateData.currentVersion = newVersion;
+      // If making public, also update publishedVersion
+      const willBePublic = isPublic !== undefined ? Boolean(isPublic) : existingBlueprint.isPublic;
+      if (willBePublic) {
+        updateData.publishedVersion = newVersion;
+      }
+    }
+
     // Update the blueprint
     const updatedBlueprint = await prismaUsers.userTemplate.update({
       where: { id: realId },
       data: updateData,
     });
+
+    // Create new version record if content changed and publishNewVersion is true
+    if (shouldCreateVersion) {
+      await prismaUsers.userTemplateVersion.create({
+        data: {
+          templateId: realId,
+          version: newVersion,
+          content: content.trim(),
+          variables: null,
+          changelog: changelog || null,
+          isPublished: Boolean(updateData.isPublic ?? existingBlueprint.isPublic),
+          createdBy: session.user.id,
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,
@@ -412,6 +453,8 @@ export async function PUT(
         name: updatedBlueprint.name,
         tier: updatedBlueprint.tier,
         category: updatedBlueprint.category,
+        version: newVersion,
+        versionCreated: shouldCreateVersion,
       },
     });
   } catch (error) {

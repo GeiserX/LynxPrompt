@@ -96,10 +96,14 @@ export async function GET() {
           isPublic: true,
           visibility: true,
           createdAt: true,
+          currentVersion: true,
+          publishedVersion: true,
         },
       }).then(templates => templates.map(template => ({
         ...template,
         id: `usr_${template.id}`, // Add usr_ prefix for template detail routing
+        version: template.currentVersion,
+        publishedVersion: template.publishedVersion,
       }))),
 
       // Get recent activity (downloads on user's templates + user's downloads)
@@ -147,6 +151,8 @@ export async function GET() {
               favorites: true,
               tier: true,
               price: true,
+              currentVersion: true,
+              publishedVersion: true,
               user: {
                 select: { name: true, displayName: true },
               },
@@ -325,6 +331,8 @@ export async function GET() {
         price: p.template.price,
         author: p.template.user?.displayName || p.template.user?.name || "Anonymous",
         purchasedAt: p.createdAt,
+        purchasedVersion: p.versionNumber || 1,
+        currentVersion: p.template.publishedVersion || p.template.currentVersion || 1,
       }));
     
     // Format team-purchased blueprints

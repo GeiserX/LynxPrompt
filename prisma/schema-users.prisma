@@ -432,6 +432,10 @@ model UserTemplate {
   // Team ownership (optional - if set, blueprint belongs to team)
   teamId       String?      // If set, this is a team blueprint
   
+  // Versioning
+  currentVersion   Int      @default(1)  // Current version number (auto-incremented)
+  publishedVersion Int?                   // Latest published version (null = never published publicly)
+  
   // Statistics (denormalized for performance, updated via triggers/API)
   downloads    Int          @default(0)
   favorites    Int          @default(0)
@@ -466,6 +470,7 @@ model UserTemplate {
   user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   team      Team?              @relation(fields: [teamId], references: [id], onDelete: SetNull)
   purchases BlueprintPurchase[]
+  versions  UserTemplateVersion[]
 
   @@index([userId])
   @@index([type])
@@ -476,6 +481,36 @@ model UserTemplate {
   @@index([downloads])
   @@index([favorites])
   @@index([price])
+  @@index([currentVersion])
+}
+
+// ============================================================================
+// BLUEPRINT VERSIONS - Historical versions of blueprints
+// ============================================================================
+
+model UserTemplateVersion {
+  id            String   @id @default(cuid())
+  templateId    String
+  version       Int      // 1, 2, 3, ... (auto-increment per template)
+  
+  // Snapshot of content at this version
+  content       String   @db.Text
+  variables     Json?
+  
+  // Metadata
+  changelog     String?  @db.Text  // What changed (optional, author-provided)
+  isPublished   Boolean  @default(false)  // Was this version published to marketplace?
+  
+  createdAt     DateTime @default(now())
+  createdBy     String?  // User ID who made this version (for team blueprints)
+  
+  template      UserTemplate       @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  purchases     BlueprintPurchase[]  // Purchases reference specific version
+  
+  @@unique([templateId, version])
+  @@index([templateId])
+  @@index([isPublished])
+  @@index([createdAt])
 }
 
 // ============================================================================
@@ -568,6 +603,10 @@ model BlueprintPurchase {
   // When a team user purchases, the purchase is made for the team
   teamId        String?
   
+  // Version purchased (for version history tracking)
+  versionId     String?  // Reference to specific version purchased
+  versionNumber Int?     // Denormalized for quick access (e.g., "You purchased v3")
+  
   // Payment details
   amount        Int      // Amount paid in cents
   currency      String   // ISO currency code
@@ -582,12 +621,14 @@ model BlueprintPurchase {
   user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   template UserTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
   team     Team?        @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  version  UserTemplateVersion? @relation(fields: [versionId], references: [id], onDelete: SetNull)
   
   @@unique([userId, templateId]) // One purchase per user per template (for individual users)
   @@unique([teamId, templateId]) // One purchase per team per template
   @@index([userId])
   @@index([teamId])
   @@index([templateId])
+  @@index([versionId])
   @@index([createdAt])
 }
 
