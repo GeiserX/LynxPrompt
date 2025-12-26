@@ -187,6 +187,34 @@ export const docsConfig: DocsSection[] = [
     ],
   },
   {
+    title: "API Reference",
+    href: "/docs/api",
+    description: "Programmatically manage blueprints with our REST API.",
+    icon: "Key",
+    items: [
+      {
+        title: "Overview",
+        href: "/docs/api",
+        description: "Getting started with the LynxPrompt API",
+      },
+      {
+        title: "Authentication",
+        href: "/docs/api/authentication",
+        description: "Generate and manage API tokens",
+      },
+      {
+        title: "Blueprints API",
+        href: "/docs/api/blueprints",
+        description: "CRUD operations for blueprints",
+      },
+      {
+        title: "User API",
+        href: "/docs/api/user",
+        description: "Access user profile information",
+      },
+    ],
+  },
+  {
     title: "FAQ",
     href: "/docs/faq",
     description: "Frequently asked questions and troubleshooting.",

@@ -763,6 +763,7 @@ type WizardConfig = {
   includePersonalData: boolean;
   platform: string;
   blueprintMode: boolean; // Generate with [[VARIABLE|default]] for blueprint templates
+  enableApiSync: boolean; // Auto-save as private template with API sync instructions
   additionalFeedback: string;
   commands: CommandsConfig;
   codeStyle: CodeStyleConfig;
@@ -783,6 +784,10 @@ export default function WizardPage() {
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const [showVariableModal, setShowVariableModal] = useState(false);
   const [variableValues, setVariableValues] = useState<Record<string, string>>({});
+  const [showOverwriteModal, setShowOverwriteModal] = useState(false);
+  const [existingBlueprintId, setExistingBlueprintId] = useState<string | null>(null);
+  const [isSavingBlueprint, setIsSavingBlueprint] = useState(false);
+  const [savedBlueprintId, setSavedBlueprintId] = useState<string | null>(null);
   const [config, setConfig] = useState<WizardConfig>({
     projectName: "",
     projectDescription: "",
@@ -824,6 +829,7 @@ export default function WizardPage() {
     includePersonalData: true,
     platform: "universal",
     blueprintMode: false,
+    enableApiSync: false,
     additionalFeedback: "",
     commands: { build: "", test: "", lint: "", dev: "", additional: [], savePreferences: false },
     codeStyle: { naming: "camelCase", errorHandling: "", errorHandlingOther: "", loggingConventions: "", notes: "", savePreferences: false },
@@ -1388,18 +1394,49 @@ export default function WizardPage() {
   };
 
   // Check for unfilled variables before download
-  const handleDownloadClick = () => {
-    // Only prompt for variables that have no default AND no user-provided value
+  const handleDownloadClick = async () => {
+    // If API sync is enabled, ALL variables without defaults must be filled (mandatory)
+    // Otherwise, only prompt for unfilled variables
     const unfilledWithoutDefaults = variablesWithoutDefaults.filter(v => !variableValues[v]);
+    
     if (unfilledWithoutDefaults.length > 0) {
       setShowVariableModal(true);
       return;
     }
-    handleDownload();
+    
+    // If API sync is enabled, check for existing blueprint with same name
+    if (config.enableApiSync && config.projectName) {
+      try {
+        const res = await fetch(`/api/blueprints?name=${encodeURIComponent(config.projectName)}&checkOwned=true`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.existingId) {
+            setExistingBlueprintId(data.existingId);
+            setShowOverwriteModal(true);
+            return;
+          }
+        }
+      } catch {
+        // If check fails, proceed without overwrite check
+      }
+    }
+    
+    await handleDownload();
   };
 
-  const handleDownload = async () => {
+  // Handle overwrite confirmation
+  const handleOverwriteConfirm = async (overwrite: boolean) => {
+    setShowOverwriteModal(false);
+    if (overwrite) {
+      await handleDownload(existingBlueprintId || undefined);
+    }
+    setExistingBlueprintId(null);
+  };
+
+  const handleDownload = async (overwriteBlueprintId?: string) => {
     setIsDownloading(true);
+    setIsSavingBlueprint(config.enableApiSync);
+    
     try {
       await savePreferences();
       const userProfile = {
@@ -1424,9 +1461,59 @@ export default function WizardPage() {
         content: replaceVariablesInContent(file.content),
       }));
       
-      // Create new blob with replaced content
+      // If API sync is enabled, save/update the blueprint first
+      let blueprintId: string | null = null;
+      if (config.enableApiSync && files.length > 0) {
+        try {
+          const blueprintData = {
+            name: config.projectName || "My AI Config",
+            description: config.projectDescription || "Generated with the LynxPrompt wizard",
+            content: files[0].content,
+            type: "AGENTS_MD",
+            category: "other",
+            visibility: "PRIVATE",
+          };
+
+          let res: Response;
+          if (overwriteBlueprintId) {
+            // Update existing blueprint
+            res = await fetch(`/api/blueprints/${overwriteBlueprintId}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(blueprintData),
+            });
+          } else {
+            // Create new blueprint
+            res = await fetch("/api/blueprints", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(blueprintData),
+            });
+          }
+
+          if (res.ok) {
+            const data = await res.json();
+            blueprintId = data.template?.id || overwriteBlueprintId;
+            setSavedBlueprintId(blueprintId);
+          } else {
+            console.error("Failed to save blueprint for API sync");
+          }
+        } catch (error) {
+          console.error("Error saving blueprint:", error);
+        }
+      }
+      
+      // If we have a blueprint ID, prepend API sync header to the content
+      let finalContent = files[0]?.content || "";
+      if (config.enableApiSync && blueprintId) {
+        const apiHeader = generateApiSyncHeader(blueprintId, files[0]?.fileName || "AGENTS.md");
+        finalContent = apiHeader + finalContent;
+        files = files.map((file, i) => i === 0 ? { ...file, content: finalContent } : file);
+      }
+      
+      // Create new blob with final content
       const finalBlob = files.length > 0 
-        ? new Blob([files[0].content], { type: "text/plain" })
+        ? new Blob([finalContent], { type: "text/plain" })
         : blob;
       
       downloadConfigFile(finalBlob, files);
@@ -1435,8 +1522,33 @@ export default function WizardPage() {
       alert("Failed to generate files. Please try again.");
     } finally {
       setIsDownloading(false);
+      setIsSavingBlueprint(false);
       setShowVariableModal(false);
     }
+  };
+  
+  // Generate API sync header for the downloaded file
+  const generateApiSyncHeader = (blueprintId: string, fileName: string) => {
+    const bpId = blueprintId.startsWith("bp_") ? blueprintId : `bp_${blueprintId}`;
+    return `# ${config.projectName || fileName}
+#
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 🔄 LynxPrompt API Sync
+# Blueprint ID: ${bpId}
+# 
+# This file is synced with LynxPrompt. To update it via API:
+#
+#   curl -X PUT "https://lynxprompt.com/api/v1/blueprints/${bpId}" \\
+#     -H "Authorization: Bearer YOUR_API_TOKEN" \\
+#     -H "Content-Type: application/json" \\
+#     -d "{\\"content\\": \\"$(cat ${fileName} | sed 's/"/\\\\"/g' | tr '\\n' ' ')\\"}"\n#
+# To generate an API token, visit:
+#   https://lynxprompt.com/settings?tab=api-tokens
+#
+# Note: Requires an API token with "Edit blueprints" permission.
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+`;
   };
 
   // Handle saving as blueprint
@@ -1468,8 +1580,13 @@ export default function WizardPage() {
             
             <h2 className="text-xl font-bold">Fill in Required Variables</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              These variables don&apos;t have default values. Please provide values for them:
+              These variables don&apos;t have default values. {config.enableApiSync ? "All values are required for API sync." : "Please provide values for them:"}
             </p>
+            {config.enableApiSync && (
+              <div className="mt-2 rounded-lg bg-blue-50 p-2 text-xs text-blue-800 dark:bg-blue-950/50 dark:text-blue-200">
+                🔄 API Sync is enabled. Variables must be filled to ensure the downloaded file works correctly.
+              </div>
+            )}
             
             <div className="mt-4 max-h-[60vh] space-y-4 overflow-y-auto">
               {variablesWithoutDefaults.map(varName => (
@@ -1494,7 +1611,7 @@ export default function WizardPage() {
                 Cancel
               </Button>
               <Button 
-                onClick={handleDownload}
+                onClick={() => handleDownload()}
                 disabled={isDownloading || variablesWithoutDefaults.some(v => !variableValues[v])}
               >
                 {isDownloading ? (
@@ -1508,6 +1625,33 @@ export default function WizardPage() {
                     Download
                   </>
                 )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Overwrite Confirmation Modal */}
+      {showOverwriteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="relative mx-4 w-full max-w-md rounded-2xl bg-background p-6 shadow-2xl">
+            <h2 className="text-xl font-bold">Blueprint Already Exists</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              You already have a blueprint named <strong>&quot;{config.projectName}&quot;</strong>.
+              Do you want to overwrite it with this new configuration?
+            </p>
+            
+            <div className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
+              <strong>Note:</strong> The existing blueprint will be updated with the new content.
+              The blueprint ID will remain the same, so existing API integrations will continue to work.
+            </div>
+            
+            <div className="mt-6 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => handleOverwriteConfirm(false)}>
+                Cancel
+              </Button>
+              <Button onClick={() => handleOverwriteConfirm(true)}>
+                Yes, Overwrite
               </Button>
             </div>
           </div>
@@ -1754,9 +1898,12 @@ export default function WizardPage() {
                   expandedFile={expandedFile}
                   copiedFile={copiedFile}
                   blueprintMode={config.blueprintMode}
+                  enableApiSync={config.enableApiSync}
+                  userTier={userTier}
                   onToggleExpand={(fileName) => setExpandedFile(expandedFile === fileName ? null : fileName)}
                   onCopyFile={handleCopyFile}
                   onPlatformChange={(v) => setConfig({ ...config, platform: v })}
+                  onApiSyncChange={(v) => setConfig({ ...config, enableApiSync: v })}
                 />
               )}
 
@@ -4407,9 +4554,12 @@ function StepGenerate({
   expandedFile,
   copiedFile,
   blueprintMode,
+  enableApiSync,
+  userTier,
   onToggleExpand,
   onCopyFile,
   onPlatformChange,
+  onApiSyncChange,
 }: {
   config: WizardConfig;
   session: {
@@ -4424,9 +4574,12 @@ function StepGenerate({
   expandedFile: string | null;
   copiedFile: string | null;
   blueprintMode: boolean;
+  enableApiSync: boolean;
+  userTier: string;
   onToggleExpand: (fileName: string) => void;
   onCopyFile: (fileName: string, content: string) => void;
   onPlatformChange: (v: string) => void;
+  onApiSyncChange: (v: boolean) => void;
 }) {
   const [ideSearch, setIdeSearch] = useState("");
   const [showAllIdes, setShowAllIdes] = useState(false);
@@ -4540,6 +4693,49 @@ function StepGenerate({
             <span className="capitalize">{session.user.skillLevel || "Intermediate"} level</span>
           </div>
         </div>
+
+        {/* API Sync Option - Pro+ only */}
+        {["pro", "max", "teams"].includes(userTier) && (
+          <div className={`rounded-lg border-2 p-4 transition-colors ${enableApiSync ? "border-blue-500 bg-blue-50 dark:border-blue-600 dark:bg-blue-950/30" : "border-dashed border-muted-foreground/30"}`}>
+            <div className="flex items-start gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <label className="font-medium">
+                    🔄 Auto-sync via API
+                  </label>
+                  {enableApiSync && (
+                    <span className="rounded-full bg-blue-500 px-2 py-0.5 text-xs font-medium text-white">
+                      Enabled
+                    </span>
+                  )}
+                </div>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Save this config as a private blueprint and include API sync instructions in the downloaded file.
+                  Update it anytime from the command line or CI/CD.
+                </p>
+                {enableApiSync && (
+                  <div className="mt-3 rounded-md bg-blue-100 p-3 text-xs text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
+                    <strong>Note:</strong> Downloading will auto-save this as a private template in your dashboard.
+                    The file will include the blueprint ID and curl commands to update it via API.
+                    <br /><br />
+                    <strong>Requires:</strong> An API token with &quot;Edit blueprints&quot; permission.{" "}
+                    <a href="/settings?tab=api-tokens" target="_blank" className="underline hover:text-blue-600">
+                      Generate one here →
+                    </a>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => onApiSyncChange(!enableApiSync)}
+                className={`relative h-6 w-11 rounded-full transition-colors ${enableApiSync ? "bg-blue-500" : "bg-muted"}`}
+              >
+                <span
+                  className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${enableApiSync ? "translate-x-5" : "translate-x-0.5"}`}
+                />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* File Previews */}
         <div className="space-y-2">

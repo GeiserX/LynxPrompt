@@ -124,6 +124,7 @@ model User {
   purchases      BlueprintPurchase[]
   payouts        Payout[]
   teamMemberships TeamMember[] // Teams user belongs to
+  apiTokens      ApiToken[]    // API tokens for programmatic access
 
   @@index([email])
   @@index([role])
@@ -465,6 +466,44 @@ enum PayoutStatus {
   COMPLETED   // Successfully sent
   FAILED      // Failed to process
   CANCELLED   // Cancelled by user or admin
+}
+
+// ============================================================================
+// API TOKENS - Programmatic access for Pro/Max/Teams users
+// ============================================================================
+
+model ApiToken {
+  id              String       @id @default(cuid())
+  userId          String
+  
+  // Token identification
+  name            String       // User-friendly name like "CLI Token", "CI/CD Pipeline"
+  tokenHash       String       @unique // SHA-256 hash of the actual token (prefix: lp_)
+  lastFourChars   String       // Last 4 chars for display (e.g., "...x7f2")
+  
+  // Access control
+  role            ApiTokenRole @default(BLUEPRINTS_FULL)
+  
+  // Expiration (default 1 week, max 1 year)
+  expiresAt       DateTime
+  
+  // Usage tracking
+  lastUsedAt      DateTime?    // Updated on each API request
+  createdAt       DateTime     @default(now())
+  revokedAt       DateTime?    // Soft delete - set when token is revoked
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([tokenHash])
+  @@index([expiresAt])
+}
+
+enum ApiTokenRole {
+  BLUEPRINTS_FULL       // Create, read, update, delete user's blueprints (default)
+  BLUEPRINTS_READONLY   // Read-only access to list/download blueprints
+  PROFILE_FULL          // Read and update profile info (not billing)
+  FULL                  // All permissions including profile
 }
 
 // ============================================================================

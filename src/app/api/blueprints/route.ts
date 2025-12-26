@@ -50,6 +50,28 @@ function determineTier(content: string): "SIMPLE" | "INTERMEDIATE" | "ADVANCED" 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    
+    // Special case: check if user owns a blueprint with a specific name
+    const checkOwned = searchParams.get("checkOwned") === "true";
+    const nameToCheck = searchParams.get("name");
+    
+    if (checkOwned && nameToCheck) {
+      const session = await getServerSession(authOptions);
+      if (!session?.user?.id) {
+        return NextResponse.json({ existingId: null });
+      }
+      
+      const existing = await prismaUsers.userTemplate.findFirst({
+        where: {
+          userId: session.user.id,
+          name: nameToCheck,
+        },
+        select: { id: true },
+      });
+      
+      return NextResponse.json({ existingId: existing?.id || null });
+    }
+    
     const sort = searchParams.get("sort") || "popular";
     const search = searchParams.get("q") || "";
     const category = searchParams.get("category");
