@@ -1523,10 +1523,19 @@ function BillingSection({ setError, setSuccess }: BillingSectionProps) {
     try {
       // If user has active subscription, use change-plan API
       if (subscription?.hasActiveSubscription) {
+        // Determine if this is an upgrade (Pro → Max)
+        const planOrder: Record<string, number> = { free: 0, pro: 1, max: 2, teams: 3 };
+        const isUpgrade = planOrder[plan] > planOrder[currentPlan];
+
+        // EU Digital Content Directive: require consent for upgrades (gaining new digital content)
+        if (isUpgrade && !euConsent) {
+          throw new Error("Please accept the terms to proceed with your upgrade.");
+        }
+
         const res = await fetch("/api/billing/change-plan", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ plan }),
+          body: JSON.stringify({ plan, euDigitalContentConsent: isUpgrade ? euConsent : undefined }),
         });
 
         const data = await res.json();
@@ -1692,8 +1701,8 @@ function BillingSection({ setError, setSuccess }: BillingSectionProps) {
         </div>
       )}
 
-      {/* EU Digital Content Consent - Only for new subscriptions (not for Teams or Max users) */}
-      {currentPlan !== "max" && currentPlan !== "teams" && !subscription?.isAdmin && !subscription?.isTeamsUser && !subscription?.hasActiveSubscription && (
+      {/* EU Digital Content Consent - Required for new subscriptions AND upgrades (not for Teams, Max users, or admins) */}
+      {currentPlan !== "max" && currentPlan !== "teams" && !subscription?.isAdmin && !subscription?.isTeamsUser && (
         <div className="rounded-xl border bg-card p-6">
           <div className="flex items-start gap-3">
             <input
@@ -1701,9 +1710,9 @@ function BillingSection({ setError, setSuccess }: BillingSectionProps) {
               id="euConsent"
               checked={euConsent}
               onChange={(e) => setEuConsent(e.target.checked)}
-              className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+              className="mt-1 h-4 w-4 shrink-0 cursor-pointer accent-primary"
             />
-            <label htmlFor="euConsent" className="text-sm text-muted-foreground">
+            <label htmlFor="euConsent" className="cursor-pointer text-sm text-muted-foreground">
               I consent to immediate access to digital content and acknowledge that I lose my right to 
               withdraw from this purchase within 14 days once I access the subscription features.
               <span className="text-red-500 ml-1">*</span>
@@ -1720,7 +1729,7 @@ function BillingSection({ setError, setSuccess }: BillingSectionProps) {
             {currentPlan === "free" && (
               <button
                 onClick={() => handlePlanChange("pro")}
-                disabled={upgrading === "pro" || (!subscription?.hasActiveSubscription && !euConsent)}
+                disabled={upgrading === "pro" || !euConsent}
                 className="flex items-start gap-4 rounded-lg border p-4 text-left transition-all hover:border-primary hover:bg-muted/50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div className="rounded-lg bg-primary/10 p-2 text-primary">
@@ -1733,14 +1742,14 @@ function BillingSection({ setError, setSuccess }: BillingSectionProps) {
                     Intermediate wizards, sell blueprints (70% revenue)
                   </p>
                 </div>
-                <Button size="sm" disabled={!!upgrading || (!subscription?.hasActiveSubscription && !euConsent)}>
+                <Button size="sm" disabled={!!upgrading || !euConsent}>
                   {upgrading === "pro" ? "..." : "Upgrade"}
                 </Button>
               </button>
             )}
             <button
               onClick={() => handlePlanChange("max")}
-              disabled={upgrading === "max" || (!subscription?.hasActiveSubscription && !euConsent)}
+              disabled={upgrading === "max" || !euConsent}
               className="flex items-start gap-4 rounded-lg border border-purple-500/30 bg-gradient-to-br from-purple-500/5 to-pink-500/5 p-4 text-left transition-all hover:border-purple-500 hover:from-purple-500/10 hover:to-pink-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <div className="rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 p-2 text-white">
@@ -1763,7 +1772,7 @@ function BillingSection({ setError, setSuccess }: BillingSectionProps) {
               <Button
                 size="sm"
                 className="bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600"
-                disabled={!!upgrading || (!subscription?.hasActiveSubscription && !euConsent)}
+                disabled={!!upgrading || !euConsent}
               >
                 {upgrading === "max" ? "..." : "Upgrade"}
               </Button>

@@ -26,7 +26,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { plan } = (await request.json()) as { plan: SubscriptionPlan };
+    const { plan, euDigitalContentConsent } = (await request.json()) as { 
+      plan: SubscriptionPlan;
+      euDigitalContentConsent?: boolean;
+    };
 
     if (!plan || (plan !== "pro" && plan !== "max")) {
       return NextResponse.json(
@@ -105,6 +108,14 @@ export async function POST(request: NextRequest) {
     const isUpgrade = planOrder[plan] > planOrder[currentPlan];
 
     if (isUpgrade) {
+      // EU Digital Content Directive: require consent for upgrades (gaining new digital content)
+      if (!euDigitalContentConsent) {
+        return NextResponse.json(
+          { error: "You must consent to immediate access and waive your withdrawal right to proceed with the upgrade." },
+          { status: 400 }
+        );
+      }
+
       // UPGRADE: Immediate with proration
       // Stripe will calculate unused credit from current plan and apply toward new plan
       await stripe.subscriptions.update(
@@ -123,6 +134,9 @@ export async function POST(request: NextRequest) {
           metadata: {
             ...subscription.metadata,
             plan: plan,
+            // EU Digital Content Directive consent tracking for upgrade
+            euDigitalContentConsent: "true",
+            upgradeConsentTimestamp: new Date().toISOString(),
           },
         }
       );
