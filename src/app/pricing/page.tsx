@@ -11,23 +11,30 @@ import { PLAN_PRICES } from "@/lib/stripe";
 
 type BillingInterval = "monthly" | "annual";
 
+// Format price showing decimals only when needed (e.g., €4.50 but €5)
+const formatEuros = (cents: number): string => {
+  const euros = cents / 100;
+  // If there's a fractional part, show 2 decimal places; otherwise show integer
+  return euros % 1 === 0 ? `€${euros}` : `€${euros.toFixed(2)}`;
+};
+
 // Prices in cents from stripe.ts
 const getPriceDisplay = (plan: "pro" | "max" | "teams", interval: BillingInterval) => {
   const prices = PLAN_PRICES[plan];
   if (interval === "annual") {
     // Show monthly equivalent for annual
     const monthlyEquivalent = prices.annual / 12;
-    return `€${(monthlyEquivalent / 100).toFixed(0)}`;
+    return formatEuros(monthlyEquivalent);
   }
-  return `€${(prices.monthly / 100).toFixed(0)}`;
+  return formatEuros(prices.monthly);
 };
 
 const getOriginalMonthlyPrice = (plan: "pro" | "max" | "teams") => {
-  return `€${(PLAN_PRICES[plan].monthly / 100).toFixed(0)}`;
+  return formatEuros(PLAN_PRICES[plan].monthly);
 };
 
 const getAnnualTotal = (plan: "pro" | "max" | "teams") => {
-  return `€${(PLAN_PRICES[plan].annual / 100).toFixed(0)}`;
+  return formatEuros(PLAN_PRICES[plan].annual);
 };
 
 const getTiers = (interval: BillingInterval) => [
