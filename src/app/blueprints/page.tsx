@@ -713,9 +713,19 @@ function BlueprintsContent() {
                       <div className="flex-1 p-5">
                         {/* Header: Name + Price */}
                         <div className="flex items-start justify-between gap-3">
-                          <h3 className="font-semibold leading-tight group-hover:text-primary">
-                            {blueprint.name}
-                          </h3>
+                          {/* Name is clickable only if accessible (free, owned, or purchased) */}
+                          {!isPaid || blueprint.isOwner || blueprint.hasPurchased ? (
+                            <Link 
+                              href={`/blueprints/${blueprint.id}`}
+                              className="font-semibold leading-tight group-hover:text-primary hover:underline"
+                            >
+                              {blueprint.name}
+                            </Link>
+                          ) : (
+                            <h3 className="font-semibold leading-tight">
+                              {blueprint.name}
+                            </h3>
+                          )}
                           {/* Price badge */}
                           <div className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${
                             isPaid 
@@ -824,7 +834,7 @@ function BlueprintsContent() {
                           <Link href={`/blueprints/${blueprint.id}`}>
                             {isPaid && !blueprint.isOwner && !blueprint.hasPurchased 
                               ? "Purchase" 
-                              : "Use Blueprint"}
+                              : "View Blueprint"}
                           </Link>
                         </Button>
                       </div>

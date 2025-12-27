@@ -30,7 +30,7 @@ export default function MarketplaceOverviewPage() {
             <div>
               <p className="font-medium">Pricing & Plans</p>
               <p className="text-sm text-muted-foreground">
-                Free, Pro, Max tiers
+                Free, Pro, Max & Teams
               </p>
             </div>
           </Link>

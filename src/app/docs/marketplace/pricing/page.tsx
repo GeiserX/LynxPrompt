@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { CreditCard, Check, ArrowRight } from "lucide-react";
+import { Check, ArrowRight } from "lucide-react";
 
 export default function PricingPage() {
   return (
@@ -17,14 +17,14 @@ export default function PricingPage() {
         <h1 className="text-3xl font-bold tracking-tight">Pricing & Plans</h1>
         <p className="max-w-2xl text-lg text-muted-foreground">
           Choose the plan that fits your needs. From free basics to full access
-          with Max.
+          with Max, or Teams for organizations.
         </p>
       </div>
 
       {/* Plans comparison */}
       <section className="space-y-6">
         <h2 className="text-2xl font-bold">Subscription Tiers</h2>
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {/* Free */}
           <div className="rounded-xl border bg-card p-6">
             <div className="mb-4">
@@ -165,6 +165,59 @@ export default function PricingPage() {
               <Link href="/pricing">Upgrade to Max</Link>
             </Button>
           </div>
+
+          {/* Teams */}
+          <div className="rounded-xl border-2 border-teal-500 bg-gradient-to-b from-teal-500/5 to-cyan-500/5 p-6">
+            <div className="mb-4">
+              <div className="mb-2 inline-block rounded-full bg-gradient-to-r from-teal-500 to-cyan-500 px-3 py-1 text-xs font-medium text-white">
+                Enterprise
+              </div>
+              <h3 className="text-lg font-semibold bg-gradient-to-r from-teal-500 to-cyan-500 bg-clip-text text-transparent">Teams</h3>
+              <div className="mt-2">
+                <span className="text-3xl font-bold">€30</span>
+                <span className="text-muted-foreground">/seat/month</span>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Minimum 3 seats
+              </p>
+            </div>
+            <ul className="space-y-3 text-sm">
+              <li className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-teal-500" />
+                Everything in Max
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-teal-500" />
+                Team-shared blueprints
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-teal-500" />
+                SSO (SAML, OIDC, LDAP)
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-teal-500" />
+                Centralized billing
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-teal-500" />
+                Only pay for active users
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-teal-500" />
+                Extended AI usage
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-teal-500" />
+                Premium support
+              </li>
+            </ul>
+            <Button
+              asChild
+              className="mt-6 w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
+            >
+              <Link href="/teams">Contact Sales</Link>
+            </Button>
+          </div>
         </div>
       </section>
 
@@ -202,6 +255,32 @@ export default function PricingPage() {
             <p className="mt-1 text-sm text-muted-foreground">
               Max subscribers get faster response times and direct access to the
               development team for technical questions.
+            </p>
+          </div>
+          <div className="rounded-lg border bg-card p-4">
+            <h3 className="font-medium">How does Teams billing work?</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Teams is billed at <strong>€30 per seat per month</strong> (€324/seat/year with annual discount), 
+              with a minimum of 3 seats. You only pay for <strong>active users</strong> — team members who 
+              haven&apos;t logged in during the billing cycle aren&apos;t charged. Pro-rated billing applies 
+              when adding seats mid-cycle.
+            </p>
+          </div>
+          <div className="rounded-lg border bg-card p-4">
+            <h3 className="font-medium">What SSO providers does Teams support?</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Teams supports <strong>SAML 2.0</strong> (Okta, Azure AD, OneLogin), 
+              <strong> OpenID Connect</strong> (Google Workspace, Auth0), and 
+              <strong> LDAP/Active Directory</strong>. Team admins configure SSO from 
+              the team settings dashboard.
+            </p>
+          </div>
+          <div className="rounded-lg border bg-card p-4">
+            <h3 className="font-medium">Can team members share blueprints privately?</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Yes! Team blueprints have three visibility levels: <strong>Private</strong> (only you), 
+              <strong> Team</strong> (all team members), or <strong>Public</strong> (everyone). 
+              Great for sharing internal coding standards and company-specific configurations.
             </p>
           </div>
         </div>
