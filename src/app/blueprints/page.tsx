@@ -590,24 +590,6 @@ function BlueprintsContent() {
                   )}
                 </div>
               )}
-
-              <div className="space-y-1">
-                <Button asChild className="w-full">
-                  <Link href="/blueprints/create">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create Blueprint
-                  </Link>
-                </Button>
-                
-                {status === "authenticated" && (
-                  <Button asChild variant="outline" className="w-full">
-                    <Link href="/wizard">
-                      <Wand2 className="mr-2 h-4 w-4" />
-                      Use Wizard
-                    </Link>
-                  </Button>
-                )}
-              </div>
             </div>
           </aside>
 
