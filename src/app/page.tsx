@@ -117,11 +117,10 @@ export default function HomePage() {
           </h1>
 
           <p className="max-w-2xl text-lg text-muted-foreground">
-            Create universal instructions for AI coding agents and tools.
-            Write once, use across Cursor, Claude Code, Copilot, and many more.
+            Repo-first AI coding Configs that work across IDEs & tools
           </p>
           <p className="text-lg font-medium text-muted-foreground">
-            New project? <span className="text-primary">Ready in seconds.</span>
+            New project? <span className="text-primary">Ready in seconds</span>
           </p>
 
           <div className="mt-6 flex gap-4">
