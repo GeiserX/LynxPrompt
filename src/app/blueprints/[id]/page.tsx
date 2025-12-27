@@ -7,7 +7,6 @@ import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { TemplateDownloadModal } from "@/components/template-download-modal";
 import {
-  Sparkles,
   ArrowLeft,
   Download,
   Heart,
@@ -22,10 +21,8 @@ import {
   Files,
   Loader2,
   Trash2,
-  GitBranch,
   History,
   ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
@@ -103,6 +100,7 @@ interface VersionInfo {
   changelog: string | null;
   isPublished: boolean;
   createdAt: string;
+  content?: string;
 }
 
 export default function BlueprintDetailPage() {
@@ -191,20 +189,50 @@ export default function BlueprintDetailPage() {
   const [cloning, setCloning] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [showVersionDropdown, setShowVersionDropdown] = useState(false);
   const [versionHistory, setVersionHistory] = useState<VersionInfo[]>([]);
   const [versionLoading, setVersionLoading] = useState(false);
+  const [selectedVersion, setSelectedVersion] = useState<number | null>(null);
+  const [selectedVersionContent, setSelectedVersionContent] = useState<string | null>(null);
+  const [viewingVersion, setViewingVersion] = useState<VersionInfo | null>(null);
 
-  // Fetch version history when expanded
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    if (!showVersionDropdown) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest("[data-version-dropdown]")) {
+        setShowVersionDropdown(false);
+      }
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [showVersionDropdown]);
+
+  // Fetch version history when dropdown is opened
   useEffect(() => {
     const fetchVersionHistory = async () => {
-      if (!showVersionHistory || !params.id) return;
+      if (!showVersionDropdown || !params.id || versionHistory.length > 0) return;
       setVersionLoading(true);
       try {
         const res = await fetch(`/api/blueprints/${params.id}/versions`);
         if (res.ok) {
           const data = await res.json();
-          setVersionHistory(data.versions || []);
+          let versions = data.versions || [];
+          
+          // If versions list is empty but blueprint has a currentVersion,
+          // create a synthetic "v1" entry for display (legacy blueprints)
+          if (versions.length === 0 && blueprint?.currentVersion) {
+            versions = [{
+              id: "current",
+              version: blueprint.currentVersion,
+              changelog: null,
+              isPublished: true,
+              createdAt: new Date().toISOString(),
+            }];
+          }
+          
+          setVersionHistory(versions);
         }
       } catch {
         // Ignore errors
@@ -213,7 +241,40 @@ export default function BlueprintDetailPage() {
       }
     };
     fetchVersionHistory();
-  }, [showVersionHistory, params.id]);
+  }, [showVersionDropdown, params.id, versionHistory.length, blueprint?.currentVersion]);
+
+  // Fetch specific version content when selected
+  const handleVersionSelect = async (versionNumber: number) => {
+    if (versionNumber === blueprint?.currentVersion) {
+      // Reset to current version
+      setSelectedVersion(null);
+      setSelectedVersionContent(null);
+      setViewingVersion(null);
+      setShowVersionDropdown(false);
+      return;
+    }
+
+    setSelectedVersion(versionNumber);
+    setShowVersionDropdown(false);
+
+    try {
+      const res = await fetch(`/api/blueprints/${params.id}/versions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ versionNumber }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSelectedVersionContent(data.content);
+        setViewingVersion(data);
+      }
+    } catch {
+      // Reset on error
+      setSelectedVersion(null);
+      setSelectedVersionContent(null);
+      setViewingVersion(null);
+    }
+  };
 
   const handleCloneToEdit = async () => {
     if (!session?.user) {
@@ -261,8 +322,9 @@ export default function BlueprintDetailPage() {
   };
 
   const handleCopy = async () => {
-    if (blueprint?.content && blueprint.hasPurchased !== false) {
-      await navigator.clipboard.writeText(blueprint.content);
+    const contentToCopy = selectedVersionContent || blueprint?.content;
+    if (contentToCopy && blueprint?.hasPurchased !== false) {
+      await navigator.clipboard.writeText(contentToCopy);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -417,13 +479,6 @@ export default function BlueprintDetailPage() {
                         {tierLabels[blueprint.tier]}
                       </span>
                     )}
-                    {/* Version badge */}
-                    {blueprint.currentVersion && blueprint.currentVersion > 0 && (
-                      <span className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-sm font-medium text-muted-foreground">
-                        <GitBranch className="h-3.5 w-3.5" />
-                        v{blueprint.currentVersion}
-                      </span>
-                    )}
                     {/* Price badge */}
                     {blueprint.isPaid && (
                       <span className="rounded-full bg-gradient-to-r from-purple-500 to-pink-500 px-3 py-1 text-sm font-semibold text-white">
@@ -484,7 +539,7 @@ export default function BlueprintDetailPage() {
                   </div>
                 ) : (
                   <div className="flex flex-wrap gap-2">
-                    {blueprint.isOwner ? (
+                    {blueprint.isOwner && !selectedVersion ? (
                       <>
                         <Button variant="outline" size="sm" asChild>
                           <Link href={`/blueprints/${params.id}/edit`}>
@@ -502,6 +557,10 @@ export default function BlueprintDetailPage() {
                           Delete
                         </Button>
                       </>
+                    ) : blueprint.isOwner && selectedVersion ? (
+                      <span className="text-sm text-muted-foreground italic">
+                        Switch to latest version to edit
+                      </span>
                     ) : (
                       <Button 
                         variant="outline" 
@@ -517,7 +576,7 @@ export default function BlueprintDetailPage() {
                         {cloning ? "Cloning..." : "Clone & Edit"}
                       </Button>
                     )}
-                    <Button variant="outline" size="sm" onClick={handleCopy} disabled={!blueprint.content}>
+                    <Button variant="outline" size="sm" onClick={handleCopy} disabled={!blueprint.content && !selectedVersionContent}>
                       {copied ? (
                         <Check className="mr-2 h-4 w-4" />
                       ) : (
@@ -525,7 +584,7 @@ export default function BlueprintDetailPage() {
                       )}
                       {copied ? "Copied!" : "Copy"}
                     </Button>
-                    <Button size="sm" onClick={() => setShowDownloadModal(true)} disabled={!blueprint.content}>
+                    <Button size="sm" onClick={() => setShowDownloadModal(true)} disabled={!blueprint.content && !selectedVersionContent}>
                       <Download className="mr-2 h-4 w-4" />
                       Download
                     </Button>
@@ -535,7 +594,7 @@ export default function BlueprintDetailPage() {
 
               <p className="mt-4 text-lg">{blueprint.description}</p>
 
-              {/* Stats + Showcase URL */}
+              {/* Stats + Showcase URL + Version Dropdown */}
               <div className="mt-6 flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1.5">
                   <Download className="h-4 w-4" />
@@ -566,6 +625,72 @@ export default function BlueprintDetailPage() {
                     Demo / Source
                   </a>
                 )}
+                {/* Version Dropdown */}
+                {blueprint.currentVersion && blueprint.currentVersion > 0 && (
+                  <div className="relative" data-version-dropdown>
+                    <button
+                      onClick={() => setShowVersionDropdown(!showVersionDropdown)}
+                      className="flex items-center gap-1.5 rounded-md border bg-background px-2.5 py-1 text-sm hover:bg-muted transition-colors"
+                    >
+                      <History className="h-3.5 w-3.5" />
+                      {selectedVersion ? `v${selectedVersion}` : `v${blueprint.currentVersion}`}
+                      {selectedVersion && selectedVersion !== blueprint.currentVersion && (
+                        <span className="text-xs text-amber-600">(viewing)</span>
+                      )}
+                      <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showVersionDropdown ? "rotate-180" : ""}`} />
+                    </button>
+                    
+                    {showVersionDropdown && (
+                      <div className="absolute left-0 top-full z-50 mt-1 w-64 rounded-lg border bg-background shadow-lg">
+                        <div className="max-h-64 overflow-y-auto p-1">
+                          {versionLoading ? (
+                            <div className="flex items-center justify-center py-4">
+                              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                            </div>
+                          ) : versionHistory.length === 0 ? (
+                            <p className="p-3 text-center text-xs text-muted-foreground">
+                              No version history
+                            </p>
+                          ) : (
+                            versionHistory.map((version) => (
+                              <button
+                                key={version.id}
+                                onClick={() => handleVersionSelect(version.version)}
+                                className={`w-full rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-muted ${
+                                  (selectedVersion || blueprint.currentVersion) === version.version
+                                    ? "bg-primary/10 text-primary"
+                                    : ""
+                                }`}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="font-medium">v{version.version}</span>
+                                  <div className="flex items-center gap-1.5">
+                                    {version.version === blueprint.currentVersion && (
+                                      <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs text-primary">
+                                        Latest
+                                      </span>
+                                    )}
+                                    {version.isPublished && (
+                                      <span className="rounded bg-green-500/10 px-1.5 py-0.5 text-xs text-green-600">
+                                        Published
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                                  <span>{new Date(version.createdAt).toLocaleDateString()}</span>
+                                  {version.changelog && (
+                                    <span className="truncate">• {version.changelog}</span>
+                                  )}
+                                </div>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -587,84 +712,35 @@ export default function BlueprintDetailPage() {
               </div>
             )}
 
-            {/* Version History - Collapsible */}
-            {blueprint.currentVersion && blueprint.currentVersion > 0 && (
-              <div className="mb-8">
-                <button
-                  onClick={() => setShowVersionHistory(!showVersionHistory)}
-                  className="flex w-full items-center justify-between rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50"
-                >
+            {/* Viewing Old Version Notice */}
+            {viewingVersion && selectedVersion !== blueprint.currentVersion && (
+              <div className="mb-8 rounded-xl border-2 border-amber-400 bg-amber-50 p-4 dark:border-amber-600 dark:bg-amber-900/20">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-muted p-2">
-                      <History className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    <div className="text-left">
-                      <h3 className="font-semibold">Version History</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Current: v{blueprint.currentVersion}
-                        {blueprint.publishedVersion && blueprint.publishedVersion !== blueprint.currentVersion && (
-                          <span className="ml-2">(Published: v{blueprint.publishedVersion})</span>
-                        )}
+                    <History className="h-5 w-5 text-amber-600" />
+                    <div>
+                      <h3 className="font-semibold text-amber-800 dark:text-amber-200">
+                        Viewing v{viewingVersion.version} (read-only)
+                      </h3>
+                      <p className="text-sm text-amber-700 dark:text-amber-300">
+                        Created {new Date(viewingVersion.createdAt).toLocaleDateString()}
+                        {viewingVersion.changelog && ` • ${viewingVersion.changelog}`}
                       </p>
                     </div>
                   </div>
-                  {showVersionHistory ? (
-                    <ChevronUp className="h-5 w-5 text-muted-foreground" />
-                  ) : (
-                    <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                  )}
-                </button>
-                
-                {showVersionHistory && (
-                  <div className="mt-2 rounded-lg border bg-card p-4">
-                    {versionLoading ? (
-                      <div className="flex items-center justify-center py-4">
-                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                      </div>
-                    ) : versionHistory.length === 0 ? (
-                      <p className="py-4 text-center text-sm text-muted-foreground">
-                        No version history available
-                      </p>
-                    ) : (
-                      <div className="space-y-3">
-                        {versionHistory.map((version) => (
-                          <div
-                            key={version.id}
-                            className={`rounded-lg border p-3 ${
-                              version.version === blueprint.currentVersion
-                                ? "border-primary bg-primary/5"
-                                : "bg-muted/30"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <span className="font-semibold">v{version.version}</span>
-                                {version.version === blueprint.currentVersion && (
-                                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                                    Current
-                                  </span>
-                                )}
-                                {version.isPublished && (
-                                  <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600">
-                                    Published
-                                  </span>
-                                )}
-                              </div>
-                              <span className="text-xs text-muted-foreground">
-                                {new Date(version.createdAt).toLocaleDateString()}
-                              </span>
-                            </div>
-                            {version.changelog && (
-                              <p className="mt-2 text-sm text-muted-foreground">
-                                {version.changelog}
-                              </p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedVersion(null);
+                      setSelectedVersionContent(null);
+                      setViewingVersion(null);
+                    }}
+                    className="border-amber-400 text-amber-700 hover:bg-amber-100 dark:border-amber-600 dark:text-amber-300"
+                  >
+                    Back to Latest (v{blueprint.currentVersion})
+                  </Button>
+                </div>
               </div>
             )}
 
@@ -689,13 +765,18 @@ export default function BlueprintDetailPage() {
             <div className="mb-8">
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="font-semibold">
-                  {blueprint.isPaid && !blueprint.hasPurchased ? "Content Preview" : "Blueprint Preview"}
+                  {blueprint.isPaid && !blueprint.hasPurchased ? "Content Preview" : selectedVersionContent ? `Version ${selectedVersion} Content` : "Blueprint Preview"}
                 </h2>
                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
                   {blueprint.isPaid && !blueprint.hasPurchased ? (
                     <>
                       <Lock className="h-3 w-3" />
                       Purchase to unlock full content
+                    </>
+                  ) : selectedVersionContent ? (
+                    <>
+                      <Eye className="h-3 w-3" />
+                      Read-only (historical version)
                     </>
                   ) : (
                     <>
@@ -736,7 +817,7 @@ export default function BlueprintDetailPage() {
               ) : (
                 <div className="rounded-xl border bg-muted/50 p-6">
                   <pre className="max-h-96 overflow-auto whitespace-pre-wrap text-sm">
-                    <code>{blueprint.content}</code>
+                    <code>{selectedVersionContent || blueprint.content}</code>
                   </pre>
                 </div>
               )}
@@ -791,15 +872,15 @@ export default function BlueprintDetailPage() {
       <Footer />
 
       {/* Download Modal - only if content is available (purchased or free) */}
-      {blueprint && blueprint.content && (
+      {blueprint && (blueprint.content || selectedVersionContent) && (
         <TemplateDownloadModal
           isOpen={showDownloadModal}
           onClose={() => setShowDownloadModal(false)}
           template={{
             id: blueprint.id,
-            name: blueprint.name,
+            name: selectedVersion ? `${blueprint.name} (v${selectedVersion})` : blueprint.name,
             description: blueprint.description,
-            content: blueprint.content,
+            content: selectedVersionContent || blueprint.content || "",
             variables: blueprint.variables,
             sensitiveFields: blueprint.sensitiveFields,
             targetPlatform: blueprint.targetPlatform,

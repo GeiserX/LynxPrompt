@@ -84,7 +84,6 @@ export default function EditBlueprintPage() {
   // Versioning state
   const [currentVersion, setCurrentVersion] = useState(1);
   const [originalContent, setOriginalContent] = useState("");
-  const [publishNewVersion, setPublishNewVersion] = useState(false);
   const [changelog, setChangelog] = useState("");
   
   // Server-side sensitive data detection
@@ -220,7 +219,7 @@ export default function EditBlueprintPage() {
           currency: "EUR",
           showcaseUrl: showcaseUrl.trim() || null,
           sensitiveDataAcknowledged: acknowledgedSensitiveData,
-          publishNewVersion: publishNewVersion && contentHasChanged,
+          publishNewVersion: contentHasChanged, // Auto-version on every content change
           changelog: changelog.trim() || null,
         }),
       });
@@ -733,37 +732,22 @@ export default function EditBlueprintPage() {
                         {contentHasChanged ? (
                           <>
                             <p className="mt-1 text-sm text-blue-800 dark:text-blue-200">
-                              Content has changed. Would you like to publish this as a new version?
+                              Content has changed. This will be saved as <strong>v{currentVersion + 1}</strong>.
                             </p>
-                            <div className="mt-3 flex items-center gap-3">
-                              <input
-                                type="checkbox"
-                                id="publishNewVersion"
-                                checked={publishNewVersion}
-                                onChange={(e) => setPublishNewVersion(e.target.checked)}
-                                className="h-4 w-4 rounded border-blue-300 dark:border-blue-400"
-                              />
-                              <label htmlFor="publishNewVersion" className="text-sm text-blue-900 dark:text-blue-100">
-                                Publish as v{currentVersion + 1}
+                            <div className="mt-3">
+                              <label htmlFor="changelog" className="block text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
+                                Change notes (optional)
                               </label>
+                              <textarea
+                                id="changelog"
+                                value={changelog}
+                                onChange={(e) => setChangelog(e.target.value)}
+                                placeholder="Describe what changed in this version..."
+                                className="w-full rounded-lg border border-blue-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-blue-600 dark:bg-blue-900/30 dark:text-blue-100"
+                                rows={2}
+                                maxLength={500}
+                              />
                             </div>
-                            
-                            {publishNewVersion && (
-                              <div className="mt-3">
-                                <label htmlFor="changelog" className="block text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
-                                  Changelog (optional)
-                                </label>
-                                <textarea
-                                  id="changelog"
-                                  value={changelog}
-                                  onChange={(e) => setChangelog(e.target.value)}
-                                  placeholder="Describe what changed in this version..."
-                                  className="w-full rounded-lg border border-blue-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-blue-600 dark:bg-blue-900/30 dark:text-blue-100"
-                                  rows={2}
-                                  maxLength={500}
-                                />
-                              </div>
-                            )}
                           </>
                         ) : (
                           <p className="mt-1 text-sm text-blue-800/70 dark:text-blue-200/70">
@@ -931,14 +915,14 @@ export default function EditBlueprintPage() {
                   <Button
                     type="submit"
                     disabled={isSubmitting || !name.trim() || !content.trim()}
-                    className={publishNewVersion && contentHasChanged ? "bg-blue-600 hover:bg-blue-700" : ""}
+                    className={contentHasChanged ? "bg-blue-600 hover:bg-blue-700" : ""}
                   >
                     {isSubmitting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        {publishNewVersion && contentHasChanged ? "Publishing..." : "Saving..."}
+                        {contentHasChanged ? "Publishing..." : "Saving..."}
                       </>
-                    ) : publishNewVersion && contentHasChanged ? (
+                    ) : contentHasChanged ? (
                       <>
                         <Upload className="mr-2 h-4 w-4" />
                         Publish v{currentVersion + 1}
