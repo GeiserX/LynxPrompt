@@ -1,11 +1,11 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Terminal, ArrowRight, Download, Key, Command, Apple, Package } from "lucide-react";
+import { Terminal, ArrowRight, Download, Key, Command, Apple, Package, Cloud, ArrowUpDown } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "CLI",
   description:
-    "Generate AI IDE configurations from your terminal with the LynxPrompt CLI. Interactive wizard, blueprint management, and seamless authentication.",
+    "Bridge your terminal to your LynxPrompt blueprints. Push, pull, and sync AI IDE configurations across your team.",
 };
 
 export default function CliDocsPage() {
@@ -20,9 +20,8 @@ export default function CliDocsPage() {
           <h1 className="text-3xl font-bold tracking-tight">LynxPrompt CLI</h1>
         </div>
         <p className="max-w-2xl text-lg text-muted-foreground">
-          Generate AI IDE configuration files directly from your terminal. The CLI offers
-          the same powerful wizard as the web interface, plus blueprint management
-          and seamless integration with your development workflow.
+          Bridge your terminal to your LynxPrompt blueprints. <strong>Push</strong> rules to the cloud,
+          <strong> pull</strong> updates from your team, and export to any AI agent format from the web.
         </p>
       </div>
 
@@ -84,36 +83,36 @@ export default function CliDocsPage() {
         </div>
       </div>
 
-      {/* Features */}
+      {/* Key Features */}
       <section className="space-y-4">
-        <h2 className="text-2xl font-bold">Features</h2>
+        <h2 className="text-2xl font-bold">Key Features</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-lg border p-4">
-            <h3 className="font-semibold">🧙 Interactive Wizard</h3>
+            <h3 className="font-semibold">☁️ Cloud Connected</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Same powerful wizard as the web UI. Auto-detects your project&apos;s tech
-              stack, suggests configurations, and generates files interactively.
+              Push rules to your LynxPrompt account with <code className="rounded bg-muted px-1">lynxp push</code>.
+              Your blueprints, accessible from anywhere.
             </p>
           </div>
           <div className="rounded-lg border p-4">
-            <h3 className="font-semibold">📦 Blueprint Management</h3>
+            <h3 className="font-semibold">🔄 Push &amp; Pull</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              List, search, and pull blueprints directly from your terminal.
-              Access the entire LynxPrompt marketplace without leaving your IDE.
+              Edit locally or on the web — stay in sync. <code className="rounded bg-muted px-1">lynxp push</code> and{" "}
+              <code className="rounded bg-muted px-1">lynxp pull</code> keep everything aligned.
             </p>
           </div>
           <div className="rounded-lg border p-4">
-            <h3 className="font-semibold">🔐 Secure Authentication</h3>
+            <h3 className="font-semibold">👥 Team Ready</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Browser-based OAuth flow with secure token storage. Your credentials
-              are stored safely in your system&apos;s config directory.
+              Link your team to the same blueprint. Everyone pushes and pulls from
+              one source of truth. No more config drift.
             </p>
           </div>
           <div className="rounded-lg border p-4">
-            <h3 className="font-semibold">🔍 Project Detection</h3>
+            <h3 className="font-semibold">🌐 Export Any Format</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Automatically detects package.json, Cargo.toml, pyproject.toml, and
-              other project files to suggest the right configuration.
+              From the web platform, export your blueprint to any AI agent format:
+              .cursorrules, CLAUDE.md, copilot-instructions, and more.
             </p>
           </div>
         </div>
@@ -123,34 +122,76 @@ export default function CliDocsPage() {
       <section className="space-y-4">
         <h2 className="text-2xl font-bold">Quick Example</h2>
         <p className="text-muted-foreground">
-          Here&apos;s how easy it is to generate AI IDE configs for your project:
+          Here&apos;s the cloud-connected workflow in action:
         </p>
         <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
           <pre className="text-sm text-zinc-100">
-            <code>{`$ lynxprompt init
+            <code>{`$ lynxp init
+🐱 LynxPrompt Init
+  Stack: typescript, react, nextjs
+  Found: .cursorrules, CLAUDE.md
+✅ Initialized!
 
-🐱 Welcome to LynxPrompt!
+$ lynxp push
+📤 Pushing to LynxPrompt...
+  → Created blueprint: bp_x7k9m2
+✓ Rules synced to cloud
 
-? What's your project name? my-api
-? Describe your project: REST API for user management
+# Later, after editing on web...
+$ lynxp pull
+  ↓ Updated 3 rules from blueprint
+✓ Local rules updated
 
-? Select your tech stack: (use arrows, space to select)
-  ◉ TypeScript
-  ◉ Node.js
-  ◉ Express
-  ◯ Python
-  ◯ Go
-
-? Which AI IDEs do you use?
-  ◉ Cursor (.cursorrules)
-  ◉ Claude Code (CLAUDE.md)
-  ◉ GitHub Copilot
-
-✅ Generated files:
-   .cursorrules
-   CLAUDE.md
-   .github/copilot-instructions.md`}</code>
+$ lynxp sync
+✓ Synced to .cursorrules, CLAUDE.md`}</code>
           </pre>
+        </div>
+      </section>
+
+      {/* Workflow */}
+      <section className="space-y-4">
+        <h2 className="text-2xl font-bold">Workflow</h2>
+        <div className="grid gap-4">
+          <div className="flex items-start gap-4 rounded-lg border p-4">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">1</div>
+            <div>
+              <h3 className="font-semibold">Initialize</h3>
+              <p className="text-sm text-muted-foreground">
+                Run <code className="rounded bg-muted px-1">lynxp init</code> to set up LynxPrompt.
+                Detects existing configs and creates your local workspace.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-4 rounded-lg border p-4">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">2</div>
+            <div>
+              <h3 className="font-semibold">Push to Cloud</h3>
+              <p className="text-sm text-muted-foreground">
+                Run <code className="rounded bg-muted px-1">lynxp push</code> to sync your rules to a private blueprint
+                in your LynxPrompt account. Your team can link to it.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-4 rounded-lg border p-4">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">3</div>
+            <div>
+              <h3 className="font-semibold">Edit Anywhere</h3>
+              <p className="text-sm text-muted-foreground">
+                Edit rules locally in your favorite editor or use the web UI.
+                Run <code className="rounded bg-muted px-1">lynxp pull</code> to get the latest changes.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-4 rounded-lg border p-4">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">4</div>
+            <div>
+              <h3 className="font-semibold">Export Any Format</h3>
+              <p className="text-sm text-muted-foreground">
+                Use <code className="rounded bg-muted px-1">lynxp sync</code> locally, or export any agent format
+                from the web platform. Your blueprint, any format you need.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
