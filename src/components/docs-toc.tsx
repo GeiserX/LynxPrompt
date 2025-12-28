@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { List } from "lucide-react";
 
 export interface TocItem {
   id: string;
@@ -15,42 +15,48 @@ interface DocsTocProps {
 }
 
 export function DocsToc({ className }: DocsTocProps) {
+  const pathname = usePathname();
   const [headings, setHeadings] = useState<TocItem[]>([]);
   const [activeId, setActiveId] = useState<string>("");
   const observerRef = useRef<IntersectionObserver | null>(null);
 
-  // Extract headings from the page content
+  // Extract headings from the page content - re-run on route change
   useEffect(() => {
-    const article = document.querySelector("main");
-    if (!article) return;
+    // Small delay to ensure DOM is updated after navigation
+    const timer = setTimeout(() => {
+      const article = document.querySelector("main");
+      if (!article) return;
 
-    const elements = article.querySelectorAll("h2, h3");
-    const items: TocItem[] = [];
+      const elements = article.querySelectorAll("h2, h3");
+      const items: TocItem[] = [];
 
-    elements.forEach((element) => {
-      // Generate ID if not present
-      if (!element.id) {
-        element.id = element.textContent
-          ?.toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/(^-|-$)/g, "") || "";
-      }
+      elements.forEach((element) => {
+        // Generate ID if not present
+        if (!element.id) {
+          element.id = element.textContent
+            ?.toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)/g, "") || "";
+        }
 
-      if (element.id) {
-        items.push({
-          id: element.id,
-          text: element.textContent || "",
-          level: element.tagName === "H2" ? 2 : 3,
-        });
-      }
-    });
+        if (element.id && element.textContent) {
+          items.push({
+            id: element.id,
+            text: element.textContent.trim(),
+            level: element.tagName === "H2" ? 2 : 3,
+          });
+        }
+      });
 
-    setHeadings(items);
-  }, []);
+      setHeadings(items);
+      setActiveId(items.length > 0 ? items[0].id : "");
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [pathname]); // Re-run when pathname changes
 
   // Intersection Observer for scroll spy
   const handleIntersection = useCallback((entries: IntersectionObserverEntry[]) => {
-    // Find the first heading that's in view
     const visibleEntries = entries.filter((entry) => entry.isIntersecting);
     
     if (visibleEntries.length > 0) {
@@ -72,8 +78,8 @@ export function DocsToc({ className }: DocsTocProps) {
 
     // Create new observer
     observerRef.current = new IntersectionObserver(handleIntersection, {
-      rootMargin: "-80px 0px -70% 0px",
-      threshold: [0, 1],
+      rootMargin: "-100px 0px -60% 0px",
+      threshold: 0,
     });
 
     // Observe all headings
@@ -84,77 +90,59 @@ export function DocsToc({ className }: DocsTocProps) {
       }
     });
 
-    // Set initial active heading
-    if (headings.length > 0 && !activeId) {
-      setActiveId(headings[0].id);
-    }
-
     return () => {
       observerRef.current?.disconnect();
     };
-  }, [headings, handleIntersection, activeId]);
+  }, [headings, handleIntersection]);
 
-  const handleClick = (id: string) => {
+  const handleClick = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
     const element = document.getElementById(id);
     if (element) {
-      const yOffset = -100; // Offset for fixed header
+      const yOffset = -100;
       const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
       window.scrollTo({ top: y, behavior: "smooth" });
       setActiveId(id);
     }
   };
 
-  if (headings.length === 0) {
+  if (headings.length < 2) {
     return null;
   }
 
   return (
-    <nav
+    <aside
       className={cn(
-        "sticky top-24 hidden w-56 shrink-0 xl:block",
+        "hidden xl:block",
         className
       )}
     >
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-          <List className="h-4 w-4" />
-          On this page
+      <nav className="sticky top-24 w-48 max-h-[calc(100vh-8rem)] overflow-y-auto">
+        <div className="space-y-3 pr-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            On this page
+          </p>
+          <ul className="space-y-1">
+            {headings.map((heading) => (
+              <li key={heading.id}>
+                <a
+                  href={`#${heading.id}`}
+                  onClick={(e) => handleClick(e, heading.id)}
+                  className={cn(
+                    "block py-1 text-sm leading-snug transition-colors cursor-pointer",
+                    heading.level === 3 && "pl-3",
+                    activeId === heading.id
+                      ? "font-medium text-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <span className="line-clamp-2">{heading.text}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
         </div>
-        <ul className="space-y-1 text-sm">
-          {headings.map((heading) => (
-            <li key={heading.id}>
-              <button
-                onClick={() => handleClick(heading.id)}
-                className={cn(
-                  "block w-full rounded-md px-3 py-1.5 text-left transition-all duration-200",
-                  heading.level === 3 && "pl-6",
-                  activeId === heading.id
-                    ? "bg-primary/10 font-medium text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                <span className="line-clamp-2">{heading.text}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* Progress indicator */}
-      <div className="mt-6 border-t pt-4">
-        <div className="text-xs text-muted-foreground">
-          {headings.findIndex((h) => h.id === activeId) + 1} / {headings.length}
-        </div>
-        <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-muted">
-          <div
-            className="h-full bg-primary transition-all duration-300"
-            style={{
-              width: `${((headings.findIndex((h) => h.id === activeId) + 1) / headings.length) * 100}%`,
-            }}
-          />
-        </div>
-      </div>
-    </nav>
+      </nav>
+    </aside>
   );
 }
-
