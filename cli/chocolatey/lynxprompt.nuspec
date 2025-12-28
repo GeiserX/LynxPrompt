@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>lynxprompt</id>
+    <version>0.1.0</version>
+    <title>LynxPrompt CLI</title>
+    <authors>GeiserCloud</authors>
+    <owners>GeiserCloud</owners>
+    <projectUrl>https://lynxprompt.com</projectUrl>
+    <projectSourceUrl>https://github.com/GeiserX/LynxPrompt</projectSourceUrl>
+    <docsUrl>https://lynxprompt.com/docs/cli</docsUrl>
+    <bugTrackerUrl>https://github.com/GeiserX/LynxPrompt/issues</bugTrackerUrl>
+    <licenseUrl>https://github.com/GeiserX/LynxPrompt/blob/main/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <iconUrl>https://lynxprompt.com/lynx-icon.png</iconUrl>
+    <description>CLI for LynxPrompt - Generate AI IDE configuration files (.cursorrules, AGENTS.md, copilot-instructions.md, etc.) from your terminal.</description>
+    <summary>Generate AI IDE configuration files from your terminal</summary>
+    <releaseNotes>Initial release with interactive wizard and auth flow.</releaseNotes>
+    <tags>ai ide cursor copilot claude windsurf cli developer-tools</tags>
+    <dependencies>
+      <dependency id="nodejs" version="[18.0,)" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>
+
