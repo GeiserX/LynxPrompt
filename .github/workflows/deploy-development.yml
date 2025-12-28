@@ -15,7 +15,7 @@ concurrency:
 jobs:
   deploy:
     name: Deploy to Development
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, geiserback]
     environment:
       name: development
       url: https://dev.lynxprompt.com
@@ -31,43 +31,44 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "📦 Building version: $VERSION"
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to Docker Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ secrets.DOCKER_REGISTRY }}
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
       - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          platforms: linux/amd64
-          push: true
-          tags: |
-            ${{ secrets.DOCKER_REGISTRY }}/lynxprompt:${{ steps.version.outputs.version }}
-            ${{ secrets.DOCKER_REGISTRY }}/lynxprompt:dev-latest
-          cache-from: type=registry,ref=${{ secrets.DOCKER_REGISTRY }}/lynxprompt:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKER_REGISTRY }}/lynxprompt:buildcache,mode=max
+        run: |
+          docker buildx build --platform linux/amd64 \
+            -t ${{ secrets.DOCKER_REGISTRY }}/lynxprompt:${{ steps.version.outputs.version }} \
+            -t ${{ secrets.DOCKER_REGISTRY }}/lynxprompt:dev-latest \
+            --push .
 
-      - name: Deploy to geiserback via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.DEV_SSH_HOST }}
-          username: ${{ secrets.DEV_SSH_USER }}
-          key: ${{ secrets.DEV_SSH_KEY }}
-          script: |
-            cd /mnt/user/appdata/lynxprompt-dev-compose/lynxprompt-dev
-            # Update image tag in docker-compose
-            sed -i 's|image: .*lynxprompt:.*|image: ${{ secrets.DOCKER_REGISTRY }}/lynxprompt:${{ steps.version.outputs.version }}|' docker-compose.yml
-            # Pull and restart
-            docker compose pull lynxprompt
-            docker compose up -d lynxprompt
-            # Cleanup old images
-            docker image prune -f
+      - name: Trigger Portainer deployment
+        run: |
+          # Update geiserback docker-compose and redeploy via Portainer
+          cd /tmp
+          rm -rf geiserback-deploy
+          git clone http://${{ secrets.GITEA_USERNAME }}:${{ secrets.GITEA_TOKEN }}@192.168.10.100:3010/giteaer/geiserback.git geiserback-deploy
+          cd geiserback-deploy
+          
+          # Update image tag
+          sed -i 's|image: .*/lynxprompt:.*|image: ${{ secrets.DOCKER_REGISTRY }}/lynxprompt:${{ steps.version.outputs.version }}|' lynxprompt-dev/docker-compose.yml
+          
+          # Commit and push
+          git config user.email "github-actions@lynxprompt.com"
+          git config user.name "GitHub Actions"
+          git add -A
+          git commit -m "deploy: update lynxprompt-dev to ${{ steps.version.outputs.version }}" || echo "No changes"
+          git push origin main
+          
+          cd /tmp && rm -rf geiserback-deploy
+          
+          # Trigger Portainer redeploy
+          curl -X PUT \
+            "${{ secrets.PORTAINER_URL_DEV }}/api/stacks/${{ secrets.PORTAINER_STACK_ID_DEV }}/git/redeploy?endpointId=${{ secrets.PORTAINER_ENDPOINT_ID_DEV }}" \
+            -H "X-API-Key: ${{ secrets.PORTAINER_API_KEY_DEV }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "PullImage": true,
+              "RepositoryAuthentication": true,
+              "RepositoryUsername": "${{ secrets.GITEA_USERNAME }}",
+              "RepositoryPassword": "${{ secrets.GITEA_TOKEN }}"
+            }'
 
       - name: Health check
         run: |
@@ -82,5 +83,4 @@ jobs:
             sleep 10
           done
           echo "⚠️ Health check timed out - site may still be starting"
-          # Don't fail - dev environment health check failures are less critical
           exit 0
