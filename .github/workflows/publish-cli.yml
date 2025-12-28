@@ -25,6 +25,10 @@ on:
           - 'npm-snap'
         default: 'all'
 
+# Permissions needed for git tagging and homebrew tap updates
+permissions:
+  contents: write
+
 jobs:
   # ===========================================
   # Check if CLI needs publishing
@@ -220,7 +224,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: GeiserX/homebrew-lynxprompt
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
           path: homebrew-tap
 
       - name: Update formula
