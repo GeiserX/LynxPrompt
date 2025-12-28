@@ -199,7 +199,7 @@ Per EU Consumer Rights Directive, digital content can waive 14-day withdrawal IF
 - [x] Copy individual files to clipboard
 - [x] Preview generated content before download
 - [ ] Save wizard configurations as drafts
-- [ ] Import existing configs (upload `.cursorrules` to create template)
+- [ ] Import existing configs (upload `.cursor/rules/` or `AGENTS.md` to create template)
 
 #### Wizard 2.0: Six Core Areas
 
@@ -852,7 +852,7 @@ Enable "click to install" functionality where downloading a blueprint automatica
 
 | IDE | URL Scheme | Example |
 |-----|------------|---------|
-| **VS Code** | `vscode://file/{path}` | `vscode://file/c:/project/.cursorrules` |
+| **VS Code** | `vscode://file/{path}` | `vscode://file/c:/project/AGENTS.md` |
 | **Cursor** | `cursor://file/{path}` | `cursor://file//path/to/file:line` |
 | **JetBrains** | `jetbrains://<ide>/navigate/reference?project=X&path=Y:line` | `jetbrains://idea/navigate/...` |
 | **Windsurf** | `windsurf:///{path}:line` | `windsurf:///path/to/file.txt:10` |
@@ -919,7 +919,7 @@ $ lynxprompt init
   ◯ Go
 
 ? Which AI IDEs do you use? (select all that apply)
-  ◉ Cursor (.cursorrules)
+  ◉ Cursor (.cursor/rules/)
   ◉ Claude Code (CLAUDE.md)
   ◉ GitHub Copilot
   ◯ Windsurf
@@ -951,7 +951,7 @@ $ lynxprompt init
   ◯ @api-agent - Builds API endpoints
 
 ✅ Generated files:
-   .cursorrules
+   .cursor/rules/project.mdc
    CLAUDE.md
    .github/copilot-instructions.md
 
@@ -1009,7 +1009,7 @@ After running `lynxp init`, your project will have:
 └── .gitignore     # Ignores local state files
 ```
 
-**Key principle**: Edit rules in `.lynxprompt/rules/`, then run `lynxp sync` to export to agent formats (AGENTS.md, .cursorrules, etc.).
+**Key principle**: Edit rules in `.lynxprompt/rules/`, then run `lynxp sync` to export to agent formats (AGENTS.md, .cursor/rules/, etc.).
 
 ### Non-Interactive Mode (for CI/CD)
 
@@ -1172,6 +1172,273 @@ Generate config with these settings? [Y/n]
 - **Credentials**: OS keychain via `keytar` (macOS Keychain, Windows Credential Manager, Linux Secret Service)
 - **Interactive UI**: Use `inquirer` or `prompts` for interactive mode
 - **Auto-detection**: Parse `package.json`, `Cargo.toml`, `pyproject.toml`, `Makefile`, etc.
+
+---
+
+## 🧠 CLI Philosophy & Strategic Analysis
+
+> **Last updated**: December 2024
+
+This section documents the strategic thinking behind CLI design decisions, user personas, and the balance between simplicity and power.
+
+### Deprecated Formats
+
+> ❌ **`.cursorrules` is DEPRECATED**. Cursor now uses `.cursor/rules/*.mdc` (directory-based MDC format with YAML frontmatter). Never suggest or generate `.cursorrules` in any documentation, wizard, or CLI output.
+
+### AI Code Editor Format Analysis
+
+After analyzing 25+ AI coding assistants, here's how they handle configuration:
+
+| Format | Editors | Structure |
+|--------|---------|-----------|
+| **Single Markdown File** | AGENTS.md, CLAUDE.md, Copilot, Zed, Gemini, Warp, Aider, Crush | One file at root or in directory |
+| **Directory-based (MDC)** | Cursor (.cursor/rules/), Amazon Q, Augment Code, Kilocode, Kiro, Trae AI, Firebase Studio, Roo Code | Multiple files with YAML frontmatter |
+| **Plain Text** | Windsurf (.windsurfrules), Cline (.clinerules), Goose (.goosehints) | Simple text files |
+| **JSON Config** | MCP agents, Firebender, OpenCode | Structured JSON |
+
+**Key insight**: Most editors use **single markdown files**. Directory-based formats (like Cursor's) are the exception, not the rule. A single file can work everywhere.
+
+### Single File vs Multi-File: The Decision
+
+**Question**: Do we need `.lynxprompt/rules/` with multiple files, or can everything be a single file?
+
+**Answer**: **Single file is sufficient for 90% of users.** The directory structure adds complexity that most users don't need.
+
+**When single file works**:
+- Solo developers
+- Small teams
+- Projects using 1-2 AI editors
+- Users who want simplicity
+
+**When multi-file (`.lynxprompt/`) makes sense**:
+- Power users managing multiple AI editors from one source
+- Enterprise teams with complex rule structures
+- Projects with many specialized rules (testing, security, docs, etc.)
+
+**Decision**: Default to direct file generation (AGENTS.md, .cursor/rules/). Offer `.lynxprompt/` as an advanced option.
+
+### User Persona Analysis
+
+Understanding who uses LynxPrompt and what they actually need:
+
+#### Persona 1: Solo Dev Starting First Repo
+
+```
+Goal: Get AI assistant working quickly (5 minutes or less)
+Journey:
+  1. Discovers LynxPrompt
+  2. Runs wizard (web or CLI)
+  3. Answers 5 questions
+  4. Gets AGENTS.md or .cursor/rules/
+  5. Done. Moves on with life.
+  
+Needs:
+  ✅ Quick wizard, minimal questions
+  ✅ Direct file output (no abstraction)
+  ✅ Works without login/account
+  ❌ Doesn't need: folder structures, sync commands, cloud features
+```
+
+#### Persona 2: Developer on Large Open Source Project
+
+```
+Goal: Consistent AI rules for all contributors
+Journey:
+  1. Maintainer creates AGENTS.md via wizard
+  2. Commits to repo
+  3. All contributors get it via git
+  4. Updates go through normal PR process
+  
+Needs:
+  ✅ Version controlled rules (git handles this)
+  ✅ No vendor lock-in (plain markdown files)
+  ✅ Works offline, no cloud dependency
+  ❌ Doesn't need: cloud sync, team tier (git is their sync)
+```
+
+#### Persona 3: Small Team (3-5 devs)
+
+```
+Goal: Share rules across team without manual copy-paste
+Journey:
+  A) Git-based: Lead creates config, commits, team pulls via git
+  B) Cloud-based: Uses LynxPrompt Teams for cloud sync
+  
+Needs:
+  ✅ Easy way to share (git or cloud)
+  ✅ Consistency across team
+  ⚠️ Maybe needs: .lynxprompt/ for multi-editor teams
+```
+
+#### Persona 4: Enterprise Team
+
+```
+Goal: Standardized AI rules across organization, compliance
+Journey:
+  1. Platform team creates approved rules
+  2. Distributes via internal registry OR LynxPrompt Teams
+  3. Enforces via CI/CD validation
+  
+Needs:
+  ✅ Centralized management
+  ✅ Audit trail, SSO
+  ✅ On-prem option (just commit files to internal repo)
+  ✅ CI/CD validation (lynxp check)
+```
+
+#### Persona 5: Lazy Wizard User
+
+```
+Goal: Minimum effort, working config
+Journey:
+  1. Goes to lynxprompt.com
+  2. Clicks through wizard (5 clicks)
+  3. Downloads ZIP
+  4. Extracts to project
+  5. Done!
+  
+Needs:
+  ✅ Web wizard (no CLI install needed)
+  ✅ One-click defaults
+  ✅ ZIP download
+  ❌ Never installs CLI, never uses advanced features
+```
+
+### Cloud vs Local Strategy
+
+**Research**: How successful companies handle this:
+
+| Company | Model |
+|---------|-------|
+| **GitHub** | Free local git, paid for teams/enterprise features |
+| **Vercel** | Free deploys, paid for teams |
+| **Notion** | Free personal, paid for teams |
+| **Nextcloud** | Self-hosted + cloud options |
+
+**Pattern**: Core functionality works locally/free. Cloud adds team features, sync, convenience.
+
+**LynxPrompt Decision**:
+
+| Feature | Free/Local | Paid/Cloud |
+|---------|------------|------------|
+| Wizard (web + CLI) | ✅ | ✅ |
+| File generation | ✅ | ✅ |
+| Works offline | ✅ | - |
+| Marketplace blueprints | - | ✅ |
+| Team sharing | - | ✅ |
+| Cloud sync | - | ✅ |
+| Version history | - | ✅ |
+
+**Key principle**: **Never force cloud.** The CLI and web wizard must work 100% offline. Cloud features are optional enhancements.
+
+### The `.lynxprompt/` Folder Question
+
+**Current structure**:
+```
+.lynxprompt/
+├── conf.yml       # Config (exporters, sources)
+├── rules/         # Rules files
+│   └── agents.md
+└── README.md
+```
+
+**When it adds value**:
+- User has multiple AI editors (Cursor + Claude + Copilot)
+- Wants single source of truth → export to all
+- Power users who want fine-grained control
+
+**When it's overhead**:
+- Solo dev using just Cursor
+- User just wants quick config
+- Anyone who doesn't understand "sync" concept
+
+**Decision**: Two CLI workflows:
+
+```bash
+# Simple (default for most users):
+lynxp wizard → generates AGENTS.md directly
+# Done. No .lynxprompt/ folder needed.
+
+# Advanced (power users):
+lynxp init → creates .lynxprompt/
+# Edit rules, then:
+lynxp sync → exports to all editors
+```
+
+### Why We Don't Need Separate "Presets"
+
+**Question**: Should we have pre-made presets like "nextjs-app-router", "typescript-strict"?
+
+**Answer**: **No, because we already have two mechanisms for this:**
+
+1. **The Wizard** - Generates custom configs based on user choices (stack, persona, boundaries). This IS the "preset generator".
+
+2. **Marketplace Blueprints** - Pre-made configs shared by the community. Users can `lynxp pull <blueprint>` to get a complete config.
+
+**Presets would duplicate both** without adding value. Instead, we should:
+- Make the wizard smarter (better defaults, project detection)
+- Make blueprints easier to discover and apply
+- NOT create a third category of "presets"
+
+### Recommended Default Workflow
+
+Based on persona analysis, the default should be:
+
+```bash
+$ lynxp wizard
+
+🐱 Welcome to LynxPrompt!
+
+Detected: Next.js 15, TypeScript, Prisma
+Suggested: AGENTS.md (works with most AI editors)
+
+? Accept defaults? (Y/n) Y
+
+✅ Generated: AGENTS.md
+
+Your AI assistants will now follow these rules.
+Tip: Run 'lynxp wizard' again anytime to regenerate.
+```
+
+**Principles**:
+1. **One command, useful output** - `lynxp wizard` should produce something immediately useful
+2. **Smart defaults** - Auto-detect project, suggest most compatible format
+3. **No abstraction by default** - Direct file generation, no `.lynxprompt/` unless requested
+4. **Cloud is optional** - Everything works offline
+
+### CI/CD Integration
+
+For teams that want to validate rules in CI:
+
+```bash
+# Add to CI pipeline
+lynxp check --ci
+
+# Validates:
+# - Config file syntax (if using .lynxprompt/)
+# - Rules directory exists (if using .lynxprompt/)
+# - No syntax errors in markdown
+# - Exit code: 0 = pass, 1 = fail
+```
+
+### External Source Support (Future)
+
+Allow importing rules from GitHub URLs (for teams who want to share rules across repos):
+
+```yaml
+# .lynxprompt/conf.yml (advanced mode only)
+sources:
+  - type: local
+    path: .lynxprompt/rules
+  - type: git
+    url: https://github.com/company/shared-rules
+    path: rules/base.md
+```
+
+This enables:
+- Company-wide rules in a shared repo
+- Community rule collections
+- Team rules without LynxPrompt cloud
 
 ---
 

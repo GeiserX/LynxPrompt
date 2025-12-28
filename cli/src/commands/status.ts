@@ -6,7 +6,7 @@ import { join } from "path";
 const CONFIG_FILES = [
   { path: "AGENTS.md", name: "AGENTS.md", platform: "Claude Code, Cursor, AI Agents" },
   { path: "CLAUDE.md", name: "CLAUDE.md", platform: "Claude Code" },
-  { path: ".cursorrules", name: ".cursorrules", platform: "Cursor" },
+  { path: ".cursor/rules/", name: ".cursor/rules/", platform: "Cursor" },
   { path: ".github/copilot-instructions.md", name: "Copilot Instructions", platform: "GitHub Copilot" },
   { path: ".windsurfrules", name: ".windsurfrules", platform: "Windsurf" },
   { path: ".zed/instructions.md", name: "Zed Instructions", platform: "Zed" },
