@@ -12,8 +12,8 @@
 
 services:
   # ==========================================================================
-  # APP DATABASE - System data (templates, platforms, config)
-  # Can be recreated from seed - lower backup priority
+  # APP DATABASE - System templates, platforms, languages
+  # Critical backups - contains marketplace configuration
   # ==========================================================================
   postgres-app:
     image: postgres:18-alpine
