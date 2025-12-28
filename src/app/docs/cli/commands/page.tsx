@@ -151,7 +151,7 @@ Options:
           <h3 className="font-semibold">What it does</h3>
           <ul className="ml-4 list-disc space-y-2 text-sm text-muted-foreground">
             <li><strong>Detects your tech stack</strong> by scanning package.json, Cargo.toml, go.mod, pyproject.toml, requirements.txt, Makefile</li>
-            <li><strong>Finds existing AI configs</strong> like .cursorrules, CLAUDE.md, AGENTS.md, .windsurfrules (40+ agents)</li>
+            <li><strong>Finds existing AI configs</strong> like .cursor/rules/, CLAUDE.md, AGENTS.md, .windsurfrules (40+ agents)</li>
             <li><strong>Offers to import</strong> existing configs or create a starter template</li>
             <li><strong>Creates config files</strong> in <code className="rounded bg-muted px-1">.lynxprompt/</code></li>
             <li><strong>Enables appropriate exporters</strong> based on detected agents</li>
@@ -248,8 +248,8 @@ $ lynxp push -m "Add testing guidelines"
           <h2 className="text-2xl font-bold">lynxp pull</h2>
         </div>
         <p className="text-muted-foreground">
-          Pull the latest rules from your linked blueprint. Use this after teammates make changes
-          on the web, or to restore from the cloud version.
+          Pull a blueprint in any format. Your blueprint is a collection of rules — pull exports
+          them to the format your AI agent expects.
         </p>
 
         <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
@@ -257,28 +257,54 @@ $ lynxp push -m "Add testing guidelines"
             <code>{`lynxp pull [blueprint-id] [options]
 
 Arguments:
-  blueprint-id   Optional: pull from a specific blueprint
+  blueprint-id   Blueprint to pull (default: linked blueprint)
 
 Options:
-  --force        Overwrite local changes without confirmation`}</code>
+  -f, --format <format>   Output format (see below)
+  -o, --output <path>     Custom output path
+  --split                 Split into separate files (for multi-file agents)
+  --force                 Overwrite without confirmation`}</code>
           </pre>
         </div>
 
         <div className="space-y-3">
-          <h3 className="font-semibold">Example</h3>
+          <h3 className="font-semibold">Examples</h3>
           <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
             <pre className="text-sm text-zinc-100">
-              <code>{`$ lynxp pull
-📥 Pulling from blueprint bp_x7k9m2...
-  ↓ Updated 3 rules
-  ↓ Added 1 new rule
-✓ Local rules updated
+              <code>{`# Pull as raw rules (default)
+$ lynxp pull
+✓ Updated .lynxprompt/rules/
 
-# Pull from marketplace blueprint
-$ lynxp pull bp_react_best_practices
-📥 Pulling from "React Best Practices"...
-✓ Downloaded to .lynxprompt/rules/`}</code>
+# Single-file formats - all rules concatenated
+$ lynxp pull --format claude
+✓ Downloaded to CLAUDE.md
+
+$ lynxp pull --format agents
+✓ Downloaded to AGENTS.md
+
+# Multi-file format (Cursor) - single combined file by default
+$ lynxp pull --format cursor
+✓ Downloaded to .cursor/rules/lynxprompt-rules.mdc
+
+# Multi-file format with --split - one file per rule
+$ lynxp pull --format cursor --split
+✓ Downloaded to .cursor/rules/
+    testing.mdc
+    security.mdc
+    code-style.mdc`}</code>
             </pre>
+          </div>
+        </div>
+
+        <div className="rounded-lg border bg-card p-4">
+          <h4 className="font-semibold text-sm mb-2">Supported Formats</h4>
+          <div className="grid gap-1 text-sm text-muted-foreground">
+            <div><code className="rounded bg-muted px-1">cursor</code> → .cursor/rules/*.mdc</div>
+            <div><code className="rounded bg-muted px-1">claude</code> → CLAUDE.md</div>
+            <div><code className="rounded bg-muted px-1">agents</code> → AGENTS.md</div>
+            <div><code className="rounded bg-muted px-1">copilot</code> → .github/copilot-instructions.md</div>
+            <div><code className="rounded bg-muted px-1">windsurf</code> → .windsurfrules</div>
+            <div><code className="rounded bg-muted px-1">raw</code> → .lynxprompt/rules/*.md (source)</div>
           </div>
         </div>
       </section>
@@ -331,7 +357,7 @@ $ lynxp push   # Share your changes`}</code>
         </div>
         <p className="text-muted-foreground">
           Sync local rules to AI agent files in your project. This exports your rules to
-          .cursorrules, CLAUDE.md, and other configured agent formats.
+          .cursor/rules/, CLAUDE.md, and other configured agent formats.
         </p>
 
         <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
@@ -578,7 +604,7 @@ Use 'lynxprompt pull <id>' to download.`}</code>
 
 📁 AI Config Status
 
-  ✅ .cursorrules                    (2.4 KB)
+  ✅ .cursor/rules/                  (3 files)
   ✅ CLAUDE.md                       (1.8 KB)
   ✅ .github/copilot-instructions.md (1.2 KB)
   ❌ .windsurfrules                  (not found)
