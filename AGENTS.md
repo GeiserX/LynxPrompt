@@ -57,6 +57,24 @@ ssh root@192.168.10.100 "docker exec caddy caddy fmt --overwrite /etc/caddy/Cadd
 
 Never manually run `docker compose up` or `docker restart` - Portainer loses track of stack state.
 
+### Always Test on `develop` Branch First
+
+**NEVER commit directly to `main` (production)**. All changes must go through the `develop` branch first:
+
+1. Work on `develop` branch
+2. Test changes on dev environment (dev.lynxprompt.com)
+3. Verify everything works correctly
+4. Only then merge to `main` for production deployment
+
+```bash
+# Switch to develop branch
+git checkout develop
+
+# After testing is complete, merge to main
+git checkout main
+git merge develop
+```
+
 ## 🎯 Project Overview
 
 **LynxPrompt** is a SaaS web application that generates AI IDE configuration files (`.cursorrules`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.windsurfrules`, etc.) through an intuitive wizard interface. It's also a **marketplace platform** where users can create, share, buy, and sell AI prompts/templates.

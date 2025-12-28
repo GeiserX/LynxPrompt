@@ -1,358 +1,139 @@
-# 🔥 LynxPrompt
+# LynxPrompt
 
-> **Transform your development setup into a mouse-click experience, not a keyboard marathon.**
+> **Generate AI IDE configuration files in clicks, not keystrokes.**
 
-[![License](https://img.shields.io/badge/License-Source%20Available-blue.svg)](LICENSE)
-[![Commercial](https://img.shields.io/badge/Commercial-Restricted-red.svg)](LICENSE)
+[![Live](https://img.shields.io/badge/Live-lynxprompt.com-blue)](https://lynxprompt.com)
+[![License](https://img.shields.io/badge/License-Source%20Available-orange.svg)](LICENSE)
+[![Status](https://img.shields.io/badge/Status-status.lynxprompt.com-green)](https://status.lynxprompt.com)
 
-## 🎯 Vision
+## What is LynxPrompt?
 
-LynxPrompt is an intelligent, conditional-logic-driven web application that generates AI IDE configuration files (`.cursorrules`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.windsurfrules`, etc.) based on user preferences. It remembers your choices, learns your patterns, and makes creating software repositories a **visual, mouse-driven experience** rather than writing extensive prompts.
+LynxPrompt is a web platform for generating and sharing AI IDE configuration files. Instead of manually writing `.cursorrules`, `CLAUDE.md`, or `.github/copilot-instructions.md` for every project, use our wizard or browse community blueprints.
 
-## 🚀 The Problem We Solve
+**Live at:** https://lynxprompt.com
 
-Setting up a new repository with proper AI assistant configurations is tedious:
+## Supported AI IDEs
 
-- Writing `.cursorrules` for Cursor
-- Creating `CLAUDE.md` for Claude Code
-- Setting up GitHub Copilot instructions
-- Configuring Windsurf rules
-- And many more...
+| Platform | Config File | Status |
+|----------|-------------|--------|
+| Cursor | `.cursorrules` | ✅ |
+| Claude Code | `CLAUDE.md` / `AGENTS.md` | ✅ |
+| GitHub Copilot | `.github/copilot-instructions.md` | ✅ |
+| Windsurf | `.windsurfrules` | ✅ |
+| Zed | `.zed/settings.json` | ✅ |
+| Aider | `.aider.conf.yml` | ✅ |
+| Continue.dev | `.continue/config.json` | ✅ |
+| Cody | `.cody/cody.json` | 🔄 |
 
-Each time you start a project, you repeat the same decisions:
+## Features
 
-- Which license? MIT? Apache 2.0? GPL?
-- Do you need FUNDING.yml?
-- Conventional commits? Semver?
-- CI/CD pipelines? Docker publishing?
-- Testing frameworks? Linting rules?
+- **Configuration Wizard** — Step-by-step generator with smart defaults
+- **Blueprint Marketplace** — Browse, share, and sell AI configurations
+- **API Access** — Programmatic access for Pro/Max/Teams subscribers
+- **Blueprint Versioning** — Track changes with changelogs
+- **Teams** — Share blueprints privately within your organization
+- **Template Variables** — Dynamic `[[VARIABLE]]` placeholders
 
-**LynxPrompt remembers your preferences and applies smart conditional logic to streamline this process.**
+## Quick Start
 
-## ✨ Key Features
+### Use the Web App
 
-### 🧠 Smart Conditional Logic
+1. Visit [lynxprompt.com](https://lynxprompt.com)
+2. Sign in with GitHub, Google, or email
+3. Use the wizard or browse blueprints
+4. Download your configuration files
 
-- If-then-if-then decision trees
-- "You used MIT license last time. Reuse it?"
-- Dependencies between choices (e.g., TypeScript → suggests Jest/Vitest)
-- Progressive disclosure - show only relevant options
+### Use the API
 
-### 💾 Preference Memory
+```bash
+# List your blueprints
+curl -H "Authorization: Bearer lp_xxxxx" \
+  https://lynxprompt.com/api/v1/blueprints
 
-- User profiles store past decisions
-- Reusable templates for FUNDING.yml, LICENSE, etc.
-- "Quick setup" based on your history
-- Shareable preference profiles
-
-### 🎨 Multi-Platform AI IDE Support
-
-| Platform           | Config File                       | Status     |
-| ------------------ | --------------------------------- | ---------- |
-| Cursor             | `.cursorrules`                    | ✅ Planned |
-| Claude Code        | `CLAUDE.md`                       | ✅ Planned |
-| GitHub Copilot     | `.github/copilot-instructions.md` | ✅ Planned |
-| Windsurf           | `.windsurfrules`                  | ✅ Planned |
-| Continue.dev       | `config.json`                     | 🔄 Future  |
-| Cody               | `.cody/cody.json`                 | 🔄 Future  |
-| Gemini Code Assist | TBD                               | 🔄 Future  |
-
-### 📦 Comprehensive Repository Setup
-
-- **Licensing**: MIT, Apache 2.0, GPL, BSD, Unlicense, Custom
-- **Funding**: FUNDING.yml with GitHub Sponsors, Ko-fi, Patreon, etc.
-- **CI/CD**: GitHub Actions, GitLab CI, CircleCI, Jenkins
-- **Containerization**: Dockerfile, docker-compose, Docker Hub publishing
-- **Version Control**: Conventional commits, Semver, Changelog generation
-- **Code Quality**: ESLint, Prettier, Black, Ruff, pre-commit hooks
-- **Testing**: Unit, Integration, E2E frameworks by language
-- **Documentation**: README templates, Contributing guidelines, Code of Conduct
-- **Security**: SECURITY.md, Dependabot, CodeQL
-
-### 👥 Developer Personas
-
-Tailored experiences for:
-
-- 🖥️ **Backend Developers** - APIs, databases, microservices
-- 🎨 **Frontend Developers** - React, Vue, Angular, Svelte
-- 🔄 **Full-Stack Developers** - Complete application setups
-- ⚙️ **DevOps Engineers** - Infrastructure, CI/CD, containers
-- 🗄️ **Database Administrators** - Schema management, migrations
-- 🏗️ **Infrastructure Engineers** - Terraform, Pulumi, CloudFormation
-- 🔧 **SRE** - Monitoring, alerting, SLOs
-- 📱 **Mobile Developers** - iOS, Android, React Native, Flutter
-- 📊 **Data Engineers** - Pipelines, ETL, data quality
-- 🤖 **ML Engineers** - Model training, MLOps, experiments
-
-### 🎛️ Smart Defaults
-
-- "Let the AI decide based on the prompt" option
-- Context-aware suggestions
-- Search fields for long lists (languages, frameworks)
-- Multi-select with intelligent grouping
-
-## 🛠️ Technology Stack
-
-### Frontend
-
-| Technology          | Purpose                          |
-| ------------------- | -------------------------------- |
-| **Next.js 15**      | React framework with App Router  |
-| **TypeScript**      | Type safety                      |
-| **Tailwind CSS**    | Utility-first styling            |
-| **shadcn/ui**       | Modern, accessible UI components |
-| **React Hook Form** | Form handling                    |
-| **Zod**             | Schema validation                |
-| **TanStack Query**  | Server state management          |
-| **Zustand**         | Client state management          |
-
-### Backend
-
-| Technology             | Purpose          |
-| ---------------------- | ---------------- |
-| **Next.js API Routes** | API endpoints    |
-| **Prisma**             | Type-safe ORM    |
-| **PostgreSQL**         | Primary database |
-| **NextAuth.js**        | Authentication   |
-| **Zod**                | API validation   |
-
-### Infrastructure
-
-| Technology         | Purpose                          |
-| ------------------ | -------------------------------- |
-| **Docker**         | Containerization                 |
-| **Docker Compose** | Local development                |
-| **Vercel**         | Production deployment (optional) |
-| **GitHub Actions** | CI/CD                            |
-
-## 📁 Project Structure
-
-```
-lynxprompt/
-├── src/
-│   ├── app/                    # Next.js App Router
-│   │   ├── (auth)/            # Authentication routes
-│   │   ├── (dashboard)/       # Main application
-│   │   ├── api/               # API routes
-│   │   └── layout.tsx
-│   ├── components/
-│   │   ├── ui/                # shadcn/ui components
-│   │   ├── forms/             # Form components
-│   │   ├── wizard/            # Multi-step wizard
-│   │   └── templates/         # Template editors
-│   ├── lib/
-│   │   ├── db/                # Database utilities
-│   │   ├── generators/        # Config file generators
-│   │   ├── validators/        # Zod schemas
-│   │   └── utils/
-│   ├── hooks/                 # Custom React hooks
-│   ├── stores/                # Zustand stores
-│   └── types/                 # TypeScript types
-├── prisma/
-│   ├── schema.prisma          # Database schema
-│   ├── migrations/            # Database migrations
-│   └── seed.ts                # Seed data
-├── public/                    # Static assets
-├── tests/                     # Test files
-├── docker/
-│   ├── Dockerfile
-│   └── docker-compose.yml
-├── .github/
-│   └── workflows/             # GitHub Actions
-├── docs/                      # Documentation
-└── scripts/                   # Utility scripts
+# Get a specific blueprint
+curl -H "Authorization: Bearer lp_xxxxx" \
+  https://lynxprompt.com/api/v1/blueprints/bp_abc123
 ```
 
-## 🗄️ Database Schema (PostgreSQL)
+Generate API tokens at [lynxprompt.com/settings?tab=api-tokens](https://lynxprompt.com/settings?tab=api-tokens)
 
-### Core Entities
-
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│      User       │────<│   Preference    │     │    Template     │
-├─────────────────┤     ├─────────────────┤     ├─────────────────┤
-│ id              │     │ id              │     │ id              │
-│ email           │     │ userId          │     │ userId          │
-│ name            │     │ category        │     │ name            │
-│ image           │     │ key             │     │ type            │
-│ createdAt       │     │ value           │     │ content         │
-│ updatedAt       │     │ isDefault       │     │ isPublic        │
-└─────────────────┘     └─────────────────┘     │ createdAt       │
-        │                                        └─────────────────┘
-        │
-        │              ┌─────────────────┐     ┌─────────────────┐
-        └─────────────<│    Project      │────<│  GeneratedFile  │
-                       ├─────────────────┤     ├─────────────────┤
-                       │ id              │     │ id              │
-                       │ userId          │     │ projectId       │
-                       │ name            │     │ type            │
-                       │ description     │     │ filename        │
-                       │ config (JSON)   │     │ content         │
-                       │ createdAt       │     │ createdAt       │
-                       └─────────────────┘     └─────────────────┘
-```
-
-### Key Tables
-
-- **User**: Authentication and profile data
-- **Preference**: User preferences with memory (license, funding, etc.)
-- **Template**: Reusable templates (FUNDING.yml, LICENSE, etc.)
-- **Project**: Saved project configurations
-- **GeneratedFile**: Generated config files for download
-- **WizardStep**: Configurable wizard steps with conditions
-- **DecisionTree**: If-then logic rules
-
-## 🔄 User Flow
-
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                         LynxPrompt                               │
-├──────────────────────────────────────────────────────────────────┤
-│                                                                   │
-│  1. 🎯 Select Developer Persona                                  │
-│     ┌─────────────────────────────────────────────────────┐      │
-│     │  ○ Backend  ○ Frontend  ○ Full-Stack  ○ DevOps ... │      │
-│     └─────────────────────────────────────────────────────┘      │
-│                              ↓                                    │
-│  2. 💻 Select Languages/Frameworks (search + multi-select)       │
-│     ┌─────────────────────────────────────────────────────┐      │
-│     │  🔍 Search: [typescript     ]                       │      │
-│     │  ☑ TypeScript  ☑ Python  ☐ Go  ☐ Rust  ...        │      │
-│     │  ☐ Let the AI decide based on the project          │      │
-│     └─────────────────────────────────────────────────────┘      │
-│                              ↓                                    │
-│  3. 📋 Repository Setup (conditional based on #1 and #2)         │
-│     ┌─────────────────────────────────────────────────────┐      │
-│     │  License: [MIT ▼] ← "Reuse from last project?"     │      │
-│     │  ☑ FUNDING.yml  [Edit] [Reuse Previous]            │      │
-│     │  ☑ Conventional Commits                             │      │
-│     │  ☑ Semantic Versioning                              │      │
-│     └─────────────────────────────────────────────────────┘      │
-│                              ↓                                    │
-│  4. 🔧 CI/CD & Deployment                                        │
-│     ┌─────────────────────────────────────────────────────┐      │
-│     │  ☑ GitHub Actions                                   │      │
-│     │  ☑ Docker Build & Publish                           │      │
-│     │  ☐ Kubernetes Deployment                            │      │
-│     └─────────────────────────────────────────────────────┘      │
-│                              ↓                                    │
-│  5. 🎯 Select Target AI IDEs                                     │
-│     ┌─────────────────────────────────────────────────────┐      │
-│     │  ☑ Cursor (.cursorrules)                            │      │
-│     │  ☑ Claude Code (CLAUDE.md)                          │      │
-│     │  ☐ GitHub Copilot                                   │      │
-│     │  ☐ Windsurf                                         │      │
-│     └─────────────────────────────────────────────────────┘      │
-│                              ↓                                    │
-│  6. 📥 Generate & Download                                       │
-│     ┌─────────────────────────────────────────────────────┐      │
-│     │  [📋 Copy All]  [⬇️ Download ZIP]  [💾 Save Project]│      │
-│     │                                                      │      │
-│     │  Preview:                                            │      │
-│     │  ├── .cursorrules                                   │      │
-│     │  ├── CLAUDE.md                                      │      │
-│     │  ├── LICENSE                                        │      │
-│     │  ├── .github/                                       │      │
-│     │  │   ├── FUNDING.yml                               │      │
-│     │  │   └── workflows/ci.yml                          │      │
-│     │  └── ...                                            │      │
-│     └─────────────────────────────────────────────────────┘      │
-│                                                                   │
-└──────────────────────────────────────────────────────────────────┘
-```
-
-## 🚀 Getting Started
+## Self-Hosting
 
 ### Prerequisites
 
 - Node.js 20+
 - PostgreSQL 15+
-- pnpm (recommended) or npm
 
 ### Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/lynxprompt.git
-cd lynxprompt
+git clone https://github.com/GeiserX/LynxPrompt.git
+cd LynxPrompt
 
-# Install dependencies
-pnpm install
+npm install
+cp env.example .env
 
-# Set up environment variables
-cp .env.example .env.local
+npm run db:generate
+npm run db:push
+npm run db:seed
 
-# Initialize the database
-pnpm db:push
-pnpm db:seed
-
-# Start development server
-pnpm dev
+npm run dev
 ```
 
-### Docker Development
+### Docker
 
 ```bash
-# Start with Docker Compose
 docker-compose up -d
-
-# Access at http://localhost:3000
 ```
 
-## 📋 Roadmap
+## Tech Stack
 
-### Phase 1: MVP (v0.1.0)
+| Layer | Technology |
+|-------|------------|
+| Framework | Next.js 15, React 19 |
+| Language | TypeScript |
+| Database | PostgreSQL (Prisma ORM) |
+| Auth | NextAuth.js (GitHub, Google, Magic Link, Passkeys) |
+| Payments | Stripe |
+| Analytics | ClickHouse, Umami (self-hosted) |
+| Styling | Tailwind CSS, shadcn/ui |
 
-- [ ] Basic wizard flow
-- [ ] User authentication
-- [ ] Cursor & Claude Code support
-- [ ] LICENSE & FUNDING.yml templates
-- [ ] Preference memory
-- [ ] Download generated files
+## Pricing
 
-### Phase 2: Enhanced Features (v0.2.0)
+| Tier | Price | Features |
+|------|-------|----------|
+| **Free** | €0 | Basic wizard, free blueprints |
+| **Pro** | €5/mo | Intermediate wizard, sell blueprints, API access |
+| **Max** | €20/mo | Advanced wizard, all paid blueprints included, 10% discount |
+| **Teams** | €30/seat/mo | Team blueprints, SSO, centralized billing |
 
-- [ ] GitHub Copilot & Windsurf support
-- [ ] Template editor
-- [ ] Shareable preference profiles
-- [ ] CI/CD configuration generators
-- [ ] Docker setup generators
+## Roadmap
 
-### Phase 3: Advanced (v0.3.0)
+See [docs/ROADMAP.md](docs/ROADMAP.md) for planned features including:
 
-- [ ] Community templates
-- [ ] API access
-- [ ] VS Code extension
-- [ ] GitHub App integration
-- [ ] Team/Organization features
+- CLI tooling (`npx lynxprompt init`)
+- Platform packages (Homebrew, Chocolatey, Snap)
+- GitHub URL import with auto-detection
+- AI-powered blueprint recommendations
 
-## 🤝 Contributing
+## Contributing
 
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md).
+Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## 📄 License
+## License
 
-This project is **Source Available** with commercial restrictions.
+Source Available with commercial restrictions. See [LICENSE](LICENSE).
 
-- ✅ Free for personal and non-commercial use
+- ✅ Personal and non-commercial use
 - ✅ Contributions welcome
-- ❌ Commercial use requires a license from the author
+- ❌ Commercial use requires license
 
-See the [LICENSE](LICENSE) file for full details.
+**Author:** Sergio Fernández Rubio ([GeiserCloud](https://lynxprompt.com/about))
 
-**Author:** Sergio Fernández Rubio
+## Links
 
-## 💖 Support
-
-If you find LynxPrompt useful, consider:
-
-- ⭐ Starring the repository
-- 🐛 Reporting bugs
-- 💡 Suggesting features
-- 🔀 Submitting pull requests
-
----
-
-<p align="center">
-  Made with ❤️ by developers, for developers
-</p>
+- [Website](https://lynxprompt.com)
+- [Documentation](https://lynxprompt.com/docs)
+- [Status Page](https://status.lynxprompt.com)
+- [Roadmap](docs/ROADMAP.md)
+- [Security](SECURITY.md)
