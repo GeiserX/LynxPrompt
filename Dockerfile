@@ -10,7 +10,7 @@
 # -----------------------------------------------------------------------------
 # Base stage - shared dependencies
 # -----------------------------------------------------------------------------
-FROM node:20-alpine AS base
+FROM node:25-alpine AS base
 
 # Install dependencies for Prisma and other native modules
 RUN apk add --no-cache libc6-compat openssl
