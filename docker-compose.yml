@@ -1,98 +1,297 @@
+# =============================================================================
+# LynxPrompt Docker Compose - Development Environment
+# =============================================================================
+# This file is for LOCAL DEVELOPMENT ONLY.
+# Production deployments use a private GitOps repository with real secrets.
+#
+# Quick Start:
+#   1. Copy env.example to .env and fill in OAuth credentials
+#   2. Run: docker compose up -d
+#   3. Access: http://localhost:3000
+# =============================================================================
+
 services:
   # ==========================================================================
-  # APP Database - System templates, platforms, languages
+  # APP DATABASE - System data (templates, platforms, config)
+  # Can be recreated from seed - lower backup priority
   # ==========================================================================
-  db-app:
-    image: postgres:17-alpine
-    container_name: lynxprompt-db-app
+  postgres-app:
+    image: postgres:18-alpine
+    container_name: lynxprompt-postgres-app
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
     environment:
-      POSTGRES_USER: lynxprompt_app
-      POSTGRES_PASSWORD: app_dev_password
       POSTGRES_DB: lynxprompt_app
+      POSTGRES_USER: lynxprompt_app
+      POSTGRES_PASSWORD: ${POSTGRES_APP_PASSWORD:-dev_app_password_change_me}
+      PGDATA: /data/pgdata
     volumes:
-      - postgres_app_data:/var/lib/postgresql/data
+      - postgres_app_data:/data
+    networks:
+      - lynxprompt
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U lynxprompt_app"]
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 128M
+    security_opt:
+      - no-new-privileges:true
 
   # ==========================================================================
-  # USER Database - Users, sessions, preferences, projects (GOLDEN)
+  # USER DATABASE - Golden data (users, sessions, projects)
+  # Critical backups - high priority
   # ==========================================================================
-  db-users:
-    image: postgres:17-alpine
-    container_name: lynxprompt-db-users
+  postgres-users:
+    image: postgres:18-alpine
+    container_name: lynxprompt-postgres-users
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
     environment:
-      POSTGRES_USER: lynxprompt_users
-      POSTGRES_PASSWORD: users_dev_password
       POSTGRES_DB: lynxprompt_users
+      POSTGRES_USER: lynxprompt_users
+      POSTGRES_PASSWORD: ${POSTGRES_USERS_PASSWORD:-dev_users_password_change_me}
+      PGDATA: /data/pgdata
     volumes:
-      - postgres_users_data:/var/lib/postgresql/data
+      - postgres_users_data:/data
+    networks:
+      - lynxprompt
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U lynxprompt_users"]
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 256M
+    security_opt:
+      - no-new-privileges:true
 
   # ==========================================================================
-  # SUPPORT Database - Feedback forum (bugs, suggestions, votes)
+  # BLOG DATABASE - Blog posts and content
+  # Low priority backups - content can be recreated
   # ==========================================================================
-  db-support:
-    image: postgres:17-alpine
-    container_name: lynxprompt-db-support
+  postgres-blog:
+    image: postgres:18-alpine
+    container_name: lynxprompt-postgres-blog
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
     environment:
-      POSTGRES_USER: lynxprompt_support
-      POSTGRES_PASSWORD: support_dev_password
-      POSTGRES_DB: lynxprompt_support
+      POSTGRES_DB: lynxprompt_blog
+      POSTGRES_USER: lynxprompt_blog
+      POSTGRES_PASSWORD: ${POSTGRES_BLOG_PASSWORD:-dev_blog_password_change_me}
+      PGDATA: /data/pgdata
     volumes:
-      - postgres_support_data:/var/lib/postgresql/data
+      - postgres_blog_data:/data
+    networks:
+      - lynxprompt
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lynxprompt_blog"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 64M
+    security_opt:
+      - no-new-privileges:true
+
+  # ==========================================================================
+  # SUPPORT DATABASE - Feedback forum data (bugs, suggestions, votes)
+  # Medium priority backups
+  # ==========================================================================
+  postgres-support:
+    image: postgres:18-alpine
+    container_name: lynxprompt-postgres-support
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+    environment:
+      POSTGRES_DB: lynxprompt_support
+      POSTGRES_USER: lynxprompt_support
+      POSTGRES_PASSWORD: ${POSTGRES_SUPPORT_PASSWORD:-dev_support_password_change_me}
+      PGDATA: /data/pgdata
+    volumes:
+      - postgres_support_data:/data
+    networks:
+      - lynxprompt
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U lynxprompt_support"]
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 128M
+    security_opt:
+      - no-new-privileges:true
 
   # ==========================================================================
-  # LynxPrompt Application (Development)
+  # CLICKHOUSE - Analytics & Event Data (OLAP)
+  # High-performance analytics for user behavior, trends, recommendations
+  # ==========================================================================
+  clickhouse:
+    image: clickhouse/clickhouse-server:25-alpine
+    container_name: lynxprompt-clickhouse
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+    environment:
+      CLICKHOUSE_DB: lynxprompt_analytics
+      CLICKHOUSE_USER: lynxprompt
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-dev_clickhouse_password_change_me}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - clickhouse_logs:/var/log/clickhouse-server
+    networks:
+      - lynxprompt
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
+    security_opt:
+      - no-new-privileges:true
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+
+  # ==========================================================================
+  # LYNXPROMPT APPLICATION
   # ==========================================================================
   app:
     build:
       context: .
       dockerfile: Dockerfile
-      target: development
     container_name: lynxprompt-app
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+    depends_on:
+      postgres-app:
+        condition: service_healthy
+      postgres-users:
+        condition: service_healthy
+      postgres-blog:
+        condition: service_healthy
+      postgres-support:
+        condition: service_healthy
+      clickhouse:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "2"
+        reservations:
+          memory: 256M
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100m
     ports:
       - "3000:3000"
-    environment:
-      - DATABASE_URL_APP=postgresql://lynxprompt_app:app_dev_password@db-app:5432/lynxprompt_app?schema=public
-      - DATABASE_URL_USERS=postgresql://lynxprompt_users:users_dev_password@db-users:5432/lynxprompt_users?schema=public
-      - DATABASE_URL_SUPPORT=postgresql://lynxprompt_support:support_dev_password@db-support:5432/lynxprompt_support?schema=public
-      - NEXTAUTH_URL=http://localhost:3000
-      - NEXTAUTH_SECRET=development-secret-change-in-production
-      - NODE_ENV=development
+    networks:
+      - lynxprompt
     volumes:
-      - .:/app
-      - /app/node_modules
-      - /app/.next
-    depends_on:
-      db-app:
-        condition: service_healthy
-      db-users:
-        condition: service_healthy
-      db-support:
-        condition: service_healthy
-    command: sh -c "npm run db:generate && npm run db:push && npm run db:seed && npm run dev"
+      - uploads_data:/data/uploads
+    environment:
+      # Databases
+      DATABASE_URL_APP: postgresql://lynxprompt_app:${POSTGRES_APP_PASSWORD:-dev_app_password_change_me}@postgres-app:5432/lynxprompt_app?schema=public
+      DATABASE_URL_USERS: postgresql://lynxprompt_users:${POSTGRES_USERS_PASSWORD:-dev_users_password_change_me}@postgres-users:5432/lynxprompt_users?schema=public
+      DATABASE_URL_BLOG: postgresql://lynxprompt_blog:${POSTGRES_BLOG_PASSWORD:-dev_blog_password_change_me}@postgres-blog:5432/lynxprompt_blog?schema=public
+      DATABASE_URL_SUPPORT: postgresql://lynxprompt_support:${POSTGRES_SUPPORT_PASSWORD:-dev_support_password_change_me}@postgres-support:5432/lynxprompt_support?schema=public
+      # ClickHouse Analytics
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 8123
+      CLICKHOUSE_DB: lynxprompt_analytics
+      CLICKHOUSE_USER: lynxprompt
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-dev_clickhouse_password_change_me}
+      # NextAuth
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-dev-secret-change-in-production}
+      # OAuth (configure in .env)
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      # SMTP (configure in .env)
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-noreply@localhost}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-LynxPrompt}
+      # Stripe (configure in .env)
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_PRICE_PRO_MONTHLY: ${STRIPE_PRICE_PRO_MONTHLY:-}
+      STRIPE_PRICE_MAX_MONTHLY: ${STRIPE_PRICE_MAX_MONTHLY:-}
+      STRIPE_PRICE_TEAMS_SEAT_MONTHLY: ${STRIPE_PRICE_TEAMS_SEAT_MONTHLY:-}
+      STRIPE_PRICE_PRO_ANNUAL: ${STRIPE_PRICE_PRO_ANNUAL:-}
+      STRIPE_PRICE_MAX_ANNUAL: ${STRIPE_PRICE_MAX_ANNUAL:-}
+      STRIPE_PRICE_TEAMS_SEAT_ANNUAL: ${STRIPE_PRICE_TEAMS_SEAT_ANNUAL:-}
+      # Cloudflare Turnstile (configure in .env)
+      NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
+      # Anthropic API for AI features (configure in .env)
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # Sentry/GlitchTip (configure in .env)
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
+      # App
+      NODE_ENV: ${NODE_ENV:-development}
+      MOCK: ${MOCK:-false}
+      SUPERADMIN_EMAIL: ${SUPERADMIN_EMAIL:-}
+      UPLOAD_DIR: /data/uploads/blog
 
 volumes:
   postgres_app_data:
   postgres_users_data:
+  postgres_blog_data:
   postgres_support_data:
+  clickhouse_data:
+  clickhouse_logs:
+  uploads_data:
 
 networks:
-  default:
+  lynxprompt:
     name: lynxprompt-network
