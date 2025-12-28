@@ -248,8 +248,8 @@ $ lynxp push -m "Add testing guidelines"
           <h2 className="text-2xl font-bold">lynxp pull</h2>
         </div>
         <p className="text-muted-foreground">
-          Pull the latest rules from your linked blueprint. Use this after teammates make changes
-          on the web, or to restore from the cloud version.
+          Pull a blueprint in any format. Specify the output format to get exactly what you need —
+          .cursorrules, CLAUDE.md, AGENTS.md, or any supported agent format.
         </p>
 
         <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
@@ -257,29 +257,48 @@ $ lynxp push -m "Add testing guidelines"
             <code>{`lynxp pull [blueprint-id] [options]
 
 Arguments:
-  blueprint-id   Optional: pull from a specific blueprint
+  blueprint-id   Blueprint to pull (default: linked blueprint)
 
 Options:
-  --force        Overwrite local changes without confirmation`}</code>
+  -f, --format <format>   Output format: cursor, claude, agents, copilot, 
+                          windsurf, raw (default: raw)
+  -o, --output <path>     Output file path (default: format-specific)
+  --force                 Overwrite without confirmation`}</code>
           </pre>
         </div>
 
         <div className="space-y-3">
-          <h3 className="font-semibold">Example</h3>
+          <h3 className="font-semibold">Examples</h3>
           <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
             <pre className="text-sm text-zinc-100">
-              <code>{`$ lynxp pull
-📥 Pulling from blueprint bp_x7k9m2...
-  ↓ Updated 3 rules
-  ↓ Added 1 new rule
-✓ Local rules updated
+              <code>{`# Pull linked blueprint as raw rules
+$ lynxp pull
+✓ Updated .lynxprompt/rules/
 
-# Pull from marketplace blueprint
-$ lynxp pull bp_react_best_practices
-📥 Pulling from "React Best Practices"...
-✓ Downloaded to .lynxprompt/rules/`}</code>
+# Pull as Cursor format
+$ lynxp pull --format cursor
+✓ Downloaded to .cursor/rules/
+
+# Pull as Claude Code format
+$ lynxp pull --format claude
+✓ Downloaded to CLAUDE.md
+
+# Pull marketplace blueprint in specific format
+$ lynxp pull bp_react_best --format agents
+✓ Downloaded to AGENTS.md
+
+# Pull to custom location
+$ lynxp pull bp_team_rules --format cursor -o ./my-rules.mdc
+✓ Downloaded to ./my-rules.mdc`}</code>
             </pre>
           </div>
+        </div>
+
+        <div className="rounded-lg border bg-card p-4">
+          <p className="text-sm text-muted-foreground">
+            <strong>Supported formats:</strong> cursor, claude, agents, copilot, windsurf, 
+            zed, aider, cline, amazonq, raw (markdown source)
+          </p>
         </div>
       </section>
 
