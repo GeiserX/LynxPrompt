@@ -134,6 +134,7 @@ model User {
   apiTokens      ApiToken[]    // API tokens for programmatic access
   knownDevices   KnownDevice[] // Trusted devices for 2FA
   wizardDrafts   WizardDraft[] // Saved wizard configurations
+  cliSessions    CliSession[]  // CLI authentication sessions
 
   @@index([email])
   @@index([role])
@@ -577,6 +578,7 @@ model ApiToken {
   revokedAt       DateTime?    // Soft delete - set when token is revoked
   
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cliSessions CliSession[]  // Sessions that created this token
   
   @@index([userId])
   @@index([tokenHash])
@@ -588,6 +590,38 @@ enum ApiTokenRole {
   BLUEPRINTS_READONLY   // Read-only access to list/download blueprints
   PROFILE_FULL          // Read and update profile info (not billing)
   FULL                  // All permissions including profile
+}
+
+// ============================================================================
+// CLI SESSIONS - Temporary sessions for CLI authentication flow
+// ============================================================================
+
+model CliSession {
+  id          String         @id @default(cuid())
+  sessionId   String         @unique // The session ID sent to CLI
+  status      CliSessionStatus @default(PENDING)
+  
+  // Associated user (set when auth completes)
+  userId      String?
+  user        User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Token created for this session (set when auth completes)
+  apiTokenId  String?
+  apiToken    ApiToken?      @relation(fields: [apiTokenId], references: [id], onDelete: SetNull)
+  
+  // Raw token (stored temporarily for CLI to retrieve, cleared after retrieval)
+  token       String?        @db.Text
+  
+  expiresAt   DateTime
+  createdAt   DateTime       @default(now())
+  
+  @@index([sessionId])
+  @@index([expiresAt])
+}
+
+enum CliSessionStatus {
+  PENDING     // Waiting for user to authenticate
+  COMPLETED   // User authenticated, token created
 }
 
 // ============================================================================

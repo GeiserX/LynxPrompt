@@ -1,0 +1,58 @@
+{
+  "name": "lynxprompt",
+  "version": "0.1.0",
+  "description": "CLI for LynxPrompt - Generate AI IDE configuration files",
+  "author": "LynxPrompt Contributors",
+  "license": "SEE LICENSE FILE",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GeiserX/LynxPrompt.git",
+    "directory": "cli"
+  },
+  "homepage": "https://lynxprompt.com",
+  "keywords": [
+    "ai",
+    "ide",
+    "cursor",
+    "copilot",
+    "claude",
+    "windsurf",
+    "cursorrules",
+    "agents-md",
+    "cli"
+  ],
+  "type": "module",
+  "bin": {
+    "lynxprompt": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "commander": "^13.1.0",
+    "conf": "^13.1.0",
+    "open": "^10.1.2",
+    "ora": "^8.2.0",
+    "prompts": "^2.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/prompts": "^2.4.9",
+    "tsup": "^8.4.0",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+
