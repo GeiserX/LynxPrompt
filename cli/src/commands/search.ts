@@ -14,10 +14,10 @@ export async function searchCommand(
 
   try {
     const limit = parseInt(options.limit, 10) || 20;
-    const { results, total } = await api.searchBlueprints(query, limit);
+    const { templates, total, hasMore } = await api.searchBlueprints(query, limit);
     spinner.stop();
 
-    if (results.length === 0) {
+    if (templates.length === 0) {
       console.log();
       console.log(chalk.yellow(`No blueprints found for "${query}".`));
       console.log(chalk.gray("Try different keywords or browse at https://lynxprompt.com/blueprints"));
@@ -28,12 +28,12 @@ export async function searchCommand(
     console.log(chalk.cyan(`🔍 Search Results for "${query}" (${total} found)`));
     console.log();
 
-    for (const result of results) {
+    for (const result of templates) {
       printSearchResult(result);
     }
 
-    if (results.length < total) {
-      console.log(chalk.gray(`Showing ${results.length} of ${total}. Use --limit to see more.`));
+    if (hasMore) {
+      console.log(chalk.gray(`Showing ${templates.length} of ${total}. Use --limit to see more.`));
     }
 
     console.log();
@@ -45,13 +45,15 @@ export async function searchCommand(
 }
 
 function printSearchResult(result: SearchResult): void {
-  console.log(`  ${chalk.bold(result.name)}`);
-  console.log(`     ${chalk.cyan(result.id)}`);
+  const priceInfo = result.price ? chalk.yellow(`€${(result.price / 100).toFixed(2)}`) : chalk.green("Free");
+  const officialBadge = result.isOfficial ? chalk.magenta(" ★ Official") : "";
+  
+  console.log(`  ${chalk.bold(result.name)}${officialBadge}`);
+  console.log(`     ${chalk.cyan(result.id)} • ${priceInfo}`);
   if (result.description) {
     console.log(`     ${chalk.gray(truncate(result.description, 60))}`);
   }
-  const authorName = result.author.name || "Anonymous";
-  console.log(`     ${chalk.gray(`by ${authorName}`)} • ${chalk.gray(`↓${result.downloads}`)} ${chalk.gray(`♥${result.favorites}`)}`);
+  console.log(`     ${chalk.gray(`by ${result.author}`)} • ${chalk.gray(`↓${result.downloads}`)} ${chalk.gray(`♥${result.likes}`)}`);
   if (result.tags && result.tags.length > 0) {
     console.log(`     ${formatTags(result.tags)}`);
   }

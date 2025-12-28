@@ -73,19 +73,26 @@ export interface CliPollResponse {
 export interface SearchResult {
   id: string;
   name: string;
-  description: string | null;
-  author: {
-    name: string | null;
-    id: string;
-  };
+  description: string;
+  author: string;
+  authorId?: string;
   downloads: number;
-  favorites: number;
+  likes: number;
   tags: string[];
+  tier: string;
+  category: string;
+  isOfficial: boolean;
+  aiAssisted: boolean;
+  price: number | null;
+  discountedPrice: number | null;
+  currency: string;
 }
 
 export interface SearchResponse {
-  results: SearchResult[];
+  templates: SearchResult[];
+  popularTags: string[];
   total: number;
+  hasMore: boolean;
 }
 
 class ApiClient {
@@ -175,7 +182,7 @@ class ApiClient {
       q: query,
       limit: limit.toString(),
     });
-    return this.request<SearchResponse>(`/api/templates?${params}`);
+    return this.request<SearchResponse>(`/api/blueprints?${params}`);
   }
 }
 
