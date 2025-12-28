@@ -23,7 +23,8 @@
   ],
   "type": "module",
   "bin": {
-    "lynxprompt": "./dist/index.js"
+    "lynxprompt": "./dist/index.js",
+    "lynxp": "./dist/index.js"
   },
   "main": "./dist/index.js",
   "files": [
@@ -43,7 +44,8 @@
     "conf": "^13.1.0",
     "open": "^10.1.2",
     "ora": "^8.2.0",
-    "prompts": "^2.4.2"
+    "prompts": "^2.4.2",
+    "yaml": "^2.8.2"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
@@ -55,4 +57,3 @@
     "node": ">=18.0.0"
   }
 }
-

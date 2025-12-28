@@ -962,31 +962,54 @@ No flags to remember. The wizard guides you through every step, just like the we
 
 ### CLI Commands
 
+The CLI is available as both `lynxprompt` and the short alias `lynxp`.
+
 ```bash
-# Interactive wizard (recommended)
-lynxprompt init
+# Initialize LynxPrompt in a project (auto-detects existing files)
+lynxp init
+
+# Interactive wizard for generating configurations
+lynxp wizard
 
 # Pull an existing blueprint
-lynxprompt pull bp_abc123
+lynxp pull bp_abc123
 
 # List your blueprints
-lynxprompt list
+lynxp list
 
 # Search public blueprints
-lynxprompt search "nextjs typescript"
+lynxp search "nextjs typescript"
 
 # Auto-detect project and suggest config
-lynxprompt detect
+lynxp detect
 
 # Login (opens browser)
-lynxprompt login
+lynxp login
 
 # Show current config status
-lynxprompt status
+lynxp status
+
+# Sync rules to agent files
+lynxp sync
 
 # Push local changes to LynxPrompt
-lynxprompt push
+lynxp push
 ```
+
+### Project Structure
+
+After running `lynxp init`, your project will have:
+
+```
+.lynxprompt/
+├── conf.yml       # Configuration (exporters, sources, options)
+├── rules/         # Your rules (single source of truth)
+│   └── agents.md  # Starter rules file
+├── README.md      # Documentation
+└── .gitignore     # Ignores local state files
+```
+
+**Key principle**: Edit rules in `.lynxprompt/rules/`, then run `lynxp sync` to export to agent formats (AGENTS.md, .cursorrules, etc.).
 
 ### Non-Interactive Mode (for CI/CD)
 
@@ -1155,6 +1178,12 @@ Generate config with these settings? [Y/n]
 ## 💡 Future Ideas
 
 ### High Priority
+- **Template Wizards**: Custom wizard templates that users can create and share
+  - Define wizard steps, questions, and logic in YAML/JSON format
+  - Share wizard templates via web and CLI (`lynxp wizard --template my-template`)
+  - Wizard marketplace alongside blueprint marketplace
+  - Companies can create onboarding wizards for their tech stack
+  - Web UI for creating wizard templates (drag-and-drop step builder)
 - **GitHub URL Import**: Share a public GitHub repository URL in the wizard and auto-prefill all settings based on the repo's structure (needs AI analysis of package.json, language detection, framework detection, etc.)
 - **AI-powered recommendations**: Suggest blueprints based on project structure analysis
 - **Template quality scoring**: Automated scoring based on completeness, community ratings, usage
