@@ -1,12 +1,8 @@
 name: Deploy to Production
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: "Version to deploy (e.g., 0.21.1)"
-        required: true
-        type: string
+  push:
+    branches: [main]
 
 permissions:
   contents: read
@@ -27,20 +23,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Validate version format
+      - name: Generate version
+        id: version
         run: |
-          if ! [[ "${{ inputs.version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "❌ Invalid version format. Use semver (e.g., 0.21.1)"
-            exit 1
-          fi
-          echo "✅ Deploying version ${{ inputs.version }}"
+          # Use package.json version + short commit SHA for uniqueness
+          BASE_VERSION=$(node -p "require('./package.json').version")
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          VERSION="${BASE_VERSION}-${SHORT_SHA}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "✅ Deploying version $VERSION"
 
       - name: Build and push Docker image
         run: |
           docker buildx build --platform linux/amd64 \
-            -t ${{ secrets.DOCKER_REGISTRY }}/lynxprompt:${{ inputs.version }} \
+            -t ${{ secrets.DOCKER_REGISTRY }}/lynxprompt:${{ steps.version.outputs.version }} \
             --push .
-          echo "✅ Built and pushed ${{ secrets.DOCKER_REGISTRY }}/lynxprompt:${{ inputs.version }}"
+          echo "✅ Built and pushed ${{ secrets.DOCKER_REGISTRY }}/lynxprompt:${{ steps.version.outputs.version }}"
 
       - name: Update watchtower docker-compose with new version
         run: |
@@ -51,13 +49,13 @@ jobs:
           cd watchtower-deploy
           
           # Update image tag in docker-compose
-          sed -i 's|image: ${{ secrets.DOCKER_REGISTRY }}/lynxprompt:.*|image: ${{ secrets.DOCKER_REGISTRY }}/lynxprompt:${{ inputs.version }}|' lynxprompt/docker-compose.yml
+          sed -i 's|image: ${{ secrets.DOCKER_REGISTRY }}/lynxprompt:.*|image: ${{ secrets.DOCKER_REGISTRY }}/lynxprompt:${{ steps.version.outputs.version }}|' lynxprompt/docker-compose.yml
           
           # Commit and push
           git config user.email "github-actions@lynxprompt.com"
           git config user.name "GitHub Actions"
           git add -A
-          git commit -m "deploy: update LynxPrompt to v${{ inputs.version }}" || echo "No changes to commit"
+          git commit -m "deploy: update LynxPrompt to v${{ steps.version.outputs.version }}" || echo "No changes to commit"
           git push origin main
           
           # Cleanup
