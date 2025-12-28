@@ -5,8 +5,17 @@ Generate AI IDE configuration files from your terminal.
 ## Installation
 
 ```bash
-# Install globally
+# npm (cross-platform)
 npm install -g lynxprompt
+
+# Homebrew (macOS)
+brew install GeiserX/lynxprompt/lynxprompt
+
+# Chocolatey (Windows)
+choco install lynxprompt
+
+# Snap (Linux)
+snap install lynxprompt
 
 # Or use with npx
 npx lynxprompt
@@ -17,85 +26,136 @@ The CLI is available as both `lynxprompt` and the short alias `lynxp`.
 ## Quick Start
 
 ```bash
-# Initialize LynxPrompt in your project
-lynxp init
-
-# Or use the interactive wizard for a guided setup
+# Generate an AI config file (recommended for most users)
 lynxp wizard
 
-# Login to your LynxPrompt account
+# Quick generation with defaults (creates AGENTS.md)
+lynxp wizard -y
+
+# Generate for Cursor specifically
+lynxp wizard -f cursor
+
+# Login to sync with LynxPrompt cloud
 lynxp login
 
-# List your blueprints
-lynxp list
-
-# Download a blueprint
+# Download a blueprint from marketplace
 lynxp pull bp_abc123
+
+# Check config status
+lynxp status
 ```
 
 ## Commands
 
-### Initialize (`lynxp init`)
+### Wizard (`lynxp wizard`) ⭐ Recommended
 
-Initialize LynxPrompt in your project. This command:
-
-1. Scans for existing AI config files (AGENTS.md, .cursor/rules/, etc.)
-2. Imports them or creates a starter template
-3. Sets up the `.lynxprompt/` directory structure
+Interactive wizard for generating AI IDE configurations:
 
 ```bash
-# Interactive initialization
-lynxp init
-
-# Non-interactive (auto-import existing files)
-lynxp init --yes
-
-# Re-initialize even if already set up
-lynxp init --force
-```
-
-After initialization, your project will have:
-
-```
-.lynxprompt/
-├── conf.yml       # Configuration (exporters, sources)
-├── rules/         # Your rules (edit here!)
-│   └── agents.md  # Starter rules file
-├── README.md      # Documentation
-└── .gitignore     # Ignores local state files
-```
-
-### Wizard (`lynxp wizard`)
-
-Interactive wizard for generating AI IDE configurations with full customization:
-
-```bash
-# Start the interactive wizard
+# Interactive mode
 lynxp wizard
 
-# Non-interactive mode with all options
+# Quick mode with defaults (generates AGENTS.md)
+lynxp wizard -y
+
+# Generate for specific format
+lynxp wizard -f cursor        # .cursor/rules/
+lynxp wizard -f agents        # AGENTS.md (universal)
+lynxp wizard -f copilot       # .github/copilot-instructions.md
+
+# Generate multiple formats
+lynxp wizard -f agents,cursor,copilot
+
+# Non-interactive with all options
 lynxp wizard \
   --name "my-api" \
   --description "REST API for user management" \
   --stack typescript,express \
-  --platforms cursor,claude \
+  --format cursor \
   --persona backend \
   --boundaries conservative \
   --yes
 ```
 
-**Options:**
+### Check (`lynxp check`)
 
-| Flag | Description |
-|------|-------------|
-| `-n, --name` | Project name |
-| `-d, --description` | Project description |
-| `-s, --stack` | Tech stack (comma-separated) |
-| `-p, --platforms` | Target platforms (comma-separated) |
-| `--persona` | AI persona (backend, frontend, fullstack, devops, data, security) |
-| `--boundaries` | Boundary preset (conservative, standard, permissive) |
-| `--preset` | Agent preset (test-agent, docs-agent, etc.) |
-| `-y, --yes` | Skip prompts, use defaults |
+Validate AI configuration files for CI/CD pipelines:
+
+```bash
+# Interactive validation
+lynxp check
+
+# CI mode (exit code 0=pass, 1=fail)
+lynxp check --ci
+```
+
+### Status (`lynxp status`)
+
+Show current AI configuration and tracked blueprints:
+
+```bash
+lynxp status
+```
+
+### Pull (`lynxp pull`)
+
+Download and track a blueprint from the marketplace:
+
+```bash
+# Download and track
+lynxp pull bp_abc123
+
+# Preview content first
+lynxp pull bp_abc123 --preview
+
+# Don't track for future syncs
+lynxp pull bp_abc123 --no-track
+```
+
+### Link / Unlink
+
+Connect local files to cloud blueprints:
+
+```bash
+# Link existing file to blueprint
+lynxp link AGENTS.md bp_abc123
+
+# List all tracked blueprints
+lynxp link --list
+
+# Disconnect from cloud
+lynxp unlink AGENTS.md
+```
+
+### Diff
+
+Show changes between local and cloud:
+
+```bash
+# Compare with cloud blueprint
+lynxp diff bp_abc123
+
+# Compare local rules with exports
+lynxp diff --local
+```
+
+### Search (`lynxp search`)
+
+Search public blueprints in the marketplace:
+
+```bash
+lynxp search "nextjs typescript"
+lynxp search react --limit 10
+```
+
+### List (`lynxp list`)
+
+List your own blueprints:
+
+```bash
+lynxp list
+lynxp list --visibility PUBLIC
+```
 
 ### Authentication
 
@@ -110,63 +170,52 @@ lynxp whoami
 lynxp logout
 ```
 
-### Blueprints
+### Advanced: Init and Sync
+
+For power users who want to manage rules across multiple AI editors:
 
 ```bash
-# List your blueprints
-lynxp list
-lynxp list --visibility PUBLIC
-lynxp list --limit 50
+# Initialize .lynxprompt/ folder
+lynxp init
 
-# Download a blueprint
-lynxp pull bp_abc123
-lynxp pull bp_abc123 --output ./config
+# Sync rules to all configured agents
+lynxp sync
+lynxp sync --dry-run  # Preview changes
 
-# Search public blueprints
-lynxp search "nextjs typescript"
+# Manage AI agents
+lynxp agents
+```
 
-# Check current config status
+## Blueprint Tracking
+
+When you pull a blueprint, LynxPrompt tracks it in `.lynxprompt/blueprints.yml`:
+
+- **Marketplace blueprints** - Read-only, can pull updates but changes won't sync back
+- **Team blueprints** - Full sync, push and pull changes with your team
+- **Private blueprints** - Your own, full control
+
+```bash
+# See all tracked blueprints
 lynxp status
+
+# Or
+lynxp link --list
 ```
 
 ## Environment Variables
 
 | Variable | Description |
 |----------|-------------|
-| `LYNXPROMPT_TOKEN` | API token (alternative to login) |
+| `LYNXPROMPT_TOKEN` | API token for CI/CD (skips browser auth) |
 | `LYNXPROMPT_API_URL` | Custom API URL (for development) |
 
-## Project Structure
-
-LynxPrompt uses a simple directory structure:
-
-- **`.lynxprompt/conf.yml`** - Configuration file with exporters and sources
-- **`.lynxprompt/rules/`** - Your rules in markdown format (single source of truth)
-
-**Workflow:**
-
-1. Edit rules in `.lynxprompt/rules/`
-2. Run `lynxp sync` to export to agent formats (AGENTS.md, .cursor/rules/, etc.)
-3. Your AI assistants pick up the changes automatically
-
-## Configuration File
-
-The `conf.yml` file controls how rules are exported:
+## CI/CD Integration
 
 ```yaml
-version: "1"
-exporters:
-  - agents      # AGENTS.md (Claude, Copilot, etc.)
-  - cursor      # .cursor/rules/*.mdc
-sources:
-  - type: local
-    path: .lynxprompt/rules
+# GitHub Actions example
+- name: Validate AI config
+  run: npx lynxprompt check --ci
 ```
-
-## API Access
-
-API access requires a Pro, Max, or Teams subscription. Generate tokens at:
-https://lynxprompt.com/settings?tab=api-tokens
 
 ## Documentation
 

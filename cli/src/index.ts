@@ -13,6 +13,7 @@ import { syncCommand } from "./commands/sync.js";
 import { agentsCommand } from "./commands/agents.js";
 import { checkCommand } from "./commands/check.js";
 import { diffCommand } from "./commands/diff.js";
+import { linkCommand, unlinkCommand } from "./commands/link.js";
 
 const program = new Command();
 
@@ -49,7 +50,7 @@ program
 // Status - show what's configured
 program
   .command("status")
-  .description("Show current AI configuration status")
+  .description("Show current AI configuration and tracked blueprints")
   .action(statusCommand);
 
 // ============================================
@@ -58,10 +59,11 @@ program
 
 program
   .command("pull <id>")
-  .description("Download a blueprint from the marketplace")
+  .description("Download and track a blueprint from the marketplace")
   .option("-o, --output <path>", "Output directory", ".")
   .option("-y, --yes", "Overwrite existing files without prompting")
   .option("--preview", "Preview content without downloading")
+  .option("--no-track", "Don't track the blueprint for future syncs")
   .action(pullCommand);
 
 program
@@ -76,6 +78,25 @@ program
   .option("-l, --limit <number>", "Number of results", "20")
   .option("-v, --visibility <visibility>", "Filter: PRIVATE, TEAM, PUBLIC, or all")
   .action(listCommand);
+
+// Link/Unlink - connect local files to cloud blueprints
+program
+  .command("link [file] [blueprint-id]")
+  .description("Link a local file to a cloud blueprint for tracking")
+  .option("--list", "List all tracked blueprints")
+  .action(linkCommand);
+
+program
+  .command("unlink <file>")
+  .description("Disconnect a local file from its cloud blueprint")
+  .action(unlinkCommand);
+
+// Diff - compare local with remote
+program
+  .command("diff [blueprint-id]")
+  .description("Show changes between local and remote blueprint")
+  .option("--local", "Compare .lynxprompt/rules/ with exported files")
+  .action(diffCommand);
 
 // ============================================
 // Advanced Commands (power users)
@@ -103,13 +124,6 @@ program
   .description("Manage AI agents (list, enable, disable, detect)")
   .option("-i, --interactive", "Interactive agent selection")
   .action(agentsCommand);
-
-// Diff - compare local with remote
-program
-  .command("diff [blueprint-id]")
-  .description("Show changes between local and remote blueprint")
-  .option("--local", "Compare .lynxprompt/rules/ with exported files")
-  .action(diffCommand);
 
 // ============================================
 // Auth Commands
@@ -146,17 +160,19 @@ program.addHelpText(
   "after",
   `
 ${chalk.cyan("Quick Start:")}
-  ${chalk.white("$ lynxp wizard")}                ${chalk.gray("Generate config interactively (most users)")}
+  ${chalk.white("$ lynxp wizard")}                ${chalk.gray("Generate config interactively")}
   ${chalk.white("$ lynxp wizard -y")}             ${chalk.gray("Generate AGENTS.md with defaults")}
   ${chalk.white("$ lynxp wizard -f cursor")}      ${chalk.gray("Generate .cursor/rules/")}
 
 ${chalk.cyan("Marketplace:")}
   ${chalk.white("$ lynxp search nextjs")}         ${chalk.gray("Search blueprints")}
-  ${chalk.white("$ lynxp pull bp_abc123")}        ${chalk.gray("Download a blueprint")}
+  ${chalk.white("$ lynxp pull bp_abc123")}        ${chalk.gray("Download and track a blueprint")}
+  ${chalk.white("$ lynxp link --list")}           ${chalk.gray("Show tracked blueprints")}
 
-${chalk.cyan("Advanced (multi-editor sync):")}
-  ${chalk.white("$ lynxp init")}                  ${chalk.gray("Set up .lynxprompt/ folder")}
-  ${chalk.white("$ lynxp sync")}                  ${chalk.gray("Export rules to all agents")}
+${chalk.cyan("Blueprint Tracking:")}
+  ${chalk.white("$ lynxp link AGENTS.md bp_xyz")} ${chalk.gray("Link existing file to blueprint")}
+  ${chalk.white("$ lynxp unlink AGENTS.md")}      ${chalk.gray("Disconnect from cloud")}
+  ${chalk.white("$ lynxp diff bp_abc123")}        ${chalk.gray("Show changes vs cloud version")}
 
 ${chalk.cyan("CI/CD:")}
   ${chalk.white("$ lynxp check --ci")}            ${chalk.gray("Validate config (exit code)")}
