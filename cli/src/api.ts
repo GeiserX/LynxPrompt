@@ -131,14 +131,14 @@ class ApiClient {
 
   // Auth endpoints
   async initCliSession(): Promise<CliSessionResponse> {
-    return this.request<CliSessionResponse>("/api/auth/cli/init", {
+    return this.request<CliSessionResponse>("/api/cli-auth/init", {
       method: "POST",
     });
   }
 
   async pollCliSession(sessionId: string): Promise<CliPollResponse> {
     return this.request<CliPollResponse>(
-      `/api/auth/cli/poll?session=${sessionId}`
+      `/api/cli-auth/poll?session=${sessionId}`
     );
   }
 
