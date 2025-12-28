@@ -18,7 +18,7 @@ concurrency:
 jobs:
   deploy:
     name: Deploy to Production
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, geiserback]
     environment:
       name: production
       url: https://lynxprompt.com
@@ -35,27 +35,33 @@ jobs:
           fi
           echo "✅ Deploying version ${{ inputs.version }}"
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to Docker Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ secrets.DOCKER_REGISTRY }}
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
       - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          platforms: linux/amd64
-          push: true
-          tags: |
-            ${{ secrets.DOCKER_REGISTRY }}/lynxprompt:${{ inputs.version }}
-            ${{ secrets.DOCKER_REGISTRY }}/lynxprompt:latest
-          cache-from: type=registry,ref=${{ secrets.DOCKER_REGISTRY }}/lynxprompt:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKER_REGISTRY }}/lynxprompt:buildcache,mode=max
+        run: |
+          docker buildx build --platform linux/amd64 \
+            -t ${{ secrets.DOCKER_REGISTRY }}/lynxprompt:${{ inputs.version }} \
+            --push .
+          echo "✅ Built and pushed ${{ secrets.DOCKER_REGISTRY }}/lynxprompt:${{ inputs.version }}"
+
+      - name: Update watchtower docker-compose with new version
+        run: |
+          # Clone/pull watchtower repo and update version
+          cd /tmp
+          rm -rf watchtower-deploy
+          git clone http://${{ secrets.GITEA_USERNAME }}:${{ secrets.GITEA_TOKEN }}@192.168.10.100:3010/giteaer/watchtower.git watchtower-deploy
+          cd watchtower-deploy
+          
+          # Update image tag in docker-compose
+          sed -i 's|image: ${{ secrets.DOCKER_REGISTRY }}/lynxprompt:.*|image: ${{ secrets.DOCKER_REGISTRY }}/lynxprompt:${{ inputs.version }}|' lynxprompt/docker-compose.yml
+          
+          # Commit and push
+          git config user.email "github-actions@lynxprompt.com"
+          git config user.name "GitHub Actions"
+          git add -A
+          git commit -m "deploy: update LynxPrompt to v${{ inputs.version }}" || echo "No changes to commit"
+          git push origin main
+          
+          # Cleanup
+          cd /tmp && rm -rf watchtower-deploy
 
       - name: Trigger Portainer deployment
         run: |
@@ -95,4 +101,3 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{"purge_everything":true}'
           echo "✅ Cloudflare cache purged"
-
