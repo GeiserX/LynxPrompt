@@ -438,7 +438,7 @@ export async function PUT(
           templateId: realId,
           version: newVersion,
           content: content.trim(),
-          variables: null,
+          variables: undefined,
           changelog: changelog || null,
           isPublished: Boolean(updateData.isPublic ?? existingBlueprint.isPublic),
           createdBy: session.user.id,

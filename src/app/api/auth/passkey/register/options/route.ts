@@ -29,13 +29,12 @@ export async function POST() {
     const options = await generateRegistrationOptions({
       rpName: webAuthnConfig.rpName,
       rpID: webAuthnConfig.rpID,
-      userID: user.id,
+      userID: new TextEncoder().encode(user.id),
       userName: user.email || user.name || user.id,
       userDisplayName: user.name || user.email || "User",
       attestationType: "none",
       excludeCredentials: user.authenticators.map((auth) => ({
-        id: Uint8Array.from(Buffer.from(auth.credentialID, "base64url")),
-        type: "public-key" as const,
+        id: auth.credentialID, // base64url string
         transports: auth.transports as AuthenticatorTransportFuture[],
       })),
       authenticatorSelection: {

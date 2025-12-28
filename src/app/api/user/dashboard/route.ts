@@ -163,8 +163,10 @@ export async function GET() {
     ]);
     
     // Team-specific data (if user is in a team)
-    let teamBlueprints: typeof myTemplates = [];
-    let teamPurchases: typeof purchasedBlueprints = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let teamBlueprints: any[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let teamPurchases: any[] = [];
     
     if (teamInfo) {
       // Get team-shared blueprints (created by team members and marked as TEAM visibility)

@@ -9,7 +9,7 @@ import {
   MAX_EXPIRATION_DAYS,
   ROLE_DISPLAY_NAMES,
 } from "@/lib/api-tokens";
-import type { ApiTokenRole } from "@/generated/prisma-users";
+import type { ApiTokenRole } from "@/generated/prisma-users/enums";
 
 // Valid roles for token creation
 const VALID_ROLES: ApiTokenRole[] = ["BLUEPRINTS_FULL", "BLUEPRINTS_READONLY", "PROFILE_FULL", "FULL"];

@@ -43,13 +43,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const {
-      credentialID,
-      credentialPublicKey,
-      counter,
-      credentialBackedUp,
-      credentialDeviceType,
-    } = verification.registrationInfo;
+    const { credential, credentialBackedUp, credentialDeviceType } = verification.registrationInfo;
 
     // SECURITY: Sanitize the passkey name to prevent XSS
     const sanitizedName = name ? sanitizeString(name, 50) : "Passkey";
@@ -58,9 +52,9 @@ export async function POST(request: NextRequest) {
     await prismaUsers.authenticator.create({
       data: {
         userId: session.user.id,
-        credentialID: Buffer.from(credentialID).toString("base64url"),
-        credentialPublicKey: Buffer.from(credentialPublicKey),
-        counter: BigInt(counter),
+        credentialID: credential.id, // already base64url string
+        credentialPublicKey: Buffer.from(credential.publicKey),
+        counter: BigInt(credential.counter),
         credentialDeviceType,
         credentialBackedUp,
         transports: registrationResponse.response.transports || [],
