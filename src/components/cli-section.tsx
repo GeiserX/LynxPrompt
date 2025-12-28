@@ -16,18 +16,17 @@ const TERMINAL_LINES = [
   { type: "command", content: "lynxp init" },
   { type: "output", content: "🐱 LynxPrompt Init" },
   { type: "output-dim", content: "  Stack: typescript, react, nextjs" },
-  { type: "output-cyan", content: "  Found: .cursorrules, CLAUDE.md" },
   { type: "output-success", content: "✅ Initialized!" },
   { type: "output", content: "" },
   { type: "command", content: "lynxp push" },
-  { type: "output-highlight", content: "📤 Pushing to LynxPrompt..." },
-  { type: "output-cyan", content: "  → Created blueprint: bp_x7k9m2" },
-  { type: "output-success", content: "✓ Rules synced to cloud" },
+  { type: "output-cyan", content: "  → Blueprint: bp_x7k9m2" },
+  { type: "output-success", content: "✓ Synced to cloud" },
   { type: "output", content: "" },
-  { type: "output-dim", content: "# Edit on web, then pull latest:" },
-  { type: "command", content: "lynxp pull" },
-  { type: "output-cyan", content: "  ↓ Updated 3 rules from blueprint" },
-  { type: "output-success", content: "✓ Local rules updated" },
+  { type: "output-dim", content: "# Pull in any format:" },
+  { type: "command", content: "lynxp pull -f cursor" },
+  { type: "output-success", content: "✓ .cursor/rules/*.mdc" },
+  { type: "command", content: "lynxp pull -f claude" },
+  { type: "output-success", content: "✓ CLAUDE.md" },
 ];
 
 const CLI_FEATURES = [
@@ -49,7 +48,7 @@ const CLI_FEATURES = [
   {
     icon: Globe,
     title: "Export Any Format",
-    description: "Download .cursorrules, CLAUDE.md, or any format from the web platform.",
+    description: "Download Cursor rules, CLAUDE.md, or any format from the web platform.",
   },
 ];
 

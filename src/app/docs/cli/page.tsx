@@ -112,7 +112,7 @@ export default function CliDocsPage() {
             <h3 className="font-semibold">🌐 Export Any Format</h3>
             <p className="mt-2 text-sm text-muted-foreground">
               From the web platform, export your blueprint to any AI agent format:
-              .cursorrules, CLAUDE.md, copilot-instructions, and more.
+              Cursor rules, CLAUDE.md, copilot-instructions, and more.
             </p>
           </div>
         </div>
@@ -129,7 +129,7 @@ export default function CliDocsPage() {
             <code>{`$ lynxp init
 🐱 LynxPrompt Init
   Stack: typescript, react, nextjs
-  Found: .cursorrules, CLAUDE.md
+  Found: .cursor/rules/, CLAUDE.md
 ✅ Initialized!
 
 $ lynxp push
@@ -143,7 +143,7 @@ $ lynxp pull
 ✓ Local rules updated
 
 $ lynxp sync
-✓ Synced to .cursorrules, CLAUDE.md`}</code>
+✓ Synced to .cursor/rules/, CLAUDE.md`}</code>
           </pre>
         </div>
       </section>
