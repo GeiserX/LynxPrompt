@@ -2,6 +2,12 @@
 
 > ⚠️ **IMPORTANT**: Do NOT update this file unless the user explicitly says to. Only the user can authorize changes to AGENTS.md.
 
+> 🔒 **SECURITY WARNING**: This repository is PUBLIC at [github.com/GeiserX/LynxPrompt](https://github.com/GeiserX/LynxPrompt). **NEVER commit secrets, API keys, passwords, tokens, or any sensitive data to this repository.** All secrets must be stored in:
+> - GitHub Secrets (for CI/CD)
+> - Private GitOps repositories (for docker-compose)
+> - Local `.env` files (gitignored)
+> - `AGENTS.md.old` (gitignored, local only)
+
 ## 🎯 Project Overview
 
 **LynxPrompt** is a SaaS web application that generates AI IDE configuration files (`.cursorrules`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.windsurfrules`, etc.) through an intuitive wizard interface. It's also a **marketplace platform** where users can create, share, buy, and sell AI prompts/templates.
