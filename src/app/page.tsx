@@ -12,6 +12,7 @@ import {
 import { AgentsMarquee } from "@/components/agents-marquee";
 import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
+import { CLISection } from "@/components/cli-section";
 
 // JSON-LD Structured Data for Homepage
 const organizationJsonLd = {
@@ -199,6 +200,9 @@ export default function HomePage() {
           </p>
         </div>
       </section>
+
+      {/* CLI Section */}
+      <CLISection />
 
       {/* Community Blueprints CTA */}
       <section className="container mx-auto px-4 py-20 sm:px-6 lg:px-8">
