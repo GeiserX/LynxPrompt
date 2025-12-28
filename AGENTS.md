@@ -12,6 +12,18 @@
 
 ## 🚨 CRITICAL - READ FIRST
 
+### Always Backup Before Modifying Config Files
+
+Before modifying important config files (Caddyfile, ddns-updater, docker-compose, etc.), ALWAYS create a backup first:
+
+```bash
+# Example:
+cp /path/to/Caddyfile /path/to/Caddyfile.old
+cp /path/to/config.json /path/to/config.json.old
+```
+
+This allows quick rollback if something breaks.
+
 ### Always Check GitHub Actions After Push/Deploy
 
 After any push or deployment, ALWAYS check GitHub Actions logs:
