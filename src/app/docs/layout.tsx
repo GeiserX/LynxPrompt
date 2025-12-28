@@ -47,20 +47,23 @@ export default function DocsLayout({
         <DocsSidebar className="hidden lg:block" />
 
         {/* Main content area */}
-        <main className="flex-1">
+        <main className="flex-1 min-w-0">
           {/* Mobile menu button */}
           <div className="border-b px-4 py-3 lg:hidden">
             <DocsSidebarMobile />
           </div>
 
           {/* Page content with ToC */}
-          <div className="flex gap-8 px-4 py-8 sm:px-6 lg:px-8">
-            <div className="min-w-0 max-w-3xl flex-1">
-              {children}
+          <div className="relative mx-auto max-w-6xl">
+            <div className="flex">
+              {/* Main content */}
+              <article className="flex-1 min-w-0 max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+                {children}
+              </article>
+              
+              {/* Table of Contents - fixed to right edge */}
+              <DocsToc className="flex-shrink-0 pl-4" />
             </div>
-            
-            {/* Table of Contents - right side */}
-            <DocsToc />
           </div>
         </main>
       </div>
