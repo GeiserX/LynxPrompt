@@ -187,6 +187,34 @@ export const docsConfig: DocsSection[] = [
     ],
   },
   {
+    title: "CLI",
+    href: "/docs/cli",
+    description: "Generate configurations from your terminal with the LynxPrompt CLI.",
+    icon: "Terminal",
+    items: [
+      {
+        title: "Overview",
+        href: "/docs/cli",
+        description: "Introduction to the LynxPrompt CLI",
+      },
+      {
+        title: "Installation",
+        href: "/docs/cli/installation",
+        description: "Install via npm, Homebrew, Chocolatey, or Snap",
+      },
+      {
+        title: "Authentication",
+        href: "/docs/cli/authentication",
+        description: "Login, logout, and manage credentials",
+      },
+      {
+        title: "Commands",
+        href: "/docs/cli/commands",
+        description: "All available CLI commands",
+      },
+    ],
+  },
+  {
     title: "API Reference",
     href: "/docs/api",
     description: "Programmatically manage blueprints with our REST API.",
