@@ -26,7 +26,7 @@
     "db:push:support": "prisma db push --config=prisma/prisma.config-support.ts",
     "db:seed": "tsx prisma/seed-app.ts",
     "db:seed:support": "tsx prisma/seed-support.ts",
-    "db:seed:personas": "tsx prisma/seed-personas.ts",
+    "db:seed:personas": "tsx prisma/local/seed-personas.ts",
     "db:studio:app": "prisma studio --config=prisma/prisma.config-app.ts",
     "db:studio:users": "prisma studio --config=prisma/prisma.config-users.ts",
     "db:studio:support": "prisma studio --config=prisma/prisma.config-support.ts",
