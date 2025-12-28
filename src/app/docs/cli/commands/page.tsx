@@ -1,11 +1,11 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Command, Wand2, FileCode, Search, Download, User, LogIn, LogOut, Info, ArrowRight, RefreshCw, Layers, Cloud, ArrowUp, ArrowDown } from "lucide-react";
+import { Command, Wand2, FileCode, Search, Download, User, LogIn, LogOut, Info, ArrowRight, RefreshCw, Layers, Cloud, ArrowUp, ArrowDown, Link2, Unlink, CheckCircle, FileSearch, Sparkles } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "CLI Commands",
   description:
-    "Complete reference for LynxPrompt CLI commands. Push, pull, sync, and manage blueprints from your terminal.",
+    "Complete reference for LynxPrompt CLI commands. Generate AI configs, track blueprints, and sync across editors.",
 };
 
 export default function CliCommandsPage() {
@@ -20,7 +20,7 @@ export default function CliCommandsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Commands Reference</h1>
         </div>
         <p className="max-w-2xl text-lg text-muted-foreground">
-          Complete reference for all available LynxPrompt CLI commands, options, and flags.
+          Complete reference for all LynxPrompt CLI commands, options, and flags.
         </p>
       </div>
 
@@ -36,52 +36,38 @@ export default function CliCommandsPage() {
               </tr>
             </thead>
             <tbody>
+              {/* Primary commands */}
               <tr className="border-b bg-primary/5">
                 <td className="py-3 pr-4">
-                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp init</code>
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp wizard</code>
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
-                  Initialize LynxPrompt in your project
+                  Generate AI config interactively <span className="text-xs text-primary">(recommended)</span>
                 </td>
               </tr>
               <tr className="border-b bg-primary/5">
                 <td className="py-3 pr-4">
-                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp push</code>
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp check</code>
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
-                  Push local rules to your cloud blueprint
+                  Validate AI config files (CI/CD)
                 </td>
               </tr>
               <tr className="border-b bg-primary/5">
-                <td className="py-3 pr-4">
-                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp pull</code>
-                </td>
-                <td className="py-3 pr-4 text-muted-foreground">
-                  Pull latest rules from your blueprint
-                </td>
-              </tr>
-              <tr className="border-b bg-primary/5">
-                <td className="py-3 pr-4">
-                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp sync</code>
-                </td>
-                <td className="py-3 pr-4 text-muted-foreground">
-                  Sync local rules to AI agent files
-                </td>
-              </tr>
-              <tr className="border-b">
                 <td className="py-3 pr-4">
                   <code className="rounded bg-muted px-2 py-1 text-sm">lynxp status</code>
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
-                  Show sync status and linked blueprint
+                  Show config status and tracked blueprints
                 </td>
               </tr>
+              {/* Marketplace */}
               <tr className="border-b">
                 <td className="py-3 pr-4">
-                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp link &lt;id&gt;</code>
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp pull &lt;id&gt;</code>
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
-                  Link project to a team blueprint
+                  Download and track a blueprint
                 </td>
               </tr>
               <tr className="border-b">
@@ -89,7 +75,7 @@ export default function CliCommandsPage() {
                   <code className="rounded bg-muted px-2 py-1 text-sm">lynxp search &lt;query&gt;</code>
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
-                  Search blueprints in the marketplace
+                  Search marketplace blueprints
                 </td>
               </tr>
               <tr className="border-b">
@@ -100,6 +86,57 @@ export default function CliCommandsPage() {
                   List your blueprints
                 </td>
               </tr>
+              {/* Blueprint tracking */}
+              <tr className="border-b">
+                <td className="py-3 pr-4">
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp link &lt;file&gt; &lt;id&gt;</code>
+                </td>
+                <td className="py-3 pr-4 text-muted-foreground">
+                  Link local file to cloud blueprint
+                </td>
+              </tr>
+              <tr className="border-b">
+                <td className="py-3 pr-4">
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp unlink &lt;file&gt;</code>
+                </td>
+                <td className="py-3 pr-4 text-muted-foreground">
+                  Disconnect file from cloud blueprint
+                </td>
+              </tr>
+              <tr className="border-b">
+                <td className="py-3 pr-4">
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp diff &lt;id&gt;</code>
+                </td>
+                <td className="py-3 pr-4 text-muted-foreground">
+                  Show changes vs cloud blueprint
+                </td>
+              </tr>
+              {/* Advanced */}
+              <tr className="border-b">
+                <td className="py-3 pr-4">
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp init</code>
+                </td>
+                <td className="py-3 pr-4 text-muted-foreground">
+                  Initialize .lynxprompt/ (advanced)
+                </td>
+              </tr>
+              <tr className="border-b">
+                <td className="py-3 pr-4">
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp sync</code>
+                </td>
+                <td className="py-3 pr-4 text-muted-foreground">
+                  Sync rules to all configured agents
+                </td>
+              </tr>
+              <tr className="border-b">
+                <td className="py-3 pr-4">
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp agents</code>
+                </td>
+                <td className="py-3 pr-4 text-muted-foreground">
+                  Manage AI agents
+                </td>
+              </tr>
+              {/* Auth */}
               <tr className="border-b">
                 <td className="py-3 pr-4">
                   <code className="rounded bg-muted px-2 py-1 text-sm">lynxp login</code>
@@ -108,20 +145,368 @@ export default function CliCommandsPage() {
                   Authenticate with LynxPrompt
                 </td>
               </tr>
-              <tr className="border-b">
-                <td className="py-3 pr-4">
-                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp logout</code>
-                </td>
-                <td className="py-3 pr-4 text-muted-foreground">
-                  Log out and remove credentials
-                </td>
-              </tr>
             </tbody>
           </table>
         </div>
         <p className="text-sm text-muted-foreground">
-          <strong>Note:</strong> <code className="rounded bg-muted px-1">lynxp</code> is an alias for <code className="rounded bg-muted px-1">lynxprompt</code>. You can use either.
+          <strong>Note:</strong> <code className="rounded bg-muted px-1">lynxp</code> is an alias for <code className="rounded bg-muted px-1">lynxprompt</code>.
         </p>
+      </section>
+
+      {/* wizard command */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-3">
+          <Sparkles className="h-5 w-5 text-primary" />
+          <h2 className="text-2xl font-bold">lynxp wizard</h2>
+        </div>
+        <p className="text-muted-foreground">
+          The recommended way to generate AI configuration files. Interactive wizard that creates
+          AGENTS.md, .cursor/rules/, or any other format based on your choices.
+        </p>
+
+        <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+          <pre className="text-sm text-zinc-100">
+            <code>{`lynxp wizard [options]
+
+Options:
+  -n, --name <name>        Project name
+  -d, --description <desc> Project description
+  -s, --stack <stack>      Tech stack (comma-separated)
+  -f, --format <format>    Output format: agents, cursor, or multiple
+  --persona <persona>      AI persona (fullstack, backend, frontend, etc.)
+  --boundaries <level>     Boundary preset (conservative, standard, permissive)
+  -y, --yes                Skip prompts, generate AGENTS.md with defaults`}</code>
+          </pre>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="font-semibold">Examples</h3>
+          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+            <pre className="text-sm text-zinc-100">
+              <code>{`# Interactive wizard (recommended)
+$ lynxp wizard
+
+# Quick generation with defaults
+$ lynxp wizard -y
+✅ Generated: AGENTS.md
+
+# Generate for Cursor specifically
+$ lynxp wizard -f cursor
+✅ Generated: .cursor/rules/project.mdc
+
+# Generate multiple formats
+$ lynxp wizard -f agents,cursor,copilot
+✅ Generated:
+   AGENTS.md
+   .cursor/rules/project.mdc
+   .github/copilot-instructions.md`}</code>
+            </pre>
+          </div>
+        </div>
+      </section>
+
+      {/* check command */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-3">
+          <CheckCircle className="h-5 w-5 text-primary" />
+          <h2 className="text-2xl font-bold">lynxp check</h2>
+        </div>
+        <p className="text-muted-foreground">
+          Validate AI configuration files. Perfect for CI/CD pipelines and pre-commit hooks.
+        </p>
+
+        <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+          <pre className="text-sm text-zinc-100">
+            <code>{`lynxp check [options]
+
+Options:
+  --ci    CI mode - exit codes only (0=pass, 1=fail)`}</code>
+          </pre>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="font-semibold">Example</h3>
+          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+            <pre className="text-sm text-zinc-100">
+              <code>{`$ lynxp check
+🐱 LynxPrompt Check
+
+✓ Found 3 configuration files:
+  AGENTS.md
+  .cursor/rules/project.mdc
+  .github/copilot-instructions.md
+
+⚠ 1 warning:
+  AGENTS.md: Contains placeholder text "TODO"
+
+✅ Validation passed!
+
+# In CI/CD:
+$ lynxp check --ci
+✓ Validation passed`}</code>
+            </pre>
+          </div>
+        </div>
+
+        <div className="rounded-lg border bg-card p-4">
+          <h4 className="font-semibold text-sm mb-2">What it validates</h4>
+          <ul className="text-sm text-muted-foreground space-y-1">
+            <li>• Empty or minimal content</li>
+            <li>• Placeholder text (TODO, FIXME, etc.)</li>
+            <li>• Potential secrets or API keys</li>
+            <li>• YAML frontmatter syntax (for .mdc files)</li>
+            <li>• LynxPrompt config file validity</li>
+          </ul>
+        </div>
+      </section>
+
+      {/* pull command */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-3">
+          <Download className="h-5 w-5 text-primary" />
+          <h2 className="text-2xl font-bold">lynxp pull</h2>
+        </div>
+        <p className="text-muted-foreground">
+          Download a blueprint from the marketplace and automatically track it for future updates.
+        </p>
+
+        <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+          <pre className="text-sm text-zinc-100">
+            <code>{`lynxp pull <blueprint-id> [options]
+
+Arguments:
+  blueprint-id    The blueprint ID (e.g., bp_abc123)
+
+Options:
+  -o, --output <dir>    Output directory (default: current)
+  -y, --yes             Skip confirmation prompts
+  --preview             Preview content without downloading
+  --no-track            Don't track for future syncs`}</code>
+          </pre>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="font-semibold">Examples</h3>
+          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+            <pre className="text-sm text-zinc-100">
+              <code>{`# Download and track
+$ lynxp pull bp_abc123
+🐱 Blueprint: Next.js TypeScript Starter
+   📦 Marketplace blueprint (read-only)
+
+✅ Downloaded: AGENTS.md
+   Linked to: bp_abc123
+   Updates: Run 'lynxp pull bp_abc123' to sync updates
+
+# Preview first
+$ lynxp pull bp_abc123 --preview
+# Shows content without writing file
+
+# Without tracking
+$ lynxp pull bp_abc123 --no-track`}</code>
+            </pre>
+          </div>
+        </div>
+
+        <div className="rounded-lg border bg-card p-4">
+          <h4 className="font-semibold text-sm mb-2">Blueprint Types</h4>
+          <ul className="text-sm text-muted-foreground space-y-1">
+            <li><strong>Marketplace</strong> - Read-only, can pull updates but not push changes</li>
+            <li><strong>Team</strong> - Full sync, push and pull changes</li>
+            <li><strong>Private</strong> - Your own, full control</li>
+          </ul>
+        </div>
+      </section>
+
+      {/* link command */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-3">
+          <Link2 className="h-5 w-5 text-primary" />
+          <h2 className="text-2xl font-bold">lynxp link</h2>
+        </div>
+        <p className="text-muted-foreground">
+          Connect an existing local file to a cloud blueprint for tracking. Use this when you already
+          have a file that matches a blueprint and want to track updates.
+        </p>
+
+        <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+          <pre className="text-sm text-zinc-100">
+            <code>{`lynxp link <file> <blueprint-id>
+lynxp link --list
+
+Arguments:
+  file           Local file path (e.g., AGENTS.md)
+  blueprint-id   Blueprint to link to (e.g., bp_abc123)
+
+Options:
+  --list         List all tracked blueprints`}</code>
+          </pre>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="font-semibold">Examples</h3>
+          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+            <pre className="text-sm text-zinc-100">
+              <code>{`# Link existing file to blueprint
+$ lynxp link AGENTS.md bp_abc123
+✅ Linked: AGENTS.md → bp_abc123
+
+# List all tracked blueprints
+$ lynxp link --list
+🐱 Tracked Blueprints
+
+✓ AGENTS.md [marketplace]
+  ID: bp_abc123 • Next.js TypeScript Starter
+
+● .cursor/rules/project.mdc [team]
+  ID: bp_team456 • Team Standards
+  ⚠ Local changes detected`}</code>
+            </pre>
+          </div>
+        </div>
+      </section>
+
+      {/* unlink command */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-3">
+          <Unlink className="h-5 w-5 text-primary" />
+          <h2 className="text-2xl font-bold">lynxp unlink</h2>
+        </div>
+        <p className="text-muted-foreground">
+          Disconnect a local file from its cloud blueprint. The file remains but is no longer tracked.
+        </p>
+
+        <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+          <pre className="text-sm text-zinc-100">
+            <code>{`lynxp unlink <file>
+
+Arguments:
+  file    Local file to unlink (e.g., AGENTS.md)`}</code>
+          </pre>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="font-semibold">Example</h3>
+          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+            <pre className="text-sm text-zinc-100">
+              <code>{`$ lynxp unlink AGENTS.md
+
+Currently linked to: bp_abc123
+   Name: Next.js TypeScript Starter
+   Source: marketplace
+
+? Unlink AGENTS.md from Next.js TypeScript Starter? Yes
+
+✅ Unlinked: AGENTS.md
+  The file is now a standalone local file.`}</code>
+            </pre>
+          </div>
+        </div>
+      </section>
+
+      {/* diff command */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-3">
+          <FileSearch className="h-5 w-5 text-primary" />
+          <h2 className="text-2xl font-bold">lynxp diff</h2>
+        </div>
+        <p className="text-muted-foreground">
+          Show changes between local files and cloud blueprints, or between .lynxprompt/rules/ and exported files.
+        </p>
+
+        <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+          <pre className="text-sm text-zinc-100">
+            <code>{`lynxp diff [blueprint-id] [options]
+
+Arguments:
+  blueprint-id   Compare local with this blueprint
+
+Options:
+  --local        Compare .lynxprompt/rules/ with exported files`}</code>
+          </pre>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="font-semibold">Examples</h3>
+          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+            <pre className="text-sm text-zinc-100">
+              <code>{`# Compare with cloud blueprint
+$ lynxp diff bp_abc123
+✓ Blueprint: Next.js TypeScript Starter
+
+Changes (remote → local):
+  ...
+- Old line
++ New line
+  ...
+
+Summary: +5 -3 lines changed
+
+# Compare local rules with exports
+$ lynxp diff --local
+✓ AGENTS.md is in sync
+⚠ .cursor/rules/project.mdc differs from source
+  +2 -1 lines
+
+Run 'lynxp sync' to update exported files`}</code>
+            </pre>
+          </div>
+        </div>
+      </section>
+
+      {/* status command */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-3">
+          <Info className="h-5 w-5 text-primary" />
+          <h2 className="text-2xl font-bold">lynxp status</h2>
+        </div>
+        <p className="text-muted-foreground">
+          Show current AI configuration status including tracked blueprints and local files.
+        </p>
+
+        <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+          <pre className="text-sm text-zinc-100">
+            <code>{`lynxp status`}</code>
+          </pre>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="font-semibold">Example output</h3>
+          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+            <pre className="text-sm text-zinc-100">
+              <code>{`$ lynxp status
+
+🐱 LynxPrompt Status
+   Directory: /Users/me/my-project
+
+✓ LynxPrompt initialized
+   Exporters: cursor, agents
+
+📦 Tracked Blueprints
+
+  ✓ AGENTS.md [marketplace]
+     ID: bp_abc123 • Next.js Starter
+
+  ● .cursor/rules/project.mdc [team]
+     ID: bp_team456 • Team Standards
+     ⚠ Local changes - run 'lynxp push' to sync
+
+📄 AI Config Files
+
+  ✓ AGENTS.md (tracked)
+     Platform: Claude Code, Cursor, AI Agents
+     Size: 2.1 KB (85 lines)
+
+  ✓ .cursor/rules/ (tracked)
+     Platform: Cursor
+     Rules: 3 files
+
+  ✓ .github/copilot-instructions.md
+     Platform: GitHub Copilot
+     Size: 1.2 KB (42 lines)`}</code>
+            </pre>
+          </div>
+        </div>
       </section>
 
       {/* init command */}
@@ -131,9 +516,8 @@ export default function CliCommandsPage() {
           <h2 className="text-2xl font-bold">lynxp init</h2>
         </div>
         <p className="text-muted-foreground">
-          Initialize LynxPrompt in your project. Auto-detects your tech stack and existing AI agent
-          configurations, then sets up the <code className="rounded bg-muted px-1">.lynxprompt/</code> directory
-          as your single source of truth.
+          Advanced setup for managing rules across multiple AI editors. Creates a .lynxprompt/ folder
+          as the single source of truth. <strong>Most users should use &apos;lynxp wizard&apos; instead.</strong>
         </p>
 
         <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
@@ -141,211 +525,19 @@ export default function CliCommandsPage() {
             <code>{`lynxp init [options]
 
 Options:
-  --name <name>         Project name
-  --description <desc>  Project description
-  --yes, -y             Skip confirmations`}</code>
+  -y, --yes      Skip prompts and use defaults
+  -f, --force    Re-initialize even if already initialized`}</code>
           </pre>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="font-semibold">What it does</h3>
-          <ul className="ml-4 list-disc space-y-2 text-sm text-muted-foreground">
-            <li><strong>Detects your tech stack</strong> by scanning package.json, Cargo.toml, go.mod, pyproject.toml, requirements.txt, Makefile</li>
-            <li><strong>Finds existing AI configs</strong> like .cursor/rules/, CLAUDE.md, AGENTS.md, .windsurfrules (40+ agents)</li>
-            <li><strong>Offers to import</strong> existing configs or create a starter template</li>
-            <li><strong>Creates config files</strong> in <code className="rounded bg-muted px-1">.lynxprompt/</code></li>
-            <li><strong>Enables appropriate exporters</strong> based on detected agents</li>
-          </ul>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="font-semibold">Example</h3>
-          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
-            <pre className="text-sm text-zinc-100">
-              <code>{`$ lynxp init
-
-🐱 LynxPrompt Init
-
-Detected project:
-  Stack: typescript, react, nextjs, prisma
-  Build: pnpm build
-  Test: pnpm test
-  Package manager: pnpm
-
-Detected 3 AI agents:
-  ✓ Cursor Rules (12 sections)
-  ✓ Claude Code (8 sections)
-  ✓ AGENTS.md (5 sections)
-
-? Import existing configurations into LynxPrompt? Yes
-→ Imported 25 rules from 3 files
-
-Enabling 3 exporters: cursor, claude-code, agents
-✅ LynxPrompt initialized!
-
-Created:
-  .lynxprompt/conf.yml
-  .lynxprompt/rules/00-core.md
-
-Next steps:
-  1. Edit rules in .lynxprompt/rules/
-  2. Run 'lynxp sync' to sync to all agents`}</code>
-            </pre>
-          </div>
-        </div>
-      </section>
-
-      {/* push command */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-3">
-          <ArrowUp className="h-5 w-5 text-primary" />
-          <h2 className="text-2xl font-bold">lynxp push</h2>
-        </div>
-        <p className="text-muted-foreground">
-          Push your local rules to your LynxPrompt account. Creates or updates a private blueprint
-          that your team can link to. <strong>Requires authentication.</strong>
-        </p>
-
-        <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
-          <pre className="text-sm text-zinc-100">
-            <code>{`lynxp push [options]
-
-Options:
-  -m, --message <msg>   Commit message for the update
-  --force               Overwrite remote changes without confirmation`}</code>
-          </pre>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="font-semibold">Example</h3>
-          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
-            <pre className="text-sm text-zinc-100">
-              <code>{`$ lynxp push
-📤 Pushing to LynxPrompt...
-  → Linked blueprint: bp_x7k9m2
-  → Updated 5 rules
-✓ Rules synced to cloud
-
-$ lynxp push -m "Add testing guidelines"
-📤 Pushing to LynxPrompt...
-✓ Blueprint updated: "Add testing guidelines"`}</code>
-            </pre>
-          </div>
         </div>
 
         <div className="rounded-lg border bg-card p-4">
           <p className="text-sm text-muted-foreground">
-            <strong>First push?</strong> If no blueprint is linked, push creates a new private blueprint
-            in your account and links it to this project automatically.
+            <strong>When to use init vs wizard:</strong>
           </p>
-        </div>
-      </section>
-
-      {/* pull command */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-3">
-          <ArrowDown className="h-5 w-5 text-primary" />
-          <h2 className="text-2xl font-bold">lynxp pull</h2>
-        </div>
-        <p className="text-muted-foreground">
-          Pull a blueprint in any format. Your blueprint is a collection of rules — pull exports
-          them to the format your AI agent expects.
-        </p>
-
-        <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
-          <pre className="text-sm text-zinc-100">
-            <code>{`lynxp pull [blueprint-id] [options]
-
-Arguments:
-  blueprint-id   Blueprint to pull (default: linked blueprint)
-
-Options:
-  -f, --format <format>   Output format (see below)
-  -o, --output <path>     Custom output path
-  --split                 Split into separate files (for multi-file agents)
-  --force                 Overwrite without confirmation`}</code>
-          </pre>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="font-semibold">Examples</h3>
-          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
-            <pre className="text-sm text-zinc-100">
-              <code>{`# Pull as raw rules (default)
-$ lynxp pull
-✓ Updated .lynxprompt/rules/
-
-# Single-file formats - all rules concatenated
-$ lynxp pull --format claude
-✓ Downloaded to CLAUDE.md
-
-$ lynxp pull --format agents
-✓ Downloaded to AGENTS.md
-
-# Multi-file format (Cursor) - single combined file by default
-$ lynxp pull --format cursor
-✓ Downloaded to .cursor/rules/lynxprompt-rules.mdc
-
-# Multi-file format with --split - one file per rule
-$ lynxp pull --format cursor --split
-✓ Downloaded to .cursor/rules/
-    testing.mdc
-    security.mdc
-    code-style.mdc`}</code>
-            </pre>
-          </div>
-        </div>
-
-        <div className="rounded-lg border bg-card p-4">
-          <h4 className="font-semibold text-sm mb-2">Supported Formats</h4>
-          <div className="grid gap-1 text-sm text-muted-foreground">
-            <div><code className="rounded bg-muted px-1">cursor</code> → .cursor/rules/*.mdc</div>
-            <div><code className="rounded bg-muted px-1">claude</code> → CLAUDE.md</div>
-            <div><code className="rounded bg-muted px-1">agents</code> → AGENTS.md</div>
-            <div><code className="rounded bg-muted px-1">copilot</code> → .github/copilot-instructions.md</div>
-            <div><code className="rounded bg-muted px-1">windsurf</code> → .windsurfrules</div>
-            <div><code className="rounded bg-muted px-1">raw</code> → .lynxprompt/rules/*.md (source)</div>
-          </div>
-        </div>
-      </section>
-
-      {/* link command */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-3">
-          <Cloud className="h-5 w-5 text-primary" />
-          <h2 className="text-2xl font-bold">lynxp link</h2>
-        </div>
-        <p className="text-muted-foreground">
-          Link this project to a team blueprint. All team members can link to the same blueprint
-          and stay in sync with push/pull.
-        </p>
-
-        <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
-          <pre className="text-sm text-zinc-100">
-            <code>{`lynxp link <blueprint-id>
-
-Arguments:
-  blueprint-id   The blueprint to link to (e.g., bp_abc123)`}</code>
-          </pre>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="font-semibold">Team workflow</h3>
-          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
-            <pre className="text-sm text-zinc-100">
-              <code>{`# Team lead creates blueprint
-$ lynxp push
-✓ Created blueprint: bp_team_rules
-
-# Team members link to it
-$ lynxp link bp_team_rules
-✓ Linked to "Team Rules"
-
-# Everyone can now push/pull
-$ lynxp pull   # Get latest from team
-$ lynxp push   # Share your changes`}</code>
-            </pre>
-          </div>
+          <ul className="mt-2 text-sm text-muted-foreground space-y-1">
+            <li>• <strong>wizard</strong> - Generate config files directly (most users)</li>
+            <li>• <strong>init</strong> - Set up .lynxprompt/ folder for multi-editor sync (power users)</li>
+          </ul>
         </div>
       </section>
 
@@ -356,8 +548,7 @@ $ lynxp push   # Share your changes`}</code>
           <h2 className="text-2xl font-bold">lynxp sync</h2>
         </div>
         <p className="text-muted-foreground">
-          Sync local rules to AI agent files in your project. This exports your rules to
-          .cursor/rules/, CLAUDE.md, and other configured agent formats.
+          Sync local rules from .lynxprompt/rules/ to all configured AI agent formats.
         </p>
 
         <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
@@ -365,175 +556,9 @@ $ lynxp push   # Share your changes`}</code>
             <code>{`lynxp sync [options]
 
 Options:
-  -d, --dry-run    Preview changes without writing files
-  -f, --force      Force sync without prompts (for CI/CD)`}</code>
+  --dry-run    Preview changes without writing files
+  -f, --force  Skip prompts (for CI/CD)`}</code>
           </pre>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="font-semibold">Example</h3>
-          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
-            <pre className="text-sm text-zinc-100">
-              <code>{`$ lynxp sync
-✓ Synced to 4 agents:
-  .cursor/rules/lynxprompt-rules.mdc
-  CLAUDE.md
-  AGENTS.md
-  .github/copilot-instructions.md`}</code>
-            </pre>
-          </div>
-        </div>
-
-        <div className="rounded-lg border bg-card p-4">
-          <p className="text-sm text-muted-foreground">
-            <strong>Tip:</strong> You can also export to any agent format from the web platform.
-            Just push your rules and download the format you need.
-          </p>
-        </div>
-      </section>
-
-      {/* agents command */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-3">
-          <Layers className="h-5 w-5 text-primary" />
-          <h2 className="text-2xl font-bold">lynxp agents</h2>
-        </div>
-        <p className="text-muted-foreground">
-          Manage AI agents — list all supported agents, enable/disable specific ones, or detect agents in your current project.
-        </p>
-
-        <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
-          <pre className="text-sm text-zinc-100">
-            <code>{`lynxp agents
-
-# Opens interactive menu to:
-# - List all 40+ supported agents
-# - Enable/disable agents
-# - Detect agents in current project
-# - View enabled agents`}</code>
-          </pre>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="font-semibold">Supported Agents</h3>
-          <p className="text-sm text-muted-foreground">
-            LynxPrompt supports 40+ AI coding agents, including:
-          </p>
-          <div className="grid gap-2 sm:grid-cols-2">
-            <div className="rounded-lg border p-3">
-              <p className="font-medium text-sm">IDE-Based</p>
-              <p className="text-xs text-muted-foreground">Cursor, Windsurf, Zed, VS Code, JetBrains</p>
-            </div>
-            <div className="rounded-lg border p-3">
-              <p className="font-medium text-sm">AI Assistants</p>
-              <p className="text-xs text-muted-foreground">Claude Code, GitHub Copilot, Amazon Q, Gemini</p>
-            </div>
-            <div className="rounded-lg border p-3">
-              <p className="font-medium text-sm">Extensions</p>
-              <p className="text-xs text-muted-foreground">Cline, Roo Code, Continue, Aider, Double</p>
-            </div>
-            <div className="rounded-lg border p-3">
-              <p className="font-medium text-sm">Standards</p>
-              <p className="text-xs text-muted-foreground">AGENTS.md, llms.txt, CONVENTIONS.md</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="font-semibold">Example: Detect agents</h3>
-          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
-            <pre className="text-sm text-zinc-100">
-              <code>{`$ lynxp agents
-? What would you like to do? Detect agents in this project
-
-Found 3 agents in this project:
-  ✓ Cursor (.cursor/rules/)
-      12 rules across 3 files
-  ✓ Claude Code (CLAUDE.md)
-      8 sections
-  ✓ GitHub Copilot (.github/copilot-instructions.md)
-      5 sections`}</code>
-            </pre>
-          </div>
-        </div>
-      </section>
-
-      {/* list command */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-3">
-          <FileCode className="h-5 w-5 text-primary" />
-          <h2 className="text-2xl font-bold">lynxprompt list</h2>
-        </div>
-        <p className="text-muted-foreground">
-          List all blueprints in your LynxPrompt account. Requires authentication.
-        </p>
-
-        <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
-          <pre className="text-sm text-zinc-100">
-            <code>{`lynxprompt list [options]
-
-Options:
-  --limit <n>    Maximum number of blueprints to show (default: 20)
-  --json         Output as JSON`}</code>
-          </pre>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="font-semibold">Example output</h3>
-          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
-            <pre className="text-sm text-zinc-100">
-              <code>{`$ lynxprompt list
-
-📋 Your Blueprints (3)
-
-  bp_abc123  Next.js TypeScript Starter    public   v1.2.0
-  bp_def456  Python FastAPI Template       private  v2.0.1
-  bp_ghi789  React Component Library       public   v1.0.0
-
-Use 'lynxprompt pull <id>' to download a blueprint.`}</code>
-            </pre>
-          </div>
-        </div>
-      </section>
-
-      {/* pull command */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-3">
-          <Download className="h-5 w-5 text-primary" />
-          <h2 className="text-2xl font-bold">lynxprompt pull</h2>
-        </div>
-        <p className="text-muted-foreground">
-          Download a blueprint to the current directory. Works with your own blueprints
-          and public marketplace blueprints.
-        </p>
-
-        <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
-          <pre className="text-sm text-zinc-100">
-            <code>{`lynxprompt pull <blueprint-id> [options]
-
-Arguments:
-  blueprint-id    The blueprint ID (e.g., bp_abc123)
-
-Options:
-  --output, -o <dir>    Output directory (default: current)
-  --yes, -y             Skip confirmation prompts`}</code>
-          </pre>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="font-semibold">Examples</h3>
-          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
-            <pre className="text-sm text-zinc-100">
-              <code>{`# Download to current directory
-lynxprompt pull bp_abc123
-
-# Download to specific directory
-lynxprompt pull bp_abc123 --output ./my-project
-
-# Skip confirmation
-lynxprompt pull bp_abc123 --yes`}</code>
-            </pre>
-          </div>
         </div>
       </section>
 
@@ -541,7 +566,7 @@ lynxprompt pull bp_abc123 --yes`}</code>
       <section className="space-y-4">
         <div className="flex items-center gap-3">
           <Search className="h-5 w-5 text-primary" />
-          <h2 className="text-2xl font-bold">lynxprompt search</h2>
+          <h2 className="text-2xl font-bold">lynxp search</h2>
         </div>
         <p className="text-muted-foreground">
           Search public blueprints in the LynxPrompt marketplace. No authentication required.
@@ -549,70 +574,14 @@ lynxprompt pull bp_abc123 --yes`}</code>
 
         <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
           <pre className="text-sm text-zinc-100">
-            <code>{`lynxprompt search <query> [options]
+            <code>{`lynxp search <query> [options]
 
 Arguments:
-  query           Search terms (e.g., "nextjs typescript")
+  query           Search terms
 
 Options:
-  --limit <n>     Maximum results (default: 10)
-  --json          Output as JSON`}</code>
+  --limit <n>     Maximum results (default: 20)`}</code>
           </pre>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="font-semibold">Example</h3>
-          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
-            <pre className="text-sm text-zinc-100">
-              <code>{`$ lynxprompt search "react typescript" --limit 5
-
-🔍 Search results for "react typescript" (5)
-
-  bp_abc123  React TypeScript Starter       ★ 4.8  ↓ 1.2k
-  bp_def456  React Hooks Patterns           ★ 4.7  ↓ 890
-  bp_ghi789  React Testing Library Setup    ★ 4.5  ↓ 654
-  bp_jkl012  React Redux TypeScript         ★ 4.4  ↓ 432
-  bp_mno345  React Component Patterns       ★ 4.3  ↓ 321
-
-Use 'lynxprompt pull <id>' to download.`}</code>
-            </pre>
-          </div>
-        </div>
-      </section>
-
-      {/* status command */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-3">
-          <Info className="h-5 w-5 text-primary" />
-          <h2 className="text-2xl font-bold">lynxprompt status</h2>
-        </div>
-        <p className="text-muted-foreground">
-          Show the current AI configuration files in the working directory.
-        </p>
-
-        <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
-          <pre className="text-sm text-zinc-100">
-            <code>{`lynxprompt status`}</code>
-          </pre>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="font-semibold">Example output</h3>
-          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
-            <pre className="text-sm text-zinc-100">
-              <code>{`$ lynxprompt status
-
-📁 AI Config Status
-
-  ✅ .cursor/rules/                  (3 files)
-  ✅ CLAUDE.md                       (1.8 KB)
-  ✅ .github/copilot-instructions.md (1.2 KB)
-  ❌ .windsurfrules                  (not found)
-  ❌ AGENTS.md                       (not found)
-
-Run 'lynxprompt init' to generate missing configs.`}</code>
-            </pre>
-          </div>
         </div>
       </section>
 
@@ -620,92 +589,40 @@ Run 'lynxprompt init' to generate missing configs.`}</code>
       <section className="space-y-4">
         <h2 className="text-2xl font-bold">Authentication Commands</h2>
         
-        <div className="space-y-6">
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <LogIn className="h-5 w-5 text-primary" />
-              <h3 className="text-xl font-semibold">lynxprompt login</h3>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="rounded-lg border p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <LogIn className="h-4 w-4 text-primary" />
+              <code className="text-sm font-semibold">lynxp login</code>
             </div>
-            <p className="text-muted-foreground">
-              Open browser to authenticate with your LynxPrompt account.
+            <p className="text-sm text-muted-foreground">
+              Opens browser to authenticate
             </p>
-            <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
-              <code className="text-sm text-zinc-100">lynxprompt login</code>
-            </div>
           </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <LogOut className="h-5 w-5 text-primary" />
-              <h3 className="text-xl font-semibold">lynxprompt logout</h3>
+          <div className="rounded-lg border p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <LogOut className="h-4 w-4 text-primary" />
+              <code className="text-sm font-semibold">lynxp logout</code>
             </div>
-            <p className="text-muted-foreground">
-              Log out and remove stored credentials from your system.
+            <p className="text-sm text-muted-foreground">
+              Remove stored credentials
             </p>
-            <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
-              <code className="text-sm text-zinc-100">lynxprompt logout</code>
-            </div>
           </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <User className="h-5 w-5 text-primary" />
-              <h3 className="text-xl font-semibold">lynxprompt whoami</h3>
+          <div className="rounded-lg border p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <User className="h-4 w-4 text-primary" />
+              <code className="text-sm font-semibold">lynxp whoami</code>
             </div>
-            <p className="text-muted-foreground">
-              Display the currently authenticated user and subscription plan.
+            <p className="text-sm text-muted-foreground">
+              Show current user
             </p>
-            <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
-              <code className="text-sm text-zinc-100">lynxprompt whoami</code>
-            </div>
           </div>
-        </div>
-      </section>
-
-      {/* Global options */}
-      <section className="space-y-4">
-        <h2 className="text-2xl font-bold">Global Options</h2>
-        <p className="text-muted-foreground">
-          These options work with any command:
-        </p>
-
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="border-b">
-                <th className="py-3 pr-4 text-left font-semibold">Option</th>
-                <th className="py-3 pr-4 text-left font-semibold">Description</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-b">
-                <td className="py-3 pr-4">
-                  <code className="rounded bg-muted px-2 py-1 text-sm">--version, -V</code>
-                </td>
-                <td className="py-3 pr-4 text-muted-foreground">
-                  Show CLI version number
-                </td>
-              </tr>
-              <tr className="border-b">
-                <td className="py-3 pr-4">
-                  <code className="rounded bg-muted px-2 py-1 text-sm">--help, -h</code>
-                </td>
-                <td className="py-3 pr-4 text-muted-foreground">
-                  Show help for any command
-                </td>
-              </tr>
-            </tbody>
-          </table>
         </div>
       </section>
 
       {/* Environment variables */}
       <section className="space-y-4">
         <h2 className="text-2xl font-bold">Environment Variables</h2>
-        <p className="text-muted-foreground">
-          Configure the CLI behavior with these environment variables:
-        </p>
-
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
@@ -720,7 +637,7 @@ Run 'lynxprompt init' to generate missing configs.`}</code>
                   <code className="rounded bg-muted px-2 py-1 text-sm">LYNXPROMPT_TOKEN</code>
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
-                  API token for authentication (CI/CD)
+                  API token for CI/CD (skips browser auth)
                 </td>
               </tr>
               <tr className="border-b">
@@ -754,4 +671,3 @@ Run 'lynxprompt init' to generate missing configs.`}</code>
     </div>
   );
 }
-

@@ -1,16 +1,23 @@
 import chalk from "chalk";
 import ora from "ora";
 import prompts from "prompts";
-import { api, ApiRequestError } from "../api.js";
+import { api, ApiRequestError, Blueprint } from "../api.js";
 import { isAuthenticated } from "../config.js";
 import { writeFile, access, mkdir, readFile } from "fs/promises";
 import { join, dirname } from "path";
 import { existsSync } from "fs";
+import {
+  trackBlueprint,
+  findBlueprintByFile,
+  hasLocalChanges,
+  type BlueprintSource,
+} from "../utils/blueprint-tracker.js";
 
 interface PullOptions {
   output: string;
   yes?: boolean;
   preview?: boolean;
+  track?: boolean; // Track the blueprint for future syncs (default: true)
 }
 
 // Mapping of blueprint types to filenames
@@ -24,6 +31,20 @@ const TYPE_TO_FILENAME: Record<string, string> = {
   GENERIC: "ai-config.md",
 };
 
+// Determine blueprint source from visibility
+function getSourceFromVisibility(visibility: Blueprint["visibility"]): BlueprintSource {
+  switch (visibility) {
+    case "PUBLIC":
+      return "marketplace";
+    case "TEAM":
+      return "team";
+    case "PRIVATE":
+      return "private";
+    default:
+      return "marketplace";
+  }
+}
+
 export async function pullCommand(
   id: string,
   options: PullOptions
@@ -35,6 +56,7 @@ export async function pullCommand(
     process.exit(1);
   }
 
+  const cwd = process.cwd();
   const spinner = ora(`Fetching blueprint ${chalk.cyan(id)}...`).start();
 
   try {
@@ -46,12 +68,24 @@ export async function pullCommand(
       process.exit(1);
     }
 
+    const source = getSourceFromVisibility(blueprint.visibility);
+    const isMarketplace = source === "marketplace";
+
     console.log();
     console.log(chalk.cyan(`🐱 Blueprint: ${chalk.bold(blueprint.name)}`));
     if (blueprint.description) {
       console.log(chalk.gray(`   ${blueprint.description}`));
     }
-    console.log(chalk.gray(`   Type: ${blueprint.type} • Tier: ${blueprint.tier}`));
+    console.log(chalk.gray(`   Type: ${blueprint.type} • Tier: ${blueprint.tier} • Visibility: ${blueprint.visibility}`));
+    
+    // Show source type info
+    if (isMarketplace) {
+      console.log(chalk.yellow(`   📦 Marketplace blueprint (read-only - changes won't sync back)`));
+    } else if (source === "team") {
+      console.log(chalk.blue(`   👥 Team blueprint (can sync changes)`));
+    } else if (source === "private") {
+      console.log(chalk.green(`   🔒 Private blueprint (can sync changes)`));
+    }
     console.log();
 
     // Preview mode - show content without writing
@@ -100,6 +134,24 @@ export async function pullCommand(
         localContent = await readFile(outputPath, "utf-8");
       } catch {
         // Can't read local file
+      }
+    }
+
+    // Check if this file is already tracked
+    const existingTracked = await findBlueprintByFile(cwd, filename);
+    if (existingTracked && existingTracked.id !== id) {
+      console.log(chalk.yellow(`⚠ This file is already linked to a different blueprint: ${existingTracked.id}`));
+      if (!options.yes) {
+        const { proceed } = await prompts({
+          type: "confirm",
+          name: "proceed",
+          message: "Replace the link with the new blueprint?",
+          initial: false,
+        });
+        if (!proceed) {
+          console.log(chalk.gray("Cancelled."));
+          return;
+        }
       }
     }
 
@@ -175,7 +227,28 @@ export async function pullCommand(
     // Write the file
     await writeFile(outputPath, blueprint.content, "utf-8");
 
+    // Track the blueprint (default behavior unless --no-track)
+    if (options.track !== false) {
+      await trackBlueprint(cwd, {
+        id: blueprint.id,
+        name: blueprint.name,
+        file: filename,
+        content: blueprint.content,
+        source,
+      });
+    }
+
     console.log(chalk.green(`✅ Downloaded: ${chalk.bold(outputPath)}`));
+    
+    // Show tracking info
+    if (options.track !== false) {
+      console.log(chalk.gray(`   Linked to: ${blueprint.id}`));
+      if (isMarketplace) {
+        console.log(chalk.gray(`   Updates: Run 'lynxp pull ${id}' to sync updates`));
+      } else {
+        console.log(chalk.gray(`   Sync: Run 'lynxp push ${filename}' to push changes`));
+      }
+    }
     console.log();
 
     // Show helpful next steps
@@ -185,8 +258,13 @@ export async function pullCommand(
       console.log();
     }
 
-    // Suggest diff command
-    console.log(chalk.gray("Tip: Run 'lynxp diff " + id + "' later to see changes between local and remote."));
+    // Additional tips
+    console.log(chalk.gray("Tips:"));
+    console.log(chalk.gray(`  • Run 'lynxp status' to see tracked blueprints`));
+    console.log(chalk.gray(`  • Run 'lynxp diff ${id}' to see changes between local and remote`));
+    if (isMarketplace) {
+      console.log(chalk.gray(`  • Run 'lynxp unlink ${filename}' to disconnect and make editable`));
+    }
     console.log();
   } catch (error) {
     spinner.fail("Failed to pull blueprint");
