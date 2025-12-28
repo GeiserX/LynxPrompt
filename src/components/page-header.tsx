@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Github } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -75,6 +75,15 @@ export function PageHeader({
             </Link>
           ))}
           {navContent}
+          <Link
+            href="https://github.com/GeiserX/LynxPrompt"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground sm:inline-flex"
+            aria-label="View on GitHub"
+          >
+            <Github className="h-5 w-5" />
+          </Link>
           <ThemeToggle />
           <UserMenu />
           {/* Mobile menu button */}
@@ -106,6 +115,16 @@ export function PageHeader({
                 {item.label}
               </Link>
             ))}
+            <Link
+              href="https://github.com/GeiserX/LynxPrompt"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted"
+            >
+              <Github className="h-4 w-4" />
+              GitHub
+            </Link>
           </nav>
         </div>
       )}

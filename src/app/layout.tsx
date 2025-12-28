@@ -122,7 +122,7 @@ export default function RootLayout({
         {/* Umami Analytics - privacy-focused, cookieless */}
         {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (
           <Script
-            src="https://umami.geiser.cloud/script.js"
+            src="https://umami.lynxprompt.com/script.js"
             data-website-id={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
             data-do-not-track="false"
             strategy="afterInteractive"
