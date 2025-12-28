@@ -16,10 +16,12 @@ function SignInContent() {
   const { data: session, status } = useSession();
   const [cliAuthComplete, setCliAuthComplete] = useState(false);
   const [cliAuthError, setCliAuthError] = useState<string | null>(null);
+  const [cliAuthProcessing, setCliAuthProcessing] = useState(false);
 
   // Handle CLI authentication callback when user is already authenticated
   useEffect(() => {
-    if (cliSession && status === "authenticated" && session?.user && !cliAuthComplete && !cliAuthError) {
+    if (cliSession && status === "authenticated" && session?.user && !cliAuthComplete && !cliAuthError && !cliAuthProcessing) {
+      setCliAuthProcessing(true);
       // Complete CLI authentication
       fetch("/api/cli-auth/callback", {
         method: "POST",
@@ -38,9 +40,30 @@ function SignInContent() {
         .catch((err) => {
           console.error("CLI auth callback error:", err);
           setCliAuthError("Failed to complete CLI authentication");
+        })
+        .finally(() => {
+          setCliAuthProcessing(false);
         });
     }
-  }, [cliSession, status, session, cliAuthComplete, cliAuthError]);
+  }, [cliSession, status, session, cliAuthComplete, cliAuthError, cliAuthProcessing]);
+
+  // Show loading state while checking CLI session or processing auth
+  if (cliSession && (status === "loading" || cliAuthProcessing)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-600/10 to-pink-600/10 p-8">
+        <div className="text-center">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
+            <Terminal className="h-10 w-10 text-primary animate-pulse" />
+          </div>
+          <h2 className="mt-6 text-2xl font-bold">Authenticating CLI...</h2>
+          <p className="mt-2 text-muted-foreground">
+            Please wait while we authorize your terminal session.
+          </p>
+          <Loader2 className="mx-auto mt-6 h-6 w-6 animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
 
   // Show CLI success screen
   if (cliAuthComplete) {
