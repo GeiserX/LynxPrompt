@@ -20,28 +20,27 @@ description: |
     lynxprompt pull ID  - Download a blueprint
 
 grade: stable
-confinement: strict
+confinement: classic  # Needed for npm global install and browser opening
 
 apps:
   lynxprompt:
     command: bin/lynxprompt
-    plugs:
-      - home
-      - network
-      - network-bind
 
 parts:
   lynxprompt:
     plugin: npm
     npm-node-version: "22.12.0"
     source: .
-    build-packages:
-      - git
+    npm-packages:
+      - lynxprompt@0.1.0
     override-build: |
-      npm install
-      npm run build
+      craftctl default
+      # Create wrapper script
       mkdir -p $SNAPCRAFT_PART_INSTALL/bin
-      cp -r dist/* $SNAPCRAFT_PART_INSTALL/bin/
-      chmod +x $SNAPCRAFT_PART_INSTALL/bin/index.js
-      ln -sf index.js $SNAPCRAFT_PART_INSTALL/bin/lynxprompt
+      cat > $SNAPCRAFT_PART_INSTALL/bin/lynxprompt << 'EOF'
+      #!/bin/bash
+      exec "$SNAP/lib/node_modules/lynxprompt/dist/index.js" "$@"
+      EOF
+      chmod +x $SNAPCRAFT_PART_INSTALL/bin/lynxprompt
+
 

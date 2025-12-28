@@ -8,6 +8,8 @@ import {
   Sparkles,
   Laptop,
   HelpCircle,
+  Terminal,
+  Key,
   ArrowRight,
   BookOpen,
 } from "lucide-react";
@@ -27,6 +29,8 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Sparkles,
   Laptop,
   HelpCircle,
+  Terminal,
+  Key,
 };
 
 export default function DocsIndexPage() {
