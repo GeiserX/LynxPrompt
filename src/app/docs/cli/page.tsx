@@ -1,11 +1,11 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Terminal, ArrowRight, Download, Key, Command, Apple, Package } from "lucide-react";
+import { Terminal, ArrowRight, Download, Key, Command, Apple, Package, RefreshCw, Layers } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "CLI",
   description:
-    "Generate AI IDE configurations from your terminal with the LynxPrompt CLI. Interactive wizard, blueprint management, and seamless authentication.",
+    "Generate and sync AI IDE configurations from your terminal with the LynxPrompt CLI. Supports 40+ AI agents, one-command sync, and blueprint marketplace.",
 };
 
 export default function CliDocsPage() {
@@ -20,9 +20,8 @@ export default function CliDocsPage() {
           <h1 className="text-3xl font-bold tracking-tight">LynxPrompt CLI</h1>
         </div>
         <p className="max-w-2xl text-lg text-muted-foreground">
-          Generate AI IDE configuration files directly from your terminal. The CLI offers
-          the same powerful wizard as the web interface, plus blueprint management
-          and seamless integration with your development workflow.
+          Generate and sync AI IDE configurations from your terminal. Supports <strong>40+ AI agents</strong>,
+          auto-detects your project and existing configs, and syncs rules to all agents with one command.
         </p>
       </div>
 
@@ -84,36 +83,36 @@ export default function CliDocsPage() {
         </div>
       </div>
 
-      {/* Features */}
+      {/* Key Features */}
       <section className="space-y-4">
-        <h2 className="text-2xl font-bold">Features</h2>
+        <h2 className="text-2xl font-bold">Key Features</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-lg border p-4">
-            <h3 className="font-semibold">🧙 Interactive Wizard</h3>
+            <h3 className="font-semibold">🤖 40+ AI Agents Supported</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Same powerful wizard as the web UI. Auto-detects your project&apos;s tech
-              stack, suggests configurations, and generates files interactively.
+              Cursor, Claude Code, GitHub Copilot, Windsurf, Cline, Amazon Q, Zed,
+              Gemini, and many more. One config syncs to all.
             </p>
           </div>
           <div className="rounded-lg border p-4">
-            <h3 className="font-semibold">📦 Blueprint Management</h3>
+            <h3 className="font-semibold">🔄 One-Command Sync</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              List, search, and pull blueprints directly from your terminal.
+              Edit your rules once in <code className="rounded bg-muted px-1">.lynxprompt/rules/</code>,
+              then run <code className="rounded bg-muted px-1">lynxp sync</code> to update all configured agents.
+            </p>
+          </div>
+          <div className="rounded-lg border p-4">
+            <h3 className="font-semibold">🔍 Smart Detection</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Auto-detects your tech stack from package.json, Cargo.toml, go.mod, pyproject.toml.
+              Also finds existing AI configs and imports them.
+            </p>
+          </div>
+          <div className="rounded-lg border p-4">
+            <h3 className="font-semibold">📦 Blueprint Marketplace</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Search and pull community blueprints directly from your terminal.
               Access the entire LynxPrompt marketplace without leaving your IDE.
-            </p>
-          </div>
-          <div className="rounded-lg border p-4">
-            <h3 className="font-semibold">🔐 Secure Authentication</h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Browser-based OAuth flow with secure token storage. Your credentials
-              are stored safely in your system&apos;s config directory.
-            </p>
-          </div>
-          <div className="rounded-lg border p-4">
-            <h3 className="font-semibold">🔍 Project Detection</h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Automatically detects package.json, Cargo.toml, pyproject.toml, and
-              other project files to suggest the right configuration.
             </p>
           </div>
         </div>
@@ -123,34 +122,67 @@ export default function CliDocsPage() {
       <section className="space-y-4">
         <h2 className="text-2xl font-bold">Quick Example</h2>
         <p className="text-muted-foreground">
-          Here&apos;s how easy it is to generate AI IDE configs for your project:
+          Here&apos;s how easy it is to set up and sync AI configs for your project:
         </p>
         <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
           <pre className="text-sm text-zinc-100">
-            <code>{`$ lynxprompt init
+            <code>{`$ lynxp init
 
-🐱 Welcome to LynxPrompt!
+🐱 LynxPrompt Init
 
-? What's your project name? my-api
-? Describe your project: REST API for user management
+Detected project:
+  Stack: typescript, react, nextjs, prisma
+  Package manager: pnpm
 
-? Select your tech stack: (use arrows, space to select)
-  ◉ TypeScript
-  ◉ Node.js
-  ◉ Express
-  ◯ Python
-  ◯ Go
+Detected 2 AI agents:
+  ✓ Cursor (12 sections)
+  ✓ AGENTS.md (8 sections)
 
-? Which AI IDEs do you use?
-  ◉ Cursor (.cursorrules)
-  ◉ Claude Code (CLAUDE.md)
-  ◉ GitHub Copilot
+Enabling 2 exporters: cursor, agents
+✅ LynxPrompt initialized!
 
-✅ Generated files:
-   .cursorrules
-   CLAUDE.md
-   .github/copilot-instructions.md`}</code>
+$ lynxp sync
+✓ Synced to 2 agents:
+  .cursor/rules/lynxprompt-rules.mdc
+  AGENTS.md`}</code>
           </pre>
+        </div>
+      </section>
+
+      {/* Workflow */}
+      <section className="space-y-4">
+        <h2 className="text-2xl font-bold">Workflow</h2>
+        <div className="grid gap-4">
+          <div className="flex items-start gap-4 rounded-lg border p-4">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">1</div>
+            <div>
+              <h3 className="font-semibold">Initialize</h3>
+              <p className="text-sm text-muted-foreground">
+                Run <code className="rounded bg-muted px-1">lynxp init</code> in your project. 
+                Auto-detects existing configs and creates <code className="rounded bg-muted px-1">.lynxprompt/</code> directory.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-4 rounded-lg border p-4">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">2</div>
+            <div>
+              <h3 className="font-semibold">Edit Rules</h3>
+              <p className="text-sm text-muted-foreground">
+                Edit markdown files in <code className="rounded bg-muted px-1">.lynxprompt/rules/</code>.
+                This is your single source of truth for all AI configs.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-4 rounded-lg border p-4">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">3</div>
+            <div>
+              <h3 className="font-semibold">Sync</h3>
+              <p className="text-sm text-muted-foreground">
+                Run <code className="rounded bg-muted px-1">lynxp sync</code> to export rules to all configured agents.
+                One command updates everything.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 

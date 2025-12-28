@@ -1,11 +1,11 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Command, Wand2, FileCode, Search, Download, User, LogIn, LogOut, Info, ArrowRight } from "lucide-react";
+import { Command, Wand2, FileCode, Search, Download, User, LogIn, LogOut, Info, ArrowRight, RefreshCw, Layers } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "CLI Commands",
   description:
-    "Complete reference for all LynxPrompt CLI commands. Init wizard, blueprint management, authentication, and more.",
+    "Complete reference for all LynxPrompt CLI commands. Init, sync, agents, blueprints, and more.",
 };
 
 export default function CliCommandsPage() {
@@ -36,9 +36,33 @@ export default function CliCommandsPage() {
               </tr>
             </thead>
             <tbody>
+              <tr className="border-b bg-primary/5">
+                <td className="py-3 pr-4">
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp init</code>
+                </td>
+                <td className="py-3 pr-4 text-muted-foreground">
+                  Initialize LynxPrompt in your project (auto-detects stack &amp; agents)
+                </td>
+              </tr>
+              <tr className="border-b bg-primary/5">
+                <td className="py-3 pr-4">
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp sync</code>
+                </td>
+                <td className="py-3 pr-4 text-muted-foreground">
+                  Sync rules to all configured AI agents
+                </td>
+              </tr>
+              <tr className="border-b bg-primary/5">
+                <td className="py-3 pr-4">
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp agents</code>
+                </td>
+                <td className="py-3 pr-4 text-muted-foreground">
+                  Manage AI agents (list, enable, disable, detect)
+                </td>
+              </tr>
               <tr className="border-b">
                 <td className="py-3 pr-4">
-                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxprompt init</code>
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp wizard</code>
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
                   Interactive wizard to generate AI IDE configs
@@ -46,39 +70,23 @@ export default function CliCommandsPage() {
               </tr>
               <tr className="border-b">
                 <td className="py-3 pr-4">
-                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxprompt login</code>
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp status</code>
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
-                  Authenticate with LynxPrompt
+                  Show AI config files in current directory
                 </td>
               </tr>
               <tr className="border-b">
                 <td className="py-3 pr-4">
-                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxprompt logout</code>
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp search &lt;query&gt;</code>
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
-                  Log out and remove credentials
+                  Search blueprints in the marketplace
                 </td>
               </tr>
               <tr className="border-b">
                 <td className="py-3 pr-4">
-                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxprompt whoami</code>
-                </td>
-                <td className="py-3 pr-4 text-muted-foreground">
-                  Show current authenticated user
-                </td>
-              </tr>
-              <tr className="border-b">
-                <td className="py-3 pr-4">
-                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxprompt list</code>
-                </td>
-                <td className="py-3 pr-4 text-muted-foreground">
-                  List your blueprints
-                </td>
-              </tr>
-              <tr className="border-b">
-                <td className="py-3 pr-4">
-                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxprompt pull &lt;id&gt;</code>
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp pull &lt;id&gt;</code>
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
                   Download a blueprint
@@ -86,40 +94,59 @@ export default function CliCommandsPage() {
               </tr>
               <tr className="border-b">
                 <td className="py-3 pr-4">
-                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxprompt search &lt;query&gt;</code>
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp list</code>
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
-                  Search public blueprints
+                  List your blueprints
                 </td>
               </tr>
               <tr className="border-b">
                 <td className="py-3 pr-4">
-                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxprompt status</code>
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp login</code>
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
-                  Show AI config files in current directory
+                  Authenticate with LynxPrompt
+                </td>
+              </tr>
+              <tr className="border-b">
+                <td className="py-3 pr-4">
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp logout</code>
+                </td>
+                <td className="py-3 pr-4 text-muted-foreground">
+                  Log out and remove credentials
+                </td>
+              </tr>
+              <tr className="border-b">
+                <td className="py-3 pr-4">
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp whoami</code>
+                </td>
+                <td className="py-3 pr-4 text-muted-foreground">
+                  Show current authenticated user
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
+        <p className="text-sm text-muted-foreground">
+          <strong>Note:</strong> <code className="rounded bg-muted px-1">lynxp</code> is an alias for <code className="rounded bg-muted px-1">lynxprompt</code>. You can use either.
+        </p>
       </section>
 
       {/* init command */}
       <section className="space-y-4">
         <div className="flex items-center gap-3">
           <Wand2 className="h-5 w-5 text-primary" />
-          <h2 className="text-2xl font-bold">lynxprompt init</h2>
+          <h2 className="text-2xl font-bold">lynxp init</h2>
         </div>
         <p className="text-muted-foreground">
-          Start the interactive wizard to generate AI IDE configuration files.
-          The wizard guides you through selecting your tech stack, AI platforms,
-          and configuration options.
+          Initialize LynxPrompt in your project. Auto-detects your tech stack and existing AI agent
+          configurations, then sets up the <code className="rounded bg-muted px-1">.lynxprompt/</code> directory
+          as your single source of truth.
         </p>
 
         <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
           <pre className="text-sm text-zinc-100">
-            <code>{`lynxprompt init [options]
+            <code>{`lynxp init [options]
 
 Options:
   --name <name>         Project name
@@ -129,28 +156,166 @@ Options:
         </div>
 
         <div className="space-y-3">
-          <h3 className="font-semibold">Examples</h3>
+          <h3 className="font-semibold">What it does</h3>
+          <ul className="ml-4 list-disc space-y-2 text-sm text-muted-foreground">
+            <li><strong>Detects your tech stack</strong> by scanning package.json, Cargo.toml, go.mod, pyproject.toml, requirements.txt, Makefile</li>
+            <li><strong>Finds existing AI configs</strong> like .cursorrules, CLAUDE.md, AGENTS.md, .windsurfrules (40+ agents)</li>
+            <li><strong>Offers to import</strong> existing configs or create a starter template</li>
+            <li><strong>Creates config files</strong> in <code className="rounded bg-muted px-1">.lynxprompt/</code></li>
+            <li><strong>Enables appropriate exporters</strong> based on detected agents</li>
+          </ul>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="font-semibold">Example</h3>
           <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
             <pre className="text-sm text-zinc-100">
-              <code>{`# Interactive mode (recommended)
-lynxprompt init
+              <code>{`$ lynxp init
 
-# With project name preset
-lynxprompt init --name "my-api"
+🐱 LynxPrompt Init
 
-# Skip confirmations
-lynxprompt init --yes`}</code>
+Detected project:
+  Stack: typescript, react, nextjs, prisma
+  Build: pnpm build
+  Test: pnpm test
+  Package manager: pnpm
+
+Detected 3 AI agents:
+  ✓ Cursor Rules (12 sections)
+  ✓ Claude Code (8 sections)
+  ✓ AGENTS.md (5 sections)
+
+? Import existing configurations into LynxPrompt? Yes
+→ Imported 25 rules from 3 files
+
+Enabling 3 exporters: cursor, claude-code, agents
+✅ LynxPrompt initialized!
+
+Created:
+  .lynxprompt/conf.yml
+  .lynxprompt/rules/00-core.md
+
+Next steps:
+  1. Edit rules in .lynxprompt/rules/
+  2. Run 'lynxp sync' to sync to all agents`}</code>
+            </pre>
+          </div>
+        </div>
+      </section>
+
+      {/* sync command */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-3">
+          <RefreshCw className="h-5 w-5 text-primary" />
+          <h2 className="text-2xl font-bold">lynxp sync</h2>
+        </div>
+        <p className="text-muted-foreground">
+          Sync your rules from <code className="rounded bg-muted px-1">.lynxprompt/rules/</code> to all configured AI agents.
+          This is the core workflow command — edit once, sync everywhere.
+        </p>
+
+        <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+          <pre className="text-sm text-zinc-100">
+            <code>{`lynxp sync [options]
+
+Options:
+  -d, --dry-run    Preview changes without writing files
+  -f, --force      Force sync without prompts (for CI/CD)`}</code>
+          </pre>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="font-semibold">Example</h3>
+          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+            <pre className="text-sm text-zinc-100">
+              <code>{`$ lynxp sync
+✓ Synced to 4 agents:
+  .cursor/rules/lynxprompt-rules.mdc
+  CLAUDE.md
+  AGENTS.md
+  .github/copilot-instructions.md
+
+$ lynxp sync --dry-run
+Would write to:
+  .cursor/rules/lynxprompt-rules.mdc (2.4 KB)
+  CLAUDE.md (1.8 KB)
+  AGENTS.md (1.5 KB)
+  .github/copilot-instructions.md (1.2 KB)`}</code>
             </pre>
           </div>
         </div>
 
         <div className="rounded-lg border bg-card p-4">
           <p className="text-sm text-muted-foreground">
-            The wizard auto-detects your project&apos;s technology stack by scanning for 
-            <code className="rounded bg-muted px-1.5 py-0.5 mx-1">package.json</code>,
-            <code className="rounded bg-muted px-1.5 py-0.5 mx-1">Cargo.toml</code>,
-            <code className="rounded bg-muted px-1.5 py-0.5 mx-1">pyproject.toml</code>, and other config files.
+            <strong>CI/CD Integration:</strong> Use <code className="rounded bg-muted px-1">lynxp sync --force</code> in your
+            CI pipeline to ensure AI configs are always in sync with your rules. Perfect for pre-commit hooks or GitHub Actions.
           </p>
+        </div>
+      </section>
+
+      {/* agents command */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-3">
+          <Layers className="h-5 w-5 text-primary" />
+          <h2 className="text-2xl font-bold">lynxp agents</h2>
+        </div>
+        <p className="text-muted-foreground">
+          Manage AI agents — list all supported agents, enable/disable specific ones, or detect agents in your current project.
+        </p>
+
+        <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+          <pre className="text-sm text-zinc-100">
+            <code>{`lynxp agents
+
+# Opens interactive menu to:
+# - List all 40+ supported agents
+# - Enable/disable agents
+# - Detect agents in current project
+# - View enabled agents`}</code>
+          </pre>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="font-semibold">Supported Agents</h3>
+          <p className="text-sm text-muted-foreground">
+            LynxPrompt supports 40+ AI coding agents, including:
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <div className="rounded-lg border p-3">
+              <p className="font-medium text-sm">IDE-Based</p>
+              <p className="text-xs text-muted-foreground">Cursor, Windsurf, Zed, VS Code, JetBrains</p>
+            </div>
+            <div className="rounded-lg border p-3">
+              <p className="font-medium text-sm">AI Assistants</p>
+              <p className="text-xs text-muted-foreground">Claude Code, GitHub Copilot, Amazon Q, Gemini</p>
+            </div>
+            <div className="rounded-lg border p-3">
+              <p className="font-medium text-sm">Extensions</p>
+              <p className="text-xs text-muted-foreground">Cline, Roo Code, Continue, Aider, Double</p>
+            </div>
+            <div className="rounded-lg border p-3">
+              <p className="font-medium text-sm">Standards</p>
+              <p className="text-xs text-muted-foreground">AGENTS.md, llms.txt, CONVENTIONS.md</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="font-semibold">Example: Detect agents</h3>
+          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+            <pre className="text-sm text-zinc-100">
+              <code>{`$ lynxp agents
+? What would you like to do? Detect agents in this project
+
+Found 3 agents in this project:
+  ✓ Cursor (.cursor/rules/)
+      12 rules across 3 files
+  ✓ Claude Code (CLAUDE.md)
+      8 sections
+  ✓ GitHub Copilot (.github/copilot-instructions.md)
+      5 sections`}</code>
+            </pre>
+          </div>
         </div>
       </section>
 
