@@ -1358,6 +1358,13 @@ interface SubscriptionStatus {
   isAdmin?: boolean;
   pendingChange?: string | null;
   isAnnual?: boolean;
+  isTeamsUser?: boolean;
+  team?: {
+    id: string;
+    name: string;
+    role: string;
+    slug: string;
+  } | null;
 }
 
 interface SellerEarnings {

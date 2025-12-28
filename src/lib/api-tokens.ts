@@ -9,7 +9,7 @@
 
 import { createHash, randomBytes } from "crypto";
 import { prismaUsers } from "@/lib/db-users";
-import type { ApiTokenRole } from "@/generated/prisma-users";
+import type { ApiTokenRole } from "@/generated/prisma-users/enums";
 
 // Token prefix for easy identification
 export const TOKEN_PREFIX = "lp_";
