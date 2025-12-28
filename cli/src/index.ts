@@ -6,6 +6,7 @@ import { whoamiCommand } from "./commands/whoami.js";
 import { listCommand } from "./commands/list.js";
 import { pullCommand } from "./commands/pull.js";
 import { initCommand } from "./commands/init.js";
+import { wizardCommand } from "./commands/wizard.js";
 import { searchCommand } from "./commands/search.js";
 import { statusCommand } from "./commands/status.js";
 
@@ -32,9 +33,17 @@ program
   .description("Show current authenticated user")
   .action(whoamiCommand);
 
-// Blueprint commands
+// Init command - simple initialization
 program
   .command("init")
+  .description("Initialize LynxPrompt in this directory (auto-detects existing files)")
+  .option("-y, --yes", "Skip prompts and use defaults")
+  .option("-f, --force", "Re-initialize even if already initialized")
+  .action(initCommand);
+
+// Wizard command - full interactive wizard
+program
+  .command("wizard")
   .description("Interactive wizard to generate AI IDE configuration")
   .option("-n, --name <name>", "Project name")
   .option("-d, --description <description>", "Project description")
@@ -44,8 +53,9 @@ program
   .option("--boundaries <level>", "Boundary preset (conservative, standard, permissive)")
   .option("--preset <preset>", "Use an agent preset (test-agent, docs-agent, etc.)")
   .option("-y, --yes", "Skip prompts and use defaults")
-  .action(initCommand);
+  .action(wizardCommand);
 
+// Blueprint commands
 program
   .command("list")
   .description("List your blueprints")
@@ -75,7 +85,7 @@ program
 program.addHelpText(
   "beforeAll",
   `
-${chalk.cyan("🐱 LynxPrompt CLI")}
+${chalk.cyan("🐱 LynxPrompt CLI")} ${chalk.gray("(also available as: lynxp)")}
 ${chalk.gray("Generate AI IDE configuration files from your terminal")}
 `
 );
@@ -84,10 +94,11 @@ program.addHelpText(
   "after",
   `
 ${chalk.gray("Examples:")}
-  ${chalk.cyan("$ lynxprompt init")}              ${chalk.gray("Start interactive wizard")}
-  ${chalk.cyan("$ lynxprompt pull bp_abc123")}    ${chalk.gray("Download a blueprint")}
-  ${chalk.cyan("$ lynxprompt list")}              ${chalk.gray("List your blueprints")}
-  ${chalk.cyan("$ lynxprompt search nextjs")}     ${chalk.gray("Search public blueprints")}
+  ${chalk.cyan("$ lynxp init")}                   ${chalk.gray("Initialize LynxPrompt in this directory")}
+  ${chalk.cyan("$ lynxp wizard")}                 ${chalk.gray("Start interactive configuration wizard")}
+  ${chalk.cyan("$ lynxp pull bp_abc123")}         ${chalk.gray("Download a blueprint")}
+  ${chalk.cyan("$ lynxp list")}                   ${chalk.gray("List your blueprints")}
+  ${chalk.cyan("$ lynxp search nextjs")}          ${chalk.gray("Search public blueprints")}
 
 ${chalk.gray("Documentation: https://lynxprompt.com/docs/cli")}
 `
