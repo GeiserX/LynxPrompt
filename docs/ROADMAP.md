@@ -174,6 +174,17 @@ Per EU Consumer Rights Directive, digital content can waive 14-day withdrawal IF
   - Profile visibility settings (public/private)
   - Optional: show job title and skill level on profile
   - Private blueprints never exposed
+- [x] **API v1 with Token Authentication**:
+  - API token management in settings
+  - Token permissions (read, write, admin)
+  - Token expiration support
+  - Subscription-gated access (Pro/Max/Teams)
+  - Full CRUD operations for blueprints
+- [x] **Blueprint Versioning**:
+  - Version history with changelogs
+  - Published vs draft versions
+  - Rollback capability
+  - Version comparison
 
 ---
 
@@ -190,6 +201,64 @@ Per EU Consumer Rights Directive, digital content can waive 14-day withdrawal IF
 - [ ] Save wizard configurations as drafts
 - [ ] Import existing configs (upload `.cursorrules` to create template)
 
+#### Wizard 2.0: Six Core Areas
+
+Based on [GitHub's analysis of 2,500+ agents.md files](https://github.blog/ai-and-ml/github-copilot/how-to-write-a-great-agents-md-lessons-from-over-2500-repositories/), effective AI configs need six core areas. The wizard should generate all of these:
+
+| Area | Description | Wizard Step |
+|------|-------------|-------------|
+| **1. Persona** | Who the AI is and what it specializes in | 🆕 New step |
+| **2. Commands** | Executable build/test/lint commands | CI/CD step (expand) |
+| **3. Project Structure** | Tech stack, file organization | Tech Stack step ✅ |
+| **4. Code Style** | Naming conventions, examples of good/bad code | 🆕 New step |
+| **5. Git Workflow** | Branching, commits, PR conventions | Repository step ✅ |
+| **6. Boundaries** | Always do / Ask first / Never do | 🆕 New step |
+
+**New Wizard Steps (Planned):**
+
+- [ ] **Persona Step**: Define the AI's role and expertise
+  - Role selection: Code reviewer, Test writer, Docs generator, API builder, etc.
+  - Specialization: Frontend, Backend, DevOps, Security, etc.
+  - Output style: Verbose, concise, educational
+
+- [ ] **Commands Step**: Define executable commands
+  - Build command (e.g., `npm run build`, `cargo build`)
+  - Test command (e.g., `npm test`, `pytest -v`)
+  - Lint command (e.g., `npm run lint --fix`, `ruff check`)
+  - Dev server command (e.g., `npm run dev`)
+  - Auto-detect from `package.json`, `Makefile`, `Cargo.toml`
+
+- [ ] **Code Style Step**: Define coding standards
+  - Naming conventions (functions, classes, constants)
+  - Good/bad code examples (auto-generated from language selection)
+  - Import ordering preferences
+  - Error handling patterns
+
+- [ ] **Boundaries Step**: Define AI guardrails
+  - **Always**: Files/folders it can freely modify
+  - **Ask First**: Actions requiring user approval (schema changes, new deps)
+  - **Never**: Files to never touch, actions to never take
+  - Common presets: "Conservative", "Standard", "Permissive"
+
+**YAML Frontmatter Support:**
+
+- [ ] Generate YAML frontmatter for named agents
+  - `name`: Agent identifier (e.g., `test-agent`, `docs-agent`)
+  - `description`: One-sentence purpose
+  - Support for custom agents: `@test-agent`, `@docs-agent`, `@lint-agent`
+
+**Agent Presets:**
+
+Based on GitHub's recommended agents, offer one-click presets:
+
+| Preset | Description | Commands | Boundaries |
+|--------|-------------|----------|------------|
+| `@docs-agent` | Generates documentation | `npm run docs:build`, `markdownlint` | Write to `docs/`, never modify source |
+| `@test-agent` | Writes tests | `npm test`, `pytest -v` | Write to `tests/`, never remove failing tests |
+| `@lint-agent` | Fixes code style | `npm run lint --fix`, `prettier` | Only fix style, never change logic |
+| `@api-agent` | Builds API endpoints | `npm run dev`, `curl` tests | Modify routes, ask before schema changes |
+| `@deploy-agent` | Handles dev deployments | `npm run build`, `docker build` | Only deploy to dev, require approval |
+
 #### Wizard Tiers (Feature Gating) ✅ IMPLEMENTED
 
 | Feature                                | Free | Pro | Max |
@@ -199,10 +268,10 @@ Per EU Consumer Rights Directive, digital content can waive 14-day withdrawal IF
 | Advanced wizard steps                  | ❌   | ❌  | ✅  |
 | All community blueprints (including paid) | ❌   | ❌  | ✅  |
 
-**Wizard Step Tiers:**
+**Wizard Step Tiers (Updated):**
 - **Basic** (Free): Project Info, Tech Stack, Platforms, Generate
-- **Intermediate** (Pro): + Repository, Release Strategy
-- **Advanced** (Max): + CI/CD, AI Rules, Feedback
+- **Intermediate** (Pro): + Repository, Release Strategy, Commands
+- **Advanced** (Max): + Persona, Code Style, Boundaries, Agent Presets
 
 **Admin Privileges:**
 - ADMIN and SUPERADMIN roles automatically receive MAX tier (no payment required)
@@ -312,9 +381,9 @@ When downloading, user sees:
 
 #### Template Management
 
-- [ ] Template versioning (keep history of changes)
+- [x] **Template versioning** ✅ (version history with changelogs, published vs draft)
 - [ ] Template forking (duplicate & customize others' templates)
-- [ ] Template preview (show what files look like before download)
+- [x] Template preview (show what files look like before download) ✅
 - [ ] Template ratings and reviews
 - [ ] Featured templates section
 
@@ -361,7 +430,7 @@ When downloading, user sees:
 - **Monthly**: Can be canceled anytime. Access continues until end of billing period.
 - **Annual**: 10% discount. Cannot be canceled mid-cycle (yearly commitment). Access continues until year ends.
 
-### Teams Tier Details ✅ NEW
+### Teams Tier Details ✅ IMPLEMENTED
 
 | Setting | Value |
 |---------|-------|
@@ -537,7 +606,47 @@ export function getApproxPrice(eurAmount: number): string | null {
 
 ## 🔧 API
 
-### REST API (Planned)
+### REST API v1 ✅ IMPLEMENTED
+
+The public API is available for Pro, Max, and Teams subscribers. Generate API tokens at `/settings?tab=api-tokens`.
+
+**Base URL**: `https://lynxprompt.com/api/v1`
+
+**Authentication**: Bearer token in `Authorization` header
+
+```bash
+curl -H "Authorization: Bearer lp_xxxxx" https://lynxprompt.com/api/v1/blueprints
+```
+
+#### Blueprints API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/v1/blueprints` | List your blueprints (paginated) |
+| `POST` | `/api/v1/blueprints` | Create new blueprint |
+| `GET` | `/api/v1/blueprints/:id` | Get blueprint with content |
+| `PUT` | `/api/v1/blueprints/:id` | Update blueprint |
+| `DELETE` | `/api/v1/blueprints/:id` | Delete blueprint |
+
+#### User API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/v1/user` | Get current user info |
+
+#### Query Parameters (GET /blueprints)
+
+- `limit` - Number of results (default: 50, max: 100)
+- `offset` - Pagination offset (default: 0)
+- `visibility` - Filter by visibility: `PRIVATE`, `TEAM`, `PUBLIC`, or `all`
+
+#### Token Permissions
+
+- `read` - Read-only access to blueprints
+- `write` - Full CRUD access to blueprints
+- `admin` - All permissions (for future endpoints)
+
+### Internal API Endpoints
 
 ```
 GET    /api/templates              - List templates (with pagination, filters)
@@ -771,28 +880,309 @@ npx lynxprompt init  # Download and place config in current directory
 
 ---
 
+## 🖥️ CLI Tooling
+
+### Overview
+
+A command-line interface for LynxPrompt that allows developers to initialize and manage AI IDE configurations directly from their terminal. The CLI will use the existing API v1 infrastructure.
+
+**Design Principle**: The CLI must have **feature parity with the web wizard**. Every configuration option available in the wizard should be available via CLI flags or interactive prompts.
+
+### Distribution Strategy
+
+| Platform | Package Manager | Package Name | Priority |
+|----------|-----------------|--------------|----------|
+| **Cross-platform** | npm/npx | `lynxprompt` | ✅ Phase 1 |
+| **macOS** | Homebrew | `brew install lynxprompt/tap/lynxprompt` | 📦 Phase 2 |
+| **Windows** | Chocolatey | `choco install lynxprompt` | 📦 Phase 2 |
+| **Linux** | Snap Store | `snap install lynxprompt` | 📦 Phase 2 |
+
+> **Note**: Snap is preferred over apt for Linux as it doesn't require managing a PPA repository and provides automatic updates.
+
+### Interactive Wizard (Primary Experience)
+
+The CLI is **interactive-first**. Just run `lynxprompt init` and it walks you through everything:
+
+```
+$ lynxprompt init
+
+🐱 Welcome to LynxPrompt!
+
+? What's your project name? my-api
+? Describe your project in one sentence: REST API for user management
+
+? Select your tech stack: (use arrows, space to select)
+  ◉ TypeScript
+  ◉ Node.js
+  ◉ Express
+  ◯ Python
+  ◯ Go
+
+? Which AI IDEs do you use? (select all that apply)
+  ◉ Cursor (.cursorrules)
+  ◉ Claude Code (CLAUDE.md)
+  ◉ GitHub Copilot
+  ◯ Windsurf
+  ◯ Zed
+
+? What's the AI's persona/role?
+  ❯ Backend Developer - APIs, databases, microservices
+    Full-Stack Developer - Complete application setups
+    DevOps Engineer - Infrastructure, CI/CD, containers
+    Custom...
+
+? Auto-detected commands from package.json:
+  Build: npm run build ✓
+  Test:  npm test ✓
+  Lint:  npm run lint ✓
+  Dev:   npm run dev ✓
+  ? Edit these? (y/N)
+
+? Select boundary preset:
+  ❯ Conservative - Ask before most changes
+    Standard - Balance of freedom and safety
+    Permissive - AI can modify freely within src/
+
+? Want to use an agent preset instead?
+  ◯ Start fresh (custom config)
+  ◯ @test-agent - Writes tests
+  ◯ @docs-agent - Generates documentation
+  ◯ @lint-agent - Fixes code style
+  ◯ @api-agent - Builds API endpoints
+
+✅ Generated files:
+   .cursorrules
+   CLAUDE.md
+   .github/copilot-instructions.md
+
+? Save as blueprint to LynxPrompt? (y/N)
+```
+
+No flags to remember. The wizard guides you through every step, just like the web UI.
+
+### CLI Commands
+
+```bash
+# Interactive wizard (recommended)
+lynxprompt init
+
+# Pull an existing blueprint
+lynxprompt pull bp_abc123
+
+# List your blueprints
+lynxprompt list
+
+# Search public blueprints
+lynxprompt search "nextjs typescript"
+
+# Auto-detect project and suggest config
+lynxprompt detect
+
+# Login (opens browser)
+lynxprompt login
+
+# Show current config status
+lynxprompt status
+
+# Push local changes to LynxPrompt
+lynxprompt push
+```
+
+### Non-Interactive Mode (for CI/CD)
+
+Flags are available for scripting and automation:
+
+```bash
+# Skip prompts with flags (for CI/CD pipelines)
+lynxprompt init \
+  --name "my-api" \
+  --stack typescript,express \
+  --platforms cursor,claude \
+  --persona backend \
+  --boundaries conservative \
+  --yes
+
+# Use a preset directly
+lynxprompt init --preset test-agent --yes
+
+# Pull and apply without prompts
+lynxprompt pull bp_abc123 --yes
+```
+
+### Feature Parity: Web ↔ CLI
+
+Every wizard step works in both interactive and flag modes:
+
+| Wizard Step | Interactive | Flag (for automation) |
+|-------------|-------------|----------------------|
+| Project Info | ✅ Text prompts | `--name`, `--description` |
+| Tech Stack | ✅ Multi-select | `--stack` |
+| Platforms | ✅ Checkboxes | `--platforms` |
+| Repository | ✅ Prompts | `--repo`, `--license` |
+| Release Strategy | ✅ Selection | `--versioning` |
+| CI/CD | ✅ Prompts | `--ci` |
+| **Persona** | ✅ Selection | `--persona` |
+| **Commands** | ✅ Auto-detect + edit | `--commands` |
+| **Code Style** | ✅ Preset selection | `--style` |
+| **Boundaries** | ✅ Preset picker | `--boundaries` |
+| Agent Presets | ✅ Selection | `--preset` |
+
+### Authentication Flow (`lynxprompt login`)
+
+```
+$ lynxprompt login
+
+🔐 Opening browser to authenticate...
+   https://lynxprompt.com/auth/cli?session=abc123
+
+Waiting for authentication... ✓
+
+✅ Logged in as sergio@example.com
+   Token stored securely in system keychain
+   Expires: Never (or in 1 year if you prefer)
+
+You're ready to use LynxPrompt CLI!
+```
+
+**How it works:**
+
+1. CLI generates a unique session ID
+2. Opens browser to `lynxprompt.com/auth/cli?session=xxx`
+3. User authenticates via GitHub/Google/Magic Link (existing auth)
+4. Server **automatically creates a CLI API token** with `write` permissions
+5. Server sends token back to CLI via callback/polling
+6. CLI stores token in OS keychain (macOS Keychain, Windows Credential Manager, Linux Secret Service)
+7. Token is used for all future API calls
+
+**Server-side changes needed:**
+
+- [ ] New endpoint: `POST /api/auth/cli/init` - Create CLI session
+- [ ] New endpoint: `GET /api/auth/cli/poll` - Check if auth completed
+- [ ] New endpoint: `POST /api/auth/cli/callback` - Complete auth, create token
+- [ ] Auto-generate API token with name "LynxPrompt CLI" and `write` permission
+- [ ] Token has long expiry (1 year) or no expiry for CLI convenience
+
+**Other auth commands:**
+
+```bash
+# Check current login status
+lynxprompt whoami
+# Output: Logged in as sergio@example.com (Pro plan)
+
+# Log out and remove stored token
+lynxprompt logout
+# Output: ✓ Logged out and removed stored credentials
+
+# Use a specific token (for CI/CD)
+LYNXPROMPT_TOKEN=lp_xxx lynxprompt list
+```
+
+### Implementation Phases
+
+#### Phase 1: npm Package (Priority)
+- [ ] Create `@lynxprompt/cli` package
+- [ ] Implement `lynxprompt login` - OAuth flow with automatic token creation
+- [ ] Implement `lynxprompt whoami` - Show current user and plan
+- [ ] Implement `lynxprompt logout` - Remove stored credentials
+- [ ] Implement `lynxprompt init` - Interactive wizard matching web UI
+- [ ] Implement `lynxprompt list` - List user's blueprints via API
+- [ ] Implement `lynxprompt pull` - Download blueprint to current directory
+- [ ] Store API token securely in OS keychain (keytar)
+- [ ] Support `LYNXPROMPT_TOKEN` env var for CI/CD
+- [ ] Support `.lynxpromptrc` config file for project settings
+- [ ] Publish to npm registry
+
+#### Phase 1.5: Wizard Parity
+- [ ] `--persona` flag with all persona options from web wizard
+- [ ] `--commands` flag with auto-detection from package.json/Makefile/etc.
+- [ ] `--boundaries` flag with preset levels (conservative/standard/permissive)
+- [ ] `--preset` flag for agent presets (test-agent, docs-agent, etc.)
+- [ ] `--style` flag for code style presets
+- [ ] `lynxprompt detect` - Analyze current directory and suggest config
+
+#### Phase 2: Platform-Specific Packages
+- [ ] **Homebrew tap**: Create `homebrew-tap` repository with formula
+- [ ] **Chocolatey**: Create package manifest and publish to community repo
+- [ ] **Snap**: Create `snapcraft.yaml` and publish to Snap Store
+
+#### Phase 3: Advanced Features
+- [ ] `lynxprompt push` - Upload local configs as new blueprint
+- [ ] `lynxprompt diff` - Show changes between local and remote
+- [ ] `lynxprompt sync` - Two-way sync with conflict resolution
+- [ ] Watch mode for auto-sync on file changes
+- [ ] CI/CD integration (GitHub Actions action)
+- [ ] `lynxprompt validate` - Validate config against best practices
+
+### Auto-Detection (`lynxprompt detect`)
+
+The CLI should analyze the current directory and auto-detect:
+
+```bash
+$ lynxprompt detect
+
+Detected project configuration:
+  Tech Stack: TypeScript, Next.js 15, Prisma, Tailwind CSS
+  Package Manager: npm
+  Commands:
+    Build: npm run build
+    Test: npm test  
+    Lint: npm run lint
+    Dev: npm run dev
+  File Structure:
+    Source: src/
+    Tests: tests/
+    Docs: docs/
+  
+Suggested boundaries:
+  ✅ Always: src/, tests/, docs/
+  ⚠️ Ask first: prisma/schema.prisma, package.json
+  🚫 Never: node_modules/, .env, .git/
+
+Generate config with these settings? [Y/n]
+```
+
+### Technical Requirements
+
+- **Language**: TypeScript (compile to single binary with `pkg` or `bun build`)
+- **Authentication**: Reuse existing API v1 token system
+- **Config storage**: `~/.config/lynxprompt/config.json`
+- **Credentials**: OS keychain via `keytar` (macOS Keychain, Windows Credential Manager, Linux Secret Service)
+- **Interactive UI**: Use `inquirer` or `prompts` for interactive mode
+- **Auto-detection**: Parse `package.json`, `Cargo.toml`, `pyproject.toml`, `Makefile`, etc.
+
+---
+
 ## 💡 Future Ideas
 
+### High Priority
 - **GitHub URL Import**: Share a public GitHub repository URL in the wizard and auto-prefill all settings based on the repo's structure (needs AI analysis of package.json, language detection, framework detection, etc.)
+- **AI-powered recommendations**: Suggest blueprints based on project structure analysis
+- **Template quality scoring**: Automated scoring based on completeness, community ratings, usage
+- **Blueprint analytics dashboard**: Detailed stats for authors (downloads over time, geography, referrers)
+
+### Medium Priority
 - VS Code extension to sync templates
-- CLI tool for quick template downloads (`npx lynxprompt init`)
-- Team/organization features
-- Private templates for teams
-- AI-powered template suggestions based on project analysis
 - GitHub App for automatic config updates
 - Template marketplace revenue sharing analytics
-- Multi-language support (i18n)
 - Webhook integrations (notify when template is downloaded)
 - Template collections/bundles
-- "Compare templates" feature
-- Template changelogs
+- "Compare templates" feature side-by-side
 - Affiliate program for promoters
 - Gift subscriptions
-- ~~Annual subscription discount (2 months free)~~ ✅ DONE (10% discount = ~1.2 months free)
-- **Local app integration**: IDE receives configs directly from web
-- **Restrict template sharing to subscribers** (future consideration)
-- ~~Use gravatar for emails~~ ✅ DONE
 - DMCA/copyright complaints process
 - Bank transfer payouts (via Stripe Connect)
-- **Cryptocurrency payments (Bitcoin, Ethereum, USDC) via Coinbase Commerce** - Coming soon
-- MULTILANG (only when future, not now, otherwise it's a mess)
+
+### Low Priority / Long-term
+- **Local app integration**: IDE receives configs directly from web (Electron/Tauri)
+- Multi-language support (i18n) - only when user base justifies
+- **Cryptocurrency payments (Bitcoin, Ethereum, USDC) via Coinbase Commerce**
+- Custom integrations (Slack, Teams notifications)
+- White-label solutions for enterprise
+
+### Completed Ideas ✅
+- ~~Annual subscription discount~~ → 10% discount (~1.2 months free)
+- ~~Use gravatar for emails~~ → Implemented
+- ~~Team/organization features~~ → Teams tier launched
+- ~~Private templates for teams~~ → Team visibility option
+- ~~Template changelogs~~ → Version history with changelogs
+- ~~CLI tool~~ → Now in active development (see CLI Tooling section)
