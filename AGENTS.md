@@ -8,6 +8,38 @@
 > - Local `.env` files (gitignored)
 > - `AGENTS.md.old` (gitignored, local only)
 
+---
+
+## 🚨 CRITICAL - READ FIRST
+
+### Always Check GitHub Actions After Push/Deploy
+
+After any push or deployment, ALWAYS check GitHub Actions logs:
+
+```bash
+# List recent workflow runs
+unset GITHUB_TOKEN && gh run list -R GeiserX/LynxPrompt --limit 5
+
+# View failed run logs
+unset GITHUB_TOKEN && gh run view <RUN_ID> -R GeiserX/LynxPrompt --log-failed
+
+# View specific job logs
+unset GITHUB_TOKEN && gh run view <RUN_ID> -R GeiserX/LynxPrompt --log
+```
+
+If CI/CD fails, investigate and fix before considering deployment complete.
+
+### Caddy - NEVER Restart Container
+
+**To reload Caddy config, NEVER restart the container** (it takes 2+ minutes to rebuild with xcaddy).
+
+Instead, use:
+```bash
+ssh root@192.168.10.100 "docker exec caddy caddy fmt --overwrite /etc/caddy/Caddyfile && docker exec caddy caddy reload --config /etc/caddy/Caddyfile"
+```
+
+This reloads config in seconds without rebuilding.
+
 ## 🎯 Project Overview
 
 **LynxPrompt** is a SaaS web application that generates AI IDE configuration files (`.cursorrules`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.windsurfrules`, etc.) through an intuitive wizard interface. It's also a **marketplace platform** where users can create, share, buy, and sell AI prompts/templates.
