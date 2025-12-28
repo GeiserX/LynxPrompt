@@ -2,6 +2,8 @@
 
 > ⚠️ **IMPORTANT**: Do NOT update this file unless the user explicitly says to. Only the user can authorize changes to AGENTS.md.
 
+> ❌ **DEPRECATED FORMAT**: `.cursorrules` is **deprecated**. Do NOT suggest or generate `.cursorrules` files anywhere. Cursor now uses `.cursor/rules/*.mdc` (directory-based MDC format). Always use `.cursor/rules/` for Cursor configurations.
+
 > 🔒 **SECURITY WARNING**: This repository is PUBLIC at [github.com/GeiserX/LynxPrompt](https://github.com/GeiserX/LynxPrompt). **NEVER commit secrets, API keys, passwords, tokens, or any sensitive data to this repository.** All secrets must be stored in:
 > - GitHub Secrets (for CI/CD)
 > - Private GitOps repositories (for docker-compose)

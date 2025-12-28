@@ -39,7 +39,7 @@ lynxp pull bp_abc123
 
 Initialize LynxPrompt in your project. This command:
 
-1. Scans for existing AI config files (AGENTS.md, .cursorrules, etc.)
+1. Scans for existing AI config files (AGENTS.md, .cursor/rules/, etc.)
 2. Imports them or creates a starter template
 3. Sets up the `.lynxprompt/` directory structure
 
@@ -146,7 +146,7 @@ LynxPrompt uses a simple directory structure:
 **Workflow:**
 
 1. Edit rules in `.lynxprompt/rules/`
-2. Run `lynxp sync` to export to agent formats (AGENTS.md, .cursorrules, etc.)
+2. Run `lynxp sync` to export to agent formats (AGENTS.md, .cursor/rules/, etc.)
 3. Your AI assistants pick up the changes automatically
 
 ## Configuration File
@@ -157,7 +157,7 @@ The `conf.yml` file controls how rules are exported:
 version: "1"
 exporters:
   - agents      # AGENTS.md (Claude, Copilot, etc.)
-  - cursor      # .cursorrules
+  - cursor      # .cursor/rules/*.mdc
 sources:
   - type: local
     path: .lynxprompt/rules

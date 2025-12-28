@@ -15,8 +15,9 @@ export interface GenerateOptions {
 
 // Platform to filename mapping
 const PLATFORM_FILES: Record<string, string> = {
-  cursor: ".cursorrules",
-  claude: "AGENTS.md",
+  agents: "AGENTS.md",
+  cursor: ".cursor/rules/project.mdc",
+  claude: "CLAUDE.md",
   copilot: ".github/copilot-instructions.md",
   windsurf: ".windsurfrules",
   zed: ".zed/instructions.md",
@@ -136,9 +137,23 @@ export function generateConfig(options: GenerateOptions): Record<string, string>
 
 function generateFileContent(options: GenerateOptions, platform: string): string {
   const sections: string[] = [];
-  const isMarkdown = platform !== "cursor" && platform !== "windsurf";
+  const isMdc = platform === "cursor"; // Cursor uses MDC format (Markdown with YAML frontmatter)
+  const isPlainText = platform === "windsurf"; // Windsurf uses plain text
+  const isMarkdown = !isMdc && !isPlainText;
   
-  // Header
+  // MDC frontmatter for Cursor
+  if (isMdc) {
+    sections.push("---");
+    sections.push(`description: "${options.name} - AI coding rules"`);
+    sections.push('globs: ["**/*"]');
+    sections.push("alwaysApply: true");
+    sections.push("---");
+    sections.push("");
+    sections.push(`# ${options.name} - AI Assistant Configuration`);
+    sections.push("");
+  }
+  
+  // Header for regular markdown
   if (isMarkdown) {
     sections.push(`# ${options.name} - AI Assistant Configuration`);
     sections.push("");
@@ -146,7 +161,7 @@ function generateFileContent(options: GenerateOptions, platform: string): string
 
   // Persona section
   const personaDesc = PERSONA_DESCRIPTIONS[options.persona] || options.persona;
-  if (isMarkdown) {
+  if (isMarkdown || isMdc) {
     sections.push("## Persona");
     sections.push("");
     sections.push(`You are ${personaDesc}. You assist developers working on ${options.name}.`);
@@ -162,7 +177,7 @@ function generateFileContent(options: GenerateOptions, platform: string): string
 
   // Tech Stack section
   if (options.stack.length > 0) {
-    if (isMarkdown) {
+    if (isMarkdown || isMdc) {
       sections.push("## Tech Stack");
       sections.push("");
     } else {
@@ -170,7 +185,7 @@ function generateFileContent(options: GenerateOptions, platform: string): string
     }
     
     const stackList = options.stack.map(s => STACK_NAMES[s] || s);
-    if (isMarkdown) {
+    if (isMarkdown || isMdc) {
       for (const tech of stackList) {
         sections.push(`- ${tech}`);
       }
@@ -183,7 +198,7 @@ function generateFileContent(options: GenerateOptions, platform: string): string
   // Commands section
   const hasCommands = Object.values(options.commands).some(Boolean);
   if (hasCommands) {
-    if (isMarkdown) {
+    if (isMarkdown || isMdc) {
       sections.push("## Commands");
       sections.push("");
       sections.push("Use these commands for common tasks:");
@@ -194,19 +209,19 @@ function generateFileContent(options: GenerateOptions, platform: string): string
     }
     
     if (options.commands.build) {
-      sections.push(isMarkdown ? `# Build: ${options.commands.build}` : `- Build: ${options.commands.build}`);
+      sections.push((isMarkdown || isMdc) ? `# Build: ${options.commands.build}` : `- Build: ${options.commands.build}`);
     }
     if (options.commands.test) {
-      sections.push(isMarkdown ? `# Test: ${options.commands.test}` : `- Test: ${options.commands.test}`);
+      sections.push((isMarkdown || isMdc) ? `# Test: ${options.commands.test}` : `- Test: ${options.commands.test}`);
     }
     if (options.commands.lint) {
-      sections.push(isMarkdown ? `# Lint: ${options.commands.lint}` : `- Lint: ${options.commands.lint}`);
+      sections.push((isMarkdown || isMdc) ? `# Lint: ${options.commands.lint}` : `- Lint: ${options.commands.lint}`);
     }
     if (options.commands.dev) {
-      sections.push(isMarkdown ? `# Dev: ${options.commands.dev}` : `- Dev: ${options.commands.dev}`);
+      sections.push((isMarkdown || isMdc) ? `# Dev: ${options.commands.dev}` : `- Dev: ${options.commands.dev}`);
     }
     
-    if (isMarkdown) {
+    if (isMarkdown || isMdc) {
       sections.push("```");
     }
     sections.push("");
@@ -215,7 +230,7 @@ function generateFileContent(options: GenerateOptions, platform: string): string
   // Boundaries section
   const boundaries = BOUNDARIES[options.boundaries];
   if (boundaries) {
-    if (isMarkdown) {
+    if (isMarkdown || isMdc) {
       sections.push("## Boundaries");
       sections.push("");
       
@@ -260,7 +275,7 @@ function generateFileContent(options: GenerateOptions, platform: string): string
   }
 
   // Code Style section (basic guidelines based on stack)
-  if (isMarkdown) {
+  if (isMarkdown || isMdc) {
     sections.push("## Code Style");
     sections.push("");
     sections.push("Follow these conventions:");
@@ -305,7 +320,7 @@ function generateFileContent(options: GenerateOptions, platform: string): string
   }
 
   // Footer
-  if (isMarkdown) {
+  if (isMarkdown || isMdc) {
     sections.push("---");
     sections.push("");
     sections.push(`*Generated by [LynxPrompt](https://lynxprompt.com) CLI*`);

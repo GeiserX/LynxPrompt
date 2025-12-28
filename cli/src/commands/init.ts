@@ -5,7 +5,7 @@ import { writeFile, mkdir, readFile, access, readdir } from "fs/promises";
 import { join, dirname, basename } from "path";
 import { existsSync } from "fs";
 import * as yaml from "yaml";
-import { detectAgents, type DetectionResult } from "../utils/agent-detector.js";
+import { detectAgents } from "../utils/agent-detector.js";
 import { detectProject } from "../utils/detect.js";
 import { getPopularAgents, AGENTS } from "../utils/agents.js";
 
@@ -18,6 +18,25 @@ interface InitOptions {
 const LYNXPROMPT_DIR = ".lynxprompt";
 const LYNXPROMPT_CONFIG = ".lynxprompt/conf.yml";
 const LYNXPROMPT_RULES = ".lynxprompt/rules";
+
+// Common AI agent config files
+const AGENT_FILES = [
+  { name: "AGENTS.md", agent: "Universal (AGENTS.md)" },
+  { name: "CLAUDE.md", agent: "Claude Code" },
+  { name: ".windsurfrules", agent: "Windsurf" },
+  { name: ".clinerules", agent: "Cline" },
+  { name: ".goosehints", agent: "Goose" },
+  { name: "AIDER.md", agent: "Aider" },
+  { name: ".github/copilot-instructions.md", agent: "GitHub Copilot" },
+  { name: ".zed/instructions.md", agent: "Zed" },
+];
+
+// Directory-based AI agent configs
+const AGENT_DIRS = [
+  { path: ".cursor/rules", agent: "Cursor" },
+  { path: ".amazonq/rules", agent: "Amazon Q" },
+  { path: ".augment/rules", agent: "Augment Code" },
+];
 
 interface DetectedFile {
   path: string;
@@ -44,7 +63,7 @@ async function scanForExistingFiles(cwd: string): Promise<DetectedFile[]> {
     }
   }
 
-  // Check directories and specific paths
+  // Check directories
   for (const dir of AGENT_DIRS) {
     const dirPath = join(cwd, dir.path);
     if (existsSync(dirPath)) {
@@ -155,6 +174,9 @@ function createLynxpromptReadme(): string {
 
 This directory contains your LynxPrompt configuration and rules.
 
+> **Note**: This is an advanced setup for managing rules across multiple AI editors.
+> Most users should use \`lynxp wizard\` instead for simple, direct file generation.
+
 ## Directory structure
 
 - **\`rules/\`** - Your AI rules. Edit files here, then sync to agents.
@@ -178,7 +200,7 @@ After editing rules, run:
 lynxp sync
 \`\`\`
 
-This exports your rules to the configured agent formats (AGENTS.md, .cursorrules, etc.)
+This exports your rules to the configured agent formats (AGENTS.md, .cursor/rules/, etc.)
 
 ## More information
 
@@ -190,7 +212,29 @@ This exports your rules to the configured agent formats (AGENTS.md, .cursorrules
 export async function initCommand(options: InitOptions): Promise<void> {
   console.log();
   console.log(chalk.cyan("🐱 LynxPrompt Init"));
+  console.log(chalk.gray("Advanced mode: Multi-editor rule management"));
   console.log();
+
+  // Show suggestion for simple use case
+  if (!options.yes && !options.force) {
+    console.log(chalk.yellow("💡 Tip: Most users should use 'lynxp wizard' instead."));
+    console.log(chalk.gray("   The wizard generates files directly without the .lynxprompt/ folder."));
+    console.log();
+    
+    const { proceed } = await prompts({
+      type: "confirm",
+      name: "proceed",
+      message: "Continue with advanced setup?",
+      initial: false,
+    });
+
+    if (!proceed) {
+      console.log();
+      console.log(chalk.gray("Run 'lynxp wizard' for simple file generation."));
+      return;
+    }
+    console.log();
+  }
 
   const cwd = process.cwd();
   const projectName = basename(cwd);
@@ -220,7 +264,7 @@ export async function initCommand(options: InitOptions): Promise<void> {
 
   // Show detected project info
   if (projectInfo) {
-    console.log(chalk.gray("Detected project:"));
+    console.log(chalk.green("✓ Detected project:"));
     if (projectInfo.name) console.log(chalk.gray(`  Name: ${projectInfo.name}`));
     if (projectInfo.stack.length > 0) console.log(chalk.gray(`  Stack: ${projectInfo.stack.join(", ")}`));
     if (projectInfo.packageManager) console.log(chalk.gray(`  Package manager: ${projectInfo.packageManager}`));
@@ -229,17 +273,16 @@ export async function initCommand(options: InitOptions): Promise<void> {
 
   // Show detected agents
   if (agentDetection.detected.length > 0) {
-    console.log(chalk.green(`Detected ${agentDetection.detected.length} AI agent${agentDetection.detected.length === 1 ? "" : "s"}:`));
+    console.log(chalk.green(`✓ Detected ${agentDetection.detected.length} AI agent${agentDetection.detected.length === 1 ? "" : "s"}:`));
     for (const detected of agentDetection.detected) {
       const rules = detected.ruleCount > 0 ? chalk.gray(` (${detected.ruleCount} sections)`) : "";
-      console.log(`  ${chalk.cyan("✓")} ${detected.agent.name}${rules}`);
+      console.log(`  ${chalk.cyan("•")} ${detected.agent.name}${rules}`);
     }
     console.log();
   }
 
   if (existingFiles.length > 0) {
-    console.log(chalk.green("Found existing AI configuration files:"));
-    console.log();
+    console.log(chalk.green("✓ Found existing AI configuration files:"));
     for (const file of existingFiles) {
       console.log(`  ${chalk.cyan(file.path)} ${chalk.gray(`(${file.agent})`)}`);
     }
@@ -310,7 +353,7 @@ export async function initCommand(options: InitOptions): Promise<void> {
       const { create } = await prompts({
         type: "confirm",
         name: "create",
-        message: "Create a starter AGENTS.md template?",
+        message: "Create a starter template?",
         initial: true,
       });
 
