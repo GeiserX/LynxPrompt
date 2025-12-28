@@ -85,7 +85,7 @@ services:
 
   # ==========================================================================
   # BLOG DATABASE - Blog posts and content
-  # Low priority backups - content can be recreated
+  # Critical backups - original authored content
   # ==========================================================================
   postgres-blog:
     image: postgres:18-alpine
