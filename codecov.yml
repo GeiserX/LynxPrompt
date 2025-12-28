@@ -1,0 +1,76 @@
+# Codecov Configuration
+# https://docs.codecov.io/docs/codecov-yaml
+
+codecov:
+  require_ci_to_pass: true
+  max_report_age: 24h
+
+coverage:
+  precision: 2
+  round: down
+  range: "60...90"
+
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 2%
+        # Don't fail CI on coverage decrease
+        informational: true
+    patch:
+      default:
+        target: 70%
+        threshold: 5%
+        # New code should have reasonable coverage
+        informational: false
+
+comment:
+  layout: "reach,diff,flags,files"
+  behavior: default
+  require_changes: true
+  require_base: false
+  require_head: true
+
+# File patterns to ignore in coverage reports
+ignore:
+  # Dependencies and build output
+  - "node_modules/**"
+  - "dist/**"
+  - ".next/**"
+  - "coverage/**"
+  
+  # Test files (don't count tests in coverage)
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/*.spec.ts"
+  - "**/*.spec.tsx"
+  - "tests/**"
+  - "**/vitest.config.ts"
+  - "**/vitest-setup.ts"
+  
+  # Configuration files
+  - "*.config.ts"
+  - "*.config.js"
+  - "*.config.mjs"
+  - "eslint.config.mjs"
+  - "postcss.config.mjs"
+  - "next.config.ts"
+  
+  # Generated code
+  - "src/generated/**"
+  - "prisma/**"
+  
+  # Sentry configuration (required at root)
+  - "sentry.*.config.ts"
+  
+  # Tooling
+  - "tooling/**"
+  - "scripts/**"
+
+# Coverage flags for different parts of the codebase
+flags:
+  unittests:
+    paths:
+      - src/
+    carryforward: true
+

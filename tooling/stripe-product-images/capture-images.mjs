@@ -63,3 +63,4 @@ async function captureImages() {
 
 captureImages().catch(console.error);
 
+

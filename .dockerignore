@@ -39,6 +39,9 @@ tests/
 *.md
 !README.md
 
+# Private configuration (contains secrets)
+AGENTS.md.old
+
 # Docker files (avoid recursion)
 Dockerfile*
 docker-compose*.yml
@@ -61,8 +64,8 @@ temp/
 # Generated code
 src/generated/
 
-# Stripe product images (separate tool, has its own node_modules)
-stripe-product-images/
+# Internal tooling (separate tools, have their own node_modules)
+tooling/
 
 # Misc
 *.pem
