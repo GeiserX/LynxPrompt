@@ -1,0 +1,47 @@
+name: lynxprompt
+base: core22
+version: '0.1.0'
+summary: CLI for LynxPrompt - Generate AI IDE configuration files
+description: |
+  LynxPrompt CLI helps you generate AI IDE configuration files
+  (.cursorrules, AGENTS.md, copilot-instructions.md, etc.) directly
+  from your terminal with an interactive wizard.
+
+  Features:
+  - Interactive wizard to create AI config files
+  - Auto-detect project tech stack
+  - Download blueprints from LynxPrompt marketplace
+  - Browser-based OAuth authentication
+
+  Usage:
+    lynxprompt init     - Start interactive wizard
+    lynxprompt login    - Authenticate with LynxPrompt
+    lynxprompt list     - List your blueprints
+    lynxprompt pull ID  - Download a blueprint
+
+grade: stable
+confinement: strict
+
+apps:
+  lynxprompt:
+    command: bin/lynxprompt
+    plugs:
+      - home
+      - network
+      - network-bind
+
+parts:
+  lynxprompt:
+    plugin: npm
+    npm-node-version: "22.12.0"
+    source: .
+    build-packages:
+      - git
+    override-build: |
+      npm install
+      npm run build
+      mkdir -p $SNAPCRAFT_PART_INSTALL/bin
+      cp -r dist/* $SNAPCRAFT_PART_INSTALL/bin/
+      chmod +x $SNAPCRAFT_PART_INSTALL/bin/index.js
+      ln -sf index.js $SNAPCRAFT_PART_INSTALL/bin/lynxprompt
+
