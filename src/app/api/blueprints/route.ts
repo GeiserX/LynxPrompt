@@ -489,7 +489,7 @@ export async function POST(request: NextRequest) {
         templateId: blueprint.id,
         version: 1,
         content: content.trim(),
-        variables: null,
+        variables: undefined,
         changelog: "Initial version",
         isPublished: effectiveIsPublic,
         createdBy: session.user.id,
