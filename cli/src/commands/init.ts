@@ -5,28 +5,14 @@ import { writeFile, mkdir, readFile, access, readdir } from "fs/promises";
 import { join, dirname, basename } from "path";
 import { existsSync } from "fs";
 import * as yaml from "yaml";
+import { detectAgents, type DetectionResult } from "../utils/agent-detector.js";
+import { detectProject } from "../utils/detect.js";
+import { getPopularAgents, AGENTS } from "../utils/agents.js";
 
 interface InitOptions {
   yes?: boolean;
   force?: boolean;
 }
-
-// Agent file patterns to detect
-const AGENT_FILES = [
-  { name: "AGENTS.md", agent: "Claude Code, GitHub Copilot, and others" },
-  { name: "CLAUDE.md", agent: "Claude Code" },
-  { name: ".cursorrules", agent: "Cursor" },
-  { name: ".windsurfrules", agent: "Windsurf" },
-  { name: ".clinerules", agent: "Cline" },
-  { name: ".goosehints", agent: "Goose" },
-];
-
-const AGENT_DIRS = [
-  { path: ".cursor/rules", agent: "Cursor" },
-  { path: ".github/copilot-instructions.md", agent: "GitHub Copilot" },
-  { path: ".zed/instructions.md", agent: "Zed" },
-  { path: ".windsurf/rules", agent: "Windsurf" },
-];
 
 // LynxPrompt paths
 const LYNXPROMPT_DIR = ".lynxprompt";
@@ -147,10 +133,10 @@ npm run dev
 /**
  * Create default LynxPrompt configuration
  */
-function createDefaultConfig(): string {
+function createDefaultConfig(exporters: string[] = ["agents"]): string {
   const config = {
     version: "1",
-    exporters: ["agents"],
+    exporters,
     sources: [
       {
         type: "local",
@@ -223,10 +209,33 @@ export async function initCommand(options: InitOptions): Promise<void> {
     return;
   }
 
-  // Scan for existing files
-  const spinner = ora("Scanning for existing AI config files...").start();
+  // Detect project and agents
+  const spinner = ora("Scanning project...").start();
+  const [projectInfo, agentDetection] = await Promise.all([
+    detectProject(cwd),
+    Promise.resolve(detectAgents(cwd)),
+  ]);
   const existingFiles = await scanForExistingFiles(cwd);
   spinner.stop();
+
+  // Show detected project info
+  if (projectInfo) {
+    console.log(chalk.gray("Detected project:"));
+    if (projectInfo.name) console.log(chalk.gray(`  Name: ${projectInfo.name}`));
+    if (projectInfo.stack.length > 0) console.log(chalk.gray(`  Stack: ${projectInfo.stack.join(", ")}`));
+    if (projectInfo.packageManager) console.log(chalk.gray(`  Package manager: ${projectInfo.packageManager}`));
+    console.log();
+  }
+
+  // Show detected agents
+  if (agentDetection.detected.length > 0) {
+    console.log(chalk.green(`Detected ${agentDetection.detected.length} AI agent${agentDetection.detected.length === 1 ? "" : "s"}:`));
+    for (const detected of agentDetection.detected) {
+      const rules = detected.ruleCount > 0 ? chalk.gray(` (${detected.ruleCount} sections)`) : "";
+      console.log(`  ${chalk.cyan("✓")} ${detected.agent.name}${rules}`);
+    }
+    console.log();
+  }
 
   if (existingFiles.length > 0) {
     console.log(chalk.green("Found existing AI configuration files:"));
@@ -318,9 +327,61 @@ export async function initCommand(options: InitOptions): Promise<void> {
     console.log(chalk.gray("Created: .lynxprompt/rules/agents.md"));
   }
 
+  // Determine which exporters to enable
+  let exporters: string[] = [];
+  
+  if (agentDetection.detected.length > 0) {
+    // Use detected agents
+    exporters = agentDetection.detected.map((d) => d.agent.id);
+    
+    // If more than 3 detected, ask which to enable (unless --yes)
+    if (agentDetection.detected.length > 3 && !options.yes) {
+      const { selected } = await prompts({
+        type: "multiselect",
+        name: "selected",
+        message: "Select agents to enable:",
+        choices: agentDetection.detected.map((d) => ({
+          title: d.agent.name,
+          value: d.agent.id,
+          selected: true,
+        })),
+        hint: "- Space to toggle, Enter to confirm",
+      });
+      
+      if (selected && selected.length > 0) {
+        exporters = selected;
+      }
+    }
+  } else {
+    // Default to AGENTS.md (universal format)
+    exporters = ["agents"];
+    
+    // Offer to select popular agents if interactive
+    if (!options.yes) {
+      const popular = getPopularAgents();
+      const { selected } = await prompts({
+        type: "multiselect",
+        name: "selected",
+        message: "Select AI agents to sync to:",
+        choices: popular.map((a) => ({
+          title: `${a.name} - ${a.description}`,
+          value: a.id,
+          selected: a.id === "agents", // Default select AGENTS.md
+        })),
+        hint: "- Space to toggle, Enter to confirm",
+      });
+      
+      if (selected && selected.length > 0) {
+        exporters = selected;
+      }
+    }
+  }
+
+  console.log(chalk.gray(`Enabling ${exporters.length} exporter${exporters.length === 1 ? "" : "s"}: ${exporters.join(", ")}`));
+
   // Create config file
   await mkdir(dirname(configPath), { recursive: true });
-  await writeFile(configPath, createDefaultConfig(), "utf-8");
+  await writeFile(configPath, createDefaultConfig(exporters), "utf-8");
 
   // Create README
   const readmePath = join(lynxpromptDir, "README.md");
@@ -344,6 +405,6 @@ export async function initCommand(options: InitOptions): Promise<void> {
   console.log(chalk.cyan("Next steps:"));
   console.log(chalk.gray("  1. Edit your rules in .lynxprompt/rules/"));
   console.log(chalk.gray("  2. Run 'lynxp sync' to export to your AI agents"));
-  console.log(chalk.gray("  3. Or run 'lynxp wizard' for a guided setup"));
+  console.log(chalk.gray("  3. Or run 'lynxp agents' to manage which agents to sync to"));
   console.log();
 }

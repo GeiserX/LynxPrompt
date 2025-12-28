@@ -9,6 +9,8 @@ import { initCommand } from "./commands/init.js";
 import { wizardCommand } from "./commands/wizard.js";
 import { searchCommand } from "./commands/search.js";
 import { statusCommand } from "./commands/status.js";
+import { syncCommand } from "./commands/sync.js";
+import { agentsCommand } from "./commands/agents.js";
 
 const program = new Command();
 
@@ -81,6 +83,21 @@ program
   .description("Show current AI config status in this directory")
   .action(statusCommand);
 
+// Sync command - export rules to all agents
+program
+  .command("sync")
+  .description("Sync rules to all configured AI agents")
+  .option("--dry-run", "Preview changes without writing files")
+  .option("-f, --force", "Skip prompts (for CI/automation)")
+  .action(syncCommand);
+
+// Agents command - manage which agents to sync to
+program
+  .command("agents [action] [agent]")
+  .description("Manage AI agents (list, enable, disable, detect)")
+  .option("-i, --interactive", "Interactive agent selection")
+  .action(agentsCommand);
+
 // Add some styling to help
 program.addHelpText(
   "beforeAll",
@@ -95,9 +112,10 @@ program.addHelpText(
   `
 ${chalk.gray("Examples:")}
   ${chalk.cyan("$ lynxp init")}                   ${chalk.gray("Initialize LynxPrompt in this directory")}
+  ${chalk.cyan("$ lynxp sync")}                   ${chalk.gray("Sync rules to all configured agents")}
+  ${chalk.cyan("$ lynxp agents")}                 ${chalk.gray("List and manage AI agents")}
   ${chalk.cyan("$ lynxp wizard")}                 ${chalk.gray("Start interactive configuration wizard")}
   ${chalk.cyan("$ lynxp pull bp_abc123")}         ${chalk.gray("Download a blueprint")}
-  ${chalk.cyan("$ lynxp list")}                   ${chalk.gray("List your blueprints")}
   ${chalk.cyan("$ lynxp search nextjs")}          ${chalk.gray("Search public blueprints")}
 
 ${chalk.gray("Documentation: https://lynxprompt.com/docs/cli")}
