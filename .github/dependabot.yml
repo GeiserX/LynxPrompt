@@ -26,17 +26,24 @@ updates:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
 
-  # GitHub Actions
+  # GitHub Actions - auto-merge minor/patch, ignore major
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "monthly"
     commit-message:
       prefix: "ci"
     labels:
       - "ci"
       - "automated"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    ignore:
+      # Ignore major version updates - review manually
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   # Docker
   - package-ecosystem: "docker"
