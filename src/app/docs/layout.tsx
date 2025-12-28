@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
 import { DocsSidebar, DocsSidebarMobile } from "@/components/docs-sidebar";
+import { DocsToc } from "@/components/docs-toc";
 
 export const metadata: Metadata = {
   title: {
@@ -52,9 +53,14 @@ export default function DocsLayout({
             <DocsSidebarMobile />
           </div>
 
-          {/* Page content */}
-          <div className="container mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-            {children}
+          {/* Page content with ToC */}
+          <div className="flex gap-8 px-4 py-8 sm:px-6 lg:px-8">
+            <div className="min-w-0 max-w-3xl flex-1">
+              {children}
+            </div>
+            
+            {/* Table of Contents - right side */}
+            <DocsToc />
           </div>
         </main>
       </div>
