@@ -1,11 +1,11 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Command, Wand2, FileCode, Search, Download, User, LogIn, LogOut, Info, ArrowRight, RefreshCw, Layers } from "lucide-react";
+import { Command, Wand2, FileCode, Search, Download, User, LogIn, LogOut, Info, ArrowRight, RefreshCw, Layers, Cloud, ArrowUp, ArrowDown } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "CLI Commands",
   description:
-    "Complete reference for all LynxPrompt CLI commands. Init, sync, agents, blueprints, and more.",
+    "Complete reference for LynxPrompt CLI commands. Push, pull, sync, and manage blueprints from your terminal.",
 };
 
 export default function CliCommandsPage() {
@@ -41,7 +41,23 @@ export default function CliCommandsPage() {
                   <code className="rounded bg-muted px-2 py-1 text-sm">lynxp init</code>
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
-                  Initialize LynxPrompt in your project (auto-detects stack &amp; agents)
+                  Initialize LynxPrompt in your project
+                </td>
+              </tr>
+              <tr className="border-b bg-primary/5">
+                <td className="py-3 pr-4">
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp push</code>
+                </td>
+                <td className="py-3 pr-4 text-muted-foreground">
+                  Push local rules to your cloud blueprint
+                </td>
+              </tr>
+              <tr className="border-b bg-primary/5">
+                <td className="py-3 pr-4">
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp pull</code>
+                </td>
+                <td className="py-3 pr-4 text-muted-foreground">
+                  Pull latest rules from your blueprint
                 </td>
               </tr>
               <tr className="border-b bg-primary/5">
@@ -49,23 +65,7 @@ export default function CliCommandsPage() {
                   <code className="rounded bg-muted px-2 py-1 text-sm">lynxp sync</code>
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
-                  Sync rules to all configured AI agents
-                </td>
-              </tr>
-              <tr className="border-b bg-primary/5">
-                <td className="py-3 pr-4">
-                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp agents</code>
-                </td>
-                <td className="py-3 pr-4 text-muted-foreground">
-                  Manage AI agents (list, enable, disable, detect)
-                </td>
-              </tr>
-              <tr className="border-b">
-                <td className="py-3 pr-4">
-                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp wizard</code>
-                </td>
-                <td className="py-3 pr-4 text-muted-foreground">
-                  Interactive wizard to generate AI IDE configs
+                  Sync local rules to AI agent files
                 </td>
               </tr>
               <tr className="border-b">
@@ -73,7 +73,15 @@ export default function CliCommandsPage() {
                   <code className="rounded bg-muted px-2 py-1 text-sm">lynxp status</code>
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
-                  Show AI config files in current directory
+                  Show sync status and linked blueprint
+                </td>
+              </tr>
+              <tr className="border-b">
+                <td className="py-3 pr-4">
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp link &lt;id&gt;</code>
+                </td>
+                <td className="py-3 pr-4 text-muted-foreground">
+                  Link project to a team blueprint
                 </td>
               </tr>
               <tr className="border-b">
@@ -82,14 +90,6 @@ export default function CliCommandsPage() {
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
                   Search blueprints in the marketplace
-                </td>
-              </tr>
-              <tr className="border-b">
-                <td className="py-3 pr-4">
-                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp pull &lt;id&gt;</code>
-                </td>
-                <td className="py-3 pr-4 text-muted-foreground">
-                  Download a blueprint
                 </td>
               </tr>
               <tr className="border-b">
@@ -114,14 +114,6 @@ export default function CliCommandsPage() {
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
                   Log out and remove credentials
-                </td>
-              </tr>
-              <tr className="border-b">
-                <td className="py-3 pr-4">
-                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp whoami</code>
-                </td>
-                <td className="py-3 pr-4 text-muted-foreground">
-                  Show current authenticated user
                 </td>
               </tr>
             </tbody>
@@ -203,6 +195,134 @@ Next steps:
         </div>
       </section>
 
+      {/* push command */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-3">
+          <ArrowUp className="h-5 w-5 text-primary" />
+          <h2 className="text-2xl font-bold">lynxp push</h2>
+        </div>
+        <p className="text-muted-foreground">
+          Push your local rules to your LynxPrompt account. Creates or updates a private blueprint
+          that your team can link to. <strong>Requires authentication.</strong>
+        </p>
+
+        <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+          <pre className="text-sm text-zinc-100">
+            <code>{`lynxp push [options]
+
+Options:
+  -m, --message <msg>   Commit message for the update
+  --force               Overwrite remote changes without confirmation`}</code>
+          </pre>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="font-semibold">Example</h3>
+          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+            <pre className="text-sm text-zinc-100">
+              <code>{`$ lynxp push
+📤 Pushing to LynxPrompt...
+  → Linked blueprint: bp_x7k9m2
+  → Updated 5 rules
+✓ Rules synced to cloud
+
+$ lynxp push -m "Add testing guidelines"
+📤 Pushing to LynxPrompt...
+✓ Blueprint updated: "Add testing guidelines"`}</code>
+            </pre>
+          </div>
+        </div>
+
+        <div className="rounded-lg border bg-card p-4">
+          <p className="text-sm text-muted-foreground">
+            <strong>First push?</strong> If no blueprint is linked, push creates a new private blueprint
+            in your account and links it to this project automatically.
+          </p>
+        </div>
+      </section>
+
+      {/* pull command */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-3">
+          <ArrowDown className="h-5 w-5 text-primary" />
+          <h2 className="text-2xl font-bold">lynxp pull</h2>
+        </div>
+        <p className="text-muted-foreground">
+          Pull the latest rules from your linked blueprint. Use this after teammates make changes
+          on the web, or to restore from the cloud version.
+        </p>
+
+        <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+          <pre className="text-sm text-zinc-100">
+            <code>{`lynxp pull [blueprint-id] [options]
+
+Arguments:
+  blueprint-id   Optional: pull from a specific blueprint
+
+Options:
+  --force        Overwrite local changes without confirmation`}</code>
+          </pre>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="font-semibold">Example</h3>
+          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+            <pre className="text-sm text-zinc-100">
+              <code>{`$ lynxp pull
+📥 Pulling from blueprint bp_x7k9m2...
+  ↓ Updated 3 rules
+  ↓ Added 1 new rule
+✓ Local rules updated
+
+# Pull from marketplace blueprint
+$ lynxp pull bp_react_best_practices
+📥 Pulling from "React Best Practices"...
+✓ Downloaded to .lynxprompt/rules/`}</code>
+            </pre>
+          </div>
+        </div>
+      </section>
+
+      {/* link command */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-3">
+          <Cloud className="h-5 w-5 text-primary" />
+          <h2 className="text-2xl font-bold">lynxp link</h2>
+        </div>
+        <p className="text-muted-foreground">
+          Link this project to a team blueprint. All team members can link to the same blueprint
+          and stay in sync with push/pull.
+        </p>
+
+        <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+          <pre className="text-sm text-zinc-100">
+            <code>{`lynxp link <blueprint-id>
+
+Arguments:
+  blueprint-id   The blueprint to link to (e.g., bp_abc123)`}</code>
+          </pre>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="font-semibold">Team workflow</h3>
+          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+            <pre className="text-sm text-zinc-100">
+              <code>{`# Team lead creates blueprint
+$ lynxp push
+✓ Created blueprint: bp_team_rules
+
+# Team members link to it
+$ lynxp link bp_team_rules
+✓ Linked to "Team Rules"
+
+# Everyone can now push/pull
+$ lynxp pull   # Get latest from team
+$ lynxp push   # Share your changes`}</code>
+            </pre>
+          </div>
+        </div>
+      </section>
+
       {/* sync command */}
       <section className="space-y-4">
         <div className="flex items-center gap-3">
@@ -210,8 +330,8 @@ Next steps:
           <h2 className="text-2xl font-bold">lynxp sync</h2>
         </div>
         <p className="text-muted-foreground">
-          Sync your rules from <code className="rounded bg-muted px-1">.lynxprompt/rules/</code> to all configured AI agents.
-          This is the core workflow command — edit once, sync everywhere.
+          Sync local rules to AI agent files in your project. This exports your rules to
+          .cursorrules, CLAUDE.md, and other configured agent formats.
         </p>
 
         <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
@@ -233,22 +353,15 @@ Options:
   .cursor/rules/lynxprompt-rules.mdc
   CLAUDE.md
   AGENTS.md
-  .github/copilot-instructions.md
-
-$ lynxp sync --dry-run
-Would write to:
-  .cursor/rules/lynxprompt-rules.mdc (2.4 KB)
-  CLAUDE.md (1.8 KB)
-  AGENTS.md (1.5 KB)
-  .github/copilot-instructions.md (1.2 KB)`}</code>
+  .github/copilot-instructions.md`}</code>
             </pre>
           </div>
         </div>
 
         <div className="rounded-lg border bg-card p-4">
           <p className="text-sm text-muted-foreground">
-            <strong>CI/CD Integration:</strong> Use <code className="rounded bg-muted px-1">lynxp sync --force</code> in your
-            CI pipeline to ensure AI configs are always in sync with your rules. Perfect for pre-commit hooks or GitHub Actions.
+            <strong>Tip:</strong> You can also export to any agent format from the web platform.
+            Just push your rules and download the format you need.
           </p>
         </div>
       </section>
