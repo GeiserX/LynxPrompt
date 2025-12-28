@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Terminal, Radar, FolderSearch, Package, Copy, Check, RefreshCw, Layers } from "lucide-react";
+import { Terminal, Cloud, Users, Download, Copy, Check, ArrowUpDown, Globe } from "lucide-react";
 
 const INSTALL_COMMANDS = {
   npm: "npm install -g lynxprompt",
@@ -15,43 +15,41 @@ type PackageManager = keyof typeof INSTALL_COMMANDS;
 const TERMINAL_LINES = [
   { type: "command", content: "lynxp init" },
   { type: "output", content: "🐱 LynxPrompt Init" },
+  { type: "output-dim", content: "  Stack: typescript, react, nextjs" },
+  { type: "output-cyan", content: "  Found: .cursorrules, CLAUDE.md" },
+  { type: "output-success", content: "✅ Initialized!" },
   { type: "output", content: "" },
-  { type: "output-highlight", content: "Detected project:" },
-  { type: "output-dim", content: "  Stack: typescript, react, nextjs, prisma" },
-  { type: "output-dim", content: "  Package manager: pnpm" },
+  { type: "command", content: "lynxp push" },
+  { type: "output-highlight", content: "📤 Pushing to LynxPrompt..." },
+  { type: "output-cyan", content: "  → Created blueprint: bp_x7k9m2" },
+  { type: "output-success", content: "✓ Rules synced to cloud" },
   { type: "output", content: "" },
-  { type: "output-green", content: "Detected 3 AI agents:" },
-  { type: "output-cyan", content: "  ✓ Cursor (12 sections)" },
-  { type: "output-cyan", content: "  ✓ AGENTS.md (8 sections)" },
-  { type: "output-cyan", content: "  ✓ GitHub Copilot" },
-  { type: "output", content: "" },
-  { type: "output-dim", content: "Enabling 3 exporters: cursor, agents, copilot" },
-  { type: "output-success", content: "✅ LynxPrompt initialized!" },
-  { type: "output", content: "" },
-  { type: "command", content: "lynxp sync" },
-  { type: "output-success", content: "✓ Synced to 3 agents" },
+  { type: "output-dim", content: "# Edit on web, then pull latest:" },
+  { type: "command", content: "lynxp pull" },
+  { type: "output-cyan", content: "  ↓ Updated 3 rules from blueprint" },
+  { type: "output-success", content: "✓ Local rules updated" },
 ];
 
 const CLI_FEATURES = [
   {
-    icon: Layers,
-    title: "40+ Agents Supported",
-    description: "Cursor, Claude, Copilot, Windsurf, Cline, Amazon Q, Zed, and many more",
+    icon: Cloud,
+    title: "Cloud Connected",
+    description: "Push rules to your LynxPrompt account. Your blueprints, accessible anywhere.",
   },
   {
-    icon: RefreshCw,
-    title: "One-Command Sync",
-    description: "Edit once in .lynxprompt/rules/, sync to all agents with lynxp sync",
+    icon: ArrowUpDown,
+    title: "Push & Pull",
+    description: "Edit locally or on web — stay in sync. lynxp push / lynxp pull",
   },
   {
-    icon: Radar,
-    title: "Smart Detection",
-    description: "Auto-detects your tech stack and existing AI configs, imports them instantly",
+    icon: Users,
+    title: "Team Ready",
+    description: "Link your team to the same blueprint. Everyone stays aligned automatically.",
   },
   {
-    icon: Package,
-    title: "Blueprint Marketplace",
-    description: "Pull community blueprints or share your own with lynxp pull/search",
+    icon: Globe,
+    title: "Export Any Format",
+    description: "Download .cursorrules, CLAUDE.md, or any format from the web platform.",
   },
 ];
 
@@ -73,14 +71,14 @@ export function CLISection() {
           <span>Command Line Interface</span>
         </div>
         <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          Power users? Meet the{" "}
+          Your rules,{" "}
           <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-            CLI
+            everywhere
           </span>
         </h2>
         <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">
-          40+ AI agents. One command to sync them all. Auto-detects your project,
-          imports existing configs, and syncs to every agent you use.
+          Edit locally, push to cloud, export any format. The CLI bridges your terminal
+          to your LynxPrompt blueprints — so your team stays in sync.
         </p>
       </div>
 
