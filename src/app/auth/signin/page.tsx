@@ -21,7 +21,7 @@ function SignInContent() {
   useEffect(() => {
     if (cliSession && status === "authenticated" && session?.user && !cliAuthComplete && !cliAuthError) {
       // Complete CLI authentication
-      fetch("/api/auth/cli/callback", {
+      fetch("/api/cli-auth/callback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ session_id: cliSession }),
