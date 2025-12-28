@@ -12,71 +12,121 @@ npm install -g lynxprompt
 npx lynxprompt
 ```
 
+The CLI is available as both `lynxprompt` and the short alias `lynxp`.
+
 ## Quick Start
 
 ```bash
-# Interactive wizard to create AI config
-lynxprompt init
+# Initialize LynxPrompt in your project
+lynxp init
+
+# Or use the interactive wizard for a guided setup
+lynxp wizard
 
 # Login to your LynxPrompt account
-lynxprompt login
+lynxp login
 
 # List your blueprints
-lynxprompt list
+lynxp list
 
 # Download a blueprint
-lynxprompt pull bp_abc123
+lynxp pull bp_abc123
 ```
 
 ## Commands
 
-### Authentication
+### Initialize (`lynxp init`)
+
+Initialize LynxPrompt in your project. This command:
+
+1. Scans for existing AI config files (AGENTS.md, .cursorrules, etc.)
+2. Imports them or creates a starter template
+3. Sets up the `.lynxprompt/` directory structure
 
 ```bash
-# Login (opens browser for OAuth)
-lynxprompt login
+# Interactive initialization
+lynxp init
 
-# Show current user
-lynxprompt whoami
+# Non-interactive (auto-import existing files)
+lynxp init --yes
 
-# Logout
-lynxprompt logout
+# Re-initialize even if already set up
+lynxp init --force
 ```
 
-### Blueprints
+After initialization, your project will have:
 
-```bash
-# Interactive wizard to generate config
-lynxprompt init
-
-# List your blueprints
-lynxprompt list
-lynxprompt list --visibility PUBLIC
-lynxprompt list --limit 50
-
-# Download a blueprint
-lynxprompt pull bp_abc123
-lynxprompt pull bp_abc123 --output ./config
-
-# Search public blueprints
-lynxprompt search "nextjs typescript"
-
-# Check current config status
-lynxprompt status
+```
+.lynxprompt/
+├── conf.yml       # Configuration (exporters, sources)
+├── rules/         # Your rules (edit here!)
+│   └── agents.md  # Starter rules file
+├── README.md      # Documentation
+└── .gitignore     # Ignores local state files
 ```
 
-### Non-Interactive Mode
+### Wizard (`lynxp wizard`)
 
-For CI/CD pipelines and scripting:
+Interactive wizard for generating AI IDE configurations with full customization:
 
 ```bash
-lynxprompt init \
+# Start the interactive wizard
+lynxp wizard
+
+# Non-interactive mode with all options
+lynxp wizard \
   --name "my-api" \
+  --description "REST API for user management" \
   --stack typescript,express \
   --platforms cursor,claude \
   --persona backend \
   --boundaries conservative \
   --yes
+```
+
+**Options:**
+
+| Flag | Description |
+|------|-------------|
+| `-n, --name` | Project name |
+| `-d, --description` | Project description |
+| `-s, --stack` | Tech stack (comma-separated) |
+| `-p, --platforms` | Target platforms (comma-separated) |
+| `--persona` | AI persona (backend, frontend, fullstack, devops, data, security) |
+| `--boundaries` | Boundary preset (conservative, standard, permissive) |
+| `--preset` | Agent preset (test-agent, docs-agent, etc.) |
+| `-y, --yes` | Skip prompts, use defaults |
+
+### Authentication
+
+```bash
+# Login (opens browser for OAuth)
+lynxp login
+
+# Show current user
+lynxp whoami
+
+# Logout
+lynxp logout
+```
+
+### Blueprints
+
+```bash
+# List your blueprints
+lynxp list
+lynxp list --visibility PUBLIC
+lynxp list --limit 50
+
+# Download a blueprint
+lynxp pull bp_abc123
+lynxp pull bp_abc123 --output ./config
+
+# Search public blueprints
+lynxp search "nextjs typescript"
+
+# Check current config status
+lynxp status
 ```
 
 ## Environment Variables
@@ -86,17 +136,42 @@ lynxprompt init \
 | `LYNXPROMPT_TOKEN` | API token (alternative to login) |
 | `LYNXPROMPT_API_URL` | Custom API URL (for development) |
 
-## Configuration
+## Project Structure
 
-Config is stored in `~/.config/lynxprompt/config.json`.
+LynxPrompt uses a simple directory structure:
+
+- **`.lynxprompt/conf.yml`** - Configuration file with exporters and sources
+- **`.lynxprompt/rules/`** - Your rules in markdown format (single source of truth)
+
+**Workflow:**
+
+1. Edit rules in `.lynxprompt/rules/`
+2. Run `lynxp sync` to export to agent formats (AGENTS.md, .cursorrules, etc.)
+3. Your AI assistants pick up the changes automatically
+
+## Configuration File
+
+The `conf.yml` file controls how rules are exported:
+
+```yaml
+version: "1"
+exporters:
+  - agents      # AGENTS.md (Claude, Copilot, etc.)
+  - cursor      # .cursorrules
+sources:
+  - type: local
+    path: .lynxprompt/rules
+```
 
 ## API Access
 
 API access requires a Pro, Max, or Teams subscription. Generate tokens at:
 https://lynxprompt.com/settings?tab=api-tokens
 
+## Documentation
+
+Full documentation: https://lynxprompt.com/docs/cli
+
 ## License
 
 See the main LynxPrompt repository for license information.
-
-
