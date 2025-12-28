@@ -41,16 +41,21 @@ unset GITHUB_TOKEN && gh run view <RUN_ID> -R GeiserX/LynxPrompt --log
 
 If CI/CD fails, investigate and fix before considering deployment complete.
 
-### Caddy - NEVER Restart Container
+### NEVER Restart Docker Containers
 
-**To reload Caddy config, NEVER restart the container** (it takes 2+ minutes to rebuild with xcaddy).
+**General rule**: Prefer `reload` commands over container restarts. Use Portainer GitOps to redeploy, not manual docker commands.
 
-Instead, use:
+**Caddy** - NEVER restart the container (takes 2+ minutes to rebuild with xcaddy). Instead:
 ```bash
 ssh root@192.168.10.100 "docker exec caddy caddy fmt --overwrite /etc/caddy/Caddyfile && docker exec caddy caddy reload --config /etc/caddy/Caddyfile"
 ```
 
-This reloads config in seconds without rebuilding.
+**LynxPrompt** - Use Portainer GitOps to redeploy:
+1. Update docker-compose.yml in private gitea repo
+2. Push changes
+3. Trigger Portainer redeploy via API (or wait for auto-sync)
+
+Never manually run `docker compose up` or `docker restart` - Portainer loses track of stack state.
 
 ## 🎯 Project Overview
 
@@ -88,6 +93,8 @@ This reloads config in seconds without rebuilding.
 
 ### Things I Dislike ❌
 
+- **Restarting containers** when reload is possible (use `caddy reload`, not container restart)
+- **Manual docker commands** for deployments (use Portainer GitOps)
 - Over-engineering or unnecessary abstractions
 - Adding features I didn't ask for
 - Verbose explanations when action is needed
