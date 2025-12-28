@@ -19,12 +19,21 @@ export function DocsToc({ className }: DocsTocProps) {
   const [headings, setHeadings] = useState<TocItem[]>([]);
   const [activeId, setActiveId] = useState<string>("");
   const observerRef = useRef<IntersectionObserver | null>(null);
+  const lastPathRef = useRef<string>("");
 
-  // Extract headings from the page content - re-run on route change
+  // Clear headings immediately when pathname changes
   useEffect(() => {
-    // Small delay to ensure DOM is updated after navigation
-    const timer = setTimeout(() => {
-      const article = document.querySelector("main");
+    if (lastPathRef.current !== pathname) {
+      setHeadings([]);
+      setActiveId("");
+      lastPathRef.current = pathname;
+    }
+  }, [pathname]);
+
+  // Extract headings from the page content
+  useEffect(() => {
+    const scanHeadings = () => {
+      const article = document.querySelector("main article") || document.querySelector("main");
       if (!article) return;
 
       const elements = article.querySelectorAll("h2, h3");
@@ -48,19 +57,28 @@ export function DocsToc({ className }: DocsTocProps) {
         }
       });
 
-      setHeadings(items);
-      setActiveId(items.length > 0 ? items[0].id : "");
-    }, 100);
+      // Only update if we found headings and they're different
+      if (items.length > 0) {
+        setHeadings(items);
+        setActiveId(items[0].id);
+      }
+    };
 
-    return () => clearTimeout(timer);
-  }, [pathname]); // Re-run when pathname changes
+    // Try multiple times to catch when React finishes rendering
+    const timers = [
+      setTimeout(scanHeadings, 50),
+      setTimeout(scanHeadings, 150),
+      setTimeout(scanHeadings, 300),
+    ];
+
+    return () => timers.forEach(clearTimeout);
+  }, [pathname]);
 
   // Intersection Observer for scroll spy
   const handleIntersection = useCallback((entries: IntersectionObserverEntry[]) => {
     const visibleEntries = entries.filter((entry) => entry.isIntersecting);
     
     if (visibleEntries.length > 0) {
-      // Sort by position and take the topmost one
       const sorted = visibleEntries.sort(
         (a, b) => a.boundingClientRect.top - b.boundingClientRect.top
       );
@@ -71,18 +89,15 @@ export function DocsToc({ className }: DocsTocProps) {
   useEffect(() => {
     if (headings.length === 0) return;
 
-    // Clean up previous observer
     if (observerRef.current) {
       observerRef.current.disconnect();
     }
 
-    // Create new observer
     observerRef.current = new IntersectionObserver(handleIntersection, {
       rootMargin: "-100px 0px -60% 0px",
       threshold: 0,
     });
 
-    // Observe all headings
     headings.forEach(({ id }) => {
       const element = document.getElementById(id);
       if (element) {
@@ -106,6 +121,7 @@ export function DocsToc({ className }: DocsTocProps) {
     }
   };
 
+  // Don't render if no headings or only 1 heading
   if (headings.length < 2) {
     return null;
   }
@@ -117,8 +133,8 @@ export function DocsToc({ className }: DocsTocProps) {
         className
       )}
     >
-      <nav className="sticky top-24 w-48 max-h-[calc(100vh-8rem)] overflow-y-auto">
-        <div className="space-y-3 pr-4">
+      <nav className="sticky top-24 w-44 max-h-[calc(100vh-8rem)] overflow-y-auto">
+        <div className="space-y-3 border-l border-border pl-4">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             On this page
           </p>
@@ -129,7 +145,7 @@ export function DocsToc({ className }: DocsTocProps) {
                   href={`#${heading.id}`}
                   onClick={(e) => handleClick(e, heading.id)}
                   className={cn(
-                    "block py-1 text-sm leading-snug transition-colors cursor-pointer",
+                    "block py-1 text-[13px] leading-snug transition-colors cursor-pointer",
                     heading.level === 3 && "pl-3",
                     activeId === heading.id
                       ? "font-medium text-primary"
