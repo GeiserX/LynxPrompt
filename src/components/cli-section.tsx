@@ -23,9 +23,9 @@ const TERMINAL_LINES = [
   { type: "output-success", content: "✓ Synced to cloud" },
   { type: "output", content: "" },
   { type: "output-dim", content: "# Pull in any format:" },
-  { type: "command", content: "lynxp pull --format cursor" },
-  { type: "output-success", content: "✓ .cursor/rules/" },
-  { type: "command", content: "lynxp pull --format claude" },
+  { type: "command", content: "lynxp pull -f cursor" },
+  { type: "output-success", content: "✓ .cursor/rules/*.mdc" },
+  { type: "command", content: "lynxp pull -f claude" },
   { type: "output-success", content: "✓ CLAUDE.md" },
 ];
 
@@ -48,7 +48,7 @@ const CLI_FEATURES = [
   {
     icon: Globe,
     title: "Export Any Format",
-    description: "Download .cursorrules, CLAUDE.md, or any format from the web platform.",
+    description: "Download Cursor rules, CLAUDE.md, or any format from the web platform.",
   },
 ];
 
