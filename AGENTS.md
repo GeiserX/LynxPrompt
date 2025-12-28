@@ -10,6 +10,20 @@
 
 ---
 
+## 🔄 CLI & WEB WIZARD FEATURE PARITY
+
+**The CLI (`lynxprompt` package) and Web Wizard MUST always have the same functionality.**
+
+When adding or modifying wizard features:
+1. **Update both CLI and Web** - Any new wizard step, option, or configuration must be implemented in both:
+   - Web: `src/app/wizard/` and related components
+   - CLI: `cli/src/commands/init.ts` and `cli/src/utils/generator.ts`
+2. **Same options** - Tech stacks, platforms, personas, boundaries, and presets must match
+3. **Same output** - Generated configuration files must be identical regardless of source
+4. **Test both** - Before deploying, verify the feature works in both CLI and Web
+
+---
+
 ## 🚨 CRITICAL - READ FIRST
 
 ### Always Backup Before Modifying Config Files
