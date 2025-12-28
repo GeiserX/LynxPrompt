@@ -82,4 +82,6 @@ ehthumbs.db
 
 # Docker
 docker-compose.override.yml
-AGENTS.md
+
+# Private configuration (contains secrets)
+AGENTS.md.old
