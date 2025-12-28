@@ -232,3 +232,4 @@ function getMostActiveDay(heatmap: ActivityHeatmap[]): string {
   return days[maxDay];
 }
 
+

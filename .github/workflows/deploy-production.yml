@@ -1,0 +1,98 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to deploy (e.g., 0.21.1)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://lynxprompt.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate version format
+        run: |
+          if ! [[ "${{ inputs.version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "❌ Invalid version format. Use semver (e.g., 0.21.1)"
+            exit 1
+          fi
+          echo "✅ Deploying version ${{ inputs.version }}"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.DOCKER_REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_REGISTRY }}/lynxprompt:${{ inputs.version }}
+            ${{ secrets.DOCKER_REGISTRY }}/lynxprompt:latest
+          cache-from: type=registry,ref=${{ secrets.DOCKER_REGISTRY }}/lynxprompt:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_REGISTRY }}/lynxprompt:buildcache,mode=max
+
+      - name: Trigger Portainer deployment
+        run: |
+          curl -X PUT \
+            "${{ secrets.PORTAINER_URL }}/api/stacks/${{ secrets.PORTAINER_STACK_ID }}/git/redeploy?endpointId=${{ secrets.PORTAINER_ENDPOINT_ID }}" \
+            -H "X-API-Key: ${{ secrets.PORTAINER_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "PullImage": true,
+              "RepositoryAuthentication": true,
+              "RepositoryUsername": "${{ secrets.GITEA_USERNAME }}",
+              "RepositoryPassword": "${{ secrets.GITEA_TOKEN }}"
+            }'
+
+      - name: Wait for deployment
+        run: sleep 30
+
+      - name: Health check
+        run: |
+          for i in {1..10}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://lynxprompt.com/api/health || echo "000")
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ Deployment successful - site is healthy"
+              exit 0
+            fi
+            echo "Waiting for site to be healthy... (attempt $i/10, status: $STATUS)"
+            sleep 10
+          done
+          echo "❌ Health check failed after 10 attempts"
+          exit 1
+
+      - name: Purge Cloudflare cache
+        if: success()
+        run: |
+          curl -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/purge_cache" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"purge_everything":true}'
+          echo "✅ Cloudflare cache purged"
+

@@ -224,3 +224,4 @@ export const ROLE_DESCRIPTIONS: Record<ApiTokenRole, string> = {
   FULL: "Full access to blueprints and profile",
 };
 
+
