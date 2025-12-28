@@ -1,20 +1,80 @@
 "use client";
 
-import { useState, Suspense } from "react";
-import { signIn } from "next-auth/react";
+import { useState, Suspense, useEffect } from "react";
+import { signIn, useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Mail, Github, Chrome, ArrowLeft, Loader2 } from "lucide-react";
+import { Mail, Github, Chrome, ArrowLeft, Loader2, Terminal, CheckCircle } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Turnstile } from "@/components/turnstile";
 
 function SignInContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
+  const cliSession = searchParams.get("cli_session");
+  const { data: session, status } = useSession();
+  const [cliAuthComplete, setCliAuthComplete] = useState(false);
+  const [cliAuthError, setCliAuthError] = useState<string | null>(null);
+
+  // Handle CLI authentication callback when user is already authenticated
+  useEffect(() => {
+    if (cliSession && status === "authenticated" && session?.user && !cliAuthComplete && !cliAuthError) {
+      // Complete CLI authentication
+      fetch("/api/auth/cli/callback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: cliSession }),
+      })
+        .then((res) => {
+          if (res.ok) {
+            setCliAuthComplete(true);
+          } else {
+            return res.json().then((data) => {
+              setCliAuthError(data.error || "Failed to complete CLI authentication");
+            });
+          }
+        })
+        .catch((err) => {
+          console.error("CLI auth callback error:", err);
+          setCliAuthError("Failed to complete CLI authentication");
+        });
+    }
+  }, [cliSession, status, session, cliAuthComplete, cliAuthError]);
+
+  // Show CLI success screen
+  if (cliAuthComplete) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-600/10 to-pink-600/10 p-8">
+        <div className="text-center">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+            <CheckCircle className="h-10 w-10 text-green-600 dark:text-green-400" />
+          </div>
+          <h2 className="mt-6 text-2xl font-bold">CLI Authentication Complete!</h2>
+          <p className="mt-2 text-muted-foreground">
+            You can now return to your terminal.
+          </p>
+          <p className="mt-4 text-sm text-muted-foreground">
+            This window can be safely closed.
+          </p>
+          <Button variant="outline" className="mt-8" asChild>
+            <Link href="/dashboard">Go to Dashboard</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show CLI auth pending (user needs to sign in first)
+  if (cliSession && status === "unauthenticated") {
+    // Continue to normal sign-in flow, but with CLI context shown
+  }
 
   // SECURITY: Validate callbackUrl to prevent open redirect attacks
-  const rawCallbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  // For CLI sessions, redirect back to the signin page with CLI param after OAuth
+  const rawCallbackUrl = cliSession 
+    ? `/auth/signin?cli_session=${cliSession}`
+    : (searchParams.get("callbackUrl") || "/dashboard");
   const callbackUrl = (() => {
     // Only allow relative URLs or same-origin URLs
     if (rawCallbackUrl.startsWith("/") && !rawCallbackUrl.startsWith("//")) {
@@ -173,6 +233,28 @@ function SignInContent() {
                 Back to home
               </Link>
             </Button>
+
+            {/* CLI Authentication notice */}
+            {cliSession && (
+              <div className="mb-6 rounded-lg bg-primary/10 p-4">
+                <div className="flex items-center gap-3">
+                  <Terminal className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="text-sm font-medium">CLI Authentication</p>
+                    <p className="text-xs text-muted-foreground">
+                      Sign in to authorize the LynxPrompt CLI
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* CLI Auth Error */}
+            {cliAuthError && (
+              <div className="mb-6 rounded-lg bg-destructive/10 p-4 text-sm text-destructive">
+                {cliAuthError}
+              </div>
+            )}
 
             {/* Error message */}
             {error && (
