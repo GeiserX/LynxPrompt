@@ -60,6 +60,7 @@ npm-debug.log*
 tmp/
 temp/
 *.tmp
+**/local/
 
 # Generated code
 src/generated/
