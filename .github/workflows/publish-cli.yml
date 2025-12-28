@@ -1,19 +1,102 @@
-name: Publish CLI to npm
+name: Publish CLI
 
 on:
+  # Auto-run after successful production deployment
+  workflow_run:
+    workflows: ["Deploy to Production"]
+    types: [completed]
+    branches: [main]
+
+  # Manual trigger for ad-hoc releases
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to publish (e.g., 0.1.0)'
+        description: 'Version to publish (e.g., 0.2.0)'
         required: true
         type: string
+      platforms:
+        description: 'Platforms to publish to'
+        required: true
+        type: choice
+        options:
+          - 'all'
+          - 'npm-only'
+          - 'npm-chocolatey'
+          - 'npm-snap'
+        default: 'all'
 
 jobs:
-  publish:
+  # ===========================================
+  # Check if CLI needs publishing
+  # ===========================================
+  check-changes:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success') }}
+    outputs:
+      should_publish: ${{ steps.check.outputs.should_publish }}
+      version: ${{ steps.version.outputs.version }}
+      platforms: ${{ steps.platforms.outputs.platforms }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check for CLI changes (auto-trigger)
+        id: check
+        if: github.event_name == 'workflow_run'
+        run: |
+          # Check if CLI files changed in last commit
+          if git diff --name-only HEAD~1 HEAD | grep -q "^cli/"; then
+            echo "CLI files changed, will publish"
+            echo "should_publish=true" >> $GITHUB_OUTPUT
+          else
+            echo "No CLI changes, skipping publish"
+            echo "should_publish=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Manual trigger always publishes
+        if: github.event_name == 'workflow_dispatch'
+        run: echo "should_publish=true" >> $GITHUB_OUTPUT
+
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            # Auto-increment patch version from package.json
+            CURRENT=$(node -p "require('./cli/package.json').version")
+            MAJOR=$(echo $CURRENT | cut -d. -f1)
+            MINOR=$(echo $CURRENT | cut -d. -f2)
+            PATCH=$(echo $CURRENT | cut -d. -f3)
+            NEW_PATCH=$((PATCH + 1))
+            echo "version=${MAJOR}.${MINOR}.${NEW_PATCH}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Get platforms
+        id: platforms
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "platforms=${{ github.event.inputs.platforms }}" >> $GITHUB_OUTPUT
+          else
+            echo "platforms=all" >> $GITHUB_OUTPUT
+          fi
+
+  # ===========================================
+  # Job 1: Publish to npm (always runs first)
+  # ===========================================
+  publish-npm:
+    needs: check-changes
+    if: ${{ needs.check-changes.outputs.should_publish == 'true' }}
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: cli
+    outputs:
+      version: ${{ needs.check-changes.outputs.version }}
+      tarball_sha256: ${{ steps.sha.outputs.sha256 }}
 
     steps:
       - name: Checkout
@@ -29,7 +112,7 @@ jobs:
         run: npm ci
 
       - name: Update version
-        run: npm version ${{ github.event.inputs.version }} --no-git-tag-version
+        run: npm version ${{ needs.check-changes.outputs.version }} --no-git-tag-version
 
       - name: Build
         run: npm run build
@@ -39,12 +122,176 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Get tarball SHA256
+        id: sha
+        run: |
+          sleep 10  # Wait for npm registry to update
+          SHA=$(curl -sL "https://registry.npmjs.org/lynxprompt/-/lynxprompt-${{ needs.check-changes.outputs.version }}.tgz" | sha256sum | cut -d' ' -f1)
+          echo "sha256=$SHA" >> $GITHUB_OUTPUT
+          echo "SHA256: $SHA"
+
       - name: Create Git tag
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git tag -a "cli-v${{ github.event.inputs.version }}" -m "CLI version ${{ github.event.inputs.version }}"
-          git push origin "cli-v${{ github.event.inputs.version }}"
+          git tag -a "cli-v${{ needs.check-changes.outputs.version }}" -m "CLI version ${{ needs.check-changes.outputs.version }}"
+          git push origin "cli-v${{ needs.check-changes.outputs.version }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # ===========================================
+  # Job 2: Publish to Chocolatey (Windows)
+  # ===========================================
+  publish-chocolatey:
+    needs: [check-changes, publish-npm]
+    if: ${{ needs.check-changes.outputs.platforms == 'all' || needs.check-changes.outputs.platforms == 'npm-chocolatey' }}
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Update nuspec version
+        shell: pwsh
+        run: |
+          $nuspec = Get-Content cli/chocolatey/lynxprompt.nuspec -Raw
+          $nuspec = $nuspec -replace '<version>.*</version>', '<version>${{ needs.check-changes.outputs.version }}</version>'
+          Set-Content cli/chocolatey/lynxprompt.nuspec $nuspec
+
+      - name: Update install script version
+        shell: pwsh
+        run: |
+          $script = Get-Content cli/chocolatey/tools/chocolateyinstall.ps1 -Raw
+          $script = $script -replace "lynxprompt@[\d.]+'", "lynxprompt@${{ needs.check-changes.outputs.version }}'"
+          Set-Content cli/chocolatey/tools/chocolateyinstall.ps1 $script
+
+      - name: Pack Chocolatey package
+        run: choco pack cli/chocolatey/lynxprompt.nuspec --out cli/chocolatey
+
+      - name: Push to Chocolatey
+        run: choco push cli/chocolatey/lynxprompt.${{ needs.check-changes.outputs.version }}.nupkg --source https://push.chocolatey.org/ --api-key ${{ secrets.CHOCOLATEY_API_KEY }}
+
+  # ===========================================
+  # Job 3: Publish to Snap Store (Linux)
+  # ===========================================
+  publish-snap:
+    needs: [check-changes, publish-npm]
+    if: ${{ needs.check-changes.outputs.platforms == 'all' || needs.check-changes.outputs.platforms == 'npm-snap' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Update snapcraft.yaml version
+        run: |
+          sed -i "s/^version: .*/version: '${{ needs.check-changes.outputs.version }}'/" cli/snap/snapcraft.yaml
+          # Also update the npm package version in the snap
+          sed -i "s/lynxprompt@[0-9.]*/lynxprompt@${{ needs.check-changes.outputs.version }}/" cli/snap/snapcraft.yaml
+
+      - name: Setup LXD
+        uses: canonical/setup-lxd@main
+
+      - name: Setup Snapcraft
+        run: sudo snap install snapcraft --classic
+
+      - name: Build Snap
+        run: |
+          cd cli
+          snapcraft --use-lxd
+
+      - name: Upload to Snap Store
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+        run: |
+          cd cli
+          snapcraft upload --release=stable lynxprompt_${{ needs.check-changes.outputs.version }}_amd64.snap
+
+  # ===========================================
+  # Job 4: Update Homebrew tap (automatic)
+  # ===========================================
+  update-homebrew:
+    needs: [check-changes, publish-npm]
+    if: ${{ needs.check-changes.outputs.platforms == 'all' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Homebrew tap
+        uses: actions/checkout@v4
+        with:
+          repository: GeiserX/homebrew-lynxprompt
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: homebrew-tap
+
+      - name: Update formula
+        run: |
+          cd homebrew-tap
+          cat > Formula/lynxprompt.rb << 'EOF'
+          # typed: false
+          # frozen_string_literal: true
+
+          class Lynxprompt < Formula
+            desc "CLI for LynxPrompt - Generate AI IDE configuration files"
+            homepage "https://lynxprompt.com"
+            url "https://registry.npmjs.org/lynxprompt/-/lynxprompt-${{ needs.check-changes.outputs.version }}.tgz"
+            sha256 "${{ needs.publish-npm.outputs.tarball_sha256 }}"
+            license "SEE LICENSE IN LICENSE"
+
+            depends_on "node@22"
+
+            def install
+              system "npm", "install", *std_npm_args
+              bin.install_symlink Dir["#{libexec}/bin/*"]
+            end
+
+            test do
+              assert_match "LynxPrompt CLI", shell_output("#{bin}/lynxprompt --help")
+            end
+          end
+          EOF
+
+      - name: Commit and push
+        run: |
+          cd homebrew-tap
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add Formula/lynxprompt.rb
+          git commit -m "Update lynxprompt to ${{ needs.check-changes.outputs.version }}"
+          git push
+
+  # ===========================================
+  # Summary job
+  # ===========================================
+  summary:
+    needs: [check-changes, publish-npm, publish-chocolatey, publish-snap, update-homebrew]
+    if: always() && needs.check-changes.outputs.should_publish == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Summary
+        run: |
+          echo "## CLI Publish Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ needs.check-changes.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| npm | ${{ needs.publish-npm.result == 'success' && '✅ Published' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Chocolatey | ${{ needs.publish-chocolatey.result == 'success' && '✅ Published' || needs.publish-chocolatey.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Snap | ${{ needs.publish-snap.result == 'success' && '✅ Published' || needs.publish-snap.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Homebrew | ${{ needs.update-homebrew.result == 'success' && '✅ Updated' || needs.update-homebrew.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Installation Commands" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "# npm (cross-platform)" >> $GITHUB_STEP_SUMMARY
+          echo "npm install -g lynxprompt@${{ needs.check-changes.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# Homebrew (macOS)" >> $GITHUB_STEP_SUMMARY
+          echo "brew tap GeiserX/lynxprompt && brew install lynxprompt" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# Chocolatey (Windows)" >> $GITHUB_STEP_SUMMARY
+          echo "choco install lynxprompt" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# Snap (Linux)" >> $GITHUB_STEP_SUMMARY
+          echo "snap install lynxprompt" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

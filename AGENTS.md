@@ -299,6 +299,14 @@ import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
 ```
 LynxPrompt/
 ├── .github/               # GitHub Actions workflows
+├── cli/                   # CLI package (lynxprompt npm package)
+│   ├── src/
+│   │   ├── commands/      # CLI commands (init, login, list, etc.)
+│   │   ├── utils/         # Detection, generation utilities
+│   │   └── index.ts       # Main entry point
+│   ├── homebrew/          # Homebrew formula
+│   ├── chocolatey/        # Chocolatey package
+│   └── snap/              # Snap package config
 ├── docs/                  # Documentation
 ├── prisma/                # Database schemas and seeds
 ├── public/                # Static assets
@@ -309,6 +317,8 @@ LynxPrompt/
 ├── src/
 │   ├── app/               # Next.js App Router pages
 │   │   ├── api/           # API routes
+│   │   │   ├── cli-auth/  # CLI authentication endpoints
+│   │   │   └── v1/        # Public API v1
 │   │   └── [page]/        # Page components
 │   ├── components/
 │   │   ├── ui/            # shadcn/ui components

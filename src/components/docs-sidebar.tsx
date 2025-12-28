@@ -12,6 +12,7 @@ import {
   Laptop,
   HelpCircle,
   Key,
+  Terminal,
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
@@ -27,6 +28,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Laptop,
   HelpCircle,
   Key,
+  Terminal,
 };
 
 interface DocsSidebarProps {
