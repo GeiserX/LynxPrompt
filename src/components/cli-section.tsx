@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Terminal, Radar, FolderSearch, Package, Copy, Check } from "lucide-react";
+import { Terminal, Radar, FolderSearch, Package, Copy, Check, RefreshCw, Layers } from "lucide-react";
 
 const INSTALL_COMMANDS = {
   npm: "npm install -g lynxprompt",
@@ -16,39 +16,42 @@ const TERMINAL_LINES = [
   { type: "command", content: "lynxp init" },
   { type: "output", content: "🐱 LynxPrompt Init" },
   { type: "output", content: "" },
-  { type: "output-highlight", content: "Detected project configuration:" },
-  { type: "output-dim", content: "  Name: my-nextjs-app" },
-  { type: "output-dim", content: "  Stack: typescript, react, nextjs, tailwind" },
-  { type: "output-dim", content: "  Build: next build" },
-  { type: "output-dim", content: "  Test: vitest" },
+  { type: "output-highlight", content: "Detected project:" },
+  { type: "output-dim", content: "  Stack: typescript, react, nextjs, prisma" },
+  { type: "output-dim", content: "  Package manager: pnpm" },
   { type: "output", content: "" },
-  { type: "output-green", content: "Found existing AI configuration files:" },
-  { type: "output-cyan", content: "  .cursorrules (Cursor)" },
-  { type: "output-cyan", content: "  AGENTS.md (Claude Code, GitHub Copilot)" },
+  { type: "output-green", content: "Detected 3 AI agents:" },
+  { type: "output-cyan", content: "  ✓ Cursor (12 sections)" },
+  { type: "output-cyan", content: "  ✓ AGENTS.md (8 sections)" },
+  { type: "output-cyan", content: "  ✓ GitHub Copilot" },
   { type: "output", content: "" },
+  { type: "output-dim", content: "Enabling 3 exporters: cursor, agents, copilot" },
   { type: "output-success", content: "✅ LynxPrompt initialized!" },
+  { type: "output", content: "" },
+  { type: "command", content: "lynxp sync" },
+  { type: "output-success", content: "✓ Synced to 3 agents" },
 ];
 
 const CLI_FEATURES = [
   {
-    icon: Radar,
-    title: "Auto-detect Stack",
-    description: "Scans package.json, Cargo.toml, go.mod, pyproject.toml — knows your stack instantly",
+    icon: Layers,
+    title: "40+ Agents Supported",
+    description: "Cursor, Claude, Copilot, Windsurf, Cline, Amazon Q, Zed, and many more",
   },
   {
-    icon: FolderSearch,
-    title: "Find Existing Configs",
-    description: "Detects .cursorrules, AGENTS.md, copilot-instructions and imports them",
+    icon: RefreshCw,
+    title: "One-Command Sync",
+    description: "Edit once in .lynxprompt/rules/, sync to all agents with lynxp sync",
+  },
+  {
+    icon: Radar,
+    title: "Smart Detection",
+    description: "Auto-detects your tech stack and existing AI configs, imports them instantly",
   },
   {
     icon: Package,
-    title: "Pull Blueprints",
-    description: "Download any blueprint directly to your project with lynxp pull",
-  },
-  {
-    icon: Terminal,
-    title: "Full Parity + More",
-    description: "Everything the web wizard does, plus repo-aware intelligence",
+    title: "Blueprint Marketplace",
+    description: "Pull community blueprints or share your own with lynxp pull/search",
   },
 ];
 
@@ -76,8 +79,8 @@ export function CLISection() {
           </span>
         </h2>
         <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">
-          Everything you can do in the web wizard — plus repo detection, existing config imports, 
-          and blueprint pulls. All from your terminal.
+          40+ AI agents. One command to sync them all. Auto-detects your project,
+          imports existing configs, and syncs to every agent you use.
         </p>
       </div>
 
