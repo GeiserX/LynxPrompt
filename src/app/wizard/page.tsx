@@ -817,6 +817,23 @@ function WizardPageContent() {
   const [isLoadingDraft, setIsLoadingDraft] = useState(false);
   const [isDeletingDraft, setIsDeletingDraft] = useState<string | null>(null);
   const [draftLoaded, setDraftLoaded] = useState(false);
+  
+  // Repo detection state (Max/Teams feature)
+  const [repoDetectUrl, setRepoDetectUrl] = useState("");
+  const [isDetecting, setIsDetecting] = useState(false);
+  const [detectError, setDetectError] = useState<string | null>(null);
+  const [detectedData, setDetectedData] = useState<{
+    name: string | null;
+    description: string | null;
+    stack: string[];
+    commands: { build?: string; test?: string; lint?: string; dev?: string };
+    license: string | null;
+    repoHost: string;
+    cicd: string | null;
+    hasDocker: boolean;
+    existingFiles: string[];
+  } | null>(null);
+
   const [config, setConfig] = useState<WizardConfig>({
     projectName: "",
     projectDescription: "",
@@ -1023,6 +1040,74 @@ function WizardPageContent() {
     } finally {
       setIsDeletingDraft(null);
     }
+  };
+
+  // Detect repository configuration (Max/Teams only)
+  const handleDetectRepo = async () => {
+    if (!repoDetectUrl.trim()) {
+      setDetectError("Please enter a repository URL");
+      return;
+    }
+
+    setIsDetecting(true);
+    setDetectError(null);
+    setDetectedData(null);
+
+    try {
+      const res = await fetch("/api/wizard/detect-repo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ repoUrl: repoDetectUrl.trim() }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setDetectError(data.error || "Failed to detect repository");
+        return;
+      }
+
+      if (data.detected) {
+        setDetectedData(data.detected);
+      }
+    } catch (error) {
+      console.error("Repo detection error:", error);
+      setDetectError("Failed to connect. Please try again.");
+    } finally {
+      setIsDetecting(false);
+    }
+  };
+
+  // Apply detected data to config
+  const applyDetectedData = () => {
+    if (!detectedData) return;
+
+    setConfig(prev => ({
+      ...prev,
+      projectName: detectedData.name || prev.projectName,
+      projectDescription: detectedData.description || prev.projectDescription,
+      languages: detectedData.stack.filter(s => 
+        ["javascript", "typescript", "python", "go", "rust", "java", "csharp", "ruby", "php", "swift", "kotlin", "cpp"].includes(s)
+      ),
+      frameworks: detectedData.stack.filter(s => 
+        ["nextjs", "react", "vue", "angular", "svelte", "express", "fastapi", "django", "flask", "rails", "laravel", "nestjs"].includes(s)
+      ),
+      repoHost: detectedData.repoHost || prev.repoHost,
+      license: detectedData.license || prev.license,
+      cicd: detectedData.cicd || prev.cicd,
+      buildContainer: detectedData.hasDocker,
+      commands: {
+        ...prev.commands,
+        build: detectedData.commands.build || prev.commands.build,
+        test: detectedData.commands.test || prev.commands.test,
+        lint: detectedData.commands.lint || prev.commands.lint,
+        dev: detectedData.commands.dev || prev.commands.dev,
+      },
+    }));
+
+    // Clear detection state after applying
+    setDetectedData(null);
+    setRepoDetectUrl("");
   };
 
   useEffect(() => {
@@ -2160,6 +2245,11 @@ ${curlCommand}
                   architecturePatternOther={config.architecturePatternOther}
                   devOS={config.devOS}
                   blueprintMode={config.blueprintMode}
+                  userTier={userTier}
+                  repoDetectUrl={repoDetectUrl}
+                  isDetecting={isDetecting}
+                  detectError={detectError}
+                  detectedData={detectedData}
                   onNameChange={(v) => setConfig({ ...config, projectName: v })}
                   onDescriptionChange={(v) => setConfig({ ...config, projectDescription: v })}
                   onProjectTypeChange={(v) => setConfig({ ...config, projectType: v })}
@@ -2167,6 +2257,9 @@ ${curlCommand}
                   onArchitecturePatternOtherChange={(v) => setConfig({ ...config, architecturePatternOther: v })}
                   onDevOSChange={(v) => setConfig({ ...config, devOS: v })}
                   onBlueprintModeChange={(v) => setConfig({ ...config, blueprintMode: v })}
+                  onRepoUrlChange={(v) => setRepoDetectUrl(v)}
+                  onDetectRepo={handleDetectRepo}
+                  onApplyDetected={applyDetectedData}
                 />
               )}
               {currentStep === 1 && (
@@ -2373,6 +2466,11 @@ function StepProject({
   architecturePatternOther,
   devOS,
   blueprintMode,
+  userTier,
+  repoDetectUrl,
+  isDetecting,
+  detectError,
+  detectedData,
   onNameChange,
   onDescriptionChange,
   onProjectTypeChange,
@@ -2380,6 +2478,9 @@ function StepProject({
   onArchitecturePatternOtherChange,
   onDevOSChange,
   onBlueprintModeChange,
+  onRepoUrlChange,
+  onDetectRepo,
+  onApplyDetected,
 }: {
   name: string;
   description: string;
@@ -2388,6 +2489,20 @@ function StepProject({
   architecturePatternOther: string;
   devOS: string;
   blueprintMode: boolean;
+  userTier: string;
+  repoDetectUrl: string;
+  isDetecting: boolean;
+  detectError: string | null;
+  detectedData: {
+    name: string | null;
+    description: string | null;
+    stack: string[];
+    license: string | null;
+    repoHost: string;
+    cicd: string | null;
+    hasDocker: boolean;
+    existingFiles: string[];
+  } | null;
   onNameChange: (v: string) => void;
   onDescriptionChange: (v: string) => void;
   onProjectTypeChange: (v: string) => void;
@@ -2395,7 +2510,12 @@ function StepProject({
   onArchitecturePatternOtherChange: (v: string) => void;
   onDevOSChange: (v: string) => void;
   onBlueprintModeChange: (v: boolean) => void;
+  onRepoUrlChange: (v: string) => void;
+  onDetectRepo: () => void;
+  onApplyDetected: () => void;
 }) {
+  const canDetect = userTier === "max" || userTier === "teams";
+
   return (
     <div>
       <h2 className="text-2xl font-bold">What project is this for?</h2>
@@ -2405,6 +2525,97 @@ function StepProject({
       </p>
 
       <div className="mt-6 space-y-6">
+        {/* Repository Auto-Detection (Max/Teams) */}
+        <div className={`rounded-lg border-2 p-4 transition-colors ${canDetect ? "border-primary/30 bg-primary/5" : "border-dashed border-muted-foreground/20 bg-muted/30"}`}>
+          <div className="flex items-start gap-3">
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <GitBranch className="h-4 w-4" />
+                <label className="text-sm font-medium">
+                  🔍 Auto-detect from existing repository
+                </label>
+                {!canDetect && (
+                  <span className="flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-600 dark:text-amber-400">
+                    <Crown className="h-3 w-3" />
+                    Max/Teams
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {canDetect 
+                  ? "Enter a public GitHub repository URL to auto-detect tech stack, license, CI/CD, and more."
+                  : "Upgrade to Max or Teams to auto-detect configuration from your existing repositories."}
+              </p>
+              
+              {canDetect && (
+                <div className="mt-3 space-y-3">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={repoDetectUrl}
+                      onChange={(e) => onRepoUrlChange(e.target.value)}
+                      placeholder="https://github.com/owner/repo"
+                      className="flex-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                      disabled={isDetecting}
+                    />
+                    <button
+                      onClick={onDetectRepo}
+                      disabled={isDetecting || !repoDetectUrl.trim()}
+                      className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                    >
+                      {isDetecting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Detecting...
+                        </>
+                      ) : (
+                        <>
+                          <Search className="h-4 w-4" />
+                          Detect
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {detectError && (
+                    <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                      {detectError}
+                    </div>
+                  )}
+
+                  {detectedData && (
+                    <div className="rounded-lg border bg-green-50 p-4 dark:bg-green-950/30">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-medium text-green-800 dark:text-green-200">
+                          ✓ Repository detected!
+                        </h4>
+                        <button
+                          onClick={onApplyDetected}
+                          className="rounded-lg bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700"
+                        >
+                          Apply to wizard
+                        </button>
+                      </div>
+                      <div className="mt-2 space-y-1 text-sm text-green-700 dark:text-green-300">
+                        {detectedData.name && <p>• Name: <strong>{detectedData.name}</strong></p>}
+                        {detectedData.stack.length > 0 && (
+                          <p>• Stack: {detectedData.stack.slice(0, 6).join(", ")}{detectedData.stack.length > 6 ? "..." : ""}</p>
+                        )}
+                        {detectedData.license && <p>• License: {detectedData.license}</p>}
+                        {detectedData.cicd && <p>• CI/CD: {detectedData.cicd}</p>}
+                        {detectedData.hasDocker && <p>• Docker: detected</p>}
+                        {detectedData.existingFiles.length > 0 && (
+                          <p>• Existing files: {detectedData.existingFiles.length} found</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Blueprint Template Mode - at the beginning */}
         <div className={`rounded-lg border-2 p-4 transition-colors ${blueprintMode ? "border-amber-500 bg-amber-50 dark:border-amber-600 dark:bg-amber-950/30" : "border-dashed border-muted-foreground/30"}`}>
           <div className="flex items-start gap-4">
