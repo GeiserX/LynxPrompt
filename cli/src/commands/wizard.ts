@@ -401,17 +401,21 @@ export async function wizardCommand(options: WizardOptions): Promise<void> {
   const userPlanDisplay = user?.plan?.toUpperCase() || "FREE";
   
   if (!authenticated) {
-    // Show login notice for guests
-    console.log(chalk.yellow("┌─────────────────────────────────────────────────────────────┐"));
-    console.log(chalk.yellow("│") + chalk.white(" 💡 ") + chalk.gray("Log in for full wizard features:") + "                        " + chalk.yellow("│"));
-    console.log(chalk.yellow("│") + "                                                             " + chalk.yellow("│"));
-    console.log(chalk.yellow("│") + chalk.gray("   • ") + chalk.white("Commands & Code Style") + chalk.cyan(" [PRO]") + "                          " + chalk.yellow("│"));
-    console.log(chalk.yellow("│") + chalk.gray("   • ") + chalk.white("Boundaries, Testing, Static Files") + chalk.magenta(" [MAX]") + "             " + chalk.yellow("│"));
-    console.log(chalk.yellow("│") + chalk.gray("   • ") + chalk.white("Push configs to cloud") + chalk.gray(" (lynxp push)") + "                    " + chalk.yellow("│"));
-    console.log(chalk.yellow("│") + chalk.gray("   • ") + chalk.white("Sync across devices") + chalk.gray(" (lynxp sync)") + "                      " + chalk.yellow("│"));
-    console.log(chalk.yellow("│") + "                                                             " + chalk.yellow("│"));
-    console.log(chalk.yellow("│") + chalk.cyan("   Run: lynxp login") + "                                          " + chalk.yellow("│"));
-    console.log(chalk.yellow("└─────────────────────────────────────────────────────────────┘"));
+    // Show login notice for guests (box width: 55 inner chars)
+    const W = 55;
+    const y = chalk.yellow;
+    const pad = (s: string, len: number) => s + " ".repeat(Math.max(0, len - s.length));
+    
+    console.log(y("┌" + "─".repeat(W) + "┐"));
+    console.log(y("│") + pad(" 💡 Log in for full wizard features:", W - 1) + y("│"));
+    console.log(y("│") + " ".repeat(W) + y("│"));
+    console.log(y("│") + pad("    • Commands & Code Style [PRO]", W) + y("│"));
+    console.log(y("│") + pad("    • Boundaries, Testing, Static Files [MAX]", W) + y("│"));
+    console.log(y("│") + pad("    • Push configs to cloud (lynxp push)", W) + y("│"));
+    console.log(y("│") + pad("    • Sync across devices (lynxp sync)", W) + y("│"));
+    console.log(y("│") + " ".repeat(W) + y("│"));
+    console.log(y("│") + pad("    Run: " + chalk.cyan("lynxp login"), W + 10) + y("│")); // +10 for chalk codes
+    console.log(y("└" + "─".repeat(W) + "┘"));
     console.log();
   } else {
     // Show logged-in status with plan

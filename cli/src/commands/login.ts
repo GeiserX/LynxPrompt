@@ -142,16 +142,19 @@ function displayWelcome(user: UserInfo): void {
   };
   
   const config = planConfig[plan] || planConfig.FREE;
+  const W = 45; // inner width
+  const b = chalk.bold;
+  const pad = (s: string, len: number) => s + " ".repeat(Math.max(0, len - s.length));
   
   console.log();
-  console.log(chalk.bold("┌─────────────────────────────────────────────────────┐"));
-  console.log(chalk.bold("│") + "                                                     " + chalk.bold("│"));
-  console.log(chalk.bold("│") + chalk.green.bold(`   ${config.emoji} Welcome to LynxPrompt CLI!`) + "                   " + chalk.bold("│"));
-  console.log(chalk.bold("│") + "                                                     " + chalk.bold("│"));
-  console.log(chalk.bold("│") + `   ${chalk.white("User:")} ${chalk.bold(name.padEnd(38))}` + chalk.bold("│"));
-  console.log(chalk.bold("│") + `   ${chalk.white("Plan:")} ${config.color(config.badge.padEnd(38))}` + chalk.bold("│"));
-  console.log(chalk.bold("│") + "                                                     " + chalk.bold("│"));
-  console.log(chalk.bold("└─────────────────────────────────────────────────────┘"));
+  console.log(b("┌" + "─".repeat(W) + "┐"));
+  console.log(b("│") + " ".repeat(W) + b("│"));
+  console.log(b("│") + pad(`   ${config.emoji} Welcome to LynxPrompt CLI!`, W - 1) + b("│"));
+  console.log(b("│") + " ".repeat(W) + b("│"));
+  console.log(b("│") + pad(`   User: ${name}`, W) + b("│"));
+  console.log(b("│") + pad(`   Plan: ${config.badge}`, W) + b("│"));
+  console.log(b("│") + " ".repeat(W) + b("│"));
+  console.log(b("└" + "─".repeat(W) + "┘"));
   console.log();
   
   // Show capabilities based on plan
