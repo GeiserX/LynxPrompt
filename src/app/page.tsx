@@ -119,8 +119,7 @@ export default function HomePage() {
 
           <p className="max-w-2xl text-lg text-muted-foreground">
             Wizard-generated configs or community blueprints — your AI rules, any IDE
-          </p>
-          <p className="text-lg font-medium text-muted-foreground">
+            <br />
             New project? <span className="text-primary">Pick a blueprint or build your own</span> in seconds
           </p>
 
@@ -145,8 +144,8 @@ export default function HomePage() {
           />
           <FeatureCard
             icon={<Shield className="h-8 w-8" />}
-            title="Preference Memory"
-            description="Your files and settings remembered across projects — no re-configuration needed"
+            title="Template Variables"
+            description="Dynamic [[VARIABLE|default]] placeholders — one blueprint, infinite project variations"
           />
           <FeatureCard
             icon={<GitBranch className="h-8 w-8" />}
