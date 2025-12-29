@@ -238,8 +238,7 @@ export default function PricingPage() {
           <div className="rounded-lg border bg-card p-4">
             <h3 className="font-medium">What payment methods do you accept?</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              We accept all major credit cards through Stripe. SEPA direct debit
-              is also available for EU customers.
+              We accept all major credit cards through Stripe.
             </p>
           </div>
           <div className="rounded-lg border bg-card p-4">

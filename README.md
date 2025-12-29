@@ -1,7 +1,7 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://lynxprompt.com/logos/brand/lynxprompt.png">
-  <source media="(prefers-color-scheme: light)" srcset="https://lynxprompt.com/logos/brand/lynxprompt.png">
-  <img alt="LynxPrompt" src="https://lynxprompt.com/logos/brand/lynxprompt.png" width="400">
+  <source media="(prefers-color-scheme: dark)" srcset="https://lynxprompt.com/logos/brand/lynxp.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://lynxprompt.com/logos/brand/lynxp.png">
+  <img alt="LynxPrompt" src="https://lynxprompt.com/logos/brand/lynxp.png" width="400">
 </picture>
 
 # LynxPrompt

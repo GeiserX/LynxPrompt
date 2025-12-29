@@ -26,8 +26,7 @@ export default function BillingFAQPage() {
           <h3 className="font-semibold">What payment methods do you accept?</h3>
           <p className="mt-2 text-muted-foreground">
             We accept all major credit cards (Visa, Mastercard, American
-            Express) through Stripe. SEPA direct debit is also available for EU
-            customers.
+            Express) through Stripe.
           </p>
         </div>
 

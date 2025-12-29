@@ -10,6 +10,8 @@ const INSTALL_COMMANDS = {
   bun: "bun add -g lynxprompt",
   npx: "npx lynxprompt",
   brew: "brew install GeiserX/lynxprompt/lynxprompt",
+  choco: "choco install lynxprompt",
+  snap: "sudo snap install lynxprompt",
 } as const;
 
 type PackageManager = keyof typeof INSTALL_COMMANDS;
