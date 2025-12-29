@@ -96,9 +96,9 @@ export interface SearchResponse {
 }
 
 class ApiClient {
-  private getHeaders(): HeadersInit {
+  private getHeaders(): Record<string, string> {
     const token = getToken();
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
     if (token) {

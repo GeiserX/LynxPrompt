@@ -17,9 +17,7 @@ import * as yaml from "yaml";
 import { 
   AGENTS, 
   getAgent, 
-  getPopularAgents, 
-  getAgentsByCategory,
-  type AgentDefinition 
+  getPopularAgents 
 } from "../utils/agents.js";
 import { detectAgents, formatDetectionResults } from "../utils/agent-detector.js";
 
@@ -322,4 +320,6 @@ async function saveConfig(config: LynxPromptConfig): Promise<void> {
   const content = yaml.stringify(config);
   await writeFile(configPath, content, "utf-8");
 }
+
+
 

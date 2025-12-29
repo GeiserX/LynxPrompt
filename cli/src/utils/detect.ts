@@ -1,4 +1,4 @@
-import { readFile, access, readdir } from "fs/promises";
+import { readFile, access } from "fs/promises";
 import { join } from "path";
 
 export interface DetectedProject {

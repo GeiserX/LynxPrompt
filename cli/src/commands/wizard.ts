@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import prompts from "prompts";
 import ora from "ora";
-import { writeFile, mkdir, readFile, access } from "fs/promises";
+import { writeFile, mkdir, access } from "fs/promises";
 import { join, dirname } from "path";
 import { detectProject } from "../utils/detect.js";
 import { generateConfig, GenerateOptions } from "../utils/generator.js";

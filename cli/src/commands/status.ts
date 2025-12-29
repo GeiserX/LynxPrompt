@@ -1,8 +1,8 @@
 import chalk from "chalk";
-import { access, readFile, readdir, stat } from "fs/promises";
+import { readFile, readdir, access } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
-import { checkSyncStatus, loadBlueprints } from "../utils/blueprint-tracker.js";
+import { checkSyncStatus } from "../utils/blueprint-tracker.js";
 
 // AI config files to look for
 const CONFIG_FILES = [

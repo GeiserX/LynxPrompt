@@ -15,14 +15,12 @@ import ora from "ora";
 import prompts from "prompts";
 import { api, ApiRequestError, Blueprint } from "../api.js";
 import { isAuthenticated } from "../config.js";
-import { readFile, access } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
 import {
   linkBlueprint,
   untrackBlueprint,
   findBlueprintByFile,
-  getAllTrackedBlueprints,
   checkSyncStatus,
   type BlueprintSource,
 } from "../utils/blueprint-tracker.js";
@@ -282,4 +280,6 @@ async function listTrackedBlueprints(cwd: string): Promise<void> {
   console.log(chalk.gray(`  ${chalk.green("✓")} In sync  ${chalk.yellow("●")} Modified locally  ${chalk.red("✗")} Missing`));
   console.log();
 }
+
+
 

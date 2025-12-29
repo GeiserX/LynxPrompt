@@ -1,13 +1,13 @@
 import chalk from "chalk";
 import prompts from "prompts";
 import ora from "ora";
-import { writeFile, mkdir, readFile, access, readdir } from "fs/promises";
+import { writeFile, mkdir, readFile } from "fs/promises";
 import { join, dirname, basename } from "path";
 import { existsSync } from "fs";
 import * as yaml from "yaml";
 import { detectAgents } from "../utils/agent-detector.js";
 import { detectProject } from "../utils/detect.js";
-import { getPopularAgents, AGENTS } from "../utils/agents.js";
+import { getPopularAgents } from "../utils/agents.js";
 
 interface InitOptions {
   yes?: boolean;

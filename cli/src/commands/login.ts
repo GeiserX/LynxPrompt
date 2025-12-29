@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import ora from "ora";
 import { api, ApiRequestError } from "../api.js";
-import { setToken, setUser, isAuthenticated, getApiUrl } from "../config.js";
+import { setToken, setUser, isAuthenticated } from "../config.js";
 
 export async function loginCommand(): Promise<void> {
   if (isAuthenticated()) {
@@ -125,5 +125,7 @@ async function tryOpenBrowser(url: string): Promise<boolean> {
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+
 
 

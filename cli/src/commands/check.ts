@@ -10,7 +10,7 @@
 
 import chalk from "chalk";
 import ora from "ora";
-import { readFile, access, readdir, stat } from "fs/promises";
+import { readFile, readdir, stat } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
 import * as yaml from "yaml";
@@ -319,4 +319,6 @@ export async function checkCommand(options: CheckOptions = {}): Promise<void> {
     console.log();
   }
 }
+
+
 

@@ -4,7 +4,7 @@
  */
 
 import { existsSync, readdirSync, readFileSync, statSync } from "fs";
-import { join, relative } from "path";
+import { join } from "path";
 import { AGENTS, type AgentDefinition, getAgentDisplayName } from "./agents.js";
 
 export interface DetectedAgent {
@@ -225,4 +225,6 @@ export function formatDetectionResults(result: DetectionResult): string {
 
   return lines.join("\n");
 }
+
+
 
