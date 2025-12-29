@@ -118,10 +118,10 @@ export default function HomePage() {
           </h1>
 
           <p className="max-w-2xl text-lg text-muted-foreground">
-            Repo-first AI coding Configs that work across IDEs & tools
+            Wizard-generated configs or community blueprints — your AI rules, any IDE
           </p>
           <p className="text-lg font-medium text-muted-foreground">
-            New project? <span className="text-primary">Ready in seconds</span>
+            New project? <span className="text-primary">Pick a blueprint or build your own</span> in seconds
           </p>
 
           <div className="mt-6 flex gap-4">
