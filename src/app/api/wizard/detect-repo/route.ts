@@ -22,10 +22,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check subscription tier (Max or Teams only)
+    // Check subscription plan (Max or Teams only)
     const user = await prismaUsers.user.findUnique({
       where: { id: session.user.id },
-      select: { subscriptionTier: true },
+      select: { subscriptionPlan: true },
     });
 
     if (!user) {
@@ -35,8 +35,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const allowedTiers = ["MAX", "TEAMS"];
-    if (!allowedTiers.includes(user.subscriptionTier || "")) {
+    const allowedPlans = ["MAX", "TEAMS"];
+    if (!allowedPlans.includes(user.subscriptionPlan || "")) {
       return NextResponse.json(
         { 
           error: "This feature requires a Max or Teams subscription",
