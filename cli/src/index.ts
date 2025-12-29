@@ -5,6 +5,7 @@ import { logoutCommand } from "./commands/logout.js";
 import { whoamiCommand } from "./commands/whoami.js";
 import { listCommand } from "./commands/list.js";
 import { pullCommand } from "./commands/pull.js";
+import { pushCommand } from "./commands/push.js";
 import { initCommand } from "./commands/init.js";
 import { wizardCommand } from "./commands/wizard.js";
 import { searchCommand } from "./commands/search.js";
@@ -78,6 +79,16 @@ program
   .option("-l, --limit <number>", "Number of results", "20")
   .option("-v, --visibility <visibility>", "Filter: PRIVATE, TEAM, PUBLIC, or all")
   .action(listCommand);
+
+program
+  .command("push [file]")
+  .description("Push local file to LynxPrompt cloud as a blueprint")
+  .option("-n, --name <name>", "Blueprint name")
+  .option("-d, --description <desc>", "Blueprint description")
+  .option("-v, --visibility <vis>", "Visibility: PRIVATE, TEAM, or PUBLIC", "PRIVATE")
+  .option("-t, --tags <tags>", "Tags (comma-separated)")
+  .option("-y, --yes", "Skip prompts")
+  .action(pushCommand);
 
 // Link/Unlink - connect local files to cloud blueprints
 program
@@ -167,6 +178,7 @@ ${chalk.cyan("Quick Start:")}
 ${chalk.cyan("Marketplace:")}
   ${chalk.white("$ lynxp search nextjs")}         ${chalk.gray("Search blueprints")}
   ${chalk.white("$ lynxp pull bp_abc123")}        ${chalk.gray("Download and track a blueprint")}
+  ${chalk.white("$ lynxp push")}                  ${chalk.gray("Push local file to cloud")}
   ${chalk.white("$ lynxp link --list")}           ${chalk.gray("Show tracked blueprints")}
 
 ${chalk.cyan("Blueprint Tracking:")}

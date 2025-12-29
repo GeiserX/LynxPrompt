@@ -184,6 +184,36 @@ class ApiClient {
     });
     return this.request<SearchResponse>(`/api/blueprints?${params}`);
   }
+
+  async createBlueprint(data: {
+    name: string;
+    description: string;
+    content: string;
+    visibility: "PRIVATE" | "TEAM" | "PUBLIC";
+    tags?: string[];
+  }): Promise<{ blueprint: Blueprint }> {
+    return this.request<{ blueprint: Blueprint }>("/api/v1/blueprints", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateBlueprint(
+    id: string,
+    data: {
+      name?: string;
+      description?: string;
+      content?: string;
+      visibility?: "PRIVATE" | "TEAM" | "PUBLIC";
+      tags?: string[];
+    }
+  ): Promise<{ blueprint: Blueprint }> {
+    const apiId = id.startsWith("bp_") ? id : `bp_${id}`;
+    return this.request<{ blueprint: Blueprint }>(`/api/v1/blueprints/${apiId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
 }
 
 export class ApiRequestError extends Error {

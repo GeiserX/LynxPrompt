@@ -1,10 +1,10 @@
 name: lynxprompt
 base: core22
-version: '0.1.0'
+version: '0.2.0'
 summary: CLI for LynxPrompt - Generate AI IDE configuration files
 description: |
   LynxPrompt CLI helps you generate AI IDE configuration files
-  (.cursorrules, AGENTS.md, copilot-instructions.md, etc.) directly
+  (AGENTS.md, .cursor/rules/, copilot-instructions.md, etc.) directly
   from your terminal with an interactive wizard.
 
   Features:
@@ -12,18 +12,22 @@ description: |
   - Auto-detect project tech stack
   - Download blueprints from LynxPrompt marketplace
   - Browser-based OAuth authentication
+  - Track and sync blueprints with cloud
 
-  Usage:
-    lynxprompt init     - Start interactive wizard
-    lynxprompt login    - Authenticate with LynxPrompt
-    lynxprompt list     - List your blueprints
-    lynxprompt pull ID  - Download a blueprint
+  Quick Start:
+    lynxp wizard       - Start interactive wizard
+    lynxp wizard -y    - Quick mode with defaults
+    lynxp login        - Authenticate with LynxPrompt
+    lynxp pull ID      - Download a blueprint
+    lynxp status       - Check config status
 
 grade: stable
-confinement: classic  # Needed for npm global install and browser opening
+confinement: classic
 
 apps:
   lynxprompt:
+    command: bin/lynxprompt
+  lynxp:
     command: bin/lynxprompt
 
 parts:
@@ -31,16 +35,23 @@ parts:
     plugin: npm
     npm-node-version: "22.12.0"
     source: .
-    npm-packages:
-      - lynxprompt@0.1.0
     override-build: |
-      craftctl default
-      # Create wrapper script
+      # Build from source
+      npm ci
+      npm run build
+      
+      # Create output directories
+      mkdir -p $SNAPCRAFT_PART_INSTALL/lib/lynxprompt
       mkdir -p $SNAPCRAFT_PART_INSTALL/bin
-      cat > $SNAPCRAFT_PART_INSTALL/bin/lynxprompt << 'EOF'
-      #!/bin/bash
-      exec "$SNAP/lib/node_modules/lynxprompt/dist/index.js" "$@"
-      EOF
+      
+      # Copy built files
+      cp -r dist/* $SNAPCRAFT_PART_INSTALL/lib/lynxprompt/
+      cp -r node_modules $SNAPCRAFT_PART_INSTALL/lib/lynxprompt/
+      cp package.json $SNAPCRAFT_PART_INSTALL/lib/lynxprompt/
+      
+      # Create wrapper script
+      cat > $SNAPCRAFT_PART_INSTALL/bin/lynxprompt << 'WRAPPER'
+#!/bin/bash
+exec node "$SNAP/lib/lynxprompt/index.js" "$@"
+WRAPPER
       chmod +x $SNAPCRAFT_PART_INSTALL/bin/lynxprompt
-
-
