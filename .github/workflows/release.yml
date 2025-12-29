@@ -1,0 +1,320 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      type:
+        description: 'Release type'
+        required: true
+        type: choice
+        options:
+          - 'auto'
+          - 'app-only'
+          - 'cli-only'
+        default: 'auto'
+
+permissions:
+  contents: write
+
+jobs:
+  # ===========================================
+  # Detect changes and prepare release
+  # ===========================================
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      app_changed: ${{ steps.changes.outputs.app }}
+      cli_changed: ${{ steps.changes.outputs.cli }}
+      app_version: ${{ steps.versions.outputs.app }}
+      cli_version: ${{ steps.versions.outputs.cli }}
+      should_release_app: ${{ steps.decide.outputs.release_app }}
+      should_release_cli: ${{ steps.decide.outputs.release_cli }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for changes since last release
+        id: changes
+        run: |
+          # Get last app release tag
+          LAST_APP_TAG=$(git tag -l "app-v*" --sort=-version:refname | head -n1)
+          LAST_CLI_TAG=$(git tag -l "cli-v*" --sort=-version:refname | head -n1)
+          
+          # Default to comparing with origin/main~10 if no tags exist
+          APP_BASE=${LAST_APP_TAG:-$(git rev-parse HEAD~10)}
+          CLI_BASE=${LAST_CLI_TAG:-$(git rev-parse HEAD~10)}
+          
+          # Check for app changes (everything except cli/)
+          if git diff --name-only $APP_BASE HEAD 2>/dev/null | grep -v "^cli/" | grep -q .; then
+            echo "app=true" >> $GITHUB_OUTPUT
+            echo "✅ App changes detected"
+          else
+            echo "app=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No app changes"
+          fi
+          
+          # Check for CLI changes
+          if git diff --name-only $CLI_BASE HEAD 2>/dev/null | grep -q "^cli/"; then
+            echo "cli=true" >> $GITHUB_OUTPUT
+            echo "✅ CLI changes detected"
+          else
+            echo "cli=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No CLI changes"
+          fi
+
+      - name: Get versions
+        id: versions
+        run: |
+          APP_VERSION=$(node -p "require('./package.json').version")
+          CLI_VERSION=$(node -p "require('./cli/package.json').version")
+          echo "app=$APP_VERSION" >> $GITHUB_OUTPUT
+          echo "cli=$CLI_VERSION" >> $GITHUB_OUTPUT
+          echo "📦 App version: $APP_VERSION"
+          echo "📦 CLI version: $CLI_VERSION"
+
+      - name: Check if tags already exist
+        id: tags_exist
+        run: |
+          APP_TAG="app-v${{ steps.versions.outputs.app }}"
+          CLI_TAG="cli-v${{ steps.versions.outputs.cli }}"
+          
+          if git rev-parse "$APP_TAG" >/dev/null 2>&1; then
+            echo "app_exists=true" >> $GITHUB_OUTPUT
+            echo "⚠️ App tag $APP_TAG already exists"
+          else
+            echo "app_exists=false" >> $GITHUB_OUTPUT
+          fi
+          
+          if git rev-parse "$CLI_TAG" >/dev/null 2>&1; then
+            echo "cli_exists=true" >> $GITHUB_OUTPUT
+            echo "⚠️ CLI tag $CLI_TAG already exists"
+          else
+            echo "cli_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Decide what to release
+        id: decide
+        run: |
+          RELEASE_TYPE="${{ github.event.inputs.type || 'auto' }}"
+          
+          # App release decision
+          if [[ "$RELEASE_TYPE" == "cli-only" ]]; then
+            echo "release_app=false" >> $GITHUB_OUTPUT
+          elif [[ "${{ steps.tags_exist.outputs.app_exists }}" == "true" ]]; then
+            echo "release_app=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ App tag already exists, skipping"
+          elif [[ "$RELEASE_TYPE" == "app-only" || "$RELEASE_TYPE" == "auto" && "${{ steps.changes.outputs.app }}" == "true" ]]; then
+            echo "release_app=true" >> $GITHUB_OUTPUT
+            echo "✅ Will release app"
+          else
+            echo "release_app=false" >> $GITHUB_OUTPUT
+          fi
+          
+          # CLI release decision
+          if [[ "$RELEASE_TYPE" == "app-only" ]]; then
+            echo "release_cli=false" >> $GITHUB_OUTPUT
+          elif [[ "${{ steps.tags_exist.outputs.cli_exists }}" == "true" ]]; then
+            echo "release_cli=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ CLI tag already exists, skipping"
+          elif [[ "$RELEASE_TYPE" == "cli-only" || "$RELEASE_TYPE" == "auto" && "${{ steps.changes.outputs.cli }}" == "true" ]]; then
+            echo "release_cli=true" >> $GITHUB_OUTPUT
+            echo "✅ Will release CLI"
+          else
+            echo "release_cli=false" >> $GITHUB_OUTPUT
+          fi
+
+  # ===========================================
+  # Release App (Web UI)
+  # ===========================================
+  release-app:
+    needs: prepare
+    if: ${{ needs.prepare.outputs.should_release_app == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "app-v${{ needs.prepare.outputs.app_version }}" -m "LynxPrompt App v${{ needs.prepare.outputs.app_version }}"
+          git push origin "app-v${{ needs.prepare.outputs.app_version }}"
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get previous tag
+          PREV_TAG=$(git tag -l "app-v*" --sort=-version:refname | sed -n '2p')
+          CURRENT_TAG="app-v${{ needs.prepare.outputs.app_version }}"
+          
+          if [ -z "$PREV_TAG" ]; then
+            PREV_TAG=$(git rev-list --max-parents=0 HEAD)
+          fi
+          
+          echo "📝 Generating changelog from $PREV_TAG to $CURRENT_TAG"
+          
+          # Generate changelog
+          {
+            echo "## What's Changed"
+            echo ""
+            
+            # Features
+            FEATURES=$(git log $PREV_TAG..$CURRENT_TAG --pretty=format:"- %s" --grep="^feat" -- ':!cli/' 2>/dev/null || true)
+            if [ -n "$FEATURES" ]; then
+              echo "### ✨ Features"
+              echo "$FEATURES" | head -20
+              echo ""
+            fi
+            
+            # Fixes
+            FIXES=$(git log $PREV_TAG..$CURRENT_TAG --pretty=format:"- %s" --grep="^fix" -- ':!cli/' 2>/dev/null || true)
+            if [ -n "$FIXES" ]; then
+              echo "### 🐛 Bug Fixes"
+              echo "$FIXES" | head -20
+              echo ""
+            fi
+            
+            # Other changes
+            OTHERS=$(git log $PREV_TAG..$CURRENT_TAG --pretty=format:"- %s" --invert-grep --grep="^feat" --invert-grep --grep="^fix" -- ':!cli/' 2>/dev/null | head -10 || true)
+            if [ -n "$OTHERS" ]; then
+              echo "### 🔧 Other Changes"
+              echo "$OTHERS"
+              echo ""
+            fi
+            
+            echo "---"
+            echo ""
+            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$PREV_TAG...$CURRENT_TAG"
+          } > changelog.md
+          
+          cat changelog.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: app-v${{ needs.prepare.outputs.app_version }}
+          name: "LynxPrompt v${{ needs.prepare.outputs.app_version }}"
+          body_path: changelog.md
+          draft: false
+          prerelease: false
+          generate_release_notes: false
+
+  # ===========================================
+  # Release CLI
+  # ===========================================
+  release-cli:
+    needs: prepare
+    if: ${{ needs.prepare.outputs.should_release_cli == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "cli-v${{ needs.prepare.outputs.cli_version }}" -m "LynxPrompt CLI v${{ needs.prepare.outputs.cli_version }}"
+          git push origin "cli-v${{ needs.prepare.outputs.cli_version }}"
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get previous tag
+          PREV_TAG=$(git tag -l "cli-v*" --sort=-version:refname | sed -n '2p')
+          CURRENT_TAG="cli-v${{ needs.prepare.outputs.cli_version }}"
+          
+          if [ -z "$PREV_TAG" ]; then
+            PREV_TAG=$(git rev-list --max-parents=0 HEAD)
+          fi
+          
+          echo "📝 Generating changelog from $PREV_TAG to $CURRENT_TAG"
+          
+          # Generate changelog
+          {
+            echo "## What's Changed in CLI"
+            echo ""
+            
+            # All CLI changes
+            CHANGES=$(git log $PREV_TAG..$CURRENT_TAG --pretty=format:"- %s" -- 'cli/' 2>/dev/null || true)
+            if [ -n "$CHANGES" ]; then
+              echo "### Changes"
+              echo "$CHANGES" | head -30
+              echo ""
+            fi
+            
+            echo "---"
+            echo ""
+            echo "## Installation"
+            echo ""
+            echo '```bash'
+            echo "# npm"
+            echo "npm install -g lynxprompt@${{ needs.prepare.outputs.cli_version }}"
+            echo ""
+            echo "# Homebrew"
+            echo "brew install GeiserX/lynxprompt/lynxprompt"
+            echo ""
+            echo "# Chocolatey"
+            echo "choco install lynxprompt"
+            echo ""
+            echo "# Snap"
+            echo "snap install lynxprompt"
+            echo '```'
+            echo ""
+            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$PREV_TAG...$CURRENT_TAG"
+          } > changelog.md
+          
+          cat changelog.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: cli-v${{ needs.prepare.outputs.cli_version }}
+          name: "LynxPrompt CLI v${{ needs.prepare.outputs.cli_version }}"
+          body_path: changelog.md
+          draft: false
+          prerelease: false
+          generate_release_notes: false
+
+  # ===========================================
+  # Summary
+  # ===========================================
+  summary:
+    needs: [prepare, release-app, release-cli]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Summary
+        run: |
+          echo "## Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ needs.release-app.result }}" == "success" ]]; then
+            echo "✅ **App v${{ needs.prepare.outputs.app_version }}** released" >> $GITHUB_STEP_SUMMARY
+          elif [[ "${{ needs.prepare.outputs.should_release_app }}" == "true" ]]; then
+            echo "❌ App release failed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⏭️ App release skipped (no changes or tag exists)" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [[ "${{ needs.release-cli.result }}" == "success" ]]; then
+            echo "✅ **CLI v${{ needs.prepare.outputs.cli_version }}** released" >> $GITHUB_STEP_SUMMARY
+          elif [[ "${{ needs.prepare.outputs.should_release_cli }}" == "true" ]]; then
+            echo "❌ CLI release failed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⏭️ CLI release skipped (no changes or tag exists)" >> $GITHUB_STEP_SUMMARY
+          fi
+
