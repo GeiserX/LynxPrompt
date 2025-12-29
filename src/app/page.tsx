@@ -23,7 +23,7 @@ const organizationJsonLd = {
   url: "https://lynxprompt.com",
   logo: "https://lynxprompt.com/lynxprompt.png",
   description:
-    "AI IDE configuration generator and marketplace. Create universal instructions for Cursor, Claude Code, Copilot, and more.",
+    "AI IDE configuration generator and marketplace. Create universal instructions for Cursor, Claude Code, Copilot, Antigravity, and more.",
   foundingDate: "2024",
   sameAs: [
     "https://github.com/GeiserX/LynxPrompt",
@@ -43,7 +43,7 @@ const softwareJsonLd = {
   applicationCategory: "DeveloperApplication",
   operatingSystem: "Web",
   description:
-    "Transform your development setup into a mouse-click experience. Generate .cursorrules, CLAUDE.md, copilot-instructions.md, and more.",
+    "Transform your development setup into a mouse-click experience. Generate .cursorrules, CLAUDE.md, GEMINI.md, copilot-instructions.md, and more.",
   url: "https://lynxprompt.com",
   author: {
     "@type": "Organization",

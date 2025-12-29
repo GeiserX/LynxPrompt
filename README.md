@@ -48,7 +48,7 @@ LynxPrompt supports **25+ AI coding assistants** across all major platforms:
 | **Cline** | `.clinerules` | ✅ |
 | **Cody** | `.sourcegraph/cody.json` | ✅ |
 | **Continue.dev** | `.continue/config.json` | ✅ |
-| **Gemini** | `GEMINI.md` | ✅ |
+| **Antigravity** (Google) | `GEMINI.md` | ✅ |
 | **Goose** | `.goosehints` | ✅ |
 | **JetBrains Junie** | `.junie/guidelines.md` | ✅ |
 | **OpenHands** | `.openhands/microagents/repo.md` | ✅ |

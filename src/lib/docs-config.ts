@@ -180,6 +180,11 @@ export const docsConfig: DocsSection[] = [
         description: ".windsurfrules configuration",
       },
       {
+        title: "Antigravity",
+        href: "/docs/platforms/antigravity",
+        description: "GEMINI.md configuration",
+      },
+      {
         title: "AGENTS.md",
         href: "/docs/platforms/agents-md",
         description: "The universal standard",

@@ -71,6 +71,12 @@ const AGENTS_ROW_2 = [
     logo: "/logos/agents/aider.svg",
   },
   {
+    name: "Antigravity",
+    href: "https://antigravity-ide.com",
+    logo: "/logos/agents/gemini.svg",
+    parent: "Google",
+  },
+  {
     name: "Gemini CLI",
     href: "https://github.com/google-gemini/gemini-cli",
     logo: "/logos/agents/gemini.svg",

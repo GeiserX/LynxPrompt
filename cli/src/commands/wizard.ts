@@ -125,6 +125,7 @@ const ALL_PLATFORMS = [
   { id: "claude", name: "Claude Code", file: "CLAUDE.md", icon: "🧠", note: "Also works with Cursor" },
   { id: "copilot", name: "GitHub Copilot", file: ".github/copilot-instructions.md", icon: "🐙", note: "VS Code & JetBrains" },
   { id: "windsurf", name: "Windsurf", file: ".windsurfrules", icon: "🏄", note: "Codeium IDE" },
+  { id: "antigravity", name: "Antigravity", file: "GEMINI.md", icon: "💎", note: "Google's AI-powered IDE" },
   { id: "zed", name: "Zed", file: ".zed/instructions.md", icon: "⚡", note: "Zed editor" },
   { id: "aider", name: "Aider", file: ".aider.conf.yml", icon: "🤖", note: "CLI AI pair programming" },
   { id: "cline", name: "Cline", file: ".clinerules", icon: "🔧", note: "VS Code extension" },

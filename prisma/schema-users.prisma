@@ -680,6 +680,7 @@ enum TemplateType {
   CLAUDE_MD
   COPILOT_INSTRUCTIONS
   WINDSURF_RULES
+  GEMINI_MD         // Antigravity (Google's AI-powered IDE)
   AGENTS_MD         // Universal AGENTS.md - Recommended
   CLINE_RULES
   CODEX_MD

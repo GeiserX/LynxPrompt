@@ -202,6 +202,7 @@ const PLATFORM_FILES: Record<string, string> = {
   claude: "CLAUDE.md",
   copilot: ".github/copilot-instructions.md",
   windsurf: ".windsurfrules",
+  antigravity: "GEMINI.md",
   aider: ".aider.conf.yml",
   continue: ".continue/config.json",
   cody: ".cody/config.json",
@@ -987,6 +988,14 @@ function generateWindsurfRules(
   return generateCursorRules(config, user)
     .replace(/^---[\s\S]*?---\n\n/, "") // Remove MDC frontmatter
     .replace("AI Rules", "Windsurf AI Rules");
+}
+
+// Generate Antigravity GEMINI.md - Google's AI-powered IDE
+function generateGeminiMd(config: WizardConfig, user: UserProfile): string {
+  // Use AGENTS.md as base and transform for Antigravity/Gemini
+  return generateAgentsMd(config, user)
+    .replace(/^# .* - AI Agent Instructions/, `# ${config.projectName || "Project"} - Gemini Instructions`)
+    .replace(/^> \*\*Universal AI Configuration\*\*.*$/m, "> **Antigravity Configuration** - Google's AI-powered IDE with Gemini integration.");
 }
 
 // Generate Universal AGENTS.md - works with any AI IDE
@@ -3958,6 +3967,9 @@ export function generateAllFiles(
       break;
     case "windsurf":
       content = generateWindsurfRules(config, user);
+      break;
+    case "antigravity":
+      content = generateGeminiMd(config, user);
       break;
     case "aider":
       content = generateAiderConfig(config, user);

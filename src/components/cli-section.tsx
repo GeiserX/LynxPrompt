@@ -20,7 +20,7 @@ const TERMINAL_LINES = [
   { type: "output-dim", content: "# Generate config interactively" },
   { type: "command", content: "lynxp wizard" },
   { type: "output", content: "🐱 LynxPrompt Wizard" },
-  { type: "output-dim", content: "  [→] Cursor  Windsurf  Claude  Copilot" },
+  { type: "output-dim", content: "  [→] Cursor  Windsurf  Claude  Antigravity" },
   { type: "output-success", content: "✓ Generated .cursor/rules/project.mdc" },
   { type: "output", content: "" },
   { type: "output-dim", content: "# Push to cloud & sync with team" },

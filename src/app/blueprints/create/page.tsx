@@ -40,6 +40,7 @@ const BLUEPRINT_TYPES = [
   { value: "CLAUDE_MD", label: "Claude Code (CLAUDE.md)", icon: "🤖" },
   { value: "COPILOT_INSTRUCTIONS", label: "GitHub Copilot (.github/copilot-instructions.md)", icon: "✈️" },
   { value: "WINDSURF_RULES", label: "Windsurf Rules (.windsurfrules)", icon: "🏄" },
+  { value: "GEMINI_MD", label: "Antigravity (GEMINI.md)", icon: "💎" },
   { value: "CLINE_RULES", label: "Cline Rules (.clinerules)", icon: "⚡" },
   { value: "CODEX_MD", label: "OpenAI Codex (CODEX.md)", icon: "🧠" },
   { value: "CURSOR_RULES", label: "Cursor Rules (.cursorrules) — Deprecated", icon: "🎯" },
@@ -210,6 +211,8 @@ export default function ShareBlueprintPage() {
         setType("AGENTS_MD");
       } else if (filename.includes("copilot")) {
         setType("COPILOT_INSTRUCTIONS");
+      } else if (filename === "gemini.md" || filename.includes("gemini")) {
+        setType("GEMINI_MD");
       } else if (filename.includes("windsurf") || filename === ".windsurfrules") {
         setType("WINDSURF_RULES");
       } else if (filename.includes("cline") || filename === ".clinerules") {

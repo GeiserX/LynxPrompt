@@ -43,13 +43,14 @@ export interface GenerateOptions {
   extraNotes?: string;
 }
 
-// Platform to filename mapping (all 16 platforms)
+// Platform to filename mapping (all 17 platforms)
 const PLATFORM_FILES: Record<string, string> = {
   agents: "AGENTS.md",
   cursor: ".cursor/rules/project.mdc",
   claude: "CLAUDE.md",
   copilot: ".github/copilot-instructions.md",
   windsurf: ".windsurfrules",
+  antigravity: "GEMINI.md",
   zed: ".zed/instructions.md",
   aider: ".aider.conf.yml",
   cline: ".clinerules",

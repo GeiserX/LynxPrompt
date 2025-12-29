@@ -49,6 +49,7 @@ const allPlatforms = [
   { id: "claude", name: "Claude Code", file: "CLAUDE.md" },
   { id: "copilot", name: "GitHub Copilot", file: ".github/copilot-instructions.md" },
   { id: "windsurf", name: "Windsurf", file: ".windsurfrules" },
+  { id: "antigravity", name: "Antigravity", file: "GEMINI.md" },
   { id: "aider", name: "Aider", file: ".aider.conf.yml" },
   { id: "continue", name: "Continue", file: ".continue/config.json" },
   { id: "cody", name: "Sourcegraph Cody", file: ".cody/config.json" },
@@ -84,6 +85,7 @@ export function TemplateDownloadModal({
     "CLAUDE_MD": "claude",
     "COPILOT_INSTRUCTIONS": "copilot",
     "WINDSURF_RULES": "windsurf",
+    "GEMINI_MD": "antigravity",
     // Legacy mappings
     "claude_code": "claude",
     "github_copilot": "copilot",
