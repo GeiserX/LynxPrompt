@@ -96,3 +96,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 *For detailed commit history, see the [GitHub commits](https://github.com/GeiserX/LynxPrompt/commits/main).*
 
 
+
+
+

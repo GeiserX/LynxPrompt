@@ -5,8 +5,10 @@
  * and wants to start tracking it without overwriting the local version.
  * 
  * Usage:
- *   lynxp link <file> <blueprint-id>   - Link local file to cloud blueprint
+ *   lynxp link                          - Interactive mode (recommended)
+ *   lynxp link <file> <blueprint-id>    - Link local file to cloud blueprint
  *   lynxp link --list                   - List all tracked blueprints
+ *   lynxp unlink                        - Interactive mode (recommended)
  *   lynxp unlink <file>                 - Disconnect a file from its blueprint
  */
 
@@ -44,8 +46,8 @@ function getSourceFromVisibility(visibility: Blueprint["visibility"]): Blueprint
 }
 
 export async function linkCommand(
-  file?: string,
-  blueprintId?: string,
+  fileArg?: string,
+  blueprintIdArg?: string,
   options: LinkOptions = {}
 ): Promise<void> {
   const cwd = process.cwd();
@@ -56,28 +58,57 @@ export async function linkCommand(
     return;
   }
 
-  if (!file) {
-    console.log(chalk.red("✗ Please provide a file path to link."));
-    console.log();
-    console.log(chalk.gray("Usage:"));
-    console.log(chalk.gray("  lynxp link <file> <blueprint-id>   Link a local file to a cloud blueprint"));
-    console.log(chalk.gray("  lynxp link --list                  List all tracked blueprints"));
-    console.log();
-    console.log(chalk.gray("Example:"));
-    console.log(chalk.gray("  lynxp link AGENTS.md bp_abc123"));
-    return;
-  }
+  console.log();
+  console.log(chalk.cyan("🐱 Link File to Blueprint"));
+  console.log();
 
-  if (!blueprintId) {
-    console.log(chalk.red("✗ Please provide a blueprint ID to link to."));
-    console.log();
-    console.log(chalk.gray("Usage: lynxp link <file> <blueprint-id>"));
-    console.log(chalk.gray("Example: lynxp link AGENTS.md bp_abc123"));
-    console.log();
-    console.log(chalk.gray("To find blueprint IDs:"));
-    console.log(chalk.gray("  lynxp list      - Show your blueprints"));
-    console.log(chalk.gray("  lynxp search <query>  - Search marketplace"));
-    return;
+  let file: string;
+  let blueprintId: string | undefined = blueprintIdArg;
+
+  // Interactive mode - guide the user through linking
+  if (!fileArg) {
+    // Find AI config files in the project
+    const configFiles = [
+      "AGENTS.md",
+      "CLAUDE.md",
+      ".cursor/rules/project.mdc",
+      ".github/copilot-instructions.md",
+      ".windsurfrules",
+      ".zed/instructions.md",
+      ".clinerules",
+    ];
+
+    const foundFiles = configFiles.filter(f => existsSync(join(cwd, f)));
+
+    if (foundFiles.length === 0) {
+      console.log(chalk.yellow("No AI configuration files found in this directory."));
+      console.log();
+      console.log(chalk.gray("Create one first:"));
+      console.log(chalk.gray("  lynxp wizard    Generate a new config file"));
+      console.log(chalk.gray("  lynxp pull <id> Download from marketplace"));
+      return;
+    }
+
+    // Let user select which file to link
+    const { selectedFile } = await prompts({
+      type: "select",
+      name: "selectedFile",
+      message: "Which file do you want to link to a cloud blueprint?",
+      choices: foundFiles.map(f => ({
+        title: f,
+        value: f,
+        description: "Local file exists",
+      })),
+    });
+
+    if (!selectedFile) {
+      console.log(chalk.gray("Cancelled."));
+      return;
+    }
+
+    file = selectedFile;
+  } else {
+    file = fileArg;
   }
 
   // Check if file exists
@@ -90,7 +121,9 @@ export async function linkCommand(
   // Check if already linked
   const existing = await findBlueprintByFile(cwd, file);
   if (existing) {
-    console.log(chalk.yellow(`⚠ This file is already linked to: ${existing.id}`));
+    console.log(chalk.yellow(`This file is already linked to: ${existing.name}`));
+    console.log(chalk.gray(`   ID: ${existing.id}`));
+    console.log();
     const { proceed } = await prompts({
       type: "confirm",
       name: "proceed",
@@ -103,15 +136,141 @@ export async function linkCommand(
     }
   }
 
-  // Check authentication
-  if (!isAuthenticated()) {
-    console.log(
-      chalk.yellow("Not logged in. Run 'lynxp login' to authenticate.")
-    );
-    process.exit(1);
+  // Interactive mode - help find the blueprint
+  if (!blueprintId) {
+    // Check authentication
+    if (!isAuthenticated()) {
+      console.log(chalk.yellow("You need to login to access your blueprints."));
+      const { doLogin } = await prompts({
+        type: "confirm",
+        name: "doLogin",
+        message: "Login now?",
+        initial: true,
+      });
+      if (doLogin) {
+        console.log(chalk.gray("Run 'lynxp login' in another terminal, then come back here."));
+        return;
+      }
+      console.log(chalk.gray("Cancelled."));
+      return;
+    }
+
+    // Let user choose how to find the blueprint
+    const { searchMethod } = await prompts({
+      type: "select",
+      name: "searchMethod",
+      message: "How do you want to find the blueprint?",
+      choices: [
+        { title: "📋 From my blueprints", value: "list" },
+        { title: "🔍 Search marketplace", value: "search" },
+        { title: "🔢 Enter ID directly", value: "manual" },
+      ],
+    });
+
+    if (!searchMethod) {
+      console.log(chalk.gray("Cancelled."));
+      return;
+    }
+
+    if (searchMethod === "list") {
+      // Fetch user's blueprints
+      const spinner = ora("Fetching your blueprints...").start();
+      try {
+        const { blueprints } = await api.listBlueprints();
+        spinner.stop();
+
+        if (!blueprints || blueprints.length === 0) {
+          console.log(chalk.yellow("You don't have any blueprints yet."));
+          console.log(chalk.gray("Create one with 'lynxp push' or search the marketplace."));
+          return;
+        }
+
+        const { selected } = await prompts({
+          type: "select",
+          name: "selected",
+          message: "Select a blueprint:",
+          choices: blueprints.map(b => ({
+            title: b.name,
+            value: b.id,
+            description: b.description?.substring(0, 50) || "",
+          })),
+        });
+
+        if (!selected) {
+          console.log(chalk.gray("Cancelled."));
+          return;
+        }
+        blueprintId = selected;
+      } catch {
+        spinner.stop();
+        console.log(chalk.red("✗ Could not fetch blueprints"));
+        return;
+      }
+    } else if (searchMethod === "search") {
+      const { query } = await prompts({
+        type: "text",
+        name: "query",
+        message: "Search for:",
+      });
+
+      if (!query) {
+        console.log(chalk.gray("Cancelled."));
+        return;
+      }
+
+      const spinner = ora(`Searching for "${query}"...`).start();
+      try {
+        const results = await api.searchBlueprints(query, 10);
+        spinner.stop();
+
+        if (!results.templates || results.templates.length === 0) {
+          console.log(chalk.yellow(`No blueprints found for "${query}"`));
+          return;
+        }
+
+        const { selected } = await prompts({
+          type: "select",
+          name: "selected",
+          message: "Select a blueprint:",
+          choices: results.templates.map(b => ({
+            title: `${b.name} (★ ${b.likes})`,
+            value: b.id,
+            description: b.author ? `by ${b.author}` : "",
+          })),
+        });
+
+        if (!selected) {
+          console.log(chalk.gray("Cancelled."));
+          return;
+        }
+        blueprintId = selected;
+      } catch {
+        spinner.stop();
+        console.log(chalk.red("✗ Search failed"));
+        return;
+      }
+    } else {
+      const { manualId } = await prompts({
+        type: "text",
+        name: "manualId",
+        message: "Enter blueprint ID:",
+      });
+
+      if (!manualId) {
+        console.log(chalk.gray("Cancelled."));
+        return;
+      }
+      blueprintId = manualId;
+    }
   }
 
-  // Fetch blueprint info
+  // At this point we must have both file and blueprintId
+  if (!blueprintId) {
+    console.log(chalk.red("✗ No blueprint ID provided."));
+    return;
+  }
+
+  // Fetch blueprint info and link
   const spinner = ora(`Fetching blueprint ${chalk.cyan(blueprintId)}...`).start();
 
   try {
@@ -159,11 +318,10 @@ export async function linkCommand(
 
     // Show next steps
     console.log(chalk.gray("Next steps:"));
-    console.log(chalk.gray(`  • Run 'lynxp pull ${blueprintId}' to update local file from cloud`));
-    console.log(chalk.gray(`  • Run 'lynxp diff ${blueprintId}' to see differences`));
+    console.log(chalk.gray(`  • Run 'lynxp diff' to see differences`));
     console.log(chalk.gray(`  • Run 'lynxp status' to see all tracked blueprints`));
     if (!isMarketplace) {
-      console.log(chalk.gray(`  • Run 'lynxp push ${file}' to push local changes to cloud`));
+      console.log(chalk.gray(`  • Run 'lynxp push' to push local changes to cloud`));
     }
     console.log();
 
@@ -184,27 +342,53 @@ export async function linkCommand(
   }
 }
 
-export async function unlinkCommand(file?: string): Promise<void> {
+export async function unlinkCommand(fileArg?: string): Promise<void> {
   const cwd = process.cwd();
 
-  if (!file) {
-    console.log(chalk.red("✗ Please provide a file path to unlink."));
-    console.log();
-    console.log(chalk.gray("Usage: lynxp unlink <file>"));
-    console.log(chalk.gray("Example: lynxp unlink AGENTS.md"));
-    return;
+  console.log();
+  console.log(chalk.cyan("🐱 Unlink File from Blueprint"));
+  console.log();
+
+  let file: string;
+
+  // Interactive mode - show tracked files and let user select
+  if (!fileArg) {
+    const status = await checkSyncStatus(cwd);
+    
+    if (status.length === 0) {
+      console.log(chalk.yellow("No files are currently linked to blueprints."));
+      return;
+    }
+
+    const { selectedFile } = await prompts({
+      type: "select",
+      name: "selectedFile",
+      message: "Which file do you want to unlink?",
+      choices: status.map(({ blueprint }) => ({
+        title: blueprint.file,
+        value: blueprint.file,
+        description: `${blueprint.name} (${blueprint.source})`,
+      })),
+    });
+
+    if (!selectedFile) {
+      console.log(chalk.gray("Cancelled."));
+      return;
+    }
+    file = selectedFile;
+  } else {
+    file = fileArg;
   }
 
   // Check if file is tracked
   const tracked = await findBlueprintByFile(cwd, file);
   if (!tracked) {
-    console.log(chalk.yellow(`⚠ File is not linked to any blueprint: ${file}`));
+    console.log(chalk.yellow(`File is not linked to any blueprint: ${file}`));
     return;
   }
 
-  console.log();
-  console.log(chalk.cyan(`Currently linked to: ${tracked.id}`));
-  console.log(chalk.gray(`   Name: ${tracked.name}`));
+  console.log(chalk.gray(`Currently linked to: ${tracked.name}`));
+  console.log(chalk.gray(`   ID: ${tracked.id}`));
   console.log(chalk.gray(`   Source: ${tracked.source}`));
   console.log();
 
@@ -225,8 +409,7 @@ export async function unlinkCommand(file?: string): Promise<void> {
   if (success) {
     console.log();
     console.log(chalk.green(`✅ Unlinked: ${file}`));
-    console.log(chalk.gray("  The file is now a standalone local file."));
-    console.log(chalk.gray("  It will no longer receive updates from the cloud blueprint."));
+    console.log(chalk.gray("  The file is now standalone. Changes won't sync with the cloud."));
     console.log();
   } else {
     console.log(chalk.red("✗ Failed to unlink file."));
@@ -245,7 +428,7 @@ async function listTrackedBlueprints(cwd: string): Promise<void> {
     console.log();
     console.log(chalk.gray("To track a blueprint:"));
     console.log(chalk.gray("  lynxp pull <blueprint-id>     Download and track a blueprint"));
-    console.log(chalk.gray("  lynxp link <file> <id>        Link an existing file to a blueprint"));
+    console.log(chalk.gray("  lynxp link                    Link an existing file to a blueprint"));
     return;
   }
 
@@ -280,6 +463,3 @@ async function listTrackedBlueprints(cwd: string): Promise<void> {
   console.log(chalk.gray(`  ${chalk.green("✓")} In sync  ${chalk.yellow("●")} Modified locally  ${chalk.red("✗")} Missing`));
   console.log();
 }
-
-
-

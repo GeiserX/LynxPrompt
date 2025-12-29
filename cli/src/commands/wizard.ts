@@ -18,117 +18,159 @@ interface WizardOptions {
   yes?: boolean;
 }
 
-// Output format options - simplified for most users
+// Output format options with emoji
 const OUTPUT_FORMATS = [
   {
-    title: "AGENTS.md (Universal)",
+    title: "🌐 AGENTS.md",
     value: "agents",
-    description: "Works with Claude Code, GitHub Copilot, Aider, and most AI editors",
+    description: "Universal format - Claude, Copilot, Aider, & more",
     recommended: true,
   },
   {
-    title: "Cursor (.cursor/rules/)",
+    title: "🖱️  Cursor",
     value: "cursor",
-    description: "Cursor IDE with MDC format",
+    description: ".cursor/rules/ with MDC format",
   },
   {
-    title: "Multiple formats",
+    title: "🌊 Windsurf",
+    value: "windsurf",
+    description: ".windsurfrules configuration",
+  },
+  {
+    title: "🤖 Claude Code",
+    value: "claude",
+    description: "CLAUDE.md for Claude AI",
+  },
+  {
+    title: "📦 Multiple",
     value: "multiple",
-    description: "Select multiple AI editors to generate for",
+    description: "Generate for multiple AI editors",
   },
 ];
 
-// Tech stack options
+// Tech stack options with icons
 const TECH_STACKS = [
-  { title: "TypeScript", value: "typescript" },
-  { title: "JavaScript", value: "javascript" },
-  { title: "Python", value: "python" },
-  { title: "Go", value: "go" },
-  { title: "Rust", value: "rust" },
-  { title: "Java", value: "java" },
-  { title: "C#/.NET", value: "csharp" },
-  { title: "Ruby", value: "ruby" },
-  { title: "PHP", value: "php" },
-  { title: "Swift", value: "swift" },
+  { title: "🔷 TypeScript", value: "typescript" },
+  { title: "🟡 JavaScript", value: "javascript" },
+  { title: "🐍 Python", value: "python" },
+  { title: "🔵 Go", value: "go" },
+  { title: "🦀 Rust", value: "rust" },
+  { title: "☕ Java", value: "java" },
+  { title: "💜 C#/.NET", value: "csharp" },
+  { title: "💎 Ruby", value: "ruby" },
+  { title: "🐘 PHP", value: "php" },
+  { title: "🍎 Swift", value: "swift" },
 ];
 
 const FRAMEWORKS = [
-  { title: "React", value: "react" },
-  { title: "Next.js", value: "nextjs" },
-  { title: "Vue.js", value: "vue" },
-  { title: "Angular", value: "angular" },
-  { title: "Svelte", value: "svelte" },
-  { title: "Express", value: "express" },
-  { title: "FastAPI", value: "fastapi" },
-  { title: "Django", value: "django" },
-  { title: "Flask", value: "flask" },
-  { title: "Spring Boot", value: "spring" },
-  { title: "Rails", value: "rails" },
-  { title: "Laravel", value: "laravel" },
+  { title: "⚛️  React", value: "react" },
+  { title: "▲  Next.js", value: "nextjs" },
+  { title: "💚 Vue.js", value: "vue" },
+  { title: "🅰️  Angular", value: "angular" },
+  { title: "🔥 Svelte", value: "svelte" },
+  { title: "🚂 Express", value: "express" },
+  { title: "⚡ FastAPI", value: "fastapi" },
+  { title: "🎸 Django", value: "django" },
+  { title: "🧪 Flask", value: "flask" },
+  { title: "🍃 Spring", value: "spring" },
+  { title: "💎 Rails", value: "rails" },
+  { title: "🔴 Laravel", value: "laravel" },
+  { title: "🏗️  NestJS", value: "nestjs" },
+  { title: "⚡ Vite", value: "vite" },
+  { title: "📱 React Native", value: "react-native" },
 ];
 
 // Platform options (for multiple format selection)
 const PLATFORMS = [
-  { title: "AGENTS.md (Universal)", value: "agents", filename: "AGENTS.md" },
-  { title: "Cursor (.cursor/rules/)", value: "cursor", filename: ".cursor/rules/project.mdc" },
-  { title: "Claude Code (CLAUDE.md)", value: "claude", filename: "CLAUDE.md" },
-  { title: "GitHub Copilot", value: "copilot", filename: ".github/copilot-instructions.md" },
-  { title: "Windsurf (.windsurfrules)", value: "windsurf", filename: ".windsurfrules" },
-  { title: "Zed", value: "zed", filename: ".zed/instructions.md" },
+  { title: "🌐 AGENTS.md (Universal)", value: "agents", filename: "AGENTS.md" },
+  { title: "🖱️  Cursor", value: "cursor", filename: ".cursor/rules/project.mdc" },
+  { title: "🤖 Claude Code", value: "claude", filename: "CLAUDE.md" },
+  { title: "🐙 GitHub Copilot", value: "copilot", filename: ".github/copilot-instructions.md" },
+  { title: "🌊 Windsurf", value: "windsurf", filename: ".windsurfrules" },
+  { title: "⚡ Zed", value: "zed", filename: ".zed/instructions.md" },
+  { title: "🤖 Cline", value: "cline", filename: ".clinerules" },
 ];
 
-// Persona options
+// Persona options with descriptions
 const PERSONAS = [
-  { title: "Full-Stack Developer - Complete application setups", value: "fullstack" },
-  { title: "Backend Developer - APIs, databases, microservices", value: "backend" },
-  { title: "Frontend Developer - UI, components, styling", value: "frontend" },
-  { title: "DevOps Engineer - Infrastructure, CI/CD, containers", value: "devops" },
-  { title: "Data Engineer - Pipelines, ETL, databases", value: "data" },
-  { title: "Security Engineer - Secure code, vulnerabilities", value: "security" },
-  { title: "Custom...", value: "custom" },
+  { title: "🧑‍💻 Full-Stack Developer", value: "fullstack", description: "Complete application development" },
+  { title: "⚙️  Backend Developer", value: "backend", description: "APIs, databases, services" },
+  { title: "🎨 Frontend Developer", value: "frontend", description: "UI, components, styling" },
+  { title: "🚀 DevOps Engineer", value: "devops", description: "Infrastructure, CI/CD" },
+  { title: "📊 Data Engineer", value: "data", description: "Pipelines, ETL, analytics" },
+  { title: "🔒 Security Engineer", value: "security", description: "Secure code, auditing" },
+  { title: "✏️  Custom...", value: "custom", description: "Define your own" },
 ];
 
-// Boundary presets
+// Boundary presets with visual indicators
 const BOUNDARY_PRESETS = [
   {
-    title: "Standard - Balance of freedom and safety (recommended)",
+    title: "🟢 Standard",
     value: "standard",
+    description: "Balanced freedom & safety",
     always: ["Read any file", "Modify files in src/", "Run build/test/lint", "Create test files"],
     askFirst: ["Add new dependencies", "Modify config files", "Create new modules"],
     never: ["Delete production data", "Modify .env secrets", "Force push"],
   },
   {
-    title: "Conservative - Ask before most changes",
+    title: "🟡 Conservative",
     value: "conservative",
+    description: "Ask before most changes",
     always: ["Read any file", "Run lint/format commands"],
     askFirst: ["Modify any file", "Add dependencies", "Create files", "Run tests"],
     never: ["Delete files", "Modify .env", "Push to git"],
   },
   {
-    title: "Permissive - AI can modify freely within src/",
+    title: "🟠 Permissive",
     value: "permissive",
+    description: "AI can modify freely",
     always: ["Modify any file in src/", "Run any script", "Add dependencies", "Create files"],
     askFirst: ["Modify root configs", "Delete directories"],
     never: ["Modify .env", "Access external APIs without confirmation"],
   },
 ];
 
+// Step indicator
+function showStep(current: number, total: number, title: string): void {
+  const progress = "●".repeat(current) + "○".repeat(total - current);
+  console.log();
+  console.log(chalk.cyan(`  ${progress}  Step ${current}/${total}: ${title}`));
+  console.log();
+}
+
+// Box drawing helper
+function printBox(lines: string[], color: typeof chalk.cyan = chalk.gray): void {
+  const maxLen = Math.max(...lines.map(l => l.replace(/\x1b\[[0-9;]*m/g, "").length));
+  const top = "┌" + "─".repeat(maxLen + 2) + "┐";
+  const bottom = "└" + "─".repeat(maxLen + 2) + "┘";
+  
+  console.log(color(top));
+  for (const line of lines) {
+    const stripped = line.replace(/\x1b\[[0-9;]*m/g, "");
+    const padding = " ".repeat(maxLen - stripped.length);
+    console.log(color("│ ") + line + padding + color(" │"));
+  }
+  console.log(color(bottom));
+}
+
 export async function wizardCommand(options: WizardOptions): Promise<void> {
   console.log();
-  console.log(chalk.cyan("🐱 LynxPrompt Wizard"));
-  console.log(chalk.gray("Generate AI IDE configuration in seconds"));
+  console.log(chalk.cyan.bold("  🐱 LynxPrompt Wizard"));
+  console.log(chalk.gray("     Generate AI IDE configuration in seconds"));
   console.log();
 
   // Try to detect project info
   const detected = await detectProject(process.cwd());
   
   if (detected) {
-    console.log(chalk.green("✓ Detected project:"));
-    if (detected.name) console.log(chalk.gray(`  Name: ${detected.name}`));
-    if (detected.stack.length > 0) console.log(chalk.gray(`  Stack: ${detected.stack.join(", ")}`));
-    if (detected.packageManager) console.log(chalk.gray(`  Package manager: ${detected.packageManager}`));
-    if (detected.commands.build) console.log(chalk.gray(`  Build: ${detected.commands.build}`));
-    if (detected.commands.test) console.log(chalk.gray(`  Test: ${detected.commands.test}`));
+    const detectedInfo = [
+      chalk.green("✓ Project detected"),
+    ];
+    if (detected.name) detectedInfo.push(chalk.gray(`  Name: ${detected.name}`));
+    if (detected.stack.length > 0) detectedInfo.push(chalk.gray(`  Stack: ${detected.stack.join(", ")}`));
+    if (detected.packageManager) detectedInfo.push(chalk.gray(`  Package manager: ${detected.packageManager}`));
+    
+    printBox(detectedInfo, chalk.gray);
     console.log();
   }
 
@@ -168,7 +210,8 @@ export async function wizardCommand(options: WizardOptions): Promise<void> {
     spinner.stop();
 
     console.log();
-    console.log(chalk.green("✅ Generated:"));
+    console.log(chalk.green.bold("  ✅ Generated:"));
+    console.log();
     
     for (const [filename, content] of Object.entries(files)) {
       const outputPath = join(process.cwd(), filename);
@@ -192,7 +235,7 @@ export async function wizardCommand(options: WizardOptions): Promise<void> {
         });
         
         if (!response.overwrite) {
-          console.log(chalk.yellow(`   Skipped: ${filename}`));
+          console.log(chalk.yellow(`     ⏭️  Skipped: ${filename}`));
           continue;
         }
       }
@@ -204,17 +247,20 @@ export async function wizardCommand(options: WizardOptions): Promise<void> {
       }
 
       await writeFile(outputPath, content, "utf-8");
-      console.log(`   ${chalk.cyan(filename)}`);
+      console.log(`     ${chalk.cyan("→")} ${chalk.bold(filename)}`);
     }
 
     console.log();
-    console.log(chalk.gray("Your AI assistant will now follow these instructions."));
+    printBox([
+      chalk.gray("Your AI assistant will now follow these instructions."),
+      "",
+      chalk.gray("Next steps:"),
+      chalk.cyan("  lynxp check    ") + chalk.gray("Validate configuration"),
+      chalk.cyan("  lynxp push     ") + chalk.gray("Sync to cloud"),
+      chalk.cyan("  lynxp status   ") + chalk.gray("View current setup"),
+    ], chalk.gray);
     console.log();
-    console.log(chalk.gray("Tips:"));
-    console.log(chalk.gray("  • Edit the generated file anytime to customize rules"));
-    console.log(chalk.gray("  • Run 'lynxp wizard' again to regenerate"));
-    console.log(chalk.gray("  • Run 'lynxp check' to validate your configuration"));
-    console.log();
+    
   } catch (error) {
     spinner.fail("Failed to generate files");
     console.error(chalk.red("\n✗ An error occurred while generating configuration files."));
@@ -231,36 +277,56 @@ async function runInteractiveWizard(
   detected: Awaited<ReturnType<typeof detectProject>> | null
 ): Promise<GenerateOptions> {
   const answers: Record<string, unknown> = {};
+  const totalSteps = 5;
 
-  // Step 1: Output format (simplified - most important decision first)
+  // Configure prompts to look better
+  const promptConfig = {
+    onCancel: () => {
+      console.log(chalk.yellow("\n  Cancelled. Run 'lynxp wizard' anytime to restart.\n"));
+      process.exit(0);
+    },
+  };
+
+  // ═══════════════════════════════════════════════════════════════
+  // STEP 1: Output Format
+  // ═══════════════════════════════════════════════════════════════
+  showStep(1, totalSteps, "Output Format");
+  
   let platforms: string[];
   
   if (options.format) {
-    // Format provided via flag
     platforms = options.format.split(",").map(f => f.trim());
+    console.log(chalk.gray(`  Using format from flag: ${platforms.join(", ")}`));
   } else {
     const formatResponse = await prompts({
       type: "select",
       name: "format",
-      message: "Select output format:",
+      message: chalk.white("Where will you use this?"),
       choices: OUTPUT_FORMATS.map(f => ({
-        title: f.recommended ? `${f.title} ${chalk.green("(recommended)")}` : f.title,
+        title: f.recommended 
+          ? `${f.title} ${chalk.green.bold("★ recommended")}`
+          : f.title,
         value: f.value,
-        description: f.description,
+        description: chalk.gray(f.description),
       })),
-      initial: 0, // AGENTS.md is default
-    });
+      initial: 0,
+      hint: chalk.gray("↑↓ navigate • enter select"),
+    }, promptConfig);
 
     if (formatResponse.format === "multiple") {
-      // Show multi-select for platforms
+      console.log();
       const platformResponse = await prompts({
         type: "multiselect",
         name: "platforms",
-        message: "Select AI editors:",
-        choices: PLATFORMS.map(p => ({ title: p.title, value: p.value })),
-        hint: "- Space to select, Enter to confirm",
+        message: chalk.white("Select AI editors:"),
+        choices: PLATFORMS.map(p => ({ 
+          title: p.title, 
+          value: p.value,
+        })),
+        hint: chalk.gray("space select • a toggle all • enter confirm"),
         min: 1,
-      });
+        instructions: false,
+      }, promptConfig);
       platforms = platformResponse.platforms || ["agents"];
     } else {
       platforms = [formatResponse.format || "agents"];
@@ -268,101 +334,121 @@ async function runInteractiveWizard(
   }
   answers.platforms = platforms;
 
-  // Step 2: Project name
+  // ═══════════════════════════════════════════════════════════════
+  // STEP 2: Project Info
+  // ═══════════════════════════════════════════════════════════════
+  showStep(2, totalSteps, "Project Info");
+
   const nameResponse = await prompts({
     type: "text",
     name: "name",
-    message: "Project name:",
+    message: chalk.white("Project name:"),
     initial: options.name || detected?.name || "my-project",
-  });
+    hint: chalk.gray("Used in the generated config header"),
+  }, promptConfig);
   answers.name = nameResponse.name || "my-project";
 
-  // Step 3: Quick description (optional)
   const descResponse = await prompts({
     type: "text",
     name: "description",
-    message: "Brief description (optional):",
+    message: chalk.white("Brief description:"),
     initial: options.description || "",
-  });
+    hint: chalk.gray("optional - helps AI understand context"),
+  }, promptConfig);
   answers.description = descResponse.description || "";
 
-  // Step 4: Tech stack (pre-select detected)
+  // ═══════════════════════════════════════════════════════════════
+  // STEP 3: Tech Stack
+  // ═══════════════════════════════════════════════════════════════
+  showStep(3, totalSteps, "Tech Stack");
+
   const allStackOptions = [...TECH_STACKS, ...FRAMEWORKS];
   const detectedStackSet = new Set(detected?.stack || []);
   
+  // Pre-select detected technologies
+  const preselected = allStackOptions
+    .map((s, i) => detectedStackSet.has(s.value) ? i : -1)
+    .filter(i => i !== -1);
+
+  if (preselected.length > 0) {
+    console.log(chalk.gray(`  Auto-selected: ${detected?.stack?.join(", ")}`));
+    console.log();
+  }
+
   const stackResponse = await prompts({
     type: "multiselect",
     name: "stack",
-    message: "Tech stack:",
+    message: chalk.white("Tech stack:"),
     choices: allStackOptions.map(s => ({
       title: s.title,
       value: s.value,
       selected: detectedStackSet.has(s.value),
     })),
-    hint: "- Space to select, Enter to confirm",
-  });
+    hint: chalk.gray("space select • a toggle all • enter confirm"),
+    instructions: false,
+  }, promptConfig);
   answers.stack = stackResponse.stack || [];
 
-  // Step 5: Persona (simplified - fullstack is default)
+  // ═══════════════════════════════════════════════════════════════
+  // STEP 4: AI Persona
+  // ═══════════════════════════════════════════════════════════════
+  showStep(4, totalSteps, "AI Persona");
+
   const personaResponse = await prompts({
     type: "select",
     name: "persona",
-    message: "AI persona:",
-    choices: PERSONAS,
-    initial: 0, // Full-stack by default
-  });
+    message: chalk.white("What role should the AI take?"),
+    choices: PERSONAS.map(p => ({
+      title: p.title,
+      value: p.value,
+      description: chalk.gray(p.description),
+    })),
+    initial: 0,
+    hint: chalk.gray("↑↓ navigate • enter select"),
+  }, promptConfig);
   
   if (personaResponse.persona === "custom") {
     const customPersona = await prompts({
       type: "text",
       name: "value",
-      message: "Describe the custom persona:",
-    });
+      message: chalk.white("Describe the custom persona:"),
+      hint: chalk.gray("e.g., 'ML engineer focused on PyTorch and data pipelines'"),
+    }, promptConfig);
     answers.persona = customPersona.value || "fullstack";
   } else {
     answers.persona = personaResponse.persona || "fullstack";
   }
 
-  // Step 6: Boundaries (standard is default)
+  // ═══════════════════════════════════════════════════════════════
+  // STEP 5: Boundaries
+  // ═══════════════════════════════════════════════════════════════
+  showStep(5, totalSteps, "AI Boundaries");
+
   const boundaryResponse = await prompts({
     type: "select",
     name: "boundaries",
-    message: "AI boundaries:",
-    choices: BOUNDARY_PRESETS.map(b => ({ title: b.title, value: b.value })),
-    initial: 0, // Standard by default
-  });
+    message: chalk.white("How much freedom should the AI have?"),
+    choices: BOUNDARY_PRESETS.map(b => ({ 
+      title: b.title, 
+      value: b.value,
+      description: chalk.gray(b.description),
+    })),
+    initial: 0,
+    hint: chalk.gray("↑↓ navigate • enter select"),
+  }, promptConfig);
   answers.boundaries = boundaryResponse.boundaries || "standard";
 
-  // Step 7: Commands (auto-detected, quick confirm)
-  if (detected?.commands && Object.keys(detected.commands).length > 0) {
+  // Show boundary details
+  const selectedBoundary = BOUNDARY_PRESETS.find(b => b.value === answers.boundaries);
+  if (selectedBoundary) {
     console.log();
-    console.log(chalk.gray("Auto-detected commands:"));
-    if (detected.commands.build) console.log(chalk.gray(`  Build: ${detected.commands.build}`));
-    if (detected.commands.test) console.log(chalk.gray(`  Test: ${detected.commands.test}`));
-    if (detected.commands.lint) console.log(chalk.gray(`  Lint: ${detected.commands.lint}`));
-    if (detected.commands.dev) console.log(chalk.gray(`  Dev: ${detected.commands.dev}`));
-    
-    const editCommands = await prompts({
-      type: "confirm",
-      name: "edit",
-      message: "Edit commands?",
-      initial: false,
-    });
-
-    if (editCommands.edit) {
-      const commandsResponse = await prompts([
-        { type: "text", name: "build", message: "Build:", initial: detected.commands.build },
-        { type: "text", name: "test", message: "Test:", initial: detected.commands.test },
-        { type: "text", name: "lint", message: "Lint:", initial: detected.commands.lint },
-        { type: "text", name: "dev", message: "Dev:", initial: detected.commands.dev },
-      ]);
-      answers.commands = commandsResponse;
-    } else {
-      answers.commands = detected.commands;
-    }
-  } else {
-    answers.commands = {};
+    console.log(chalk.gray("  Always allowed: ") + chalk.green(selectedBoundary.always.slice(0, 2).join(", ")));
+    console.log(chalk.gray("  Ask first:      ") + chalk.yellow(selectedBoundary.askFirst.slice(0, 2).join(", ")));
+    console.log(chalk.gray("  Never:          ") + chalk.red(selectedBoundary.never.slice(0, 2).join(", ")));
   }
+
+  // Commands from detection
+  answers.commands = detected?.commands || {};
 
   return {
     name: answers.name as string,

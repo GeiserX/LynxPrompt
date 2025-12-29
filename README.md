@@ -73,7 +73,7 @@ Use `AGENTS.md` as a universal format that works with:
 ### Web Platform
 
 - **Configuration Wizard** — Step-by-step generator with smart defaults
-- **Blueprint Marketplace** — Browse, share, and sell AI configurations  
+- **Blueprint Marketplace** — Browse, share, and sell AI configurations
 - **Blueprint Versioning** — Track changes with changelogs
 - **Teams** — Share blueprints privately within your organization
 - **Template Variables** — Dynamic `[[VARIABLE]]` placeholders

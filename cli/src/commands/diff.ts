@@ -1,12 +1,12 @@
 /**
  * Diff command - show changes between local and remote blueprints
  * 
- * Compares local AI configuration files with a remote blueprint from LynxPrompt.
- * Useful for seeing what changes have been made locally or what would change
- * if you pulled a blueprint.
+ * Compares local AI configuration files with their linked cloud blueprints.
+ * If no blueprint is linked, prompts user to link one first.
  * 
  * Usage:
- *   lynxp diff <blueprint-id>     - Compare local files with remote blueprint
+ *   lynxp diff                    - Compare all tracked files with their cloud blueprints
+ *   lynxp diff <file>             - Compare specific file with its linked blueprint
  *   lynxp diff --local            - Show diff between .lynxprompt/rules/ and exported files
  */
 
@@ -17,6 +17,7 @@ import { join } from "path";
 import { existsSync } from "fs";
 import { isAuthenticated } from "../config.js";
 import { api, ApiRequestError } from "../api.js";
+import { checkSyncStatus, findBlueprintByFile } from "../utils/blueprint-tracker.js";
 
 interface DiffOptions {
   local?: boolean;
@@ -152,7 +153,7 @@ function getDiffStats(diff: Array<{ type: "add" | "remove" | "same"; line: strin
   };
 }
 
-export async function diffCommand(blueprintId?: string, options: DiffOptions = {}): Promise<void> {
+export async function diffCommand(fileOrId?: string, options: DiffOptions = {}): Promise<void> {
   console.log();
   console.log(chalk.cyan("🐱 LynxPrompt Diff"));
   console.log();
@@ -165,16 +166,119 @@ export async function diffCommand(blueprintId?: string, options: DiffOptions = {
     return;
   }
 
-  // Remote diff mode - compare local with remote blueprint
-  if (!blueprintId) {
-    console.log(chalk.red("✗ Please provide a blueprint ID to compare with."));
-    console.log();
-    console.log(chalk.gray("Usage:"));
-    console.log(chalk.gray("  lynxp diff <blueprint-id>    Compare local with remote blueprint"));
-    console.log(chalk.gray("  lynxp diff --local           Compare .lynxprompt/rules/ with exports"));
+  // Check for tracked blueprints first
+  const trackedFiles = await checkSyncStatus(cwd);
+  
+  // If a specific file or blueprint ID is given
+  if (fileOrId) {
+    // Check if it's a tracked file
+    const tracked = await findBlueprintByFile(cwd, fileOrId);
+    if (tracked) {
+      await diffFileWithBlueprint(cwd, fileOrId, tracked.id);
+      return;
+    }
+    
+    // Otherwise treat it as a blueprint ID
+    await diffWithBlueprintId(cwd, fileOrId);
     return;
   }
 
+  // No argument given - show diff for all tracked files
+  if (trackedFiles.length === 0) {
+    console.log(chalk.yellow("No tracked blueprints found."));
+    console.log();
+    console.log(chalk.gray("To track a blueprint and compare changes:"));
+    console.log(chalk.gray("  1. Pull a blueprint: lynxp pull <blueprint-id>"));
+    console.log(chalk.gray("  2. Or link an existing file: lynxp link"));
+    console.log();
+    console.log(chalk.gray("Other options:"));
+    console.log(chalk.gray("  lynxp diff --local    Compare .lynxprompt/rules/ with exported files"));
+    return;
+  }
+
+  // Show diff for all tracked files
+  let hasChanges = false;
+  
+  for (const { blueprint, localModified, fileExists } of trackedFiles) {
+    if (!fileExists) {
+      console.log(chalk.red(`✗ ${blueprint.file} - file not found`));
+      continue;
+    }
+    
+    console.log(chalk.cyan(`📄 ${blueprint.file}`));
+    console.log(chalk.gray(`   Linked to: ${blueprint.name} (${blueprint.id})`));
+    
+    if (localModified) {
+      hasChanges = true;
+      await diffFileWithBlueprint(cwd, blueprint.file, blueprint.id, true);
+    } else {
+      console.log(chalk.green("   ✓ In sync with cloud"));
+    }
+    console.log();
+  }
+  
+  if (!hasChanges) {
+    console.log(chalk.green("✓ All tracked files are in sync with their cloud blueprints!"));
+  } else {
+    console.log(chalk.gray("To push local changes: lynxp push"));
+    console.log(chalk.gray("To pull cloud changes: lynxp pull <id>"));
+  }
+  console.log();
+}
+
+/**
+ * Compare a specific file with its linked blueprint
+ */
+async function diffFileWithBlueprint(cwd: string, file: string, blueprintId: string, compact: boolean = false): Promise<void> {
+  const filePath = join(cwd, file);
+  
+  if (!existsSync(filePath)) {
+    console.log(chalk.red(`✗ File not found: ${file}`));
+    return;
+  }
+
+  const spinner = compact ? null : ora("Fetching blueprint...").start();
+
+  try {
+    const { blueprint } = await api.getBlueprint(blueprintId);
+    spinner?.stop();
+
+    if (!blueprint || !blueprint.content) {
+      console.log(chalk.red(`✗ Blueprint has no content`));
+      return;
+    }
+
+    const localContent = await readFile(filePath, "utf-8");
+    const diff = computeDiff(blueprint.content, localContent);
+    const stats = getDiffStats(diff);
+
+    if (stats.added === 0 && stats.removed === 0) {
+      if (!compact) {
+        console.log(chalk.green("✓ Files are identical!"));
+      }
+    } else {
+      if (!compact) {
+        console.log(chalk.gray("Changes (cloud → local):"));
+        console.log();
+      }
+      console.log(formatDiff(diff));
+      console.log(chalk.gray(`   ${chalk.green(`+${stats.added}`)} ${chalk.red(`-${stats.removed}`)} lines`));
+    }
+
+  } catch (error) {
+    spinner?.stop();
+    if (error instanceof ApiRequestError) {
+      console.log(chalk.red(`✗ Could not fetch blueprint: ${error.message}`));
+    } else {
+      console.log(chalk.red("✗ Failed to compare"));
+    }
+  }
+}
+
+/**
+ * Compare with a specific blueprint ID (legacy behavior)
+ */
+async function diffWithBlueprintId(cwd: string, blueprintId: string): Promise<void> {
   // Check if logged in
   if (!isAuthenticated()) {
     console.log(chalk.yellow("⚠ Not logged in. Some blueprints may not be accessible."));
