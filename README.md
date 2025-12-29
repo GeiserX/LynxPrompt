@@ -1,7 +1,7 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://lynxprompt.com/logos/brand/lynxp.png">
   <source media="(prefers-color-scheme: light)" srcset="https://lynxprompt.com/logos/brand/lynxp.png">
-  <img alt="LynxPrompt" src="https://lynxprompt.com/logos/brand/lynxp.png" width="400">
+  <img alt="LynxPrompt" src="https://lynxprompt.com/logos/brand/lynxp.png" width="150">
 </picture>
 
 # LynxPrompt
