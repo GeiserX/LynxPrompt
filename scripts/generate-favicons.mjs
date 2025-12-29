@@ -17,6 +17,39 @@ const sizes = [
   { file: 'apple-touch-icon.png', size: 180 },
 ];
 
+// Create ICO file from multiple PNG sizes
+// ICO format: header + directory entries + image data
+function createIco(images) {
+  // ICO header: 6 bytes
+  // - 2 bytes: reserved (0)
+  // - 2 bytes: type (1 = ICO)
+  // - 2 bytes: number of images
+  const header = Buffer.alloc(6);
+  header.writeUInt16LE(0, 0);      // Reserved
+  header.writeUInt16LE(1, 2);      // Type: 1 = ICO
+  header.writeUInt16LE(images.length, 4); // Number of images
+  
+  // Directory entries: 16 bytes each
+  const dirEntries = [];
+  let offset = 6 + (images.length * 16); // Start after header and directory
+  
+  for (const img of images) {
+    const entry = Buffer.alloc(16);
+    entry.writeUInt8(img.width >= 256 ? 0 : img.width, 0);  // Width (0 = 256)
+    entry.writeUInt8(img.height >= 256 ? 0 : img.height, 1); // Height (0 = 256)
+    entry.writeUInt8(0, 2);          // Color palette (0 = no palette)
+    entry.writeUInt8(0, 3);          // Reserved
+    entry.writeUInt16LE(1, 4);       // Color planes
+    entry.writeUInt16LE(32, 6);      // Bits per pixel
+    entry.writeUInt32LE(img.data.length, 8);  // Image size
+    entry.writeUInt32LE(offset, 12); // Offset to image data
+    dirEntries.push(entry);
+    offset += img.data.length;
+  }
+  
+  return Buffer.concat([header, ...dirEntries, ...images.map(i => i.data)]);
+}
+
 async function generateFavicons() {
   const input = join(publicDir, 'lynxprompt.png');
   
@@ -31,22 +64,36 @@ async function generateFavicons() {
     console.log(`✓ Generated ${file} (${size}x${size})`);
   }
   
-  // Generate proper ICO file (multi-resolution: 16, 32, 48)
-  // Since Sharp doesn't support ICO output, we'll use the 32px PNG as favicon.ico
-  // Modern browsers will use the PNG favicons from the manifest
-  await sharp(input)
-    .resize(32, 32, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
-    .png()
-    .toFile(join(publicDir, 'favicon.ico'));
-  console.log('✓ Generated favicon.ico (32x32 PNG format)');
+  // Generate proper multi-resolution ICO file (16, 32, 48px)
+  const icoSizes = [16, 32, 48];
+  const icoImages = await Promise.all(
+    icoSizes.map(async (size) => ({
+      width: size,
+      height: size,
+      data: await sharp(input)
+        .resize(size, size, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+        .png()
+        .toBuffer()
+    }))
+  );
   
-  // Generate SVG favicon
-  // Since we're working with a PNG source, we'll create a simple SVG wrapper
-  const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <image href="/lynxprompt.png" width="512" height="512"/>
+  const icoBuffer = createIco(icoImages);
+  await fs.writeFile(join(publicDir, 'favicon.ico'), icoBuffer);
+  console.log('✓ Generated favicon.ico (multi-resolution: 16, 32, 48px)');
+  
+  // Generate SVG favicon with embedded base64 PNG
+  // External image references don't work in SVG favicons for security reasons
+  const pngFor64 = await sharp(input)
+    .resize(64, 64, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .png()
+    .toBuffer();
+  const base64Png = pngFor64.toString('base64');
+  
+  const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <image href="data:image/png;base64,${base64Png}" width="64" height="64"/>
 </svg>`;
   await fs.writeFile(join(publicDir, 'favicon.svg'), svgContent);
-  console.log('✓ Generated favicon.svg');
+  console.log('✓ Generated favicon.svg (with embedded base64 image)');
   
   // Generate web app manifest
   const manifest = {
