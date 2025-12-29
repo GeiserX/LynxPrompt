@@ -67,15 +67,6 @@ const ALL_PLATFORMS = [
   { id: "goose", name: "Goose", file: ".goosehints", icon: "🪿", note: "Block AI agent" },
 ];
 
-// Quick output format selection (single choice)
-const OUTPUT_FORMATS = [
-  { title: "🌐 AGENTS.md (Universal)", value: "agents", description: "Works with Claude, Copilot, Aider, Devin & more", recommended: true },
-  { title: "⚡ Cursor", value: "cursor", description: ".cursor/rules/ native format" },
-  { title: "🧠 Claude Code", value: "claude", description: "CLAUDE.md format" },
-  { title: "🐙 GitHub Copilot", value: "copilot", description: ".github/copilot-instructions.md" },
-  { title: "🏄 Windsurf", value: "windsurf", description: ".windsurfrules configuration" },
-  { title: "📦 Multiple platforms...", value: "multiple", description: "Select from 16+ supported AI editors" },
-];
 
 // Languages
 const LANGUAGES = [
@@ -145,6 +136,48 @@ const LICENSES = [
   { id: "mpl-2.0", label: "MPL 2.0" },
   { id: "unlicense", label: "Unlicense" },
   { id: "none", label: "None / Proprietary" },
+];
+
+// CI/CD platforms
+const CICD_OPTIONS = [
+  { id: "github_actions", label: "GitHub Actions", icon: "🐙" },
+  { id: "gitlab_ci", label: "GitLab CI", icon: "🦊" },
+  { id: "jenkins", label: "Jenkins", icon: "🔧" },
+  { id: "circleci", label: "CircleCI", icon: "⚫" },
+  { id: "travis", label: "Travis CI", icon: "🔨" },
+  { id: "azure_devops", label: "Azure DevOps", icon: "☁️" },
+  { id: "bitbucket", label: "Bitbucket Pipelines", icon: "🪣" },
+  { id: "teamcity", label: "TeamCity", icon: "🏢" },
+  { id: "drone", label: "Drone", icon: "🚁" },
+  { id: "buildkite", label: "Buildkite", icon: "🧱" },
+];
+
+// Deployment targets
+const DEPLOYMENT_TARGETS = [
+  { id: "vercel", label: "Vercel", icon: "▲" },
+  { id: "netlify", label: "Netlify", icon: "🌐" },
+  { id: "aws", label: "AWS", icon: "☁️" },
+  { id: "gcp", label: "Google Cloud", icon: "🌈" },
+  { id: "azure", label: "Azure", icon: "🔷" },
+  { id: "docker", label: "Docker", icon: "🐳" },
+  { id: "kubernetes", label: "Kubernetes", icon: "☸️" },
+  { id: "heroku", label: "Heroku", icon: "🟣" },
+  { id: "digitalocean", label: "DigitalOcean", icon: "🔵" },
+  { id: "railway", label: "Railway", icon: "🚂" },
+  { id: "fly", label: "Fly.io", icon: "✈️" },
+  { id: "cloudflare", label: "Cloudflare", icon: "🔶" },
+];
+
+// Container registries
+const CONTAINER_REGISTRIES = [
+  { id: "dockerhub", label: "Docker Hub", icon: "🐳" },
+  { id: "ghcr", label: "GitHub Container Registry", icon: "🐙" },
+  { id: "gcr", label: "Google Container Registry", icon: "🌈" },
+  { id: "ecr", label: "AWS ECR", icon: "☁️" },
+  { id: "acr", label: "Azure Container Registry", icon: "🔷" },
+  { id: "quay", label: "Quay.io", icon: "🔴" },
+  { id: "gitlab", label: "GitLab Registry", icon: "🦊" },
+  { id: "custom", label: "Custom/Self-hosted", icon: "🏠" },
 ];
 
 // Common commands by category
@@ -291,6 +324,27 @@ const PROJECT_TYPES = [
   { id: "leisure", label: "Leisure", icon: "🎮", description: "Personal/hobby project" },
   { id: "opensource", label: "Open Source", icon: "🌍", description: "Community-driven project" },
   { id: "learning", label: "Learning", icon: "📚", description: "Educational/experimental" },
+];
+
+// Development environment (OS)
+const DEV_OS_OPTIONS = [
+  { id: "macos", label: "macOS", icon: "🍎" },
+  { id: "linux", label: "Linux", icon: "🐧" },
+  { id: "windows", label: "Windows", icon: "🪟" },
+  { id: "wsl", label: "WSL", icon: "🐧" },
+  { id: "remote", label: "Remote/SSH", icon: "☁️" },
+];
+
+// Architecture patterns
+const ARCHITECTURE_PATTERNS = [
+  { id: "monolith", label: "Monolith" },
+  { id: "microservices", label: "Microservices" },
+  { id: "serverless", label: "Serverless" },
+  { id: "mvc", label: "MVC" },
+  { id: "layered", label: "Layered/N-tier" },
+  { id: "event_driven", label: "Event-driven" },
+  { id: "modular", label: "Modular monolith" },
+  { id: "other", label: "Other" },
 ];
 
 // Check if user tier can access a step
@@ -591,43 +645,30 @@ async function runInteractiveWizard(
     platforms = options.format.split(",").map(f => f.trim());
     console.log(chalk.gray(`  Using format from flag: ${platforms.join(", ")}`));
   } else {
-    const formatResponse = await prompts({
-      type: "select",
-      name: "format",
-      message: chalk.white("Where will you use this?"),
-      choices: OUTPUT_FORMATS.map(f => ({
-        title: f.recommended 
-          ? `${f.title} ${chalk.green.bold("★ recommended")}`
-          : f.title,
-        value: f.value,
-        description: chalk.gray(f.description),
+    // Multi-select by default - user can select one or more platforms
+    console.log(chalk.gray("  Select the AI editors you want to generate config for:"));
+    console.log(chalk.gray("  (AGENTS.md is recommended - works with most AI tools)"));
+    console.log();
+    
+    const platformResponse = await prompts({
+      type: "multiselect",
+      name: "platforms",
+      message: chalk.white("Select AI editors (16 supported):"),
+      choices: ALL_PLATFORMS.map(p => ({ 
+        title: p.id === "agents" 
+          ? `${p.icon} ${p.name} ${chalk.green.bold("★ recommended")}`
+          : `${p.icon} ${p.name}`,
+        value: p.id,
+        description: chalk.gray(p.note),
+        selected: p.id === "agents", // Pre-select AGENTS.md
       })),
-      initial: 0,
-      hint: chalk.gray("↑↓ navigate • enter select"),
+      hint: chalk.gray("space select • a toggle all • enter confirm"),
+      min: 1,
+      instructions: false,
     }, promptConfig);
-
-    if (formatResponse.format === "multiple") {
-      console.log();
-      console.log(chalk.gray("  Select the AI editors you want to generate config for:"));
-      console.log();
-      const platformResponse = await prompts({
-        type: "multiselect",
-        name: "platforms",
-        message: chalk.white("Select AI editors (16 supported):"),
-        choices: ALL_PLATFORMS.map(p => ({ 
-          title: `${p.icon} ${p.name}`,
-          value: p.id,
-          description: chalk.gray(p.note),
-        })),
-        hint: chalk.gray("space select • a toggle all • enter confirm"),
-        min: 1,
-        instructions: false,
-      }, promptConfig);
-      platforms = platformResponse.platforms || ["agents"];
-      console.log(chalk.green(`  ✓ Selected ${platforms.length} platform${platforms.length === 1 ? "" : "s"}`));
-    } else {
-      platforms = [formatResponse.format || "agents"];
-    }
+    
+    platforms = platformResponse.platforms || ["agents"];
+    console.log(chalk.green(`  ✓ Selected ${platforms.length} platform${platforms.length === 1 ? "" : "s"}`));
   }
   answers.platforms = platforms;
 
@@ -660,14 +701,50 @@ async function runInteractiveWizard(
     type: "select",
     name: "projectType",
     message: chalk.white("Project type:"),
-    choices: PROJECT_TYPES.map(t => ({
-      title: `${t.icon} ${t.label}`,
-      value: t.id,
-      description: chalk.gray(t.description),
-    })),
+    choices: [
+      { title: chalk.gray("⏭ Skip"), value: "" },
+      ...PROJECT_TYPES.map(t => ({
+        title: `${t.icon} ${t.label}`,
+        value: t.id,
+        description: chalk.gray(t.description),
+      })),
+    ],
     initial: 0,
   }, promptConfig);
-  answers.projectType = typeResponse.projectType || "work";
+  answers.projectType = typeResponse.projectType || "";
+
+  // Development environment
+  const devOsResponse = await prompts({
+    type: "select",
+    name: "devOS",
+    message: chalk.white("Development environment:"),
+    choices: [
+      { title: chalk.gray("⏭ Skip"), value: "" },
+      ...DEV_OS_OPTIONS.map(o => ({
+        title: `${o.icon} ${o.label}`,
+        value: o.id,
+      })),
+    ],
+    initial: 0,
+    hint: chalk.gray("Helps generate compatible commands"),
+  }, promptConfig);
+  answers.devOS = devOsResponse.devOS || "";
+
+  // Architecture pattern
+  const archResponse = await prompts({
+    type: "select",
+    name: "architecture",
+    message: chalk.white("Architecture pattern:"),
+    choices: [
+      { title: chalk.gray("⏭ Skip"), value: "" },
+      ...ARCHITECTURE_PATTERNS.map(a => ({
+        title: a.label,
+        value: a.id,
+      })),
+    ],
+    initial: 0,
+  }, promptConfig);
+  answers.architecture = archResponse.architecture || "";
 
   // ═══════════════════════════════════════════════════════════════
   // STEP 3: Tech Stack (basic - all users)
@@ -675,11 +752,26 @@ async function runInteractiveWizard(
   const techStep = getCurrentStep("tech")!;
   showStep(currentStepNum, techStep, userTier);
 
+  // Let AI decide option
+  const letAiResponse = await prompts({
+    type: "toggle",
+    name: "letAiDecide",
+    message: chalk.white("Let AI help choose additional technologies?"),
+    initial: false,
+    active: "Yes",
+    inactive: "No",
+  }, promptConfig);
+  answers.letAiDecide = letAiResponse.letAiDecide || false;
+
+  console.log();
+  console.log(chalk.gray("  You can also select specific technologies below:"));
+  console.log();
+
   const allStackOptions = [...LANGUAGES, ...FRAMEWORKS, ...DATABASES];
-  const detectedStackSet = new Set(detected?.stack || []);
   
-  if (detectedStackSet.size > 0) {
-    console.log(chalk.gray(`  Auto-selected: ${detected?.stack?.join(", ")}`));
+  // Show detected stack as hint but don't pre-select
+  if (detected?.stack && detected.stack.length > 0) {
+    console.log(chalk.gray(`  Detected in project: ${detected.stack.join(", ")}`));
     console.log();
   }
 
@@ -690,7 +782,7 @@ async function runInteractiveWizard(
     choices: allStackOptions.map(s => ({
       title: s.title,
       value: s.value,
-      selected: detectedStackSet.has(s.value),
+      // No pre-selection - user must explicitly choose
     })),
     hint: chalk.gray("space select • a toggle all • enter confirm"),
     instructions: false,
@@ -707,13 +799,16 @@ async function runInteractiveWizard(
     type: "select",
     name: "repoHost",
     message: chalk.white("Repository host:"),
-    choices: REPO_HOSTS.map(h => ({
-      title: `${h.icon} ${h.label}`,
-      value: h.id,
-    })),
+    choices: [
+      { title: chalk.gray("⏭ Skip"), value: "" },
+      ...REPO_HOSTS.map(h => ({
+        title: `${h.icon} ${h.label}`,
+        value: h.id,
+      })),
+    ],
     initial: 0,
   }, promptConfig);
-  answers.repoHost = repoHostResponse.repoHost || "github";
+  answers.repoHost = repoHostResponse.repoHost || "";
 
   const visibilityResponse = await prompts({
     type: "toggle",
@@ -729,23 +824,126 @@ async function runInteractiveWizard(
     type: "select",
     name: "license",
     message: chalk.white("License:"),
-    choices: LICENSES.map(l => ({
-      title: l.label,
-      value: l.id,
-    })),
+    choices: [
+      { title: chalk.gray("⏭ Skip"), value: "" },
+      ...LICENSES.map(l => ({
+        title: l.label,
+        value: l.id,
+      })),
+    ],
     initial: 0,
   }, promptConfig);
-  answers.license = licenseResponse.license || "mit";
+  answers.license = licenseResponse.license || "";
 
   const conventionalResponse = await prompts({
     type: "toggle",
     name: "conventionalCommits",
     message: chalk.white("Use Conventional Commits?"),
-    initial: true,
+    initial: false,
     active: "Yes",
     inactive: "No",
   }, promptConfig);
-  answers.conventionalCommits = conventionalResponse.conventionalCommits ?? true;
+  answers.conventionalCommits = conventionalResponse.conventionalCommits || false;
+
+  const semverResponse = await prompts({
+    type: "toggle",
+    name: "semver",
+    message: chalk.white("Use Semantic Versioning?"),
+    initial: false,
+    active: "Yes",
+    inactive: "No",
+  }, promptConfig);
+  answers.semver = semverResponse.semver || false;
+
+  // Dependabot (GitHub/GitLab only)
+  if (answers.repoHost === "github" || answers.repoHost === "gitlab") {
+    const dependabotResponse = await prompts({
+      type: "toggle",
+      name: "dependabot",
+      message: chalk.white("Enable Dependabot/dependency updates?"),
+      initial: false,
+      active: "Yes",
+      inactive: "No",
+    }, promptConfig);
+    answers.dependabot = dependabotResponse.dependabot || false;
+  }
+
+  // CI/CD Platform
+  const cicdResponse = await prompts({
+    type: "select",
+    name: "cicd",
+    message: chalk.white("CI/CD Platform:"),
+    choices: [
+      { title: chalk.gray("⏭ Skip"), value: "" },
+      ...CICD_OPTIONS.map(c => ({
+        title: `${c.icon} ${c.label}`,
+        value: c.id,
+      })),
+    ],
+    initial: 0,
+  }, promptConfig);
+  answers.cicd = cicdResponse.cicd || "";
+
+  // Deployment targets
+  const deployResponse = await prompts({
+    type: "multiselect",
+    name: "deploymentTargets",
+    message: chalk.white("Deployment targets:"),
+    choices: DEPLOYMENT_TARGETS.map(t => ({
+      title: `${t.icon} ${t.label}`,
+      value: t.id,
+    })),
+    hint: chalk.gray("space select • enter to skip/confirm"),
+    instructions: false,
+  }, promptConfig);
+  answers.deploymentTargets = deployResponse.deploymentTargets || [];
+
+  // Container build
+  const containerResponse = await prompts({
+    type: "toggle",
+    name: "buildContainer",
+    message: chalk.white("Build container images (Docker)?"),
+    initial: false,
+    active: "Yes",
+    inactive: "No",
+  }, promptConfig);
+  answers.buildContainer = containerResponse.buildContainer || false;
+
+  // Container registry (if building containers)
+  if (answers.buildContainer) {
+    const registryResponse = await prompts({
+      type: "select",
+      name: "containerRegistry",
+      message: chalk.white("Container registry:"),
+      choices: [
+        { title: chalk.gray("⏭ Skip"), value: "" },
+        ...CONTAINER_REGISTRIES.map(r => ({
+          title: `${r.icon} ${r.label}`,
+          value: r.id,
+        })),
+      ],
+      initial: 0,
+    }, promptConfig);
+    answers.containerRegistry = registryResponse.containerRegistry || "";
+  }
+
+  // Example repository URL
+  const exampleRepoResponse = await prompts({
+    type: "text",
+    name: "exampleRepoUrl",
+    message: chalk.white("Example repository URL (optional):"),
+    hint: chalk.gray("A similar public repo for AI to learn from"),
+  }, promptConfig);
+  answers.exampleRepoUrl = exampleRepoResponse.exampleRepoUrl || "";
+
+  // External documentation URL
+  const docsUrlResponse = await prompts({
+    type: "text",
+    name: "documentationUrl",
+    message: chalk.white("External documentation URL (optional):"),
+    hint: chalk.gray("Confluence, Notion, GitBook, etc."),
+  }, promptConfig);
+  answers.documentationUrl = docsUrlResponse.documentationUrl || "";
 
   // ═══════════════════════════════════════════════════════════════
   // STEP 5: Commands (intermediate - Pro+)
@@ -845,26 +1043,40 @@ async function runInteractiveWizard(
       type: "select",
       name: "naming",
       message: chalk.white("Naming convention:"),
-      choices: NAMING_CONVENTIONS.map(n => ({
-        title: n.label,
-        value: n.id,
-        description: chalk.gray(n.desc),
-      })),
+      choices: [
+        { title: chalk.gray("⏭ Skip"), value: "" },
+        ...NAMING_CONVENTIONS.map(n => ({
+          title: n.label,
+          value: n.id,
+          description: chalk.gray(n.desc),
+        })),
+      ],
       initial: 0,
     }, promptConfig);
-    answers.namingConvention = namingResponse.naming || "language_default";
+    answers.namingConvention = namingResponse.naming || "";
 
     const errorResponse = await prompts({
       type: "select",
       name: "errorHandling",
       message: chalk.white("Error handling pattern:"),
-      choices: ERROR_PATTERNS.map(e => ({
-        title: e.label,
-        value: e.id,
-      })),
+      choices: [
+        { title: chalk.gray("⏭ Skip"), value: "" },
+        ...ERROR_PATTERNS.map(e => ({
+          title: e.label,
+          value: e.id,
+        })),
+      ],
       initial: 0,
     }, promptConfig);
-    answers.errorHandling = errorResponse.errorHandling || "try_catch";
+    answers.errorHandling = errorResponse.errorHandling || "";
+
+    const loggingResponse = await prompts({
+      type: "text",
+      name: "loggingConventions",
+      message: chalk.white("Logging conventions (optional):"),
+      hint: chalk.gray("e.g., use structured logging, JSON format, specific lib"),
+    }, promptConfig);
+    answers.loggingConventions = loggingResponse.loggingConventions || "";
 
     const styleNotesResponse = await prompts({
       type: "text",
@@ -887,12 +1099,12 @@ async function runInteractiveWizard(
     message: chalk.white("AI behavior rules:"),
     choices: AI_BEHAVIOR_RULES.map(r => ({
       title: r.recommended 
-        ? `${r.label} ${chalk.green("★")}`
+        ? `${r.label} ${chalk.green("★ recommended")}`
         : r.label,
       value: r.id,
-      selected: r.recommended,
+      // No pre-selection - user must explicitly choose
     })),
-    hint: chalk.gray("space select • enter confirm"),
+    hint: chalk.gray("space select • enter to skip/confirm"),
     instructions: false,
   }, promptConfig);
   answers.aiBehavior = aiBehaviorResponse.aiBehavior || [];
@@ -904,9 +1116,9 @@ async function runInteractiveWizard(
     choices: IMPORTANT_FILES.map(f => ({
       title: `${f.icon} ${f.label}`,
       value: f.id,
-      selected: f.id === "readme" || f.id === "package",
+      // No pre-selection - user must explicitly choose
     })),
-    hint: chalk.gray("space select • enter confirm"),
+    hint: chalk.gray("space select • enter to skip/confirm"),
     instructions: false,
   }, promptConfig);
   answers.importantFiles = importantFilesResponse.importantFiles || [];
@@ -921,6 +1133,16 @@ async function runInteractiveWizard(
   }, promptConfig);
   answers.selfImprove = selfImproveResponse.selfImprove || false;
 
+  const includePersonalResponse = await prompts({
+    type: "toggle",
+    name: "includePersonalData",
+    message: chalk.white("Include personal data (name/email for commits)?"),
+    initial: false,
+    active: "Yes",
+    inactive: "No",
+  }, promptConfig);
+  answers.includePersonalData = includePersonalResponse.includePersonalData || false;
+
   // ═══════════════════════════════════════════════════════════════
   // STEP 8: Boundaries (advanced - Max+)
   // ═══════════════════════════════════════════════════════════════
@@ -932,14 +1154,17 @@ async function runInteractiveWizard(
       type: "select",
       name: "boundaryPreset",
       message: chalk.white("Boundary preset:"),
-      choices: BOUNDARY_PRESETS.map(b => ({
-        title: b.title,
-        value: b.value,
-        description: chalk.gray(b.description),
-      })),
+      choices: [
+        { title: chalk.gray("⏭ Skip"), value: "" },
+        ...BOUNDARY_PRESETS.map(b => ({
+          title: b.title,
+          value: b.value,
+          description: chalk.gray(b.description),
+        })),
+      ],
       initial: 0,
     }, promptConfig);
-    answers.boundaries = presetResponse.boundaryPreset || "standard";
+    answers.boundaries = presetResponse.boundaryPreset || "";
 
     const selectedPreset = BOUNDARY_PRESETS.find(b => b.value === answers.boundaries);
     if (selectedPreset) {
@@ -1067,34 +1292,59 @@ async function runInteractiveWizard(
     console.log(chalk.gray("  Generate additional project files:"));
     console.log();
 
+    // Static file options with metadata
+    const STATIC_FILE_OPTIONS = [
+      { title: "📝 .editorconfig", value: "editorconfig", desc: "Consistent code formatting", file: ".editorconfig" },
+      { title: "🤝 CONTRIBUTING.md", value: "contributing", desc: "Contributor guidelines", file: "CONTRIBUTING.md" },
+      { title: "📜 CODE_OF_CONDUCT.md", value: "codeOfConduct", desc: "Community standards", file: "CODE_OF_CONDUCT.md" },
+      { title: "🔒 SECURITY.md", value: "security", desc: "Vulnerability reporting", file: "SECURITY.md" },
+      { title: "🗺️  ROADMAP.md", value: "roadmap", desc: "Project roadmap", file: "ROADMAP.md" },
+      { title: "📋 .gitignore", value: "gitignore", desc: "Git ignore patterns", file: ".gitignore" },
+      { title: "💰 FUNDING.yml", value: "funding", desc: "GitHub Sponsors config", file: ".github/FUNDING.yml" },
+      { title: "📄 LICENSE", value: "license", desc: "License file", file: "LICENSE" },
+      { title: "📖 README.md", value: "readme", desc: "Project readme", file: "README.md" },
+      { title: "🏗️  ARCHITECTURE.md", value: "architecture", desc: "Architecture docs", file: "ARCHITECTURE.md" },
+      { title: "📝 CHANGELOG.md", value: "changelog", desc: "Version history", file: "CHANGELOG.md" },
+    ];
+
     const staticFilesResponse = await prompts({
       type: "multiselect",
       name: "staticFiles",
       message: chalk.white("Include static files:"),
-      choices: [
-        { title: "📝 .editorconfig", value: "editorconfig", description: chalk.gray("Consistent code formatting") },
-        { title: "🤝 CONTRIBUTING.md", value: "contributing", description: chalk.gray("Contributor guidelines") },
-        { title: "📜 CODE_OF_CONDUCT.md", value: "codeOfConduct", description: chalk.gray("Community standards") },
-        { title: "🔒 SECURITY.md", value: "security", description: chalk.gray("Vulnerability reporting") },
-        { title: "🗺️  ROADMAP.md", value: "roadmap", description: chalk.gray("Project roadmap") },
-        { title: "📋 .gitignore", value: "gitignore", description: chalk.gray("Git ignore patterns"), selected: true },
-      ],
-      hint: chalk.gray("space select • enter confirm"),
+      choices: STATIC_FILE_OPTIONS.map(f => ({
+        title: f.title,
+        value: f.value,
+        description: chalk.gray(f.desc),
+      })),
+      hint: chalk.gray("space select • enter to skip/confirm"),
       instructions: false,
     }, promptConfig);
     answers.staticFiles = staticFilesResponse.staticFiles || [];
 
-    // If GitHub + public, offer FUNDING.yml
-    if (answers.repoHost === "github" && answers.isPublic) {
-      const fundingResponse = await prompts({
-        type: "toggle",
-        name: "funding",
-        message: chalk.white("Generate FUNDING.yml for GitHub Sponsors?"),
-        initial: false,
-        active: "Yes",
-        inactive: "No",
-      }, promptConfig);
-      answers.includeFunding = fundingResponse.funding || false;
+    // For each selected file, prompt for content
+    if ((answers.staticFiles as string[])?.length > 0) {
+      console.log();
+      console.log(chalk.cyan("  📝 Customize file contents (press Enter to use defaults):"));
+      console.log(chalk.gray("  You can paste content or leave empty for auto-generated defaults."));
+      console.log();
+
+      answers.staticFileContents = {};
+      
+      for (const fileKey of (answers.staticFiles as string[])) {
+        const fileInfo = STATIC_FILE_OPTIONS.find(f => f.value === fileKey);
+        if (!fileInfo) continue;
+
+        const contentResponse = await prompts({
+          type: "text",
+          name: "content",
+          message: chalk.white(`Content for ${fileInfo.file}:`),
+          hint: chalk.gray("paste content or Enter to skip"),
+        }, promptConfig);
+
+        if (contentResponse.content && contentResponse.content.trim()) {
+          (answers.staticFileContents as Record<string, string>)[fileKey] = contentResponse.content;
+        }
+      }
     }
   }
 
@@ -1110,6 +1360,7 @@ async function runInteractiveWizard(
     name: "persona",
     message: chalk.white("AI assistant persona:"),
     choices: [
+      { title: chalk.gray("⏭ Skip"), value: "" },
       { title: "🧑‍💻 Full-Stack Developer", value: "fullstack", description: chalk.gray("Complete application development") },
       { title: "⚙️  Backend Developer", value: "backend", description: chalk.gray("APIs, databases, services") },
       { title: "🎨 Frontend Developer", value: "frontend", description: chalk.gray("UI, components, styling") },
@@ -1128,9 +1379,9 @@ async function runInteractiveWizard(
       message: chalk.white("Describe the custom persona:"),
       hint: chalk.gray("e.g., 'ML engineer focused on PyTorch'"),
     }, promptConfig);
-    answers.persona = customPersona.value || "fullstack";
+    answers.persona = customPersona.value || "";
   } else {
-    answers.persona = personaResponse.persona || "fullstack";
+    answers.persona = personaResponse.persona || "";
   }
 
   // Anything else
@@ -1159,6 +1410,8 @@ async function runInteractiveWizard(
     commands: typeof answers.commands === "object" ? answers.commands as Record<string, string> : (detected?.commands || {}),
     // Extended config for Pro/Max users
     projectType: answers.projectType as string,
+    devOS: answers.devOS as string,
+    architecture: answers.architecture as string,
     repoHost: answers.repoHost as string,
     isPublic: answers.isPublic as boolean,
     license: answers.license as string,

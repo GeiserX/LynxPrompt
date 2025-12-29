@@ -8,16 +8,29 @@ export interface GenerateOptions {
   commands: Record<string, string | string[]>;
   // Extended options for Pro/Max users
   projectType?: string;
+  devOS?: string;
+  architecture?: string;
   repoHost?: string;
   isPublic?: boolean;
   license?: string;
   conventionalCommits?: boolean;
+  semver?: boolean;
+  dependabot?: boolean;
+  cicd?: string;
+  deploymentTargets?: string[];
+  buildContainer?: boolean;
+  containerRegistry?: string;
+  exampleRepoUrl?: string;
+  documentationUrl?: string;
+  letAiDecide?: boolean;
+  loggingConventions?: string;
   namingConvention?: string;
   errorHandling?: string;
   styleNotes?: string;
   aiBehavior?: string[];
   importantFiles?: string[];
   selfImprove?: boolean;
+  includePersonalData?: boolean;
   boundaryNever?: string[];
   boundaryAsk?: string[];
   testLevels?: string[];
@@ -25,6 +38,7 @@ export interface GenerateOptions {
   coverageTarget?: number;
   testNotes?: string;
   staticFiles?: string[];
+  staticFileContents?: Record<string, string>;
   includeFunding?: boolean;
   extraNotes?: string;
 }
@@ -198,14 +212,291 @@ const TEST_LEVEL_DESCRIPTIONS: Record<string, string> = {
   e2e: "End-to-end tests for full user flows",
 };
 
+// Static file templates with defaults
+const STATIC_FILE_TEMPLATES: Record<string, (options: GenerateOptions) => string> = {
+  editorconfig: () => `# EditorConfig is awesome: https://EditorConfig.org
+
+root = true
+
+[*]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.md]
+trim_trailing_whitespace = false
+
+[Makefile]
+indent_style = tab
+`,
+  contributing: (opts) => `# Contributing to ${opts.name}
+
+Thank you for your interest in contributing!
+
+## How to Contribute
+
+1. Fork the repository
+2. Create a feature branch (\`git checkout -b feature/amazing-feature\`)
+3. Commit your changes${opts.conventionalCommits ? " using Conventional Commits format" : ""}
+4. Push to the branch (\`git push origin feature/amazing-feature\`)
+5. Open a Pull Request
+
+## Development Setup
+
+\`\`\`bash
+# Clone your fork
+git clone https://github.com/YOUR_USERNAME/${opts.name}.git
+cd ${opts.name}
+
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+\`\`\`
+
+## Code Style
+
+Please follow the existing code style and conventions in this project.
+`,
+  codeOfConduct: (opts) => `# Code of Conduct
+
+## Our Pledge
+
+We pledge to make participation in the ${opts.name} project a harassment-free experience for everyone.
+
+## Our Standards
+
+Examples of behavior that contributes to a positive environment:
+- Using welcoming and inclusive language
+- Being respectful of differing viewpoints
+- Gracefully accepting constructive criticism
+- Focusing on what is best for the community
+
+## Enforcement
+
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the project team.
+
+## Attribution
+
+This Code of Conduct is adapted from the Contributor Covenant, version 2.1.
+`,
+  security: (opts) => `# Security Policy
+
+## Supported Versions
+
+| Version | Supported          |
+| ------- | ------------------ |
+| latest  | :white_check_mark: |
+
+## Reporting a Vulnerability
+
+If you discover a security vulnerability in ${opts.name}, please report it by emailing the maintainers.
+
+**Please do not open a public issue for security vulnerabilities.**
+
+We will acknowledge receipt within 48 hours and provide a detailed response within 7 days.
+`,
+  roadmap: (opts) => `# Roadmap
+
+## ${opts.name} Development Roadmap
+
+### Current Version
+
+- Core functionality
+
+### Planned Features
+
+- [ ] Feature 1
+- [ ] Feature 2
+- [ ] Feature 3
+
+### Long-term Goals
+
+- Goal 1
+- Goal 2
+
+---
+*This roadmap is subject to change based on community feedback and priorities.*
+`,
+  gitignore: (opts) => {
+    const patterns = ["# Dependencies", "node_modules/", ".pnpm-store/", ""];
+    if (opts.stack.includes("python")) {
+      patterns.push("# Python", "__pycache__/", "*.py[cod]", ".venv/", "venv/", "");
+    }
+    patterns.push("# Environment", ".env", ".env.local", ".env*.local", "");
+    patterns.push("# Build outputs", "dist/", "build/", ".next/", "out/", "");
+    patterns.push("# IDE", ".idea/", ".vscode/", "*.swp", "*.swo", "");
+    patterns.push("# OS", ".DS_Store", "Thumbs.db", "");
+    patterns.push("# Logs", "*.log", "npm-debug.log*", "");
+    return patterns.join("\n");
+  },
+  funding: () => `# These are supported funding model platforms
+
+github: [] # Replace with your GitHub username
+patreon: # Replace with your Patreon username
+open_collective: # Replace with your Open Collective username
+ko_fi: # Replace with your Ko-fi username
+custom: [] # Add custom funding links
+`,
+  license: (opts) => {
+    if (opts.license === "mit") {
+      return `MIT License
+
+Copyright (c) ${new Date().getFullYear()} ${opts.name}
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+`;
+    }
+    return `# License
+
+This project is licensed under the ${opts.license?.toUpperCase() || "Proprietary"} license.
+`;
+  },
+  readme: (opts) => {
+    const stackBadges = opts.stack.slice(0, 5).map(s => STACK_NAMES[s] || s).join(" • ");
+    return `# ${opts.name}
+
+${opts.description || "A project generated with LynxPrompt."}
+
+${stackBadges ? `## Tech Stack\n\n${stackBadges}\n` : ""}
+## Getting Started
+
+\`\`\`bash
+# Clone the repository
+git clone <repository-url>
+cd ${opts.name}
+
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+\`\`\`
+
+## License
+
+${opts.license && opts.license !== "none" ? `This project is licensed under the ${opts.license.toUpperCase()} License.` : "See LICENSE file for details."}
+`;
+  },
+  architecture: (opts) => `# Architecture
+
+## ${opts.name} Architecture Overview
+
+${opts.architecture ? `### Pattern: ${opts.architecture}\n` : ""}
+### Directory Structure
+
+\`\`\`
+${opts.name}/
+├── src/           # Source code
+├── tests/         # Test files
+├── docs/          # Documentation
+└── ...
+\`\`\`
+
+### Key Components
+
+1. **Component A** - Description
+2. **Component B** - Description
+3. **Component C** - Description
+
+### Data Flow
+
+Describe how data flows through the application.
+
+---
+*Generated by LynxPrompt*
+`,
+  changelog: (opts) => `# Changelog
+
+All notable changes to ${opts.name} will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+- Initial project setup
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+`,
+};
+
+// File paths for static files
+const STATIC_FILE_PATHS: Record<string, string> = {
+  editorconfig: ".editorconfig",
+  contributing: "CONTRIBUTING.md",
+  codeOfConduct: "CODE_OF_CONDUCT.md",
+  security: "SECURITY.md",
+  roadmap: "ROADMAP.md",
+  gitignore: ".gitignore",
+  funding: ".github/FUNDING.yml",
+  license: "LICENSE",
+  readme: "README.md",
+  architecture: "ARCHITECTURE.md",
+  changelog: "CHANGELOG.md",
+};
+
 export function generateConfig(options: GenerateOptions): Record<string, string> {
   const files: Record<string, string> = {};
 
+  // Generate AI IDE config files
   for (const platform of options.platforms) {
     const filename = PLATFORM_FILES[platform];
     if (filename) {
       files[filename] = generateFileContent(options, platform);
     }
+  }
+
+  // Generate static files
+  if (options.staticFiles && options.staticFiles.length > 0) {
+    for (const fileKey of options.staticFiles) {
+      const filePath = STATIC_FILE_PATHS[fileKey];
+      if (!filePath) continue;
+
+      // Use custom content if provided, otherwise generate default
+      if (options.staticFileContents?.[fileKey]) {
+        files[filePath] = options.staticFileContents[fileKey];
+      } else {
+        const templateFn = STATIC_FILE_TEMPLATES[fileKey];
+        if (templateFn) {
+          files[filePath] = templateFn(options);
+        }
+      }
+    }
+  }
+
+  // Legacy: funding as separate option
+  if (options.includeFunding && !options.staticFiles?.includes("funding")) {
+    files[".github/FUNDING.yml"] = STATIC_FILE_TEMPLATES.funding(options);
   }
 
   return files;
@@ -296,10 +587,20 @@ function generateFileContent(options: GenerateOptions, platform: string): string
     sections.push("");
   }
 
-  // Repository info
-  if (options.repoHost || options.license || options.conventionalCommits) {
+  // Let AI Decide
+  if (options.letAiDecide) {
     if (isMarkdown || isMdc) {
-      sections.push("## Repository");
+      sections.push("> **AI Assistance:** Let AI analyze the codebase and suggest additional technologies and approaches as needed.");
+      sections.push("");
+    }
+  }
+
+  // Repository info
+  if (options.repoHost || options.license || options.conventionalCommits || options.semver || 
+      options.cicd || options.deploymentTargets?.length || options.buildContainer ||
+      options.exampleRepoUrl || options.documentationUrl) {
+    if (isMarkdown || isMdc) {
+      sections.push("## Repository & Infrastructure");
       sections.push("");
       if (options.repoHost) {
         sections.push(`- **Host:** ${options.repoHost.charAt(0).toUpperCase() + options.repoHost.slice(1)}`);
@@ -309,6 +610,68 @@ function generateFileContent(options: GenerateOptions, platform: string): string
       }
       if (options.conventionalCommits) {
         sections.push("- **Commits:** Follow [Conventional Commits](https://conventionalcommits.org) format");
+      }
+      if (options.semver) {
+        sections.push("- **Versioning:** Follow [Semantic Versioning](https://semver.org) (semver)");
+      }
+      if (options.dependabot) {
+        sections.push("- **Dependencies:** Dependabot/automated dependency updates enabled");
+      }
+      if (options.cicd) {
+        const cicdNames: Record<string, string> = {
+          github_actions: "GitHub Actions",
+          gitlab_ci: "GitLab CI",
+          jenkins: "Jenkins",
+          circleci: "CircleCI",
+          travis: "Travis CI",
+          azure_devops: "Azure DevOps",
+          bitbucket: "Bitbucket Pipelines",
+          teamcity: "TeamCity",
+          drone: "Drone",
+          buildkite: "Buildkite",
+        };
+        sections.push(`- **CI/CD:** ${cicdNames[options.cicd] || options.cicd}`);
+      }
+      if (options.deploymentTargets && options.deploymentTargets.length > 0) {
+        const targetNames: Record<string, string> = {
+          vercel: "Vercel",
+          netlify: "Netlify",
+          aws: "AWS",
+          gcp: "Google Cloud",
+          azure: "Azure",
+          docker: "Docker",
+          kubernetes: "Kubernetes",
+          heroku: "Heroku",
+          digitalocean: "DigitalOcean",
+          railway: "Railway",
+          fly: "Fly.io",
+          cloudflare: "Cloudflare",
+        };
+        const targets = options.deploymentTargets.map(t => targetNames[t] || t).join(", ");
+        sections.push(`- **Deployment:** ${targets}`);
+      }
+      if (options.buildContainer) {
+        let containerInfo = "Docker container builds enabled";
+        if (options.containerRegistry) {
+          const registryNames: Record<string, string> = {
+            dockerhub: "Docker Hub",
+            ghcr: "GitHub Container Registry",
+            gcr: "Google Container Registry",
+            ecr: "AWS ECR",
+            acr: "Azure Container Registry",
+            quay: "Quay.io",
+            gitlab: "GitLab Registry",
+            custom: "Custom registry",
+          };
+          containerInfo += ` → ${registryNames[options.containerRegistry] || options.containerRegistry}`;
+        }
+        sections.push(`- **Containers:** ${containerInfo}`);
+      }
+      if (options.exampleRepoUrl) {
+        sections.push(`- **Example Repo:** ${options.exampleRepoUrl} (use as reference for style/structure)`);
+      }
+      if (options.documentationUrl) {
+        sections.push(`- **Documentation:** ${options.documentationUrl}`);
       }
       sections.push("");
     }
@@ -387,6 +750,16 @@ function generateFileContent(options: GenerateOptions, platform: string): string
       sections.push("## Self-Improving Blueprint");
       sections.push("");
       sections.push("> **Auto-update enabled:** As you work on this project, track patterns and update this configuration file to better reflect the project's conventions and preferences.");
+      sections.push("");
+    }
+  }
+
+  // Personal data for commits
+  if (options.includePersonalData) {
+    if (isMarkdown || isMdc) {
+      sections.push("## Commit Identity");
+      sections.push("");
+      sections.push("> **Personal data enabled:** Use my name and email for git commits when making changes.");
       sections.push("");
     }
   }
@@ -472,6 +845,11 @@ function generateFileContent(options: GenerateOptions, platform: string): string
       if (errorStyles[options.errorHandling]) {
         sections.push(`- **Errors:** ${errorStyles[options.errorHandling]}`);
       }
+    }
+
+    // Logging conventions
+    if (options.loggingConventions) {
+      sections.push(`- **Logging:** ${options.loggingConventions}`);
     }
     
     // Style notes
