@@ -1457,6 +1457,7 @@ This enables:
 - **Blueprint analytics dashboard**: Detailed stats for authors (downloads over time, geography, referrers)
 
 ### Medium Priority
+- **Blueprint upload timestamp display**: Show when a blueprint was uploaded on the public blueprint page (e.g., `/blueprints/usr_xxx`). Display date and time for users to see how recent the content is.
 - VS Code extension to sync templates
 - GitHub App for automatic config updates
 - Template marketplace revenue sharing analytics

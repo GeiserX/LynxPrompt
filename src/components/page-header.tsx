@@ -13,6 +13,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
+  { href: "/wizard", label: "Wizard" },
   { href: "/pricing", label: "Pricing" },
   { href: "/blueprints", label: "Blueprints" },
   { href: "/docs", label: "Docs" },
@@ -69,7 +70,7 @@ export function PageHeader({
             <Link
               key={item.href}
               href={item.href}
-              className="hidden text-sm hover:underline sm:inline"
+              className="hidden text-sm hover:underline lg:inline"
             >
               {item.label}
             </Link>
@@ -79,17 +80,19 @@ export function PageHeader({
             href="https://github.com/GeiserX/LynxPrompt"
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground sm:inline-flex"
+            className="hidden rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground lg:inline-flex"
             aria-label="View on GitHub"
           >
             <Github className="h-5 w-5" />
           </Link>
-          <ThemeToggle />
+          <div className="hidden lg:block">
+            <ThemeToggle />
+          </div>
           <UserMenu />
           {/* Mobile menu button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground sm:hidden"
+            className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground lg:hidden"
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -99,7 +102,7 @@ export function PageHeader({
 
       {/* Mobile navigation menu */}
       {mobileMenuOpen && (
-        <div className="border-t bg-background sm:hidden">
+        <div className="border-t bg-background lg:hidden">
           <nav className="container mx-auto flex flex-col px-4 py-3">
             {NAV_ITEMS.map((item) => (
               <Link
@@ -125,6 +128,10 @@ export function PageHeader({
               <Github className="h-4 w-4" />
               GitHub
             </Link>
+            <div className="flex items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground">
+              <span>Theme</span>
+              <ThemeToggle />
+            </div>
           </nav>
         </div>
       )}

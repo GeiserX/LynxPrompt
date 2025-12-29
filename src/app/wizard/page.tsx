@@ -694,6 +694,7 @@ type CodeStyleConfig = {
   errorHandling: string;
   errorHandlingOther: string;
   loggingConventions: string;
+  loggingConventionsOther: string;
   notes: string;
   savePreferences: boolean;
 };
@@ -825,6 +826,9 @@ function WizardPageContent() {
   const [isLoadingDraft, setIsLoadingDraft] = useState(false);
   const [isDeletingDraft, setIsDeletingDraft] = useState<string | null>(null);
   const [draftLoaded, setDraftLoaded] = useState(false);
+  const [showDeleteDraftModal, setShowDeleteDraftModal] = useState(false);
+  const [showSaveBlueprintModal, setShowSaveBlueprintModal] = useState(false);
+  const [pendingAction, setPendingAction] = useState<"download" | "share" | null>(null);
   
   // Repo detection state (Max/Teams feature)
   const [repoDetectUrl, setRepoDetectUrl] = useState("");
@@ -876,8 +880,8 @@ function WizardPageContent() {
     containerRegistry: "",
     containerRegistryOther: "",
     registryUsername: "",
-    aiBehaviorRules: ["always_debug_after_build", "check_logs_after_build", "follow_existing_patterns"],
-    importantFiles: ["readme", "package_json", "changelog", "contributing", "makefile", "dockerfile", "docker_compose", "env_example", "openapi", "architecture_md", "api_docs", "database_schema"],
+    aiBehaviorRules: ["always_debug_after_build", "check_logs_after_build", "run_tests_before_commit", "follow_existing_patterns", "ask_before_large_refactors", "check_for_security_issues"],
+    importantFiles: [],
     importantFilesOther: "",
     enableAutoUpdate: false,
     includePersonalData: true,
@@ -886,7 +890,7 @@ function WizardPageContent() {
     enableApiSync: false,
     additionalFeedback: "",
     commands: { build: "", test: "", lint: "", dev: "", additional: [], savePreferences: false },
-    codeStyle: { naming: "camelCase", errorHandling: "", errorHandlingOther: "", loggingConventions: "", notes: "", savePreferences: false },
+    codeStyle: { naming: "language_default", errorHandling: "", errorHandlingOther: "", loggingConventions: "", loggingConventionsOther: "", notes: "", savePreferences: false },
     boundaries: { always: [], ask: [], never: [], savePreferences: false },
     testing: { levels: [], coverage: 80, frameworks: [], notes: "", savePreferences: false },
     staticFiles: {
@@ -1771,6 +1775,16 @@ function WizardPageContent() {
         : blob;
       
       downloadConfigFile(finalBlob, files);
+      
+      // After successful download, ask about draft deletion and blueprint saving
+      if (currentDraftId) {
+        setPendingAction("download");
+        setShowDeleteDraftModal(true);
+      } else {
+        // No draft, ask if they want to save as blueprint
+        setPendingAction("download");
+        setShowSaveBlueprintModal(true);
+      }
     } catch (error) {
       console.error("Error generating files:", error);
       alert("Failed to generate files. Please try again.");
@@ -1854,8 +1868,55 @@ ${curlCommand}
     sessionStorage.setItem("wizardBlueprintContent", content);
     sessionStorage.setItem("wizardBlueprintName", config.projectName || "My AI Config");
     sessionStorage.setItem("wizardBlueprintDescription", config.projectDescription || "Generated with the LynxPrompt wizard");
-    // Navigate to create blueprint page
-    window.location.href = "/blueprints/create";
+    
+    // If there's a draft, ask if user wants to delete it before navigating
+    if (currentDraftId) {
+      setPendingAction("share");
+      setShowDeleteDraftModal(true);
+    } else {
+      // Navigate to create blueprint page
+      window.location.href = "/blueprints/create";
+    }
+  };
+  
+  // Handle delete draft confirmation after download/share
+  const handleDeleteDraftConfirm = async (shouldDelete: boolean) => {
+    if (shouldDelete && currentDraftId) {
+      try {
+        await fetch(`/api/wizard/drafts/${currentDraftId}`, {
+          method: "DELETE",
+        });
+        setCurrentDraftId(null);
+        setDraftName("");
+      } catch (error) {
+        console.error("Failed to delete draft:", error);
+      }
+    }
+    setShowDeleteDraftModal(false);
+    
+    // After draft decision, proceed with next step
+    if (pendingAction === "share") {
+      window.location.href = "/blueprints/create";
+    } else if (pendingAction === "download") {
+      // Show save blueprint modal for download action
+      setShowSaveBlueprintModal(true);
+    }
+    setPendingAction(null);
+  };
+  
+  // Handle save blueprint confirmation after download
+  const handleSaveBlueprintConfirm = (shouldSave: boolean) => {
+    setShowSaveBlueprintModal(false);
+    if (shouldSave) {
+      // Navigate to create blueprint page with the content
+      if (previewFiles.length > 0) {
+        const content = replaceVariablesInContent(previewFiles[0].content);
+        sessionStorage.setItem("wizardBlueprintContent", content);
+        sessionStorage.setItem("wizardBlueprintName", config.projectName || "My AI Config");
+        sessionStorage.setItem("wizardBlueprintDescription", config.projectDescription || "Generated with the LynxPrompt wizard");
+        window.location.href = "/blueprints/create";
+      }
+    }
   };
 
   return (
@@ -2099,6 +2160,67 @@ ${curlCommand}
             <div className="mt-6 flex justify-end">
               <Button variant="outline" onClick={() => setShowLoadDraftModal(false)}>
                 Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Draft Confirmation Modal */}
+      {showDeleteDraftModal && currentDraftId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="relative mx-4 w-full max-w-md rounded-2xl bg-background p-6 shadow-2xl">
+            <button
+              onClick={() => handleDeleteDraftConfirm(false)}
+              className="absolute right-4 top-4 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <h2 className="text-xl font-bold">Delete Draft?</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              You have a saved draft: <strong>&quot;{draftName}&quot;</strong>. Would you like to delete it now that you&apos;ve finished your configuration?
+            </p>
+            
+            <div className="mt-6 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => handleDeleteDraftConfirm(false)}>
+                Keep Draft
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={() => handleDeleteDraftConfirm(true)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Draft
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Save Blueprint Confirmation Modal (after Download) */}
+      {showSaveBlueprintModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="relative mx-4 w-full max-w-md rounded-2xl bg-background p-6 shadow-2xl">
+            <button
+              onClick={() => handleSaveBlueprintConfirm(false)}
+              className="absolute right-4 top-4 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <h2 className="text-xl font-bold">Save Blueprint to Profile?</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Your AI config file has been downloaded. Would you like to also save this blueprint to your dashboard for easy access and sharing?
+            </p>
+            
+            <div className="mt-6 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => handleSaveBlueprintConfirm(false)}>
+                No, Thanks
+              </Button>
+              <Button 
+                onClick={() => handleSaveBlueprintConfirm(true)}
+              >
+                <Save className="mr-2 h-4 w-4" />
+                Save Blueprint
               </Button>
             </div>
           </div>
@@ -2409,7 +2531,7 @@ ${curlCommand}
                       disabled={isDownloading || previewFiles.length === 0}
                     >
                       <Share2 className="mr-2 h-4 w-4" />
-                      Share as Blueprint
+                      Share/Save Blueprint
                     </Button>
                     <Button
                       className="bg-gradient-to-r from-purple-600 to-pink-600"
@@ -2542,12 +2664,10 @@ function StepProject({
                 <label className="text-sm font-medium">
                   🔍 Auto-detect from existing repository
                 </label>
-                {!canDetect && (
-                  <span className="flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-600 dark:text-amber-400">
-                    <Crown className="h-3 w-3" />
-                    Max/Teams
-                  </span>
-                )}
+                <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${canDetect ? "bg-purple-500/10 text-purple-600 dark:text-purple-400" : "bg-amber-500/10 text-amber-600 dark:text-amber-400"}`}>
+                  <Crown className="h-3 w-3" />
+                  Max
+                </span>
               </div>
               <p className="mt-1 text-sm text-muted-foreground">
                 {canDetect 
@@ -2756,13 +2876,13 @@ function StepProject({
             Architecture Pattern (optional)
           </label>
           <p className="mb-3 text-sm text-muted-foreground">
-            What architectural approach does this project follow?
+            What architectural approach does this project follow? Click again to deselect.
           </p>
           <div className="flex flex-wrap gap-2">
             {ARCHITECTURE_PATTERNS.map((pattern) => (
               <button
                 key={pattern.id}
-                onClick={() => onArchitecturePatternChange(pattern.id)}
+                onClick={() => onArchitecturePatternChange(architecturePattern === pattern.id ? "" : pattern.id)}
                 className={`rounded-full border px-4 py-2 text-sm transition-all ${
                   architecturePattern === pattern.id
                     ? "border-primary bg-primary/10"
@@ -3441,9 +3561,23 @@ function StepRepository({
     } else {
       // Select
       const newHosts = [...currentHosts, hostId];
+      
+      // Auto-select CI/CD based on repo host, but only if current CI/CD is the default
+      // Don't override if user already selected something different
+      let cicdUpdate: Partial<WizardConfig> = {};
+      const defaultCiCd = "github_actions";
+      if (config.cicd === defaultCiCd || config.cicd === "gitlab_ci") {
+        if (hostId === "github" && !newHosts.includes("gitlab")) {
+          cicdUpdate = { cicd: "github_actions" };
+        } else if (hostId === "gitlab" && !newHosts.includes("github")) {
+          cicdUpdate = { cicd: "gitlab_ci" };
+        }
+      }
+      
       onChange({ 
         repoHosts: newHosts,
-        repoHost: newHosts[0] // Keep single host for backward compat
+        repoHost: newHosts[0], // Keep single host for backward compat
+        ...cicdUpdate
       });
     }
   };
@@ -3865,7 +3999,7 @@ function StepAIBehavior({
       </div>
 
       {/* Self-Improving Blueprint Option */}
-      <div className="mt-8">
+      <div className="mt-3">
         <button
           onClick={() => onAutoUpdateChange(!enableAutoUpdate)}
           className={`flex w-full items-start gap-4 rounded-lg border p-4 text-left transition-all ${
@@ -4406,13 +4540,13 @@ function StepCodeStyle({
         
         {/* Error Handling Pattern */}
         <div>
-          <label className="text-sm font-medium">Error Handling Pattern</label>
-          <p className="mt-1 text-xs text-muted-foreground">How should errors be handled in this project?</p>
+          <label className="text-sm font-medium">Error Handling Pattern (optional)</label>
+          <p className="mt-1 text-xs text-muted-foreground">How should errors be handled in this project? Click again to deselect.</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {ERROR_HANDLING_PATTERNS.map((pattern) => (
               <button
                 key={pattern.id}
-                onClick={() => onChange({ errorHandling: pattern.id })}
+                onClick={() => onChange({ errorHandling: config.errorHandling === pattern.id ? "" : pattern.id })}
                 className={`rounded-full border px-3 py-1.5 text-sm transition-all ${
                   config.errorHandling === pattern.id
                     ? "border-primary bg-primary/10"
@@ -4436,15 +4570,44 @@ function StepCodeStyle({
 
         {/* Logging Conventions */}
         <div>
-          <label className="text-sm font-medium">Logging Conventions</label>
-          <p className="mt-1 text-xs text-muted-foreground">Describe your logging approach (optional)</p>
-          <input
-            type="text"
-            value={config.loggingConventions}
-            onChange={(e) => onChange({ loggingConventions: e.target.value })}
-            placeholder="e.g., Use console.log for dev, structured JSON in prod, pino logger, log levels..."
-            className="mt-2 w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-          />
+          <label className="text-sm font-medium">Logging Conventions (optional)</label>
+          <p className="mt-1 text-xs text-muted-foreground">How should logging be handled? Click again to deselect.</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {[
+              { id: "structured_json", label: "Structured JSON" },
+              { id: "console_log", label: "Console.log (dev)" },
+              { id: "log_levels", label: "Log Levels (debug/info/warn/error)" },
+              { id: "pino", label: "Pino" },
+              { id: "winston", label: "Winston" },
+              { id: "bunyan", label: "Bunyan" },
+              { id: "python_logging", label: "Python logging" },
+              { id: "log4j", label: "Log4j / SLF4J" },
+              { id: "serilog", label: "Serilog" },
+              { id: "opentelemetry", label: "OpenTelemetry" },
+              { id: "other", label: "Other" },
+            ].map((option) => (
+              <button
+                key={option.id}
+                onClick={() => onChange({ loggingConventions: config.loggingConventions === option.id ? "" : option.id })}
+                className={`rounded-full border px-3 py-1.5 text-sm transition-all ${
+                  config.loggingConventions === option.id
+                    ? "border-primary bg-primary/10"
+                    : "hover:border-primary"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          {config.loggingConventions === "other" && (
+            <input
+              type="text"
+              value={config.loggingConventionsOther || ""}
+              onChange={(e) => onChange({ loggingConventionsOther: e.target.value })}
+              placeholder="e.g., Custom logger, file-based logging, centralized logging service..."
+              className="mt-2 w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          )}
         </div>
 
         <div>
