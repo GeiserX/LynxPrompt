@@ -14,6 +14,13 @@ export interface DetectedProject {
   packageManager: "npm" | "yarn" | "pnpm" | "bun" | null;
   type: "monorepo" | "library" | "application" | "unknown";
   description?: string;
+  // New auto-detected fields
+  license?: string;
+  repoHost?: string;
+  repoUrl?: string;
+  cicd?: string;
+  hasDocker?: boolean;
+  existingFiles?: string[];
 }
 
 // Framework detection patterns
@@ -308,6 +315,129 @@ export async function detectProject(cwd: string): Promise<DetectedProject | null
   if (await fileExists(join(cwd, "Dockerfile")) || await fileExists(join(cwd, "docker-compose.yml"))) {
     detected.stack.push("docker");
     detected.type = "application";
+    detected.hasDocker = true;
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // Additional auto-detection for wizard fields
+  // ════════════════════════════════════════════════════════════════
+
+  // Detect license from LICENSE file
+  const licensePath = join(cwd, "LICENSE");
+  if (await fileExists(licensePath)) {
+    try {
+      const licenseContent = await readFile(licensePath, "utf-8");
+      const lowerContent = licenseContent.toLowerCase();
+      
+      if (lowerContent.includes("mit license") || lowerContent.includes("permission is hereby granted, free of charge")) {
+        detected.license = "mit";
+      } else if (lowerContent.includes("apache license") && lowerContent.includes("version 2.0")) {
+        detected.license = "apache-2.0";
+      } else if (lowerContent.includes("gnu general public license") && lowerContent.includes("version 3")) {
+        detected.license = "gpl-3.0";
+      } else if (lowerContent.includes("gnu lesser general public license")) {
+        detected.license = "lgpl-3.0";
+      } else if (lowerContent.includes("gnu affero general public license")) {
+        detected.license = "agpl-3.0";
+      } else if (lowerContent.includes("bsd 3-clause") || lowerContent.includes("redistribution and use in source and binary forms")) {
+        detected.license = "bsd-3";
+      } else if (lowerContent.includes("mozilla public license") && lowerContent.includes("2.0")) {
+        detected.license = "mpl-2.0";
+      } else if (lowerContent.includes("unlicense") || lowerContent.includes("this is free and unencumbered software")) {
+        detected.license = "unlicense";
+      }
+    } catch {
+      // Failed to read LICENSE
+    }
+  }
+
+  // Detect repository info from .git/config
+  const gitConfigPath = join(cwd, ".git", "config");
+  if (await fileExists(gitConfigPath)) {
+    try {
+      const gitConfig = await readFile(gitConfigPath, "utf-8");
+      const urlMatch = gitConfig.match(/url\s*=\s*(.+)/);
+      if (urlMatch) {
+        const repoUrl = urlMatch[1].trim();
+        detected.repoUrl = repoUrl;
+        
+        if (repoUrl.includes("github.com")) {
+          detected.repoHost = "github";
+        } else if (repoUrl.includes("gitlab.com") || repoUrl.includes("gitlab")) {
+          detected.repoHost = "gitlab";
+        } else if (repoUrl.includes("bitbucket")) {
+          detected.repoHost = "bitbucket";
+        } else if (repoUrl.includes("gitea") || repoUrl.includes("codeberg")) {
+          detected.repoHost = "gitea";
+        } else if (repoUrl.includes("azure")) {
+          detected.repoHost = "azure";
+        }
+      }
+    } catch {
+      // Failed to read git config
+    }
+  }
+
+  // Detect CI/CD from workflow files
+  if (await fileExists(join(cwd, ".github", "workflows"))) {
+    detected.cicd = "github_actions";
+  } else if (await fileExists(join(cwd, ".gitlab-ci.yml"))) {
+    detected.cicd = "gitlab_ci";
+  } else if (await fileExists(join(cwd, "Jenkinsfile"))) {
+    detected.cicd = "jenkins";
+  } else if (await fileExists(join(cwd, ".circleci"))) {
+    detected.cicd = "circleci";
+  } else if (await fileExists(join(cwd, ".travis.yml"))) {
+    detected.cicd = "travis";
+  } else if (await fileExists(join(cwd, "azure-pipelines.yml"))) {
+    detected.cicd = "azure_devops";
+  } else if (await fileExists(join(cwd, "bitbucket-pipelines.yml"))) {
+    detected.cicd = "bitbucket";
+  } else if (await fileExists(join(cwd, ".drone.yml"))) {
+    detected.cicd = "drone";
+  }
+
+  // Detect existing static files
+  detected.existingFiles = [];
+  const staticFiles = [
+    ".editorconfig",
+    "CONTRIBUTING.md",
+    "CODE_OF_CONDUCT.md", 
+    "SECURITY.md",
+    "ROADMAP.md",
+    ".gitignore",
+    ".github/FUNDING.yml",
+    "LICENSE",
+    "README.md",
+    "ARCHITECTURE.md",
+    "CHANGELOG.md",
+  ];
+  
+  for (const file of staticFiles) {
+    if (await fileExists(join(cwd, file))) {
+      detected.existingFiles.push(file);
+    }
+  }
+
+  // Try to get description from README if not already set
+  if (!detected.description) {
+    const readmePath = join(cwd, "README.md");
+    if (await fileExists(readmePath)) {
+      try {
+        const readme = await readFile(readmePath, "utf-8");
+        // Get first non-heading, non-empty paragraph
+        const lines = readme.split("\n");
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed && !trimmed.startsWith("#") && !trimmed.startsWith("!") && !trimmed.startsWith("[") && trimmed.length > 20) {
+            detected.description = trimmed.substring(0, 200);
+            break;
+          }
+        }
+      } catch {
+        // Failed to read README
+      }
+    }
   }
 
   return detected.stack.length > 0 || detected.name ? detected : null;

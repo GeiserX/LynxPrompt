@@ -1,11 +1,82 @@
 import chalk from "chalk";
 import prompts from "prompts";
 import ora from "ora";
-import { writeFile, mkdir, access } from "fs/promises";
+import * as readline from "readline";
+import { writeFile, mkdir, access, readFile } from "fs/promises";
 import { join, dirname } from "path";
 import { detectProject } from "../utils/detect.js";
 import { generateConfig, GenerateOptions } from "../utils/generator.js";
 import { isAuthenticated, getUser } from "../config.js";
+
+// File paths for static files detection
+const STATIC_FILE_PATHS: Record<string, string> = {
+  editorconfig: ".editorconfig",
+  contributing: "CONTRIBUTING.md",
+  codeOfConduct: "CODE_OF_CONDUCT.md",
+  security: "SECURITY.md",
+  roadmap: "ROADMAP.md",
+  gitignore: ".gitignore",
+  funding: ".github/FUNDING.yml",
+  license: "LICENSE",
+  readme: "README.md",
+  architecture: "ARCHITECTURE.md",
+  changelog: "CHANGELOG.md",
+};
+
+// Check if a file exists and read its content
+async function readExistingFile(filePath: string): Promise<string | null> {
+  try {
+    await access(filePath);
+    const content = await readFile(filePath, "utf-8");
+    return content;
+  } catch {
+    return null;
+  }
+}
+
+// Multi-line input reader using EOF terminator
+async function readMultilineInput(prompt: string): Promise<string> {
+  console.log(chalk.white(prompt));
+  console.log(chalk.gray("  (Paste your content, then type EOF on a new line and press Enter to finish)"));
+  console.log(chalk.gray("  (Press Enter twice to skip)"));
+  console.log();
+
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  return new Promise((resolve) => {
+    const lines: string[] = [];
+    let emptyLineCount = 0;
+
+    rl.on("line", (line) => {
+      if (line.trim() === "EOF") {
+        rl.close();
+        resolve(lines.join("\n"));
+        return;
+      }
+      
+      if (line === "") {
+        emptyLineCount++;
+        if (emptyLineCount >= 2 && lines.length === 0) {
+          // Two empty lines at start = skip
+          rl.close();
+          resolve("");
+          return;
+        }
+      } else {
+        emptyLineCount = 0;
+      }
+      
+      lines.push(line);
+    });
+
+    rl.on("close", () => {
+      resolve(lines.join("\n"));
+    });
+  });
+}
 
 interface WizardOptions {
   name?: string;
@@ -795,18 +866,35 @@ async function runInteractiveWizard(
   const repoStep = getCurrentStep("repo")!;
   showStep(currentStepNum, repoStep, userTier);
 
+  // Show detected repository info
+  if (detected?.repoHost || detected?.license || detected?.cicd) {
+    console.log(chalk.green("  ✓ Auto-detected from your project:"));
+    if (detected.repoHost) console.log(chalk.gray(`    • Repository: ${detected.repoHost}${detected.repoUrl ? ` (${detected.repoUrl})` : ""}`));
+    if (detected.license) console.log(chalk.gray(`    • License: ${detected.license}`));
+    if (detected.cicd) console.log(chalk.gray(`    • CI/CD: ${detected.cicd}`));
+    console.log();
+  }
+
+  // Find initial index for detected repo host
+  const repoHostChoices = [
+    { title: chalk.gray("⏭ Skip"), value: "" },
+    ...REPO_HOSTS.map(h => ({
+      title: detected?.repoHost === h.id 
+        ? `${h.icon} ${h.label} ${chalk.green("(detected)")}`
+        : `${h.icon} ${h.label}`,
+      value: h.id,
+    })),
+  ];
+  const detectedRepoIndex = detected?.repoHost 
+    ? repoHostChoices.findIndex(c => c.value === detected.repoHost)
+    : 0;
+
   const repoHostResponse = await prompts({
     type: "select",
     name: "repoHost",
     message: chalk.white("Repository host:"),
-    choices: [
-      { title: chalk.gray("⏭ Skip"), value: "" },
-      ...REPO_HOSTS.map(h => ({
-        title: `${h.icon} ${h.label}`,
-        value: h.id,
-      })),
-    ],
-    initial: 0,
+    choices: repoHostChoices,
+    initial: detectedRepoIndex > 0 ? detectedRepoIndex : 0,
   }, promptConfig);
   answers.repoHost = repoHostResponse.repoHost || "";
 
@@ -820,18 +908,26 @@ async function runInteractiveWizard(
   }, promptConfig);
   answers.isPublic = visibilityResponse.isPublic || false;
 
+  // Find initial index for detected license
+  const licenseChoices = [
+    { title: chalk.gray("⏭ Skip"), value: "" },
+    ...LICENSES.map(l => ({
+      title: detected?.license === l.id
+        ? `${l.label} ${chalk.green("(detected)")}`
+        : l.label,
+      value: l.id,
+    })),
+  ];
+  const detectedLicenseIndex = detected?.license
+    ? licenseChoices.findIndex(c => c.value === detected.license)
+    : 0;
+
   const licenseResponse = await prompts({
     type: "select",
     name: "license",
     message: chalk.white("License:"),
-    choices: [
-      { title: chalk.gray("⏭ Skip"), value: "" },
-      ...LICENSES.map(l => ({
-        title: l.label,
-        value: l.id,
-      })),
-    ],
-    initial: 0,
+    choices: licenseChoices,
+    initial: detectedLicenseIndex > 0 ? detectedLicenseIndex : 0,
   }, promptConfig);
   answers.license = licenseResponse.license || "";
 
@@ -868,29 +964,39 @@ async function runInteractiveWizard(
     answers.dependabot = dependabotResponse.dependabot || false;
   }
 
-  // CI/CD Platform
+  // CI/CD Platform - use detected value if available
+  const cicdChoices = [
+    { title: chalk.gray("⏭ Skip"), value: "" },
+    ...CICD_OPTIONS.map(c => ({
+      title: detected?.cicd === c.id
+        ? `${c.icon} ${c.label} ${chalk.green("(detected)")}`
+        : `${c.icon} ${c.label}`,
+      value: c.id,
+    })),
+  ];
+  const detectedCicdIndex = detected?.cicd
+    ? cicdChoices.findIndex(c => c.value === detected.cicd)
+    : 0;
+
   const cicdResponse = await prompts({
     type: "select",
     name: "cicd",
     message: chalk.white("CI/CD Platform:"),
-    choices: [
-      { title: chalk.gray("⏭ Skip"), value: "" },
-      ...CICD_OPTIONS.map(c => ({
-        title: `${c.icon} ${c.label}`,
-        value: c.id,
-      })),
-    ],
-    initial: 0,
+    choices: cicdChoices,
+    initial: detectedCicdIndex > 0 ? detectedCicdIndex : 0,
   }, promptConfig);
   answers.cicd = cicdResponse.cicd || "";
 
-  // Deployment targets
+  // Deployment targets - pre-select Docker if Dockerfile detected
   const deployResponse = await prompts({
     type: "multiselect",
     name: "deploymentTargets",
     message: chalk.white("Deployment targets:"),
     choices: DEPLOYMENT_TARGETS.map(t => ({
-      title: `${t.icon} ${t.label}`,
+      title: (t.id === "docker" && detected?.hasDocker)
+        ? `${t.icon} ${t.label} ${chalk.green("(detected)")}`
+        : `${t.icon} ${t.label}`,
+      selected: t.id === "docker" && detected?.hasDocker,
       value: t.id,
     })),
     hint: chalk.gray("space select • enter to skip/confirm"),
@@ -1294,25 +1400,45 @@ async function runInteractiveWizard(
 
     // Static file options with metadata
     const STATIC_FILE_OPTIONS = [
-      { title: "📝 .editorconfig", value: "editorconfig", desc: "Consistent code formatting", file: ".editorconfig" },
-      { title: "🤝 CONTRIBUTING.md", value: "contributing", desc: "Contributor guidelines", file: "CONTRIBUTING.md" },
-      { title: "📜 CODE_OF_CONDUCT.md", value: "codeOfConduct", desc: "Community standards", file: "CODE_OF_CONDUCT.md" },
-      { title: "🔒 SECURITY.md", value: "security", desc: "Vulnerability reporting", file: "SECURITY.md" },
-      { title: "🗺️  ROADMAP.md", value: "roadmap", desc: "Project roadmap", file: "ROADMAP.md" },
-      { title: "📋 .gitignore", value: "gitignore", desc: "Git ignore patterns", file: ".gitignore" },
-      { title: "💰 FUNDING.yml", value: "funding", desc: "GitHub Sponsors config", file: ".github/FUNDING.yml" },
-      { title: "📄 LICENSE", value: "license", desc: "License file", file: "LICENSE" },
-      { title: "📖 README.md", value: "readme", desc: "Project readme", file: "README.md" },
-      { title: "🏗️  ARCHITECTURE.md", value: "architecture", desc: "Architecture docs", file: "ARCHITECTURE.md" },
-      { title: "📝 CHANGELOG.md", value: "changelog", desc: "Version history", file: "CHANGELOG.md" },
+      { title: "📝 .editorconfig", value: "editorconfig", desc: "Consistent code formatting" },
+      { title: "🤝 CONTRIBUTING.md", value: "contributing", desc: "Contributor guidelines" },
+      { title: "📜 CODE_OF_CONDUCT.md", value: "codeOfConduct", desc: "Community standards" },
+      { title: "🔒 SECURITY.md", value: "security", desc: "Vulnerability reporting" },
+      { title: "🗺️  ROADMAP.md", value: "roadmap", desc: "Project roadmap" },
+      { title: "📋 .gitignore", value: "gitignore", desc: "Git ignore patterns" },
+      { title: "💰 FUNDING.yml", value: "funding", desc: "GitHub Sponsors config" },
+      { title: "📄 LICENSE", value: "license", desc: "License file" },
+      { title: "📖 README.md", value: "readme", desc: "Project readme" },
+      { title: "🏗️  ARCHITECTURE.md", value: "architecture", desc: "Architecture docs" },
+      { title: "📝 CHANGELOG.md", value: "changelog", desc: "Version history" },
     ];
+
+    // Detect existing files
+    const existingFiles: Record<string, string> = {};
+    for (const opt of STATIC_FILE_OPTIONS) {
+      const filePath = STATIC_FILE_PATHS[opt.value];
+      if (filePath) {
+        const content = await readExistingFile(join(process.cwd(), filePath));
+        if (content) {
+          existingFiles[opt.value] = content;
+        }
+      }
+    }
+
+    const existingCount = Object.keys(existingFiles).length;
+    if (existingCount > 0) {
+      console.log(chalk.green(`  ✓ Found ${existingCount} existing file(s) in your project`));
+      console.log();
+    }
 
     const staticFilesResponse = await prompts({
       type: "multiselect",
       name: "staticFiles",
       message: chalk.white("Include static files:"),
       choices: STATIC_FILE_OPTIONS.map(f => ({
-        title: f.title,
+        title: existingFiles[f.value] 
+          ? `${f.title} ${chalk.green("(exists)")}`
+          : f.title,
         value: f.value,
         description: chalk.gray(f.desc),
       })),
@@ -1324,26 +1450,70 @@ async function runInteractiveWizard(
     // For each selected file, prompt for content
     if ((answers.staticFiles as string[])?.length > 0) {
       console.log();
-      console.log(chalk.cyan("  📝 Customize file contents (press Enter to use defaults):"));
-      console.log(chalk.gray("  You can paste content or leave empty for auto-generated defaults."));
+      console.log(chalk.cyan("  📝 Customize file contents:"));
+      console.log(chalk.gray("  For each file, choose to use existing content, write new, or use defaults."));
       console.log();
 
       answers.staticFileContents = {};
       
       for (const fileKey of (answers.staticFiles as string[])) {
-        const fileInfo = STATIC_FILE_OPTIONS.find(f => f.value === fileKey);
-        if (!fileInfo) continue;
+        const fileOpt = STATIC_FILE_OPTIONS.find(f => f.value === fileKey);
+        if (!fileOpt) continue;
 
-        const contentResponse = await prompts({
-          type: "text",
-          name: "content",
-          message: chalk.white(`Content for ${fileInfo.file}:`),
-          hint: chalk.gray("paste content or Enter to skip"),
-        }, promptConfig);
+        const filePath = STATIC_FILE_PATHS[fileKey];
+        const existingContent = existingFiles[fileKey];
 
-        if (contentResponse.content && contentResponse.content.trim()) {
-          (answers.staticFileContents as Record<string, string>)[fileKey] = contentResponse.content;
+        if (existingContent) {
+          // File exists - ask what to do
+          const preview = existingContent.split("\n").slice(0, 3).join("\n");
+          console.log(chalk.gray(`  ─── ${filePath} (existing) ───`));
+          console.log(chalk.gray(preview.substring(0, 150) + (preview.length > 150 ? "..." : "")));
+          console.log();
+
+          const actionResponse = await prompts({
+            type: "select",
+            name: "action",
+            message: chalk.white(`${filePath}:`),
+            choices: [
+              { title: chalk.green("✓ Use existing content"), value: "existing" },
+              { title: chalk.yellow("✏️  Write new content"), value: "new" },
+              { title: chalk.gray("⚡ Generate default"), value: "default" },
+            ],
+            initial: 0,
+          }, promptConfig);
+
+          if (actionResponse.action === "existing") {
+            (answers.staticFileContents as Record<string, string>)[fileKey] = existingContent;
+          } else if (actionResponse.action === "new") {
+            console.log();
+            const content = await readMultilineInput(`  Content for ${filePath}:`);
+            if (content.trim()) {
+              (answers.staticFileContents as Record<string, string>)[fileKey] = content;
+            }
+          }
+          // "default" - don't add to staticFileContents, generator will create default
+        } else {
+          // File doesn't exist - ask if they want to write content
+          const actionResponse = await prompts({
+            type: "select",
+            name: "action",
+            message: chalk.white(`${filePath}:`),
+            choices: [
+              { title: chalk.gray("⚡ Generate default"), value: "default" },
+              { title: chalk.yellow("✏️  Write custom content"), value: "new" },
+            ],
+            initial: 0,
+          }, promptConfig);
+
+          if (actionResponse.action === "new") {
+            console.log();
+            const content = await readMultilineInput(`  Content for ${filePath}:`);
+            if (content.trim()) {
+              (answers.staticFileContents as Record<string, string>)[fileKey] = content;
+            }
+          }
         }
+        console.log();
       }
     }
   }
