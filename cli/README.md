@@ -105,6 +105,9 @@ Download and track a blueprint from the marketplace:
 # Download and track
 lynxp pull bp_abc123
 
+# Push local file to cloud
+lynxp push
+
 # Preview content first
 lynxp pull bp_abc123 --preview
 
@@ -137,6 +140,28 @@ lynxp diff bp_abc123
 
 # Compare local rules with exports
 lynxp diff --local
+```
+
+### Push (`lynxp push`)
+
+Upload a local configuration file to LynxPrompt cloud:
+
+```bash
+# Push current AGENTS.md (auto-detected)
+lynxp push
+
+# Push a specific file
+lynxp push .cursor/rules/project.mdc
+
+# Push with options
+lynxp push AGENTS.md \
+  --name "My Project Rules" \
+  --description "AI config for my project" \
+  --visibility PUBLIC \
+  --tags "nextjs,typescript,react"
+
+# Non-interactive mode
+lynxp push -y --name "My Config"
 ```
 
 ### Search (`lynxp search`)
