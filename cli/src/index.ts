@@ -21,7 +21,7 @@ const program = new Command();
 program
   .name("lynxprompt")
   .description("CLI for LynxPrompt - Generate AI IDE configuration files")
-  .version("0.2.0");
+  .version("0.3.0");
 
 // ============================================
 // Primary Commands (most users need these)
