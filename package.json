@@ -11,7 +11,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --no-turbopack",
     "start": "next start",
     "lint": "eslint src",
     "lint:fix": "next lint --fix",
