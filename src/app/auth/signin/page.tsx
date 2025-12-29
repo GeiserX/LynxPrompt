@@ -14,9 +14,18 @@ function SignInContent() {
   const error = searchParams.get("error");
   const cliSession = searchParams.get("cli_session");
   const { data: session, status } = useSession();
+  
+  // ALL useState hooks must be declared before any conditional returns (React rules of hooks)
   const [cliAuthComplete, setCliAuthComplete] = useState(false);
   const [cliAuthError, setCliAuthError] = useState<string | null>(null);
   const [cliAuthProcessing, setCliAuthProcessing] = useState(false);
+  const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
+  const [emailSent, setEmailSent] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileError, setTurnstileError] = useState<string | null>(null);
+  const [magicLinkError, setMagicLinkError] = useState<string | null>(null);
 
   // Handle CLI authentication callback when user is already authenticated
   useEffect(() => {
@@ -114,14 +123,6 @@ function SignInContent() {
     }
     return "/dashboard"; // Default safe redirect
   })();
-
-  const [email, setEmail] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
-  const [emailSent, setEmailSent] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-  const [turnstileError, setTurnstileError] = useState<string | null>(null);
-  const [magicLinkError, setMagicLinkError] = useState<string | null>(null);
 
   // Turnstile is always enabled for magic link (component handles bypass internally)
   const turnstileEnabled = true;
