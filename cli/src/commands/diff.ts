@@ -108,7 +108,6 @@ function longestCommonSubsequence(a: string[], b: string[]): string[] {
 function formatDiff(diff: Array<{ type: "add" | "remove" | "same"; line: string }>, contextLines: number = 3): string {
   const output: string[] = [];
   let lastPrintedIndex = -1;
-  let inHunk = false;
   
   // Find sections with changes
   const changeIndices = diff.map((d, i) => d.type !== "same" ? i : -1).filter(i => i !== -1);

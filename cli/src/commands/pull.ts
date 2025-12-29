@@ -3,13 +3,12 @@ import ora from "ora";
 import prompts from "prompts";
 import { api, ApiRequestError, Blueprint } from "../api.js";
 import { isAuthenticated } from "../config.js";
-import { writeFile, access, mkdir, readFile } from "fs/promises";
+import { writeFile, mkdir, readFile } from "fs/promises";
 import { join, dirname } from "path";
 import { existsSync } from "fs";
 import {
   trackBlueprint,
   findBlueprintByFile,
-  hasLocalChanges,
   type BlueprintSource,
 } from "../utils/blueprint-tracker.js";
 

@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import ora from "ora";
 import { api, ApiRequestError } from "../api.js";
-import { isAuthenticated, getUser, setUser } from "../config.js";
+import { isAuthenticated, setUser } from "../config.js";
 
 export async function whoamiCommand(): Promise<void> {
   if (!isAuthenticated()) {
@@ -75,5 +75,7 @@ function formatPlan(plan: string): string {
   const colorFn = planColors[plan] || chalk.white;
   return colorFn(plan);
 }
+
+
 
 
