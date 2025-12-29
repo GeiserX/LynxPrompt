@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
   <metadata>
     <id>lynxprompt</id>
-    <version>0.1.0</version>
+    <version>0.3.0</version>
     <title>LynxPrompt CLI</title>
     <authors>GeiserCloud</authors>
     <owners>GeiserCloud</owners>
@@ -15,7 +15,7 @@
     <iconUrl>https://lynxprompt.com/lynx-icon.png</iconUrl>
     <description>CLI for LynxPrompt - Generate AI IDE configuration files (.cursorrules, AGENTS.md, copilot-instructions.md, etc.) from your terminal.</description>
     <summary>Generate AI IDE configuration files from your terminal</summary>
-    <releaseNotes>Initial release with interactive wizard and auth flow.</releaseNotes>
+    <releaseNotes>Bug fixes and improvements. Fixed Chocolatey install script stderr handling.</releaseNotes>
     <tags>ai ide cursor copilot claude windsurf cli developer-tools</tags>
     <dependencies>
       <dependency id="nodejs" version="[18.0,)" />
