@@ -45,7 +45,7 @@ export default function PricingPage() {
               </li>
               <li className="flex items-center gap-2">
                 <Check className="h-4 w-4 text-green-500" />
-                Create free blueprints
+                Create &amp; store private blueprints
               </li>
               <li className="flex items-center gap-2">
                 <Check className="h-4 w-4 text-green-500" />
