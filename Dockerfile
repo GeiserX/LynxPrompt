@@ -51,6 +51,8 @@ RUN npx prisma generate --config=prisma/prisma.config-app.ts & \
 # Note: NEXT_PUBLIC_* vars are fetched at runtime via /api/config/public
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV TSC_COMPILE_ON_ERROR=true
+# Disable Turbopack for production builds (fixes font resolution issues in Next.js 16)
+ENV TURBOPACK=0
 RUN --mount=type=cache,target=/app/.next/cache \
     npm run build
 
