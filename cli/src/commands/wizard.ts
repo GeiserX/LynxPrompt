@@ -19,33 +19,58 @@ interface WizardOptions {
   yes?: boolean;
 }
 
-// Output format options with emoji
+// All supported platforms (matches web wizard)
+const ALL_PLATFORMS = [
+  { id: "agents", name: "Universal (AGENTS.md)", file: "AGENTS.md", icon: "🌐", note: "Works with all AI-enabled IDEs" },
+  { id: "cursor", name: "Cursor", file: ".cursor/rules/", icon: "⚡", note: "Native project rules format" },
+  { id: "claude", name: "Claude Code", file: "CLAUDE.md", icon: "🧠", note: "Also works with Cursor" },
+  { id: "copilot", name: "GitHub Copilot", file: ".github/copilot-instructions.md", icon: "🐙", note: "VS Code & JetBrains" },
+  { id: "windsurf", name: "Windsurf", file: ".windsurfrules", icon: "🏄", note: "Codeium IDE" },
+  { id: "zed", name: "Zed", file: ".zed/instructions.md", icon: "⚡", note: "Zed editor" },
+  { id: "aider", name: "Aider", file: ".aider.conf.yml", icon: "🤖", note: "CLI AI pair programming" },
+  { id: "cline", name: "Cline", file: ".clinerules", icon: "🔧", note: "VS Code extension" },
+  { id: "continue", name: "Continue", file: ".continue/config.json", icon: "➡️", note: "Open-source autopilot" },
+  { id: "cody", name: "Sourcegraph Cody", file: ".cody/config.json", icon: "🔍", note: "Context-aware AI" },
+  { id: "amazonq", name: "Amazon Q", file: ".amazonq/rules/", icon: "📦", note: "AWS AI assistant" },
+  { id: "tabnine", name: "Tabnine", file: ".tabnine.yaml", icon: "📝", note: "AI code completion" },
+  { id: "supermaven", name: "Supermaven", file: ".supermaven/config.json", icon: "🦸", note: "Fast AI completions" },
+  { id: "codegpt", name: "CodeGPT", file: ".codegpt/config.json", icon: "💬", note: "VS Code AI assistant" },
+  { id: "void", name: "Void", file: ".void/config.json", icon: "🕳️", note: "Open-source Cursor alt" },
+  { id: "goose", name: "Goose", file: ".goosehints", icon: "🪿", note: "Block AI agent" },
+];
+
+// Quick output format selection (single choice)
 const OUTPUT_FORMATS = [
   {
-    title: "🌐 AGENTS.md",
+    title: "🌐 AGENTS.md (Universal)",
     value: "agents",
-    description: "Universal format - Claude, Copilot, Aider, & more",
+    description: "Works with Claude, Copilot, Aider, Devin & more",
     recommended: true,
   },
   {
-    title: "🖱️  Cursor",
+    title: "⚡ Cursor",
     value: "cursor",
-    description: ".cursor/rules/ with MDC format",
+    description: ".cursor/rules/ native format",
   },
   {
-    title: "🌊 Windsurf",
+    title: "🧠 Claude Code",
+    value: "claude",
+    description: "CLAUDE.md format",
+  },
+  {
+    title: "🐙 GitHub Copilot",
+    value: "copilot",
+    description: ".github/copilot-instructions.md",
+  },
+  {
+    title: "🏄 Windsurf",
     value: "windsurf",
     description: ".windsurfrules configuration",
   },
   {
-    title: "🤖 Claude Code",
-    value: "claude",
-    description: "CLAUDE.md for Claude AI",
-  },
-  {
-    title: "📦 Multiple",
+    title: "📦 Multiple platforms...",
     value: "multiple",
-    description: "Generate for multiple AI editors",
+    description: "Select from 16+ supported AI editors",
   },
 ];
 
@@ -81,16 +106,7 @@ const FRAMEWORKS = [
   { title: "📱 React Native", value: "react-native" },
 ];
 
-// Platform options (for multiple format selection)
-const PLATFORMS = [
-  { title: "🌐 AGENTS.md (Universal)", value: "agents", filename: "AGENTS.md" },
-  { title: "🖱️  Cursor", value: "cursor", filename: ".cursor/rules/project.mdc" },
-  { title: "🤖 Claude Code", value: "claude", filename: "CLAUDE.md" },
-  { title: "🐙 GitHub Copilot", value: "copilot", filename: ".github/copilot-instructions.md" },
-  { title: "🌊 Windsurf", value: "windsurf", filename: ".windsurfrules" },
-  { title: "⚡ Zed", value: "zed", filename: ".zed/instructions.md" },
-  { title: "🤖 Cline", value: "cline", filename: ".clinerules" },
-];
+// Platform options for multiple format selection (uses ALL_PLATFORMS)
 
 // Persona options with descriptions
 const PERSONAS = [
@@ -181,16 +197,23 @@ export async function wizardCommand(options: WizardOptions): Promise<void> {
     // Show logged-in status with plan
     const planEmoji = userPlan === "TEAMS" ? "👥" : userPlan === "MAX" ? "🚀" : userPlan === "PRO" ? "⚡" : "🆓";
     console.log(chalk.green(`  ✓ Logged in as ${chalk.bold(user?.name || user?.email)} ${planEmoji} ${chalk.gray(userPlan)}`));
+    console.log();
     
-    // Show plan-specific features
+    // Show wizard steps and what's available per tier
+    console.log(chalk.bold("  Wizard Steps:"));
+    console.log(chalk.green("    ✓") + " Output Format, Project, Tech Stack, Persona " + chalk.gray("(all users)"));
+    
     if (userPlan === "FREE") {
-      console.log(chalk.gray("    Upgrade to PRO for API sync & advanced features"));
+      console.log(chalk.gray("    ○") + chalk.gray(" Commands, Code Style ") + chalk.cyan("[PRO]"));
+      console.log(chalk.gray("    ○") + chalk.gray(" Boundaries, Testing, Static Files ") + chalk.magenta("[MAX]"));
+      console.log();
+      console.log(chalk.gray("    Upgrade at https://lynxprompt.com/pricing"));
     } else if (userPlan === "PRO") {
-      console.log(chalk.cyan("    ⚡ PRO features enabled: API sync, sell blueprints"));
-    } else if (userPlan === "MAX") {
-      console.log(chalk.magenta("    🚀 MAX features enabled: API sync, AI assist, premium blueprints"));
-    } else if (userPlan === "TEAMS") {
-      console.log(chalk.yellow("    👥 TEAMS features enabled: Team sync, SSO, shared blueprints"));
+      console.log(chalk.cyan("    ⚡") + " Commands, Code Style " + chalk.cyan("[PRO]"));
+      console.log(chalk.gray("    ○") + chalk.gray(" Boundaries, Testing, Static Files ") + chalk.magenta("[MAX]"));
+    } else if (userPlan === "MAX" || userPlan === "TEAMS") {
+      console.log(chalk.cyan("    ⚡") + " Commands, Code Style " + chalk.cyan("[PRO]"));
+      console.log(chalk.magenta("    🚀") + " Boundaries, Testing, Static Files, AI Assist " + chalk.magenta("[MAX]"));
     }
     console.log();
   }
@@ -363,19 +386,23 @@ async function runInteractiveWizard(
 
     if (formatResponse.format === "multiple") {
       console.log();
+      console.log(chalk.gray("  Select the AI editors you want to generate config for:"));
+      console.log();
       const platformResponse = await prompts({
         type: "multiselect",
         name: "platforms",
-        message: chalk.white("Select AI editors:"),
-        choices: PLATFORMS.map(p => ({ 
-          title: p.title, 
-          value: p.value,
+        message: chalk.white("Select AI editors (16 supported):"),
+        choices: ALL_PLATFORMS.map(p => ({ 
+          title: `${p.icon} ${p.name}`,
+          value: p.id,
+          description: chalk.gray(p.note),
         })),
         hint: chalk.gray("space select • a toggle all • enter confirm"),
         min: 1,
         instructions: false,
       }, promptConfig);
       platforms = platformResponse.platforms || ["agents"];
+      console.log(chalk.green(`  ✓ Selected ${platforms.length} platform${platforms.length === 1 ? "" : "s"}`));
     } else {
       platforms = [formatResponse.format || "agents"];
     }
