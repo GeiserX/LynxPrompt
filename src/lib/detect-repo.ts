@@ -18,8 +18,12 @@ export interface DetectedRepo {
   repoHost: string;
   cicd: string | null;
   hasDocker: boolean;
+  containerRegistry: string | null;
+  testFramework: string | null;
   existingFiles: string[];
   isPublic: boolean;
+  isOpenSource: boolean;
+  projectType: string | null;
 }
 
 // Framework detection patterns (same as CLI)
@@ -80,6 +84,23 @@ interface GitHubRepoInfo {
 }
 
 /**
+ * Detect repo host from URL
+ */
+export function detectRepoHost(url: string): string {
+  const lower = url.toLowerCase();
+  if (lower.includes("github.com") || lower.includes("github:")) return "github";
+  if (lower.includes("gitlab.com") || lower.includes("gitlab:")) return "gitlab";
+  if (lower.includes("bitbucket.org") || lower.includes("bitbucket:")) return "bitbucket";
+  if (lower.includes("gitea.") || lower.includes("gitea:")) return "gitea";
+  if (lower.includes("forgejo.")) return "forgejo";
+  if (lower.includes("codeberg.org")) return "codeberg";
+  if (lower.includes("sr.ht") || lower.includes("sourcehut")) return "sourcehut";
+  if (lower.includes("azure.com") || lower.includes("visualstudio.com") || lower.includes("dev.azure")) return "azure_devops";
+  if (lower.includes("gogs.")) return "gogs";
+  return "other";
+}
+
+/**
  * Parse GitHub repo URL to owner/repo
  */
 export function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
@@ -93,6 +114,23 @@ export function parseGitHubUrl(url: string): { owner: string; repo: string } | n
     const match = url.match(pattern);
     if (match) {
       return { owner: match[1], repo: match[2].replace(/\.git$/, "") };
+    }
+  }
+  return null;
+}
+
+/**
+ * Parse GitLab repo URL to owner/repo (or group/subgroup/repo)
+ */
+export function parseGitLabUrl(url: string): { path: string } | null {
+  const patterns = [
+    /gitlab\.com[/:](.+?)(?:\.git)?$/,
+  ];
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) {
+      return { path: match[1].replace(/\.git$/, "") };
     }
   }
   return null;
@@ -204,17 +242,26 @@ export async function detectGitHubRepo(repoUrl: string): Promise<DetectedRepo | 
     return null;
   }
 
+  // Determine if it's open source based on license
+  const openSourceLicenses = ["mit", "apache-2.0", "gpl-3.0", "lgpl-3.0", "agpl-3.0", "bsd-2-clause", "bsd-3-clause", "mpl-2.0", "unlicense", "cc0-1.0", "isc"];
+  const licenseId = repoInfo.license?.spdx_id?.toLowerCase() || null;
+  const isOpenSource = !repoInfo.private && (licenseId ? openSourceLicenses.includes(licenseId) : false);
+
   const detected: DetectedRepo = {
     name: repoInfo.name,
     description: repoInfo.description,
     stack: [],
     commands: {},
-    license: repoInfo.license?.spdx_id?.toLowerCase() || null,
-    repoHost: "github",
+    license: licenseId,
+    repoHost: detectRepoHost(repoUrl),
     cicd: null,
     hasDocker: false,
+    containerRegistry: null,
+    testFramework: null,
     existingFiles: [],
     isPublic: !repoInfo.private,
+    isOpenSource,
+    projectType: isOpenSource ? "open_source" : null,
   };
 
   // List root files
@@ -241,10 +288,31 @@ export async function detectGitHubRepo(repoUrl: string): Promise<DetectedRepo | 
     }
   }
 
-  // Check for Docker
+  // Check for Docker and try to detect container registry
   if (fileNames.has("dockerfile") || fileNames.has("docker-compose.yml") || fileNames.has("docker-compose.yaml")) {
     detected.hasDocker = true;
     detected.stack.push("docker");
+    
+    // Try to detect container registry from docker-compose
+    const dockerComposeFile = fileNames.has("docker-compose.yml") 
+      ? "docker-compose.yml" 
+      : fileNames.has("docker-compose.yaml") 
+        ? "docker-compose.yaml" 
+        : null;
+    
+    if (dockerComposeFile) {
+      const dockerCompose = await fetchGitHubFile(owner, repo, dockerComposeFile);
+      if (dockerCompose) {
+        // Detect registry from image names in docker-compose
+        if (dockerCompose.includes("ghcr.io")) detected.containerRegistry = "ghcr";
+        else if (dockerCompose.includes("docker.io") || dockerCompose.match(/image:\s*[a-z0-9]+\/[a-z0-9]/)) detected.containerRegistry = "dockerhub";
+        else if (dockerCompose.includes("gcr.io")) detected.containerRegistry = "gcr";
+        else if (dockerCompose.includes("ecr.") || dockerCompose.includes(".amazonaws.com")) detected.containerRegistry = "ecr";
+        else if (dockerCompose.includes("azurecr.io")) detected.containerRegistry = "acr";
+        else if (dockerCompose.includes("quay.io")) detected.containerRegistry = "quay";
+        else if (dockerCompose.includes("registry.gitlab.com")) detected.containerRegistry = "gitlab_registry";
+      }
+    }
   }
 
   // Check for CI/CD
@@ -287,6 +355,15 @@ export async function detectGitHubRepo(repoUrl: string): Promise<DetectedRepo | 
           detected.stack.unshift("javascript");
         }
 
+        // Detect test framework
+        if (allDeps["vitest"]) detected.testFramework = "vitest";
+        else if (allDeps["jest"]) detected.testFramework = "jest";
+        else if (allDeps["@playwright/test"]) detected.testFramework = "playwright";
+        else if (allDeps["cypress"]) detected.testFramework = "cypress";
+        else if (allDeps["mocha"]) detected.testFramework = "mocha";
+        else if (allDeps["ava"]) detected.testFramework = "ava";
+        else if (allDeps["tap"]) detected.testFramework = "tap";
+
         // Detect commands
         if (pkg.scripts) {
           if (pkg.scripts.build) detected.commands.build = "npm run build";
@@ -316,6 +393,11 @@ export async function detectGitHubRepo(repoUrl: string): Promise<DetectedRepo | 
       if (content.includes("flask")) detected.stack.push("flask");
       detected.commands.test = "pytest";
       detected.commands.lint = "ruff check .";
+      
+      // Detect Python test framework
+      if (content.includes("pytest")) detected.testFramework = "pytest";
+      else if (content.includes("unittest")) detected.testFramework = "unittest";
+      else if (content.includes("nose")) detected.testFramework = "nose";
     }
   }
 

@@ -494,18 +494,11 @@ const PROJECT_TYPES = [
     aiNote: "Strict adherence to documented procedures. Don't make assumptions or go your own way.",
   },
   {
-    id: "open_source_small",
-    label: "Open Source (Small)",
+    id: "open_source",
+    label: "Open Source",
     icon: "🌱",
-    description: "Personal/hobby project, open to contributions",
-    aiNote: "Be thorough but pragmatic. Balance best practices with simplicity.",
-  },
-  {
-    id: "open_source_large",
-    label: "Open Source (Large)",
-    icon: "🌳",
-    description: "Established project with community, maintainers",
-    aiNote: "Follow existing conventions strictly. Document everything. Consider backward compatibility.",
+    description: "Open source project, community contributions welcome",
+    aiNote: "Follow existing conventions strictly. Document everything. Consider backward compatibility. Be thorough but pragmatic.",
   },
   {
     id: "leisure",
@@ -843,7 +836,11 @@ function WizardPageContent() {
     repoHost: string;
     cicd: string | null;
     hasDocker: boolean;
+    containerRegistry: string | null;
+    testFramework: string | null;
     existingFiles: string[];
+    isOpenSource: boolean;
+    projectType: string | null;
   } | null>(null);
 
   const [config, setConfig] = useState<WizardConfig>({
@@ -1098,22 +1095,39 @@ function WizardPageContent() {
       ...prev,
       projectName: detectedData.name || prev.projectName,
       projectDescription: detectedData.description || prev.projectDescription,
+      projectType: detectedData.projectType || prev.projectType,
       languages: detectedData.stack.filter(s => 
         ["javascript", "typescript", "python", "go", "rust", "java", "csharp", "ruby", "php", "swift", "kotlin", "cpp"].includes(s)
       ),
       frameworks: detectedData.stack.filter(s => 
-        ["nextjs", "react", "vue", "angular", "svelte", "express", "fastapi", "django", "flask", "rails", "laravel", "nestjs"].includes(s)
+        ["nextjs", "react", "vue", "angular", "svelte", "express", "fastapi", "django", "flask", "rails", "laravel", "nestjs", "prisma", "drizzle", "tailwind", "vite", "vitest", "jest", "playwright", "cypress"].includes(s)
       ),
       repoHost: detectedData.repoHost || prev.repoHost,
+      repoHosts: detectedData.repoHost ? [detectedData.repoHost] : prev.repoHosts,
       license: detectedData.license || prev.license,
       cicd: detectedData.cicd || prev.cicd,
       buildContainer: detectedData.hasDocker,
+      containerRegistry: detectedData.containerRegistry || prev.containerRegistry,
+      isPublic: detectedData.isOpenSource,
       commands: {
         ...prev.commands,
         build: detectedData.commands.build || prev.commands.build,
         test: detectedData.commands.test || prev.commands.test,
         lint: detectedData.commands.lint || prev.commands.lint,
         dev: detectedData.commands.dev || prev.commands.dev,
+      },
+      testing: {
+        ...prev.testing,
+        frameworks: detectedData.testFramework ? [detectedData.testFramework] : prev.testing.frameworks,
+      },
+      // Apply detected existing static files
+      staticFiles: {
+        ...prev.staticFiles,
+        contributing: detectedData.existingFiles.includes("CONTRIBUTING.md"),
+        codeOfConduct: detectedData.existingFiles.includes("CODE_OF_CONDUCT.md"),
+        security: detectedData.existingFiles.includes("SECURITY.md"),
+        roadmap: detectedData.existingFiles.includes("ROADMAP.md"),
+        editorconfig: detectedData.existingFiles.includes(".editorconfig"),
       },
     }));
 
@@ -2627,11 +2641,16 @@ function StepProject({
     name: string | null;
     description: string | null;
     stack: string[];
+    commands: { build?: string; test?: string; lint?: string; dev?: string };
     license: string | null;
     repoHost: string;
     cicd: string | null;
     hasDocker: boolean;
+    containerRegistry: string | null;
+    testFramework: string | null;
     existingFiles: string[];
+    isOpenSource: boolean;
+    projectType: string | null;
   } | null;
   onNameChange: (v: string) => void;
   onDescriptionChange: (v: string) => void;
@@ -2726,14 +2745,19 @@ function StepProject({
                       </div>
                       <div className="mt-2 space-y-1 text-sm text-green-700 dark:text-green-300">
                         {detectedData.name && <p>• Name: <strong>{detectedData.name}</strong></p>}
+                        {detectedData.isOpenSource && <p>• Type: <strong>Open Source</strong></p>}
                         {detectedData.stack.length > 0 && (
                           <p>• Stack: {detectedData.stack.slice(0, 6).join(", ")}{detectedData.stack.length > 6 ? "..." : ""}</p>
                         )}
-                        {detectedData.license && <p>• License: {detectedData.license}</p>}
-                        {detectedData.cicd && <p>• CI/CD: {detectedData.cicd}</p>}
-                        {detectedData.hasDocker && <p>• Docker: detected</p>}
+                        {detectedData.license && <p>• License: {detectedData.license.toUpperCase()}</p>}
+                        {detectedData.repoHost && <p>• Host: {detectedData.repoHost}</p>}
+                        {detectedData.cicd && <p>• CI/CD: {detectedData.cicd.replace(/_/g, " ")}</p>}
+                        {detectedData.testFramework && <p>• Test framework: {detectedData.testFramework}</p>}
+                        {detectedData.hasDocker && (
+                          <p>• Docker: detected{detectedData.containerRegistry ? ` (registry: ${detectedData.containerRegistry})` : ""}</p>
+                        )}
                         {detectedData.existingFiles.length > 0 && (
-                          <p>• Existing files: {detectedData.existingFiles.length} found</p>
+                          <p>• Static files found: {detectedData.existingFiles.length} ({detectedData.existingFiles.slice(0, 3).join(", ")}{detectedData.existingFiles.length > 3 ? "..." : ""})</p>
                         )}
                       </div>
                     </div>
@@ -2778,14 +2802,14 @@ function StepProject({
                 </div>
               )}
             </div>
-            <button
+            <div
               onClick={() => onBlueprintModeChange(!blueprintMode)}
-              className={`relative h-6 w-11 rounded-full transition-colors ${blueprintMode ? "bg-amber-500" : "bg-muted"}`}
+              className={`relative h-6 w-11 cursor-pointer rounded-full transition-colors ${blueprintMode ? "bg-amber-500" : "bg-muted"}`}
             >
-              <span
-                className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${blueprintMode ? "translate-x-5" : "translate-x-0.5"}`}
+              <div
+                className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${blueprintMode ? "left-0.5 translate-x-5" : "left-0.5 translate-x-0"}`}
               />
-            </button>
+            </div>
           </div>
         </div>
 
