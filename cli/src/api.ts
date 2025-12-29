@@ -172,7 +172,21 @@ class ApiClient {
   }
 
   async getBlueprint(id: string): Promise<{ blueprint: Blueprint }> {
-    // Ensure the ID has the bp_ prefix for the API
+    // IDs can be:
+    // - bp_xxx (v1 blueprint IDs)
+    // - usr_xxx (user template IDs from marketplace)
+    // - plain ID (needs bp_ prefix for v1 API)
+    
+    // For usr_ IDs, use the public blueprint endpoint (not v1)
+    // This endpoint returns the blueprint directly, not wrapped
+    if (id.startsWith("usr_")) {
+      const blueprint = await this.request<Blueprint>(`/api/blueprints/${id}`);
+      // Map isPublic to visibility for consistency
+      const visibility = (blueprint as any).isPublic ? "PUBLIC" : "PRIVATE";
+      return { blueprint: { ...blueprint, visibility, type: (blueprint as any).tier || "GENERIC" } };
+    }
+    
+    // For v1 blueprints, ensure bp_ prefix
     const apiId = id.startsWith("bp_") ? id : `bp_${id}`;
     return this.request<{ blueprint: Blueprint }>(`/api/v1/blueprints/${apiId}`);
   }
