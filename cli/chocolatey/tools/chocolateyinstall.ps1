@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'Stop'
 
 $packageName = 'lynxprompt'
-$version = '0.3.0'
+$version = '0.4.0'
 
 # Check if Node.js is installed
 $node = Get-Command node -ErrorAction SilentlyContinue
