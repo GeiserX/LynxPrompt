@@ -1,54 +1,58 @@
 "use client";
 
 import { useState } from "react";
-import { Terminal, Cloud, Users, Download, Copy, Check, ArrowUpDown, Globe } from "lucide-react";
+import { Terminal, Users, Copy, Check, ArrowUpDown, Globe } from "lucide-react";
 
 const INSTALL_COMMANDS = {
   npm: "npm install -g lynxprompt",
-  brew: "brew install lynxprompt",
-  snap: "sudo snap install lynxprompt",
-  choco: "choco install lynxprompt",
+  yarn: "yarn global add lynxprompt",
+  pnpm: "pnpm add -g lynxprompt",
+  bun: "bun add -g lynxprompt",
+  npx: "npx lynxprompt",
+  brew: "brew install GeiserX/lynxprompt/lynxprompt",
 } as const;
 
 type PackageManager = keyof typeof INSTALL_COMMANDS;
 
 const TERMINAL_LINES = [
-  { type: "command", content: "lynxp init" },
-  { type: "output", content: "🐱 LynxPrompt Init" },
-  { type: "output-dim", content: "  Stack: typescript, react, nextjs" },
-  { type: "output-success", content: "✅ Initialized!" },
+  { type: "output-dim", content: "# Generate config interactively" },
+  { type: "command", content: "lynxp wizard" },
+  { type: "output", content: "🐱 LynxPrompt Wizard" },
+  { type: "output-dim", content: "  [→] Cursor  Windsurf  Claude  Copilot" },
+  { type: "output-success", content: "✓ Generated .cursor/rules/project.mdc" },
   { type: "output", content: "" },
+  { type: "output-dim", content: "# Push to cloud & sync with team" },
   { type: "command", content: "lynxp push" },
   { type: "output-cyan", content: "  → Blueprint: bp_x7k9m2" },
   { type: "output-success", content: "✓ Synced to cloud" },
   { type: "output", content: "" },
-  { type: "output-dim", content: "# Pull in any format:" },
-  { type: "command", content: "lynxp pull -f cursor" },
-  { type: "output-success", content: "✓ .cursor/rules/*.mdc" },
-  { type: "command", content: "lynxp pull -f claude" },
-  { type: "output-success", content: "✓ CLAUDE.md" },
+  { type: "output-dim", content: "# Or pull from marketplace" },
+  { type: "command", content: "lynxp search nextjs" },
+  { type: "output-cyan", content: "  → Next.js 15 Stack (★ 220)" },
+  { type: "command", content: "lynxp pull usr_cmjq..." },
+  { type: "output-success", content: "✓ Downloaded to AGENTS.md" },
 ];
 
 const CLI_FEATURES = [
   {
-    icon: Cloud,
-    title: "Cloud Connected",
-    description: "Push rules to your LynxPrompt account. Your blueprints, accessible anywhere.",
+    icon: Terminal,
+    title: "Interactive Wizard",
+    description: "Navigate with arrow keys, select with Enter. Generate configs in seconds.",
   },
   {
     icon: ArrowUpDown,
     title: "Push & Pull",
-    description: "Edit locally or on web — stay in sync. lynxp push / lynxp pull",
+    description: "Edit locally or on web — stay in sync. Your blueprints, everywhere.",
   },
   {
     icon: Users,
     title: "Team Ready",
-    description: "Link your team to the same blueprint. Everyone stays aligned automatically.",
+    description: "Share blueprints with your team. Everyone stays aligned automatically.",
   },
   {
     icon: Globe,
-    title: "Export Any Format",
-    description: "Download Cursor rules, CLAUDE.md, or any format from the web platform.",
+    title: "27+ AI Agents",
+    description: "Cursor, Claude, Copilot, Windsurf, Zed, and more. One source, all formats.",
   },
 ];
 

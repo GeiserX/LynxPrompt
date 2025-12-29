@@ -122,28 +122,34 @@ export default function CliDocsPage() {
       <section className="space-y-4">
         <h2 className="text-2xl font-bold">Quick Example</h2>
         <p className="text-muted-foreground">
-          Here&apos;s the cloud-connected workflow in action:
+          Here&apos;s the typical workflow in action:
         </p>
         <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
           <pre className="text-sm text-zinc-100">
-            <code>{`$ lynxp init
-🐱 LynxPrompt Init
-  Stack: typescript, react, nextjs
-  Found: .cursor/rules/, CLAUDE.md
-✅ Initialized!
+            <code>{`# Generate AI config interactively
+$ lynxp wizard
+🐱 LynxPrompt Wizard
+  ●○○○○  Step 1/5: Output Format
+  [→] AGENTS.md (Universal)  Cursor  Windsurf  Claude
+✅ Generated: AGENTS.md
 
+# Push to cloud & sync with team
 $ lynxp push
 📤 Pushing to LynxPrompt...
   → Created blueprint: bp_x7k9m2
 ✓ Rules synced to cloud
 
-# Later, after editing on web...
-$ lynxp pull
-  ↓ Updated 3 rules from blueprint
-✓ Local rules updated
+# Or pull from marketplace
+$ lynxp search nextjs
+  → Next.js 15 Stack (★ 220)
+  → Next.js TypeScript (★ 185)
 
-$ lynxp sync
-✓ Synced to .cursor/rules/, CLAUDE.md`}</code>
+$ lynxp pull usr_cmjq...
+✓ Downloaded to AGENTS.md
+
+# See what changed
+$ lynxp diff
+✓ All tracked files in sync`}</code>
           </pre>
         </div>
       </section>
@@ -155,40 +161,40 @@ $ lynxp sync
           <div className="flex items-start gap-4 rounded-lg border p-4">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">1</div>
             <div>
-              <h3 className="font-semibold">Initialize</h3>
+              <h3 className="font-semibold">Login (optional)</h3>
               <p className="text-sm text-muted-foreground">
-                Run <code className="rounded bg-muted px-1">lynxp init</code> to set up LynxPrompt.
-                Detects existing configs and creates your local workspace.
+                Run <code className="rounded bg-muted px-1">lynxp login</code> to connect to your LynxPrompt account.
+                Not required for generating configs or browsing the marketplace.
               </p>
             </div>
           </div>
           <div className="flex items-start gap-4 rounded-lg border p-4">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">2</div>
             <div>
-              <h3 className="font-semibold">Push to Cloud</h3>
+              <h3 className="font-semibold">Generate or Pull</h3>
               <p className="text-sm text-muted-foreground">
-                Run <code className="rounded bg-muted px-1">lynxp push</code> to sync your rules to a private blueprint
-                in your LynxPrompt account. Your team can link to it.
+                Use <code className="rounded bg-muted px-1">lynxp wizard</code> to generate a new config interactively,
+                or <code className="rounded bg-muted px-1">lynxp pull &lt;id&gt;</code> to download from the marketplace.
               </p>
             </div>
           </div>
           <div className="flex items-start gap-4 rounded-lg border p-4">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">3</div>
             <div>
-              <h3 className="font-semibold">Edit Anywhere</h3>
+              <h3 className="font-semibold">Push to Cloud</h3>
               <p className="text-sm text-muted-foreground">
-                Edit rules locally in your favorite editor or use the web UI.
-                Run <code className="rounded bg-muted px-1">lynxp pull</code> to get the latest changes.
+                Run <code className="rounded bg-muted px-1">lynxp push</code> to sync your rules to a private blueprint.
+                Your team can pull it and stay in sync.
               </p>
             </div>
           </div>
           <div className="flex items-start gap-4 rounded-lg border p-4">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">4</div>
             <div>
-              <h3 className="font-semibold">Export Any Format</h3>
+              <h3 className="font-semibold">Compare &amp; Sync</h3>
               <p className="text-sm text-muted-foreground">
-                Use <code className="rounded bg-muted px-1">lynxp sync</code> locally, or export any agent format
-                from the web platform. Your blueprint, any format you need.
+                Use <code className="rounded bg-muted px-1">lynxp diff</code> to see changes between local and cloud,
+                then <code className="rounded bg-muted px-1">lynxp push</code> or <code className="rounded bg-muted px-1">lynxp pull</code> to sync.
               </p>
             </div>
           </div>

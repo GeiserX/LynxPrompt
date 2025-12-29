@@ -231,3 +231,4 @@ jobs:
           node dist/index.js --help
           echo "✓ Built CLI works"
 
+

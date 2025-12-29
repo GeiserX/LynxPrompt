@@ -98,14 +98,14 @@ program
   .action(linkCommand);
 
 program
-  .command("unlink <file>")
+  .command("unlink [file]")
   .description("Disconnect a local file from its cloud blueprint")
   .action(unlinkCommand);
 
 // Diff - compare local with remote
 program
-  .command("diff [blueprint-id]")
-  .description("Show changes between local and remote blueprint")
+  .command("diff [file-or-id]")
+  .description("Compare tracked files with their cloud blueprints")
   .option("--local", "Compare .lynxprompt/rules/ with exported files")
   .action(diffCommand);
 

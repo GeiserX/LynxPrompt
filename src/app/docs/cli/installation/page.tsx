@@ -40,33 +40,54 @@ export default function CliInstallationPage() {
         </div>
       </section>
 
-      {/* npm - Recommended */}
+      {/* JavaScript Package Managers - Recommended */}
       <section className="space-y-4">
         <div className="flex items-center gap-3">
           <Package className="h-6 w-6 text-red-500" />
-          <h2 className="text-2xl font-bold">npm (Recommended)</h2>
+          <h2 className="text-2xl font-bold">JavaScript Package Managers (Recommended)</h2>
         </div>
         <p className="text-muted-foreground">
           The fastest way to install on any platform. Works on macOS, Windows, and Linux.
         </p>
         
-        <div className="space-y-4">
-          <div>
-            <h3 className="mb-2 font-semibold">Global installation</h3>
-            <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="rounded-lg border p-4">
+            <h3 className="mb-2 font-semibold">npm</h3>
+            <div className="overflow-x-auto rounded bg-zinc-950 px-3 py-2">
               <code className="text-sm text-zinc-100">npm install -g lynxprompt</code>
             </div>
           </div>
           
-          <div>
-            <h3 className="mb-2 font-semibold">Or run directly with npx</h3>
-            <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
-              <code className="text-sm text-zinc-100">npx lynxprompt init</code>
+          <div className="rounded-lg border p-4">
+            <h3 className="mb-2 font-semibold">yarn</h3>
+            <div className="overflow-x-auto rounded bg-zinc-950 px-3 py-2">
+              <code className="text-sm text-zinc-100">yarn global add lynxprompt</code>
             </div>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Great for one-off usage without installing globally.
-            </p>
           </div>
+          
+          <div className="rounded-lg border p-4">
+            <h3 className="mb-2 font-semibold">pnpm</h3>
+            <div className="overflow-x-auto rounded bg-zinc-950 px-3 py-2">
+              <code className="text-sm text-zinc-100">pnpm add -g lynxprompt</code>
+            </div>
+          </div>
+          
+          <div className="rounded-lg border p-4">
+            <h3 className="mb-2 font-semibold">bun</h3>
+            <div className="overflow-x-auto rounded bg-zinc-950 px-3 py-2">
+              <code className="text-sm text-zinc-100">bun add -g lynxprompt</code>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-lg border bg-muted/30 p-4">
+          <h3 className="mb-2 font-semibold">Run without installing (npx)</h3>
+          <div className="overflow-x-auto rounded bg-zinc-950 px-3 py-2">
+            <code className="text-sm text-zinc-100">npx lynxprompt wizard</code>
+          </div>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Great for one-off usage or trying out the CLI without global installation.
+          </p>
         </div>
       </section>
 
@@ -163,25 +184,27 @@ brew upgrade lynxprompt`}</code>
         
         <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
           <pre className="text-sm text-zinc-100">
-            <code>{`$ lynxprompt --version
-0.1.0
+            <code>{`$ lynxp --version
+0.3.0
 
-$ lynxprompt --help
+$ lynxp --help
 
 🐱 LynxPrompt CLI
-Generate AI IDE configuration files from your terminal
+Generate AI IDE configuration files
 
 Usage: lynxprompt [options] [command]
 
 Commands:
-  login     Authenticate with LynxPrompt (opens browser)
-  logout    Log out and remove stored credentials
-  whoami    Show current authenticated user
-  init      Interactive wizard to generate AI IDE configuration
-  list      List your blueprints
-  pull      Download a blueprint to the current directory
-  search    Search public blueprints
-  status    Show current AI config status in this directory`}</code>
+  wizard    Generate AI config interactively (recommended)
+  check     Validate AI config files (CI/CD)
+  status    Show config status and tracked blueprints
+  pull      Download and track a blueprint
+  push      Push local file to cloud
+  search    Search marketplace blueprints
+  link      Link local file to cloud blueprint
+  unlink    Disconnect file from cloud blueprint
+  diff      Compare tracked files with cloud
+  login     Authenticate with LynxPrompt`}</code>
           </pre>
         </div>
       </section>
@@ -206,6 +229,24 @@ Commands:
                 <td className="py-3 pr-4">npm</td>
                 <td className="py-3 pr-4">
                   <code className="rounded bg-muted px-2 py-1 text-sm">npm uninstall -g lynxprompt</code>
+                </td>
+              </tr>
+              <tr className="border-b">
+                <td className="py-3 pr-4">yarn</td>
+                <td className="py-3 pr-4">
+                  <code className="rounded bg-muted px-2 py-1 text-sm">yarn global remove lynxprompt</code>
+                </td>
+              </tr>
+              <tr className="border-b">
+                <td className="py-3 pr-4">pnpm</td>
+                <td className="py-3 pr-4">
+                  <code className="rounded bg-muted px-2 py-1 text-sm">pnpm remove -g lynxprompt</code>
+                </td>
+              </tr>
+              <tr className="border-b">
+                <td className="py-3 pr-4">bun</td>
+                <td className="py-3 pr-4">
+                  <code className="rounded bg-muted px-2 py-1 text-sm">bun remove -g lynxprompt</code>
                 </td>
               </tr>
               <tr className="border-b">
@@ -249,4 +290,7 @@ Commands:
     </div>
   );
 }
+
+
+
 

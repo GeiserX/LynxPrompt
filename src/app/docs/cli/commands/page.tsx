@@ -36,6 +36,15 @@ export default function CliCommandsPage() {
               </tr>
             </thead>
             <tbody>
+              {/* Auth first */}
+              <tr className="border-b bg-blue-500/5">
+                <td className="py-3 pr-4">
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp login</code>
+                </td>
+                <td className="py-3 pr-4 text-muted-foreground">
+                  Authenticate with LynxPrompt
+                </td>
+              </tr>
               {/* Primary commands */}
               <tr className="border-b bg-primary/5">
                 <td className="py-3 pr-4">
@@ -72,6 +81,14 @@ export default function CliCommandsPage() {
               </tr>
               <tr className="border-b">
                 <td className="py-3 pr-4">
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp push</code>
+                </td>
+                <td className="py-3 pr-4 text-muted-foreground">
+                  Push local file to cloud
+                </td>
+              </tr>
+              <tr className="border-b">
+                <td className="py-3 pr-4">
                   <code className="rounded bg-muted px-2 py-1 text-sm">lynxp search &lt;query&gt;</code>
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
@@ -89,26 +106,26 @@ export default function CliCommandsPage() {
               {/* Blueprint tracking */}
               <tr className="border-b">
                 <td className="py-3 pr-4">
-                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp link &lt;file&gt; &lt;id&gt;</code>
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp link</code>
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
-                  Link local file to cloud blueprint
+                  Link local file to cloud blueprint (interactive)
                 </td>
               </tr>
               <tr className="border-b">
                 <td className="py-3 pr-4">
-                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp unlink &lt;file&gt;</code>
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp unlink</code>
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
-                  Disconnect file from cloud blueprint
+                  Disconnect file from cloud blueprint (interactive)
                 </td>
               </tr>
               <tr className="border-b">
                 <td className="py-3 pr-4">
-                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp diff &lt;id&gt;</code>
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp diff</code>
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
-                  Show changes vs cloud blueprint
+                  Compare all tracked files with cloud
                 </td>
               </tr>
               {/* Advanced */}
@@ -134,15 +151,6 @@ export default function CliCommandsPage() {
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
                   Manage AI agents
-                </td>
-              </tr>
-              {/* Auth */}
-              <tr className="border-b">
-                <td className="py-3 pr-4">
-                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp login</code>
-                </td>
-                <td className="py-3 pr-4 text-muted-foreground">
-                  Authenticate with LynxPrompt
                 </td>
               </tr>
             </tbody>
@@ -325,42 +333,42 @@ $ lynxp pull bp_abc123 --no-track`}</code>
           <h2 className="text-2xl font-bold">lynxp link</h2>
         </div>
         <p className="text-muted-foreground">
-          Connect an existing local file to a cloud blueprint for tracking. Use this when you already
-          have a file that matches a blueprint and want to track updates.
+          Connect an existing local file to a cloud blueprint for tracking. Interactive mode guides
+          you through the process when run without arguments.
         </p>
 
         <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
           <pre className="text-sm text-zinc-100">
-            <code>{`lynxp link <file> <blueprint-id>
-lynxp link --list
-
-Arguments:
-  file           Local file path (e.g., AGENTS.md)
-  blueprint-id   Blueprint to link to (e.g., bp_abc123)
-
-Options:
-  --list         List all tracked blueprints`}</code>
+            <code>{`lynxp link                         # Interactive mode (recommended)
+lynxp link <file> <blueprint-id>   # Direct mode
+lynxp link --list                  # List tracked blueprints`}</code>
           </pre>
         </div>
 
         <div className="space-y-3">
-          <h3 className="font-semibold">Examples</h3>
+          <h3 className="font-semibold">Interactive Example</h3>
           <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
             <pre className="text-sm text-zinc-100">
-              <code>{`# Link existing file to blueprint
-$ lynxp link AGENTS.md bp_abc123
+              <code>{`$ lynxp link
+🐱 Link File to Blueprint
+
+? Which file do you want to link?
+  → AGENTS.md
+    .cursor/rules/project.mdc
+
+? How do you want to find the blueprint?
+  → 📋 From my blueprints
+    🔍 Search marketplace
+    🔢 Enter ID directly
+
+? Select a blueprint:
+  → Next.js TypeScript Starter
+    Team Standards
+
 ✅ Linked: AGENTS.md → bp_abc123
 
-# List all tracked blueprints
-$ lynxp link --list
-🐱 Tracked Blueprints
-
-✓ AGENTS.md [marketplace]
-  ID: bp_abc123 • Next.js TypeScript Starter
-
-● .cursor/rules/project.mdc [team]
-  ID: bp_team456 • Team Standards
-  ⚠ Local changes detected`}</code>
+# Or use direct mode:
+$ lynxp link AGENTS.md bp_abc123`}</code>
             </pre>
           </div>
         </div>
@@ -373,15 +381,13 @@ $ lynxp link --list
           <h2 className="text-2xl font-bold">lynxp unlink</h2>
         </div>
         <p className="text-muted-foreground">
-          Disconnect a local file from its cloud blueprint. The file remains but is no longer tracked.
+          Disconnect a local file from its cloud blueprint. Interactive mode when run without arguments.
         </p>
 
         <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
           <pre className="text-sm text-zinc-100">
-            <code>{`lynxp unlink <file>
-
-Arguments:
-  file    Local file to unlink (e.g., AGENTS.md)`}</code>
+            <code>{`lynxp unlink           # Interactive mode (shows tracked files)
+lynxp unlink <file>    # Direct mode`}</code>
           </pre>
         </div>
 
@@ -389,16 +395,20 @@ Arguments:
           <h3 className="font-semibold">Example</h3>
           <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
             <pre className="text-sm text-zinc-100">
-              <code>{`$ lynxp unlink AGENTS.md
+              <code>{`$ lynxp unlink
+🐱 Unlink File from Blueprint
 
-Currently linked to: bp_abc123
-   Name: Next.js TypeScript Starter
+? Which file do you want to unlink?
+  → AGENTS.md (Next.js TypeScript Starter)
+    .cursor/rules/project.mdc (Team Standards)
+
+Currently linked to: Next.js TypeScript Starter
+   ID: bp_abc123
    Source: marketplace
 
-? Unlink AGENTS.md from Next.js TypeScript Starter? Yes
+? Unlink AGENTS.md? Yes
 
-✅ Unlinked: AGENTS.md
-  The file is now a standalone local file.`}</code>
+✅ Unlinked: AGENTS.md`}</code>
             </pre>
           </div>
         </div>
@@ -411,18 +421,15 @@ Currently linked to: bp_abc123
           <h2 className="text-2xl font-bold">lynxp diff</h2>
         </div>
         <p className="text-muted-foreground">
-          Show changes between local files and cloud blueprints, or between .lynxprompt/rules/ and exported files.
+          Compare tracked files with their cloud blueprints. Run without arguments to check all tracked files at once.
         </p>
 
         <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
           <pre className="text-sm text-zinc-100">
-            <code>{`lynxp diff [blueprint-id] [options]
-
-Arguments:
-  blueprint-id   Compare local with this blueprint
-
-Options:
-  --local        Compare .lynxprompt/rules/ with exported files`}</code>
+            <code>{`lynxp diff                   # Compare ALL tracked files with cloud
+lynxp diff <file>            # Compare specific file with its blueprint
+lynxp diff <blueprint-id>    # Compare with specific blueprint
+lynxp diff --local           # Compare .lynxprompt/rules/ with exports`}</code>
           </pre>
         </div>
 
@@ -430,25 +437,27 @@ Options:
           <h3 className="font-semibold">Examples</h3>
           <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
             <pre className="text-sm text-zinc-100">
-              <code>{`# Compare with cloud blueprint
-$ lynxp diff bp_abc123
-✓ Blueprint: Next.js TypeScript Starter
+              <code>{`# Compare all tracked files (recommended)
+$ lynxp diff
+🐱 LynxPrompt Diff
 
-Changes (remote → local):
-  ...
+📄 AGENTS.md
+   Linked to: Next.js Starter (bp_abc123)
+   ✓ In sync with cloud
+
+📄 .cursor/rules/project.mdc
+   Linked to: Team Standards (bp_team456)
 - Old line
 + New line
-  ...
+   +2 -1 lines
 
-Summary: +5 -3 lines changed
+To push local changes: lynxp push
 
-# Compare local rules with exports
-$ lynxp diff --local
-✓ AGENTS.md is in sync
-⚠ .cursor/rules/project.mdc differs from source
-  +2 -1 lines
+# Compare specific file
+$ lynxp diff AGENTS.md
 
-Run 'lynxp sync' to update exported files`}</code>
+# Compare with untracked blueprint
+$ lynxp diff bp_newid123`}</code>
             </pre>
           </div>
         </div>
