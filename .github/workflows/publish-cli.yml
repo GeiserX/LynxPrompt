@@ -138,6 +138,81 @@ jobs:
           echo "sha256=$SHA" >> $GITHUB_OUTPUT
 
   # ===========================================
+  # Build and upload standalone binaries
+  # ===========================================
+  publish-binaries:
+    needs: [check, publish-npm]
+    if: ${{ needs.check.outputs.should_publish == 'true' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cli
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Ensure version matches
+        run: |
+          CURRENT=$(node -p "require('./package.json').version")
+          TARGET="${{ needs.check.outputs.version }}"
+          if [[ "$CURRENT" != "$TARGET" ]]; then
+            npm version "$TARGET" --no-git-tag-version
+          fi
+
+      - name: Build standalone binaries
+        run: npm run build:binaries
+
+      - name: Package binaries
+        run: |
+          cd binaries
+          VERSION="${{ needs.check.outputs.version }}"
+          
+          # Linux x64
+          mv lynxprompt-linux-x64 lynxprompt
+          tar -czvf "lynxprompt-${VERSION}-linux-x64.tar.gz" lynxprompt
+          rm lynxprompt
+          
+          # Linux arm64
+          mv lynxprompt-linux-arm64 lynxprompt
+          tar -czvf "lynxprompt-${VERSION}-linux-arm64.tar.gz" lynxprompt
+          rm lynxprompt
+          
+          # macOS x64
+          mv lynxprompt-macos-x64 lynxprompt
+          tar -czvf "lynxprompt-${VERSION}-macos-x64.tar.gz" lynxprompt
+          rm lynxprompt
+          
+          # macOS arm64 (Apple Silicon)
+          mv lynxprompt-macos-arm64 lynxprompt
+          tar -czvf "lynxprompt-${VERSION}-macos-arm64.tar.gz" lynxprompt
+          rm lynxprompt
+          
+          # Windows x64
+          mv lynxprompt-win-x64.exe lynxprompt.exe
+          zip "lynxprompt-${VERSION}-win-x64.zip" lynxprompt.exe
+          rm lynxprompt.exe
+          
+          ls -la
+
+      - name: Upload binaries to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: cli-v${{ needs.check.outputs.version }}
+          files: |
+            cli/binaries/*.tar.gz
+            cli/binaries/*.zip
+          fail_on_unmatched_files: false
+
+  # ===========================================
   # Publish to Chocolatey (Windows)
   # ===========================================
   publish-chocolatey:
@@ -265,7 +340,7 @@ jobs:
   # Summary
   # ===========================================
   summary:
-    needs: [check, publish-npm, publish-chocolatey, publish-snap, update-homebrew]
+    needs: [check, publish-npm, publish-binaries, publish-chocolatey, publish-snap, update-homebrew]
     if: always() && needs.check.outputs.should_publish == 'true'
     runs-on: ubuntu-latest
 
@@ -279,11 +354,16 @@ jobs:
           echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| npm | ${{ needs.publish-npm.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Standalone Binaries | ${{ needs.publish-binaries.result == 'success' && '✅' || needs.publish-binaries.result == 'skipped' && '⏭️' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Chocolatey | ${{ needs.publish-chocolatey.result == 'success' && '✅' || needs.publish-chocolatey.result == 'skipped' && '⏭️' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Snap | ${{ needs.publish-snap.result == 'success' && '✅' || needs.publish-snap.result == 'skipped' && '⏭️' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Homebrew | ${{ needs.update-homebrew.result == 'success' && '✅' || needs.update-homebrew.result == 'skipped' && '⏭️' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Installation" >> $GITHUB_STEP_SUMMARY
           echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "# npm (requires Node.js)" >> $GITHUB_STEP_SUMMARY
           echo "npm install -g lynxprompt@${{ needs.check.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# Standalone binary (no dependencies)" >> $GITHUB_STEP_SUMMARY
+          echo "# Download from: https://github.com/GeiserX/LynxPrompt/releases/tag/cli-v${{ needs.check.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
