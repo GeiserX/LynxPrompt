@@ -12,6 +12,22 @@
 
 ---
 
+## 🚀 DEPLOYMENT TO PRODUCTION = NEW RELEASE
+
+**When the user asks to deploy to production (`main` branch), this ALWAYS includes creating a new release.**
+
+The deployment process is:
+1. Merge `develop` into `main` (or push to `main`)
+2. The GitHub Actions workflow will automatically create a new release with:
+   - Auto-generated version tag (based on conventional commits)
+   - Changelog from commits since last release
+   - npm package publication for the CLI
+3. After pushing to `main`, verify the release was created and the workflow succeeded
+
+**Never deploy to production without a release being created.** If the release workflow fails, investigate and fix before considering deployment complete.
+
+---
+
 ## 🔄 CLI & WEB WIZARD FEATURE PARITY
 
 **The CLI (`lynxprompt` package) and Web Wizard MUST always have the same functionality.**
