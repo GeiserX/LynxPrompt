@@ -608,6 +608,14 @@ const PLATFORMS = [
     note: "Codeium IDE",
   },
   {
+    id: "antigravity",
+    name: "Antigravity",
+    file: "GEMINI.md",
+    icon: "💎",
+    gradient: "from-blue-600 to-indigo-600",
+    note: "Google's AI-powered IDE",
+  },
+  {
     id: "aider",
     name: "Aider",
     file: ".aider.conf.yml",

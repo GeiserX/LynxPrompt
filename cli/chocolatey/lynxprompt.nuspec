@@ -16,7 +16,7 @@
     <description>CLI for LynxPrompt - Generate AI IDE configuration files (.cursorrules, AGENTS.md, copilot-instructions.md, etc.) from your terminal.</description>
     <summary>Generate AI IDE configuration files from your terminal</summary>
     <releaseNotes>Major update: Full CLI wizard with 11 steps matching web UI, tier-based feature gating (Free/Pro/Max), 16 AI editor platforms support, enhanced code generation with testing strategy, boundaries customization, and static file generation.</releaseNotes>
-    <tags>ai ide cursor copilot claude windsurf cli developer-tools</tags>
+    <tags>ai ide cursor copilot claude windsurf antigravity gemini cli developer-tools</tags>
     <dependencies>
       <dependency id="nodejs" version="[18.0,)" />
     </dependencies>

@@ -22,8 +22,8 @@ export default function GettingStartedPage() {
         </div>
         <p className="max-w-2xl text-lg text-muted-foreground">
           LynxPrompt helps you generate AI IDE configuration files for tools
-          like Cursor, Claude Code, GitHub Copilot, and Windsurf. Get started in
-          just a few minutes.
+          like Cursor, Claude Code, GitHub Copilot, Windsurf, and Antigravity.
+          Get started in just a few minutes.
         </p>
       </div>
 

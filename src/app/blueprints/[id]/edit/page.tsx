@@ -37,6 +37,7 @@ const BLUEPRINT_TYPES = [
   { value: "CLAUDE_MD", label: "Claude Code (CLAUDE.md)", icon: "🤖" },
   { value: "COPILOT_INSTRUCTIONS", label: "GitHub Copilot (.github/copilot-instructions.md)", icon: "✈️" },
   { value: "WINDSURF_RULES", label: "Windsurf Rules (.windsurfrules)", icon: "🏄" },
+  { value: "GEMINI_MD", label: "Antigravity (GEMINI.md)", icon: "💎" },
   { value: "CLINE_RULES", label: "Cline Rules (.clinerules)", icon: "⚡" },
   { value: "CODEX_MD", label: "OpenAI Codex (CODEX.md)", icon: "🧠" },
   { value: "CURSOR_RULES", label: "Cursor Rules (.cursorrules) — Deprecated", icon: "🎯" },

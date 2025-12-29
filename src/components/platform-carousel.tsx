@@ -47,9 +47,9 @@ const PLATFORMS = [
     icon: "🔍",
   },
   {
-    name: "Gemini Code Assist",
-    description: "Google's AI coding helper",
-    configFile: ".gemini/settings.json",
+    name: "Antigravity",
+    description: "Google's AI-powered IDE",
+    configFile: "GEMINI.md",
     gradient: "from-blue-600 to-indigo-600",
     icon: "💎",
   },

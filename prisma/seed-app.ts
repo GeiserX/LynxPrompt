@@ -51,6 +51,16 @@ async function main() {
       docsUrl: "https://windsurf.com/docs",
       isActive: true,
     },
+    {
+      name: "antigravity",
+      displayName: "Antigravity",
+      description: "Google's AI-powered IDE",
+      configFile: "GEMINI.md",
+      configPath: "",
+      website: "https://antigravity-ide.com",
+      docsUrl: "https://antigravity-ide.com/docs",
+      isActive: true,
+    },
   ];
 
   for (const platform of platforms) {

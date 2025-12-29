@@ -81,9 +81,19 @@ export const AGENTS: AgentDefinition[] = [
 
   // === MARKDOWN FORMAT AGENTS ===
   {
+    id: "antigravity",
+    name: "Antigravity",
+    description: "Google's AI-powered IDE with GEMINI.md support",
+    patterns: ["GEMINI.md"],
+    output: "GEMINI.md",
+    format: "markdown",
+    category: "popular",
+    popular: true,
+  },
+  {
     id: "gemini",
-    name: "Gemini",
-    description: "Google's Gemini AI assistant",
+    name: "Gemini CLI",
+    description: "Google's Gemini CLI tool",
     patterns: ["GEMINI.md"],
     output: "GEMINI.md",
     format: "markdown",

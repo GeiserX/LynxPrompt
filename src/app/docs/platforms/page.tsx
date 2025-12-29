@@ -73,6 +73,16 @@ export default function PlatformsOverviewPage() {
             </div>
           </Link>
           <Link
+            href="/docs/platforms/antigravity"
+            className="flex items-center gap-3 rounded-lg border bg-background p-4 transition-colors hover:bg-muted"
+          >
+            <FileCode className="h-5 w-5 text-primary" />
+            <div>
+              <p className="font-medium">Antigravity</p>
+              <p className="text-sm text-muted-foreground">GEMINI.md</p>
+            </div>
+          </Link>
+          <Link
             href="/docs/platforms/agents-md"
             className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 p-4 transition-colors hover:bg-primary/10"
           >
@@ -130,6 +140,12 @@ export default function PlatformsOverviewPage() {
             </code>
             <p className="mt-2 text-xs text-muted-foreground">
               Windsurf (Codeium) project rules
+            </p>
+          </div>
+          <div className="rounded-lg border bg-card p-4">
+            <code className="text-sm font-medium text-primary">GEMINI.md</code>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Antigravity (Google) AI instructions
             </p>
           </div>
           <div className="rounded-lg border bg-card p-4">
