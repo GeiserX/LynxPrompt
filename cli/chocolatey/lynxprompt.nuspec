@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
   <metadata>
     <id>lynxprompt</id>
-    <version>0.4.3</version>
+    <version>0.4.4</version>
     <title>LynxPrompt CLI</title>
     <authors>GeiserCloud</authors>
     <owners>GeiserCloud</owners>
