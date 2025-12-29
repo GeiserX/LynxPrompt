@@ -5,6 +5,7 @@ import { writeFile, mkdir, access } from "fs/promises";
 import { join, dirname } from "path";
 import { detectProject } from "../utils/detect.js";
 import { generateConfig, GenerateOptions } from "../utils/generator.js";
+import { isAuthenticated, getUser } from "../config.js";
 
 interface WizardOptions {
   name?: string;
@@ -159,6 +160,41 @@ export async function wizardCommand(options: WizardOptions): Promise<void> {
   console.log(chalk.gray("     Generate AI IDE configuration in seconds"));
   console.log();
 
+  // Check authentication and show notice
+  const authenticated = isAuthenticated();
+  const user = getUser();
+  const userPlan = user?.plan?.toUpperCase() || "FREE";
+  
+  if (!authenticated) {
+    // Show login notice for guests
+    console.log(chalk.yellow("┌─────────────────────────────────────────────────────┐"));
+    console.log(chalk.yellow("│") + chalk.white(" 💡 ") + chalk.gray("Log in for full wizard features:") + "              " + chalk.yellow("│"));
+    console.log(chalk.yellow("│") + "                                                     " + chalk.yellow("│"));
+    console.log(chalk.yellow("│") + chalk.gray("   • ") + chalk.white("Push configs to cloud") + chalk.gray(" (lynxp push)") + "          " + chalk.yellow("│"));
+    console.log(chalk.yellow("│") + chalk.gray("   • ") + chalk.white("Sync across devices") + chalk.gray(" (lynxp sync)") + "            " + chalk.yellow("│"));
+    console.log(chalk.yellow("│") + chalk.gray("   • ") + chalk.white("Access marketplace blueprints") + "                " + chalk.yellow("│"));
+    console.log(chalk.yellow("│") + "                                                     " + chalk.yellow("│"));
+    console.log(chalk.yellow("│") + chalk.cyan("   Run: lynxp login") + "                                " + chalk.yellow("│"));
+    console.log(chalk.yellow("└─────────────────────────────────────────────────────┘"));
+    console.log();
+  } else {
+    // Show logged-in status with plan
+    const planEmoji = userPlan === "TEAMS" ? "👥" : userPlan === "MAX" ? "🚀" : userPlan === "PRO" ? "⚡" : "🆓";
+    console.log(chalk.green(`  ✓ Logged in as ${chalk.bold(user?.name || user?.email)} ${planEmoji} ${chalk.gray(userPlan)}`));
+    
+    // Show plan-specific features
+    if (userPlan === "FREE") {
+      console.log(chalk.gray("    Upgrade to PRO for API sync & advanced features"));
+    } else if (userPlan === "PRO") {
+      console.log(chalk.cyan("    ⚡ PRO features enabled: API sync, sell blueprints"));
+    } else if (userPlan === "MAX") {
+      console.log(chalk.magenta("    🚀 MAX features enabled: API sync, AI assist, premium blueprints"));
+    } else if (userPlan === "TEAMS") {
+      console.log(chalk.yellow("    👥 TEAMS features enabled: Team sync, SSO, shared blueprints"));
+    }
+    console.log();
+  }
+
   // Try to detect project info
   const detected = await detectProject(process.cwd());
   
@@ -251,14 +287,26 @@ export async function wizardCommand(options: WizardOptions): Promise<void> {
     }
 
     console.log();
-    printBox([
+    
+    // Build next steps based on auth status
+    const nextStepsLines = [
       chalk.gray("Your AI assistant will now follow these instructions."),
       "",
       chalk.gray("Next steps:"),
       chalk.cyan("  lynxp check    ") + chalk.gray("Validate configuration"),
-      chalk.cyan("  lynxp push     ") + chalk.gray("Sync to cloud"),
-      chalk.cyan("  lynxp status   ") + chalk.gray("View current setup"),
-    ], chalk.gray);
+    ];
+    
+    if (authenticated) {
+      nextStepsLines.push(chalk.cyan("  lynxp push     ") + chalk.gray("Upload to cloud"));
+      nextStepsLines.push(chalk.cyan("  lynxp link     ") + chalk.gray("Link to a blueprint"));
+      nextStepsLines.push(chalk.cyan("  lynxp sync     ") + chalk.gray("Sync with linked blueprint"));
+    } else {
+      nextStepsLines.push(chalk.gray("  lynxp login    ") + chalk.yellow("Log in to push & sync"));
+    }
+    
+    nextStepsLines.push(chalk.cyan("  lynxp status   ") + chalk.gray("View current setup"));
+    
+    printBox(nextStepsLines, chalk.gray);
     console.log();
     
   } catch (error) {
