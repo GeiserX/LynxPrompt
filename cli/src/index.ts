@@ -15,6 +15,9 @@ import { agentsCommand } from "./commands/agents.js";
 import { checkCommand } from "./commands/check.js";
 import { diffCommand } from "./commands/diff.js";
 import { linkCommand, unlinkCommand } from "./commands/link.js";
+import { analyzeCommand } from "./commands/analyze.js";
+import { convertCommand } from "./commands/convert.js";
+import { mergeCommand } from "./commands/merge.js";
 
 const program = new Command();
 
@@ -39,6 +42,17 @@ program
   .option("--persona <persona>", "AI persona (fullstack, backend, frontend, devops, data, security)")
   .option("--boundaries <level>", "Boundary preset (conservative, standard, permissive)")
   .option("-y, --yes", "Skip prompts, use defaults (generates AGENTS.md)")
+  // New arguments
+  .option("-o, --output <dir>", "Output directory (default: current directory)")
+  .option("--repo-url <url>", "Analyze remote repository URL (GitHub/GitLab supported)")
+  .option("--blueprint", "Generate with [[VARIABLE|default]] placeholders for templates")
+  .option("--license <type>", "License type (mit, apache-2.0, gpl-3.0, etc.)")
+  .option("--ci-cd <platform>", "CI/CD platform (github_actions, gitlab_ci, jenkins, etc.)")
+  .option("--project-type <type>", "Project type (work, leisure, opensource, learning)")
+  .option("--detect-only", "Only detect project info, don't generate files")
+  .option("--load-draft <name>", "Load a saved wizard draft")
+  .option("--save-draft <name>", "Save wizard state as a draft (auto-saves at end)")
+  .option("--vars <values>", "Fill variables: VAR1=value1,VAR2=value2")
   .action(wizardCommand);
 
 // Check - validation for CI/CD
@@ -47,6 +61,32 @@ program
   .description("Validate AI configuration files (for CI/CD)")
   .option("--ci", "CI mode - exit codes only (0=pass, 1=fail)")
   .action(checkCommand);
+
+// Analyze - standalone project analyzer
+program
+  .command("analyze")
+  .description("Analyze project configuration without generating files")
+  .option("-r, --remote <url>", "Analyze a remote repository (GitHub/GitLab)")
+  .option("-j, --json", "Output as JSON (for scripting)")
+  .action(analyzeCommand);
+
+// Convert - format conversion
+program
+  .command("convert [source] <target>")
+  .description("Convert AI config between formats (e.g., AGENTS.md → cursor)")
+  .option("-o, --output <file>", "Output filename")
+  .option("-f, --force", "Overwrite existing output file")
+  .action(convertCommand);
+
+// Merge - combine multiple configs
+program
+  .command("merge <files...>")
+  .description("Merge multiple AI configuration files into one")
+  .option("-o, --output <file>", "Output filename (default: merged.md)")
+  .option("-s, --strategy <type>", "Merge strategy: concat, sections, smart (default: smart)")
+  .option("-f, --force", "Overwrite existing output file")
+  .option("-i, --interactive", "Review and select sections to include")
+  .action(mergeCommand);
 
 // Status - show what's configured
 program
@@ -174,6 +214,13 @@ ${chalk.cyan("Quick Start:")}
   ${chalk.white("$ lynxp wizard")}                ${chalk.gray("Generate config interactively")}
   ${chalk.white("$ lynxp wizard -y")}             ${chalk.gray("Generate AGENTS.md with defaults")}
   ${chalk.white("$ lynxp wizard -f cursor")}      ${chalk.gray("Generate .cursor/rules/")}
+  ${chalk.white("$ lynxp wizard --blueprint")}    ${chalk.gray("Generate with [[VAR|default]] placeholders")}
+
+${chalk.cyan("Analysis & Tools:")}
+  ${chalk.white("$ lynxp analyze")}               ${chalk.gray("Analyze project tech stack")}
+  ${chalk.white("$ lynxp analyze -r <url>")}      ${chalk.gray("Analyze remote repository")}
+  ${chalk.white("$ lynxp convert AGENTS.md cursor")} ${chalk.gray("Convert to Cursor format")}
+  ${chalk.white("$ lynxp merge a.md b.md -o out.md")} ${chalk.gray("Merge multiple configs")}
 
 ${chalk.cyan("Marketplace:")}
   ${chalk.white("$ lynxp search nextjs")}         ${chalk.gray("Search blueprints")}

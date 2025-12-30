@@ -187,6 +187,75 @@ Slack channel: #[[SLACK_CHANNEL|dev-team]]`}</code>
         </ul>
       </section>
 
+      {/* Wizard-Generated Variables */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg bg-gradient-to-br from-cyan-500/20 to-purple-500/20 p-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+          </div>
+          <h2 className="text-2xl font-bold">Wizard-Generated Variables</h2>
+        </div>
+        <p className="text-muted-foreground">
+          When using the <strong>wizard in blueprint mode</strong> (CLI: <code className="rounded bg-muted px-1.5 py-0.5 text-sm">lynxp wizard --blueprint</code>), 
+          LynxPrompt automatically generates these standard variables:
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-lg border border-cyan-200 bg-cyan-50/30 p-3 dark:border-cyan-500/30 dark:bg-cyan-900/20">
+            <code className="text-sm font-medium text-cyan-700 dark:text-cyan-300">[[PROJECT_NAME|...]]</code>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Project name from wizard input
+            </p>
+          </div>
+          <div className="rounded-lg border border-cyan-200 bg-cyan-50/30 p-3 dark:border-cyan-500/30 dark:bg-cyan-900/20">
+            <code className="text-sm font-medium text-cyan-700 dark:text-cyan-300">[[PROJECT_DESCRIPTION|...]]</code>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Project description from wizard input
+            </p>
+          </div>
+          <div className="rounded-lg border border-cyan-200 bg-cyan-50/30 p-3 dark:border-cyan-500/30 dark:bg-cyan-900/20">
+            <code className="text-sm font-medium text-cyan-700 dark:text-cyan-300">[[AUTHOR_NAME|...]]</code>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Author name for commit attribution
+            </p>
+          </div>
+          <div className="rounded-lg border border-cyan-200 bg-cyan-50/30 p-3 dark:border-cyan-500/30 dark:bg-cyan-900/20">
+            <code className="text-sm font-medium text-cyan-700 dark:text-cyan-300">[[AUTHOR_EMAIL|...]]</code>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Author email for commit attribution
+            </p>
+          </div>
+          <div className="rounded-lg border border-cyan-200 bg-cyan-50/30 p-3 dark:border-cyan-500/30 dark:bg-cyan-900/20">
+            <code className="text-sm font-medium text-cyan-700 dark:text-cyan-300">[[REPO_URL|...]]</code>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Repository URL (GitHub, GitLab, etc.)
+            </p>
+          </div>
+          <div className="rounded-lg border border-cyan-200 bg-cyan-50/30 p-3 dark:border-cyan-500/30 dark:bg-cyan-900/20">
+            <code className="text-sm font-medium text-cyan-700 dark:text-cyan-300">[[LICENSE|...]]</code>
+            <p className="mt-1 text-xs text-muted-foreground">
+              License type (MIT, Apache-2.0, etc.)
+            </p>
+          </div>
+        </div>
+        <div className="rounded-lg border bg-card p-4">
+          <h3 className="font-medium">How to use blueprint mode</h3>
+          <div className="mt-3 space-y-2 text-sm text-muted-foreground">
+            <div className="rounded bg-muted/50 p-3">
+              <p className="font-mono text-xs">
+                <span className="text-cyan-600 dark:text-cyan-400"># CLI</span><br />
+                lynxp wizard --blueprint<br />
+                <span className="text-muted-foreground"># Or with variable filling:</span><br />
+                lynxp wizard --blueprint --vars &quot;PROJECT_NAME=MyApp,LICENSE=MIT&quot;
+              </p>
+            </div>
+            <p className="mt-2">
+              This creates config files with <code className="rounded bg-muted px-1 py-0.5 text-xs">[[VAR|default]]</code> placeholders 
+              instead of hardcoded values, making them reusable as templates.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Common variables */}
       <section className="space-y-4">
         <div className="flex items-center gap-3">

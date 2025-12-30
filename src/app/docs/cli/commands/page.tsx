@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Command, Wand2, FileCode, Search, Download, User, LogIn, LogOut, Info, ArrowRight, RefreshCw, Layers, Cloud, ArrowUp, ArrowDown, Link2, Unlink, CheckCircle, FileSearch, Sparkles } from "lucide-react";
+import { Command, Wand2, FileCode, Search, Download, User, LogIn, LogOut, Info, ArrowRight, RefreshCw, Layers, Cloud, ArrowUp, ArrowDown, Link2, Unlink, CheckCircle, FileSearch, Sparkles, Scan, GitMerge, ArrowRightLeft } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "CLI Commands",
@@ -52,6 +52,30 @@ export default function CliCommandsPage() {
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
                   Generate AI config interactively <span className="text-xs text-primary">(recommended)</span>
+                </td>
+              </tr>
+              <tr className="border-b bg-primary/5">
+                <td className="py-3 pr-4">
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp analyze</code>
+                </td>
+                <td className="py-3 pr-4 text-muted-foreground">
+                  Analyze project tech stack (local or remote)
+                </td>
+              </tr>
+              <tr className="border-b bg-primary/5">
+                <td className="py-3 pr-4">
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp convert</code>
+                </td>
+                <td className="py-3 pr-4 text-muted-foreground">
+                  Convert between config formats
+                </td>
+              </tr>
+              <tr className="border-b bg-primary/5">
+                <td className="py-3 pr-4">
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp merge</code>
+                </td>
+                <td className="py-3 pr-4 text-muted-foreground">
+                  Merge multiple config files
                 </td>
               </tr>
               <tr className="border-b bg-primary/5">
@@ -176,14 +200,26 @@ export default function CliCommandsPage() {
           <pre className="text-sm text-zinc-100">
             <code>{`lynxp wizard [options]
 
-Options:
-  -n, --name <name>        Project name
-  -d, --description <desc> Project description
-  -s, --stack <stack>      Tech stack (comma-separated)
-  -f, --format <format>    Output format: agents, cursor, or multiple
-  --persona <persona>      AI persona (fullstack, backend, frontend, etc.)
-  --boundaries <level>     Boundary preset (conservative, standard, permissive)
-  -y, --yes                Skip prompts, generate AGENTS.md with defaults`}</code>
+Basic Options:
+  -n, --name <name>         Project name
+  -d, --description <desc>  Project description
+  -s, --stack <stack>       Tech stack (comma-separated)
+  -f, --format <format>     Output: agents, cursor, copilot, etc.
+  --persona <persona>       AI persona (fullstack, backend, frontend, etc.)
+  --boundaries <level>      Boundary preset (conservative, standard, permissive)
+  -y, --yes                 Skip prompts, use defaults
+
+Advanced Options:
+  -o, --output <dir>        Output directory
+  --repo-url <url>          Analyze remote repository (GitHub/GitLab)
+  --blueprint               Generate with [[VAR|default]] placeholders
+  --license <type>          License type (mit, apache-2.0, gpl-3.0)
+  --ci-cd <platform>        CI/CD platform (github_actions, gitlab_ci)
+  --project-type <type>     Project type (work, leisure, opensource)
+  --detect-only             Only detect project info, don't generate
+  --load-draft <name>       Load a saved wizard draft
+  --save-draft <name>       Save wizard state as draft
+  --vars <values>           Fill variables: VAR1=val1,VAR2=val2`}</code>
           </pre>
         </div>
 
@@ -196,20 +232,169 @@ $ lynxp wizard
 
 # Quick generation with defaults
 $ lynxp wizard -y
-✅ Generated: AGENTS.md
 
-# Generate for Cursor specifically
+# Generate for Cursor
 $ lynxp wizard -f cursor
-✅ Generated: .cursor/rules/project.mdc
 
-# Generate multiple formats
-$ lynxp wizard -f agents,cursor,copilot
-✅ Generated:
-   AGENTS.md
-   .cursor/rules/project.mdc
-   .github/copilot-instructions.md`}</code>
+# Analyze remote repo first
+$ lynxp wizard --repo-url https://github.com/owner/repo
+
+# Generate blueprint template
+$ lynxp wizard --blueprint
+# Output: [[PROJECT_NAME|MyApp]] configuration...
+
+# Fill blueprint variables
+$ lynxp wizard --blueprint --vars "PROJECT_NAME=MyApp,LICENSE=MIT"
+
+# Save/load drafts
+$ lynxp wizard --save-draft myproject
+$ lynxp wizard --load-draft myproject`}</code>
             </pre>
           </div>
+        </div>
+
+        <div className="rounded-lg border bg-card p-4">
+          <h4 className="font-semibold text-sm mb-2">Remote Repository Detection</h4>
+          <p className="text-sm text-muted-foreground">
+            Max/Teams users can analyze remote repositories via GitHub or GitLab API. 
+            For other hosts, a shallow clone is used automatically.
+          </p>
+        </div>
+      </section>
+
+      {/* analyze command */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-3">
+          <Scan className="h-5 w-5 text-primary" />
+          <h2 className="text-2xl font-bold">lynxp analyze</h2>
+        </div>
+        <p className="text-muted-foreground">
+          Analyze project configuration and tech stack without generating files. 
+          Supports local directories and remote repositories (GitHub, GitLab).
+        </p>
+
+        <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+          <pre className="text-sm text-zinc-100">
+            <code>{`lynxp analyze [options]
+
+Options:
+  -r, --remote <url>    Analyze remote repository
+  -j, --json            Output as JSON (for scripting)`}</code>
+          </pre>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="font-semibold">Examples</h3>
+          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+            <pre className="text-sm text-zinc-100">
+              <code>{`# Analyze current directory
+$ lynxp analyze
+📊 Project Analysis
+  Name: my-project
+  Stack: typescript, react, tailwind
+  Package Manager: npm
+  CI/CD: github_actions
+
+# Analyze remote repository
+$ lynxp analyze -r https://github.com/owner/repo
+
+# JSON output for scripts
+$ lynxp analyze --json | jq '.detected.stack'`}</code>
+            </pre>
+          </div>
+        </div>
+      </section>
+
+      {/* convert command */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-3">
+          <ArrowRightLeft className="h-5 w-5 text-primary" />
+          <h2 className="text-2xl font-bold">lynxp convert</h2>
+        </div>
+        <p className="text-muted-foreground">
+          Convert AI configuration files between formats. Useful for migrating 
+          between editors or generating multiple formats from a single source.
+        </p>
+
+        <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+          <pre className="text-sm text-zinc-100">
+            <code>{`lynxp convert [source] <target>
+
+Arguments:
+  source    Source file (auto-detected if omitted)
+  target    Target format: agents, cursor, copilot, windsurf, etc.
+
+Options:
+  -o, --output <file>   Output filename
+  -f, --force           Overwrite existing file`}</code>
+          </pre>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="font-semibold">Examples</h3>
+          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+            <pre className="text-sm text-zinc-100">
+              <code>{`# Convert AGENTS.md to Cursor format
+$ lynxp convert AGENTS.md cursor
+✓ Converted to .cursor/rules/project.mdc
+
+# Auto-detect source and convert
+$ lynxp convert cursor
+
+# Custom output filename
+$ lynxp convert AGENTS.md copilot -o team-rules.md`}</code>
+            </pre>
+          </div>
+        </div>
+      </section>
+
+      {/* merge command */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-3">
+          <GitMerge className="h-5 w-5 text-primary" />
+          <h2 className="text-2xl font-bold">lynxp merge</h2>
+        </div>
+        <p className="text-muted-foreground">
+          Merge two or more AI configuration files into one. Useful for combining 
+          team rules, project-specific configs, or rules from different sources.
+        </p>
+
+        <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+          <pre className="text-sm text-zinc-100">
+            <code>{`lynxp merge <file1> <file2> [...files]
+
+Options:
+  -o, --output <file>      Output filename (default: merged.md)
+  -s, --strategy <type>    Merge strategy: concat, sections, smart
+  -f, --force              Overwrite existing file
+  -i, --interactive        Review and select sections to include`}</code>
+          </pre>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="font-semibold">Examples</h3>
+          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+            <pre className="text-sm text-zinc-100">
+              <code>{`# Merge two config files
+$ lynxp merge team-rules.md project-rules.md
+✓ Merged to merged.md
+
+# Custom output and strategy
+$ lynxp merge a.md b.md c.md -o combined.md -s smart
+
+# Interactive mode to select sections
+$ lynxp merge rules1.md rules2.md -i`}</code>
+            </pre>
+          </div>
+        </div>
+
+        <div className="rounded-lg border bg-card p-4">
+          <h4 className="font-semibold text-sm mb-2">Merge Strategies</h4>
+          <ul className="text-sm text-muted-foreground space-y-1">
+            <li><strong>concat</strong> — Simple concatenation with separators</li>
+            <li><strong>sections</strong> — Group by section title</li>
+            <li><strong>smart</strong> — Dedupe similar content (default)</li>
+          </ul>
         </div>
       </section>
 
