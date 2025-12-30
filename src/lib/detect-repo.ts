@@ -83,6 +83,21 @@ interface GitHubRepoInfo {
   default_branch: string;
 }
 
+// GitLab API types
+interface GitLabFile {
+  name: string;
+  path: string;
+  type: "blob" | "tree";
+}
+
+interface GitLabRepoInfo {
+  name: string;
+  description: string | null;
+  license?: { key: string } | null;
+  visibility: "public" | "private" | "internal";
+  default_branch: string;
+}
+
 /**
  * Detect repo host from URL
  */
@@ -120,20 +135,106 @@ export function parseGitHubUrl(url: string): { owner: string; repo: string } | n
 }
 
 /**
- * Parse GitLab repo URL to owner/repo (or group/subgroup/repo)
+ * Parse GitLab repo URL to project path (handles groups/subgroups)
  */
-export function parseGitLabUrl(url: string): { path: string } | null {
+export function parseGitLabUrl(url: string): { path: string; host: string } | null {
+  // Support gitlab.com and self-hosted GitLab instances
   const patterns = [
-    /gitlab\.com[/:](.+?)(?:\.git)?$/,
+    /^https?:\/\/([^/]+)\/(.+?)(?:\.git)?$/,
+    /^git@([^:]+):(.+?)(?:\.git)?$/,
   ];
 
   for (const pattern of patterns) {
     const match = url.match(pattern);
     if (match) {
-      return { path: match[1].replace(/\.git$/, "") };
+      const host = match[1];
+      const path = match[2].replace(/\.git$/, "");
+      // Only process if it looks like GitLab
+      if (host.includes("gitlab") || url.toLowerCase().includes("gitlab")) {
+        return { path, host };
+      }
     }
   }
   return null;
+}
+
+/**
+ * Fetch file content from GitLab
+ */
+async function fetchGitLabFile(
+  host: string,
+  projectPath: string,
+  filePath: string
+): Promise<string | null> {
+  try {
+    const encodedPath = encodeURIComponent(projectPath);
+    const encodedFile = encodeURIComponent(filePath);
+    const response = await fetch(
+      `https://${host}/api/v4/projects/${encodedPath}/repository/files/${encodedFile}/raw?ref=HEAD`,
+      {
+        headers: {
+          "User-Agent": "LynxPrompt-Wizard",
+        },
+        next: { revalidate: 60 },
+      }
+    );
+    if (!response.ok) return null;
+    return await response.text();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * List files in GitLab repo
+ */
+async function listGitLabFiles(
+  host: string,
+  projectPath: string,
+  path = ""
+): Promise<GitLabFile[]> {
+  try {
+    const encodedPath = encodeURIComponent(projectPath);
+    const url = path
+      ? `https://${host}/api/v4/projects/${encodedPath}/repository/tree?path=${encodeURIComponent(path)}&per_page=100`
+      : `https://${host}/api/v4/projects/${encodedPath}/repository/tree?per_page=100`;
+    
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent": "LynxPrompt-Wizard",
+      },
+      next: { revalidate: 60 },
+    });
+    if (!response.ok) return [];
+    return await response.json();
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Get GitLab repo info
+ */
+async function getGitLabRepoInfo(
+  host: string,
+  projectPath: string
+): Promise<GitLabRepoInfo | null> {
+  try {
+    const encodedPath = encodeURIComponent(projectPath);
+    const response = await fetch(
+      `https://${host}/api/v4/projects/${encodedPath}`,
+      {
+        headers: {
+          "User-Agent": "LynxPrompt-Wizard",
+        },
+        next: { revalidate: 60 },
+      }
+    );
+    if (!response.ok) return null;
+    return await response.json();
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -445,5 +546,214 @@ export async function detectGitHubRepo(repoUrl: string): Promise<DetectedRepo | 
   }
 
   return detected;
+}
+
+/**
+ * Main detection function for GitLab repos
+ */
+export async function detectGitLabRepo(repoUrl: string): Promise<DetectedRepo | null> {
+  const parsed = parseGitLabUrl(repoUrl);
+  if (!parsed) {
+    return null;
+  }
+
+  const { path: projectPath, host } = parsed;
+
+  // Get repo info
+  const repoInfo = await getGitLabRepoInfo(host, projectPath);
+  if (!repoInfo) {
+    return null;
+  }
+
+  // If private, we can't access without auth
+  if (repoInfo.visibility === "private") {
+    return null;
+  }
+
+  // Determine if it's open source based on license
+  const openSourceLicenses = ["mit", "apache-2.0", "gpl-3.0", "lgpl-3.0", "agpl-3.0", "bsd-2-clause", "bsd-3-clause", "mpl-2.0", "unlicense", "cc0-1.0", "isc"];
+  const licenseId = repoInfo.license?.key?.toLowerCase() || null;
+  const isOpenSource = repoInfo.visibility === "public" && (licenseId ? openSourceLicenses.includes(licenseId) : false);
+
+  const detected: DetectedRepo = {
+    name: repoInfo.name,
+    description: repoInfo.description,
+    stack: [],
+    commands: {},
+    license: licenseId,
+    repoHost: "gitlab",
+    cicd: null,
+    hasDocker: false,
+    containerRegistry: null,
+    testFramework: null,
+    existingFiles: [],
+    isPublic: repoInfo.visibility === "public",
+    isOpenSource,
+    projectType: isOpenSource ? "open_source" : null,
+  };
+
+  // List root files
+  const rootFiles = await listGitLabFiles(host, projectPath);
+  const fileNames = new Set(rootFiles.map((f) => f.name.toLowerCase()));
+
+  // Check for existing static files
+  const staticFiles = [
+    ".editorconfig",
+    "CONTRIBUTING.md",
+    "CODE_OF_CONDUCT.md",
+    "SECURITY.md",
+    "ROADMAP.md",
+    ".gitignore",
+    "LICENSE",
+    "README.md",
+    "ARCHITECTURE.md",
+    "CHANGELOG.md",
+  ];
+
+  for (const file of staticFiles) {
+    if (rootFiles.some((f) => f.name.toLowerCase() === file.toLowerCase())) {
+      detected.existingFiles.push(file);
+    }
+  }
+
+  // Check for Docker
+  if (fileNames.has("dockerfile") || fileNames.has("docker-compose.yml") || fileNames.has("docker-compose.yaml")) {
+    detected.hasDocker = true;
+    detected.stack.push("docker");
+    
+    // Try to detect container registry
+    const dockerComposeFile = fileNames.has("docker-compose.yml") 
+      ? "docker-compose.yml" 
+      : fileNames.has("docker-compose.yaml") 
+        ? "docker-compose.yaml" 
+        : null;
+    
+    if (dockerComposeFile) {
+      const dockerCompose = await fetchGitLabFile(host, projectPath, dockerComposeFile);
+      if (dockerCompose) {
+        if (dockerCompose.includes("registry.gitlab.com")) detected.containerRegistry = "gitlab_registry";
+        else if (dockerCompose.includes("ghcr.io")) detected.containerRegistry = "ghcr";
+        else if (dockerCompose.includes("docker.io") || dockerCompose.match(/image:\s*[a-z0-9]+\/[a-z0-9]/)) detected.containerRegistry = "dockerhub";
+        else if (dockerCompose.includes("gcr.io")) detected.containerRegistry = "gcr";
+        else if (dockerCompose.includes("ecr.") || dockerCompose.includes(".amazonaws.com")) detected.containerRegistry = "ecr";
+      }
+    }
+  }
+
+  // Check for CI/CD
+  if (fileNames.has(".gitlab-ci.yml")) {
+    detected.cicd = "gitlab_ci";
+  }
+
+  // Detect from package.json (Node.js)
+  if (fileNames.has("package.json")) {
+    const packageContent = await fetchGitLabFile(host, projectPath, "package.json");
+    if (packageContent) {
+      try {
+        const pkg = JSON.parse(packageContent);
+        const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
+
+        // Detect frameworks
+        for (const [framework, deps] of Object.entries(JS_FRAMEWORK_PATTERNS)) {
+          if (deps.some((dep) => allDeps[dep])) {
+            detected.stack.push(framework);
+          }
+        }
+
+        // Detect tools
+        for (const [tool, deps] of Object.entries(JS_TOOL_PATTERNS)) {
+          if (deps.some((dep) => allDeps[dep])) {
+            detected.stack.push(tool);
+          }
+        }
+
+        // Add JavaScript if nothing else detected
+        if (detected.stack.length === 0 || (detected.stack.length === 1 && detected.stack[0] === "typescript")) {
+          detected.stack.unshift("javascript");
+        }
+
+        // Detect test framework
+        if (allDeps["vitest"]) detected.testFramework = "vitest";
+        else if (allDeps["jest"]) detected.testFramework = "jest";
+        else if (allDeps["@playwright/test"]) detected.testFramework = "playwright";
+        else if (allDeps["cypress"]) detected.testFramework = "cypress";
+
+        // Detect commands
+        if (pkg.scripts) {
+          if (pkg.scripts.build) detected.commands.build = "npm run build";
+          if (pkg.scripts.test) detected.commands.test = "npm run test";
+          if (pkg.scripts.lint) detected.commands.lint = "npm run lint";
+          if (pkg.scripts.dev) detected.commands.dev = "npm run dev";
+          else if (pkg.scripts.start) detected.commands.dev = "npm run start";
+        }
+
+        if (!detected.description && pkg.description) {
+          detected.description = pkg.description;
+        }
+      } catch {
+        // Invalid JSON
+      }
+    }
+  }
+
+  // Detect from pyproject.toml (Python)
+  if (fileNames.has("pyproject.toml")) {
+    const content = await fetchGitLabFile(host, projectPath, "pyproject.toml");
+    if (content) {
+      detected.stack.push("python");
+      if (content.includes("fastapi")) detected.stack.push("fastapi");
+      if (content.includes("django")) detected.stack.push("django");
+      if (content.includes("flask")) detected.stack.push("flask");
+      detected.commands.test = "pytest";
+      detected.commands.lint = "ruff check .";
+      
+      if (content.includes("pytest")) detected.testFramework = "pytest";
+    }
+  }
+
+  // Detect from Cargo.toml (Rust)
+  if (fileNames.has("cargo.toml")) {
+    detected.stack.push("rust");
+    detected.commands.build = "cargo build";
+    detected.commands.test = "cargo test";
+    detected.commands.lint = "cargo clippy";
+  }
+
+  // Detect from go.mod (Go)
+  if (fileNames.has("go.mod")) {
+    detected.stack.push("go");
+    detected.commands.build = "go build";
+    detected.commands.test = "go test ./...";
+    detected.commands.lint = "golangci-lint run";
+  }
+
+  // Try to get better license detection from LICENSE file
+  if (!detected.license && detected.existingFiles.includes("LICENSE")) {
+    const licenseContent = await fetchGitLabFile(host, projectPath, "LICENSE");
+    if (licenseContent) {
+      detected.license = detectLicense(licenseContent);
+    }
+  }
+
+  return detected;
+}
+
+/**
+ * Unified detection function - tries GitHub API first, then GitLab API
+ * Returns null if neither works (for CLI fallback to shallow clone)
+ */
+export async function detectRemoteRepo(repoUrl: string): Promise<DetectedRepo | null> {
+  const host = detectRepoHost(repoUrl);
+  
+  if (host === "github") {
+    return detectGitHubRepo(repoUrl);
+  }
+  
+  if (host === "gitlab") {
+    return detectGitLabRepo(repoUrl);
+  }
+  
+  // For other hosts, return null (CLI can fallback to shallow clone)
+  return null;
 }
 
