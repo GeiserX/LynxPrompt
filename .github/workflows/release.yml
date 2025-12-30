@@ -27,8 +27,10 @@ jobs:
     outputs:
       app_changed: ${{ steps.changes.outputs.app }}
       cli_changed: ${{ steps.changes.outputs.cli }}
-      app_version: ${{ steps.versions.outputs.app }}
-      cli_version: ${{ steps.versions.outputs.cli }}
+      app_version: ${{ steps.tags_exist.outputs.app_version }}
+      cli_version: ${{ steps.tags_exist.outputs.cli_version }}
+      app_bumped: ${{ steps.tags_exist.outputs.app_bumped }}
+      cli_bumped: ${{ steps.tags_exist.outputs.cli_bumped }}
       should_release_app: ${{ steps.decide.outputs.release_app }}
       should_release_cli: ${{ steps.decide.outputs.release_cli }}
 
@@ -77,24 +79,57 @@ jobs:
           echo "📦 App version: $APP_VERSION"
           echo "📦 CLI version: $CLI_VERSION"
 
-      - name: Check if tags already exist
+      - name: Check if tags already exist and auto-bump if needed
         id: tags_exist
         run: |
-          APP_TAG="app-v${{ steps.versions.outputs.app }}"
-          CLI_TAG="cli-v${{ steps.versions.outputs.cli }}"
+          APP_VERSION="${{ steps.versions.outputs.app }}"
+          CLI_VERSION="${{ steps.versions.outputs.cli }}"
+          APP_TAG="app-v$APP_VERSION"
+          CLI_TAG="cli-v$CLI_VERSION"
           
+          # Check app tag
           if git rev-parse "$APP_TAG" >/dev/null 2>&1; then
-            echo "app_exists=true" >> $GITHUB_OUTPUT
-            echo "⚠️ App tag $APP_TAG already exists"
+            if [[ "${{ steps.changes.outputs.app }}" == "true" ]]; then
+              # Changes detected but tag exists - need to bump version
+              echo "⚠️ App tag $APP_TAG exists but changes detected - will auto-bump"
+              # Calculate next patch version
+              IFS='.' read -r major minor patch <<< "$APP_VERSION"
+              NEW_APP_VERSION="$major.$minor.$((patch + 1))"
+              echo "app_version=$NEW_APP_VERSION" >> $GITHUB_OUTPUT
+              echo "app_exists=false" >> $GITHUB_OUTPUT
+              echo "app_bumped=true" >> $GITHUB_OUTPUT
+              echo "📦 Auto-bumped app to v$NEW_APP_VERSION"
+            else
+              echo "app_exists=true" >> $GITHUB_OUTPUT
+              echo "app_bumped=false" >> $GITHUB_OUTPUT
+              echo "app_version=$APP_VERSION" >> $GITHUB_OUTPUT
+            fi
           else
             echo "app_exists=false" >> $GITHUB_OUTPUT
+            echo "app_bumped=false" >> $GITHUB_OUTPUT
+            echo "app_version=$APP_VERSION" >> $GITHUB_OUTPUT
           fi
           
+          # Check CLI tag
           if git rev-parse "$CLI_TAG" >/dev/null 2>&1; then
-            echo "cli_exists=true" >> $GITHUB_OUTPUT
-            echo "⚠️ CLI tag $CLI_TAG already exists"
+            if [[ "${{ steps.changes.outputs.cli }}" == "true" ]]; then
+              # Changes detected but tag exists - need to bump version
+              echo "⚠️ CLI tag $CLI_TAG exists but changes detected - will auto-bump"
+              IFS='.' read -r major minor patch <<< "$CLI_VERSION"
+              NEW_CLI_VERSION="$major.$minor.$((patch + 1))"
+              echo "cli_version=$NEW_CLI_VERSION" >> $GITHUB_OUTPUT
+              echo "cli_exists=false" >> $GITHUB_OUTPUT
+              echo "cli_bumped=true" >> $GITHUB_OUTPUT
+              echo "📦 Auto-bumped CLI to v$NEW_CLI_VERSION"
+            else
+              echo "cli_exists=true" >> $GITHUB_OUTPUT
+              echo "cli_bumped=false" >> $GITHUB_OUTPUT
+              echo "cli_version=$CLI_VERSION" >> $GITHUB_OUTPUT
+            fi
           else
             echo "cli_exists=false" >> $GITHUB_OUTPUT
+            echo "cli_bumped=false" >> $GITHUB_OUTPUT
+            echo "cli_version=$CLI_VERSION" >> $GITHUB_OUTPUT
           fi
 
       - name: Decide what to release
@@ -141,6 +176,17 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Bump version in package.json if needed
+        if: ${{ needs.prepare.outputs.app_bumped == 'true' }}
+        run: |
+          npm version ${{ needs.prepare.outputs.app_version }} --no-git-tag-version
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json
+          git commit -m "chore: bump app version to ${{ needs.prepare.outputs.app_version }} [skip ci]"
+          git push origin main
 
       - name: Create tag
         run: |
@@ -221,6 +267,24 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Bump CLI version in package.json if needed
+        if: ${{ needs.prepare.outputs.cli_bumped == 'true' }}
+        run: |
+          cd cli
+          npm version ${{ needs.prepare.outputs.cli_version }} --no-git-tag-version
+          cd ..
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add cli/package.json
+          git commit -m "chore(cli): bump version to ${{ needs.prepare.outputs.cli_version }} [skip ci]"
+          git push origin main
 
       - name: Create tag
         run: |
