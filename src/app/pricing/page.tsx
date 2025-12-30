@@ -56,9 +56,6 @@ const getTiers = (interval: BillingInterval) => [
       { text: "Browse free blueprints", included: true },
       { text: "Create & store private blueprints", included: true },
       { text: "Community support", included: true },
-      { text: "Intermediate wizards", included: false },
-      { text: "Advanced wizards", included: false },
-      { text: "Sell your blueprints", included: false },
     ],
     cta: "Get Started",
     ctaLink: "/auth/signin",
@@ -604,6 +601,25 @@ export default function PricingPage() {
                     API documentation
                   </Link>{" "}
                   for details.
+                </p>
+              </details>
+
+              <details className="group rounded-lg border bg-card">
+                <summary className="flex cursor-pointer items-center justify-between p-4 font-medium">
+                  Should I use the CLI or the Web Wizard?
+                  <span className="transition-transform group-open:rotate-180">
+                    ↓
+                  </span>
+                </summary>
+                <p className="border-t px-4 py-3 text-sm text-muted-foreground">
+                  Both offer <strong>full feature parity</strong> — the same wizards, options, and 
+                  output are available in both. Use the <strong>CLI</strong> (<code className="rounded bg-muted px-1.5 py-0.5 text-xs">npx lynxprompt</code>) 
+                  if you prefer working in your terminal, want to automate config generation in scripts, 
+                  or have direct access to your project files. Use the <strong>Web Wizard</strong> if 
+                  you prefer a visual interface, want to preview your config in real-time, or are 
+                  exploring LynxPrompt for the first time. Both CLI and Web respect your subscription 
+                  tier — Free users get basic wizards, Pro unlocks intermediate wizards, and Max 
+                  unlocks advanced wizards plus AI-powered editing.
                 </p>
               </details>
             </div>

@@ -2,11 +2,60 @@ import chalk from "chalk";
 import prompts from "prompts";
 import ora from "ora";
 import * as readline from "readline";
+import * as os from "os";
 import { writeFile, mkdir, access, readFile } from "fs/promises";
 import { join, dirname } from "path";
-import { detectProject } from "../utils/detect.js";
-import { generateConfig, GenerateOptions } from "../utils/generator.js";
+import { detectProject, detectFromRemoteUrl, isGitUrl } from "../utils/detect.js";
+import { generateConfig, GenerateOptions, parseVariablesString } from "../utils/generator.js";
 import { isAuthenticated, getUser } from "../config.js";
+import { api, ApiRequestError } from "../api.js";
+
+// Draft management - local storage in .lynxprompt/drafts/
+const DRAFTS_DIR = ".lynxprompt/drafts";
+
+interface WizardDraft {
+  name: string;
+  savedAt: string;
+  config: Record<string, unknown>;
+}
+
+async function saveDraftLocally(name: string, config: Record<string, unknown>): Promise<void> {
+  const draftsPath = join(process.cwd(), DRAFTS_DIR);
+  await mkdir(draftsPath, { recursive: true });
+  
+  const draft: WizardDraft = {
+    name,
+    savedAt: new Date().toISOString(),
+    config,
+  };
+  
+  const filename = `${name.replace(/[^a-zA-Z0-9-_]/g, "_")}.json`;
+  await writeFile(join(draftsPath, filename), JSON.stringify(draft, null, 2), "utf-8");
+}
+
+async function loadDraftLocally(name: string): Promise<WizardDraft | null> {
+  try {
+    const filename = `${name.replace(/[^a-zA-Z0-9-_]/g, "_")}.json`;
+    const filepath = join(process.cwd(), DRAFTS_DIR, filename);
+    const content = await readFile(filepath, "utf-8");
+    return JSON.parse(content);
+  } catch {
+    return null;
+  }
+}
+
+async function listLocalDrafts(): Promise<string[]> {
+  try {
+    const draftsPath = join(process.cwd(), DRAFTS_DIR);
+    await access(draftsPath);
+    const files = await import("fs/promises").then(fs => fs.readdir(draftsPath));
+    return files
+      .filter(f => f.endsWith(".json"))
+      .map(f => f.replace(".json", ""));
+  } catch {
+    return [];
+  }
+}
 
 // File paths for static files detection
 const STATIC_FILE_PATHS: Record<string, string> = {
@@ -88,6 +137,17 @@ interface WizardOptions {
   boundaries?: string;
   preset?: string;
   yes?: boolean;
+  // New options
+  output?: string;
+  repoUrl?: string;
+  blueprint?: boolean;
+  license?: string;
+  ciCd?: string;
+  projectType?: string;
+  detectOnly?: boolean;
+  loadDraft?: string;
+  saveDraft?: string;
+  vars?: string;
 }
 
 // User tier levels
@@ -426,6 +486,49 @@ function canAccessTier(userTier: UserTier, requiredTier: StepTier): boolean {
   return tierLevels[userTier] >= requiredLevels[requiredTier];
 }
 
+// Check if user can access AI features (Max or Teams only)
+function canAccessAI(userTier: UserTier): boolean {
+  return userTier === "max" || userTier === "teams";
+}
+
+// Get AI shortcut hint based on OS
+function getAIShortcutHint(): string {
+  const platform = os.platform();
+  if (platform === "darwin") {
+    return "⌘+I";
+  } else {
+    return "Ctrl+I";
+  }
+}
+
+// AI assistant for text fields
+async function aiAssist(instruction: string, existingContent?: string): Promise<string | null> {
+  const spinner = ora("AI is thinking...").start();
+  
+  try {
+    const response = await api.aiEditBlueprint({
+      content: existingContent,
+      instruction,
+      mode: existingContent ? "blueprint" : "wizard",
+    });
+    spinner.succeed("AI suggestion ready");
+    return response.content;
+  } catch (error) {
+    if (error instanceof ApiRequestError) {
+      if (error.statusCode === 403) {
+        spinner.fail("AI editing requires Max or Teams subscription");
+      } else if (error.statusCode === 429) {
+        spinner.fail("Rate limit reached. Please wait a moment.");
+      } else {
+        spinner.fail(`AI error: ${error.message}`);
+      }
+    } else {
+      spinner.fail("Failed to get AI suggestion");
+    }
+    return null;
+  }
+}
+
 // Get tier badge
 function getTierBadge(tier: StepTier): { label: string; color: typeof chalk.cyan } | null {
   switch (tier) {
@@ -517,6 +620,81 @@ export async function wizardCommand(options: WizardOptions): Promise<void> {
   console.log(chalk.gray("     Generate AI IDE configuration in seconds"));
   console.log();
 
+  // Handle --load-draft option
+  if (options.loadDraft) {
+    const draft = await loadDraftLocally(options.loadDraft);
+    if (draft) {
+      console.log(chalk.green(`  ✓ Loaded draft: ${draft.name} (saved ${new Date(draft.savedAt).toLocaleString()})`));
+      console.log();
+      // Merge draft config into options for use later
+      Object.assign(options, draft.config);
+    } else {
+      const availableDrafts = await listLocalDrafts();
+      console.log(chalk.red(`  ✗ Draft "${options.loadDraft}" not found.`));
+      if (availableDrafts.length > 0) {
+        console.log(chalk.gray(`  Available drafts: ${availableDrafts.join(", ")}`));
+      }
+      console.log();
+    }
+  }
+
+  // Handle --repo-url for direct remote analysis
+  if (options.repoUrl) {
+    const spinner = ora("Analyzing remote repository...").start();
+    const detected = await detectFromRemoteUrl(options.repoUrl);
+    if (detected) {
+      spinner.succeed("Remote repository analyzed");
+      // Pre-fill options from detected
+      if (!options.name && detected.name) options.name = detected.name;
+      if (!options.description && detected.description) options.description = detected.description;
+      if (!options.stack && detected.stack.length > 0) options.stack = detected.stack.join(",");
+      if (!options.license && detected.license) options.license = detected.license;
+      if (detected.cicd) options.ciCd = detected.cicd;
+    } else {
+      spinner.fail("Could not analyze repository");
+    }
+    console.log();
+  }
+
+  // Handle --detect-only mode
+  if (options.detectOnly) {
+    const detected = options.repoUrl 
+      ? await detectFromRemoteUrl(options.repoUrl)
+      : await detectProject(process.cwd());
+    
+    if (detected) {
+      console.log(chalk.green.bold("  📊 Project Analysis"));
+      console.log();
+      console.log(chalk.white(`  Name: ${detected.name || "unknown"}`));
+      if (detected.description) console.log(chalk.gray(`  Description: ${detected.description}`));
+      console.log(chalk.white(`  Stack: ${detected.stack.join(", ") || "none detected"}`));
+      console.log(chalk.white(`  Type: ${detected.type}`));
+      if (detected.packageManager) console.log(chalk.white(`  Package Manager: ${detected.packageManager}`));
+      if (detected.repoHost) console.log(chalk.white(`  Repository Host: ${detected.repoHost}`));
+      if (detected.license) console.log(chalk.white(`  License: ${detected.license}`));
+      if (detected.cicd) console.log(chalk.white(`  CI/CD: ${detected.cicd}`));
+      if (detected.hasDocker) console.log(chalk.white(`  Docker: yes`));
+      if (detected.commands) {
+        console.log(chalk.white(`  Commands:`));
+        if (detected.commands.build) console.log(chalk.gray(`    build: ${detected.commands.build}`));
+        if (detected.commands.test) console.log(chalk.gray(`    test: ${detected.commands.test}`));
+        if (detected.commands.lint) console.log(chalk.gray(`    lint: ${detected.commands.lint}`));
+        if (detected.commands.dev) console.log(chalk.gray(`    dev: ${detected.commands.dev}`));
+      }
+      console.log();
+    } else {
+      console.log(chalk.yellow("  No project detected."));
+      console.log();
+    }
+    return; // Exit without generating
+  }
+
+  // Blueprint mode hint
+  if (options.blueprint) {
+    console.log(chalk.magenta("  📋 Template Mode: Generating with [[VARIABLE|default]] placeholders"));
+    console.log();
+  }
+
   // Check authentication and determine tier
   const authenticated = isAuthenticated();
   const user = getUser();
@@ -553,6 +731,10 @@ export async function wizardCommand(options: WizardOptions): Promise<void> {
   // Show wizard steps overview
   showWizardOverview(userTier);
   
+  // Show draft save hint
+  console.log(chalk.gray(`  💾 Tip: Type 'save:draftname' anytime to save progress locally`));
+  console.log();
+  
   // Count accessible steps
   const accessibleSteps = getAvailableSteps(userTier);
   const lockedSteps = WIZARD_STEPS.length - accessibleSteps.length;
@@ -562,18 +744,79 @@ export async function wizardCommand(options: WizardOptions): Promise<void> {
     console.log();
   }
 
-  // Try to detect project info
-  const detected = await detectProject(process.cwd());
+  // Try to detect from current directory first
+  let detected = await detectProject(process.cwd());
   
+  // Show local detection results if found
   if (detected) {
     const detectedInfo = [
-      chalk.green("✓ Project detected"),
+      chalk.green("✓ Local project detected"),
     ];
     if (detected.name) detectedInfo.push(chalk.gray(`  Name: ${detected.name}`));
     if (detected.stack.length > 0) detectedInfo.push(chalk.gray(`  Stack: ${detected.stack.join(", ")}`));
     if (detected.packageManager) detectedInfo.push(chalk.gray(`  Package manager: ${detected.packageManager}`));
     
     printBox(detectedInfo, chalk.gray);
+    console.log();
+  } else {
+    console.log(chalk.gray("  No project detected in current directory."));
+    console.log();
+  }
+  
+  // Always offer to analyze a remote repository (Max/Teams feature)
+  const canDetectRemote = canAccessAI(userTier); // Max/Teams only
+  
+  if (canDetectRemote) {
+    console.log(chalk.magenta("  ✨ Remote Detection available (Max/Teams)"));
+    console.log(chalk.gray("     Analyze any public GitHub/GitLab repo, or private with git credentials."));
+    console.log();
+    
+    const remoteResponse = await prompts({
+      type: "confirm",
+      name: "useRemote",
+      message: detected 
+        ? chalk.white("Analyze a different remote repository instead?")
+        : chalk.white("Analyze a remote repository URL?"),
+      initial: !detected,
+    }, promptConfig);
+    
+    if (remoteResponse.useRemote) {
+      const urlResponse = await prompts({
+        type: "text",
+        name: "url",
+        message: chalk.white("Enter the repository URL:"),
+        hint: chalk.gray("GitHub, GitLab, or any git host"),
+        validate: (v) => isGitUrl(v) || "Please enter a valid Git URL",
+      }, promptConfig);
+      
+      if (urlResponse.url) {
+        const host = urlResponse.url.toLowerCase().includes("github") ? "GitHub API" 
+          : urlResponse.url.toLowerCase().includes("gitlab") ? "GitLab API" 
+          : "shallow clone";
+        const remoteSpinner = ora(`Analyzing remote repository via ${host}...`).start();
+        const remoteDetected = await detectFromRemoteUrl(urlResponse.url);
+        
+        if (remoteDetected) {
+          detected = remoteDetected;
+          remoteSpinner.succeed("Remote repository analyzed");
+          
+          // Show remote detection results
+          const detectedInfo = [
+            chalk.green("✓ Remote project detected"),
+          ];
+          if (detected.name) detectedInfo.push(chalk.gray(`  Name: ${detected.name}`));
+          if (detected.stack.length > 0) detectedInfo.push(chalk.gray(`  Stack: ${detected.stack.join(", ")}`));
+          if (detected.repoUrl) detectedInfo.push(chalk.gray(`  Source: ${detected.repoUrl}`));
+          
+          printBox(detectedInfo, chalk.gray);
+          console.log();
+        } else {
+          remoteSpinner.fail("Could not analyze repository (may be private or inaccessible)");
+        }
+      }
+    }
+  } else if (!detected) {
+    console.log(chalk.yellow("  💡 Tip: Max/Teams users can analyze remote repository URLs"));
     console.log();
   }
 
@@ -608,15 +851,26 @@ export async function wizardCommand(options: WizardOptions): Promise<void> {
   const spinner = ora("Generating configuration...").start();
   
   try {
-    const files = generateConfig(config);
+    // Add blueprint mode and variables to config
+    const variables = options.vars ? parseVariablesString(options.vars) : undefined;
+    const finalConfig = {
+      ...config,
+      blueprintMode: options.blueprint || false,
+      variables,
+    };
+    
+    const files = generateConfig(finalConfig);
     spinner.stop();
 
     console.log();
     console.log(chalk.green.bold("  ✅ Generated:"));
     console.log();
     
+    // Determine output directory
+    const outputDir = options.output || process.cwd();
+    
     for (const [filename, content] of Object.entries(files)) {
-      const outputPath = join(process.cwd(), filename);
+      const outputPath = join(outputDir, filename);
       
       // Check if file exists
       let exists = false;
@@ -674,6 +928,18 @@ export async function wizardCommand(options: WizardOptions): Promise<void> {
     
     printBox(nextStepsLines, chalk.gray);
     console.log();
+    
+    // Save draft if requested
+    if (options.saveDraft) {
+      try {
+        await saveDraftLocally(options.saveDraft, config as unknown as Record<string, unknown>);
+        console.log(chalk.green(`  💾 Draft saved as "${options.saveDraft}"`));
+        console.log(chalk.gray(`     Load later with: lynxp wizard --load-draft ${options.saveDraft}`));
+        console.log();
+      } catch (err) {
+        console.log(chalk.yellow(`  ⚠️ Could not save draft: ${err instanceof Error ? err.message : "unknown error"}`));
+      }
+    }
     
   } catch (error) {
     spinner.fail("Failed to generate files");
@@ -1453,6 +1719,9 @@ async function runInteractiveWizard(
       console.log();
       console.log(chalk.cyan("  📝 Customize file contents:"));
       console.log(chalk.gray("  For each file, choose to use existing content, write new, or use defaults."));
+      if (canAccessAI(userTier)) {
+        console.log(chalk.magenta(`  ✨ Tip: Type 'ai:' followed by your request to use AI assistance`));
+      }
       console.log();
 
       answers.staticFileContents = {};
@@ -1508,9 +1777,46 @@ async function runInteractiveWizard(
 
           if (actionResponse.action === "new") {
             console.log();
-            const content = await readMultilineInput(`  Content for ${filePath}:`);
-            if (content.trim()) {
-              (answers.staticFileContents as Record<string, string>)[fileKey] = content;
+            if (canAccessAI(userTier)) {
+              const aiPromptResponse = await prompts({
+                type: "text",
+                name: "input",
+                message: chalk.white(`Content for ${filePath}:`),
+                hint: chalk.gray("Type 'ai:' + description OR paste content (press Enter twice to skip)"),
+              }, promptConfig);
+              
+              let content = aiPromptResponse.input || "";
+              
+              if (content.toLowerCase().startsWith("ai:")) {
+                const aiInstruction = content.substring(3).trim();
+                if (aiInstruction) {
+                  const aiResult = await aiAssist(`Generate ${filePath} content: ${aiInstruction}`, existingContent);
+                  if (aiResult) {
+                    console.log(chalk.cyan("  AI-generated content preview (first 200 chars):"));
+                    console.log(chalk.gray("  " + aiResult.substring(0, 200) + (aiResult.length > 200 ? "..." : "")));
+                    const acceptAI = await prompts({
+                      type: "confirm",
+                      name: "accept",
+                      message: chalk.white("Use this AI-generated content?"),
+                      initial: true,
+                    }, promptConfig);
+                    if (acceptAI.accept) {
+                      content = aiResult;
+                    } else {
+                      content = "";
+                    }
+                  }
+                }
+              }
+              
+              if (content.trim()) {
+                (answers.staticFileContents as Record<string, string>)[fileKey] = content;
+              }
+            } else {
+              const content = await readMultilineInput(`  Content for ${filePath}:`);
+              if (content.trim()) {
+                (answers.staticFileContents as Record<string, string>)[fileKey] = content;
+              }
             }
           }
         }
@@ -1555,14 +1861,63 @@ async function runInteractiveWizard(
     answers.persona = personaResponse.persona || "";
   }
 
-  // Anything else
+  // Anything else - with AI assist option for Max/Teams users
+  const hasAIAccess = canAccessAI(userTier);
+  
+  if (hasAIAccess) {
+    console.log();
+    console.log(chalk.magenta(`  ✨ AI Assistant available (like ${getAIShortcutHint()} in the web UI)`));
+    console.log(chalk.gray("     Describe what you want to add, and AI will format it for your config."));
+    console.log();
+  }
+
   const extraNotesResponse = await prompts({
     type: "text",
     name: "extraNotes",
     message: chalk.white("Anything else AI should know? (optional):"),
-    hint: chalk.gray("Special requirements, gotchas, team conventions..."),
+    hint: hasAIAccess 
+      ? chalk.gray("Enter text or type 'ai:' followed by your request")
+      : chalk.gray("Special requirements, gotchas, team conventions..."),
   }, promptConfig);
-  answers.extraNotes = extraNotesResponse.extraNotes || "";
+  
+  let extraNotes = extraNotesResponse.extraNotes || "";
+  
+  // Check if user wants AI assistance
+  if (hasAIAccess && extraNotes.toLowerCase().startsWith("ai:")) {
+    const aiInstruction = extraNotes.substring(3).trim();
+    if (aiInstruction) {
+      const aiResult = await aiAssist(aiInstruction);
+      if (aiResult) {
+        console.log();
+        console.log(chalk.cyan("  AI suggestion:"));
+        console.log(chalk.gray("  ─".repeat(30)));
+        console.log(chalk.white("  " + aiResult.split("\n").join("\n  ")));
+        console.log(chalk.gray("  ─".repeat(30)));
+        console.log();
+        
+        const acceptResponse = await prompts({
+          type: "confirm",
+          name: "accept",
+          message: chalk.white("Use this AI-generated content?"),
+          initial: true,
+        }, promptConfig);
+        
+        if (acceptResponse.accept) {
+          extraNotes = aiResult;
+        } else {
+          // Let user write their own
+          const manualResponse = await prompts({
+            type: "text",
+            name: "extraNotes",
+            message: chalk.white("Enter your own notes instead:"),
+          }, promptConfig);
+          extraNotes = manualResponse.extraNotes || "";
+        }
+      }
+    }
+  }
+  
+  answers.extraNotes = extraNotes;
 
   // ═══════════════════════════════════════════════════════════════
   // BUILD FINAL CONFIG

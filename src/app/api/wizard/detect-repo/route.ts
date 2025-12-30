@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
-import { detectGitHubRepo, parseGitHubUrl } from "@/lib/detect-repo";
+import { detectRemoteRepo, detectRepoHost } from "@/lib/detect-repo";
 
 /**
  * POST /api/wizard/detect-repo
- * Detects project configuration from a public GitHub repository
+ * Detects project configuration from a public GitHub or GitLab repository
  * 
  * Requires: Max or Teams subscription
  * Body: { repoUrl: string }
@@ -57,25 +57,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate it's a GitHub URL
-    const parsed = parseGitHubUrl(repoUrl);
-    if (!parsed) {
+    // Check if it's a supported host
+    const host = detectRepoHost(repoUrl);
+    const supportedHosts = ["github", "gitlab"];
+    
+    if (!supportedHosts.includes(host)) {
       return NextResponse.json(
         { 
-          error: "Invalid GitHub URL. Please provide a valid GitHub repository URL.",
-          example: "https://github.com/owner/repo",
+          error: `Unsupported repository host: ${host}. Currently supported: GitHub, GitLab`,
+          supportedHosts,
         },
         { status: 400 }
       );
     }
 
     // Detect repository configuration
-    const detected = await detectGitHubRepo(repoUrl);
+    const detected = await detectRemoteRepo(repoUrl);
 
     if (!detected) {
       return NextResponse.json(
         { 
-          error: "Could not access repository. Make sure it's a public GitHub repository.",
+          error: `Could not access repository. Make sure it's a public ${host === "github" ? "GitHub" : "GitLab"} repository.`,
         },
         { status: 404 }
       );
