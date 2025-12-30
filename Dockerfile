@@ -48,7 +48,13 @@ RUN npx prisma generate --config=prisma/prisma.config-app.ts & \
     wait
 
 # Build the application with Next.js build cache
-# Note: NEXT_PUBLIC_* vars are fetched at runtime via /api/config/public
+# NEXT_PUBLIC_* vars must be available at build time for Next.js to inline them
+ARG NEXT_PUBLIC_UMAMI_WEBSITE_ID
+ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY
+ARG NEXT_PUBLIC_SENTRY_DSN
+ENV NEXT_PUBLIC_UMAMI_WEBSITE_ID=${NEXT_PUBLIC_UMAMI_WEBSITE_ID}
+ENV NEXT_PUBLIC_TURNSTILE_SITE_KEY=${NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+ENV NEXT_PUBLIC_SENTRY_DSN=${NEXT_PUBLIC_SENTRY_DSN}
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV TSC_COMPILE_ON_ERROR=true
 # Disable Turbopack for production builds (fixes font resolution issues in Next.js 16)
