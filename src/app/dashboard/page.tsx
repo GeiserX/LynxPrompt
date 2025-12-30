@@ -32,6 +32,7 @@ import {
   Save,
   Trash2,
   GitBranch,
+  Search,
 } from "lucide-react";
 import { Footer } from "@/components/footer";
 import { PageHeader } from "@/components/page-header";
@@ -181,6 +182,9 @@ export default function DashboardPage() {
   const [draftsLoading, setDraftsLoading] = useState(true);
   const [showDrafts, setShowDrafts] = useState(false);
   const [isDeletingDraft, setIsDeletingDraft] = useState<string | null>(null);
+  
+  // My Blueprints search
+  const [blueprintSearch, setBlueprintSearch] = useState("");
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -809,6 +813,20 @@ export default function DashboardPage() {
                   </Button>
                 </div>
 
+                {/* Search input */}
+                {!loading && dashboardData && dashboardData.myTemplates.length > 0 && (
+                  <div className="relative mb-4">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      type="text"
+                      placeholder="Search your blueprints..."
+                      value={blueprintSearch}
+                      onChange={(e) => setBlueprintSearch(e.target.value)}
+                      className="w-full rounded-lg border bg-background py-2 pl-10 pr-4 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                )}
+
                 {loading ? (
                   <div className="space-y-3">
                     {[1, 2, 3].map((i) => (
@@ -836,7 +854,12 @@ export default function DashboardPage() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {dashboardData?.myTemplates.map((template) => (
+                    {dashboardData?.myTemplates
+                      .filter((template) =>
+                        blueprintSearch.trim() === "" ||
+                        template.name.toLowerCase().includes(blueprintSearch.toLowerCase())
+                      )
+                      .map((template) => (
                       <div
                         key={template.id}
                         className="flex items-center justify-between rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50"
@@ -904,6 +927,17 @@ export default function DashboardPage() {
                         </div>
                       </div>
                     ))}
+                    {/* No results message */}
+                    {blueprintSearch.trim() !== "" && 
+                      dashboardData?.myTemplates.filter(t => 
+                        t.name.toLowerCase().includes(blueprintSearch.toLowerCase())
+                      ).length === 0 && (
+                      <div className="rounded-lg border bg-card p-6 text-center">
+                        <p className="text-sm text-muted-foreground">
+                          No blueprints match &quot;{blueprintSearch}&quot;
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
