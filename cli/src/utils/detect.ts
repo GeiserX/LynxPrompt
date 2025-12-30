@@ -1,5 +1,7 @@
-import { readFile, access } from "fs/promises";
+import { readFile, access, rm, mkdtemp } from "fs/promises";
 import { join } from "path";
+import { tmpdir } from "os";
+import { execSync } from "child_process";
 
 export interface DetectedProject {
   name: string | null;
@@ -450,4 +452,303 @@ async function fileExists(path: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/**
+ * Detect repo host from URL
+ */
+export function detectRepoHost(url: string): string {
+  const lower = url.toLowerCase();
+  if (lower.includes("github.com") || lower.includes("github:")) return "github";
+  if (lower.includes("gitlab.com") || lower.includes("gitlab")) return "gitlab";
+  if (lower.includes("bitbucket.org") || lower.includes("bitbucket:")) return "bitbucket";
+  if (lower.includes("gitea.") || lower.includes("gitea:") || lower.includes("codeberg.org")) return "gitea";
+  if (lower.includes("azure.com") || lower.includes("visualstudio.com") || lower.includes("dev.azure")) return "azure";
+  return "other";
+}
+
+/**
+ * Parse GitHub URL to owner/repo
+ */
+function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
+  const patterns = [
+    /github\.com[/:]([^/]+)\/([^/.]+)/,
+    /^([^/]+)\/([^/]+)$/,
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) {
+      return { owner: match[1], repo: match[2].replace(/\.git$/, "") };
+    }
+  }
+  return null;
+}
+
+/**
+ * Parse GitLab URL to project path and host
+ */
+function parseGitLabUrl(url: string): { path: string; host: string } | null {
+  const patterns = [
+    /^https?:\/\/([^/]+)\/(.+?)(?:\.git)?$/,
+    /^git@([^:]+):(.+?)(?:\.git)?$/,
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) {
+      const host = match[1];
+      const path = match[2].replace(/\.git$/, "");
+      if (host.includes("gitlab") || url.toLowerCase().includes("gitlab")) {
+        return { path, host };
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Detect from GitHub API (faster, no clone needed)
+ */
+async function detectFromGitHubApi(repoUrl: string): Promise<DetectedProject | null> {
+  const parsed = parseGitHubUrl(repoUrl);
+  if (!parsed) return null;
+  
+  const { owner, repo } = parsed;
+  
+  try {
+    // Get repo info
+    const repoRes = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+      headers: { "User-Agent": "LynxPrompt-CLI" },
+    });
+    if (!repoRes.ok) return null;
+    const repoInfo = await repoRes.json();
+    
+    if (repoInfo.private) return null;
+    
+    const detected: DetectedProject = {
+      name: repoInfo.name,
+      description: repoInfo.description,
+      stack: [],
+      commands: {},
+      packageManager: null,
+      type: "application",
+      repoHost: "github",
+      repoUrl,
+      license: repoInfo.license?.spdx_id?.toLowerCase() || undefined,
+    };
+    
+    // List root files
+    const filesRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/`, {
+      headers: { "User-Agent": "LynxPrompt-CLI" },
+    });
+    if (!filesRes.ok) return detected;
+    const files = await filesRes.json();
+    const fileNames = new Set(files.map((f: { name: string }) => f.name.toLowerCase()));
+    
+    // Detect from package.json
+    if (fileNames.has("package.json")) {
+      const pkgRes = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/HEAD/package.json`);
+      if (pkgRes.ok) {
+        try {
+          const pkg = await pkgRes.json();
+          const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
+          
+          // Frameworks
+          if (allDeps["next"]) detected.stack.push("nextjs");
+          if (allDeps["react"]) detected.stack.push("react");
+          if (allDeps["vue"]) detected.stack.push("vue");
+          if (allDeps["svelte"]) detected.stack.push("svelte");
+          if (allDeps["express"]) detected.stack.push("express");
+          if (allDeps["fastify"]) detected.stack.push("fastify");
+          
+          // Tools
+          if (allDeps["typescript"]) detected.stack.push("typescript");
+          if (allDeps["tailwindcss"]) detected.stack.push("tailwind");
+          if (allDeps["prisma"]) detected.stack.push("prisma");
+          if (allDeps["vitest"]) detected.stack.push("vitest");
+          if (allDeps["jest"]) detected.stack.push("jest");
+          
+          if (detected.stack.length === 0 || (detected.stack.length === 1 && detected.stack[0] === "typescript")) {
+            detected.stack.unshift("javascript");
+          }
+          
+          if (pkg.scripts) {
+            detected.commands.build = pkg.scripts.build ? "npm run build" : undefined;
+            detected.commands.test = pkg.scripts.test ? "npm run test" : undefined;
+            detected.commands.lint = pkg.scripts.lint ? "npm run lint" : undefined;
+            detected.commands.dev = pkg.scripts.dev ? "npm run dev" : (pkg.scripts.start ? "npm run start" : undefined);
+          }
+        } catch { /* ignore */ }
+      }
+    }
+    
+    // Detect other languages
+    if (fileNames.has("pyproject.toml") || fileNames.has("requirements.txt")) detected.stack.push("python");
+    if (fileNames.has("cargo.toml")) detected.stack.push("rust");
+    if (fileNames.has("go.mod")) detected.stack.push("go");
+    if (fileNames.has("dockerfile")) detected.hasDocker = true;
+    
+    // CI/CD
+    if (files.some((f: { name: string; type: string }) => f.name === ".github" && f.type === "dir")) {
+      detected.cicd = "github_actions";
+    }
+    if (fileNames.has(".gitlab-ci.yml")) detected.cicd = "gitlab_ci";
+    
+    return detected;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Detect from GitLab API (faster, no clone needed)
+ */
+async function detectFromGitLabApi(repoUrl: string): Promise<DetectedProject | null> {
+  const parsed = parseGitLabUrl(repoUrl);
+  if (!parsed) return null;
+  
+  const { path: projectPath, host } = parsed;
+  const encodedPath = encodeURIComponent(projectPath);
+  
+  try {
+    // Get repo info
+    const repoRes = await fetch(`https://${host}/api/v4/projects/${encodedPath}`, {
+      headers: { "User-Agent": "LynxPrompt-CLI" },
+    });
+    if (!repoRes.ok) return null;
+    const repoInfo = await repoRes.json();
+    
+    if (repoInfo.visibility === "private") return null;
+    
+    const detected: DetectedProject = {
+      name: repoInfo.name,
+      description: repoInfo.description,
+      stack: [],
+      commands: {},
+      packageManager: null,
+      type: "application",
+      repoHost: "gitlab",
+      repoUrl,
+      license: repoInfo.license?.key?.toLowerCase() || undefined,
+    };
+    
+    // List root files
+    const filesRes = await fetch(`https://${host}/api/v4/projects/${encodedPath}/repository/tree?per_page=100`, {
+      headers: { "User-Agent": "LynxPrompt-CLI" },
+    });
+    if (!filesRes.ok) return detected;
+    const files = await filesRes.json();
+    const fileNames = new Set(files.map((f: { name: string }) => f.name.toLowerCase()));
+    
+    // Detect from package.json
+    if (fileNames.has("package.json")) {
+      const pkgRes = await fetch(`https://${host}/api/v4/projects/${encodedPath}/repository/files/package.json/raw?ref=HEAD`, {
+        headers: { "User-Agent": "LynxPrompt-CLI" },
+      });
+      if (pkgRes.ok) {
+        try {
+          const pkg = await pkgRes.json();
+          const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
+          
+          if (allDeps["next"]) detected.stack.push("nextjs");
+          if (allDeps["react"]) detected.stack.push("react");
+          if (allDeps["typescript"]) detected.stack.push("typescript");
+          if (allDeps["tailwindcss"]) detected.stack.push("tailwind");
+          
+          if (detected.stack.length === 0) {
+            detected.stack.unshift("javascript");
+          }
+          
+          if (pkg.scripts) {
+            detected.commands.build = pkg.scripts.build ? "npm run build" : undefined;
+            detected.commands.test = pkg.scripts.test ? "npm run test" : undefined;
+            detected.commands.lint = pkg.scripts.lint ? "npm run lint" : undefined;
+            detected.commands.dev = pkg.scripts.dev ? "npm run dev" : undefined;
+          }
+        } catch { /* ignore */ }
+      }
+    }
+    
+    // Detect other languages
+    if (fileNames.has("pyproject.toml") || fileNames.has("requirements.txt")) detected.stack.push("python");
+    if (fileNames.has("cargo.toml")) detected.stack.push("rust");
+    if (fileNames.has("go.mod")) detected.stack.push("go");
+    if (fileNames.has("dockerfile")) detected.hasDocker = true;
+    if (fileNames.has(".gitlab-ci.yml")) detected.cicd = "gitlab_ci";
+    
+    return detected;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Detect from shallow git clone (fallback for non-GitHub/GitLab hosts)
+ */
+async function detectFromShallowClone(repoUrl: string): Promise<DetectedProject | null> {
+  let tempDir: string | null = null;
+  
+  try {
+    tempDir = await mkdtemp(join(tmpdir(), "lynxprompt-detect-"));
+    
+    try {
+      execSync(`git clone --depth 1 --quiet "${repoUrl}" "${tempDir}"`, {
+        stdio: "pipe",
+        timeout: 30000,
+      });
+    } catch {
+      return null;
+    }
+    
+    const detected = await detectProject(tempDir);
+    
+    if (detected) {
+      detected.repoHost = detectRepoHost(repoUrl);
+      detected.repoUrl = repoUrl;
+    }
+    
+    return detected;
+  } catch {
+    return null;
+  } finally {
+    if (tempDir) {
+      try {
+        await rm(tempDir, { recursive: true, force: true });
+      } catch { /* ignore */ }
+    }
+  }
+}
+
+/**
+ * Detect project info from a remote Git URL
+ * Strategy: Try API first (GitHub/GitLab), fallback to shallow clone
+ */
+export async function detectFromRemoteUrl(repoUrl: string): Promise<DetectedProject | null> {
+  const host = detectRepoHost(repoUrl);
+  
+  // Try API-based detection first (faster)
+  if (host === "github") {
+    const result = await detectFromGitHubApi(repoUrl);
+    if (result) return result;
+  }
+  
+  if (host === "gitlab") {
+    const result = await detectFromGitLabApi(repoUrl);
+    if (result) return result;
+  }
+  
+  // Fallback to shallow clone for other hosts or if API fails
+  return detectFromShallowClone(repoUrl);
+}
+
+/**
+ * Check if a string looks like a Git URL
+ */
+export function isGitUrl(str: string): boolean {
+  const patterns = [
+    /^https?:\/\/[^/]+\/.*$/,
+    /^git@[^:]+:.*$/,
+    /^git:\/\/.*$/,
+    /^ssh:\/\/.*$/,
+  ];
+  return patterns.some(p => p.test(str.trim()));
 }

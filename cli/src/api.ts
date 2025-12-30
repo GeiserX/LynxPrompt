@@ -228,6 +228,18 @@ class ApiClient {
       body: JSON.stringify(data),
     });
   }
+
+  // AI endpoints
+  async aiEditBlueprint(data: {
+    content?: string;
+    instruction: string;
+    mode: "blueprint" | "wizard";
+  }): Promise<{ content: string; usage?: object }> {
+    return this.request<{ content: string; usage?: object }>("/api/ai/edit-blueprint", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
 }
 
 export class ApiRequestError extends Error {
