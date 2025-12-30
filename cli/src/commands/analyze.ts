@@ -132,12 +132,6 @@ export async function analyzeCommand(options: AnalyzeOptions): Promise<void> {
   console.log(`  ${chalk.dim("Repo Host:")}       ${detected.repoHost || chalk.gray("none detected")}`);
   console.log(`  ${chalk.dim("CI/CD:")}           ${detected.cicd || chalk.gray("none detected")}`);
   console.log(`  ${chalk.dim("Docker:")}          ${detected.hasDocker ? chalk.green("yes") : chalk.gray("no")}`);
-  if (detected.containerRegistry) {
-    console.log(`  ${chalk.dim("Container Reg:")}   ${detected.containerRegistry}`);
-  }
-  if (detected.testFramework) {
-    console.log(`  ${chalk.dim("Test Framework:")} ${detected.testFramework}`);
-  }
   console.log();
 
   // Commands
@@ -166,7 +160,7 @@ export async function analyzeCommand(options: AnalyzeOptions): Promise<void> {
   if (!detected.hasDocker && detected.type === "application") {
     recommendations.push("Consider adding Docker for containerization");
   }
-  if (!detected.testFramework) {
+  if (!detected.stack.some(s => ["vitest", "jest", "pytest", "mocha"].includes(s))) {
     recommendations.push("Add a test framework (vitest, jest, pytest, etc.)");
   }
   if (!detected.commands?.lint) {

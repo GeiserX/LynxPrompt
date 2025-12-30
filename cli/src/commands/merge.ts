@@ -102,7 +102,7 @@ function mergeSectionsByStrategy(
       
       const merged: string[] = [];
       
-      for (const [title, sections] of sectionMap) {
+      for (const [, sections] of sectionMap) {
         if (sections.length === 1) {
           merged.push(`## ${sections[0].title}\n\n${sections[0].content.trim()}`);
         } else {

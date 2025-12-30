@@ -70,7 +70,7 @@ function bpVar(blueprintMode: boolean, varName: string, defaultValue: string): s
  */
 export function fillVariables(content: string, variables: Record<string, string>): string {
   // Pattern matches [[VAR_NAME|default_value]]
-  return content.replace(/\[\[([A-Z_]+)\|([^\]]*)\]\]/g, (match, varName, defaultValue) => {
+  return content.replace(/\[\[([A-Z_]+)\|([^\]]*)\]\]/g, (_, varName, defaultValue) => {
     return variables[varName] ?? defaultValue;
   });
 }
