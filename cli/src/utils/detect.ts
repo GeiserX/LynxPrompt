@@ -508,6 +508,24 @@ function parseGitLabUrl(url: string): { path: string; host: string } | null {
 /**
  * Detect from GitHub API (faster, no clone needed)
  */
+interface GitHubRepoInfo {
+  name: string;
+  description: string | null;
+  private: boolean;
+  license?: { spdx_id: string } | null;
+}
+
+interface GitHubFile {
+  name: string;
+  type: string;
+}
+
+interface PackageJson {
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+  scripts?: Record<string, string>;
+}
+
 async function detectFromGitHubApi(repoUrl: string): Promise<DetectedProject | null> {
   const parsed = parseGitHubUrl(repoUrl);
   if (!parsed) return null;
@@ -520,20 +538,20 @@ async function detectFromGitHubApi(repoUrl: string): Promise<DetectedProject | n
       headers: { "User-Agent": "LynxPrompt-CLI" },
     });
     if (!repoRes.ok) return null;
-    const repoInfo = await repoRes.json();
+    const repoInfo = await repoRes.json() as GitHubRepoInfo;
     
     if (repoInfo.private) return null;
     
     const detected: DetectedProject = {
       name: repoInfo.name,
-      description: repoInfo.description,
+      description: repoInfo.description ?? undefined,
       stack: [],
       commands: {},
       packageManager: null,
       type: "application",
       repoHost: "github",
       repoUrl,
-      license: repoInfo.license?.spdx_id?.toLowerCase() || undefined,
+      license: repoInfo.license?.spdx_id?.toLowerCase(),
     };
     
     // List root files
@@ -541,16 +559,16 @@ async function detectFromGitHubApi(repoUrl: string): Promise<DetectedProject | n
       headers: { "User-Agent": "LynxPrompt-CLI" },
     });
     if (!filesRes.ok) return detected;
-    const files = await filesRes.json();
-    const fileNames = new Set(files.map((f: { name: string }) => f.name.toLowerCase()));
+    const files = await filesRes.json() as GitHubFile[];
+    const fileNames = new Set(files.map((f) => f.name.toLowerCase()));
     
     // Detect from package.json
     if (fileNames.has("package.json")) {
       const pkgRes = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/HEAD/package.json`);
       if (pkgRes.ok) {
         try {
-          const pkg = await pkgRes.json();
-          const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
+          const pkg = await pkgRes.json() as PackageJson;
+          const allDeps: Record<string, string> = { ...pkg.dependencies, ...pkg.devDependencies };
           
           // Frameworks
           if (allDeps["next"]) detected.stack.push("nextjs");
@@ -572,10 +590,11 @@ async function detectFromGitHubApi(repoUrl: string): Promise<DetectedProject | n
           }
           
           if (pkg.scripts) {
-            detected.commands.build = pkg.scripts.build ? "npm run build" : undefined;
-            detected.commands.test = pkg.scripts.test ? "npm run test" : undefined;
-            detected.commands.lint = pkg.scripts.lint ? "npm run lint" : undefined;
-            detected.commands.dev = pkg.scripts.dev ? "npm run dev" : (pkg.scripts.start ? "npm run start" : undefined);
+            if (pkg.scripts.build) detected.commands.build = "npm run build";
+            if (pkg.scripts.test) detected.commands.test = "npm run test";
+            if (pkg.scripts.lint) detected.commands.lint = "npm run lint";
+            if (pkg.scripts.dev) detected.commands.dev = "npm run dev";
+            else if (pkg.scripts.start) detected.commands.dev = "npm run start";
           }
         } catch { /* ignore */ }
       }
@@ -588,7 +607,7 @@ async function detectFromGitHubApi(repoUrl: string): Promise<DetectedProject | n
     if (fileNames.has("dockerfile")) detected.hasDocker = true;
     
     // CI/CD
-    if (files.some((f: { name: string; type: string }) => f.name === ".github" && f.type === "dir")) {
+    if (files.some((f) => f.name === ".github" && f.type === "dir")) {
       detected.cicd = "github_actions";
     }
     if (fileNames.has(".gitlab-ci.yml")) detected.cicd = "gitlab_ci";
@@ -597,6 +616,18 @@ async function detectFromGitHubApi(repoUrl: string): Promise<DetectedProject | n
   } catch {
     return null;
   }
+}
+
+interface GitLabRepoInfo {
+  name: string;
+  description: string | null;
+  visibility: "public" | "private" | "internal";
+  license?: { key: string } | null;
+}
+
+interface GitLabFile {
+  name: string;
+  type: string;
 }
 
 /**
@@ -615,20 +646,20 @@ async function detectFromGitLabApi(repoUrl: string): Promise<DetectedProject | n
       headers: { "User-Agent": "LynxPrompt-CLI" },
     });
     if (!repoRes.ok) return null;
-    const repoInfo = await repoRes.json();
+    const repoInfo = await repoRes.json() as GitLabRepoInfo;
     
     if (repoInfo.visibility === "private") return null;
     
     const detected: DetectedProject = {
       name: repoInfo.name,
-      description: repoInfo.description,
+      description: repoInfo.description ?? undefined,
       stack: [],
       commands: {},
       packageManager: null,
       type: "application",
       repoHost: "gitlab",
       repoUrl,
-      license: repoInfo.license?.key?.toLowerCase() || undefined,
+      license: repoInfo.license?.key?.toLowerCase(),
     };
     
     // List root files
@@ -636,8 +667,8 @@ async function detectFromGitLabApi(repoUrl: string): Promise<DetectedProject | n
       headers: { "User-Agent": "LynxPrompt-CLI" },
     });
     if (!filesRes.ok) return detected;
-    const files = await filesRes.json();
-    const fileNames = new Set(files.map((f: { name: string }) => f.name.toLowerCase()));
+    const files = await filesRes.json() as GitLabFile[];
+    const fileNames = new Set(files.map((f) => f.name.toLowerCase()));
     
     // Detect from package.json
     if (fileNames.has("package.json")) {
@@ -646,8 +677,8 @@ async function detectFromGitLabApi(repoUrl: string): Promise<DetectedProject | n
       });
       if (pkgRes.ok) {
         try {
-          const pkg = await pkgRes.json();
-          const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
+          const pkg = await pkgRes.json() as PackageJson;
+          const allDeps: Record<string, string> = { ...pkg.dependencies, ...pkg.devDependencies };
           
           if (allDeps["next"]) detected.stack.push("nextjs");
           if (allDeps["react"]) detected.stack.push("react");
@@ -659,10 +690,10 @@ async function detectFromGitLabApi(repoUrl: string): Promise<DetectedProject | n
           }
           
           if (pkg.scripts) {
-            detected.commands.build = pkg.scripts.build ? "npm run build" : undefined;
-            detected.commands.test = pkg.scripts.test ? "npm run test" : undefined;
-            detected.commands.lint = pkg.scripts.lint ? "npm run lint" : undefined;
-            detected.commands.dev = pkg.scripts.dev ? "npm run dev" : undefined;
+            if (pkg.scripts.build) detected.commands.build = "npm run build";
+            if (pkg.scripts.test) detected.commands.test = "npm run test";
+            if (pkg.scripts.lint) detected.commands.lint = "npm run lint";
+            if (pkg.scripts.dev) detected.commands.dev = "npm run dev";
           }
         } catch { /* ignore */ }
       }
