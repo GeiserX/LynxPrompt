@@ -240,6 +240,95 @@ class ApiClient {
       body: JSON.stringify(data),
     });
   }
+
+  // User preferences endpoints
+  async saveWizardPreferences(data: {
+    commands?: Record<string, string | string[]>;
+    codeStyle?: {
+      naming?: string;
+      errorHandling?: string;
+      loggingConventions?: string;
+      notes?: string;
+    };
+    boundaries?: {
+      preset?: string;
+      never?: string[];
+      ask?: string[];
+    };
+    testing?: {
+      levels?: string[];
+      frameworks?: string[];
+      coverage?: number;
+      notes?: string;
+    };
+  }): Promise<{ saved: number }> {
+    // Convert structured data to the array format expected by the API
+    const preferences: Array<{ category: string; key: string; value: string; isDefault?: boolean }> = [];
+
+    // Commands
+    if (data.commands) {
+      for (const [key, value] of Object.entries(data.commands)) {
+        const strValue = Array.isArray(value) ? value.join(", ") : value;
+        if (strValue) {
+          preferences.push({ category: "commands", key, value: strValue, isDefault: true });
+        }
+      }
+    }
+
+    // Code style
+    if (data.codeStyle) {
+      if (data.codeStyle.naming) {
+        preferences.push({ category: "code_style", key: "naming", value: data.codeStyle.naming, isDefault: true });
+      }
+      if (data.codeStyle.errorHandling) {
+        preferences.push({ category: "code_style", key: "errorHandling", value: data.codeStyle.errorHandling, isDefault: true });
+      }
+      if (data.codeStyle.loggingConventions) {
+        preferences.push({ category: "code_style", key: "loggingConventions", value: data.codeStyle.loggingConventions, isDefault: true });
+      }
+      if (data.codeStyle.notes) {
+        preferences.push({ category: "code_style", key: "notes", value: data.codeStyle.notes, isDefault: true });
+      }
+    }
+
+    // Boundaries
+    if (data.boundaries) {
+      if (data.boundaries.preset) {
+        preferences.push({ category: "boundaries", key: "preset", value: data.boundaries.preset, isDefault: true });
+      }
+      if (data.boundaries.never?.length) {
+        preferences.push({ category: "boundaries", key: "never", value: JSON.stringify(data.boundaries.never), isDefault: true });
+      }
+      if (data.boundaries.ask?.length) {
+        preferences.push({ category: "boundaries", key: "ask", value: JSON.stringify(data.boundaries.ask), isDefault: true });
+      }
+    }
+
+    // Testing
+    if (data.testing) {
+      if (data.testing.levels?.length) {
+        preferences.push({ category: "testing", key: "levels", value: JSON.stringify(data.testing.levels), isDefault: true });
+      }
+      if (data.testing.frameworks?.length) {
+        preferences.push({ category: "testing", key: "frameworks", value: JSON.stringify(data.testing.frameworks), isDefault: true });
+      }
+      if (data.testing.coverage !== undefined) {
+        preferences.push({ category: "testing", key: "coverage", value: String(data.testing.coverage), isDefault: true });
+      }
+      if (data.testing.notes) {
+        preferences.push({ category: "testing", key: "notes", value: data.testing.notes, isDefault: true });
+      }
+    }
+
+    if (preferences.length === 0) {
+      return { saved: 0 };
+    }
+
+    return this.request<{ saved: number }>("/api/user/wizard-preferences", {
+      method: "POST",
+      body: JSON.stringify(preferences),
+    });
+  }
 }
 
 export class ApiRequestError extends Error {
