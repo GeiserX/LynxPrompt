@@ -38,6 +38,14 @@ export interface GenerateOptions {
   importantFiles?: string[];
   selfImprove?: boolean;
   includePersonalData?: boolean;
+  enableAutoUpdate?: boolean;
+  blueprintId?: string; // For auto-update curl command
+  // User profile data (fetched from cloud)
+  userName?: string;
+  userEmail?: string;
+  userPersona?: string;
+  userRole?: string;
+  userExpertise?: string;
   boundaryAlways?: string[];
   boundaryNever?: string[];
   boundaryAsk?: string[];
@@ -603,6 +611,47 @@ function generateFileContent(options: GenerateOptions, platform: string): string
     sections.push("");
   }
 
+  // Auto-update via API section (for synced blueprints)
+  if (options.enableAutoUpdate && options.blueprintId && (isMarkdown || isMdc)) {
+    const bpId = options.blueprintId.startsWith("bp_") ? options.blueprintId : `bp_${options.blueprintId}`;
+    const fileName = platform === "cursor" ? ".cursor/rules/agents.mdc" : "AGENTS.md";
+    const devOS = Array.isArray(options.devOS) ? options.devOS[0] : (options.devOS || "linux");
+    
+    sections.push("<!--");
+    sections.push("This file is synced with LynxPrompt. To update it via API:");
+    sections.push("");
+    
+    if (devOS === "windows") {
+      sections.push("# PowerShell (Windows)");
+      sections.push(`$content = (Get-Content "${fileName}" -Raw) -replace '"', '\\"'`);
+      sections.push(`$body = @{ content = $content } | ConvertTo-Json`);
+      sections.push(`Invoke-RestMethod -Uri "https://lynxprompt.com/api/v1/blueprints/${bpId}" \``);
+      sections.push('  -Method PUT -Headers @{ "Authorization" = "Bearer $env:LYNXPROMPT_API_TOKEN" } `');
+      sections.push('  -ContentType "application/json" -Body $body');
+    } else if (devOS === "wsl" || devOS === "linux" || devOS === "macos" || devOS === "multi") {
+      sections.push("# Bash (Linux/macOS/WSL)");
+      sections.push(`curl -X PUT "https://lynxprompt.com/api/v1/blueprints/${bpId}" \\`);
+      sections.push('  -H "Authorization: Bearer $LYNXPROMPT_API_TOKEN" \\');
+      sections.push('  -H "Content-Type: application/json" \\');
+      sections.push(`  -d "{\\"content\\": \\"$(cat ${fileName} | jq -Rs .)\\"}"`);
+      sections.push("");
+      sections.push("# Note: Install jq if not present: sudo apt install jq (Linux) or brew install jq (macOS)");
+    } else {
+      // Default to bash
+      sections.push("# Bash");
+      sections.push(`curl -X PUT "https://lynxprompt.com/api/v1/blueprints/${bpId}" \\`);
+      sections.push('  -H "Authorization: Bearer $LYNXPROMPT_API_TOKEN" \\');
+      sections.push('  -H "Content-Type: application/json" \\');
+      sections.push(`  -d "{\\"content\\": \\"$(cat ${fileName} | jq -Rs .)\\"}"`);
+    }
+    
+    sections.push("");
+    sections.push("Generate an API token at: https://lynxprompt.com/settings");
+    sections.push("Docs: https://lynxprompt.com/docs/api");
+    sections.push("-->");
+    sections.push("");
+  }
+
   // Project type context
   if (options.projectType) {
     const typeContexts: Record<string, string> = {
@@ -623,15 +672,27 @@ function generateFileContent(options: GenerateOptions, platform: string): string
   }
 
   // Persona section
-  const personaDesc = PERSONA_DESCRIPTIONS[options.persona] || options.persona;
+  // Use userPersona from profile if available, otherwise fall back to persona selection
+  const personaDesc = options.userPersona 
+    || PERSONA_DESCRIPTIONS[options.persona] 
+    || options.persona 
+    || "";
   const projectDesc = bpVar(bp, "PROJECT_DESCRIPTION", options.description || "");
   
   if (isMarkdown || isMdc) {
     sections.push("## Persona");
     sections.push("");
-    sections.push(`You are ${personaDesc}. You assist developers working on ${projectName}.`);
+    if (personaDesc) {
+      sections.push(`You are ${personaDesc}. You assist developers working on ${projectName}.`);
+    } else {
+      sections.push(`You assist developers working on ${projectName}.`);
+    }
   } else {
-    sections.push(`You are ${personaDesc}. You assist developers working on ${projectName}.`);
+    if (personaDesc) {
+      sections.push(`You are ${personaDesc}. You assist developers working on ${projectName}.`);
+    } else {
+      sections.push(`You assist developers working on ${projectName}.`);
+    }
   }
   
   if (options.description) {
@@ -832,7 +893,27 @@ function generateFileContent(options: GenerateOptions, platform: string): string
     if (isMarkdown || isMdc) {
       sections.push("## Commit Identity");
       sections.push("");
-      sections.push("> **Personal data enabled:** Use my name and email for git commits when making changes.");
+      if (options.userName || options.userEmail || options.userRole || options.userExpertise) {
+        // Include actual user profile data
+        const identityLines: string[] = [];
+        if (options.userName) {
+          identityLines.push(`- **Name:** ${options.userName}`);
+        }
+        if (options.userEmail) {
+          identityLines.push(`- **Email:** ${options.userEmail}`);
+        }
+        if (options.userRole) {
+          identityLines.push(`- **Role:** ${options.userRole}`);
+        }
+        if (options.userExpertise) {
+          identityLines.push(`- **Expertise:** ${options.userExpertise}`);
+        }
+        sections.push(...identityLines);
+        sections.push("");
+        sections.push("> Use this identity for git commits when making changes on my behalf.");
+      } else {
+        sections.push("> **Personal data enabled:** Use my name and email for git commits when making changes.");
+      }
       sections.push("");
     }
   }
