@@ -111,7 +111,7 @@ export async function GET(
       memberSince: user.createdAt,
       // Public templates
       templates: user.templates.map((t) => ({
-        id: `usr_${t.id}`, // Add prefix for consistency
+        id: `bp_${t.id}`, // Add prefix for consistency
         name: t.name,
         description: t.description,
         type: t.type,

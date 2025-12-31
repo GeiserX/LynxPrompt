@@ -19,8 +19,8 @@ export async function GET(
   // Determine template type and strip prefix for database lookup
   const isSystem = rawId.startsWith("sys_");
   const templateType = isSystem ? "system" : "user";
-  // Strip prefix (sys_ or usr_) if present for database ID
-  const templateId = rawId.replace(/^(sys_|usr_)/, "");
+  // Strip prefix (sys_ or bp_) if present for database ID
+  const templateId = rawId.replace(/^(sys_|bp_)/, "");
 
   const favorite = await prismaUsers.templateFavorite.findUnique({
     where: {
@@ -50,8 +50,8 @@ export async function POST(
   // Determine template type and strip prefix for database lookup
   const isSystem = rawId.startsWith("sys_");
   const templateType = isSystem ? "system" : "user";
-  // Strip prefix (sys_ or usr_) if present for database ID
-  const templateId = rawId.replace(/^(sys_|usr_)/, "");
+  // Strip prefix (sys_ or bp_) if present for database ID
+  const templateId = rawId.replace(/^(sys_|bp_)/, "");
 
   try {
     // Check if already favorited

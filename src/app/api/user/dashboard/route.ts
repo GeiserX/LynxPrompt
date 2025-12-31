@@ -101,7 +101,7 @@ export async function GET() {
         },
       }).then(templates => templates.map(template => ({
         ...template,
-        id: `usr_${template.id}`, // Add usr_ prefix for template detail routing
+        id: `bp_${template.id}`, // Add bp_ prefix for template detail routing
         version: template.currentVersion,
         publishedVersion: template.publishedVersion,
       }))),
@@ -191,7 +191,7 @@ export async function GET() {
           },
         },
       }).then(templates => templates.map(template => ({
-        id: `usr_${template.id}`,
+        id: `bp_${template.id}`,
         name: template.name,
         type: template.type,
         downloads: template.downloads,
@@ -229,11 +229,11 @@ export async function GET() {
     }
 
     // Enrich activity with template names
-    // Template IDs in downloads are stored WITH prefix (usr_xxx, sys_xxx)
+    // Template IDs in downloads are stored WITH prefix (bp_xxx, sys_xxx)
     // Need to strip prefix for database lookup, then map back
     const userTemplateIds = recentActivity
-      .filter((a) => a.templateId.startsWith("usr_"))
-      .map((a) => a.templateId.replace(/^usr_/, ""));
+      .filter((a) => a.templateId.startsWith("bp_"))
+      .map((a) => a.templateId.replace(/^bp_/, ""));
     const systemTemplateIds = recentActivity
       .filter((a) => a.templateId.startsWith("sys_"))
       .map((a) => a.templateId.replace(/^sys_/, ""));
@@ -254,7 +254,7 @@ export async function GET() {
 
     // Create map with prefixed IDs
     const templateNameMap = new Map<string, string>();
-    userTemplateNames.forEach((t) => templateNameMap.set(`usr_${t.id}`, t.name));
+    userTemplateNames.forEach((t) => templateNameMap.set(`bp_${t.id}`, t.name));
     systemTemplateNames.forEach((t) => templateNameMap.set(`sys_${t.id}`, t.name));
 
     const enrichedActivity = recentActivity.map((activity) => ({
@@ -305,7 +305,7 @@ export async function GET() {
           });
           if (template) {
             return {
-              id: `usr_${template.id}`,
+              id: `bp_${template.id}`,
               name: template.name,
               description: template.description,
               downloads: template.downloads,
@@ -324,7 +324,7 @@ export async function GET() {
     const formattedPurchases = purchasedBlueprints
       .filter(p => p.template) // Only include if template still exists
       .map(p => ({
-        id: `usr_${p.template.id}`,
+        id: `bp_${p.template.id}`,
         name: p.template.name,
         description: p.template.description,
         downloads: p.template.downloads,
@@ -341,7 +341,7 @@ export async function GET() {
     const formattedTeamPurchases = teamPurchases
       .filter(p => p.template)
       .map(p => ({
-        id: `usr_${p.template.id}`,
+        id: `bp_${p.template.id}`,
         name: p.template.name,
         description: p.template.description,
         downloads: p.template.downloads,

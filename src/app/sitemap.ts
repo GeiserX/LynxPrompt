@@ -307,7 +307,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
 
     blueprintPages = blueprints.map((blueprint) => ({
-      url: `${baseUrl}/blueprints/usr_${blueprint.id}`,
+      url: `${baseUrl}/blueprints/bp_${blueprint.id}`,
       lastModified: blueprint.updatedAt,
       changeFrequency: "weekly" as const,
       priority: 0.6,

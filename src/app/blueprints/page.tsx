@@ -179,7 +179,7 @@ function BlueprintsContent() {
           const res = await fetch("/api/user/favorites");
           if (res.ok) {
             const data = await res.json();
-            // API returns array directly, with 'id' field (e.g., 'usr_xxx' or 'sys_xxx')
+            // API returns array directly, with 'id' field (e.g., 'bp_xxx' or 'sys_xxx')
             const favoriteIds = new Set<string>(
               Array.isArray(data) 
                 ? data.map((f: { id: string }) => String(f.id)).filter(Boolean)

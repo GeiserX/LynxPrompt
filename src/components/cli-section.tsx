@@ -31,7 +31,7 @@ const TERMINAL_LINES = [
   { type: "output-dim", content: "# Or pull from marketplace" },
   { type: "command", content: "lynxp search nextjs" },
   { type: "output-cyan", content: "  → Next.js 15 Stack (★ 220)" },
-  { type: "command", content: "lynxp pull usr_cmjq..." },
+  { type: "command", content: "lynxp pull bp_cmjq..." },
   { type: "output-success", content: "✓ Downloaded to AGENTS.md" },
 ];
 
