@@ -483,34 +483,6 @@ const IMPORTANT_FILES = [
   { id: "contributing", label: "CONTRIBUTING.md", icon: "🤝 " },
 ];
 
-// Boundary presets
-const BOUNDARY_PRESETS = [
-  {
-    title: "🟢 Standard",
-    value: "standard",
-    description: "Balanced freedom & safety",
-    always: ["Read any file", "Modify files in src/", "Run build/test/lint", "Create test files"],
-    askFirst: ["Add new dependencies", "Modify config files", "Create new modules"],
-    never: ["Delete production data", "Modify .env secrets", "Force push"],
-  },
-  {
-    title: "🟡 Conservative",
-    value: "conservative",
-    description: "Ask before most changes",
-    always: ["Read any file", "Run lint/format commands"],
-    askFirst: ["Modify any file", "Add dependencies", "Create files", "Run tests"],
-    never: ["Delete files", "Modify .env", "Push to git"],
-  },
-  {
-    title: "🟠 Permissive",
-    value: "permissive",
-    description: "AI can modify freely",
-    always: ["Modify any file in src/", "Run any script", "Add dependencies", "Create files"],
-    askFirst: ["Modify root configs", "Delete directories"],
-    never: ["Modify .env", "Access external APIs without confirmation"],
-  },
-];
-
 // Detailed boundary options
 const BOUNDARY_OPTIONS = [
   "Delete files",
@@ -650,16 +622,6 @@ function sortSelectedFirst<T extends Choice>(choices: T[]): T[] {
 // Check if user can access AI features (Max or Teams only)
 function canAccessAI(userTier: UserTier): boolean {
   return userTier === "max" || userTier === "teams";
-}
-
-// Get AI shortcut hint based on OS
-function getAIShortcutHint(): string {
-  const platform = os.platform();
-  if (platform === "darwin") {
-    return "⌘+I";
-  } else {
-    return "Ctrl+I";
-  }
 }
 
 // AI assistant for text fields
