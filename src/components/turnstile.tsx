@@ -35,6 +35,7 @@ export function Turnstile({ onSuccess, onError, onExpire, className }: Turnstile
   const [status, setStatus] = useState<"loading" | "ready" | "success" | "error">("loading");
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [widgetRendered, setWidgetRendered] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
   const hasSucceeded = useRef(false);
@@ -91,6 +92,7 @@ export function Turnstile({ onSuccess, onError, onExpire, className }: Turnstile
         theme: resolvedTheme === "dark" ? "dark" : "light",
         size: "normal",
       });
+      setWidgetRendered(true);
       return true;
     } catch (err) {
       console.error("Turnstile render error:", err);
@@ -145,6 +147,7 @@ export function Turnstile({ onSuccess, onError, onExpire, className }: Turnstile
     }
     renderAttempts.current = 0;
     hasSucceeded.current = false;
+    setWidgetRendered(false);
     setRetryCount(c => c + 1);
     setStatus("ready");
   };
@@ -202,7 +205,7 @@ export function Turnstile({ onSuccess, onError, onExpire, className }: Turnstile
       />
       <div ref={containerRef} className="min-h-[65px]">
         {/* Show loading while waiting for widget to render */}
-        {status === "ready" && !widgetIdRef.current && (
+        {status === "ready" && !widgetRendered && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
             <span>Loading captcha...</span>
