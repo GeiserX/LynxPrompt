@@ -66,10 +66,15 @@ export function toBlueprintApiId(id: string): string {
 
 /**
  * Remove blueprint prefix from API ID for database queries
+ * Supports both bp_ (v1 API) and usr_ (marketplace) prefixes
  */
 export function fromBlueprintApiId(apiId: string): string {
   if (apiId.startsWith(BLUEPRINT_PREFIX)) {
     return apiId.slice(BLUEPRINT_PREFIX.length);
+  }
+  // Also support usr_ prefix (same table, different UI)
+  if (apiId.startsWith("usr_")) {
+    return apiId.slice(4); // "usr_".length = 4
   }
   return apiId;
 }
