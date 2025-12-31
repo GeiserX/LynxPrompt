@@ -1064,13 +1064,53 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
   try {
     // Add blueprint mode and variables to config
     const variables = options.vars ? parseVariablesString(options.vars) : undefined;
+    // Don't pass enableAutoUpdate/blueprintId to generator yet - we'll add curl header after saving
     const finalConfig = {
       ...config,
       blueprintMode: options.blueprint || config.blueprintMode || false,
       variables,
+      enableAutoUpdate: false, // Don't generate curl header yet
     };
     
-    const files = generateConfig(finalConfig);
+    let files = generateConfig(finalConfig);
+    
+    // If enableAutoUpdate is true, save blueprint to cloud first
+    let savedBlueprintId: string | null = null;
+    if (config.enableAutoUpdate && api) {
+      spinner.text = "Saving blueprint to cloud...";
+      try {
+        const mainFile = Object.entries(files)[0];
+        if (mainFile) {
+          const [_fileName, content] = mainFile;
+          const response = await api.createBlueprint({
+            name: config.name || "My AI Config",
+            description: config.description || "Generated with LynxPrompt CLI",
+            content: content,
+            visibility: "PRIVATE",
+          });
+          savedBlueprintId = response.blueprint.id;
+          
+          // Now regenerate with the real blueprint ID to include curl header
+          const configWithAutoUpdate = {
+            ...finalConfig,
+            enableAutoUpdate: true,
+            blueprintId: savedBlueprintId,
+          };
+          files = generateConfig(configWithAutoUpdate);
+          
+          console.log(chalk.green(`  ✓ Blueprint saved: ${savedBlueprintId}`));
+        }
+      } catch (saveError) {
+        spinner.stop();
+        console.log(chalk.yellow("\n  ⚠️  Could not save blueprint to cloud"));
+        if (saveError instanceof Error) {
+          console.log(chalk.gray(`     ${saveError.message}`));
+        }
+        console.log(chalk.gray("     Continuing without auto-update curl command..."));
+        // Continue without auto-update
+      }
+    }
+    
     spinner.stop();
 
     console.log();
@@ -2025,28 +2065,21 @@ async function runInteractiveWizard(
     }
   }
 
-  // Auto-update via API option
+  // Auto-update via API option (requires saving blueprint to cloud)
   const enableAutoUpdateResponse = await prompts({
     type: "toggle",
     name: "enableAutoUpdate",
-    message: chalk.white("Enable auto-update via API (include curl sync command)?"),
+    message: chalk.white("Save to cloud & enable auto-update via API?"),
     initial: false,
     active: "Yes",
     inactive: "No",
   }, promptConfig);
   answers.enableAutoUpdate = enableAutoUpdateResponse.enableAutoUpdate || false;
 
-  // If auto-update enabled, we need a blueprint ID (user can provide one or we'll generate one)
-  if (answers.enableAutoUpdate) {
-    const blueprintIdResponse = await prompts({
-      type: "text",
-      name: "blueprintId",
-      message: chalk.white("Blueprint ID (leave blank to use project name):"),
-      initial: "",
-    }, promptConfig);
-    const projectName = typeof answers.name === "string" ? answers.name : "";
-    answers.blueprintId = blueprintIdResponse.blueprintId || projectName.toLowerCase().replace(/[^a-z0-9]/g, "-") || "my-blueprint";
-    console.log(chalk.gray(`  Blueprint ID: bp_${answers.blueprintId}`));
+  if (answers.enableAutoUpdate && !api) {
+    console.log(chalk.yellow("  ⚠️  Auto-update requires login. Run 'lynxp login' first."));
+    console.log(chalk.gray("     Continuing without auto-update..."));
+    answers.enableAutoUpdate = false;
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -2470,7 +2503,6 @@ async function runInteractiveWizard(
     selfImprove: answers.selfImprove as boolean,
     includePersonalData: answers.includePersonalData as boolean,
     enableAutoUpdate: answers.enableAutoUpdate as boolean,
-    blueprintId: answers.blueprintId as string,
     userName: answers.userName as string,
     userEmail: answers.userEmail as string,
     userPersona: answers.userPersona as string,
