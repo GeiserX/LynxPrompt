@@ -949,6 +949,7 @@ function WizardPageContent() {
           setCurrentDraftId(draft.id);
           setDraftName(draft.name);
           setDraftLoaded(true);
+          window.scrollTo({ top: 0, behavior: "smooth" });
         }
       } catch (error) {
         console.error("Failed to load draft:", error);
@@ -1013,6 +1014,7 @@ function WizardPageContent() {
         setCurrentDraftId(draft.id);
         setDraftName(draft.name);
         setShowLoadDraftModal(false);
+        window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
         alert("Failed to load draft");
       }
@@ -1513,6 +1515,12 @@ function WizardPageContent() {
     return <ProfileSetupRequired />;
   }
 
+  // Helper to change step and scroll to top
+  const goToStep = (step: number) => {
+    setCurrentStep(step);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const handleNext = () => {
     if (currentStep >= WIZARD_STEPS.length - 1) return;
     let next = currentStep + 1;
@@ -1520,7 +1528,7 @@ function WizardPageContent() {
       next++;
     }
     if (next >= WIZARD_STEPS.length) next = WIZARD_STEPS.length - 1;
-    setCurrentStep(next);
+    goToStep(next);
   };
 
   const handleCopyFile = async (fileName: string, content: string) => {
@@ -1541,7 +1549,7 @@ function WizardPageContent() {
         prevStep--;
       }
       if (prevStep >= 0) {
-        setCurrentStep(prevStep);
+        goToStep(prevStep);
       }
     }
   };
@@ -2295,7 +2303,7 @@ ${curlCommand}
               return (
                 <button
                   key={step.id}
-                  onClick={() => !isLocked && setCurrentStep(index)}
+                  onClick={() => !isLocked && goToStep(index)}
                   disabled={isLocked}
                   className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors ${
                     isLocked
