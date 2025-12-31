@@ -124,8 +124,10 @@ export async function validateApiToken(authHeader: string | null): Promise<{
     return null;
   }
 
-  // Check expiration - return null with special handling in the route
-  // We'll handle expired tokens separately in routes for better error messages
+  // Check if expired
+  if (token.expiresAt < new Date()) {
+    return null;
+  }
   
   // Update lastUsedAt (fire and forget)
   prismaUsers.apiToken.update({

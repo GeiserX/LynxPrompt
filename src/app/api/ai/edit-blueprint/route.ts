@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { authenticateRequest, isMaxOrTeams } from "@/lib/api-auth";
 import { prismaUsers } from "@/lib/db-users";
 import Anthropic from "@anthropic-ai/sdk";
 
@@ -55,9 +54,10 @@ Output ONLY the formatted content that can be added to an AI configuration file.
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    // Authenticate via session OR Bearer token
+    const auth = await authenticateRequest(request);
 
-    if (!session?.user?.id) {
+    if (!auth) {
       return NextResponse.json(
         { error: "Authentication required" },
         { status: 401 }
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
 
     // Check if user is MAX or TEAMS subscriber
     const user = await prismaUsers.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: auth.user.id },
       select: {
         subscriptionPlan: true,
         role: true,
@@ -82,13 +82,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const isMaxOrTeamsUser =
-      user.subscriptionPlan === "MAX" ||
-      user.subscriptionPlan === "TEAMS" ||
-      user.role === "ADMIN" ||
-      user.role === "SUPERADMIN";
-
-    if (!isMaxOrTeamsUser) {
+    if (!isMaxOrTeams(auth.user)) {
       return NextResponse.json(
         { error: "AI editing is only available for Max and Teams subscribers" },
         { status: 403 }
@@ -255,7 +249,7 @@ export async function POST(request: Request) {
 
     // Update user's usage tracking
     await prismaUsers.user.update({
-      where: { id: session.user.id },
+      where: { id: auth.user.id },
       data: {
         aiTokensUsedThisPeriod: tokensUsed + costUnits,
         aiLastRequestAt: now,

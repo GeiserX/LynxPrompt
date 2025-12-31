@@ -1698,16 +1698,17 @@ async function runInteractiveWizard(
   }, promptConfig);
   answers.deploymentTargets = deployResponse.deploymentTargets || [];
 
-  // Container build
+  // Container build - default to Yes if Docker is selected in deployment targets
+  const dockerSelected = (answers.deploymentTargets as string[] || []).includes("docker");
   const containerResponse = await prompts({
     type: "toggle",
     name: "buildContainer",
     message: chalk.white("Build container images (Docker)?"),
-    initial: false,
+    initial: dockerSelected, // Default Yes if Docker selected
     active: "Yes",
     inactive: "No",
   }, promptConfig);
-  answers.buildContainer = containerResponse.buildContainer || false;
+  answers.buildContainer = containerResponse.buildContainer ?? dockerSelected;
 
   // Container registry (if building containers)
   if (answers.buildContainer) {
@@ -1961,16 +1962,16 @@ async function runInteractiveWizard(
     message: chalk.white("AI behavior rules (type to filter):"),
     choices: AI_BEHAVIOR_RULES.map(r => ({
       title: r.recommended 
-        ? `${r.label} ${chalk.green("★")}`
+        ? `${r.label} ${chalk.green("★ recommended")}`
         : r.label,
       value: r.id,
       description: chalk.gray(r.description),
-      // No pre-selection - user must explicitly choose
+      selected: true, // All selected by default
     })),
     hint: chalk.gray("type to filter • space select • enter confirm"),
     instructions: false,
   }, promptConfig);
-  answers.aiBehavior = aiBehaviorResponse.aiBehavior || [];
+  answers.aiBehavior = aiBehaviorResponse.aiBehavior || AI_BEHAVIOR_RULES.map(r => r.id);
   
   // Show selected rules in newlines
   if ((answers.aiBehavior as string[]).length > 0) {

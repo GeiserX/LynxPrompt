@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { authenticateRequest } from "@/lib/api-auth";
 import { prismaUsers } from "@/lib/db-users";
 
 // GET - Fetch all wizard preferences for the user
@@ -43,12 +44,15 @@ export async function GET() {
 // POST - Save wizard preferences
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    console.log("[wizard-preferences POST] session user id:", session?.user?.id);
-    if (!session?.user?.id) {
+    // Support both session auth (browser) and Bearer token auth (CLI)
+    const auth = await authenticateRequest(req);
+    console.log("[wizard-preferences POST] auth:", auth?.source, auth?.user?.id);
+    
+    if (!auth) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const userId = auth.user.id;
     const body = await req.json();
     console.log("[wizard-preferences POST] received body:", JSON.stringify(body, null, 2));
     
@@ -80,13 +84,13 @@ export async function POST(req: Request) {
         prismaUsers.preference.upsert({
           where: {
             userId_category_key: {
-              userId: session.user.id,
+              userId,
               category: pref.category,
               key: pref.key,
             },
           },
           create: {
-            userId: session.user.id,
+            userId,
             category: pref.category,
             key: pref.key,
             value: pref.value,
