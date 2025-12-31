@@ -309,7 +309,7 @@ export default function BlueprintDetailPage() {
 
       if (res.ok && data.template?.id) {
         // Redirect to edit the new copy
-        router.push(`/blueprints/usr_${data.template.id}/edit`);
+        router.push(`/blueprints/bp_${data.template.id}/edit`);
       } else {
         alert(data.error || "Failed to clone blueprint");
       }
@@ -374,8 +374,8 @@ export default function BlueprintDetailPage() {
 
     setPurchasing(true);
     try {
-      // Extract real blueprint ID (remove usr_ prefix)
-      const realBlueprintId = (params.id as string).replace("usr_", "");
+      // Extract real blueprint ID (remove bp_ or legacy usr_ prefix)
+      const realBlueprintId = (params.id as string).replace(/^(bp_|usr_)/, "");
 
       const res = await fetch("/api/blueprints/purchase", {
         method: "POST",

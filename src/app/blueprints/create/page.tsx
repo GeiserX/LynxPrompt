@@ -358,7 +358,7 @@ export default function ShareBlueprintPage() {
             </p>
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
               <Button asChild>
-                <Link href={`/blueprints/usr_${success.id}`}>
+                <Link href={`/blueprints/bp_${success.id}`}>
                   View Blueprint
                 </Link>
               </Button>

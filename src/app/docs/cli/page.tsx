@@ -144,7 +144,7 @@ $ lynxp search nextjs
   → Next.js 15 Stack (★ 220)
   → Next.js TypeScript (★ 185)
 
-$ lynxp pull usr_cmjq...
+$ lynxp pull bp_cmjq...
 ✓ Downloaded to AGENTS.md
 
 # See what changed
