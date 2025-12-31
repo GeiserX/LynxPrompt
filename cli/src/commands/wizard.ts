@@ -17,9 +17,10 @@ interface WizardDraft {
   name: string;
   savedAt: string;
   config: Record<string, unknown>;
+  stepReached?: number;
 }
 
-async function saveDraftLocally(name: string, config: Record<string, unknown>): Promise<void> {
+async function saveDraftLocally(name: string, config: Record<string, unknown>, stepReached?: number): Promise<void> {
   const draftsPath = join(process.cwd(), DRAFTS_DIR);
   await mkdir(draftsPath, { recursive: true });
   
@@ -27,6 +28,7 @@ async function saveDraftLocally(name: string, config: Record<string, unknown>): 
     name,
     savedAt: new Date().toISOString(),
     config,
+    stepReached,
   };
   
   const filename = `${name.replace(/[^a-zA-Z0-9-_]/g, "_")}.json`;
@@ -148,6 +150,9 @@ interface WizardOptions {
   loadDraft?: string;
   saveDraft?: string;
   vars?: string;
+  // Internal: for resuming from a draft
+  _resumeFromStep?: number;
+  _draftAnswers?: Record<string, unknown>;
 }
 
 // User tier levels
@@ -773,9 +778,10 @@ async function saveDraftOnExit(): Promise<void> {
     console.log();
     console.log(chalk.yellow(`  💾 Saving wizard state to draft: ${draftName}...`));
     
-    await saveDraftLocally(draftName, wizardState.answers);
+    await saveDraftLocally(draftName, wizardState.answers, wizardState.stepReached);
     
     console.log(chalk.green(`  ✓ Draft saved! Resume with: lynxp wizard --load-draft ${draftName}`));
+    console.log(chalk.gray(`     Saved at step ${wizardState.stepReached}`));
     console.log();
   } catch (err) {
     console.log(chalk.red(`  ✗ Could not save draft: ${err instanceof Error ? err.message : "unknown error"}`));
@@ -808,10 +814,15 @@ export async function wizardCommand(options: WizardOptions): Promise<void> {
   if (options.loadDraft) {
     const draft = await loadDraftLocally(options.loadDraft);
     if (draft) {
-      console.log(chalk.green(`  ✓ Loaded draft: ${draft.name} (saved ${new Date(draft.savedAt).toLocaleString()})`));
+      const stepInfo = draft.stepReached ? ` at step ${draft.stepReached}` : "";
+      console.log(chalk.green(`  ✓ Loaded draft: ${draft.name} (saved ${new Date(draft.savedAt).toLocaleString()}${stepInfo})`));
       console.log();
-      // Merge draft config into options for use later
-      Object.assign(options, draft.config);
+      // Store draft answers and resume step for use in interactive wizard
+      options._draftAnswers = draft.config;
+      options._resumeFromStep = draft.stepReached;
+      // Also merge basic options (name, description, etc.)
+      if (draft.config.name) options.name = draft.config.name as string;
+      if (draft.config.description) options.description = draft.config.description as string;
     } else {
       const availableDrafts = await listLocalDrafts();
       console.log(chalk.red(`  ✗ Draft "${options.loadDraft}" not found.`));
@@ -1142,44 +1153,79 @@ export async function wizardCommand(options: WizardOptions): Promise<void> {
       });
 
       if (savePrefsResponse.savePrefs) {
-        const saveSpinner = ora("Saving preferences to your profile...").start();
-        try {
-          // Save wizard preferences via API
-          await api.saveWizardPreferences({
-            commands: config.commands,
-            codeStyle: {
-              naming: config.namingConvention,
-              errorHandling: config.errorHandling,
-              loggingConventions: config.loggingConventions,
-              loggingConventionsOther: config.loggingConventionsOther,
-              notes: config.styleNotes,
-            },
-            boundaries: {
-              always: config.boundaryAlways,
-              never: config.boundaryNever,
-              ask: config.boundaryAsk,
-            },
-            testing: {
-              levels: config.testLevels,
-              frameworks: config.testFrameworks,
-              coverage: config.coverageTarget,
-              notes: config.testNotes,
-            },
-          });
-          saveSpinner.succeed("Preferences saved to your profile");
-        } catch (err) {
-          saveSpinner.fail("Could not save preferences (you can still use the generated files)");
-          if (err instanceof ApiRequestError) {
-            if (err.statusCode === 401) {
-              console.log(chalk.yellow("     Your session may have expired. Try: lynxp login"));
-            } else {
-              console.log(chalk.gray(`     ${err.message} (status: ${err.statusCode})`));
+        // Retry loop for saving preferences
+        let saved = false;
+        let attempts = 0;
+        const maxAttempts = 3;
+        
+        while (!saved && attempts < maxAttempts) {
+          attempts++;
+          const saveSpinner = ora("Saving preferences to your profile...").start();
+          try {
+            // Save wizard preferences via API
+            await api.saveWizardPreferences({
+              commands: config.commands,
+              codeStyle: {
+                naming: config.namingConvention,
+                errorHandling: config.errorHandling,
+                loggingConventions: config.loggingConventions,
+                loggingConventionsOther: config.loggingConventionsOther,
+                notes: config.styleNotes,
+              },
+              boundaries: {
+                always: config.boundaryAlways,
+                never: config.boundaryNever,
+                ask: config.boundaryAsk,
+              },
+              testing: {
+                levels: config.testLevels,
+                frameworks: config.testFrameworks,
+                coverage: config.coverageTarget,
+                notes: config.testNotes,
+              },
+            });
+            saveSpinner.succeed("Preferences saved to your profile");
+            saved = true;
+          } catch (err) {
+            saveSpinner.fail("Could not save preferences");
+            let errorType = "unknown";
+            
+            if (err instanceof ApiRequestError) {
+              if (err.statusCode === 401) {
+                console.log(chalk.yellow("     Your session may have expired. Try: lynxp login"));
+                break; // Don't retry auth errors
+              } else {
+                console.log(chalk.gray(`     ${err.message} (status: ${err.statusCode})`));
+                errorType = "api";
+              }
+            } else if (err instanceof Error) {
+              if (err.message.includes("fetch failed") || err.message.includes("ENOTFOUND")) {
+                console.log(chalk.yellow("     Network error. Check your internet connection."));
+                errorType = "network";
+              } else {
+                console.log(chalk.gray(`     ${err.message}`));
+              }
             }
-          } else if (err instanceof Error) {
-            if (err.message.includes("fetch failed") || err.message.includes("ENOTFOUND")) {
-              console.log(chalk.yellow("     Network error. Check your internet connection."));
+            
+            // Ask if user wants to retry (for network/api errors)
+            if (errorType === "network" || errorType === "api") {
+              if (attempts < maxAttempts) {
+                const retryResponse = await prompts({
+                  type: "confirm",
+                  name: "retry",
+                  message: chalk.white("Would you like to retry?"),
+                  initial: true,
+                });
+                
+                if (!retryResponse.retry) {
+                  console.log(chalk.gray("     Skipping preference save. Your config files are still generated."));
+                  break;
+                }
+              } else {
+                console.log(chalk.gray(`     Max retries (${maxAttempts}) reached. Your config files are still generated.`));
+              }
             } else {
-              console.log(chalk.gray(`     ${err.message}`));
+              break; // Don't retry unknown errors
             }
           }
         }
@@ -1202,14 +1248,29 @@ async function runInteractiveWizard(
   detected: Awaited<ReturnType<typeof detectProject>> | null,
   userTier: UserTier
 ): Promise<GenerateOptions> {
-  const answers: Record<string, unknown> = {};
+  // Load answers from draft if resuming
+  const answers: Record<string, unknown> = options._draftAnswers ? { ...options._draftAnswers } : {};
+  const resumeFromStep = options._resumeFromStep || 0;
   const availableSteps = getAvailableSteps(userTier);
   let currentStepNum = 0;
 
   // Initialize global state for draft saving on exit
   wizardState.inProgress = true;
   wizardState.answers = answers;
-  wizardState.stepReached = 0;
+  wizardState.stepReached = resumeFromStep;
+
+  // Show resume message if loading from draft
+  if (resumeFromStep > 0 && Object.keys(answers).length > 0) {
+    console.log(chalk.cyan(`  📋 Resuming from step ${resumeFromStep}...`));
+    console.log(chalk.gray("     Previously saved answers:"));
+    // Show key saved values
+    if (answers.name) console.log(chalk.gray(`       • Name: ${answers.name}`));
+    if (answers.platforms) console.log(chalk.gray(`       • Platforms: ${(answers.platforms as string[]).join(", ")}`));
+    if (answers.stack) console.log(chalk.gray(`       • Stack: ${(answers.stack as string[]).slice(0, 5).join(", ")}${(answers.stack as string[]).length > 5 ? "..." : ""}`));
+    console.log();
+    console.log(chalk.yellow("     Steps 1-" + (resumeFromStep - 1) + " will use saved values. Continuing from step " + resumeFromStep + "."));
+    console.log();
+  }
 
   // Helper to get current step info and increment counter
   const getCurrentStep = (stepId: string) => {
@@ -1222,18 +1283,28 @@ async function runInteractiveWizard(
     return null;
   };
 
+  // Helper to check if we should skip this step (already completed in draft)
+  const shouldSkipStep = (stepNum: number) => {
+    return resumeFromStep > 0 && stepNum < resumeFromStep;
+  };
+
   // ═══════════════════════════════════════════════════════════════
   // STEP 1: Output Format (basic - all users)
   // ═══════════════════════════════════════════════════════════════
   const formatStep = getCurrentStep("format")!;
-  showStep(currentStepNum, formatStep, userTier);
   
   let platforms: string[];
   
-  if (options.format) {
+  if (shouldSkipStep(currentStepNum) && answers.platforms) {
+    // Use saved answer from draft
+    platforms = answers.platforms as string[];
+    console.log(chalk.gray(`  Step 1 (Output Format): Using saved platforms: ${platforms.join(", ")}`));
+  } else if (options.format) {
+    showStep(currentStepNum, formatStep, userTier);
     platforms = options.format.split(",").map(f => f.trim());
     console.log(chalk.gray(`  Using format from flag: ${platforms.join(", ")}`));
   } else {
+    showStep(currentStepNum, formatStep, userTier);
     // Multi-select by default - user can select one or more platforms
     console.log(chalk.gray("  Select the AI editors you want to generate config for:"));
     console.log(chalk.gray("  (AGENTS.md is recommended - works with most AI tools)"));
@@ -1335,6 +1406,17 @@ async function runInteractiveWizard(
     initial: 0,
   }, promptConfig);
   answers.architecture = archResponse.architecture || "";
+  
+  // If "other" selected, ask for custom input
+  if (answers.architecture === "other") {
+    const customArchResponse = await prompts({
+      type: "text",
+      name: "customArchitecture",
+      message: chalk.white("Describe your architecture pattern:"),
+      hint: chalk.gray("e.g., CQRS, Hexagonal, Clean Architecture"),
+    }, promptConfig);
+    answers.architectureOther = customArchResponse.customArchitecture || "";
+  }
 
   // Blueprint Template Mode - available for all users
   console.log();
@@ -1761,12 +1843,23 @@ async function runInteractiveWizard(
       initial: 0,
     }, promptConfig);
     answers.errorHandling = errorResponse.errorHandling || "";
+    
+    // If "other" selected, ask for custom input
+    if (answers.errorHandling === "other") {
+      const customErrorResponse = await prompts({
+        type: "text",
+        name: "customErrorHandling",
+        message: chalk.white("Describe your error handling approach:"),
+        hint: chalk.gray("e.g., Railway-oriented, custom error boundaries"),
+      }, promptConfig);
+      answers.errorHandlingOther = customErrorResponse.customErrorHandling || "";
+    }
 
-    // Logging conventions - select from predefined options like WebUI
+    // Logging conventions - searchable select like WebUI
     const loggingResponse = await prompts({
-      type: "select",
+      type: "autocomplete",
       name: "loggingConventions",
-      message: chalk.white("Logging conventions:"),
+      message: chalk.white("Logging conventions (type to search):"),
       choices: [
         { title: chalk.gray("⏭ Skip"), value: "" },
         ...LOGGING_OPTIONS.map(l => ({
@@ -1803,17 +1896,6 @@ async function runInteractiveWizard(
   // ═══════════════════════════════════════════════════════════════
   const aiStep = getCurrentStep("ai")!;
   showStep(currentStepNum, aiStep, userTier);
-
-  console.log(chalk.gray("  Select which behaviors AI should follow:"));
-  console.log();
-  
-  // Show each AI behavior rule with description on separate lines
-  for (const rule of AI_BEHAVIOR_RULES) {
-    const recBadge = rule.recommended ? chalk.green(" ★ recommended") : "";
-    console.log(chalk.cyan(`  • ${rule.label}${recBadge}`));
-    console.log(chalk.gray(`    ${rule.description}`));
-  }
-  console.log();
   
   const aiBehaviorResponse = await prompts({
     type: "autocompleteMultiselect",
@@ -1831,6 +1913,15 @@ async function runInteractiveWizard(
     instructions: false,
   }, promptConfig);
   answers.aiBehavior = aiBehaviorResponse.aiBehavior || [];
+  
+  // Show selected rules in newlines
+  if ((answers.aiBehavior as string[]).length > 0) {
+    console.log(chalk.green("  ✓ Selected:"));
+    for (const ruleId of (answers.aiBehavior as string[])) {
+      const rule = AI_BEHAVIOR_RULES.find(r => r.id === ruleId);
+      if (rule) console.log(chalk.cyan(`    • ${rule.label}`));
+    }
+  }
 
   const importantFilesResponse = await prompts({
     type: "autocompleteMultiselect",
@@ -1859,7 +1950,7 @@ async function runInteractiveWizard(
   const includePersonalResponse = await prompts({
     type: "toggle",
     name: "includePersonalData",
-    message: chalk.white("Include personal data (name/email for commits)?"),
+    message: chalk.white("Include personal data (as saved in WebUI)?"),
     initial: false,
     active: "Yes",
     inactive: "No",
@@ -1873,30 +1964,30 @@ async function runInteractiveWizard(
     const boundariesStep = getCurrentStep("boundaries")!;
     showStep(currentStepNum, boundariesStep, userTier);
 
-    console.log(chalk.gray("  Define what AI should always do, ask first, or never do."));
+    console.log(chalk.gray("  Define what AI should never do, ask first, or always do."));
     console.log(chalk.gray("  Each option can only be in one category."));
     console.log();
 
     // Track used options to filter them out from subsequent questions
     const usedOptions = new Set<string>();
 
-    // ALWAYS do - AI will do these automatically
-    console.log(chalk.green.bold("  ✓ ALWAYS ALLOW - AI will do these automatically"));
-    const alwaysResponse = await prompts({
+    // 1. NEVER do - AI will refuse to do (ask first - most restrictive)
+    console.log(chalk.red.bold("  ✗ NEVER ALLOW - AI will refuse to do"));
+    const neverResponse = await prompts({
       type: "autocompleteMultiselect",
-      name: "always",
-      message: chalk.white("Always allow (type to filter):"),
+      name: "never",
+      message: chalk.white("Never allow (type to filter):"),
       choices: BOUNDARY_OPTIONS.map(o => ({
-        title: chalk.green(o),
+        title: chalk.red(o),
         value: o,
       })),
       hint: chalk.gray("space select • enter confirm"),
       instructions: false,
     }, promptConfig);
-    answers.boundaryAlways = alwaysResponse.always || [];
-    (answers.boundaryAlways as string[]).forEach(o => usedOptions.add(o));
+    answers.boundaryNever = neverResponse.never || [];
+    (answers.boundaryNever as string[]).forEach(o => usedOptions.add(o));
 
-    // ASK first - AI will ask before doing
+    // 2. ASK first - AI will ask before doing
     console.log();
     console.log(chalk.yellow.bold("  ? ASK FIRST - AI will ask before doing"));
     const availableForAsk = BOUNDARY_OPTIONS.filter(o => !usedOptions.has(o));
@@ -1914,22 +2005,22 @@ async function runInteractiveWizard(
     answers.boundaryAsk = askResponse.ask || [];
     (answers.boundaryAsk as string[]).forEach(o => usedOptions.add(o));
 
-    // NEVER do - AI will refuse to do
+    // 3. ALWAYS do - AI will do these automatically
     console.log();
-    console.log(chalk.red.bold("  ✗ NEVER ALLOW - AI will refuse to do"));
-    const availableForNever = BOUNDARY_OPTIONS.filter(o => !usedOptions.has(o));
-    const neverResponse = await prompts({
+    console.log(chalk.green.bold("  ✓ ALWAYS ALLOW - AI will do these automatically"));
+    const availableForAlways = BOUNDARY_OPTIONS.filter(o => !usedOptions.has(o));
+    const alwaysResponse = await prompts({
       type: "autocompleteMultiselect",
-      name: "never",
-      message: chalk.white("Never allow (type to filter):"),
-      choices: availableForNever.map(o => ({
-        title: chalk.red(o),
+      name: "always",
+      message: chalk.white("Always allow (type to filter):"),
+      choices: availableForAlways.map(o => ({
+        title: chalk.green(o),
         value: o,
       })),
       hint: chalk.gray("space select • enter confirm"),
       instructions: false,
     }, promptConfig);
-    answers.boundaryNever = neverResponse.never || [];
+    answers.boundaryAlways = alwaysResponse.always || [];
 
     // Show summary
     console.log();
