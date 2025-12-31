@@ -13,7 +13,7 @@ export interface GenerateOptions {
   variables?: Record<string, string>;
   // Extended options for Pro/Max users
   projectType?: string;
-  devOS?: string;
+  devOS?: string | string[];
   architecture?: string;
   repoHost?: string;
   isPublic?: boolean;
@@ -25,6 +25,7 @@ export interface GenerateOptions {
   deploymentTargets?: string[];
   buildContainer?: boolean;
   containerRegistry?: string;
+  customRegistryUrl?: string;
   exampleRepoUrl?: string;
   documentationUrl?: string;
   letAiDecide?: boolean;

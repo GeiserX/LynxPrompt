@@ -289,19 +289,19 @@ const CICD_OPTIONS = [
   { id: "buildkite", label: "Buildkite", icon: "🧱" },
 ];
 
-// Deployment targets
+// Deployment targets - ensure consistent icon spacing
 const DEPLOYMENT_TARGETS = [
-  { id: "vercel", label: "Vercel", icon: "▲" },
+  { id: "vercel", label: "Vercel", icon: "▲ " },
   { id: "netlify", label: "Netlify", icon: "🌐" },
-  { id: "aws", label: "AWS", icon: "☁️" },
+  { id: "aws", label: "AWS", icon: "☁️ " },
   { id: "gcp", label: "Google Cloud", icon: "🌈" },
   { id: "azure", label: "Azure", icon: "🔷" },
   { id: "docker", label: "Docker", icon: "🐳" },
-  { id: "kubernetes", label: "Kubernetes", icon: "☸️" },
+  { id: "kubernetes", label: "Kubernetes", icon: "☸️ " },
   { id: "heroku", label: "Heroku", icon: "🟣" },
   { id: "digitalocean", label: "DigitalOcean", icon: "🔵" },
   { id: "railway", label: "Railway", icon: "🚂" },
-  { id: "fly", label: "Fly.io", icon: "✈️" },
+  { id: "fly", label: "Fly.io", icon: "✈️ " },
   { id: "cloudflare", label: "Cloudflare", icon: "🔶" },
 ];
 
@@ -431,9 +431,9 @@ const COMMON_COMMANDS = {
   ],
 };
 
-// Naming conventions
+// Naming conventions - "Follow language conventions" is the recommended default
 const NAMING_CONVENTIONS = [
-  { id: "language_default", label: "Follow language conventions", desc: "Use idiomatic style" },
+  { id: "language_default", label: "Follow language conventions", desc: "Use idiomatic style (recommended)" },
   { id: "camelCase", label: "camelCase", desc: "JavaScript, TypeScript, Java" },
   { id: "snake_case", label: "snake_case", desc: "Python, Ruby, Rust, Go" },
   { id: "PascalCase", label: "PascalCase", desc: "C#, .NET classes" },
@@ -474,13 +474,13 @@ const AI_BEHAVIOR_RULES = [
   { id: "check_for_security_issues", label: "Check for Security Issues", description: "Review for common vulnerabilities", recommended: false },
 ];
 
-// Important files to read
+// Important files to read - ensure consistent spacing after icons
 const IMPORTANT_FILES = [
-  { id: "readme", label: "README.md", icon: "📖" },
-  { id: "package", label: "package.json / pyproject.toml", icon: "📦" },
-  { id: "tsconfig", label: "tsconfig.json / config files", icon: "⚙️" },
-  { id: "architecture", label: "ARCHITECTURE.md", icon: "🏗️" },
-  { id: "contributing", label: "CONTRIBUTING.md", icon: "🤝" },
+  { id: "readme", label: "README.md", icon: "📖 " },
+  { id: "package", label: "package.json / pyproject.toml", icon: "📦 " },
+  { id: "tsconfig", label: "tsconfig.json / config files", icon: "⚙️  " },
+  { id: "architecture", label: "ARCHITECTURE.md", icon: "🏗️  " },
+  { id: "contributing", label: "CONTRIBUTING.md", icon: "🤝 " },
 ];
 
 // Boundary presets
@@ -592,14 +592,25 @@ const PROJECT_TYPES = [
   { id: "learning", label: "Learning", icon: "📚", description: "Educational/experimental" },
 ];
 
-// Development environment (OS)
+// Development environment (OS) - can be multi-select
 const DEV_OS_OPTIONS = [
   { id: "macos", label: "macOS", icon: "🍎" },
   { id: "linux", label: "Linux", icon: "🐧" },
   { id: "windows", label: "Windows", icon: "🪟" },
   { id: "wsl", label: "WSL", icon: "🐧" },
   { id: "remote", label: "Remote/SSH", icon: "☁️" },
+  { id: "devcontainer", label: "Dev Container", icon: "📦" },
+  { id: "codespaces", label: "GitHub Codespaces", icon: "☁️" },
 ];
+
+// Detect current OS
+function detectCurrentOS(): string {
+  const platform = os.platform();
+  if (platform === "darwin") return "macos";
+  if (platform === "linux") return "linux";
+  if (platform === "win32") return "windows";
+  return "";
+}
 
 // Architecture patterns
 const ARCHITECTURE_PATTERNS = [
@@ -618,6 +629,22 @@ function canAccessTier(userTier: UserTier, requiredTier: StepTier): boolean {
   const tierLevels = { free: 0, pro: 1, max: 2, teams: 2 };
   const requiredLevels = { basic: 0, intermediate: 1, advanced: 2 };
   return tierLevels[userTier] >= requiredLevels[requiredTier];
+}
+
+// Helper to sort choices with selected items first
+interface Choice {
+  title: string;
+  value: string;
+  selected?: boolean;
+  description?: string;
+}
+
+function sortSelectedFirst<T extends Choice>(choices: T[]): T[] {
+  return [...choices].sort((a, b) => {
+    if (a.selected && !b.selected) return -1;
+    if (!a.selected && b.selected) return 1;
+    return 0;
+  });
 }
 
 // Check if user can access AI features (Max or Teams only)
@@ -1352,44 +1379,53 @@ async function runInteractiveWizard(
     type: "text",
     name: "description",
     message: chalk.white("Brief description:"),
-    initial: options.description || "",
-    hint: chalk.gray("optional - helps AI understand context"),
+    initial: options.description || detected?.description || "",
+    hint: detected?.description 
+      ? chalk.green("(pre-filled from repo About)")
+      : chalk.gray("optional - helps AI understand context"),
   }, promptConfig);
   answers.description = descResponse.description || "";
 
-  // Project type
+  // Project type - pre-select open-source if detected from public repo
+  const isDetectedOpenSource = detected?.isPublicRepo === true;
+  const projectTypeChoices = [
+    { title: chalk.gray("⏭ Skip"), value: "" },
+    ...PROJECT_TYPES.map(t => ({
+      title: (t.id === "opensource" && isDetectedOpenSource)
+        ? `${t.icon} ${t.label} ${chalk.green("(detected)")}`
+        : `${t.icon} ${t.label}`,
+      value: t.id,
+      description: chalk.gray(t.description),
+    })),
+  ];
+  const defaultProjectTypeIdx = isDetectedOpenSource 
+    ? projectTypeChoices.findIndex(c => c.value === "opensource")
+    : 0;
+  
   const typeResponse = await prompts({
     type: "select",
     name: "projectType",
     message: chalk.white("Project type:"),
-    choices: [
-      { title: chalk.gray("⏭ Skip"), value: "" },
-      ...PROJECT_TYPES.map(t => ({
-        title: `${t.icon} ${t.label}`,
-        value: t.id,
-        description: chalk.gray(t.description),
-      })),
-    ],
-    initial: 0,
+    choices: projectTypeChoices,
+    initial: defaultProjectTypeIdx > 0 ? defaultProjectTypeIdx : 0,
   }, promptConfig);
   answers.projectType = typeResponse.projectType || "";
 
-  // Development environment
+  // Development environment(s) - multi-select with current OS pre-selected
+  const currentOS = detectCurrentOS();
   const devOsResponse = await prompts({
-    type: "select",
+    type: "autocompleteMultiselect",
     name: "devOS",
-    message: chalk.white("Development environment:"),
-    choices: [
-      { title: chalk.gray("⏭ Skip"), value: "" },
-      ...DEV_OS_OPTIONS.map(o => ({
-        title: `${o.icon} ${o.label}`,
-        value: o.id,
-      })),
-    ],
-    initial: 0,
-    hint: chalk.gray("Helps generate compatible commands"),
+    message: chalk.white("Development environment(s) (type to search):"),
+    choices: DEV_OS_OPTIONS.map(o => ({
+      title: `${o.icon} ${o.label}`,
+      value: o.id,
+      selected: o.id === currentOS, // Pre-select current OS
+    })),
+    hint: chalk.gray("type to filter • space select • enter confirm"),
+    instructions: false,
   }, promptConfig);
-  answers.devOS = devOsResponse.devOS || "";
+  answers.devOS = devOsResponse.devOS || [];
 
   // Architecture pattern
   const archResponse = await prompts({
@@ -1467,45 +1503,48 @@ async function runInteractiveWizard(
   }
 
   // Languages - autocomplete multiselect for searchability
+  const languageChoices = sortSelectedFirst(LANGUAGES.map(s => ({
+    title: s.title,
+    value: s.value,
+    selected: detected?.stack?.includes(s.value),
+  })));
   const languageResponse = await prompts({
     type: "autocompleteMultiselect",
     name: "languages",
     message: chalk.white("Languages (type to search):"),
-    choices: LANGUAGES.map(s => ({
-      title: s.title,
-      value: s.value,
-      selected: detected?.stack?.includes(s.value),
-    })),
+    choices: languageChoices,
     hint: chalk.gray("type to filter • space select • enter confirm"),
     instructions: false,
   }, promptConfig);
   const selectedLanguages = languageResponse.languages || [];
 
   // Frameworks - separate selection like WebUI
+  const frameworkChoices = sortSelectedFirst(FRAMEWORKS.map(s => ({
+    title: s.title,
+    value: s.value,
+    selected: detected?.stack?.includes(s.value),
+  })));
   const frameworkResponse = await prompts({
     type: "autocompleteMultiselect",
     name: "frameworks",
     message: chalk.white("Frameworks (type to search):"),
-    choices: FRAMEWORKS.map(s => ({
-      title: s.title,
-      value: s.value,
-      selected: detected?.stack?.includes(s.value),
-    })),
+    choices: frameworkChoices,
     hint: chalk.gray("type to filter • space select • enter confirm"),
     instructions: false,
   }, promptConfig);
   const selectedFrameworks = frameworkResponse.frameworks || [];
 
   // Databases
+  const databaseChoices = sortSelectedFirst(DATABASES.map(s => ({
+    title: s.title,
+    value: s.value,
+    selected: detected?.stack?.includes(s.value),
+  })));
   const databaseResponse = await prompts({
     type: "autocompleteMultiselect",
     name: "databases",
     message: chalk.white("Databases (type to search):"),
-    choices: DATABASES.map(s => ({
-      title: s.title,
-      value: s.value,
-      selected: detected?.stack?.includes(s.value),
-    })),
+    choices: databaseChoices,
     hint: chalk.gray("type to filter • space select • enter confirm"),
     instructions: false,
   }, promptConfig);
@@ -1642,17 +1681,18 @@ async function runInteractiveWizard(
   answers.cicd = cicdResponse.cicd || "";
 
   // Deployment targets - pre-select Docker if Dockerfile detected (with search)
+  const deployChoices = sortSelectedFirst(DEPLOYMENT_TARGETS.map(t => ({
+    title: (t.id === "docker" && detected?.hasDocker)
+      ? `${t.icon}${t.label} ${chalk.green("(detected)")}`
+      : `${t.icon}${t.label}`,
+    selected: t.id === "docker" && detected?.hasDocker,
+    value: t.id,
+  })));
   const deployResponse = await prompts({
     type: "autocompleteMultiselect",
     name: "deploymentTargets",
     message: chalk.white("Deployment targets (type to search):"),
-    choices: DEPLOYMENT_TARGETS.map(t => ({
-      title: (t.id === "docker" && detected?.hasDocker)
-        ? `${t.icon} ${t.label} ${chalk.green("(detected)")}`
-        : `${t.icon} ${t.label}`,
-      selected: t.id === "docker" && detected?.hasDocker,
-      value: t.id,
-    })),
+    choices: deployChoices,
     hint: chalk.gray("type to filter • space select • enter confirm"),
     instructions: false,
   }, promptConfig);
@@ -1685,6 +1725,18 @@ async function runInteractiveWizard(
       initial: 0,
     }, promptConfig);
     answers.containerRegistry = registryResponse.containerRegistry || "";
+    
+    // If custom/self-hosted registry selected, ask for URL
+    if (answers.containerRegistry === "custom") {
+      const customRegistryResponse = await prompts({
+        type: "text",
+        name: "customRegistryUrl",
+        message: chalk.white("Container registry URL:"),
+        hint: chalk.gray("e.g., registry.example.com:5000"),
+        validate: (v) => v.trim() ? true : "Please enter a registry URL",
+      }, promptConfig);
+      answers.customRegistryUrl = customRegistryResponse.customRegistryUrl || "";
+    }
   }
 
   // Example repository URL
@@ -1716,57 +1768,61 @@ async function runInteractiveWizard(
     console.log();
 
     // Build commands - autocomplete for searching
+    const buildChoices = sortSelectedFirst(COMMON_COMMANDS.build.map(c => ({
+      title: chalk.cyan(c),
+      value: c,
+      selected: detected?.commands?.build === c,
+    })));
     const buildResponse = await prompts({
       type: "autocompleteMultiselect",
       name: "build",
       message: chalk.white("Build commands (type to search):"),
-      choices: COMMON_COMMANDS.build.map(c => ({
-        title: chalk.cyan(c),
-        value: c,
-        selected: detected?.commands?.build === c,
-      })),
+      choices: buildChoices,
       hint: chalk.gray("type to filter • space select • enter confirm"),
       instructions: false,
     }, promptConfig);
 
     // Test commands - autocomplete for searching
+    const testChoices = sortSelectedFirst(COMMON_COMMANDS.test.map(c => ({
+      title: chalk.yellow(c),
+      value: c,
+      selected: detected?.commands?.test === c,
+    })));
     const testResponse = await prompts({
       type: "autocompleteMultiselect",
       name: "test",
       message: chalk.white("Test commands (type to search):"),
-      choices: COMMON_COMMANDS.test.map(c => ({
-        title: chalk.yellow(c),
-        value: c,
-        selected: detected?.commands?.test === c,
-      })),
+      choices: testChoices,
       hint: chalk.gray("type to filter • space select • enter confirm"),
       instructions: false,
     }, promptConfig);
 
     // Lint commands - autocomplete for searching
+    const lintChoices = sortSelectedFirst(COMMON_COMMANDS.lint.map(c => ({
+      title: chalk.green(c),
+      value: c,
+      selected: detected?.commands?.lint === c,
+    })));
     const lintResponse = await prompts({
       type: "autocompleteMultiselect",
       name: "lint",
       message: chalk.white("Lint/format commands (type to search):"),
-      choices: COMMON_COMMANDS.lint.map(c => ({
-        title: chalk.green(c),
-        value: c,
-        selected: detected?.commands?.lint === c,
-      })),
+      choices: lintChoices,
       hint: chalk.gray("type to filter • space select • enter confirm"),
       instructions: false,
     }, promptConfig);
 
     // Dev commands - autocomplete for searching
+    const devChoices = sortSelectedFirst(COMMON_COMMANDS.dev.map(c => ({
+      title: chalk.magenta(c),
+      value: c,
+      selected: detected?.commands?.dev === c,
+    })));
     const devResponse = await prompts({
       type: "autocompleteMultiselect",
       name: "dev",
       message: chalk.white("Dev server commands (type to search):"),
-      choices: COMMON_COMMANDS.dev.map(c => ({
-        title: chalk.magenta(c),
-        value: c,
-        selected: detected?.commands?.dev === c,
-      })),
+      choices: devChoices,
       hint: chalk.gray("type to filter • space select • enter confirm"),
       instructions: false,
     }, promptConfig);
@@ -1820,12 +1876,14 @@ async function runInteractiveWizard(
       choices: [
         { title: chalk.gray("⏭ Skip"), value: "" },
         ...NAMING_CONVENTIONS.map(n => ({
-          title: n.label,
+          title: n.id === "language_default" 
+            ? `${n.label} ${chalk.green("★ recommended")}`
+            : n.label,
           value: n.id,
           description: chalk.gray(n.desc),
         })),
       ],
-      initial: 0,
+      initial: 1, // Pre-select "Follow language conventions"
     }, promptConfig);
     answers.namingConvention = namingResponse.naming || "";
 
@@ -2068,15 +2126,16 @@ async function runInteractiveWizard(
         : [];
 
     // Full list of test frameworks with search - expanded to match WebUI
+    const testFrameworkChoices = sortSelectedFirst(TEST_FRAMEWORKS.map(f => ({
+      title: f,
+      value: f,
+      selected: detectedFrameworks.includes(f),
+    })));
     const testFrameworkResponse = await prompts({
       type: "autocompleteMultiselect",
       name: "testFrameworks",
       message: chalk.white("Testing frameworks (type to search):"),
-      choices: TEST_FRAMEWORKS.map(f => ({
-        title: f,
-        value: f,
-        selected: detectedFrameworks.includes(f),
-      })),
+      choices: testFrameworkChoices,
       hint: chalk.gray("type to filter • space select • enter confirm"),
       instructions: false,
     }, promptConfig);
@@ -2286,8 +2345,9 @@ async function runInteractiveWizard(
   
   if (hasAIAccess) {
     console.log();
-    console.log(chalk.magenta(`  ✨ AI Assistant available (like ${getAIShortcutHint()} in the web UI)`));
-    console.log(chalk.gray("     Describe what you want to add, and AI will format it for your config."));
+    console.log(chalk.magenta("  ✨ AI Assistant available"));
+    console.log(chalk.gray("     Type 'ai:' followed by your request to get AI-generated content."));
+    console.log(chalk.gray("     Example: ai: add guidelines for API error handling"));
     console.log();
   }
 
