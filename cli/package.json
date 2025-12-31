@@ -1,6 +1,6 @@
 {
   "name": "lynxprompt",
-  "version": "0.5.6",
+  "version": "0.6.0",
   "description": "CLI for LynxPrompt - Generate AI IDE configuration files",
   "author": "LynxPrompt Contributors",
   "license": "SEE LICENSE FILE",

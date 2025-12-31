@@ -23,7 +23,7 @@ export async function GET() {
     const enrichedFavorites = await Promise.all(
       favorites.map(async (fav) => {
         // Strip any existing prefix from templateId (handles legacy data)
-        const cleanTemplateId = fav.templateId.replace(/^(sys_|usr_)/, "");
+        const cleanTemplateId = fav.templateId.replace(/^(sys_|bp_|usr_)/, "");
         
         if (fav.templateType === "system") {
           const template = await prismaApp.systemTemplate.findUnique({
@@ -58,7 +58,7 @@ export async function GET() {
           });
           if (template) {
             return {
-              id: `usr_${template.id}`,
+              id: `bp_${template.id}`,
               name: template.name,
               description: template.description,
               downloads: template.downloads,
@@ -103,7 +103,7 @@ export async function POST(request: Request) {
     }
 
     // Strip prefix from templateId if present
-    const templateId = rawTemplateId.replace(/^(sys_|usr_)/, "");
+    const templateId = rawTemplateId.replace(/^(sys_|bp_|usr_)/, "");
 
     // Check if already favorited
     const existing = await prismaUsers.templateFavorite.findUnique({

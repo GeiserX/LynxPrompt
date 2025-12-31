@@ -30,8 +30,8 @@ export async function GET(
     let currentVersion = 1;
     let publishedVersion: number | null = null;
     
-    if (id.startsWith("usr_")) {
-      const realId = id.replace("usr_", "");
+    if (id.startsWith("bp_")) {
+      const realId = id.replace("bp_", "");
       const row = await prismaUsers.userTemplate.findUnique({
         where: { id: realId },
         select: { showcaseUrl: true, currentVersion: true, publishedVersion: true },
@@ -93,8 +93,8 @@ export async function GET(
 
       // Check purchase only if not owner and blueprint is paid
       if (isPaid && !isOwner) {
-        // Extract real template ID (remove usr_ prefix)
-        const realTemplateId = id.startsWith("usr_") ? id.replace("usr_", "") : id;
+        // Extract real template ID (remove bp_ prefix)
+        const realTemplateId = id.startsWith("bp_") ? id.replace("bp_", "") : id;
 
         // Check individual purchase
         const individualPurchase = await prismaUsers.blueprintPurchase.findUnique({
@@ -218,14 +218,14 @@ export async function PUT(
     const { id } = await params;
     
     // Only user templates can be edited
-    if (!id.startsWith("usr_")) {
+    if (!id.startsWith("bp_")) {
       return NextResponse.json(
         { error: "System blueprints cannot be edited" },
         { status: 403 }
       );
     }
 
-    const realId = id.replace("usr_", "");
+    const realId = id.replace("bp_", "");
 
     // Check if user owns this blueprint
     const existingBlueprint = await prismaUsers.userTemplate.findUnique({
@@ -449,7 +449,7 @@ export async function PUT(
     return NextResponse.json({
       success: true,
       blueprint: {
-        id: `usr_${updatedBlueprint.id}`,
+        id: `bp_${updatedBlueprint.id}`,
         name: updatedBlueprint.name,
         tier: updatedBlueprint.tier,
         category: updatedBlueprint.category,
@@ -485,14 +485,14 @@ export async function DELETE(
     const { id } = await params;
     
     // Only user templates can be deleted
-    if (!id.startsWith("usr_")) {
+    if (!id.startsWith("bp_")) {
       return NextResponse.json(
         { error: "System blueprints cannot be deleted" },
         { status: 403 }
       );
     }
 
-    const realId = id.replace("usr_", "");
+    const realId = id.replace("bp_", "");
 
     // Check if user owns this blueprint
     const existingBlueprint = await prismaUsers.userTemplate.findUnique({

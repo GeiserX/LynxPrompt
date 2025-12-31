@@ -240,7 +240,7 @@ export async function GET(request: NextRequest) {
       const hasPurchased = purchasedIds.has(t.id);
       
       return {
-        id: `usr_${t.id}`,
+        id: `bp_${t.id}`,
         name: t.name,
         description: t.description || "",
         author: t.user?.displayName || t.user?.name || "Anonymous",
