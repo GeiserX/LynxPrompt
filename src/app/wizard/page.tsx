@@ -1229,13 +1229,10 @@ function WizardPageContent() {
           },
           staticFiles: {
             ...prev.staticFiles,
-            funding: byCategory.static?.funding !== undefined
-              ? (typeof byCategory.static.funding === 'string' 
-                  ? byCategory.static.funding === 'true' 
-                  : Boolean(byCategory.static.funding))
-              : prev.staticFiles.funding,
-            fundingYml: byCategory.static?.fundingYml ?? prev.staticFiles.fundingYml,
-            fundingSave: byCategory.static?.fundingYml ? true : prev.staticFiles.fundingSave,
+            // Support both new key "FUNDING.yml" and legacy "fundingYml"
+            funding: (byCategory.static?.["FUNDING.yml"] || byCategory.static?.fundingYml) ? true : prev.staticFiles.funding,
+            fundingYml: byCategory.static?.["FUNDING.yml"] ?? byCategory.static?.fundingYml ?? prev.staticFiles.fundingYml,
+            fundingSave: (byCategory.static?.["FUNDING.yml"] || byCategory.static?.fundingYml) ? true : prev.staticFiles.fundingSave,
             editorconfig: byCategory.static?.editorconfig !== undefined
               ? (typeof byCategory.static.editorconfig === 'string' 
                   ? byCategory.static.editorconfig === 'true' 
@@ -1270,13 +1267,11 @@ function WizardPageContent() {
             dockerignoreMode: byCategory.static?.dockerignoreMode ?? prev.staticFiles.dockerignoreMode,
             dockerignoreCustom: byCategory.static?.dockerignoreCustom ?? prev.staticFiles.dockerignoreCustom,
             dockerignoreSave: byCategory.static?.dockerignoreCustom ? true : prev.staticFiles.dockerignoreSave,
-            licenseSave: byCategory.static?.licenseSave !== undefined
-              ? (typeof byCategory.static.licenseSave === 'string' 
-                  ? byCategory.static.licenseSave === 'true' 
-                  : Boolean(byCategory.static.licenseSave))
-              : prev.staticFiles.licenseSave,
+            // licenseSave is now determined by whether license is in general
+            licenseSave: byCategory.general?.license ? true : prev.staticFiles.licenseSave,
           },
-          license: byCategory.repo?.license ?? prev.license,
+          // Load license from general (new) or repo (legacy)
+          license: byCategory.general?.license ?? byCategory.repo?.license ?? prev.license,
           repoHost: byCategory.repo?.host ?? prev.repoHost,
           isPublic: byCategory.repo?.isPublic !== undefined
             ? (typeof byCategory.repo.isPublic === 'string' 
@@ -1644,15 +1639,15 @@ function WizardPageContent() {
       );
     }
     if (config.staticFiles.fundingSave) {
+      // Only save the FUNDING.yml content, no separate boolean flag needed
       payload.push(
-        { category: "static", key: "funding", value: String(config.funding || config.staticFiles.funding) },
-        { category: "static", key: "fundingYml", value: config.staticFiles.fundingYml || config.fundingYml || "" },
+        { category: "static", key: "FUNDING.yml", value: config.staticFiles.fundingYml || config.fundingYml || "" },
       );
     }
     if (config.staticFiles.licenseSave) {
+      // Save license to general category (appears in General section of wizard preferences)
       payload.push(
-        { category: "static", key: "licenseSave", value: String(config.staticFiles.licenseSave || config.licenseSave) },
-        { category: "repo", key: "license", value: config.license },
+        { category: "general", key: "license", value: config.license, isDefault: true },
       );
     }
     console.log("[savePreferences] payload to save:", payload);
