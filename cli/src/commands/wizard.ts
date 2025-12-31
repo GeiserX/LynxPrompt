@@ -794,6 +794,27 @@ process.on("SIGINT", async () => {
 });
 
 export async function wizardCommand(options: WizardOptions): Promise<void> {
+  try {
+    await runWizardWithDraftProtection(options);
+  } catch (error) {
+    // On any unexpected error, try to save the draft
+    await saveDraftOnExit();
+    
+    console.error(chalk.red("\n  ✗ An unexpected error occurred:"));
+    if (error instanceof Error) {
+      console.error(chalk.gray(`     ${error.message}`));
+    }
+    console.log();
+    
+    if (wizardState.stepReached > 0) {
+      console.log(chalk.yellow("  Your progress has been saved. Resume with the draft command shown above."));
+    }
+    console.log();
+    process.exit(1);
+  }
+}
+
+async function runWizardWithDraftProtection(options: WizardOptions): Promise<void> {
   console.log();
   console.log(chalk.cyan.bold("  🐱 LynxPrompt Wizard"));
   console.log(chalk.gray("     Generate AI IDE configuration in seconds"));
@@ -967,7 +988,7 @@ export async function wizardCommand(options: WizardOptions): Promise<void> {
       message: detected 
         ? chalk.white("🔍 Analyze a different remote repository instead?")
         : chalk.white("🔍 Analyze a remote repository URL?"),
-      initial: !detected,
+      initial: false, // Default to No - user must explicitly choose Yes
     }, promptConfig);
     
     if (remoteResponse.useRemote) {
@@ -1223,11 +1244,19 @@ export async function wizardCommand(options: WizardOptions): Promise<void> {
     
   } catch (error) {
     spinner.fail("Failed to generate files");
+    
+    // Try to save draft even on generation error
+    await saveDraftOnExit();
+    
     console.error(chalk.red("\n✗ An error occurred while generating configuration files."));
     if (error instanceof Error) {
       console.error(chalk.gray(`  ${error.message}`));
     }
     console.error(chalk.gray("\nTry running with --yes flag for default settings."));
+    
+    if (wizardState.stepReached > 0) {
+      console.log(chalk.yellow("\n  Your wizard progress has been saved to a draft."));
+    }
     process.exit(1);
   }
 }
@@ -1978,6 +2007,48 @@ async function runInteractiveWizard(
   }, promptConfig);
   answers.includePersonalData = includePersonalResponse.includePersonalData || false;
 
+  // If personal data enabled, fetch user profile from API
+  if (answers.includePersonalData && api) {
+    try {
+      console.log(chalk.gray("  Fetching profile from LynxPrompt..."));
+      const userResponse = await api.getUser();
+      if (userResponse.user) {
+        answers.userName = userResponse.user.name || userResponse.user.display_name || "";
+        answers.userEmail = userResponse.user.email || "";
+        answers.userPersona = userResponse.user.persona || "";
+        // skill_level can serve as expertise
+        answers.userExpertise = userResponse.user.skill_level || "";
+        console.log(chalk.green("  ✓ Profile loaded"));
+      }
+    } catch {
+      console.log(chalk.yellow("  Could not fetch profile data. Using defaults."));
+    }
+  }
+
+  // Auto-update via API option
+  const enableAutoUpdateResponse = await prompts({
+    type: "toggle",
+    name: "enableAutoUpdate",
+    message: chalk.white("Enable auto-update via API (include curl sync command)?"),
+    initial: false,
+    active: "Yes",
+    inactive: "No",
+  }, promptConfig);
+  answers.enableAutoUpdate = enableAutoUpdateResponse.enableAutoUpdate || false;
+
+  // If auto-update enabled, we need a blueprint ID (user can provide one or we'll generate one)
+  if (answers.enableAutoUpdate) {
+    const blueprintIdResponse = await prompts({
+      type: "text",
+      name: "blueprintId",
+      message: chalk.white("Blueprint ID (leave blank to use project name):"),
+      initial: "",
+    }, promptConfig);
+    const projectName = typeof answers.name === "string" ? answers.name : "";
+    answers.blueprintId = blueprintIdResponse.blueprintId || projectName.toLowerCase().replace(/[^a-z0-9]/g, "-") || "my-blueprint";
+    console.log(chalk.gray(`  Blueprint ID: bp_${answers.blueprintId}`));
+  }
+
   // ═══════════════════════════════════════════════════════════════
   // STEP 8: Boundaries (advanced - Max+)
   // ═══════════════════════════════════════════════════════════════
@@ -2398,6 +2469,12 @@ async function runInteractiveWizard(
     importantFiles: answers.importantFiles as string[],
     selfImprove: answers.selfImprove as boolean,
     includePersonalData: answers.includePersonalData as boolean,
+    enableAutoUpdate: answers.enableAutoUpdate as boolean,
+    blueprintId: answers.blueprintId as string,
+    userName: answers.userName as string,
+    userEmail: answers.userEmail as string,
+    userPersona: answers.userPersona as string,
+    userExpertise: answers.userExpertise as string,
     boundaryAlways: answers.boundaryAlways as string[],
     boundaryNever: answers.boundaryNever as string[],
     boundaryAsk: answers.boundaryAsk as string[],
