@@ -318,7 +318,7 @@ function BlueprintsContent() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <h1 className="text-4xl font-bold tracking-tight">
-              Agent Blueprints
+              Blueprints Catalog
             </h1>
             <p className="mt-4 text-lg text-muted-foreground">
               Discover community-created AI configurations or share your own.
