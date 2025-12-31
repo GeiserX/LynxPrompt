@@ -12,14 +12,14 @@ export async function GET(
     const { id } = await params;
 
     // Only user templates have versions
-    if (!id.startsWith("usr_")) {
+    if (!id.startsWith("bp_")) {
       return NextResponse.json({
         versions: [],
         totalVersions: 0,
       });
     }
 
-    const realId = id.replace("usr_", "");
+    const realId = id.replace("bp_", "");
 
     // Check if blueprint exists and if user has access
     const blueprint = await prismaUsers.userTemplate.findUnique({
@@ -110,14 +110,14 @@ export async function POST(
     const { id } = await params;
     const { versionNumber } = await request.json();
 
-    if (!id.startsWith("usr_")) {
+    if (!id.startsWith("bp_")) {
       return NextResponse.json(
         { error: "System blueprints don't have versions" },
         { status: 400 }
       );
     }
 
-    const realId = id.replace("usr_", "");
+    const realId = id.replace("bp_", "");
 
     // Check access
     const blueprint = await prismaUsers.userTemplate.findUnique({

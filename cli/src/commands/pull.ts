@@ -48,16 +48,11 @@ export async function pullCommand(
   id: string,
   options: PullOptions
 ): Promise<void> {
-  // Public marketplace blueprints (usr_ IDs) don't require authentication
-  // Only v1 blueprints (bp_ IDs) require login
-  const isPublicBlueprint = id.startsWith("usr_");
-  
-  if (!isPublicBlueprint && !isAuthenticated()) {
+  // Check authentication - require login for API access
+  // (The API will check visibility/ownership for private blueprints)
+  if (!isAuthenticated()) {
     console.log(
       chalk.yellow("Not logged in. Run 'lynxp login' to authenticate.")
-    );
-    console.log(
-      chalk.gray("Note: Public marketplace blueprints (usr_...) can be downloaded without login.")
     );
     process.exit(1);
   }

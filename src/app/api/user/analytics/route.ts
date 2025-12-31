@@ -53,7 +53,8 @@ export async function GET() {
         OR: [
           { userId }, // Downloads by this user
           {
-            templateId: { in: userTemplateIds.map((id) => `usr_${id}`) },
+            // Handle both bp_ (current) and usr_ (legacy) prefixes
+            templateId: { in: userTemplateIds.flatMap((id) => [`bp_${id}`, `usr_${id}`]) },
             templateType: "user",
           }, // Downloads of user's templates
         ],
@@ -97,7 +98,7 @@ export async function GET() {
         if (entry) {
           // Check if this is a download of user's own template
           const templateIdWithoutPrefix = download.templateId.replace(
-            /^usr_/,
+            /^(bp_|usr_)/,
             ""
           );
           const isOwnTemplate = userTemplateIds.includes(
@@ -171,7 +172,7 @@ export async function GET() {
 
     // Calculate summary stats
     const totalDownloadsReceived = downloads.filter((d) => {
-      const templateIdWithoutPrefix = d.templateId.replace(/^usr_/, "");
+      const templateIdWithoutPrefix = d.templateId.replace(/^(bp_|usr_)/, "");
       return (
         userTemplateIds.includes(templateIdWithoutPrefix) &&
         d.userId !== userId

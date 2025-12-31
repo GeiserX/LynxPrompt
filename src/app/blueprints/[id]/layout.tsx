@@ -4,8 +4,9 @@ import { prismaApp } from "@/lib/db-app";
 
 // Helper to parse blueprint ID
 function parseBlueprintId(id: string): { type: "user" | "system"; realId: string } {
-  if (id.startsWith("usr_")) {
-    return { type: "user", realId: id.replace("usr_", "") };
+  // Handle both bp_ (current) and usr_ (legacy) prefixes for user blueprints
+  if (id.startsWith("bp_") || id.startsWith("usr_")) {
+    return { type: "user", realId: id.replace(/^(bp_|usr_)/, "") };
   }
   return { type: "system", realId: id };
 }

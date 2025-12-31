@@ -58,7 +58,7 @@ export default function UserApiDocsPage() {
             <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
               <pre className="text-sm text-zinc-100">
                 <code>{`{
-  "id": "usr_clw2m8k0x0001",
+  "id": "bp_clw2m8k0x0001",
   "email": "user@example.com",
   "name": "John Doe",
   "image": "https://avatars.githubusercontent.com/u/12345",

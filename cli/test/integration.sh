@@ -121,7 +121,7 @@ fi
 # Test 12: Pull preview (public, no auth needed)
 info "Test 12: Pull preview (public blueprint)"
 # Try to find a public blueprint from search
-PUBLIC_ID=$(echo "$SEARCH_RESULT" | grep -o 'usr_[a-z0-9]*' | head -1 || echo "")
+PUBLIC_ID=$(echo "$SEARCH_RESULT" | grep -o 'bp_[a-z0-9]*' | head -1 || echo "")
 if [ -n "$PUBLIC_ID" ]; then
   if lynxp pull "$PUBLIC_ID" --preview 2>&1 | grep -q "Blueprint:"; then
     pass "Pull preview works"

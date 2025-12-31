@@ -442,7 +442,7 @@ export async function getTemplates(options?: {
 
   // Map user templates
   const mappedUserTemplates: TemplateData[] = userTemplates.map((t) => ({
-    id: `usr_${t.id}`, // Prefix to distinguish from system templates
+    id: `bp_${t.id}`, // Prefix to distinguish from system templates
     name: t.name,
     description: t.description || "",
     content: t.content,
@@ -524,7 +524,7 @@ export async function getCategories(): Promise<CategoryData[]> {
 
 /**
  * Get a single template by ID with full content
- * ID format: sys_<id> for system templates, usr_<id> for user templates
+ * ID format: sys_<id> for system templates, bp_<id> for user blueprints
  */
 export async function getTemplateById(
   id: string
@@ -581,8 +581,9 @@ export async function getTemplateById(
       category: template.category || undefined,
       difficulty: template.difficulty || undefined,
     };
-  } else if (id.startsWith("usr_")) {
-    const realId = id.replace("usr_", "");
+  } else if (id.startsWith("bp_") || id.startsWith("usr_")) {
+    // Handle both bp_ (current) and usr_ (legacy) prefixes
+    const realId = id.replace(/^(bp_|usr_)/, "");
 
     // Get session to check if user owns this template or has purchased it
     const session = await import("next-auth").then(({ getServerSession }) =>
@@ -663,7 +664,7 @@ export async function getTemplateById(
     }
 
     return {
-      id: `usr_${template.id}`,
+      id: `bp_${template.id}`,
       name: template.name,
       description: template.description || "",
       content: template.content,
@@ -752,8 +753,9 @@ export async function incrementTemplateUsage(id: string): Promise<void> {
       where: { id: realId },
       data: { downloads: { increment: 1 } },
     });
-  } else if (id.startsWith("usr_")) {
-    const realId = id.replace("usr_", "");
+  } else if (id.startsWith("bp_") || id.startsWith("usr_")) {
+    // Handle both bp_ (current) and usr_ (legacy) prefixes
+    const realId = id.replace(/^(bp_|usr_)/, "");
     await prismaUsers.userTemplate.update({
       where: { id: realId },
       data: { downloads: { increment: 1 } },
