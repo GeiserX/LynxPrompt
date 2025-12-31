@@ -561,19 +561,33 @@ function printBox(lines: string[], color: typeof chalk.cyan = chalk.gray): void 
   console.log(color(bottom));
 }
 
-// Step indicator with tier info
+// Step indicator with tier info and highlighted current step
 function showStep(current: number, step: WizardStep, userTier: UserTier): void {
   const availableSteps = getAvailableSteps(userTier);
   const total = availableSteps.length;
-  const progress = "●".repeat(current) + "○".repeat(total - current);
+  
+  // Build progress bar with current step highlighted
+  let progressBar = "";
+  for (let i = 1; i <= total; i++) {
+    if (i < current) {
+      progressBar += chalk.green("●"); // Completed
+    } else if (i === current) {
+      progressBar += chalk.cyan.bold("◉"); // Current (highlighted)
+    } else {
+      progressBar += chalk.gray("○"); // Upcoming
+    }
+  }
+  
   const badge = getTierBadge(step.tier);
   
   console.log();
-  let stepLine = chalk.cyan(`  ${progress}  Step ${current}/${total}: ${step.icon} ${step.title}`);
+  console.log(chalk.gray("  ═".repeat(30)));
+  let stepLine = `  ${progressBar}  ${chalk.cyan.bold(`Step ${current}/${total}`)}: ${step.icon} ${chalk.bold(step.title)}`;
   if (badge) {
     stepLine += " " + badge.color(`[${badge.label}]`);
   }
   console.log(stepLine);
+  console.log(chalk.gray("  ═".repeat(30)));
   console.log();
 }
 
@@ -715,6 +729,8 @@ export async function wizardCommand(options: WizardOptions): Promise<void> {
     console.log(y("│") + " ".repeat(W) + y("│"));
     console.log(y("│") + pad("    • Commands & Code Style [PRO]", W) + y("│"));
     console.log(y("│") + pad("    • Boundaries, Testing, Static Files [MAX]", W) + y("│"));
+    console.log(y("│") + pad("    • Auto-detect from remote repos [MAX]", W) + y("│"));
+    console.log(y("│") + pad("    • Save preferences to your profile", W) + y("│"));
     console.log(y("│") + pad("    • Push configs to cloud (lynxp push)", W) + y("│"));
     console.log(y("│") + pad("    • Sync across devices (lynxp sync)", W) + y("│"));
     console.log(y("│") + " ".repeat(W) + y("│"));
@@ -767,16 +783,20 @@ export async function wizardCommand(options: WizardOptions): Promise<void> {
   const canDetectRemote = canAccessAI(userTier); // Max/Teams only
   
   if (canDetectRemote) {
-    console.log(chalk.magenta("  ✨ Remote Detection available (Max/Teams)"));
+    console.log();
+    console.log(chalk.magenta.bold("  ┌─────────────────────────────────────────────────┐"));
+    console.log(chalk.magenta.bold("  │  ✨ AUTO-DETECT FROM REPOSITORY (MAX/TEAMS)    │"));
+    console.log(chalk.magenta.bold("  └─────────────────────────────────────────────────┘"));
     console.log(chalk.gray("     Analyze any public GitHub/GitLab repo, or private with git credentials."));
+    console.log(chalk.gray("     We'll detect: languages, frameworks, commands, license, CI/CD, and more!"));
     console.log();
     
     const remoteResponse = await prompts({
       type: "confirm",
       name: "useRemote",
       message: detected 
-        ? chalk.white("Analyze a different remote repository instead?")
-        : chalk.white("Analyze a remote repository URL?"),
+        ? chalk.white("🔍 Analyze a different remote repository instead?")
+        : chalk.white("🔍 Analyze a remote repository URL?"),
       initial: !detected,
     }, promptConfig);
     
@@ -855,7 +875,7 @@ export async function wizardCommand(options: WizardOptions): Promise<void> {
     const variables = options.vars ? parseVariablesString(options.vars) : undefined;
     const finalConfig = {
       ...config,
-      blueprintMode: options.blueprint || false,
+      blueprintMode: options.blueprint || config.blueprintMode || false,
       variables,
     };
     
@@ -940,6 +960,50 @@ export async function wizardCommand(options: WizardOptions): Promise<void> {
         console.log(chalk.yellow(`  ⚠️ Could not save draft: ${err instanceof Error ? err.message : "unknown error"}`));
       }
     }
+
+    // Offer to save preferences to profile (logged-in users only)
+    if (authenticated && !options.yes) {
+      console.log();
+      const savePrefsResponse = await prompts({
+        type: "confirm",
+        name: "savePrefs",
+        message: chalk.white("Save these preferences to your profile for next time?"),
+        initial: true,
+      });
+
+      if (savePrefsResponse.savePrefs) {
+        const saveSpinner = ora("Saving preferences to your profile...").start();
+        try {
+          // Save wizard preferences via API
+          await api.saveWizardPreferences({
+            commands: config.commands,
+            codeStyle: {
+              naming: config.namingConvention,
+              errorHandling: config.errorHandling,
+              loggingConventions: config.loggingConventions,
+              notes: config.styleNotes,
+            },
+            boundaries: {
+              preset: config.boundaries,
+              never: config.boundaryNever,
+              ask: config.boundaryAsk,
+            },
+            testing: {
+              levels: config.testLevels,
+              frameworks: config.testFrameworks,
+              coverage: config.coverageTarget,
+              notes: config.testNotes,
+            },
+          });
+          saveSpinner.succeed("Preferences saved to your profile");
+        } catch (err) {
+          saveSpinner.fail("Could not save preferences (you can still use the generated files)");
+          if (err instanceof Error) {
+            console.log(chalk.gray(`     ${err.message}`));
+          }
+        }
+      }
+    }
     
   } catch (error) {
     spinner.fail("Failed to generate files");
@@ -986,12 +1050,13 @@ async function runInteractiveWizard(
     // Multi-select by default - user can select one or more platforms
     console.log(chalk.gray("  Select the AI editors you want to generate config for:"));
     console.log(chalk.gray("  (AGENTS.md is recommended - works with most AI tools)"));
+    console.log(chalk.gray("  Type to search/filter the list."));
     console.log();
     
     const platformResponse = await prompts({
-      type: "multiselect",
+      type: "autocompleteMultiselect",
       name: "platforms",
-      message: chalk.white("Select AI editors (16 supported):"),
+      message: chalk.white("Select AI editors (type to search):"),
       choices: ALL_PLATFORMS.map(p => ({ 
         title: p.id === "agents" 
           ? `${p.icon} ${p.name} ${chalk.green.bold("★ recommended")}`
@@ -1000,7 +1065,7 @@ async function runInteractiveWizard(
         description: chalk.gray(p.note),
         selected: p.id === "agents", // Pre-select AGENTS.md
       })),
-      hint: chalk.gray("space select • a toggle all • enter confirm"),
+      hint: chalk.gray("type to filter • space select • enter confirm"),
       min: 1,
       instructions: false,
     }, promptConfig);
@@ -1084,48 +1149,101 @@ async function runInteractiveWizard(
   }, promptConfig);
   answers.architecture = archResponse.architecture || "";
 
+  // Blueprint Template Mode - available for all users
+  console.log();
+  console.log(chalk.yellow("  🧩 Blueprint Template Mode"));
+  console.log(chalk.gray("     Create a reusable template with [[VARIABLE|default]] placeholders"));
+  console.log(chalk.gray("     that others can customize when using your blueprint."));
+  console.log();
+  
+  const blueprintResponse = await prompts({
+    type: "toggle",
+    name: "blueprintMode",
+    message: chalk.white("Create as Blueprint Template?"),
+    initial: false,
+    active: "Yes",
+    inactive: "No",
+  }, promptConfig);
+  answers.blueprintMode = blueprintResponse.blueprintMode || false;
+  
+  if (answers.blueprintMode) {
+    console.log(chalk.green("  ✓ Blueprint mode enabled - values will use [[VARIABLE|default]] syntax"));
+  }
+
   // ═══════════════════════════════════════════════════════════════
   // STEP 3: Tech Stack (basic - all users)
   // ═══════════════════════════════════════════════════════════════
   const techStep = getCurrentStep("tech")!;
   showStep(currentStepNum, techStep, userTier);
 
-  // Let AI decide option
+  // Let AI decide option - default to Yes
   const letAiResponse = await prompts({
     type: "toggle",
     name: "letAiDecide",
     message: chalk.white("Let AI help choose additional technologies?"),
-    initial: false,
+    initial: true, // Default to Yes
     active: "Yes",
     inactive: "No",
   }, promptConfig);
-  answers.letAiDecide = letAiResponse.letAiDecide || false;
+  answers.letAiDecide = letAiResponse.letAiDecide ?? true;
 
   console.log();
-  console.log(chalk.gray("  You can also select specific technologies below:"));
+  console.log(chalk.gray("  Select your tech stack (type to search/filter):"));
   console.log();
 
-  const allStackOptions = [...LANGUAGES, ...FRAMEWORKS, ...DATABASES];
-  
-  // Show detected stack as hint but don't pre-select
+  // Show detected stack as hint
   if (detected?.stack && detected.stack.length > 0) {
-    console.log(chalk.gray(`  Detected in project: ${detected.stack.join(", ")}`));
+    console.log(chalk.green(`  ✓ Detected in project: ${detected.stack.join(", ")}`));
     console.log();
   }
 
-  const stackResponse = await prompts({
-    type: "multiselect",
-    name: "stack",
-    message: chalk.white("Languages, frameworks & databases:"),
-    choices: allStackOptions.map(s => ({
+  // Languages - autocomplete multiselect for searchability
+  const languageResponse = await prompts({
+    type: "autocompleteMultiselect",
+    name: "languages",
+    message: chalk.white("Languages (type to search):"),
+    choices: LANGUAGES.map(s => ({
       title: s.title,
       value: s.value,
-      // No pre-selection - user must explicitly choose
+      selected: detected?.stack?.includes(s.value),
     })),
-    hint: chalk.gray("space select • a toggle all • enter confirm"),
+    hint: chalk.gray("type to filter • space select • enter confirm"),
     instructions: false,
   }, promptConfig);
-  answers.stack = stackResponse.stack || [];
+  const selectedLanguages = languageResponse.languages || [];
+
+  // Frameworks - separate selection like WebUI
+  const frameworkResponse = await prompts({
+    type: "autocompleteMultiselect",
+    name: "frameworks",
+    message: chalk.white("Frameworks (type to search):"),
+    choices: FRAMEWORKS.map(s => ({
+      title: s.title,
+      value: s.value,
+      selected: detected?.stack?.includes(s.value),
+    })),
+    hint: chalk.gray("type to filter • space select • enter confirm"),
+    instructions: false,
+  }, promptConfig);
+  const selectedFrameworks = frameworkResponse.frameworks || [];
+
+  // Databases
+  const databaseResponse = await prompts({
+    type: "autocompleteMultiselect",
+    name: "databases",
+    message: chalk.white("Databases (type to search):"),
+    choices: DATABASES.map(s => ({
+      title: s.title,
+      value: s.value,
+      selected: detected?.stack?.includes(s.value),
+    })),
+    hint: chalk.gray("type to filter • space select • enter confirm"),
+    instructions: false,
+  }, promptConfig);
+  const selectedDatabases = databaseResponse.databases || [];
+
+  // Combine all stack selections
+  answers.stack = [...selectedLanguages, ...selectedFrameworks, ...selectedDatabases];
 
   // ═══════════════════════════════════════════════════════════════
   // STEP 4: Repository Setup (basic - all users)
@@ -1169,11 +1287,11 @@ async function runInteractiveWizard(
     type: "toggle",
     name: "isPublic",
     message: chalk.white("Public repository?"),
-    initial: false,
+    initial: false, // Default No
     active: "Yes",
     inactive: "No",
   }, promptConfig);
-  answers.isPublic = visibilityResponse.isPublic || false;
+  answers.isPublic = visibilityResponse.isPublic ?? false;
 
   // Find initial index for detected license
   const licenseChoices = [
@@ -1934,6 +2052,8 @@ async function runInteractiveWizard(
     persona: answers.persona as string,
     boundaries: answers.boundaries as "conservative" | "standard" | "permissive",
     commands: typeof answers.commands === "object" ? answers.commands as Record<string, string> : (detected?.commands || {}),
+    // Blueprint mode
+    blueprintMode: answers.blueprintMode as boolean,
     // Extended config for Pro/Max users
     projectType: answers.projectType as string,
     devOS: answers.devOS as string,
@@ -1942,12 +2062,14 @@ async function runInteractiveWizard(
     isPublic: answers.isPublic as boolean,
     license: answers.license as string,
     conventionalCommits: answers.conventionalCommits as boolean,
+    letAiDecide: answers.letAiDecide as boolean,
     namingConvention: answers.namingConvention as string,
     errorHandling: answers.errorHandling as string,
     styleNotes: answers.styleNotes as string,
     aiBehavior: answers.aiBehavior as string[],
     importantFiles: answers.importantFiles as string[],
     selfImprove: answers.selfImprove as boolean,
+    includePersonalData: answers.includePersonalData as boolean,
     boundaryNever: answers.boundaryNever as string[],
     boundaryAsk: answers.boundaryAsk as string[],
     testLevels: answers.testLevels as string[],
@@ -1955,7 +2077,17 @@ async function runInteractiveWizard(
     coverageTarget: answers.coverageTarget as number,
     testNotes: answers.testNotes as string,
     staticFiles: answers.staticFiles as string[],
+    staticFileContents: answers.staticFileContents as Record<string, string>,
     includeFunding: answers.includeFunding as boolean,
     extraNotes: answers.extraNotes as string,
+    semver: answers.semver as boolean,
+    dependabot: answers.dependabot as boolean,
+    cicd: answers.cicd as string,
+    deploymentTargets: answers.deploymentTargets as string[],
+    buildContainer: answers.buildContainer as boolean,
+    containerRegistry: answers.containerRegistry as string,
+    exampleRepoUrl: answers.exampleRepoUrl as string,
+    documentationUrl: answers.documentationUrl as string,
+    loggingConventions: answers.loggingConventions as string,
   };
 }
