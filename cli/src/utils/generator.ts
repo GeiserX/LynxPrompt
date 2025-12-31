@@ -29,6 +29,7 @@ export interface GenerateOptions {
   documentationUrl?: string;
   letAiDecide?: boolean;
   loggingConventions?: string;
+  loggingConventionsOther?: string;
   namingConvention?: string;
   errorHandling?: string;
   styleNotes?: string;
@@ -36,6 +37,7 @@ export interface GenerateOptions {
   importantFiles?: string[];
   selfImprove?: boolean;
   includePersonalData?: boolean;
+  boundaryAlways?: string[];
   boundaryNever?: string[];
   boundaryAsk?: string[];
   testLevels?: string[];
@@ -838,9 +840,10 @@ function generateFileContent(options: GenerateOptions, platform: string): string
   let boundaries = BOUNDARIES[options.boundaries];
   
   // Apply custom boundaries if provided
-  if (options.boundaryNever?.length || options.boundaryAsk?.length) {
+  if (options.boundaryAlways?.length || options.boundaryNever?.length || options.boundaryAsk?.length) {
     boundaries = {
       ...boundaries,
+      always: options.boundaryAlways?.length ? options.boundaryAlways : boundaries.always,
       never: options.boundaryNever?.length ? options.boundaryNever : boundaries.never,
       askFirst: options.boundaryAsk?.length ? options.boundaryAsk : boundaries.askFirst,
     };
@@ -919,7 +922,10 @@ function generateFileContent(options: GenerateOptions, platform: string): string
 
     // Logging conventions
     if (options.loggingConventions) {
-      sections.push(`- **Logging:** ${options.loggingConventions}`);
+      const loggingValue = options.loggingConventions === "other" && options.loggingConventionsOther
+        ? options.loggingConventionsOther
+        : options.loggingConventions.replace(/_/g, " ");
+      sections.push(`- **Logging:** ${loggingValue}`);
     }
     
     // Style notes
