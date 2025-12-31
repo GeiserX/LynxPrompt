@@ -248,10 +248,11 @@ class ApiClient {
       naming?: string;
       errorHandling?: string;
       loggingConventions?: string;
+      loggingConventionsOther?: string;
       notes?: string;
     };
     boundaries?: {
-      preset?: string;
+      always?: string[];
       never?: string[];
       ask?: string[];
     };
@@ -286,6 +287,9 @@ class ApiClient {
       if (data.codeStyle.loggingConventions) {
         preferences.push({ category: "code_style", key: "loggingConventions", value: data.codeStyle.loggingConventions, isDefault: true });
       }
+      if (data.codeStyle.loggingConventionsOther) {
+        preferences.push({ category: "code_style", key: "loggingConventionsOther", value: data.codeStyle.loggingConventionsOther, isDefault: true });
+      }
       if (data.codeStyle.notes) {
         preferences.push({ category: "code_style", key: "notes", value: data.codeStyle.notes, isDefault: true });
       }
@@ -293,8 +297,8 @@ class ApiClient {
 
     // Boundaries
     if (data.boundaries) {
-      if (data.boundaries.preset) {
-        preferences.push({ category: "boundaries", key: "preset", value: data.boundaries.preset, isDefault: true });
+      if (data.boundaries.always?.length) {
+        preferences.push({ category: "boundaries", key: "always", value: JSON.stringify(data.boundaries.always), isDefault: true });
       }
       if (data.boundaries.never?.length) {
         preferences.push({ category: "boundaries", key: "never", value: JSON.stringify(data.boundaries.never), isDefault: true });

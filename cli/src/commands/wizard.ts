@@ -312,33 +312,117 @@ const CONTAINER_REGISTRIES = [
   { id: "custom", label: "Custom/Self-hosted", icon: "🏠" },
 ];
 
-// Common commands by category
+// Common commands by category - expanded to match WebUI
 const COMMON_COMMANDS = {
   build: [
+    // JavaScript/Node
     "npm run build", "pnpm build", "yarn build", "bun run build",
     "next build", "vite build", "tsc", "tsc --noEmit",
-    "go build", "cargo build", "cargo build --release",
-    "mvn package", "gradle build", "dotnet build",
+    "esbuild", "rollup -c", "webpack", "parcel build",
+    // Python
+    "python setup.py build", "pip install -e .", "poetry build", "pdm build", "hatch build",
+    // Go
+    "go build", "go build ./...", "go install",
+    // Rust
+    "cargo build", "cargo build --release",
+    // Java/JVM
+    "mvn package", "mvn clean install", "gradle build",
+    // .NET
+    "dotnet build", "dotnet publish",
+    // Ruby
+    "bundle exec rake build", "gem build",
+    // PHP
+    "composer install", "composer dump-autoload",
+    // Docker
     "docker build -t app .", "docker compose build",
+    // Make
+    "make", "make build", "make all",
   ],
   test: [
+    // JavaScript/Node
     "npm test", "pnpm test", "yarn test", "bun test",
     "vitest", "vitest run", "jest", "jest --coverage",
-    "pytest", "pytest --cov", "go test ./...",
-    "cargo test", "mvn test", "gradle test",
-    "playwright test", "cypress run",
+    "mocha", "ava", "tap",
+    // E2E
+    "playwright test", "cypress run", "cypress open",
+    "puppeteer", "selenium",
+    // Python
+    "pytest", "pytest --cov", "pytest -xvs",
+    "unittest", "nose2", "hypothesis",
+    // Go
+    "go test ./...", "go test -v ./...", "go test -race ./...",
+    // Rust
+    "cargo test", "cargo test --release",
+    // Java/JVM
+    "mvn test", "gradle test", "mvn verify",
+    // .NET
+    "dotnet test",
+    // Ruby
+    "bundle exec rspec", "rake test",
+    // PHP
+    "phpunit", "pest",
+    // Docker
+    "docker compose run test",
   ],
   lint: [
+    // JavaScript/Node
     "npm run lint", "pnpm lint", "eslint .", "eslint . --fix",
     "prettier --check .", "prettier --write .",
-    "ruff check", "ruff format", "black .", "flake8",
-    "golangci-lint run", "cargo clippy", "rubocop",
+    "biome check", "biome check --apply",
+    // Python
+    "ruff check", "ruff check --fix", "ruff format",
+    "black .", "black --check .",
+    "flake8", "pylint", "mypy .",
+    // Go
+    "golangci-lint run", "go fmt ./...", "go vet ./...",
+    // Rust
+    "cargo clippy", "cargo fmt", "cargo fmt --check",
+    // Java
+    "mvn checkstyle:check", "gradle spotlessCheck",
+    // Ruby
+    "rubocop", "rubocop -a",
+    // PHP
+    "php-cs-fixer fix", "phpcs", "phpstan analyse",
+    // General
+    "pre-commit run --all-files",
   ],
   dev: [
+    // JavaScript/Node
     "npm run dev", "pnpm dev", "yarn dev", "bun run dev",
     "next dev", "vite", "vite dev",
-    "uvicorn main:app --reload", "flask run", "rails server",
-    "go run .", "cargo run", "dotnet run",
+    "nodemon", "ts-node-dev",
+    // Python
+    "uvicorn main:app --reload", "flask run", "python manage.py runserver",
+    "gunicorn --reload", "hypercorn --reload",
+    // Go
+    "go run .", "air", "reflex",
+    // Rust
+    "cargo run", "cargo watch -x run",
+    // Java
+    "mvn spring-boot:run", "gradle bootRun",
+    // .NET
+    "dotnet run", "dotnet watch run",
+    // Ruby
+    "rails server", "bundle exec rails s",
+    // PHP
+    "php artisan serve", "symfony server:start",
+    // Docker
+    "docker compose up", "docker compose up -d",
+  ],
+  additional: [
+    // Database
+    "npm run db:push", "npm run db:migrate", "prisma migrate dev",
+    "alembic upgrade head", "flask db upgrade",
+    "rails db:migrate", "rake db:migrate",
+    // Codegen
+    "npm run codegen", "graphql-codegen", "prisma generate",
+    // Docs
+    "npm run docs", "mkdocs serve", "sphinx-build",
+    // Deploy
+    "npm run deploy", "vercel", "netlify deploy",
+    "flyctl deploy", "railway up",
+    // Clean
+    "npm run clean", "make clean", "cargo clean",
   ],
 };
 
@@ -360,16 +444,29 @@ const ERROR_PATTERNS = [
   { id: "other", label: "Other" },
 ];
 
-// AI Behavior rules
+// Logging conventions - matching WebUI
+const LOGGING_OPTIONS = [
+  { id: "structured_json", label: "Structured JSON" },
+  { id: "console_log", label: "Console.log (dev)" },
+  { id: "log_levels", label: "Log Levels (debug/info/warn/error)" },
+  { id: "pino", label: "Pino" },
+  { id: "winston", label: "Winston" },
+  { id: "bunyan", label: "Bunyan" },
+  { id: "python_logging", label: "Python logging" },
+  { id: "log4j", label: "Log4j / SLF4J" },
+  { id: "serilog", label: "Serilog" },
+  { id: "opentelemetry", label: "OpenTelemetry" },
+  { id: "other", label: "Other" },
+];
+
+// AI Behavior rules - matching WebUI
 const AI_BEHAVIOR_RULES = [
-  { id: "explain_changes", label: "Explain changes before making them", recommended: true },
-  { id: "preserve_style", label: "Preserve existing code style", recommended: true },
-  { id: "minimal_changes", label: "Make minimal, focused changes", recommended: true },
-  { id: "no_comments", label: "Avoid adding unnecessary comments", recommended: false },
-  { id: "prefer_simple", label: "Prefer simpler solutions", recommended: true },
-  { id: "test_first", label: "Write tests before implementation", recommended: false },
-  { id: "no_console", label: "Remove console.log/print before committing", recommended: false },
-  { id: "type_strict", label: "Be strict with types (no any/Any)", recommended: false },
+  { id: "always_debug_after_build", label: "Always Debug After Building", description: "Run and test locally after making changes", recommended: true },
+  { id: "check_logs_after_build", label: "Check Logs After Build/Commit", description: "Check logs when build or commit finishes", recommended: true },
+  { id: "run_tests_before_commit", label: "Run Tests Before Commit", description: "Ensure tests pass before committing", recommended: true },
+  { id: "follow_existing_patterns", label: "Follow Existing Patterns", description: "Match the codebase's existing style", recommended: true },
+  { id: "ask_before_large_refactors", label: "Ask Before Large Refactors", description: "Confirm before significant changes", recommended: true },
+  { id: "check_for_security_issues", label: "Check for Security Issues", description: "Review for common vulnerabilities", recommended: false },
 ];
 
 // Important files to read
@@ -430,16 +527,48 @@ const BOUNDARY_OPTIONS = [
   "Skip tests temporarily",
 ];
 
-// Testing frameworks
+// Testing frameworks - expanded to match WebUI
 const TEST_FRAMEWORKS = [
-  "jest", "vitest", "mocha", "ava", "tap",
-  "pytest", "unittest", "nose2",
-  "go test", "testify",
-  "cargo test", "rstest",
-  "junit", "testng", "spock",
-  "rspec", "minitest",
-  "phpunit", "pest",
-  "playwright", "cypress", "puppeteer", "selenium",
+  // JavaScript/TypeScript
+  "jest", "vitest", "mocha", "ava", "tap", "bun:test",
+  // E2E/Integration
+  "playwright", "cypress", "puppeteer", "selenium", "webdriverio", "testcafe",
+  // React/Frontend
+  "rtl", "enzyme", "storybook", "chromatic",
+  // API/Mocking
+  "msw", "supertest", "pact", "dredd", "karate", "postman", "insomnia",
+  // Python
+  "pytest", "unittest", "nose2", "hypothesis", "behave", "robot",
+  // Go
+  "go-test", "testify", "ginkgo", "gomega",
+  // Java/JVM
+  "junit", "testng", "mockito", "spock", "cucumber-jvm",
+  // Ruby
+  "rspec", "minitest", "capybara", "factory_bot",
+  // .NET
+  "xunit", "nunit", "mstest", "specflow",
+  // Infrastructure/DevOps
+  "terratest", "conftest", "opa", "inspec", "serverspec", "molecule", "kitchen", "goss",
+  // Kubernetes
+  "kubetest", "kuttl", "chainsaw", "helm-unittest",
+  // Security
+  "owasp-zap", "burpsuite", "nuclei", "semgrep",
+  // Load/Performance
+  "k6", "locust", "jmeter", "artillery", "gatling", "vegeta", "wrk", "ab",
+  // Chaos Engineering
+  "chaos-mesh", "litmus", "gremlin", "toxiproxy",
+  // Contract Testing
+  "spring-cloud-contract", "specmatic",
+  // BDD
+  "cucumber", "gauge", "concordion",
+  // Mutation Testing
+  "stryker", "pitest", "mutmut",
+  // Fuzzing
+  "go-fuzz", "afl", "libfuzzer", "jazzer",
+  // PHP
+  "phpunit", "pest", "codeception",
+  // Rust
+  "cargo-test", "rstest", "proptest",
 ];
 
 // Test levels
@@ -620,13 +749,54 @@ function showWizardOverview(userTier: UserTier): void {
   console.log();
 }
 
+// Global wizard state for saving draft on exit
+let wizardState: {
+  inProgress: boolean;
+  answers: Record<string, unknown>;
+  stepReached: number;
+} = {
+  inProgress: false,
+  answers: {},
+  stepReached: 0,
+};
+
+// Save draft function for SIGINT handler
+async function saveDraftOnExit(): Promise<void> {
+  if (!wizardState.inProgress || Object.keys(wizardState.answers).length === 0) {
+    return;
+  }
+  
+  try {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+    const draftName = `autosave-${timestamp}`;
+    
+    console.log();
+    console.log(chalk.yellow(`  💾 Saving wizard state to draft: ${draftName}...`));
+    
+    await saveDraftLocally(draftName, wizardState.answers);
+    
+    console.log(chalk.green(`  ✓ Draft saved! Resume with: lynxp wizard --load-draft ${draftName}`));
+    console.log();
+  } catch (err) {
+    console.log(chalk.red(`  ✗ Could not save draft: ${err instanceof Error ? err.message : "unknown error"}`));
+  }
+}
+
 // Configure prompts to handle cancellation
 const promptConfig = {
-  onCancel: () => {
+  onCancel: async () => {
+    await saveDraftOnExit();
     console.log(chalk.yellow("\n  Cancelled. Run 'lynxp wizard' anytime to restart.\n"));
     process.exit(0);
   },
 };
+
+// Register SIGINT handler for Ctrl+C
+process.on("SIGINT", async () => {
+  await saveDraftOnExit();
+  console.log(chalk.yellow("\n  Interrupted. Run 'lynxp wizard' anytime to restart.\n"));
+  process.exit(0);
+});
 
 export async function wizardCommand(options: WizardOptions): Promise<void> {
   console.log();
@@ -785,7 +955,7 @@ export async function wizardCommand(options: WizardOptions): Promise<void> {
   if (canDetectRemote) {
     console.log();
     console.log(chalk.magenta.bold("  ┌─────────────────────────────────────────────────┐"));
-    console.log(chalk.magenta.bold("  │  ✨ AUTO-DETECT FROM REPOSITORY (MAX/TEAMS)    │"));
+    console.log(chalk.magenta.bold("  │  ✨ AUTO-DETECT FROM REPOSITORY (MAX/TEAMS)     │"));
     console.log(chalk.magenta.bold("  └─────────────────────────────────────────────────┘"));
     console.log(chalk.gray("     Analyze any public GitHub/GitLab repo, or private with git credentials."));
     console.log(chalk.gray("     We'll detect: languages, frameworks, commands, license, CI/CD, and more!"));
@@ -981,10 +1151,11 @@ export async function wizardCommand(options: WizardOptions): Promise<void> {
               naming: config.namingConvention,
               errorHandling: config.errorHandling,
               loggingConventions: config.loggingConventions,
+              loggingConventionsOther: config.loggingConventionsOther,
               notes: config.styleNotes,
             },
             boundaries: {
-              preset: config.boundaries,
+              always: config.boundaryAlways,
               never: config.boundaryNever,
               ask: config.boundaryAsk,
             },
@@ -998,8 +1169,18 @@ export async function wizardCommand(options: WizardOptions): Promise<void> {
           saveSpinner.succeed("Preferences saved to your profile");
         } catch (err) {
           saveSpinner.fail("Could not save preferences (you can still use the generated files)");
-          if (err instanceof Error) {
-            console.log(chalk.gray(`     ${err.message}`));
+          if (err instanceof ApiRequestError) {
+            if (err.statusCode === 401) {
+              console.log(chalk.yellow("     Your session may have expired. Try: lynxp login"));
+            } else {
+              console.log(chalk.gray(`     ${err.message} (status: ${err.statusCode})`));
+            }
+          } else if (err instanceof Error) {
+            if (err.message.includes("fetch failed") || err.message.includes("ENOTFOUND")) {
+              console.log(chalk.yellow("     Network error. Check your internet connection."));
+            } else {
+              console.log(chalk.gray(`     ${err.message}`));
+            }
           }
         }
       }
@@ -1025,11 +1206,17 @@ async function runInteractiveWizard(
   const availableSteps = getAvailableSteps(userTier);
   let currentStepNum = 0;
 
+  // Initialize global state for draft saving on exit
+  wizardState.inProgress = true;
+  wizardState.answers = answers;
+  wizardState.stepReached = 0;
+
   // Helper to get current step info and increment counter
   const getCurrentStep = (stepId: string) => {
     const step = availableSteps.find(s => s.id === stepId);
     if (step) {
       currentStepNum++;
+      wizardState.stepReached = currentStepNum;
       return step;
     }
     return null;
@@ -1287,11 +1474,11 @@ async function runInteractiveWizard(
     type: "toggle",
     name: "isPublic",
     message: chalk.white("Public repository?"),
-    initial: false, // Default No
+    initial: true, // Default Yes
     active: "Yes",
     inactive: "No",
   }, promptConfig);
-  answers.isPublic = visibilityResponse.isPublic ?? false;
+  answers.isPublic = visibilityResponse.isPublic ?? true;
 
   // Find initial index for detected license
   const licenseChoices = [
@@ -1320,21 +1507,21 @@ async function runInteractiveWizard(
     type: "toggle",
     name: "conventionalCommits",
     message: chalk.white("Use Conventional Commits?"),
-    initial: false,
+    initial: true, // Default Yes
     active: "Yes",
     inactive: "No",
   }, promptConfig);
-  answers.conventionalCommits = conventionalResponse.conventionalCommits || false;
+  answers.conventionalCommits = conventionalResponse.conventionalCommits ?? true;
 
   const semverResponse = await prompts({
     type: "toggle",
     name: "semver",
     message: chalk.white("Use Semantic Versioning?"),
-    initial: false,
+    initial: true, // Default Yes
     active: "Yes",
     inactive: "No",
   }, promptConfig);
-  answers.semver = semverResponse.semver || false;
+  answers.semver = semverResponse.semver ?? true;
 
   // Dependabot (GitHub/GitLab only)
   if (answers.repoHost === "github" || answers.repoHost === "gitlab") {
@@ -1342,11 +1529,11 @@ async function runInteractiveWizard(
       type: "toggle",
       name: "dependabot",
       message: chalk.white("Enable Dependabot/dependency updates?"),
-      initial: false,
+      initial: true, // Default Yes
       active: "Yes",
       inactive: "No",
     }, promptConfig);
-    answers.dependabot = dependabotResponse.dependabot || false;
+    answers.dependabot = dependabotResponse.dependabot ?? true;
   }
 
   // CI/CD Platform - use detected value if available
@@ -1372,11 +1559,11 @@ async function runInteractiveWizard(
   }, promptConfig);
   answers.cicd = cicdResponse.cicd || "";
 
-  // Deployment targets - pre-select Docker if Dockerfile detected
+  // Deployment targets - pre-select Docker if Dockerfile detected (with search)
   const deployResponse = await prompts({
-    type: "multiselect",
+    type: "autocompleteMultiselect",
     name: "deploymentTargets",
-    message: chalk.white("Deployment targets:"),
+    message: chalk.white("Deployment targets (type to search):"),
     choices: DEPLOYMENT_TARGETS.map(t => ({
       title: (t.id === "docker" && detected?.hasDocker)
         ? `${t.icon} ${t.label} ${chalk.green("(detected)")}`
@@ -1384,7 +1571,7 @@ async function runInteractiveWizard(
       selected: t.id === "docker" && detected?.hasDocker,
       value: t.id,
     })),
-    hint: chalk.gray("space select • enter to skip/confirm"),
+    hint: chalk.gray("type to filter • space select • enter confirm"),
     instructions: false,
   }, promptConfig);
   answers.deploymentTargets = deployResponse.deploymentTargets || [];
@@ -1443,62 +1630,75 @@ async function runInteractiveWizard(
     const commandsStep = getCurrentStep("commands")!;
     showStep(currentStepNum, commandsStep, userTier);
 
-    console.log(chalk.gray("  Select common commands for your project:"));
+    console.log(chalk.gray("  Select common commands for your project (type to search):"));
     console.log();
 
-    // Build commands
+    // Build commands - autocomplete for searching
     const buildResponse = await prompts({
-      type: "multiselect",
+      type: "autocompleteMultiselect",
       name: "build",
-      message: chalk.white("Build commands:"),
-      choices: COMMON_COMMANDS.build.slice(0, 12).map(c => ({
+      message: chalk.white("Build commands (type to search):"),
+      choices: COMMON_COMMANDS.build.map(c => ({
         title: chalk.cyan(c),
         value: c,
         selected: detected?.commands?.build === c,
       })),
-      hint: chalk.gray("space select • enter confirm"),
+      hint: chalk.gray("type to filter • space select • enter confirm"),
       instructions: false,
     }, promptConfig);
 
-    // Test commands
+    // Test commands - autocomplete for searching
     const testResponse = await prompts({
-      type: "multiselect",
+      type: "autocompleteMultiselect",
       name: "test",
-      message: chalk.white("Test commands:"),
-      choices: COMMON_COMMANDS.test.slice(0, 12).map(c => ({
+      message: chalk.white("Test commands (type to search):"),
+      choices: COMMON_COMMANDS.test.map(c => ({
         title: chalk.yellow(c),
         value: c,
         selected: detected?.commands?.test === c,
       })),
-      hint: chalk.gray("space select • enter confirm"),
+      hint: chalk.gray("type to filter • space select • enter confirm"),
       instructions: false,
     }, promptConfig);
 
-    // Lint commands
+    // Lint commands - autocomplete for searching
     const lintResponse = await prompts({
-      type: "multiselect",
+      type: "autocompleteMultiselect",
       name: "lint",
-      message: chalk.white("Lint/format commands:"),
-      choices: COMMON_COMMANDS.lint.slice(0, 12).map(c => ({
+      message: chalk.white("Lint/format commands (type to search):"),
+      choices: COMMON_COMMANDS.lint.map(c => ({
         title: chalk.green(c),
         value: c,
         selected: detected?.commands?.lint === c,
       })),
-      hint: chalk.gray("space select • enter confirm"),
+      hint: chalk.gray("type to filter • space select • enter confirm"),
       instructions: false,
     }, promptConfig);
 
-    // Dev commands
+    // Dev commands - autocomplete for searching
     const devResponse = await prompts({
-      type: "multiselect",
+      type: "autocompleteMultiselect",
       name: "dev",
-      message: chalk.white("Dev server commands:"),
-      choices: COMMON_COMMANDS.dev.slice(0, 12).map(c => ({
+      message: chalk.white("Dev server commands (type to search):"),
+      choices: COMMON_COMMANDS.dev.map(c => ({
         title: chalk.magenta(c),
         value: c,
         selected: detected?.commands?.dev === c,
       })),
-      hint: chalk.gray("space select • enter confirm"),
+      hint: chalk.gray("type to filter • space select • enter confirm"),
+      instructions: false,
+    }, promptConfig);
+
+    // Additional commands - autocomplete for searching
+    const additionalResponse = await prompts({
+      type: "autocompleteMultiselect",
+      name: "additional",
+      message: chalk.white("Additional commands (type to search):"),
+      choices: COMMON_COMMANDS.additional.map(c => ({
+        title: chalk.blue(c),
+        value: c,
+      })),
+      hint: chalk.gray("type to filter • space select • enter confirm"),
       instructions: false,
     }, promptConfig);
 
@@ -1507,13 +1707,14 @@ async function runInteractiveWizard(
       test: testResponse.test || [],
       lint: lintResponse.lint || [],
       dev: devResponse.dev || [],
+      additional: additionalResponse.additional || [],
     };
 
     // Custom command
     const customCmdResponse = await prompts({
       type: "text",
       name: "custom",
-      message: chalk.white("Additional custom command (optional):"),
+      message: chalk.white("Custom command (optional):"),
       hint: chalk.gray("e.g., npm run migrate, make deploy"),
     }, promptConfig);
     if (customCmdResponse.custom) {
@@ -1561,13 +1762,32 @@ async function runInteractiveWizard(
     }, promptConfig);
     answers.errorHandling = errorResponse.errorHandling || "";
 
+    // Logging conventions - select from predefined options like WebUI
     const loggingResponse = await prompts({
-      type: "text",
+      type: "select",
       name: "loggingConventions",
-      message: chalk.white("Logging conventions (optional):"),
-      hint: chalk.gray("e.g., use structured logging, JSON format, specific lib"),
+      message: chalk.white("Logging conventions:"),
+      choices: [
+        { title: chalk.gray("⏭ Skip"), value: "" },
+        ...LOGGING_OPTIONS.map(l => ({
+          title: l.label,
+          value: l.id,
+        })),
+      ],
+      initial: 0,
     }, promptConfig);
     answers.loggingConventions = loggingResponse.loggingConventions || "";
+    
+    // If "other" selected, ask for custom input
+    if (answers.loggingConventions === "other") {
+      const customLoggingResponse = await prompts({
+        type: "text",
+        name: "customLogging",
+        message: chalk.white("Describe your logging convention:"),
+        hint: chalk.gray("e.g., custom logger, file-based logging"),
+      }, promptConfig);
+      answers.loggingConventionsOther = customLoggingResponse.customLogging || "";
+    }
 
     const styleNotesResponse = await prompts({
       type: "text",
@@ -1584,32 +1804,44 @@ async function runInteractiveWizard(
   const aiStep = getCurrentStep("ai")!;
   showStep(currentStepNum, aiStep, userTier);
 
+  console.log(chalk.gray("  Select which behaviors AI should follow:"));
+  console.log();
+  
+  // Show each AI behavior rule with description on separate lines
+  for (const rule of AI_BEHAVIOR_RULES) {
+    const recBadge = rule.recommended ? chalk.green(" ★ recommended") : "";
+    console.log(chalk.cyan(`  • ${rule.label}${recBadge}`));
+    console.log(chalk.gray(`    ${rule.description}`));
+  }
+  console.log();
+  
   const aiBehaviorResponse = await prompts({
-    type: "multiselect",
+    type: "autocompleteMultiselect",
     name: "aiBehavior",
-    message: chalk.white("AI behavior rules:"),
+    message: chalk.white("AI behavior rules (type to filter):"),
     choices: AI_BEHAVIOR_RULES.map(r => ({
       title: r.recommended 
-        ? `${r.label} ${chalk.green("★ recommended")}`
+        ? `${r.label} ${chalk.green("★")}`
         : r.label,
       value: r.id,
+      description: chalk.gray(r.description),
       // No pre-selection - user must explicitly choose
     })),
-    hint: chalk.gray("space select • enter to skip/confirm"),
+    hint: chalk.gray("type to filter • space select • enter confirm"),
     instructions: false,
   }, promptConfig);
   answers.aiBehavior = aiBehaviorResponse.aiBehavior || [];
 
   const importantFilesResponse = await prompts({
-    type: "multiselect",
+    type: "autocompleteMultiselect",
     name: "importantFiles",
-    message: chalk.white("Important files AI should read:"),
+    message: chalk.white("Important files AI should read (type to search):"),
     choices: IMPORTANT_FILES.map(f => ({
       title: `${f.icon} ${f.label}`,
       value: f.id,
       // No pre-selection - user must explicitly choose
     })),
-    hint: chalk.gray("space select • enter to skip/confirm"),
+    hint: chalk.gray("type to filter • space select • enter confirm"),
     instructions: false,
   }, promptConfig);
   answers.importantFiles = importantFilesResponse.importantFiles || [];
@@ -1641,72 +1873,75 @@ async function runInteractiveWizard(
     const boundariesStep = getCurrentStep("boundaries")!;
     showStep(currentStepNum, boundariesStep, userTier);
 
-    const presetResponse = await prompts({
-      type: "select",
-      name: "boundaryPreset",
-      message: chalk.white("Boundary preset:"),
-      choices: [
-        { title: chalk.gray("⏭ Skip"), value: "" },
-        ...BOUNDARY_PRESETS.map(b => ({
-          title: b.title,
-          value: b.value,
-          description: chalk.gray(b.description),
-        })),
-      ],
-      initial: 0,
-    }, promptConfig);
-    answers.boundaries = presetResponse.boundaryPreset || "";
+    console.log(chalk.gray("  Define what AI should always do, ask first, or never do."));
+    console.log(chalk.gray("  Each option can only be in one category."));
+    console.log();
 
-    const selectedPreset = BOUNDARY_PRESETS.find(b => b.value === answers.boundaries);
-    if (selectedPreset) {
-      console.log();
-      console.log(chalk.gray("  Preset details:"));
-      console.log(chalk.green(`    ✓ Always: ${selectedPreset.always.slice(0, 3).join(", ")}`));
-      console.log(chalk.yellow(`    ? Ask: ${selectedPreset.askFirst.slice(0, 2).join(", ")}`));
-      console.log(chalk.red(`    ✗ Never: ${selectedPreset.never.slice(0, 2).join(", ")}`));
+    // Track used options to filter them out from subsequent questions
+    const usedOptions = new Set<string>();
+
+    // ALWAYS do - AI will do these automatically
+    console.log(chalk.green.bold("  ✓ ALWAYS ALLOW - AI will do these automatically"));
+    const alwaysResponse = await prompts({
+      type: "autocompleteMultiselect",
+      name: "always",
+      message: chalk.white("Always allow (type to filter):"),
+      choices: BOUNDARY_OPTIONS.map(o => ({
+        title: chalk.green(o),
+        value: o,
+      })),
+      hint: chalk.gray("space select • enter confirm"),
+      instructions: false,
+    }, promptConfig);
+    answers.boundaryAlways = alwaysResponse.always || [];
+    (answers.boundaryAlways as string[]).forEach(o => usedOptions.add(o));
+
+    // ASK first - AI will ask before doing
+    console.log();
+    console.log(chalk.yellow.bold("  ? ASK FIRST - AI will ask before doing"));
+    const availableForAsk = BOUNDARY_OPTIONS.filter(o => !usedOptions.has(o));
+    const askResponse = await prompts({
+      type: "autocompleteMultiselect",
+      name: "ask",
+      message: chalk.white("Ask first (type to filter):"),
+      choices: availableForAsk.map(o => ({
+        title: chalk.yellow(o),
+        value: o,
+      })),
+      hint: chalk.gray("space select • enter confirm"),
+      instructions: false,
+    }, promptConfig);
+    answers.boundaryAsk = askResponse.ask || [];
+    (answers.boundaryAsk as string[]).forEach(o => usedOptions.add(o));
+
+    // NEVER do - AI will refuse to do
+    console.log();
+    console.log(chalk.red.bold("  ✗ NEVER ALLOW - AI will refuse to do"));
+    const availableForNever = BOUNDARY_OPTIONS.filter(o => !usedOptions.has(o));
+    const neverResponse = await prompts({
+      type: "autocompleteMultiselect",
+      name: "never",
+      message: chalk.white("Never allow (type to filter):"),
+      choices: availableForNever.map(o => ({
+        title: chalk.red(o),
+        value: o,
+      })),
+      hint: chalk.gray("space select • enter confirm"),
+      instructions: false,
+    }, promptConfig);
+    answers.boundaryNever = neverResponse.never || [];
+
+    // Show summary
+    console.log();
+    console.log(chalk.gray("  Boundary summary:"));
+    if ((answers.boundaryAlways as string[]).length > 0) {
+      console.log(chalk.green(`    ✓ Always: ${(answers.boundaryAlways as string[]).join(", ")}`));
     }
-
-    // Customize boundaries?
-    const customizeResponse = await prompts({
-      type: "toggle",
-      name: "customize",
-      message: chalk.white("Customize specific boundaries?"),
-      initial: false,
-      active: "Yes",
-      inactive: "No",
-    }, promptConfig);
-
-    if (customizeResponse.customize) {
-      console.log();
-      console.log(chalk.gray("  Select actions AI should NEVER do:"));
-      const neverResponse = await prompts({
-        type: "multiselect",
-        name: "never",
-        message: chalk.white("Never allow:"),
-        choices: BOUNDARY_OPTIONS.map(o => ({
-          title: chalk.red(o),
-          value: o,
-          selected: selectedPreset?.never.includes(o),
-        })),
-        instructions: false,
-      }, promptConfig);
-      answers.boundaryNever = neverResponse.never || [];
-
-      console.log(chalk.gray("  Select actions AI should ASK before doing:"));
-      const askResponse = await prompts({
-        type: "multiselect",
-        name: "ask",
-        message: chalk.white("Ask first:"),
-        choices: BOUNDARY_OPTIONS
-          .filter(o => !(answers.boundaryNever as string[])?.includes(o))
-          .map(o => ({
-            title: chalk.yellow(o),
-            value: o,
-            selected: selectedPreset?.askFirst.includes(o),
-          })),
-        instructions: false,
-      }, promptConfig);
-      answers.boundaryAsk = askResponse.ask || [];
+    if ((answers.boundaryAsk as string[]).length > 0) {
+      console.log(chalk.yellow(`    ? Ask: ${(answers.boundaryAsk as string[]).join(", ")}`));
+    }
+    if ((answers.boundaryNever as string[]).length > 0) {
+      console.log(chalk.red(`    ✗ Never: ${(answers.boundaryNever as string[]).join(", ")}`));
     }
   } else {
     answers.boundaries = options.boundaries || "standard";
@@ -1720,14 +1955,15 @@ async function runInteractiveWizard(
     showStep(currentStepNum, testingStep, userTier);
 
     const testLevelsResponse = await prompts({
-      type: "multiselect",
+      type: "autocompleteMultiselect",
       name: "testLevels",
-      message: chalk.white("Test levels:"),
+      message: chalk.white("Test levels (type to search):"),
       choices: TEST_LEVELS.map(l => ({
         title: `${l.label} - ${chalk.gray(l.desc)}`,
         value: l.id,
         selected: l.id === "unit" || l.id === "integration",
       })),
+      hint: chalk.gray("type to filter • space select • enter confirm"),
       instructions: false,
     }, promptConfig);
     answers.testLevels = testLevelsResponse.testLevels || [];
@@ -1740,16 +1976,17 @@ async function runInteractiveWizard(
         ? ["pytest"]
         : [];
 
+    // Full list of test frameworks with search - expanded to match WebUI
     const testFrameworkResponse = await prompts({
-      type: "multiselect",
+      type: "autocompleteMultiselect",
       name: "testFrameworks",
-      message: chalk.white("Testing frameworks:"),
-      choices: TEST_FRAMEWORKS.slice(0, 16).map(f => ({
+      message: chalk.white("Testing frameworks (type to search):"),
+      choices: TEST_FRAMEWORKS.map(f => ({
         title: f,
         value: f,
         selected: detectedFrameworks.includes(f),
       })),
-      hint: chalk.gray("space select • enter confirm"),
+      hint: chalk.gray("type to filter • space select • enter confirm"),
       instructions: false,
     }, promptConfig);
     answers.testFrameworks = testFrameworkResponse.testFrameworks || [];
@@ -1817,9 +2054,9 @@ async function runInteractiveWizard(
     }
 
     const staticFilesResponse = await prompts({
-      type: "multiselect",
+      type: "autocompleteMultiselect",
       name: "staticFiles",
-      message: chalk.white("Include static files:"),
+      message: chalk.white("Include static files (type to search):"),
       choices: STATIC_FILE_OPTIONS.map(f => ({
         title: existingFiles[f.value] 
           ? `${f.title} ${chalk.green("(exists)")}`
@@ -1827,7 +2064,7 @@ async function runInteractiveWizard(
         value: f.value,
         description: chalk.gray(f.desc),
       })),
-      hint: chalk.gray("space select • enter to skip/confirm"),
+      hint: chalk.gray("type to filter • space select • enter confirm"),
       instructions: false,
     }, promptConfig);
     answers.staticFiles = staticFilesResponse.staticFiles || [];
@@ -1949,35 +2186,9 @@ async function runInteractiveWizard(
   const extraStep = getCurrentStep("extra")!;
   showStep(currentStepNum, extraStep, userTier);
 
-  // AI persona
-  const personaResponse = await prompts({
-    type: "select",
-    name: "persona",
-    message: chalk.white("AI assistant persona:"),
-    choices: [
-      { title: chalk.gray("⏭ Skip"), value: "" },
-      { title: "🧑‍💻 Full-Stack Developer", value: "fullstack", description: chalk.gray("Complete application development") },
-      { title: "⚙️  Backend Developer", value: "backend", description: chalk.gray("APIs, databases, services") },
-      { title: "🎨 Frontend Developer", value: "frontend", description: chalk.gray("UI, components, styling") },
-      { title: "🚀 DevOps Engineer", value: "devops", description: chalk.gray("Infrastructure, CI/CD") },
-      { title: "📊 Data Engineer", value: "data", description: chalk.gray("Pipelines, ETL, analytics") },
-      { title: "🔒 Security Engineer", value: "security", description: chalk.gray("Secure code, auditing") },
-      { title: "✏️  Custom...", value: "custom", description: chalk.gray("Define your own") },
-    ],
-    initial: 0,
-  }, promptConfig);
-  
-  if (personaResponse.persona === "custom") {
-    const customPersona = await prompts({
-      type: "text",
-      name: "value",
-      message: chalk.white("Describe the custom persona:"),
-      hint: chalk.gray("e.g., 'ML engineer focused on PyTorch'"),
-    }, promptConfig);
-    answers.persona = customPersona.value || "";
-  } else {
-    answers.persona = personaResponse.persona || "";
-  }
+  // AI persona is handled from profile settings, not asked here
+  // (Users can set their persona in the web UI under AI Configuration)
+  answers.persona = "";
 
   // Anything else - with AI assist option for Max/Teams users
   const hasAIAccess = canAccessAI(userTier);
@@ -2044,6 +2255,9 @@ async function runInteractiveWizard(
   console.log(chalk.green("  ✅ All steps completed!"));
   console.log();
 
+  // Reset wizard state - no longer in progress
+  wizardState.inProgress = false;
+
   return {
     name: answers.name as string,
     description: answers.description as string,
@@ -2070,6 +2284,7 @@ async function runInteractiveWizard(
     importantFiles: answers.importantFiles as string[],
     selfImprove: answers.selfImprove as boolean,
     includePersonalData: answers.includePersonalData as boolean,
+    boundaryAlways: answers.boundaryAlways as string[],
     boundaryNever: answers.boundaryNever as string[],
     boundaryAsk: answers.boundaryAsk as string[],
     testLevels: answers.testLevels as string[],
@@ -2089,5 +2304,6 @@ async function runInteractiveWizard(
     exampleRepoUrl: answers.exampleRepoUrl as string,
     documentationUrl: answers.documentationUrl as string,
     loggingConventions: answers.loggingConventions as string,
+    loggingConventionsOther: answers.loggingConventionsOther as string,
   };
 }
