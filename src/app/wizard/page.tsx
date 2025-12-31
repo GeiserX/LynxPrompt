@@ -1727,28 +1727,23 @@ function WizardPageContent() {
         tier: userTier, // Pass user tier to respect feature access
       };
       
-      // Build config with variable replacements
+      // Build config (keep variables intact for blueprint saving)
       const genConfig = buildGeneratorConfig();
-      // Apply variable replacements to additionalFeedback
-      genConfig.additionalFeedback = replaceVariablesInContent(genConfig.additionalFeedback);
       
       const blob = await generateConfigFiles(genConfig, userProfile);
       let files = generateAllFiles(genConfig, userProfile);
       
-      // Replace variables in file contents
-      files = files.map(file => ({
-        ...file,
-        content: replaceVariablesInContent(file.content),
-      }));
+      // Keep original content with variables intact for blueprint saving
+      const originalContent = files[0]?.content || "";
       
-      // If API sync is enabled, save/update the blueprint first
+      // If API sync is enabled, save/update the blueprint first (with variables intact)
       let blueprintId: string | null = null;
       if (config.enableApiSync && files.length > 0) {
         try {
           const blueprintData = {
             name: config.projectName || "My AI Config",
             description: config.projectDescription || "Generated with the LynxPrompt wizard",
-            content: files[0].content,
+            content: originalContent, // Keep [[VAR|default]] syntax for blueprints
             type: "AGENTS_MD",
             category: "other",
             visibility: "PRIVATE",
@@ -1783,6 +1778,15 @@ function WizardPageContent() {
         }
       }
       
+      // NOW replace variables for the download (after blueprint was saved with variables intact)
+      files = files.map(file => ({
+        ...file,
+        content: replaceVariablesInContent(file.content),
+      }));
+      
+      // Also replace variables in additionalFeedback for genConfig (used by generateConfigFiles)
+      genConfig.additionalFeedback = replaceVariablesInContent(genConfig.additionalFeedback);
+      
       // If we have a blueprint ID, prepend API sync header to the content
       let finalContent = files[0]?.content || "";
       if (config.enableApiSync && blueprintId) {
@@ -1791,7 +1795,7 @@ function WizardPageContent() {
         files = files.map((file, i) => i === 0 ? { ...file, content: finalContent } : file);
       }
       
-      // Create new blob with final content
+      // Create new blob with final content (variables already replaced)
       const finalBlob = files.length > 0 
         ? new Blob([finalContent], { type: "text/plain" })
         : blob;
@@ -1883,9 +1887,9 @@ ${curlCommand}
 
   // Handle saving as blueprint
   const handleShareAsBlueprint = () => {
-    // Get the generated content
+    // Get the generated content (keep variables intact for blueprints)
     if (previewFiles.length === 0) return;
-    const content = replaceVariablesInContent(previewFiles[0].content);
+    const content = previewFiles[0].content; // Don't replace variables - blueprints should keep [[VAR|default]] syntax
     // Store in sessionStorage for the create page to pick up
     sessionStorage.setItem("wizardBlueprintContent", content);
     sessionStorage.setItem("wizardBlueprintName", config.projectName || "My AI Config");
@@ -1930,9 +1934,9 @@ ${curlCommand}
   const handleSaveBlueprintConfirm = (shouldSave: boolean) => {
     setShowSaveBlueprintModal(false);
     if (shouldSave) {
-      // Navigate to create blueprint page with the content
+      // Navigate to create blueprint page with the content (keep variables intact)
       if (previewFiles.length > 0) {
-        const content = replaceVariablesInContent(previewFiles[0].content);
+        const content = previewFiles[0].content; // Don't replace variables - blueprints should keep [[VAR|default]] syntax
         sessionStorage.setItem("wizardBlueprintContent", content);
         sessionStorage.setItem("wizardBlueprintName", config.projectName || "My AI Config");
         sessionStorage.setItem("wizardBlueprintDescription", config.projectDescription || "Generated with the LynxPrompt wizard");
