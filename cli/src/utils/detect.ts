@@ -23,6 +23,7 @@ export interface DetectedProject {
   cicd?: string;
   hasDocker?: boolean;
   existingFiles?: string[];
+  isPublicRepo?: boolean;
 }
 
 // Framework detection patterns
@@ -552,6 +553,7 @@ async function detectFromGitHubApi(repoUrl: string): Promise<DetectedProject | n
       repoHost: "github",
       repoUrl,
       license: repoInfo.license?.spdx_id?.toLowerCase(),
+      isPublicRepo: !repoInfo.private,
     };
     
     // List root files
@@ -561,6 +563,36 @@ async function detectFromGitHubApi(repoUrl: string): Promise<DetectedProject | n
     if (!filesRes.ok) return detected;
     const files = await filesRes.json() as GitHubFile[];
     const fileNames = new Set(files.map((f) => f.name.toLowerCase()));
+    
+    // Detect from pyproject.toml (Python projects - check first for FastAPI etc)
+    if (fileNames.has("pyproject.toml")) {
+      detected.stack.push("python");
+      const pyprojectRes = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/HEAD/pyproject.toml`);
+      if (pyprojectRes.ok) {
+        try {
+          const content = await pyprojectRes.text();
+          if (content.includes("fastapi")) detected.stack.push("fastapi");
+          if (content.includes("django")) detected.stack.push("django");
+          if (content.includes("flask")) detected.stack.push("flask");
+          if (content.includes("sqlalchemy")) detected.stack.push("sqlalchemy");
+          if (content.includes("pydantic")) detected.stack.push("pydantic");
+          if (content.includes("pytest")) detected.stack.push("pytest");
+          if (content.includes("ruff")) detected.stack.push("ruff");
+        } catch { /* ignore */ }
+      }
+    } else if (fileNames.has("requirements.txt")) {
+      detected.stack.push("python");
+      const reqRes = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/HEAD/requirements.txt`);
+      if (reqRes.ok) {
+        try {
+          const content = (await reqRes.text()).toLowerCase();
+          if (content.includes("fastapi")) detected.stack.push("fastapi");
+          if (content.includes("django")) detected.stack.push("django");
+          if (content.includes("flask")) detected.stack.push("flask");
+          if (content.includes("sqlalchemy")) detected.stack.push("sqlalchemy");
+        } catch { /* ignore */ }
+      }
+    }
     
     // Detect from package.json
     if (fileNames.has("package.json")) {
@@ -601,10 +633,23 @@ async function detectFromGitHubApi(repoUrl: string): Promise<DetectedProject | n
     }
     
     // Detect other languages
-    if (fileNames.has("pyproject.toml") || fileNames.has("requirements.txt")) detected.stack.push("python");
     if (fileNames.has("cargo.toml")) detected.stack.push("rust");
     if (fileNames.has("go.mod")) detected.stack.push("go");
     if (fileNames.has("dockerfile")) detected.hasDocker = true;
+    
+    // Detect database from docker-compose or common files
+    if (fileNames.has("docker-compose.yml") || fileNames.has("docker-compose.yaml")) {
+      const composeRes = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/HEAD/docker-compose.yml`);
+      if (composeRes.ok) {
+        try {
+          const content = (await composeRes.text()).toLowerCase();
+          if (content.includes("postgres")) detected.stack.push("postgresql");
+          if (content.includes("mysql")) detected.stack.push("mysql");
+          if (content.includes("mongo")) detected.stack.push("mongodb");
+          if (content.includes("redis")) detected.stack.push("redis");
+        } catch { /* ignore */ }
+      }
+    }
     
     // CI/CD
     if (files.some((f) => f.name === ".github" && f.type === "dir")) {
