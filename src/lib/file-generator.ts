@@ -92,7 +92,6 @@ interface WizardConfig {
   releaseStrategy?: string;
   customReleaseStrategy?: string;
   cicd: string[];
-  dependabot?: boolean;
   conventionalCommits?: boolean;
   semver?: boolean;
   containerRegistry?: string;
@@ -114,6 +113,16 @@ interface WizardConfig {
   testingStrategy?: TestingStrategyConfig;
   staticFiles?: StaticFilesConfig;
   saveAllPreferences?: boolean;
+  security?: SecurityConfig;
+}
+
+// Security configuration (FREE tier)
+interface SecurityConfig {
+  secretsManagement?: string[];
+  securityTooling?: string[];
+  authPatterns?: string[];
+  dataHandling?: string[];
+  additionalNotes?: string;
 }
 
 // Blueprint variable helpers
@@ -902,8 +911,12 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
   if (config.semver) {
     lines.push("- **Semantic versioning**: Follow semver (MAJOR.MINOR.PATCH) for version numbers");
   }
-  if (config.dependabot) {
-    lines.push("- **Dependency updates**: Keep dependencies updated (Dependabot/Renovate is configured)");
+  // Dependency updates now in security.securityTooling
+  if (config.security?.securityTooling?.includes("dependabot") || config.security?.securityTooling?.includes("renovate")) {
+    const tools = [];
+    if (config.security.securityTooling.includes("dependabot")) tools.push("Dependabot");
+    if (config.security.securityTooling.includes("renovate")) tools.push("Renovate");
+    lines.push(`- **Dependency updates**: Keep dependencies updated (${tools.join("/")}) configured)`);
   }
   lines.push("");
 
@@ -956,6 +969,165 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
       lines.push(staticFilesSection);
     }
   }
+
+  // Security Configuration - FREE tier feature
+  const security = config.security;
+  if (security && (security.secretsManagement?.length || security.securityTooling?.length || 
+      security.authPatterns?.length || security.dataHandling?.length || security.additionalNotes)) {
+    lines.push("## 🔐 Security Configuration");
+    lines.push("");
+    
+    // Secrets Management
+    if (security.secretsManagement?.length) {
+      lines.push("### Secrets Management");
+      lines.push("");
+      const secretsLabels: Record<string, string> = {
+        env_vars: "Environment Variables",
+        dotenv: "dotenv / dotenvx",
+        vault: "HashiCorp Vault",
+        aws_secrets: "AWS Secrets Manager",
+        aws_ssm: "AWS SSM Parameter Store",
+        gcp_secrets: "GCP Secret Manager",
+        azure_keyvault: "Azure Key Vault",
+        infisical: "Infisical",
+        doppler: "Doppler",
+        "1password": "1Password Secrets Automation",
+        bitwarden: "Bitwarden Secrets Manager",
+        sops: "SOPS (Mozilla)",
+        age: "age encryption",
+        sealed_secrets: "Sealed Secrets (K8s)",
+        external_secrets: "External Secrets Operator",
+        git_crypt: "git-crypt",
+        chamber: "Chamber",
+        berglas: "Berglas",
+      };
+      for (const s of security.secretsManagement) {
+        lines.push(`- ${secretsLabels[s] || s}`);
+      }
+      lines.push("");
+    }
+
+    // Security Tooling
+    if (security.securityTooling?.length) {
+      lines.push("### Security Tooling");
+      lines.push("");
+      const toolingLabels: Record<string, string> = {
+        dependabot: "Dependabot (dependency updates)",
+        renovate: "Renovate (dependency updates)",
+        snyk: "Snyk (vulnerability scanning)",
+        sonarqube: "SonarQube / SonarCloud",
+        codeql: "CodeQL (GitHub)",
+        semgrep: "Semgrep",
+        trivy: "Trivy (container scanning)",
+        grype: "Grype",
+        checkov: "Checkov (IaC)",
+        tfsec: "tfsec (Terraform)",
+        kics: "KICS",
+        gitleaks: "Gitleaks (secret detection)",
+        trufflehog: "TruffleHog",
+        detect_secrets: "detect-secrets (Yelp)",
+        bandit: "Bandit (Python)",
+        brakeman: "Brakeman (Rails)",
+        gosec: "gosec (Go)",
+        npm_audit: "npm audit / yarn audit",
+        pip_audit: "pip-audit",
+        safety: "Safety",
+        bundler_audit: "bundler-audit",
+        owasp_dependency_check: "OWASP Dependency-Check",
+        ossf_scorecard: "OSSF Scorecard",
+        socket: "Socket.dev",
+        mend: "Mend (WhiteSource)",
+        fossa: "FOSSA",
+      };
+      for (const t of security.securityTooling) {
+        lines.push(`- ${toolingLabels[t] || t}`);
+      }
+      lines.push("");
+    }
+
+    // Authentication Patterns
+    if (security.authPatterns?.length) {
+      lines.push("### Authentication");
+      lines.push("");
+      const authLabels: Record<string, string> = {
+        oauth2: "OAuth 2.0",
+        oidc: "OpenID Connect (OIDC)",
+        jwt: "JWT (JSON Web Tokens)",
+        session: "Session-based Auth",
+        api_keys: "API Keys",
+        basic_auth: "Basic Authentication",
+        bearer_token: "Bearer Tokens",
+        mfa_totp: "MFA / TOTP",
+        passkeys: "Passkeys / WebAuthn",
+        saml: "SAML 2.0",
+        ldap: "LDAP / Active Directory",
+        mutual_tls: "Mutual TLS (mTLS)",
+        auth0: "Auth0",
+        clerk: "Clerk",
+        firebase_auth: "Firebase Auth",
+        supabase_auth: "Supabase Auth",
+        keycloak: "Keycloak",
+        okta: "Okta",
+        cognito: "AWS Cognito",
+        workos: "WorkOS",
+      };
+      for (const a of security.authPatterns) {
+        lines.push(`- ${authLabels[a] || a}`);
+      }
+      lines.push("");
+    }
+
+    // Data Handling
+    if (security.dataHandling?.length) {
+      lines.push("### Data Handling & Compliance");
+      lines.push("");
+      const dataLabels: Record<string, string> = {
+        encryption_at_rest: "Encryption at Rest",
+        encryption_in_transit: "Encryption in Transit (TLS)",
+        pii_handling: "PII Data Handling",
+        gdpr_compliance: "GDPR Compliance",
+        ccpa_compliance: "CCPA Compliance",
+        hipaa_compliance: "HIPAA Compliance",
+        soc2_compliance: "SOC 2 Compliance",
+        pci_dss: "PCI-DSS Compliance",
+        data_masking: "Data Masking / Anonymization",
+        data_retention: "Data Retention Policies",
+        audit_logging: "Audit Logging",
+        backup_encryption: "Encrypted Backups",
+        key_rotation: "Key Rotation",
+        zero_trust: "Zero Trust Architecture",
+        least_privilege: "Least Privilege Access",
+        rbac: "RBAC (Role-Based Access)",
+        abac: "ABAC (Attribute-Based Access)",
+        data_classification: "Data Classification",
+        dlp: "DLP (Data Loss Prevention)",
+      };
+      for (const d of security.dataHandling) {
+        lines.push(`- ${dataLabels[d] || d}`);
+      }
+      lines.push("");
+    }
+
+    // Additional security notes
+    if (security.additionalNotes) {
+      lines.push("### Additional Security Notes");
+      lines.push("");
+      lines.push(security.additionalNotes);
+      lines.push("");
+    }
+  }
+
+  // Security Notice - always include
+  lines.push("");
+  lines.push("## ⚠️ Security Notice");
+  lines.push("");
+  lines.push("> **Do not commit secrets to the repository or to the live app.**");
+  lines.push("> Always use secure standards to transmit sensitive information.");
+  lines.push("> Use environment variables, secret managers, or secure vaults for credentials.");
+  lines.push("");
+  lines.push("---");
+  lines.push("");
+  lines.push("*Generated by [LynxPrompt](https://lynxprompt.com)*");
 
   return lines.join("\n");
 }
@@ -1391,8 +1563,12 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
   if (config.semver) {
     lines.push("- **Semantic versioning**: Follow semver (MAJOR.MINOR.PATCH) for version numbers");
   }
-  if (config.dependabot) {
-    lines.push("- **Dependency updates**: Keep dependencies updated (Dependabot/Renovate is configured)");
+  // Dependency updates now in security.securityTooling
+  if (config.security?.securityTooling?.includes("dependabot") || config.security?.securityTooling?.includes("renovate")) {
+    const tools = [];
+    if (config.security.securityTooling.includes("dependabot")) tools.push("Dependabot");
+    if (config.security.securityTooling.includes("renovate")) tools.push("Renovate");
+    lines.push(`- **Dependency updates**: Keep dependencies updated (${tools.join("/")}) configured)`);
   }
   lines.push("");
 
@@ -1422,6 +1598,102 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
       lines.push(staticFilesSection);
     }
   }
+
+  // Security Configuration - FREE tier feature (for AGENTS.md)
+  const security2 = config.security;
+  if (security2 && (security2.secretsManagement?.length || security2.securityTooling?.length || 
+      security2.authPatterns?.length || security2.dataHandling?.length || security2.additionalNotes)) {
+    lines.push("## 🔐 Security Configuration");
+    lines.push("");
+    
+    // Secrets Management
+    if (security2.secretsManagement?.length) {
+      lines.push("### Secrets Management");
+      lines.push("");
+      const secretsLabels: Record<string, string> = {
+        env_vars: "Environment Variables", dotenv: "dotenv / dotenvx", vault: "HashiCorp Vault",
+        aws_secrets: "AWS Secrets Manager", aws_ssm: "AWS SSM Parameter Store", gcp_secrets: "GCP Secret Manager",
+        azure_keyvault: "Azure Key Vault", infisical: "Infisical", doppler: "Doppler",
+        "1password": "1Password", bitwarden: "Bitwarden", sops: "SOPS", age: "age encryption",
+        sealed_secrets: "Sealed Secrets", external_secrets: "External Secrets Operator", git_crypt: "git-crypt",
+        chamber: "Chamber", berglas: "Berglas",
+      };
+      for (const s of security2.secretsManagement) {
+        lines.push(`- ${secretsLabels[s] || s}`);
+      }
+      lines.push("");
+    }
+
+    // Security Tooling
+    if (security2.securityTooling?.length) {
+      lines.push("### Security Tooling");
+      lines.push("");
+      const toolingLabels: Record<string, string> = {
+        dependabot: "Dependabot", renovate: "Renovate", snyk: "Snyk", sonarqube: "SonarQube",
+        codeql: "CodeQL", semgrep: "Semgrep", trivy: "Trivy", grype: "Grype", checkov: "Checkov",
+        tfsec: "tfsec", kics: "KICS", gitleaks: "Gitleaks", trufflehog: "TruffleHog",
+        detect_secrets: "detect-secrets", bandit: "Bandit", brakeman: "Brakeman", gosec: "gosec",
+        npm_audit: "npm audit", pip_audit: "pip-audit", safety: "Safety", bundler_audit: "bundler-audit",
+        owasp_dependency_check: "OWASP Dependency-Check", ossf_scorecard: "OSSF Scorecard",
+        socket: "Socket.dev", mend: "Mend", fossa: "FOSSA",
+      };
+      for (const t of security2.securityTooling) {
+        lines.push(`- ${toolingLabels[t] || t}`);
+      }
+      lines.push("");
+    }
+
+    // Authentication Patterns
+    if (security2.authPatterns?.length) {
+      lines.push("### Authentication");
+      lines.push("");
+      const authLabels: Record<string, string> = {
+        oauth2: "OAuth 2.0", oidc: "OIDC", jwt: "JWT", session: "Session-based", api_keys: "API Keys",
+        basic_auth: "Basic Auth", bearer_token: "Bearer Tokens", mfa_totp: "MFA/TOTP", passkeys: "Passkeys",
+        saml: "SAML 2.0", ldap: "LDAP/AD", mutual_tls: "mTLS", auth0: "Auth0", clerk: "Clerk",
+        firebase_auth: "Firebase Auth", supabase_auth: "Supabase Auth", keycloak: "Keycloak",
+        okta: "Okta", cognito: "AWS Cognito", workos: "WorkOS",
+      };
+      for (const a of security2.authPatterns) {
+        lines.push(`- ${authLabels[a] || a}`);
+      }
+      lines.push("");
+    }
+
+    // Data Handling
+    if (security2.dataHandling?.length) {
+      lines.push("### Data Handling");
+      lines.push("");
+      const dataLabels: Record<string, string> = {
+        encryption_at_rest: "Encryption at Rest", encryption_in_transit: "Encryption in Transit",
+        pii_handling: "PII Handling", gdpr_compliance: "GDPR", ccpa_compliance: "CCPA",
+        hipaa_compliance: "HIPAA", soc2_compliance: "SOC 2", pci_dss: "PCI-DSS",
+        data_masking: "Data Masking", data_retention: "Data Retention", audit_logging: "Audit Logging",
+        backup_encryption: "Encrypted Backups", key_rotation: "Key Rotation", zero_trust: "Zero Trust",
+        least_privilege: "Least Privilege", rbac: "RBAC", abac: "ABAC",
+        data_classification: "Data Classification", dlp: "DLP",
+      };
+      for (const d of security2.dataHandling) {
+        lines.push(`- ${dataLabels[d] || d}`);
+      }
+      lines.push("");
+    }
+
+    // Additional notes
+    if (security2.additionalNotes) {
+      lines.push("### Notes");
+      lines.push(security2.additionalNotes);
+      lines.push("");
+    }
+  }
+
+  // Security Notice - always include
+  lines.push("");
+  lines.push("## ⚠️ Security Notice");
+  lines.push("");
+  lines.push("> **Do not commit secrets to the repository or to the live app.**");
+  lines.push("> Always use secure standards to transmit sensitive information.");
+  lines.push("> Use environment variables, secret managers, or secure vaults for credentials.");
 
   return lines.join("\n");
 }
@@ -1768,6 +2040,9 @@ function generateAiderConfig(config: WizardConfig, user: UserProfile): string {
   lines.push("# ═══════════════════════════════════════════════════════════════════════════");
   lines.push("# END OF CONVENTIONS - Aider will read these comments for project context");
   lines.push("# ═══════════════════════════════════════════════════════════════════════════");
+  lines.push("");
+  lines.push("# SECURITY: Do not commit secrets to the repository.");
+  lines.push("# Use environment variables or secret managers for credentials.");
   
   return lines.join("\n");
 }
@@ -2489,6 +2764,9 @@ function generateTabnineConfig(config: WizardConfig, user: UserProfile): string 
   }
   
   lines.push("# ═══════════════════════════════════════════════════════════════════════════");
+  lines.push("");
+  lines.push("# SECURITY: Do not commit secrets to the repository.");
+  lines.push("# Use environment variables or secret managers for credentials.");
   
   return lines.join("\n");
 }
@@ -3002,7 +3280,7 @@ function generateCodeGPTConfig(config: WizardConfig, user: UserProfile): string 
     preferences: {
       conventionalCommits: config.conventionalCommits || false,
       semver: config.semver || false,
-      dependabot: config.dependabot || false
+      dependabot: config.security?.securityTooling?.includes("dependabot") || false
     },
     importantFiles: importantFiles.length > 0 ? importantFiles : undefined
   };
@@ -3448,7 +3726,7 @@ function generateVoidConfig(config: WizardConfig, user: UserProfile): string {
     preferences: {
       conventionalCommits: config.conventionalCommits || false,
       semver: config.semver || false,
-      dependabot: config.dependabot || false,
+      dependabot: config.security?.securityTooling?.includes("dependabot") || false,
       autoUpdate: config.enableAutoUpdate || false
     }
   };

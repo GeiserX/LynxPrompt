@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Command, Wand2, FileCode, Search, Download, User, LogIn, LogOut, Info, ArrowRight, RefreshCw, Layers, Cloud, ArrowUp, ArrowDown, Link2, Unlink, CheckCircle, FileSearch, Sparkles, Scan, GitMerge, ArrowRightLeft } from "lucide-react";
+import { Command, FileCode, Search, Download, User, LogIn, LogOut, Info, ArrowRight, Layers, Cloud, ArrowUp, ArrowDown, Link2, Unlink, CheckCircle, FileSearch, Sparkles, Scan, GitMerge, ArrowRightLeft } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "CLI Commands",
@@ -153,22 +153,6 @@ export default function CliCommandsPage() {
                 </td>
               </tr>
               {/* Advanced */}
-              <tr className="border-b">
-                <td className="py-3 pr-4">
-                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp init</code>
-                </td>
-                <td className="py-3 pr-4 text-muted-foreground">
-                  Initialize .lynxprompt/ (advanced)
-                </td>
-              </tr>
-              <tr className="border-b">
-                <td className="py-3 pr-4">
-                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp sync</code>
-                </td>
-                <td className="py-3 pr-4 text-muted-foreground">
-                  Sync rules to all configured agents
-                </td>
-              </tr>
               <tr className="border-b">
                 <td className="py-3 pr-4">
                   <code className="rounded bg-muted px-2 py-1 text-sm">lynxp agents</code>
@@ -700,59 +684,6 @@ $ lynxp diff bp_newid123`}</code>
      Size: 1.2 KB (42 lines)`}</code>
             </pre>
           </div>
-        </div>
-      </section>
-
-      {/* init command */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-3">
-          <Wand2 className="h-5 w-5 text-primary" />
-          <h2 className="text-2xl font-bold">lynxp init</h2>
-        </div>
-        <p className="text-muted-foreground">
-          Advanced setup for managing rules across multiple AI editors. Creates a .lynxprompt/ folder
-          as the single source of truth. <strong>Most users should use &apos;lynxp wizard&apos; instead.</strong>
-        </p>
-
-        <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
-          <pre className="text-sm text-zinc-100">
-            <code>{`lynxp init [options]
-
-Options:
-  -y, --yes      Skip prompts and use defaults
-  -f, --force    Re-initialize even if already initialized`}</code>
-          </pre>
-        </div>
-
-        <div className="rounded-lg border bg-card p-4">
-          <p className="text-sm text-muted-foreground">
-            <strong>When to use init vs wizard:</strong>
-          </p>
-          <ul className="mt-2 text-sm text-muted-foreground space-y-1">
-            <li>• <strong>wizard</strong> - Generate config files directly (most users)</li>
-            <li>• <strong>init</strong> - Set up .lynxprompt/ folder for multi-editor sync (power users)</li>
-          </ul>
-        </div>
-      </section>
-
-      {/* sync command */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-3">
-          <RefreshCw className="h-5 w-5 text-primary" />
-          <h2 className="text-2xl font-bold">lynxp sync</h2>
-        </div>
-        <p className="text-muted-foreground">
-          Sync local rules from .lynxprompt/rules/ to all configured AI agent formats.
-        </p>
-
-        <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
-          <pre className="text-sm text-zinc-100">
-            <code>{`lynxp sync [options]
-
-Options:
-  --dry-run    Preview changes without writing files
-  -f, --force  Skip prompts (for CI/CD)`}</code>
-          </pre>
         </div>
       </section>
 
