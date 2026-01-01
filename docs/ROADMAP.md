@@ -875,7 +875,7 @@ Enable "click to install" functionality where downloading a blueprint automatica
 ### Alternative: CLI Tool
 
 ```bash
-npx lynxprompt init  # Download and place config in current directory
+npx lynxprompt wizard  # Generate AI IDE config in current directory
 ```
 
 ---
@@ -901,10 +901,10 @@ A command-line interface for LynxPrompt that allows developers to initialize and
 
 ### Interactive Wizard (Primary Experience)
 
-The CLI is **interactive-first**. Just run `lynxprompt init` and it walks you through everything:
+The CLI is **interactive-first**. Just run `lynxprompt wizard` and it walks you through everything:
 
 ```
-$ lynxprompt init
+$ lynxprompt wizard
 
 🐱 Welcome to LynxPrompt!
 
@@ -965,10 +965,7 @@ No flags to remember. The wizard guides you through every step, just like the we
 The CLI is available as both `lynxprompt` and the short alias `lynxp`.
 
 ```bash
-# Initialize LynxPrompt in a project (auto-detects existing files)
-lynxp init
-
-# Interactive wizard for generating configurations
+# Interactive wizard for generating configurations (recommended)
 lynxp wizard
 
 # Pull an existing blueprint
@@ -981,7 +978,7 @@ lynxp list
 lynxp search "nextjs typescript"
 
 # Auto-detect project and suggest config
-lynxp detect
+lynxp analyze
 
 # Login (opens browser)
 lynxp login
@@ -989,27 +986,9 @@ lynxp login
 # Show current config status
 lynxp status
 
-# Sync rules to agent files
-lynxp sync
-
 # Push local changes to LynxPrompt
 lynxp push
 ```
-
-### Project Structure
-
-After running `lynxp init`, your project will have:
-
-```
-.lynxprompt/
-├── conf.yml       # Configuration (exporters, sources, options)
-├── rules/         # Your rules (single source of truth)
-│   └── agents.md  # Starter rules file
-├── README.md      # Documentation
-└── .gitignore     # Ignores local state files
-```
-
-**Key principle**: Edit rules in `.lynxprompt/rules/`, then run `lynxp sync` to export to agent formats (AGENTS.md, .cursor/rules/, etc.).
 
 ### Non-Interactive Mode (for CI/CD)
 
@@ -1017,16 +996,13 @@ Flags are available for scripting and automation:
 
 ```bash
 # Skip prompts with flags (for CI/CD pipelines)
-lynxprompt init \
+lynxprompt wizard \
   --name "my-api" \
   --stack typescript,express \
-  --platforms cursor,claude \
+  --format cursor,claude \
   --persona backend \
   --boundaries conservative \
   --yes
-
-# Use a preset directly
-lynxprompt init --preset test-agent --yes
 
 # Pull and apply without prompts
 lynxprompt pull bp_abc123 --yes
@@ -1079,7 +1055,7 @@ You're ready to use LynxPrompt CLI!
 
 **Server-side changes needed:**
 
-- [ ] New endpoint: `POST /api/auth/cli/init` - Create CLI session
+- [ ] New endpoint: `POST /api/auth/cli/session` - Create CLI session
 - [ ] New endpoint: `GET /api/auth/cli/poll` - Check if auth completed
 - [ ] New endpoint: `POST /api/auth/cli/callback` - Complete auth, create token
 - [ ] Auto-generate API token with name "LynxPrompt CLI" and `write` permission
@@ -1107,7 +1083,7 @@ LYNXPROMPT_TOKEN=lp_xxx lynxprompt list
 - [ ] Implement `lynxprompt login` - OAuth flow with automatic token creation
 - [ ] Implement `lynxprompt whoami` - Show current user and plan
 - [ ] Implement `lynxprompt logout` - Remove stored credentials
-- [ ] Implement `lynxprompt init` - Interactive wizard matching web UI
+- [ ] Implement `lynxprompt wizard` - Interactive wizard matching web UI
 - [ ] Implement `lynxprompt list` - List user's blueprints via API
 - [ ] Implement `lynxprompt pull` - Download blueprint to current directory
 - [ ] Store API token securely in OS keychain (keytar)
@@ -1131,8 +1107,6 @@ LYNXPROMPT_TOKEN=lp_xxx lynxprompt list
 #### Phase 3: Advanced Features
 - [ ] `lynxprompt push` - Upload local configs as new blueprint
 - [ ] `lynxprompt diff` - Show changes between local and remote
-- [ ] `lynxprompt sync` - Two-way sync with conflict resolution
-- [ ] Watch mode for auto-sync on file changes
 - [ ] CI/CD integration (GitHub Actions action)
 - [ ] `lynxprompt validate` - Validate config against best practices
 
@@ -1236,7 +1210,7 @@ Needs:
   ✅ Quick wizard, minimal questions
   ✅ Direct file output (no abstraction)
   ✅ Works without login/account
-  ❌ Doesn't need: folder structures, sync commands, cloud features
+  ❌ Doesn't need: folder structures, cloud features
 ```
 
 #### Persona 2: Developer on Large Open Source Project
@@ -1253,7 +1227,7 @@ Needs:
   ✅ Version controlled rules (git handles this)
   ✅ No vendor lock-in (plain markdown files)
   ✅ Works offline, no cloud dependency
-  ❌ Doesn't need: cloud sync, team tier (git is their sync)
+  ❌ Doesn't need: team tier (git is their sync)
 ```
 
 #### Persona 3: Small Team (3-5 devs)
@@ -1262,7 +1236,7 @@ Needs:
 Goal: Share rules across team without manual copy-paste
 Journey:
   A) Git-based: Lead creates config, commits, team pulls via git
-  B) Cloud-based: Uses LynxPrompt Teams for cloud sync
+  B) Cloud-based: Uses LynxPrompt Teams for sharing
   
 Needs:
   ✅ Easy way to share (git or cloud)
@@ -1326,7 +1300,7 @@ Needs:
 | Works offline | ✅ | - |
 | Marketplace blueprints | - | ✅ |
 | Team sharing | - | ✅ |
-| Cloud sync | - | ✅ |
+| Team sharing | - | ✅ |
 | Version history | - | ✅ |
 
 **Key principle**: **Never force cloud.** The CLI and web wizard must work 100% offline. Cloud features are optional enhancements.
@@ -1350,7 +1324,7 @@ Needs:
 **When it's overhead**:
 - Solo dev using just Cursor
 - User just wants quick config
-- Anyone who doesn't understand "sync" concept
+- Anyone who wants quick config
 
 **Decision**: Two CLI workflows:
 
@@ -1360,9 +1334,7 @@ lynxp wizard → generates AGENTS.md directly
 # Done. No .lynxprompt/ folder needed.
 
 # Advanced (power users):
-lynxp init → creates .lynxprompt/
-# Edit rules, then:
-lynxp sync → exports to all editors
+lynxp wizard --format agents,cursor,claude → generates all formats
 ```
 
 ### Why We Don't Need Separate "Presets"
@@ -1458,7 +1430,7 @@ This enables:
 
 ### Medium Priority
 - **Blueprint upload timestamp display**: Show when a blueprint was uploaded on the public blueprint page (e.g., `/blueprints/usr_xxx`). Display date and time for users to see how recent the content is.
-- VS Code extension to sync templates
+- VS Code extension for templates
 - GitHub App for automatic config updates
 - Template marketplace revenue sharing analytics
 - Webhook integrations (notify when template is downloaded)

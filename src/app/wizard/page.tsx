@@ -58,6 +58,7 @@ const WIZARD_STEPS: {
   { id: "project", title: "Project Basics", icon: Sparkles, tier: "basic" },
   { id: "tech", title: "Tech Stack", icon: Code, tier: "basic" },
   { id: "repo", title: "Repository Setup", icon: GitBranch, tier: "basic" },
+  { id: "security", title: "Security", icon: Lock, tier: "basic" },  // NEW: Security step (FREE)
   { id: "commands", title: "Commands", icon: ClipboardList, tier: "intermediate" },
   { id: "code_style", title: "Code Style", icon: Wand2, tier: "intermediate" },
   { id: "ai", title: "AI Behavior", icon: Brain, tier: "basic" },
@@ -69,17 +70,19 @@ const WIZARD_STEPS: {
 ];
 
 // Precomputed widths (Tailwind-safe arbitrary values) for the mobile progress bar
+// Updated for 12 steps (including security step)
 const MOBILE_PROGRESS_WIDTHS = [
-  "w-[9%]",
-  "w-[18%]",
-  "w-[27%]",
-  "w-[36%]",
-  "w-[45%]",
-  "w-[55%]",
-  "w-[64%]",
-  "w-[73%]",
-  "w-[82%]",
-  "w-[91%]",
+  "w-[8%]",
+  "w-[17%]",
+  "w-[25%]",
+  "w-[33%]",
+  "w-[42%]",
+  "w-[50%]",
+  "w-[58%]",
+  "w-[67%]",
+  "w-[75%]",
+  "w-[83%]",
+  "w-[92%]",
   "w-[100%]",
 ];
 
@@ -475,13 +478,120 @@ const DATABASES = [
   { value: "intersystems_cache", label: "InterSystems Caché", icon: "💎", category: "proprietary" },
 ];
 
+// AI Behavior rules (security moved to dedicated Security step)
 const AI_BEHAVIOR_RULES = [
   { id: "always_debug_after_build", label: "Always Debug After Building", description: "Run and test locally after making changes", recommended: true },
   { id: "check_logs_after_build", label: "Check Logs After Build/Commit", description: "Check logs when build or commit finishes", recommended: true },
   { id: "run_tests_before_commit", label: "Run Tests Before Commit", description: "Ensure tests pass before committing", recommended: true },
   { id: "follow_existing_patterns", label: "Follow Existing Patterns", description: "Match the codebase's existing style", recommended: true },
   { id: "ask_before_large_refactors", label: "Ask Before Large Refactors", description: "Confirm before significant changes", recommended: true },
-  { id: "check_for_security_issues", label: "Check for Security Issues", description: "Review for common vulnerabilities", recommended: false },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// SECURITY OPTIONS (FREE tier - new dedicated section)
+// ═══════════════════════════════════════════════════════════════
+
+// Secrets management strategies
+const SECRETS_MANAGEMENT_OPTIONS = [
+  { id: "env_vars", label: "Environment Variables", description: "Use .env files locally, env vars in prod", recommended: true },
+  { id: "dotenv", label: "dotenv / dotenvx", description: "Load .env files with dotenv library" },
+  { id: "vault", label: "HashiCorp Vault", description: "Enterprise secrets management" },
+  { id: "aws_secrets", label: "AWS Secrets Manager", description: "AWS native secrets storage" },
+  { id: "aws_ssm", label: "AWS SSM Parameter Store", description: "AWS Systems Manager parameters" },
+  { id: "gcp_secrets", label: "GCP Secret Manager", description: "Google Cloud secrets storage" },
+  { id: "azure_keyvault", label: "Azure Key Vault", description: "Azure secrets and keys" },
+  { id: "infisical", label: "Infisical", description: "Open-source secrets management" },
+  { id: "doppler", label: "Doppler", description: "Universal secrets platform" },
+  { id: "1password", label: "1Password Secrets Automation", description: "1Password for teams/CI" },
+  { id: "bitwarden", label: "Bitwarden Secrets Manager", description: "Bitwarden for secrets" },
+  { id: "sops", label: "SOPS (Mozilla)", description: "Encrypted files with KMS" },
+  { id: "age", label: "age encryption", description: "Simple file encryption" },
+  { id: "sealed_secrets", label: "Sealed Secrets (K8s)", description: "Kubernetes encrypted secrets" },
+  { id: "external_secrets", label: "External Secrets Operator", description: "K8s external secrets sync" },
+  { id: "git_crypt", label: "git-crypt", description: "Transparent file encryption in git" },
+  { id: "chamber", label: "Chamber", description: "AWS SSM-based secrets tool" },
+  { id: "berglas", label: "Berglas", description: "GCP secrets CLI tool" },
+  { id: "other", label: "Other", description: "Custom secrets management" },
+];
+
+// Security tooling (scanning, dependency updates, etc.)
+const SECURITY_TOOLING_OPTIONS = [
+  { id: "dependabot", label: "Dependabot", description: "GitHub dependency updates", recommended: true },
+  { id: "renovate", label: "Renovate", description: "Multi-platform dependency updates", recommended: true },
+  { id: "snyk", label: "Snyk", description: "Vulnerability scanning & fixing" },
+  { id: "sonarqube", label: "SonarQube / SonarCloud", description: "Code quality & security" },
+  { id: "codeql", label: "CodeQL", description: "GitHub semantic code analysis" },
+  { id: "semgrep", label: "Semgrep", description: "Static analysis with custom rules" },
+  { id: "trivy", label: "Trivy", description: "Container & IaC vulnerability scanner" },
+  { id: "grype", label: "Grype", description: "Container image vulnerability scanner" },
+  { id: "checkov", label: "Checkov", description: "IaC security scanning" },
+  { id: "tfsec", label: "tfsec", description: "Terraform security scanner" },
+  { id: "kics", label: "KICS", description: "IaC security scanning" },
+  { id: "gitleaks", label: "Gitleaks", description: "Secret detection in git repos" },
+  { id: "trufflehog", label: "TruffleHog", description: "Secret scanning in code" },
+  { id: "detect_secrets", label: "detect-secrets (Yelp)", description: "Pre-commit secret detection" },
+  { id: "bandit", label: "Bandit", description: "Python security linter" },
+  { id: "brakeman", label: "Brakeman", description: "Ruby on Rails security scanner" },
+  { id: "gosec", label: "gosec", description: "Go security checker" },
+  { id: "npm_audit", label: "npm audit / yarn audit", description: "Node.js vulnerability check" },
+  { id: "pip_audit", label: "pip-audit", description: "Python dependency audit" },
+  { id: "safety", label: "Safety", description: "Python dependency checker" },
+  { id: "bundler_audit", label: "bundler-audit", description: "Ruby gem vulnerability checker" },
+  { id: "owasp_dependency_check", label: "OWASP Dependency-Check", description: "Known vulnerability detection" },
+  { id: "ossf_scorecard", label: "OSSF Scorecard", description: "Open source security metrics" },
+  { id: "socket", label: "Socket.dev", description: "Supply chain security" },
+  { id: "mend", label: "Mend (WhiteSource)", description: "Open source security platform" },
+  { id: "fossa", label: "FOSSA", description: "License & security compliance" },
+  { id: "other", label: "Other", description: "Custom security tooling" },
+];
+
+// Authentication patterns
+const AUTH_PATTERNS_OPTIONS = [
+  { id: "oauth2", label: "OAuth 2.0", description: "Standard authorization framework", recommended: true },
+  { id: "oidc", label: "OpenID Connect (OIDC)", description: "Identity layer on OAuth 2.0", recommended: true },
+  { id: "jwt", label: "JWT (JSON Web Tokens)", description: "Stateless token authentication" },
+  { id: "session", label: "Session-based Auth", description: "Server-side session management" },
+  { id: "api_keys", label: "API Keys", description: "Simple API authentication" },
+  { id: "basic_auth", label: "Basic Authentication", description: "Username/password (HTTPS only)" },
+  { id: "bearer_token", label: "Bearer Tokens", description: "Token-based API auth" },
+  { id: "mfa_totp", label: "MFA / TOTP", description: "Multi-factor with time-based OTP" },
+  { id: "passkeys", label: "Passkeys / WebAuthn", description: "Passwordless authentication" },
+  { id: "saml", label: "SAML 2.0", description: "Enterprise SSO protocol" },
+  { id: "ldap", label: "LDAP / Active Directory", description: "Directory-based auth" },
+  { id: "mutual_tls", label: "Mutual TLS (mTLS)", description: "Certificate-based auth" },
+  { id: "auth0", label: "Auth0", description: "Identity platform" },
+  { id: "clerk", label: "Clerk", description: "User management platform" },
+  { id: "firebase_auth", label: "Firebase Auth", description: "Google auth service" },
+  { id: "supabase_auth", label: "Supabase Auth", description: "Supabase auth service" },
+  { id: "keycloak", label: "Keycloak", description: "Open source IAM" },
+  { id: "okta", label: "Okta", description: "Enterprise identity" },
+  { id: "cognito", label: "AWS Cognito", description: "AWS user pools" },
+  { id: "workos", label: "WorkOS", description: "Enterprise SSO" },
+  { id: "other", label: "Other", description: "Custom auth pattern" },
+];
+
+// Data handling policies
+const DATA_HANDLING_OPTIONS = [
+  { id: "encryption_at_rest", label: "Encryption at Rest", description: "Encrypt stored data", recommended: true },
+  { id: "encryption_in_transit", label: "Encryption in Transit (TLS)", description: "HTTPS/TLS for all connections", recommended: true },
+  { id: "pii_handling", label: "PII Data Handling", description: "Special handling for personal data" },
+  { id: "gdpr_compliance", label: "GDPR Compliance", description: "EU data protection rules" },
+  { id: "ccpa_compliance", label: "CCPA Compliance", description: "California privacy law" },
+  { id: "hipaa_compliance", label: "HIPAA Compliance", description: "Healthcare data protection" },
+  { id: "soc2_compliance", label: "SOC 2 Compliance", description: "Service organization controls" },
+  { id: "pci_dss", label: "PCI-DSS Compliance", description: "Payment card data security" },
+  { id: "data_masking", label: "Data Masking / Anonymization", description: "Hide sensitive data in logs/exports" },
+  { id: "data_retention", label: "Data Retention Policies", description: "Automatic data expiration" },
+  { id: "audit_logging", label: "Audit Logging", description: "Track data access and changes" },
+  { id: "backup_encryption", label: "Encrypted Backups", description: "Encrypt backup data" },
+  { id: "key_rotation", label: "Key Rotation", description: "Regular encryption key updates" },
+  { id: "zero_trust", label: "Zero Trust Architecture", description: "Never trust, always verify" },
+  { id: "least_privilege", label: "Least Privilege Access", description: "Minimal permissions" },
+  { id: "rbac", label: "RBAC (Role-Based Access)", description: "Permission by role" },
+  { id: "abac", label: "ABAC (Attribute-Based Access)", description: "Fine-grained access control" },
+  { id: "data_classification", label: "Data Classification", description: "Classify data sensitivity levels" },
+  { id: "dlp", label: "DLP (Data Loss Prevention)", description: "Prevent data leakage" },
+  { id: "other", label: "Other", description: "Custom data handling" },
 ];
 
 // Project types define AI behavior flexibility
@@ -776,6 +886,16 @@ type WizardConfig = {
   boundaries: BoundariesConfig;
   testing: TestingStrategyConfig;
   staticFiles: StaticFilesConfig;
+  security: SecurityConfig;
+};
+
+// Security configuration (FREE tier)
+type SecurityConfig = {
+  secretsManagement: string[];
+  securityTooling: string[];
+  authPatterns: string[];
+  dataHandling: string[];
+  additionalNotes: string;
 };
 
 interface WizardDraftSummary {
@@ -877,7 +997,7 @@ function WizardPageContent() {
     containerRegistry: "",
     containerRegistryOther: "",
     registryUsername: "",
-    aiBehaviorRules: ["always_debug_after_build", "check_logs_after_build", "run_tests_before_commit", "follow_existing_patterns", "ask_before_large_refactors", "check_for_security_issues"],
+    aiBehaviorRules: ["always_debug_after_build", "check_logs_after_build", "run_tests_before_commit", "follow_existing_patterns", "ask_before_large_refactors"],
     importantFiles: [],
     importantFilesOther: "",
     enableAutoUpdate: false,
@@ -916,6 +1036,14 @@ function WizardPageContent() {
       dockerignoreCustom: "",
       dockerignoreSave: false,
       licenseSave: false,
+    },
+    // Security configuration (FREE tier)
+    security: {
+      secretsManagement: ["env_vars"],  // Default to environment variables
+      securityTooling: ["dependabot", "renovate"],  // Default recommended tools
+      authPatterns: [],
+      dataHandling: ["encryption_at_rest", "encryption_in_transit"],  // Default recommended
+      additionalNotes: "",
     },
   });
 
@@ -2432,19 +2560,25 @@ ${curlCommand}
                 />
               )}
               {currentStep === 3 && (
+                <StepSecurity
+                  config={config.security}
+                  onChange={(updates) => setConfig({ ...config, security: { ...config.security, ...updates } })}
+                />
+              )}
+              {currentStep === 4 && (
                 <StepCommands
                   config={config.commands}
                   onChange={(updates) => setConfig({ ...config, commands: { ...config.commands, ...updates } })}
                 />
               )}
-              {currentStep === 4 && (
+              {currentStep === 5 && (
                 <StepCodeStyle
                   config={config.codeStyle}
                   onChange={(updates) => setConfig({ ...config, codeStyle: { ...config.codeStyle, ...updates } })}
                   selectedLanguages={config.languages}
                 />
               )}
-              {currentStep === 5 && (
+              {currentStep === 6 && (
                 <StepAIBehavior
                   selected={config.aiBehaviorRules}
                   onToggle={(v) => toggleArrayValue("aiBehaviorRules", v)}
@@ -2460,19 +2594,19 @@ ${curlCommand}
                   userSkillLevel={session.user.skillLevel}
                 />
               )}
-              {currentStep === 6 && (
+              {currentStep === 7 && (
                 <StepBoundaries
                   config={config.boundaries}
                   onChange={(updates) => setConfig({ ...config, boundaries: { ...config.boundaries, ...updates } })}
                 />
               )}
-              {currentStep === 7 && (
+              {currentStep === 8 && (
                 <StepTesting
                   config={config.testing}
                   onChange={(updates) => setConfig({ ...config, testing: { ...config.testing, ...updates } })}
                 />
               )}
-              {currentStep === 8 && (
+              {currentStep === 9 && (
                 <StepStaticFiles
                   config={config.staticFiles}
                   isGithub={config.repoHost === "github"}
@@ -2481,14 +2615,14 @@ ${curlCommand}
                   onChange={(updates) => setConfig({ ...config, staticFiles: { ...config.staticFiles, ...updates } })}
                 />
               )}
-              {currentStep === 9 && (
+              {currentStep === 10 && (
                 <StepFeedback
                   value={config.additionalFeedback}
                   onChange={(v) => setConfig({ ...config, additionalFeedback: v })}
                   userTier={userTier}
                 />
               )}
-              {currentStep === 10 && (
+              {currentStep === 11 && (
                 <StepGenerate
                   config={config}
                   session={session}
@@ -3782,14 +3916,7 @@ function StepRepository({
             checked={config.semver}
             onChange={(v) => onChange({ semver: v })}
           />
-          {(config.repoHost === "github" || config.repoHost === "gitlab") && (
-            <ToggleOption
-              label="Dependabot / Updates"
-              description="Enable dependency updates (GitHub & GitLab only)"
-              checked={config.dependabot}
-              onChange={(v) => onChange({ dependabot: v })}
-            />
-          )}
+          {/* Dependabot/Renovate moved to Security step */}
         </div>
 
         {/* CI/CD Selection */}
@@ -3921,6 +4048,268 @@ function StepRepository({
           </div>
         )}
 
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SECURITY STEP (FREE tier)
+// ═══════════════════════════════════════════════════════════════
+function StepSecurity({
+  config,
+  onChange,
+}: {
+  config: SecurityConfig;
+  onChange: (updates: Partial<SecurityConfig>) => void;
+}) {
+  const [secretsSearch, setSecretsSearch] = useState("");
+  const [toolingSearch, setToolingSearch] = useState("");
+  const [authSearch, setAuthSearch] = useState("");
+  const [dataSearch, setDataSearch] = useState("");
+
+  // Filter functions
+  const filteredSecrets = SECRETS_MANAGEMENT_OPTIONS.filter(opt =>
+    opt.label.toLowerCase().includes(secretsSearch.toLowerCase()) ||
+    opt.description.toLowerCase().includes(secretsSearch.toLowerCase())
+  );
+  const filteredTooling = SECURITY_TOOLING_OPTIONS.filter(opt =>
+    opt.label.toLowerCase().includes(toolingSearch.toLowerCase()) ||
+    opt.description.toLowerCase().includes(toolingSearch.toLowerCase())
+  );
+  const filteredAuth = AUTH_PATTERNS_OPTIONS.filter(opt =>
+    opt.label.toLowerCase().includes(authSearch.toLowerCase()) ||
+    opt.description.toLowerCase().includes(authSearch.toLowerCase())
+  );
+  const filteredData = DATA_HANDLING_OPTIONS.filter(opt =>
+    opt.label.toLowerCase().includes(dataSearch.toLowerCase()) ||
+    opt.description.toLowerCase().includes(dataSearch.toLowerCase())
+  );
+
+  const toggleItem = (field: keyof SecurityConfig, id: string) => {
+    const current = config[field] as string[];
+    const updated = current.includes(id)
+      ? current.filter(x => x !== id)
+      : [...current, id];
+    onChange({ [field]: updated });
+  };
+
+  return (
+    <div>
+      <h2 className="text-2xl font-bold flex items-center gap-2">
+        <Lock className="h-6 w-6 text-primary" />
+        Security Configuration
+      </h2>
+      <p className="mt-2 text-muted-foreground">
+        Configure security practices for your project.
+      </p>
+      
+      {/* Security Warning Banner */}
+      <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950/30">
+        <div className="flex items-start gap-3">
+          <Shield className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="font-medium text-red-800 dark:text-red-200">⚠️ Never commit secrets to your repository!</p>
+            <p className="mt-1 text-sm text-red-700 dark:text-red-300">
+              Always use secure methods to manage credentials, API keys, and sensitive data.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6 space-y-8">
+        {/* 1. Secrets Management */}
+        <div>
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">1</span>
+            Secrets Management
+          </h3>
+          <p className="mt-1 text-sm text-muted-foreground">How do you manage secrets and credentials?</p>
+          
+          <div className="mt-3 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={secretsSearch}
+              onChange={(e) => setSecretsSearch(e.target.value)}
+              placeholder="Search secrets management..."
+              className="w-full rounded-lg border bg-background pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          
+          <div className="mt-3 flex flex-wrap gap-2 max-h-48 overflow-y-auto p-1">
+            {filteredSecrets.map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => toggleItem("secretsManagement", opt.id)}
+                className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all ${
+                  config.secretsManagement.includes(opt.id)
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "hover:border-primary"
+                }`}
+                title={opt.description}
+              >
+                {opt.label}
+                {opt.recommended && <span className="text-xs text-green-500">★</span>}
+                {config.secretsManagement.includes(opt.id) && <Check className="h-3 w-3" />}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 2. Security Tooling */}
+        <div>
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">2</span>
+            Security Tooling
+          </h3>
+          <p className="mt-1 text-sm text-muted-foreground">Security scanning, dependency updates, and vulnerability detection.</p>
+          
+          <div className="mt-3 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={toolingSearch}
+              onChange={(e) => setToolingSearch(e.target.value)}
+              placeholder="Search security tools..."
+              className="w-full rounded-lg border bg-background pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          
+          <div className="mt-3 flex flex-wrap gap-2 max-h-48 overflow-y-auto p-1">
+            {filteredTooling.map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => toggleItem("securityTooling", opt.id)}
+                className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all ${
+                  config.securityTooling.includes(opt.id)
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "hover:border-primary"
+                }`}
+                title={opt.description}
+              >
+                {opt.label}
+                {opt.recommended && <span className="text-xs text-green-500">★</span>}
+                {config.securityTooling.includes(opt.id) && <Check className="h-3 w-3" />}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 3. Authentication Patterns */}
+        <div>
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">3</span>
+            Authentication Patterns
+          </h3>
+          <p className="mt-1 text-sm text-muted-foreground">How users and services authenticate with your application.</p>
+          
+          <div className="mt-3 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={authSearch}
+              onChange={(e) => setAuthSearch(e.target.value)}
+              placeholder="Search auth patterns..."
+              className="w-full rounded-lg border bg-background pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          
+          <div className="mt-3 flex flex-wrap gap-2 max-h-48 overflow-y-auto p-1">
+            {filteredAuth.map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => toggleItem("authPatterns", opt.id)}
+                className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all ${
+                  config.authPatterns.includes(opt.id)
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "hover:border-primary"
+                }`}
+                title={opt.description}
+              >
+                {opt.label}
+                {opt.recommended && <span className="text-xs text-green-500">★</span>}
+                {config.authPatterns.includes(opt.id) && <Check className="h-3 w-3" />}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 4. Data Handling */}
+        <div>
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">4</span>
+            Data Handling & Compliance
+          </h3>
+          <p className="mt-1 text-sm text-muted-foreground">Data protection, encryption, and compliance requirements.</p>
+          
+          <div className="mt-3 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={dataSearch}
+              onChange={(e) => setDataSearch(e.target.value)}
+              placeholder="Search data handling..."
+              className="w-full rounded-lg border bg-background pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          
+          <div className="mt-3 flex flex-wrap gap-2 max-h-48 overflow-y-auto p-1">
+            {filteredData.map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => toggleItem("dataHandling", opt.id)}
+                className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all ${
+                  config.dataHandling.includes(opt.id)
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "hover:border-primary"
+                }`}
+                title={opt.description}
+              >
+                {opt.label}
+                {opt.recommended && <span className="text-xs text-green-500">★</span>}
+                {config.dataHandling.includes(opt.id) && <Check className="h-3 w-3" />}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Additional Notes */}
+        <div>
+          <label className="text-sm font-medium">Additional Security Notes</label>
+          <p className="text-xs text-muted-foreground mt-1">Any specific security requirements or custom practices?</p>
+          <textarea
+            value={config.additionalNotes}
+            onChange={(e) => onChange({ additionalNotes: e.target.value })}
+            placeholder="e.g., specific compliance requirements, custom security practices..."
+            className="mt-2 w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary min-h-[80px]"
+          />
+        </div>
+
+        {/* Summary */}
+        {(config.secretsManagement.length > 0 || config.securityTooling.length > 0 || 
+          config.authPatterns.length > 0 || config.dataHandling.length > 0) && (
+          <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-950/30">
+            <h4 className="font-medium text-green-800 dark:text-green-200 flex items-center gap-2">
+              <Check className="h-4 w-4" />
+              Security Configuration Summary
+            </h4>
+            <div className="mt-2 text-sm text-green-700 dark:text-green-300 space-y-1">
+              {config.secretsManagement.length > 0 && (
+                <p>• <strong>Secrets:</strong> {config.secretsManagement.length} method(s) selected</p>
+              )}
+              {config.securityTooling.length > 0 && (
+                <p>• <strong>Tooling:</strong> {config.securityTooling.length} tool(s) selected</p>
+              )}
+              {config.authPatterns.length > 0 && (
+                <p>• <strong>Auth:</strong> {config.authPatterns.length} pattern(s) selected</p>
+              )}
+              {config.dataHandling.length > 0 && (
+                <p>• <strong>Data:</strong> {config.dataHandling.length} policy/policies selected</p>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
