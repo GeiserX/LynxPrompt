@@ -1,8 +1,6 @@
 # AGENTS.md - AI Agent Instructions for LynxPrompt
 
-> 📦 **RELEASE REMINDER**: CLI npm publishing is handled by GitHub Actions automatically when pushing to `main`. Do NOT run `npm publish` locally. Just push to main and the workflow handles versioning and npm publication.
->
-> 🏷️ **NEVER CREATE TAGS MANUALLY**: The release workflow creates tags automatically. NEVER run `git tag` manually. Tag naming convention: `app-v*` for web app, `cli-v*` for CLI. Manual tags will conflict with the workflow and cause failures.
+> 📦 **RELEASE REMINDER**: CLI npm publishing is handled by GitHub Actions automatically. Do NOT run `npm publish` locally. Do NOT create git tags manually. The workflow handles everything.
 
 > ⚠️ **IMPORTANT**: Do NOT update this file unless the user explicitly says to. Only the user can authorize changes to AGENTS.md.
 
@@ -16,27 +14,118 @@
 
 ---
 
-## 🚀 DEPLOYMENT TO PRODUCTION = NEW RELEASE
+## 🚀 RELEASE PROCESS (CRITICAL - READ CAREFULLY)
 
-**When the user asks to deploy to production (`main` branch), this ALWAYS includes creating a new release.**
+### Understanding the Release Pipeline
 
-The deployment process is:
-1. Bump version in `package.json` (app) and/or `cli/package.json` (CLI) on `develop` branch
-2. Commit with conventional commit message (e.g., `feat: new feature (v0.24.0)`)
-3. Merge `develop` into `main` (or push to `main`)
-4. The GitHub Actions Release workflow will automatically:
-   - Detect which components changed (app vs CLI)
-   - Create appropriate tags (`app-vX.Y.Z` for web, `cli-vX.Y.Z` for CLI)
-   - Generate changelog from commits
-   - Create GitHub releases
-   - Publish CLI to npm (via separate npm-publish workflow triggered by `cli-v*` tags)
-5. After pushing to `main`, verify the release was created and the workflow succeeded
+There are **two separate workflows** that work together:
 
-**CRITICAL RULES:**
-- **NEVER create tags manually** - The release workflow creates them automatically
-- **NEVER run `npm publish` locally** - GitHub Actions handles npm publication
-- **Tag naming**: `app-v*` for web app, `cli-v*` for CLI (NOT just `v*`)
-- If the release workflow fails, investigate and fix before considering deployment complete
+1. **`release.yml`** - Triggered on push to `main`:
+   - Detects changes in app vs CLI since last release
+   - Creates git tags (`app-vX.Y.Z` for web, `cli-vX.Y.Z` for CLI)
+   - Creates GitHub Releases with changelogs
+
+2. **`publish-cli.yml`** - Triggered by GitHub Release events OR manual dispatch:
+   - Publishes CLI to npm
+   - Builds standalone binaries
+   - Updates Homebrew, Chocolatey, Snap packages
+
+### Step-by-Step Release Process
+
+#### For a MINOR or MAJOR version (new features):
+
+```bash
+# 1. Switch to develop branch
+git checkout develop
+
+# 2. Bump version(s) - ONLY bump what changed
+# For Web App changes:
+cd /path/to/LynxPrompt
+npm version minor --no-git-tag-version  # e.g., 0.23.0 → 0.24.0
+
+# For CLI changes:
+cd cli
+npm version minor --no-git-tag-version  # e.g., 0.7.0 → 0.8.0
+cd ..
+
+# 3. Commit with conventional commit message
+git add package.json package-lock.json cli/package.json
+git commit -m "feat: description of changes"
+
+# 4. Push to develop (triggers CI tests)
+git push origin develop
+
+# 5. Wait for CI to pass, then merge to main
+git checkout main
+git merge develop
+git push origin main
+
+# 6. Verify release workflow succeeded
+unset GITHUB_TOKEN && gh run list -R GeiserX/LynxPrompt -w "Release" --limit 3
+
+# 7. If CLI was released, verify npm publish workflow triggered
+unset GITHUB_TOKEN && gh run list -R GeiserX/LynxPrompt -w "Publish CLI" --limit 3
+
+# 8. If publish-cli didn't auto-trigger, manually trigger it:
+unset GITHUB_TOKEN && gh workflow run "Publish CLI" -R GeiserX/LynxPrompt -f platforms=all
+
+# 9. Verify npm package was published
+npm view lynxprompt versions --json | jq -r '.[-3:]'
+```
+
+#### For a PATCH version (bug fixes only):
+
+Same process, but use `npm version patch` instead of `minor`.
+
+### ⚠️ CRITICAL RULES - NEVER BREAK THESE
+
+| ❌ NEVER DO THIS | ✅ DO THIS INSTEAD |
+|------------------|-------------------|
+| `git tag v0.24.0` | Let release.yml create tags |
+| `git tag cli-v0.8.0` | Let release.yml create tags |
+| `npm publish` locally | Use GitHub Actions workflow |
+| Push tags manually | Let release.yml push tags |
+| Use tag format `v*` | Workflow uses `app-v*` and `cli-v*` |
+
+### Troubleshooting Release Issues
+
+**Problem: Release workflow skips CLI/App release**
+- Cause: No changes detected since last release tag
+- Fix: Ensure you modified files in the right directory (cli/ for CLI, anything else for app)
+
+**Problem: Tag already exists error**
+- Cause: Someone manually created a tag
+- Fix: Delete the manual tag from remote AND local:
+  ```bash
+  git push origin --delete cli-v0.8.0
+  git tag -d cli-v0.8.0
+  ```
+
+**Problem: npm publish didn't happen**
+- Cause: publish-cli.yml didn't trigger automatically
+- Fix: Manually trigger the workflow:
+  ```bash
+  unset GITHUB_TOKEN && gh workflow run "Publish CLI" -R GeiserX/LynxPrompt -f platforms=all
+  ```
+
+**Problem: npm says version already exists**
+- Cause: Version was already published (maybe partial failure)
+- Fix: Bump to next patch version and release again
+
+### Verifying a Successful Release
+
+```bash
+# 1. Check GitHub Releases exist
+unset GITHUB_TOKEN && gh release list -R GeiserX/LynxPrompt --limit 5
+
+# 2. Check npm has the new version
+npm view lynxprompt version
+
+# 3. Check git tags exist
+git fetch --tags
+git tag -l "cli-v*" | tail -5
+git tag -l "app-v*" | tail -5
+```
 
 ---
 
