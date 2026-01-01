@@ -1,6 +1,8 @@
 # AGENTS.md - AI Agent Instructions for LynxPrompt
 
 > 📦 **RELEASE REMINDER**: CLI npm publishing is handled by GitHub Actions automatically when pushing to `main`. Do NOT run `npm publish` locally. Just push to main and the workflow handles versioning and npm publication.
+>
+> 🏷️ **NEVER CREATE TAGS MANUALLY**: The release workflow creates tags automatically. NEVER run `git tag` manually. Tag naming convention: `app-v*` for web app, `cli-v*` for CLI. Manual tags will conflict with the workflow and cause failures.
 
 > ⚠️ **IMPORTANT**: Do NOT update this file unless the user explicitly says to. Only the user can authorize changes to AGENTS.md.
 
@@ -19,14 +21,22 @@
 **When the user asks to deploy to production (`main` branch), this ALWAYS includes creating a new release.**
 
 The deployment process is:
-1. Merge `develop` into `main` (or push to `main`)
-2. The GitHub Actions workflow will automatically create a new release with:
-   - Auto-generated version tag (based on conventional commits)
-   - Changelog from commits since last release
-   - npm package publication for the CLI
-3. After pushing to `main`, verify the release was created and the workflow succeeded
+1. Bump version in `package.json` (app) and/or `cli/package.json` (CLI) on `develop` branch
+2. Commit with conventional commit message (e.g., `feat: new feature (v0.24.0)`)
+3. Merge `develop` into `main` (or push to `main`)
+4. The GitHub Actions Release workflow will automatically:
+   - Detect which components changed (app vs CLI)
+   - Create appropriate tags (`app-vX.Y.Z` for web, `cli-vX.Y.Z` for CLI)
+   - Generate changelog from commits
+   - Create GitHub releases
+   - Publish CLI to npm (via separate npm-publish workflow triggered by `cli-v*` tags)
+5. After pushing to `main`, verify the release was created and the workflow succeeded
 
-**Never deploy to production without a release being created.** If the release workflow fails, investigate and fix before considering deployment complete.
+**CRITICAL RULES:**
+- **NEVER create tags manually** - The release workflow creates them automatically
+- **NEVER run `npm publish` locally** - GitHub Actions handles npm publication
+- **Tag naming**: `app-v*` for web app, `cli-v*` for CLI (NOT just `v*`)
+- If the release workflow fails, investigate and fix before considering deployment complete
 
 ---
 
