@@ -3630,7 +3630,8 @@ function generateVoidConfig(config: WizardConfig, user: UserProfile): string {
   if (config.semver) {
     rulesParts.push("- **Versioning**: Follow semantic versioning (MAJOR.MINOR.PATCH)");
   }
-  if (config.dependabot) {
+  // Dependency updates now in security.securityTooling
+  if (config.security?.securityTooling?.includes("dependabot") || config.security?.securityTooling?.includes("renovate")) {
     rulesParts.push("- **Dependencies**: Keep updated (Dependabot/Renovate configured)");
   }
   rulesParts.push("");
