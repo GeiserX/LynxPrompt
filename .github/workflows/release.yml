@@ -192,8 +192,19 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "app-v${{ needs.prepare.outputs.app_version }}" -m "LynxPrompt App v${{ needs.prepare.outputs.app_version }}"
-          git push origin "app-v${{ needs.prepare.outputs.app_version }}"
+          TAG_NAME="app-v${{ needs.prepare.outputs.app_version }}"
+          
+          # Check if tag exists locally or remotely
+          if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+            echo "ℹ️ Tag $TAG_NAME already exists locally, skipping creation"
+          elif git ls-remote --tags origin | grep -q "refs/tags/$TAG_NAME"; then
+            echo "ℹ️ Tag $TAG_NAME already exists on remote, fetching it"
+            git fetch origin "refs/tags/$TAG_NAME:refs/tags/$TAG_NAME"
+          else
+            echo "📦 Creating tag $TAG_NAME"
+            git tag -a "$TAG_NAME" -m "LynxPrompt App v${{ needs.prepare.outputs.app_version }}"
+            git push origin "$TAG_NAME"
+          fi
 
       - name: Generate changelog
         id: changelog
@@ -290,8 +301,19 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "cli-v${{ needs.prepare.outputs.cli_version }}" -m "LynxPrompt CLI v${{ needs.prepare.outputs.cli_version }}"
-          git push origin "cli-v${{ needs.prepare.outputs.cli_version }}"
+          TAG_NAME="cli-v${{ needs.prepare.outputs.cli_version }}"
+          
+          # Check if tag exists locally or remotely
+          if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+            echo "ℹ️ Tag $TAG_NAME already exists locally, skipping creation"
+          elif git ls-remote --tags origin | grep -q "refs/tags/$TAG_NAME"; then
+            echo "ℹ️ Tag $TAG_NAME already exists on remote, fetching it"
+            git fetch origin "refs/tags/$TAG_NAME:refs/tags/$TAG_NAME"
+          else
+            echo "📦 Creating tag $TAG_NAME"
+            git tag -a "$TAG_NAME" -m "LynxPrompt CLI v${{ needs.prepare.outputs.cli_version }}"
+            git push origin "$TAG_NAME"
+          fi
 
       - name: Generate changelog
         id: changelog
