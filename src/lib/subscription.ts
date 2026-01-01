@@ -23,6 +23,39 @@ export const TEAMS_MIN_SEATS = 3;
 export const TEAMS_AI_LIMIT_PER_USER = 1500; // €15.00 max AI spend per user/month
 
 /**
+ * Blueprint limits per tier
+ */
+export const BLUEPRINT_LIMITS = {
+  MAX_LINES: 10000, // Maximum lines per blueprint (all tiers)
+  MAX_COUNT: {
+    free: 50,      // Free users: 50 blueprints
+    pro: 5000,     // Pro users: 5,000 blueprints
+    max: 5000,     // Max users: 5,000 blueprints
+    teams: 10000,  // Teams users: 10,000 blueprints
+  },
+} as const;
+
+/**
+ * Get maximum blueprint count for a tier
+ */
+export function getMaxBlueprintCount(tier: SubscriptionTier): number {
+  return BLUEPRINT_LIMITS.MAX_COUNT[tier] || BLUEPRINT_LIMITS.MAX_COUNT.free;
+}
+
+/**
+ * Check if content exceeds line limit
+ * @returns Number of lines if valid, or negative number indicating excess
+ */
+export function checkBlueprintLineCount(content: string): { valid: boolean; lineCount: number; maxLines: number } {
+  const lineCount = content.split("\n").length;
+  return {
+    valid: lineCount <= BLUEPRINT_LIMITS.MAX_LINES,
+    lineCount,
+    maxLines: BLUEPRINT_LIMITS.MAX_LINES,
+  };
+}
+
+/**
  * Get effective subscription tier based on role and subscription
  * Admins get MAX tier automatically
  * Teams users get teams tier (which includes all MAX features)

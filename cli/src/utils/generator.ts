@@ -20,7 +20,6 @@ export interface GenerateOptions {
   license?: string;
   conventionalCommits?: boolean;
   semver?: boolean;
-  dependabot?: boolean;
   cicd?: string;
   deploymentTargets?: string[];
   buildContainer?: boolean;
@@ -57,6 +56,14 @@ export interface GenerateOptions {
   staticFileContents?: Record<string, string>;
   includeFunding?: boolean;
   extraNotes?: string;
+  // Security configuration (FREE tier)
+  security?: {
+    secretsManagement?: string[];  // Secrets management strategies
+    securityTooling?: string[];    // Security scanning tools (includes dependabot/renovate)
+    authPatterns?: string[];       // Authentication patterns
+    dataHandling?: string[];       // Data handling policies
+    additionalNotes?: string;      // Custom security notes
+  };
 }
 
 /**
@@ -748,9 +755,7 @@ function generateFileContent(options: GenerateOptions, platform: string): string
       if (options.semver) {
         sections.push("- **Versioning:** Follow [Semantic Versioning](https://semver.org) (semver)");
       }
-      if (options.dependabot) {
-        sections.push("- **Dependencies:** Dependabot/automated dependency updates enabled");
-      }
+      // Note: Dependency updates (Dependabot/Renovate) are now in security.securityTooling
       if (options.cicd) {
         const cicdNames: Record<string, string> = {
           github_actions: "GitHub Actions",
@@ -1108,6 +1113,187 @@ function generateFileContent(options: GenerateOptions, platform: string): string
     }
   }
 
+  // Security Configuration section
+  const security = options.security;
+  if (security && (security.secretsManagement?.length || security.securityTooling?.length || 
+      security.authPatterns?.length || security.dataHandling?.length || security.additionalNotes)) {
+    if (isMarkdown || isMdc) {
+      sections.push("## 🔐 Security Configuration");
+      sections.push("");
+      
+      // Secrets Management
+      if (security.secretsManagement?.length) {
+        sections.push("### Secrets Management");
+        sections.push("");
+        const secretsLabels: Record<string, string> = {
+          env_vars: "Environment Variables",
+          dotenv: "dotenv / dotenvx",
+          vault: "HashiCorp Vault",
+          aws_secrets: "AWS Secrets Manager",
+          aws_ssm: "AWS SSM Parameter Store",
+          gcp_secrets: "GCP Secret Manager",
+          azure_keyvault: "Azure Key Vault",
+          infisical: "Infisical",
+          doppler: "Doppler",
+          "1password": "1Password Secrets Automation",
+          bitwarden: "Bitwarden Secrets Manager",
+          sops: "SOPS (Mozilla)",
+          age: "age encryption",
+          sealed_secrets: "Sealed Secrets (K8s)",
+          external_secrets: "External Secrets Operator",
+          git_crypt: "git-crypt",
+          chamber: "Chamber",
+          berglas: "Berglas",
+        };
+        for (const s of security.secretsManagement) {
+          sections.push(`- ${secretsLabels[s] || s}`);
+        }
+        sections.push("");
+      }
+
+      // Security Tooling (includes dependency updates)
+      if (security.securityTooling?.length) {
+        sections.push("### Security Tooling");
+        sections.push("");
+        const toolingLabels: Record<string, string> = {
+          dependabot: "Dependabot (dependency updates)",
+          renovate: "Renovate (dependency updates)",
+          snyk: "Snyk (vulnerability scanning)",
+          sonarqube: "SonarQube / SonarCloud",
+          codeql: "CodeQL (GitHub)",
+          semgrep: "Semgrep",
+          trivy: "Trivy (container scanning)",
+          grype: "Grype",
+          checkov: "Checkov (IaC)",
+          tfsec: "tfsec (Terraform)",
+          kics: "KICS",
+          gitleaks: "Gitleaks (secret detection)",
+          trufflehog: "TruffleHog",
+          detect_secrets: "detect-secrets (Yelp)",
+          bandit: "Bandit (Python)",
+          brakeman: "Brakeman (Rails)",
+          gosec: "gosec (Go)",
+          npm_audit: "npm audit / yarn audit",
+          pip_audit: "pip-audit",
+          safety: "Safety",
+          bundler_audit: "bundler-audit",
+          owasp_dependency_check: "OWASP Dependency-Check",
+          ossf_scorecard: "OSSF Scorecard",
+          socket: "Socket.dev",
+          mend: "Mend (WhiteSource)",
+          fossa: "FOSSA",
+        };
+        for (const t of security.securityTooling) {
+          sections.push(`- ${toolingLabels[t] || t}`);
+        }
+        sections.push("");
+      }
+
+      // Authentication Patterns
+      if (security.authPatterns?.length) {
+        sections.push("### Authentication");
+        sections.push("");
+        const authLabels: Record<string, string> = {
+          oauth2: "OAuth 2.0",
+          oidc: "OpenID Connect (OIDC)",
+          jwt: "JWT (JSON Web Tokens)",
+          session: "Session-based Auth",
+          api_keys: "API Keys",
+          basic_auth: "Basic Authentication",
+          bearer_token: "Bearer Tokens",
+          mfa_totp: "MFA / TOTP",
+          passkeys: "Passkeys / WebAuthn",
+          saml: "SAML 2.0",
+          ldap: "LDAP / Active Directory",
+          mutual_tls: "Mutual TLS (mTLS)",
+          auth0: "Auth0",
+          clerk: "Clerk",
+          firebase_auth: "Firebase Auth",
+          supabase_auth: "Supabase Auth",
+          keycloak: "Keycloak",
+          okta: "Okta",
+          cognito: "AWS Cognito",
+          workos: "WorkOS",
+        };
+        for (const a of security.authPatterns) {
+          sections.push(`- ${authLabels[a] || a}`);
+        }
+        sections.push("");
+      }
+
+      // Data Handling
+      if (security.dataHandling?.length) {
+        sections.push("### Data Handling & Compliance");
+        sections.push("");
+        const dataLabels: Record<string, string> = {
+          encryption_at_rest: "Encryption at Rest",
+          encryption_in_transit: "Encryption in Transit (TLS)",
+          pii_handling: "PII Data Handling",
+          gdpr_compliance: "GDPR Compliance",
+          ccpa_compliance: "CCPA Compliance",
+          hipaa_compliance: "HIPAA Compliance",
+          soc2_compliance: "SOC 2 Compliance",
+          pci_dss: "PCI-DSS Compliance",
+          data_masking: "Data Masking / Anonymization",
+          data_retention: "Data Retention Policies",
+          audit_logging: "Audit Logging",
+          backup_encryption: "Encrypted Backups",
+          key_rotation: "Key Rotation",
+          zero_trust: "Zero Trust Architecture",
+          least_privilege: "Least Privilege Access",
+          rbac: "RBAC (Role-Based Access)",
+          abac: "ABAC (Attribute-Based Access)",
+          data_classification: "Data Classification",
+          dlp: "DLP (Data Loss Prevention)",
+        };
+        for (const d of security.dataHandling) {
+          sections.push(`- ${dataLabels[d] || d}`);
+        }
+        sections.push("");
+      }
+
+      // Additional security notes
+      if (security.additionalNotes) {
+        sections.push("### Additional Security Notes");
+        sections.push("");
+        sections.push(security.additionalNotes);
+        sections.push("");
+      }
+    } else {
+      // Non-markdown format
+      sections.push("Security Configuration:");
+      if (security.secretsManagement?.length) {
+        sections.push(`- Secrets: ${security.secretsManagement.join(", ")}`);
+      }
+      if (security.securityTooling?.length) {
+        sections.push(`- Tooling: ${security.securityTooling.join(", ")}`);
+      }
+      if (security.authPatterns?.length) {
+        sections.push(`- Auth: ${security.authPatterns.join(", ")}`);
+      }
+      if (security.dataHandling?.length) {
+        sections.push(`- Data: ${security.dataHandling.join(", ")}`);
+      }
+      sections.push("");
+    }
+  }
+
+  // Security Warning
+  if (isMarkdown || isMdc) {
+    sections.push("## ⚠️ Security Notice");
+    sections.push("");
+    sections.push("> **Do not commit secrets to the repository or to the live app.**");
+    sections.push("> Always use secure standards to transmit sensitive information.");
+    sections.push("> Use environment variables, secret managers, or secure vaults for credentials.");
+    sections.push("");
+  } else {
+    sections.push("");
+    sections.push("SECURITY NOTICE:");
+    sections.push("Do not commit secrets to the repository or to the live app.");
+    sections.push("Always use secure standards to transmit sensitive information.");
+    sections.push("");
+  }
+
   // Footer
   if (isMarkdown || isMdc) {
     sections.push("---");
@@ -1158,6 +1344,9 @@ function generateYamlConfig(options: GenerateOptions, platform: string): string 
     lines.push('    - "**/*.py"');
   }
   
+  lines.push("");
+  lines.push("# SECURITY: Do not commit secrets to the repository.");
+  lines.push("# Use environment variables or secret managers for credentials.");
   lines.push("");
   lines.push(`# Generated by LynxPrompt CLI`);
   
