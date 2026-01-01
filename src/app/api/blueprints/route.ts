@@ -4,6 +4,13 @@ import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { detectSensitiveData, type SensitiveMatch } from "@/lib/sensitive-data";
+import { 
+  getEffectiveTier, 
+  getMaxBlueprintCount, 
+  checkBlueprintLineCount,
+  BLUEPRINT_LIMITS,
+  type SubscriptionTier 
+} from "@/lib/subscription";
 
 // Blueprint type options
 const BLUEPRINT_TYPES = [
@@ -377,6 +384,40 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Content must be at least 10 characters" },
         { status: 400 }
+      );
+    }
+
+    // Check line count limit (all tiers)
+    const lineCheck = checkBlueprintLineCount(content);
+    if (!lineCheck.valid) {
+      return NextResponse.json(
+        { 
+          error: `Blueprint exceeds maximum line limit. Your blueprint has ${lineCheck.lineCount.toLocaleString()} lines, but the maximum is ${lineCheck.maxLines.toLocaleString()} lines.` 
+        },
+        { status: 400 }
+      );
+    }
+
+    // Get user's effective tier for blueprint count limit
+    const userTier = getEffectiveTier(
+      (user?.role as "USER" | "ADMIN" | "SUPERADMIN") || "USER",
+      (user?.subscriptionPlan?.toLowerCase() as SubscriptionTier) || "free"
+    );
+    const maxBlueprints = getMaxBlueprintCount(userTier);
+
+    // Count user's existing blueprints
+    const existingBlueprintCount = await prismaUsers.userTemplate.count({
+      where: { userId: session.user.id },
+    });
+
+    if (existingBlueprintCount >= maxBlueprints) {
+      return NextResponse.json(
+        { 
+          error: `You have reached the maximum number of blueprints for your plan (${maxBlueprints.toLocaleString()}). Upgrade your subscription to create more blueprints.`,
+          limit: maxBlueprints,
+          current: existingBlueprintCount,
+        },
+        { status: 403 }
       );
     }
 

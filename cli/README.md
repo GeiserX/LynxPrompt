@@ -195,17 +195,13 @@ lynxp whoami
 lynxp logout
 ```
 
-### Advanced: Init and Sync
+### Advanced: Multi-Format Generation
 
-For power users who want to manage rules across multiple AI editors:
+For power users who want to generate configs for multiple AI editors at once:
 
 ```bash
-# Initialize .lynxprompt/ folder
-lynxp init
-
-# Sync rules to all configured agents
-lynxp sync
-lynxp sync --dry-run  # Preview changes
+# Generate for multiple formats at once
+lynxp wizard -f agents,cursor,copilot,windsurf
 
 # Manage AI agents
 lynxp agents

@@ -174,6 +174,7 @@ const WIZARD_STEPS: WizardStep[] = [
   { id: "project", title: "Project Basics", icon: "✨", tier: "basic" },
   { id: "tech", title: "Tech Stack", icon: "💻", tier: "basic" },
   { id: "repo", title: "Repository Setup", icon: "🔀", tier: "basic" },
+  { id: "security", title: "Security", icon: "🔐", tier: "basic" },  // NEW: Security step (FREE)
   { id: "commands", title: "Commands", icon: "📋", tier: "intermediate" },
   { id: "code_style", title: "Code Style", icon: "🪄", tier: "intermediate" },
   { id: "ai", title: "AI Behavior", icon: "🧠", tier: "basic" },
@@ -464,14 +465,120 @@ const LOGGING_OPTIONS = [
   { id: "other", label: "Other" },
 ];
 
-// AI Behavior rules - matching WebUI
+// AI Behavior rules - matching WebUI (security moved to dedicated Security step)
 const AI_BEHAVIOR_RULES = [
   { id: "always_debug_after_build", label: "Always Debug After Building", description: "Run and test locally after making changes", recommended: true },
   { id: "check_logs_after_build", label: "Check Logs After Build/Commit", description: "Check logs when build or commit finishes", recommended: true },
   { id: "run_tests_before_commit", label: "Run Tests Before Commit", description: "Ensure tests pass before committing", recommended: true },
   { id: "follow_existing_patterns", label: "Follow Existing Patterns", description: "Match the codebase's existing style", recommended: true },
   { id: "ask_before_large_refactors", label: "Ask Before Large Refactors", description: "Confirm before significant changes", recommended: true },
-  { id: "check_for_security_issues", label: "Check for Security Issues", description: "Review for common vulnerabilities", recommended: false },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// SECURITY OPTIONS (FREE tier - new dedicated section)
+// ═══════════════════════════════════════════════════════════════
+
+// Secrets management strategies
+const SECRETS_MANAGEMENT_OPTIONS = [
+  { id: "env_vars", label: "Environment Variables", description: "Use .env files locally, env vars in prod", recommended: true },
+  { id: "dotenv", label: "dotenv / dotenvx", description: "Load .env files with dotenv library" },
+  { id: "vault", label: "HashiCorp Vault", description: "Enterprise secrets management" },
+  { id: "aws_secrets", label: "AWS Secrets Manager", description: "AWS native secrets storage" },
+  { id: "aws_ssm", label: "AWS SSM Parameter Store", description: "AWS Systems Manager parameters" },
+  { id: "gcp_secrets", label: "GCP Secret Manager", description: "Google Cloud secrets storage" },
+  { id: "azure_keyvault", label: "Azure Key Vault", description: "Azure secrets and keys" },
+  { id: "infisical", label: "Infisical", description: "Open-source secrets management" },
+  { id: "doppler", label: "Doppler", description: "Universal secrets platform" },
+  { id: "1password", label: "1Password Secrets Automation", description: "1Password for teams/CI" },
+  { id: "bitwarden", label: "Bitwarden Secrets Manager", description: "Bitwarden for secrets" },
+  { id: "sops", label: "SOPS (Mozilla)", description: "Encrypted files with KMS" },
+  { id: "age", label: "age encryption", description: "Simple file encryption" },
+  { id: "sealed_secrets", label: "Sealed Secrets (K8s)", description: "Kubernetes encrypted secrets" },
+  { id: "external_secrets", label: "External Secrets Operator", description: "K8s external secrets sync" },
+  { id: "git_crypt", label: "git-crypt", description: "Transparent file encryption in git" },
+  { id: "chamber", label: "Chamber", description: "AWS SSM-based secrets tool" },
+  { id: "berglas", label: "Berglas", description: "GCP secrets CLI tool" },
+  { id: "other", label: "Other", description: "Custom secrets management" },
+];
+
+// Security tooling (scanning, dependency updates, etc.)
+const SECURITY_TOOLING_OPTIONS = [
+  { id: "dependabot", label: "Dependabot", description: "GitHub dependency updates", recommended: true },
+  { id: "renovate", label: "Renovate", description: "Multi-platform dependency updates", recommended: true },
+  { id: "snyk", label: "Snyk", description: "Vulnerability scanning & fixing" },
+  { id: "sonarqube", label: "SonarQube / SonarCloud", description: "Code quality & security" },
+  { id: "codeql", label: "CodeQL", description: "GitHub semantic code analysis" },
+  { id: "semgrep", label: "Semgrep", description: "Static analysis with custom rules" },
+  { id: "trivy", label: "Trivy", description: "Container & IaC vulnerability scanner" },
+  { id: "grype", label: "Grype", description: "Container image vulnerability scanner" },
+  { id: "checkov", label: "Checkov", description: "IaC security scanning" },
+  { id: "tfsec", label: "tfsec", description: "Terraform security scanner" },
+  { id: "kics", label: "KICS", description: "IaC security scanning" },
+  { id: "gitleaks", label: "Gitleaks", description: "Secret detection in git repos" },
+  { id: "trufflehog", label: "TruffleHog", description: "Secret scanning in code" },
+  { id: "detect_secrets", label: "detect-secrets (Yelp)", description: "Pre-commit secret detection" },
+  { id: "bandit", label: "Bandit", description: "Python security linter" },
+  { id: "brakeman", label: "Brakeman", description: "Ruby on Rails security scanner" },
+  { id: "gosec", label: "gosec", description: "Go security checker" },
+  { id: "npm_audit", label: "npm audit / yarn audit", description: "Node.js vulnerability check" },
+  { id: "pip_audit", label: "pip-audit", description: "Python dependency audit" },
+  { id: "safety", label: "Safety", description: "Python dependency checker" },
+  { id: "bundler_audit", label: "bundler-audit", description: "Ruby gem vulnerability checker" },
+  { id: "owasp_dependency_check", label: "OWASP Dependency-Check", description: "Known vulnerability detection" },
+  { id: "ossf_scorecard", label: "OSSF Scorecard", description: "Open source security metrics" },
+  { id: "socket", label: "Socket.dev", description: "Supply chain security" },
+  { id: "mend", label: "Mend (WhiteSource)", description: "Open source security platform" },
+  { id: "fossa", label: "FOSSA", description: "License & security compliance" },
+  { id: "other", label: "Other", description: "Custom security tooling" },
+];
+
+// Authentication patterns
+const AUTH_PATTERNS_OPTIONS = [
+  { id: "oauth2", label: "OAuth 2.0", description: "Standard authorization framework", recommended: true },
+  { id: "oidc", label: "OpenID Connect (OIDC)", description: "Identity layer on OAuth 2.0", recommended: true },
+  { id: "jwt", label: "JWT (JSON Web Tokens)", description: "Stateless token authentication" },
+  { id: "session", label: "Session-based Auth", description: "Server-side session management" },
+  { id: "api_keys", label: "API Keys", description: "Simple API authentication" },
+  { id: "basic_auth", label: "Basic Authentication", description: "Username/password (HTTPS only)" },
+  { id: "bearer_token", label: "Bearer Tokens", description: "Token-based API auth" },
+  { id: "mfa_totp", label: "MFA / TOTP", description: "Multi-factor with time-based OTP" },
+  { id: "passkeys", label: "Passkeys / WebAuthn", description: "Passwordless authentication" },
+  { id: "saml", label: "SAML 2.0", description: "Enterprise SSO protocol" },
+  { id: "ldap", label: "LDAP / Active Directory", description: "Directory-based auth" },
+  { id: "mutual_tls", label: "Mutual TLS (mTLS)", description: "Certificate-based auth" },
+  { id: "auth0", label: "Auth0", description: "Identity platform" },
+  { id: "clerk", label: "Clerk", description: "User management platform" },
+  { id: "firebase_auth", label: "Firebase Auth", description: "Google auth service" },
+  { id: "supabase_auth", label: "Supabase Auth", description: "Supabase auth service" },
+  { id: "keycloak", label: "Keycloak", description: "Open source IAM" },
+  { id: "okta", label: "Okta", description: "Enterprise identity" },
+  { id: "cognito", label: "AWS Cognito", description: "AWS user pools" },
+  { id: "workos", label: "WorkOS", description: "Enterprise SSO" },
+  { id: "other", label: "Other", description: "Custom auth pattern" },
+];
+
+// Data handling policies
+const DATA_HANDLING_OPTIONS = [
+  { id: "encryption_at_rest", label: "Encryption at Rest", description: "Encrypt stored data", recommended: true },
+  { id: "encryption_in_transit", label: "Encryption in Transit (TLS)", description: "HTTPS/TLS for all connections", recommended: true },
+  { id: "pii_handling", label: "PII Data Handling", description: "Special handling for personal data" },
+  { id: "gdpr_compliance", label: "GDPR Compliance", description: "EU data protection rules" },
+  { id: "ccpa_compliance", label: "CCPA Compliance", description: "California privacy law" },
+  { id: "hipaa_compliance", label: "HIPAA Compliance", description: "Healthcare data protection" },
+  { id: "soc2_compliance", label: "SOC 2 Compliance", description: "Service organization controls" },
+  { id: "pci_dss", label: "PCI-DSS Compliance", description: "Payment card data security" },
+  { id: "data_masking", label: "Data Masking / Anonymization", description: "Hide sensitive data in logs/exports" },
+  { id: "data_retention", label: "Data Retention Policies", description: "Automatic data expiration" },
+  { id: "audit_logging", label: "Audit Logging", description: "Track data access and changes" },
+  { id: "backup_encryption", label: "Encrypted Backups", description: "Encrypt backup data" },
+  { id: "key_rotation", label: "Key Rotation", description: "Regular encryption key updates" },
+  { id: "zero_trust", label: "Zero Trust Architecture", description: "Never trust, always verify" },
+  { id: "least_privilege", label: "Least Privilege Access", description: "Minimal permissions" },
+  { id: "rbac", label: "RBAC (Role-Based Access)", description: "Permission by role" },
+  { id: "abac", label: "ABAC (Attribute-Based Access)", description: "Fine-grained access control" },
+  { id: "data_classification", label: "Data Classification", description: "Classify data sensitivity levels" },
+  { id: "dlp", label: "DLP (Data Loss Prevention)", description: "Prevent data leakage" },
+  { id: "other", label: "Other", description: "Custom data handling" },
 ];
 
 // Important files to read - ensure consistent spacing after icons
@@ -923,7 +1030,7 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
     console.log(y("│") + pad("    • Auto-detect from remote repos [MAX]", W) + y("│"));
     console.log(y("│") + pad("    • Save preferences to your profile", W) + y("│"));
     console.log(y("│") + pad("    • Push configs to cloud (lynxp push)", W) + y("│"));
-    console.log(y("│") + pad("    • Sync across devices (lynxp sync)", W) + y("│"));
+    console.log(y("│") + pad("    • Share across devices (lynxp push/pull)", W) + y("│"));
     console.log(y("│") + " ".repeat(W) + y("│"));
     console.log(y("│") + pad("    Run: " + chalk.cyan("lynxp login"), W + 10) + y("│")); // +10 for chalk codes
     console.log(y("└" + "─".repeat(W) + "┘"));
@@ -1170,7 +1277,7 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
     if (authenticated) {
       nextStepsLines.push(chalk.cyan("  lynxp push     ") + chalk.gray("Upload to cloud"));
       nextStepsLines.push(chalk.cyan("  lynxp link     ") + chalk.gray("Link to a blueprint"));
-      nextStepsLines.push(chalk.cyan("  lynxp sync     ") + chalk.gray("Sync with linked blueprint"));
+      nextStepsLines.push(chalk.cyan("  lynxp diff     ") + chalk.gray("Compare with cloud blueprint"));
     } else {
       nextStepsLines.push(chalk.gray("  lynxp login    ") + chalk.yellow("Log in to push & sync"));
     }
@@ -1675,18 +1782,7 @@ async function runInteractiveWizard(
   }, promptConfig);
   answers.semver = semverResponse.semver ?? true;
 
-  // Dependabot (GitHub/GitLab only)
-  if (answers.repoHost === "github" || answers.repoHost === "gitlab") {
-    const dependabotResponse = await prompts({
-      type: "toggle",
-      name: "dependabot",
-      message: chalk.white("Enable Dependabot/dependency updates?"),
-      initial: true, // Default Yes
-      active: "Yes",
-      inactive: "No",
-    }, promptConfig);
-    answers.dependabot = dependabotResponse.dependabot ?? true;
-  }
+  // Dependabot/Renovate moved to Security step
 
   // CI/CD Platform - use detected value if available
   const cicdChoices = [
@@ -1790,7 +1886,134 @@ async function runInteractiveWizard(
   answers.documentationUrl = docsUrlResponse.documentationUrl || "";
 
   // ═══════════════════════════════════════════════════════════════
-  // STEP 5: Commands (intermediate - Pro+)
+  // STEP 5: Security (basic - FREE tier for all users)
+  // ═══════════════════════════════════════════════════════════════
+  const securityStep = getCurrentStep("security")!;
+  showStep(currentStepNum, securityStep, userTier);
+
+  console.log(chalk.yellow("  🔐 Security Configuration"));
+  console.log(chalk.gray("     Configure security practices for your project."));
+  console.log(chalk.red.bold("     ⚠️  Never commit secrets to your repository!"));
+  console.log();
+
+  // 1. Secrets Management Strategy (multi-select, searchable)
+  console.log(chalk.cyan("  1️⃣  Secrets Management"));
+  console.log(chalk.gray("     How do you manage secrets and credentials?"));
+  console.log();
+  
+  const secretsResponse = await prompts({
+    type: "autocompleteMultiselect",
+    name: "secretsManagement",
+    message: chalk.white("Secrets management strategies (type to search):"),
+    choices: SECRETS_MANAGEMENT_OPTIONS.map(opt => ({
+      title: opt.recommended 
+        ? `${opt.label} ${chalk.green("★ recommended")}`
+        : opt.label,
+      value: opt.id,
+      description: chalk.gray(opt.description),
+      selected: opt.recommended,
+    })),
+    hint: chalk.gray("type to filter • space select • enter confirm"),
+    instructions: false,
+  }, promptConfig);
+  answers.secretsManagement = secretsResponse.secretsManagement || [];
+
+  // 2. Security Tooling (includes Dependabot/Renovate - multi-select, searchable)
+  console.log();
+  console.log(chalk.cyan("  2️⃣  Security Tooling"));
+  console.log(chalk.gray("     Security scanning, dependency updates, and vulnerability detection."));
+  console.log();
+  
+  const securityToolingResponse = await prompts({
+    type: "autocompleteMultiselect",
+    name: "securityTooling",
+    message: chalk.white("Security tools (type to search):"),
+    choices: SECURITY_TOOLING_OPTIONS.map(opt => ({
+      title: opt.recommended 
+        ? `${opt.label} ${chalk.green("★ recommended")}`
+        : opt.label,
+      value: opt.id,
+      description: chalk.gray(opt.description),
+      selected: opt.recommended,
+    })),
+    hint: chalk.gray("type to filter • space select • enter confirm"),
+    instructions: false,
+  }, promptConfig);
+  answers.securityTooling = securityToolingResponse.securityTooling || [];
+
+  // 3. Authentication Patterns (multi-select, searchable)
+  console.log();
+  console.log(chalk.cyan("  3️⃣  Authentication Patterns"));
+  console.log(chalk.gray("     How users and services authenticate with your application."));
+  console.log();
+  
+  const authPatternsResponse = await prompts({
+    type: "autocompleteMultiselect",
+    name: "authPatterns",
+    message: chalk.white("Auth patterns (type to search):"),
+    choices: AUTH_PATTERNS_OPTIONS.map(opt => ({
+      title: opt.recommended 
+        ? `${opt.label} ${chalk.green("★ recommended")}`
+        : opt.label,
+      value: opt.id,
+      description: chalk.gray(opt.description),
+    })),
+    hint: chalk.gray("type to filter • space select • enter confirm"),
+    instructions: false,
+  }, promptConfig);
+  answers.authPatterns = authPatternsResponse.authPatterns || [];
+
+  // 4. Data Handling (multi-select, searchable)
+  console.log();
+  console.log(chalk.cyan("  4️⃣  Data Handling & Compliance"));
+  console.log(chalk.gray("     Data protection, encryption, and compliance requirements."));
+  console.log();
+  
+  const dataHandlingResponse = await prompts({
+    type: "autocompleteMultiselect",
+    name: "dataHandling",
+    message: chalk.white("Data handling policies (type to search):"),
+    choices: DATA_HANDLING_OPTIONS.map(opt => ({
+      title: opt.recommended 
+        ? `${opt.label} ${chalk.green("★ recommended")}`
+        : opt.label,
+      value: opt.id,
+      description: chalk.gray(opt.description),
+      selected: opt.recommended,
+    })),
+    hint: chalk.gray("type to filter • space select • enter confirm"),
+    instructions: false,
+  }, promptConfig);
+  answers.dataHandling = dataHandlingResponse.dataHandling || [];
+
+  // Additional security notes
+  const securityNotesResponse = await prompts({
+    type: "text",
+    name: "securityNotes",
+    message: chalk.white("Additional security notes (optional):"),
+    hint: chalk.gray("e.g., specific compliance requirements, custom security practices"),
+  }, promptConfig);
+  answers.securityNotes = securityNotesResponse.securityNotes || "";
+
+  // Show security summary
+  console.log();
+  console.log(chalk.green("  ✓ Security configuration complete:"));
+  if ((answers.secretsManagement as string[]).length > 0) {
+    console.log(chalk.gray(`    • Secrets: ${(answers.secretsManagement as string[]).join(", ")}`));
+  }
+  if ((answers.securityTooling as string[]).length > 0) {
+    console.log(chalk.gray(`    • Tooling: ${(answers.securityTooling as string[]).join(", ")}`));
+  }
+  if ((answers.authPatterns as string[]).length > 0) {
+    console.log(chalk.gray(`    • Auth: ${(answers.authPatterns as string[]).join(", ")}`));
+  }
+  if ((answers.dataHandling as string[]).length > 0) {
+    console.log(chalk.gray(`    • Data: ${(answers.dataHandling as string[]).join(", ")}`));
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // STEP 6: Commands (intermediate - Pro+)
+  // (was STEP 5 before Security step added)
   // ═══════════════════════════════════════════════════════════════
   if (canAccessTier(userTier, "intermediate")) {
     const commandsStep = getCurrentStep("commands")!;
@@ -1895,7 +2118,7 @@ async function runInteractiveWizard(
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // STEP 6: Code Style (intermediate - Pro+)
+  // STEP 7: Code Style (intermediate - Pro+)
   // ═══════════════════════════════════════════════════════════════
   if (canAccessTier(userTier, "intermediate")) {
     const styleStep = getCurrentStep("code_style")!;
@@ -1982,7 +2205,7 @@ async function runInteractiveWizard(
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // STEP 7: AI Behavior (basic - all users)
+  // STEP 8: AI Behavior (basic - all users)
   // ═══════════════════════════════════════════════════════════════
   const aiStep = getCurrentStep("ai")!;
   showStep(currentStepNum, aiStep, userTier);
@@ -2083,7 +2306,7 @@ async function runInteractiveWizard(
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // STEP 8: Boundaries (advanced - Max+)
+  // STEP 9: Boundaries (advanced - Max+)
   // ═══════════════════════════════════════════════════════════════
   if (canAccessTier(userTier, "advanced")) {
     const boundariesStep = getCurrentStep("boundaries")!;
@@ -2164,7 +2387,7 @@ async function runInteractiveWizard(
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // STEP 9: Testing Strategy (advanced - Max+)
+  // STEP 10: Testing Strategy (advanced - Max+)
   // ═══════════════════════════════════════════════════════════════
   if (canAccessTier(userTier, "advanced")) {
     const testingStep = getCurrentStep("testing")!;
@@ -2228,7 +2451,7 @@ async function runInteractiveWizard(
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // STEP 10: Static Files (advanced - Max+)
+  // STEP 11: Static Files (advanced - Max+)
   // ═══════════════════════════════════════════════════════════════
   if (canAccessTier(userTier, "advanced")) {
     const staticStep = getCurrentStep("static")!;
@@ -2398,7 +2621,7 @@ async function runInteractiveWizard(
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // STEP 11: Final Details / Extra (basic - all users)
+  // STEP 12: Final Details / Extra (basic - all users)
   // ═══════════════════════════════════════════════════════════════
   const extraStep = getCurrentStep("extra")!;
   showStep(currentStepNum, extraStep, userTier);
@@ -2519,7 +2742,6 @@ async function runInteractiveWizard(
     includeFunding: answers.includeFunding as boolean,
     extraNotes: answers.extraNotes as string,
     semver: answers.semver as boolean,
-    dependabot: answers.dependabot as boolean,
     cicd: answers.cicd as string,
     deploymentTargets: answers.deploymentTargets as string[],
     buildContainer: answers.buildContainer as boolean,
@@ -2528,5 +2750,13 @@ async function runInteractiveWizard(
     documentationUrl: answers.documentationUrl as string,
     loggingConventions: answers.loggingConventions as string,
     loggingConventionsOther: answers.loggingConventionsOther as string,
+    // Security configuration (NEW)
+    security: {
+      secretsManagement: answers.secretsManagement as string[],
+      securityTooling: answers.securityTooling as string[],
+      authPatterns: answers.authPatterns as string[],
+      dataHandling: answers.dataHandling as string[],
+      additionalNotes: answers.securityNotes as string,
+    },
   };
 }

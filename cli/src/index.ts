@@ -6,11 +6,9 @@ import { whoamiCommand } from "./commands/whoami.js";
 import { listCommand } from "./commands/list.js";
 import { pullCommand } from "./commands/pull.js";
 import { pushCommand } from "./commands/push.js";
-import { initCommand } from "./commands/init.js";
 import { wizardCommand } from "./commands/wizard.js";
 import { searchCommand } from "./commands/search.js";
 import { statusCommand } from "./commands/status.js";
-import { syncCommand } from "./commands/sync.js";
 import { agentsCommand } from "./commands/agents.js";
 import { checkCommand } from "./commands/check.js";
 import { diffCommand } from "./commands/diff.js";
@@ -152,22 +150,6 @@ program
 // ============================================
 // Advanced Commands (power users)
 // ============================================
-
-// Init - advanced multi-editor setup
-program
-  .command("init")
-  .description("Initialize .lynxprompt/ for multi-editor sync (advanced)")
-  .option("-y, --yes", "Skip prompts and use defaults")
-  .option("-f, --force", "Re-initialize even if already initialized")
-  .action(initCommand);
-
-// Sync - export rules to all agents
-program
-  .command("sync")
-  .description("Sync .lynxprompt/rules/ to all configured agents")
-  .option("--dry-run", "Preview changes without writing files")
-  .option("-f, --force", "Skip prompts (for CI/automation)")
-  .action(syncCommand);
 
 // Agents - manage which agents to sync to
 program
