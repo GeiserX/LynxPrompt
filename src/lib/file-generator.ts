@@ -70,7 +70,7 @@ interface WizardConfig {
   projectType?: string; // work, leisure, open_source_small, etc.
   architecturePattern?: string;
   architecturePatternOther?: string;
-  devOS?: string; // linux, macos, windows, wsl, multi
+  devOS?: string | string[]; // linux, macos, windows, wsl - can be multi-select
   languages: string[];
   frameworks: string[];
   databases?: string[]; // preferred databases (multi-select)
@@ -226,6 +226,36 @@ function resolvePlatforms(config: WizardConfig): string[] {
   if (Array.isArray(config.platforms)) return config.platforms;
   if (config.platform) return [config.platform];
   return ["cursor"];
+}
+
+// Helper: normalize devOS to array (supports legacy string or new array format)
+function resolveDevOS(config: WizardConfig): string[] {
+  if (Array.isArray(config.devOS)) return config.devOS;
+  if (config.devOS) return [config.devOS];
+  return ["linux"];
+}
+
+// Helper: check if multiple OS platforms are selected
+function isMultiPlatformOS(config: WizardConfig): boolean {
+  const osList = resolveDevOS(config);
+  if (osList.length > 1) return true;
+  const hasWindows = osList.includes("windows");
+  const hasUnix = osList.includes("linux") || osList.includes("macos") || osList.includes("wsl");
+  return hasWindows && hasUnix;
+}
+
+// Helper: format devOS list for display
+function formatDevOSDisplay(config: WizardConfig): string {
+  const osNames: Record<string, string> = {
+    linux: "Linux",
+    macos: "macOS",
+    windows: "Windows",
+    wsl: "WSL",
+  };
+  const osList = resolveDevOS(config);
+  if (osList.length === 0) return "Linux";
+  if (osList.length === 1) return osNames[osList[0]] || osList[0];
+  return osList.map(os => osNames[os] || os).join(", ");
 }
 
 // ============================================================================
@@ -464,14 +494,7 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     lines.push(`**Visibility**: ${config.isPublic ? "Public repository" : "Private repository"}`);
   }
   if (config.devOS) {
-    const osNames: Record<string, string> = {
-      linux: "Linux",
-      macos: "macOS",
-      windows: "Windows",
-      wsl: "Windows with WSL (Windows Subsystem for Linux)",
-      multi: "Multi-platform"
-    };
-    lines.push(`**Development OS**: ${osNames[config.devOS] || config.devOS}`);
+    lines.push(`**Development OS**: ${formatDevOSDisplay(config)}`);
   }
   lines.push("");
 
@@ -510,19 +533,20 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
 
   // Development environment details
   if (config.devOS) {
+    const osList = resolveDevOS(config);
     lines.push("### Development Environment");
-    if (config.devOS === "windows") {
-      lines.push("- Use PowerShell or CMD compatible commands");
-      lines.push("- Use backslashes for paths, or forward slashes for cross-platform compatibility");
-    } else if (config.devOS === "wsl") {
-      lines.push("- Prefer Linux commands (bash/zsh)");
-      lines.push("- Be aware of Windows/Linux path translations when needed");
-    } else if (config.devOS === "multi") {
+    if (isMultiPlatformOS(config) || osList.length > 1) {
       lines.push("- Use cross-platform commands that work on Windows, macOS, and Linux");
       lines.push("- Prefer npm scripts or Makefile targets over platform-specific commands");
-    } else if (config.devOS === "linux") {
+    } else if (osList.includes("windows")) {
+      lines.push("- Use PowerShell or CMD compatible commands");
+      lines.push("- Use backslashes for paths, or forward slashes for cross-platform compatibility");
+    } else if (osList.includes("wsl")) {
+      lines.push("- Prefer Linux commands (bash/zsh)");
+      lines.push("- Be aware of Windows/Linux path translations when needed");
+    } else if (osList.includes("linux")) {
       lines.push("- Use standard Unix/Linux commands (bash, zsh)");
-    } else if (config.devOS === "macos") {
+    } else if (osList.includes("macos")) {
       lines.push("- Use standard Unix commands, macOS-specific tools are acceptable");
     }
     lines.push("");
@@ -1211,14 +1235,7 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
   }
   
   if (config.devOS) {
-    const osNames: Record<string, string> = {
-      linux: "Linux",
-      macos: "macOS",
-      windows: "Windows",
-      wsl: "Windows with WSL (Windows Subsystem for Linux)",
-      multi: "Multi-platform"
-    };
-    lines.push(`**Development OS**: ${osNames[config.devOS] || config.devOS}`);
+    lines.push(`**Development OS**: ${formatDevOSDisplay(config)}`);
   }
   lines.push("");
   
@@ -1762,11 +1779,7 @@ function generateAiderConfig(config: WizardConfig, user: UserProfile): string {
   
   // Development OS
   if (config.devOS) {
-    const osNames: Record<string, string> = {
-      linux: "Linux", macos: "macOS", windows: "Windows",
-      wsl: "WSL", multi: "Multi-platform"
-    };
-    lines.push(`# Development OS: ${osNames[config.devOS] || config.devOS}`);
+    lines.push(`# Development OS: ${formatDevOSDisplay(config)}`);
   }
   lines.push("#");
   
@@ -3326,11 +3339,7 @@ function generateVoidConfig(config: WizardConfig, user: UserProfile): string {
   }
   
   if (config.devOS) {
-    const osNames: Record<string, string> = {
-      linux: "Linux", macos: "macOS", windows: "Windows",
-      wsl: "WSL", multi: "Multi-platform"
-    };
-    rulesParts.push(`**Development OS**: ${osNames[config.devOS] || config.devOS}`);
+    rulesParts.push(`**Development OS**: ${formatDevOSDisplay(config)}`);
   }
   rulesParts.push("");
   
@@ -4145,10 +4154,16 @@ export interface GeneratedFile {
 }
 
 // Generate API sync header for files with auto-update enabled
-// devOS: linux, macos, windows, wsl, multi
-function generateApiSyncHeader(blueprintId: string, platform: string, devOS: string = "linux"): string {
+// devOS: linux, macos, windows, wsl - can be array for multi-platform
+function generateApiSyncHeader(blueprintId: string, platform: string, devOS: string | string[] = "linux"): string {
   const lines: string[] = [];
   const fileName = getFileName(platform);
+  
+  // Normalize devOS to array
+  const osList = Array.isArray(devOS) ? devOS : [devOS];
+  const hasWindows = osList.includes("windows");
+  const hasUnix = osList.includes("linux") || osList.includes("macos") || osList.includes("wsl");
+  const isMultiPlatform = (hasWindows && hasUnix) || osList.length > 1;
   
   // Add comment style based on platform
   const isJsonPlatform = ["continue", "cody", "supermaven", "codegpt", "void"].includes(platform);
@@ -4161,13 +4176,7 @@ function generateApiSyncHeader(blueprintId: string, platform: string, devOS: str
   
   // Generate OS-specific curl command
   let curlCommand = "";
-  if (devOS === "windows") {
-    // PowerShell for Windows
-    curlCommand = `$content = (Get-Content "${fileName}" -Raw) -replace '"', '\\"'
-Invoke-RestMethod -Uri "https://lynxprompt.com/api/v1/blueprints/${blueprintId}" \`
-  -Method PUT -Headers @{ "Authorization" = "Bearer $env:LYNXPROMPT_API_TOKEN" } \`
-  -Body (@{ content = $content } | ConvertTo-Json)`;
-  } else if (devOS === "multi") {
+  if (isMultiPlatform) {
     // Show both Unix and Windows commands
     curlCommand = `# Linux/macOS:
 curl -X PUT https://lynxprompt.com/api/v1/blueprints/${blueprintId} \\
@@ -4177,6 +4186,12 @@ curl -X PUT https://lynxprompt.com/api/v1/blueprints/${blueprintId} \\
 
 # Windows PowerShell:
 $c = Get-Content "${fileName}" -Raw; Invoke-RestMethod -Uri "https://lynxprompt.com/api/v1/blueprints/${blueprintId}" -Method PUT -Headers @{ Authorization = "Bearer $env:LYNXPROMPT_API_TOKEN" } -Body (@{ content = $c } | ConvertTo-Json)`;
+  } else if (osList.includes("windows")) {
+    // PowerShell for Windows
+    curlCommand = `$content = (Get-Content "${fileName}" -Raw) -replace '"', '\\"'
+Invoke-RestMethod -Uri "https://lynxprompt.com/api/v1/blueprints/${blueprintId}" \`
+  -Method PUT -Headers @{ "Authorization" = "Bearer $env:LYNXPROMPT_API_TOKEN" } \`
+  -Body (@{ content = $content } | ConvertTo-Json)`;
   } else {
     // Linux, macOS, WSL - bash-style
     curlCommand = `curl -X PUT https://lynxprompt.com/api/v1/blueprints/${blueprintId} \\

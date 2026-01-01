@@ -2711,7 +2711,7 @@ async function runInteractiveWizard(
     blueprintMode: answers.blueprintMode as boolean,
     // Extended config for Pro/Max users
     projectType: answers.projectType as string,
-    devOS: answers.devOS as string,
+    devOS: answers.devOS as string[],
     architecture: answers.architecture as string,
     repoHost: answers.repoHost as string,
     isPublic: answers.isPublic as boolean,

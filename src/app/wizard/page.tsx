@@ -237,12 +237,7 @@ const FRAMEWORKS = [
   { value: "sequelize", label: "Sequelize", icon: "📦" },
   { value: "mongoose", label: "Mongoose", icon: "🍃" },
   { value: "sqlalchemy", label: "SQLAlchemy", icon: "🐍" },
-  // Testing
-  { value: "jest", label: "Jest", icon: "🃏" },
-  { value: "vitest", label: "Vitest", icon: "⚡" },
-  { value: "playwright", label: "Playwright", icon: "🎭" },
-  { value: "cypress", label: "Cypress", icon: "🌲" },
-  { value: "pytest", label: "pytest", icon: "🐍" },
+  // NOTE: Testing frameworks moved to Testing section (TEST_FRAMEWORKS)
   // DevOps/Infra - Containers
   { value: "docker", label: "Docker", icon: "🐳" },
   { value: "podman", label: "Podman", icon: "🦭" },
@@ -844,7 +839,7 @@ type WizardConfig = {
   projectType: string;
   architecturePattern: string;
   architecturePatternOther: string;
-  devOS: string; // windows, macos, linux
+  devOS: string[]; // windows, macos, linux - multi-select
   languages: string[];
   frameworks: string[];
   databases: string[]; // preferred databases (multi-select)
@@ -969,7 +964,7 @@ function WizardPageContent() {
     projectType: "leisure",
     architecturePattern: "",
     architecturePatternOther: "",
-    devOS: "linux",
+    devOS: ["linux"],
     languages: [],
     frameworks: [],
     databases: [],
@@ -1947,29 +1942,15 @@ function WizardPageContent() {
   // Generate API sync header for the downloaded file - OS-specific commands
   const generateApiSyncHeader = (blueprintId: string, fileName: string) => {
     const bpId = blueprintId.startsWith("bp_") ? blueprintId : `bp_${blueprintId}`;
-    const devOS = config.devOS || "linux";
+    const devOSList = config.devOS || ["linux"];
+    const hasWindows = devOSList.includes("windows");
+    const hasUnix = devOSList.includes("linux") || devOSList.includes("macos") || devOSList.includes("wsl");
+    const isMultiPlatform = (hasWindows && hasUnix) || devOSList.length > 1;
     
     // Generate OS-specific curl command
     let curlCommand = "";
     
-    if (devOS === "windows") {
-      // PowerShell command for Windows
-      curlCommand = `#   # PowerShell (Windows)
-#   $content = (Get-Content "${fileName}" -Raw) -replace '"', '\\"'
-#   $body = @{ content = $content } | ConvertTo-Json
-#   Invoke-RestMethod -Uri "https://lynxprompt.com/api/v1/blueprints/${bpId}" \`
-#     -Method PUT \`
-#     -Headers @{ "Authorization" = "Bearer $env:LYNXPROMPT_API_TOKEN"; "Content-Type" = "application/json" } \`
-#     -Body $body`;
-    } else if (devOS === "wsl") {
-      // WSL uses bash but might need Windows path awareness
-      curlCommand = `#   # Bash (WSL/Linux)
-#   curl -X PUT "https://lynxprompt.com/api/v1/blueprints/${bpId}" \\
-#     -H "Authorization: Bearer \$LYNXPROMPT_API_TOKEN" \\
-#     -H "Content-Type: application/json" \\
-#     -d "{\\"content\\": \\"$(cat ${fileName} | jq -Rs .)\\"}"\n#
-#   # Note: Install jq if not present: sudo apt install jq`;
-    } else if (devOS === "multi") {
+    if (isMultiPlatform) {
       // Show both options for cross-platform
       curlCommand = `#   # Linux/macOS (bash):
 #   curl -X PUT "https://lynxprompt.com/api/v1/blueprints/${bpId}" \\
@@ -1981,6 +1962,23 @@ function WizardPageContent() {
 #   Invoke-RestMethod -Uri "https://lynxprompt.com/api/v1/blueprints/${bpId}" \`
 #     -Method PUT -Headers @{ "Authorization" = "Bearer \$env:LYNXPROMPT_API_TOKEN" } \`
 #     -Body (@{ content = $content } | ConvertTo-Json)`;
+    } else if (devOSList.includes("windows")) {
+      // PowerShell command for Windows
+      curlCommand = `#   # PowerShell (Windows)
+#   $content = (Get-Content "${fileName}" -Raw) -replace '"', '\\"'
+#   $body = @{ content = $content } | ConvertTo-Json
+#   Invoke-RestMethod -Uri "https://lynxprompt.com/api/v1/blueprints/${bpId}" \`
+#     -Method PUT \`
+#     -Headers @{ "Authorization" = "Bearer $env:LYNXPROMPT_API_TOKEN"; "Content-Type" = "application/json" } \`
+#     -Body $body`;
+    } else if (devOSList.includes("wsl")) {
+      // WSL uses bash but might need Windows path awareness
+      curlCommand = `#   # Bash (WSL/Linux)
+#   curl -X PUT "https://lynxprompt.com/api/v1/blueprints/${bpId}" \\
+#     -H "Authorization: Bearer \$LYNXPROMPT_API_TOKEN" \\
+#     -H "Content-Type: application/json" \\
+#     -d "{\\"content\\": \\"$(cat ${fileName} | jq -Rs .)\\"}"\n#
+#   # Note: Install jq if not present: sudo apt install jq`;
     } else {
       // Linux/macOS default - use jq for proper JSON escaping
       curlCommand = `#   curl -X PUT "https://lynxprompt.com/api/v1/blueprints/${bpId}" \\
@@ -2772,7 +2770,7 @@ function StepProject({
   projectType: string;
   architecturePattern: string;
   architecturePatternOther: string;
-  devOS: string;
+  devOS: string[];
   blueprintMode: boolean;
   userTier: string;
   repoDetectUrl: string;
@@ -2798,7 +2796,7 @@ function StepProject({
   onProjectTypeChange: (v: string) => void;
   onArchitecturePatternChange: (v: string) => void;
   onArchitecturePatternOtherChange: (v: string) => void;
-  onDevOSChange: (v: string) => void;
+  onDevOSChange: (v: string[]) => void;
   onBlueprintModeChange: (v: boolean) => void;
   onRepoUrlChange: (v: string) => void;
   onDetectRepo: () => void;
@@ -2989,21 +2987,38 @@ function StepProject({
             What OS are you developing on? This helps generate compatible commands.
           </p>
           <div className="flex flex-wrap gap-2">
-            {DEV_OS_OPTIONS.map((os) => (
-              <button
-                key={os.id}
-                onClick={() => onDevOSChange(os.id)}
-                className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition-all ${
-                  devOS === os.id
-                    ? "border-primary bg-primary/10"
-                    : "hover:border-primary"
-                }`}
-              >
-                <span>{os.icon}</span>
-                <span>{os.label}</span>
-              </button>
-            ))}
+            {DEV_OS_OPTIONS.map((os) => {
+              const isSelected = devOS.includes(os.id);
+              return (
+                <button
+                  key={os.id}
+                  onClick={() => {
+                    if (isSelected) {
+                      // Don't allow deselecting if it's the only one
+                      if (devOS.length > 1) {
+                        onDevOSChange(devOS.filter(o => o !== os.id));
+                      }
+                    } else {
+                      onDevOSChange([...devOS, os.id]);
+                    }
+                  }}
+                  className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition-all ${
+                    isSelected
+                      ? "border-primary bg-primary/10"
+                      : "hover:border-primary"
+                  }`}
+                >
+                  <span>{os.icon}</span>
+                  <span>{os.label}</span>
+                </button>
+              );
+            })}
           </div>
+          {devOS.length > 1 && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Cross-platform development: commands will be shown for multiple OS
+            </p>
+          )}
         </div>
 
         {/* Project Type - affects AI behavior */}
@@ -3114,31 +3129,61 @@ function StepTechStack({
 
   const INITIAL_DISPLAY = 12;
 
-  // Filter languages
-  const filteredLanguages = LANGUAGES.filter(lang => 
-    lang.label.toLowerCase().includes(langSearch.toLowerCase()) ||
-    lang.value.toLowerCase().includes(langSearch.toLowerCase())
-  );
+  // Filter languages - selected items first
+  const filteredLanguages = useMemo(() => {
+    const filtered = LANGUAGES.filter(lang => 
+      lang.label.toLowerCase().includes(langSearch.toLowerCase()) ||
+      lang.value.toLowerCase().includes(langSearch.toLowerCase())
+    );
+    // Sort selected items first
+    return [...filtered].sort((a, b) => {
+      const aSelected = selectedLanguages.includes(a.value);
+      const bSelected = selectedLanguages.includes(b.value);
+      if (aSelected && !bSelected) return -1;
+      if (!aSelected && bSelected) return 1;
+      return 0;
+    });
+  }, [langSearch, selectedLanguages]);
   const displayedLanguages = showAllLangs || langSearch 
     ? filteredLanguages 
     : filteredLanguages.slice(0, INITIAL_DISPLAY);
   const hasMoreLangs = !langSearch && filteredLanguages.length > INITIAL_DISPLAY;
 
-  // Filter frameworks
-  const filteredFrameworks = FRAMEWORKS.filter(fw => 
-    fw.label.toLowerCase().includes(fwSearch.toLowerCase()) ||
-    fw.value.toLowerCase().includes(fwSearch.toLowerCase())
-  );
+  // Filter frameworks - selected items first
+  const filteredFrameworks = useMemo(() => {
+    const filtered = FRAMEWORKS.filter(fw => 
+      fw.label.toLowerCase().includes(fwSearch.toLowerCase()) ||
+      fw.value.toLowerCase().includes(fwSearch.toLowerCase())
+    );
+    // Sort selected items first
+    return [...filtered].sort((a, b) => {
+      const aSelected = selectedFrameworks.includes(a.value);
+      const bSelected = selectedFrameworks.includes(b.value);
+      if (aSelected && !bSelected) return -1;
+      if (!aSelected && bSelected) return 1;
+      return 0;
+    });
+  }, [fwSearch, selectedFrameworks]);
   const displayedFrameworks = showAllFrameworks || fwSearch 
     ? filteredFrameworks 
     : filteredFrameworks.slice(0, INITIAL_DISPLAY);
   const hasMoreFws = !fwSearch && filteredFrameworks.length > INITIAL_DISPLAY;
 
-  // Filter databases - grouped by category
-  const filteredDatabases = DATABASES.filter(db => 
-    db.label.toLowerCase().includes(dbSearch.toLowerCase()) ||
-    db.value.toLowerCase().includes(dbSearch.toLowerCase())
-  );
+  // Filter databases - grouped by category, selected items first
+  const filteredDatabases = useMemo(() => {
+    const filtered = DATABASES.filter(db => 
+      db.label.toLowerCase().includes(dbSearch.toLowerCase()) ||
+      db.value.toLowerCase().includes(dbSearch.toLowerCase())
+    );
+    // Sort selected items first within each category
+    return [...filtered].sort((a, b) => {
+      const aSelected = selectedDatabases.includes(a.value);
+      const bSelected = selectedDatabases.includes(b.value);
+      if (aSelected && !bSelected) return -1;
+      if (!aSelected && bSelected) return 1;
+      return 0;
+    });
+  }, [dbSearch, selectedDatabases]);
   // Group by category for display
   const openSourceDbs = filteredDatabases.filter(db => db.category === "opensource");
   const cloudDbs = filteredDatabases.filter(db => db.category === "cloud");
