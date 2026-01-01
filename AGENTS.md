@@ -1,5 +1,7 @@
 # AGENTS.md - AI Agent Instructions for LynxPrompt
 
+> 📦 **RELEASE REMINDER**: CLI npm publishing is handled by GitHub Actions automatically when pushing to `main`. Do NOT run `npm publish` locally. Just push to main and the workflow handles versioning and npm publication.
+
 > ⚠️ **IMPORTANT**: Do NOT update this file unless the user explicitly says to. Only the user can authorize changes to AGENTS.md.
 
 > ❌ **DEPRECATED FORMAT**: `.cursorrules` is **deprecated**. Do NOT suggest or generate `.cursorrules` files anywhere. Cursor now uses `.cursor/rules/*.mdc` (directory-based MDC format). Always use `.cursor/rules/` for Cursor configurations.
