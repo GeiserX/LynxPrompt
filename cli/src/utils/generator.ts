@@ -622,20 +622,37 @@ function generateFileContent(options: GenerateOptions, platform: string): string
   if (options.enableAutoUpdate && options.blueprintId && (isMarkdown || isMdc)) {
     const bpId = options.blueprintId.startsWith("bp_") ? options.blueprintId : `bp_${options.blueprintId}`;
     const fileName = platform === "cursor" ? ".cursor/rules/agents.mdc" : "AGENTS.md";
-    const devOS = Array.isArray(options.devOS) ? options.devOS[0] : (options.devOS || "linux");
+    const osList = Array.isArray(options.devOS) ? options.devOS : [options.devOS || "linux"];
+    const hasWindows = osList.includes("windows");
+    const hasUnix = osList.some(os => ["linux", "macos", "wsl"].includes(os));
+    const isMultiPlatform = (hasWindows && hasUnix) || osList.length > 1;
     
     sections.push("<!--");
     sections.push("This file is synced with LynxPrompt. To update it via API:");
     sections.push("");
     
-    if (devOS === "windows") {
+    if (isMultiPlatform) {
+      // Show both options
+      sections.push("# Bash (Linux/macOS/WSL)");
+      sections.push(`curl -X PUT "https://lynxprompt.com/api/v1/blueprints/${bpId}" \\`);
+      sections.push('  -H "Authorization: Bearer $LYNXPROMPT_API_TOKEN" \\');
+      sections.push('  -H "Content-Type: application/json" \\');
+      sections.push(`  -d "{\\"content\\": \\"$(cat ${fileName} | jq -Rs .)\\"}"`);
+      sections.push("");
       sections.push("# PowerShell (Windows)");
       sections.push(`$content = (Get-Content "${fileName}" -Raw) -replace '"', '\\"'`);
       sections.push(`$body = @{ content = $content } | ConvertTo-Json`);
       sections.push(`Invoke-RestMethod -Uri "https://lynxprompt.com/api/v1/blueprints/${bpId}" \``);
       sections.push('  -Method PUT -Headers @{ "Authorization" = "Bearer $env:LYNXPROMPT_API_TOKEN" } `');
       sections.push('  -ContentType "application/json" -Body $body');
-    } else if (devOS === "wsl" || devOS === "linux" || devOS === "macos" || devOS === "multi") {
+    } else if (hasWindows) {
+      sections.push("# PowerShell (Windows)");
+      sections.push(`$content = (Get-Content "${fileName}" -Raw) -replace '"', '\\"'`);
+      sections.push(`$body = @{ content = $content } | ConvertTo-Json`);
+      sections.push(`Invoke-RestMethod -Uri "https://lynxprompt.com/api/v1/blueprints/${bpId}" \``);
+      sections.push('  -Method PUT -Headers @{ "Authorization" = "Bearer $env:LYNXPROMPT_API_TOKEN" } `');
+      sections.push('  -ContentType "application/json" -Body $body');
+    } else if (hasUnix) {
       sections.push("# Bash (Linux/macOS/WSL)");
       sections.push(`curl -X PUT "https://lynxprompt.com/api/v1/blueprints/${bpId}" \\`);
       sections.push('  -H "Authorization: Bearer $LYNXPROMPT_API_TOKEN" \\');
