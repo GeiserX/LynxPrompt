@@ -1027,10 +1027,9 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
   const authenticated = isAuthenticated();
   const user = getUser();
   const userPlanRaw = user?.plan?.toLowerCase() || "free";
-  const userTier: UserTier = ["pro", "max", "teams"].includes(userPlanRaw) 
-    ? (userPlanRaw as UserTier) 
-    : "free";
-  const userPlanDisplay = user?.plan?.toUpperCase() || "FREE";
+  // Map legacy pro/max to users (free), only teams is a paid tier now
+  const userTier: UserTier = userPlanRaw === "teams" ? "teams" : "users";
+  const userPlanDisplay = userTier === "teams" ? "TEAMS" : "USERS";
   
   if (!authenticated) {
     // Show login notice for guests (box width: 55 inner chars)
@@ -1041,9 +1040,9 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
     console.log(y("┌" + "─".repeat(W) + "┐"));
     console.log(y("│") + pad(" 💡 Log in for full wizard features:", W - 1) + y("│"));
     console.log(y("│") + " ".repeat(W) + y("│"));
-    console.log(y("│") + pad("    • Commands & Code Style [PRO]", W) + y("│"));
-    console.log(y("│") + pad("    • Boundaries, Testing, Static Files [MAX]", W) + y("│"));
-    console.log(y("│") + pad("    • Auto-detect from remote repos [MAX]", W) + y("│"));
+    console.log(y("│") + pad("    • Full wizard with all steps", W) + y("│"));
+    console.log(y("│") + pad("    • Auto-detect from repos [TEAMS]", W) + y("│"));
+    console.log(y("│") + pad("    • AI assistant for configs [TEAMS]", W) + y("│"));
     console.log(y("│") + pad("    • Save preferences to your profile", W) + y("│"));
     console.log(y("│") + pad("    • Push configs to cloud (lynxp push)", W) + y("│"));
     console.log(y("│") + pad("    • Share across devices (lynxp push/pull)", W) + y("│"));
@@ -1053,7 +1052,7 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
     console.log();
   } else {
     // Show logged-in status with plan
-    const planEmoji = userTier === "teams" ? "👥" : userTier === "max" ? "🚀" : userTier === "pro" ? "⚡" : "🆓";
+    const planEmoji = userTier === "teams" ? "👥" : "🆓";
     console.log(chalk.green(`  ✓ Logged in as ${chalk.bold(user?.name || user?.email)} ${planEmoji} ${chalk.gray(userPlanDisplay)}`));
     console.log();
   }
@@ -1093,15 +1092,15 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
     console.log();
   }
   
-  // Always offer to analyze a remote repository (Max/Teams feature)
-  const canDetectRemote = canAccessAI(userTier); // Max/Teams only
+  // Always offer to analyze a repository (available to all users)
+  const canDetectRemote = true; // Available to everyone now
   
   if (canDetectRemote) {
     console.log();
-    console.log(chalk.magenta.bold("  ┌─────────────────────────────────────────────────┐"));
-    console.log(chalk.magenta.bold("  │  ✨ AUTO-DETECT FROM REPOSITORY (MAX/TEAMS)     │"));
-    console.log(chalk.magenta.bold("  └─────────────────────────────────────────────────┘"));
-    console.log(chalk.gray("     Analyze any public GitHub/GitLab repo, or private with git credentials."));
+    console.log(chalk.magenta.bold("  ┌───────────────────────────────────────────────┐"));
+    console.log(chalk.magenta.bold("  │  ✨ AUTO-DETECT FROM REPOSITORY               │"));
+    console.log(chalk.magenta.bold("  └───────────────────────────────────────────────┘"));
+    console.log(chalk.gray("     Analyze any local path, GitHub/GitLab URL, or private repo with credentials."));
     console.log(chalk.gray("     We'll detect: languages, frameworks, commands, license, CI/CD, and more!"));
     console.log();
     
@@ -1109,8 +1108,8 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
       type: "confirm",
       name: "useRemote",
       message: detected 
-        ? chalk.white("🔍 Analyze a different remote repository instead?")
-        : chalk.white("🔍 Analyze a remote repository URL?"),
+        ? chalk.white("🔍 Analyze a different repository instead?")
+        : chalk.white("🔍 Analyze a repository (local path or URL)?"),
       initial: false, // Default to No - user must explicitly choose Yes
     }, promptConfig);
     
@@ -1118,40 +1117,79 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
       const urlResponse = await prompts({
         type: "text",
         name: "url",
-        message: chalk.white("Enter the repository URL:"),
-        hint: chalk.gray("GitHub, GitLab, or any git host"),
-        validate: (v) => isGitUrl(v) || "Please enter a valid Git URL",
+        message: chalk.white("Enter local path or repository URL:"),
+        hint: chalk.gray("/path/to/project or https://github.com/user/repo"),
+        validate: (v) => {
+          if (!v || v.trim() === "") return "Please enter a path or URL";
+          // Accept local paths (start with /, ~, or .)
+          if (v.startsWith("/") || v.startsWith("~") || v.startsWith(".")) return true;
+          // Accept git URLs
+          if (isGitUrl(v)) return true;
+          return "Please enter a valid local path or Git URL";
+        },
       }, promptConfig);
       
       if (urlResponse.url) {
-        const host = urlResponse.url.toLowerCase().includes("github") ? "GitHub API" 
-          : urlResponse.url.toLowerCase().includes("gitlab") ? "GitLab API" 
-          : "shallow clone";
-        const remoteSpinner = ora(`Analyzing remote repository via ${host}...`).start();
-        const remoteDetected = await detectFromRemoteUrl(urlResponse.url);
+        const inputPath = urlResponse.url.trim();
+        const isLocalPath = inputPath.startsWith("/") || inputPath.startsWith("~") || inputPath.startsWith(".");
         
-        if (remoteDetected) {
-          detected = remoteDetected;
-          remoteSpinner.succeed("Remote repository analyzed");
+        if (isLocalPath) {
+          // Expand ~ to home directory
+          const { homedir } = await import("os");
+          const resolvedPath = inputPath.startsWith("~") 
+            ? inputPath.replace("~", homedir())
+            : inputPath.startsWith(".")
+              ? join(process.cwd(), inputPath)
+              : inputPath;
           
-          // Show remote detection results
-          const detectedInfo = [
-            chalk.green("✓ Remote project detected"),
-          ];
-          if (detected.name) detectedInfo.push(chalk.gray(`  Name: ${detected.name}`));
-          if (detected.stack.length > 0) detectedInfo.push(chalk.gray(`  Stack: ${detected.stack.join(", ")}`));
-          if (detected.repoUrl) detectedInfo.push(chalk.gray(`  Source: ${detected.repoUrl}`));
+          const localSpinner = ora(`Analyzing local repository at ${resolvedPath}...`).start();
+          const localDetected = await detectProject(resolvedPath);
           
-          printBox(detectedInfo, chalk.gray);
-          console.log();
+          if (localDetected) {
+            detected = localDetected;
+            localSpinner.succeed("Local repository analyzed");
+            
+            // Show local detection results
+            const detectedInfo = [
+              chalk.green("✓ Local project detected"),
+            ];
+            if (detected.name) detectedInfo.push(chalk.gray(`  Name: ${detected.name}`));
+            if (detected.stack.length > 0) detectedInfo.push(chalk.gray(`  Stack: ${detected.stack.join(", ")}`));
+            if (detected.packageManager) detectedInfo.push(chalk.gray(`  Package manager: ${detected.packageManager}`));
+            
+            printBox(detectedInfo, chalk.gray);
+            console.log();
+          } else {
+            localSpinner.fail("Could not analyze directory (no recognizable project structure)");
+          }
         } else {
-          remoteSpinner.fail("Could not analyze repository (may be private or inaccessible)");
+          // Remote URL analysis
+          const host = inputPath.toLowerCase().includes("github") ? "GitHub API" 
+            : inputPath.toLowerCase().includes("gitlab") ? "GitLab API" 
+            : "shallow clone";
+          const remoteSpinner = ora(`Analyzing remote repository via ${host}...`).start();
+          const remoteDetected = await detectFromRemoteUrl(inputPath);
+        
+          if (remoteDetected) {
+            detected = remoteDetected;
+            remoteSpinner.succeed("Remote repository analyzed");
+            
+            // Show remote detection results
+            const detectedInfo = [
+              chalk.green("✓ Remote project detected"),
+            ];
+            if (detected.name) detectedInfo.push(chalk.gray(`  Name: ${detected.name}`));
+            if (detected.stack.length > 0) detectedInfo.push(chalk.gray(`  Stack: ${detected.stack.join(", ")}`));
+            if (detected.repoUrl) detectedInfo.push(chalk.gray(`  Source: ${detected.repoUrl}`));
+            
+            printBox(detectedInfo, chalk.gray);
+            console.log();
+          } else {
+            remoteSpinner.fail("Could not analyze repository (may be private or inaccessible)");
+          }
         }
       }
     }
-  } else if (!detected) {
-    console.log(chalk.yellow("  💡 Tip: Max/Teams users can analyze remote repository URLs"));
-    console.log();
   }
 
   let config: GenerateOptions;
@@ -2028,7 +2066,7 @@ async function runInteractiveWizard(
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // STEP 6: Commands (intermediate - Pro+)
+  // STEP 6: Commands (intermediate)
   // (was STEP 5 before Security step added)
   // ═══════════════════════════════════════════════════════════════
   if (canAccessTier(userTier, "intermediate")) {
@@ -2134,7 +2172,7 @@ async function runInteractiveWizard(
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // STEP 7: Code Style (intermediate - Pro+)
+  // STEP 7: Code Style (intermediate)
   // ═══════════════════════════════════════════════════════════════
   if (canAccessTier(userTier, "intermediate")) {
     const styleStep = getCurrentStep("code_style")!;
@@ -2266,23 +2304,58 @@ async function runInteractiveWizard(
   }, promptConfig);
   answers.importantFiles = importantFilesResponse.importantFiles || [];
 
+  // Cloud sync & AI learning options (grouped together)
+  console.log();
+  console.log(chalk.gray("  ─── Cloud & AI Options ───"));
+  console.log();
+  
+  // Auto-update via API option (requires saving blueprint to cloud)
+  console.log(chalk.gray("  📤 Save your config to LynxPrompt cloud and add a curl command to auto-update."));
+  console.log(chalk.gray("     When you run the curl, your local config syncs with cloud changes."));
+  const enableAutoUpdateResponse = await prompts({
+    type: "toggle",
+    name: "enableAutoUpdate",
+    message: chalk.white("Save to cloud & enable auto-sync?"),
+    initial: false,
+    active: "Yes",
+    inactive: "No",
+    hint: chalk.gray("Adds curl command for automatic updates"),
+  }, promptConfig);
+  answers.enableAutoUpdate = enableAutoUpdateResponse.enableAutoUpdate || false;
+
+  if (answers.enableAutoUpdate && !api) {
+    console.log(chalk.yellow("  ⚠️  Cloud sync requires login. Run 'lynxp login' first."));
+    console.log(chalk.gray("     Continuing without cloud sync..."));
+    answers.enableAutoUpdate = false;
+  }
+
+  // Self-improving blueprint - learn from your edits
+  console.log();
+  console.log(chalk.gray("  🧠 Self-improving blueprints track your manual edits and suggest improvements."));
+  console.log(chalk.gray("     LynxPrompt learns your preferences to generate better configs over time."));
   const selfImproveResponse = await prompts({
     type: "toggle",
     name: "selfImprove",
-    message: chalk.white("Enable self-improving blueprint?"),
+    message: chalk.white("Enable AI learning from your edits?"),
     initial: false,
     active: "Yes",
     inactive: "No",
+    hint: chalk.gray("AI learns your style from manual changes"),
   }, promptConfig);
   answers.selfImprove = selfImproveResponse.selfImprove || false;
 
+  // Include personal data from profile
+  console.log();
+  console.log(chalk.gray("  👤 Include your profile info (name, email, persona) in the generated config."));
+  console.log(chalk.gray("     This helps AI tools personalize responses to your expertise level."));
   const includePersonalResponse = await prompts({
     type: "toggle",
     name: "includePersonalData",
-    message: chalk.white("Include personal data (as saved in WebUI)?"),
+    message: chalk.white("Include your profile data in config?"),
     initial: false,
     active: "Yes",
     inactive: "No",
+    hint: chalk.gray("Name, email, expertise from your profile"),
   }, promptConfig);
   answers.includePersonalData = includePersonalResponse.includePersonalData || false;
 
@@ -2304,25 +2377,8 @@ async function runInteractiveWizard(
     }
   }
 
-  // Auto-update via API option (requires saving blueprint to cloud)
-  const enableAutoUpdateResponse = await prompts({
-    type: "toggle",
-    name: "enableAutoUpdate",
-    message: chalk.white("Save to cloud & enable auto-update via API?"),
-    initial: false,
-    active: "Yes",
-    inactive: "No",
-  }, promptConfig);
-  answers.enableAutoUpdate = enableAutoUpdateResponse.enableAutoUpdate || false;
-
-  if (answers.enableAutoUpdate && !api) {
-    console.log(chalk.yellow("  ⚠️  Auto-update requires login. Run 'lynxp login' first."));
-    console.log(chalk.gray("     Continuing without auto-update..."));
-    answers.enableAutoUpdate = false;
-  }
-
   // ═══════════════════════════════════════════════════════════════
-  // STEP 9: Boundaries (advanced - Max+)
+  // STEP 9: Boundaries (advanced)
   // ═══════════════════════════════════════════════════════════════
   if (canAccessTier(userTier, "advanced")) {
     const boundariesStep = getCurrentStep("boundaries")!;
@@ -2403,7 +2459,7 @@ async function runInteractiveWizard(
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // STEP 10: Testing Strategy (advanced - Max+)
+  // STEP 10: Testing Strategy (advanced)
   // ═══════════════════════════════════════════════════════════════
   if (canAccessTier(userTier, "advanced")) {
     const testingStep = getCurrentStep("testing")!;
@@ -2467,7 +2523,7 @@ async function runInteractiveWizard(
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // STEP 11: Static Files (advanced - Max+)
+  // STEP 11: Static Files (advanced)
   // ═══════════════════════════════════════════════════════════════
   if (canAccessTier(userTier, "advanced")) {
     const staticStep = getCurrentStep("static")!;
@@ -2646,7 +2702,7 @@ async function runInteractiveWizard(
   // (Users can set their persona in the web UI under AI Configuration)
   answers.persona = "";
 
-  // Anything else - with AI assist option for Max/Teams users
+  // Anything else - with AI assist option for Teams users
   const hasAIAccess = canAccessAI(userTier);
   
   if (hasAIAccess) {

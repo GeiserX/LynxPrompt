@@ -59,8 +59,8 @@ function printBlueprint(bp: Blueprint): void {
 
   const tierBadge = {
     SIMPLE: chalk.gray("[Basic]"),
-    INTERMEDIATE: chalk.blue("[Pro]"),
-    ADVANCED: chalk.magenta("[Max]"),
+    INTERMEDIATE: chalk.blue("[Standard]"),
+    ADVANCED: chalk.cyan("[Advanced]"),
   }[bp.tier] || "";
 
   console.log(`  ${visibilityIcon} ${chalk.bold(bp.name)} ${tierBadge}`);
@@ -87,8 +87,8 @@ function handleApiError(error: unknown): void {
     if (error.statusCode === 401) {
       console.error(chalk.red("Your session has expired. Please run 'lynxprompt login' again."));
     } else if (error.statusCode === 403) {
-      console.error(chalk.red("API access requires Pro, Max, or Teams subscription."));
-      console.error(chalk.gray("Upgrade at https://lynxprompt.com/pricing"));
+      console.error(chalk.red("API access error. Please check your subscription."));
+      console.error(chalk.gray("Visit https://lynxprompt.com/pricing for plan details."));
     } else {
       console.error(chalk.red(`Error: ${error.message}`));
     }
