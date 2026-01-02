@@ -139,11 +139,33 @@ jobs:
           fi
           echo "✓ Token available"
 
+      - name: Wait for dev server to be healthy
+        run: |
+          echo "Checking dev server health..."
+          for i in 1 2 3 4 5; do
+            if curl -sf https://dev.lynxprompt.com/api/health > /dev/null 2>&1; then
+              echo "✓ Dev server is healthy"
+              exit 0
+            fi
+            echo "Attempt $i: Server not ready, waiting 30s..."
+            sleep 30
+          done
+          echo "⚠️ Dev server may not be fully deployed yet, proceeding anyway"
+
       - name: Test whoami
         if: env.LYNXPROMPT_TOKEN != ''
         run: |
-          lynxp whoami
-          echo "✓ Authentication working"
+          # Retry up to 3 times in case server is still warming up
+          for i in 1 2 3; do
+            if lynxp whoami; then
+              echo "✓ Authentication working"
+              exit 0
+            fi
+            echo "Attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+          echo "❌ whoami failed after 3 attempts"
+          exit 1
 
       - name: Test list blueprints
         if: env.LYNXPROMPT_TOKEN != ''
