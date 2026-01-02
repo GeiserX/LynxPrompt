@@ -45,8 +45,9 @@ export async function GET(req: NextRequest) {
       TEAMS: 0,
     };
     usersByPlan.forEach((row) => {
-      const plan = row.subscriptionPlan;
-      // Map legacy PRO/MAX to FREE for stats
+      // Cast to string to handle legacy PRO/MAX values in database
+      const plan = row.subscriptionPlan as string;
+      // Map legacy PRO/MAX to FREE (Users) for stats
       if (plan === "FREE" || plan === "PRO" || plan === "MAX") {
         currentPlanCounts["FREE"] = (currentPlanCounts["FREE"] || 0) + row._count.id;
       } else if (plan === "TEAMS") {
