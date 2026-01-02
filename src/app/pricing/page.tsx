@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Check, X, Zap, Crown, Star, ArrowRight, Users } from "lucide-react";
+import { Sparkles, Check, X, Zap, ArrowRight, Users } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
 import { PLAN_PRICES } from "@/lib/stripe";
@@ -21,8 +21,8 @@ const formatEuros = (cents: number): string => {
 };
 
 // Prices in cents from stripe.ts
-const getPriceDisplay = (plan: "pro" | "max" | "teams", interval: BillingInterval) => {
-  const prices = PLAN_PRICES[plan];
+const getPriceDisplay = (interval: BillingInterval) => {
+  const prices = PLAN_PRICES.teams;
   if (interval === "annual") {
     // Show monthly equivalent for annual
     const monthlyEquivalent = prices.annual / 12;
@@ -31,124 +31,84 @@ const getPriceDisplay = (plan: "pro" | "max" | "teams", interval: BillingInterva
   return formatEuros(prices.monthly);
 };
 
-const getOriginalMonthlyPrice = (plan: "pro" | "max" | "teams") => {
-  return formatEuros(PLAN_PRICES[plan].monthly);
+const getOriginalMonthlyPrice = () => {
+  return formatEuros(PLAN_PRICES.teams.monthly);
 };
 
-const getAnnualTotal = (plan: "pro" | "max" | "teams") => {
-  return formatEuros(PLAN_PRICES[plan].annual);
+const getAnnualTotal = () => {
+  return formatEuros(PLAN_PRICES.teams.annual);
 };
 
 const getTiers = (interval: BillingInterval) => [
   {
-    name: "Free",
+    name: "Users",
     price: "€0",
     period: "forever",
     originalPrice: null,
     annualTotal: null,
-    description: "Perfect for getting started with AI IDE configurations",
+    description: "Full access to all wizard features. Perfect for individual developers.",
     icon: Zap,
-    highlighted: false,
-    iconStyle: "default",
+    highlighted: true,
+    iconStyle: "primary",
+    badge: "Most Popular",
     features: [
-      { text: "Basic wizards", included: true },
-      { text: "Download configs", included: true },
-      { text: "Browse free blueprints", included: true },
-      { text: "Create & store private blueprints", included: true },
-      { text: "Community support", included: true },
+      { text: "Full wizard (all steps)", included: true },
+      { text: "Download configs for all platforms", included: true },
+      { text: "Browse & create blueprints", included: true },
+      { text: "API access", included: true },
+      { text: "Save wizard drafts", included: true },
+      { text: "Sell blueprints (70% revenue)", included: true },
+      { text: "AI-powered editing", included: false },
+      { text: "Team-shared blueprints", included: false },
+      { text: "SSO (SAML, OIDC, LDAP)", included: false },
     ],
     cta: "Get Started",
     ctaLink: "/auth/signin",
   },
   {
-    name: "Pro",
-    price: getPriceDisplay("pro", interval),
-    period: "/month",
-    originalPrice: interval === "annual" ? getOriginalMonthlyPrice("pro") : null,
-    annualTotal: interval === "annual" ? getAnnualTotal("pro") : null,
-    description: "For developers who want more powerful configuration options",
-    icon: Star,
-    highlighted: true,
-    iconStyle: "primary",
-    badge: "Most Popular",
-    features: [
-      { text: "Everything in Free", included: true },
-      { text: "Intermediate repo wizards", included: true },
-      { text: "API access for blueprints", included: true },
-      { text: "Priority support", included: true },
-      { text: "Save wizard drafts", included: true },
-      { text: "Sell blueprints (70% revenue)", included: true },
-    ],
-    cta: "Start Pro Trial",
-    ctaLink: `/auth/signin?plan=pro&interval=${interval}`,
-  },
-  {
-    name: "Max",
-    price: getPriceDisplay("max", interval),
-    period: "/month",
-    originalPrice: interval === "annual" ? getOriginalMonthlyPrice("max") : null,
-    annualTotal: interval === "annual" ? getAnnualTotal("max") : null,
-    description:
-      "Full power with advanced features and discounts on paid blueprints",
-    icon: Crown,
-    highlighted: false,
-    iconStyle: "accent",
-    features: [
-      { text: "Everything in Pro", included: true },
-      { text: "Advanced repo wizards", included: true },
-      { text: "AI-powered blueprint editing", included: true },
-      { text: "10% off paid blueprints", included: true },
-      { text: "Early access to features", included: true },
-      { text: "Premium support", included: true },
-    ],
-    cta: "Go Max",
-    ctaLink: `/auth/signin?plan=max&interval=${interval}`,
-  },
-  {
     name: "Teams",
-    price: getPriceDisplay("teams", interval),
+    price: getPriceDisplay(interval),
     period: "/seat/month",
-    originalPrice: interval === "annual" ? getOriginalMonthlyPrice("teams") : null,
-    annualTotal: interval === "annual" ? `${getAnnualTotal("teams")}/seat` : null,
+    originalPrice: interval === "annual" ? getOriginalMonthlyPrice() : null,
+    annualTotal: interval === "annual" ? `${getAnnualTotal()}/seat` : null,
     description:
-      "For organizations that need centralized management and SSO",
+      "For organizations that need AI assistance, centralized management, and SSO",
     icon: Users,
     highlighted: false,
     iconStyle: "teams",
     badge: "Enterprise",
     features: [
-      { text: "Everything in Max", included: true },
+      { text: "Everything in Users", included: true },
+      { text: "AI-powered blueprint editing", included: true },
+      { text: "AI wizard assistant", included: true },
       { text: "Team-shared blueprints", included: true },
       { text: "SSO (SAML, OIDC, LDAP)", included: true },
       { text: "Centralized billing", included: true },
       { text: "Only pay for active users", included: true },
-      { text: "Extended AI usage", included: true },
+      { text: "Extended AI usage limits", included: true },
+      { text: "Priority support", included: true },
     ],
-    cta: "Contact Sales",
+    cta: "Start Teams Trial",
     ctaLink: "/teams",
   },
 ];
 
 const COMPARISON_FEATURES = [
-  { name: "Basic wizards", free: true, pro: true, max: true, teams: true },
-  { name: "Intermediate wizards", free: false, pro: true, max: true, teams: true },
-  { name: "Advanced wizards", free: false, pro: false, max: true, teams: true },
-  { name: "AI-powered editing", free: false, pro: false, max: true, teams: true },
-  { name: "API access", free: false, pro: true, max: true, teams: true },
-  { name: "Download configs", free: true, pro: true, max: true, teams: true },
-  { name: "Browse free blueprints", free: true, pro: true, max: true, teams: true },
-  { name: "Create private blueprints", free: true, pro: true, max: true, teams: true },
-  { name: "Paid blueprint discount", free: "-", pro: "-", max: "10% off", teams: "10% off" },
-  { name: "Sell blueprints", free: false, pro: true, max: true, teams: true },
-  { name: "Revenue share", free: "-", pro: "70%", max: "70%", teams: "70%" },
-  { name: "Save drafts", free: false, pro: true, max: true, teams: true },
-  { name: "Priority support", free: false, pro: true, max: true, teams: true },
-  { name: "Premium support", free: false, pro: false, max: true, teams: true },
-  { name: "Team-shared blueprints", free: false, pro: false, max: false, teams: true },
-  { name: "SSO (SAML/OIDC/LDAP)", free: false, pro: false, max: false, teams: true },
-  { name: "Centralized billing", free: false, pro: false, max: false, teams: true },
-  { name: "Active user billing only", free: "-", pro: "-", max: "-", teams: true },
-  { name: "AI usage limit", free: "-", pro: "-", max: "Standard", teams: "Extended" },
+  { name: "Full wizard (all steps)", users: true, teams: true },
+  { name: "All platforms (16+ IDEs)", users: true, teams: true },
+  { name: "API access", users: true, teams: true },
+  { name: "Download configs", users: true, teams: true },
+  { name: "Create private blueprints", users: true, teams: true },
+  { name: "Browse & download blueprints", users: true, teams: true },
+  { name: "Sell blueprints (70% revenue)", users: true, teams: true },
+  { name: "Save wizard drafts", users: true, teams: true },
+  { name: "AI-powered editing", users: false, teams: true },
+  { name: "AI wizard assistant", users: false, teams: true },
+  { name: "Team-shared blueprints", users: false, teams: true },
+  { name: "SSO (SAML/OIDC/LDAP)", users: false, teams: true },
+  { name: "Centralized billing", users: false, teams: true },
+  { name: "Active user billing only", users: "-", teams: true },
+  { name: "Priority support", users: false, teams: true },
 ];
 
 export default function PricingPage() {
@@ -159,17 +119,14 @@ export default function PricingPage() {
   const TIERS = getTiers(billingInterval);
 
   // Dynamic CTA links based on auth status and billing interval
-  const getCtaLink = (plan: string) => {
-    if (plan === "teams") {
+  const getCtaLink = (tierName: string) => {
+    if (tierName === "Teams") {
       return `/teams?interval=${billingInterval}`; // Teams has its own signup flow
     }
     if (!isAuthenticated) {
-      return `/auth/signin${plan !== "free" ? `?plan=${plan}&interval=${billingInterval}` : ""}`;
+      return "/auth/signin";
     }
-    if (plan === "free") {
-      return "/dashboard";
-    }
-    return `/settings/billing?upgrade=${plan}&interval=${billingInterval}`;
+    return "/dashboard";
   };
 
   return (
@@ -186,14 +143,13 @@ export default function PricingPage() {
               <span>Simple, transparent pricing</span>
             </div>
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-              Choose the plan that&apos;s right for you
+              Full access for everyone
             </h1>
             <p className="mt-4 text-lg text-muted-foreground">
-              Start free and upgrade as you grow. All plans include core
-              features.
+              All users get the complete wizard experience. Teams adds AI assistance and enterprise features.
             </p>
             
-            {/* Billing Interval Toggle */}
+            {/* Billing Interval Toggle (only affects Teams pricing) */}
             <div className="mt-8 flex items-center justify-center gap-4">
               <div className="relative inline-flex rounded-full border bg-muted/50 p-1">
                 <button
@@ -223,13 +179,13 @@ export default function PricingPage() {
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
                   </span>
-                  Save 10%
+                  Save 10% on Teams
                 </span>
               )}
             </div>
             {billingInterval === "annual" && (
               <p className="mt-3 text-sm text-muted-foreground">
-                Billed annually. Annual subscriptions cannot be canceled mid-cycle.
+                Teams billed annually. Annual subscriptions cannot be canceled mid-cycle.
               </p>
             )}
           </div>
@@ -239,7 +195,7 @@ export default function PricingPage() {
       {/* Pricing Cards */}
       <section className="py-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <div className="mx-auto grid max-w-4xl gap-8 md:grid-cols-2">
             {TIERS.map((tier) => (
               <div
                 key={tier.name}
@@ -267,29 +223,25 @@ export default function PricingPage() {
                   <div className="flex items-center gap-3">
                     <div
                       className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                        tier.iconStyle === "accent"
-                          ? "bg-gradient-to-br from-purple-500 to-pink-500"
-                          : tier.iconStyle === "teams"
-                            ? "bg-gradient-to-br from-teal-500 to-cyan-500"
-                            : tier.iconStyle === "primary"
-                              ? "bg-primary"
-                              : "border-2 border-muted-foreground/30 bg-muted"
+                        tier.iconStyle === "teams"
+                          ? "bg-gradient-to-br from-teal-500 to-cyan-500"
+                          : tier.iconStyle === "primary"
+                            ? "bg-primary"
+                            : "border-2 border-muted-foreground/30 bg-muted"
                       }`}
                     >
                       <tier.icon
                         className={`h-5 w-5 ${
-                          tier.iconStyle === "accent" || tier.iconStyle === "primary" || tier.iconStyle === "teams"
+                          tier.iconStyle === "primary" || tier.iconStyle === "teams"
                             ? "text-white"
                             : "text-foreground"
                         }`}
                       />
                     </div>
                     <h3 className={`text-xl font-semibold ${
-                      tier.iconStyle === "accent" 
-                        ? "bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent"
-                        : tier.iconStyle === "teams"
-                          ? "bg-gradient-to-r from-teal-500 to-cyan-500 bg-clip-text text-transparent"
-                          : ""
+                      tier.iconStyle === "teams"
+                        ? "bg-gradient-to-r from-teal-500 to-cyan-500 bg-clip-text text-transparent"
+                        : ""
                     }`}>{tier.name}</h3>
                   </div>
 
@@ -346,11 +298,11 @@ export default function PricingPage() {
                     variant={tier.highlighted ? "default" : "outline"}
                     size="lg"
                   >
-                    <Link href={getCtaLink(tier.name.toLowerCase())}>
-                      {isAuthenticated && tier.name === "Free"
+                    <Link href={getCtaLink(tier.name)}>
+                      {isAuthenticated && tier.name === "Users"
                         ? "Go to Dashboard"
-                        : isAuthenticated
-                          ? `Upgrade to ${tier.name}`
+                        : isAuthenticated && tier.name === "Teams"
+                          ? "Upgrade to Teams"
                           : tier.cta}
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
@@ -365,31 +317,22 @@ export default function PricingPage() {
       {/* Feature Comparison Table */}
       <section className="border-t bg-muted/30 py-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-4xl">
+          <div className="mx-auto max-w-3xl">
             <h2 className="mb-8 text-center text-2xl font-bold">
               Feature Comparison
             </h2>
 
-            {/* Mobile scroll hint */}
-            <p className="mb-3 text-center text-xs text-muted-foreground sm:hidden">
-              ← Scroll to see all plans →
-            </p>
-
             <div className="overflow-x-auto rounded-lg border bg-card">
-              <table className="w-full min-w-[600px]">
+              <table className="w-full">
                 <colgroup>
-                  <col className="w-[32%]" />
-                  <col className="w-[17%]" />
-                  <col className="w-[17%]" />
-                  <col className="w-[17%]" />
-                  <col className="w-[17%]" />
+                  <col className="w-[50%]" />
+                  <col className="w-[25%]" />
+                  <col className="w-[25%]" />
                 </colgroup>
                 <thead>
                   <tr className="border-b bg-muted/50">
                     <th className="px-4 py-3 text-left font-medium">Feature</th>
-                    <th className="px-3 py-3 text-center font-medium">Free</th>
-                    <th className="px-3 py-3 text-center font-medium text-primary">Pro</th>
-                    <th className="px-3 py-3 text-center font-medium bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">Max</th>
+                    <th className="px-3 py-3 text-center font-medium text-primary">Users</th>
                     <th className="px-3 py-3 text-center font-medium bg-gradient-to-r from-teal-500 to-cyan-500 bg-clip-text text-transparent">Teams</th>
                   </tr>
                 </thead>
@@ -398,41 +341,15 @@ export default function PricingPage() {
                     <tr key={idx} className="border-b last:border-b-0">
                       <td className="px-4 py-3 text-sm">{feature.name}</td>
                       <td className="px-3 py-3 text-center">
-                        {typeof feature.free === "boolean" ? (
-                          feature.free ? (
+                        {typeof feature.users === "boolean" ? (
+                          feature.users ? (
                             <Check className="mx-auto h-4 w-4 text-green-500" />
                           ) : (
                             <X className="mx-auto h-4 w-4 text-muted-foreground/50" />
                           )
                         ) : (
                           <span className="text-sm text-muted-foreground">
-                            {feature.free}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-3 py-3 text-center">
-                        {typeof feature.pro === "boolean" ? (
-                          feature.pro ? (
-                            <Check className="mx-auto h-4 w-4 text-green-500" />
-                          ) : (
-                            <X className="mx-auto h-4 w-4 text-muted-foreground/50" />
-                          )
-                        ) : (
-                          <span className="text-sm text-muted-foreground">
-                            {feature.pro}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-3 py-3 text-center">
-                        {typeof feature.max === "boolean" ? (
-                          feature.max ? (
-                            <Check className="mx-auto h-4 w-4 text-green-500" />
-                          ) : (
-                            <X className="mx-auto h-4 w-4 text-muted-foreground/50" />
-                          )
-                        ) : (
-                          <span className="text-sm text-muted-foreground">
-                            {feature.max}
+                            {feature.users}
                           </span>
                         )}
                       </td>
@@ -469,44 +386,31 @@ export default function PricingPage() {
             <div className="space-y-4">
               <details className="group rounded-lg border bg-card">
                 <summary className="flex cursor-pointer items-center justify-between p-4 font-medium">
-                  What&apos;s the difference between monthly and annual billing?
+                  Why is most of LynxPrompt free?
                   <span className="transition-transform group-open:rotate-180">
                     ↓
                   </span>
                 </summary>
                 <p className="border-t px-4 py-3 text-sm text-muted-foreground">
-                  Annual billing offers a <strong>10% discount</strong> on all paid plans.
-                  Monthly subscriptions can be canceled anytime. Annual subscriptions are a 
-                  yearly commitment — you get the discount but cannot cancel mid-cycle (you 
-                  keep full access until the year ends).
+                  We believe everyone should have access to great AI IDE configurations. The wizard, 
+                  all 16+ platform outputs, blueprint creation, API access, and selling on the marketplace 
+                  are all free. Teams is for organizations that need AI assistance (which costs us money 
+                  to provide) and enterprise features like SSO.
                 </p>
               </details>
 
               <details className="group rounded-lg border bg-card">
                 <summary className="flex cursor-pointer items-center justify-between p-4 font-medium">
-                  What happens if I downgrade my plan?
+                  What&apos;s the difference between Users and Teams?
                   <span className="transition-transform group-open:rotate-180">
                     ↓
                   </span>
                 </summary>
                 <p className="border-t px-4 py-3 text-sm text-muted-foreground">
-                  You&apos;ll keep access to your current features until the end
-                  of your billing period. After that, you&apos;ll move to the
-                  new plan. Your saved configurations and blueprints will remain.
-                </p>
-              </details>
-
-              <details className="group rounded-lg border bg-card">
-                <summary className="flex cursor-pointer items-center justify-between p-4 font-medium">
-                  How does the Max subscription work with paid blueprints?
-                  <span className="transition-transform group-open:rotate-180">
-                    ↓
-                  </span>
-                </summary>
-                <p className="border-t px-4 py-3 text-sm text-muted-foreground">
-                  Max subscribers get a <strong>10% discount</strong> on all paid blueprints.
-                  The discount is applied at checkout. Authors still receive their full 70% cut -
-                  the discount comes from the platform fee (reduced from 30% to 20%).
+                  <strong>Users</strong> get the complete wizard with all steps, all platform outputs, 
+                  API access, blueprint creation and selling, and draft saving. <strong>Teams</strong> adds 
+                  AI-powered editing (we use Claude to help you write better configs), team-shared blueprints, 
+                  SSO integration, centralized billing, and only charges for active users.
                 </p>
               </details>
 
@@ -518,23 +422,8 @@ export default function PricingPage() {
                   </span>
                 </summary>
                 <p className="border-t px-4 py-3 text-sm text-muted-foreground">
-                  Pro and Max users can create and sell blueprints. You keep 70%
-                  of every sale. When a Max subscriber buys your blueprint at a discount,
-                  you still receive the same 70% of the original price.
-                </p>
-              </details>
-
-              <details className="group rounded-lg border bg-card">
-                <summary className="flex cursor-pointer items-center justify-between p-4 font-medium">
-                  What payment methods do you accept?
-                  <span className="transition-transform group-open:rotate-180">
-                    ↓
-                  </span>
-                </summary>
-                <p className="border-t px-4 py-3 text-sm text-muted-foreground">
-                  We accept all major credit cards via Stripe. Cryptocurrency
-                  payments (Bitcoin, Ethereum, USDC) are coming soon via
-                  Coinbase Commerce.
+                  Yes! All users can create and sell blueprints on the marketplace. You keep 
+                  <strong> 70% of every sale</strong>. Minimum price is €5, minimum payout is €5 via PayPal.
                 </p>
               </details>
 
@@ -550,6 +439,7 @@ export default function PricingPage() {
                   You only pay for <strong>active users</strong> — team members who haven&apos;t logged in 
                   during the billing cycle aren&apos;t charged. If you add users mid-cycle, you pay a 
                   prorated amount for the remaining days. Unused seat credits roll over to the next cycle.
+                  Annual billing gets <strong>10% off</strong>.
                 </p>
               </details>
 
@@ -592,11 +482,10 @@ export default function PricingPage() {
                   </span>
                 </summary>
                 <p className="border-t px-4 py-3 text-sm text-muted-foreground">
-                  Pro, Max, and Teams subscribers get <strong>API access</strong> to programmatically 
-                  manage their blueprints. You can list, create, update, and delete blueprints via 
-                  REST API, making it easy to sync your AI config files from CI/CD pipelines or 
-                  scripts. Use the wizard&apos;s &quot;Auto update via API&quot; feature to auto-generate 
-                  sync commands in your downloaded files. See our{" "}
+                  All users get <strong>API access</strong> to programmatically manage their blueprints. 
+                  You can list, create, update, and delete blueprints via REST API, making it easy to 
+                  sync your AI config files from CI/CD pipelines or scripts. Use the wizard&apos;s 
+                  &quot;Auto update via API&quot; feature to auto-generate sync commands. See our{" "}
                   <Link href="/docs/api" className="text-primary hover:underline">
                     API documentation
                   </Link>{" "}
@@ -617,9 +506,20 @@ export default function PricingPage() {
                   if you prefer working in your terminal, want to automate config generation in scripts, 
                   or have direct access to your project files. Use the <strong>Web Wizard</strong> if 
                   you prefer a visual interface, want to preview your config in real-time, or are 
-                  exploring LynxPrompt for the first time. Both CLI and Web respect your subscription 
-                  tier — Free users get basic wizards, Pro unlocks intermediate wizards, and Max 
-                  unlocks advanced wizards plus AI-powered editing.
+                  exploring LynxPrompt for the first time. AI editing is only available to Teams users 
+                  in both CLI and Web.
+                </p>
+              </details>
+
+              <details className="group rounded-lg border bg-card">
+                <summary className="flex cursor-pointer items-center justify-between p-4 font-medium">
+                  What payment methods do you accept?
+                  <span className="transition-transform group-open:rotate-180">
+                    ↓
+                  </span>
+                </summary>
+                <p className="border-t px-4 py-3 text-sm text-muted-foreground">
+                  We accept all major credit cards via Stripe. Cryptocurrency payments are planned.
                 </p>
               </details>
             </div>
@@ -708,11 +608,10 @@ export default function PricingPage() {
         </div>
         <div className="container relative z-10 mx-auto px-4 text-center sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold">
-            Ready to supercharge your AI coding?
+            Ready to configure your AI IDE?
           </h2>
           <p className="mt-2 text-white/80">
-            Join thousands of developers using LynxPrompt to configure their AI
-            IDEs.
+            Join thousands of developers using LynxPrompt to get the most out of AI coding assistants.
           </p>
           <div className="mt-6 flex justify-center gap-4">
             <Button
@@ -739,4 +638,3 @@ export default function PricingPage() {
     </div>
   );
 }
-

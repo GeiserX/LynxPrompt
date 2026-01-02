@@ -60,12 +60,12 @@ export const docsConfig: DocsSection[] = [
       {
         title: "Intermediate Steps",
         href: "/docs/wizard/intermediate-steps",
-        description: "Repository and release settings (Pro+)",
+        description: "Repository and release settings",
       },
       {
         title: "Advanced Steps",
         href: "/docs/wizard/advanced-steps",
-        description: "CI/CD, AI rules, and feedback (Max)",
+        description: "CI/CD, AI rules, and feedback",
       },
     ],
   },
@@ -111,7 +111,7 @@ export const docsConfig: DocsSection[] = [
       {
         title: "Pricing & Plans",
         href: "/docs/marketplace/pricing",
-        description: "Free, Pro, and Max subscription tiers",
+        description: "Users and Teams plans",
       },
       {
         title: "Selling Blueprints",

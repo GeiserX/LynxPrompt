@@ -81,15 +81,24 @@ export async function authenticateRequest(request: Request): Promise<AuthResult 
 }
 
 /**
- * Check if user has Max or Teams subscription (or admin role)
+ * Check if user has Teams subscription (or admin role)
+ * This is the only tier that has AI access
  */
-export function isMaxOrTeams(user: AuthenticatedUser): boolean {
+export function isTeams(user: AuthenticatedUser): boolean {
   return (
-    user.subscriptionPlan === "MAX" ||
     user.subscriptionPlan === "TEAMS" ||
     user.role === "ADMIN" ||
     user.role === "SUPERADMIN"
   );
+}
+
+/**
+ * @deprecated Use isTeams instead - Max tier no longer exists
+ * Check if user has Max or Teams subscription (or admin role)
+ * Now just an alias for isTeams for backwards compatibility
+ */
+export function isMaxOrTeams(user: AuthenticatedUser): boolean {
+  return isTeams(user);
 }
 
 

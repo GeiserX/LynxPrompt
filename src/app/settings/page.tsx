@@ -1390,32 +1390,33 @@ interface PayoutHistory {
 
 const PLAN_DETAILS = {
   free: {
-    name: "Free",
-    description: "Basic features for getting started",
+    name: "User",
+    description: "Full wizard access, all features except AI",
     price: "€0",
     priceAnnual: "€0",
     icon: Star,
-    color: "text-muted-foreground",
+    color: "text-primary",
   },
+  // Legacy plans mapped to User tier
   pro: {
-    name: "Pro",
-    description: "For developers who want more powerful configuration options",
-    price: "€5/month",
-    priceAnnual: "€54/year",
-    icon: Zap,
+    name: "User",
+    description: "Full wizard access, all features except AI",
+    price: "€0",
+    priceAnnual: "€0",
+    icon: Star,
     color: "text-primary",
   },
   max: {
-    name: "Max",
-    description: "Full access to everything, including all paid community blueprints",
-    price: "€20/month",
-    priceAnnual: "€216/year",
-    icon: Crown,
-    color: "text-purple-500",
+    name: "User",
+    description: "Full wizard access, all features except AI",
+    price: "€0",
+    priceAnnual: "€0",
+    icon: Star,
+    color: "text-primary",
   },
   teams: {
     name: "Teams",
-    description: "Team collaboration with shared blueprints and enterprise SSO",
+    description: "All features including AI editing, SSO, and team blueprints",
     price: "€30/seat/month",
     priceAnnual: "€30/seat/month",
     icon: Users,
@@ -1718,8 +1719,8 @@ function BillingSection({ setError, setSuccess }: BillingSectionProps) {
         </div>
       )}
 
-      {/* EU Digital Content Consent - Required for new subscriptions AND upgrades (not for Teams, Max users, or admins) */}
-      {currentPlan !== "max" && currentPlan !== "teams" && !subscription?.isAdmin && !subscription?.isTeamsUser && (
+      {/* EU Digital Content Consent - No longer needed here since Teams upgrades go to /teams page */}
+      {false && currentPlan !== "teams" && !subscription?.isAdmin && !subscription?.isTeamsUser && (
         <div className="rounded-xl border bg-card p-6">
           <div className="flex items-start gap-3">
             <input
@@ -1738,63 +1739,36 @@ function BillingSection({ setError, setSuccess }: BillingSectionProps) {
         </div>
       )}
 
-      {/* Upgrade Options - Hide for admins (they already have MAX), Max users, and Teams users (billing at team level) */}
-      {currentPlan !== "max" && currentPlan !== "teams" && !subscription?.isAdmin && !subscription?.isTeamsUser && (
+      {/* Upgrade to Teams - Hide for admins (they already have Teams-level access) and existing Teams users */}
+      {currentPlan !== "teams" && !subscription?.isAdmin && !subscription?.isTeamsUser && (
         <div className="rounded-xl border bg-card p-6">
-          <h2 className="mb-4 font-semibold">Upgrade Your Plan</h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {currentPlan === "free" && (
-              <button
-                onClick={() => handlePlanChange("pro")}
-                disabled={upgrading === "pro" || !euConsent}
-                className="flex items-start gap-4 rounded-lg border p-4 text-left transition-all hover:border-primary hover:bg-muted/50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <div className="rounded-lg bg-primary/10 p-2 text-primary">
-                  <Zap className="h-5 w-5" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold">Pro</p>
-                  <p className="text-sm text-muted-foreground">€5/month</p>
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    Intermediate wizards, sell blueprints (70% revenue)
-                  </p>
-                </div>
-                <Button size="sm" disabled={!!upgrading || !euConsent}>
-                  {upgrading === "pro" ? "..." : "Upgrade"}
-                </Button>
-              </button>
-            )}
-            <button
-              onClick={() => handlePlanChange("max")}
-              disabled={upgrading === "max" || !euConsent}
-              className="flex items-start gap-4 rounded-lg border border-purple-500/30 bg-gradient-to-br from-purple-500/5 to-pink-500/5 p-4 text-left transition-all hover:border-purple-500 hover:from-purple-500/10 hover:to-pink-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
+          <h2 className="mb-4 font-semibold">Upgrade to Teams</h2>
+          <p className="mb-4 text-sm text-muted-foreground">
+            You already have full wizard access. Teams adds AI-powered editing, SSO, and team-shared blueprints.
+          </p>
+          <Link
+            href="/teams"
+            className="inline-flex items-center gap-2 rounded-lg border border-teal-500/30 bg-gradient-to-br from-teal-500/5 to-cyan-500/5 px-4 py-3 text-left transition-all hover:border-teal-500 hover:from-teal-500/10 hover:to-cyan-500/10"
+          >
+            <div className="rounded-lg bg-gradient-to-br from-teal-500 to-cyan-500 p-2 text-white">
+              <Users className="h-5 w-5" />
+            </div>
+            <div className="flex-1">
+              <p className="bg-gradient-to-r from-teal-500 to-cyan-500 bg-clip-text font-semibold text-transparent">
+                Teams
+              </p>
+              <p className="text-sm text-muted-foreground">€30/seat/month</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                AI editing, SSO, team blueprints
+              </p>
+            </div>
+            <Button
+              size="sm"
+              className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white hover:from-teal-600 hover:to-cyan-600"
             >
-              <div className="rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 p-2 text-white">
-                <Crown className="h-5 w-5" />
-              </div>
-              <div className="flex-1">
-                <p className="bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text font-semibold text-transparent">
-                  Max
-                </p>
-                <p className="text-sm text-muted-foreground">€20/month</p>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  All features + access to ALL paid blueprints
-                </p>
-                {currentPlan === "pro" && subscription?.hasActiveSubscription && (
-                  <p className="mt-1 text-xs text-green-600">
-                    Unused Pro credit will be applied
-                  </p>
-                )}
-              </div>
-              <Button
-                size="sm"
-                className="bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600"
-                disabled={!!upgrading || !euConsent}
-              >
-                {upgrading === "max" ? "..." : "Upgrade"}
-              </Button>
-            </button>
-          </div>
+              Learn More
+            </Button>
+          </Link>
         </div>
       )}
 

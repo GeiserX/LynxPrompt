@@ -368,13 +368,16 @@ import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
 - **LynxPrompt is NOT merchant of record** for individual purchases
 - Subscriptions are direct contracts with LynxPrompt
 
-### Subscription Tiers
+### Subscription Tiers (January 2026+)
 | Tier | Monthly | Annual (10% off) | Features |
 |------|---------|------------------|----------|
-| Free | €0/month | €0/year | Basic templates |
-| Pro | €5/month | €54/year | Intermediate wizards, sell templates |
-| Max | €20/month | €216/year | All paid templates, advanced wizards |
-| Teams | €30/seat/month | €324/seat/year | Everything in Max + SSO, team blueprints |
+| Users | €0/month | €0/year | Full wizard, all platforms, API access, sell blueprints |
+| Teams | €30/seat/month | €324/seat/year | Everything + AI editing, SSO, team blueprints |
+
+**Key changes:**
+- All users now get full wizard access (basic + intermediate + advanced steps)
+- AI features (editing, wizard assistant) are restricted to Teams users
+- No more Pro/Max tiers - simplified to Users vs Teams
 
 ### Revenue Split
 - **70% to seller** / **30% to platform**

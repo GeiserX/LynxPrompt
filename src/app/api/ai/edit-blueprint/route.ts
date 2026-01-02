@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { authenticateRequest, isMaxOrTeams } from "@/lib/api-auth";
+import { authenticateRequest, isTeams } from "@/lib/api-auth";
 import { prismaUsers } from "@/lib/db-users";
 import Anthropic from "@anthropic-ai/sdk";
 
@@ -82,9 +82,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    if (!isMaxOrTeams(auth.user)) {
+    if (!isTeams(auth.user)) {
       return NextResponse.json(
-        { error: "AI editing is only available for Max and Teams subscribers" },
+        { error: "AI editing is only available for Teams subscribers" },
         { status: 403 }
       );
     }

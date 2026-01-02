@@ -206,11 +206,14 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
   const interval = priceId ? getIntervalFromPriceId(priceId) : "monthly";
 
   // Map subscription status
-  type SubscriptionPlan = "FREE" | "PRO" | "MAX";
+  // Note: PRO and MAX are legacy - new subscriptions only have FREE or TEAMS
+  // Legacy PRO/MAX subscriptions are treated as FREE (full wizard access now)
+  type SubscriptionPlan = "FREE" | "TEAMS";
   const planMap: Record<string, SubscriptionPlan> = {
     free: "FREE",
-    pro: "PRO",
-    max: "MAX",
+    pro: "FREE",  // Legacy - map to FREE (they get full wizard access anyway)
+    max: "FREE",  // Legacy - map to FREE (they get full wizard access anyway)
+    teams: "TEAMS",
   };
 
   // Get current period end - cast to access the property
@@ -334,17 +337,19 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
         });
 
         // Update database
-        type SubscriptionPlan = "FREE" | "PRO" | "MAX";
+        // Note: Legacy PRO/MAX mapped to FREE - only TEAMS is a paid tier now
+        type SubscriptionPlan = "FREE" | "TEAMS";
         const planMap: Record<string, SubscriptionPlan> = {
-          pro: "PRO",
-          max: "MAX",
+          pro: "FREE",   // Legacy
+          max: "FREE",   // Legacy
           free: "FREE",
+          teams: "TEAMS",
         };
         
         await prismaUsers.user.update({
           where: { id: user.id },
           data: {
-            subscriptionPlan: planMap[scheduledDowngrade] || "PRO",
+            subscriptionPlan: planMap[scheduledDowngrade] || "FREE",
           },
         });
 
