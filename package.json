@@ -1,6 +1,6 @@
 {
   "name": "lynxprompt",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "private": true,
   "description": "LynxPrompt - Transform your development setup into a mouse-click experience with AI IDE configuration generation",
   "author": "LynxPrompt Contributors",
