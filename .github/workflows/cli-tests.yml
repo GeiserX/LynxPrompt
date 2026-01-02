@@ -101,6 +101,7 @@ jobs:
           echo "✓ Search works"
 
   # Authenticated tests (only on main/develop, not PRs from forks)
+  # Uses built-from-source CLI to test current code against dev server
   authenticated-tests:
     name: Authenticated CLI Tests
     runs-on: ubuntu-latest
@@ -118,8 +119,17 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Install CLI globally from npm
-        run: npm install -g lynxprompt
+      - name: Build CLI from source
+        working-directory: cli
+        run: |
+          npm ci
+          npm run build
+          npm link
+
+      - name: Verify CLI is from source
+        run: |
+          lynxp --version
+          echo "✓ CLI built from source"
 
       - name: Check for token
         run: |
