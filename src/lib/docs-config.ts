@@ -48,24 +48,9 @@ export const docsConfig: DocsSection[] = [
     icon: "Wand2",
     items: [
       {
-        title: "Overview",
+        title: "Full Wizard Guide",
         href: "/docs/wizard",
-        description: "How the wizard works",
-      },
-      {
-        title: "Basic Steps",
-        href: "/docs/wizard/basic-steps",
-        description: "Project info, tech stack, and platforms",
-      },
-      {
-        title: "Intermediate Steps",
-        href: "/docs/wizard/intermediate-steps",
-        description: "Repository and release settings",
-      },
-      {
-        title: "Advanced Steps",
-        href: "/docs/wizard/advanced-steps",
-        description: "CI/CD, AI rules, and feedback",
+        description: "All wizard steps and AI features",
       },
     ],
   },
@@ -151,41 +136,36 @@ export const docsConfig: DocsSection[] = [
   {
     title: "Supported Platforms",
     href: "/docs/platforms",
-    description: "All the AI IDEs and tools LynxPrompt supports.",
+    description: "All the AI IDEs and tools LynxPrompt supports (30+).",
     icon: "Laptop",
     items: [
       {
         title: "Overview",
         href: "/docs/platforms",
-        description: "Supported platforms and file formats",
+        description: "All 30+ supported platforms",
       },
       {
-        title: "Cursor",
-        href: "/docs/platforms/cursor",
-        description: ".cursor/rules configuration",
+        title: "Popular Platforms",
+        href: "/docs/platforms/popular",
+        description: "Cursor, Claude Code, Copilot, Windsurf",
       },
       {
-        title: "Claude Code",
-        href: "/docs/platforms/claude-code",
-        description: "CLAUDE.md configuration",
+        title: "AI-Powered IDEs",
+        href: "/docs/platforms/ides",
+        description: "Antigravity, Zed, Void, Trae AI, Firebase Studio",
       },
       {
-        title: "GitHub Copilot",
-        href: "/docs/platforms/copilot",
-        description: "copilot-instructions.md setup",
+        title: "Editor Extensions",
+        href: "/docs/platforms/editors",
+        description: "Cline, Roo Code, Continue, Cody, and more",
       },
       {
-        title: "Windsurf",
-        href: "/docs/platforms/windsurf",
-        description: ".windsurfrules configuration",
+        title: "CLI Tools",
+        href: "/docs/platforms/cli",
+        description: "Aider, Goose, Warp AI, Gemini CLI",
       },
       {
-        title: "Antigravity",
-        href: "/docs/platforms/antigravity",
-        description: "GEMINI.md configuration",
-      },
-      {
-        title: "AGENTS.md",
+        title: "AGENTS.md Standard",
         href: "/docs/platforms/agents-md",
         description: "The universal standard",
       },

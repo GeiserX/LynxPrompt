@@ -20,12 +20,12 @@ import {
   ArrowLeft,
   Building2,
   CreditCard,
-  Shield,
   Copy,
   Check,
   Camera,
   ImageIcon,
 } from "lucide-react";
+import { SSOConfigPanel } from "@/components/sso-config";
 
 interface TeamMember {
   id: string;
@@ -619,20 +619,8 @@ export default function TeamManagementPage() {
               </div>
 
               {/* SSO Settings (Admin only) */}
-              {userRole === "ADMIN" && (
-                <div className="rounded-xl border bg-card p-6">
-                  <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
-                    <Shield className="h-5 w-5 text-teal-500" />
-                    Enterprise SSO
-                  </h2>
-                  <p className="mb-4 text-sm text-muted-foreground">
-                    Configure SAML, OIDC, or LDAP for your team.
-                  </p>
-                  <Button variant="outline" className="w-full" disabled>
-                    Configure SSO
-                    <span className="ml-2 text-xs text-muted-foreground">(Coming soon)</span>
-                  </Button>
-                </div>
+              {userRole === "ADMIN" && team?.id && (
+                <SSOConfigPanel teamId={team.id} />
               )}
             </div>
           </div>
