@@ -1093,7 +1093,8 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
   }
   
   // Always offer to analyze a repository (available to all users)
-  const canDetectRemote = true; // Available to everyone now
+  // Skip if --yes flag is used (non-interactive mode)
+  const canDetectRemote = !options.yes;
   
   if (canDetectRemote) {
     console.log();
