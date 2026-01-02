@@ -1,5 +1,6 @@
 import { Command } from "commander";
 import chalk from "chalk";
+import { createRequire } from "module";
 import { loginCommand } from "./commands/login.js";
 import { logoutCommand } from "./commands/logout.js";
 import { whoamiCommand } from "./commands/whoami.js";
@@ -9,7 +10,6 @@ import { pushCommand } from "./commands/push.js";
 import { wizardCommand } from "./commands/wizard.js";
 import { searchCommand } from "./commands/search.js";
 import { statusCommand } from "./commands/status.js";
-import { agentsCommand } from "./commands/agents.js";
 import { checkCommand } from "./commands/check.js";
 import { diffCommand } from "./commands/diff.js";
 import { linkCommand, unlinkCommand } from "./commands/link.js";
@@ -17,12 +17,16 @@ import { analyzeCommand } from "./commands/analyze.js";
 import { convertCommand } from "./commands/convert.js";
 import { mergeCommand } from "./commands/merge.js";
 
+// Read version from package.json
+const require = createRequire(import.meta.url);
+const packageJson = require("../package.json");
+
 const program = new Command();
 
 program
   .name("lynxprompt")
   .description("CLI for LynxPrompt - Generate AI IDE configuration files")
-  .version("0.3.0");
+  .version(packageJson.version);
 
 // ============================================
 // Primary Commands (most users need these)
@@ -146,17 +150,6 @@ program
   .description("Compare tracked files with their cloud blueprints")
   .option("--local", "Compare .lynxprompt/rules/ with exported files")
   .action(diffCommand);
-
-// ============================================
-// Advanced Commands (power users)
-// ============================================
-
-// Agents - manage which agents to sync to
-program
-  .command("agents [action] [agent]")
-  .description("Manage AI agents (list, enable, disable, detect)")
-  .option("-i, --interactive", "Interactive agent selection")
-  .action(agentsCommand);
 
 // ============================================
 // Auth Commands

@@ -235,6 +235,7 @@ jobs:
         shell: pwsh
         run: |
           $script = Get-Content cli/chocolatey/tools/chocolateyinstall.ps1 -Raw
+          $script = $script -replace "\`$version = '[\d.]+'", "`$version = '${{ needs.check.outputs.version }}'"
           $script = $script -replace "lynxprompt@[\d.]+", "lynxprompt@${{ needs.check.outputs.version }}"
           Set-Content cli/chocolatey/tools/chocolateyinstall.ps1 $script
 
