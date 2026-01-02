@@ -54,7 +54,7 @@ export async function GET() {
     const teamMembership = user.teamMemberships[0];
     const isTeamsUser = user.subscriptionPlan === "TEAMS" || !!teamMembership;
     
-    // Admins and Superadmins get MAX tier for free
+    // Admins and Superadmins get Teams tier features for free
     const isAdmin = user.role === "ADMIN" || user.role === "SUPERADMIN";
     
     // Determine effective plan

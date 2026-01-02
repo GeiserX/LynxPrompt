@@ -148,8 +148,8 @@ export default function FAQOverviewPage() {
             </h3>
             <p className="mt-2 text-muted-foreground">
               Free blueprints are available to everyone. Paid blueprints are
-              premium configurations created by Pro/Max users who set their own
-              prices. Max subscribers get a 10% discount on all paid blueprints.
+              premium configurations created by Teams users who set their own
+              prices. Teams subscribers get a 10% discount on all paid blueprints.
             </p>
           </div>
 

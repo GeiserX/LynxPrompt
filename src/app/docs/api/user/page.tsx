@@ -62,7 +62,7 @@ export default function UserApiDocsPage() {
   "email": "user@example.com",
   "name": "John Doe",
   "image": "https://avatars.githubusercontent.com/u/12345",
-  "plan": "PRO",
+  "plan": "FREE",
   "createdAt": "2024-06-15T10:30:00.000Z"
 }`}</code>
               </pre>
@@ -126,7 +126,7 @@ export default function UserApiDocsPage() {
                 </td>
                 <td className="py-2 pr-4 text-muted-foreground">string</td>
                 <td className="py-2 text-muted-foreground">
-                  Subscription tier: FREE, PRO, MAX, or TEAMS
+                  Subscription tier: FREE (Users) or TEAMS
                 </td>
               </tr>
               <tr className="border-b">

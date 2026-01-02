@@ -5,8 +5,8 @@ import { getTemplateById, incrementTemplateUsage } from "@/lib/data/templates";
 import { prismaUsers } from "@/lib/db-users";
 import { detectSensitiveData } from "@/lib/sensitive-data";
 
-// MAX subscribers get 10% discount on paid blueprints
-const MAX_DISCOUNT_PERCENT = 10;
+// Teams subscribers get 10% discount on paid blueprints
+const TEAMS_DISCOUNT_PERCENT = 10;
 
 // GET /api/blueprints/[id] - Get blueprint details
 export async function GET(
@@ -52,7 +52,7 @@ export async function GET(
     // Check if this is a paid template
     const isPaid = templateWithShowcase.price && templateWithShowcase.price > 0;
     let hasPurchased = false;
-    let isMaxUser = false;
+    let isTeamsUser = false;
     let isOwner = false;
     let discountedPrice: number | null = null;
 
@@ -79,14 +79,14 @@ export async function GET(
       const userTeamId = teamMembership?.teamId;
 
       // Teams users get 10% discount (also admins/superadmins)
-      isMaxUser = user?.subscriptionPlan === "TEAMS" ||
-                  user?.role === "ADMIN" ||
-                  user?.role === "SUPERADMIN";
+      isTeamsUser = user?.subscriptionPlan === "TEAMS" ||
+                    user?.role === "ADMIN" ||
+                    user?.role === "SUPERADMIN";
 
-      // Calculate discounted price for MAX/TEAMS users
-      if (isPaid && isMaxUser && templateWithShowcase.price) {
+      // Calculate discounted price for Teams users
+      if (isPaid && isTeamsUser && templateWithShowcase.price) {
         discountedPrice = Math.round(
-          templateWithShowcase.price * (1 - MAX_DISCOUNT_PERCENT / 100)
+          templateWithShowcase.price * (1 - TEAMS_DISCOUNT_PERCENT / 100)
         );
       }
 
@@ -131,9 +131,9 @@ export async function GET(
         isPaid: true,
         hasPurchased: false,
         isOwner: false,
-        isMaxUser,
+        isTeamsUser,
         discountedPrice,
-        discountPercent: isMaxUser ? MAX_DISCOUNT_PERCENT : null,
+        discountPercent: isTeamsUser ? TEAMS_DISCOUNT_PERCENT : null,
         // Show truncated preview (first 500 chars)
         preview:
           templateWithShowcase.content?.substring(0, 500) +
@@ -151,9 +151,9 @@ export async function GET(
       isPaid: isPaid || false,
       hasPurchased: hasPurchased || !isPaid,
       isOwner,
-      isMaxUser,
+      isTeamsUser,
       discountedPrice: isPaid ? discountedPrice : null,
-      discountPercent: isPaid && isMaxUser ? MAX_DISCOUNT_PERCENT : null,
+      discountPercent: isPaid && isTeamsUser ? TEAMS_DISCOUNT_PERCENT : null,
     });
   } catch (error) {
     console.error("Error fetching blueprint:", error);

@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "Simple, transparent pricing for LynxPrompt. Start free, upgrade as you grow. Pro from €5/month, Max from €20/month. 10% off annual plans.",
+    "Simple, transparent pricing for LynxPrompt. Free for individuals with full access. Teams plan for organizations with AI features, SSO, and shared blueprints.",
   keywords: [
     "LynxPrompt pricing",
     "AI IDE pricing",

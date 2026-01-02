@@ -360,7 +360,7 @@ export default function DPAPage() {
                       </tr>
                       <tr>
                         <td className="py-2 pr-4">Anthropic</td>
-                        <td className="py-2 pr-4">AI processing (MAX only)</td>
+                        <td className="py-2 pr-4">AI processing (Teams only)</td>
                         <td className="py-2">USA (SCCs)</td>
                       </tr>
                       <tr>

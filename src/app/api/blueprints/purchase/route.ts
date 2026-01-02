@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user is MAX/Teams subscriber for discount
+    // Check if user is Teams subscriber for discount
     const user = await prismaUsers.user.findUnique({
       where: { id: session.user.id },
       select: { subscriptionPlan: true, role: true },
@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
                         user?.role === "ADMIN" || 
                         user?.role === "SUPERADMIN";
     
-    // MAX/Teams subscribers get 10% discount (platform absorbs it, author still gets 70% of original)
+    // Teams subscribers get 10% discount (platform absorbs it, author still gets 70% of original)
     const TEAMS_DISCOUNT_PERCENT = 10;
     const originalPrice = template.price;
     const discountedPrice = isTeamsUser 
