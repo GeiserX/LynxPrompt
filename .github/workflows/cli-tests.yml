@@ -101,11 +101,10 @@ jobs:
           echo "✓ Search works"
 
   # Authenticated tests (only on main/develop, not PRs from forks)
-  # Note: This job is allowed to fail if the dev server is unavailable
   authenticated-tests:
     name: Authenticated CLI Tests
     runs-on: ubuntu-latest
-    continue-on-error: true
+    needs: [build-test]  # Ensure build passes first
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     env:
       LYNXPROMPT_TOKEN: ${{ secrets.LYNXPROMPT_DEV_TOKEN }}
