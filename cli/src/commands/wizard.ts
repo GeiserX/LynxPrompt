@@ -918,6 +918,53 @@ const promptConfig = {
   },
 };
 
+// Check if input is a draft save command and handle it
+async function checkDraftSaveCommand(input: string): Promise<boolean> {
+  if (typeof input === "string" && input.startsWith("save:")) {
+    const draftName = input.slice(5).trim();
+    if (draftName) {
+      try {
+        await saveDraftLocally(draftName, wizardState.answers, wizardState.stepReached);
+        console.log(chalk.green(`\n  ✓ Draft saved: ${draftName}`));
+        console.log(chalk.gray(`     Load later with: lynxp wizard --load-draft ${draftName}`));
+        console.log();
+        return true;
+      } catch (err) {
+        console.log(chalk.yellow(`\n  ⚠️ Could not save draft: ${err instanceof Error ? err.message : "unknown error"}`));
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+// Wrapper for prompts that handles draft save commands
+async function promptWithDraftSave<T>(
+  questions: prompts.PromptObject<string> | prompts.PromptObject<string>[],
+  config?: prompts.Options
+): Promise<T> {
+  const questionArray = Array.isArray(questions) ? questions : [questions];
+  
+  for (const q of questionArray) {
+    if (q.type === "text") {
+      const originalValidate = q.validate;
+      q.validate = async (value: string) => {
+        // Check for draft save command
+        if (await checkDraftSaveCommand(value)) {
+          return "Draft saved! Please enter your answer:";
+        }
+        // Run original validation
+        if (originalValidate) {
+          return originalValidate(value);
+        }
+        return true;
+      };
+    }
+  }
+  
+  return prompts(questions, config) as Promise<T>;
+}
+
 // Register SIGINT handler for Ctrl+C
 process.on("SIGINT", async () => {
   await saveDraftOnExit();
@@ -1972,15 +2019,11 @@ async function runInteractiveWizard(
   const securityStep = getCurrentStep("security")!;
   showStep(currentStepNum, securityStep, userTier);
 
-  console.log(chalk.yellow("  🔐 Security Configuration"));
-  console.log(chalk.gray("     Configure security practices for your project."));
-  console.log(chalk.red.bold("     ⚠️  Never commit secrets to your repository!"));
+  console.log(chalk.yellow("  🔐 Security"));
   console.log();
 
   // 1. Secrets Management Strategy (multi-select, searchable)
   console.log(chalk.cyan("  1️⃣  Secrets Management"));
-  console.log(chalk.gray("     How do you manage secrets and credentials?"));
-  console.log();
   
   const secretsResponse = await prompts({
     type: "autocompleteMultiselect",

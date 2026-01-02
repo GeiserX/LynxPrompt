@@ -15,10 +15,14 @@ import {
   Pencil,
   Save,
   AlertTriangle,
+  Search,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import Link from "next/link";
 import { trackTemplateDownload } from "@/lib/analytics/client";
 import { parseVariablesWithDefaults, detectDuplicateVariableDefaults, type DuplicateVariableDefault } from "@/lib/file-generator";
+import { PLATFORMS } from "@/lib/platforms";
 
 interface SensitiveField {
   label: string;
@@ -42,27 +46,14 @@ interface TemplateDownloadModalProps {
   targetPlatform?: string; // Override the default platform
 }
 
-// All supported platforms for download (matches wizard's 12 platforms)
-const allPlatforms = [
-  { id: "universal", name: "Universal (AGENTS.md)", file: "AGENTS.md" },
-  { id: "cursor", name: "Cursor", file: ".cursor/rules" },
-  { id: "claude", name: "Claude Code", file: "CLAUDE.md" },
-  { id: "copilot", name: "GitHub Copilot", file: ".github/copilot-instructions.md" },
-  { id: "windsurf", name: "Windsurf", file: ".windsurfrules" },
-  { id: "antigravity", name: "Antigravity", file: "GEMINI.md" },
-  { id: "aider", name: "Aider", file: ".aider.conf.yml" },
-  { id: "continue", name: "Continue", file: ".continue/config.json" },
-  { id: "cody", name: "Sourcegraph Cody", file: ".cody/config.json" },
-  { id: "tabnine", name: "Tabnine", file: ".tabnine.yaml" },
-  { id: "supermaven", name: "Supermaven", file: ".supermaven/config.json" },
-  { id: "codegpt", name: "CodeGPT", file: ".codegpt/config.json" },
-  { id: "void", name: "Void", file: ".void/config.json" },
-];
-
-const platformInfo: Record<string, { name: string; file: string }> =
+// Build platformInfo from the central PLATFORMS definition
+const platformInfo: Record<string, { name: string; file: string; icon: string }> =
   Object.fromEntries(
-    allPlatforms.map((p) => [p.id, { name: p.name, file: p.file }])
+    PLATFORMS.map((p) => [p.id, { name: p.name, file: p.file, icon: p.icon }])
   );
+
+// Default display count
+const DEFAULT_PLATFORM_COUNT = 6;
 
 export function TemplateDownloadModal({
   isOpen,
@@ -98,6 +89,25 @@ export function TemplateDownloadModal({
   };
   
   const [selectedPlatform, setSelectedPlatform] = useState(getInitialPlatform());
+  const [platformSearch, setPlatformSearch] = useState("");
+  const [showAllPlatforms, setShowAllPlatforms] = useState(false);
+
+  // Filter and limit platforms based on search and showAll
+  const filteredPlatforms = useMemo(() => {
+    const searchLower = platformSearch.toLowerCase();
+    return PLATFORMS.filter(
+      (p) =>
+        p.name.toLowerCase().includes(searchLower) ||
+        p.id.toLowerCase().includes(searchLower) ||
+        p.note.toLowerCase().includes(searchLower)
+    );
+  }, [platformSearch]);
+
+  const displayedPlatforms = showAllPlatforms || platformSearch
+    ? filteredPlatforms
+    : filteredPlatforms.slice(0, DEFAULT_PLATFORM_COUNT);
+
+  const hasMorePlatforms = !platformSearch && filteredPlatforms.length > DEFAULT_PLATFORM_COUNT;
 
   // Fetch user's saved variable preferences
   const fetchUserVariables = useCallback(async () => {
@@ -348,13 +358,26 @@ export function TemplateDownloadModal({
             </div>
           )}
 
-          {/* Platform Selection - Always show all platforms */}
+          {/* Platform Selection with Search */}
           <div className="mb-6">
             <label className="mb-2 block text-sm font-medium">
               Which AI IDE are you using?
             </label>
+            
+            {/* Search box */}
+            <div className="relative mb-3">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                value={platformSearch}
+                onChange={(e) => setPlatformSearch(e.target.value)}
+                placeholder="Search platforms..."
+                className="w-full rounded-lg border bg-background py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {allPlatforms.map((platform) => (
+              {displayedPlatforms.map((platform) => (
                 <button
                   key={platform.id}
                   onClick={() => setSelectedPlatform(platform.id)}
@@ -364,10 +387,31 @@ export function TemplateDownloadModal({
                       : "hover:border-primary/50"
                   }`}
                 >
-                  <span className="text-sm font-medium">{platform.name}</span>
+                  <span>{platform.icon}</span>
+                  <span className="truncate text-sm font-medium">{platform.name}</span>
                 </button>
               ))}
             </div>
+            
+            {/* Show more/less button */}
+            {hasMorePlatforms && (
+              <button
+                onClick={() => setShowAllPlatforms(!showAllPlatforms)}
+                className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg border border-dashed py-2 text-sm text-muted-foreground hover:border-primary hover:text-primary"
+              >
+                {showAllPlatforms ? (
+                  <>
+                    <ChevronUp className="h-4 w-4" />
+                    Show fewer ({DEFAULT_PLATFORM_COUNT})
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-4 w-4" />
+                    Show all {filteredPlatforms.length} platforms
+                  </>
+                )}
+              </button>
+            )}
             <p className="mt-2 text-xs text-muted-foreground">
               Will be saved as:{" "}
               <code className="rounded bg-muted px-1">
