@@ -201,6 +201,54 @@ E-commerce platform with React frontend and Go backend.
         </ul>
       </section>
 
+      {/* Monorepo Support */}
+      <section className="space-y-4">
+        <h2 className="text-2xl font-bold">Monorepo Support</h2>
+        <p className="text-muted-foreground">
+          AGENTS.md supports hierarchical configurations for monorepos and
+          multi-package projects. Place AGENTS.md files at multiple levels:
+        </p>
+        <div className="rounded-lg bg-muted/50 p-4">
+          <pre className="overflow-x-auto text-sm">
+            {`my-monorepo/
+├── AGENTS.md              # Root: shared rules for entire repo
+├── packages/
+│   ├── web/
+│   │   └── AGENTS.md      # Web app specific rules
+│   ├── api/
+│   │   └── AGENTS.md      # API server specific rules
+│   └── shared/
+│       └── AGENTS.md      # Shared library rules
+└── tools/
+    └── AGENTS.md          # Build tools specific rules`}
+          </pre>
+        </div>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div className="rounded-lg border bg-card p-4">
+            <h3 className="font-medium">Inheritance</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              AI tools read the closest AGENTS.md to the file being edited,
+              while also considering parent-level rules for shared context.
+            </p>
+          </div>
+          <div className="rounded-lg border bg-card p-4">
+            <h3 className="font-medium">Specificity</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Package-level AGENTS.md can override or extend root rules with
+              specific tech stacks, conventions, or boundaries.
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
+          <p className="text-sm">
+            <strong>Tip:</strong> Use the root AGENTS.md for project-wide rules
+            (git workflow, security policies, team conventions) and subfolder
+            AGENTS.md for package-specific rules (tech stack, testing
+            frameworks, code style).
+          </p>
+        </div>
+      </section>
+
       {/* LynxPrompt integration */}
       <section className="space-y-4">
         <h2 className="text-2xl font-bold">LynxPrompt + AGENTS.md</h2>
@@ -215,6 +263,9 @@ E-commerce platform with React frontend and Go backend.
           </li>
           <li>Create blueprints that include AGENTS.md</li>
           <li>Use AI editing to customize your AGENTS.md</li>
+          <li>
+            Generate separate configurations for each package in your monorepo
+          </li>
         </ul>
       </section>
 

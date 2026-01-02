@@ -99,6 +99,24 @@ export default function FAQOverviewPage() {
 
           <div className="rounded-lg border bg-card p-4">
             <h3 className="font-semibold">
+              Does LynxPrompt support monorepos?
+            </h3>
+            <p className="mt-2 text-muted-foreground">
+              Yes! You can place AGENTS.md files at multiple levels in your
+              project. Put shared rules at the root and package-specific rules
+              in subfolders. AI tools will read the closest AGENTS.md while
+              inheriting context from parent configurations.
+            </p>
+            <Link
+              href="/docs/platforms/agents-md"
+              className="mt-2 inline-block text-sm text-primary hover:underline"
+            >
+              Learn more about monorepo setup →
+            </Link>
+          </div>
+
+          <div className="rounded-lg border bg-card p-4">
+            <h3 className="font-semibold">
               How do I report a problem or request a feature?
             </h3>
             <p className="mt-2 text-muted-foreground">
