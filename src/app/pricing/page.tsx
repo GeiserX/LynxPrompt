@@ -59,7 +59,7 @@ const getTiers = (interval: BillingInterval) => [
       { text: "Save wizard drafts", included: true },
       { text: "Sell blueprints (70% revenue)", included: true },
       { text: "Unlimited config downloads", included: true },
-      { text: "16+ supported IDE platforms", included: true },
+      { text: "30+ supported AI platforms", included: true },
       { text: "Community support", included: true },
     ],
     cta: "Get Started",
@@ -95,7 +95,7 @@ const getTiers = (interval: BillingInterval) => [
 
 const COMPARISON_FEATURES = [
   { name: "Full wizard (all steps)", users: true, teams: true },
-  { name: "All platforms (16+ IDEs)", users: true, teams: true },
+  { name: "All platforms (30+ IDEs)", users: true, teams: true },
   { name: "API access", users: true, teams: true },
   { name: "Unlimited downloads", users: true, teams: true },
   { name: "Create private blueprints", users: true, teams: true },
@@ -394,7 +394,7 @@ export default function PricingPage() {
                 </summary>
                 <p className="border-t px-4 py-3 text-sm text-muted-foreground">
                   We believe everyone should have access to great AI IDE configurations. The wizard, 
-                  all 16+ platform outputs, blueprint creation, API access, and selling on the marketplace 
+                  all 30+ platform outputs, blueprint creation, API access, and selling on the marketplace 
                   are all free. Teams is for organizations that need AI assistance (which costs us money 
                   to provide) and enterprise features like SSO.
                 </p>

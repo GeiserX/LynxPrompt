@@ -69,8 +69,7 @@ interface StatsData {
   revenue: {
     estimatedMRR: number;
     estimatedMRRFormatted: string;
-    activePro: number;
-    activeMax: number;
+    activeFree: number;
     activeTeamSeats: number;
     purchasesThisPeriod: {
       count: number;
@@ -127,9 +126,7 @@ const PLAN_COLORS = {
 };
 
 const PLAN_LABELS = {
-  FREE: "Free",
-  PRO: "Pro",
-  MAX: "Max",
+  FREE: "Users",
   TEAMS: "Teams",
 };
 
@@ -272,7 +269,7 @@ export default function AdminStatsPage() {
           <KPICard
             title="Estimated MRR"
             value={data.revenue.estimatedMRRFormatted}
-            subtitle={`${data.revenue.activePro + data.revenue.activeMax + data.revenue.activeTeamSeats} active subscribers`}
+            subtitle={`${data.revenue.activeTeamSeats} active Teams subscribers`}
             icon={DollarSign}
             color="green"
           />

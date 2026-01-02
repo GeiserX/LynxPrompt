@@ -184,25 +184,48 @@ const WIZARD_STEPS: WizardStep[] = [
   { id: "extra", title: "Final Details", icon: "💬", tier: "basic" },
 ];
 
-// All supported platforms (matches web wizard - 16 total)
+/**
+ * All supported platforms (30+ and growing!)
+ * 
+ * IMPORTANT: Keep in sync with src/lib/platforms.ts (the single source of truth)
+ * When adding new platforms, update both files!
+ */
 const ALL_PLATFORMS = [
-  { id: "agents", name: "Universal (AGENTS.md)", file: "AGENTS.md", icon: "🌐", note: "Works with all AI-enabled IDEs" },
-  { id: "cursor", name: "Cursor", file: ".cursor/rules/", icon: "⚡", note: "Native project rules format" },
-  { id: "claude", name: "Claude Code", file: "CLAUDE.md", icon: "🧠", note: "Also works with Cursor" },
-  { id: "copilot", name: "GitHub Copilot", file: ".github/copilot-instructions.md", icon: "🐙", note: "VS Code & JetBrains" },
-  { id: "windsurf", name: "Windsurf", file: ".windsurfrules", icon: "🏄", note: "Codeium IDE" },
-  { id: "antigravity", name: "Antigravity", file: "GEMINI.md", icon: "💎", note: "Google's AI-powered IDE" },
-  { id: "zed", name: "Zed", file: ".zed/instructions.md", icon: "⚡", note: "Zed editor" },
-  { id: "aider", name: "Aider", file: ".aider.conf.yml", icon: "🤖", note: "CLI AI pair programming" },
-  { id: "cline", name: "Cline", file: ".clinerules", icon: "🔧", note: "VS Code extension" },
-  { id: "continue", name: "Continue", file: ".continue/config.json", icon: "➡️", note: "Open-source autopilot" },
-  { id: "cody", name: "Sourcegraph Cody", file: ".cody/config.json", icon: "🔍", note: "Context-aware AI" },
-  { id: "amazonq", name: "Amazon Q", file: ".amazonq/rules/", icon: "📦", note: "AWS AI assistant" },
+  // Popular platforms
+  { id: "universal", name: "Universal (AGENTS.md)", file: "AGENTS.md", icon: "🌐", note: "Works with Claude Code, Copilot, Aider, and many others" },
+  { id: "cursor", name: "Cursor", file: ".cursor/rules/", icon: "⚡", note: "AI-powered code editor with native rules" },
+  { id: "claude", name: "Claude Code", file: "CLAUDE.md", icon: "🧠", note: "Anthropic's agentic coding tool" },
+  { id: "copilot", name: "GitHub Copilot", file: ".github/copilot-instructions.md", icon: "🐙", note: "GitHub's AI pair programmer" },
+  { id: "windsurf", name: "Windsurf", file: ".windsurfrules", icon: "🏄", note: "Codeium's AI-native IDE" },
+  // AI IDEs
+  { id: "antigravity", name: "Antigravity", file: "GEMINI.md", icon: "💎", note: "Google's Gemini-powered IDE" },
+  { id: "zed", name: "Zed", file: ".zed/instructions.md", icon: "⚡", note: "High-performance editor with AI" },
+  { id: "void", name: "Void", file: ".void/config.json", icon: "🕳️", note: "Open-source Cursor alternative" },
+  { id: "trae", name: "Trae AI", file: ".trae/rules/", icon: "🔷", note: "ByteDance's AI IDE" },
+  { id: "firebase", name: "Firebase Studio", file: ".idx/", icon: "🔥", note: "Google's cloud IDE" },
+  // Editor extensions
+  { id: "cline", name: "Cline", file: ".clinerules", icon: "🔧", note: "Autonomous coding agent for VS Code" },
+  { id: "roocode", name: "Roo Code", file: ".roo/rules/", icon: "🦘", note: "AI coding assistant for VS Code" },
+  { id: "continue", name: "Continue", file: ".continue/config.json", icon: "➡️", note: "Open-source AI autopilot" },
+  { id: "cody", name: "Sourcegraph Cody", file: ".cody/config.json", icon: "🔍", note: "Context-aware AI assistant" },
   { id: "tabnine", name: "Tabnine", file: ".tabnine.yaml", icon: "📝", note: "AI code completion" },
-  { id: "supermaven", name: "Supermaven", file: ".supermaven/config.json", icon: "🦸", note: "Fast AI completions" },
+  { id: "supermaven", name: "Supermaven", file: ".supermaven/config.json", icon: "🦸", note: "Fast AI code completions" },
   { id: "codegpt", name: "CodeGPT", file: ".codegpt/config.json", icon: "💬", note: "VS Code AI assistant" },
-  { id: "void", name: "Void", file: ".void/config.json", icon: "🕳️", note: "Open-source Cursor alt" },
-  { id: "goose", name: "Goose", file: ".goosehints", icon: "🪿", note: "Block AI agent" },
+  { id: "amazonq", name: "Amazon Q", file: ".amazonq/rules/", icon: "📦", note: "AWS AI coding companion" },
+  { id: "augment", name: "Augment Code", file: ".augment/rules/", icon: "🔮", note: "AI code augmentation" },
+  { id: "kilocode", name: "Kilo Code", file: ".kilocode/rules/", icon: "📊", note: "AI code generation" },
+  { id: "junie", name: "Junie", file: ".junie/guidelines.md", icon: "🎯", note: "JetBrains AI assistant" },
+  { id: "kiro", name: "Kiro", file: ".kiro/steering/", icon: "🚀", note: "AWS spec-driven agent" },
+  // CLI tools
+  { id: "aider", name: "Aider", file: "AIDER.md", icon: "🤖", note: "AI pair programming in terminal" },
+  { id: "goose", name: "Goose", file: ".goosehints", icon: "🪿", note: "Block's AI coding agent" },
+  { id: "warp", name: "Warp AI", file: "WARP.md", icon: "🚀", note: "AI-powered terminal" },
+  { id: "gemini-cli", name: "Gemini CLI", file: "GEMINI.md", icon: "💎", note: "Google's Gemini in terminal" },
+  { id: "opencode", name: "Open Code", file: "opencode.json", icon: "🔓", note: "Open-source AI coding" },
+  // Other
+  { id: "openhands", name: "OpenHands", file: ".openhands/microagents/repo.md", icon: "🤲", note: "Open-source AI agent" },
+  { id: "crush", name: "Crush", file: "CRUSH.md", icon: "💥", note: "AI coding assistant" },
+  { id: "firebender", name: "Firebender", file: "firebender.json", icon: "🔥", note: "AI code transformation" },
 ];
 
 
