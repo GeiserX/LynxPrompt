@@ -52,8 +52,8 @@ export async function whoamiCommand(): Promise<void> {
       if (error.statusCode === 401) {
         console.error(chalk.red("Your session has expired. Please run 'lynxprompt login' again."));
       } else if (error.statusCode === 403) {
-        console.error(chalk.red("API access requires Pro, Max, or Teams subscription."));
-        console.error(chalk.gray("Upgrade at https://lynxprompt.com/pricing"));
+        console.error(chalk.red("API access error. Please check your subscription."));
+        console.error(chalk.gray("Visit https://lynxprompt.com/pricing for plan details."));
       } else {
         console.error(chalk.red(`Error: ${error.message}`));
       }
@@ -67,13 +67,14 @@ export async function whoamiCommand(): Promise<void> {
 function formatPlan(plan: string): string {
   const planColors: Record<string, (s: string) => string> = {
     FREE: chalk.gray,
-    PRO: chalk.blue,
-    MAX: chalk.magenta,
     TEAMS: chalk.cyan,
   };
   
-  const colorFn = planColors[plan] || chalk.white;
-  return colorFn(plan);
+  // Map legacy PRO/MAX to FREE display
+  const displayPlan = plan === "PRO" || plan === "MAX" ? "FREE" : plan;
+  const displayName = displayPlan === "FREE" ? "Users" : displayPlan;
+  const colorFn = planColors[displayPlan] || chalk.white;
+  return colorFn(displayName);
 }
 
 

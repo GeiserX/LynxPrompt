@@ -133,23 +133,23 @@ function displayWelcome(user: UserInfo): void {
   const plan = user.plan?.toUpperCase() || "FREE";
   const name = user.name || user.email.split("@")[0];
   
-  // Plan colors and emojis
+  // Plan colors and emojis - simplified to Users and Teams only
   const planConfig: Record<string, { color: (s: string) => string; emoji: string; badge: string }> = {
-    FREE: { color: chalk.gray, emoji: "🆓", badge: "Free" },
-    PRO: { color: chalk.cyan, emoji: "⚡", badge: "Pro" },
-    MAX: { color: chalk.magenta, emoji: "🚀", badge: "Max" },
-    TEAMS: { color: chalk.yellow, emoji: "👥", badge: "Teams" },
+    FREE: { color: chalk.gray, emoji: "🆓", badge: "Users" },
+    TEAMS: { color: chalk.cyan, emoji: "👥", badge: "Teams" },
   };
   
-  const config = planConfig[plan] || planConfig.FREE;
-  const W = 45; // inner width
+  // Map legacy PRO/MAX to FREE (Users)
+  const effectivePlan = plan === "PRO" || plan === "MAX" ? "FREE" : plan;
+  const config = planConfig[effectivePlan] || planConfig.FREE;
+  const W = 46; // inner width (46 to make square with 48 total)
   const b = chalk.bold;
   const pad = (s: string, len: number) => s + " ".repeat(Math.max(0, len - s.length));
   
   console.log();
   console.log(b("┌" + "─".repeat(W) + "┐"));
   console.log(b("│") + " ".repeat(W) + b("│"));
-  console.log(b("│") + pad(`   ${config.emoji} Welcome to LynxPrompt CLI!`, W - 1) + b("│"));
+  console.log(b("│") + pad(`   ${config.emoji} Welcome to LynxPrompt CLI!`, W) + b("│"));
   console.log(b("│") + " ".repeat(W) + b("│"));
   console.log(b("│") + pad(`   User: ${name}`, W) + b("│"));
   console.log(b("│") + pad(`   Plan: ${config.badge}`, W) + b("│"));
@@ -162,25 +162,25 @@ function displayWelcome(user: UserInfo): void {
   console.log();
   
   // All users get these
-  console.log(chalk.green("  ✓") + " " + chalk.white("lynxprompt init") + chalk.gray(" - Generate config files"));
-  console.log(chalk.green("  ✓") + " " + chalk.white("lynxprompt wizard") + chalk.gray(" - Interactive wizard"));
-  console.log(chalk.green("  ✓") + " " + chalk.white("lynxprompt list") + chalk.gray(" - List your blueprints"));
-  console.log(chalk.green("  ✓") + " " + chalk.white("lynxprompt pull <id>") + chalk.gray(" - Download blueprints"));
-  console.log(chalk.green("  ✓") + " " + chalk.white("lynxprompt push") + chalk.gray(" - Upload blueprints to marketplace"));
-  console.log(chalk.green("  ✓") + " " + chalk.white("lynxprompt link") + chalk.gray(" - Link project to blueprint"));
-  console.log(chalk.green("  ✓") + " " + chalk.white("lynxprompt sync") + chalk.gray(" - Sync linked blueprints"));
-  console.log(chalk.green("  ✓") + " " + chalk.white("lynxprompt diff") + chalk.gray(" - Compare local vs remote"));
+  console.log(chalk.green("  ✓") + " " + chalk.white("lynxp wizard") + chalk.gray(" - Interactive config wizard"));
+  console.log(chalk.green("  ✓") + " " + chalk.white("lynxp list") + chalk.gray(" - List your blueprints"));
+  console.log(chalk.green("  ✓") + " " + chalk.white("lynxp pull <id>") + chalk.gray(" - Download blueprints"));
+  console.log(chalk.green("  ✓") + " " + chalk.white("lynxp push") + chalk.gray(" - Upload blueprints to marketplace"));
+  console.log(chalk.green("  ✓") + " " + chalk.white("lynxp link") + chalk.gray(" - Link project to blueprint"));
+  console.log(chalk.green("  ✓") + " " + chalk.white("lynxp diff") + chalk.gray(" - Compare local vs cloud"));
+  console.log(chalk.green("  ✓") + " " + chalk.white("lynxp whoami") + chalk.gray(" - Show account info"));
+  console.log(chalk.green("  ✓") + " " + chalk.white("lynxp logout") + chalk.gray(" - Sign out of CLI"));
   
   // Plan-specific features - Teams users get extra features
-  if (plan === "TEAMS") {
+  if (effectivePlan === "TEAMS") {
     console.log();
     console.log(chalk.cyan("  ⚡") + " " + chalk.white("AI-powered editing") + chalk.gray(" - AI assistant for configs"));
-    console.log(chalk.yellow("  👥") + " " + chalk.white("Team blueprints") + chalk.gray(" - Share with your team"));
-    console.log(chalk.yellow("  👥") + " " + chalk.white("SSO integration") + chalk.gray(" - Enterprise authentication"));
+    console.log(chalk.cyan("  👥") + " " + chalk.white("Team blueprints") + chalk.gray(" - Share with your team"));
+    console.log(chalk.cyan("  👥") + " " + chalk.white("SSO integration") + chalk.gray(" - Enterprise authentication"));
   }
   
   console.log();
-  console.log(chalk.gray("Token stored securely. Run ") + chalk.cyan("lynxprompt --help") + chalk.gray(" to see all commands."));
+  console.log(chalk.gray("Token stored securely. Run ") + chalk.cyan("lynxp --help") + chalk.gray(" to see all commands."));
   console.log();
 }
 

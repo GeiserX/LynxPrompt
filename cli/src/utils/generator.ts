@@ -941,19 +941,17 @@ function generateFileContent(options: GenerateOptions, platform: string): string
   }
 
   // Boundaries section
-  let boundaries = BOUNDARIES[options.boundaries];
+  // Get preset boundaries or use standard as fallback
+  const presetBoundaries = BOUNDARIES[options.boundaries] || BOUNDARIES.standard;
   
-  // Apply custom boundaries if provided
-  if (options.boundaryAlways?.length || options.boundaryNever?.length || options.boundaryAsk?.length) {
-    boundaries = {
-      ...boundaries,
-      always: options.boundaryAlways?.length ? options.boundaryAlways : boundaries.always,
-      never: options.boundaryNever?.length ? options.boundaryNever : boundaries.never,
-      askFirst: options.boundaryAsk?.length ? options.boundaryAsk : boundaries.askFirst,
-    };
-  }
+  // Build final boundaries - use custom values if provided, otherwise use preset
+  const boundaries = {
+    always: options.boundaryAlways?.length ? options.boundaryAlways : presetBoundaries.always,
+    never: options.boundaryNever?.length ? options.boundaryNever : presetBoundaries.never,
+    askFirst: options.boundaryAsk?.length ? options.boundaryAsk : presetBoundaries.askFirst,
+  };
   
-  if (boundaries) {
+  if (boundaries.always?.length || boundaries.never?.length || boundaries.askFirst?.length) {
     if (isMarkdown || isMdc) {
       sections.push("## Boundaries");
       sections.push("");
