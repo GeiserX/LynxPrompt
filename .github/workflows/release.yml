@@ -395,6 +395,12 @@ jobs:
           prerelease: false
           generate_release_notes: false
 
+      - name: Trigger CLI publish workflow
+        run: |
+          gh workflow run "Publish CLI" -f platforms=all
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   # ===========================================
   # Summary
   # ===========================================
