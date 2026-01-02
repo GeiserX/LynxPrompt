@@ -676,7 +676,7 @@ function BlueprintsContent() {
                   const displayPrice = isPaid 
                       ? `€${(blueprint.price! / 100).toFixed(2)}` 
                       : null;
-                  const originalPrice = hasDiscount ? `€${(blueprint.price! / 100).toFixed(2)}` : null;
+                  // Note: hasDiscount removed since Teams discount only applies after purchase
                   
                   return (
                     <div
@@ -709,18 +709,7 @@ function BlueprintsContent() {
                               ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white" 
                               : "bg-gradient-to-r from-emerald-500 to-teal-500 text-white dark:from-emerald-600 dark:to-teal-600"
                           }`}>
-                            {isPaid ? (
-                              hasDiscount ? (
-                                <span className="flex items-center gap-1.5">
-                                  <span className="line-through opacity-70">{originalPrice}</span>
-                                  <span>{displayPrice}</span>
-                                </span>
-                              ) : (
-                                displayPrice
-                              )
-                            ) : (
-                              "Free"
-                            )}
+                            {isPaid ? displayPrice : "Free"}
                           </div>
                         </div>
                         
