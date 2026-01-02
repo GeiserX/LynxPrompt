@@ -122,9 +122,7 @@ const TIME_RANGES = [
 ];
 
 const PLAN_COLORS = {
-  FREE: "#64748b", // slate
-  PRO: "#8b5cf6", // violet
-  MAX: "#f97316", // orange
+  FREE: "#64748b", // slate (Users)
   TEAMS: "#06b6d4", // cyan
 };
 
@@ -373,29 +371,15 @@ export default function AdminStatsPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="rounded-full bg-violet-500/20 p-1.5">
-                    <Sparkles className="h-3.5 w-3.5 text-violet-500" />
+                  <div className="rounded-full bg-gray-500/20 p-1.5">
+                    <Users className="h-3.5 w-3.5 text-gray-500" />
                   </div>
-                  <span className="text-sm">Pro Subscribers</span>
+                  <span className="text-sm">Users (Free)</span>
                 </div>
                 <div className="text-right">
-                  <span className="font-medium">{data.revenue.activePro}</span>
+                  <span className="font-medium">{data.revenue.activeFree}</span>
                   <span className="ml-1 text-xs text-muted-foreground">
-                    × €5
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="rounded-full bg-orange-500/20 p-1.5">
-                    <Zap className="h-3.5 w-3.5 text-orange-500" />
-                  </div>
-                  <span className="text-sm">Max Subscribers</span>
-                </div>
-                <div className="text-right">
-                  <span className="font-medium">{data.revenue.activeMax}</span>
-                  <span className="ml-1 text-xs text-muted-foreground">
-                    × €20
+                    × €0
                   </span>
                 </div>
               </div>
@@ -709,7 +693,7 @@ function UserGrowthChart({
           const date = new Date(day.date);
 
           // Calculate stacked bar heights
-          const plans = ["FREE", "PRO", "MAX", "TEAMS"] as const;
+          const plans = ["FREE", "TEAMS"] as const;
           let totalHeight = 0;
 
           return (

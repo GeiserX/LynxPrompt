@@ -1803,31 +1803,7 @@ function BillingSection({ setError, setSuccess }: BillingSectionProps) {
         </div>
       )}
 
-      {/* Downgrade Option - Only for Max users with active subscription (not Teams) */}
-      {currentPlan === "max" && !subscription?.isAdmin && !subscription?.isTeamsUser && subscription?.hasActiveSubscription && !subscription?.pendingChange && (
-        <div className="rounded-xl border bg-card p-6">
-          <h2 className="mb-4 font-semibold">Downgrade Plan</h2>
-          <button
-            onClick={() => handlePlanChange("pro")}
-            disabled={upgrading === "pro"}
-            className="flex w-full items-start gap-4 rounded-lg border p-4 text-left transition-all hover:border-primary hover:bg-muted/50"
-          >
-            <div className="rounded-lg bg-primary/10 p-2 text-primary">
-              <Zap className="h-5 w-5" />
-            </div>
-            <div className="flex-1">
-              <p className="font-semibold">Downgrade to Pro</p>
-              <p className="text-sm text-muted-foreground">€5/month</p>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Takes effect at the end of your billing period. You&apos;ll keep Max access until then.
-              </p>
-            </div>
-            <Button size="sm" variant="outline" disabled={!!upgrading}>
-              {upgrading === "pro" ? "..." : "Downgrade"}
-            </Button>
-          </button>
-        </div>
-      )}
+      {/* Downgrade Option removed - no longer have Pro/Max tiers */}
 
       {/* Manage Subscription */}
       {subscription?.hasStripeAccount && (
@@ -1880,9 +1856,8 @@ function BillingSection({ setError, setSuccess }: BillingSectionProps) {
         </p>
       </div>
 
-      {/* Seller Payouts Section - Only for Pro/Max users who can sell */}
-      {(subscription?.plan === "pro" || subscription?.plan === "max" || subscription?.isAdmin) && (
-        <div className="mt-8 space-y-6 border-t pt-8">
+      {/* Seller Payouts Section - All users can sell blueprints */}
+      <div className="mt-8 space-y-6 border-t pt-8">
           <div>
             <h1 className="text-2xl font-bold">Seller Payouts</h1>
             <p className="text-muted-foreground">
@@ -2060,7 +2035,6 @@ function BillingSection({ setError, setSuccess }: BillingSectionProps) {
             </p>
           </div>
         </div>
-      )}
     </div>
   );
 }
@@ -2816,7 +2790,8 @@ function ApiTokensSection({ setError, setSuccess }: ApiTokensSectionProps) {
     }
   };
 
-  const canUseApi = ["PRO", "MAX", "TEAMS"].includes(subscriptionPlan.toUpperCase());
+  // All users can now use the API
+  const canUseApi = true;
 
   if (loading) {
     return (

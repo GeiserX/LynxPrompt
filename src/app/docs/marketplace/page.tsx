@@ -30,7 +30,7 @@ export default function MarketplaceOverviewPage() {
             <div>
               <p className="font-medium">Pricing & Plans</p>
               <p className="text-sm text-muted-foreground">
-                Free, Pro, Max & Teams
+                Users & Teams plans
               </p>
             </div>
           </Link>
@@ -82,7 +82,7 @@ export default function MarketplaceOverviewPage() {
           <div className="rounded-lg border bg-card p-4">
             <h3 className="font-medium">For Sellers</h3>
             <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
-              <li>• Pro/Max users can sell blueprints</li>
+              <li>• All users can sell blueprints</li>
               <li>• Set your own prices (min €5)</li>
               <li>• Keep 70% of each sale</li>
               <li>• Monthly payouts via PayPal</li>
