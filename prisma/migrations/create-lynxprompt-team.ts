@@ -7,10 +7,21 @@
  * Make sure DATABASE_URL_USERS is set in your environment
  */
 
-import { PrismaClient } from "../../src/generated/prisma-users";
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { PrismaClient } = require("../../src/generated/prisma-users/client");
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { PrismaPg } = require("@prisma/adapter-pg");
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pg = require("pg");
+
+const pool = new pg.Pool({
+  connectionString: process.env.DATABASE_URL_USERS,
+});
+
+const adapter = new PrismaPg(pool);
 
 const prisma = new PrismaClient({
-  datasourceUrl: process.env.DATABASE_URL_USERS,
+  adapter,
 });
 
 async function createLynxPromptTeam() {
@@ -148,6 +159,7 @@ async function createLynxPromptTeam() {
     throw error;
   } finally {
     await prisma.$disconnect();
+    await pool.end();
   }
 }
 
