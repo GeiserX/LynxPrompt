@@ -37,10 +37,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Check subscription
+    // Check subscription (all users can now use the API)
     if (!canUseApi(tokenData.user.subscriptionPlan)) {
       return NextResponse.json(
-        { error: "API access requires Pro, Max, or Teams subscription" },
+        { error: "API access is not available for your account" },
         { status: 403 }
       );
     }
@@ -110,8 +110,9 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("API v1 GET /user error:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Internal server error", details: message },
       { status: 500 }
     );
   }
