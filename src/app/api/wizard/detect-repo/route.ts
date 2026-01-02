@@ -22,10 +22,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check subscription plan (Max or Teams only)
+    // Check subscription plan (Teams only)
     const user = await prismaUsers.user.findUnique({
       where: { id: session.user.id },
-      select: { subscriptionPlan: true },
+      select: { subscriptionPlan: true, role: true },
     });
 
     if (!user) {
@@ -35,13 +35,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Repository detection is a Teams-only feature (AI assistance)
-    const allowedPlans = ["TEAMS"];
-    if (!allowedPlans.includes(user.subscriptionPlan || "") && user.role !== "ADMIN" && user.role !== "SUPERADMIN") {
+    // Repository detection is a Teams-only feature
+    const isTeamsUser = user.subscriptionPlan === "TEAMS";
+    const isAdmin = user.role === "ADMIN" || user.role === "SUPERADMIN";
+    if (!isTeamsUser && !isAdmin) {
       return NextResponse.json(
         { 
-          error: "This feature requires a Max or Teams subscription",
-          requiredTier: "max",
+          error: "This feature requires a Teams subscription",
+          requiredTier: "teams",
         },
         { status: 403 }
       );

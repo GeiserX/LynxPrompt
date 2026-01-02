@@ -60,7 +60,7 @@ export async function GET() {
     // Determine effective plan
     let effectivePlan: string;
     if (isAdmin) {
-      effectivePlan = "max";
+      effectivePlan = "teams";
     } else if (isTeamsUser) {
       effectivePlan = "teams";
     } else {

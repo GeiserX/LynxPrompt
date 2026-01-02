@@ -24,9 +24,9 @@ export async function POST(request: NextRequest) {
     // Default to monthly if not specified
     const billingInterval: BillingInterval = interval === "annual" ? "annual" : "monthly";
 
-    if (!plan || (plan !== "pro" && plan !== "max")) {
+    if (!plan || plan !== "teams") {
       return NextResponse.json(
-        { error: "Invalid plan selected" },
+        { error: "Invalid plan selected. Only Teams plan is available for subscription." },
         { status: 400 }
       );
     }

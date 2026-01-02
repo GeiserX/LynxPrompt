@@ -2418,7 +2418,7 @@ ${curlCommand}
               const isActive = index === currentStep;
               const isCompleted = index < currentStep;
               const isLocked = !canAccessTier(userTier, step.tier);
-              const tierBadge = getTierBadge(step.tier);
+              // tierBadge removed - all wizard steps now available to all users
 
               return (
                 <button
@@ -2455,11 +2455,7 @@ ${curlCommand}
                     )}
                   </div>
                   <span className="flex-1 text-sm font-medium">{step.title}</span>
-                  {tierBadge && (
-                    <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${tierBadge.className}`}>
-                      {tierBadge.label}
-                    </span>
-                  )}
+                  {/* Tier badges removed - all wizard steps now available to all users */}
                 </button>
               );
             })}
