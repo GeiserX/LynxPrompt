@@ -113,36 +113,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user is Teams subscriber for discount
-    const user = await prismaUsers.user.findUnique({
-      where: { id: session.user.id },
-      select: { subscriptionPlan: true, role: true },
-    });
-    
-    // Teams users get 10% discount (also admins/superadmins)
-    const isTeamsUser = user?.subscriptionPlan === "TEAMS" ||
-                        user?.role === "ADMIN" || 
-                        user?.role === "SUPERADMIN";
-    
-    // Teams subscribers get 10% discount (platform absorbs it, author still gets 70% of original)
-    const TEAMS_DISCOUNT_PERCENT = 10;
+    // All users pay full price - no discounts
     const originalPrice = template.price;
-    const discountedPrice = isTeamsUser 
-      ? Math.round(originalPrice * (1 - TEAMS_DISCOUNT_PERCENT / 100))
-      : originalPrice;
 
     // Create Stripe Checkout session for one-time payment
     const stripe = ensureStripe();
     const authorName = template.user.displayName || template.user.name || "Author";
     
-    // Description includes team info and discount
+    // Description includes team info if applicable
     let description = `Blueprint by ${authorName}`;
-    if (teamName && isTeamsUser) {
-      description = `Blueprint by ${authorName} (10% Teams discount, shared with ${teamName})`;
-    } else if (teamName) {
+    if (teamName) {
       description = `Blueprint by ${authorName} (shared with ${teamName})`;
-    } else if (isTeamsUser) {
-      description = `Blueprint by ${authorName} (10% Teams subscriber discount applied)`;
     }
 
     const checkoutSession = await stripe.checkout.sessions.create({
@@ -161,7 +142,7 @@ export async function POST(request: NextRequest) {
                 teamId: teamId || "",
               },
             },
-            unit_amount: discountedPrice, // Charge discounted price
+            unit_amount: originalPrice, // Full price charged
           },
           quantity: 1,
         },
@@ -172,9 +153,8 @@ export async function POST(request: NextRequest) {
         userId: session.user.id,
         authorId: template.userId,
         teamId: teamId || "", // Include team for webhook processing
-        originalPrice: originalPrice.toString(), // Store original for author share calculation
-        paidPrice: discountedPrice.toString(),
-        isTeamsDiscount: isTeamsUser ? "true" : "false",
+        originalPrice: originalPrice.toString(),
+        paidPrice: originalPrice.toString(),
         currency: template.currency,
       },
       success_url: `${process.env.NEXTAUTH_URL}/blueprints/${templateId}?purchased=true`,
