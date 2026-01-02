@@ -230,10 +230,6 @@ export default function TermsPage() {
                   <li>Funds may be held until the chargeback window expires (typically 90–120 days for new sellers)</li>
                 </ul>
 
-                <h3 className="mt-4 font-medium text-foreground">Max Subscriber Discount</h3>
-                <p className="mt-2">
-                  Max subscribers receive a <strong>10% discount</strong> on all paid blueprint purchases. Authors still receive their full 70% of the original price — the discount is absorbed by the platform (reducing our fee from 30% to 20% on discounted purchases).
-                </p>
               </section>
 
               {/* 9. Refunds & Right of Withdrawal */}
