@@ -26,9 +26,9 @@ LynxPrompt is a web platform and CLI for generating and sharing **AI IDE configu
 
 ## Supported AI IDEs & Tools
 
-LynxPrompt supports **25+ AI coding assistants** across all major platforms:
+LynxPrompt supports **30+ AI coding assistants** across all major platforms:
 
-### Popular Editors
+### Popular Platforms
 
 | Platform | Config File | Status |
 |----------|-------------|:------:|
@@ -37,27 +37,38 @@ LynxPrompt supports **25+ AI coding assistants** across all major platforms:
 | **GitHub Copilot** | `.github/copilot-instructions.md` | ✅ |
 | **Windsurf** | `.windsurfrules` | ✅ |
 | **Zed** | `.zed/instructions.md` | ✅ |
-| **Aider** | `AIDER.md` / `.aider.conf.yml` | ✅ |
+| **Aider** | `AIDER.md` | ✅ |
+| **Antigravity** (Google) | `GEMINI.md` | ✅ |
 
-### More AI Tools
+### Editor Extensions
 
 | Platform | Config File | Status |
 |----------|-------------|:------:|
-| **Amazon Q** | `.amazonq/rules/` | ✅ |
-| **Kiro** (AWS) | `.kiro/steering/` | ✅ |
 | **Cline** | `.clinerules` | ✅ |
-| **Cody** | `.sourcegraph/cody.json` | ✅ |
-| **Continue.dev** | `.continue/config.json` | ✅ |
-| **Antigravity** (Google) | `GEMINI.md` | ✅ |
-| **Goose** | `.goosehints` | ✅ |
-| **JetBrains Junie** | `.junie/guidelines.md` | ✅ |
-| **OpenHands** | `.openhands/microagents/repo.md` | ✅ |
-| **Trae AI** (ByteDance) | `.trae/rules/` | ✅ |
-| **Augment Code** | `.augment/rules/` | ✅ |
 | **Roo Code** | `.roo/rules/` | ✅ |
-| **Firebase Studio** | `.idx/` | ✅ |
+| **Continue.dev** | `.continue/config.json` | ✅ |
+| **Sourcegraph Cody** | `.cody/config.json` | ✅ |
+| **Amazon Q** | `.amazonq/rules/` | ✅ |
+| **Tabnine** | `.tabnine.yaml` | ✅ |
+| **Supermaven** | `.supermaven/config.json` | ✅ |
+| **CodeGPT** | `.codegpt/config.json` | ✅ |
+| **Augment Code** | `.augment/rules/` | ✅ |
+| **Kilo Code** | `.kilocode/rules/` | ✅ |
+| **JetBrains Junie** | `.junie/guidelines.md` | ✅ |
+
+### CLI Tools & Other
+
+| Platform | Config File | Status |
+|----------|-------------|:------:|
+| **Goose** | `.goosehints` | ✅ |
 | **Warp AI** | `WARP.md` | ✅ |
-| **VS Code MCP** | `.vscode/mcp.json` | ✅ |
+| **Gemini CLI** | `GEMINI.md` | ✅ |
+| **OpenHands** | `.openhands/microagents/repo.md` | ✅ |
+| **Kiro** (AWS) | `.kiro/steering/` | ✅ |
+| **Trae AI** (ByteDance) | `.trae/rules/` | ✅ |
+| **Firebase Studio** | `.idx/` | ✅ |
+| **Void** | `.void/config.json` | ✅ |
+| **Open Code** | `opencode.json` | ✅ |
 
 ### Universal Format
 

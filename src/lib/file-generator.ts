@@ -203,23 +203,8 @@ function canAccessFeature(userTier: string | undefined, featureTier: "basic" | "
   return userLevel >= featureLevels[featureTier];
 }
 
-// Platform file names
-// These are the PRIMARY platforms, but files work across multiple IDEs
-const PLATFORM_FILES: Record<string, string> = {
-  universal: "AGENTS.md",
-  cursor: ".cursor/rules/project.mdc",
-  claude: "CLAUDE.md",
-  copilot: ".github/copilot-instructions.md",
-  windsurf: ".windsurfrules",
-  antigravity: "GEMINI.md",
-  aider: ".aider.conf.yml",
-  continue: ".continue/config.json",
-  cody: ".cody/config.json",
-  tabnine: ".tabnine.yaml",
-  supermaven: ".supermaven/config.json",
-  codegpt: ".codegpt/config.json",
-  void: ".void/config.json",
-};
+// Platform file names - imported from central definition
+import { PLATFORM_FILES, getPlatform } from "./platforms";
 
 // Helper: normalize platforms array (supports legacy array or single string)
 function resolvePlatforms(config: WizardConfig): string[] {
@@ -4293,6 +4278,75 @@ export function generateAllFiles(
       break;
     case "void":
       content = generateVoidConfig(config, user);
+      break;
+    // New platforms - using appropriate generators
+    case "zed":
+      // Zed uses markdown format similar to CLAUDE.md
+      content = generateClaudeMd(config, user);
+      break;
+    case "cline":
+      // Cline uses plain text rules similar to Windsurf
+      content = generateWindsurfRules(config, user);
+      break;
+    case "goose":
+      // Goose uses plain text hints
+      content = generateWindsurfRules(config, user);
+      break;
+    case "amazonq":
+      // Amazon Q uses Cursor-like MDC format
+      content = generateCursorRules(config, user);
+      break;
+    case "roocode":
+      // Roo Code uses MDC format
+      content = generateCursorRules(config, user);
+      break;
+    case "warp":
+      // Warp uses markdown
+      content = generateClaudeMd(config, user);
+      break;
+    case "gemini-cli":
+      // Gemini CLI uses same format as Antigravity
+      content = generateGeminiMd(config, user);
+      break;
+    case "trae":
+      // Trae uses MDC format
+      content = generateCursorRules(config, user);
+      break;
+    case "firebase":
+      // Firebase Studio uses MDC format
+      content = generateCursorRules(config, user);
+      break;
+    case "augment":
+      // Augment uses MDC format
+      content = generateCursorRules(config, user);
+      break;
+    case "kilocode":
+      // Kilocode uses MDC format
+      content = generateCursorRules(config, user);
+      break;
+    case "junie":
+      // Junie uses markdown
+      content = generateClaudeMd(config, user);
+      break;
+    case "kiro":
+      // Kiro uses MDC format
+      content = generateCursorRules(config, user);
+      break;
+    case "openhands":
+      // OpenHands uses markdown
+      content = generateClaudeMd(config, user);
+      break;
+    case "crush":
+      // Crush uses markdown
+      content = generateClaudeMd(config, user);
+      break;
+    case "opencode":
+      // OpenCode uses JSON config
+      content = generateCodyConfig(config, user);
+      break;
+    case "firebender":
+      // Firebender uses JSON config
+      content = generateCodyConfig(config, user);
       break;
   }
 
