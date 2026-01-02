@@ -766,6 +766,8 @@ type WizardConfig = {
   platform: string;
   blueprintMode: boolean; // Generate with [[VARIABLE|default]] for blueprint templates
   enableApiSync: boolean; // Auto-save as private template with API sync instructions
+  preferCliSync: boolean; // Use CLI commands instead of curl (default true)
+  tokenEnvVar: string; // Environment variable name for API token
   additionalFeedback: string;
   commands: CommandsConfig;
   codeStyle: CodeStyleConfig;
@@ -833,6 +835,8 @@ function WizardPageContent() {
   const [repoDetectUrl, setRepoDetectUrl] = useState("");
   const [isDetecting, setIsDetecting] = useState(false);
   const [detectError, setDetectError] = useState<string | null>(null);
+  // Track which fields were auto-filled from detection (persists after applying)
+  const [detectedFields, setDetectedFields] = useState<Set<string>>(new Set());
   const [detectedData, setDetectedData] = useState<{
     name: string | null;
     description: string | null;
@@ -891,6 +895,8 @@ function WizardPageContent() {
     platform: "universal",
     blueprintMode: false,
     enableApiSync: false,
+    preferCliSync: true, // Default to CLI (recommended, no token in file)
+    tokenEnvVar: "LYNXPROMPT_API_TOKEN",
     additionalFeedback: "",
     commands: { build: "", test: "", lint: "", dev: "", additional: [], savePreferences: false },
     codeStyle: { naming: "language_default", errorHandling: "", errorHandlingOther: "", loggingConventions: "", loggingConventionsOther: "", notes: "", savePreferences: false },
@@ -1106,6 +1112,27 @@ function WizardPageContent() {
   // Apply detected data to config
   const applyDetectedData = () => {
     if (!detectedData) return;
+
+    // Track which fields are being filled from detection
+    const newDetectedFields = new Set<string>();
+    if (detectedData.name) newDetectedFields.add("projectName");
+    if (detectedData.description) newDetectedFields.add("projectDescription");
+    if (detectedData.projectType) newDetectedFields.add("projectType");
+    if (detectedData.stack.length > 0) {
+      newDetectedFields.add("languages");
+      newDetectedFields.add("frameworks");
+    }
+    if (detectedData.repoHost) newDetectedFields.add("repoHost");
+    if (detectedData.license) newDetectedFields.add("license");
+    if (detectedData.cicd) newDetectedFields.add("cicd");
+    if (detectedData.hasDocker) newDetectedFields.add("docker");
+    if (detectedData.commands.build) newDetectedFields.add("commands.build");
+    if (detectedData.commands.test) newDetectedFields.add("commands.test");
+    if (detectedData.commands.lint) newDetectedFields.add("commands.lint");
+    if (detectedData.commands.dev) newDetectedFields.add("commands.dev");
+    if (detectedData.testFramework) newDetectedFields.add("testFramework");
+    
+    setDetectedFields(prev => new Set([...prev, ...newDetectedFields]));
 
     setConfig(prev => ({
       ...prev,
@@ -1830,68 +1857,51 @@ function WizardPageContent() {
     }
   };
   
-  // Generate API sync header for the downloaded file - OS-specific commands
+  // Generate API sync header for the downloaded file - CLI or env var based (never put token directly in file)
   const generateApiSyncHeader = (blueprintId: string, fileName: string) => {
     const bpId = blueprintId.startsWith("bp_") ? blueprintId : `bp_${blueprintId}`;
-    const devOSList = config.devOS || ["linux"];
-    const hasWindows = devOSList.includes("windows");
-    const hasUnix = devOSList.includes("linux") || devOSList.includes("macos") || devOSList.includes("wsl");
-    const isMultiPlatform = (hasWindows && hasUnix) || devOSList.length > 1;
+    const tokenEnvVar = config.tokenEnvVar || "LYNXPROMPT_API_TOKEN";
     
-    // Generate OS-specific curl command
-    let curlCommand = "";
+    let syncCommands = "";
     
-    if (isMultiPlatform) {
-      // Show both options for cross-platform
-      curlCommand = `#   # Linux/macOS (bash):
-#   curl -X PUT "https://lynxprompt.com/api/v1/blueprints/${bpId}" \\
-#     -H "Authorization: Bearer \$LYNXPROMPT_API_TOKEN" \\
-#     -H "Content-Type: application/json" \\
-#     -d "{\\"content\\": \\"$(cat ${fileName} | jq -Rs .)\\"}"\n#
-#   # Windows (PowerShell):
-#   $content = (Get-Content "${fileName}" -Raw) -replace '"', '\\"'
-#   Invoke-RestMethod -Uri "https://lynxprompt.com/api/v1/blueprints/${bpId}" \`
-#     -Method PUT -Headers @{ "Authorization" = "Bearer \$env:LYNXPROMPT_API_TOKEN" } \`
-#     -Body (@{ content = $content } | ConvertTo-Json)`;
-    } else if (devOSList.includes("windows")) {
-      // PowerShell command for Windows
-      curlCommand = `#   # PowerShell (Windows)
-#   $content = (Get-Content "${fileName}" -Raw) -replace '"', '\\"'
-#   $body = @{ content = $content } | ConvertTo-Json
-#   Invoke-RestMethod -Uri "https://lynxprompt.com/api/v1/blueprints/${bpId}" \`
-#     -Method PUT \`
-#     -Headers @{ "Authorization" = "Bearer $env:LYNXPROMPT_API_TOKEN"; "Content-Type" = "application/json" } \`
-#     -Body $body`;
-    } else if (devOSList.includes("wsl")) {
-      // WSL uses bash but might need Windows path awareness
-      curlCommand = `#   # Bash (WSL/Linux)
-#   curl -X PUT "https://lynxprompt.com/api/v1/blueprints/${bpId}" \\
-#     -H "Authorization: Bearer \$LYNXPROMPT_API_TOKEN" \\
-#     -H "Content-Type: application/json" \\
-#     -d "{\\"content\\": \\"$(cat ${fileName} | jq -Rs .)\\"}"\n#
-#   # Note: Install jq if not present: sudo apt install jq`;
+    if (config.preferCliSync) {
+      // CLI method (recommended - no token needed in file)
+      syncCommands = `#   # Using LynxPrompt CLI (recommended):
+#   lynxp push    # Upload local changes to cloud
+#   lynxp pull    # Download cloud changes to local
+#   lynxp diff    # Compare local vs cloud versions
+#
+#   Install CLI: npm install -g lynxprompt
+#   Login: lynxp login`;
     } else {
-      // Linux/macOS default - use jq for proper JSON escaping
-      curlCommand = `#   curl -X PUT "https://lynxprompt.com/api/v1/blueprints/${bpId}" \\
-#     -H "Authorization: Bearer \$LYNXPROMPT_API_TOKEN" \\
+      // Environment variable method (no token in file)
+      syncCommands = `#   # Using curl with environment variable:
+#   # Token stored in $${tokenEnvVar} - NEVER put token directly in this file!
+#
+#   # Push local changes to cloud:
+#   curl -X PUT "https://lynxprompt.com/api/v1/blueprints/${bpId}" \\
+#     -H "Authorization: Bearer \$${tokenEnvVar}" \\
 #     -H "Content-Type: application/json" \\
-#     -d "{\\"content\\": \\"$(cat ${fileName} | jq -Rs .)\\"}"`;
+#     -d "{\\"content\\": \\"$(cat ${fileName} | jq -Rs .)\\"}"\n#
+#   # Pull cloud changes to local:
+#   curl -s "https://lynxprompt.com/api/v1/blueprints/${bpId}" \\
+#     -H "Authorization: Bearer \$${tokenEnvVar}" | jq -r '.content' > ${fileName}
+#
+#   Set your token: export ${tokenEnvVar}="your_token_here"`;
     }
     
     return `# ${config.projectName || fileName}
 #
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# 🔄 LynxPrompt API Sync
+# 🔄 LynxPrompt Cloud Sync
 # Blueprint ID: ${bpId}
 # 
-# This file is synced with LynxPrompt. To update it via API:
+# This file is synced with LynxPrompt.
 #
-${curlCommand}
+${syncCommands}
 #
 # Generate an API token at: https://lynxprompt.com/settings
 # Docs: https://lynxprompt.com/docs/api
-#
-# Note: Requires an API token with "Edit blueprints" permission.
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 `;
@@ -2501,11 +2511,15 @@ ${curlCommand}
                   copiedFile={copiedFile}
                   blueprintMode={config.blueprintMode}
                   enableApiSync={config.enableApiSync}
+                  preferCliSync={config.preferCliSync}
+                  tokenEnvVar={config.tokenEnvVar}
                   userTier={userTier}
                   onToggleExpand={(fileName) => setExpandedFile(expandedFile === fileName ? null : fileName)}
                   onCopyFile={handleCopyFile}
                   onPlatformChange={(v) => setConfig({ ...config, platform: v })}
                   onApiSyncChange={(v) => setConfig({ ...config, enableApiSync: v })}
+                  onPreferCliSyncChange={(v) => setConfig({ ...config, preferCliSync: v })}
+                  onTokenEnvVarChange={(v) => setConfig({ ...config, tokenEnvVar: v })}
                 />
               )}
 
@@ -5670,11 +5684,15 @@ function StepGenerate({
   copiedFile,
   blueprintMode,
   enableApiSync,
+  preferCliSync,
+  tokenEnvVar,
   userTier,
   onToggleExpand,
   onCopyFile,
   onPlatformChange,
   onApiSyncChange,
+  onPreferCliSyncChange,
+  onTokenEnvVarChange,
 }: {
   config: WizardConfig;
   session: {
@@ -5690,11 +5708,15 @@ function StepGenerate({
   copiedFile: string | null;
   blueprintMode: boolean;
   enableApiSync: boolean;
+  preferCliSync: boolean;
+  tokenEnvVar: string;
   userTier: string;
   onToggleExpand: (fileName: string) => void;
   onCopyFile: (fileName: string, content: string) => void;
   onPlatformChange: (v: string) => void;
   onApiSyncChange: (v: boolean) => void;
+  onPreferCliSyncChange: (v: boolean) => void;
+  onTokenEnvVarChange: (v: string) => void;
 }) {
   const [ideSearch, setIdeSearch] = useState("");
   const [showAllIdes, setShowAllIdes] = useState(false);
@@ -5809,40 +5831,84 @@ function StepGenerate({
           </div>
         </div>
 
-        {/* API Sync Option - Pro+ only */}
-        {["pro", "max", "teams"].includes(userTier.toLowerCase()) && (
-          <div className={`rounded-lg border p-4 transition-colors ${enableApiSync ? "border-primary bg-primary/5" : "border-dashed"}`}>
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <label className="font-medium">
-                    🔄 Auto-update via API
-                  </label>
-                </div>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Save as private blueprint &amp; include sync commands in the downloaded file.
-                </p>
-                {enableApiSync && (
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    Requires an API token.{" "}
-                    <a href="/settings" target="_blank" className="text-primary hover:underline">
-                      Get one in Settings →
-                    </a>
-                  </p>
-                )}
+        {/* Cloud Sync Option */}
+        <div className={`rounded-lg border p-4 transition-colors ${enableApiSync ? "border-primary bg-primary/5" : "border-dashed"}`}>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <label className="font-medium">
+                  ☁️ Cloud Sync
+                </label>
               </div>
-              <button
-                onClick={() => onApiSyncChange(!enableApiSync)}
-                className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${enableApiSync ? "bg-primary" : "bg-muted"}`}
-                aria-label="Toggle API sync"
-              >
-                <span
-                  className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${enableApiSync ? "translate-x-5" : "translate-x-0"}`}
-                />
-              </button>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Save as private blueprint &amp; include sync commands in the downloaded file.
+              </p>
             </div>
+            <button
+              onClick={() => onApiSyncChange(!enableApiSync)}
+              className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${enableApiSync ? "bg-primary" : "bg-muted"}`}
+              aria-label="Toggle cloud sync"
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${enableApiSync ? "translate-x-5" : "translate-x-0"}`}
+              />
+            </button>
           </div>
-        )}
+          
+          {/* CLI vs curl preference - shown when sync is enabled */}
+          {enableApiSync && (
+            <div className="mt-4 space-y-4 border-t pt-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <label className="font-medium text-sm">
+                    📦 Use LynxPrompt CLI
+                    <span className="ml-2 rounded bg-green-100 px-2 py-0.5 text-xs text-green-700 dark:bg-green-900 dark:text-green-300">
+                      Recommended
+                    </span>
+                  </label>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {preferCliSync 
+                      ? "AI will use lynxp push/pull/diff commands. No API token stored in file."
+                      : "AI will use curl with environment variable. Token in $" + tokenEnvVar}
+                  </p>
+                </div>
+                <button
+                  onClick={() => onPreferCliSyncChange(!preferCliSync)}
+                  className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${preferCliSync ? "bg-green-500" : "bg-muted"}`}
+                  aria-label="Toggle CLI preference"
+                >
+                  <span
+                    className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${preferCliSync ? "translate-x-5" : "translate-x-0"}`}
+                  />
+                </button>
+              </div>
+              
+              {/* Env var name input - shown when not using CLI */}
+              {!preferCliSync && (
+                <div>
+                  <label className="text-xs text-muted-foreground">Environment variable for API token:</label>
+                  <input
+                    type="text"
+                    value={tokenEnvVar}
+                    onChange={(e) => onTokenEnvVarChange(e.target.value)}
+                    placeholder="LYNXPROMPT_API_TOKEN"
+                    className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Set this in your shell: <code className="rounded bg-muted px-1">export {tokenEnvVar}=&quot;your_token&quot;</code>
+                  </p>
+                </div>
+              )}
+              
+              <p className="text-xs text-muted-foreground">
+                {preferCliSync 
+                  ? <>Install CLI: <code className="rounded bg-muted px-1">npm install -g lynxprompt</code></>
+                  : <>Get a token at <a href="/settings" target="_blank" className="text-primary hover:underline">Settings →</a></>
+                }
+              </p>
+            </div>
+          )}
+        </div>
 
         {/* File Previews */}
         <div className="space-y-2">
