@@ -66,8 +66,6 @@ interface Blueprint {
   isOfficial?: boolean;
   aiAssisted?: boolean;
   price?: number | null;
-  discountedPrice?: number | null;
-  isTeamsUser?: boolean;
   currency?: string;
   isOwner?: boolean;
   hasPurchased?: boolean;
@@ -675,10 +673,7 @@ function BlueprintsContent() {
               <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
                 {blueprints.map((blueprint) => {
                   const isPaid = blueprint.price && blueprint.price > 0;
-                  const hasDiscount = isPaid && blueprint.discountedPrice && blueprint.discountedPrice < blueprint.price!;
-                  const displayPrice = hasDiscount 
-                    ? `€${(blueprint.discountedPrice! / 100).toFixed(2)}`
-                    : isPaid 
+                  const displayPrice = isPaid 
                       ? `€${(blueprint.price! / 100).toFixed(2)}` 
                       : null;
                   const originalPrice = hasDiscount ? `€${(blueprint.price! / 100).toFixed(2)}` : null;

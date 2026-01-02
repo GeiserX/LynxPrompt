@@ -191,8 +191,7 @@ export async function GET(request: NextRequest) {
       .slice(0, 20)
       .map(([tag]) => tag);
 
-    // Check if user is Teams subscriber for discount and get purchased blueprints
-    let isTeamsUser = false;
+    // Check for purchased blueprints
     let userId: string | null = null;
     let purchasedIds: Set<string> = new Set();
     
@@ -204,10 +203,6 @@ export async function GET(request: NextRequest) {
         select: { subscriptionPlan: true, role: true },
       });
       
-      // Teams users get 10% discount (also admins/superadmins)
-      isTeamsUser = user?.subscriptionPlan === "TEAMS" ||
-                    user?.role === "ADMIN" || 
-                    user?.role === "SUPERADMIN";
       
       // Get user's team membership
       const teamMembership = await prismaUsers.teamMember.findFirst({
@@ -233,14 +228,8 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Teams subscribers get 10% discount
-    const TEAMS_DISCOUNT_PERCENT = 10;
-
     // Format response
     const formattedBlueprints = blueprints.map((t) => {
-      const discountedPrice = isTeamsUser && t.price 
-        ? Math.round(t.price * (1 - TEAMS_DISCOUNT_PERCENT / 100))
-        : null;
       
       const isOwner = userId ? t.userId === userId : false;
       const hasPurchased = purchasedIds.has(t.id);
@@ -260,8 +249,6 @@ export async function GET(request: NextRequest) {
         isOfficial: t.isOfficial || false,
         aiAssisted: t.aiAssisted || false,
         price: t.price,
-        discountedPrice,
-        isTeamsUser,
         currency: t.currency || "EUR",
         isOwner,
         hasPurchased,

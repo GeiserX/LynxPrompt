@@ -119,11 +119,10 @@ export default function MarketplaceOverviewPage() {
 
       {/* Max subscriber discount */}
       <section className="space-y-4">
-        <h2 className="text-2xl font-bold">Max Subscriber Discount</h2>
+        <h2 className="text-2xl font-bold">Revenue Split</h2>
         <p className="text-muted-foreground">
-          Max subscribers receive a 10% discount on all paid blueprint
-          purchases. The creator still receives their full 70% — we absorb the
-          discount.
+          Blueprint authors receive 70% of each sale, while LynxPrompt retains
+          30% as a platform fee. This applies to all paid blueprint purchases.
         </p>
         <div className="rounded-lg bg-muted/50 p-4">
           <h3 className="font-medium">Example: €10 Blueprint</h3>

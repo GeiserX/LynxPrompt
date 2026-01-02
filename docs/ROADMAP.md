@@ -420,10 +420,8 @@ When downloading, user sees:
 
 #### Key Subscription Rules
 
-- **Free users**: Access to basic templates only
-- **Pro users**: Access to intermediate wizard features for repos
-- **Max users**: Full access to advanced wizards + **10% discount on paid blueprints**
-- **Teams users**: All Max features + team-shared blueprints + SSO + €15/user AI budget
+- **Users (free)**: Full wizard access, all platforms, API, sell blueprints
+- **Teams**: Everything in Users + AI features, SSO, team-shared blueprints
 
 #### Billing Intervals
 
@@ -475,25 +473,23 @@ Where:
 #### Revenue Split
 
 | Recipient                 | Standard | With Max Discount |
-| ------------------------- | -------- | ----------------- |
-| **Template Author**       | 70%      | 70% (unchanged)   |
-| **Platform (LynxPrompt)** | 30%      | 20%               |
-| **Max Subscriber Saves**  | -        | 10%               |
+| ------------------------- | -------- |
+| **Template Author**       | 70%      |
+| **Platform (LynxPrompt)** | 30%      |
 
-### Max Subscriber Discount Model
+### Revenue Split Model
 
-Max subscribers receive a **10% discount** on all paid blueprint purchases:
-
-1. **Author Protection**: Authors always receive 70% of the ORIGINAL price
-2. **Platform Absorbs Discount**: LynxPrompt takes 20% instead of 30%
-3. **Simple & Predictable**: No complex pool calculations or download tracking
+All blueprint purchases follow a simple 70/30 split:
+- Authors receive 70% of the sale price
+- Platform retains 30% as a fee
+- No discounts - everyone pays the same price
 
 #### Example
 
 ```
 Blueprint Price: €10
-Standard Purchase: Author gets €7.00, Platform gets €3.00
-Max Subscriber Purchase: Author gets €7.00, Platform gets €2.00, User pays €9.00
+Author receives: €7.00
+Platform receives: €3.00
 ```
 
 ### Payment Processing
@@ -588,7 +584,7 @@ export function getApproxPrice(eurAmount: number): string | null {
 ### Phase 3: Max Subscription Pool
 
 - [x] Implement download tracking for paid templates
-- [x] Max subscriber 10% discount on purchases
+- [x] ~~Max subscriber 10% discount~~ (removed January 2026)
 - [ ] Author earnings dashboard
 - [ ] Author payout notifications
 
