@@ -174,8 +174,8 @@ export default function AdvancedStepsPage() {
       <section className="space-y-4">
         <h2 className="text-2xl font-bold">Self-Improving Configs</h2>
         <p className="text-muted-foreground">
-          Max users can enable &quot;self-improvement&quot; instructions in
-          their configs. This tells the AI to track your coding patterns and
+          You can enable &quot;self-improvement&quot; instructions in
+          your configs. This tells the AI to track your coding patterns and
           update the config file accordingly.
         </p>
         <div className="rounded-lg border bg-card p-4">

@@ -84,7 +84,7 @@ interface TemplateData {
   price?: number | null;
   discountedPrice?: number | null;
   discountPercent?: number | null;
-  isMaxUser?: boolean;
+  isTeamsUser?: boolean;
   currency?: string;
   isPaid?: boolean;
   hasPurchased?: boolean;

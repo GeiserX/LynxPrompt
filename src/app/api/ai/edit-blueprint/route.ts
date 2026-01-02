@@ -64,7 +64,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if user is MAX or TEAMS subscriber
+    // Check if user is Teams subscriber (AI features are Teams-only)
     const user = await prismaUsers.user.findUnique({
       where: { id: auth.user.id },
       select: {

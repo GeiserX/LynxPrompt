@@ -67,7 +67,7 @@ interface Blueprint {
   aiAssisted?: boolean;
   price?: number | null;
   discountedPrice?: number | null;
-  isMaxUser?: boolean;
+  isTeamsUser?: boolean;
   currency?: string;
   isOwner?: boolean;
   hasPurchased?: boolean;

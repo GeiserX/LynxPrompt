@@ -894,14 +894,14 @@ export default function ShareBlueprintPage() {
                         {!canCreatePaidBlueprints && (
                           <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
                             <Lock className="h-3 w-3" />
-                            PRO or MAX required
+                            Teams required
                           </span>
                         )}
                       </div>
 
                       {!canCreatePaidBlueprints && (
                         <p className="mt-2 text-sm text-muted-foreground">
-                          Upgrade to <Link href="/pricing" className="text-primary hover:underline font-medium">PRO or MAX</Link> to create paid blueprints and earn 70% of each sale.
+                          Upgrade to <Link href="/pricing" className="text-primary hover:underline font-medium">Teams</Link> to create paid blueprints and earn 70% of each sale.
                         </p>
                       )}
 

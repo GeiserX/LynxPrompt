@@ -86,7 +86,7 @@ export default function TermsPage() {
                   <li>LynxPrompt facilitates the transaction, handles payments, and takes a platform commission</li>
                 </ul>
                 <p className="mt-3">
-                  For subscription services (Free, Pro, Max, and Teams tiers), the contract is directly between you and LynxPrompt.
+                  For subscription services (Users and Teams tiers), the contract is directly between you and LynxPrompt.
                 </p>
               </section>
 

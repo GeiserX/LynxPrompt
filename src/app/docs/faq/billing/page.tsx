@@ -64,16 +64,15 @@ export default function BillingFAQPage() {
         </div>
 
         <div className="rounded-lg border bg-card p-4">
-          <h3 className="font-semibold">What&apos;s the difference between Pro and Max?</h3>
+          <h3 className="font-semibold">What&apos;s the difference between Users and Teams?</h3>
           <p className="mt-2 text-muted-foreground">
-            <strong>Pro (€5/month):</strong> Intermediate wizard steps, ability
-            to sell paid blueprints (70% revenue), repository & release
-            settings.
+            <strong>Users (Free):</strong> Full wizard access, all platforms, API access,
+            ability to sell blueprints (70% revenue), browse and download blueprints.
             <br />
             <br />
-            <strong>Max (€20/month):</strong> Everything in Pro, plus advanced
-            wizard steps, AI-powered blueprint editing, and 10% off all paid
-            blueprint purchases.
+            <strong>Teams (€30/seat/month):</strong> Everything in Users, plus AI-powered
+            blueprint editing, team-shared blueprints, SSO (SAML, OIDC, LDAP),
+            centralized billing, and 10% off all paid blueprint purchases.
           </p>
         </div>
 
@@ -86,8 +85,6 @@ export default function BillingFAQPage() {
             </Link>
             . Annual plans offer a <strong>10% discount</strong> compared to monthly billing:
             <br /><br />
-            <strong>Pro:</strong> €54/year (€4.50/month) vs €5/month<br />
-            <strong>Max:</strong> €216/year (€18/month) vs €20/month<br />
             <strong>Teams:</strong> €324/seat/year (€27/seat/month) vs €30/seat/month
             <br /><br />
             Note: Annual subscriptions are a yearly commitment and cannot be canceled or refunded mid-cycle.

@@ -50,7 +50,7 @@ export default function WizardOverviewPage() {
             <Sparkles className="h-5 w-5 text-purple-500" />
             <div>
               <p className="font-medium">Advanced Steps</p>
-              <p className="text-sm text-muted-foreground">Max tier</p>
+              <p className="text-sm text-muted-foreground">All users</p>
             </div>
           </Link>
         </div>

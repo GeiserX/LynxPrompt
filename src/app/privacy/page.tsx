@@ -308,7 +308,7 @@ export default function PrivacyPage() {
                     </h3>
                     <p className="mt-1 text-sm">
                       <strong>Data shared:</strong> Blueprint content you submit
-                      for AI-assisted editing (MAX subscription feature only)
+                      for AI-assisted editing (Teams subscription feature only)
                     </p>
                     <p className="text-sm">
                       <strong>Purpose:</strong> AI-powered blueprint modification
