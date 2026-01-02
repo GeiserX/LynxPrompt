@@ -422,7 +422,8 @@ export default function PricingPage() {
                   </span>
                 </summary>
                 <p className="border-t px-4 py-3 text-sm text-muted-foreground">
-                  Yes! All users can create and sell blueprints on the marketplace. Minimum price is €5, minimum payout is €5 via PayPal.
+                  Yes! All users can create and sell blueprints on the marketplace. You keep 
+                  <strong> 70% of every sale</strong>. Minimum price is €5, minimum payout is €5 via PayPal.
                 </p>
               </details>
 

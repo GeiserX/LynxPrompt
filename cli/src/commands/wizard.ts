@@ -2019,12 +2019,6 @@ async function runInteractiveWizard(
   const securityStep = getCurrentStep("security")!;
   showStep(currentStepNum, securityStep, userTier);
 
-  console.log(chalk.yellow("  🔐 Security"));
-  console.log();
-
-  // 1. Secrets Management Strategy (multi-select, searchable)
-  console.log(chalk.cyan("  1️⃣  Secrets Management"));
-  
   const secretsResponse = await prompts({
     type: "autocompleteMultiselect",
     name: "secretsManagement",
