@@ -41,9 +41,9 @@ const getAnnualTotal = () => {
 
 const getTiers = (interval: BillingInterval) => [
   {
-    name: "Users",
+    name: "Free",
     price: "€0",
-    period: "forever",
+    period: "",
     originalPrice: null,
     annualTotal: null,
     description: "Full access to all wizard features. Perfect for individual developers.",
@@ -52,7 +52,7 @@ const getTiers = (interval: BillingInterval) => [
     iconStyle: "primary",
     badge: "Most Popular",
     features: [
-      { text: "Full wizard (all steps)", included: true },
+      { text: "Full wizard", included: true },
       { text: "Download configs for all platforms", included: true },
       { text: "Browse & create blueprints", included: true },
       { text: "API access for automation", included: true },
@@ -78,14 +78,13 @@ const getTiers = (interval: BillingInterval) => [
     iconStyle: "teams",
     badge: "Enterprise",
     features: [
-      { text: "Everything in Users", included: true },
+      { text: "Everything in Free", included: true },
       { text: "AI-powered blueprint editing", included: true },
       { text: "AI wizard assistant", included: true },
       { text: "Team-shared blueprints", included: true },
       { text: "SSO (SAML, OIDC, LDAP)", included: true },
       { text: "Centralized billing", included: true },
       { text: "Only pay for active users", included: true },
-      { text: "Extended AI usage limits", included: true },
       { text: "Priority support", included: true },
     ],
     cta: "Start Teams Trial",
@@ -94,22 +93,22 @@ const getTiers = (interval: BillingInterval) => [
 ];
 
 const COMPARISON_FEATURES = [
-  { name: "Full wizard (all steps)", users: true, teams: true },
-  { name: "All platforms (30+ IDEs)", users: true, teams: true },
-  { name: "API access", users: true, teams: true },
-  { name: "Unlimited downloads", users: true, teams: true },
-  { name: "Create private blueprints", users: true, teams: true },
-  { name: "Browse & download blueprints", users: true, teams: true },
-  { name: "Sell blueprints (70% revenue)", users: true, teams: true },
-  { name: "Save wizard drafts", users: true, teams: true },
-  { name: "Community support", users: true, teams: true },
-  { name: "AI-powered editing", users: "-", teams: true },
-  { name: "AI wizard assistant", users: "-", teams: true },
-  { name: "Team-shared blueprints", users: "-", teams: true },
-  { name: "SSO (SAML/OIDC/LDAP)", users: "-", teams: true },
-  { name: "Centralized billing", users: "-", teams: true },
-  { name: "Active user billing only", users: "-", teams: true },
-  { name: "Priority support", users: false, teams: true },
+  { name: "Full wizard", free: true, teams: true },
+  { name: "All platforms (30+ IDEs)", free: true, teams: true },
+  { name: "API access", free: true, teams: true },
+  { name: "Unlimited downloads", free: true, teams: true },
+  { name: "Create private blueprints", free: true, teams: true },
+  { name: "Browse & download blueprints", free: true, teams: true },
+  { name: "Sell blueprints (70% revenue)", free: true, teams: true },
+  { name: "Save wizard drafts", free: true, teams: true },
+  { name: "Community support", free: true, teams: true },
+  { name: "AI-powered editing", free: "-", teams: true },
+  { name: "AI wizard assistant", free: "-", teams: true },
+  { name: "Team-shared blueprints", free: "-", teams: true },
+  { name: "SSO (SAML/OIDC/LDAP)", free: "-", teams: true },
+  { name: "Centralized billing", free: "-", teams: true },
+  { name: "Active user billing only", free: "-", teams: true },
+  { name: "Priority support", free: "-", teams: true },
 ];
 
 export default function PricingPage() {
@@ -300,7 +299,7 @@ export default function PricingPage() {
                     size="lg"
                   >
                     <Link href={getCtaLink(tier.name)}>
-                      {isAuthenticated && tier.name === "Users"
+                      {isAuthenticated && tier.name === "Free"
                         ? "Go to Dashboard"
                         : isAuthenticated && tier.name === "Teams"
                           ? "Upgrade to Teams"
@@ -333,7 +332,7 @@ export default function PricingPage() {
                 <thead>
                   <tr className="border-b bg-muted/50">
                     <th className="px-4 py-3 text-left font-medium">Feature</th>
-                    <th className="px-3 py-3 text-center font-medium text-primary">Users</th>
+                    <th className="px-3 py-3 text-center font-medium text-primary">Free</th>
                     <th className="px-3 py-3 text-center font-medium bg-gradient-to-r from-teal-500 to-cyan-500 bg-clip-text text-transparent">Teams</th>
                   </tr>
                 </thead>
@@ -342,15 +341,15 @@ export default function PricingPage() {
                     <tr key={idx} className="border-b last:border-b-0">
                       <td className="px-4 py-3 text-sm">{feature.name}</td>
                       <td className="px-3 py-3 text-center">
-                        {typeof feature.users === "boolean" ? (
-                          feature.users ? (
+                        {typeof feature.free === "boolean" ? (
+                          feature.free ? (
                             <Check className="mx-auto h-4 w-4 text-green-500" />
                           ) : (
                             <X className="mx-auto h-4 w-4 text-muted-foreground/50" />
                           )
                         ) : (
                           <span className="text-sm text-muted-foreground">
-                            {feature.users}
+                            {feature.free}
                           </span>
                         )}
                       </td>
@@ -402,13 +401,13 @@ export default function PricingPage() {
 
               <details className="group rounded-lg border bg-card">
                 <summary className="flex cursor-pointer items-center justify-between p-4 font-medium">
-                  What&apos;s the difference between Users and Teams?
+                  What&apos;s the difference between Free and Teams?
                   <span className="transition-transform group-open:rotate-180">
                     ↓
                   </span>
                 </summary>
                 <p className="border-t px-4 py-3 text-sm text-muted-foreground">
-                  <strong>Users</strong> get the complete wizard with all steps, all platform outputs, 
+                  <strong>Free</strong> gives you the full wizard, all platform outputs, 
                   API access, blueprint creation and selling, and draft saving. <strong>Teams</strong> adds 
                   AI-powered editing (we use Claude to help you write better configs), team-shared blueprints, 
                   SSO integration, centralized billing, and only charges for active users.

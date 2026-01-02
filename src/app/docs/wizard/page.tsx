@@ -78,9 +78,9 @@ export default function WizardOverviewPage() {
 
       {/* Tier comparison */}
       <section className="space-y-4">
-        <h2 className="text-2xl font-bold">Wizard Tiers</h2>
+        <h2 className="text-2xl font-bold">Wizard Features</h2>
         <p className="text-muted-foreground">
-          The wizard has different tiers of features based on your subscription:
+          All users get access to the full wizard. Teams subscribers get additional AI features:
         </p>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-sm">
@@ -88,8 +88,7 @@ export default function WizardOverviewPage() {
               <tr className="border-b">
                 <th className="py-3 pr-4 text-left font-medium">Feature</th>
                 <th className="px-4 py-3 text-center font-medium">Free</th>
-                <th className="px-4 py-3 text-center font-medium">Pro</th>
-                <th className="px-4 py-3 text-center font-medium">Max</th>
+                <th className="px-4 py-3 text-center font-medium text-teal-500">Teams</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -97,11 +96,9 @@ export default function WizardOverviewPage() {
                 <td className="py-3 pr-4">Project Info</td>
                 <td className="px-4 py-3 text-center text-green-500">✓</td>
                 <td className="px-4 py-3 text-center text-green-500">✓</td>
-                <td className="px-4 py-3 text-center text-green-500">✓</td>
               </tr>
               <tr>
                 <td className="py-3 pr-4">Tech Stack Selection</td>
-                <td className="px-4 py-3 text-center text-green-500">✓</td>
                 <td className="px-4 py-3 text-center text-green-500">✓</td>
                 <td className="px-4 py-3 text-center text-green-500">✓</td>
               </tr>
@@ -109,35 +106,29 @@ export default function WizardOverviewPage() {
                 <td className="py-3 pr-4">Platform Selection</td>
                 <td className="px-4 py-3 text-center text-green-500">✓</td>
                 <td className="px-4 py-3 text-center text-green-500">✓</td>
-                <td className="px-4 py-3 text-center text-green-500">✓</td>
               </tr>
               <tr>
                 <td className="py-3 pr-4">Repository Settings</td>
-                <td className="px-4 py-3 text-center text-muted-foreground">—</td>
                 <td className="px-4 py-3 text-center text-green-500">✓</td>
                 <td className="px-4 py-3 text-center text-green-500">✓</td>
               </tr>
               <tr>
                 <td className="py-3 pr-4">Release Strategy</td>
-                <td className="px-4 py-3 text-center text-muted-foreground">—</td>
                 <td className="px-4 py-3 text-center text-green-500">✓</td>
                 <td className="px-4 py-3 text-center text-green-500">✓</td>
               </tr>
               <tr>
                 <td className="py-3 pr-4">CI/CD Configuration</td>
-                <td className="px-4 py-3 text-center text-muted-foreground">—</td>
-                <td className="px-4 py-3 text-center text-muted-foreground">—</td>
+                <td className="px-4 py-3 text-center text-green-500">✓</td>
                 <td className="px-4 py-3 text-center text-green-500">✓</td>
               </tr>
               <tr>
                 <td className="py-3 pr-4">AI Rules Customization</td>
                 <td className="px-4 py-3 text-center text-muted-foreground">—</td>
-                <td className="px-4 py-3 text-center text-muted-foreground">—</td>
                 <td className="px-4 py-3 text-center text-green-500">✓</td>
               </tr>
               <tr>
                 <td className="py-3 pr-4">AI Assistant</td>
-                <td className="px-4 py-3 text-center text-muted-foreground">—</td>
                 <td className="px-4 py-3 text-center text-muted-foreground">—</td>
                 <td className="px-4 py-3 text-center text-green-500">✓</td>
               </tr>

@@ -15,24 +15,24 @@ export default function AdvancedStepsPage() {
           <span>Advanced Steps</span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="rounded-full bg-purple-500/10 px-3 py-1 text-sm font-medium text-purple-600 dark:text-purple-400">
-            Max Tier
+          <span className="rounded-full bg-teal-500/10 px-3 py-1 text-sm font-medium text-teal-600 dark:text-teal-400">
+            Teams Feature
           </span>
         </div>
         <h1 className="text-3xl font-bold tracking-tight">
           Advanced Wizard Steps
         </h1>
         <p className="max-w-2xl text-lg text-muted-foreground">
-          Max subscribers get access to the most powerful wizard features
-          including CI/CD configuration, custom AI rules, and an AI assistant.
+          Teams subscribers get access to AI-powered features
+          including AI rules customization and an AI assistant.
         </p>
       </div>
 
       {/* Subscription note */}
-      <div className="rounded-xl border border-purple-500/30 bg-purple-500/5 p-4">
+      <div className="rounded-xl border border-teal-500/30 bg-teal-500/5 p-4">
         <p className="text-sm">
-          <strong>Max Required:</strong> These features are exclusively
-          available to Max subscribers.{" "}
+          <strong>Teams Required:</strong> AI features are exclusively
+          available to Teams subscribers.{" "}
           <Link href="/pricing" className="text-primary hover:underline">
             View pricing →
           </Link>
@@ -214,9 +214,9 @@ export default function AdvancedStepsPage() {
             blueprint.
           </p>
         </div>
-        <Button asChild className="bg-white text-purple-600 hover:bg-white/90">
-          <Link href="/pricing">
-            Get Max <ArrowRight className="ml-2 h-4 w-4" />
+        <Button asChild className="bg-white text-teal-600 hover:bg-white/90">
+          <Link href="/teams">
+            Get Teams <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
         </Button>
       </div>

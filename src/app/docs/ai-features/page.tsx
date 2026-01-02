@@ -18,13 +18,13 @@ export default function AIFeaturesOverviewPage() {
         </p>
       </div>
 
-      {/* Max exclusive note */}
-      <div className="rounded-xl border border-purple-500/30 bg-purple-500/5 p-4">
+      {/* Teams exclusive note */}
+      <div className="rounded-xl border border-teal-500/30 bg-teal-500/5 p-4">
         <p className="text-sm">
-          <strong>Max Exclusive:</strong> AI features are available only to Max
+          <strong>Teams Exclusive:</strong> AI features are available only to Teams
           subscribers.{" "}
           <Link href="/pricing" className="text-primary hover:underline">
-            Upgrade to Max →
+            Upgrade to Teams →
           </Link>
         </p>
       </div>
@@ -162,18 +162,18 @@ export default function AIFeaturesOverviewPage() {
       </section>
 
       {/* CTA */}
-      <div className="flex flex-col gap-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 p-6 text-white sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 p-6 text-white sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold">Unlock AI Features</h2>
           <p className="mt-1 text-sm text-white/80">
-            Upgrade to Max to access AI-powered editing and assistance.
+            Upgrade to Teams to access AI-powered editing and assistance.
           </p>
         </div>
         <Link
-          href="/pricing"
-          className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-purple-600 transition-colors hover:bg-white/90"
+          href="/teams"
+          className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-teal-600 transition-colors hover:bg-white/90"
         >
-          Get Max
+          Get Teams
           <ArrowRight className="h-4 w-4" />
         </Link>
       </div>

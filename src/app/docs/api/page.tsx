@@ -15,20 +15,20 @@ export default function ApiDocsPage() {
         </div>
         <p className="max-w-2xl text-lg text-muted-foreground">
           Programmatically manage your blueprints and keep them in sync with your
-          codebase. Available for Pro, Max, and Teams subscribers.
+          codebase. Available to all users.
         </p>
       </div>
 
       {/* Availability notice */}
       <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
-        <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+        <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
           <Shield className="h-5 w-5" />
-          <span className="font-medium">Pro, Max & Teams Only</span>
+          <span className="font-medium">Available to All Users</span>
         </div>
         <p className="mt-2 text-sm text-muted-foreground">
-          API access is available for Pro, Max, and Teams subscribers. 
-          <Link href="/pricing" className="ml-1 text-primary hover:underline">
-            Upgrade your plan
+          API access is available to all users. 
+          <Link href="/settings" className="ml-1 text-primary hover:underline">
+            Generate your API token
           </Link>{" "}
           to get started.
         </p>

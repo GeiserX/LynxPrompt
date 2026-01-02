@@ -14,7 +14,7 @@ export default function SupportDocsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Support & Feedback</h1>
         </div>
         <p className="max-w-2xl text-lg text-muted-foreground">
-          Learn how to get help, report bugs, and suggest features. Pro and Max
+          Learn how to get help, report bugs, and suggest features. Teams
           subscribers receive prioritized support.
         </p>
       </div>
@@ -79,16 +79,16 @@ export default function SupportDocsPage() {
         </div>
       </section>
 
-      {/* Pro/Max Priority */}
+      {/* Teams Priority */}
       <section className="space-y-4">
-        <h2 className="text-2xl font-bold">Priority Support for Pro & Max</h2>
+        <h2 className="text-2xl font-bold">Priority Support for Teams</h2>
         <div className="rounded-xl border border-purple-500/30 bg-purple-500/5 p-6">
           <div className="flex items-start gap-4">
             <Crown className="h-8 w-8 text-purple-500" />
             <div>
               <h3 className="text-lg font-semibold">Subscriber Benefits</h3>
               <p className="mt-2 text-muted-foreground">
-                Pro and Max subscribers receive prioritized attention for their
+                Teams subscribers receive prioritized attention for their
                 feedback:
               </p>
               <ul className="mt-4 space-y-3">
@@ -102,11 +102,11 @@ export default function SupportDocsPage() {
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="mt-1 rounded bg-gradient-to-r from-purple-500 to-pink-500 px-2 py-0.5 text-xs font-bold text-white">
-                    Max
+                  <span className="mt-1 rounded bg-gradient-to-r from-teal-500 to-cyan-500 px-2 py-0.5 text-xs font-bold text-white">
+                    Teams
                   </span>
                   <span className="text-sm text-muted-foreground">
-                    Your posts display a Max badge for highest priority. Max
+                    Your posts display a Teams badge for highest priority. Teams
                     subscribers&apos; bug reports receive faster attention.
                   </span>
                 </li>

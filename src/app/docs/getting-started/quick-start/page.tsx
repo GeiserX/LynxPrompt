@@ -117,7 +117,7 @@ export default function QuickStartPage() {
                 </li>
                 <li>
                   <strong>Advanced options:</strong> CI/CD, testing preferences
-                  (Pro/Max only)
+                  (available to all)
                 </li>
               </ul>
               <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">

@@ -23,7 +23,7 @@ export default function IntermediateStepsPage() {
           Intermediate Wizard Steps
         </h1>
         <p className="max-w-2xl text-lg text-muted-foreground">
-          Pro subscribers unlock intermediate wizard steps that add repository
+          All users have access to intermediate wizard steps that add repository
           and release configuration to your AI config files.
         </p>
       </div>
@@ -31,10 +31,9 @@ export default function IntermediateStepsPage() {
       {/* Subscription note */}
       <div className="rounded-xl border border-blue-500/30 bg-blue-500/5 p-4">
         <p className="text-sm">
-          <strong>Pro Required:</strong> These features are available to Pro and
-          Max subscribers.{" "}
-          <Link href="/pricing" className="text-primary hover:underline">
-            View pricing →
+          <strong>Available to All:</strong> These features are available to all users.{" "}
+          <Link href="/wizard" className="text-primary hover:underline">
+            Start the wizard →
           </Link>
         </p>
       </div>

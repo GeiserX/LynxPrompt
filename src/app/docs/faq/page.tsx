@@ -92,7 +92,7 @@ export default function FAQOverviewPage() {
             </h3>
             <p className="mt-2 text-muted-foreground">
               Absolutely! All generated files are plain text. Edit them however
-              you like. Max subscribers can also use AI-powered editing to
+              you like. Teams subscribers can also use AI-powered editing to
               modify blueprints with natural language instructions.
             </p>
           </div>
@@ -156,7 +156,7 @@ export default function FAQOverviewPage() {
           <div className="rounded-lg border bg-card p-4">
             <h3 className="font-semibold">Can I sell my own blueprints?</h3>
             <p className="mt-2 text-muted-foreground">
-              Yes, if you have a Pro or Max subscription. You keep 70% of each
+              Yes! All users can sell blueprints. You keep 70% of each
               sale. The minimum price is €5.
             </p>
           </div>
@@ -167,7 +167,7 @@ export default function FAQOverviewPage() {
             </h3>
             <p className="mt-2 text-muted-foreground">
               Most blueprints work across multiple platforms. Check the platform
-              tags before downloading. You can also use AI editing (Max only) to
+              tags before downloading. Teams subscribers can also use AI editing to
               adapt blueprints for different tools.
             </p>
           </div>

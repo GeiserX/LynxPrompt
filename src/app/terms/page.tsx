@@ -190,7 +190,7 @@ export default function TermsPage() {
                   <li>Share access credentials to circumvent purchase requirements</li>
                 </ul>
                 <p className="mt-3 text-sm text-muted-foreground">
-                  Max subscribers purchasing prompts at a discount receive the same license terms as full-price purchases.
+                  Teams subscribers purchasing blueprints receive the same license terms as other purchases.
                 </p>
               </section>
 

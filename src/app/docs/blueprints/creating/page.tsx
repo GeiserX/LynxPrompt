@@ -45,7 +45,7 @@ export default function CreatingBlueprintsPage() {
             </ul>
           </div>
           <div className="rounded-xl border bg-card p-6">
-            <h3 className="text-lg font-semibold">Pro & Max Users</h3>
+            <h3 className="text-lg font-semibold">Teams Users</h3>
             <ul className="mt-3 space-y-2 text-muted-foreground">
               <li className="flex items-center gap-2">
                 <Check className="h-4 w-4 text-green-500" />

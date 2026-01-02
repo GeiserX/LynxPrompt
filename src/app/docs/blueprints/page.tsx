@@ -174,7 +174,7 @@ export default function BlueprintsOverviewPage() {
               </li>
               <li className="flex items-center gap-2">
                 <span className="text-purple-500">★</span>
-                Max subscribers get 10% off
+                Instant download after purchase
               </li>
               <li className="flex items-center gap-2">
                 <span className="text-purple-500">★</span>
