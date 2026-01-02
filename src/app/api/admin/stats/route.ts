@@ -8,8 +8,6 @@ import { prismaSupport } from "@/lib/db-support";
 // Subscription plan prices in cents (monthly)
 const PLAN_PRICES = {
   FREE: 0,
-  PRO: 500, // €5
-  MAX: 2000, // €20
   TEAMS: 3000, // €30/seat
 };
 
@@ -42,14 +40,20 @@ export async function GET(req: NextRequest) {
       _count: { id: true },
     });
 
-    const currentPlanCounts = {
+    const currentPlanCounts: Record<string, number> = {
       FREE: 0,
-      PRO: 0,
-      MAX: 0,
       TEAMS: 0,
     };
     usersByPlan.forEach((row) => {
-      currentPlanCounts[row.subscriptionPlan as keyof typeof currentPlanCounts] = row._count.id;
+      const plan = row.subscriptionPlan;
+      // Map legacy PRO/MAX to FREE for stats
+      if (plan === "FREE" || plan === "PRO" || plan === "MAX") {
+        currentPlanCounts["FREE"] = (currentPlanCounts["FREE"] || 0) + row._count.id;
+      } else if (plan === "TEAMS") {
+        currentPlanCounts["TEAMS"] = (currentPlanCounts["TEAMS"] || 0) + row._count.id;
+      } else {
+        currentPlanCounts[plan] = row._count.id;
+      }
     });
 
     // Total users
@@ -76,14 +80,20 @@ export async function GET(req: NextRequest) {
       const date = new Date();
       date.setDate(date.getDate() - i);
       const dateStr = date.toISOString().split("T")[0];
-      userTimeSeries[dateStr] = { FREE: 0, PRO: 0, MAX: 0, TEAMS: 0 };
+      userTimeSeries[dateStr] = { FREE: 0, TEAMS: 0 };
     }
 
-    // Fill with actual data
+    // Fill with actual data (map legacy PRO/MAX to FREE)
     allUsers.forEach((user) => {
       const dateStr = user.createdAt.toISOString().split("T")[0];
       if (userTimeSeries[dateStr]) {
-        userTimeSeries[dateStr][user.subscriptionPlan]++;
+        const plan = user.subscriptionPlan;
+        if (plan === "TEAMS") {
+          userTimeSeries[dateStr]["TEAMS"]++;
+        } else {
+          // Map FREE, PRO, MAX to FREE (Users tier)
+          userTimeSeries[dateStr]["FREE"]++;
+        }
       }
     });
 
@@ -106,22 +116,14 @@ export async function GET(req: NextRequest) {
     // ===== REVENUE STATS =====
     
     // Calculate estimated MRR (Monthly Recurring Revenue)
-    const activePro = await prismaUsers.user.count({
-      where: { subscriptionPlan: "PRO", subscriptionStatus: "active" },
-    });
-    const activeMax = await prismaUsers.user.count({
-      where: { subscriptionPlan: "MAX", subscriptionStatus: "active" },
-    });
+    // Note: Pro/Max plans have been deprecated - revenue now only from Teams
     
     // Teams revenue (count active team members)
     const activeTeamMembers = await prismaUsers.teamMember.count({
       where: { isActiveThisCycle: true },
     });
 
-    const estimatedMRR = 
-      (activePro * PLAN_PRICES.PRO) + 
-      (activeMax * PLAN_PRICES.MAX) + 
-      (activeTeamMembers * PLAN_PRICES.TEAMS);
+    const estimatedMRR = activeTeamMembers * PLAN_PRICES.TEAMS;
 
     // Blueprint purchases revenue
     const purchasesInPeriod = await prismaUsers.blueprintPurchase.aggregate({
@@ -301,8 +303,6 @@ export async function GET(req: NextRequest) {
       revenue: {
         estimatedMRR,
         estimatedMRRFormatted: `€${(estimatedMRR / 100).toFixed(2)}`,
-        activePro,
-        activeMax,
         activeTeamSeats: activeTeamMembers,
         purchasesThisPeriod: {
           count: purchasesInPeriod._count.id,

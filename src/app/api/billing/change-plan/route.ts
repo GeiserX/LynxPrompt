@@ -31,7 +31,15 @@ export async function POST(request: NextRequest) {
       euDigitalContentConsent?: boolean;
     };
 
-    if (!plan || (plan !== "pro" && plan !== "max")) {
+    // Plan changes are no longer supported as we only have Users (free) and Teams
+    // This endpoint is kept for backwards compatibility but will always fail
+    return NextResponse.json(
+      { error: "Plan changes are no longer supported. Please contact support to modify your subscription." },
+      { status: 400 }
+    );
+
+    // Legacy validation (unreachable code, kept for reference)
+    if (!plan || plan !== "teams") {
       return NextResponse.json(
         { error: "Invalid plan selected" },
         { status: 400 }

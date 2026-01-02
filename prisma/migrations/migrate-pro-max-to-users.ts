@@ -11,11 +11,16 @@
  * Run with: npx tsx prisma/migrations/migrate-pro-max-to-users.ts
  */
 
-import { PrismaClient } from "../../src/generated/prisma-users";
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { PrismaClient } = require("../src/generated/prisma-users");
 
 const prisma = new PrismaClient({
   datasourceUrl: process.env.DATABASE_URL_USERS,
-});
+}) as {
+  $queryRaw: <T>(query: TemplateStringsArray, ...values: unknown[]) => Promise<T>;
+  $executeRaw: (query: TemplateStringsArray, ...values: unknown[]) => Promise<number>;
+  $disconnect: () => Promise<void>;
+};
 
 async function migrateProMaxToUsers() {
   console.log("🔄 Starting migration: Pro/Max users → Users tier");
@@ -36,7 +41,7 @@ async function migrateProMaxToUsers() {
     }
 
     console.log(`📊 Found ${proMaxUsers.length} users to migrate:`);
-    proMaxUsers.forEach((user) => {
+    proMaxUsers.forEach((user: { id: string; email: string | null; subscriptionPlan: string }) => {
       console.log(`   - ${user.email || user.id} (${user.subscriptionPlan})`);
     });
 
@@ -73,7 +78,7 @@ async function migrateProMaxToUsers() {
     `;
 
     console.log("\n📈 Current subscription distribution:");
-    distribution.forEach((row) => {
+    distribution.forEach((row: { subscriptionPlan: string; count: bigint }) => {
       const planName = row.subscriptionPlan === "FREE" ? "Users" : row.subscriptionPlan;
       console.log(`   - ${planName}: ${row.count} users`);
     });

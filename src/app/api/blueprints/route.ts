@@ -204,9 +204,8 @@ export async function GET(request: NextRequest) {
         select: { subscriptionPlan: true, role: true },
       });
       
-      // MAX and TEAMS users get 10% discount
-      isMaxUser = user?.subscriptionPlan === "MAX" || 
-                  user?.subscriptionPlan === "TEAMS" ||
+      // Teams users get 10% discount (also admins/superadmins)
+      isMaxUser = user?.subscriptionPlan === "TEAMS" ||
                   user?.role === "ADMIN" || 
                   user?.role === "SUPERADMIN";
       
@@ -343,16 +342,17 @@ export async function POST(request: NextRequest) {
       select: { subscriptionPlan: true, role: true },
     });
 
-    const isPaidUser = 
-      user?.subscriptionPlan === "PRO" || 
-      user?.subscriptionPlan === "MAX" ||
+    // All users can now create blueprints (not just paid users)
+    // Teams users and admins get extra features
+    const isTeamsUser = 
+      user?.subscriptionPlan === "TEAMS" ||
       user?.role === "ADMIN" ||
       user?.role === "SUPERADMIN";
 
     // Turnstile verification is disabled for blueprint creation
     // Only kept for sign-in flows
     // If needed in future, uncomment:
-    // if (!isPaidUser && turnstileToken) {
+    // if (!isTeamsUser && turnstileToken) {
     //   const isValid = await verifyTurnstileToken(turnstileToken);
     //   if (!isValid) {
     //     return NextResponse.json(
@@ -362,11 +362,11 @@ export async function POST(request: NextRequest) {
     //   }
     // }
 
-    // Check if user can create paid blueprints
+    // Check if user can create paid blueprints (Teams only)
     if (price !== null && price !== undefined && price > 0) {
-      if (!isPaidUser) {
+      if (!isTeamsUser) {
         return NextResponse.json(
-          { error: "Only PRO or MAX subscribers can create paid blueprints. Upgrade your plan to unlock this feature." },
+          { error: "Only Teams subscribers can create paid blueprints. Upgrade to Teams to unlock this feature." },
           { status: 403 }
         );
       }

@@ -119,16 +119,16 @@ export async function POST(request: NextRequest) {
       select: { subscriptionPlan: true, role: true },
     });
     
-    const isMaxOrTeamsUser = user?.subscriptionPlan === "MAX" || 
-                             user?.subscriptionPlan === "TEAMS" ||
-                             user?.role === "ADMIN" || 
-                             user?.role === "SUPERADMIN";
+    // Teams users get 10% discount (also admins/superadmins)
+    const isTeamsUser = user?.subscriptionPlan === "TEAMS" ||
+                        user?.role === "ADMIN" || 
+                        user?.role === "SUPERADMIN";
     
     // MAX/Teams subscribers get 10% discount (platform absorbs it, author still gets 70% of original)
-    const MAX_DISCOUNT_PERCENT = 10;
+    const TEAMS_DISCOUNT_PERCENT = 10;
     const originalPrice = template.price;
-    const discountedPrice = isMaxOrTeamsUser 
-      ? Math.round(originalPrice * (1 - MAX_DISCOUNT_PERCENT / 100))
+    const discountedPrice = isTeamsUser 
+      ? Math.round(originalPrice * (1 - TEAMS_DISCOUNT_PERCENT / 100))
       : originalPrice;
 
     // Create Stripe Checkout session for one-time payment
@@ -137,12 +137,12 @@ export async function POST(request: NextRequest) {
     
     // Description includes team info and discount
     let description = `Blueprint by ${authorName}`;
-    if (teamName && isMaxOrTeamsUser) {
+    if (teamName && isTeamsUser) {
       description = `Blueprint by ${authorName} (10% Teams discount, shared with ${teamName})`;
     } else if (teamName) {
       description = `Blueprint by ${authorName} (shared with ${teamName})`;
-    } else if (isMaxOrTeamsUser) {
-      description = `Blueprint by ${authorName} (10% Max subscriber discount applied)`;
+    } else if (isTeamsUser) {
+      description = `Blueprint by ${authorName} (10% Teams subscriber discount applied)`;
     }
 
     const checkoutSession = await stripe.checkout.sessions.create({
@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
         teamId: teamId || "", // Include team for webhook processing
         originalPrice: originalPrice.toString(), // Store original for author share calculation
         paidPrice: discountedPrice.toString(),
-        isMaxDiscount: isMaxOrTeamsUser ? "true" : "false",
+        isTeamsDiscount: isTeamsUser ? "true" : "false",
         currency: template.currency,
       },
       success_url: `${process.env.NEXTAUTH_URL}/blueprints/${templateId}?purchased=true`,

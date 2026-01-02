@@ -78,9 +78,8 @@ export async function GET(
       });
       const userTeamId = teamMembership?.teamId;
 
-      // MAX and TEAMS users get 10% discount (also admins/superadmins)
-      isMaxUser = user?.subscriptionPlan === "MAX" ||
-                  user?.subscriptionPlan === "TEAMS" ||
+      // Teams users get 10% discount (also admins/superadmins)
+      isMaxUser = user?.subscriptionPlan === "TEAMS" ||
                   user?.role === "ADMIN" ||
                   user?.role === "SUPERADMIN";
 
@@ -351,16 +350,17 @@ export async function PUT(
         select: { subscriptionPlan: true, role: true },
       });
 
-      const isPaidUser = 
-        user?.subscriptionPlan === "PRO" || 
-        user?.subscriptionPlan === "MAX" ||
+      // All users can now update their blueprints
+      // Teams users and admins get extra features
+      const isTeamsUser = 
+        user?.subscriptionPlan === "TEAMS" ||
         user?.role === "ADMIN" ||
         user?.role === "SUPERADMIN";
 
       if (price !== null && price > 0) {
-        if (!isPaidUser) {
+        if (!isTeamsUser) {
           return NextResponse.json(
-            { error: "Only PRO or MAX subscribers can create paid blueprints" },
+            { error: "Only Teams subscribers can create paid blueprints" },
             { status: 403 }
           );
         }
