@@ -2146,11 +2146,14 @@ async function runInteractiveWizard(
     console.log();
 
     // Build commands - autocomplete for searching
-    const buildChoices = sortSelectedFirst(COMMON_COMMANDS.build.map(c => ({
-      title: chalk.cyan(c),
-      value: c,
-      selected: detected?.commands?.build === c,
-    })));
+    const buildChoices = sortSelectedFirst(COMMON_COMMANDS.build.map(c => {
+      const isDetected = detected?.commands?.build === c;
+      return {
+        title: isDetected ? `${chalk.cyan(c)} ${chalk.green("(detected)")}` : chalk.cyan(c),
+        value: c,
+        selected: isDetected,
+      };
+    }));
     const buildResponse = await prompts({
       type: "autocompleteMultiselect",
       name: "build",
@@ -2161,11 +2164,14 @@ async function runInteractiveWizard(
     }, promptConfig);
 
     // Test commands - autocomplete for searching
-    const testChoices = sortSelectedFirst(COMMON_COMMANDS.test.map(c => ({
-      title: chalk.yellow(c),
-      value: c,
-      selected: detected?.commands?.test === c,
-    })));
+    const testChoices = sortSelectedFirst(COMMON_COMMANDS.test.map(c => {
+      const isDetected = detected?.commands?.test === c;
+      return {
+        title: isDetected ? `${chalk.yellow(c)} ${chalk.green("(detected)")}` : chalk.yellow(c),
+        value: c,
+        selected: isDetected,
+      };
+    }));
     const testResponse = await prompts({
       type: "autocompleteMultiselect",
       name: "test",
@@ -2176,11 +2182,14 @@ async function runInteractiveWizard(
     }, promptConfig);
 
     // Lint commands - autocomplete for searching
-    const lintChoices = sortSelectedFirst(COMMON_COMMANDS.lint.map(c => ({
-      title: chalk.green(c),
-      value: c,
-      selected: detected?.commands?.lint === c,
-    })));
+    const lintChoices = sortSelectedFirst(COMMON_COMMANDS.lint.map(c => {
+      const isDetected = detected?.commands?.lint === c;
+      return {
+        title: isDetected ? `${chalk.green(c)} ${chalk.green("(detected)")}` : chalk.green(c),
+        value: c,
+        selected: isDetected,
+      };
+    }));
     const lintResponse = await prompts({
       type: "autocompleteMultiselect",
       name: "lint",
@@ -2191,11 +2200,14 @@ async function runInteractiveWizard(
     }, promptConfig);
 
     // Dev commands - autocomplete for searching
-    const devChoices = sortSelectedFirst(COMMON_COMMANDS.dev.map(c => ({
-      title: chalk.magenta(c),
-      value: c,
-      selected: detected?.commands?.dev === c,
-    })));
+    const devChoices = sortSelectedFirst(COMMON_COMMANDS.dev.map(c => {
+      const isDetected = detected?.commands?.dev === c;
+      return {
+        title: isDetected ? `${chalk.magenta(c)} ${chalk.green("(detected)")}` : chalk.magenta(c),
+        value: c,
+        selected: isDetected,
+      };
+    }));
     const devResponse = await prompts({
       type: "autocompleteMultiselect",
       name: "dev",
@@ -2406,44 +2418,70 @@ async function runInteractiveWizard(
   }, promptConfig);
   answers.selfImprove = selfImproveResponse.selfImprove || false;
 
-  // Cloud sync - save to cloud and add update command
+  // Cloud sync - save to cloud and add sync commands
   console.log();
-  console.log(chalk.gray("  ☁️  Save your config to LynxPrompt cloud for automatic updates."));
-  console.log(chalk.gray("     When you update the blueprint online, the AI can run the sync command"));
-  console.log(chalk.gray("     to fetch the latest version automatically."));
+  console.log(chalk.gray("  ☁️  Save your config to LynxPrompt cloud for synchronization."));
+  console.log(chalk.gray("     • Use 'lynxp push' to upload local changes to the cloud"));
+  console.log(chalk.gray("     • Use 'lynxp pull' to download cloud changes to local"));
+  console.log(chalk.gray("     • Use 'lynxp diff' to compare local vs cloud versions"));
   const enableAutoUpdateResponse = await prompts({
     type: "toggle",
     name: "enableAutoUpdate",
-    message: chalk.white("Save to cloud & enable auto-sync?"),
+    message: chalk.white("Save to cloud & enable sync?"),
     initial: false,
     active: "Yes",
     inactive: "No",
-    hint: chalk.gray("Adds sync command for automatic updates"),
+    hint: chalk.gray("Adds sync commands to config"),
   }, promptConfig);
   answers.enableAutoUpdate = enableAutoUpdateResponse.enableAutoUpdate || false;
 
-  // Ask about CLI vs curl when logged in
-  answers.preferCliSync = false;
+  // Ask about CLI availability when cloud sync enabled
+  answers.preferCliSync = true; // Default to CLI
+  answers.tokenEnvVar = "LYNXPROMPT_API_TOKEN"; // Default env var name
+  
   if (answers.enableAutoUpdate && api) {
     console.log();
-    console.log(chalk.gray("  📥 Choose how the AI should sync updates from the cloud:"));
-    console.log(chalk.gray("     • CLI: Uses 'lynxp pull' command (requires CLI installed in dev environment)"));
-    console.log(chalk.gray("     • curl: Uses curl command with API (works everywhere, but exposes token in file)"));
+    console.log(chalk.gray("  📦 Choose how the AI should run sync commands:"));
+    console.log();
+    console.log(chalk.green.bold("     CLI (Recommended):"));
+    console.log(chalk.gray("     • No API token stored in config files - more secure"));
+    console.log(chalk.gray("     • AI uses 'lynxp push/pull/diff' commands directly"));
+    console.log(chalk.gray("     • Requires LynxPrompt CLI installed in dev environment"));
+    console.log();
+    console.log(chalk.yellow("     Environment Variable (if CLI not available):"));
+    console.log(chalk.gray("     • Token stored in environment variable (not in file)"));
+    console.log(chalk.gray("     • AI uses curl with $LYNXPROMPT_API_TOKEN"));
+    console.log();
+    
     const syncMethodResponse = await prompts({
       type: "toggle",
       name: "preferCliSync",
-      message: chalk.white("Will you have LynxPrompt CLI available in your dev environment?"),
-      initial: true,
-      active: "Yes (use CLI)",
-      inactive: "No (use curl)",
-      hint: chalk.gray("CLI is recommended - no token in file"),
+      message: chalk.white("Will LynxPrompt CLI be available in your dev environment?"),
+      initial: true, // Default to yes - strongly recommended
+      active: "Yes, use CLI (recommended)",
+      inactive: "No, use env variable",
+      hint: chalk.green("Strongly recommended for security"),
     }, promptConfig);
     answers.preferCliSync = syncMethodResponse.preferCliSync ?? true;
     
     if (answers.preferCliSync) {
-      console.log(chalk.green("  ✓ Great! AI will use 'lynxp pull' to sync (no API token in file)"));
+      console.log(chalk.green("  ✓ Perfect! AI will use 'lynxp push/pull/diff' for syncing"));
+      console.log(chalk.gray("     Make sure CLI is installed: npm install -g lynxprompt"));
     } else {
-      console.log(chalk.yellow("  ⚠️  Using curl with API token. The token will be visible in your config file."));
+      // Ask for env var name where token will be stored
+      console.log();
+      console.log(chalk.gray("  🔐 The AI will use curl with an API token from an environment variable."));
+      console.log(chalk.gray("     The token will NOT be stored in the config file for security."));
+      const envVarResponse = await prompts({
+        type: "text",
+        name: "tokenEnvVar",
+        message: chalk.white("Environment variable name for API token:"),
+        initial: "LYNXPROMPT_API_TOKEN",
+        hint: chalk.gray("e.g., LYNXPROMPT_API_TOKEN, LP_TOKEN"),
+      }, promptConfig);
+      answers.tokenEnvVar = envVarResponse.tokenEnvVar || "LYNXPROMPT_API_TOKEN";
+      console.log(chalk.green(`  ✓ AI will use curl with $${answers.tokenEnvVar}`));
+      console.log(chalk.gray(`     Set your token: export ${answers.tokenEnvVar}="your_token_here"`));
     }
   }
 
@@ -2904,9 +2942,12 @@ async function runInteractiveWizard(
     styleNotes: answers.styleNotes as string,
     aiBehavior: answers.aiBehavior as string[],
     importantFiles: answers.importantFiles as string[],
+    importantFilesOther: answers.importantFilesOther as string,
     selfImprove: answers.selfImprove as boolean,
     includePersonalData: answers.includePersonalData as boolean,
     enableAutoUpdate: answers.enableAutoUpdate as boolean,
+    preferCliSync: answers.preferCliSync as boolean,
+    tokenEnvVar: answers.tokenEnvVar as string,
     userName: answers.userName as string,
     userEmail: answers.userEmail as string,
     userPersona: answers.userPersona as string,
