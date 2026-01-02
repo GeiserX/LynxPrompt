@@ -117,25 +117,49 @@ export function parseVariablesString(varsStr: string): Record<string, string> {
   return variables;
 }
 
-// Platform to filename mapping (all 17 platforms)
+// Platform to filename mapping (30+ platforms)
+// IMPORTANT: Keep in sync with src/lib/platforms.ts
 const PLATFORM_FILES: Record<string, string> = {
-  agents: "AGENTS.md",
+  // Popular platforms
+  universal: "AGENTS.md",
+  agents: "AGENTS.md", // Alias for universal
   cursor: ".cursor/rules/project.mdc",
   claude: "CLAUDE.md",
   copilot: ".github/copilot-instructions.md",
   windsurf: ".windsurfrules",
+  
+  // AI-powered IDEs
   antigravity: "GEMINI.md",
   zed: ".zed/instructions.md",
-  aider: ".aider.conf.yml",
+  void: ".void/config.json",
+  trae: ".trae/rules/project.mdc",
+  firebase: ".idx/rules/project.mdc",
+  
+  // Editor extensions
   cline: ".clinerules",
-  continue: ".continue/rules.md",
-  cody: ".cody/rules.md",
-  amazonq: ".amazonq/rules/project.md",
+  roocode: ".roo/rules/project.mdc",
+  continue: ".continue/config.json",
+  cody: ".cody/config.json",
   tabnine: ".tabnine.yaml",
-  supermaven: ".supermaven/rules.md",
-  codegpt: ".codegpt/rules.md",
-  void: ".void/rules.md",
+  supermaven: ".supermaven/config.json",
+  codegpt: ".codegpt/config.json",
+  amazonq: ".amazonq/rules/project.md",
+  augment: ".augment/rules/project.mdc",
+  kilocode: ".kilocode/rules/project.mdc",
+  junie: ".junie/guidelines.md",
+  kiro: ".kiro/steering/project.mdc",
+  
+  // CLI tools
+  aider: ".aider.conf.yml",
   goose: ".goosehints",
+  warp: "WARP.md",
+  "gemini-cli": "GEMINI.md",
+  opencode: "opencode.json",
+  
+  // Other emerging tools
+  openhands: ".openhands/microagents/repo.md",
+  crush: "CRUSH.md",
+  firebender: "firebender.json",
 };
 
 // Persona descriptions
@@ -586,15 +610,28 @@ export function generateConfig(options: GenerateOptions): Record<string, string>
 
 function generateFileContent(options: GenerateOptions, platform: string): string {
   const sections: string[] = [];
-  const isMdc = platform === "cursor";
-  const isYaml = platform === "aider" || platform === "tabnine";
-  const isPlainText = platform === "windsurf" || platform === "cline" || platform === "goose";
-  const isMarkdown = !isMdc && !isYaml && !isPlainText;
+  
+  // Determine format based on platform
+  const mdcPlatforms = ["cursor", "trae", "firebase", "roocode", "augment", "kilocode", "kiro"];
+  const yamlPlatforms = ["aider", "tabnine"];
+  const plainTextPlatforms = ["windsurf", "cline", "goose"];
+  const jsonPlatforms = ["void", "continue", "cody", "supermaven", "codegpt", "opencode", "firebender"];
+  
+  const isMdc = mdcPlatforms.includes(platform);
+  const isYaml = yamlPlatforms.includes(platform);
+  const isPlainText = plainTextPlatforms.includes(platform);
+  const isJson = jsonPlatforms.includes(platform);
+  const isMarkdown = !isMdc && !isYaml && !isPlainText && !isJson;
   const bp = options.blueprintMode || false;
   
   // Handle YAML formats
   if (isYaml) {
     return generateYamlConfig(options, platform);
+  }
+  
+  // Handle JSON formats
+  if (isJson) {
+    return generateJsonConfig(options, platform);
   }
   
   // Project name with optional blueprint variable
@@ -1320,6 +1357,71 @@ function generateFileContent(options: GenerateOptions, platform: string): string
   }
 
   return sections.join("\n");
+}
+
+function generateJsonConfig(options: GenerateOptions, platform: string): string {
+  const config: Record<string, unknown> = {
+    version: "1.0.0",
+    project: {
+      name: options.name,
+      description: options.description || "",
+      stack: options.stack.map(s => STACK_NAMES[s] || s),
+    },
+  };
+  
+  // Add persona if set
+  const personaDesc = options.userPersona 
+    || PERSONA_DESCRIPTIONS[options.persona] 
+    || options.persona 
+    || "";
+  if (personaDesc) {
+    config.persona = personaDesc;
+  }
+  
+  // Add rules/instructions
+  const rules: string[] = [];
+  
+  // Boundaries
+  const boundaryRules = BOUNDARIES[options.boundaries] || BOUNDARIES.standard;
+  rules.push(...boundaryRules.always.map(r => `AUTO-APPROVE: ${r}`));
+  rules.push(...boundaryRules.askFirst.map(r => `ASK FIRST: ${r}`));
+  rules.push(...boundaryRules.never.map(r => `PROHIBITED: ${r}`));
+  
+  // Security
+  rules.push("SECURITY: Do not commit secrets. Use environment variables or secret managers.");
+  rules.push("SECURITY: When making changes involving auth, data, or APIs, perform security audit.");
+  
+  config.rules = rules;
+  
+  // Add important files to read
+  if (options.importantFiles && options.importantFiles.length > 0) {
+    config.context = {
+      readFirst: options.importantFiles.map(f => IMPORTANT_FILES_PATHS[f] || f),
+    };
+  }
+  
+  // Platform-specific additions
+  if (platform === "continue") {
+    config.name = options.name;
+    config.customInstructions = rules.join("\n");
+  } else if (platform === "cody") {
+    config.customInstructions = rules.join("\n");
+  } else if (platform === "void") {
+    config.editor = { rules: rules.join("\n") };
+  } else if (platform === "supermaven") {
+    config.rules = rules;
+  } else if (platform === "codegpt") {
+    config.systemPrompt = rules.join("\n");
+  } else if (platform === "opencode") {
+    config.instructions = rules;
+  } else if (platform === "firebender") {
+    config.transforms = rules;
+  }
+  
+  // Add generated by comment
+  config._comment = `Generated by LynxPrompt CLI for ${options.name}`;
+  
+  return JSON.stringify(config, null, 2);
 }
 
 function generateYamlConfig(options: GenerateOptions, platform: string): string {

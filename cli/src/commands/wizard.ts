@@ -490,11 +490,11 @@ const LOGGING_OPTIONS = [
 
 // AI Behavior rules - matching WebUI (security moved to dedicated Security step)
 const AI_BEHAVIOR_RULES = [
-  { id: "always_debug_after_build", label: "Always Debug After Building", description: "Run and test locally after making changes", recommended: true },
-  { id: "check_logs_after_build", label: "Check Logs After Build/Commit", description: "Check logs when build or commit finishes", recommended: true },
-  { id: "run_tests_before_commit", label: "Run Tests Before Commit", description: "Ensure tests pass before committing", recommended: true },
-  { id: "follow_existing_patterns", label: "Follow Existing Patterns", description: "Match the codebase's existing style", recommended: true },
-  { id: "ask_before_large_refactors", label: "Ask Before Large Refactors", description: "Confirm before significant changes", recommended: true },
+  { id: "always_debug_after_build", label: "Always Debug After Building", description: "AI should build and run code locally to verify changes work before suggesting them as complete", recommended: true },
+  { id: "check_logs_after_build", label: "Check Logs After Build/Commit", description: "AI should review build output, test logs, and error messages to catch issues early", recommended: true },
+  { id: "run_tests_before_commit", label: "Run Tests Before Commit", description: "AI must run the test suite and ensure all tests pass before suggesting a commit", recommended: true },
+  { id: "follow_existing_patterns", label: "Follow Existing Patterns", description: "AI should study existing code and follow the same naming, structure, and conventions used in the codebase", recommended: true },
+  { id: "ask_before_large_refactors", label: "Ask Before Large Refactors", description: "AI should always ask for explicit approval before making significant architectural changes or refactoring multiple files", recommended: true },
 ];
 
 // ═══════════════════════════════════════════════════════════════
@@ -605,12 +605,21 @@ const DATA_HANDLING_OPTIONS = [
 ];
 
 // Important files to read - ensure consistent spacing after icons
+// Important files AI should read first (NOT AI config files - those are what we're creating)
+// Matching WebUI wizard options
 const IMPORTANT_FILES = [
-  { id: "readme", label: "README.md", icon: "📖 " },
-  { id: "package", label: "package.json / pyproject.toml", icon: "📦 " },
-  { id: "tsconfig", label: "tsconfig.json / config files", icon: "⚙️  " },
-  { id: "architecture", label: "ARCHITECTURE.md", icon: "🏗️  " },
-  { id: "contributing", label: "CONTRIBUTING.md", icon: "🤝 " },
+  { id: "readme", label: "README.md", icon: "📖", description: "Project overview, setup instructions, and documentation" },
+  { id: "package_json", label: "package.json", icon: "📦", description: "Dependencies, scripts, and project metadata" },
+  { id: "changelog", label: "CHANGELOG.md", icon: "📝", description: "Version history and release notes" },
+  { id: "contributing", label: "CONTRIBUTING.md", icon: "🤝", description: "Contribution guidelines and code standards" },
+  { id: "makefile", label: "Makefile", icon: "🔧", description: "Build commands and automation tasks" },
+  { id: "dockerfile", label: "Dockerfile", icon: "🐳", description: "Container configuration and build steps" },
+  { id: "docker_compose", label: "docker-compose.yml", icon: "🐳", description: "Multi-container setup and services" },
+  { id: "env_example", label: ".env.example", icon: "🔐", description: "Environment variables template" },
+  { id: "openapi", label: "openapi.yaml / swagger.json", icon: "📡", description: "API specification and endpoints" },
+  { id: "architecture_md", label: "ARCHITECTURE.md", icon: "🏗️", description: "System architecture and design decisions" },
+  { id: "api_docs", label: "API documentation", icon: "📚", description: "API reference and usage examples" },
+  { id: "database_schema", label: "Database schema / migrations", icon: "🗄️", description: "Database structure and migration files" },
 ];
 
 // Detailed boundary options
@@ -1696,11 +1705,14 @@ async function runInteractiveWizard(
   }
 
   // Languages - autocomplete multiselect for searchability
-  const languageChoices = sortSelectedFirst(LANGUAGES.map(s => ({
-    title: s.title,
-    value: s.value,
-    selected: detected?.stack?.includes(s.value),
-  })));
+  const languageChoices = sortSelectedFirst(LANGUAGES.map(s => {
+    const isDetected = detected?.stack?.includes(s.value);
+    return {
+      title: isDetected ? `${s.title} ${chalk.green("(detected)")}` : s.title,
+      value: s.value,
+      selected: isDetected,
+    };
+  }));
   const languageResponse = await prompts({
     type: "autocompleteMultiselect",
     name: "languages",
@@ -1712,11 +1724,14 @@ async function runInteractiveWizard(
   const selectedLanguages = languageResponse.languages || [];
 
   // Frameworks - separate selection like WebUI
-  const frameworkChoices = sortSelectedFirst(FRAMEWORKS.map(s => ({
-    title: s.title,
-    value: s.value,
-    selected: detected?.stack?.includes(s.value),
-  })));
+  const frameworkChoices = sortSelectedFirst(FRAMEWORKS.map(s => {
+    const isDetected = detected?.stack?.includes(s.value);
+    return {
+      title: isDetected ? `${s.title} ${chalk.green("(detected)")}` : s.title,
+      value: s.value,
+      selected: isDetected,
+    };
+  }));
   const frameworkResponse = await prompts({
     type: "autocompleteMultiselect",
     name: "frameworks",
@@ -1728,11 +1743,14 @@ async function runInteractiveWizard(
   const selectedFrameworks = frameworkResponse.frameworks || [];
 
   // Databases
-  const databaseChoices = sortSelectedFirst(DATABASES.map(s => ({
-    title: s.title,
-    value: s.value,
-    selected: detected?.stack?.includes(s.value),
-  })));
+  const databaseChoices = sortSelectedFirst(DATABASES.map(s => {
+    const isDetected = detected?.stack?.includes(s.value);
+    return {
+      title: isDetected ? `${s.title} ${chalk.green("(detected)")}` : s.title,
+      value: s.value,
+      selected: isDetected,
+    };
+  }));
   const databaseResponse = await prompts({
     type: "autocompleteMultiselect",
     name: "databases",
@@ -1923,20 +1941,26 @@ async function runInteractiveWizard(
   }
 
   // Example repository URL
+  console.log();
+  console.log(chalk.gray("  📚 Point the AI to a well-structured public repository as a reference."));
+  console.log(chalk.gray("     The AI will study its code patterns, architecture, and conventions to better assist you."));
   const exampleRepoResponse = await prompts({
     type: "text",
     name: "exampleRepoUrl",
-    message: chalk.white("Example repository URL (optional):"),
-    hint: chalk.gray("A similar public repo for AI to learn from"),
+    message: chalk.white("Reference repository URL (optional):"),
+    hint: chalk.gray("e.g., https://github.com/vercel/next.js"),
   }, promptConfig);
   answers.exampleRepoUrl = exampleRepoResponse.exampleRepoUrl || "";
 
   // External documentation URL
+  console.log();
+  console.log(chalk.gray("  📖 Link to your team's external documentation for project context."));
+  console.log(chalk.gray("     The AI will read these docs to understand your project's domain and conventions."));
   const docsUrlResponse = await prompts({
     type: "text",
     name: "documentationUrl",
-    message: chalk.white("External documentation URL (optional):"),
-    hint: chalk.gray("Confluence, Notion, GitBook, etc."),
+    message: chalk.white("External docs URL (optional):"),
+    hint: chalk.gray("e.g., Confluence, Notion, GitBook, internal wiki"),
   }, promptConfig);
   answers.documentationUrl = docsUrlResponse.documentationUrl || "";
 
@@ -1973,6 +1997,17 @@ async function runInteractiveWizard(
   }, promptConfig);
   answers.secretsManagement = secretsResponse.secretsManagement || [];
 
+  // If "other" selected, ask for custom input
+  if ((answers.secretsManagement as string[]).includes("other")) {
+    const customSecretsResponse = await prompts({
+      type: "text",
+      name: "customSecretsManagement",
+      message: chalk.white("Describe your secrets management approach:"),
+      hint: chalk.gray("e.g., custom KMS integration, proprietary vault"),
+    }, promptConfig);
+    answers.secretsManagementOther = customSecretsResponse.customSecretsManagement || "";
+  }
+
   // 2. Security Tooling (includes Dependabot/Renovate - multi-select, searchable)
   console.log();
   console.log(chalk.cyan("  2️⃣  Security Tooling"));
@@ -1996,6 +2031,17 @@ async function runInteractiveWizard(
   }, promptConfig);
   answers.securityTooling = securityToolingResponse.securityTooling || [];
 
+  // If "other" selected, ask for custom input
+  if ((answers.securityTooling as string[]).includes("other")) {
+    const customSecurityToolingResponse = await prompts({
+      type: "text",
+      name: "customSecurityTooling",
+      message: chalk.white("Describe your security tooling:"),
+      hint: chalk.gray("e.g., custom SAST tool, internal vulnerability scanner"),
+    }, promptConfig);
+    answers.securityToolingOther = customSecurityToolingResponse.customSecurityTooling || "";
+  }
+
   // 3. Authentication Patterns (multi-select, searchable)
   console.log();
   console.log(chalk.cyan("  3️⃣  Authentication Patterns"));
@@ -2017,6 +2063,17 @@ async function runInteractiveWizard(
     instructions: false,
   }, promptConfig);
   answers.authPatterns = authPatternsResponse.authPatterns || [];
+
+  // If "other" selected, ask for custom input
+  if ((answers.authPatterns as string[]).includes("other")) {
+    const customAuthResponse = await prompts({
+      type: "text",
+      name: "customAuthPatterns",
+      message: chalk.white("Describe your authentication approach:"),
+      hint: chalk.gray("e.g., custom SSO, proprietary auth system"),
+    }, promptConfig);
+    answers.authPatternsOther = customAuthResponse.customAuthPatterns || "";
+  }
 
   // 4. Data Handling (multi-select, searchable)
   console.log();
@@ -2040,6 +2097,17 @@ async function runInteractiveWizard(
     instructions: false,
   }, promptConfig);
   answers.dataHandling = dataHandlingResponse.dataHandling || [];
+
+  // If "other" selected, ask for custom input
+  if ((answers.dataHandling as string[]).includes("other")) {
+    const customDataHandlingResponse = await prompts({
+      type: "text",
+      name: "customDataHandling",
+      message: chalk.white("Describe your data handling policies:"),
+      hint: chalk.gray("e.g., custom encryption, specific compliance requirements"),
+    }, promptConfig);
+    answers.dataHandlingOther = customDataHandlingResponse.customDataHandling || "";
+  }
 
   // Additional security notes
   const securityNotesResponse = await prompts({
@@ -2291,6 +2359,9 @@ async function runInteractiveWizard(
     }
   }
 
+  console.log();
+  console.log(chalk.gray("  📁 Select files the AI should read first to understand your project context."));
+  console.log(chalk.gray("     These help the AI understand your codebase, APIs, and conventions."));
   const importantFilesResponse = await prompts({
     type: "autocompleteMultiselect",
     name: "importantFiles",
@@ -2298,21 +2369,48 @@ async function runInteractiveWizard(
     choices: IMPORTANT_FILES.map(f => ({
       title: `${f.icon} ${f.label}`,
       value: f.id,
-      // No pre-selection - user must explicitly choose
+      description: chalk.gray(f.description),
     })),
     hint: chalk.gray("type to filter • space select • enter confirm"),
     instructions: false,
   }, promptConfig);
   answers.importantFiles = importantFilesResponse.importantFiles || [];
 
+  // Ask for custom important files
+  console.log();
+  const customImportantFilesResponse = await prompts({
+    type: "text",
+    name: "importantFilesOther",
+    message: chalk.white("Other important files (comma-separated, optional):"),
+    hint: chalk.gray("e.g., src/config/index.ts, docs/api.md, prisma/schema.prisma"),
+  }, promptConfig);
+  answers.importantFilesOther = customImportantFilesResponse.importantFilesOther || "";
+
   // Cloud sync & AI learning options (grouped together)
   console.log();
   console.log(chalk.gray("  ─── Cloud & AI Options ───"));
   console.log();
   
-  // Auto-update via API option (requires saving blueprint to cloud)
-  console.log(chalk.gray("  📤 Save your config to LynxPrompt cloud and add a curl command to auto-update."));
-  console.log(chalk.gray("     When you run the curl, your local config syncs with cloud changes."));
+  // Self-improving config - AI can suggest improvements to this config file
+  console.log(chalk.gray("  🧠 Enable AI to suggest improvements to your config file."));
+  console.log(chalk.gray("     When enabled, the AI can propose updates to this AGENTS.md file"));
+  console.log(chalk.gray("     (e.g., better rules, new patterns) and you approve the changes."));
+  const selfImproveResponse = await prompts({
+    type: "toggle",
+    name: "selfImprove",
+    message: chalk.white("Allow AI to suggest config improvements?"),
+    initial: false,
+    active: "Yes",
+    inactive: "No",
+    hint: chalk.gray("AI proposes updates, you approve"),
+  }, promptConfig);
+  answers.selfImprove = selfImproveResponse.selfImprove || false;
+
+  // Cloud sync - save to cloud and add update command
+  console.log();
+  console.log(chalk.gray("  ☁️  Save your config to LynxPrompt cloud for automatic updates."));
+  console.log(chalk.gray("     When you update the blueprint online, the AI can run the sync command"));
+  console.log(chalk.gray("     to fetch the latest version automatically."));
   const enableAutoUpdateResponse = await prompts({
     type: "toggle",
     name: "enableAutoUpdate",
@@ -2320,30 +2418,40 @@ async function runInteractiveWizard(
     initial: false,
     active: "Yes",
     inactive: "No",
-    hint: chalk.gray("Adds curl command for automatic updates"),
+    hint: chalk.gray("Adds sync command for automatic updates"),
   }, promptConfig);
   answers.enableAutoUpdate = enableAutoUpdateResponse.enableAutoUpdate || false;
+
+  // Ask about CLI vs curl when logged in
+  answers.preferCliSync = false;
+  if (answers.enableAutoUpdate && api) {
+    console.log();
+    console.log(chalk.gray("  📥 Choose how the AI should sync updates from the cloud:"));
+    console.log(chalk.gray("     • CLI: Uses 'lynxp pull' command (requires CLI installed in dev environment)"));
+    console.log(chalk.gray("     • curl: Uses curl command with API (works everywhere, but exposes token in file)"));
+    const syncMethodResponse = await prompts({
+      type: "toggle",
+      name: "preferCliSync",
+      message: chalk.white("Will you have LynxPrompt CLI available in your dev environment?"),
+      initial: true,
+      active: "Yes (use CLI)",
+      inactive: "No (use curl)",
+      hint: chalk.gray("CLI is recommended - no token in file"),
+    }, promptConfig);
+    answers.preferCliSync = syncMethodResponse.preferCliSync ?? true;
+    
+    if (answers.preferCliSync) {
+      console.log(chalk.green("  ✓ Great! AI will use 'lynxp pull' to sync (no API token in file)"));
+    } else {
+      console.log(chalk.yellow("  ⚠️  Using curl with API token. The token will be visible in your config file."));
+    }
+  }
 
   if (answers.enableAutoUpdate && !api) {
     console.log(chalk.yellow("  ⚠️  Cloud sync requires login. Run 'lynxp login' first."));
     console.log(chalk.gray("     Continuing without cloud sync..."));
     answers.enableAutoUpdate = false;
   }
-
-  // Self-improving blueprint - learn from your edits
-  console.log();
-  console.log(chalk.gray("  🧠 Self-improving blueprints track your manual edits and suggest improvements."));
-  console.log(chalk.gray("     LynxPrompt learns your preferences to generate better configs over time."));
-  const selfImproveResponse = await prompts({
-    type: "toggle",
-    name: "selfImprove",
-    message: chalk.white("Enable AI learning from your edits?"),
-    initial: false,
-    active: "Yes",
-    inactive: "No",
-    hint: chalk.gray("AI learns your style from manual changes"),
-  }, promptConfig);
-  answers.selfImprove = selfImproveResponse.selfImprove || false;
 
   // Include personal data from profile
   console.log();
