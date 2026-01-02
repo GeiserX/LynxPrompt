@@ -1,6 +1,7 @@
 "use client";
 
 // AI coding tools that support AGENTS.md or similar project-level instructions
+// Logos sourced from https://github.com/agentsmd/agents.md/tree/main/public/logos
 // Row 1 - scrolls right (reverse direction)
 const AGENTS_ROW_1 = [
   {
@@ -25,11 +26,6 @@ const AGENTS_ROW_1 = [
     href: "https://windsurf.com",
     logo: "/logos/agents/windsurf-light.svg",
     parent: "Codeium",
-  },
-  {
-    name: "Cline",
-    href: "https://cline.bot",
-    logo: "/logos/agents/cline.svg",
   },
   {
     name: "RooCode",
@@ -93,33 +89,16 @@ const AGENTS_ROW_2 = [
     logo: "/logos/agents/vscode-light.svg",
   },
   {
-    name: "Amazon Q",
-    href: "https://aws.amazon.com/q/developer/",
-    logo: "/logos/agents/amazonq.svg",
-    parent: "AWS",
+    name: "Codex",
+    href: "https://openai.com/codex/",
+    logo: "/logos/agents/codex.svg",
+    parent: "OpenAI",
   },
   {
-    name: "Kiro",
-    href: "https://kiro.dev",
-    logo: "/logos/agents/kiro.svg",
-    parent: "AWS",
-  },
-  {
-    name: "Continue",
-    href: "https://continue.dev",
-    logo: "/logos/agents/continue.svg",
-  },
-  {
-    name: "Cody",
-    href: "https://sourcegraph.com/cody",
-    logo: "/logos/agents/cody.svg",
-    parent: "Sourcegraph",
-  },
-  {
-    name: "Junie",
-    href: "https://www.jetbrains.com/junie/",
-    logo: "/logos/agents/jetbrains.svg",
-    parent: "JetBrains",
+    name: "Jules",
+    href: "https://jules.google",
+    logo: "/logos/agents/jules.svg",
+    parent: "Google",
   },
   {
     name: "Devin",
@@ -128,14 +107,29 @@ const AGENTS_ROW_2 = [
     parent: "Cognition",
   },
   {
+    name: "Factory",
+    href: "https://factory.ai",
+    logo: "/logos/agents/factory.svg",
+  },
+  {
     name: "Kilo Code",
     href: "https://kilocode.ai/",
     logo: "/logos/agents/kilo-code.svg",
   },
   {
-    name: "OpenHands",
-    href: "https://github.com/All-Hands-AI/OpenHands",
-    logo: "/logos/agents/openhands.svg",
+    name: "Phoenix",
+    href: "https://phoenix.new/",
+    logo: "/logos/agents/phoenix.svg",
+  },
+  {
+    name: "Semgrep",
+    href: "https://semgrep.dev",
+    logo: "/logos/agents/semgrep.svg",
+  },
+  {
+    name: "UiPath",
+    href: "https://uipath.github.io/uipath-python",
+    logo: "/logos/agents/uipath.svg",
   },
 ];
 
