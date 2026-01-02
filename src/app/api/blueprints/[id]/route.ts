@@ -5,8 +5,6 @@ import { getTemplateById, incrementTemplateUsage } from "@/lib/data/templates";
 import { prismaUsers } from "@/lib/db-users";
 import { detectSensitiveData } from "@/lib/sensitive-data";
 
-// Teams subscribers get 10% discount on paid blueprints
-const TEAMS_DISCOUNT_PERCENT = 10;
 
 // GET /api/blueprints/[id] - Get blueprint details
 export async function GET(
@@ -52,9 +50,7 @@ export async function GET(
     // Check if this is a paid template
     const isPaid = templateWithShowcase.price && templateWithShowcase.price > 0;
     let hasPurchased = false;
-    let isTeamsUser = false;
     let isOwner = false;
-    let discountedPrice: number | null = null;
 
     const session = await getServerSession(authOptions);
 
@@ -77,18 +73,6 @@ export async function GET(
         select: { teamId: true },
       });
       const userTeamId = teamMembership?.teamId;
-
-      // Teams users get 10% discount (also admins/superadmins)
-      isTeamsUser = user?.subscriptionPlan === "TEAMS" ||
-                    user?.role === "ADMIN" ||
-                    user?.role === "SUPERADMIN";
-
-      // Calculate discounted price for Teams users
-      if (isPaid && isTeamsUser && templateWithShowcase.price) {
-        discountedPrice = Math.round(
-          templateWithShowcase.price * (1 - TEAMS_DISCOUNT_PERCENT / 100)
-        );
-      }
 
       // Check purchase only if not owner and blueprint is paid
       if (isPaid && !isOwner) {
@@ -131,9 +115,6 @@ export async function GET(
         isPaid: true,
         hasPurchased: false,
         isOwner: false,
-        isTeamsUser,
-        discountedPrice,
-        discountPercent: isTeamsUser ? TEAMS_DISCOUNT_PERCENT : null,
         // Show truncated preview (first 500 chars)
         preview:
           templateWithShowcase.content?.substring(0, 500) +
@@ -151,9 +132,6 @@ export async function GET(
       isPaid: isPaid || false,
       hasPurchased: hasPurchased || !isPaid,
       isOwner,
-      isTeamsUser,
-      discountedPrice: isPaid ? discountedPrice : null,
-      discountPercent: isPaid && isTeamsUser ? TEAMS_DISCOUNT_PERCENT : null,
     });
   } catch (error) {
     console.error("Error fetching blueprint:", error);

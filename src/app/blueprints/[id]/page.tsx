@@ -82,9 +82,6 @@ interface TemplateData {
   category?: string;
   difficulty?: string;
   price?: number | null;
-  discountedPrice?: number | null;
-  discountPercent?: number | null;
-  isTeamsUser?: boolean;
   currency?: string;
   isPaid?: boolean;
   hasPurchased?: boolean;
@@ -482,13 +479,7 @@ export default function BlueprintDetailPage() {
                     {/* Price badge */}
                     {blueprint.isPaid && (
                       <span className="rounded-full bg-gradient-to-r from-purple-500 to-pink-500 px-3 py-1 text-sm font-semibold text-white">
-                        {blueprint.discountedPrice && blueprint.discountedPrice < (blueprint.price || 0) ? (
-                          <>
-                            <span className="line-through opacity-70 mr-1">€{((blueprint.price || 0) / 100).toFixed(2)}</span>
-                            €{(blueprint.discountedPrice / 100).toFixed(2)}
-                            <span className="ml-1 text-xs">(-{blueprint.discountPercent}%)</span>
-                          </>
-                        ) : (
+                        {(
                           `€${((blueprint.price || 0) / 100).toFixed(2)}`
                         )}
                       </span>
@@ -527,9 +518,7 @@ export default function BlueprintDetailPage() {
                       ) : (
                         <ShoppingCart className="mr-2 h-5 w-5" />
                       )}
-                      {purchasing ? "Processing..." : blueprint.discountedPrice && blueprint.discountedPrice < (blueprint.price || 0)
-                        ? `Purchase for €${(blueprint.discountedPrice / 100).toFixed(2)} (was €${((blueprint.price || 0) / 100).toFixed(2)})`
-                        : `Purchase for €${((blueprint.price || 0) / 100).toFixed(2)}`}
+                      {purchasing ? "Processing..." : `Purchase for €${((blueprint.price || 0) / 100).toFixed(2)}`}
                     </Button>
                     {blueprint.currentVersion && blueprint.currentVersion > 0 && (
                       <span className="text-xs text-muted-foreground">
@@ -808,9 +797,7 @@ export default function BlueprintDetailPage() {
                       ) : (
                         <ShoppingCart className="mr-2 h-4 w-4" />
                       )}
-                      {purchasing ? "Processing..." : blueprint.discountedPrice && blueprint.discountedPrice < (blueprint.price || 0)
-                        ? `Purchase for €${(blueprint.discountedPrice / 100).toFixed(2)}`
-                        : `Purchase for €${((blueprint.price || 0) / 100).toFixed(2)}`}
+                      {purchasing ? "Processing..." : `Purchase for €${((blueprint.price || 0) / 100).toFixed(2)}`}
                     </Button>
                   </div>
                 </div>
