@@ -57,7 +57,7 @@ const getTiers = (interval: BillingInterval) => [
       { text: "Browse & create blueprints", included: true },
       { text: "API access for automation", included: true },
       { text: "Save wizard drafts", included: true },
-      { text: "Sell blueprints (70% revenue)", included: true },
+      { text: "Sell blueprints on marketplace", included: true },
       { text: "Unlimited config downloads", included: true },
       { text: "30+ supported AI platforms", included: true },
       { text: "Community support", included: true },
@@ -99,7 +99,7 @@ const COMPARISON_FEATURES = [
   { name: "Unlimited downloads", free: true, teams: true },
   { name: "Create private blueprints", free: true, teams: true },
   { name: "Browse & download blueprints", free: true, teams: true },
-  { name: "Sell blueprints (70% revenue)", free: true, teams: true },
+  { name: "Sell blueprints on marketplace", free: true, teams: true },
   { name: "Save wizard drafts", free: true, teams: true },
   { name: "Community support", free: true, teams: true },
   { name: "AI-powered editing", free: "-", teams: true },
@@ -422,8 +422,7 @@ export default function PricingPage() {
                   </span>
                 </summary>
                 <p className="border-t px-4 py-3 text-sm text-muted-foreground">
-                  Yes! All users can create and sell blueprints on the marketplace. You keep 
-                  <strong> 70% of every sale</strong>. Minimum price is €5, minimum payout is €5 via PayPal.
+                  Yes! All users can create and sell blueprints on the marketplace. Minimum price is €5, minimum payout is €5 via PayPal.
                 </p>
               </details>
 
