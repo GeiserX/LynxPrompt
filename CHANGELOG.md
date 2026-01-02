@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [1.0.0] - January 2026
+
+### BREAKING CHANGES
+- **Pricing Model Simplified**: Removed Pro and Max subscription tiers
+  - All individual users now get full wizard access (previously Pro/Max only)
+  - AI features (editing, wizard assistant) restricted to Teams tier only
+  - Legacy Pro/Max users automatically migrated to Users tier
+
+### Added
+- Full wizard access for all Users (formerly "Free" tier)
+- All platforms support for Users (Cursor, Claude, Windsurf, etc.)
+- API access for blueprint management for all Users
+- Database migration script: `prisma/migrations/migrate-pro-max-to-users.ts`
+
+### Changed
+- Renamed "Free" tier to "Users" throughout the application
+- Pricing page now shows only Users vs Teams comparison
+- Updated all documentation to reflect new pricing model
+- CLI wizard now gives full access to all users (AI restricted to Teams)
+- Settings page shows simplified upgrade options
+
+### Removed
+- Pro tier ($12/month)
+- Max tier ($20/month)
+- Pro/Max badges from wizard steps
+- Tier-based wizard step restrictions (all steps now accessible)
+
+### Migration Notes
+For database administrators:
+```bash
+# Run the migration script to convert Pro/Max users to Users tier
+npx tsx prisma/migrations/migrate-pro-max-to-users.ts
+```
+
+---
+
+## [0.23.x] - December 2025
+
 ### Changed
 - Repository reorganized for public release
 - Moved internal tooling to `tooling/` directory
