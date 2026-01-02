@@ -190,7 +190,9 @@ jobs:
           for i in 1 2 3; do
             git push origin main && break
             echo "Push failed, retrying with rebase..."
+            git stash
             git pull origin main --rebase
+            git stash pop || true
             sleep 2
           done
 
@@ -305,7 +307,9 @@ jobs:
           for i in 1 2 3; do
             git push origin main && break
             echo "Push failed, retrying with rebase..."
+            git stash
             git pull origin main --rebase
+            git stash pop || true
             sleep 2
           done
 
@@ -396,10 +400,10 @@ jobs:
           generate_release_notes: false
 
       - name: Trigger CLI publish workflow
-        run: |
-          gh workflow run "Publish CLI" -f platforms=all
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          event-type: cli-release
+          client-payload: '{"version": "${{ needs.prepare.outputs.cli_version }}"}'
 
   # ===========================================
   # Summary
