@@ -150,10 +150,10 @@ enum UserRole {
 }
 
 enum SubscriptionPlan {
-  FREE
-  PRO
-  MAX
-  TEAMS
+  FREE    // Standard user - all features except AI
+  TEAMS   // Teams user - all features including AI, SSO, team sharing
+  // DEPRECATED: PRO and MAX no longer used - all users get full wizard access
+  // Keeping enum values would require database migration, so we just use FREE for all non-Teams users
 }
 
 // ============================================================================

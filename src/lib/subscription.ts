@@ -1,16 +1,17 @@
 /**
  * Subscription tier utilities
  * 
- * Wizard access levels:
- * - FREE: Basic wizard only
- * - PRO: Basic + Intermediate wizards
- * - MAX/TEAMS: All wizards (Basic + Intermediate + Advanced)
+ * NEW PRICING MODEL (January 2026):
+ * - Users (free): Full wizard access, all features EXCEPT AI
+ * - Teams: All features including AI, SSO, team-shared blueprints
  * 
- * ADMIN and SUPERADMIN roles automatically get MAX tier for free.
- * TEAMS users get MAX-level features plus team-specific features.
+ * All users can now access the full wizard (basic + intermediate + advanced).
+ * AI features are the only restriction for non-Teams users.
+ * 
+ * ADMIN and SUPERADMIN roles automatically get Teams-level features.
  */
 
-export type SubscriptionTier = "free" | "pro" | "max" | "teams";
+export type SubscriptionTier = "free" | "teams";
 export type WizardTier = "basic" | "intermediate" | "advanced";
 export type UserRole = "USER" | "ADMIN" | "SUPERADMIN";
 
@@ -24,13 +25,12 @@ export const TEAMS_AI_LIMIT_PER_USER = 1500; // €15.00 max AI spend per user/m
 
 /**
  * Blueprint limits per tier
+ * All users now get the same generous limits
  */
 export const BLUEPRINT_LIMITS = {
   MAX_LINES: 10000, // Maximum lines per blueprint (all tiers)
   MAX_COUNT: {
-    free: 50,      // Free users: 50 blueprints
-    pro: 5000,     // Pro users: 5,000 blueprints
-    max: 5000,     // Max users: 5,000 blueprints
+    free: 5000,    // Users: 5,000 blueprints (was 50 for free)
     teams: 10000,  // Teams users: 10,000 blueprints
   },
 } as const;
@@ -57,78 +57,64 @@ export function checkBlueprintLineCount(content: string): { valid: boolean; line
 
 /**
  * Get effective subscription tier based on role and subscription
- * Admins get MAX tier automatically
- * Teams users get teams tier (which includes all MAX features)
+ * Admins get Teams tier automatically
  */
 export function getEffectiveTier(
   role: UserRole,
-  subscriptionPlan: SubscriptionTier
+  subscriptionPlan: SubscriptionTier | "pro" | "max" // Accept legacy values
 ): SubscriptionTier {
   if (role === "ADMIN" || role === "SUPERADMIN") {
-    return "max";
+    return "teams";
   }
-  return subscriptionPlan;
+  // Map legacy plans to new model
+  if (subscriptionPlan === "pro" || subscriptionPlan === "max") {
+    return "free"; // Legacy pro/max users are now regular users with full access
+  }
+  return subscriptionPlan === "teams" ? "teams" : "free";
 }
 
 /**
- * Check if a tier has MAX-level features (includes Teams)
+ * Check if a tier has Teams-level features (AI, SSO, team sharing)
  */
-export function hasMaxFeatures(tier: SubscriptionTier): boolean {
-  return tier === "max" || tier === "teams";
+export function hasTeamsFeatures(tier: SubscriptionTier): boolean {
+  return tier === "teams";
+}
+
+/**
+ * Check if user can access AI features (Teams only)
+ */
+export function canAccessAI(tier: SubscriptionTier): boolean {
+  return tier === "teams";
 }
 
 /**
  * Check if user can access a specific wizard tier
+ * NEW: All users can access ALL wizard tiers
  */
 export function canAccessWizard(
-  effectiveTier: SubscriptionTier,
-  wizardTier: WizardTier
+  _effectiveTier: SubscriptionTier,
+  _wizardTier: WizardTier
 ): boolean {
-  switch (wizardTier) {
-    case "basic":
-      // Everyone can access basic
-      return true;
-    case "intermediate":
-      // Pro, Max, and Teams can access intermediate
-      return effectiveTier === "pro" || hasMaxFeatures(effectiveTier);
-    case "advanced":
-      // Max and Teams can access advanced
-      return hasMaxFeatures(effectiveTier);
-    default:
-      return false;
-  }
+  // All users can access all wizard tiers now
+  return true;
 }
 
 /**
  * Get the required tier for a wizard level
+ * NEW: All wizard levels are available to all users
  */
-export function getRequiredTier(wizardTier: WizardTier): SubscriptionTier {
-  switch (wizardTier) {
-    case "basic":
-      return "free";
-    case "intermediate":
-      return "pro";
-    case "advanced":
-      return "max"; // Max or Teams
-    default:
-      return "free";
-  }
+export function getRequiredTier(_wizardTier: WizardTier): SubscriptionTier {
+  // All wizard tiers are now free
+  return "free";
 }
 
 /**
  * Get available wizard tiers for a subscription level
+ * NEW: All users get all tiers
  */
-export function getAvailableWizards(effectiveTier: SubscriptionTier): WizardTier[] {
-  switch (effectiveTier) {
-    case "max":
-    case "teams":
-      return ["basic", "intermediate", "advanced"];
-    case "pro":
-      return ["basic", "intermediate"];
-    case "free":
-    default:
-      return ["basic"];
-  }
+export function getAvailableWizards(_effectiveTier: SubscriptionTier): WizardTier[] {
+  // All users get all wizard tiers
+  return ["basic", "intermediate", "advanced"];
 }
 
 /**
@@ -179,4 +165,8 @@ export function calculateInactiveCredit(
   return unusedSeats * TEAMS_PRICE_PER_SEAT;
 }
 
-
+// Legacy compatibility - keep hasMaxFeatures for code that might still reference it
+/** @deprecated Use hasTeamsFeatures instead */
+export function hasMaxFeatures(tier: SubscriptionTier | "pro" | "max"): boolean {
+  return tier === "teams";
+}

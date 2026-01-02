@@ -35,8 +35,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const allowedPlans = ["MAX", "TEAMS"];
-    if (!allowedPlans.includes(user.subscriptionPlan || "")) {
+    // Repository detection is a Teams-only feature (AI assistance)
+    const allowedPlans = ["TEAMS"];
+    if (!allowedPlans.includes(user.subscriptionPlan || "") && user.role !== "ADMIN" && user.role !== "SUPERADMIN") {
       return NextResponse.json(
         { 
           error: "This feature requires a Max or Teams subscription",

@@ -86,21 +86,16 @@ const MOBILE_PROGRESS_WIDTHS = [
   "w-[100%]",
 ];
 
-function getTierBadge(tier: WizardTier) {
-  switch (tier) {
-    case "intermediate":
-      return { label: "Pro", className: "bg-blue-500/10 text-blue-500" };
-    case "advanced":
-      return { label: "Max", className: "bg-purple-500/10 text-purple-500" };
-    default:
-      return null;
-  }
+// Tier badges removed - all wizard steps are now available to all users
+function getTierBadge(_tier: WizardTier) {
+  // No badges needed - all users have full wizard access
+  return null;
 }
 
-function canAccessTier(userTier: string, requiredTier: WizardTier): boolean {
-  const tierLevels = { free: 0, pro: 1, max: 2 };
-  const requiredLevels = { basic: 0, intermediate: 1, advanced: 2 };
-  return tierLevels[userTier as keyof typeof tierLevels] >= requiredLevels[requiredTier];
+// All users can access all wizard steps
+function canAccessTier(_userTier: string, _requiredTier: WizardTier): boolean {
+  // All users get full wizard access - only AI features are restricted to Teams
+  return true;
 }
 
 const LANGUAGES = [
@@ -938,7 +933,7 @@ function WizardPageContent() {
   const [showSaveBlueprintModal, setShowSaveBlueprintModal] = useState(false);
   const [pendingAction, setPendingAction] = useState<"download" | "share" | null>(null);
   
-  // Repo detection state (Max/Teams feature)
+  // Repo detection state (Teams feature)
   const [repoDetectUrl, setRepoDetectUrl] = useState("");
   const [isDetecting, setIsDetecting] = useState(false);
   const [detectError, setDetectError] = useState<string | null>(null);
@@ -1176,7 +1171,7 @@ function WizardPageContent() {
     }
   };
 
-  // Detect repository configuration (Max/Teams only)
+  // Detect repository configuration (Teams only)
   const handleDetectRepo = async () => {
     if (!repoDetectUrl.trim()) {
       setDetectError("Please enter a repository URL");
@@ -2469,24 +2464,9 @@ ${curlCommand}
               );
             })}
 
-            {/* Upgrade prompt if there are locked steps */}
-            {lockedSteps.length > 0 && (
-              <div className="mt-4 rounded-lg border border-dashed bg-muted/30 p-4">
-                <div className="flex items-center gap-2 text-sm font-medium">
-                  <Lock className="h-4 w-4 text-muted-foreground" />
-                  <span>{lockedSteps.length} step{lockedSteps.length > 1 ? "s" : ""} locked</span>
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Upgrade to unlock {userTier === "free" ? "Pro and Max" : "Max"} features
-                </p>
-                <Button asChild size="sm" className="mt-3 w-full">
-                  <Link href="/pricing">
-                    <Crown className="mr-2 h-4 w-4" />
-                    Upgrade
-                  </Link>
-                </Button>
-              </div>
-            )}
+            {/* Note: All wizard steps are now unlocked for all users.
+                This block is kept for backwards compatibility but will never render
+                since canAccessTier always returns true. */}
           </div>
         </aside>
 
@@ -2802,7 +2782,7 @@ function StepProject({
   onDetectRepo: () => void;
   onApplyDetected: () => void;
 }) {
-  const canDetect = userTier === "max" || userTier === "teams";
+  const canDetect = userTier === "teams";
 
   return (
     <div>
@@ -2813,7 +2793,7 @@ function StepProject({
       </p>
 
       <div className="mt-6 space-y-6">
-        {/* Repository Auto-Detection (Max/Teams) */}
+        {/* Repository Auto-Detection (Teams) */}
         <div className={`rounded-lg border-2 p-4 transition-colors ${canDetect ? "border-primary/30 bg-primary/5" : "border-dashed border-muted-foreground/20 bg-muted/30"}`}>
           <div className="flex items-start gap-3">
             <div className="flex-1">
@@ -2822,15 +2802,15 @@ function StepProject({
                 <label className="text-sm font-medium">
                   🔍 Auto-detect from existing repository
                 </label>
-                <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${canDetect ? "bg-purple-500/10 text-purple-600 dark:text-purple-400" : "bg-amber-500/10 text-amber-600 dark:text-amber-400"}`}>
+                <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${canDetect ? "bg-teal-500/10 text-teal-600 dark:text-teal-400" : "bg-amber-500/10 text-amber-600 dark:text-amber-400"}`}>
                   <Crown className="h-3 w-3" />
-                  Max
+                  Teams
                 </span>
               </div>
               <p className="mt-1 text-sm text-muted-foreground">
                 {canDetect 
                   ? "Enter a public GitHub repository URL to auto-detect tech stack, license, CI/CD, and more."
-                  : "Upgrade to Max or Teams to auto-detect configuration from your existing repositories."}
+                  : "Upgrade to Teams to auto-detect configuration from your existing repositories."}
               </p>
               
               {canDetect && (
@@ -5726,7 +5706,7 @@ function StepFeedback({
   onChange: (v: string) => void;
   userTier: string;
 }) {
-  const isMaxUser = userTier === "max";
+  const isTeamsUser = userTier === "teams";
   
   return (
     <div>
@@ -5736,8 +5716,8 @@ function StepFeedback({
         project that we haven&apos;t asked? Add any additional context.
       </p>
 
-      {/* AI Assist Panel - MAX users only */}
-      {isMaxUser && (
+      {/* AI Assist Panel - Teams users only */}
+      {isTeamsUser && (
         <div className="mt-6 rounded-lg border border-purple-200 bg-white p-4 shadow-sm dark:border-purple-800 dark:bg-purple-900/20">
           <div className="mb-3 flex items-center gap-2 text-sm font-medium text-purple-700 dark:text-purple-300">
             <Sparkles className="h-4 w-4" />
@@ -5943,9 +5923,6 @@ function StepGenerate({
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="rounded bg-primary px-1.5 py-0.5 text-[10px] font-bold text-primary-foreground">
-                    PRO
-                  </span>
                   <label className="font-medium">
                     🔄 Auto-update via API
                   </label>

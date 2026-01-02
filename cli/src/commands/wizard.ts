@@ -703,11 +703,10 @@ const ARCHITECTURE_PATTERNS = [
   { id: "other", label: "Other" },
 ];
 
-// Check if user tier can access a step
-function canAccessTier(userTier: UserTier, requiredTier: StepTier): boolean {
-  const tierLevels = { free: 0, pro: 1, max: 2, teams: 2 };
-  const requiredLevels = { basic: 0, intermediate: 1, advanced: 2 };
-  return tierLevels[userTier] >= requiredLevels[requiredTier];
+// All users can access all wizard steps
+function canAccessTier(_userTier: UserTier, _requiredTier: StepTier): boolean {
+  // All users get full wizard access - only AI features are restricted to Teams
+  return true;
 }
 
 // Helper to sort choices with selected items first
@@ -726,9 +725,9 @@ function sortSelectedFirst<T extends Choice>(choices: T[]): T[] {
   });
 }
 
-// Check if user can access AI features (Max or Teams only)
+// Check if user can access AI features (Teams only)
 function canAccessAI(userTier: UserTier): boolean {
-  return userTier === "max" || userTier === "teams";
+  return userTier === "teams";
 }
 
 // AI assistant for text fields
@@ -746,7 +745,7 @@ async function aiAssist(instruction: string, existingContent?: string): Promise<
   } catch (error) {
     if (error instanceof ApiRequestError) {
       if (error.statusCode === 403) {
-        spinner.fail("AI editing requires Max or Teams subscription");
+        spinner.fail("AI editing requires Teams subscription");
       } else if (error.statusCode === 429) {
         spinner.fail("Rate limit reached. Please wait a moment.");
       } else {
@@ -759,16 +758,10 @@ async function aiAssist(instruction: string, existingContent?: string): Promise<
   }
 }
 
-// Get tier badge
-function getTierBadge(tier: StepTier): { label: string; color: typeof chalk.cyan } | null {
-  switch (tier) {
-    case "intermediate":
-      return { label: "PRO", color: chalk.cyan };
-    case "advanced":
-      return { label: "MAX", color: chalk.magenta };
-    default:
-      return null;
-  }
+// Tier badges removed - all wizard steps are now available to all users
+function getTierBadge(_tier: StepTier): { label: string; color: typeof chalk.cyan } | null {
+  // No badges needed - all users have full wizard access
+  return null;
 }
 
 // Get available steps for user tier
