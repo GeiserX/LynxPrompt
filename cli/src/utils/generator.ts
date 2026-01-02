@@ -35,10 +35,13 @@ export interface GenerateOptions {
   styleNotes?: string;
   aiBehavior?: string[];
   importantFiles?: string[];
+  importantFilesOther?: string;
   selfImprove?: boolean;
   includePersonalData?: boolean;
   enableAutoUpdate?: boolean;
   blueprintId?: string; // For auto-update curl command
+  preferCliSync?: boolean; // Use CLI commands instead of curl (default true)
+  tokenEnvVar?: string; // Environment variable name for API token (default LYNXPROMPT_API_TOKEN)
   // User profile data (fetched from cloud)
   userName?: string;
   userEmail?: string;
@@ -655,59 +658,48 @@ function generateFileContent(options: GenerateOptions, platform: string): string
     sections.push("");
   }
 
-  // Auto-update via API section (for synced blueprints)
+  // Cloud sync section (for synced blueprints)
   if (options.enableAutoUpdate && options.blueprintId && (isMarkdown || isMdc)) {
     const bpId = options.blueprintId.startsWith("bp_") ? options.blueprintId : `bp_${options.blueprintId}`;
-    const fileName = platform === "cursor" ? ".cursor/rules/agents.mdc" : "AGENTS.md";
-    const osList = Array.isArray(options.devOS) ? options.devOS : [options.devOS || "linux"];
-    const hasWindows = osList.includes("windows");
-    const hasUnix = osList.some(os => ["linux", "macos", "wsl"].includes(os));
-    const isMultiPlatform = (hasWindows && hasUnix) || osList.length > 1;
+    const preferCli = options.preferCliSync !== false; // Default to true
+    const tokenEnvVar = options.tokenEnvVar || "LYNXPROMPT_API_TOKEN";
     
     sections.push("<!--");
-    sections.push("This file is synced with LynxPrompt. To update it via API:");
+    sections.push(`This file is synced with LynxPrompt (Blueprint: ${bpId})`);
     sections.push("");
+    sections.push("Sync Commands:");
     
-    if (isMultiPlatform) {
-      // Show both options
-      sections.push("# Bash (Linux/macOS/WSL)");
-      sections.push(`curl -X PUT "https://lynxprompt.com/api/v1/blueprints/${bpId}" \\`);
-      sections.push('  -H "Authorization: Bearer $LYNXPROMPT_API_TOKEN" \\');
-      sections.push('  -H "Content-Type: application/json" \\');
-      sections.push(`  -d "{\\"content\\": \\"$(cat ${fileName} | jq -Rs .)\\"}"`);
+    if (preferCli) {
+      // CLI method (recommended - no token in file)
       sections.push("");
-      sections.push("# PowerShell (Windows)");
-      sections.push(`$content = (Get-Content "${fileName}" -Raw) -replace '"', '\\"'`);
-      sections.push(`$body = @{ content = $content } | ConvertTo-Json`);
-      sections.push(`Invoke-RestMethod -Uri "https://lynxprompt.com/api/v1/blueprints/${bpId}" \``);
-      sections.push('  -Method PUT -Headers @{ "Authorization" = "Bearer $env:LYNXPROMPT_API_TOKEN" } `');
-      sections.push('  -ContentType "application/json" -Body $body');
-    } else if (hasWindows) {
-      sections.push("# PowerShell (Windows)");
-      sections.push(`$content = (Get-Content "${fileName}" -Raw) -replace '"', '\\"'`);
-      sections.push(`$body = @{ content = $content } | ConvertTo-Json`);
-      sections.push(`Invoke-RestMethod -Uri "https://lynxprompt.com/api/v1/blueprints/${bpId}" \``);
-      sections.push('  -Method PUT -Headers @{ "Authorization" = "Bearer $env:LYNXPROMPT_API_TOKEN" } `');
-      sections.push('  -ContentType "application/json" -Body $body');
-    } else if (hasUnix) {
-      sections.push("# Bash (Linux/macOS/WSL)");
-      sections.push(`curl -X PUT "https://lynxprompt.com/api/v1/blueprints/${bpId}" \\`);
-      sections.push('  -H "Authorization: Bearer $LYNXPROMPT_API_TOKEN" \\');
-      sections.push('  -H "Content-Type: application/json" \\');
-      sections.push(`  -d "{\\"content\\": \\"$(cat ${fileName} | jq -Rs .)\\"}"`);
+      sections.push("# Using LynxPrompt CLI (recommended):");
+      sections.push("lynxp push    # Upload local changes to cloud");
+      sections.push("lynxp pull    # Download cloud changes to local");
+      sections.push("lynxp diff    # Compare local vs cloud versions");
       sections.push("");
-      sections.push("# Note: Install jq if not present: sudo apt install jq (Linux) or brew install jq (macOS)");
+      sections.push("# Install CLI: npm install -g lynxprompt");
+      sections.push("# Login: lynxp login");
     } else {
-      // Default to bash
-      sections.push("# Bash");
+      // Environment variable method (no token hardcoded)
+      const fileName = platform === "cursor" ? ".cursor/rules/agents.mdc" : "AGENTS.md";
+      sections.push("");
+      sections.push(`# Using curl with environment variable (token stored in $${tokenEnvVar}):`);
+      sections.push("");
+      sections.push("# Push local changes to cloud:");
       sections.push(`curl -X PUT "https://lynxprompt.com/api/v1/blueprints/${bpId}" \\`);
-      sections.push('  -H "Authorization: Bearer $LYNXPROMPT_API_TOKEN" \\');
+      sections.push(`  -H "Authorization: Bearer $${tokenEnvVar}" \\`);
       sections.push('  -H "Content-Type: application/json" \\');
       sections.push(`  -d "{\\"content\\": \\"$(cat ${fileName} | jq -Rs .)\\"}"`);
+      sections.push("");
+      sections.push("# Pull cloud changes to local:");
+      sections.push(`curl -s "https://lynxprompt.com/api/v1/blueprints/${bpId}" \\`);
+      sections.push(`  -H "Authorization: Bearer $${tokenEnvVar}" | jq -r '.content' > ${fileName}`);
+      sections.push("");
+      sections.push(`# Set your token: export ${tokenEnvVar}="your_token_here"`);
+      sections.push("# Generate token at: https://lynxprompt.com/settings");
     }
     
     sections.push("");
-    sections.push("Generate an API token at: https://lynxprompt.com/settings");
     sections.push("Docs: https://lynxprompt.com/docs/api");
     sections.push("-->");
     sections.push("");
