@@ -155,8 +155,8 @@ interface WizardOptions {
   _draftAnswers?: Record<string, unknown>;
 }
 
-// User tier levels
-type UserTier = "free" | "pro" | "max" | "teams";
+// User tier levels - simplified to just Users and Teams
+type UserTier = "users" | "teams";
 
 // Step tier requirements (matching web wizard exactly)
 type StepTier = "basic" | "intermediate" | "advanced";
