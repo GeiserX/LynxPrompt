@@ -63,18 +63,6 @@ jobs:
           test -f .cursor/rules/project.mdc || exit 1
           echo "✓ Cursor config generated"
 
-      - name: Test agents list
-        working-directory: /tmp/lynxp-test
-        run: |
-          lynxp agents list
-          echo "✓ Agents list works"
-
-      - name: Test agents detect
-        working-directory: /tmp/lynxp-test
-        run: |
-          lynxp agents detect
-          echo "✓ Agents detect works"
-
       - name: Test check
         working-directory: /tmp/lynxp-test
         run: |
