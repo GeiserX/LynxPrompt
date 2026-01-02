@@ -187,7 +187,7 @@ export default function CreatingBlueprintsPage() {
               <div className="space-y-3">
                 <h3 className="text-lg font-semibold">Set Pricing (Optional)</h3>
                 <p className="text-muted-foreground">
-                  Pro and Max users can set a price for their blueprints:
+                  Teams users can set a price for their blueprints:
                 </p>
                 <ul className="list-inside list-disc space-y-1 text-muted-foreground">
                   <li>Minimum price: €5</li>

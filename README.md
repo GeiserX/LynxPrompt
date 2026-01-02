@@ -209,10 +209,8 @@ docker-compose up -d
 
 | Tier | Price | Features |
 |------|-------|----------|
-| **Free** | €0 | Wizard, browse & download blueprints, share free blueprints |
-| **Pro** | €5/mo | Sell blueprints, advanced wizard options, API access |
-| **Max** | €20/mo | All paid blueprints included, priority support, 10% seller discount |
-| **Teams** | €30/seat/mo | Team blueprints, SSO, centralized billing |
+| **Users** | €0 | Full wizard access, browse & download blueprints, sell blueprints, API access |
+| **Teams** | €30/seat/mo | Everything in Users + AI editing, team blueprints, SSO, centralized billing |
 
 ---
 

@@ -208,7 +208,9 @@ export function hasPermission(role: ApiTokenRole, action: "blueprints:read" | "b
  * Check if user's subscription plan allows API access
  */
 export function canUseApi(subscriptionPlan: string): boolean {
-  return ["PRO", "MAX", "TEAMS"].includes(subscriptionPlan);
+  // All users can now use the API (previously Pro/Max/Teams only)
+  // Teams users get additional features like AI editing
+  return true;
 }
 
 /**

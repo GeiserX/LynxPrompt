@@ -241,7 +241,7 @@ export default function TeamsPage() {
                 <h4 className="mb-2 font-medium">What&apos;s Included:</h4>
                 <ul className="grid gap-2 sm:grid-cols-2">
                   {[
-                    "Everything in Max plan",
+                    "Everything in Users plan",
                     "Team-shared blueprints",
                     "SAML/OIDC/LDAP SSO",
                     "Multiple team admins",

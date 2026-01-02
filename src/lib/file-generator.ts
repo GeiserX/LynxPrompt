@@ -723,7 +723,7 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     lines.push("");
   }
 
-  // Only include Boundaries section if user actually specified boundaries AND has Max tier access
+  // Only include Boundaries section if user actually specified boundaries
   const hasBoundaries = config.boundaries && (
     (config.boundaries.always?.length ?? 0) > 0 ||
     (config.boundaries.ask?.length ?? 0) > 0 ||
@@ -766,7 +766,7 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     }
   }
 
-  // Only include Commands section if user actually specified commands AND has Pro tier access
+  // Only include Commands section if user actually specified commands
   const hasCommands = config.commands && (
     config.commands.build ||
     config.commands.test ||
@@ -791,7 +791,7 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     lines.push("");
   }
 
-  // Only include Testing Strategy if user explicitly configured it AND has Max tier access
+  // Only include Testing Strategy if user explicitly configured it
   const hasTestingConfig = config.testingStrategy && (
     (config.testingStrategy.levels?.length ?? 0) > 0 ||
     (config.testingStrategy.frameworks?.length ?? 0) > 0 ||
@@ -944,7 +944,7 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
   }
   lines.push("");
 
-  // Only include Static Files summary if user explicitly enabled any AND has Max tier access
+  // Only include Static Files summary if user explicitly enabled any
   const hasStaticFiles = config.staticFiles && (
     config.staticFiles.editorconfig ||
     config.staticFiles.contributing ||
@@ -986,7 +986,7 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     lines.push("Keep this file updated so future sessions start with better context.");
   }
 
-  // Add embedded static files (only for Max tier)
+  // Add embedded static files (all users)
   if (canAccessFeature(user.tier, "advanced")) {
     const staticFilesSection = generateEmbeddedStaticFiles(config, user, bp);
     if (staticFilesSection) {
@@ -1407,7 +1407,7 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
     lines.push("");
   }
 
-  // Commands - requires Pro tier
+  // Commands (all users)
   if (config.commands && canAccessFeature(user.tier, "intermediate") && (config.commands.build || config.commands.test || config.commands.lint || config.commands.dev || config.commands.additional?.length)) {
     lines.push("### Commands");
     if (config.commands.build) lines.push(`- Build: \`${bpVar(bp, "BUILD_COMMAND", config.commands.build)}\``);
@@ -1420,7 +1420,7 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
     lines.push("");
   }
 
-  // Code Style - requires Pro tier
+  // Code Style (all users)
   const hasCodeStyle = config.codeStyle?.naming || config.codeStyle?.errorHandling || config.codeStyle?.loggingConventions || config.codeStyle?.notes;
   if (hasCodeStyle && canAccessFeature(user.tier, "intermediate")) {
     lines.push("### Code Style & Conventions");
@@ -1455,7 +1455,7 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
     lines.push("");
   }
 
-  // Boundaries - requires Max tier
+  // Boundaries (all users)
   const hasBoundariesAgents = config.boundaries && (
     (config.boundaries.always?.length ?? 0) > 0 ||
     (config.boundaries.ask?.length ?? 0) > 0 ||
@@ -1481,7 +1481,7 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
     lines.push("");
   }
 
-  // Testing Strategy - requires Max tier
+  // Testing Strategy (all users)
   const hasTestingAgents = config.testingStrategy && (
     (config.testingStrategy.levels?.length ?? 0) > 0 ||
     (config.testingStrategy.frameworks?.length ?? 0) > 0 ||
@@ -1610,7 +1610,7 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
     lines.push("");
   }
 
-  // Add embedded static files (only for Max tier)
+  // Add embedded static files (all users)
   if (canAccessFeature(user.tier, "advanced")) {
     const staticFilesSection = generateEmbeddedStaticFiles(config, user, bp);
     if (staticFilesSection) {

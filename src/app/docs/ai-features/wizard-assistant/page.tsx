@@ -33,9 +33,9 @@ export default function WizardAssistantPage() {
           The &quot;Anything Else&quot; Section
         </h2>
         <p className="text-muted-foreground">
-          In the advanced wizard steps (Max tier), there&apos;s an &quot;Anything
-          Else&quot; section where you can add custom requirements. The AI
-          assistant helps format these into proper configuration rules.
+          In the advanced wizard steps, there&apos;s an &quot;Anything
+          Else&quot; section where you can add custom requirements. Teams users
+          get access to AI assistant that helps format these into proper configuration rules.
         </p>
         <div className="rounded-xl border bg-card p-6">
           <h3 className="font-semibold">How it works:</h3>

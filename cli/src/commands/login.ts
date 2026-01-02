@@ -171,19 +171,10 @@ function displayWelcome(user: UserInfo): void {
   console.log(chalk.green("  ✓") + " " + chalk.white("lynxprompt sync") + chalk.gray(" - Sync linked blueprints"));
   console.log(chalk.green("  ✓") + " " + chalk.white("lynxprompt diff") + chalk.gray(" - Compare local vs remote"));
   
-  // Plan-specific features
-  if (plan === "PRO" || plan === "MAX" || plan === "TEAMS") {
-    console.log();
-    console.log(chalk.cyan("  ⚡") + " " + chalk.white("Advanced wizards") + chalk.gray(" - More customization options"));
-    console.log(chalk.cyan("  ⚡") + " " + chalk.white("Sell blueprints") + chalk.gray(" - Monetize your configurations"));
-  }
-  
-  if (plan === "MAX" || plan === "TEAMS") {
-    console.log(chalk.magenta("  🚀") + " " + chalk.white("All paid blueprints") + chalk.gray(" - Access premium content"));
-    console.log(chalk.magenta("  🚀") + " " + chalk.white("Priority support") + chalk.gray(" - Get help faster"));
-  }
-  
+  // Plan-specific features - Teams users get extra features
   if (plan === "TEAMS") {
+    console.log();
+    console.log(chalk.cyan("  ⚡") + " " + chalk.white("AI-powered editing") + chalk.gray(" - AI assistant for configs"));
     console.log(chalk.yellow("  👥") + " " + chalk.white("Team blueprints") + chalk.gray(" - Share with your team"));
     console.log(chalk.yellow("  👥") + " " + chalk.white("SSO integration") + chalk.gray(" - Enterprise authentication"));
   }

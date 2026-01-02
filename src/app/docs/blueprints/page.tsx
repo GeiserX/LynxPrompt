@@ -170,7 +170,7 @@ export default function BlueprintsOverviewPage() {
               </li>
               <li className="flex items-center gap-2">
                 <span className="text-purple-500">★</span>
-                Created by Pro/Max users
+                Created by Teams users
               </li>
               <li className="flex items-center gap-2">
                 <span className="text-purple-500">★</span>

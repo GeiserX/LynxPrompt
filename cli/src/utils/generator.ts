@@ -11,7 +11,7 @@ export interface GenerateOptions {
   // Variable values to fill in [[VAR|default]] placeholders
   // Pass as { VAR_NAME: "value" } to replace [[VAR_NAME|default]] with "value"
   variables?: Record<string, string>;
-  // Extended options for Pro/Max users
+  // Extended options for all users
   projectType?: string;
   devOS?: string | string[];
   architecture?: string;

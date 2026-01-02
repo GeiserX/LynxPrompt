@@ -2702,7 +2702,7 @@ async function runInteractiveWizard(
     commands: typeof answers.commands === "object" ? answers.commands as Record<string, string> : (detected?.commands || {}),
     // Blueprint mode
     blueprintMode: answers.blueprintMode as boolean,
-    // Extended config for Pro/Max users
+    // Extended config for all users
     projectType: answers.projectType as string,
     devOS: answers.devOS as string[],
     architecture: answers.architecture as string,
