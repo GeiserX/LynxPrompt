@@ -195,11 +195,10 @@ export default function BasicStepsPage() {
 
       {/* Next steps */}
       <section className="space-y-4">
-        <h2 className="text-2xl font-bold">Want More Features?</h2>
+        <h2 className="text-2xl font-bold">Want AI Features?</h2>
         <p className="text-muted-foreground">
-          Upgrade to Pro or Max to unlock additional wizard steps like
-          repository settings, CI/CD configuration, and AI-powered
-          customization.
+          Upgrade to Teams to unlock AI-powered features like
+          AI editing and AI wizard assistant.
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
           <Link
@@ -215,9 +214,9 @@ export default function BasicStepsPage() {
             href="/docs/wizard/advanced-steps"
             className="rounded-lg border bg-card p-4 transition-colors hover:bg-muted"
           >
-            <h3 className="font-medium">Advanced Steps (Max)</h3>
+            <h3 className="font-medium">AI Features (Teams)</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              CI/CD, AI rules, and AI assistant
+              AI editing, AI wizard assistant
             </p>
           </Link>
         </div>

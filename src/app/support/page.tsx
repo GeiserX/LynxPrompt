@@ -91,8 +91,6 @@ const STATUS_BADGES: Record<string, { label: string; className: string; icon: Re
 
 const PLAN_BADGES: Record<string, { label: string; className: string }> = {
   FREE: { label: "Free", className: "bg-gray-500/20 text-gray-600 dark:text-gray-400" },
-  PRO: { label: "Pro", className: "bg-gradient-to-r from-blue-500 to-indigo-500 text-white" },
-  MAX: { label: "Max", className: "bg-gradient-to-r from-purple-500 to-pink-500 text-white" },
 };
 
 function SupportPageContent() {

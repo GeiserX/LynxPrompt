@@ -52,9 +52,9 @@ const TEAMS_FEATURES = [
   },
   {
     icon: BarChart3,
-    title: "Generous AI Limits",
+    title: "AI Features",
     description:
-      "Extended AI usage limits for AI-heavy workflows across your team.",
+      "AI-powered blueprint editing and wizard assistant for your entire team.",
   },
 ];
 
@@ -241,12 +241,12 @@ export default function TeamsPage() {
                 <h4 className="mb-2 font-medium">What&apos;s Included:</h4>
                 <ul className="grid gap-2 sm:grid-cols-2">
                   {[
-                    "Everything in Users plan",
+                    "Everything in Free plan",
                     "Team-shared blueprints",
                     "SAML/OIDC/LDAP SSO",
                     "Multiple team admins",
                     "Priority support",
-                    "Extended AI usage",
+                    "AI features",
                   ].map((item) => (
                     <li key={item} className="flex items-center gap-2 text-sm">
                       <Check className="h-4 w-4 text-teal-500" />

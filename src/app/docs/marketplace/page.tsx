@@ -75,7 +75,6 @@ export default function MarketplaceOverviewPage() {
             <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
               <li>• Browse free and paid blueprints</li>
               <li>• Pay with credit card via Stripe</li>
-              <li>• Max subscribers get 10% off all purchases</li>
               <li>• Instant download after purchase</li>
             </ul>
           </div>
@@ -117,7 +116,7 @@ export default function MarketplaceOverviewPage() {
         </div>
       </section>
 
-      {/* Max subscriber discount */}
+      {/* Revenue Split */}
       <section className="space-y-4">
         <h2 className="text-2xl font-bold">Revenue Split</h2>
         <p className="text-muted-foreground">
@@ -132,9 +131,9 @@ export default function MarketplaceOverviewPage() {
               <span>Creator gets €7.00, Platform gets €3.00</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Max subscriber:</span>
+              <span className="text-muted-foreground">Teams subscriber:</span>
               <span>
-                Creator gets €7.00, Platform gets €2.00, User pays €9.00
+                Creator gets €7.00, Platform gets €3.00, User pays €10.00
               </span>
             </div>
           </div>

@@ -14,8 +14,8 @@ export default function AIEditingPage() {
           <span>AI Blueprint Editing</span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="rounded-full bg-purple-500/10 px-3 py-1 text-sm font-medium text-purple-600 dark:text-purple-400">
-            Max Only
+          <span className="rounded-full bg-teal-500/10 px-3 py-1 text-sm font-medium text-teal-600 dark:text-teal-400">
+            Teams Only
           </span>
         </div>
         <h1 className="text-3xl font-bold tracking-tight">

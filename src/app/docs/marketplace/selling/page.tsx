@@ -18,8 +18,8 @@ export default function SellingBlueprintsPage() {
           Selling Blueprints
         </h1>
         <p className="max-w-2xl text-lg text-muted-foreground">
-          Turn your AI configuration expertise into income. Pro and Max
-          subscribers can create and sell premium blueprints.
+          Turn your AI configuration expertise into income. All users
+          can create and sell premium blueprints.
         </p>
       </div>
 
@@ -32,7 +32,7 @@ export default function SellingBlueprintsPage() {
               <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500/10">
                 <Check className="h-4 w-4 text-green-500" />
               </div>
-              <span>Active Pro or Max subscription</span>
+              <span>LynxPrompt account (free)</span>
             </li>
             <li className="flex items-center gap-3">
               <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500/10">
@@ -65,7 +65,7 @@ export default function SellingBlueprintsPage() {
             </p>
           </div>
           <div className="rounded-lg border bg-card p-4">
-            <h3 className="font-medium">No Maximum</h3>
+            <h3 className="font-medium">No Limit</h3>
             <p className="mt-1 text-2xl font-bold">€∞</p>
             <p className="mt-1 text-sm text-muted-foreground">
               Set any price above the minimum

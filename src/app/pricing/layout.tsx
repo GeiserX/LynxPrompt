@@ -45,16 +45,16 @@ const pricingJsonLd = {
         name: "Free",
         price: "0",
         priceCurrency: "EUR",
-        description: "Basic wizards, download configs, browse free blueprints",
+        description: "Full wizard, download configs for 30+ platforms, create and sell blueprints, API access",
       },
       {
         "@type": "Offer",
-        name: "Pro",
-        price: "5",
+        name: "Teams",
+        price: "30",
         priceCurrency: "EUR",
         priceSpecification: {
           "@type": "UnitPriceSpecification",
-          price: "5",
+          price: "30",
           priceCurrency: "EUR",
           unitCode: "MON",
           referenceQuantity: {
@@ -63,25 +63,7 @@ const pricingJsonLd = {
             unitCode: "MON",
           },
         },
-        description: "Intermediate wizards, sell blueprints, priority support",
-      },
-      {
-        "@type": "Offer",
-        name: "Max",
-        price: "20",
-        priceCurrency: "EUR",
-        priceSpecification: {
-          "@type": "UnitPriceSpecification",
-          price: "20",
-          priceCurrency: "EUR",
-          unitCode: "MON",
-          referenceQuantity: {
-            "@type": "QuantitativeValue",
-            value: "1",
-            unitCode: "MON",
-          },
-        },
-        description: "Advanced wizards, AI editing, 10% off paid blueprints",
+        description: "Everything in Free, plus AI features, team blueprints, SSO, centralized billing",
       },
       {
         "@type": "Offer",
