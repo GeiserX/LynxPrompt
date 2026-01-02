@@ -93,20 +93,11 @@ export default function SupportDocsPage() {
               </p>
               <ul className="mt-4 space-y-3">
                 <li className="flex items-start gap-2">
-                  <span className="mt-1 rounded bg-gradient-to-r from-blue-500 to-indigo-500 px-2 py-0.5 text-xs font-bold text-white">
-                    Pro
-                  </span>
-                  <span className="text-sm text-muted-foreground">
-                    Your posts display a Pro badge, helping us identify and
-                    prioritize feedback from paying customers.
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
                   <span className="mt-1 rounded bg-gradient-to-r from-teal-500 to-cyan-500 px-2 py-0.5 text-xs font-bold text-white">
                     Teams
                   </span>
                   <span className="text-sm text-muted-foreground">
-                    Your posts display a Teams badge for highest priority. Teams
+                    Your posts display a Teams badge for priority. Teams
                     subscribers&apos; bug reports receive faster attention.
                   </span>
                 </li>

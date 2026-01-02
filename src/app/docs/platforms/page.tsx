@@ -1,8 +1,15 @@
 import Link from "next/link";
-import { Laptop, FileCode } from "lucide-react";
+import { Laptop, FileCode, Star, ArrowRight } from "lucide-react";
 import { AgentsMarquee } from "@/components/agents-marquee";
+import { PLATFORMS, getPlatformsByCategory, PLATFORM_COUNT } from "@/lib/platforms";
 
 export default function PlatformsOverviewPage() {
+  const popularPlatforms = getPlatformsByCategory("popular");
+  const idePlatforms = getPlatformsByCategory("ide");
+  const editorPlatforms = getPlatformsByCategory("editor");
+  const cliPlatforms = getPlatformsByCategory("cli");
+  const otherPlatforms = getPlatformsByCategory("other");
+
   return (
     <div className="space-y-10">
       {/* Header */}
@@ -16,8 +23,8 @@ export default function PlatformsOverviewPage() {
           </h1>
         </div>
         <p className="max-w-2xl text-lg text-muted-foreground">
-          LynxPrompt generates configuration files compatible with all major AI
-          coding assistants and the AGENTS.md universal standard.
+          LynxPrompt generates configuration files for <strong>{PLATFORM_COUNT}+ AI coding assistants</strong> and 
+          the AGENTS.md universal standard.
         </p>
       </div>
 
@@ -26,136 +33,178 @@ export default function PlatformsOverviewPage() {
         <AgentsMarquee />
       </div>
 
-      {/* In this section */}
-      <div className="rounded-xl border bg-card p-6">
-        <h2 className="mb-4 font-semibold">Platform Guides</h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <Link
-            href="/docs/platforms/cursor"
-            className="flex items-center gap-3 rounded-lg border bg-background p-4 transition-colors hover:bg-muted"
-          >
-            <FileCode className="h-5 w-5 text-primary" />
-            <div>
-              <p className="font-medium">Cursor</p>
-              <p className="text-sm text-muted-foreground">.cursor/rules</p>
-            </div>
-          </Link>
-          <Link
-            href="/docs/platforms/claude-code"
-            className="flex items-center gap-3 rounded-lg border bg-background p-4 transition-colors hover:bg-muted"
-          >
-            <FileCode className="h-5 w-5 text-primary" />
-            <div>
-              <p className="font-medium">Claude Code</p>
-              <p className="text-sm text-muted-foreground">CLAUDE.md</p>
-            </div>
-          </Link>
-          <Link
-            href="/docs/platforms/copilot"
-            className="flex items-center gap-3 rounded-lg border bg-background p-4 transition-colors hover:bg-muted"
-          >
-            <FileCode className="h-5 w-5 text-primary" />
-            <div>
-              <p className="font-medium">GitHub Copilot</p>
-              <p className="text-sm text-muted-foreground">
-                copilot-instructions.md
-              </p>
-            </div>
-          </Link>
-          <Link
-            href="/docs/platforms/windsurf"
-            className="flex items-center gap-3 rounded-lg border bg-background p-4 transition-colors hover:bg-muted"
-          >
-            <FileCode className="h-5 w-5 text-primary" />
-            <div>
-              <p className="font-medium">Windsurf</p>
-              <p className="text-sm text-muted-foreground">.windsurfrules</p>
-            </div>
-          </Link>
-          <Link
-            href="/docs/platforms/antigravity"
-            className="flex items-center gap-3 rounded-lg border bg-background p-4 transition-colors hover:bg-muted"
-          >
-            <FileCode className="h-5 w-5 text-primary" />
-            <div>
-              <p className="font-medium">Antigravity</p>
-              <p className="text-sm text-muted-foreground">GEMINI.md</p>
-            </div>
-          </Link>
-          <Link
-            href="/docs/platforms/agents-md"
-            className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 p-4 transition-colors hover:bg-primary/10"
-          >
-            <FileCode className="h-5 w-5 text-primary" />
-            <div>
-              <p className="font-medium">AGENTS.md</p>
-              <p className="text-sm text-muted-foreground">Universal standard</p>
-            </div>
-          </Link>
-        </div>
-      </div>
-
-      {/* File formats */}
+      {/* Popular Platforms */}
       <section className="space-y-4">
-        <h2 className="text-2xl font-bold">Configuration Files</h2>
+        <div className="flex items-center gap-2">
+          <Star className="h-5 w-5 text-amber-500" />
+          <h2 className="text-2xl font-bold">Popular Platforms</h2>
+        </div>
         <p className="text-muted-foreground">
-          LynxPrompt generates these configuration files based on your selected
-          platforms:
+          The most commonly used AI coding assistants.
         </p>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
-            <code className="text-sm font-medium text-primary">AGENTS.md</code>
-            <span className="ml-2 rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-medium text-primary">
-              Universal
-            </span>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Works with any tool supporting the AGENTS.md standard
-            </p>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {popularPlatforms.map((platform) => (
+            <div
+              key={platform.id}
+              className={`rounded-xl border p-4 bg-gradient-to-br ${platform.gradient}/5`}
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">{platform.icon}</span>
+                <div>
+                  <h3 className="font-semibold">{platform.name}</h3>
+                  <code className="text-xs text-muted-foreground">{platform.file}</code>
+                </div>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">{platform.note}</p>
+              {platform.url && (
+                <a 
+                  href={platform.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center text-xs text-primary hover:underline"
+                >
+                  Learn more <ArrowRight className="ml-1 h-3 w-3" />
+                </a>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* AI-Powered IDEs */}
+      <section className="space-y-4">
+        <h2 className="text-2xl font-bold">AI-Powered IDEs</h2>
+        <p className="text-muted-foreground">
+          Full development environments with built-in AI capabilities.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {idePlatforms.map((platform) => (
+            <div
+              key={platform.id}
+              className="rounded-lg border bg-card p-4"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-xl">{platform.icon}</span>
+                <div>
+                  <h3 className="font-medium">{platform.name}</h3>
+                  <code className="text-xs text-muted-foreground">{platform.file}</code>
+                </div>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">{platform.note}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Editor Extensions */}
+      <section className="space-y-4">
+        <h2 className="text-2xl font-bold">Editor Extensions & Plugins</h2>
+        <p className="text-muted-foreground">
+          AI assistants that integrate with your existing editor.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {editorPlatforms.map((platform) => (
+            <div
+              key={platform.id}
+              className="rounded-lg border bg-card p-4"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-xl">{platform.icon}</span>
+                <div>
+                  <h3 className="font-medium">{platform.name}</h3>
+                  <code className="text-xs text-muted-foreground">{platform.file}</code>
+                </div>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">{platform.note}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CLI Tools */}
+      <section className="space-y-4">
+        <h2 className="text-2xl font-bold">CLI Tools</h2>
+        <p className="text-muted-foreground">
+          AI coding assistants for the command line.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {cliPlatforms.map((platform) => (
+            <div
+              key={platform.id}
+              className="rounded-lg border bg-card p-4"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-xl">{platform.icon}</span>
+                <div>
+                  <h3 className="font-medium">{platform.name}</h3>
+                  <code className="text-xs text-muted-foreground">{platform.file}</code>
+                </div>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">{platform.note}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Other/Emerging Tools */}
+      {otherPlatforms.length > 0 && (
+        <section className="space-y-4">
+          <h2 className="text-2xl font-bold">Emerging Tools</h2>
+          <p className="text-muted-foreground">
+            New and specialized AI coding tools.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {otherPlatforms.map((platform) => (
+              <div
+                key={platform.id}
+                className="rounded-lg border bg-card p-4"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">{platform.icon}</span>
+                  <div>
+                    <h3 className="font-medium">{platform.name}</h3>
+                    <code className="text-xs text-muted-foreground">{platform.file}</code>
+                  </div>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">{platform.note}</p>
+              </div>
+            ))}
           </div>
-          <div className="rounded-lg border bg-card p-4">
-            <code className="text-sm font-medium text-primary">
-              .cursor/rules
-            </code>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Cursor IDE project-level rules
-            </p>
-          </div>
-          <div className="rounded-lg border bg-card p-4">
-            <code className="text-sm font-medium text-primary">CLAUDE.md</code>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Claude Code (Anthropic) instructions
-            </p>
-          </div>
-          <div className="rounded-lg border bg-card p-4">
-            <code className="text-sm font-medium text-primary">
-              .github/copilot-instructions.md
-            </code>
-            <p className="mt-2 text-xs text-muted-foreground">
-              GitHub Copilot workspace instructions
-            </p>
-          </div>
-          <div className="rounded-lg border bg-card p-4">
-            <code className="text-sm font-medium text-primary">
-              .windsurfrules
-            </code>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Windsurf (Codeium) project rules
-            </p>
-          </div>
-          <div className="rounded-lg border bg-card p-4">
-            <code className="text-sm font-medium text-primary">GEMINI.md</code>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Antigravity (Google) AI instructions
-            </p>
-          </div>
-          <div className="rounded-lg border bg-card p-4">
-            <code className="text-sm font-medium text-primary">
-              .aider.conf.yml
-            </code>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Aider terminal AI configuration
-            </p>
-          </div>
+        </section>
+      )}
+
+      {/* All Files */}
+      <section className="space-y-4">
+        <h2 className="text-2xl font-bold">Generated Configuration Files</h2>
+        <p className="text-muted-foreground">
+          LynxPrompt generates these configuration files based on your selected platforms:
+        </p>
+        <div className="overflow-x-auto rounded-lg border">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50">
+              <tr>
+                <th className="px-4 py-3 text-left font-medium">Platform</th>
+                <th className="px-4 py-3 text-left font-medium">File / Directory</th>
+                <th className="px-4 py-3 text-left font-medium">Format</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {PLATFORMS.map((platform) => (
+                <tr key={platform.id} className="hover:bg-muted/30">
+                  <td className="px-4 py-2">
+                    <span className="mr-2">{platform.icon}</span>
+                    {platform.name}
+                  </td>
+                  <td className="px-4 py-2">
+                    <code className="text-xs text-primary">{platform.file}</code>
+                  </td>
+                  <td className="px-4 py-2 text-muted-foreground">
+                    {platform.format}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </section>
 
@@ -212,9 +261,3 @@ export default function PlatformsOverviewPage() {
     </div>
   );
 }
-
-
-
-
-
-
