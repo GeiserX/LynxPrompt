@@ -19,6 +19,7 @@ import {
   Trash2,
   Loader2,
 } from "lucide-react";
+import { CodeEditor } from "@/components/code-editor";
 
 // Category display config
 const PREFERENCE_CATEGORIES: Record<string, { label: string; icon: React.ElementType; description: string }> = {
@@ -160,7 +161,16 @@ export function PreferencesPanel({
                           
                           {isEditing ? (
                             <div className="mt-2">
-                              {isLongContent ? (
+                              {category === "static" ? (
+                                /* Full code editor with line numbers for static files */
+                                <CodeEditor
+                                  value={editValue}
+                                  onChange={setEditValue}
+                                  minHeight={250}
+                                  maxHeight={500}
+                                  placeholder={`Enter content for ${displayName}...`}
+                                />
+                              ) : isLongContent ? (
                                 <textarea
                                   value={editValue}
                                   onChange={(e) => setEditValue(e.target.value)}
@@ -188,7 +198,26 @@ export function PreferencesPanel({
                             </div>
                           ) : (
                             <div className="mt-1">
-                              {isLongContent ? (
+                              {category === "static" ? (
+                                /* Code preview with line numbers for static files */
+                                <div className="rounded-lg border bg-muted/30 overflow-hidden max-h-32 overflow-y-auto">
+                                  <div className="flex">
+                                    <div className="w-8 bg-muted/50 border-r text-right text-muted-foreground text-xs font-mono py-2 px-1 select-none shrink-0">
+                                      {value.split('\n').slice(0, 10).map((_, i) => (
+                                        <div key={i} className="leading-5">{i + 1}</div>
+                                      ))}
+                                      {value.split('\n').length > 10 && (
+                                        <div className="leading-5 text-muted-foreground/50">...</div>
+                                      )}
+                                    </div>
+                                    <pre className="text-xs text-muted-foreground py-2 px-3 overflow-x-auto font-mono flex-1">
+                                      {value.split('\n').length > 10 
+                                        ? value.split('\n').slice(0, 10).join('\n') + '\n...' 
+                                        : value}
+                                    </pre>
+                                  </div>
+                                </div>
+                              ) : isLongContent ? (
                                 <pre className="text-xs text-muted-foreground bg-muted/50 rounded p-2 overflow-x-auto max-h-24 overflow-y-auto font-mono">
                                   {value.length > 300 ? value.slice(0, 300) + '...' : value}
                                 </pre>
