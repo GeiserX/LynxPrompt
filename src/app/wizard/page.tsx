@@ -2409,6 +2409,7 @@ ${syncCommands}
                   isDetecting={isDetecting}
                   detectError={detectError}
                   detectedData={detectedData}
+                  detectedFields={detectedFields}
                   onNameChange={(v) => setConfig({ ...config, projectName: v })}
                   onDescriptionChange={(v) => setConfig({ ...config, projectDescription: v })}
                   onProjectTypeChange={(v) => setConfig({ ...config, projectType: v })}
@@ -2427,6 +2428,7 @@ ${syncCommands}
                   selectedFrameworks={config.frameworks}
                   selectedDatabases={config.databases}
                   letAiDecide={config.letAiDecide}
+                  detectedFields={detectedFields}
                   onToggleLanguage={(v) => toggleArrayValue("languages", v)}
                   onToggleFramework={(v) => toggleArrayValue("frameworks", v)}
                   onToggleDatabase={(v) => toggleArrayValue("databases", v)}
@@ -2436,6 +2438,7 @@ ${syncCommands}
               {currentStep === 2 && (
                 <StepRepository
                   config={config}
+                  detectedFields={detectedFields}
                   onChange={(updates) => setConfig({ ...config, ...updates })}
                 />
               )}
@@ -2627,6 +2630,15 @@ const DEV_OS_OPTIONS = [
   { id: "multi", label: "Multi-platform", icon: "🌐", desc: "Cross-platform commands" },
 ];
 
+// Helper component for detected badge
+function DetectedBadge() {
+  return (
+    <span className="ml-2 rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-700 dark:bg-green-900/50 dark:text-green-300">
+      detected
+    </span>
+  );
+}
+
 function StepProject({
   name,
   description,
@@ -2640,6 +2652,7 @@ function StepProject({
   isDetecting,
   detectError,
   detectedData,
+  detectedFields,
   onNameChange,
   onDescriptionChange,
   onProjectTypeChange,
@@ -2677,6 +2690,7 @@ function StepProject({
     isOpenSource: boolean;
     projectType: string | null;
   } | null;
+  detectedFields: Set<string>;
   onNameChange: (v: string) => void;
   onDescriptionChange: (v: string) => void;
   onProjectTypeChange: (v: string) => void;
@@ -2841,6 +2855,7 @@ function StepProject({
         <div>
           <label className="mb-2 block text-sm font-medium">
             Project Name <span className="text-destructive">*</span>
+            {detectedFields.has("projectName") && <DetectedBadge />}
           </label>
           <input
             type="text"
@@ -2854,6 +2869,7 @@ function StepProject({
         <div>
           <label className="mb-2 block text-sm font-medium">
             Description (optional)
+            {detectedFields.has("projectDescription") && <DetectedBadge />}
           </label>
           <textarea
             value={description}
@@ -2911,6 +2927,7 @@ function StepProject({
         <div>
           <label className="mb-2 block text-sm font-medium">
             What type of project is this?
+            {detectedFields.has("projectType") && <DetectedBadge />}
           </label>
           <p className="mb-3 text-sm text-muted-foreground">
             This affects how the AI assistant behaves when helping you code.
@@ -2986,6 +3003,7 @@ function StepTechStack({
   selectedFrameworks,
   selectedDatabases,
   letAiDecide,
+  detectedFields,
   onToggleLanguage,
   onToggleFramework,
   onToggleDatabase,
@@ -2995,6 +3013,7 @@ function StepTechStack({
   selectedFrameworks: string[];
   selectedDatabases: string[];
   letAiDecide: boolean;
+  detectedFields: Set<string>;
   onToggleLanguage: (v: string) => void;
   onToggleFramework: (v: string) => void;
   onToggleDatabase: (v: string) => void;
@@ -3143,7 +3162,10 @@ function StepTechStack({
       {/* Languages */}
       <div className="mt-6">
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="font-semibold">Languages</h3>
+          <h3 className="font-semibold">
+            Languages
+            {detectedFields.has("languages") && <DetectedBadge />}
+          </h3>
           <span className="text-sm text-muted-foreground">
             {selectedLanguages.length} selected
           </span>
@@ -3255,7 +3277,10 @@ function StepTechStack({
       {/* Frameworks */}
       <div className="mt-6">
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="font-semibold">Frameworks & Libraries</h3>
+          <h3 className="font-semibold">
+            Frameworks & Libraries
+            {detectedFields.has("frameworks") && <DetectedBadge />}
+          </h3>
           <span className="text-sm text-muted-foreground">
             {selectedFrameworks.length} selected
           </span>
@@ -3638,9 +3663,11 @@ const CONTAINER_REGISTRIES = [
 
 function StepRepository({
   config,
+  detectedFields,
   onChange,
 }: {
   config: WizardConfig;
+  detectedFields: Set<string>;
   onChange: (updates: Partial<WizardConfig>) => void;
 }) {
   const toggleRepoHost = (hostId: string) => {
@@ -3689,7 +3716,10 @@ function StepRepository({
 
       <div className="mt-6 space-y-6">
         <div>
-          <label className="text-sm font-medium">Repository Host(s)</label>
+          <label className="text-sm font-medium">
+            Repository Host(s)
+            {detectedFields.has("repoHost") && <DetectedBadge />}
+          </label>
           <p className="text-xs text-muted-foreground mt-1">Select one or more platforms where this code will be hosted</p>
           <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
             {REPO_HOSTS.map((host) => (
@@ -3742,7 +3772,10 @@ function StepRepository({
         </div>
 
         <div>
-          <label className="text-sm font-medium">License (preference)</label>
+          <label className="text-sm font-medium">
+            License (preference)
+            {detectedFields.has("license") && <DetectedBadge />}
+          </label>
           <div className="mt-2 grid grid-cols-3 gap-2">
             {[
               { id: "mit", label: "MIT" },
@@ -3852,7 +3885,10 @@ function StepRepository({
 
         {/* CI/CD Selection */}
         <div>
-          <label className="block text-sm font-medium">CI/CD Platform</label>
+          <label className="block text-sm font-medium">
+            CI/CD Platform
+            {detectedFields.has("cicd") && <DetectedBadge />}
+          </label>
           <p className="text-xs text-muted-foreground mb-2">Select your continuous integration/deployment tool</p>
           <div className="flex flex-wrap gap-2">
             {CICD_OPTIONS.slice(0, 8).map((opt) => (
