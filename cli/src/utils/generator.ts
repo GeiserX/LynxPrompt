@@ -57,6 +57,7 @@ export interface GenerateOptions {
   testNotes?: string;
   staticFiles?: string[];
   staticFileContents?: Record<string, string>;
+  staticFileHandling?: "config_only" | "both"; // How to handle static files
   includeFunding?: boolean;
   extraNotes?: string;
   // Security configuration (FREE tier)
@@ -578,8 +579,10 @@ export function generateConfig(options: GenerateOptions): Record<string, string>
     }
   }
 
-  // Generate static files
-  if (options.staticFiles && options.staticFiles.length > 0) {
+  // Generate static files (only if "both" mode - otherwise they're embedded in config)
+  const createLocalStaticFiles = options.staticFileHandling !== "config_only";
+  
+  if (options.staticFiles && options.staticFiles.length > 0 && createLocalStaticFiles) {
     for (const fileKey of options.staticFiles) {
       const filePath = STATIC_FILE_PATHS[fileKey];
       if (!filePath) continue;
@@ -596,8 +599,8 @@ export function generateConfig(options: GenerateOptions): Record<string, string>
     }
   }
 
-  // Legacy: funding as separate option
-  if (options.includeFunding && !options.staticFiles?.includes("funding")) {
+  // Legacy: funding as separate option (respect staticFileHandling)
+  if (options.includeFunding && !options.staticFiles?.includes("funding") && createLocalStaticFiles) {
     files[".github/FUNDING.yml"] = STATIC_FILE_TEMPLATES.funding(options);
   }
 
@@ -637,8 +640,14 @@ function generateFileContent(options: GenerateOptions, platform: string): string
     return generateJsonConfig(options, platform);
   }
   
-  // Project name with optional blueprint variable
+  // Project name and other blueprint variables
   const projectName = bpVar(bp, "PROJECT_NAME", options.name);
+  const repoHost = bpVar(bp, "REPO_HOST", options.repoHost || "");
+  const license = bpVar(bp, "LICENSE", options.license || "");
+  const authorName = bpVar(bp, "AUTHOR_NAME", options.userName || "");
+  const authorEmail = bpVar(bp, "AUTHOR_EMAIL", options.userEmail || "");
+  const architecture = bpVar(bp, "ARCHITECTURE", options.architecture || "");
+  const cicd = bpVar(bp, "CI_CD", options.cicd || "");
   
   // MDC frontmatter for Cursor
   if (isMdc) {
@@ -790,10 +799,16 @@ function generateFileContent(options: GenerateOptions, platform: string): string
       sections.push("## Repository & Infrastructure");
       sections.push("");
       if (options.repoHost) {
-        sections.push(`- **Host:** ${options.repoHost.charAt(0).toUpperCase() + options.repoHost.slice(1)}`);
+        sections.push(`- **Host:** ${repoHost || options.repoHost.charAt(0).toUpperCase() + options.repoHost.slice(1)}`);
       }
       if (options.license && options.license !== "none") {
-        sections.push(`- **License:** ${options.license.toUpperCase()}`);
+        sections.push(`- **License:** ${license || options.license.toUpperCase()}`);
+      }
+      if (options.architecture) {
+        sections.push(`- **Architecture:** ${architecture || options.architecture}`);
+      }
+      if (options.cicd) {
+        sections.push(`- **CI/CD:** ${cicd || options.cicd}`);
       }
       if (options.conventionalCommits) {
         sections.push("- **Commits:** Follow [Conventional Commits](https://conventionalcommits.org) format");
@@ -945,13 +960,13 @@ function generateFileContent(options: GenerateOptions, platform: string): string
       sections.push("## Commit Identity");
       sections.push("");
       if (options.userName || options.userEmail || options.userRole || options.userExpertise) {
-        // Include actual user profile data
+        // Include actual user profile data (with blueprint variables if enabled)
         const identityLines: string[] = [];
         if (options.userName) {
-          identityLines.push(`- **Name:** ${options.userName}`);
+          identityLines.push(`- **Name:** ${authorName || options.userName}`);
         }
         if (options.userEmail) {
-          identityLines.push(`- **Email:** ${options.userEmail}`);
+          identityLines.push(`- **Email:** ${authorEmail || options.userEmail}`);
         }
         if (options.userRole) {
           identityLines.push(`- **Role:** ${options.userRole}`);
@@ -1339,6 +1354,40 @@ function generateFileContent(options: GenerateOptions, platform: string): string
     sections.push("Always use secure standards to transmit sensitive information.");
     sections.push("SECURITY AUDIT: When making changes involving auth, data, APIs, or deps, offer to review security.");
     sections.push("");
+  }
+
+  // Static Files Content (when config_only mode - embed in config instead of creating files)
+  if (options.staticFileHandling === "config_only" && options.staticFiles && options.staticFiles.length > 0) {
+    if (isMarkdown || isMdc) {
+      sections.push("## 📄 Static Files Reference");
+      sections.push("");
+      sections.push("The following static file contents are included for AI context. These are not separate files.");
+      sections.push("");
+      
+      for (const fileKey of options.staticFiles) {
+        const filePath = STATIC_FILE_PATHS[fileKey];
+        if (!filePath) continue;
+        
+        let content: string;
+        if (options.staticFileContents?.[fileKey]) {
+          content = options.staticFileContents[fileKey];
+        } else {
+          const templateFn = STATIC_FILE_TEMPLATES[fileKey];
+          if (templateFn) {
+            content = templateFn(options);
+          } else {
+            continue;
+          }
+        }
+        
+        sections.push(`### ${filePath}`);
+        sections.push("");
+        sections.push("```");
+        sections.push(content.trim());
+        sections.push("```");
+        sections.push("");
+      }
+    }
   }
 
   // Footer
