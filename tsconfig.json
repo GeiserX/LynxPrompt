@@ -41,6 +41,7 @@
     "node_modules",
     "prisma/seed-*.ts",
     "prisma/prisma.config-*.ts",
+    "prisma/migrations/**/*.ts",
     "cli"
   ]
 }
