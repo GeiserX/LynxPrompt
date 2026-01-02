@@ -1613,14 +1613,16 @@ async function runInteractiveWizard(
   }, promptConfig);
   answers.projectType = typeResponse.projectType || "";
 
-  // Development environment(s) - multi-select with current OS pre-selected
+  // Development environment(s) - multi-select with current OS pre-selected and labeled
   const currentOS = detectCurrentOS();
   const devOsResponse = await prompts({
     type: "autocompleteMultiselect",
     name: "devOS",
     message: chalk.white("Development environment(s) (type to search):"),
     choices: DEV_OS_OPTIONS.map(o => ({
-      title: `${o.icon} ${o.label}`,
+      title: o.id === currentOS 
+        ? `${o.icon} ${o.label} ${chalk.green("(detected by your current system)")}`
+        : `${o.icon} ${o.label}`,
       value: o.id,
       selected: o.id === currentOS, // Pre-select current OS
     })),
@@ -2403,35 +2405,36 @@ async function runInteractiveWizard(
   console.log(chalk.gray("  ─── Cloud & AI Options ───"));
   console.log();
   
-  // Self-improving config - AI can suggest improvements to this config file
-  console.log(chalk.gray("  🧠 Enable AI to suggest improvements to your config file."));
-  console.log(chalk.gray("     When enabled, the AI can propose updates to this AGENTS.md file"));
-  console.log(chalk.gray("     (e.g., better rules, new patterns) and you approve the changes."));
+  // Self-improving config - instruct AI to suggest improvements
+  console.log(chalk.gray("  🧠 Write instructions in the generated config telling AI it can suggest improvements."));
+  console.log(chalk.gray("     The AI will learn your patterns and propose better rules, new conventions,"));
+  console.log(chalk.gray("     and optimizations over time. You review and approve any changes."));
   const selfImproveResponse = await prompts({
     type: "toggle",
     name: "selfImprove",
-    message: chalk.white("Allow AI to suggest config improvements?"),
+    message: chalk.white("Enable self-improving AI config rules?"),
     initial: false,
     active: "Yes",
     inactive: "No",
-    hint: chalk.gray("AI proposes updates, you approve"),
+    hint: chalk.gray("Instructs AI to suggest improvements"),
   }, promptConfig);
   answers.selfImprove = selfImproveResponse.selfImprove || false;
 
-  // Cloud sync - save to cloud and add sync commands
+  // Cloud sync - save to cloud and enable synchronization
   console.log();
-  console.log(chalk.gray("  ☁️  Save your config to LynxPrompt cloud for synchronization."));
-  console.log(chalk.gray("     • Use 'lynxp push' to upload local changes to the cloud"));
-  console.log(chalk.gray("     • Use 'lynxp pull' to download cloud changes to local"));
-  console.log(chalk.gray("     • Use 'lynxp diff' to compare local vs cloud versions"));
+  console.log(chalk.gray("  ☁️  Store your config on LynxPrompt cloud for team sharing and version control."));
+  console.log(chalk.gray("     Benefits:"));
+  console.log(chalk.gray("     • Share configs across devices and team members"));
+  console.log(chalk.gray("     • Track changes and rollback if needed"));
+  console.log(chalk.gray("     • Instructions added to config so AI can sync automatically"));
   const enableAutoUpdateResponse = await prompts({
     type: "toggle",
     name: "enableAutoUpdate",
-    message: chalk.white("Save to cloud & enable sync?"),
+    message: chalk.white("Enable cloud synchronization?"),
     initial: false,
     active: "Yes",
     inactive: "No",
-    hint: chalk.gray("Adds sync commands to config"),
+    hint: chalk.gray("Enables push/pull/diff with LynxPrompt cloud"),
   }, promptConfig);
   answers.enableAutoUpdate = enableAutoUpdateResponse.enableAutoUpdate || false;
 
@@ -2441,16 +2444,17 @@ async function runInteractiveWizard(
   
   if (answers.enableAutoUpdate && api) {
     console.log();
-    console.log(chalk.gray("  📦 Choose how the AI should run sync commands:"));
+    console.log(chalk.gray("  📦 How should the AI perform sync operations?"));
     console.log();
     console.log(chalk.green.bold("     CLI (Recommended):"));
-    console.log(chalk.gray("     • No API token stored in config files - more secure"));
-    console.log(chalk.gray("     • AI uses 'lynxp push/pull/diff' commands directly"));
-    console.log(chalk.gray("     • Requires LynxPrompt CLI installed in dev environment"));
+    console.log(chalk.gray("     • Most secure - no tokens stored anywhere"));
+    console.log(chalk.gray("     • AI runs lynxp commands directly"));
+    console.log(chalk.gray("     • Requires CLI installed: npm install -g lynxprompt"));
     console.log();
-    console.log(chalk.yellow("     Environment Variable (if CLI not available):"));
+    console.log(chalk.yellow("     curl/token/env variable:"));
+    console.log(chalk.gray("     • Works without CLI installed"));
     console.log(chalk.gray("     • Token stored in environment variable (not in file)"));
-    console.log(chalk.gray("     • AI uses curl with $LYNXPROMPT_API_TOKEN"));
+    console.log(chalk.gray("     • Less convenient but still secure"));
     console.log();
     
     const syncMethodResponse = await prompts({
@@ -2459,19 +2463,19 @@ async function runInteractiveWizard(
       message: chalk.white("Will LynxPrompt CLI be available in your dev environment?"),
       initial: true, // Default to yes - strongly recommended
       active: "Yes, use CLI (recommended)",
-      inactive: "No, use env variable",
+      inactive: "No, use curl/token/env variable",
       hint: chalk.green("Strongly recommended for security"),
     }, promptConfig);
     answers.preferCliSync = syncMethodResponse.preferCliSync ?? true;
     
     if (answers.preferCliSync) {
-      console.log(chalk.green("  ✓ Perfect! AI will use 'lynxp push/pull/diff' for syncing"));
+      console.log(chalk.green("  ✓ Perfect! Config will include lynxp CLI commands for syncing"));
       console.log(chalk.gray("     Make sure CLI is installed: npm install -g lynxprompt"));
     } else {
       // Ask for env var name where token will be stored
       console.log();
-      console.log(chalk.gray("  🔐 The AI will use curl with an API token from an environment variable."));
-      console.log(chalk.gray("     The token will NOT be stored in the config file for security."));
+      console.log(chalk.gray("  🔐 Config will include curl commands using an environment variable."));
+      console.log(chalk.gray("     Your API token will NOT be stored in the config file."));
       const envVarResponse = await prompts({
         type: "text",
         name: "tokenEnvVar",
@@ -2480,8 +2484,8 @@ async function runInteractiveWizard(
         hint: chalk.gray("e.g., LYNXPROMPT_API_TOKEN, LP_TOKEN"),
       }, promptConfig);
       answers.tokenEnvVar = envVarResponse.tokenEnvVar || "LYNXPROMPT_API_TOKEN";
-      console.log(chalk.green(`  ✓ AI will use curl with $${answers.tokenEnvVar}`));
-      console.log(chalk.gray(`     Set your token: export ${answers.tokenEnvVar}="your_token_here"`));
+      console.log(chalk.green(`  ✓ Config will reference $${answers.tokenEnvVar}`));
+      console.log(chalk.gray(`     Remember to set: export ${answers.tokenEnvVar}="your_token_here"`));
     }
   }
 
@@ -2489,6 +2493,22 @@ async function runInteractiveWizard(
     console.log(chalk.yellow("  ⚠️  Cloud sync requires login. Run 'lynxp login' first."));
     console.log(chalk.gray("     Continuing without cloud sync..."));
     answers.enableAutoUpdate = false;
+  }
+  
+  // If multiple output formats selected AND cloud sync enabled, ask which to upload
+  const selectedPlatforms = answers.platforms as string[];
+  if (answers.enableAutoUpdate && selectedPlatforms && selectedPlatforms.length > 1) {
+    console.log();
+    console.log(chalk.yellow("  ⚠️  You selected multiple output formats but only one can be synced to cloud."));
+    const primaryFormatResponse = await prompts({
+      type: "select",
+      name: "primaryFormat",
+      message: chalk.white("Which format should be the cloud-synced version?"),
+      choices: selectedPlatforms.map(p => ({ title: p, value: p })),
+      hint: chalk.gray("This version will be uploaded to LynxPrompt cloud"),
+    }, promptConfig);
+    answers.primarySyncFormat = primaryFormatResponse.primaryFormat || selectedPlatforms[0];
+    console.log(chalk.green(`  ✓ ${answers.primarySyncFormat} will be synced to cloud, others are local-only`));
   }
 
   // Include personal data from profile
@@ -2676,7 +2696,27 @@ async function runInteractiveWizard(
     const staticStep = getCurrentStep("static")!;
     showStep(currentStepNum, staticStep, userTier);
 
-    console.log(chalk.gray("  Generate additional project files:"));
+    // First, ask how to handle static files
+    console.log(chalk.gray("  How should static file content be handled?"));
+    console.log();
+    console.log(chalk.gray("     📄 Config only: Content embedded in AI config file (AI has context, no local files)"));
+    console.log(chalk.gray("     📁 Both: Create local files AND embed content in AI config file"));
+    console.log();
+    
+    const staticFileHandlingResponse = await prompts({
+      type: "select",
+      name: "handling",
+      message: chalk.white("Where to add static file content?"),
+      choices: [
+        { title: "📄 Config file only (recommended)", value: "config_only", description: "Content goes in AI config, no separate files created" },
+        { title: "📁 Both local files AND config", value: "both", description: "Create files locally AND embed in AI config" },
+      ],
+      initial: 0,
+    }, promptConfig);
+    answers.staticFileHandling = staticFileHandlingResponse.handling || "config_only";
+
+    console.log();
+    console.log(chalk.gray("  Select project files to include:"));
     console.log();
 
     // Static file options with metadata
@@ -2961,6 +3001,7 @@ async function runInteractiveWizard(
     testNotes: answers.testNotes as string,
     staticFiles: answers.staticFiles as string[],
     staticFileContents: answers.staticFileContents as Record<string, string>,
+    staticFileHandling: answers.staticFileHandling as "config_only" | "both",
     includeFunding: answers.includeFunding as boolean,
     extraNotes: answers.extraNotes as string,
     semver: answers.semver as boolean,
