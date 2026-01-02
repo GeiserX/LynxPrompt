@@ -5,7 +5,7 @@ import { signIn, useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Mail, Github, Chrome, ArrowLeft, Loader2, Terminal, CheckCircle } from "lucide-react";
+import { Mail, Github, Chrome, ArrowLeft, Loader2, Terminal, CheckCircle, Building2, KeyRound } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Turnstile } from "@/components/turnstile";
 
@@ -26,6 +26,16 @@ function SignInContent() {
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [turnstileError, setTurnstileError] = useState<string | null>(null);
   const [magicLinkError, setMagicLinkError] = useState<string | null>(null);
+  const [showSSO, setShowSSO] = useState(false);
+  const [ssoEmail, setSsoEmail] = useState("");
+  const [ssoLoading, setSsoLoading] = useState(false);
+  const [ssoResult, setSsoResult] = useState<{
+    hasSSO: boolean;
+    teamName?: string;
+    teamSlug?: string;
+    provider?: string;
+    message?: string;
+  } | null>(null);
 
   // Handle CLI authentication callback when user is already authenticated
   useEffect(() => {
@@ -201,6 +211,36 @@ function SignInContent() {
     }
   };
 
+  const handleSSOLookup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!ssoEmail) return;
+
+    setSsoLoading(true);
+    setSsoResult(null);
+
+    try {
+      const res = await fetch("/api/auth/sso/lookup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: ssoEmail }),
+      });
+
+      const data = await res.json();
+      setSsoResult(data);
+    } catch (error) {
+      console.error("SSO lookup error:", error);
+      setSsoResult({ hasSSO: false, message: "Failed to check SSO. Please try again." });
+    } finally {
+      setSsoLoading(false);
+    }
+  };
+
+  const handleSSOLogin = () => {
+    if (!ssoResult?.teamSlug) return;
+    // Redirect to team SSO login page
+    window.location.href = `/auth/sso/${ssoResult.teamSlug}?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+  };
+
   return (
     <div className="flex min-h-screen">
       {/* Left side - Branding */}
@@ -326,6 +366,88 @@ function SignInContent() {
                     )}
                     Continue with Google
                   </Button>
+
+                  {/* Teams SSO */}
+                  <Button
+                    variant="outline"
+                    className={`w-full justify-start gap-3 ${showSSO ? 'border-teal-500 bg-teal-500/5' : ''}`}
+                    onClick={() => setShowSSO(!showSSO)}
+                    disabled={isLoading}
+                  >
+                    <Building2 className="h-5 w-5 text-teal-500" />
+                    <span>Teams SSO</span>
+                    <span className="ml-auto text-xs text-muted-foreground">Enterprise</span>
+                  </Button>
+
+                  {/* SSO Expanded Section */}
+                  {showSSO && (
+                    <div className="rounded-lg border border-teal-500/30 bg-teal-500/5 p-4">
+                      <p className="mb-3 text-sm text-muted-foreground">
+                        Enter your work email to sign in with your organization&apos;s SSO.
+                      </p>
+                      <form onSubmit={handleSSOLookup}>
+                        <div className="flex gap-2">
+                          <div className="relative flex-1">
+                            <KeyRound className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <input
+                              type="email"
+                              value={ssoEmail}
+                              onChange={(e) => {
+                                setSsoEmail(e.target.value);
+                                setSsoResult(null);
+                              }}
+                              placeholder="you@company.com"
+                              className="h-10 w-full rounded-lg border bg-background pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                              disabled={ssoLoading}
+                            />
+                          </div>
+                          <Button 
+                            type="submit" 
+                            disabled={ssoLoading || !ssoEmail}
+                            className="bg-teal-600 hover:bg-teal-700"
+                          >
+                            {ssoLoading ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              "Check"
+                            )}
+                          </Button>
+                        </div>
+                      </form>
+
+                      {/* SSO Result */}
+                      {ssoResult && (
+                        <div className="mt-3">
+                          {ssoResult.hasSSO ? (
+                            <div className="rounded-lg bg-teal-500/10 p-3">
+                              <p className="text-sm font-medium text-teal-700 dark:text-teal-300">
+                                ✓ SSO enabled for {ssoResult.teamName}
+                              </p>
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                Provider: {ssoResult.provider}
+                              </p>
+                              <Button
+                                onClick={handleSSOLogin}
+                                className="mt-3 w-full bg-teal-600 hover:bg-teal-700"
+                              >
+                                <Building2 className="mr-2 h-4 w-4" />
+                                Sign in with {ssoResult.teamName} SSO
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="rounded-lg bg-amber-500/10 p-3">
+                              <p className="text-sm text-amber-700 dark:text-amber-300">
+                                {ssoResult.message || "No SSO configured for this email domain."}
+                              </p>
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                Contact your administrator or use another sign-in method.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Divider */}
