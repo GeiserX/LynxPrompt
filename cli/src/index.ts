@@ -16,6 +16,7 @@ import { linkCommand, unlinkCommand } from "./commands/link.js";
 import { analyzeCommand } from "./commands/analyze.js";
 import { convertCommand } from "./commands/convert.js";
 import { mergeCommand } from "./commands/merge.js";
+import { importCommand } from "./commands/import.js";
 
 // Read version from package.json
 const require = createRequire(import.meta.url);
@@ -89,6 +90,19 @@ program
   .option("-f, --force", "Overwrite existing output file")
   .option("-i, --interactive", "Review and select sections to include")
   .action(mergeCommand);
+
+// Import - scan for existing AGENTS.md files (monorepo support)
+program
+  .command("import [path]")
+  .description("Scan and import AGENTS.md files from a repository")
+  .option("--dry-run", "Preview what would be imported without changes")
+  .option("--no-recursive", "Don't scan subdirectories")
+  .option("--depth <n>", "Max directory depth to scan", "10")
+  .option("--pattern <file>", "Custom config filename to look for")
+  .option("--link", "Link imported files to cloud (requires login)")
+  .option("-v, --verbose", "Show detailed section information")
+  .option("-j, --json", "Output as JSON")
+  .action(importCommand);
 
 // Status - show what's configured
 program
@@ -194,6 +208,8 @@ ${chalk.cyan("Quick Start:")}
 ${chalk.cyan("Analysis & Tools:")}
   ${chalk.white("$ lynxp analyze")}               ${chalk.gray("Analyze project tech stack")}
   ${chalk.white("$ lynxp analyze -r <url>")}      ${chalk.gray("Analyze remote repository")}
+  ${chalk.white("$ lynxp import")}                ${chalk.gray("Scan repo for AGENTS.md files")}
+  ${chalk.white("$ lynxp import --dry-run")}      ${chalk.gray("Preview monorepo hierarchy")}
   ${chalk.white("$ lynxp convert AGENTS.md cursor")} ${chalk.gray("Convert to Cursor format")}
   ${chalk.white("$ lynxp merge a.md b.md -o out.md")} ${chalk.gray("Merge multiple configs")}
 
