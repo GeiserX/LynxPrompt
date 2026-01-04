@@ -13,11 +13,9 @@ import { api, ApiRequestError } from "../api.js";
 // Draft management - local storage in .lynxprompt/drafts/
 const DRAFTS_DIR = ".lynxprompt/drafts";
 
-// Get CLI version from package.json (same method used in index.ts)
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const cliPackageJson = require("../../package.json");
-const CLI_VERSION: string = cliPackageJson.version;
+// CLI version injected at build time via tsup.config.ts
+// Falls back to "unknown" if not defined (shouldn't happen in production builds)
+const CLI_VERSION: string = process.env.CLI_VERSION || "unknown";
 
 interface WizardDraft {
   name: string;
