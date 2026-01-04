@@ -74,13 +74,13 @@ export async function generateMetadata({
         type: "profile",
         images: user.image
           ? [{ url: user.image, alt: displayName }]
-          : [{ url: "/lynxprompt.png", alt: "LynxPrompt" }],
+          : [{ url: "/og-image.png", alt: "LynxPrompt" }],
       },
       twitter: {
         card: "summary",
         title: displayName,
         description,
-        images: user.image ? [user.image] : ["/lynxprompt.png"],
+        images: user.image ? [user.image] : ["/og-image.png"],
       },
       alternates: {
         canonical: `https://lynxprompt.com/users/${id}`,
@@ -133,7 +133,7 @@ async function getUserJsonLd(id: string) {
       "@type": "Person",
       name: displayName,
       url: `https://lynxprompt.com/users/${id}`,
-      image: user.image || "https://lynxprompt.com/lynxprompt.png",
+      image: user.image || "https://lynxprompt.com/og-image.png",
       sameAs: sameAs.length > 0 ? sameAs : undefined,
     };
   } catch {
@@ -163,6 +163,7 @@ export default async function UserProfileLayout({
     </>
   );
 }
+
 
 
 

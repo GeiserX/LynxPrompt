@@ -63,7 +63,7 @@ const softwareJsonLd = {
     "Team collaboration",
     "SSO support",
   ],
-  screenshot: "https://lynxprompt.com/lynxprompt.png",
+  screenshot: "https://lynxprompt.com/og-image.png",
 };
 
 const websiteJsonLd = {
