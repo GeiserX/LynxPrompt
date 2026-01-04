@@ -1,6 +1,5 @@
 import { Command } from "commander";
 import chalk from "chalk";
-import { createRequire } from "module";
 import { loginCommand } from "./commands/login.js";
 import { logoutCommand } from "./commands/logout.js";
 import { whoamiCommand } from "./commands/whoami.js";
@@ -18,16 +17,15 @@ import { convertCommand } from "./commands/convert.js";
 import { mergeCommand } from "./commands/merge.js";
 import { importCommand } from "./commands/import.js";
 
-// Read version from package.json
-const require = createRequire(import.meta.url);
-const packageJson = require("../package.json");
+// CLI version injected at build time via tsup.config.ts define option
+const CLI_VERSION = process.env.CLI_VERSION || "0.0.0";
 
 const program = new Command();
 
 program
   .name("lynxprompt")
   .description("CLI for LynxPrompt - Generate AI IDE configuration files")
-  .version(packageJson.version);
+  .version(CLI_VERSION);
 
 // ============================================
 // Primary Commands (most users need these)
