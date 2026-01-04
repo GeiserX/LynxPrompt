@@ -107,7 +107,7 @@ export async function generateMetadata({
       type: "website",
       images: [
         {
-          url: "/lynxprompt.png",
+          url: "/og-image.png",
           alt: blueprint.name,
         },
       ],
@@ -191,7 +191,7 @@ async function getBlueprintJsonLd(id: string) {
     "@type": "Product",
     name: blueprint.name,
     description: blueprint.description || `AI configuration blueprint for ${blueprint.category || "developers"}`,
-    image: "https://lynxprompt.com/lynxprompt.png",
+    image: "https://lynxprompt.com/og-image.png",
     brand: {
       "@type": "Brand",
       name: "LynxPrompt",

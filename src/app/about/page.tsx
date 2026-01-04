@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     description:
       "Born from a simple frustration—setting up AI IDE configurations is tedious. We built LynxPrompt to make it effortless.",
     type: "website",
-    images: [{ url: "/lynxprompt.png", alt: "LynxPrompt Logo" }],
+    images: [{ url: "/og-image.png", alt: "LynxPrompt" }],
   },
   twitter: {
     card: "summary",

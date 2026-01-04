@@ -66,17 +66,17 @@ export const metadata: Metadata = {
   openGraph: {
     title: "LynxPrompt - AI IDE Configuration Generator",
     description:
-      "Transform your development setup into a mouse-click experience. Generate .cursorrules, CLAUDE.md, and more.",
+      "AI IDE/Tools rule config generator via WebUI or CLI. Generate, browse, store & share AGENTS.md, CLAUDE.md, and more.",
     type: "website",
     siteName: "LynxPrompt",
     locale: "en_US",
     url: "https://lynxprompt.com",
     images: [
       {
-        url: "/lynxprompt.png",
-        width: 1200,
-        height: 630,
-        alt: "LynxPrompt - AI IDE Configuration Generator",
+        url: "/og-image.png",
+        width: 1280,
+        height: 640,
+        alt: "LynxPrompt - AI IDE/Tools rule config generator",
       },
     ],
   },
@@ -84,8 +84,8 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "LynxPrompt - AI IDE Configuration Generator",
     description:
-      "Transform your development setup into a mouse-click experience. Generate .cursorrules, CLAUDE.md, and more.",
-    images: ["/lynxprompt.png"],
+      "AI IDE/Tools rule config generator via WebUI or CLI. Generate, browse, store & share AGENTS.md, CLAUDE.md, and more.",
+    images: ["/og-image.png"],
     creator: "@geaboron",
   },
   robots: {
