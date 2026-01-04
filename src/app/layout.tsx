@@ -64,7 +64,7 @@ export const metadata: Metadata = {
     title: "LynxPrompt",
   },
   openGraph: {
-    title: "LynxPrompt - AI IDE Configuration Generator",
+    title: "LynxPrompt — AI Rule/Configuration Files Hub",
     description:
       "AI IDE/Tools rule config generator via WebUI or CLI. Generate, browse, store & share AGENTS.md, CLAUDE.md, and more.",
     type: "website",
@@ -82,7 +82,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "LynxPrompt - AI IDE Configuration Generator",
+    title: "LynxPrompt — AI Rule/Configuration Files Hub",
     description:
       "AI IDE/Tools rule config generator via WebUI or CLI. Generate, browse, store & share AGENTS.md, CLAUDE.md, and more.",
     images: ["/og-image.png"],
