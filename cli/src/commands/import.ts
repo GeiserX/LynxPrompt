@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import prompts from "prompts";
 import ora from "ora";
-import { readFile, access, readdir, stat } from "fs/promises";
+import { readFile, access, readdir } from "fs/promises";
 import { join, relative, dirname, basename } from "path";
 
 // Import command configuration
@@ -182,7 +182,7 @@ function parseMarkdownSections(content: string): ParsedSection[] {
 /**
  * Build hierarchy from flat list of files
  */
-function buildHierarchy(files: AgentsMdFile[], rootPath: string): MonorepoHierarchy[] {
+function buildHierarchy(files: AgentsMdFile[], _rootPath: string): MonorepoHierarchy[] {
   const hierarchies: MonorepoHierarchy[] = [];
   
   // Sort by path depth (root files first)
