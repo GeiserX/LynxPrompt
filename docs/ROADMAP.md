@@ -200,17 +200,18 @@ Based on the new `lynxp import` command and growing need for hierarchical config
 - [ ] Auto-prefill tech stack from `package.json`, `tsconfig.json`, etc.
 - [ ] Warn if generating a root config when parent config already exists
 
-#### 2. Enhanced `lynxp status` Command ✅ IMPLEMENTED
-- [x] Show hierarchical view of imported configs
+#### 2. Enhanced `lynxp status` Command
+- [ ] Read and display hierarchy from `.lynxprompt/hierarchy.json`
 - [x] Display sync status (tracked blueprints vs local-only)
-- [x] Show which files are outdated vs current
+- [ ] Show parent-child relationships visually
 - [x] Platform compatibility indicators
 
-#### 3. `hierarchy.json` Schema & Integration
-- [ ] Define JSON schema for hierarchy representation
-- [ ] Store parent-child relationships between config files
+#### 3. `hierarchy.json` Schema & Integration ✅ PARTIAL
+- [x] JSON schema implemented in `lynxp import` (saves to `.lynxprompt/hierarchy.json`)
+- [x] Store parent-child relationships between config files
 - [ ] Track inheritance (which sections come from parent vs child)
 - [ ] Support for section overrides at child level
+- [ ] Wizard reads hierarchy to suggest child-specific config
 
 #### 4. Web Dashboard Hierarchy View
 - [ ] Visual tree view of imported monorepo configs
