@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
+import packageJson from "../../../../../package.json";
+
+// Web app version - read from package.json (single source of truth)
+const APP_VERSION: string = packageJson.version;
 
 // GET /api/wizard/drafts - List user's drafts
 export async function GET() {
@@ -101,6 +105,16 @@ export async function POST(request: NextRequest) {
 
     let draft;
 
+    // Add version metadata to the config for tracking
+    const configWithMeta = {
+      ...config,
+      _meta: {
+        source: "web",
+        version: APP_VERSION,
+        savedAt: new Date().toISOString(),
+      },
+    };
+
     if (id) {
       // Update existing draft
       const existing = await prismaUsers.wizardDraft.findFirst({
@@ -119,7 +133,7 @@ export async function POST(request: NextRequest) {
         data: {
           name: name.trim(),
           step,
-          config,
+          config: configWithMeta,
         },
       });
     } else {
@@ -129,7 +143,7 @@ export async function POST(request: NextRequest) {
           userId: session.user.id,
           name: name.trim(),
           step,
-          config,
+          config: configWithMeta,
         },
       });
     }
@@ -148,6 +162,7 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
 
 
 

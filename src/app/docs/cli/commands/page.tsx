@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Command, FileCode, Search, Download, User, LogIn, LogOut, Info, ArrowRight, Layers, Cloud, ArrowUp, ArrowDown, Link2, Unlink, CheckCircle, FileSearch, Sparkles, Scan, GitMerge, ArrowRightLeft } from "lucide-react";
+import { Command, FileCode, Search, Download, User, LogIn, LogOut, Info, ArrowRight, Layers, Cloud, ArrowUp, ArrowDown, Link2, Unlink, CheckCircle, FileSearch, Sparkles, Scan, GitMerge, ArrowRightLeft, FolderSearch } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "CLI Commands",
@@ -76,6 +76,14 @@ export default function CliCommandsPage() {
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
                   Merge multiple config files
+                </td>
+              </tr>
+              <tr className="border-b bg-primary/5">
+                <td className="py-3 pr-4">
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp import</code>
+                </td>
+                <td className="py-3 pr-4 text-muted-foreground">
+                  Scan repo for AGENTS.md files (monorepo support)
                 </td>
               </tr>
               <tr className="border-b bg-primary/5">
@@ -379,6 +387,85 @@ $ lynxp merge rules1.md rules2.md -i`}</code>
             <li><strong>sections</strong> — Group by section title</li>
             <li><strong>smart</strong> — Dedupe similar content (default)</li>
           </ul>
+        </div>
+      </section>
+
+      {/* import command */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-3">
+          <FolderSearch className="h-5 w-5 text-primary" />
+          <h2 className="text-2xl font-bold">lynxp import</h2>
+        </div>
+        <p className="text-muted-foreground">
+          Scan a repository for existing AGENTS.md files and understand your monorepo structure.
+          Perfect for discovering AI configurations across large codebases.
+        </p>
+
+        <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+          <pre className="text-sm text-zinc-100">
+            <code>{`lynxp import [path] [options]
+
+Arguments:
+  path              Directory to scan (default: current directory)
+
+Options:
+  --dry-run         Preview what would be imported
+  --no-recursive    Don't scan subdirectories
+  --depth <n>       Max directory depth to scan (default: 10)
+  --pattern <file>  Custom config filename to look for
+  --link            Link found files to cloud (requires login)
+  -v, --verbose     Show detailed section information
+  -j, --json        Output as JSON (for scripting)`}</code>
+          </pre>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="font-semibold">Examples</h3>
+          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+            <pre className="text-sm text-zinc-100">
+              <code>{`# Scan current directory
+$ lynxp import
+📥 LynxPrompt Import
+   Found 4 configuration file(s)
+
+🏢 my-monorepo [Monorepo Root]
+   AGENTS.md
+   └─ 📄 packages/web
+      packages/web/AGENTS.md
+   └─ 📄 packages/api
+      packages/api/AGENTS.md
+
+📊 1 monorepo detected with hierarchical configs
+
+# Preview without changes
+$ lynxp import --dry-run
+
+# Scan specific directory
+$ lynxp import ./packages --depth 3
+
+# JSON output for scripting
+$ lynxp import --json | jq '.hierarchy'`}</code>
+            </pre>
+          </div>
+        </div>
+
+        <div className="rounded-lg border bg-card p-4">
+          <h4 className="font-semibold text-sm mb-2">What it detects</h4>
+          <ul className="text-sm text-muted-foreground space-y-1">
+            <li>• <strong>AGENTS.md</strong> — Universal AI config format</li>
+            <li>• <strong>CLAUDE.md</strong> — Claude Code format</li>
+            <li>• <strong>.cursorrules</strong> — Legacy Cursor format</li>
+            <li>• <strong>.windsurfrules</strong> — Windsurf format</li>
+          </ul>
+        </div>
+
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
+          <p className="text-sm">
+            <strong>Monorepo Support:</strong> The import command automatically detects hierarchical
+            configurations where package-level AGENTS.md files inherit from a root configuration.
+            This information is saved to <code className="rounded bg-muted px-1">.lynxprompt/hierarchy.json</code> for
+            use by other commands.
+          </p>
         </div>
       </section>
 
