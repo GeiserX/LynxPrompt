@@ -287,34 +287,47 @@ export const authOptions: NextAuthOptions = {
         });
       }
       
-      // Auto-accept terms for existing users who haven't accepted yet
-      // (They agreed by signing in with the ToS notice displayed on signin page)
-      // Note: New users get terms set in createUser event
-      if (user.id) {
-        const dbUser = await prismaUsers.user.findUnique({
-          where: { id: user.id },
-          select: { termsAcceptedAt: true },
-        });
-        
-        if (!dbUser?.termsAcceptedAt) {
+      // IMPORTANT: For NEW users signing up via OAuth, user.id is NOT a valid database ID yet.
+      // The PrismaAdapter creates the user AFTER signIn returns true.
+      // We need to check if the user actually exists in the database before trying to update.
+      // For new users, terms are set in the createUser event instead.
+      
+      // Check if user exists in database (by email, since id might not be valid for new users)
+      const existingUser = user.email 
+        ? await prismaUsers.user.findUnique({
+            where: { email: user.email },
+            select: { id: true, termsAcceptedAt: true },
+          })
+        : null;
+      
+      // Only process existing users - new users are handled in createUser event
+      if (existingUser) {
+        // Auto-accept terms for existing users who haven't accepted yet
+        // (They agreed by signing in with the ToS notice displayed on signin page)
+        if (!existingUser.termsAcceptedAt) {
           const now = new Date();
-          await prismaUsers.user.update({
-            where: { id: user.id },
-            data: {
-              termsAcceptedAt: now,
-              termsVersion: "2025-12",
-              privacyAcceptedAt: now,
-              privacyVersion: "2025-12",
-            },
-          });
-          console.log(`[Auth] Terms auto-accepted for existing user ${user.id} (agreed via signin page notice)`);
+          try {
+            await prismaUsers.user.update({
+              where: { id: existingUser.id },
+              data: {
+                termsAcceptedAt: now,
+                termsVersion: "2025-12",
+                privacyAcceptedAt: now,
+                privacyVersion: "2025-12",
+              },
+            });
+            console.log(`[Auth] Terms auto-accepted for existing user ${existingUser.id} (agreed via signin page notice)`);
+          } catch (error) {
+            // Don't fail sign-in if terms update fails
+            console.error(`[Auth] Failed to auto-accept terms for user ${existingUser.id}:`, error);
+          }
         }
         
         // Update lastActiveAt for team members on sign-in
         // This is used to track "active" users for billing purposes
         try {
           await prismaUsers.teamMember.updateMany({
-            where: { userId: user.id },
+            where: { userId: existingUser.id },
             data: { 
               lastActiveAt: new Date(),
               isActiveThisCycle: true,
@@ -324,50 +337,50 @@ export const authOptions: NextAuthOptions = {
           // Don't fail sign-in if this fails
           console.error(`[Auth] Failed to update team member activity:`, error);
         }
-      }
-      
-      // Backfill provider details for existing accounts that don't have them
-      // This handles accounts created before we started storing provider details
-      if (account && profile && (account.provider === "github" || account.provider === "google")) {
-        try {
-          const existingAccount = await prismaUsers.account.findUnique({
-            where: {
-              provider_providerAccountId: {
-                provider: account.provider,
-                providerAccountId: account.providerAccountId,
-              },
-            },
-            select: { providerEmail: true, providerUsername: true },
-          });
-          
-          // Only update if details are missing
-          if (existingAccount && (!existingAccount.providerEmail && !existingAccount.providerUsername)) {
-            let providerEmail: string | null = null;
-            let providerUsername: string | null = null;
-            
-            if (account.provider === "github") {
-              providerUsername = (profile as { login?: string }).login || null;
-              providerEmail = (profile as { email?: string }).email || null;
-            } else if (account.provider === "google") {
-              providerEmail = (profile as { email?: string }).email || null;
-            }
-            
-            if (providerEmail || providerUsername) {
-              await prismaUsers.account.update({
-                where: {
-                  provider_providerAccountId: {
-                    provider: account.provider,
-                    providerAccountId: account.providerAccountId,
-                  },
+        
+        // Backfill provider details for existing accounts that don't have them
+        // This handles accounts created before we started storing provider details
+        if (account && profile && (account.provider === "github" || account.provider === "google")) {
+          try {
+            const existingAccount = await prismaUsers.account.findUnique({
+              where: {
+                provider_providerAccountId: {
+                  provider: account.provider,
+                  providerAccountId: account.providerAccountId,
                 },
-                data: { providerEmail, providerUsername },
-              });
-              console.log(`[Auth] Backfilled provider details for ${account.provider}: email=${providerEmail}, username=${providerUsername}`);
+              },
+              select: { providerEmail: true, providerUsername: true },
+            });
+            
+            // Only update if details are missing
+            if (existingAccount && (!existingAccount.providerEmail && !existingAccount.providerUsername)) {
+              let providerEmail: string | null = null;
+              let providerUsername: string | null = null;
+              
+              if (account.provider === "github") {
+                providerUsername = (profile as { login?: string }).login || null;
+                providerEmail = (profile as { email?: string }).email || null;
+              } else if (account.provider === "google") {
+                providerEmail = (profile as { email?: string }).email || null;
+              }
+              
+              if (providerEmail || providerUsername) {
+                await prismaUsers.account.update({
+                  where: {
+                    provider_providerAccountId: {
+                      provider: account.provider,
+                      providerAccountId: account.providerAccountId,
+                    },
+                  },
+                  data: { providerEmail, providerUsername },
+                });
+                console.log(`[Auth] Backfilled provider details for ${account.provider}: email=${providerEmail}, username=${providerUsername}`);
+              }
             }
+          } catch (error) {
+            // Don't fail sign-in if backfill fails
+            console.error(`[Auth] Failed to backfill provider details:`, error);
           }
-        } catch (error) {
-          // Don't fail sign-in if backfill fails
-          console.error(`[Auth] Failed to backfill provider details:`, error);
         }
       }
       
@@ -508,17 +521,22 @@ export const authOptions: NextAuthOptions = {
       const termsVersion = "2025-12";
       const privacyVersion = "2025-12";
       
-      await prismaUsers.user.update({
-        where: { id: user.id },
-        data: {
-          termsAcceptedAt: now,
-          termsVersion: termsVersion,
-          privacyAcceptedAt: now,
-          privacyVersion: privacyVersion,
-        },
-      });
-      
-      console.log(`[Auth] New user ${user.id} created with terms v${termsVersion} accepted at ${now.toISOString()}`);
+      try {
+        await prismaUsers.user.update({
+          where: { id: user.id },
+          data: {
+            termsAcceptedAt: now,
+            termsVersion: termsVersion,
+            privacyAcceptedAt: now,
+            privacyVersion: privacyVersion,
+          },
+        });
+        
+        console.log(`[Auth] New user ${user.id} created with terms v${termsVersion} accepted at ${now.toISOString()}`);
+      } catch (error) {
+        // Log but don't fail - this is a non-critical update
+        console.error(`[Auth] Failed to set terms for new user ${user.id}:`, error);
+      }
     },
     // Store provider-specific identifiers when account is linked
     async linkAccount({ account, profile }) {
@@ -562,6 +580,7 @@ export const authOptions: NextAuthOptions = {
   // Disable debug in production
   debug: process.env.NODE_ENV === "development",
   // Security: Use secure cookies in production
+  // Configure all auth cookies for better OAuth reliability
   cookies: {
     sessionToken: {
       name:
@@ -573,6 +592,61 @@ export const authOptions: NextAuthOptions = {
         sameSite: "lax",
         path: "/",
         secure: process.env.NODE_ENV === "production",
+      },
+    },
+    // CSRF token - used for state verification during OAuth callbacks
+    csrfToken: {
+      name:
+        process.env.NODE_ENV === "production"
+          ? "__Host-next-auth.csrf-token"
+          : "next-auth.csrf-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+    // Callback URL - stores intended redirect after OAuth
+    callbackUrl: {
+      name:
+        process.env.NODE_ENV === "production"
+          ? "__Secure-next-auth.callback-url"
+          : "next-auth.callback-url",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+    // State - OAuth state parameter stored in cookie
+    state: {
+      name:
+        process.env.NODE_ENV === "production"
+          ? "__Secure-next-auth.state"
+          : "next-auth.state",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        // State cookies need to persist through OAuth redirect
+        maxAge: 60 * 15, // 15 minutes - reasonable time for OAuth flow
+      },
+    },
+    // PKCE code verifier for additional security
+    pkceCodeVerifier: {
+      name:
+        process.env.NODE_ENV === "production"
+          ? "__Secure-next-auth.pkce.code_verifier"
+          : "next-auth.pkce.code_verifier",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 60 * 15, // 15 minutes
       },
     },
   },

@@ -13,11 +13,20 @@ import { api, ApiRequestError } from "../api.js";
 // Draft management - local storage in .lynxprompt/drafts/
 const DRAFTS_DIR = ".lynxprompt/drafts";
 
+// Get CLI version from package.json (same method used in index.ts)
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const cliPackageJson = require("../../package.json");
+const CLI_VERSION: string = cliPackageJson.version;
+
 interface WizardDraft {
   name: string;
   savedAt: string;
   config: Record<string, unknown>;
   stepReached?: number;
+  // Version tracking - added to detect draft/tool version mismatches
+  source: "cli" | "web";
+  version: string;
 }
 
 async function saveDraftLocally(name: string, config: Record<string, unknown>, stepReached?: number): Promise<void> {
@@ -29,6 +38,8 @@ async function saveDraftLocally(name: string, config: Record<string, unknown>, s
     savedAt: new Date().toISOString(),
     config,
     stepReached,
+    source: "cli",
+    version: CLI_VERSION,
   };
   
   const filename = `${name.replace(/[^a-zA-Z0-9-_]/g, "_")}.json`;
@@ -957,7 +968,22 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
     const draft = await loadDraftLocally(options.loadDraft);
     if (draft) {
       const stepInfo = draft.stepReached ? ` at step ${draft.stepReached}` : "";
-      console.log(chalk.green(`  ✓ Loaded draft: ${draft.name} (saved ${new Date(draft.savedAt).toLocaleString()}${stepInfo})`));
+      const sourceInfo = draft.source ? ` [${draft.source}]` : "";
+      const versionInfo = draft.version ? ` v${draft.version}` : "";
+      console.log(chalk.green(`  ✓ Loaded draft: ${draft.name}${sourceInfo}${versionInfo} (saved ${new Date(draft.savedAt).toLocaleString()}${stepInfo})`));
+      
+      // Check for version mismatch warnings
+      if (draft.source && draft.source !== "cli") {
+        console.log(chalk.yellow(`  ⚠ This draft was created with the ${draft.source.toUpperCase()}. Some features may differ.`));
+      }
+      if (draft.version && draft.version !== CLI_VERSION) {
+        // Compare major.minor versions for compatibility warning
+        const draftMajorMinor = draft.version.split(".").slice(0, 2).join(".");
+        const cliMajorMinor = CLI_VERSION.split(".").slice(0, 2).join(".");
+        if (draftMajorMinor !== cliMajorMinor) {
+          console.log(chalk.yellow(`  ⚠ Draft was created with v${draft.version}, current CLI is v${CLI_VERSION}. Some options may have changed.`));
+        }
+      }
       console.log();
       // Store draft answers and resume step for use in interactive wizard
       options._draftAnswers = draft.config;
