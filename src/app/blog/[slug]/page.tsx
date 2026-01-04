@@ -206,7 +206,7 @@ export default async function BlogPostPage({ params }: PageProps) {
     "@type": "Article",
     headline: post.title,
     description: post.excerpt || post.title,
-    image: post.coverImage || "https://lynxprompt.com/lynxprompt.png",
+    image: post.coverImage || "https://lynxprompt.com/og-image.png",
     datePublished: (post.publishedAt || post.createdAt).toISOString(),
     dateModified: post.updatedAt?.toISOString() || (post.publishedAt || post.createdAt).toISOString(),
     author: {
@@ -219,7 +219,7 @@ export default async function BlogPostPage({ params }: PageProps) {
       name: "LynxPrompt",
       logo: {
         "@type": "ImageObject",
-        url: "https://lynxprompt.com/lynxprompt.png",
+        url: "https://lynxprompt.com/og-image.png",
       },
     },
     mainEntityOfPage: {
