@@ -190,6 +190,42 @@ Per EU Consumer Rights Directive, digital content can waive 14-day withdrawal IF
 
 ## 🔴 Planned Features
 
+### Monorepo & Hierarchy Support (Q1 2026)
+
+Based on the new `lynxp import` command and growing need for hierarchical config management:
+
+#### 1. Wizard Auto-Detection for Monorepos
+- [ ] Detect if current directory is within a parent AGENTS.md project
+- [ ] Suggest child-specific sections (e.g., "This is the `packages/api` module of a larger project")
+- [ ] Auto-prefill tech stack from `package.json`, `tsconfig.json`, etc.
+- [ ] Warn if generating a root config when parent config already exists
+
+#### 2. Enhanced `lynxp status` Command ✅ IMPLEMENTED
+- [x] Show hierarchical view of imported configs
+- [x] Display sync status (tracked blueprints vs local-only)
+- [x] Show which files are outdated vs current
+- [x] Platform compatibility indicators
+
+#### 3. `hierarchy.json` Schema & Integration
+- [ ] Define JSON schema for hierarchy representation
+- [ ] Store parent-child relationships between config files
+- [ ] Track inheritance (which sections come from parent vs child)
+- [ ] Support for section overrides at child level
+
+#### 4. Web Dashboard Hierarchy View
+- [ ] Visual tree view of imported monorepo configs
+- [ ] Click to edit individual nodes
+- [ ] Drag-and-drop to reorganize hierarchy
+- [ ] Bulk operations (update all children, propagate changes)
+
+#### 5. `lynxp sync` Command for Hierarchy Management
+- [ ] Sync changes from parent to children
+- [ ] Merge parent updates with local customizations
+- [ ] Conflict resolution for overlapping sections
+- [ ] Export hierarchy to single flattened file
+
+---
+
 ### Core Functionality
 
 #### Wizard Improvements
