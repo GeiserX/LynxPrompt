@@ -28,8 +28,6 @@ import {
 interface UserGrowthData {
   date: string;
   FREE: number;
-  PRO: number;
-  MAX: number;
   TEAMS: number;
   total: number;
 }
@@ -138,8 +136,6 @@ export default function AdminStatsPage() {
   const [timeRange, setTimeRange] = useState(30);
   const [visiblePlans, setVisiblePlans] = useState<Record<string, boolean>>({
     FREE: true,
-    PRO: true,
-    MAX: true,
     TEAMS: true,
   });
 
@@ -648,16 +644,12 @@ function UserGrowthChart({
   const cumulativeData = data.reduce<UserGrowthData[]>((acc, day) => {
     const prev = acc[acc.length - 1] || {
       FREE: 0,
-      PRO: 0,
-      MAX: 0,
       TEAMS: 0,
       total: 0,
     };
     acc.push({
       date: day.date,
       FREE: prev.FREE + day.FREE,
-      PRO: prev.PRO + day.PRO,
-      MAX: prev.MAX + day.MAX,
       TEAMS: prev.TEAMS + day.TEAMS,
       total: prev.total + day.total,
     });
