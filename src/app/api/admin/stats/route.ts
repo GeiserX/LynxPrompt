@@ -32,11 +32,22 @@ export async function GET(req: NextRequest) {
     startDate.setDate(startDate.getDate() - daysBack);
     startDate.setHours(0, 0, 0, 0);
 
+    // Filter to exclude test/seed users (dev-test-*@lynxprompt.com and dev@lynxprompt.com)
+    const excludeTestUsers = {
+      NOT: {
+        OR: [
+          { email: { startsWith: "dev-test-" } },
+          { email: "dev@lynxprompt.com" },
+        ],
+      },
+    };
+
     // ===== USER STATS =====
     
-    // Current user counts by subscription plan
+    // Current user counts by subscription plan (excluding test users)
     const usersByPlan = await prismaUsers.user.groupBy({
       by: ["subscriptionPlan"],
+      where: excludeTestUsers,
       _count: { id: true },
     });
 
@@ -60,10 +71,11 @@ export async function GET(req: NextRequest) {
     // Total users
     const totalUsers = Object.values(currentPlanCounts).reduce((a, b) => a + b, 0);
 
-    // Users created over time (for the chart)
+    // Users created over time (for the chart) - excluding test users
     const allUsers = await prismaUsers.user.findMany({
       where: {
         createdAt: { gte: startDate },
+        ...excludeTestUsers,
       },
       select: {
         id: true,
@@ -108,9 +120,10 @@ export async function GET(req: NextRequest) {
     // New users this period
     const newUsersThisPeriod = allUsers.length;
 
-    // Users by role
+    // Users by role (excluding test users)
     const usersByRole = await prismaUsers.user.groupBy({
       by: ["role"],
+      where: excludeTestUsers,
       _count: { id: true },
     });
 
@@ -124,6 +137,9 @@ export async function GET(req: NextRequest) {
       where: { isActiveThisCycle: true },
     });
 
+    // Count of free users (for display in revenue breakdown)
+    const activeFreeUsers = currentPlanCounts["FREE"] || 0;
+
     const estimatedMRR = activeTeamMembers * PLAN_PRICES.TEAMS;
 
     // Blueprint purchases revenue
@@ -135,20 +151,35 @@ export async function GET(req: NextRequest) {
 
     // ===== BLUEPRINT STATS =====
     
-    // Total blueprints
-    const totalBlueprints = await prismaUsers.userTemplate.count();
+    // Filter to exclude blueprints from test users
+    const excludeTestUserBlueprints = {
+      user: {
+        NOT: {
+          OR: [
+            { email: { startsWith: "dev-test-" } },
+            { email: "dev@lynxprompt.com" },
+          ],
+        },
+      },
+    };
+
+    // Total blueprints (excluding test users)
+    const totalBlueprints = await prismaUsers.userTemplate.count({
+      where: excludeTestUserBlueprints,
+    });
     const publicBlueprints = await prismaUsers.userTemplate.count({
-      where: { visibility: "PUBLIC" },
+      where: { visibility: "PUBLIC", ...excludeTestUserBlueprints },
     });
     const paidBlueprints = await prismaUsers.userTemplate.count({
-      where: { price: { gt: 0 } },
+      where: { price: { gt: 0 }, ...excludeTestUserBlueprints },
     });
 
     // System templates
     const systemTemplates = await prismaApp.systemTemplate.count();
 
-    // Top downloaded blueprints
+    // Top downloaded blueprints (excluding test users)
     const topBlueprints = await prismaUsers.userTemplate.findMany({
+      where: excludeTestUserBlueprints,
       take: 10,
       orderBy: { downloads: "desc" },
       select: {
@@ -161,9 +192,24 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    // Downloads over time
+    // Downloads over time (excluding downloads by test users)
     const downloads = await prismaUsers.templateDownload.findMany({
-      where: { createdAt: { gte: startDate } },
+      where: {
+        createdAt: { gte: startDate },
+        OR: [
+          { userId: null }, // Anonymous downloads
+          {
+            user: {
+              NOT: {
+                OR: [
+                  { email: { startsWith: "dev-test-" } },
+                  { email: "dev@lynxprompt.com" },
+                ],
+              },
+            },
+          },
+        ],
+      },
       select: { createdAt: true, platform: true, templateType: true },
     });
 
@@ -270,9 +316,22 @@ export async function GET(req: NextRequest) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const prismaAny = prismaUsers as any;
       if (prismaAny.wizardDraft) {
-        wizardDrafts = await prismaAny.wizardDraft.count();
+        // Exclude test users from wizard drafts
+        const excludeTestUserDrafts = {
+          user: {
+            NOT: {
+              OR: [
+                { email: { startsWith: "dev-test-" } },
+                { email: "dev@lynxprompt.com" },
+              ],
+            },
+          },
+        };
+        wizardDrafts = await prismaAny.wizardDraft.count({
+          where: excludeTestUserDrafts,
+        });
         recentDrafts = await prismaAny.wizardDraft.count({
-          where: { updatedAt: { gte: startDate } },
+          where: { updatedAt: { gte: startDate }, ...excludeTestUserDrafts },
         });
       }
     } catch {
@@ -285,6 +344,14 @@ export async function GET(req: NextRequest) {
       where: {
         revokedAt: null,
         expiresAt: { gt: new Date() },
+        user: {
+          NOT: {
+            OR: [
+              { email: { startsWith: "dev-test-" } },
+              { email: "dev@lynxprompt.com" },
+            ],
+          },
+        },
       },
     });
 
@@ -304,6 +371,7 @@ export async function GET(req: NextRequest) {
       revenue: {
         estimatedMRR,
         estimatedMRRFormatted: `€${(estimatedMRR / 100).toFixed(2)}`,
+        activeFree: activeFreeUsers,
         activeTeamSeats: activeTeamMembers,
         purchasesThisPeriod: {
           count: purchasesInPeriod._count.id,
