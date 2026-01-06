@@ -300,9 +300,9 @@ export async function POST(request: NextRequest) {
       turnstileToken,
       sensitiveDataAcknowledged = false, // User acknowledged sensitive data warning
       // Hierarchy fields for monorepo AGENTS.md support
+      hierarchyId = null, // Hierarchy ID (ha_xxx)
       parentId = null, // Parent blueprint ID for nested AGENTS.md
       repositoryPath = null, // Relative path within repo (e.g., "packages/core/AGENTS.md")
-      repositoryRoot = null, // Repository identifier to group blueprints
     } = body;
     
     // Validate visibility
@@ -528,9 +528,9 @@ export async function POST(request: NextRequest) {
         currentVersion: 1,
         publishedVersion: effectiveIsPublic ? 1 : null, // Set publishedVersion if public
         // Hierarchy fields
+        hierarchyId: hierarchyId?.trim() || null,
         parentId: validatedParentId,
         repositoryPath: repositoryPath?.trim() || null,
-        repositoryRoot: repositoryRoot?.trim() || null,
       },
     });
 
@@ -556,9 +556,9 @@ export async function POST(request: NextRequest) {
         category: blueprint.category,
         version: 1,
         // Hierarchy info
+        hierarchyId: blueprint.hierarchyId,
         parentId: blueprint.parentId,
         repositoryPath: blueprint.repositoryPath,
-        repositoryRoot: blueprint.repositoryRoot,
       },
     });
   } catch (error) {
