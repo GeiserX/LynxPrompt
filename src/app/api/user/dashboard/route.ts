@@ -96,23 +96,23 @@ export async function GET() {
           isPublic: true,
           visibility: true,
           createdAt: true,
-          currentVersion: true,
-          publishedVersion: true,
-          // Hierarchy fields
-          parentId: true,
-          repositoryPath: true,
-          repositoryRoot: true,
-        },
-      }).then(templates => templates.map(template => ({
-        ...template,
-        id: `bp_${template.id}`, // Add bp_ prefix for template detail routing
-        version: template.currentVersion,
-        publishedVersion: template.publishedVersion,
-        // Include hierarchy info
-        parentId: template.parentId ? `bp_${template.parentId}` : null,
-        repositoryPath: template.repositoryPath,
-        repositoryRoot: template.repositoryRoot,
-      }))),
+        currentVersion: true,
+        publishedVersion: true,
+        // Hierarchy fields
+        hierarchyId: true,
+        parentId: true,
+        repositoryPath: true,
+      },
+    }).then(templates => templates.map(template => ({
+      ...template,
+      id: `bp_${template.id}`, // Add bp_ prefix for template detail routing
+      version: template.currentVersion,
+      publishedVersion: template.publishedVersion,
+      // Include hierarchy info
+      hierarchyId: template.hierarchyId ? `ha_${template.hierarchyId}` : null,
+      parentId: template.parentId ? `bp_${template.parentId}` : null,
+      repositoryPath: template.repositoryPath,
+    }))),
 
       // Get recent activity (downloads on user's templates + user's downloads)
       prismaUsers.templateDownload.findMany({
@@ -170,52 +170,38 @@ export async function GET() {
       }),
     ]);
     
-    // Get hierarchical blueprints (grouped by repositoryRoot)
-    const allUserBlueprints = await prismaUsers.userTemplate.findMany({
-      where: { 
-        userId,
-        repositoryRoot: { not: null }, // Only blueprints with repository info
-      },
-      orderBy: [
-        { repositoryRoot: "asc" },
-        { repositoryPath: "asc" },
-      ],
-      select: {
-        id: true,
-        name: true,
-        type: true,
-        downloads: true,
-        favorites: true,
-        visibility: true,
-        createdAt: true,
-        parentId: true,
-        repositoryPath: true,
-        repositoryRoot: true,
+    // Get user's hierarchies with their blueprints
+    const userHierarchies = await prismaUsers.hierarchy.findMany({
+      where: { userId },
+      orderBy: { updatedAt: "desc" },
+      include: {
+        blueprints: {
+          orderBy: { repositoryPath: "asc" },
+          select: {
+            id: true,
+            name: true,
+            type: true,
+            downloads: true,
+            favorites: true,
+            visibility: true,
+            createdAt: true,
+            parentId: true,
+            repositoryPath: true,
+            contentChecksum: true,
+          },
+        },
       },
     });
 
-    // Group by repositoryRoot to create hierarchy
-    const hierarchyMap = new Map<string, {
-      repositoryRoot: string;
-      blueprints: typeof allUserBlueprints;
-    }>();
-
-    for (const bp of allUserBlueprints) {
-      if (!bp.repositoryRoot) continue;
-      
-      if (!hierarchyMap.has(bp.repositoryRoot)) {
-        hierarchyMap.set(bp.repositoryRoot, {
-          repositoryRoot: bp.repositoryRoot,
-          blueprints: [],
-        });
-      }
-      hierarchyMap.get(bp.repositoryRoot)!.blueprints.push(bp);
-    }
-
-    // Convert to array with formatted IDs
-    const hierarchicalBlueprints = Array.from(hierarchyMap.values()).map(group => ({
-      repositoryRoot: group.repositoryRoot,
-      blueprints: group.blueprints.map(bp => ({
+    // Format hierarchies with ha_ prefix
+    const hierarchicalBlueprints = userHierarchies.map(hierarchy => ({
+      id: `ha_${hierarchy.id}`,
+      name: hierarchy.name,
+      description: hierarchy.description,
+      repositoryRoot: hierarchy.repositoryRoot,
+      createdAt: hierarchy.createdAt,
+      updatedAt: hierarchy.updatedAt,
+      blueprints: hierarchy.blueprints.map(bp => ({
         id: `bp_${bp.id}`,
         name: bp.name,
         type: bp.type,
@@ -225,6 +211,7 @@ export async function GET() {
         createdAt: bp.createdAt,
         parentId: bp.parentId ? `bp_${bp.parentId}` : null,
         repositoryPath: bp.repositoryPath,
+        contentChecksum: bp.contentChecksum,
       })),
     }));
 

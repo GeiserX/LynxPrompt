@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createHash } from "crypto";
 import { prismaUsers } from "@/lib/db-users";
 import {
   validateApiToken,
@@ -6,7 +7,16 @@ import {
   hasPermission,
   canUseApi,
   toBlueprintApiId,
+  toHierarchyApiId,
+  fromHierarchyApiId,
 } from "@/lib/api-tokens";
+
+/**
+ * Compute SHA-256 checksum of content for optimistic locking
+ */
+function computeChecksum(content: string): string {
+  return createHash("sha256").update(content).digest("hex").slice(0, 16);
+}
 
 /**
  * GET /api/v1/blueprints
@@ -99,9 +109,10 @@ export async function GET(request: NextRequest) {
         createdAt: true,
         updatedAt: true,
         // Hierarchy fields
+        hierarchyId: true,
         parentId: true,
         repositoryPath: true,
-        repositoryRoot: true,
+        contentChecksum: true,
       },
     });
 
@@ -122,9 +133,10 @@ export async function GET(request: NextRequest) {
       created_at: bp.createdAt.toISOString(),
       updated_at: bp.updatedAt.toISOString(),
       // Hierarchy fields
+      hierarchy_id: bp.hierarchyId ? toHierarchyApiId(bp.hierarchyId) : null,
       parent_id: bp.parentId ? toBlueprintApiId(bp.parentId) : null,
       repository_path: bp.repositoryPath,
-      repository_root: bp.repositoryRoot,
+      content_checksum: bp.contentChecksum,
     }));
 
     return NextResponse.json({
@@ -208,9 +220,9 @@ export async function POST(request: NextRequest) {
       tags = [],
       visibility = "PRIVATE",
       // Hierarchy fields for monorepo AGENTS.md support
+      hierarchy_id = null,
       parent_id = null,
       repository_path = null,
-      repository_root = null,
     } = body;
 
     // Validate required fields
@@ -256,6 +268,22 @@ export async function POST(request: NextRequest) {
     if (effectiveLines > 100) tier = "ADVANCED";
     else if (effectiveLines > 30) tier = "INTERMEDIATE";
 
+    // Validate hierarchy_id if provided - must be owned by the same user
+    let validatedHierarchyId: string | null = null;
+    if (hierarchy_id && typeof hierarchy_id === "string") {
+      const cleanHierarchyId = fromHierarchyApiId(hierarchy_id);
+      const hierarchy = await prismaUsers.hierarchy.findFirst({
+        where: {
+          id: cleanHierarchyId,
+          userId: tokenData.userId,
+        },
+        select: { id: true },
+      });
+      if (hierarchy) {
+        validatedHierarchyId = hierarchy.id;
+      }
+    }
+
     // Validate parentId if provided - must be owned by the same user
     let validatedParentId: string | null = null;
     if (parent_id && typeof parent_id === "string") {
@@ -273,6 +301,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Compute content checksum for optimistic locking
+    const contentChecksum = computeChecksum(content.trim());
+
     // Create blueprint
     const blueprint = await prismaUsers.userTemplate.create({
       data: {
@@ -287,9 +318,10 @@ export async function POST(request: NextRequest) {
         visibility: normalizedVisibility as "PRIVATE" | "TEAM" | "PUBLIC",
         isPublic: normalizedVisibility === "PUBLIC",
         // Hierarchy fields
+        hierarchyId: validatedHierarchyId,
         parentId: validatedParentId,
         repositoryPath: repository_path?.trim() || null,
-        repositoryRoot: repository_root?.trim() || null,
+        contentChecksum,
       },
       select: {
         id: true,
@@ -302,9 +334,10 @@ export async function POST(request: NextRequest) {
         visibility: true,
         createdAt: true,
         updatedAt: true,
+        hierarchyId: true,
         parentId: true,
         repositoryPath: true,
-        repositoryRoot: true,
+        contentChecksum: true,
       },
     });
 
@@ -321,9 +354,10 @@ export async function POST(request: NextRequest) {
         visibility: blueprint.visibility,
         created_at: blueprint.createdAt.toISOString(),
         updated_at: blueprint.updatedAt.toISOString(),
+        hierarchy_id: blueprint.hierarchyId ? toHierarchyApiId(blueprint.hierarchyId) : null,
         parent_id: blueprint.parentId ? toBlueprintApiId(blueprint.parentId) : null,
         repository_path: blueprint.repositoryPath,
-        repository_root: blueprint.repositoryRoot,
+        content_checksum: blueprint.contentChecksum,
       },
     }, { status: 201 });
   } catch (error) {

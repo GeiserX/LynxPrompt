@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.0] - January 2026
+
+### Added
+- **Hierarchy as First-Class Entity**: Hierarchies now have their own identity (`ha_xxx` IDs)
+  - `GET/POST /api/v1/hierarchies` endpoints
+  - `GET/DELETE /api/v1/hierarchies/{id}` with full tree structure
+  - CLI: `lynxp hierarchies` to list all hierarchies
+  - CLI: `lynxp pull ha_xxx` downloads entire hierarchy with directory structure
+- **Optimistic Locking**: Prevent accidental overwrites when collaborating
+  - `content_checksum` field on blueprints
+  - `expected_checksum` parameter on PUT requests
+  - 409 Conflict response when checksum mismatch
+  - CLI: `--force` flag to override conflict detection
+- Complete docs page rewrite for hierarchy feature
+
+### Changed
+- Hierarchies are now stored in a dedicated `Hierarchy` table
+- Dashboard shows hierarchies with `ha_` IDs and names
+- Removed `repositoryRoot` field from UserTemplate (now on Hierarchy model)
+- API responses include `hierarchy_id` instead of `repository_root`
+
+---
+
 ## [1.1.0] - January 2026
 
 ### Added

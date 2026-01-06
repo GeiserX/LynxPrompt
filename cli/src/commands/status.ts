@@ -56,36 +56,61 @@ export async function statusCommand(): Promise<void> {
   // Show tracked blueprints
   const trackedStatus = await checkSyncStatus(cwd);
   if (trackedStatus.length > 0) {
+    // Group by hierarchy
+    const byHierarchy = new Map<string | null, typeof trackedStatus>();
+    for (const item of trackedStatus) {
+      const key = item.blueprint.hierarchyId || null;
+      const group = byHierarchy.get(key) || [];
+      group.push(item);
+      byHierarchy.set(key, group);
+    }
+
     console.log(chalk.cyan("📦 Tracked Blueprints"));
     console.log();
     
-    for (const { blueprint, localModified, fileExists } of trackedStatus) {
-      const statusIcon = !fileExists
-        ? chalk.red("✗")
-        : localModified
-        ? chalk.yellow("●")
-        : chalk.green("✓");
-      
-      const sourceLabel = {
-        marketplace: chalk.gray("[marketplace]"),
-        team: chalk.blue("[team]"),
-        private: chalk.green("[private]"),
-        local: chalk.gray("[local]"),
-      }[blueprint.source];
-
-      console.log(`  ${statusIcon} ${chalk.bold(blueprint.file)} ${sourceLabel}`);
-      console.log(`     ${chalk.gray(`ID: ${blueprint.id} • ${blueprint.name}`)}`);
-      
-      if (!fileExists) {
-        console.log(chalk.red(`     ⚠ File missing - run 'lynxp pull ${blueprint.id}' to restore`));
-      } else if (localModified) {
-        if (blueprint.source === "marketplace") {
-          console.log(chalk.yellow(`     ⚠ Local changes (marketplace = read-only, won't sync back)`));
-        } else {
-          console.log(chalk.yellow(`     ⚠ Local changes - run 'lynxp push ${blueprint.file}' to sync`));
-        }
+    // Show hierarchies first
+    for (const [hierarchyId, items] of byHierarchy.entries()) {
+      if (hierarchyId) {
+        const hierarchyName = items[0].blueprint.hierarchyName || "Unknown Hierarchy";
+        console.log(chalk.magenta(`  📁 ${hierarchyName}`));
+        console.log(chalk.gray(`     Hierarchy: ${hierarchyId}`));
+        console.log();
       }
-      console.log();
+
+      for (const { blueprint, localModified, fileExists } of items) {
+        const statusIcon = !fileExists
+          ? chalk.red("✗")
+          : localModified
+          ? chalk.yellow("●")
+          : chalk.green("✓");
+        
+        const sourceLabel = {
+          marketplace: chalk.gray("[marketplace]"),
+          team: chalk.blue("[team]"),
+          private: chalk.green("[private]"),
+          local: chalk.gray("[local]"),
+        }[blueprint.source];
+
+        const indent = hierarchyId ? "    " : "  ";
+        console.log(`${indent}${statusIcon} ${chalk.bold(blueprint.file)} ${sourceLabel}`);
+        console.log(`${indent}   ${chalk.gray(`ID: ${blueprint.id} • ${blueprint.name}`)}`);
+        
+        // Show repository path if different from file
+        if (blueprint.repositoryPath && blueprint.repositoryPath !== blueprint.file) {
+          console.log(`${indent}   ${chalk.gray(`Path: ${blueprint.repositoryPath}`)}`);
+        }
+        
+        if (!fileExists) {
+          console.log(chalk.red(`${indent}   ⚠ File missing - run 'lynxp pull ${blueprint.id}' to restore`));
+        } else if (localModified) {
+          if (blueprint.source === "marketplace") {
+            console.log(chalk.yellow(`${indent}   ⚠ Local changes (marketplace = read-only, won't sync back)`));
+          } else {
+            console.log(chalk.yellow(`${indent}   ⚠ Local changes - run 'lynxp push ${blueprint.file}' to sync`));
+          }
+        }
+        console.log();
+      }
     }
   }
 
