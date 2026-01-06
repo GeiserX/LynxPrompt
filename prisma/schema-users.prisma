@@ -465,6 +465,12 @@ model UserTemplate {
   // Showcase URL: link to demo, GitHub repo, or live app built with this blueprint
   showcaseUrl      String?
   
+  // Hierarchy support for monorepo AGENTS.md files
+  // When detected, AGENTS.md files can be grouped hierarchically
+  parentId         String?      // Parent blueprint ID (for nested AGENTS.md in monorepos)
+  repositoryPath   String?      // Relative path within repo (e.g., "packages/core/AGENTS.md")
+  repositoryRoot   String?      // Repository identifier to group blueprints (e.g., repo URL or root path hash)
+  
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
@@ -472,6 +478,10 @@ model UserTemplate {
   team      Team?              @relation(fields: [teamId], references: [id], onDelete: SetNull)
   purchases BlueprintPurchase[]
   versions  UserTemplateVersion[]
+  
+  // Self-referential relation for hierarchy
+  parent    UserTemplate?      @relation("BlueprintHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children  UserTemplate[]     @relation("BlueprintHierarchy")
 
   @@index([userId])
   @@index([type])
@@ -483,6 +493,8 @@ model UserTemplate {
   @@index([favorites])
   @@index([price])
   @@index([currentVersion])
+  @@index([parentId])
+  @@index([repositoryRoot])
 }
 
 // ============================================================================

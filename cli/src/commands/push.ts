@@ -2,6 +2,7 @@ import chalk from "chalk";
 import ora from "ora";
 import fs from "fs";
 import path from "path";
+import { createHash } from "crypto";
 import prompts from "prompts";
 import { api, ApiRequestError } from "../api.js";
 import { isAuthenticated } from "../config.js";
@@ -9,6 +10,7 @@ import {
   findBlueprintByFile,
   trackBlueprint,
   updateChecksum,
+  loadBlueprints,
 } from "../utils/blueprint-tracker.js";
 
 interface PushOptions {
@@ -17,6 +19,119 @@ interface PushOptions {
   visibility?: string;
   tags?: string;
   yes?: boolean;
+}
+
+interface HierarchyInfo {
+  repositoryPath: string | null;
+  repositoryRoot: string | null;
+  parentId: string | null;
+}
+
+/**
+ * Detect hierarchy info for a file being pushed
+ * Reads from .lynxprompt/hierarchy.json if it exists, or scans for AGENTS.md files
+ */
+async function detectHierarchyInfo(cwd: string, file: string): Promise<HierarchyInfo> {
+  const result: HierarchyInfo = {
+    repositoryPath: null,
+    repositoryRoot: null,
+    parentId: null,
+  };
+
+  try {
+    // Check for hierarchy.json (created by `lynxp import --save`)
+    const hierarchyPath = path.join(cwd, ".lynxprompt", "hierarchy.json");
+    if (fs.existsSync(hierarchyPath)) {
+      const hierarchyData = JSON.parse(fs.readFileSync(hierarchyPath, "utf-8"));
+      
+      // Find this file in the hierarchy
+      const relativePath = path.relative(cwd, path.resolve(file));
+      
+      for (const group of hierarchyData.hierarchy || []) {
+        // Check if this is the root file
+        if (group.rootFile === relativePath) {
+          result.repositoryPath = relativePath;
+          result.repositoryRoot = createRepositoryRoot(hierarchyData.rootPath || cwd);
+          break;
+        }
+        
+        // Check if this is a child file
+        for (const child of group.children || []) {
+          if (child.path === relativePath) {
+            result.repositoryPath = relativePath;
+            result.repositoryRoot = createRepositoryRoot(hierarchyData.rootPath || cwd);
+            
+            // Find parent blueprint ID if the root file was already pushed
+            if (group.rootFile) {
+              const blueprints = await loadBlueprints(cwd);
+              const parentBlueprint = blueprints.blueprints.find(
+                b => b.file === group.rootFile
+              );
+              if (parentBlueprint) {
+                result.parentId = parentBlueprint.id;
+              }
+            }
+            break;
+          }
+        }
+      }
+    }
+
+    // If no hierarchy.json, try to auto-detect based on file location
+    if (!result.repositoryPath) {
+      const relativePath = path.relative(cwd, path.resolve(file));
+      
+      // Check if file is in a subdirectory (potential monorepo child)
+      if (relativePath.includes(path.sep) && !relativePath.startsWith("..")) {
+        result.repositoryPath = relativePath;
+        result.repositoryRoot = createRepositoryRoot(cwd);
+        
+        // Check if there's an AGENTS.md at the root
+        const rootAgentsMd = path.join(cwd, "AGENTS.md");
+        if (fs.existsSync(rootAgentsMd) && path.resolve(file) !== rootAgentsMd) {
+          // Look for a tracked blueprint for the root AGENTS.md
+          const blueprints = await loadBlueprints(cwd);
+          const parentBlueprint = blueprints.blueprints.find(
+            b => b.file === "AGENTS.md"
+          );
+          if (parentBlueprint) {
+            result.parentId = parentBlueprint.id;
+          }
+        }
+      } else if (relativePath === "AGENTS.md" || relativePath === path.basename(file)) {
+        // Root-level file, check for children
+        result.repositoryPath = relativePath;
+        result.repositoryRoot = createRepositoryRoot(cwd);
+      }
+    }
+  } catch (error) {
+    // Silently fail - hierarchy detection is optional
+  }
+
+  return result;
+}
+
+/**
+ * Create a stable repository root identifier from a path
+ */
+function createRepositoryRoot(rootPath: string): string {
+  // Try to get git remote URL first
+  try {
+    const gitConfigPath = path.join(rootPath, ".git", "config");
+    if (fs.existsSync(gitConfigPath)) {
+      const gitConfig = fs.readFileSync(gitConfigPath, "utf-8");
+      const urlMatch = gitConfig.match(/url = (.+)/);
+      if (urlMatch) {
+        // Hash the git URL for consistent identification
+        return createHash("sha256").update(urlMatch[1].trim()).digest("hex").substring(0, 16);
+      }
+    }
+  } catch {
+    // Fall through to path-based hashing
+  }
+  
+  // Fall back to hashing the absolute path
+  return createHash("sha256").update(path.resolve(rootPath)).digest("hex").substring(0, 16);
 }
 
 export async function pushCommand(
@@ -170,6 +285,9 @@ async function createOrLinkBlueprint(
     name = filename.replace(/\.(md|mdc|json|yml|yaml)$/, "");
   }
 
+  // Detect hierarchy info for monorepo support
+  const hierarchyInfo = await detectHierarchyInfo(cwd, file);
+  
   const spinner = ora("Creating blueprint...").start();
 
   try {
@@ -179,6 +297,10 @@ async function createOrLinkBlueprint(
       content,
       visibility: visibility as "PRIVATE" | "TEAM" | "PUBLIC",
       tags,
+      // Include hierarchy info if detected
+      parent_id: hierarchyInfo.parentId,
+      repository_path: hierarchyInfo.repositoryPath,
+      repository_root: hierarchyInfo.repositoryRoot,
     });
 
     spinner.succeed("Blueprint created!");
@@ -196,6 +318,12 @@ async function createOrLinkBlueprint(
     console.log(chalk.green(`✅ Created blueprint ${chalk.bold(result.blueprint.name)}`));
     console.log(chalk.gray(`   ID: ${result.blueprint.id}`));
     console.log(chalk.gray(`   Visibility: ${visibility}`));
+    if (hierarchyInfo.repositoryPath) {
+      console.log(chalk.gray(`   Path: ${hierarchyInfo.repositoryPath}`));
+    }
+    if (hierarchyInfo.parentId) {
+      console.log(chalk.cyan(`   ↳ Linked to parent blueprint: ${hierarchyInfo.parentId}`));
+    }
     if (visibility === "PUBLIC") {
       console.log(chalk.gray(`   View: https://lynxprompt.com/templates/${result.blueprint.id.replace("bp_", "")}`));
     }

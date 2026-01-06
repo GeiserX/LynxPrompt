@@ -98,12 +98,20 @@ export async function GET() {
           createdAt: true,
           currentVersion: true,
           publishedVersion: true,
+          // Hierarchy fields
+          parentId: true,
+          repositoryPath: true,
+          repositoryRoot: true,
         },
       }).then(templates => templates.map(template => ({
         ...template,
         id: `bp_${template.id}`, // Add bp_ prefix for template detail routing
         version: template.currentVersion,
         publishedVersion: template.publishedVersion,
+        // Include hierarchy info
+        parentId: template.parentId ? `bp_${template.parentId}` : null,
+        repositoryPath: template.repositoryPath,
+        repositoryRoot: template.repositoryRoot,
       }))),
 
       // Get recent activity (downloads on user's templates + user's downloads)
@@ -162,6 +170,64 @@ export async function GET() {
       }),
     ]);
     
+    // Get hierarchical blueprints (grouped by repositoryRoot)
+    const allUserBlueprints = await prismaUsers.userTemplate.findMany({
+      where: { 
+        userId,
+        repositoryRoot: { not: null }, // Only blueprints with repository info
+      },
+      orderBy: [
+        { repositoryRoot: "asc" },
+        { repositoryPath: "asc" },
+      ],
+      select: {
+        id: true,
+        name: true,
+        type: true,
+        downloads: true,
+        favorites: true,
+        visibility: true,
+        createdAt: true,
+        parentId: true,
+        repositoryPath: true,
+        repositoryRoot: true,
+      },
+    });
+
+    // Group by repositoryRoot to create hierarchy
+    const hierarchyMap = new Map<string, {
+      repositoryRoot: string;
+      blueprints: typeof allUserBlueprints;
+    }>();
+
+    for (const bp of allUserBlueprints) {
+      if (!bp.repositoryRoot) continue;
+      
+      if (!hierarchyMap.has(bp.repositoryRoot)) {
+        hierarchyMap.set(bp.repositoryRoot, {
+          repositoryRoot: bp.repositoryRoot,
+          blueprints: [],
+        });
+      }
+      hierarchyMap.get(bp.repositoryRoot)!.blueprints.push(bp);
+    }
+
+    // Convert to array with formatted IDs
+    const hierarchicalBlueprints = Array.from(hierarchyMap.values()).map(group => ({
+      repositoryRoot: group.repositoryRoot,
+      blueprints: group.blueprints.map(bp => ({
+        id: `bp_${bp.id}`,
+        name: bp.name,
+        type: bp.type,
+        downloads: bp.downloads,
+        favorites: bp.favorites,
+        visibility: bp.visibility,
+        createdAt: bp.createdAt,
+        parentId: bp.parentId ? `bp_${bp.parentId}` : null,
+        repositoryPath: bp.repositoryPath,
+      })),
+    }));
+
     // Team-specific data (if user is in a team)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let teamBlueprints: any[] = [];
@@ -364,6 +430,8 @@ export async function GET() {
       recentActivity: enrichedActivity,
       favoriteTemplates: enrichedFavorites.filter((f) => f !== null),
       purchasedBlueprints: formattedPurchases,
+      // Hierarchical blueprints (grouped by repository)
+      hierarchicalBlueprints,
       // Team data (only included if user is in a team)
       team: teamInfo ? {
         id: teamInfo.teamId,

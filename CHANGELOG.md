@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.0] - January 2026
+
+### Added
+- **Monorepo Hierarchy Support**: AGENTS.md files can now be organized in hierarchical structures
+  - Parent-child relationships between blueprints
+  - Repository path tracking for monorepo organization
+  - CLI auto-detects hierarchy when pushing from subdirectories
+  - Dashboard shows grouped hierarchical blueprints with expandable tree view
+  - Web UI supports manual hierarchy configuration for AGENTS_MD blueprints
+- Documentation page for monorepo hierarchy feature (`/docs/blueprints/hierarchy`)
+
+### Changed
+- Dashboard API now returns `hierarchicalBlueprints` grouped by repository
+- Blueprint create/update APIs accept `parentId`, `repositoryPath`, `repositoryRoot` fields
+- CLI push command detects git repository root and calculates relative paths
+
+---
+
 ## [1.0.0] - January 2026
 
 ### BREAKING CHANGES
