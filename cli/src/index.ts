@@ -16,6 +16,7 @@ import { analyzeCommand } from "./commands/analyze.js";
 import { convertCommand } from "./commands/convert.js";
 import { mergeCommand } from "./commands/merge.js";
 import { importCommand } from "./commands/import.js";
+import { hierarchiesCommand } from "./commands/hierarchies.js";
 
 // CLI version injected at build time via tsup.config.ts define option
 const CLI_VERSION = process.env.CLI_VERSION || "0.0.0";
@@ -114,7 +115,7 @@ program
 
 program
   .command("pull <id>")
-  .description("Download and track a blueprint from the marketplace")
+  .description("Download a blueprint (bp_xxx) or entire hierarchy (ha_xxx)")
   .option("-o, --output <path>", "Output directory", ".")
   .option("-y, --yes", "Overwrite existing files without prompting")
   .option("--preview", "Preview content without downloading")
@@ -142,7 +143,15 @@ program
   .option("-v, --visibility <vis>", "Visibility: PRIVATE, TEAM, or PUBLIC", "PRIVATE")
   .option("-t, --tags <tags>", "Tags (comma-separated)")
   .option("-y, --yes", "Skip prompts")
+  .option("-f, --force", "Force push (overwrite remote changes)")
   .action(pushCommand);
+
+program
+  .command("hierarchies")
+  .description("List your blueprint hierarchies (monorepo groupings)")
+  .option("-l, --limit <number>", "Number of results", "50")
+  .option("-j, --json", "Output as JSON")
+  .action(hierarchiesCommand);
 
 // Link/Unlink - connect local files to cloud blueprints
 program
@@ -214,7 +223,9 @@ ${chalk.cyan("Analysis & Tools:")}
 ${chalk.cyan("Marketplace:")}
   ${chalk.white("$ lynxp search nextjs")}         ${chalk.gray("Search blueprints")}
   ${chalk.white("$ lynxp pull bp_abc123")}        ${chalk.gray("Download and track a blueprint")}
+  ${chalk.white("$ lynxp pull ha_xyz789")}        ${chalk.gray("Download entire hierarchy")}
   ${chalk.white("$ lynxp push")}                  ${chalk.gray("Push local file to cloud")}
+  ${chalk.white("$ lynxp hierarchies")}           ${chalk.gray("List your hierarchies")}
   ${chalk.white("$ lynxp link --list")}           ${chalk.gray("Show tracked blueprints")}
 
 ${chalk.cyan("Blueprint Tracking:")}

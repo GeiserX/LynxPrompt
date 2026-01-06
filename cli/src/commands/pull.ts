@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import ora from "ora";
 import prompts from "prompts";
-import { api, ApiRequestError, Blueprint } from "../api.js";
+import { api, ApiRequestError, Blueprint, Hierarchy } from "../api.js";
 import { isAuthenticated } from "../config.js";
 import { writeFile, mkdir, readFile } from "fs/promises";
 import { join, dirname } from "path";
@@ -44,12 +44,18 @@ function getSourceFromVisibility(visibility: Blueprint["visibility"]): Blueprint
   }
 }
 
+/**
+ * Check if an ID is a hierarchy ID
+ */
+function isHierarchyId(id: string): boolean {
+  return id.startsWith("ha_");
+}
+
 export async function pullCommand(
   id: string,
   options: PullOptions
 ): Promise<void> {
   // Check authentication - require login for API access
-  // (The API will check visibility/ownership for private blueprints)
   if (!isAuthenticated()) {
     console.log(
       chalk.yellow("Not logged in. Run 'lynxp login' to authenticate.")
@@ -57,6 +63,153 @@ export async function pullCommand(
     process.exit(1);
   }
 
+  // Check if pulling a hierarchy
+  if (isHierarchyId(id)) {
+    await pullHierarchy(id, options);
+  } else {
+    await pullBlueprint(id, options);
+  }
+}
+
+/**
+ * Pull an entire hierarchy with all its blueprints
+ */
+async function pullHierarchy(
+  id: string,
+  options: PullOptions
+): Promise<void> {
+  const cwd = process.cwd();
+  const spinner = ora(`Fetching hierarchy ${chalk.cyan(id)}...`).start();
+
+  try {
+    const response = await api.getHierarchy(id);
+    const { hierarchy, blueprints } = response;
+    spinner.stop();
+
+    console.log();
+    console.log(chalk.cyan(`📁 Hierarchy: ${chalk.bold(hierarchy.name)}`));
+    if (hierarchy.description) {
+      console.log(chalk.gray(`   ${hierarchy.description}`));
+    }
+    console.log(chalk.gray(`   Repository: ${hierarchy.repository_root}`));
+    console.log(chalk.gray(`   Blueprints: ${blueprints.length}`));
+    console.log();
+
+    // Preview mode - show hierarchy structure without downloading
+    if (options.preview) {
+      console.log(chalk.yellow("📋 Hierarchy structure:"));
+      console.log();
+      
+      for (const bp of blueprints) {
+        const indent = bp.parent_id ? "  ↳ " : "  ";
+        const path = bp.repository_path || TYPE_TO_FILENAME[bp.type] || "unknown";
+        console.log(chalk.gray(`${indent}${path}`));
+        console.log(chalk.gray(`${indent}  └─ ${bp.name} (${bp.id})`));
+      }
+      
+      console.log();
+      console.log(chalk.gray("Run without --preview to download this hierarchy."));
+      return;
+    }
+
+    // Confirm before downloading
+    if (!options.yes && blueprints.length > 1) {
+      const { proceed } = await prompts({
+        type: "confirm",
+        name: "proceed",
+        message: `Download ${blueprints.length} blueprints to ${options.output}?`,
+        initial: true,
+      });
+      if (!proceed) {
+        console.log(chalk.gray("Cancelled."));
+        return;
+      }
+    }
+
+    console.log(chalk.cyan("📥 Downloading blueprints..."));
+    console.log();
+
+    let downloaded = 0;
+    let skipped = 0;
+
+    for (const bp of blueprints) {
+      // Determine output path - use repository_path if available
+      const filename = bp.repository_path || TYPE_TO_FILENAME[bp.type] || "ai-config.md";
+      const outputPath = join(options.output, filename);
+
+      // Check if file exists
+      if (existsSync(outputPath) && !options.yes) {
+        const { overwrite } = await prompts({
+          type: "confirm",
+          name: "overwrite",
+          message: `File exists: ${filename}. Overwrite?`,
+          initial: false,
+        });
+        if (!overwrite) {
+          console.log(chalk.gray(`  ⏭ Skipped: ${filename}`));
+          skipped++;
+          continue;
+        }
+      }
+
+      // Fetch full blueprint content
+      const { blueprint } = await api.getBlueprint(bp.id);
+      
+      if (!blueprint.content) {
+        console.log(chalk.yellow(`  ⚠ No content: ${filename}`));
+        skipped++;
+        continue;
+      }
+
+      // Create directory if needed
+      const dir = dirname(outputPath);
+      if (dir !== "." && dir !== options.output) {
+        await mkdir(dir, { recursive: true });
+      }
+
+      // Write the file
+      await writeFile(outputPath, blueprint.content, "utf-8");
+
+      // Track the blueprint
+      if (options.track !== false) {
+        const source = getSourceFromVisibility(blueprint.visibility);
+        await trackBlueprint(cwd, {
+          id: blueprint.id,
+          name: blueprint.name,
+          file: filename,
+          content: blueprint.content,
+          source,
+        });
+      }
+
+      console.log(chalk.green(`  ✓ ${filename}`));
+      downloaded++;
+    }
+
+    console.log();
+    console.log(chalk.green(`✅ Downloaded ${downloaded} blueprint(s)`));
+    if (skipped > 0) {
+      console.log(chalk.gray(`   Skipped: ${skipped}`));
+    }
+    console.log();
+    console.log(chalk.gray("Tips:"));
+    console.log(chalk.gray(`  • Run 'lynxp status' to see tracked blueprints`));
+    console.log(chalk.gray(`  • Run 'lynxp sync' to push local changes`));
+    console.log(chalk.gray(`  • Run 'lynxp pull ${id}' again to refresh all files`));
+    console.log();
+  } catch (error) {
+    spinner.fail("Failed to pull hierarchy");
+    handleApiError(error);
+  }
+}
+
+/**
+ * Pull a single blueprint
+ */
+async function pullBlueprint(
+  id: string,
+  options: PullOptions
+): Promise<void> {
   const cwd = process.cwd();
   const spinner = ora(`Fetching blueprint ${chalk.cyan(id)}...`).start();
 
@@ -78,6 +231,14 @@ export async function pullCommand(
       console.log(chalk.gray(`   ${blueprint.description}`));
     }
     console.log(chalk.gray(`   Type: ${blueprint.type} • Tier: ${blueprint.tier} • Visibility: ${blueprint.visibility}`));
+    
+    // Show hierarchy info if present
+    if (blueprint.hierarchy_id) {
+      console.log(chalk.blue(`   📁 Part of hierarchy: ${blueprint.hierarchy_id}`));
+      if (blueprint.repository_path) {
+        console.log(chalk.gray(`   Path in hierarchy: ${blueprint.repository_path}`));
+      }
+    }
     
     // Show source type info
     if (isMarketplace) {
@@ -124,8 +285,8 @@ export async function pullCommand(
       return;
     }
 
-    // Determine output filename
-    const filename = TYPE_TO_FILENAME[blueprint.type] || "ai-config.md";
+    // Determine output filename - use repository_path if available for hierarchy blueprints
+    const filename = blueprint.repository_path || TYPE_TO_FILENAME[blueprint.type] || "ai-config.md";
     const outputPath = join(options.output, filename);
 
     // Check if file exists and show diff preview
@@ -244,6 +405,9 @@ export async function pullCommand(
     // Show tracking info
     if (options.track !== false) {
       console.log(chalk.gray(`   Linked to: ${blueprint.id}`));
+      if (blueprint.content_checksum) {
+        console.log(chalk.gray(`   Checksum: ${blueprint.content_checksum}`));
+      }
       if (isMarketplace) {
         console.log(chalk.gray(`   Updates: Run 'lynxp pull ${id}' to sync updates`));
       } else {
@@ -300,18 +464,18 @@ function handleApiError(error: unknown): void {
       );
     } else if (error.statusCode === 403) {
       console.error(
-        chalk.red("✗ You don't have access to this blueprint.")
+        chalk.red("✗ You don't have access to this blueprint or hierarchy.")
       );
       console.error(
         chalk.gray(
-          "  This might be a private blueprint or require a higher subscription tier."
+          "  This might be a private resource or require a higher subscription tier."
         )
       );
     } else if (error.statusCode === 404) {
-      console.error(chalk.red("✗ Blueprint not found."));
+      console.error(chalk.red("✗ Blueprint or hierarchy not found."));
       console.error(
         chalk.gray(
-          "  Make sure you have the correct blueprint ID. Use 'lynxp list' to see your blueprints."
+          "  Make sure you have the correct ID. Use 'lynxp list' or 'lynxp hierarchies' to see your resources."
         )
       );
     } else {

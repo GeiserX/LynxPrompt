@@ -17,6 +17,9 @@ export const TOKEN_PREFIX = "lp_";
 // Blueprint ID prefix for API responses
 export const BLUEPRINT_PREFIX = "bp_";
 
+// Hierarchy ID prefix for API responses
+export const HIERARCHY_PREFIX = "ha_";
+
 // Default expiration: 1 week
 export const DEFAULT_EXPIRATION_DAYS = 7;
 
@@ -77,6 +80,31 @@ export function fromBlueprintApiId(apiId: string): string {
     return apiId.slice(4); // "usr_".length = 4
   }
   return apiId;
+}
+
+/**
+ * Add hierarchy prefix to ID for API responses
+ */
+export function toHierarchyApiId(id: string): string {
+  if (id.startsWith(HIERARCHY_PREFIX)) return id;
+  return `${HIERARCHY_PREFIX}${id}`;
+}
+
+/**
+ * Remove hierarchy prefix from API ID for database queries
+ */
+export function fromHierarchyApiId(apiId: string): string {
+  if (apiId.startsWith(HIERARCHY_PREFIX)) {
+    return apiId.slice(HIERARCHY_PREFIX.length);
+  }
+  return apiId;
+}
+
+/**
+ * Check if an ID is a hierarchy ID
+ */
+export function isHierarchyId(id: string): boolean {
+  return id.startsWith(HIERARCHY_PREFIX);
 }
 
 /**

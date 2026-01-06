@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createHash } from "crypto";
 import { prismaUsers } from "@/lib/db-users";
 import {
   validateApiToken,
@@ -7,7 +8,15 @@ import {
   canUseApi,
   toBlueprintApiId,
   fromBlueprintApiId,
+  toHierarchyApiId,
 } from "@/lib/api-tokens";
+
+/**
+ * Compute SHA-256 checksum of content for optimistic locking
+ */
+function computeChecksum(content: string): string {
+  return createHash("sha256").update(content).digest("hex").slice(0, 16);
+}
 
 /**
  * GET /api/v1/blueprints/[id]
@@ -45,7 +54,7 @@ export async function GET(
     // Check subscription
     if (!canUseApi(tokenData.user.subscriptionPlan)) {
       return NextResponse.json(
-        { error: "API access requires Pro, Max, or Teams subscription" },
+        { error: "API access requires a subscription" },
         { status: 403 }
       );
     }
@@ -85,9 +94,10 @@ export async function GET(
         createdAt: true,
         updatedAt: true,
         // Hierarchy fields
+        hierarchyId: true,
         parentId: true,
         repositoryPath: true,
-        repositoryRoot: true,
+        contentChecksum: true,
       },
     });
 
@@ -127,9 +137,10 @@ export async function GET(
         created_at: blueprint.createdAt.toISOString(),
         updated_at: blueprint.updatedAt.toISOString(),
         // Hierarchy fields
+        hierarchy_id: blueprint.hierarchyId ? toHierarchyApiId(blueprint.hierarchyId) : null,
         parent_id: blueprint.parentId ? toBlueprintApiId(blueprint.parentId) : null,
         repository_path: blueprint.repositoryPath,
-        repository_root: blueprint.repositoryRoot,
+        content_checksum: blueprint.contentChecksum,
       },
     });
   } catch (error) {
@@ -153,6 +164,7 @@ export async function GET(
  * - category?: string
  * - tags?: string[]
  * - visibility?: "PRIVATE" | "TEAM" | "PUBLIC"
+ * - expected_checksum?: string (for optimistic locking - if provided, must match current checksum)
  */
 export async function PUT(
   request: NextRequest,
@@ -186,7 +198,7 @@ export async function PUT(
     // Check subscription
     if (!canUseApi(tokenData.user.subscriptionPlan)) {
       return NextResponse.json(
-        { error: "API access requires Pro, Max, or Teams subscription" },
+        { error: "API access requires a subscription" },
         { status: 403 }
       );
     }
@@ -202,10 +214,10 @@ export async function PUT(
     const { id } = await params;
     const blueprintId = fromBlueprintApiId(id);
 
-    // Check ownership first
+    // Check ownership first and get current checksum for optimistic locking
     const existing = await prismaUsers.userTemplate.findUnique({
       where: { id: blueprintId },
-      select: { userId: true },
+      select: { userId: true, contentChecksum: true },
     });
 
     if (!existing) {
@@ -223,7 +235,20 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { name, content, description, type, category, tags, visibility } = body;
+    const { name, content, description, type, category, tags, visibility, expected_checksum } = body;
+
+    // Optimistic locking: if expected_checksum is provided, verify it matches
+    if (expected_checksum && existing.contentChecksum && expected_checksum !== existing.contentChecksum) {
+      return NextResponse.json(
+        {
+          error: "Conflict - blueprint has been modified",
+          message: "The blueprint has been modified since you last pulled it. Pull the latest version and try again, or use force=true to overwrite.",
+          current_checksum: existing.contentChecksum,
+          expected_checksum: expected_checksum,
+        },
+        { status: 409 }
+      );
+    }
 
     // Build update data
     const updateData: Record<string, unknown> = {};
@@ -258,6 +283,9 @@ export async function PUT(
       if (effectiveLines > 100) updateData.tier = "ADVANCED";
       else if (effectiveLines > 30) updateData.tier = "INTERMEDIATE";
       else updateData.tier = "SIMPLE";
+
+      // Update checksum
+      updateData.contentChecksum = computeChecksum(content.trim());
     }
 
     if (description !== undefined) {
@@ -309,6 +337,10 @@ export async function PUT(
         visibility: true,
         createdAt: true,
         updatedAt: true,
+        hierarchyId: true,
+        parentId: true,
+        repositoryPath: true,
+        contentChecksum: true,
       },
     });
 
@@ -326,6 +358,10 @@ export async function PUT(
         visibility: blueprint.visibility,
         created_at: blueprint.createdAt.toISOString(),
         updated_at: blueprint.updatedAt.toISOString(),
+        hierarchy_id: blueprint.hierarchyId ? toHierarchyApiId(blueprint.hierarchyId) : null,
+        parent_id: blueprint.parentId ? toBlueprintApiId(blueprint.parentId) : null,
+        repository_path: blueprint.repositoryPath,
+        content_checksum: blueprint.contentChecksum,
       },
     });
   } catch (error) {
@@ -373,7 +409,7 @@ export async function DELETE(
     // Check subscription
     if (!canUseApi(tokenData.user.subscriptionPlan)) {
       return NextResponse.json(
-        { error: "API access requires Pro, Max, or Teams subscription" },
+        { error: "API access requires a subscription" },
         { status: 403 }
       );
     }
@@ -426,16 +462,3 @@ export async function DELETE(
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
