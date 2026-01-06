@@ -124,6 +124,7 @@ model User {
   sessions       Session[]
   preferences    Preference[]
   templates      UserTemplate[]
+  hierarchies    Hierarchy[]   // User's blueprint hierarchies (monorepo groupings)
   projects       Project[]
   authenticators Authenticator[]
   favorites      TemplateFavorite[]
@@ -412,6 +413,28 @@ model Preference {
 }
 
 // ============================================================================
+// HIERARCHIES - Monorepo AGENTS.md groupings
+// ============================================================================
+
+model Hierarchy {
+  id              String   @id @default(cuid())
+  userId          String
+  name            String           // Human-readable name (e.g., "My Company Monorepo")
+  repositoryRoot  String           // Unique identifier for the repo (git remote or path hash)
+  description     String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blueprints      UserTemplate[]
+  
+  @@unique([userId, repositoryRoot])  // One hierarchy per repo per user
+  @@index([userId])
+  @@index([repositoryRoot])
+}
+
+// ============================================================================
 // USER TEMPLATES - User-created templates (NOT system templates)
 // ============================================================================
 
@@ -466,20 +489,24 @@ model UserTemplate {
   showcaseUrl      String?
   
   // Hierarchy support for monorepo AGENTS.md files
-  // When detected, AGENTS.md files can be grouped hierarchically
-  parentId         String?      // Parent blueprint ID (for nested AGENTS.md in monorepos)
-  repositoryPath   String?      // Relative path within repo (e.g., "packages/core/AGENTS.md")
-  repositoryRoot   String?      // Repository identifier to group blueprints (e.g., repo URL or root path hash)
+  // Blueprint optionally belongs to a Hierarchy (ha_...)
+  hierarchyId      String?      // Links to Hierarchy entity
+  repositoryPath   String?      // Relative path within hierarchy (e.g., "packages/core/AGENTS.md")
+  parentId         String?      // Parent blueprint ID within the hierarchy
+  
+  // Optimistic locking for collaboration
+  contentChecksum  String?      // SHA256 of content, for conflict detection
   
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
   user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   team      Team?              @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  hierarchy Hierarchy?         @relation(fields: [hierarchyId], references: [id], onDelete: SetNull)
   purchases BlueprintPurchase[]
   versions  UserTemplateVersion[]
   
-  // Self-referential relation for hierarchy
+  // Self-referential relation for parent-child within hierarchy
   parent    UserTemplate?      @relation("BlueprintHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
   children  UserTemplate[]     @relation("BlueprintHierarchy")
 
@@ -493,8 +520,8 @@ model UserTemplate {
   @@index([favorites])
   @@index([price])
   @@index([currentVersion])
+  @@index([hierarchyId])
   @@index([parentId])
-  @@index([repositoryRoot])
 }
 
 // ============================================================================

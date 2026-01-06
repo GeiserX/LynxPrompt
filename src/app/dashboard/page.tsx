@@ -120,10 +120,16 @@ interface HierarchicalBlueprint {
   createdAt: string;
   parentId: string | null;
   repositoryPath: string | null;
+  contentChecksum: string | null;
 }
 
 interface HierarchyGroup {
+  id: string; // ha_xxx
+  name: string;
+  description: string | null;
   repositoryRoot: string;
+  createdAt: string;
+  updatedAt: string;
   blueprints: HierarchicalBlueprint[];
 }
 
@@ -849,16 +855,16 @@ export default function DashboardPage() {
                     <div className="space-y-4">
                       {dashboardData.hierarchicalBlueprints.map((group) => (
                         <div
-                          key={group.repositoryRoot}
+                          key={group.id}
                           className="rounded-lg border border-purple-500/20 bg-gradient-to-r from-purple-500/5 to-background"
                         >
                           <button
                             onClick={() => {
                               const newExpanded = new Set(expandedHierarchies);
-                              if (newExpanded.has(group.repositoryRoot)) {
-                                newExpanded.delete(group.repositoryRoot);
+                              if (newExpanded.has(group.id)) {
+                                newExpanded.delete(group.id);
                               } else {
-                                newExpanded.add(group.repositoryRoot);
+                                newExpanded.add(group.id);
                               }
                               setExpandedHierarchies(newExpanded);
                             }}
@@ -869,20 +875,20 @@ export default function DashboardPage() {
                                 <GitBranch className="h-5 w-5 text-purple-500" />
                               </div>
                               <div>
-                                <h3 className="font-medium">Repository</h3>
+                                <h3 className="font-medium">{group.name}</h3>
                                 <p className="text-xs text-muted-foreground">
-                                  {group.blueprints.length} AGENTS.md file{group.blueprints.length !== 1 ? "s" : ""}
+                                  {group.id} • {group.blueprints.length} AGENTS.md file{group.blueprints.length !== 1 ? "s" : ""}
                                 </p>
                               </div>
                             </div>
-                            {expandedHierarchies.has(group.repositoryRoot) ? (
+                            {expandedHierarchies.has(group.id) ? (
                               <ChevronDown className="h-4 w-4 text-muted-foreground" />
                             ) : (
                               <ChevronRight className="h-4 w-4 text-muted-foreground" />
                             )}
                           </button>
 
-                          {expandedHierarchies.has(group.repositoryRoot) && (
+                          {expandedHierarchies.has(group.id) && (
                             <div className="border-t border-purple-500/10">
                               {group.blueprints.map((bp, idx) => (
                                 <div

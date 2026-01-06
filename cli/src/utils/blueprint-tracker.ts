@@ -30,6 +30,10 @@ export interface TrackedBlueprint {
   version?: string;        // Blueprint version (if available)
   editable: boolean;       // Can the user push changes back?
   canPull: boolean;        // Can pull updates from upstream?
+  // Hierarchy info (optional)
+  hierarchyId?: string;    // Hierarchy ID (e.g., ha_xyz789)
+  hierarchyName?: string;  // Hierarchy name for display
+  repositoryPath?: string; // Path within hierarchy (e.g., "packages/core/AGENTS.md")
 }
 
 // Blueprints file structure
@@ -92,6 +96,9 @@ export async function trackBlueprint(
     content: string;
     source: BlueprintSource;
     version?: string;
+    hierarchyId?: string;
+    hierarchyName?: string;
+    repositoryPath?: string;
   }
 ): Promise<void> {
   const config = await loadBlueprints(cwd);
@@ -113,6 +120,9 @@ export async function trackBlueprint(
     version: blueprint.version,
     editable,
     canPull,
+    hierarchyId: blueprint.hierarchyId,
+    hierarchyName: blueprint.hierarchyName,
+    repositoryPath: blueprint.repositoryPath,
   });
   
   await saveBlueprints(cwd, config);

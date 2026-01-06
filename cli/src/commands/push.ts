@@ -19,96 +19,127 @@ interface PushOptions {
   visibility?: string;
   tags?: string;
   yes?: boolean;
+  force?: boolean;
 }
 
 interface HierarchyInfo {
   repositoryPath: string | null;
-  repositoryRoot: string | null;
+  hierarchyId: string | null;
   parentId: string | null;
+  repositoryRoot: string; // Used to create/find hierarchy
+}
+
+interface DiscoveredFile {
+  path: string;       // Relative path from cwd
+  absolutePath: string;
+  isRoot: boolean;    // Is this the root AGENTS.md?
+}
+
+/**
+ * Scan for AGENTS.md files in current directory and subdirectories
+ */
+function scanForAgentFiles(cwd: string, maxDepth: number = 5): DiscoveredFile[] {
+  const results: DiscoveredFile[] = [];
+  
+  function scan(dir: string, depth: number) {
+    if (depth > maxDepth) return;
+    
+    try {
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+      
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name);
+        
+        // Skip common non-project directories
+        if (entry.isDirectory()) {
+          if (["node_modules", ".git", "dist", "build", ".next", "__pycache__", "venv", ".venv"].includes(entry.name)) {
+            continue;
+          }
+          scan(fullPath, depth + 1);
+        } else if (entry.name === "AGENTS.md") {
+          const relativePath = path.relative(cwd, fullPath);
+          results.push({
+            path: relativePath,
+            absolutePath: fullPath,
+            isRoot: relativePath === "AGENTS.md",
+          });
+        }
+      }
+    } catch {
+      // Ignore directories we can't read
+    }
+  }
+  
+  scan(cwd, 0);
+  
+  // Sort: root first, then alphabetically by path
+  results.sort((a, b) => {
+    if (a.isRoot && !b.isRoot) return -1;
+    if (!a.isRoot && b.isRoot) return 1;
+    return a.path.localeCompare(b.path);
+  });
+  
+  return results;
 }
 
 /**
  * Detect hierarchy info for a file being pushed
- * Reads from .lynxprompt/hierarchy.json if it exists, or scans for AGENTS.md files
+ * Creates or gets a hierarchy for the repository
  */
 async function detectHierarchyInfo(cwd: string, file: string): Promise<HierarchyInfo> {
+  const repositoryRoot = createRepositoryRoot(cwd);
   const result: HierarchyInfo = {
     repositoryPath: null,
-    repositoryRoot: null,
+    hierarchyId: null,
     parentId: null,
+    repositoryRoot,
   };
 
   try {
-    // Check for hierarchy.json (created by `lynxp import --save`)
-    const hierarchyPath = path.join(cwd, ".lynxprompt", "hierarchy.json");
-    if (fs.existsSync(hierarchyPath)) {
-      const hierarchyData = JSON.parse(fs.readFileSync(hierarchyPath, "utf-8"));
+    const relativePath = path.relative(cwd, path.resolve(file));
+    
+    // Check if file is in a subdirectory (potential monorepo child)
+    if (relativePath.includes(path.sep) && !relativePath.startsWith("..")) {
+      result.repositoryPath = relativePath;
       
-      // Find this file in the hierarchy
-      const relativePath = path.relative(cwd, path.resolve(file));
-      
-      for (const group of hierarchyData.hierarchy || []) {
-        // Check if this is the root file
-        if (group.rootFile === relativePath) {
-          result.repositoryPath = relativePath;
-          result.repositoryRoot = createRepositoryRoot(hierarchyData.rootPath || cwd);
-          break;
-        }
-        
-        // Check if this is a child file
-        for (const child of group.children || []) {
-          if (child.path === relativePath) {
-            result.repositoryPath = relativePath;
-            result.repositoryRoot = createRepositoryRoot(hierarchyData.rootPath || cwd);
-            
-            // Find parent blueprint ID if the root file was already pushed
-            if (group.rootFile) {
-              const blueprints = await loadBlueprints(cwd);
-              const parentBlueprint = blueprints.blueprints.find(
-                b => b.file === group.rootFile
-              );
-              if (parentBlueprint) {
-                result.parentId = parentBlueprint.id;
-              }
-            }
-            break;
-          }
+      // Check if there's an AGENTS.md at the root that was already pushed
+      const rootAgentsMd = path.join(cwd, "AGENTS.md");
+      if (fs.existsSync(rootAgentsMd) && path.resolve(file) !== rootAgentsMd) {
+        const blueprints = await loadBlueprints(cwd);
+        const parentBlueprint = blueprints.blueprints.find(
+          b => b.file === "AGENTS.md"
+        );
+        if (parentBlueprint) {
+          result.parentId = parentBlueprint.id;
         }
       }
+    } else if (relativePath === "AGENTS.md" || relativePath === path.basename(file)) {
+      // Root-level file
+      result.repositoryPath = relativePath;
     }
-
-    // If no hierarchy.json, try to auto-detect based on file location
-    if (!result.repositoryPath) {
-      const relativePath = path.relative(cwd, path.resolve(file));
-      
-      // Check if file is in a subdirectory (potential monorepo child)
-      if (relativePath.includes(path.sep) && !relativePath.startsWith("..")) {
-        result.repositoryPath = relativePath;
-        result.repositoryRoot = createRepositoryRoot(cwd);
-        
-        // Check if there's an AGENTS.md at the root
-        const rootAgentsMd = path.join(cwd, "AGENTS.md");
-        if (fs.existsSync(rootAgentsMd) && path.resolve(file) !== rootAgentsMd) {
-          // Look for a tracked blueprint for the root AGENTS.md
-          const blueprints = await loadBlueprints(cwd);
-          const parentBlueprint = blueprints.blueprints.find(
-            b => b.file === "AGENTS.md"
-          );
-          if (parentBlueprint) {
-            result.parentId = parentBlueprint.id;
-          }
-        }
-      } else if (relativePath === "AGENTS.md" || relativePath === path.basename(file)) {
-        // Root-level file, check for children
-        result.repositoryPath = relativePath;
-        result.repositoryRoot = createRepositoryRoot(cwd);
-      }
-    }
-  } catch (error) {
+  } catch {
     // Silently fail - hierarchy detection is optional
   }
 
   return result;
+}
+
+/**
+ * Ensure a hierarchy exists for the repository and return its ID
+ */
+async function ensureHierarchy(_cwd: string, repositoryRoot: string, name: string): Promise<string | null> {
+  try {
+    // Try to create or get existing hierarchy
+    const response = await api.createHierarchy({
+      name,
+      repository_root: repositoryRoot,
+    });
+    return response.hierarchy.id;
+  } catch (error) {
+    // If it fails, hierarchy feature might not be available
+    console.log(chalk.gray("   Note: Hierarchy creation skipped"));
+    return null;
+  }
 }
 
 /**
@@ -170,7 +201,7 @@ export async function pushCommand(
 
   if (linked) {
     // Update existing blueprint
-    await updateBlueprint(cwd, file, linked.id, content, options);
+    await updateBlueprint(cwd, file, linked.id, content, options, linked.checksum);
   } else {
     // Create new blueprint or link to existing
     await createOrLinkBlueprint(cwd, file, filename, content, options);
@@ -182,7 +213,8 @@ async function updateBlueprint(
   file: string,
   blueprintId: string,
   content: string,
-  options: PushOptions
+  options: PushOptions,
+  expectedChecksum?: string
 ): Promise<void> {
   console.log(chalk.cyan(`\n📤 Updating blueprint ${chalk.bold(blueprintId)}...`));
   console.log(chalk.gray(`   File: ${file}`));
@@ -204,18 +236,41 @@ async function updateBlueprint(
   const spinner = ora("Pushing changes...").start();
 
   try {
-    const result = await api.updateBlueprint(blueprintId, { content });
+    const updateData: { content: string; expected_checksum?: string } = { content };
+    
+    // Include expected checksum for optimistic locking (unless force)
+    if (expectedChecksum && !options.force) {
+      updateData.expected_checksum = expectedChecksum;
+    }
+
+    const result = await api.updateBlueprint(blueprintId, updateData);
     spinner.succeed("Blueprint updated!");
 
-    // Update local tracking
+    // Update local tracking with new checksum
     await updateChecksum(cwd, file, content);
 
     console.log();
     console.log(chalk.green(`✅ Successfully updated ${chalk.bold(result.blueprint.name)}`));
     console.log(chalk.gray(`   ID: ${blueprintId}`));
+    if (result.blueprint.content_checksum) {
+      console.log(chalk.gray(`   Checksum: ${result.blueprint.content_checksum}`));
+    }
     console.log(chalk.gray(`   View: https://lynxprompt.com/templates/${blueprintId.replace("bp_", "")}`));
   } catch (error) {
     spinner.fail("Failed to update blueprint");
+    
+    // Handle optimistic locking conflict
+    if (error instanceof ApiRequestError && error.statusCode === 409) {
+      console.log();
+      console.log(chalk.yellow("⚠ Conflict: The blueprint has been modified since you last pulled it."));
+      console.log(chalk.gray("  Someone else may have pushed changes."));
+      console.log();
+      console.log(chalk.gray("Options:"));
+      console.log(chalk.gray("  1. Run 'lynxp pull " + blueprintId + "' to get the latest version"));
+      console.log(chalk.gray("  2. Run 'lynxp push --force' to overwrite remote changes"));
+      process.exit(1);
+    }
+    
     handleError(error);
   }
 }
@@ -227,6 +282,46 @@ async function createOrLinkBlueprint(
   content: string,
   options: PushOptions
 ): Promise<void> {
+  // Check if pushing AGENTS.md and scan for more AGENTS.md files
+  const isAgentsMd = filename === "AGENTS.md";
+  
+  if (isAgentsMd) {
+    const discoveredFiles = scanForAgentFiles(cwd);
+    
+    // If we found multiple AGENTS.md files, offer to create hierarchy
+    if (discoveredFiles.length > 1) {
+      console.log();
+      console.log(chalk.cyan(`📁 Found ${discoveredFiles.length} AGENTS.md files:`));
+      console.log();
+      for (const f of discoveredFiles) {
+        const icon = f.isRoot ? "📄" : "  └─";
+        console.log(chalk.gray(`   ${icon} ${f.path}`));
+      }
+      console.log();
+      
+      let shouldCreateHierarchy = options.yes; // Auto-create if -y flag
+      
+      if (!options.yes) {
+        const { createHierarchy } = await prompts({
+          type: "confirm",
+          name: "createHierarchy",
+          message: `Create a hierarchy with all ${discoveredFiles.length} AGENTS.md files?`,
+          initial: true,
+        });
+        shouldCreateHierarchy = createHierarchy;
+      } else {
+        console.log(chalk.cyan(`Auto-creating hierarchy with ${discoveredFiles.length} files...`));
+      }
+      
+      if (shouldCreateHierarchy) {
+        await pushHierarchy(cwd, discoveredFiles, options);
+        return;
+      }
+      
+      console.log(chalk.gray("Proceeding with single file push..."));
+    }
+  }
+
   console.log(chalk.cyan("\n📤 Push new blueprint"));
   console.log(chalk.gray(`   File: ${file}`));
 
@@ -288,6 +383,12 @@ async function createOrLinkBlueprint(
   // Detect hierarchy info for monorepo support
   const hierarchyInfo = await detectHierarchyInfo(cwd, file);
   
+  // If we have hierarchy info, ensure a hierarchy exists
+  let hierarchyId: string | null = null;
+  if (hierarchyInfo.repositoryPath) {
+    hierarchyId = await ensureHierarchy(cwd, hierarchyInfo.repositoryRoot, path.basename(cwd));
+  }
+  
   const spinner = ora("Creating blueprint...").start();
 
   try {
@@ -298,9 +399,9 @@ async function createOrLinkBlueprint(
       visibility: visibility as "PRIVATE" | "TEAM" | "PUBLIC",
       tags,
       // Include hierarchy info if detected
+      hierarchy_id: hierarchyId,
       parent_id: hierarchyInfo.parentId,
       repository_path: hierarchyInfo.repositoryPath,
-      repository_root: hierarchyInfo.repositoryRoot,
     });
 
     spinner.succeed("Blueprint created!");
@@ -312,6 +413,8 @@ async function createOrLinkBlueprint(
       file,
       content,
       source: "private",
+      hierarchyId: hierarchyId || undefined,
+      repositoryPath: hierarchyInfo.repositoryPath || undefined,
     });
 
     console.log();
@@ -320,6 +423,9 @@ async function createOrLinkBlueprint(
     console.log(chalk.gray(`   Visibility: ${visibility}`));
     if (hierarchyInfo.repositoryPath) {
       console.log(chalk.gray(`   Path: ${hierarchyInfo.repositoryPath}`));
+    }
+    if (result.blueprint.hierarchy_id) {
+      console.log(chalk.gray(`   Hierarchy: ${result.blueprint.hierarchy_id}`));
     }
     if (hierarchyInfo.parentId) {
       console.log(chalk.cyan(`   ↳ Linked to parent blueprint: ${hierarchyInfo.parentId}`));
@@ -333,6 +439,144 @@ async function createOrLinkBlueprint(
     spinner.fail("Failed to create blueprint");
     handleError(error);
   }
+}
+
+/**
+ * Push multiple AGENTS.md files as a hierarchy
+ */
+async function pushHierarchy(
+  cwd: string,
+  files: DiscoveredFile[],
+  options: PushOptions
+): Promise<void> {
+  // Get hierarchy name
+  let hierarchyName = options.name || path.basename(cwd);
+  let visibility = options.visibility || "PRIVATE";
+  
+  if (!options.yes) {
+    const responses = await prompts([
+      {
+        type: "text",
+        name: "name",
+        message: "Hierarchy name:",
+        initial: hierarchyName,
+        validate: (v) => v.length > 0 || "Name is required",
+      },
+      {
+        type: "select",
+        name: "visibility",
+        message: "Visibility for all blueprints:",
+        choices: [
+          { title: "Private (only you)", value: "PRIVATE" },
+          { title: "Team (your team members)", value: "TEAM" },
+          { title: "Public (visible to everyone)", value: "PUBLIC" },
+        ],
+        initial: 0,
+      },
+    ]);
+    
+    if (!responses.name) {
+      console.log(chalk.yellow("Push cancelled."));
+      return;
+    }
+    
+    hierarchyName = responses.name;
+    visibility = responses.visibility || visibility;
+  }
+  
+  console.log();
+  console.log(chalk.cyan(`📁 Creating hierarchy "${hierarchyName}" with ${files.length} files...`));
+  console.log();
+  
+  // Create repository root identifier
+  const repositoryRoot = createRepositoryRoot(cwd);
+  
+  // Create hierarchy first
+  let hierarchyId: string;
+  try {
+    const hierarchyResponse = await api.createHierarchy({
+      name: hierarchyName,
+      repository_root: repositoryRoot,
+    });
+    hierarchyId = hierarchyResponse.hierarchy.id;
+    console.log(chalk.green(`✓ Created hierarchy: ${hierarchyId}`));
+  } catch (error) {
+    console.log(chalk.red("Failed to create hierarchy"));
+    handleError(error);
+    return;
+  }
+  
+  // Upload each file
+  let rootBlueprintId: string | null = null;
+  let successCount = 0;
+  let failCount = 0;
+  
+  for (const file of files) {
+    const spinner = ora(`Uploading ${file.path}...`).start();
+    
+    try {
+      const content = fs.readFileSync(file.absolutePath, "utf-8");
+      
+      // Generate name from path
+      let blueprintName: string;
+      if (file.isRoot) {
+        blueprintName = hierarchyName;
+      } else {
+        // Use folder name or derive from path
+        const dirname = path.dirname(file.path);
+        blueprintName = dirname.replace(/[/\\]/g, " / ");
+      }
+      
+      const result = await api.createBlueprint({
+        name: blueprintName,
+        description: "",
+        content,
+        visibility: visibility as "PRIVATE" | "TEAM" | "PUBLIC",
+        tags: [],
+        hierarchy_id: hierarchyId,
+        parent_id: file.isRoot ? null : rootBlueprintId,
+        repository_path: file.path,
+      });
+      
+      // Track root blueprint ID for linking children
+      if (file.isRoot) {
+        rootBlueprintId = result.blueprint.id;
+      }
+      
+      // Track locally
+      await trackBlueprint(cwd, {
+        id: result.blueprint.id,
+        name: blueprintName,
+        file: file.path,
+        content,
+        source: "private",
+        hierarchyId,
+        hierarchyName,
+        repositoryPath: file.path,
+      });
+      
+      spinner.succeed(`${file.path} → ${result.blueprint.id}`);
+      successCount++;
+    } catch (error) {
+      spinner.fail(`${file.path} failed`);
+      if (error instanceof ApiRequestError) {
+        console.log(chalk.red(`   Error: ${error.message}`));
+      }
+      failCount++;
+    }
+  }
+  
+  console.log();
+  console.log(chalk.green(`✅ Hierarchy created successfully!`));
+  console.log(chalk.gray(`   Hierarchy: ${hierarchyId}`));
+  console.log(chalk.gray(`   Name: ${hierarchyName}`));
+  console.log(chalk.gray(`   Blueprints: ${successCount} uploaded${failCount > 0 ? `, ${failCount} failed` : ""}`));
+  console.log();
+  console.log(chalk.cyan("Tips:"));
+  console.log(chalk.gray(`  • Run 'lynxp status' to see all tracked blueprints`));
+  console.log(chalk.gray(`  • Run 'lynxp pull ${hierarchyId}' to download the entire hierarchy`));
+  console.log(chalk.gray(`  • Run 'lynxp push' in any subfolder to update individual blueprints`));
+  console.log();
 }
 
 function findDefaultFile(): string | null {
