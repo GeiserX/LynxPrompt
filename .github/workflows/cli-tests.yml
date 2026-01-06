@@ -196,7 +196,8 @@ jobs:
           echo "## Updated" >> ci-test.md
           echo "Updated at $(date -u)" >> ci-test.md
           
-          lynxp push ci-test.md --yes
+          # Use --force since local file was modified (optimistic locking)
+          lynxp push ci-test.md --yes --force
           echo "✓ Push update works"
 
       - name: Test status with linked blueprint
