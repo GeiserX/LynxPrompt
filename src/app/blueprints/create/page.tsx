@@ -23,6 +23,9 @@ import {
   ExternalLink,
   Users,
   Globe,
+  FolderTree,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Footer } from "@/components/footer";
@@ -67,6 +70,14 @@ export default function ShareBlueprintPage() {
   const [isPaid, setIsPaid] = useState(false);
   const [price, setPrice] = useState<number>(5);
   const [showcaseUrl, setShowcaseUrl] = useState("");
+  
+  // Hierarchy fields (for AGENTS_MD monorepo support)
+  const [showHierarchy, setShowHierarchy] = useState(false);
+  const [repositoryPath, setRepositoryPath] = useState("");
+  const [repositoryRoot, setRepositoryRoot] = useState("");
+  const [parentBlueprintId, setParentBlueprintId] = useState("");
+  const [userBlueprints, setUserBlueprints] = useState<Array<{ id: string; name: string }>>([]);
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<{ id: string; name: string; isPublic: boolean } | null>(
@@ -136,6 +147,27 @@ export default function ShareBlueprintPage() {
   }, [status]);
 
   const canCreatePaidBlueprints = userPlan === "pro" || userPlan === "max";
+
+  // Fetch user's blueprints for hierarchy parent selection
+  useEffect(() => {
+    const fetchUserBlueprints = async () => {
+      if (status !== "authenticated" || type !== "AGENTS_MD" || !showHierarchy) return;
+      try {
+        const res = await fetch("/api/user/dashboard");
+        if (res.ok) {
+          const data = await res.json();
+          const blueprints = (data.myTemplates || []).map((t: { id: string; name: string }) => ({
+            id: t.id,
+            name: t.name,
+          }));
+          setUserBlueprints(blueprints);
+        }
+      } catch {
+        // Ignore errors
+      }
+    };
+    fetchUserBlueprints();
+  }, [status, type, showHierarchy]);
 
   // Detect sensitive data in content
   const sensitiveMatches = useMemo<SensitiveMatch[]>(() => {
@@ -272,6 +304,10 @@ export default function ShareBlueprintPage() {
           showcaseUrl: showcaseUrl.trim() || null,
           turnstileToken: requiresTurnstile ? turnstileToken : undefined,
           sensitiveDataAcknowledged: acknowledgedSensitiveData,
+          // Hierarchy fields (for AGENTS_MD monorepo support)
+          parentId: type === "AGENTS_MD" && showHierarchy && parentBlueprintId ? parentBlueprintId.replace("bp_", "") : null,
+          repositoryPath: type === "AGENTS_MD" && showHierarchy && repositoryPath.trim() ? repositoryPath.trim() : null,
+          repositoryRoot: type === "AGENTS_MD" && showHierarchy && repositoryRoot.trim() ? repositoryRoot.trim() : null,
         }),
       });
 
@@ -731,6 +767,107 @@ export default function ShareBlueprintPage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Hierarchy Section (for AGENTS_MD only) */}
+                  {type === "AGENTS_MD" && (
+                    <div className="rounded-lg border border-purple-200 bg-purple-50 p-4 dark:border-purple-500/30 dark:bg-purple-900/20">
+                      <button
+                        type="button"
+                        onClick={() => setShowHierarchy(!showHierarchy)}
+                        className="flex w-full items-center justify-between text-left"
+                      >
+                        <div className="flex items-center gap-2">
+                          <FolderTree className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                          <span className="text-sm font-medium text-purple-900 dark:text-purple-200">
+                            Monorepo Hierarchy
+                          </span>
+                          <span className="text-xs text-purple-600 dark:text-purple-400">(optional)</span>
+                        </div>
+                        {showHierarchy ? (
+                          <ChevronDown className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                        )}
+                      </button>
+
+                      {showHierarchy && (
+                        <div className="mt-4 space-y-4">
+                          <p className="text-xs text-purple-700 dark:text-purple-300">
+                            If this AGENTS.md is part of a monorepo with multiple AGENTS.md files,
+                            you can specify its location and link it to a parent blueprint.
+                          </p>
+
+                          {/* Repository Path */}
+                          <div>
+                            <label
+                              htmlFor="repositoryPath"
+                              className="mb-1 block text-sm font-medium text-purple-900 dark:text-purple-200"
+                            >
+                              File Path
+                            </label>
+                            <input
+                              id="repositoryPath"
+                              type="text"
+                              value={repositoryPath}
+                              onChange={(e) => setRepositoryPath(e.target.value)}
+                              placeholder="e.g., packages/core/AGENTS.md"
+                              className="w-full rounded-lg border border-purple-300 bg-background px-4 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-purple-500/50"
+                            />
+                            <p className="mt-1 text-xs text-purple-600 dark:text-purple-400">
+                              The relative path of this file within your repository
+                            </p>
+                          </div>
+
+                          {/* Repository Root */}
+                          <div>
+                            <label
+                              htmlFor="repositoryRoot"
+                              className="mb-1 block text-sm font-medium text-purple-900 dark:text-purple-200"
+                            >
+                              Repository Identifier
+                            </label>
+                            <input
+                              id="repositoryRoot"
+                              type="text"
+                              value={repositoryRoot}
+                              onChange={(e) => setRepositoryRoot(e.target.value)}
+                              placeholder="e.g., my-monorepo or https://github.com/user/repo"
+                              className="w-full rounded-lg border border-purple-300 bg-background px-4 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-purple-500/50"
+                            />
+                            <p className="mt-1 text-xs text-purple-600 dark:text-purple-400">
+                              A unique name or URL for this repository (used to group blueprints)
+                            </p>
+                          </div>
+
+                          {/* Parent Blueprint */}
+                          <div>
+                            <label
+                              htmlFor="parentBlueprint"
+                              className="mb-1 block text-sm font-medium text-purple-900 dark:text-purple-200"
+                            >
+                              Parent Blueprint
+                            </label>
+                            <select
+                              id="parentBlueprint"
+                              value={parentBlueprintId}
+                              onChange={(e) => setParentBlueprintId(e.target.value)}
+                              className="w-full rounded-lg border border-purple-300 bg-background px-4 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-purple-500/50"
+                            >
+                              <option value="">None (root-level)</option>
+                              {userBlueprints.map((bp) => (
+                                <option key={bp.id} value={bp.id}>
+                                  {bp.name}
+                                </option>
+                              ))}
+                            </select>
+                            <p className="mt-1 text-xs text-purple-600 dark:text-purple-400">
+                              Link to a parent AGENTS.md blueprint (e.g., root-level config)
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Tags */}
                   <div>

@@ -80,6 +80,11 @@ export const docsConfig: DocsSection[] = [
         href: "/docs/blueprints/variables",
         description: "Using [[VARIABLE]] and [[VARIABLE|default]] placeholders",
       },
+      {
+        title: "Monorepo Hierarchy",
+        href: "/docs/blueprints/hierarchy",
+        description: "Organize AGENTS.md files in monorepos",
+      },
     ],
   },
   {

@@ -411,10 +411,10 @@ Slack channel: #[[SLACK_CHANNEL|dev-team]]`}</code>
           ← Creating Blueprints
         </Link>
         <Link
-          href="/docs/marketplace"
+          href="/docs/blueprints/hierarchy"
           className="text-sm text-muted-foreground hover:text-foreground"
         >
-          Marketplace →
+          Monorepo Hierarchy →
         </Link>
       </section>
     </div>

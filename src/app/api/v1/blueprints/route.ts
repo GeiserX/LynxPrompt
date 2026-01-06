@@ -98,6 +98,10 @@ export async function GET(request: NextRequest) {
         currency: true,
         createdAt: true,
         updatedAt: true,
+        // Hierarchy fields
+        parentId: true,
+        repositoryPath: true,
+        repositoryRoot: true,
       },
     });
 
@@ -117,6 +121,10 @@ export async function GET(request: NextRequest) {
       currency: bp.currency,
       created_at: bp.createdAt.toISOString(),
       updated_at: bp.updatedAt.toISOString(),
+      // Hierarchy fields
+      parent_id: bp.parentId ? toBlueprintApiId(bp.parentId) : null,
+      repository_path: bp.repositoryPath,
+      repository_root: bp.repositoryRoot,
     }));
 
     return NextResponse.json({
@@ -199,6 +207,10 @@ export async function POST(request: NextRequest) {
       category = "other",
       tags = [],
       visibility = "PRIVATE",
+      // Hierarchy fields for monorepo AGENTS.md support
+      parent_id = null,
+      repository_path = null,
+      repository_root = null,
     } = body;
 
     // Validate required fields
@@ -244,6 +256,23 @@ export async function POST(request: NextRequest) {
     if (effectiveLines > 100) tier = "ADVANCED";
     else if (effectiveLines > 30) tier = "INTERMEDIATE";
 
+    // Validate parentId if provided - must be owned by the same user
+    let validatedParentId: string | null = null;
+    if (parent_id && typeof parent_id === "string") {
+      // Strip bp_ prefix if present
+      const cleanParentId = parent_id.startsWith("bp_") ? parent_id.slice(3) : parent_id;
+      const parentBlueprint = await prismaUsers.userTemplate.findFirst({
+        where: {
+          id: cleanParentId,
+          userId: tokenData.userId,
+        },
+        select: { id: true },
+      });
+      if (parentBlueprint) {
+        validatedParentId = parentBlueprint.id;
+      }
+    }
+
     // Create blueprint
     const blueprint = await prismaUsers.userTemplate.create({
       data: {
@@ -257,6 +286,10 @@ export async function POST(request: NextRequest) {
         tags: validatedTags,
         visibility: normalizedVisibility as "PRIVATE" | "TEAM" | "PUBLIC",
         isPublic: normalizedVisibility === "PUBLIC",
+        // Hierarchy fields
+        parentId: validatedParentId,
+        repositoryPath: repository_path?.trim() || null,
+        repositoryRoot: repository_root?.trim() || null,
       },
       select: {
         id: true,
@@ -269,6 +302,9 @@ export async function POST(request: NextRequest) {
         visibility: true,
         createdAt: true,
         updatedAt: true,
+        parentId: true,
+        repositoryPath: true,
+        repositoryRoot: true,
       },
     });
 
@@ -285,6 +321,9 @@ export async function POST(request: NextRequest) {
         visibility: blueprint.visibility,
         created_at: blueprint.createdAt.toISOString(),
         updated_at: blueprint.updatedAt.toISOString(),
+        parent_id: blueprint.parentId ? toBlueprintApiId(blueprint.parentId) : null,
+        repository_path: blueprint.repositoryPath,
+        repository_root: blueprint.repositoryRoot,
       },
     }, { status: 201 });
   } catch (error) {
@@ -295,6 +334,8 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+
 
 
 
