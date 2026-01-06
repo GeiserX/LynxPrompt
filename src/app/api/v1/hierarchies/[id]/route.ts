@@ -191,6 +191,136 @@ export async function GET(
 }
 
 /**
+ * PATCH /api/v1/hierarchies/[id]
+ * Update hierarchy name or description
+ */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const authHeader = request.headers.get("authorization");
+    
+    // Check for expired token first
+    const expirationCheck = await checkTokenExpiration(authHeader);
+    if (expirationCheck.isExpired) {
+      return NextResponse.json(
+        {
+          error: "Token expired",
+          expired_at: expirationCheck.expiredAt?.toISOString(),
+          message: "Your API token has expired. Please generate a new token at https://lynxprompt.com/settings?tab=api-tokens",
+        },
+        { status: 401 }
+      );
+    }
+
+    // Validate token
+    const tokenData = await validateApiToken(authHeader);
+    if (!tokenData) {
+      return NextResponse.json(
+        { error: "Invalid or missing API token" },
+        { status: 401 }
+      );
+    }
+
+    // Check subscription
+    if (!canUseApi(tokenData.user.subscriptionPlan)) {
+      return NextResponse.json(
+        { error: "API access requires a subscription" },
+        { status: 403 }
+      );
+    }
+
+    // Check permission
+    if (!hasPermission(tokenData.role, "blueprints:write")) {
+      return NextResponse.json(
+        { error: "Token does not have blueprints:write permission" },
+        { status: 403 }
+      );
+    }
+
+    const { id } = await params;
+    const hierarchyId = fromHierarchyApiId(id);
+
+    // Parse body
+    const body = await request.json();
+    const { name, description } = body;
+
+    // Validate at least one field is provided
+    if (!name && description === undefined) {
+      return NextResponse.json(
+        { error: "At least one field (name or description) is required" },
+        { status: 400 }
+      );
+    }
+
+    // Check ownership
+    const hierarchy = await prismaUsers.hierarchy.findUnique({
+      where: { id: hierarchyId },
+      select: { userId: true, name: true },
+    });
+
+    if (!hierarchy) {
+      return NextResponse.json(
+        { error: "Hierarchy not found" },
+        { status: 404 }
+      );
+    }
+
+    if (hierarchy.userId !== tokenData.userId) {
+      return NextResponse.json(
+        { error: "Forbidden - you don't own this hierarchy" },
+        { status: 403 }
+      );
+    }
+
+    // Build update data
+    const updateData: { name?: string; description?: string | null } = {};
+    if (name) {
+      if (typeof name !== "string" || name.length < 1 || name.length > 100) {
+        return NextResponse.json(
+          { error: "Name must be a string between 1 and 100 characters" },
+          { status: 400 }
+        );
+      }
+      updateData.name = name;
+    }
+    if (description !== undefined) {
+      if (description !== null && (typeof description !== "string" || description.length > 500)) {
+        return NextResponse.json(
+          { error: "Description must be a string of max 500 characters or null" },
+          { status: 400 }
+        );
+      }
+      updateData.description = description;
+    }
+
+    // Update hierarchy
+    const updated = await prismaUsers.hierarchy.update({
+      where: { id: hierarchyId },
+      data: updateData,
+    });
+
+    return NextResponse.json({
+      hierarchy: {
+        id: toHierarchyApiId(updated.id),
+        name: updated.name,
+        description: updated.description,
+        repository_root: updated.repositoryRoot,
+        created_at: updated.createdAt.toISOString(),
+        updated_at: updated.updatedAt.toISOString(),
+      },
+    });
+  } catch (error) {
+    console.error("API v1 PATCH /hierarchies/[id] error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
  * DELETE /api/v1/hierarchies/[id]
  * Delete a hierarchy (unlinks blueprints but doesn't delete them)
  */
