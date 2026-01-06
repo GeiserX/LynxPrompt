@@ -84,6 +84,10 @@ export async function GET(
         showcaseUrl: true,
         createdAt: true,
         updatedAt: true,
+        // Hierarchy fields
+        parentId: true,
+        repositoryPath: true,
+        repositoryRoot: true,
       },
     });
 
@@ -122,6 +126,10 @@ export async function GET(
         showcase_url: blueprint.showcaseUrl,
         created_at: blueprint.createdAt.toISOString(),
         updated_at: blueprint.updatedAt.toISOString(),
+        // Hierarchy fields
+        parent_id: blueprint.parentId ? toBlueprintApiId(blueprint.parentId) : null,
+        repository_path: blueprint.repositoryPath,
+        repository_root: blueprint.repositoryRoot,
       },
     });
   } catch (error) {
@@ -418,6 +426,7 @@ export async function DELETE(
     );
   }
 }
+
 
 
 
