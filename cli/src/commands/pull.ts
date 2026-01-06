@@ -170,7 +170,7 @@ async function pullHierarchy(
       // Write the file
       await writeFile(outputPath, blueprint.content, "utf-8");
 
-      // Track the blueprint
+      // Track the blueprint with hierarchy info
       if (options.track !== false) {
         const source = getSourceFromVisibility(blueprint.visibility);
         await trackBlueprint(cwd, {
@@ -179,6 +179,9 @@ async function pullHierarchy(
           file: filename,
           content: blueprint.content,
           source,
+          hierarchyId: id,
+          hierarchyName: hierarchy.name,
+          repositoryPath: bp.repository_path || undefined,
         });
       }
 
@@ -397,6 +400,8 @@ async function pullBlueprint(
         file: filename,
         content: blueprint.content,
         source,
+        hierarchyId: blueprint.hierarchy_id || undefined,
+        repositoryPath: blueprint.repository_path || undefined,
       });
     }
 

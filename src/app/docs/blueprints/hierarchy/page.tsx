@@ -86,6 +86,39 @@ export default function MonorepoHierarchyPage() {
         </div>
       </section>
 
+      {/* Naming */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg bg-primary/10 p-2">
+            <FileCode className="h-5 w-5 text-primary" />
+          </div>
+          <h2 className="text-2xl font-bold">Hierarchy Naming</h2>
+        </div>
+        <p className="text-muted-foreground">
+          When you create a hierarchy, the name <strong>defaults to the folder name</strong> where your root 
+          AGENTS.md is located. You can change it later via the API.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="rounded-lg border bg-card p-4">
+            <h3 className="mb-2 font-medium">Default Name</h3>
+            <p className="text-sm text-muted-foreground">
+              If you push from <code>/projects/my-monorepo/AGENTS.md</code>, the hierarchy will be 
+              named <code>my-monorepo</code> automatically.
+            </p>
+          </div>
+          <div className="rounded-lg border bg-muted/30 p-4">
+            <h3 className="mb-2 font-medium text-sm">Rename via API</h3>
+            <pre className="overflow-x-auto text-sm">
+              <code>{`PATCH /api/v1/hierarchies/ha_xyz789
+{
+  "name": "My Custom Name",
+  "description": "Optional description"
+}`}</code>
+            </pre>
+          </div>
+        </div>
+      </section>
+
       {/* CLI: Push */}
       <section className="space-y-4">
         <div className="flex items-center gap-3">
