@@ -127,7 +127,7 @@ async function detectHierarchyInfo(cwd: string, file: string): Promise<Hierarchy
 /**
  * Ensure a hierarchy exists for the repository and return its ID
  */
-async function ensureHierarchy(cwd: string, repositoryRoot: string, name: string): Promise<string | null> {
+async function ensureHierarchy(_cwd: string, repositoryRoot: string, name: string): Promise<string | null> {
   try {
     // Try to create or get existing hierarchy
     const response = await api.createHierarchy({

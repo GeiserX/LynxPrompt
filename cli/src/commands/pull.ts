@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import ora from "ora";
 import prompts from "prompts";
-import { api, ApiRequestError, Blueprint, Hierarchy } from "../api.js";
+import { api, ApiRequestError, Blueprint } from "../api.js";
 import { isAuthenticated } from "../config.js";
 import { writeFile, mkdir, readFile } from "fs/promises";
 import { join, dirname } from "path";
