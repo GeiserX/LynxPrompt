@@ -22,6 +22,10 @@ export interface Blueprint {
   created_at: string;
   updated_at: string;
   content?: string;
+  // Hierarchy fields for monorepo AGENTS.md support
+  parent_id?: string | null;
+  repository_path?: string | null;
+  repository_root?: string | null;
 }
 
 export interface BlueprintsResponse {
@@ -199,6 +203,10 @@ class ApiClient {
     content: string;
     visibility: "PRIVATE" | "TEAM" | "PUBLIC";
     tags?: string[];
+    // Hierarchy fields for monorepo AGENTS.md support
+    parent_id?: string | null;
+    repository_path?: string | null;
+    repository_root?: string | null;
   }): Promise<{ blueprint: Blueprint }> {
     return this.request<{ blueprint: Blueprint }>("/api/v1/blueprints", {
       method: "POST",

@@ -33,6 +33,7 @@ import {
   Trash2,
   GitBranch,
   Search,
+  FolderTree,
 } from "lucide-react";
 import { Footer } from "@/components/footer";
 import { PageHeader } from "@/components/page-header";
@@ -109,6 +110,23 @@ interface PurchasedBlueprint {
   currentVersion?: number;
 }
 
+interface HierarchicalBlueprint {
+  id: string;
+  name: string;
+  type: string;
+  downloads: number;
+  favorites: number;
+  visibility: "PRIVATE" | "TEAM" | "PUBLIC";
+  createdAt: string;
+  parentId: string | null;
+  repositoryPath: string | null;
+}
+
+interface HierarchyGroup {
+  repositoryRoot: string;
+  blueprints: HierarchicalBlueprint[];
+}
+
 interface TeamBlueprint {
   id: string;
   name: string;
@@ -139,6 +157,7 @@ interface DashboardData {
   recentActivity: RecentActivity[];
   favoriteTemplates: FavoriteTemplate[];
   purchasedBlueprints: PurchasedBlueprint[];
+  hierarchicalBlueprints: HierarchyGroup[];
   teamBlueprints: TeamBlueprint[];
   teamPurchases: TeamPurchase[];
 }
@@ -185,6 +204,10 @@ export default function DashboardPage() {
   
   // My Blueprints search
   const [blueprintSearch, setBlueprintSearch] = useState("");
+  
+  // Hierarchical blueprints toggle
+  const [showHierarchical, setShowHierarchical] = useState(false);
+  const [expandedHierarchies, setExpandedHierarchies] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -794,6 +817,118 @@ export default function DashboardPage() {
                               <Eye className="h-4 w-4" />
                             </Link>
                           </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Hierarchical Blueprints (Monorepo AGENTS.md) */}
+              {dashboardData?.hierarchicalBlueprints && dashboardData.hierarchicalBlueprints.length > 0 && (
+                <div className="mb-8">
+                  <button
+                    onClick={() => setShowHierarchical(!showHierarchical)}
+                    className="mb-4 flex w-full items-center justify-between text-left"
+                  >
+                    <div className="flex items-center gap-2">
+                      <FolderTree className="h-5 w-5 text-purple-500" />
+                      <h2 className="text-lg font-semibold">Hierarchical Blueprints</h2>
+                      <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+                        {dashboardData.hierarchicalBlueprints.reduce((acc, g) => acc + g.blueprints.length, 0)} files
+                      </span>
+                    </div>
+                    {showHierarchical ? (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </button>
+
+                  {showHierarchical && (
+                    <div className="space-y-4">
+                      {dashboardData.hierarchicalBlueprints.map((group) => (
+                        <div
+                          key={group.repositoryRoot}
+                          className="rounded-lg border border-purple-500/20 bg-gradient-to-r from-purple-500/5 to-background"
+                        >
+                          <button
+                            onClick={() => {
+                              const newExpanded = new Set(expandedHierarchies);
+                              if (newExpanded.has(group.repositoryRoot)) {
+                                newExpanded.delete(group.repositoryRoot);
+                              } else {
+                                newExpanded.add(group.repositoryRoot);
+                              }
+                              setExpandedHierarchies(newExpanded);
+                            }}
+                            className="flex w-full items-center justify-between p-4 text-left"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="rounded-lg bg-purple-500/10 p-2">
+                                <GitBranch className="h-5 w-5 text-purple-500" />
+                              </div>
+                              <div>
+                                <h3 className="font-medium">Repository</h3>
+                                <p className="text-xs text-muted-foreground">
+                                  {group.blueprints.length} AGENTS.md file{group.blueprints.length !== 1 ? "s" : ""}
+                                </p>
+                              </div>
+                            </div>
+                            {expandedHierarchies.has(group.repositoryRoot) ? (
+                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </button>
+
+                          {expandedHierarchies.has(group.repositoryRoot) && (
+                            <div className="border-t border-purple-500/10">
+                              {group.blueprints.map((bp, idx) => (
+                                <div
+                                  key={bp.id}
+                                  className={`flex items-center justify-between px-4 py-3 ${
+                                    idx !== group.blueprints.length - 1 ? "border-b border-purple-500/10" : ""
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                      {bp.parentId ? (
+                                        <span className="text-xs">└─</span>
+                                      ) : null}
+                                      <FileText className="h-4 w-4" />
+                                    </div>
+                                    <div>
+                                      <h4 className="text-sm font-medium">{bp.name}</h4>
+                                      {bp.repositoryPath && (
+                                        <p className="text-xs text-muted-foreground font-mono">
+                                          {bp.repositoryPath}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span
+                                      className={`rounded-full px-2 py-0.5 text-xs ${
+                                        bp.visibility === "PUBLIC"
+                                          ? "bg-green-500/10 text-green-600"
+                                          : bp.visibility === "TEAM"
+                                          ? "bg-teal-500/10 text-teal-600"
+                                          : "bg-yellow-500/10 text-yellow-600"
+                                      }`}
+                                    >
+                                      {bp.visibility === "PUBLIC" ? "Public" : bp.visibility === "TEAM" ? "Team" : "Private"}
+                                    </span>
+                                    <Button variant="ghost" size="icon" asChild title="View">
+                                      <Link href={`/blueprints/${bp.id}`}>
+                                        <Eye className="h-4 w-4" />
+                                      </Link>
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
