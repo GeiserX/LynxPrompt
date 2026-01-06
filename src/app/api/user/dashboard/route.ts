@@ -96,23 +96,23 @@ export async function GET() {
           isPublic: true,
           visibility: true,
           createdAt: true,
-          currentVersion: true,
-          publishedVersion: true,
-          // Hierarchy fields
-          parentId: true,
-          repositoryPath: true,
-          repositoryRoot: true,
-        },
-      }).then(templates => templates.map(template => ({
-        ...template,
-        id: `bp_${template.id}`, // Add bp_ prefix for template detail routing
-        version: template.currentVersion,
-        publishedVersion: template.publishedVersion,
-        // Include hierarchy info
-        parentId: template.parentId ? `bp_${template.parentId}` : null,
-        repositoryPath: template.repositoryPath,
-        repositoryRoot: template.repositoryRoot,
-      }))),
+        currentVersion: true,
+        publishedVersion: true,
+        // Hierarchy fields
+        hierarchyId: true,
+        parentId: true,
+        repositoryPath: true,
+      },
+    }).then(templates => templates.map(template => ({
+      ...template,
+      id: `bp_${template.id}`, // Add bp_ prefix for template detail routing
+      version: template.currentVersion,
+      publishedVersion: template.publishedVersion,
+      // Include hierarchy info
+      hierarchyId: template.hierarchyId ? `ha_${template.hierarchyId}` : null,
+      parentId: template.parentId ? `bp_${template.parentId}` : null,
+      repositoryPath: template.repositoryPath,
+    }))),
 
       // Get recent activity (downloads on user's templates + user's downloads)
       prismaUsers.templateDownload.findMany({

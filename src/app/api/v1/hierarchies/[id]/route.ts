@@ -103,7 +103,6 @@ export async function GET(
     }
 
     // Build tree structure
-    const blueprintsById = new Map(hierarchy.blueprints.map(b => [b.id, b]));
     const rootBlueprints: typeof hierarchy.blueprints = [];
     const childrenMap = new Map<string, typeof hierarchy.blueprints>();
 
@@ -117,8 +116,26 @@ export async function GET(
       }
     }
 
+    // Define explicit return type to avoid recursive inference issue
+    interface FormattedBlueprint {
+      id: string;
+      name: string;
+      description: string | null;
+      type: string;
+      tier: string;
+      repository_path: string | null;
+      parent_id: string | null;
+      content_checksum: string | null;
+      visibility: string;
+      downloads: number;
+      favorites: number;
+      created_at: string;
+      updated_at: string;
+      children: FormattedBlueprint[];
+    }
+
     // Format blueprint for response
-    const formatBlueprint = (bp: typeof hierarchy.blueprints[0]) => ({
+    const formatBlueprint = (bp: typeof hierarchy.blueprints[0]): FormattedBlueprint => ({
       id: toBlueprintApiId(bp.id),
       name: bp.name,
       description: bp.description,
