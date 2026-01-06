@@ -299,6 +299,10 @@ export async function POST(request: NextRequest) {
       showcaseUrl,
       turnstileToken,
       sensitiveDataAcknowledged = false, // User acknowledged sensitive data warning
+      // Hierarchy fields for monorepo AGENTS.md support
+      parentId = null, // Parent blueprint ID for nested AGENTS.md
+      repositoryPath = null, // Relative path within repo (e.g., "packages/core/AGENTS.md")
+      repositoryRoot = null, // Repository identifier to group blueprints
     } = body;
     
     // Validate visibility
@@ -486,6 +490,21 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Validate parentId if provided - must be owned by the same user
+    let validatedParentId: string | null = null;
+    if (parentId && typeof parentId === "string") {
+      const parentBlueprint = await prismaUsers.userTemplate.findFirst({
+        where: {
+          id: parentId,
+          userId: session.user.id,
+        },
+        select: { id: true },
+      });
+      if (parentBlueprint) {
+        validatedParentId = parentBlueprint.id;
+      }
+    }
+
     // Create the blueprint with version 1
     const blueprint = await prismaUsers.userTemplate.create({
       data: {
@@ -508,6 +527,10 @@ export async function POST(request: NextRequest) {
         showcaseUrl: validatedShowcaseUrl,
         currentVersion: 1,
         publishedVersion: effectiveIsPublic ? 1 : null, // Set publishedVersion if public
+        // Hierarchy fields
+        parentId: validatedParentId,
+        repositoryPath: repositoryPath?.trim() || null,
+        repositoryRoot: repositoryRoot?.trim() || null,
       },
     });
 
@@ -532,6 +555,10 @@ export async function POST(request: NextRequest) {
         tier: blueprint.tier,
         category: blueprint.category,
         version: 1,
+        // Hierarchy info
+        parentId: blueprint.parentId,
+        repositoryPath: blueprint.repositoryPath,
+        repositoryRoot: blueprint.repositoryRoot,
       },
     });
   } catch (error) {
