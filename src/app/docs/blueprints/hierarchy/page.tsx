@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FolderTree, Terminal, Globe, GitBranch, Layers, FileCode } from "lucide-react";
+import { FolderTree, Terminal, Globe, GitBranch, Layers, FileCode, Download, RefreshCw, AlertTriangle } from "lucide-react";
 
 export default function MonorepoHierarchyPage() {
   return (
@@ -15,7 +15,8 @@ export default function MonorepoHierarchyPage() {
         </div>
         <h1 className="text-3xl font-bold tracking-tight">Monorepo Hierarchy</h1>
         <p className="max-w-2xl text-lg text-muted-foreground">
-          Organize multiple AGENTS.md files in monorepo structures with parent-child relationships.
+          Organize multiple AGENTS.md files in monorepo structures with parent-child relationships
+          using <code className="text-primary">ha_</code> hierarchies.
         </p>
       </div>
 
@@ -30,7 +31,8 @@ export default function MonorepoHierarchyPage() {
         <p className="text-muted-foreground">
           Large monorepos often have multiple AGENTS.md files at different levels—a root file with 
           organization-wide rules, and package-specific files with additional context. LynxPrompt 
-          detects and preserves this hierarchy when you push blueprints.
+          groups these into <strong>hierarchies</strong> (identified by <code className="text-primary">ha_</code> IDs)
+          that you can pull and sync as a unit.
         </p>
         <div className="rounded-lg border bg-muted/30 p-4">
           <pre className="overflow-x-auto text-sm">
@@ -47,151 +49,247 @@ export default function MonorepoHierarchyPage() {
     ├── api/
     │   └── AGENTS.md      ← Child blueprint (api-specific)
     └── worker/
-        └── AGENTS.md      ← Child blueprint (worker-specific)`}</code>
+        └── AGENTS.md      ← Child blueprint (worker-specific)
+
+→ All grouped under hierarchy: ha_xyz123`}</code>
           </pre>
         </div>
       </section>
 
-      {/* How it works */}
+      {/* ID Formats */}
       <section className="space-y-4">
         <div className="flex items-center gap-3">
           <div className="rounded-lg bg-primary/10 p-2">
             <Layers className="h-5 w-5 text-primary" />
           </div>
-          <h2 className="text-2xl font-bold">How Hierarchy Works</h2>
+          <h2 className="text-2xl font-bold">ID Formats</h2>
         </div>
-        <p className="text-muted-foreground">
-          When you push AGENTS.md files from a monorepo, LynxPrompt stores:
-        </p>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-lg border bg-card p-4">
-            <h3 className="mb-2 font-medium">Repository Root</h3>
-            <code className="rounded bg-muted px-2 py-1 text-sm font-medium text-primary">
-              repository_root
+            <code className="rounded bg-blue-500/10 px-2 py-1 text-sm font-medium text-blue-600 dark:text-blue-400">
+              bp_abc123
             </code>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Identifies which repository/monorepo this blueprint belongs to
+            <h3 className="mt-2 font-medium">Blueprint ID</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Individual AGENTS.md file. Pull one file with <code>lynxp pull bp_xxx</code>
             </p>
           </div>
           <div className="rounded-lg border bg-card p-4">
-            <h3 className="mb-2 font-medium">Repository Path</h3>
-            <code className="rounded bg-muted px-2 py-1 text-sm font-medium text-primary">
-              repository_path
+            <code className="rounded bg-purple-500/10 px-2 py-1 text-sm font-medium text-purple-600 dark:text-purple-400">
+              ha_xyz789
             </code>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Relative path within the repo (e.g., <code className="text-xs">packages/core</code>)
-            </p>
-          </div>
-          <div className="rounded-lg border bg-card p-4">
-            <h3 className="mb-2 font-medium">Parent Blueprint</h3>
-            <code className="rounded bg-muted px-2 py-1 text-sm font-medium text-primary">
-              parent_id
-            </code>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Links child blueprints to their parent (root AGENTS.md)
+            <h3 className="mt-2 font-medium">Hierarchy ID</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Group of related blueprints. Pull entire tree with <code>lynxp pull ha_xxx</code>
             </p>
           </div>
         </div>
       </section>
 
-      {/* CLI Usage */}
+      {/* CLI: Push */}
       <section className="space-y-4">
         <div className="flex items-center gap-3">
           <div className="rounded-lg bg-primary/10 p-2">
             <Terminal className="h-5 w-5 text-primary" />
           </div>
-          <h2 className="text-2xl font-bold">Using the CLI</h2>
+          <h2 className="text-2xl font-bold">Pushing to a Hierarchy</h2>
         </div>
         <p className="text-muted-foreground">
-          The CLI automatically detects hierarchy when pushing AGENTS.md files:
+          When you push AGENTS.md files, the CLI auto-detects the repository and creates/joins a hierarchy:
         </p>
         <div className="space-y-4">
           <div className="rounded-lg border bg-muted/30 p-4">
-            <h3 className="mb-2 font-medium text-sm">Push a root AGENTS.md</h3>
+            <h3 className="mb-2 font-medium text-sm">1. Push root AGENTS.md (creates hierarchy)</h3>
             <pre className="overflow-x-auto text-sm">
-              <code>{`# From your monorepo root
-cd my-monorepo
+              <code>{`cd my-monorepo
 lynxp push AGENTS.md --name "My Org Rules"
 
-# Output:
 # ✅ Created blueprint "My Org Rules"
 #    ID: bp_abc123
-#    Repository: my-monorepo (root)`}</code>
+#    Hierarchy: ha_xyz789  ← New hierarchy created`}</code>
             </pre>
           </div>
           <div className="rounded-lg border bg-muted/30 p-4">
-            <h3 className="mb-2 font-medium text-sm">Push a child AGENTS.md</h3>
+            <h3 className="mb-2 font-medium text-sm">2. Push child AGENTS.md (joins hierarchy)</h3>
             <pre className="overflow-x-auto text-sm">
-              <code>{`# From a package directory
-cd my-monorepo/packages/core
+              <code>{`cd my-monorepo/packages/core
 lynxp push AGENTS.md --name "Core Package Rules"
 
-# Output:
 # ✅ Created blueprint "Core Package Rules"
 #    ID: bp_def456
-#    Repository: my-monorepo
-#    Path: packages/core
-#    Parent: bp_abc123 (My Org Rules)  ← Auto-detected!`}</code>
+#    Hierarchy: ha_xyz789  ← Same hierarchy
+#    Path: packages/core/AGENTS.md
+#    ↳ Linked to parent: bp_abc123`}</code>
             </pre>
-          </div>
-        </div>
-        <div className="rounded-lg border border-sky-200 bg-sky-50 p-4 dark:border-sky-500/50 dark:bg-sky-900/30">
-          <div className="flex items-start gap-2">
-            <GitBranch className="h-4 w-4 flex-shrink-0 text-sky-600 dark:text-sky-300 mt-0.5" />
-            <div>
-              <h3 className="font-medium text-sky-800 dark:text-sky-200">Automatic Detection</h3>
-              <p className="mt-1 text-sm text-sky-700 dark:text-sky-300">
-                The CLI uses git to find the repository root and calculates the relative path. 
-                It also searches your existing blueprints to find and link to parent AGENTS.md files automatically.
-              </p>
-            </div>
           </div>
         </div>
       </section>
 
-      {/* Web UI */}
+      {/* CLI: Pull Hierarchy */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg bg-primary/10 p-2">
+            <Download className="h-5 w-5 text-primary" />
+          </div>
+          <h2 className="text-2xl font-bold">Pulling a Hierarchy</h2>
+        </div>
+        <p className="text-muted-foreground">
+          Pull an entire hierarchy to recreate the directory structure with all AGENTS.md files:
+        </p>
+        <div className="rounded-lg border bg-muted/30 p-4">
+          <pre className="overflow-x-auto text-sm">
+            <code>{`# Pull entire hierarchy
+lynxp pull ha_xyz789
+
+# 📥 Downloading blueprints...
+#   ✓ AGENTS.md
+#   ✓ packages/core/AGENTS.md
+#   ✓ packages/web/AGENTS.md
+#   ✓ services/api/AGENTS.md
+# ✅ Downloaded 4 blueprint(s)
+
+# Preview first
+lynxp pull ha_xyz789 --preview`}</code>
+          </pre>
+        </div>
+      </section>
+
+      {/* CLI: List Hierarchies */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg bg-primary/10 p-2">
+            <FolderTree className="h-5 w-5 text-primary" />
+          </div>
+          <h2 className="text-2xl font-bold">Listing Hierarchies</h2>
+        </div>
+        <div className="rounded-lg border bg-muted/30 p-4">
+          <pre className="overflow-x-auto text-sm">
+            <code>{`lynxp hierarchies
+
+# 📁 Your Hierarchies (2 total)
+#
+#   my-monorepo
+#     ID: ha_xyz789
+#     Blueprints: 6
+#
+#   other-project
+#     ID: ha_abc456
+#     Blueprints: 3`}</code>
+          </pre>
+        </div>
+      </section>
+
+      {/* Optimistic Locking */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg bg-yellow-500/10 p-2">
+            <AlertTriangle className="h-5 w-5 text-yellow-600" />
+          </div>
+          <h2 className="text-2xl font-bold">Conflict Detection</h2>
+        </div>
+        <p className="text-muted-foreground">
+          LynxPrompt uses optimistic locking to prevent accidental overwrites when collaborating:
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="rounded-lg border bg-card p-4">
+            <h3 className="mb-2 font-medium">How it works</h3>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li>• Each blueprint has a <code>content_checksum</code></li>
+              <li>• When you push, the expected checksum is sent</li>
+              <li>• If someone else pushed in between, you get a 409 Conflict</li>
+              <li>• Pull latest changes, resolve, then push again</li>
+            </ul>
+          </div>
+          <div className="rounded-lg border bg-muted/30 p-4">
+            <pre className="overflow-x-auto text-sm">
+              <code>{`# Conflict detected
+lynxp push AGENTS.md
+
+# ⚠ Conflict: Blueprint has been modified
+#   Someone else may have pushed changes.
+#
+# Options:
+#   1. lynxp pull bp_xxx (get latest)
+#   2. lynxp push --force (overwrite)`}</code>
+            </pre>
+          </div>
+        </div>
+      </section>
+
+      {/* API */}
       <section className="space-y-4">
         <div className="flex items-center gap-3">
           <div className="rounded-lg bg-primary/10 p-2">
             <Globe className="h-5 w-5 text-primary" />
           </div>
-          <h2 className="text-2xl font-bold">Web UI</h2>
+          <h2 className="text-2xl font-bold">API Reference</h2>
         </div>
         <p className="text-muted-foreground">
-          When creating AGENTS_MD blueprints in the web interface, you can manually specify hierarchy:
+          Access hierarchies programmatically via the v1 API:
         </p>
-        <div className="rounded-lg border bg-card p-4 space-y-3">
-          <div className="flex items-start gap-3">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-sm font-medium">1</span>
-            <div>
-              <p className="font-medium">Enable hierarchy mode</p>
-              <p className="text-sm text-muted-foreground">
-                Click &quot;Part of a monorepo hierarchy?&quot; when creating an AGENTS_MD blueprint
-              </p>
-            </div>
+        <div className="space-y-4">
+          <div className="rounded-lg border bg-muted/30 p-4">
+            <h3 className="mb-2 font-medium text-sm">List hierarchies</h3>
+            <pre className="overflow-x-auto text-sm">
+              <code>{`GET /api/v1/hierarchies
+Authorization: Bearer lp_xxx
+
+# Response:
+{
+  "hierarchies": [
+    {
+      "id": "ha_xyz789",
+      "name": "my-monorepo",
+      "repository_root": "abc123...",
+      "blueprint_count": 6
+    }
+  ]
+}`}</code>
+            </pre>
           </div>
-          <div className="flex items-start gap-3">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-sm font-medium">2</span>
-            <div>
-              <p className="font-medium">Set repository identifier</p>
-              <p className="text-sm text-muted-foreground">
-                Enter a unique name for your repository (e.g., &quot;my-org/monorepo&quot;)
-              </p>
-            </div>
+          <div className="rounded-lg border bg-muted/30 p-4">
+            <h3 className="mb-2 font-medium text-sm">Get hierarchy with blueprints</h3>
+            <pre className="overflow-x-auto text-sm">
+              <code>{`GET /api/v1/hierarchies/ha_xyz789
+Authorization: Bearer lp_xxx
+
+# Response includes:
+# - hierarchy metadata
+# - blueprints array (flat list)
+# - tree structure (nested for traversal)`}</code>
+            </pre>
           </div>
-          <div className="flex items-start gap-3">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-sm font-medium">3</span>
-            <div>
-              <p className="font-medium">Specify path and parent</p>
-              <p className="text-sm text-muted-foreground">
-                Set the relative path (leave empty for root) and optionally link to a parent blueprint
-              </p>
-            </div>
+          <div className="rounded-lg border bg-muted/30 p-4">
+            <h3 className="mb-2 font-medium text-sm">Create blueprint with hierarchy</h3>
+            <pre className="overflow-x-auto text-sm">
+              <code>{`POST /api/v1/blueprints
+{
+  "name": "Core Package",
+  "content": "...",
+  "visibility": "PRIVATE",
+  "hierarchy_id": "ha_xyz789",
+  "repository_path": "packages/core/AGENTS.md",
+  "parent_id": "bp_abc123"
+}`}</code>
+            </pre>
+          </div>
+          <div className="rounded-lg border bg-muted/30 p-4">
+            <h3 className="mb-2 font-medium text-sm">Update with conflict detection</h3>
+            <pre className="overflow-x-auto text-sm">
+              <code>{`PUT /api/v1/blueprints/bp_def456
+{
+  "content": "...",
+  "expected_checksum": "abc123def456"
+}
+
+# 200 OK → Success
+# 409 Conflict → Someone else modified it`}</code>
+            </pre>
           </div>
         </div>
       </section>
 
-      {/* Dashboard View */}
+      {/* Dashboard */}
       <section className="space-y-4">
         <div className="flex items-center gap-3">
           <div className="rounded-lg bg-primary/10 p-2">
@@ -200,96 +298,30 @@ lynxp push AGENTS.md --name "Core Package Rules"
           <h2 className="text-2xl font-bold">Dashboard View</h2>
         </div>
         <p className="text-muted-foreground">
-          Hierarchical blueprints appear in a special section on your dashboard:
+          In your dashboard, hierarchical blueprints are shown in a collapsible &quot;Hierarchical Blueprints&quot;
+          section. Click on a hierarchy to expand and see all its AGENTS.md files with their paths.
         </p>
         <div className="rounded-lg border bg-card p-4">
-          <ul className="space-y-2 text-muted-foreground">
-            <li className="flex items-center gap-2">
-              <span className="text-green-500">✓</span>
-              <strong>Grouped by repository</strong> — All AGENTS.md files from the same repo are grouped together
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="text-green-500">✓</span>
-              <strong>Expandable tree view</strong> — Click to expand and see all blueprints in a repository
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="text-green-500">✓</span>
-              <strong>Path display</strong> — Each blueprint shows its relative path within the repo
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="text-green-500">✓</span>
-              <strong>Quick access</strong> — Click any blueprint to view or edit it
-            </li>
-          </ul>
-        </div>
-        <div className="rounded-lg border bg-muted/30 p-4">
-          <p className="text-sm text-muted-foreground mb-2">Example dashboard view:</p>
-          <pre className="overflow-x-auto text-sm">
-            <code>{`📁 Hierarchical Blueprints
-└─ my-org/monorepo
-   ├─ [root] My Org Rules
-   ├─ packages/core → Core Package Rules
-   ├─ packages/web → Web App Rules
-   └─ services/api → API Service Rules`}</code>
-          </pre>
-        </div>
-      </section>
-
-      {/* API */}
-      <section className="space-y-4">
-        <h2 className="text-2xl font-bold">API Reference</h2>
-        <p className="text-muted-foreground">
-          When creating blueprints via the API, include hierarchy fields:
-        </p>
-        <div className="rounded-lg border bg-muted/30 p-4">
-          <pre className="overflow-x-auto text-sm">
-            <code>{`POST /api/v1/blueprints
-{
-  "name": "Core Package Rules",
-  "content": "# Core Package\\n\\n...",
-  "type": "AGENTS_MD",
-  "visibility": "PRIVATE",
-  
-  // Hierarchy fields (optional)
-  "repository_root": "my-org/monorepo",
-  "repository_path": "packages/core",
-  "parent_id": "bp_abc123"  // ID of parent blueprint
-}`}</code>
-          </pre>
-        </div>
-        <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-4 dark:border-amber-500/50 dark:bg-amber-900/20">
-          <h3 className="font-medium text-amber-800 dark:text-amber-200">Note</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            The <code className="rounded bg-muted px-1 py-0.5 text-xs">parent_id</code> must reference 
-            a blueprint you own. You cannot link to other users&apos; blueprints as parents.
-          </p>
-        </div>
-      </section>
-
-      {/* Best practices */}
-      <section className="space-y-4">
-        <h2 className="text-2xl font-bold">Best Practices</h2>
-        <div className="space-y-3">
-          <div className="rounded-lg border bg-card p-4">
-            <h3 className="font-medium">Push root first</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Always push your root AGENTS.md before child files. This ensures the parent 
-              blueprint exists for children to link to.
-            </p>
-          </div>
-          <div className="rounded-lg border bg-card p-4">
-            <h3 className="font-medium">Use consistent repository identifiers</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              The CLI uses git to auto-detect repository roots, ensuring consistency. 
-              When using the web UI, use a consistent naming scheme like <code className="rounded bg-muted px-1 py-0.5 text-xs">org/repo-name</code>.
-            </p>
-          </div>
-          <div className="rounded-lg border bg-card p-4">
-            <h3 className="font-medium">Keep paths relative</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Repository paths should be relative to the repo root (e.g., <code className="rounded bg-muted px-1 py-0.5 text-xs">packages/core</code>), 
-              not absolute filesystem paths.
-            </p>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400">
+              <FolderTree className="h-4 w-4" />
+              <span className="font-medium">Hierarchical Blueprints</span>
+              <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs dark:bg-purple-900/30">
+                6 files
+              </span>
+            </div>
+            <div className="ml-6 space-y-1 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <GitBranch className="h-3 w-3" />
+                <span>my-monorepo (ha_xyz789)</span>
+              </div>
+              <div className="ml-4 space-y-0.5 font-mono text-xs">
+                <div>AGENTS.md</div>
+                <div className="text-muted-foreground/70">└─ packages/core/AGENTS.md</div>
+                <div className="text-muted-foreground/70">└─ packages/web/AGENTS.md</div>
+                <div className="text-muted-foreground/70">└─ services/api/AGENTS.md</div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -300,7 +332,7 @@ lynxp push AGENTS.md --name "Core Package Rules"
           href="/docs/blueprints/variables"
           className="text-sm text-muted-foreground hover:text-foreground"
         >
-          ← Template Variables
+          ← Variables
         </Link>
         <Link
           href="/docs/marketplace"
@@ -312,4 +344,3 @@ lynxp push AGENTS.md --name "Core Package Rules"
     </div>
   );
 }
-

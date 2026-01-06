@@ -23,9 +23,38 @@ export interface Blueprint {
   updated_at: string;
   content?: string;
   // Hierarchy fields for monorepo AGENTS.md support
+  hierarchy_id?: string | null;
   parent_id?: string | null;
   repository_path?: string | null;
-  repository_root?: string | null;
+  content_checksum?: string | null;
+}
+
+export interface Hierarchy {
+  id: string;
+  name: string;
+  description: string | null;
+  repository_root: string;
+  blueprint_count?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface HierarchyDetail extends Hierarchy {
+  blueprints: Blueprint[];
+  tree: BlueprintTreeNode[];
+  total_blueprints: number;
+}
+
+export interface BlueprintTreeNode extends Blueprint {
+  children: BlueprintTreeNode[];
+}
+
+export interface HierarchiesResponse {
+  hierarchies: Hierarchy[];
+  total: number;
+  limit: number;
+  offset: number;
+  has_more: boolean;
 }
 
 export interface BlueprintsResponse {
@@ -204,9 +233,9 @@ class ApiClient {
     visibility: "PRIVATE" | "TEAM" | "PUBLIC";
     tags?: string[];
     // Hierarchy fields for monorepo AGENTS.md support
+    hierarchy_id?: string | null;
     parent_id?: string | null;
     repository_path?: string | null;
-    repository_root?: string | null;
   }): Promise<{ blueprint: Blueprint }> {
     return this.request<{ blueprint: Blueprint }>("/api/v1/blueprints", {
       method: "POST",
@@ -222,12 +251,55 @@ class ApiClient {
       content?: string;
       visibility?: "PRIVATE" | "TEAM" | "PUBLIC";
       tags?: string[];
+      expected_checksum?: string; // For optimistic locking
     }
   ): Promise<{ blueprint: Blueprint }> {
     const apiId = id.startsWith("bp_") ? id : `bp_${id}`;
     return this.request<{ blueprint: Blueprint }>(`/api/v1/blueprints/${apiId}`, {
       method: "PUT",
       body: JSON.stringify(data),
+    });
+  }
+
+  // Hierarchy endpoints
+  async listHierarchies(options: {
+    limit?: number;
+    offset?: number;
+  } = {}): Promise<HierarchiesResponse> {
+    const params = new URLSearchParams();
+    if (options.limit) params.set("limit", options.limit.toString());
+    if (options.offset) params.set("offset", options.offset.toString());
+
+    const query = params.toString();
+    return this.request<HierarchiesResponse>(
+      `/api/v1/hierarchies${query ? `?${query}` : ""}`
+    );
+  }
+
+  async getHierarchy(id: string): Promise<{ hierarchy: Hierarchy; blueprints: Blueprint[]; tree: BlueprintTreeNode[]; total_blueprints: number }> {
+    // Ensure ha_ prefix for hierarchy IDs
+    let apiId = id;
+    if (!id.startsWith("ha_")) {
+      apiId = `ha_${id}`;
+    }
+    return this.request<{ hierarchy: Hierarchy; blueprints: Blueprint[]; tree: BlueprintTreeNode[]; total_blueprints: number }>(`/api/v1/hierarchies/${apiId}`);
+  }
+
+  async createHierarchy(data: {
+    name: string;
+    repository_root: string;
+    description?: string;
+  }): Promise<{ hierarchy: Hierarchy }> {
+    return this.request<{ hierarchy: Hierarchy }>("/api/v1/hierarchies", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteHierarchy(id: string): Promise<{ success: boolean; message: string }> {
+    const apiId = id.startsWith("ha_") ? id : `ha_${id}`;
+    return this.request<{ success: boolean; message: string }>(`/api/v1/hierarchies/${apiId}`, {
+      method: "DELETE",
     });
   }
 
