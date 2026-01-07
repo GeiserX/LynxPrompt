@@ -1,4 +1,4 @@
-import type { AiBehaviorRuleOption, ImportantFileOption } from "./types.js";
+import type { AiBehaviorRuleOption, ImportantFileOption, WizardOption } from "./types.js";
 
 /**
  * AI behavior rules
@@ -14,6 +14,18 @@ export const AI_BEHAVIOR_RULES: AiBehaviorRuleOption[] = [
   { id: "avoid_breaking_changes", label: "Avoid Breaking Changes", description: "Maintain backward compatibility" },
   { id: "use_conventional_commits", label: "Use Conventional Commits", description: "Follow commit message conventions" },
   { id: "prefer_composition", label: "Prefer Composition Over Inheritance", description: "Use composition patterns" },
+];
+
+/**
+ * Plan mode frequency - how often should the AI enter plan mode before implementing
+ */
+export const PLAN_MODE_FREQUENCY: WizardOption[] = [
+  { id: "always", label: "Always", icon: "🧠", description: "Plan before every task, even simple ones" },
+  { id: "complex_tasks", label: "Complex Tasks Only", icon: "🎯", description: "Plan for multi-step or complex changes (recommended)" },
+  { id: "multi_file", label: "Multi-file Changes", icon: "📁", description: "Plan when changes span multiple files" },
+  { id: "new_features", label: "New Features", icon: "✨", description: "Plan only for new feature implementations" },
+  { id: "on_request", label: "On Request", icon: "🙋", description: "Only plan when explicitly asked" },
+  { id: "never", label: "Never", icon: "⚡", description: "Execute immediately without planning" },
 ];
 
 /**

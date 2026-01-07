@@ -1,5 +1,7 @@
 # AGENTS.md - AI Agent Instructions for LynxPrompt
 
+> 🧠 **PLAN MODE**: Use Plan Mode frequently! Before implementing complex features, multi-step tasks, or making significant changes, switch to Plan Mode to think through the approach, consider edge cases, and outline the implementation strategy. Planning prevents mistakes and saves time.
+
 > 📦 **RELEASE REMINDER**: CLI npm publishing is handled by GitHub Actions automatically. Do NOT run `npm publish` locally. Do NOT create git tags manually. The workflow handles everything.
 
 > ⚠️ **IMPORTANT**: Do NOT update this file unless the user explicitly says to. Only the user can authorize changes to AGENTS.md.
