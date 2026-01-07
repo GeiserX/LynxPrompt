@@ -110,7 +110,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Build shared package
-        run: npx --yes tsc -p packages/shared/tsconfig.json
+        run: npx --yes --package typescript tsc -p packages/shared/tsconfig.json
 
       - name: Build CLI from source
         working-directory: cli
@@ -226,7 +226,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Build shared package
-        run: npx --yes tsc -p packages/shared/tsconfig.json
+        run: npx --yes --package typescript tsc -p packages/shared/tsconfig.json
 
       - name: Install dependencies
         working-directory: cli
