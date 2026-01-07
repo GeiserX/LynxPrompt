@@ -8,6 +8,7 @@ export interface DetectedRepo {
   name: string | null;
   description: string | null;
   stack: string[];
+  databases: string[];
   commands: {
     build?: string;
     test?: string;
@@ -352,6 +353,7 @@ export async function detectGitHubRepo(repoUrl: string): Promise<DetectedRepo | 
     name: repoInfo.name,
     description: repoInfo.description,
     stack: [],
+    databases: [],
     commands: {},
     license: licenseId,
     repoHost: detectRepoHost(repoUrl),
@@ -478,6 +480,29 @@ export async function detectGitHubRepo(repoUrl: string): Promise<DetectedRepo | 
         if (!detected.description && pkg.description) {
           detected.description = pkg.description;
         }
+        
+        // Detect databases from Node.js packages
+        if (allDeps["pg"] || allDeps["postgres"] || allDeps["@neondatabase/serverless"]) {
+          detected.databases.push("postgresql");
+        }
+        if (allDeps["better-sqlite3"] || allDeps["sql.js"] || allDeps["sqlite3"]) {
+          detected.databases.push("sqlite");
+        }
+        if (allDeps["mongodb"] || allDeps["mongoose"]) {
+          detected.databases.push("mongodb");
+        }
+        if (allDeps["redis"] || allDeps["ioredis"]) {
+          detected.databases.push("redis");
+        }
+        if (allDeps["mysql"] || allDeps["mysql2"]) {
+          detected.databases.push("mysql");
+        }
+        if (allDeps["@planetscale/database"]) {
+          detected.databases.push("mysql"); // PlanetScale uses MySQL
+        }
+        if (allDeps["@libsql/client"] || allDeps["@turso/client"]) {
+          detected.databases.push("sqlite"); // Turso uses libSQL (SQLite)
+        }
       } catch {
         // Invalid JSON
       }
@@ -488,28 +513,73 @@ export async function detectGitHubRepo(repoUrl: string): Promise<DetectedRepo | 
   if (fileNames.has("pyproject.toml")) {
     const content = await fetchGitHubFile(owner, repo, "pyproject.toml");
     if (content) {
+      const lowerContent = content.toLowerCase();
       detected.stack.push("python");
-      if (content.includes("fastapi")) detected.stack.push("fastapi");
-      if (content.includes("django")) detected.stack.push("django");
-      if (content.includes("flask")) detected.stack.push("flask");
+      if (lowerContent.includes("fastapi")) detected.stack.push("fastapi");
+      if (lowerContent.includes("django")) detected.stack.push("django");
+      if (lowerContent.includes("flask")) detected.stack.push("flask");
       detected.commands.test = "pytest";
       detected.commands.lint = "ruff check .";
       
       // Detect Python test framework
-      if (content.includes("pytest")) detected.testFramework = "pytest";
-      else if (content.includes("unittest")) detected.testFramework = "unittest";
-      else if (content.includes("nose")) detected.testFramework = "nose";
+      if (lowerContent.includes("pytest")) detected.testFramework = "pytest";
+      else if (lowerContent.includes("unittest")) detected.testFramework = "unittest";
+      else if (lowerContent.includes("nose")) detected.testFramework = "nose";
+      
+      // Detect databases from Python packages
+      if (lowerContent.includes("asyncpg") || lowerContent.includes("psycopg")) {
+        detected.databases.push("postgresql");
+      }
+      if (lowerContent.includes("aiosqlite") || lowerContent.includes("sqlite")) {
+        detected.databases.push("sqlite");
+      }
+      if (lowerContent.includes("pymongo") || lowerContent.includes("motor")) {
+        detected.databases.push("mongodb");
+      }
+      if (lowerContent.includes("redis") || lowerContent.includes("aioredis")) {
+        detected.databases.push("redis");
+      }
+      if (lowerContent.includes("pymysql") || lowerContent.includes("aiomysql")) {
+        detected.databases.push("mysql");
+      }
     }
   }
 
   // Detect from requirements.txt (Python)
-  if (fileNames.has("requirements.txt") && !detected.stack.includes("python")) {
+  if (fileNames.has("requirements.txt")) {
     const content = await fetchGitHubFile(owner, repo, "requirements.txt");
     if (content) {
-      detected.stack.push("python");
-      if (content.toLowerCase().includes("fastapi")) detected.stack.push("fastapi");
-      if (content.toLowerCase().includes("django")) detected.stack.push("django");
-      if (content.toLowerCase().includes("flask")) detected.stack.push("flask");
+      const lowerContent = content.toLowerCase();
+      if (!detected.stack.includes("python")) {
+        detected.stack.push("python");
+      }
+      if (lowerContent.includes("fastapi")) detected.stack.push("fastapi");
+      if (lowerContent.includes("django")) detected.stack.push("django");
+      if (lowerContent.includes("flask")) detected.stack.push("flask");
+      
+      // Detect databases from Python packages
+      if (lowerContent.includes("asyncpg") || lowerContent.includes("psycopg")) {
+        detected.databases.push("postgresql");
+      }
+      if (lowerContent.includes("aiosqlite") || lowerContent.includes("sqlite")) {
+        detected.databases.push("sqlite");
+      }
+      if (lowerContent.includes("pymongo") || lowerContent.includes("motor")) {
+        detected.databases.push("mongodb");
+      }
+      if (lowerContent.includes("redis") || lowerContent.includes("aioredis")) {
+        detected.databases.push("redis");
+      }
+      if (lowerContent.includes("pymysql") || lowerContent.includes("aiomysql") || lowerContent.includes("mysql-connector")) {
+        detected.databases.push("mysql");
+      }
+      if (lowerContent.includes("sqlalchemy")) {
+        // SQLAlchemy is an ORM, check if specific DB adapters are present
+        if (!detected.databases.length) {
+          // If no specific DB detected but SQLAlchemy is present, it might be sqlite by default
+          detected.databases.push("sqlite");
+        }
+      }
     }
   }
 
@@ -579,6 +649,7 @@ export async function detectGitLabRepo(repoUrl: string): Promise<DetectedRepo | 
     name: repoInfo.name,
     description: repoInfo.description,
     stack: [],
+    databases: [],
     commands: {},
     license: licenseId,
     repoHost: "gitlab",
@@ -690,6 +761,23 @@ export async function detectGitLabRepo(repoUrl: string): Promise<DetectedRepo | 
         if (!detected.description && pkg.description) {
           detected.description = pkg.description;
         }
+        
+        // Detect databases from Node.js packages
+        if (allDeps["pg"] || allDeps["postgres"] || allDeps["@neondatabase/serverless"]) {
+          detected.databases.push("postgresql");
+        }
+        if (allDeps["better-sqlite3"] || allDeps["sql.js"] || allDeps["sqlite3"]) {
+          detected.databases.push("sqlite");
+        }
+        if (allDeps["mongodb"] || allDeps["mongoose"]) {
+          detected.databases.push("mongodb");
+        }
+        if (allDeps["redis"] || allDeps["ioredis"]) {
+          detected.databases.push("redis");
+        }
+        if (allDeps["mysql"] || allDeps["mysql2"]) {
+          detected.databases.push("mysql");
+        }
       } catch {
         // Invalid JSON
       }
@@ -700,14 +788,32 @@ export async function detectGitLabRepo(repoUrl: string): Promise<DetectedRepo | 
   if (fileNames.has("pyproject.toml")) {
     const content = await fetchGitLabFile(host, projectPath, "pyproject.toml");
     if (content) {
+      const lowerContent = content.toLowerCase();
       detected.stack.push("python");
-      if (content.includes("fastapi")) detected.stack.push("fastapi");
-      if (content.includes("django")) detected.stack.push("django");
-      if (content.includes("flask")) detected.stack.push("flask");
+      if (lowerContent.includes("fastapi")) detected.stack.push("fastapi");
+      if (lowerContent.includes("django")) detected.stack.push("django");
+      if (lowerContent.includes("flask")) detected.stack.push("flask");
       detected.commands.test = "pytest";
       detected.commands.lint = "ruff check .";
       
-      if (content.includes("pytest")) detected.testFramework = "pytest";
+      if (lowerContent.includes("pytest")) detected.testFramework = "pytest";
+      
+      // Detect databases
+      if (lowerContent.includes("asyncpg") || lowerContent.includes("psycopg")) {
+        detected.databases.push("postgresql");
+      }
+      if (lowerContent.includes("aiosqlite") || lowerContent.includes("sqlite")) {
+        detected.databases.push("sqlite");
+      }
+      if (lowerContent.includes("pymongo") || lowerContent.includes("motor")) {
+        detected.databases.push("mongodb");
+      }
+      if (lowerContent.includes("redis") || lowerContent.includes("aioredis")) {
+        detected.databases.push("redis");
+      }
+      if (lowerContent.includes("pymysql") || lowerContent.includes("aiomysql")) {
+        detected.databases.push("mysql");
+      }
     }
   }
 
