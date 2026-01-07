@@ -2134,6 +2134,19 @@ async function runInteractiveWizard(
   }, promptConfig);
   answers.defaultBranch = defaultBranchResponse.defaultBranch || "main";
 
+  // Commit workflow preference
+  const commitWorkflowResponse = await prompts({
+    type: "select",
+    name: "commitWorkflow",
+    message: chalk.white("Commit workflow preference:"),
+    choices: [
+      { title: "🔀 Branch + PR - Create branches and open pull requests", value: "branch_pr" },
+      { title: "⬆️ Direct to main - Commit directly to main/master branch", value: "direct_main" },
+    ],
+    initial: 0, // Default to branch + PR
+  }, promptConfig);
+  answers.commitWorkflow = commitWorkflowResponse.commitWorkflow || "branch_pr";
+
   // Dependabot/Renovate moved to Security step
 
   // CI/CD Platform - use detected value if available
@@ -3600,5 +3613,7 @@ async function runInteractiveWizard(
     changelogTool: answers.changelogTool as string,
     // AI Behavior
     planModeFrequency: answers.planModeFrequency as string,
+    // Commit workflow
+    commitWorkflow: answers.commitWorkflow as string,
   };
 }

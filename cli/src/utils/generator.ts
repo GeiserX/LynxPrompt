@@ -62,12 +62,22 @@ export interface GenerateOptions {
   extraNotes?: string;
   // Security configuration (FREE tier)
   security?: {
+    authProviders?: string[];      // Login providers (Google, GitHub, etc.)
     secretsManagement?: string[];  // Secrets management strategies
     securityTooling?: string[];    // Security scanning tools (includes dependabot/renovate)
     authPatterns?: string[];       // Authentication patterns
     dataHandling?: string[];       // Data handling policies
+    compliance?: string[];         // Compliance standards (GDPR, HIPAA, etc.)
+    analytics?: string[];          // Analytics tools
     additionalNotes?: string;      // Custom security notes
   };
+  // Versioning (conditional on semver)
+  versionTagFormat?: string;       // v_prefix, no_prefix, package_prefix, etc.
+  changelogTool?: string;          // manual, conventional_changelog, etc.
+  // AI Behavior
+  planModeFrequency?: string;      // always, complex_tasks, multi_file, etc.
+  // Commit workflow
+  commitWorkflow?: string;         // branch_pr, direct_main
 }
 
 /**
@@ -923,8 +933,38 @@ function generateFileContent(options: GenerateOptions, platform: string): string
           sections.push(`- ${desc}`);
         }
       }
+      // Add plan mode frequency if specified
+      if (options.planModeFrequency && options.planModeFrequency !== "on_request") {
+        const planModeDescriptions: Record<string, string> = {
+          always: "**Always enter Plan Mode** before making any changes - think through the approach first",
+          complex_tasks: "**Use Plan Mode** for complex tasks, multi-step changes, or risky modifications",
+          multi_file: "**Use Plan Mode** when changes span multiple files",
+          new_features: "**Use Plan Mode** when implementing new features",
+          never: "Skip plan mode - proceed directly with implementation",
+        };
+        if (planModeDescriptions[options.planModeFrequency]) {
+          sections.push(`- ${planModeDescriptions[options.planModeFrequency]}`);
+        }
+      }
       sections.push("");
     }
+  }
+
+  // Git workflow preference
+  if (options.commitWorkflow && (isMarkdown || isMdc)) {
+    sections.push("## Git Workflow");
+    sections.push("");
+    if (options.commitWorkflow === "branch_pr") {
+      sections.push("- **Workflow:** Create feature branches and submit pull requests");
+      sections.push("- Do NOT commit directly to main/master branch");
+      sections.push("- Create a descriptive branch name (e.g., `feat/add-login`, `fix/button-styling`)");
+      sections.push("- Open a PR for review before merging");
+    } else if (options.commitWorkflow === "direct_main") {
+      sections.push("- **Workflow:** Commit directly to main/master branch");
+      sections.push("- Small, focused commits are preferred");
+      sections.push("- Ensure tests pass before pushing");
+    }
+    sections.push("");
   }
 
   // Important files
