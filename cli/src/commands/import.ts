@@ -4,12 +4,25 @@ import ora from "ora";
 import { readFile, access, readdir } from "fs/promises";
 import { join, relative, dirname, basename } from "path";
 
+import { detectCommandFiles, CommandFileInfo } from "../utils/detect.js";
+
 // Import command configuration
 const CONFIG_FILE_PATTERNS = [
   "AGENTS.md",
   "CLAUDE.md",
   ".cursorrules",  // Legacy
   ".windsurfrules",
+];
+
+// Command directories to scan for AI agent commands
+// All commands are plain markdown - conversion is just renaming to different directories
+const COMMAND_DIRECTORIES = [
+  ".cursor/commands",
+  ".claude/commands",
+  ".windsurf/workflows",
+  ".copilot/prompts",
+  ".continue/prompts",
+  ".opencode/commands",
 ];
 
 interface AgentsMdFile {
@@ -315,7 +328,7 @@ function displayResults(result: ImportResult, options: ImportOptions): void {
 export async function importCommand(path: string = ".", options: ImportOptions): Promise<void> {
   console.log();
   console.log(chalk.cyan.bold("  📥 LynxPrompt Import"));
-  console.log(chalk.gray("     Scan and import AGENTS.md files from your repository"));
+  console.log(chalk.gray("     Scan and import AGENTS.md files and AI commands from your repository"));
   console.log();
 
   // Resolve the path
@@ -329,27 +342,34 @@ export async function importCommand(path: string = ".", options: ImportOptions):
     process.exit(1);
   }
 
-  const spinner = ora("Scanning for configuration files...").start();
+  const spinner = ora("Scanning for configuration files and commands...").start();
 
   try {
-    // Scan for files
+    // Scan for config files
     const files = await scanDirectory(rootPath, options);
     
-    if (files.length === 0) {
-      spinner.warn("No configuration files found");
+    // Also scan for command files
+    const commands = await detectCommandFiles(rootPath);
+    
+    const totalFound = files.length + commands.length;
+    
+    if (totalFound === 0) {
+      spinner.warn("No configuration files or commands found");
       console.log();
-      console.log(chalk.gray("  Looking for: AGENTS.md, CLAUDE.md, .cursorrules, .windsurfrules"));
+      console.log(chalk.gray("  Looking for:"));
+      console.log(chalk.gray("    • Rules: AGENTS.md, CLAUDE.md, .cursorrules, .windsurfrules"));
+      console.log(chalk.gray("    • Commands: .cursor/commands/*.md, .claude/commands/*.md"));
       console.log(chalk.gray("  Try specifying a different path or use --pattern for custom filenames"));
       return;
     }
 
-    spinner.succeed(`Found ${files.length} configuration file(s)`);
+    spinner.succeed(`Found ${files.length} configuration file(s) and ${commands.length} command(s)`);
 
     // Build hierarchy
     const hierarchy = buildHierarchy(files, rootPath);
 
     const result: ImportResult = {
-      totalFound: files.length,
+      totalFound: totalFound,
       files,
       hierarchy,
       errors: [],
@@ -357,6 +377,37 @@ export async function importCommand(path: string = ".", options: ImportOptions):
 
     // Display results
     displayResults(result, options);
+    
+    // Display command files if found
+    if (commands.length > 0) {
+      console.log();
+      console.log(chalk.cyan.bold("  ⚡ AI Agent Commands"));
+      console.log();
+      
+      // Group commands by type
+      const cursorCommands = commands.filter(c => c.type === "cursor-command");
+      const claudeCommands = commands.filter(c => c.type === "claude-command");
+      
+      if (cursorCommands.length > 0) {
+        console.log(chalk.blue(`  Cursor Commands (${cursorCommands.length}):`));
+        for (const cmd of cursorCommands) {
+          console.log(chalk.gray(`    ⚡ ${cmd.name}`));
+          console.log(chalk.gray(`       ${relative(rootPath, cmd.path)}`));
+        }
+        console.log();
+      }
+      
+      if (claudeCommands.length > 0) {
+        console.log(chalk.yellow(`  Claude Commands (${claudeCommands.length}):`));
+        for (const cmd of claudeCommands) {
+          console.log(chalk.gray(`    🧠 ${cmd.name}`));
+          console.log(chalk.gray(`       ${relative(rootPath, cmd.path)}`));
+        }
+        console.log();
+      }
+      
+      console.log(chalk.cyan("  💡 Push commands with: lynxp push .cursor/commands/my-command.md"));
+    }
 
     // Dry run mode - stop here
     if (options.dryRun) {

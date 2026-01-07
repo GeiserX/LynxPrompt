@@ -83,7 +83,7 @@ export default function CliCommandsPage() {
                   <code className="rounded bg-muted px-2 py-1 text-sm">lynxp import</code>
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
-                  Scan repo for AGENTS.md files (monorepo support)
+                  Scan repo for AGENTS.md files and AI commands
                 </td>
               </tr>
               <tr className="border-b bg-primary/5">
@@ -116,7 +116,7 @@ export default function CliCommandsPage() {
                   <code className="rounded bg-muted px-2 py-1 text-sm">lynxp push</code>
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
-                  Push local file to cloud
+                  Push local file or command to cloud
                 </td>
               </tr>
               <tr className="border-b">
@@ -397,8 +397,8 @@ $ lynxp merge rules1.md rules2.md -i`}</code>
           <h2 className="text-2xl font-bold">lynxp import</h2>
         </div>
         <p className="text-muted-foreground">
-          Scan a repository for existing AGENTS.md files and understand your monorepo structure.
-          Perfect for discovering AI configurations across large codebases.
+          Scan a repository for existing AGENTS.md files, AI commands, and understand your monorepo structure.
+          Perfect for discovering AI configurations and slash commands across large codebases.
         </p>
 
         <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
@@ -451,12 +451,28 @@ $ lynxp import --json | jq '.hierarchy'`}</code>
 
         <div className="rounded-lg border bg-card p-4">
           <h4 className="font-semibold text-sm mb-2">What it detects</h4>
-          <ul className="text-sm text-muted-foreground space-y-1">
-            <li>• <strong>AGENTS.md</strong> — Universal AI config format</li>
-            <li>• <strong>CLAUDE.md</strong> — Claude Code format</li>
-            <li>• <strong>.cursorrules</strong> — Legacy Cursor format</li>
-            <li>• <strong>.windsurfrules</strong> — Windsurf format</li>
-          </ul>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <p className="text-xs font-medium text-primary mb-2">📋 AI Rules & Configuration</p>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>• <strong>AGENTS.md</strong> — Universal AI config format</li>
+                <li>• <strong>CLAUDE.md</strong> — Claude Code format</li>
+                <li>• <strong>.cursorrules</strong> — Legacy Cursor format</li>
+                <li>• <strong>.windsurfrules</strong> — Windsurf format</li>
+              </ul>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-violet-500 mb-2">⚡ AI Agent Commands (Slash Commands)</p>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>• <strong>.cursor/commands/*.md</strong> — Cursor commands</li>
+                <li>• <strong>.claude/commands/*.md</strong> — Claude Code commands</li>
+                <li>• <strong>.windsurf/workflows/*.md</strong> — Windsurf workflows</li>
+                <li>• <strong>.copilot/prompts/*.md</strong> — GitHub Copilot prompts</li>
+                <li>• <strong>.continue/prompts/*.md</strong> — Continue.dev prompts</li>
+                <li>• <strong>.opencode/commands/*.md</strong> — OpenCode commands</li>
+              </ul>
+            </div>
+          </div>
         </div>
 
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">

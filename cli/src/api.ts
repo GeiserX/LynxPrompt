@@ -232,6 +232,7 @@ class ApiClient {
     content: string;
     visibility: "PRIVATE" | "TEAM" | "PUBLIC";
     tags?: string[];
+    type?: string; // Blueprint type (AGENTS_MD, CURSOR_COMMAND, CLAUDE_COMMAND, etc.)
     // Hierarchy fields for monorepo AGENTS.md support
     hierarchy_id?: string | null;
     parent_id?: string | null;

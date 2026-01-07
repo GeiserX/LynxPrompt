@@ -72,6 +72,7 @@ interface TemplateData {
   platforms: string[];
   isOfficial: boolean;
   tier?: string;
+  type?: string; // AGENTS_MD, CURSOR_COMMAND, CLAUDE_COMMAND, etc.
   targetPlatform?: string;
   compatibleWith?: string[];
   variables?: Record<string, string>;
@@ -90,6 +91,29 @@ interface TemplateData {
   currentVersion?: number;
   publishedVersion?: number | null;
 }
+
+// All command template types
+const COMMAND_TYPES = [
+  "CURSOR_COMMAND", "CLAUDE_COMMAND", "WINDSURF_WORKFLOW", 
+  "COPILOT_PROMPT", "CONTINUE_PROMPT", "OPENCODE_COMMAND"
+];
+
+// Helper to check if a type is a command
+const isCommandType = (type: string | undefined) => 
+  type ? COMMAND_TYPES.includes(type) : false;
+
+// Get display name for command type
+const getCommandDisplayName = (type: string | undefined) => {
+  const names: Record<string, string> = {
+    "CURSOR_COMMAND": "Cursor",
+    "CLAUDE_COMMAND": "Claude Code",
+    "WINDSURF_WORKFLOW": "Windsurf",
+    "COPILOT_PROMPT": "Copilot",
+    "CONTINUE_PROMPT": "Continue",
+    "OPENCODE_COMMAND": "OpenCode",
+  };
+  return names[type || ""] || "Command";
+};
 
 interface VersionInfo {
   id: string;
@@ -474,6 +498,12 @@ export default function BlueprintDetailPage() {
                         className={`rounded-lg border px-2.5 py-1 text-sm font-medium ${tierColors[blueprint.tier] || ""}`}
                       >
                         {tierLabels[blueprint.tier]}
+                      </span>
+                    )}
+                    {/* Command badge */}
+                    {isCommandType(blueprint.type) && (
+                      <span className="flex items-center gap-1 rounded-full bg-gradient-to-r from-violet-500 to-purple-500 px-3 py-1 text-sm font-medium text-white">
+                        ⚡ {getCommandDisplayName(blueprint.type)} Command
                       </span>
                     )}
                     {/* Price badge */}

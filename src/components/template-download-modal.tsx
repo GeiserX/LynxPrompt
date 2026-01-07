@@ -77,11 +77,37 @@ export function TemplateDownloadModal({
     "COPILOT_INSTRUCTIONS": "copilot",
     "WINDSURF_RULES": "windsurf",
     "GEMINI_MD": "antigravity",
+    // Command types - map to their command platforms
+    "CURSOR_COMMAND": "cursor-command",
+    "CLAUDE_COMMAND": "claude-command",
+    "WINDSURF_WORKFLOW": "windsurf-workflow",
+    "COPILOT_PROMPT": "copilot-prompt",
+    "CONTINUE_PROMPT": "continue-prompt",
+    "OPENCODE_COMMAND": "opencode-command",
     // Legacy mappings
     "claude_code": "claude",
     "github_copilot": "copilot",
     "continue_dev": "continue",
   };
+  
+  // All command template types
+  const COMMAND_TYPES = [
+    "CURSOR_COMMAND", "CLAUDE_COMMAND", "WINDSURF_WORKFLOW", 
+    "COPILOT_PROMPT", "CONTINUE_PROMPT", "OPENCODE_COMMAND"
+  ];
+  
+  // Check if template is a command
+  const isCommand = COMMAND_TYPES.includes(template.targetPlatform || "");
+  
+  // Command export targets - all use plain markdown, conversion is just renaming
+  const commandExportTargets = [
+    { id: "cursor", name: "Cursor", directory: ".cursor/commands/", icon: "⚡" },
+    { id: "claude", name: "Claude Code", directory: ".claude/commands/", icon: "🧠" },
+    { id: "windsurf", name: "Windsurf", directory: ".windsurf/workflows/", icon: "🏄" },
+    { id: "copilot", name: "Copilot", directory: ".copilot/prompts/", icon: "🐙" },
+    { id: "continue", name: "Continue", directory: ".continue/prompts/", icon: "➡️" },
+    { id: "opencode", name: "OpenCode", directory: ".opencode/commands/", icon: "🔓" },
+  ];
   
   const getInitialPlatform = () => {
     const rawPlatform = targetPlatform || template.targetPlatform || "universal";
@@ -272,21 +298,37 @@ export function TemplateDownloadModal({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // State for command export target
+  const [commandExportTarget, setCommandExportTarget] = useState<string>("cursor");
+  
   const handleDownload = async () => {
-    const platform = platformInfo[selectedPlatform];
-    const filename = platform?.file || ".cursorrules";
+    let filename: string;
+    
+    if (isCommand) {
+      // For commands, use the template name as filename, sanitized
+      const sanitizedName = template.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+      const target = commandExportTargets.find(t => t.id === commandExportTarget);
+      // Download with directory info in filename hint (browsers will strip the path)
+      filename = `${sanitizedName}.md`;
+    } else {
+      const platform = platformInfo[selectedPlatform];
+      filename = platform?.file || ".cursorrules";
+    }
 
     // Track the download if template has an ID
     if (template.id) {
       // Track in ClickHouse for real-time analytics
-      trackTemplateDownload(template.id, selectedPlatform, template.name);
+      trackTemplateDownload(template.id, isCommand ? `command-${commandExportTarget}` : selectedPlatform, template.name);
 
       // Also track in PostgreSQL for denormalized counts
       try {
         await fetch(`/api/blueprints/${template.id}/download`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ platform: selectedPlatform }),
+          body: JSON.stringify({ platform: isCommand ? `command-${commandExportTarget}` : selectedPlatform }),
         });
       } catch {
         // Don't fail the download if tracking fails
@@ -358,67 +400,109 @@ export function TemplateDownloadModal({
             </div>
           )}
 
-          {/* Platform Selection with Search */}
-          <div className="mb-6">
-            <label className="mb-2 block text-sm font-medium">
-              Which AI IDE are you using?
-            </label>
-            
-            {/* Search box */}
-            <div className="relative mb-3">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="text"
-                value={platformSearch}
-                onChange={(e) => setPlatformSearch(e.target.value)}
-                placeholder="Search platforms..."
-                className="w-full rounded-lg border bg-background py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
+          {/* Command Export Selection (for command blueprints) */}
+          {isCommand && (
+            <div className="mb-6">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-violet-500 to-purple-500 px-2 py-0.5 text-xs font-medium text-white">
+                  ⚡ Command
+                </span>
+                <label className="text-sm font-medium">
+                  Export for which AI IDE?
+                </label>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                {commandExportTargets.map((target) => (
+                  <button
+                    key={target.id}
+                    onClick={() => setCommandExportTarget(target.id)}
+                    className={`flex flex-col items-start gap-1 rounded-lg border p-4 text-left transition-colors ${
+                      commandExportTarget === target.id
+                        ? "border-violet-500 bg-violet-500/10"
+                        : "hover:border-violet-500/50"
+                    }`}
+                  >
+                    <span className="text-lg">{target.icon}</span>
+                    <span className="font-medium">{target.name}</span>
+                    <code className="text-xs text-muted-foreground">{target.directory}</code>
+                  </button>
+                ))}
+              </div>
+              
+              <p className="mt-3 text-xs text-muted-foreground">
+                Save the downloaded file to:{" "}
+                <code className="rounded bg-violet-500/10 px-1 text-violet-600 dark:text-violet-400">
+                  {commandExportTargets.find(t => t.id === commandExportTarget)?.directory}
+                  {template.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.md
+                </code>
+              </p>
             </div>
-            
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {displayedPlatforms.map((platform) => (
+          )}
+
+          {/* Platform Selection with Search (for non-command blueprints) */}
+          {!isCommand && (
+            <div className="mb-6">
+              <label className="mb-2 block text-sm font-medium">
+                Which AI IDE are you using?
+              </label>
+              
+              {/* Search box */}
+              <div className="relative mb-3">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={platformSearch}
+                  onChange={(e) => setPlatformSearch(e.target.value)}
+                  placeholder="Search platforms..."
+                  className="w-full rounded-lg border bg-background py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {displayedPlatforms.map((platform) => (
+                  <button
+                    key={platform.id}
+                    onClick={() => setSelectedPlatform(platform.id)}
+                    className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left transition-colors ${
+                      selectedPlatform === platform.id
+                        ? "border-primary bg-primary/10"
+                        : "hover:border-primary/50"
+                    }`}
+                  >
+                    <span>{platform.icon}</span>
+                    <span className="truncate text-sm font-medium">{platform.name}</span>
+                  </button>
+                ))}
+              </div>
+              
+              {/* Show more/less button */}
+              {hasMorePlatforms && (
                 <button
-                  key={platform.id}
-                  onClick={() => setSelectedPlatform(platform.id)}
-                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left transition-colors ${
-                    selectedPlatform === platform.id
-                      ? "border-primary bg-primary/10"
-                      : "hover:border-primary/50"
-                  }`}
+                  onClick={() => setShowAllPlatforms(!showAllPlatforms)}
+                  className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg border border-dashed py-2 text-sm text-muted-foreground hover:border-primary hover:text-primary"
                 >
-                  <span>{platform.icon}</span>
-                  <span className="truncate text-sm font-medium">{platform.name}</span>
+                  {showAllPlatforms ? (
+                    <>
+                      <ChevronUp className="h-4 w-4" />
+                      Show fewer ({DEFAULT_PLATFORM_COUNT})
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="h-4 w-4" />
+                      Show all {filteredPlatforms.length} platforms
+                    </>
+                  )}
                 </button>
-              ))}
+              )}
+              <p className="mt-2 text-xs text-muted-foreground">
+                Will be saved as:{" "}
+                <code className="rounded bg-muted px-1">
+                  {platformInfo[selectedPlatform]?.file || ".cursorrules"}
+                </code>
+              </p>
             </div>
-            
-            {/* Show more/less button */}
-            {hasMorePlatforms && (
-              <button
-                onClick={() => setShowAllPlatforms(!showAllPlatforms)}
-                className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg border border-dashed py-2 text-sm text-muted-foreground hover:border-primary hover:text-primary"
-              >
-                {showAllPlatforms ? (
-                  <>
-                    <ChevronUp className="h-4 w-4" />
-                    Show fewer ({DEFAULT_PLATFORM_COUNT})
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="h-4 w-4" />
-                    Show all {filteredPlatforms.length} platforms
-                  </>
-                )}
-              </button>
-            )}
-            <p className="mt-2 text-xs text-muted-foreground">
-              Will be saved as:{" "}
-              <code className="rounded bg-muted px-1">
-                {platformInfo[selectedPlatform]?.file || ".cursorrules"}
-              </code>
-            </p>
-          </div>
+          )}
 
           {/* Variable Inputs - show all variables from template */}
           {(Object.keys(sensitiveFields).length > 0 || Object.keys(values).length > 0) && (

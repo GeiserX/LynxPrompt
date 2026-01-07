@@ -28,13 +28,38 @@ export interface PlatformDefinition {
   /** Short description/note */
   note: string;
   /** Category for grouping in UI */
-  category: "popular" | "ide" | "editor" | "cli" | "other";
+  category: "popular" | "ide" | "editor" | "cli" | "other" | "command";
   /** Output format type */
   format: "markdown" | "mdc" | "json" | "yaml" | "text";
   /** Whether this is a top/recommended platform */
   featured?: boolean;
   /** Website URL */
   url?: string;
+  /** Whether this is a command (slash command) rather than a rules file */
+  isCommand?: boolean;
+}
+
+/**
+ * Command definition for AI IDE slash commands
+ * Commands are stored in specific directories and trigger AI workflows
+ */
+export interface CommandDefinition {
+  /** Unique identifier (matches platform ID) */
+  id: string;
+  /** Human-readable name */
+  name: string;
+  /** Directory where commands are stored */
+  directory: string;
+  /** File extension for commands */
+  extension: string;
+  /** Associated platform ID */
+  platformId: string;
+  /** Icon for UI */
+  icon: string;
+  /** Gradient for cards */
+  gradient: string;
+  /** Description */
+  note: string;
 }
 
 /**
@@ -401,6 +426,164 @@ export const PLATFORMS: PlatformDefinition[] = [
     category: "other",
     format: "json",
   },
+
+  // ========================================
+  // AI AGENT COMMANDS - Slash commands for IDEs
+  // ========================================
+  {
+    id: "cursor-command",
+    name: "Cursor Command",
+    file: ".cursor/commands/",
+    icon: "⚡",
+    gradient: "from-blue-500 to-cyan-500",
+    note: "Custom slash commands for Cursor IDE",
+    category: "command",
+    format: "markdown",
+    isCommand: true,
+    url: "https://docs.cursor.com/context/rules",
+  },
+  {
+    id: "claude-command",
+    name: "Claude Code Command",
+    file: ".claude/commands/",
+    icon: "🧠",
+    gradient: "from-orange-500 to-amber-500",
+    note: "Custom slash commands for Claude Code",
+    category: "command",
+    format: "markdown",
+    isCommand: true,
+    url: "https://docs.anthropic.com/en/docs/claude-code",
+  },
+  {
+    id: "windsurf-workflow",
+    name: "Windsurf Workflow",
+    file: ".windsurf/workflows/",
+    icon: "🏄",
+    gradient: "from-teal-500 to-emerald-500",
+    note: "Cascade workflows for Windsurf IDE",
+    category: "command",
+    format: "markdown",
+    isCommand: true,
+    url: "https://windsurf.com",
+  },
+  {
+    id: "copilot-prompt",
+    name: "Copilot Prompt",
+    file: ".copilot/prompts/",
+    icon: "🐙",
+    gradient: "from-gray-600 to-gray-800",
+    note: "Custom prompts for GitHub Copilot Chat",
+    category: "command",
+    format: "markdown",
+    isCommand: true,
+    url: "https://github.com/features/copilot",
+  },
+  {
+    id: "continue-prompt",
+    name: "Continue Prompt",
+    file: ".continue/prompts/",
+    icon: "➡️",
+    gradient: "from-blue-600 to-indigo-500",
+    note: "Invokable prompts for Continue.dev",
+    category: "command",
+    format: "markdown",
+    isCommand: true,
+    url: "https://continue.dev",
+  },
+  {
+    id: "opencode-command",
+    name: "OpenCode Command",
+    file: ".opencode/commands/",
+    icon: "🔓",
+    gradient: "from-gray-600 to-gray-800",
+    note: "Custom commands for OpenCode TUI",
+    category: "command",
+    format: "markdown",
+    isCommand: true,
+    url: "https://opencode.ai",
+  },
+];
+
+/**
+ * All supported AI agent command types
+ * Commands are reusable workflows triggered via slash commands
+ * 
+ * Supported tools (from research):
+ * - Cursor: .cursor/commands/*.md
+ * - Claude Code: .claude/commands/*.md  
+ * - Windsurf: .windsurf/workflows/*.md
+ * - GitHub Copilot: .copilot/prompts/*.md
+ * - Continue.dev: .continue/prompts/*.md (with invokable: true)
+ * - OpenCode: .opencode/commands/*.md
+ * - Zed: Custom slash command extensions
+ * - Aider: Built-in commands (not storable)
+ * 
+ * NOT supported (no executable slash commands):
+ * - JetBrains AI Assistant (uses Alt+Enter menu)
+ * - Replit Agent
+ * - Bolt.new
+ */
+export const COMMANDS: CommandDefinition[] = [
+  {
+    id: "cursor-command",
+    name: "Cursor Command",
+    directory: ".cursor/commands",
+    extension: ".md",
+    platformId: "cursor",
+    icon: "⚡",
+    gradient: "from-blue-500 to-cyan-500",
+    note: "Custom slash commands for Cursor IDE (e.g., /deploy, /test)",
+  },
+  {
+    id: "claude-command",
+    name: "Claude Code Command",
+    directory: ".claude/commands",
+    extension: ".md",
+    platformId: "claude",
+    icon: "🧠",
+    gradient: "from-orange-500 to-amber-500",
+    note: "Custom slash commands for Claude Code (e.g., /review, /refactor)",
+  },
+  {
+    id: "windsurf-workflow",
+    name: "Windsurf Workflow",
+    directory: ".windsurf/workflows",
+    extension: ".md",
+    platformId: "windsurf",
+    icon: "🏄",
+    gradient: "from-teal-500 to-emerald-500",
+    note: "Cascade workflows for Windsurf IDE",
+  },
+  {
+    id: "copilot-prompt",
+    name: "Copilot Prompt",
+    directory: ".copilot/prompts",
+    extension: ".md",
+    platformId: "copilot",
+    icon: "🐙",
+    gradient: "from-gray-600 to-gray-800",
+    note: "Custom prompts for GitHub Copilot Chat",
+  },
+  {
+    id: "continue-prompt",
+    name: "Continue Prompt",
+    directory: ".continue/prompts",
+    extension: ".md",
+    platformId: "continue",
+    icon: "➡️",
+    gradient: "from-blue-600 to-indigo-500",
+    note: "Invokable prompts for Continue.dev extension",
+  },
+  {
+    id: "opencode-command",
+    name: "OpenCode Command",
+    directory: ".opencode/commands",
+    extension: ".md",
+    platformId: "opencode",
+    icon: "🔓",
+    gradient: "from-gray-600 to-gray-800",
+    note: "Custom commands for OpenCode TUI",
+  },
 ];
 
 // ========================================
@@ -465,4 +648,96 @@ export const PLATFORM_COUNT = PLATFORMS.length;
 export const PLATFORM_FILES: Record<string, string> = Object.fromEntries(
   PLATFORMS.map((p) => [p.id, p.file])
 );
+
+// ========================================
+// COMMAND HELPER FUNCTIONS
+// ========================================
+
+/**
+ * Get command definition by ID
+ */
+export function getCommand(id: string): CommandDefinition | undefined {
+  return COMMANDS.find((c) => c.id === id);
+}
+
+/**
+ * Get all command platforms (for UI selection)
+ */
+export function getCommandPlatforms(): PlatformDefinition[] {
+  return PLATFORMS.filter((p) => p.isCommand);
+}
+
+/**
+ * Get command platform by platform ID (e.g., "cursor" -> cursor-command)
+ */
+export function getCommandForPlatform(platformId: string): CommandDefinition | undefined {
+  return COMMANDS.find((c) => c.platformId === platformId);
+}
+
+/**
+ * Check if a file path is a command file
+ */
+export function isCommandFile(filePath: string): boolean {
+  const normalizedPath = filePath.replace(/\\/g, "/");
+  return COMMANDS.some((cmd) => normalizedPath.includes(cmd.directory));
+}
+
+/**
+ * Infer command type from file path
+ */
+export function inferCommandType(filePath: string): CommandDefinition | undefined {
+  const normalizedPath = filePath.replace(/\\/g, "/");
+  return COMMANDS.find((cmd) => normalizedPath.includes(cmd.directory));
+}
+
+/**
+ * Get the template type for a command
+ */
+export function getCommandTemplateType(commandId: string): string | undefined {
+  const mapping: Record<string, string> = {
+    "cursor-command": "CURSOR_COMMAND",
+    "claude-command": "CLAUDE_COMMAND",
+    "windsurf-workflow": "WINDSURF_WORKFLOW",
+    "copilot-prompt": "COPILOT_PROMPT",
+    "continue-prompt": "CONTINUE_PROMPT",
+    "opencode-command": "OPENCODE_COMMAND",
+  };
+  return mapping[commandId];
+}
+
+/**
+ * Convert a command to a different IDE format
+ * Currently supports Cursor <-> Claude Code conversion
+ */
+export function convertCommand(
+  content: string,
+  fromType: string,
+  toType: string
+): { content: string; filename: string; directory: string } {
+  // Both use markdown, so content conversion is straightforward
+  // The main difference is the directory structure
+  
+  const toCommand = COMMANDS.find((c) => c.id === toType);
+  if (!toCommand) {
+    throw new Error(`Unknown command type: ${toType}`);
+  }
+
+  return {
+    content: content,
+    filename: "command.md", // Will be replaced with actual filename
+    directory: toCommand.directory,
+  };
+}
+
+/**
+ * Get all command directories to scan
+ */
+export function getCommandDirectories(): string[] {
+  return COMMANDS.map((c) => c.directory);
+}
+
+/**
+ * Total count of supported commands
+ */
+export const COMMAND_COUNT = COMMANDS.length;
 
