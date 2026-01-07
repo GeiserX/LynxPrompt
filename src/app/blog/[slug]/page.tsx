@@ -89,6 +89,23 @@ function getGravatarUrl(email: string, size: number = 96): string {
 // Force dynamic rendering since we need session checks
 export const dynamic = "force-dynamic";
 
+// Validate URL for safe protocols (prevent javascript: XSS)
+function isSafeUrl(url: string): boolean {
+  const trimmed = url.trim().toLowerCase();
+  // Only allow http, https, mailto, and relative URLs
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || 
+      trimmed.startsWith("mailto:") || trimmed.startsWith("/") || 
+      trimmed.startsWith("#") || trimmed.startsWith("./") || trimmed.startsWith("../")) {
+    return true;
+  }
+  // Block javascript:, data:, vbscript:, and other potentially dangerous protocols
+  if (trimmed.includes(":")) {
+    return false;
+  }
+  // Allow relative URLs without protocol
+  return true;
+}
+
 // Simple markdown to HTML converter (basic but effective)
 function markdownToHtml(markdown: string): string {
   let html = markdown;
@@ -109,10 +126,16 @@ function markdownToHtml(markdown: string): string {
   html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
   html = html.replace(/\*(.*?)\*/g, "<em>$1</em>");
   
-  // Links
+  // Links - with URL validation to prevent javascript: XSS
   html = html.replace(
     /\[([^\]]+)\]\(([^)]+)\)/g,
-    '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
+    (_match, text, url) => {
+      if (isSafeUrl(url)) {
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+      }
+      // For unsafe URLs, render as plain text
+      return text;
+    }
   );
   
   // Code blocks (triple backticks)

@@ -1,7 +1,7 @@
 import { readFile, access, rm, mkdtemp } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
-import { execSync } from "child_process";
+import { spawnSync } from "child_process";
 
 export interface DetectedProject {
   name: string | null;
@@ -758,19 +758,47 @@ async function detectFromGitLabApi(repoUrl: string): Promise<DetectedProject | n
 }
 
 /**
+ * Validate git URL to prevent command injection
+ * Only allows http(s), git, and ssh protocols
+ */
+function isValidGitUrl(url: string): boolean {
+  const trimmed = url.trim();
+  // Allow standard git URL formats
+  if (trimmed.startsWith("https://") || trimmed.startsWith("http://") ||
+      trimmed.startsWith("git://") || trimmed.startsWith("git@") ||
+      trimmed.startsWith("ssh://")) {
+    // Additional validation: no shell metacharacters
+    const dangerousChars = /[;&|`$(){}[\]<>\\'"!#*?~]/;
+    return !dangerousChars.test(trimmed);
+  }
+  return false;
+}
+
+/**
  * Detect from shallow git clone (fallback for non-GitHub/GitLab hosts)
  */
 async function detectFromShallowClone(repoUrl: string): Promise<DetectedProject | null> {
   let tempDir: string | null = null;
   
+  // Security: Validate URL before passing to git
+  if (!isValidGitUrl(repoUrl)) {
+    return null;
+  }
+  
   try {
     tempDir = await mkdtemp(join(tmpdir(), "lynxprompt-detect-"));
     
     try {
-      execSync(`git clone --depth 1 --quiet "${repoUrl}" "${tempDir}"`, {
+      // Security: Use spawnSync with array arguments to prevent command injection
+      // This passes arguments directly to git without shell interpretation
+      const result = spawnSync("git", ["clone", "--depth", "1", "--quiet", repoUrl, tempDir], {
         stdio: "pipe",
         timeout: 30000,
       });
+      
+      if (result.status !== 0) {
+        return null;
+      }
     } catch {
       return null;
     }
