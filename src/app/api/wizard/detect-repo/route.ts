@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prismaUsers } from "@/lib/db-users";
 import { detectRemoteRepo, detectRepoHost } from "@/lib/detect-repo";
 
 /**
  * POST /api/wizard/detect-repo
  * Detects project configuration from a public GitHub or GitLab repository
  * 
- * Requires: Max or Teams subscription
+ * Free for all authenticated users
  * Body: { repoUrl: string }
  */
 export async function POST(request: NextRequest) {
@@ -19,32 +18,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Authentication required" },
         { status: 401 }
-      );
-    }
-
-    // Check subscription plan (Teams only)
-    const user = await prismaUsers.user.findUnique({
-      where: { id: session.user.id },
-      select: { subscriptionPlan: true, role: true },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
-    }
-
-    // Repository detection is a Teams-only feature
-    const isTeamsUser = user.subscriptionPlan === "TEAMS";
-    const isAdmin = user.role === "ADMIN" || user.role === "SUPERADMIN";
-    if (!isTeamsUser && !isAdmin) {
-      return NextResponse.json(
-        { 
-          error: "This feature requires a Teams subscription",
-          requiredTier: "teams",
-        },
-        { status: 403 }
       );
     }
 

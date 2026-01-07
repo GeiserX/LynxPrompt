@@ -14,7 +14,6 @@ import {
   ChevronDown,
   ChevronUp,
   Copy,
-  Crown,
   Download,
   FileText,
   GitBranch,
@@ -1040,6 +1039,8 @@ function WizardPageContent() {
 
       if (data.detected) {
         setDetectedData(data.detected);
+        // Auto-apply detected data immediately
+        applyDetectedDataFromResult(data.detected);
       }
     } catch (error) {
       console.error("Repo detection error:", error);
@@ -1049,7 +1050,53 @@ function WizardPageContent() {
     }
   };
 
-  // Apply detected data to config
+  // Apply detected data to config (called with result directly for auto-apply)
+  const applyDetectedDataFromResult = (detectedResult: typeof detectedData) => {
+    if (!detectedResult) return;
+    
+    // Track which fields are being filled from detection
+    const newDetectedFields = new Set<string>();
+    if (detectedResult.name) newDetectedFields.add("projectName");
+    if (detectedResult.description) newDetectedFields.add("projectDescription");
+    if (detectedResult.stack.length > 0) {
+      newDetectedFields.add("languages");
+      newDetectedFields.add("frameworks");
+    }
+    if (detectedResult.databases?.length > 0) newDetectedFields.add("databases");
+    if (detectedResult.license) newDetectedFields.add("license");
+    if (detectedResult.cicd) newDetectedFields.add("cicd");
+    if (detectedResult.isOpenSource) newDetectedFields.add("projectType");
+    if (detectedResult.hasDocker) newDetectedFields.add("buildContainer");
+    if (detectedResult.containerRegistry) newDetectedFields.add("containerRegistry");
+    if (detectedResult.repoHost) newDetectedFields.add("repoHost");
+
+    setConfig((prev) => ({
+      ...prev,
+      projectName: detectedResult.name || prev.projectName,
+      projectDescription: detectedResult.description || prev.projectDescription,
+      languages: detectedResult.stack.filter((s: string) =>
+        ["javascript", "typescript", "python", "go", "rust", "java", "csharp", "ruby", "php", "swift", "kotlin", "cpp"].includes(s)
+      ),
+      frameworks: detectedResult.stack.filter((s: string) =>
+        ["nextjs", "react", "vue", "angular", "svelte", "express", "fastapi", "django", "flask", "nestjs", "nuxt", "remix", "astro", "hono", "fastify"].includes(s)
+      ),
+      databases: detectedResult.databases || prev.databases,
+      license: detectedResult.license || prev.license,
+      cicd: detectedResult.cicd || prev.cicd,
+      projectType: detectedResult.isOpenSource ? "open_source" : prev.projectType,
+      buildContainer: detectedResult.hasDocker || prev.buildContainer,
+      containerRegistry: detectedResult.containerRegistry || prev.containerRegistry,
+      repoHost: detectedResult.repoHost || prev.repoHost,
+    }));
+
+    setDetectedFields(newDetectedFields);
+    
+    // Clear detection state after applying
+    setDetectedData(null);
+    setRepoDetectUrl("");
+  };
+
+  // Legacy apply function for manual button (now unused but kept for safety)
   const applyDetectedData = () => {
     if (!detectedData) return;
 
@@ -2666,8 +2713,6 @@ function StepProject({
   onDetectRepo: () => void;
   onApplyDetected: () => void;
 }) {
-  const canDetect = userTier === "teams";
-
   return (
     <div>
       <h2 className="text-2xl font-bold">What project is this for?</h2>
@@ -2677,8 +2722,8 @@ function StepProject({
       </p>
 
       <div className="mt-6 space-y-6">
-        {/* Repository Auto-Detection (Teams) */}
-        <div className={`rounded-lg border-2 p-4 transition-colors ${canDetect ? "border-primary/30 bg-primary/5" : "border-dashed border-muted-foreground/20 bg-muted/30"}`}>
+        {/* Repository Auto-Detection (Free for all) */}
+        <div className="rounded-lg border-2 p-4 transition-colors border-primary/30 bg-primary/5">
           <div className="flex items-start gap-3">
             <div className="flex-1">
               <div className="flex items-center gap-2">
@@ -2686,35 +2731,28 @@ function StepProject({
                 <label className="text-sm font-medium">
                   🔍 Auto-detect from existing repository
                 </label>
-                <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${canDetect ? "bg-teal-500/10 text-teal-600 dark:text-teal-400" : "bg-amber-500/10 text-amber-600 dark:text-amber-400"}`}>
-                  <Crown className="h-3 w-3" />
-                  Teams
-                </span>
               </div>
               <p className="mt-1 text-sm text-muted-foreground">
-                {canDetect 
-                  ? "Enter a public GitHub repository URL to auto-detect tech stack, license, CI/CD, and more."
-                  : "Upgrade to Teams to auto-detect configuration from your existing repositories."}
+                Enter a public GitHub or GitLab URL to auto-detect tech stack, license, CI/CD, and more.
               </p>
               
-              {canDetect && (
-                <div className="mt-3 space-y-3">
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={repoDetectUrl}
-                      onChange={(e) => onRepoUrlChange(e.target.value)}
-                      placeholder="https://github.com/owner/repo"
-                      className="flex-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                      disabled={isDetecting}
-                    />
-                    <button
-                      onClick={onDetectRepo}
-                      disabled={isDetecting || !repoDetectUrl.trim()}
-                      className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                    >
-                      {isDetecting ? (
-                        <>
+              <div className="mt-3 space-y-3">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={repoDetectUrl}
+                    onChange={(e) => onRepoUrlChange(e.target.value)}
+                    placeholder="https://github.com/owner/repo"
+                    className="flex-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    disabled={isDetecting}
+                  />
+                  <button
+                    onClick={onDetectRepo}
+                    disabled={isDetecting || !repoDetectUrl.trim()}
+                    className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    {isDetecting ? (
+                      <>
                           <Loader2 className="h-4 w-4 animate-spin" />
                           Detecting...
                         </>
@@ -2732,44 +2770,7 @@ function StepProject({
                       {detectError}
                     </div>
                   )}
-
-                  {detectedData && (
-                    <div className="rounded-lg border bg-green-50 p-4 dark:bg-green-950/30">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-green-800 dark:text-green-200">
-                          ✓ Repository detected!
-                        </h4>
-                        <button
-                          onClick={onApplyDetected}
-                          className="rounded-lg bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700"
-                        >
-                          Apply to wizard
-                        </button>
-                      </div>
-                      <div className="mt-2 space-y-1 text-sm text-green-700 dark:text-green-300">
-                        {detectedData.name && <p>• Name: <strong>{detectedData.name}</strong></p>}
-                        {detectedData.isOpenSource && <p>• Type: <strong>Open Source</strong></p>}
-                        {detectedData.stack.length > 0 && (
-                          <p>• Stack: {detectedData.stack.slice(0, 6).join(", ")}{detectedData.stack.length > 6 ? "..." : ""}</p>
-                        )}
-                        {detectedData.databases?.length > 0 && (
-                          <p>• Databases: {detectedData.databases.join(", ")}</p>
-                        )}
-                        {detectedData.license && <p>• License: {detectedData.license.toUpperCase()}</p>}
-                        {detectedData.repoHost && <p>• Host: {detectedData.repoHost}</p>}
-                        {detectedData.cicd && <p>• CI/CD: {detectedData.cicd.replace(/_/g, " ")}</p>}
-                        {detectedData.testFramework && <p>• Test framework: {detectedData.testFramework}</p>}
-                        {detectedData.hasDocker && (
-                          <p>• Docker: detected{detectedData.containerRegistry ? ` (registry: ${detectedData.containerRegistry})` : ""}</p>
-                        )}
-                        {detectedData.existingFiles.length > 0 && (
-                          <p>• Static files found: {detectedData.existingFiles.length} ({detectedData.existingFiles.slice(0, 3).join(", ")}{detectedData.existingFiles.length > 3 ? "..." : ""})</p>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </div>
-              )}
             </div>
           </div>
         </div>
@@ -3703,6 +3704,7 @@ function StepTechStack({
 
 // Branch strategies
 const BRANCH_STRATEGIES = [
+  { id: "none", label: "None (toy project)", desc: "No branching, commit directly to main", icon: "🎮" },
   { id: "github_flow", label: "GitHub Flow", desc: "Simple: main + feature branches", icon: "🌊" },
   { id: "gitflow", label: "Gitflow", desc: "develop, feature, release, hotfix branches", icon: "🌳" },
   { id: "trunk_based", label: "Trunk-Based", desc: "Short-lived branches, continuous integration", icon: "🚂" },
@@ -3716,12 +3718,6 @@ const DEFAULT_BRANCHES = [
   { id: "master", label: "master" },
   { id: "develop", label: "develop" },
   { id: "trunk", label: "trunk" },
-];
-
-// Commit workflow preferences
-const COMMIT_WORKFLOW_OPTIONS = [
-  { id: "branch_pr", label: "Branch + PR", desc: "Create branches and open pull requests", icon: "🔀" },
-  { id: "direct_main", label: "Direct to main", desc: "Commit directly to main/master branch", icon: "⬆️" },
 ];
 
 const REPO_HOSTS = [
@@ -4136,7 +4132,11 @@ function StepRepository({
             {BRANCH_STRATEGIES.map((strategy) => (
               <button
                 key={strategy.id}
-                onClick={() => onChange({ branchStrategy: strategy.id })}
+                onClick={() => onChange({ 
+                  branchStrategy: strategy.id,
+                  // Auto-set commit workflow: toy projects = direct commits, others = branch + PR
+                  commitWorkflow: strategy.id === "none" ? "direct_main" : "branch_pr"
+                })}
                 className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-all ${
                   config.branchStrategy === strategy.id
                     ? "border-primary bg-primary/5 ring-1 ring-primary"
@@ -4168,31 +4168,6 @@ function StepRepository({
                 }`}
               >
                 {branch.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Commit Workflow */}
-        <div>
-          <label className="block text-sm font-medium mb-2">Commit Workflow</label>
-          <p className="text-xs text-muted-foreground mb-2">Do you prefer branches + PRs or committing directly to main?</p>
-          <div className="flex gap-2">
-            {COMMIT_WORKFLOW_OPTIONS.map((opt) => (
-              <button
-                key={opt.id}
-                onClick={() => onChange({ commitWorkflow: opt.id })}
-                className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-all ${
-                  config.commitWorkflow === opt.id
-                    ? "border-primary bg-primary/5 ring-1 ring-primary"
-                    : "hover:border-primary"
-                }`}
-              >
-                <span>{opt.icon}</span>
-                <div className="text-left">
-                  <span className="text-sm font-medium">{opt.label}</span>
-                  <p className="text-xs text-muted-foreground">{opt.desc}</p>
-                </div>
               </button>
             ))}
           </div>
