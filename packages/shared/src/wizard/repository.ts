@@ -166,3 +166,75 @@ export const CONTAINER_REGISTRIES: ContainerRegistryOption[] = [
   { id: "self_hosted", label: "Self-hosted Registry", icon: "🏠" },
 ];
 
+/**
+ * Version tag formats (when semver is enabled)
+ */
+export const VERSION_TAG_FORMATS: WizardOption[] = [
+  { id: "v_prefix", label: "v*", icon: "🏷️", description: "e.g., v1.0.0" },
+  { id: "no_prefix", label: "* (no prefix)", icon: "🏷️", description: "e.g., 1.0.0" },
+  { id: "app_prefix", label: "app-v*", icon: "🏷️", description: "e.g., app-v1.0.0" },
+  { id: "cli_prefix", label: "cli-v*", icon: "🏷️", description: "e.g., cli-v1.0.0" },
+  { id: "monorepo", label: "package@version", icon: "🏷️", description: "e.g., @scope/pkg@1.0.0" },
+  { id: "custom", label: "Custom format", icon: "🏷️", description: "Define your own tag format" },
+];
+
+/**
+ * Changelog generation tools/methods
+ */
+export const CHANGELOG_OPTIONS: WizardOption[] = [
+  { id: "manual", label: "Manual", icon: "✍️", description: "Write CHANGELOG.md manually" },
+  { id: "conventional_changelog", label: "conventional-changelog", icon: "📝", description: "Auto-generate from commits" },
+  { id: "release_please", label: "release-please", icon: "🤖", description: "Google's release automation" },
+  { id: "semantic_release", label: "semantic-release", icon: "🚀", description: "Fully automated versioning" },
+  { id: "changesets", label: "Changesets", icon: "📦", description: "Monorepo version management" },
+  { id: "git_cliff", label: "git-cliff", icon: "🏔️", description: "Customizable changelog generator" },
+  { id: "auto", label: "auto (Intuit)", icon: "⚡", description: "Automated releases based on labels" },
+  { id: "standard_version", label: "standard-version", icon: "📋", description: "Automate versioning and CHANGELOG" },
+  { id: "lerna_changelog", label: "lerna-changelog", icon: "🐉", description: "For Lerna monorepos" },
+  { id: "keep_a_changelog", label: "Keep a Changelog", icon: "📖", description: "Manual following keepachangelog.com" },
+  { id: "github_releases", label: "GitHub Releases", icon: "🐙", description: "Use GitHub release notes" },
+  { id: "none", label: "None", icon: "❌", description: "No changelog" },
+];
+
+/**
+ * VPN / Network overlay solutions
+ */
+export const VPN_OPTIONS: WizardOption[] = [
+  { id: "tailscale", label: "Tailscale", icon: "🔗", description: "Zero-config mesh VPN" },
+  { id: "headscale", label: "Headscale", icon: "🔗", description: "Self-hosted Tailscale control server" },
+  { id: "wireguard", label: "WireGuard", icon: "🛡️", description: "Modern VPN protocol" },
+  { id: "netbird", label: "NetBird", icon: "🐦", description: "Open-source network as code" },
+  { id: "zerotier", label: "ZeroTier", icon: "🌐", description: "Global area networking" },
+  { id: "nebula", label: "Nebula", icon: "🌌", description: "Slack's mesh networking tool" },
+  { id: "innernet", label: "innernet", icon: "🔐", description: "WireGuard-based private network" },
+  { id: "netmaker", label: "Netmaker", icon: "🕸️", description: "WireGuard automation platform" },
+  { id: "firezone", label: "Firezone", icon: "🔥", description: "Self-hosted VPN server" },
+  { id: "pritunl", label: "Pritunl", icon: "🔒", description: "Enterprise VPN server" },
+  { id: "openvpn", label: "OpenVPN", icon: "🔓", description: "Classic open-source VPN" },
+  { id: "cloudflare_tunnel", label: "Cloudflare Tunnel", icon: "🔶", description: "Expose services via Cloudflare" },
+  { id: "ngrok", label: "ngrok", icon: "🚇", description: "Secure tunnels to localhost" },
+  { id: "none", label: "None", icon: "❌", description: "No VPN/tunneling" },
+];
+
+/**
+ * GitOps / Infrastructure management tools
+ */
+export const GITOPS_TOOLS: WizardOption[] = [
+  { id: "portainer", label: "Portainer", icon: "🐋", description: "Docker/K8s management UI" },
+  { id: "argocd", label: "ArgoCD", icon: "🐙", description: "GitOps continuous delivery for K8s" },
+  { id: "fluxcd", label: "FluxCD", icon: "🔄", description: "GitOps toolkit for Kubernetes" },
+  { id: "rancher", label: "Rancher", icon: "🐄", description: "Multi-cluster K8s management" },
+  { id: "lens", label: "Lens", icon: "🔍", description: "Kubernetes IDE" },
+  { id: "k9s", label: "k9s", icon: "🐕", description: "Terminal UI for K8s" },
+  { id: "terraform", label: "Terraform", icon: "🏗️", description: "Infrastructure as Code" },
+  { id: "pulumi", label: "Pulumi", icon: "☁️", description: "IaC with programming languages" },
+  { id: "ansible", label: "Ansible", icon: "📜", description: "Automation and configuration" },
+  { id: "chef", label: "Chef", icon: "👨‍🍳", description: "Configuration management" },
+  { id: "puppet", label: "Puppet", icon: "🎭", description: "Infrastructure automation" },
+  { id: "saltstack", label: "SaltStack", icon: "🧂", description: "Event-driven automation" },
+  { id: "crossplane", label: "Crossplane", icon: "✖️", description: "Control plane for cloud infrastructure" },
+  { id: "waypoint", label: "HashiCorp Waypoint", icon: "🧭", description: "Build, deploy, release" },
+  { id: "spinnaker", label: "Spinnaker", icon: "🎡", description: "Multi-cloud continuous delivery" },
+  { id: "none", label: "None", icon: "❌", description: "No GitOps tooling" },
+];
+

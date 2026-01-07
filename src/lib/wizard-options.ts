@@ -55,10 +55,18 @@ import {
   CONTAINER_REGISTRIES as SHARED_CONTAINER_REGISTRIES,
   AI_BEHAVIOR_RULES as SHARED_AI_BEHAVIOR_RULES,
   IMPORTANT_FILES as SHARED_IMPORTANT_FILES,
+  PLAN_MODE_FREQUENCY as SHARED_PLAN_MODE_FREQUENCY,
+  AUTH_PROVIDERS as SHARED_AUTH_PROVIDERS,
   SECRETS_MANAGEMENT_OPTIONS as SHARED_SECRETS_MANAGEMENT_OPTIONS,
   SECURITY_TOOLING_OPTIONS as SHARED_SECURITY_TOOLING_OPTIONS,
   AUTH_PATTERNS_OPTIONS as SHARED_AUTH_PATTERNS_OPTIONS,
   DATA_HANDLING_OPTIONS as SHARED_DATA_HANDLING_OPTIONS,
+  COMPLIANCE_OPTIONS as SHARED_COMPLIANCE_OPTIONS,
+  ANALYTICS_OPTIONS as SHARED_ANALYTICS_OPTIONS,
+  VERSION_TAG_FORMATS as SHARED_VERSION_TAG_FORMATS,
+  CHANGELOG_OPTIONS as SHARED_CHANGELOG_OPTIONS,
+  VPN_OPTIONS as SHARED_VPN_OPTIONS,
+  GITOPS_TOOLS as SHARED_GITOPS_TOOLS,
   NAMING_CONVENTIONS as SHARED_NAMING_CONVENTIONS,
   ERROR_HANDLING_PATTERNS as SHARED_ERROR_HANDLING_PATTERNS,
   LOGGING_OPTIONS as SHARED_LOGGING_OPTIONS,
@@ -213,8 +221,20 @@ export const IMPORTANT_FILES = SHARED_IMPORTANT_FILES.map((o) => ({
   icon: o.icon,
   description: o.description,
 }));
+export const PLAN_MODE_FREQUENCY = SHARED_PLAN_MODE_FREQUENCY.map((o) => ({
+  id: o.id,
+  label: o.label,
+  icon: o.icon,
+  description: o.description,
+}));
 
 // Security
+export const AUTH_PROVIDERS = SHARED_AUTH_PROVIDERS.map((o) => ({
+  id: o.id,
+  label: o.label,
+  description: o.description,
+  recommended: o.recommended,
+}));
 export const SECRETS_MANAGEMENT_OPTIONS = SHARED_SECRETS_MANAGEMENT_OPTIONS.map((o) => ({
   id: o.id,
   label: o.label,
@@ -238,6 +258,46 @@ export const DATA_HANDLING_OPTIONS = SHARED_DATA_HANDLING_OPTIONS.map((o) => ({
   label: o.label,
   description: o.description,
   recommended: o.recommended,
+}));
+export const COMPLIANCE_OPTIONS = SHARED_COMPLIANCE_OPTIONS.map((o) => ({
+  id: o.id,
+  label: o.label,
+  description: o.description,
+  recommended: o.recommended,
+}));
+export const ANALYTICS_OPTIONS = SHARED_ANALYTICS_OPTIONS.map((o) => ({
+  id: o.id,
+  label: o.label,
+  description: o.description,
+  recommended: o.recommended,
+}));
+
+// Versioning & Release
+export const VERSION_TAG_FORMATS = SHARED_VERSION_TAG_FORMATS.map((o) => ({
+  id: o.id,
+  label: o.label,
+  icon: o.icon,
+  description: o.description,
+}));
+export const CHANGELOG_OPTIONS = SHARED_CHANGELOG_OPTIONS.map((o) => ({
+  id: o.id,
+  label: o.label,
+  icon: o.icon,
+  description: o.description,
+}));
+
+// Infrastructure
+export const VPN_OPTIONS = SHARED_VPN_OPTIONS.map((o) => ({
+  id: o.id,
+  label: o.label,
+  icon: o.icon,
+  description: o.description,
+}));
+export const GITOPS_TOOLS = SHARED_GITOPS_TOOLS.map((o) => ({
+  id: o.id,
+  label: o.label,
+  icon: o.icon,
+  description: o.description,
 }));
 
 // Code Style
