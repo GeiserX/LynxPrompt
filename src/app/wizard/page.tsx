@@ -46,6 +46,9 @@ import {
   generateAllFiles,
   type GeneratedFile,
 } from "@/lib/file-generator";
+// NOTE: Wizard constants are defined inline in this file. 
+// The shared package (packages/shared) contains the canonical list.
+// TODO: Migrate to importing from @/lib/wizard-options once inline constants are removed.
 
 type WizardTier = "basic" | "intermediate" | "advanced";
 
@@ -98,8 +101,10 @@ function canAccessTier(_userTier: string, _requiredTier: WizardTier): boolean {
   return true;
 }
 
+// Tech stack constants - these should eventually be imported from @/lib/wizard-options
+// For now they're defined inline to match the CLI wizard
+
 const LANGUAGES = [
-  // Popular
   { value: "typescript", label: "TypeScript", icon: "📘" },
   { value: "javascript", label: "JavaScript", icon: "📒" },
   { value: "python", label: "Python", icon: "🐍" },
@@ -112,7 +117,6 @@ const LANGUAGES = [
   { value: "swift", label: "Swift", icon: "🍎" },
   { value: "kotlin", label: "Kotlin", icon: "🎨" },
   { value: "cpp", label: "C++", icon: "⚙️" },
-  // Additional
   { value: "c", label: "C", icon: "🔧" },
   { value: "scala", label: "Scala", icon: "🔴" },
   { value: "elixir", label: "Elixir", icon: "💧" },
@@ -133,24 +137,17 @@ const LANGUAGES = [
   { value: "shell", label: "Shell/Bash", icon: "🐚" },
   { value: "powershell", label: "PowerShell", icon: "💻" },
   { value: "sql", label: "SQL", icon: "🗃️" },
-  // Blockchain
   { value: "solidity", label: "Solidity", icon: "⛓️" },
   { value: "move", label: "Move", icon: "🔒" },
   { value: "cairo", label: "Cairo", icon: "🏛️" },
   { value: "wasm", label: "WebAssembly", icon: "🌐" },
-  // IaC & DevOps Languages
   { value: "hcl", label: "HCL (Terraform)", icon: "🏗️" },
   { value: "yaml", label: "YAML", icon: "📄" },
   { value: "jsonnet", label: "Jsonnet", icon: "🔧" },
-  { value: "dhall", label: "Dhall", icon: "⚙️" },
-  { value: "cue", label: "CUE", icon: "🔷" },
-  { value: "starlark", label: "Starlark", icon: "⭐" },
-  { value: "rego", label: "Rego (OPA)", icon: "🛡️" },
   { value: "nix", label: "Nix", icon: "❄️" },
 ];
 
 const FRAMEWORKS = [
-  // Frontend
   { value: "react", label: "React", icon: "⚛️" },
   { value: "nextjs", label: "Next.js", icon: "▲" },
   { value: "vue", label: "Vue.js", icon: "💚" },
@@ -163,333 +160,75 @@ const FRAMEWORKS = [
   { value: "astro", label: "Astro", icon: "🚀" },
   { value: "remix", label: "Remix", icon: "💿" },
   { value: "gatsby", label: "Gatsby", icon: "🟣" },
-  // Backend Node
   { value: "express", label: "Express.js", icon: "📦" },
   { value: "nestjs", label: "NestJS", icon: "🐱" },
   { value: "fastify", label: "Fastify", icon: "🚀" },
   { value: "hono", label: "Hono", icon: "🔥" },
-  { value: "koa", label: "Koa", icon: "🌿" },
-  // Python
   { value: "fastapi", label: "FastAPI", icon: "⚡" },
   { value: "django", label: "Django", icon: "🎸" },
   { value: "flask", label: "Flask", icon: "🌶️" },
-  { value: "starlette", label: "Starlette", icon: "⭐" },
-  { value: "tornado", label: "Tornado", icon: "🌪️" },
-  { value: "pyramid", label: "Pyramid", icon: "🔺" },
-  // Java/Kotlin
   { value: "spring", label: "Spring Boot", icon: "🌱" },
-  { value: "quarkus", label: "Quarkus", icon: "🔷" },
-  { value: "micronaut", label: "Micronaut", icon: "🔵" },
-  { value: "ktor", label: "Ktor", icon: "🎨" },
-  // .NET
   { value: "dotnet", label: ".NET", icon: "🔷" },
-  { value: "blazor", label: "Blazor", icon: "🔷" },
-  // Ruby
   { value: "rails", label: "Ruby on Rails", icon: "🛤️" },
-  { value: "sinatra", label: "Sinatra", icon: "🎤" },
-  { value: "hanami", label: "Hanami", icon: "🌸" },
-  // Go
   { value: "gin", label: "Gin", icon: "🍸" },
   { value: "fiber", label: "Fiber", icon: "⚡" },
-  { value: "echo", label: "Echo", icon: "📣" },
-  { value: "chi", label: "Chi", icon: "🐹" },
-  // Rust
   { value: "actix", label: "Actix", icon: "🦀" },
   { value: "axum", label: "Axum", icon: "🦀" },
-  { value: "rocket", label: "Rocket", icon: "🚀" },
-  { value: "warp", label: "Warp", icon: "🦀" },
-  // PHP
   { value: "laravel", label: "Laravel", icon: "🐘" },
-  { value: "symfony", label: "Symfony", icon: "🎵" },
-  { value: "wordpress", label: "WordPress", icon: "📝" },
-  // Mobile
   { value: "flutter", label: "Flutter", icon: "🦋" },
   { value: "reactnative", label: "React Native", icon: "📱" },
-  { value: "swiftui", label: "SwiftUI", icon: "🍎" },
-  { value: "jetpackcompose", label: "Jetpack Compose", icon: "🤖" },
-  { value: "ionic", label: "Ionic", icon: "⚡" },
-  { value: "expo", label: "Expo", icon: "📱" },
-  // Desktop
   { value: "electron", label: "Electron", icon: "⚡" },
   { value: "tauri", label: "Tauri", icon: "🦀" },
-  // CSS/UI
   { value: "tailwind", label: "Tailwind CSS", icon: "🎨" },
-  { value: "bootstrap", label: "Bootstrap", icon: "🅱️" },
-  { value: "chakra", label: "Chakra UI", icon: "⚡" },
-  { value: "mui", label: "Material UI", icon: "🎨" },
-  { value: "antdesign", label: "Ant Design", icon: "🐜" },
-  { value: "shadcn", label: "shadcn/ui", icon: "🎨" },
-  // State/Data
-  { value: "redux", label: "Redux", icon: "🔄" },
-  { value: "zustand", label: "Zustand", icon: "🐻" },
-  { value: "tanstack", label: "TanStack Query", icon: "🔮" },
-  { value: "trpc", label: "tRPC", icon: "🔗" },
-  { value: "graphql", label: "GraphQL", icon: "◼️" },
-  // Databases/ORMs
   { value: "prisma", label: "Prisma", icon: "🔺" },
   { value: "drizzle", label: "Drizzle", icon: "💧" },
-  { value: "typeorm", label: "TypeORM", icon: "📦" },
-  { value: "sequelize", label: "Sequelize", icon: "📦" },
-  { value: "mongoose", label: "Mongoose", icon: "🍃" },
-  { value: "sqlalchemy", label: "SQLAlchemy", icon: "🐍" },
-  // NOTE: Testing frameworks moved to Testing section (TEST_FRAMEWORKS)
-  // DevOps/Infra - Containers
   { value: "docker", label: "Docker", icon: "🐳" },
-  { value: "podman", label: "Podman", icon: "🦭" },
-  { value: "containerd", label: "containerd", icon: "📦" },
-  { value: "buildah", label: "Buildah", icon: "🔨" },
-  // Kubernetes & Orchestration
   { value: "kubernetes", label: "Kubernetes", icon: "☸️" },
-  { value: "helm", label: "Helm", icon: "⎈" },
-  { value: "kustomize", label: "Kustomize", icon: "📋" },
-  { value: "kubebuilder", label: "Kubebuilder", icon: "🔧" },
-  { value: "operatorsdk", label: "Operator SDK", icon: "⚙️" },
-  { value: "crossplane", label: "Crossplane", icon: "🔀" },
-  { value: "k3s", label: "K3s", icon: "☸️" },
-  { value: "kind", label: "Kind", icon: "📦" },
-  { value: "minikube", label: "Minikube", icon: "💻" },
-  { value: "rancher", label: "Rancher", icon: "🐄" },
-  { value: "openshift", label: "OpenShift", icon: "🎩" },
-  // IaC - Infrastructure as Code
   { value: "terraform", label: "Terraform", icon: "🏗️" },
-  { value: "terragrunt", label: "Terragrunt", icon: "🏗️" },
-  { value: "opentofu", label: "OpenTofu", icon: "🏗️" },
-  { value: "pulumi", label: "Pulumi", icon: "☁️" },
-  { value: "cdktf", label: "CDK for Terraform", icon: "🏗️" },
-  { value: "awscdk", label: "AWS CDK", icon: "☁️" },
-  { value: "cloudformation", label: "CloudFormation", icon: "☁️" },
-  { value: "bicep", label: "Bicep (Azure)", icon: "💪" },
-  { value: "arm", label: "ARM Templates", icon: "☁️" },
-  { value: "gcp_dm", label: "GCP Deployment Manager", icon: "☁️" },
-  // Configuration Management
   { value: "ansible", label: "Ansible", icon: "🔧" },
-  { value: "chef", label: "Chef", icon: "👨‍🍳" },
-  { value: "puppet", label: "Puppet", icon: "🎭" },
-  { value: "saltstack", label: "SaltStack", icon: "🧂" },
-  // GitOps
   { value: "argocd", label: "ArgoCD", icon: "🐙" },
-  { value: "fluxcd", label: "FluxCD", icon: "🔄" },
-  { value: "jenkinsx", label: "Jenkins X", icon: "🔧" },
-  // Service Mesh & Networking
-  { value: "istio", label: "Istio", icon: "🕸️" },
-  { value: "linkerd", label: "Linkerd", icon: "🔗" },
-  { value: "consul", label: "Consul", icon: "🔍" },
-  { value: "envoy", label: "Envoy", icon: "📬" },
-  { value: "nginx", label: "NGINX", icon: "🌐" },
-  { value: "traefik", label: "Traefik", icon: "🚦" },
-  { value: "caddy", label: "Caddy", icon: "🔒" },
-  { value: "haproxy", label: "HAProxy", icon: "⚖️" },
-  // Observability & Monitoring
-  { value: "prometheus", label: "Prometheus", icon: "📊" },
-  { value: "grafana", label: "Grafana", icon: "📈" },
-  { value: "datadog", label: "Datadog", icon: "🐕" },
-  { value: "newrelic", label: "New Relic", icon: "📊" },
-  { value: "opentelemetry", label: "OpenTelemetry", icon: "🔭" },
-  { value: "jaeger", label: "Jaeger", icon: "🔍" },
-  { value: "zipkin", label: "Zipkin", icon: "🔍" },
-  { value: "elk", label: "ELK Stack", icon: "📋" },
-  { value: "loki", label: "Loki", icon: "📝" },
-  { value: "fluentd", label: "Fluentd", icon: "📤" },
-  { value: "fluentbit", label: "Fluent Bit", icon: "📤" },
-  { value: "vector", label: "Vector", icon: "➡️" },
-  // Secrets & Security
-  { value: "vault", label: "HashiCorp Vault", icon: "🔐" },
-  { value: "sops", label: "SOPS", icon: "🔒" },
-  { value: "externalsecrets", label: "External Secrets", icon: "🔑" },
-  { value: "sealedsecrets", label: "Sealed Secrets", icon: "📦" },
-  { value: "trivy", label: "Trivy", icon: "🛡️" },
-  { value: "snyk", label: "Snyk", icon: "🔍" },
-  { value: "falco", label: "Falco", icon: "🦅" },
-  { value: "opa", label: "Open Policy Agent", icon: "🛡️" },
-  { value: "kyverno", label: "Kyverno", icon: "🛡️" },
-  // CI/CD Tools
-  { value: "jenkins", label: "Jenkins", icon: "🔧" },
-  { value: "tekton", label: "Tekton", icon: "🔧" },
-  { value: "drone", label: "Drone CI", icon: "🐝" },
-  { value: "concourse", label: "Concourse", icon: "✈️" },
-  { value: "spinnaker", label: "Spinnaker", icon: "🎡" },
-  // Databases - DevOps perspective
-  { value: "postgresql", label: "PostgreSQL", icon: "🐘" },
-  { value: "mysql", label: "MySQL", icon: "🐬" },
-  { value: "mongodb", label: "MongoDB", icon: "🍃" },
-  { value: "redis", label: "Redis", icon: "🔴" },
-  { value: "elasticsearch", label: "Elasticsearch", icon: "🔍" },
-  { value: "cassandra", label: "Cassandra", icon: "👁️" },
-  { value: "cockroachdb", label: "CockroachDB", icon: "🪳" },
-  { value: "clickhouse", label: "ClickHouse", icon: "🏠" },
-  { value: "timescaledb", label: "TimescaleDB", icon: "⏱️" },
-  { value: "influxdb", label: "InfluxDB", icon: "📈" },
-  // Message Queues
-  { value: "kafka", label: "Apache Kafka", icon: "📨" },
-  { value: "rabbitmq", label: "RabbitMQ", icon: "🐰" },
-  { value: "nats", label: "NATS", icon: "📬" },
-  { value: "pulsar", label: "Apache Pulsar", icon: "⭐" },
-  { value: "sqs", label: "AWS SQS", icon: "📬" },
-  // ML/AI Ops
-  { value: "mlflow", label: "MLflow", icon: "🧪" },
-  { value: "kubeflow", label: "Kubeflow", icon: "☸️" },
-  { value: "airflow", label: "Apache Airflow", icon: "🌬️" },
-  { value: "dagster", label: "Dagster", icon: "📊" },
-  { value: "prefect", label: "Prefect", icon: "🔄" },
-  { value: "ray", label: "Ray", icon: "☀️" },
-  // Serverless
-  { value: "serverless", label: "Serverless Framework", icon: "⚡" },
-  { value: "sam", label: "AWS SAM", icon: "☁️" },
-  { value: "openfaas", label: "OpenFaaS", icon: "λ" },
-  { value: "knative", label: "Knative", icon: "☸️" },
 ];
 
-// Databases - organized by category for better UX
 const DATABASES = [
-  // === OPEN SOURCE RELATIONAL ===
   { value: "postgresql", label: "PostgreSQL", icon: "🐘", category: "opensource" },
   { value: "mysql", label: "MySQL", icon: "🐬", category: "opensource" },
-  { value: "mariadb", label: "MariaDB", icon: "🦭", category: "opensource" },
   { value: "sqlite", label: "SQLite", icon: "📦", category: "opensource" },
-  { value: "cockroachdb", label: "CockroachDB", icon: "🪳", category: "opensource" },
-  { value: "yugabytedb", label: "YugabyteDB", icon: "🔵", category: "opensource" },
-  { value: "tidb", label: "TiDB", icon: "⚡", category: "opensource" },
-  { value: "vitess", label: "Vitess", icon: "🟢", category: "opensource" },
-  // === OPEN SOURCE NOSQL - Document ===
   { value: "mongodb", label: "MongoDB", icon: "🍃", category: "opensource" },
-  { value: "couchdb", label: "CouchDB", icon: "🛋️", category: "opensource" },
-  { value: "arangodb", label: "ArangoDB", icon: "🥑", category: "opensource" },
-  { value: "ferretdb", label: "FerretDB", icon: "🐻", category: "opensource" },
-  { value: "pouchdb", label: "PouchDB", icon: "📱", category: "opensource" },
-  // === OPEN SOURCE NOSQL - Key-Value ===
   { value: "redis", label: "Redis", icon: "🔴", category: "opensource" },
-  { value: "valkey", label: "Valkey", icon: "🔑", category: "opensource" },
-  { value: "keydb", label: "KeyDB", icon: "🗝️", category: "opensource" },
-  { value: "dragonfly", label: "Dragonfly", icon: "🐉", category: "opensource" },
-  { value: "memcached", label: "Memcached", icon: "💾", category: "opensource" },
-  { value: "etcd", label: "etcd", icon: "🔧", category: "opensource" },
-  // === OPEN SOURCE NOSQL - Wide Column ===
   { value: "cassandra", label: "Apache Cassandra", icon: "👁️", category: "opensource" },
-  { value: "scylladb", label: "ScyllaDB", icon: "🦂", category: "opensource" },
-  { value: "hbase", label: "Apache HBase", icon: "🐘", category: "opensource" },
-  // === OPEN SOURCE NOSQL - Graph ===
   { value: "neo4j", label: "Neo4j", icon: "🔗", category: "opensource" },
-  { value: "dgraph", label: "Dgraph", icon: "📊", category: "opensource" },
-  { value: "janusgraph", label: "JanusGraph", icon: "🪐", category: "opensource" },
-  { value: "agensgraph", label: "AgensGraph", icon: "🌐", category: "opensource" },
-  // === OPEN SOURCE - Time Series ===
-  { value: "timescaledb", label: "TimescaleDB", icon: "⏱️", category: "opensource" },
-  { value: "influxdb", label: "InfluxDB", icon: "📈", category: "opensource" },
-  { value: "questdb", label: "QuestDB", icon: "🏎️", category: "opensource" },
-  { value: "victoriametrics", label: "VictoriaMetrics", icon: "📊", category: "opensource" },
-  { value: "prometheus", label: "Prometheus", icon: "🔥", category: "opensource" },
-  // === OPEN SOURCE - Analytics/OLAP ===
-  { value: "clickhouse", label: "ClickHouse", icon: "🏠", category: "opensource" },
-  { value: "apache_druid", label: "Apache Druid", icon: "🧙", category: "opensource" },
-  { value: "apache_pinot", label: "Apache Pinot", icon: "🎯", category: "opensource" },
-  { value: "duckdb", label: "DuckDB", icon: "🦆", category: "opensource" },
-  { value: "starrocks", label: "StarRocks", icon: "⭐", category: "opensource" },
-  // === OPEN SOURCE - Search ===
   { value: "elasticsearch", label: "Elasticsearch", icon: "🔍", category: "opensource" },
-  { value: "opensearch", label: "OpenSearch", icon: "🔎", category: "opensource" },
-  { value: "meilisearch", label: "Meilisearch", icon: "⚡", category: "opensource" },
-  { value: "typesense", label: "Typesense", icon: "🔤", category: "opensource" },
-  { value: "solr", label: "Apache Solr", icon: "☀️", category: "opensource" },
-  { value: "zinc", label: "Zinc", icon: "🔬", category: "opensource" },
-  // === OPEN SOURCE - Vector/AI ===
+  { value: "clickhouse", label: "ClickHouse", icon: "🏠", category: "opensource" },
+  { value: "cockroachdb", label: "CockroachDB", icon: "🪳", category: "opensource" },
+  { value: "timescaledb", label: "TimescaleDB", icon: "⏱️", category: "opensource" },
   { value: "milvus", label: "Milvus", icon: "🧠", category: "opensource" },
-  { value: "weaviate", label: "Weaviate", icon: "🕸️", category: "opensource" },
-  { value: "qdrant", label: "Qdrant", icon: "🎯", category: "opensource" },
-  { value: "chroma", label: "Chroma", icon: "🎨", category: "opensource" },
-  { value: "pgvector", label: "pgvector", icon: "🐘", category: "opensource" },
-  // === OPEN SOURCE - Message Queues (often used as DBs) ===
   { value: "kafka", label: "Apache Kafka", icon: "📨", category: "opensource" },
-  { value: "rabbitmq", label: "RabbitMQ", icon: "🐰", category: "opensource" },
-  { value: "nats", label: "NATS", icon: "📬", category: "opensource" },
-  { value: "pulsar", label: "Apache Pulsar", icon: "💫", category: "opensource" },
-  { value: "redpanda", label: "Redpanda", icon: "🐼", category: "opensource" },
-  // === OPEN SOURCE - Embedded/Edge ===
-  { value: "leveldb", label: "LevelDB", icon: "📚", category: "opensource" },
-  { value: "rocksdb", label: "RocksDB", icon: "🪨", category: "opensource" },
-  { value: "badger", label: "Badger", icon: "🦡", category: "opensource" },
-  { value: "surrealdb", label: "SurrealDB", icon: "🌊", category: "opensource" },
-  { value: "rqlite", label: "rqlite", icon: "📡", category: "opensource" },
-  // === CLOUD MANAGED - AWS ===
-  { value: "aws_rds", label: "AWS RDS", icon: "☁️", category: "cloud" },
-  { value: "aws_aurora", label: "AWS Aurora", icon: "🌅", category: "cloud" },
-  { value: "aws_dynamodb", label: "AWS DynamoDB", icon: "⚡", category: "cloud" },
-  { value: "aws_redshift", label: "AWS Redshift", icon: "📊", category: "cloud" },
-  { value: "aws_neptune", label: "AWS Neptune", icon: "🔱", category: "cloud" },
-  { value: "aws_timestream", label: "AWS Timestream", icon: "⏰", category: "cloud" },
-  { value: "aws_documentdb", label: "AWS DocumentDB", icon: "📄", category: "cloud" },
-  { value: "aws_elasticache", label: "AWS ElastiCache", icon: "💨", category: "cloud" },
-  { value: "aws_memorydb", label: "AWS MemoryDB", icon: "🧠", category: "cloud" },
-  // === CLOUD MANAGED - GCP ===
-  { value: "gcp_cloudsql", label: "GCP Cloud SQL", icon: "☁️", category: "cloud" },
-  { value: "gcp_spanner", label: "GCP Spanner", icon: "🔧", category: "cloud" },
-  { value: "gcp_firestore", label: "GCP Firestore", icon: "🔥", category: "cloud" },
-  { value: "gcp_bigtable", label: "GCP Bigtable", icon: "📊", category: "cloud" },
-  { value: "gcp_bigquery", label: "GCP BigQuery", icon: "🔍", category: "cloud" },
-  { value: "gcp_memorystore", label: "GCP Memorystore", icon: "💾", category: "cloud" },
-  { value: "gcp_alloydb", label: "GCP AlloyDB", icon: "🔷", category: "cloud" },
-  // === CLOUD MANAGED - Azure ===
-  { value: "azure_sql", label: "Azure SQL", icon: "☁️", category: "cloud" },
-  { value: "azure_cosmosdb", label: "Azure Cosmos DB", icon: "🌌", category: "cloud" },
-  { value: "azure_synapse", label: "Azure Synapse", icon: "🔗", category: "cloud" },
-  { value: "azure_cache", label: "Azure Cache for Redis", icon: "💨", category: "cloud" },
-  { value: "azure_postgresql", label: "Azure PostgreSQL", icon: "🐘", category: "cloud" },
-  { value: "azure_mysql", label: "Azure MySQL", icon: "🐬", category: "cloud" },
-  // === CLOUD MANAGED - Other ===
+  { value: "supabase", label: "Supabase", icon: "⚡", category: "cloud" },
   { value: "planetscale", label: "PlanetScale", icon: "🪐", category: "cloud" },
   { value: "neon", label: "Neon", icon: "💡", category: "cloud" },
-  { value: "supabase", label: "Supabase", icon: "⚡", category: "cloud" },
   { value: "turso", label: "Turso", icon: "🚀", category: "cloud" },
-  { value: "xata", label: "Xata", icon: "✨", category: "cloud" },
-  { value: "upstash", label: "Upstash", icon: "🔺", category: "cloud" },
-  { value: "railway_postgres", label: "Railway Postgres", icon: "🚂", category: "cloud" },
-  { value: "render_postgres", label: "Render Postgres", icon: "🔷", category: "cloud" },
-  { value: "digitalocean_dbaas", label: "DigitalOcean DBaaS", icon: "🌊", category: "cloud" },
-  { value: "aiven", label: "Aiven", icon: "🔴", category: "cloud" },
+  { value: "aws_rds", label: "AWS RDS", icon: "☁️", category: "cloud" },
+  { value: "aws_dynamodb", label: "AWS DynamoDB", icon: "⚡", category: "cloud" },
   { value: "mongodb_atlas", label: "MongoDB Atlas", icon: "🍃", category: "cloud" },
-  { value: "elastic_cloud", label: "Elastic Cloud", icon: "🔍", category: "cloud" },
-  { value: "redis_cloud", label: "Redis Cloud", icon: "🔴", category: "cloud" },
-  { value: "fauna", label: "Fauna", icon: "🦎", category: "cloud" },
-  { value: "pinecone", label: "Pinecone", icon: "🌲", category: "cloud" },
-  { value: "snowflake", label: "Snowflake", icon: "❄️", category: "cloud" },
-  { value: "databricks", label: "Databricks", icon: "🧱", category: "cloud" },
-  { value: "cockroach_cloud", label: "CockroachDB Cloud", icon: "🪳", category: "cloud" },
-  { value: "timescale_cloud", label: "Timescale Cloud", icon: "⏱️", category: "cloud" },
-  { value: "clickhouse_cloud", label: "ClickHouse Cloud", icon: "🏠", category: "cloud" },
-  // === CLOSED SOURCE / PROPRIETARY ===
   { value: "oracle", label: "Oracle Database", icon: "🔶", category: "proprietary" },
   { value: "mssql", label: "Microsoft SQL Server", icon: "🟦", category: "proprietary" },
-  { value: "db2", label: "IBM Db2", icon: "🔷", category: "proprietary" },
-  { value: "teradata", label: "Teradata", icon: "🟠", category: "proprietary" },
-  { value: "sap_hana", label: "SAP HANA", icon: "🔵", category: "proprietary" },
-  { value: "informix", label: "IBM Informix", icon: "📊", category: "proprietary" },
-  { value: "sybase", label: "SAP ASE (Sybase)", icon: "🔷", category: "proprietary" },
-  { value: "singlestore", label: "SingleStore", icon: "⚡", category: "proprietary" },
-  { value: "marklogic", label: "MarkLogic", icon: "📁", category: "proprietary" },
-  { value: "intersystems_cache", label: "InterSystems Caché", icon: "💎", category: "proprietary" },
 ];
 
-// Package managers (JS/TS only)
 const PACKAGE_MANAGERS = [
-  { id: "npm", label: "npm", icon: "📦", desc: "Node Package Manager (default)" },
-  { id: "yarn", label: "Yarn", icon: "🧶", desc: "Fast, reliable, and secure" },
-  { id: "pnpm", label: "pnpm", icon: "📀", desc: "Fast, disk space efficient" },
-  { id: "bun", label: "Bun", icon: "🥟", desc: "All-in-one JS runtime + PM" },
+  { id: "npm", label: "npm", icon: "📦", desc: "Node Package Manager" },
+  { id: "yarn", label: "Yarn", icon: "🧶", desc: "Fast, reliable, secure" },
+  { id: "pnpm", label: "pnpm", icon: "📀", desc: "Fast, disk efficient" },
+  { id: "bun", label: "Bun", icon: "🥟", desc: "All-in-one runtime + PM" },
 ];
 
-// Monorepo tools (JS/TS only)
 const MONOREPO_TOOLS = [
   { id: "", label: "None", icon: "📁", desc: "Single package repository" },
-  { id: "turborepo", label: "Turborepo", icon: "⚡", desc: "High-performance build system" },
-  { id: "nx", label: "Nx", icon: "🔷", desc: "Smart, extensible build framework" },
-  { id: "lerna", label: "Lerna", icon: "🐉", desc: "Multi-package repositories" },
+  { id: "turborepo", label: "Turborepo", icon: "⚡", desc: "High-performance build" },
+  { id: "nx", label: "Nx", icon: "🔷", desc: "Smart build framework" },
+  { id: "lerna", label: "Lerna", icon: "🐉", desc: "Multi-package repos" },
   { id: "pnpm_workspaces", label: "pnpm Workspaces", icon: "📀", desc: "Native pnpm monorepo" },
-  { id: "yarn_workspaces", label: "Yarn Workspaces", icon: "🧶", desc: "Native Yarn monorepo" },
-  { id: "npm_workspaces", label: "npm Workspaces", icon: "📦", desc: "Native npm monorepo" },
-  { id: "rush", label: "Rush", icon: "🚀", desc: "Microsoft's scalable monorepo" },
-  { id: "moon", label: "moon", icon: "🌙", desc: "Repository management tool" },
 ];
 
-// JS/TS runtimes
 const JS_RUNTIMES = [
   { id: "node", label: "Node.js", icon: "🟢", desc: "Standard JavaScript runtime" },
   { id: "deno", label: "Deno", icon: "🦕", desc: "Secure runtime with TypeScript" },
