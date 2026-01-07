@@ -6,8 +6,7 @@ import type { SecurityOption } from "./types.js";
  */
 export const AUTH_PROVIDERS: SecurityOption[] = [
   // Username/Password
-  { id: "username_password", label: "Username & Password", description: "Traditional credentials", recommended: true },
-  { id: "email_password", label: "Email & Password", description: "Email-based login" },
+  { id: "username_password", label: "Simple user or Email & Password", description: "Traditional username/email + password login", recommended: true },
   // OAuth Providers
   { id: "github_oauth", label: "GitHub OAuth", description: "Sign in with GitHub" },
   { id: "google_oauth", label: "Google OAuth", description: "Sign in with Google" },

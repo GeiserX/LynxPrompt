@@ -72,6 +72,7 @@ export const LICENSES: LicenseOption[] = [
  * Branch strategies
  */
 export const BRANCH_STRATEGIES: BranchStrategyOption[] = [
+  { id: "none", label: "None (toy project)", icon: "🎮", description: "No branching, commit directly to main" },
   { id: "github_flow", label: "GitHub Flow", icon: "🌊", description: "Simple: main + feature branches" },
   { id: "gitflow", label: "Gitflow", icon: "🌳", description: "develop, feature, release, hotfix branches" },
   { id: "trunk_based", label: "Trunk-Based", icon: "🚂", description: "Short-lived branches, continuous integration" },
