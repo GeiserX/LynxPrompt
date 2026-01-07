@@ -2617,18 +2617,51 @@ async function runInteractiveWizard(
     const commandsStep = getCurrentStep("commands")!;
     showStep(currentStepNum, commandsStep, userTier);
 
-    console.log(chalk.gray("  Select common commands for your project (type to search):"));
+    console.log(chalk.gray("  Select commands for your project. Detected commands are pre-selected."));
     console.log();
+    
+    // Helper to build choices with detected commands first
+    const buildCommandChoices = (
+      category: "build" | "test" | "lint" | "dev" | "format" | "typecheck" | "clean" | "preCommit" | "additional",
+      commonCmds: string[],
+      color: (s: string) => string
+    ) => {
+      const detectedCmds = detected?.detectedCommands?.[category] || [];
+      const detectedSet = new Set(detectedCmds.map(d => d.cmd));
+      
+      // Start with detected commands (pre-selected)
+      const choices = detectedCmds.map(d => ({
+        title: `${color(d.cmd)} ${chalk.green("(detected)")}${d.desc ? chalk.gray(` - ${d.desc}`) : ""}`,
+        value: d.cmd,
+        selected: true,
+      }));
+      
+      // Add common commands that weren't detected
+      for (const cmd of commonCmds) {
+        if (!detectedSet.has(cmd)) {
+          choices.push({
+            title: color(cmd),
+            value: cmd,
+            selected: false,
+          });
+        }
+      }
+      
+      return choices;
+    };
+    
+    // Show summary of detected commands
+    const detectedCmds = detected?.detectedCommands;
+    if (detectedCmds) {
+      const totalDetected = Object.values(detectedCmds).reduce((sum, arr) => sum + (arr?.length || 0), 0);
+      if (totalDetected > 0) {
+        console.log(chalk.green(`  ✓ ${totalDetected} commands detected from your project`));
+        console.log();
+      }
+    }
 
     // Build commands - autocomplete for searching
-    const buildChoices = sortSelectedFirst(COMMON_COMMANDS.build.map(c => {
-      const isDetected = detected?.commands?.build === c;
-      return {
-        title: isDetected ? `${chalk.cyan(c)} ${chalk.green("(detected)")}` : chalk.cyan(c),
-        value: c,
-        selected: isDetected,
-      };
-    }));
+    const buildChoices = buildCommandChoices("build", COMMON_COMMANDS.build, chalk.cyan);
     const buildResponse = await prompts({
       type: "autocompleteMultiselect",
       name: "build",
@@ -2639,14 +2672,7 @@ async function runInteractiveWizard(
     }, promptConfig);
 
     // Test commands - autocomplete for searching
-    const testChoices = sortSelectedFirst(COMMON_COMMANDS.test.map(c => {
-      const isDetected = detected?.commands?.test === c;
-      return {
-        title: isDetected ? `${chalk.yellow(c)} ${chalk.green("(detected)")}` : chalk.yellow(c),
-        value: c,
-        selected: isDetected,
-      };
-    }));
+    const testChoices = buildCommandChoices("test", COMMON_COMMANDS.test, chalk.yellow);
     const testResponse = await prompts({
       type: "autocompleteMultiselect",
       name: "test",
@@ -2657,32 +2683,18 @@ async function runInteractiveWizard(
     }, promptConfig);
 
     // Lint commands - autocomplete for searching
-    const lintChoices = sortSelectedFirst(COMMON_COMMANDS.lint.map(c => {
-      const isDetected = detected?.commands?.lint === c;
-      return {
-        title: isDetected ? `${chalk.green(c)} ${chalk.green("(detected)")}` : chalk.green(c),
-        value: c,
-        selected: isDetected,
-      };
-    }));
+    const lintChoices = buildCommandChoices("lint", COMMON_COMMANDS.lint, chalk.green);
     const lintResponse = await prompts({
       type: "autocompleteMultiselect",
       name: "lint",
-      message: chalk.white("Lint/format commands (type to search):"),
+      message: chalk.white("Lint commands (type to search):"),
       choices: lintChoices,
       hint: chalk.gray("type to filter • space select • enter confirm"),
       instructions: false,
     }, promptConfig);
 
     // Dev commands - autocomplete for searching
-    const devChoices = sortSelectedFirst(COMMON_COMMANDS.dev.map(c => {
-      const isDetected = detected?.commands?.dev === c;
-      return {
-        title: isDetected ? `${chalk.magenta(c)} ${chalk.green("(detected)")}` : chalk.magenta(c),
-        value: c,
-        selected: isDetected,
-      };
-    }));
+    const devChoices = buildCommandChoices("dev", COMMON_COMMANDS.dev, chalk.magenta);
     const devResponse = await prompts({
       type: "autocompleteMultiselect",
       name: "dev",
@@ -2693,66 +2705,56 @@ async function runInteractiveWizard(
     }, promptConfig);
 
     // Format commands - autocomplete for searching
+    const formatChoices = buildCommandChoices("format", COMMON_COMMANDS.format, chalk.blue);
     const formatResponse = await prompts({
       type: "autocompleteMultiselect",
       name: "format",
       message: chalk.white("Format commands (type to search):"),
-      choices: COMMON_COMMANDS.format.map(c => ({
-        title: chalk.blue(c),
-        value: c,
-      })),
+      choices: formatChoices,
       hint: chalk.gray("type to filter • space select • enter confirm"),
       instructions: false,
     }, promptConfig);
 
     // Typecheck commands - autocomplete for searching
+    const typecheckChoices = buildCommandChoices("typecheck", COMMON_COMMANDS.typecheck, chalk.gray);
     const typecheckResponse = await prompts({
       type: "autocompleteMultiselect",
       name: "typecheck",
       message: chalk.white("Typecheck commands (type to search):"),
-      choices: COMMON_COMMANDS.typecheck.map(c => ({
-        title: chalk.gray(c),
-        value: c,
-      })),
+      choices: typecheckChoices,
       hint: chalk.gray("type to filter • space select • enter confirm"),
       instructions: false,
     }, promptConfig);
 
     // Clean commands - autocomplete for searching
+    const cleanChoices = buildCommandChoices("clean", COMMON_COMMANDS.clean, chalk.red);
     const cleanResponse = await prompts({
       type: "autocompleteMultiselect",
       name: "clean",
       message: chalk.white("Clean commands (type to search):"),
-      choices: COMMON_COMMANDS.clean.map(c => ({
-        title: chalk.red(c),
-        value: c,
-      })),
+      choices: cleanChoices,
       hint: chalk.gray("type to filter • space select • enter confirm"),
       instructions: false,
     }, promptConfig);
 
     // Pre-commit commands - autocomplete for searching
+    const preCommitChoices = buildCommandChoices("preCommit", COMMON_COMMANDS.preCommit, chalk.yellow);
     const preCommitResponse = await prompts({
       type: "autocompleteMultiselect",
       name: "preCommit",
       message: chalk.white("Pre-commit hooks (type to search):"),
-      choices: COMMON_COMMANDS.preCommit.map(c => ({
-        title: chalk.yellow(c),
-        value: c,
-      })),
+      choices: preCommitChoices,
       hint: chalk.gray("type to filter • space select • enter confirm"),
       instructions: false,
     }, promptConfig);
 
     // Additional commands - autocomplete for searching
+    const additionalChoices = buildCommandChoices("additional", COMMON_COMMANDS.additional, chalk.blue);
     const additionalResponse = await prompts({
       type: "autocompleteMultiselect",
       name: "additional",
       message: chalk.white("Additional commands (type to search):"),
-      choices: COMMON_COMMANDS.additional.map(c => ({
-        title: chalk.blue(c),
-        value: c,
-      })),
+      choices: additionalChoices,
       hint: chalk.gray("type to filter • space select • enter confirm"),
       instructions: false,
     }, promptConfig);
@@ -2865,10 +2867,10 @@ async function runInteractiveWizard(
     const maxFileLengthResponse = await prompts({
       type: "number",
       name: "maxFileLength",
-      message: chalk.white("Max file length (lines, 100-1000):"),
+      message: chalk.white("Max file length (lines, 100-10000):"),
       initial: 300,
       min: 100,
-      max: 1000,
+      max: 10000,
     }, promptConfig);
     answers.maxFileLength = maxFileLengthResponse.maxFileLength || 300;
 
@@ -2878,27 +2880,90 @@ async function runInteractiveWizard(
       name: "importOrder",
       message: chalk.white("Import order preference:"),
       choices: [
+        { title: chalk.gray("⏭ Skip"), value: "" },
         { title: "Grouped (external → internal → relative)", value: "grouped" },
         { title: "Alphabetical (sort A-Z)", value: "sorted" },
         { title: "Natural (leave as written)", value: "natural" },
       ],
       initial: 0,
     }, promptConfig);
-    answers.importOrder = importOrderResponse.importOrder || "grouped";
+    answers.importOrder = importOrderResponse.importOrder || "";
 
     // Comment language
     const commentLangResponse = await prompts({
-      type: "select",
+      type: "autocomplete",
       name: "commentLanguage",
       message: chalk.white("Comment language:"),
       choices: [
+        { title: chalk.gray("⏭ Skip"), value: "" },
         { title: "🇬🇧 English", value: "english" },
-        { title: "🌍 Native language", value: "native" },
-        { title: "🗣️ Any (team preference)", value: "any" },
+        { title: "🇪🇸 Spanish (Español)", value: "spanish" },
+        { title: "🇫🇷 French (Français)", value: "french" },
+        { title: "🇩🇪 German (Deutsch)", value: "german" },
+        { title: "🇮🇹 Italian (Italiano)", value: "italian" },
+        { title: "🇵🇹 Portuguese (Português)", value: "portuguese" },
+        { title: "🇳🇱 Dutch (Nederlands)", value: "dutch" },
+        { title: "🇷🇺 Russian (Русский)", value: "russian" },
+        { title: "🇨🇳 Chinese Simplified (简体中文)", value: "chinese_simplified" },
+        { title: "🇹🇼 Chinese Traditional (繁體中文)", value: "chinese_traditional" },
+        { title: "🇯🇵 Japanese (日本語)", value: "japanese" },
+        { title: "🇰🇷 Korean (한국어)", value: "korean" },
+        { title: "🇸🇦 Arabic (العربية)", value: "arabic" },
+        { title: "🇮🇱 Hebrew (עברית)", value: "hebrew" },
+        { title: "🇮🇳 Hindi (हिन्दी)", value: "hindi" },
+        { title: "🇧🇩 Bengali (বাংলা)", value: "bengali" },
+        { title: "🇵🇰 Urdu (اردو)", value: "urdu" },
+        { title: "🇹🇭 Thai (ไทย)", value: "thai" },
+        { title: "🇻🇳 Vietnamese (Tiếng Việt)", value: "vietnamese" },
+        { title: "🇮🇩 Indonesian (Bahasa Indonesia)", value: "indonesian" },
+        { title: "🇲🇾 Malay (Bahasa Melayu)", value: "malay" },
+        { title: "🇵🇭 Filipino (Tagalog)", value: "filipino" },
+        { title: "🇵🇱 Polish (Polski)", value: "polish" },
+        { title: "🇨🇿 Czech (Čeština)", value: "czech" },
+        { title: "🇸🇰 Slovak (Slovenčina)", value: "slovak" },
+        { title: "🇭🇺 Hungarian (Magyar)", value: "hungarian" },
+        { title: "🇷🇴 Romanian (Română)", value: "romanian" },
+        { title: "🇧🇬 Bulgarian (Български)", value: "bulgarian" },
+        { title: "🇺🇦 Ukrainian (Українська)", value: "ukrainian" },
+        { title: "🇬🇷 Greek (Ελληνικά)", value: "greek" },
+        { title: "🇹🇷 Turkish (Türkçe)", value: "turkish" },
+        { title: "🇸🇪 Swedish (Svenska)", value: "swedish" },
+        { title: "🇳🇴 Norwegian (Norsk)", value: "norwegian" },
+        { title: "🇩🇰 Danish (Dansk)", value: "danish" },
+        { title: "🇫🇮 Finnish (Suomi)", value: "finnish" },
+        { title: "🇪🇪 Estonian (Eesti)", value: "estonian" },
+        { title: "🇱🇻 Latvian (Latviešu)", value: "latvian" },
+        { title: "🇱🇹 Lithuanian (Lietuvių)", value: "lithuanian" },
+        { title: "🇸🇮 Slovenian (Slovenščina)", value: "slovenian" },
+        { title: "🇭🇷 Croatian (Hrvatski)", value: "croatian" },
+        { title: "🇷🇸 Serbian (Српски)", value: "serbian" },
+        { title: "🇮🇷 Persian/Farsi (فارسی)", value: "persian" },
+        { title: "🇿🇦 Afrikaans", value: "afrikaans" },
+        { title: "🇳🇬 Swahili (Kiswahili)", value: "swahili" },
+        { title: "🇪🇬 Egyptian Arabic", value: "egyptian_arabic" },
+        { title: "🇲🇽 Latin American Spanish", value: "latam_spanish" },
+        { title: "🇧🇷 Brazilian Portuguese", value: "brazilian_portuguese" },
+        { title: "🇨🇦 Canadian French", value: "canadian_french" },
+        { title: "🇦🇹 Austrian German", value: "austrian_german" },
+        { title: "🇨🇭 Swiss German", value: "swiss_german" },
+        { title: "🔤 Other (specify)", value: "other" },
       ],
-      initial: 0,
+      hint: chalk.gray("type to filter"),
+      suggest: (input: string, choices: { title: string; value: string }[]) =>
+        choices.filter(c => c.title.toLowerCase().includes(input.toLowerCase())),
     }, promptConfig);
-    answers.commentLanguage = commentLangResponse.commentLanguage || "english";
+    answers.commentLanguage = commentLangResponse.commentLanguage || "";
+    
+    // If "other" selected, ask for custom language
+    if (answers.commentLanguage === "other") {
+      const customLangResponse = await prompts({
+        type: "text",
+        name: "customLanguage",
+        message: chalk.white("Specify comment language:"),
+        validate: (v) => v.trim() ? true : "Please enter a language",
+      }, promptConfig);
+      answers.commentLanguage = customLangResponse.customLanguage || "english";
+    }
 
     // Documentation style
     const docStyleResponse = await prompts({
@@ -3191,11 +3256,12 @@ async function runInteractiveWizard(
     showStep(currentStepNum, boundariesStep, userTier);
 
     console.log(chalk.gray("  Define what AI should never do, ask first, or always do."));
-    console.log(chalk.gray("  Each option can only be in one category."));
+    console.log(chalk.gray("  Each option can only be in one category. Select 'Other' to add custom."));
     console.log();
 
     // Track used options to filter them out from subsequent questions
     const usedOptions = new Set<string>();
+    const OTHER_MARKER = "__other__";
 
     // 1. NEVER do - AI will refuse to do (ask first - most restrictive)
     console.log(chalk.red.bold("  ✗ NEVER ALLOW - AI will refuse to do"));
@@ -3203,15 +3269,33 @@ async function runInteractiveWizard(
       type: "autocompleteMultiselect",
       name: "never",
       message: chalk.white("Never allow (type to filter):"),
-      choices: BOUNDARY_OPTIONS.map(o => ({
-        title: chalk.red(o),
-        value: o,
-      })),
+      choices: [
+        ...BOUNDARY_OPTIONS.map(o => ({
+          title: chalk.red(o),
+          value: o,
+        })),
+        { title: chalk.magenta("✎ Other (custom)"), value: OTHER_MARKER },
+      ],
       hint: chalk.gray("space select • enter confirm"),
       instructions: false,
     }, promptConfig);
-    answers.boundaryNever = neverResponse.never || [];
-    (answers.boundaryNever as string[]).forEach(o => usedOptions.add(o));
+    let neverList: string[] = (neverResponse.never || []).filter((o: string) => o !== OTHER_MARKER);
+    
+    // Handle "Other" for Never
+    if ((neverResponse.never || []).includes(OTHER_MARKER)) {
+      const customNeverResponse = await prompts({
+        type: "text",
+        name: "custom",
+        message: chalk.white("Enter custom 'never allow' items (comma-separated):"),
+        hint: chalk.gray("e.g., Push to production, Deploy without approval"),
+      }, promptConfig);
+      if (customNeverResponse.custom) {
+        const customItems = customNeverResponse.custom.split(",").map((s: string) => s.trim()).filter(Boolean);
+        neverList = [...neverList, ...customItems];
+      }
+    }
+    answers.boundaryNever = neverList;
+    neverList.forEach(o => usedOptions.add(o));
 
     // 2. ASK first - AI will ask before doing
     console.log();
@@ -3221,15 +3305,33 @@ async function runInteractiveWizard(
       type: "autocompleteMultiselect",
       name: "ask",
       message: chalk.white("Ask first (type to filter):"),
-      choices: availableForAsk.map(o => ({
-        title: chalk.yellow(o),
-        value: o,
-      })),
+      choices: [
+        ...availableForAsk.map(o => ({
+          title: chalk.yellow(o),
+          value: o,
+        })),
+        { title: chalk.magenta("✎ Other (custom)"), value: OTHER_MARKER },
+      ],
       hint: chalk.gray("space select • enter confirm"),
       instructions: false,
     }, promptConfig);
-    answers.boundaryAsk = askResponse.ask || [];
-    (answers.boundaryAsk as string[]).forEach(o => usedOptions.add(o));
+    let askList: string[] = (askResponse.ask || []).filter((o: string) => o !== OTHER_MARKER);
+    
+    // Handle "Other" for Ask
+    if ((askResponse.ask || []).includes(OTHER_MARKER)) {
+      const customAskResponse = await prompts({
+        type: "text",
+        name: "custom",
+        message: chalk.white("Enter custom 'ask first' items (comma-separated):"),
+        hint: chalk.gray("e.g., Change external API calls, Modify authentication"),
+      }, promptConfig);
+      if (customAskResponse.custom) {
+        const customItems = customAskResponse.custom.split(",").map((s: string) => s.trim()).filter(Boolean);
+        askList = [...askList, ...customItems];
+      }
+    }
+    answers.boundaryAsk = askList;
+    askList.forEach(o => usedOptions.add(o));
 
     // 3. ALWAYS do - AI will do these automatically
     console.log();
@@ -3239,26 +3341,44 @@ async function runInteractiveWizard(
       type: "autocompleteMultiselect",
       name: "always",
       message: chalk.white("Always allow (type to filter):"),
-      choices: availableForAlways.map(o => ({
-        title: chalk.green(o),
-        value: o,
-      })),
+      choices: [
+        ...availableForAlways.map(o => ({
+          title: chalk.green(o),
+          value: o,
+        })),
+        { title: chalk.magenta("✎ Other (custom)"), value: OTHER_MARKER },
+      ],
       hint: chalk.gray("space select • enter confirm"),
       instructions: false,
     }, promptConfig);
-    answers.boundaryAlways = alwaysResponse.always || [];
+    let alwaysList: string[] = (alwaysResponse.always || []).filter((o: string) => o !== OTHER_MARKER);
+    
+    // Handle "Other" for Always
+    if ((alwaysResponse.always || []).includes(OTHER_MARKER)) {
+      const customAlwaysResponse = await prompts({
+        type: "text",
+        name: "custom",
+        message: chalk.white("Enter custom 'always allow' items (comma-separated):"),
+        hint: chalk.gray("e.g., Add comments, Format code"),
+      }, promptConfig);
+      if (customAlwaysResponse.custom) {
+        const customItems = customAlwaysResponse.custom.split(",").map((s: string) => s.trim()).filter(Boolean);
+        alwaysList = [...alwaysList, ...customItems];
+      }
+    }
+    answers.boundaryAlways = alwaysList;
 
     // Show summary
     console.log();
     console.log(chalk.gray("  Boundary summary:"));
-    if ((answers.boundaryAlways as string[]).length > 0) {
-      console.log(chalk.green(`    ✓ Always: ${(answers.boundaryAlways as string[]).join(", ")}`));
+    if (alwaysList.length > 0) {
+      console.log(chalk.green(`    ✓ Always: ${alwaysList.join(", ")}`));
     }
-    if ((answers.boundaryAsk as string[]).length > 0) {
-      console.log(chalk.yellow(`    ? Ask: ${(answers.boundaryAsk as string[]).join(", ")}`));
+    if (askList.length > 0) {
+      console.log(chalk.yellow(`    ? Ask: ${askList.join(", ")}`));
     }
-    if ((answers.boundaryNever as string[]).length > 0) {
-      console.log(chalk.red(`    ✗ Never: ${(answers.boundaryNever as string[]).join(", ")}`));
+    if (neverList.length > 0) {
+      console.log(chalk.red(`    ✗ Never: ${neverList.join(", ")}`));
     }
   } else {
     answers.boundaries = options.boundaries || "standard";
@@ -3331,15 +3451,20 @@ async function runInteractiveWizard(
     answers.tddPreference = tddResponse.tddPreference ?? false;
 
     // Snapshot Testing
+    console.log(chalk.gray("  Snapshot testing captures expected output (HTML, JSON, etc.) and compares"));
+    console.log(chalk.gray("  future runs against it. Useful for UI components, API responses, serialization."));
     const snapshotResponse = await prompts({
-      type: "toggle",
+      type: "select",
       name: "snapshotTesting",
       message: chalk.white("Use snapshot testing?"),
-      initial: false,
-      active: "Yes",
-      inactive: "No",
+      choices: [
+        { title: chalk.gray("⏭ Skip"), value: "skip" },
+        { title: "Yes - Use snapshot testing for output validation", value: "yes" },
+        { title: "No - Avoid snapshot tests", value: "no" },
+      ],
+      initial: 0,
     }, promptConfig);
-    answers.snapshotTesting = snapshotResponse.snapshotTesting ?? false;
+    answers.snapshotTesting = snapshotResponse.snapshotTesting === "yes";
 
     // Mock Strategy
     const mockResponse = await prompts({
@@ -3371,24 +3496,41 @@ async function runInteractiveWizard(
     const staticStep = getCurrentStep("static")!;
     showStep(currentStepNum, staticStep, userTier);
 
-    // First, ask how to handle static files
-    console.log(chalk.gray("  How should static file content be handled?"));
-    console.log();
-    console.log(chalk.gray("     📄 Config only: Content embedded in AI config file (AI has context, no local files)"));
-    console.log(chalk.gray("     📁 Both: Create local files AND embed content in AI config file"));
-    console.log();
+    // If repo was detected, default to skipping this step
+    let skipStaticFiles = false;
+    if (detected) {
+      console.log(chalk.gray("  Since you're working with an existing repository, you may already have these files."));
+      console.log();
+      const skipResponse = await prompts({
+        type: "toggle",
+        name: "skip",
+        message: chalk.white("Skip static files configuration?"),
+        initial: true,
+        active: "Yes, skip",
+        inactive: "No, configure",
+      }, promptConfig);
+      skipStaticFiles = skipResponse.skip ?? true;
+    }
     
-    const staticFileHandlingResponse = await prompts({
-      type: "select",
-      name: "handling",
-      message: chalk.white("Where to add static file content?"),
-      choices: [
-        { title: "📄 Config file only (recommended)", value: "config_only", description: "Content goes in AI config, no separate files created" },
-        { title: "📁 Both local files AND config", value: "both", description: "Create files locally AND embed in AI config" },
-      ],
-      initial: 0,
-    }, promptConfig);
-    answers.staticFileHandling = staticFileHandlingResponse.handling || "config_only";
+    if (!skipStaticFiles) {
+      // First, ask how to handle static files
+      console.log(chalk.gray("  How should static file content be handled?"));
+      console.log();
+      console.log(chalk.gray("     📄 Config only: Content embedded in AI config file (AI has context, no local files)"));
+      console.log(chalk.gray("     📁 Both: Create local files AND embed content in AI config file"));
+      console.log();
+      
+      const staticFileHandlingResponse = await prompts({
+        type: "select",
+        name: "handling",
+        message: chalk.white("Where to add static file content?"),
+        choices: [
+          { title: "📄 Config file only (recommended)", value: "config_only", description: "Content goes in AI config, no separate files created" },
+          { title: "📁 Both local files AND config", value: "both", description: "Create files locally AND embed in AI config" },
+        ],
+        initial: 0,
+      }, promptConfig);
+      answers.staticFileHandling = staticFileHandlingResponse.handling || "config_only";
 
     console.log();
     console.log(chalk.gray("  Select project files to include:"));
@@ -3552,6 +3694,7 @@ async function runInteractiveWizard(
         console.log();
       }
     }
+    } // end of skipStaticFiles check
   }
 
   // ═══════════════════════════════════════════════════════════════

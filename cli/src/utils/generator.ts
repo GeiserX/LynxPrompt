@@ -248,13 +248,22 @@ const AI_BEHAVIOR_DESCRIPTIONS: Record<string, string> = {
   type_strict: "Be strict with types - avoid any/Any/Object types",
 };
 
-// Important files descriptions
+// Important files descriptions - must match wizard options
 const IMPORTANT_FILES_PATHS: Record<string, string> = {
   readme: "README.md",
-  package: "package.json or pyproject.toml",
-  tsconfig: "tsconfig.json or similar config",
-  architecture: "ARCHITECTURE.md",
+  package_json: "package.json",
+  changelog: "CHANGELOG.md",
   contributing: "CONTRIBUTING.md",
+  makefile: "Makefile",
+  dockerfile: "Dockerfile",
+  docker_compose: "docker-compose.yml",
+  env_example: ".env.example",
+  openapi: "openapi.yaml / swagger.json",
+  architecture_md: "ARCHITECTURE.md",
+  // Legacy aliases for backwards compatibility
+  package: "package.json",
+  tsconfig: "tsconfig.json",
+  architecture: "ARCHITECTURE.md",
 };
 
 // Boundary presets
@@ -1214,11 +1223,41 @@ function generateFileContent(options: GenerateOptions, platform: string): string
 
   // Security Configuration section
   const security = options.security;
-  if (security && (security.secretsManagement?.length || security.securityTooling?.length || 
-      security.authPatterns?.length || security.dataHandling?.length || security.additionalNotes)) {
+  if (security && (security.authProviders?.length || security.secretsManagement?.length || security.securityTooling?.length || 
+      security.authPatterns?.length || security.dataHandling?.length || security.compliance?.length || 
+      security.analytics?.length || security.additionalNotes)) {
     if (isMarkdown || isMdc) {
       sections.push("## 🔐 Security Configuration");
       sections.push("");
+      
+      // Auth Providers (Login providers)
+      if (security.authProviders?.length) {
+        sections.push("### Authentication Providers");
+        sections.push("");
+        const authProviderLabels: Record<string, string> = {
+          google: "Google",
+          github: "GitHub",
+          microsoft: "Microsoft",
+          apple: "Apple",
+          facebook: "Facebook",
+          twitter: "Twitter/X",
+          linkedin: "LinkedIn",
+          discord: "Discord",
+          slack: "Slack",
+          gitlab: "GitLab",
+          bitbucket: "Bitbucket",
+          email_password: "Email/Password",
+          phone_sms: "Phone/SMS",
+          magic_link: "Magic Link",
+          passkeys: "Passkeys/WebAuthn",
+          saml: "SAML SSO",
+          ldap: "LDAP/Active Directory",
+        };
+        for (const p of security.authProviders) {
+          sections.push(`- ${authProviderLabels[p] || p}`);
+        }
+        sections.push("");
+      }
       
       // Secrets Management
       if (security.secretsManagement?.length) {
@@ -1351,6 +1390,52 @@ function generateFileContent(options: GenerateOptions, platform: string): string
         sections.push("");
       }
 
+      // Compliance
+      if (security.compliance?.length) {
+        sections.push("### Compliance Standards");
+        sections.push("");
+        const complianceLabels: Record<string, string> = {
+          gdpr: "GDPR (EU)",
+          ccpa: "CCPA (California)",
+          hipaa: "HIPAA (Healthcare)",
+          soc2: "SOC 2",
+          pci_dss: "PCI-DSS (Payment)",
+          iso27001: "ISO 27001",
+          fedramp: "FedRAMP",
+          none: "No specific requirements",
+        };
+        for (const c of security.compliance) {
+          sections.push(`- ${complianceLabels[c] || c}`);
+        }
+        sections.push("");
+      }
+
+      // Analytics
+      if (security.analytics?.length) {
+        sections.push("### Analytics Tools");
+        sections.push("");
+        const analyticsLabels: Record<string, string> = {
+          none: "No analytics",
+          umami: "Umami",
+          plausible: "Plausible",
+          fathom: "Fathom",
+          posthog: "PostHog",
+          mixpanel: "Mixpanel",
+          amplitude: "Amplitude",
+          google_analytics: "Google Analytics",
+          segment: "Segment",
+          heap: "Heap",
+          matomo: "Matomo",
+          simple_analytics: "Simple Analytics",
+          pirsch: "Pirsch",
+          countly: "Countly",
+        };
+        for (const a of security.analytics) {
+          sections.push(`- ${analyticsLabels[a] || a}`);
+        }
+        sections.push("");
+      }
+
       // Additional security notes
       if (security.additionalNotes) {
         sections.push("### Additional Security Notes");
@@ -1361,6 +1446,9 @@ function generateFileContent(options: GenerateOptions, platform: string): string
     } else {
       // Non-markdown format
       sections.push("Security Configuration:");
+      if (security.authProviders?.length) {
+        sections.push(`- Auth Providers: ${security.authProviders.join(", ")}`);
+      }
       if (security.secretsManagement?.length) {
         sections.push(`- Secrets: ${security.secretsManagement.join(", ")}`);
       }
@@ -1372,6 +1460,12 @@ function generateFileContent(options: GenerateOptions, platform: string): string
       }
       if (security.dataHandling?.length) {
         sections.push(`- Data: ${security.dataHandling.join(", ")}`);
+      }
+      if (security.compliance?.length) {
+        sections.push(`- Compliance: ${security.compliance.join(", ")}`);
+      }
+      if (security.analytics?.length) {
+        sections.push(`- Analytics: ${security.analytics.join(", ")}`);
       }
       sections.push("");
     }
