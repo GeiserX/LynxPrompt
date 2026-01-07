@@ -5,6 +5,7 @@
  * and transforms them for CLI use (prompts library format).
  */
 
+// Import from compiled dist folder to avoid rootDir issues
 import {
   // Types
   type WizardOption,
@@ -26,7 +27,6 @@ import {
   DEFAULT_BRANCHES as SHARED_DEFAULT_BRANCHES,
   SELF_HOSTED_TARGETS as SHARED_SELF_HOSTED_TARGETS,
   CLOUD_TARGETS as SHARED_CLOUD_TARGETS,
-  DEPLOYMENT_TARGETS as SHARED_DEPLOYMENT_TARGETS,
   CONTAINER_REGISTRIES as SHARED_CONTAINER_REGISTRIES,
   AI_BEHAVIOR_RULES as SHARED_AI_BEHAVIOR_RULES,
   IMPORTANT_FILES as SHARED_IMPORTANT_FILES,
@@ -41,7 +41,7 @@ import {
   TEST_LEVELS as SHARED_TEST_LEVELS,
   TEST_FRAMEWORKS as SHARED_TEST_FRAMEWORKS,
   COMMANDS_BY_CATEGORY as SHARED_COMMANDS_BY_CATEGORY,
-} from "../../../packages/shared/src/wizard/index.js";
+} from "../../../packages/shared/dist/wizard/index.js";
 
 // ============================================
 // Transform to CLI format: { title, value }

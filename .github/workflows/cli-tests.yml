@@ -5,11 +5,13 @@ on:
     branches: [main, develop]
     paths:
       - 'cli/**'
+      - 'packages/shared/**'
       - '.github/workflows/cli-tests.yml'
   pull_request:
     branches: [main, develop]
     paths:
       - 'cli/**'
+      - 'packages/shared/**'
   workflow_dispatch:
     inputs:
       environment:
@@ -106,6 +108,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+
+      - name: Build shared package
+        working-directory: packages/shared
+        run: |
+          npm install typescript --save-dev
+          npx tsc
 
       - name: Build CLI from source
         working-directory: cli
@@ -219,6 +227,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+
+      - name: Build shared package
+        working-directory: packages/shared
+        run: |
+          npm install typescript --save-dev
+          npx tsc
 
       - name: Install dependencies
         working-directory: cli
