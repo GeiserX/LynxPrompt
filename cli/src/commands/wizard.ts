@@ -2949,8 +2949,8 @@ async function runInteractiveWizard(
         { title: "🔤 Other (specify)", value: "other" },
       ],
       hint: chalk.gray("type to filter"),
-      suggest: (input: string, choices: { title: string; value: string }[]) =>
-        choices.filter(c => c.title.toLowerCase().includes(input.toLowerCase())),
+      suggest: (input: string, choices: prompts.Choice[]) =>
+        Promise.resolve(choices.filter(c => c.title.toLowerCase().includes(input.toLowerCase()))),
     }, promptConfig);
     answers.commentLanguage = commentLangResponse.commentLanguage || "";
     
