@@ -60,6 +60,7 @@ enum TemplateType {
   FUNDING
   CURSORRULES       // Legacy - keep for backwards compat
   CURSOR_RULES      // New standard (still deprecated in favor of AGENTS_MD)
+  CURSOR_MDC        // Cursor MDC format (.cursor/rules/)
   CLAUDE_MD
   COPILOT_INSTRUCTIONS
   WINDSURF_RULES
@@ -67,6 +68,28 @@ enum TemplateType {
   AGENTS_MD         // Universal AGENTS.md - Recommended
   CLINE_RULES
   CODEX_MD
+  // IDEs
+  ZED_INSTRUCTIONS  // Zed (.zed/instructions.md)
+  VOID_CONFIG       // Void IDE (.void/config.json)
+  TRAE_RULES        // Trae (.trae/rules/)
+  IDX_CONFIG        // Project IDX (.idx/)
+  // Editor Extensions
+  ROO_RULES         // Roo-Cline (.roo/rules/)
+  CONTINUE_CONFIG   // Continue (.continue/config.json)
+  CODY_CONFIG       // Sourcegraph Cody (.cody/config.json)
+  TABNINE_CONFIG    // Tabnine (.tabnine.yaml)
+  AMAZONQ_RULES     // Amazon Q (.amazonq/rules/)
+  AUGMENT_RULES     // Augment (.augment/rules/)
+  KILOCODE_RULES    // Kilocode (.kilocode/rules/)
+  JUNIE_GUIDELINES  // Junie (.junie/guidelines.md)
+  KIRO_STEERING     // Kiro (.kiro/steering/)
+  // CLI Tools
+  AIDER_MD          // Aider (AIDER.md)
+  GOOSEHINTS        // Goose (.goosehints)
+  WARP_MD           // Warp AI (WARP.md)
+  OPENCODE_JSON     // OpenCode (opencode.json)
+  // Other
+  OPENHANDS_MD      // OpenHands (.openhands/microagents/repo.md)
   // AI Agent Commands - Slash commands for AI IDEs
   CURSOR_COMMAND    // Cursor commands (.cursor/commands/*.md)
   CLAUDE_COMMAND    // Claude Code commands (.claude/commands/*.md)

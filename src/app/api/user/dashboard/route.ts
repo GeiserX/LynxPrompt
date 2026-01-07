@@ -82,11 +82,10 @@ export async function GET() {
         _sum: { favorites: true },
       }),
 
-      // Get user's recent templates (max 5)
+      // Get user's templates (all, for client-side pagination and search)
       prismaUsers.userTemplate.findMany({
         where: { userId },
         orderBy: { createdAt: "desc" },
-        take: 5,
         select: {
           id: true,
           name: true,
@@ -316,11 +315,10 @@ export async function GET() {
       isOwnDownload: activity.userId === userId,
     }));
 
-    // Get user's favorite templates (max 6)
+    // Get user's favorite templates (all for client-side pagination)
     const favorites = await prismaUsers.templateFavorite.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
-      take: 6,
     });
 
     // Enrich favorites with template details

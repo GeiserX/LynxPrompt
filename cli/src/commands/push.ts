@@ -220,20 +220,6 @@ async function updateBlueprint(
   console.log(chalk.cyan(`\n📤 Updating blueprint ${chalk.bold(blueprintId)}...`));
   console.log(chalk.gray(`   File: ${file}`));
 
-  if (!options.yes) {
-    const confirm = await prompts({
-      type: "confirm",
-      name: "value",
-      message: `Push changes to ${blueprintId}?`,
-      initial: true,
-    });
-
-    if (!confirm.value) {
-      console.log(chalk.yellow("Push cancelled."));
-      return;
-    }
-  }
-
   const spinner = ora("Pushing changes...").start();
 
   try {
@@ -341,14 +327,12 @@ async function createOrLinkBlueprint(
     "OPENCODE_COMMAND": "OpenCode",
   };
   
-  const typeLabel = isCommandFile 
-    ? chalk.magenta(`[${commandNames[inferredType] || "Command"} Command]`)
-    : "";
-
   console.log(chalk.cyan("\n📤 Push new blueprint"));
   console.log(chalk.gray(`   File: ${file}`));
   if (isCommandFile) {
-    console.log(chalk.gray(`   Type: ${typeLabel}`));
+    console.log(chalk.magenta(`   Type: ${commandNames[inferredType] || "Command"} Command`));
+  } else {
+    console.log(chalk.gray(`   Type: ${inferredType.replace(/_/g, " ")}`));
   }
 
   // Ask for details if not provided
@@ -445,8 +429,10 @@ async function createOrLinkBlueprint(
     });
 
     console.log();
-    console.log(chalk.green(`✅ Created blueprint ${chalk.bold(result.blueprint.name)}`));
+    const typeDesc = isCommandFile ? `${commandNames[inferredType]} Command` : "Blueprint";
+    console.log(chalk.green(`✅ Created ${typeDesc} ${chalk.bold(result.blueprint.name)}`));
     console.log(chalk.gray(`   ID: ${result.blueprint.id}`));
+    console.log(chalk.gray(`   Type: ${inferredType}`));
     console.log(chalk.gray(`   Visibility: ${visibility}`));
     if (hierarchyInfo.repositoryPath) {
       console.log(chalk.gray(`   Path: ${hierarchyInfo.repositoryPath}`));
