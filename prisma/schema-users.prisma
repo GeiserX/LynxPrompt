@@ -723,6 +723,13 @@ enum TemplateType {
   AGENTS_MD         // Universal AGENTS.md - Recommended
   CLINE_RULES
   CODEX_MD
+  // AI Agent Commands - Slash commands for AI IDEs
+  CURSOR_COMMAND    // Cursor commands (.cursor/commands/*.md)
+  CLAUDE_COMMAND    // Claude Code commands (.claude/commands/*.md)
+  WINDSURF_WORKFLOW // Windsurf workflows (.windsurf/workflows/*.md)
+  COPILOT_PROMPT    // GitHub Copilot prompts (.copilot/prompts/*.md)
+  CONTINUE_PROMPT   // Continue.dev prompts (.continue/prompts/*.md)
+  OPENCODE_COMMAND  // OpenCode commands (.opencode/commands/*.md)
   GITIGNORE
   README
   CONTRIBUTING

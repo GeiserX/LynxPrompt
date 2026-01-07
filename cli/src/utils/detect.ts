@@ -1467,3 +1467,139 @@ export function isGitUrl(str: string): boolean {
   ];
   return patterns.some(p => p.test(str.trim()));
 }
+
+// ═══════════════════════════════════════════════════════════════
+// AI AGENT COMMAND DETECTION
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Command file definition for AI IDE slash commands
+ */
+export interface CommandFileInfo {
+  /** Full path to the command file */
+  path: string;
+  /** Filename without extension */
+  name: string;
+  /** Command type (cursor-command, claude-command, windsurf-workflow, etc.) */
+  type: "cursor-command" | "claude-command" | "windsurf-workflow" | "copilot-prompt" | "continue-prompt" | "opencode-command";
+  /** Content of the command file */
+  content: string;
+  /** IDE platform this command belongs to */
+  platform: "cursor" | "claude" | "windsurf" | "copilot" | "continue" | "opencode";
+  /** Template type for database storage */
+  templateType: "CURSOR_COMMAND" | "CLAUDE_COMMAND" | "WINDSURF_WORKFLOW" | "COPILOT_PROMPT" | "CONTINUE_PROMPT" | "OPENCODE_COMMAND";
+}
+
+/**
+ * Known command directories for various AI IDEs
+ * 
+ * All commands are markdown files - conversion between formats is just renaming/moving.
+ * The content is plain markdown text, no special format required.
+ */
+const COMMAND_DIRECTORIES = [
+  { directory: ".cursor/commands", type: "cursor-command" as const, platform: "cursor" as const, templateType: "CURSOR_COMMAND" as const },
+  { directory: ".claude/commands", type: "claude-command" as const, platform: "claude" as const, templateType: "CLAUDE_COMMAND" as const },
+  { directory: ".windsurf/workflows", type: "windsurf-workflow" as const, platform: "windsurf" as const, templateType: "WINDSURF_WORKFLOW" as const },
+  { directory: ".copilot/prompts", type: "copilot-prompt" as const, platform: "copilot" as const, templateType: "COPILOT_PROMPT" as const },
+  { directory: ".continue/prompts", type: "continue-prompt" as const, platform: "continue" as const, templateType: "CONTINUE_PROMPT" as const },
+  { directory: ".opencode/commands", type: "opencode-command" as const, platform: "opencode" as const, templateType: "OPENCODE_COMMAND" as const },
+];
+
+/**
+ * Detect command files in a directory
+ * Scans known command directories for AI IDE slash commands
+ */
+export async function detectCommandFiles(cwd: string): Promise<CommandFileInfo[]> {
+  const commands: CommandFileInfo[] = [];
+  const { readdir, readFile: readFileAsync } = await import("fs/promises");
+  
+  for (const cmdDir of COMMAND_DIRECTORIES) {
+    const dirPath = join(cwd, cmdDir.directory);
+    
+    try {
+      await access(dirPath);
+      const entries = await readdir(dirPath, { withFileTypes: true });
+      
+      for (const entry of entries) {
+        if (entry.isFile() && entry.name.endsWith(".md")) {
+          const filePath = join(dirPath, entry.name);
+          try {
+            const content = await readFileAsync(filePath, "utf-8");
+            const name = entry.name.replace(/\.md$/, "");
+            
+            commands.push({
+              path: filePath,
+              name,
+              type: cmdDir.type,
+              content,
+              platform: cmdDir.platform,
+              templateType: cmdDir.templateType,
+            });
+          } catch {
+            // Skip files we can't read
+          }
+        }
+      }
+    } catch {
+      // Directory doesn't exist, skip
+    }
+  }
+  
+  return commands;
+}
+
+/**
+ * Detect if a file path is a command file
+ */
+export function isCommandFilePath(filePath: string): boolean {
+  const normalizedPath = filePath.replace(/\\/g, "/");
+  return COMMAND_DIRECTORIES.some(cmd => normalizedPath.includes(cmd.directory));
+}
+
+/**
+ * Infer command type from file path
+ */
+export function inferCommandTypeFromPath(filePath: string): { type: string; platform: string; templateType: string } | null {
+  const normalizedPath = filePath.replace(/\\/g, "/");
+  const match = COMMAND_DIRECTORIES.find(cmd => normalizedPath.includes(cmd.directory));
+  
+  if (match) {
+    return {
+      type: match.type,
+      platform: match.platform,
+      templateType: match.templateType,
+    };
+  }
+  
+  return null;
+}
+
+/**
+ * Get command directories to scan
+ */
+export function getCommandDirectories(): { directory: string; type: string; platform: string; templateType: string }[] {
+  return COMMAND_DIRECTORIES;
+}
+
+/**
+ * Convert a command from one IDE format to another
+ * Currently both Cursor and Claude Code use markdown, so this is mostly about file placement
+ */
+export function convertCommandFormat(
+  content: string,
+  _fromType: string,
+  toType: string
+): { content: string; directory: string; extension: string } {
+  const targetDir = COMMAND_DIRECTORIES.find(d => d.type === toType);
+  if (!targetDir) {
+    throw new Error(`Unknown command type: ${toType}`);
+  }
+  
+  // Both formats use markdown, so content stays the same
+  // Future: if formats diverge, add conversion logic here
+  return {
+    content,
+    directory: targetDir.directory,
+    extension: ".md",
+  };
+}

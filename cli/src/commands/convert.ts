@@ -44,6 +44,13 @@ const TARGET_FILES: Record<string, string> = {
   codex: "codex.md",
   supermaven: "supermaven.md",
   goose: ".goose/rules.txt",
+  // Command targets - all plain markdown, no conversion needed
+  "cursor-command": ".cursor/commands/command.md",
+  "claude-command": ".claude/commands/command.md",
+  "windsurf-workflow": ".windsurf/workflows/workflow.md",
+  "copilot-prompt": ".copilot/prompts/prompt.md",
+  "continue-prompt": ".continue/prompts/prompt.md",
+  "opencode-command": ".opencode/commands/command.md",
 };
 
 // Platform display names
@@ -59,7 +66,27 @@ const PLATFORM_NAMES: Record<string, string> = {
   codex: "Codex",
   supermaven: "Supermaven",
   goose: "Goose Rules",
+  // Commands
+  "cursor-command": "Cursor Command",
+  "claude-command": "Claude Code Command",
+  "windsurf-workflow": "Windsurf Workflow",
+  "copilot-prompt": "Copilot Prompt",
+  "continue-prompt": "Continue Prompt",
+  "opencode-command": "OpenCode Command",
 };
+
+// Command directory patterns for detection
+const COMMAND_DIRS: Record<string, string> = {
+  ".cursor/commands": "cursor-command",
+  ".claude/commands": "claude-command",
+  ".windsurf/workflows": "windsurf-workflow",
+  ".copilot/prompts": "copilot-prompt",
+  ".continue/prompts": "continue-prompt",
+  ".opencode/commands": "opencode-command",
+};
+
+// Check if a target is a command type
+const isCommandTarget = (target: string) => target.includes("-command") || target.includes("-prompt") || target.includes("-workflow");
 
 async function detectSourceFile(cwd: string): Promise<{ path: string; platform: string } | null> {
   // Try to find a source file in common locations
@@ -89,6 +116,19 @@ async function detectSourceFile(cwd: string): Promise<{ path: string; platform: 
   return null;
 }
 
+/**
+ * Detect if a source path is a command file
+ */
+function detectCommandPlatform(sourcePath: string): string | null {
+  const normalized = sourcePath.replace(/\\/g, "/").toLowerCase();
+  for (const [dir, platform] of Object.entries(COMMAND_DIRS)) {
+    if (normalized.includes(dir)) {
+      return platform;
+    }
+  }
+  return null;
+}
+
 function parseMarkdownConfig(content: string): Record<string, string> {
   const config: Record<string, string> = {};
   
@@ -113,6 +153,12 @@ function parseMarkdownConfig(content: string): Record<string, string> {
 
 function generateTargetContent(config: Record<string, string>, targetPlatform: string): string {
   const rawContent = config._raw || "";
+  
+  // Commands are all plain markdown - no conversion needed between command types
+  // They just go in different directories
+  if (isCommandTarget(targetPlatform)) {
+    return rawContent;
+  }
   
   // For simple conversions, adapt the content format
   switch (targetPlatform) {
@@ -199,9 +245,15 @@ export async function convertCommand(
   
   if (source) {
     sourcePath = join(cwd, source);
-    // Detect platform from filename
-    const sourceBasename = basename(source).toLowerCase();
-    sourcePlatform = SOURCE_FILES[sourceBasename] || "unknown";
+    // Check if it's a command file first
+    const cmdPlatform = detectCommandPlatform(source);
+    if (cmdPlatform) {
+      sourcePlatform = cmdPlatform;
+    } else {
+      // Detect platform from filename
+      const sourceBasename = basename(source).toLowerCase();
+      sourcePlatform = SOURCE_FILES[sourceBasename] || "unknown";
+    }
   } else {
     const detected = await detectSourceFile(cwd);
     if (!detected) {
@@ -212,8 +264,14 @@ export async function convertCommand(
         console.log(chalk.gray(`    • ${file}`));
       }
       console.log();
+      console.log(chalk.gray("  Command directories (for slash commands):"));
+      for (const dir of Object.keys(COMMAND_DIRS)) {
+        console.log(chalk.gray(`    • ${dir}/*.md`));
+      }
+      console.log();
       console.log(chalk.gray("  Usage: lynxp convert <source> <target>"));
       console.log(chalk.gray("  Example: lynxp convert AGENTS.md cursor"));
+      console.log(chalk.gray("  Example: lynxp convert .cursor/commands/deploy.md claude-command"));
       process.exit(1);
     }
     sourcePath = detected.path;
@@ -254,7 +312,15 @@ export async function convertCommand(
   spinner.stop();
 
   // Determine output path
-  const outputFilename = options.output || TARGET_FILES[normalizedTarget];
+  let outputFilename = options.output || TARGET_FILES[normalizedTarget];
+  
+  // For commands, preserve original filename but change directory
+  if (isCommandTarget(normalizedTarget) && !options.output) {
+    const originalFilename = basename(sourcePath);
+    const targetDir = TARGET_FILES[normalizedTarget].split("/").slice(0, -1).join("/");
+    outputFilename = `${targetDir}/${originalFilename}`;
+  }
+  
   const outputPath = join(cwd, outputFilename);
 
   // Check if output exists

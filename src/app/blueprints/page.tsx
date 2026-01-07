@@ -62,6 +62,7 @@ interface Blueprint {
   likes: number;
   tags: string[];
   tier?: string;
+  type?: string; // AGENTS_MD, CURSOR_COMMAND, etc.
   category?: string;
   isOfficial?: boolean;
   aiAssisted?: boolean;
@@ -70,6 +71,13 @@ interface Blueprint {
   isOwner?: boolean;
   hasPurchased?: boolean;
 }
+
+// Command type detection
+const COMMAND_TYPES = [
+  "CURSOR_COMMAND", "CLAUDE_COMMAND", "WINDSURF_WORKFLOW", 
+  "COPILOT_PROMPT", "CONTINUE_PROMPT", "OPENCODE_COMMAND"
+];
+const isCommandType = (type?: string) => type ? COMMAND_TYPES.includes(type) : false;
 
 interface ApiResponse {
   templates: Blueprint[];
@@ -743,6 +751,11 @@ function BlueprintsContent() {
                           {blueprint.aiAssisted && (
                             <span className="rounded bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
                               AI-assisted
+                            </span>
+                          )}
+                          {isCommandType(blueprint.type) && (
+                            <span className="rounded bg-gradient-to-r from-violet-500 to-purple-500 px-1.5 py-0.5 text-xs font-medium text-white">
+                              ⚡ Command
                             </span>
                           )}
                         </div>
