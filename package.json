@@ -9,6 +9,9 @@
     "type": "git",
     "url": "https://github.com/GeiserX/LynxPrompt.git"
   },
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
