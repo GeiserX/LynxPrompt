@@ -127,6 +127,27 @@ export async function GET(req: NextRequest) {
       _count: { id: true },
     });
 
+    // Individual users list (for expandable view)
+    const usersList = await prismaUsers.user.findMany({
+      where: excludeTestUsers,
+      orderBy: { createdAt: "desc" },
+      take: 100, // Limit to recent 100 users
+      select: {
+        id: true,
+        name: true,
+        displayName: true,
+        email: true,
+        subscriptionPlan: true,
+        role: true,
+        createdAt: true,
+        _count: {
+          select: {
+            templates: true,
+          },
+        },
+      },
+    });
+
     // ===== REVENUE STATS =====
     
     // Calculate estimated MRR (Monthly Recurring Revenue)
@@ -245,12 +266,21 @@ export async function GET(req: NextRequest) {
 
     // ===== TEAM STATS =====
     
-    const totalTeams = await prismaUsers.team.count();
-    const teamMembers = await prismaUsers.teamMember.count();
+    // Exclude "lynxprompt" team (owner's internal team) from stats
+    const excludeOwnerTeam = {
+      slug: { not: "lynxprompt" },
+    };
+
+    const totalTeams = await prismaUsers.team.count({
+      where: excludeOwnerTeam,
+    });
+    const teamMembers = await prismaUsers.teamMember.count({
+      where: { team: excludeOwnerTeam },
+    });
     let pendingInvitations = 0;
     try {
       pendingInvitations = await prismaUsers.teamInvitation.count({
-        where: { status: "PENDING" as never },
+        where: { status: "PENDING" as never, team: excludeOwnerTeam },
       });
     } catch {
       // Enum query might fail
@@ -367,6 +397,15 @@ export async function GET(req: NextRequest) {
         byRole: Object.fromEntries(usersByRole.map((r) => [r.role, r._count.id])),
         newThisPeriod: newUsersThisPeriod,
         growthData: userGrowthData,
+        list: usersList.map((u) => ({
+          id: u.id,
+          name: u.displayName || u.name || "Anonymous",
+          email: u.email,
+          plan: u.subscriptionPlan,
+          role: u.role,
+          createdAt: u.createdAt.toISOString(),
+          blueprintsCount: u._count.templates,
+        })),
       },
       revenue: {
         estimatedMRR,
