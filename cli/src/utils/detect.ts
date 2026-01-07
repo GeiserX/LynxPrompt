@@ -344,8 +344,6 @@ async function detectExtendedCommands(cwd: string): Promise<DetectedProject["det
 
   // Check for additional Dockerfiles
   try {
-    const files = await readFile(join(cwd, "."), "utf-8").catch(() => "");
-    // This won't work - let's just check common patterns
     const dockerViewerPath = join(cwd, "Dockerfile.viewer");
     if (await fileExists(dockerViewerPath)) {
       addCmd("build", "docker build -f Dockerfile.viewer -t app-viewer .", "Build viewer Docker image");
