@@ -285,6 +285,68 @@ const DATABASES = [
   { title: "📂 Prisma", value: "prisma" },
 ];
 
+// Package managers (JS/TS only)
+const PACKAGE_MANAGERS = [
+  { title: "📦 npm", value: "npm", desc: "Node Package Manager (default)" },
+  { title: "🧶 Yarn", value: "yarn", desc: "Fast, reliable, and secure" },
+  { title: "📀 pnpm", value: "pnpm", desc: "Fast, disk space efficient" },
+  { title: "🥟 Bun", value: "bun", desc: "All-in-one JS runtime + PM" },
+];
+
+// JS/TS Runtimes
+const JS_RUNTIMES = [
+  { title: "🟢 Node.js", value: "node", desc: "Standard JavaScript runtime" },
+  { title: "🦕 Deno", value: "deno", desc: "Secure runtime with TypeScript" },
+  { title: "🥟 Bun", value: "bun", desc: "Fast all-in-one JS runtime" },
+];
+
+// Monorepo tools
+const MONOREPO_TOOLS = [
+  { title: "📁 None", value: "", desc: "Single package repository" },
+  { title: "⚡ Turborepo", value: "turborepo", desc: "High-performance build system" },
+  { title: "🔷 Nx", value: "nx", desc: "Smart, extensible build framework" },
+  { title: "🐉 Lerna", value: "lerna", desc: "Multi-package repositories" },
+  { title: "📀 pnpm Workspaces", value: "pnpm_workspaces", desc: "Native pnpm monorepo" },
+  { title: "🧶 Yarn Workspaces", value: "yarn_workspaces", desc: "Native Yarn monorepo" },
+  { title: "📦 npm Workspaces", value: "npm_workspaces", desc: "Native npm monorepo" },
+];
+
+// ORMs by language
+const ORM_OPTIONS = [
+  { title: "📝 None / Raw SQL", value: "", langs: [] },
+  // JavaScript/TypeScript
+  { title: "🔷 Prisma", value: "prisma", langs: ["javascript", "typescript"] },
+  { title: "💧 Drizzle", value: "drizzle", langs: ["javascript", "typescript"] },
+  { title: "🔶 TypeORM", value: "typeorm", langs: ["javascript", "typescript"] },
+  { title: "📘 Sequelize", value: "sequelize", langs: ["javascript", "typescript"] },
+  { title: "🔧 Knex.js", value: "knex", langs: ["javascript", "typescript"] },
+  { title: "🎯 Kysely", value: "kysely", langs: ["javascript", "typescript"] },
+  // Python
+  { title: "🐍 SQLAlchemy", value: "sqlalchemy", langs: ["python"] },
+  { title: "🎸 Django ORM", value: "django_orm", langs: ["python"] },
+  { title: "🐢 Tortoise ORM", value: "tortoise", langs: ["python"] },
+  { title: "⚡ SQLModel", value: "sqlmodel", langs: ["python"] },
+  // Go
+  { title: "🐹 GORM", value: "gorm", langs: ["go"] },
+  { title: "🏗️ Ent", value: "ent", langs: ["go"] },
+  { title: "📝 sqlc", value: "sqlc", langs: ["go"] },
+  // Rust
+  { title: "🦀 Diesel", value: "diesel", langs: ["rust"] },
+  { title: "🌊 SeaORM", value: "sea-orm", langs: ["rust"] },
+  { title: "📦 SQLx", value: "sqlx", langs: ["rust"] },
+  // Java/Kotlin
+  { title: "☕ Hibernate", value: "hibernate", langs: ["java", "kotlin"] },
+  { title: "🎵 jOOQ", value: "jooq", langs: ["java", "kotlin"] },
+  // .NET
+  { title: "🔷 Entity Framework", value: "ef_core", langs: ["csharp"] },
+  { title: "⚡ Dapper", value: "dapper", langs: ["csharp"] },
+  // Ruby
+  { title: "💎 ActiveRecord", value: "activerecord", langs: ["ruby"] },
+  // PHP
+  { title: "🐘 Eloquent", value: "eloquent", langs: ["php"] },
+  { title: "📖 Doctrine", value: "doctrine", langs: ["php"] },
+];
+
 // Repository hosts
 const REPO_HOSTS = [
   { id: "github", label: "GitHub", icon: "🐙" },
@@ -447,6 +509,52 @@ const COMMON_COMMANDS = {
     // Docker
     "docker compose up", "docker compose up -d",
   ],
+  format: [
+    // JavaScript/Node
+    "prettier --write .", "npm run format", "pnpm format",
+    "biome format --write .", "dprint fmt",
+    // Python
+    "black .", "ruff format .", "isort .", "autopep8 --in-place -r .",
+    // Go
+    "go fmt ./...", "gofmt -w .", "goimports -w .",
+    // Rust
+    "cargo fmt",
+    // Other
+    "shfmt -w .", "terraform fmt -recursive",
+  ],
+  typecheck: [
+    // TypeScript
+    "tsc --noEmit", "npm run typecheck", "pnpm typecheck",
+    "vue-tsc --noEmit", "tsc -b",
+    // Python
+    "mypy .", "pyright", "pyre check",
+    // Go
+    "go vet ./...", "staticcheck ./...",
+    // Rust
+    "cargo check",
+  ],
+  clean: [
+    // JavaScript/Node
+    "npm run clean", "rm -rf node_modules", "rm -rf dist",
+    "rm -rf .next", "rm -rf build", "rm -rf coverage",
+    // Python
+    "rm -rf __pycache__", "find . -name '*.pyc' -delete",
+    // Go
+    "go clean -cache", "go clean -testcache",
+    // Rust
+    "cargo clean",
+    // Docker
+    "docker system prune -af", "docker compose down -v",
+    // Make
+    "make clean",
+  ],
+  preCommit: [
+    // JavaScript
+    "npx husky install", "pnpm dlx husky install", "lefthook install",
+    "lint-staged", "npx lint-staged", "simple-git-hooks",
+    // Python
+    "pre-commit install", "pre-commit run --all-files",
+  ],
   additional: [
     // Database
     "npm run db:push", "npm run db:migrate", "prisma migrate dev",
@@ -459,8 +567,6 @@ const COMMON_COMMANDS = {
     // Deploy
     "npm run deploy", "vercel", "netlify deploy",
     "flyctl deploy", "railway up",
-    // Clean
-    "npm run clean", "make clean", "cargo clean",
   ],
 };
 
@@ -1787,6 +1893,75 @@ async function runInteractiveWizard(
   }, promptConfig);
   const selectedDatabases = databaseResponse.databases || [];
 
+  // JS/TS specific options
+  const hasJsTs = selectedLanguages.includes("javascript") || selectedLanguages.includes("typescript");
+  
+  if (hasJsTs) {
+    console.log();
+    console.log(chalk.cyan("  📦 JavaScript/TypeScript Options"));
+    console.log();
+    
+    // Package Manager
+    const pmResponse = await prompts({
+      type: "select",
+      name: "packageManager",
+      message: chalk.white("Package manager:"),
+      choices: PACKAGE_MANAGERS.map(pm => ({
+        title: `${pm.title} - ${chalk.gray(pm.desc)}`,
+        value: pm.value,
+      })),
+      initial: 0,
+    }, promptConfig);
+    answers.packageManager = pmResponse.packageManager || "npm";
+
+    // JS Runtime
+    const runtimeResponse = await prompts({
+      type: "select",
+      name: "jsRuntime",
+      message: chalk.white("JavaScript runtime:"),
+      choices: JS_RUNTIMES.map(rt => ({
+        title: `${rt.title} - ${chalk.gray(rt.desc)}`,
+        value: rt.value,
+      })),
+      initial: 0,
+    }, promptConfig);
+    answers.jsRuntime = runtimeResponse.jsRuntime || "node";
+
+    // Monorepo
+    const monoResponse = await prompts({
+      type: "select",
+      name: "monorepoTool",
+      message: chalk.white("Monorepo tool:"),
+      choices: MONOREPO_TOOLS.map(mt => ({
+        title: `${mt.title} - ${chalk.gray(mt.desc)}`,
+        value: mt.value,
+      })),
+      initial: 0,
+    }, promptConfig);
+    answers.monorepoTool = monoResponse.monorepoTool || "";
+  }
+
+  // ORM selection (if databases selected)
+  if (selectedDatabases.length > 0) {
+    console.log();
+    console.log(chalk.cyan("  🔗 ORM / Database Library"));
+    console.log();
+    
+    // Filter ORMs by selected languages
+    const relevantOrms = ORM_OPTIONS.filter(orm => 
+      orm.langs.length === 0 || orm.langs.some(l => selectedLanguages.includes(l))
+    );
+    
+    const ormResponse = await prompts({
+      type: "select",
+      name: "orm",
+      message: chalk.white("ORM / Database library:"),
+      choices: relevantOrms.map(orm => ({ title: orm.title, value: orm.value })),
+      initial: 0,
+    }, promptConfig);
+    answers.orm = ormResponse.orm || "";
+  }
+
   // Combine all stack selections
   answers.stack = [...selectedLanguages, ...selectedFrameworks, ...selectedDatabases];
 
@@ -1880,6 +2055,48 @@ async function runInteractiveWizard(
     inactive: "No",
   }, promptConfig);
   answers.semver = semverResponse.semver ?? true;
+
+  // Commit signing
+  const signingResponse = await prompts({
+    type: "toggle",
+    name: "commitSigning",
+    message: chalk.white("Require commit signing (GPG/SSH)?"),
+    initial: false,
+    active: "Yes",
+    inactive: "No",
+  }, promptConfig);
+  answers.commitSigning = signingResponse.commitSigning ?? false;
+
+  // Branch strategy
+  const branchStrategyResponse = await prompts({
+    type: "select",
+    name: "branchStrategy",
+    message: chalk.white("Branch strategy:"),
+    choices: [
+      { title: "🌊 GitHub Flow - Simple: main + feature branches", value: "github_flow" },
+      { title: "🌳 Gitflow - develop, feature, release, hotfix branches", value: "gitflow" },
+      { title: "🚂 Trunk-Based - Short-lived branches, continuous integration", value: "trunk_based" },
+      { title: "🦊 GitLab Flow - Environment branches (staging, production)", value: "gitlab_flow" },
+      { title: "🚀 Release Flow - main + release branches", value: "release_flow" },
+    ],
+    initial: 0,
+  }, promptConfig);
+  answers.branchStrategy = branchStrategyResponse.branchStrategy || "github_flow";
+
+  // Default branch
+  const defaultBranchResponse = await prompts({
+    type: "select",
+    name: "defaultBranch",
+    message: chalk.white("Default branch name:"),
+    choices: [
+      { title: "main", value: "main" },
+      { title: "master", value: "master" },
+      { title: "develop", value: "develop" },
+      { title: "trunk", value: "trunk" },
+    ],
+    initial: 0,
+  }, promptConfig);
+  answers.defaultBranch = defaultBranchResponse.defaultBranch || "main";
 
   // Dependabot/Renovate moved to Security step
 
@@ -2233,6 +2450,58 @@ async function runInteractiveWizard(
       instructions: false,
     }, promptConfig);
 
+    // Format commands - autocomplete for searching
+    const formatResponse = await prompts({
+      type: "autocompleteMultiselect",
+      name: "format",
+      message: chalk.white("Format commands (type to search):"),
+      choices: COMMON_COMMANDS.format.map(c => ({
+        title: chalk.blue(c),
+        value: c,
+      })),
+      hint: chalk.gray("type to filter • space select • enter confirm"),
+      instructions: false,
+    }, promptConfig);
+
+    // Typecheck commands - autocomplete for searching
+    const typecheckResponse = await prompts({
+      type: "autocompleteMultiselect",
+      name: "typecheck",
+      message: chalk.white("Typecheck commands (type to search):"),
+      choices: COMMON_COMMANDS.typecheck.map(c => ({
+        title: chalk.gray(c),
+        value: c,
+      })),
+      hint: chalk.gray("type to filter • space select • enter confirm"),
+      instructions: false,
+    }, promptConfig);
+
+    // Clean commands - autocomplete for searching
+    const cleanResponse = await prompts({
+      type: "autocompleteMultiselect",
+      name: "clean",
+      message: chalk.white("Clean commands (type to search):"),
+      choices: COMMON_COMMANDS.clean.map(c => ({
+        title: chalk.red(c),
+        value: c,
+      })),
+      hint: chalk.gray("type to filter • space select • enter confirm"),
+      instructions: false,
+    }, promptConfig);
+
+    // Pre-commit commands - autocomplete for searching
+    const preCommitResponse = await prompts({
+      type: "autocompleteMultiselect",
+      name: "preCommit",
+      message: chalk.white("Pre-commit hooks (type to search):"),
+      choices: COMMON_COMMANDS.preCommit.map(c => ({
+        title: chalk.yellow(c),
+        value: c,
+      })),
+      hint: chalk.gray("type to filter • space select • enter confirm"),
+      instructions: false,
+    }, promptConfig);
+
     // Additional commands - autocomplete for searching
     const additionalResponse = await prompts({
       type: "autocompleteMultiselect",
@@ -2251,6 +2520,10 @@ async function runInteractiveWizard(
       test: testResponse.test || [],
       lint: lintResponse.lint || [],
       dev: devResponse.dev || [],
+      format: formatResponse.format || [],
+      typecheck: typecheckResponse.typecheck || [],
+      clean: cleanResponse.clean || [],
+      preCommit: preCommitResponse.preCommit || [],
       additional: additionalResponse.additional || [],
     };
 
@@ -2346,6 +2619,64 @@ async function runInteractiveWizard(
       answers.loggingConventionsOther = customLoggingResponse.customLogging || "";
     }
 
+    // Max file length
+    const maxFileLengthResponse = await prompts({
+      type: "number",
+      name: "maxFileLength",
+      message: chalk.white("Max file length (lines, 100-1000):"),
+      initial: 300,
+      min: 100,
+      max: 1000,
+    }, promptConfig);
+    answers.maxFileLength = maxFileLengthResponse.maxFileLength || 300;
+
+    // Import order
+    const importOrderResponse = await prompts({
+      type: "select",
+      name: "importOrder",
+      message: chalk.white("Import order preference:"),
+      choices: [
+        { title: "Grouped (external → internal → relative)", value: "grouped" },
+        { title: "Alphabetical (sort A-Z)", value: "sorted" },
+        { title: "Natural (leave as written)", value: "natural" },
+      ],
+      initial: 0,
+    }, promptConfig);
+    answers.importOrder = importOrderResponse.importOrder || "grouped";
+
+    // Comment language
+    const commentLangResponse = await prompts({
+      type: "select",
+      name: "commentLanguage",
+      message: chalk.white("Comment language:"),
+      choices: [
+        { title: "🇬🇧 English", value: "english" },
+        { title: "🌍 Native language", value: "native" },
+        { title: "🗣️ Any (team preference)", value: "any" },
+      ],
+      initial: 0,
+    }, promptConfig);
+    answers.commentLanguage = commentLangResponse.commentLanguage || "english";
+
+    // Documentation style
+    const docStyleResponse = await prompts({
+      type: "select",
+      name: "docStyle",
+      message: chalk.white("Documentation style:"),
+      choices: [
+        { title: chalk.gray("⏭ Skip (language default)"), value: "" },
+        { title: "JSDoc", value: "jsdoc" },
+        { title: "TSDoc", value: "tsdoc" },
+        { title: "Python docstrings", value: "pydoc" },
+        { title: "Go doc comments", value: "godoc" },
+        { title: "Rust doc (///)", value: "rustdoc" },
+        { title: "Javadoc", value: "javadoc" },
+        { title: "C# XML docs", value: "xmldoc" },
+      ],
+      initial: 0,
+    }, promptConfig);
+    answers.docStyle = docStyleResponse.docStyle || "";
+
     const styleNotesResponse = await prompts({
       type: "text",
       name: "styleNotes",
@@ -2386,6 +2717,41 @@ async function runInteractiveWizard(
       if (rule) console.log(chalk.cyan(`    • ${rule.label}`));
     }
   }
+
+  // Explanation verbosity
+  const verbosityResponse = await prompts({
+    type: "select",
+    name: "explanationVerbosity",
+    message: chalk.white("Explanation verbosity:"),
+    choices: [
+      { title: "📝 Concise - Brief, to the point", value: "concise" },
+      { title: "⚖️ Balanced - Clear with context", value: "balanced" },
+      { title: "📚 Detailed - In-depth explanations", value: "detailed" },
+    ],
+    initial: 1,
+  }, promptConfig);
+  answers.explanationVerbosity = verbosityResponse.explanationVerbosity || "balanced";
+
+  // Focus areas
+  const accessibilityResponse = await prompts({
+    type: "toggle",
+    name: "accessibilityFocus",
+    message: chalk.white("Prioritize accessibility (WCAG, a11y)?"),
+    initial: false,
+    active: "Yes",
+    inactive: "No",
+  }, promptConfig);
+  answers.accessibilityFocus = accessibilityResponse.accessibilityFocus ?? false;
+
+  const performanceResponse = await prompts({
+    type: "toggle",
+    name: "performanceFocus",
+    message: chalk.white("Prioritize performance optimizations?"),
+    initial: false,
+    active: "Yes",
+    inactive: "No",
+  }, promptConfig);
+  answers.performanceFocus = performanceResponse.performanceFocus ?? false;
 
   console.log();
   console.log(chalk.gray("  📁 Select files the AI should read first to understand your project context."));
@@ -2693,6 +3059,42 @@ async function runInteractiveWizard(
       max: 100,
     }, promptConfig);
     answers.coverageTarget = coverageResponse.coverage ?? 80;
+
+    // TDD Preference
+    const tddResponse = await prompts({
+      type: "toggle",
+      name: "tddPreference",
+      message: chalk.white("Use Test-Driven Development (TDD)?"),
+      initial: false,
+      active: "Yes",
+      inactive: "No",
+    }, promptConfig);
+    answers.tddPreference = tddResponse.tddPreference ?? false;
+
+    // Snapshot Testing
+    const snapshotResponse = await prompts({
+      type: "toggle",
+      name: "snapshotTesting",
+      message: chalk.white("Use snapshot testing?"),
+      initial: false,
+      active: "Yes",
+      inactive: "No",
+    }, promptConfig);
+    answers.snapshotTesting = snapshotResponse.snapshotTesting ?? false;
+
+    // Mock Strategy
+    const mockResponse = await prompts({
+      type: "select",
+      name: "mockStrategy",
+      message: chalk.white("Mock strategy:"),
+      choices: [
+        { title: "Minimal - Only mock external dependencies", value: "minimal" },
+        { title: "Comprehensive - Mock for isolation", value: "comprehensive" },
+        { title: "None - No mocking preferred", value: "none" },
+      ],
+      initial: 0,
+    }, promptConfig);
+    answers.mockStrategy = mockResponse.mockStrategy || "minimal";
 
     const testNotesResponse = await prompts({
       type: "text",
