@@ -12,6 +12,7 @@ import {
   updateChecksum,
   loadBlueprints,
 } from "../utils/blueprint-tracker.js";
+import { inferCommandTypeFromPath } from "../utils/detect.js";
 
 interface PushOptions {
   name?: string;
@@ -322,8 +323,33 @@ async function createOrLinkBlueprint(
     }
   }
 
+  // Infer the blueprint type from the file path
+  const inferredType = inferBlueprintType(file);
+  const COMMAND_TYPES = [
+    "CURSOR_COMMAND", "CLAUDE_COMMAND", "WINDSURF_WORKFLOW", 
+    "COPILOT_PROMPT", "CONTINUE_PROMPT", "OPENCODE_COMMAND"
+  ];
+  const isCommandFile = COMMAND_TYPES.includes(inferredType);
+  
+  // Get friendly name for command type
+  const commandNames: Record<string, string> = {
+    "CURSOR_COMMAND": "Cursor",
+    "CLAUDE_COMMAND": "Claude Code",
+    "WINDSURF_WORKFLOW": "Windsurf",
+    "COPILOT_PROMPT": "Copilot",
+    "CONTINUE_PROMPT": "Continue",
+    "OPENCODE_COMMAND": "OpenCode",
+  };
+  
+  const typeLabel = isCommandFile 
+    ? chalk.magenta(`[${commandNames[inferredType] || "Command"} Command]`)
+    : "";
+
   console.log(chalk.cyan("\n📤 Push new blueprint"));
   console.log(chalk.gray(`   File: ${file}`));
+  if (isCommandFile) {
+    console.log(chalk.gray(`   Type: ${typeLabel}`));
+  }
 
   // Ask for details if not provided
   let name = options.name;
@@ -398,6 +424,7 @@ async function createOrLinkBlueprint(
       content,
       visibility: visibility as "PRIVATE" | "TEAM" | "PUBLIC",
       tags,
+      type: inferredType, // Include the inferred type (AGENTS_MD, CURSOR_COMMAND, etc.)
       // Include hierarchy info if detected
       hierarchy_id: hierarchyId,
       parent_id: hierarchyInfo.parentId,
@@ -598,6 +625,35 @@ function findDefaultFile(): string | null {
   }
 
   return null;
+}
+
+/**
+ * Infer blueprint type from file path
+ * Returns the appropriate TemplateType for the file
+ */
+function inferBlueprintType(filePath: string): string {
+  const normalizedPath = filePath.replace(/\\/g, "/");
+  
+  // Check if it's a command file first
+  const commandInfo = inferCommandTypeFromPath(filePath);
+  if (commandInfo) {
+    return commandInfo.templateType;
+  }
+  
+  // Infer from file path for rules/config files
+  if (normalizedPath.includes(".cursor/rules/")) return "CURSOR_RULES";
+  if (normalizedPath.endsWith("CLAUDE.md")) return "CLAUDE_MD";
+  if (normalizedPath.endsWith(".windsurfrules")) return "WINDSURF_RULES";
+  if (normalizedPath.endsWith(".clinerules")) return "CLINE_RULES";
+  if (normalizedPath.includes(".github/copilot-instructions.md")) return "COPILOT_INSTRUCTIONS";
+  if (normalizedPath.endsWith("GEMINI.md")) return "GEMINI_MD";
+  if (normalizedPath.endsWith("AIDER.md")) return "AGENTS_MD";
+  if (normalizedPath.endsWith("AGENTS.md")) return "AGENTS_MD";
+  
+  // Default to AGENTS_MD for markdown files
+  if (normalizedPath.endsWith(".md")) return "AGENTS_MD";
+  
+  return "CUSTOM";
 }
 
 function handleError(error: unknown): void {

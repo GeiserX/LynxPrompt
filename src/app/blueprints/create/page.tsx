@@ -39,16 +39,39 @@ import { detectVariables, detectDuplicateVariableDefaults, type DuplicateVariabl
 
 // All supported IDE types - blueprints are interchangeable across all platforms
 const BLUEPRINT_TYPES = [
-  { value: "AGENTS_MD", label: "Universal (AGENTS.md) — Recommended", icon: "📋" },
-  { value: "CLAUDE_MD", label: "Claude Code (CLAUDE.md)", icon: "🤖" },
-  { value: "COPILOT_INSTRUCTIONS", label: "GitHub Copilot (.github/copilot-instructions.md)", icon: "✈️" },
-  { value: "WINDSURF_RULES", label: "Windsurf Rules (.windsurfrules)", icon: "🏄" },
-  { value: "GEMINI_MD", label: "Antigravity (GEMINI.md)", icon: "💎" },
-  { value: "CLINE_RULES", label: "Cline Rules (.clinerules)", icon: "⚡" },
-  { value: "CODEX_MD", label: "OpenAI Codex (CODEX.md)", icon: "🧠" },
-  { value: "CURSOR_RULES", label: "Cursor Rules (.cursorrules) — Deprecated", icon: "🎯" },
-  { value: "CUSTOM", label: "Custom / Other", icon: "📄" },
+  { value: "AGENTS_MD", label: "Universal (AGENTS.md) — Recommended", icon: "📋", isCommand: false },
+  { value: "CLAUDE_MD", label: "Claude Code (CLAUDE.md)", icon: "🤖", isCommand: false },
+  { value: "COPILOT_INSTRUCTIONS", label: "GitHub Copilot (.github/copilot-instructions.md)", icon: "✈️", isCommand: false },
+  { value: "WINDSURF_RULES", label: "Windsurf Rules (.windsurfrules)", icon: "🏄", isCommand: false },
+  { value: "GEMINI_MD", label: "Antigravity (GEMINI.md)", icon: "💎", isCommand: false },
+  { value: "CLINE_RULES", label: "Cline Rules (.clinerules)", icon: "⚡", isCommand: false },
+  { value: "CODEX_MD", label: "OpenAI Codex (CODEX.md)", icon: "🧠", isCommand: false },
+  { value: "CURSOR_RULES", label: "Cursor Rules (.cursorrules) — Deprecated", icon: "🎯", isCommand: false },
+  { value: "CUSTOM", label: "Custom / Other", icon: "📄", isCommand: false },
 ] as const;
+
+// AI Agent Command types - reusable workflows triggered via slash commands
+// All commands are plain markdown files - conversion is just renaming/moving to different directories
+const COMMAND_TYPES = [
+  { value: "CURSOR_COMMAND", label: "Cursor Command (.cursor/commands/)", icon: "⚡", isCommand: true, platform: "cursor" },
+  { value: "CLAUDE_COMMAND", label: "Claude Code Command (.claude/commands/)", icon: "🧠", isCommand: true, platform: "claude" },
+  { value: "WINDSURF_WORKFLOW", label: "Windsurf Workflow (.windsurf/workflows/)", icon: "🏄", isCommand: true, platform: "windsurf" },
+  { value: "COPILOT_PROMPT", label: "Copilot Prompt (.copilot/prompts/)", icon: "🐙", isCommand: true, platform: "copilot" },
+  { value: "CONTINUE_PROMPT", label: "Continue Prompt (.continue/prompts/)", icon: "➡️", isCommand: true, platform: "continue" },
+  { value: "OPENCODE_COMMAND", label: "OpenCode Command (.opencode/commands/)", icon: "🔓", isCommand: true, platform: "opencode" },
+] as const;
+
+// Combined types for the dropdown
+const ALL_BLUEPRINT_TYPES = [...BLUEPRINT_TYPES, ...COMMAND_TYPES] as const;
+
+// Helper to check if a type is a command
+const isCommandType = (type: string) => COMMAND_TYPES.some(c => c.value === type);
+
+// Get the platform name for a command type
+const getCommandPlatformName = (type: string) => {
+  const cmd = COMMAND_TYPES.find(c => c.value === type);
+  return cmd?.platform || "unknown";
+};
 
 export default function ShareBlueprintPage() {
   const { status } = useSession();
@@ -738,9 +761,14 @@ export default function ShareBlueprintPage() {
                   <div>
                     <label
                       htmlFor="type"
-                      className="mb-1 block text-sm font-medium"
+                      className="mb-1 flex items-center gap-2 text-sm font-medium"
                     >
                       Origin Format <span className="text-red-500">*</span>
+                      {isCommandType(type) && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-violet-500 to-purple-500 px-2 py-0.5 text-xs font-medium text-white">
+                          ⚡ Command
+                        </span>
+                      )}
                     </label>
                     <select
                       id="type"
@@ -748,24 +776,50 @@ export default function ShareBlueprintPage() {
                       onChange={(e) => setType(e.target.value)}
                       className="w-full rounded-lg border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                     >
-                      {BLUEPRINT_TYPES.map((t) => (
-                        <option key={t.value} value={t.value}>
-                          {t.icon} {t.label}
-                        </option>
-                      ))}
+                      <optgroup label="AI Rules & Configuration">
+                        {BLUEPRINT_TYPES.map((t) => (
+                          <option key={t.value} value={t.value}>
+                            {t.icon} {t.label}
+                          </option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="AI Agent Commands (Slash Commands)">
+                        {COMMAND_TYPES.map((t) => (
+                          <option key={t.value} value={t.value}>
+                            {t.icon} {t.label}
+                          </option>
+                        ))}
+                      </optgroup>
                     </select>
-                    {/* Interoperability notice */}
-                    <div className="mt-2 rounded-lg border border-sky-200 bg-sky-50 p-3 dark:border-sky-500/50 dark:bg-sky-900/30">
-                      <div className="flex items-start gap-2">
-                        <Info className="h-4 w-4 flex-shrink-0 text-sky-600 dark:text-sky-300 mt-0.5" />
-                        <p className="text-xs text-sky-800 dark:text-sky-200">
-                          <span className="font-medium text-sky-900 dark:text-sky-100">Note:</span> This is just to identify the original format.
-                          All blueprints are interchangeable and compatible across all AI IDEs —
-                          Cursor, Claude, Copilot, Windsurf, Cline, and more.
-                          Users can download in any format they need.
-                        </p>
+                    {/* Command type notice */}
+                    {isCommandType(type) && (
+                      <div className="mt-2 rounded-lg border border-violet-200 bg-violet-50 p-3 dark:border-violet-500/50 dark:bg-violet-900/30">
+                        <div className="flex items-start gap-2">
+                          <Sparkles className="h-4 w-4 flex-shrink-0 text-violet-600 dark:text-violet-300 mt-0.5" />
+                          <div className="text-xs text-violet-800 dark:text-violet-200">
+                            <span className="font-medium text-violet-900 dark:text-violet-100">AI Agent Command:</span>{" "}
+                            Commands are reusable workflows triggered via slash commands (e.g., <code className="rounded bg-violet-200/50 px-1 dark:bg-violet-800/50">/deploy</code>,{" "}
+                            <code className="rounded bg-violet-200/50 px-1 dark:bg-violet-800/50">/test</code>).
+                            They can be exported to Cursor (<code className="rounded bg-violet-200/50 px-1 dark:bg-violet-800/50">.cursor/commands/</code>){" "}
+                            or Claude Code (<code className="rounded bg-violet-200/50 px-1 dark:bg-violet-800/50">.claude/commands/</code>).
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    )}
+                    {/* Interoperability notice (for non-command types) */}
+                    {!isCommandType(type) && (
+                      <div className="mt-2 rounded-lg border border-sky-200 bg-sky-50 p-3 dark:border-sky-500/50 dark:bg-sky-900/30">
+                        <div className="flex items-start gap-2">
+                          <Info className="h-4 w-4 flex-shrink-0 text-sky-600 dark:text-sky-300 mt-0.5" />
+                          <p className="text-xs text-sky-800 dark:text-sky-200">
+                            <span className="font-medium text-sky-900 dark:text-sky-100">Note:</span> This is just to identify the original format.
+                            All blueprints are interchangeable and compatible across all AI IDEs —
+                            Cursor, Claude, Copilot, Windsurf, Cline, and more.
+                            Users can download in any format they need.
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Hierarchy Section (for AGENTS_MD only) */}

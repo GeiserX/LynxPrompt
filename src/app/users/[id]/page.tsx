@@ -70,6 +70,13 @@ const tierStyles: Record<string, string> = {
   ADVANCED: "border-purple-500/50 bg-purple-500/10 text-purple-700 dark:text-purple-300",
 };
 
+// Command type detection
+const COMMAND_TYPES = [
+  "CURSOR_COMMAND", "CLAUDE_COMMAND", "WINDSURF_WORKFLOW", 
+  "COPILOT_PROMPT", "CONTINUE_PROMPT", "OPENCODE_COMMAND"
+];
+const isCommandType = (type?: string) => type ? COMMAND_TYPES.includes(type) : false;
+
 const skillLevelLabels: Record<string, string> = {
   novice: "Novice",
   intermediate: "Intermediate",
@@ -442,9 +449,16 @@ export default function UserProfilePage() {
                     )}
 
                     <div className="mt-3 flex items-center justify-between">
-                      <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${tierStyles[template.tier] || ""}`}>
-                        {template.tier}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${tierStyles[template.tier] || ""}`}>
+                          {template.tier}
+                        </span>
+                        {isCommandType(template.type) && (
+                          <span className="rounded bg-gradient-to-r from-violet-500 to-purple-500 px-1.5 py-0.5 text-xs font-medium text-white">
+                            ⚡ Command
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Download className="h-3 w-3" />

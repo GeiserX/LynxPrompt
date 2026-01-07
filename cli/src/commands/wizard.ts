@@ -3129,9 +3129,9 @@ async function runInteractiveWizard(
 
   // Cloud sync - save to cloud and enable synchronization
   console.log();
-  console.log(chalk.gray("  ☁️  Store your config on LynxPrompt cloud for team sharing and version control."));
+  console.log(chalk.gray("  ☁️  Store your config on LynxPrompt cloud for syncing and version control."));
   console.log(chalk.gray("     Benefits:"));
-  console.log(chalk.gray("     • Share configs across devices and team members"));
+  console.log(chalk.gray("     • Sync configs across all your devices"));
   console.log(chalk.gray("     • Track changes and rollback if needed"));
   console.log(chalk.gray("     • Instructions added to config so AI can sync automatically"));
   const enableAutoUpdateResponse = await prompts({

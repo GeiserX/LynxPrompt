@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.0] - January 2026
+
+### Added
+- **AI Agent Commands Support**: Store and manage AI IDE slash commands (like `/deploy`, `/test`)
+  - New blueprint types: `CURSOR_COMMAND` and `CLAUDE_COMMAND`
+  - CLI: `lynxp import` now detects command files in `.cursor/commands/` and `.claude/commands/`
+  - CLI: `lynxp push` automatically infers command type from file path
+  - WebUI: Command type selection in blueprint creation with visual badges
+  - WebUI: Export commands to different IDEs (Cursor ↔ Claude Code)
+  - Commands support variable defaults like regular blueprints
+- **Command detection in CLI**: Automatic scanning of common command directories
+- **Command badges**: Visual indicators throughout the UI to distinguish commands from rules
+
+### Changed
+- Blueprint type selector now has grouped options (AI Rules vs AI Commands)
+- Import command output now shows discovered commands alongside config files
+- Download modal shows command-specific export options with target directory hints
+
+---
+
 ## [1.2.0] - January 2026
 
 ### Added
