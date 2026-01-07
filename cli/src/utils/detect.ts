@@ -6,6 +6,7 @@ import { spawnSync } from "child_process";
 export interface DetectedProject {
   name: string | null;
   stack: string[];
+  databases: string[];  // Separate field for databases (matches WebUI)
   commands: {
     build?: string;
     test?: string;
@@ -16,14 +17,18 @@ export interface DetectedProject {
   packageManager: "npm" | "yarn" | "pnpm" | "bun" | null;
   type: "monorepo" | "library" | "application" | "unknown";
   description?: string;
-  // New auto-detected fields
+  // New auto-detected fields (aligned with WebUI)
   license?: string;
   repoHost?: string;
   repoUrl?: string;
   cicd?: string;
   hasDocker?: boolean;
+  containerRegistry?: string;  // ghcr, dockerhub, gcr, ecr, acr, etc.
+  testFramework?: string;      // vitest, jest, pytest, etc.
   existingFiles?: string[];
   isPublicRepo?: boolean;
+  isOpenSource?: boolean;      // Based on license type
+  projectType?: string;        // open_source, internal, etc.
 }
 
 // Framework detection patterns
@@ -67,6 +72,7 @@ export async function detectProject(cwd: string): Promise<DetectedProject | null
   const detected: DetectedProject = {
     name: null,
     stack: [],
+    databases: [],
     commands: {},
     packageManager: null,
     type: "unknown",
@@ -527,6 +533,12 @@ interface PackageJson {
   scripts?: Record<string, string>;
 }
 
+// Open source license identifiers
+const OPEN_SOURCE_LICENSES = ["mit", "apache-2.0", "gpl-3.0", "lgpl-3.0", "agpl-3.0", "bsd-2-clause", "bsd-3-clause", "mpl-2.0", "unlicense", "cc0-1.0", "isc"];
+
+// Static files to detect
+const STATIC_FILES = [".editorconfig", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md", "SECURITY.md", "ROADMAP.md", ".gitignore", "LICENSE", "README.md", "ARCHITECTURE.md", "CHANGELOG.md"];
+
 async function detectFromGitHubApi(repoUrl: string): Promise<DetectedProject | null> {
   const parsed = parseGitHubUrl(repoUrl);
   if (!parsed) return null;
@@ -543,17 +555,26 @@ async function detectFromGitHubApi(repoUrl: string): Promise<DetectedProject | n
     
     if (repoInfo.private) return null;
     
+    // Determine if it's open source based on license
+    const licenseId = repoInfo.license?.spdx_id?.toLowerCase() || null;
+    const isOpenSource = !repoInfo.private && (licenseId ? OPEN_SOURCE_LICENSES.includes(licenseId) : false);
+    
     const detected: DetectedProject = {
       name: repoInfo.name,
       description: repoInfo.description ?? undefined,
       stack: [],
+      databases: [],
       commands: {},
       packageManager: null,
       type: "application",
       repoHost: "github",
       repoUrl,
-      license: repoInfo.license?.spdx_id?.toLowerCase(),
+      license: licenseId ?? undefined,
       isPublicRepo: !repoInfo.private,
+      isOpenSource,
+      projectType: isOpenSource ? "open_source" : undefined,
+      hasDocker: false,
+      existingFiles: [],
     };
     
     // List root files
@@ -564,32 +585,130 @@ async function detectFromGitHubApi(repoUrl: string): Promise<DetectedProject | n
     const files = await filesRes.json() as GitHubFile[];
     const fileNames = new Set(files.map((f) => f.name.toLowerCase()));
     
-    // Detect from pyproject.toml (Python projects - check first for FastAPI etc)
+    // Detect existing static files
+    for (const file of STATIC_FILES) {
+      if (files.some((f) => f.name.toLowerCase() === file.toLowerCase())) {
+        detected.existingFiles!.push(file);
+      }
+    }
+    
+    // Check for Docker and detect container registry
+    if (fileNames.has("dockerfile") || fileNames.has("docker-compose.yml") || fileNames.has("docker-compose.yaml")) {
+      detected.hasDocker = true;
+      detected.stack.push("docker");
+      
+      // Try to detect container registry from docker-compose
+      const dockerComposeFile = fileNames.has("docker-compose.yml") ? "docker-compose.yml" : fileNames.has("docker-compose.yaml") ? "docker-compose.yaml" : null;
+      if (dockerComposeFile) {
+        const composeRes = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/HEAD/${dockerComposeFile}`);
+        if (composeRes.ok) {
+          try {
+            const content = await composeRes.text();
+            const lowerContent = content.toLowerCase();
+            
+            // Detect container registry
+            if (content.includes("ghcr.io")) detected.containerRegistry = "ghcr";
+            else if (content.includes("docker.io") || /image:\s*[a-z0-9]+\/[a-z0-9]/.test(content)) detected.containerRegistry = "dockerhub";
+            else if (content.includes("gcr.io")) detected.containerRegistry = "gcr";
+            else if (content.includes("ecr.") || content.includes(".amazonaws.com")) detected.containerRegistry = "ecr";
+            else if (content.includes("azurecr.io")) detected.containerRegistry = "acr";
+            else if (content.includes("quay.io")) detected.containerRegistry = "quay";
+            else if (content.includes("registry.gitlab.com")) detected.containerRegistry = "gitlab_registry";
+            
+            // Detect databases from docker-compose
+            if (lowerContent.includes("postgres")) detected.databases.push("postgresql");
+            if (lowerContent.includes("mysql") && !lowerContent.includes("mysql-")) detected.databases.push("mysql");
+            if (lowerContent.includes("mongo")) detected.databases.push("mongodb");
+            if (lowerContent.includes("redis")) detected.databases.push("redis");
+            if (lowerContent.includes("sqlite")) detected.databases.push("sqlite");
+            if (lowerContent.includes("mariadb")) detected.databases.push("mariadb");
+          } catch { /* ignore */ }
+        }
+      }
+    }
+    
+    // Check for CI/CD
+    if (files.some((f) => f.name === ".github" && f.type === "dir")) {
+      // Check if .github/workflows exists
+      const ghFilesRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/.github`, {
+        headers: { "User-Agent": "LynxPrompt-CLI" },
+      });
+      if (ghFilesRes.ok) {
+        const ghFiles = await ghFilesRes.json() as GitHubFile[];
+        if (ghFiles.some((f) => f.name === "workflows")) {
+          detected.cicd = "github_actions";
+        }
+      }
+    }
+    if (fileNames.has(".gitlab-ci.yml")) detected.cicd = "gitlab_ci";
+    if (fileNames.has("jenkinsfile")) detected.cicd = "jenkins";
+    if (fileNames.has(".travis.yml")) detected.cicd = "travis";
+    if (fileNames.has("azure-pipelines.yml")) detected.cicd = "azure_devops";
+    
+    // Detect from pyproject.toml (Python projects)
     if (fileNames.has("pyproject.toml")) {
       detected.stack.push("python");
       const pyprojectRes = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/HEAD/pyproject.toml`);
       if (pyprojectRes.ok) {
         try {
           const content = await pyprojectRes.text();
-          if (content.includes("fastapi")) detected.stack.push("fastapi");
-          if (content.includes("django")) detected.stack.push("django");
-          if (content.includes("flask")) detected.stack.push("flask");
-          if (content.includes("sqlalchemy")) detected.stack.push("sqlalchemy");
-          if (content.includes("pydantic")) detected.stack.push("pydantic");
-          if (content.includes("pytest")) detected.stack.push("pytest");
-          if (content.includes("ruff")) detected.stack.push("ruff");
+          const lowerContent = content.toLowerCase();
+          if (lowerContent.includes("fastapi")) detected.stack.push("fastapi");
+          if (lowerContent.includes("django")) detected.stack.push("django");
+          if (lowerContent.includes("flask")) detected.stack.push("flask");
+          if (lowerContent.includes("sqlalchemy")) detected.stack.push("sqlalchemy");
+          if (lowerContent.includes("pydantic")) detected.stack.push("pydantic");
+          
+          // Detect test framework
+          if (lowerContent.includes("pytest")) detected.testFramework = "pytest";
+          else if (lowerContent.includes("unittest")) detected.testFramework = "unittest";
+          
+          // Detect commands
+          detected.commands.test = "pytest";
+          if (lowerContent.includes("ruff")) detected.commands.lint = "ruff check .";
+          
+          // Detect databases from Python packages
+          if (lowerContent.includes("asyncpg") || lowerContent.includes("psycopg")) {
+            if (!detected.databases.includes("postgresql")) detected.databases.push("postgresql");
+          }
+          if (lowerContent.includes("aiosqlite") || lowerContent.includes("sqlite")) {
+            if (!detected.databases.includes("sqlite")) detected.databases.push("sqlite");
+          }
+          if (lowerContent.includes("pymongo") || lowerContent.includes("motor")) {
+            if (!detected.databases.includes("mongodb")) detected.databases.push("mongodb");
+          }
+          if (lowerContent.includes("redis") || lowerContent.includes("aioredis")) {
+            if (!detected.databases.includes("redis")) detected.databases.push("redis");
+          }
+          if (lowerContent.includes("pymysql") || lowerContent.includes("aiomysql")) {
+            if (!detected.databases.includes("mysql")) detected.databases.push("mysql");
+          }
         } catch { /* ignore */ }
       }
-    } else if (fileNames.has("requirements.txt")) {
-      detected.stack.push("python");
+    }
+    
+    // Detect from requirements.txt (Python)
+    if (fileNames.has("requirements.txt")) {
       const reqRes = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/HEAD/requirements.txt`);
       if (reqRes.ok) {
         try {
           const content = (await reqRes.text()).toLowerCase();
-          if (content.includes("fastapi")) detected.stack.push("fastapi");
-          if (content.includes("django")) detected.stack.push("django");
-          if (content.includes("flask")) detected.stack.push("flask");
-          if (content.includes("sqlalchemy")) detected.stack.push("sqlalchemy");
+          if (!detected.stack.includes("python")) detected.stack.push("python");
+          if (content.includes("fastapi") && !detected.stack.includes("fastapi")) detected.stack.push("fastapi");
+          if (content.includes("django") && !detected.stack.includes("django")) detected.stack.push("django");
+          if (content.includes("flask") && !detected.stack.includes("flask")) detected.stack.push("flask");
+          if (content.includes("sqlalchemy") && !detected.stack.includes("sqlalchemy")) detected.stack.push("sqlalchemy");
+          
+          // Detect databases from Python packages
+          if (content.includes("asyncpg") || content.includes("psycopg")) {
+            if (!detected.databases.includes("postgresql")) detected.databases.push("postgresql");
+          }
+          if (content.includes("aiosqlite") || content.includes("sqlite")) {
+            if (!detected.databases.includes("sqlite")) detected.databases.push("sqlite");
+          }
+          if (content.includes("pymongo") || content.includes("motor")) {
+            if (!detected.databases.includes("mongodb")) detected.databases.push("mongodb");
+          }
         } catch { /* ignore */ }
       }
     }
@@ -609,13 +728,20 @@ async function detectFromGitHubApi(repoUrl: string): Promise<DetectedProject | n
           if (allDeps["svelte"]) detected.stack.push("svelte");
           if (allDeps["express"]) detected.stack.push("express");
           if (allDeps["fastify"]) detected.stack.push("fastify");
+          if (allDeps["hono"]) detected.stack.push("hono");
           
           // Tools
           if (allDeps["typescript"]) detected.stack.push("typescript");
           if (allDeps["tailwindcss"]) detected.stack.push("tailwind");
           if (allDeps["prisma"]) detected.stack.push("prisma");
-          if (allDeps["vitest"]) detected.stack.push("vitest");
-          if (allDeps["jest"]) detected.stack.push("jest");
+          if (allDeps["drizzle-orm"]) detected.stack.push("drizzle");
+          
+          // Test frameworks
+          if (allDeps["vitest"]) detected.testFramework = "vitest";
+          else if (allDeps["jest"]) detected.testFramework = "jest";
+          else if (allDeps["@playwright/test"]) detected.testFramework = "playwright";
+          else if (allDeps["cypress"]) detected.testFramework = "cypress";
+          else if (allDeps["mocha"]) detected.testFramework = "mocha";
           
           if (detected.stack.length === 0 || (detected.stack.length === 1 && detected.stack[0] === "typescript")) {
             detected.stack.unshift("javascript");
@@ -628,34 +754,38 @@ async function detectFromGitHubApi(repoUrl: string): Promise<DetectedProject | n
             if (pkg.scripts.dev) detected.commands.dev = "npm run dev";
             else if (pkg.scripts.start) detected.commands.dev = "npm run start";
           }
+          
+          // Detect databases from Node.js packages
+          if (allDeps["pg"] || allDeps["postgres"] || allDeps["@neondatabase/serverless"]) {
+            if (!detected.databases.includes("postgresql")) detected.databases.push("postgresql");
+          }
+          if (allDeps["better-sqlite3"] || allDeps["sql.js"] || allDeps["sqlite3"]) {
+            if (!detected.databases.includes("sqlite")) detected.databases.push("sqlite");
+          }
+          if (allDeps["mongodb"] || allDeps["mongoose"]) {
+            if (!detected.databases.includes("mongodb")) detected.databases.push("mongodb");
+          }
+          if (allDeps["redis"] || allDeps["ioredis"]) {
+            if (!detected.databases.includes("redis")) detected.databases.push("redis");
+          }
+          if (allDeps["mysql"] || allDeps["mysql2"]) {
+            if (!detected.databases.includes("mysql")) detected.databases.push("mysql");
+          }
         } catch { /* ignore */ }
       }
     }
     
     // Detect other languages
-    if (fileNames.has("cargo.toml")) detected.stack.push("rust");
-    if (fileNames.has("go.mod")) detected.stack.push("go");
-    if (fileNames.has("dockerfile")) detected.hasDocker = true;
-    
-    // Detect database from docker-compose or common files
-    if (fileNames.has("docker-compose.yml") || fileNames.has("docker-compose.yaml")) {
-      const composeRes = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/HEAD/docker-compose.yml`);
-      if (composeRes.ok) {
-        try {
-          const content = (await composeRes.text()).toLowerCase();
-          if (content.includes("postgres")) detected.stack.push("postgresql");
-          if (content.includes("mysql")) detected.stack.push("mysql");
-          if (content.includes("mongo")) detected.stack.push("mongodb");
-          if (content.includes("redis")) detected.stack.push("redis");
-        } catch { /* ignore */ }
-      }
+    if (fileNames.has("cargo.toml")) {
+      detected.stack.push("rust");
+      detected.commands.build = "cargo build";
+      detected.commands.test = "cargo test";
     }
-    
-    // CI/CD
-    if (files.some((f) => f.name === ".github" && f.type === "dir")) {
-      detected.cicd = "github_actions";
+    if (fileNames.has("go.mod")) {
+      detected.stack.push("go");
+      detected.commands.build = "go build";
+      detected.commands.test = "go test ./...";
     }
-    if (fileNames.has(".gitlab-ci.yml")) detected.cicd = "gitlab_ci";
     
     return detected;
   } catch {
@@ -695,16 +825,26 @@ async function detectFromGitLabApi(repoUrl: string): Promise<DetectedProject | n
     
     if (repoInfo.visibility === "private") return null;
     
+    // Determine if it's open source based on license
+    const licenseId = repoInfo.license?.key?.toLowerCase() || null;
+    const isOpenSource = repoInfo.visibility === "public" && (licenseId ? OPEN_SOURCE_LICENSES.includes(licenseId) : false);
+    
     const detected: DetectedProject = {
       name: repoInfo.name,
       description: repoInfo.description ?? undefined,
       stack: [],
+      databases: [],
       commands: {},
       packageManager: null,
       type: "application",
       repoHost: "gitlab",
       repoUrl,
-      license: repoInfo.license?.key?.toLowerCase(),
+      license: licenseId ?? undefined,
+      isPublicRepo: repoInfo.visibility === "public",
+      isOpenSource,
+      projectType: isOpenSource ? "open_source" : undefined,
+      hasDocker: false,
+      existingFiles: [],
     };
     
     // List root files
@@ -714,6 +854,50 @@ async function detectFromGitLabApi(repoUrl: string): Promise<DetectedProject | n
     if (!filesRes.ok) return detected;
     const files = await filesRes.json() as GitLabFile[];
     const fileNames = new Set(files.map((f) => f.name.toLowerCase()));
+    
+    // Detect existing static files
+    for (const file of STATIC_FILES) {
+      if (files.some((f) => f.name.toLowerCase() === file.toLowerCase())) {
+        detected.existingFiles!.push(file);
+      }
+    }
+    
+    // CI/CD detection
+    if (fileNames.has(".gitlab-ci.yml")) detected.cicd = "gitlab_ci";
+    if (fileNames.has("jenkinsfile")) detected.cicd = "jenkins";
+    
+    // Check for Docker and detect container registry
+    if (fileNames.has("dockerfile") || fileNames.has("docker-compose.yml") || fileNames.has("docker-compose.yaml")) {
+      detected.hasDocker = true;
+      detected.stack.push("docker");
+      
+      // Try to detect container registry from docker-compose
+      const dockerComposeFile = fileNames.has("docker-compose.yml") ? "docker-compose.yml" : fileNames.has("docker-compose.yaml") ? "docker-compose.yaml" : null;
+      if (dockerComposeFile) {
+        const composeRes = await fetch(`https://${host}/api/v4/projects/${encodedPath}/repository/files/${encodeURIComponent(dockerComposeFile)}/raw?ref=HEAD`, {
+          headers: { "User-Agent": "LynxPrompt-CLI" },
+        });
+        if (composeRes.ok) {
+          try {
+            const content = await composeRes.text();
+            const lowerContent = content.toLowerCase();
+            
+            // Detect container registry
+            if (content.includes("registry.gitlab.com")) detected.containerRegistry = "gitlab_registry";
+            else if (content.includes("ghcr.io")) detected.containerRegistry = "ghcr";
+            else if (content.includes("docker.io") || /image:\s*[a-z0-9]+\/[a-z0-9]/.test(content)) detected.containerRegistry = "dockerhub";
+            else if (content.includes("gcr.io")) detected.containerRegistry = "gcr";
+            
+            // Detect databases from docker-compose
+            if (lowerContent.includes("postgres")) detected.databases.push("postgresql");
+            if (lowerContent.includes("mysql") && !lowerContent.includes("mysql-")) detected.databases.push("mysql");
+            if (lowerContent.includes("mongo")) detected.databases.push("mongodb");
+            if (lowerContent.includes("redis")) detected.databases.push("redis");
+            if (lowerContent.includes("sqlite")) detected.databases.push("sqlite");
+          } catch { /* ignore */ }
+        }
+      }
+    }
     
     // Detect from package.json
     if (fileNames.has("package.json")) {
@@ -725,12 +909,25 @@ async function detectFromGitLabApi(repoUrl: string): Promise<DetectedProject | n
           const pkg = await pkgRes.json() as PackageJson;
           const allDeps: Record<string, string> = { ...pkg.dependencies, ...pkg.devDependencies };
           
+          // Frameworks
           if (allDeps["next"]) detected.stack.push("nextjs");
           if (allDeps["react"]) detected.stack.push("react");
+          if (allDeps["vue"]) detected.stack.push("vue");
+          if (allDeps["svelte"]) detected.stack.push("svelte");
+          if (allDeps["express"]) detected.stack.push("express");
+          if (allDeps["fastify"]) detected.stack.push("fastify");
+          
+          // Tools
           if (allDeps["typescript"]) detected.stack.push("typescript");
           if (allDeps["tailwindcss"]) detected.stack.push("tailwind");
+          if (allDeps["prisma"]) detected.stack.push("prisma");
           
-          if (detected.stack.length === 0) {
+          // Test frameworks
+          if (allDeps["vitest"]) detected.testFramework = "vitest";
+          else if (allDeps["jest"]) detected.testFramework = "jest";
+          else if (allDeps["@playwright/test"]) detected.testFramework = "playwright";
+          
+          if (detected.stack.length === 0 || (detected.stack.length === 1 && detected.stack[0] === "typescript")) {
             detected.stack.unshift("javascript");
           }
           
@@ -740,16 +937,63 @@ async function detectFromGitLabApi(repoUrl: string): Promise<DetectedProject | n
             if (pkg.scripts.lint) detected.commands.lint = "npm run lint";
             if (pkg.scripts.dev) detected.commands.dev = "npm run dev";
           }
+          
+          // Detect databases from Node.js packages
+          if (allDeps["pg"] || allDeps["postgres"]) {
+            if (!detected.databases.includes("postgresql")) detected.databases.push("postgresql");
+          }
+          if (allDeps["better-sqlite3"] || allDeps["sqlite3"]) {
+            if (!detected.databases.includes("sqlite")) detected.databases.push("sqlite");
+          }
+          if (allDeps["mongodb"] || allDeps["mongoose"]) {
+            if (!detected.databases.includes("mongodb")) detected.databases.push("mongodb");
+          }
+          if (allDeps["redis"] || allDeps["ioredis"]) {
+            if (!detected.databases.includes("redis")) detected.databases.push("redis");
+          }
         } catch { /* ignore */ }
       }
     }
     
+    // Detect from pyproject.toml or requirements.txt (Python)
+    if (fileNames.has("pyproject.toml")) {
+      detected.stack.push("python");
+      const pyRes = await fetch(`https://${host}/api/v4/projects/${encodedPath}/repository/files/pyproject.toml/raw?ref=HEAD`, {
+        headers: { "User-Agent": "LynxPrompt-CLI" },
+      });
+      if (pyRes.ok) {
+        try {
+          const content = (await pyRes.text()).toLowerCase();
+          if (content.includes("fastapi")) detected.stack.push("fastapi");
+          if (content.includes("django")) detected.stack.push("django");
+          if (content.includes("flask")) detected.stack.push("flask");
+          if (content.includes("sqlalchemy")) detected.stack.push("sqlalchemy");
+          if (content.includes("pytest")) detected.testFramework = "pytest";
+          
+          // Detect databases
+          if (content.includes("asyncpg") || content.includes("psycopg")) {
+            if (!detected.databases.includes("postgresql")) detected.databases.push("postgresql");
+          }
+          if (content.includes("aiosqlite") || content.includes("sqlite")) {
+            if (!detected.databases.includes("sqlite")) detected.databases.push("sqlite");
+          }
+        } catch { /* ignore */ }
+      }
+    } else if (fileNames.has("requirements.txt")) {
+      detected.stack.push("python");
+    }
+    
     // Detect other languages
-    if (fileNames.has("pyproject.toml") || fileNames.has("requirements.txt")) detected.stack.push("python");
-    if (fileNames.has("cargo.toml")) detected.stack.push("rust");
-    if (fileNames.has("go.mod")) detected.stack.push("go");
-    if (fileNames.has("dockerfile")) detected.hasDocker = true;
-    if (fileNames.has(".gitlab-ci.yml")) detected.cicd = "gitlab_ci";
+    if (fileNames.has("cargo.toml")) {
+      detected.stack.push("rust");
+      detected.commands.build = "cargo build";
+      detected.commands.test = "cargo test";
+    }
+    if (fileNames.has("go.mod")) {
+      detected.stack.push("go");
+      detected.commands.build = "go build";
+      detected.commands.test = "go test ./...";
+    }
     
     return detected;
   } catch {
