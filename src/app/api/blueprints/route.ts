@@ -12,7 +12,7 @@ import {
   type SubscriptionTier 
 } from "@/lib/subscription";
 
-// Blueprint type options
+// Blueprint type options (including command types)
 const BLUEPRINT_TYPES = [
   "AGENTS_MD",
   "CLAUDE_MD",
@@ -22,6 +22,30 @@ const BLUEPRINT_TYPES = [
   "CODEX_MD",
   "CURSOR_RULES",
   "CURSORRULES", // Legacy - backwards compat
+  "CURSOR_MDC",
+  "GEMINI_MD",
+  "ZED_INSTRUCTIONS",
+  "VOID_CONFIG",
+  "TRAE_RULES",
+  "IDX_CONFIG",
+  "ROO_RULES",
+  "CONTINUE_CONFIG",
+  "CODY_CONFIG",
+  "TABNINE_CONFIG",
+  "AMAZONQ_RULES",
+  "AUGMENT_RULES",
+  "KILOCODE_RULES",
+  "JUNIE_GUIDELINES",
+  "KIRO_STEERING",
+  "AIDER_MD",
+  "GOOSEHINTS",
+  // Command types
+  "CURSOR_COMMAND",
+  "CLAUDE_COMMAND",
+  "WINDSURF_WORKFLOW",
+  "COPILOT_PROMPT",
+  "CONTINUE_PROMPT",
+  "OPENCODE_COMMAND",
   "CUSTOM",
 ] as const;
 
@@ -83,6 +107,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("q") || "";
     const category = searchParams.get("category");
     const tier = searchParams.get("tier");
+    const typeFilter = searchParams.get("type"); // "configs" or "commands"
     const tagsParam = searchParams.get("tags");
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "12", 10);
@@ -134,6 +159,17 @@ export async function GET(request: NextRequest) {
     if (tagsParam) {
       const tagsList = tagsParam.split(",").map(t => t.trim().toLowerCase());
       where.tags = { hasSome: tagsList };
+    }
+
+    // Filter by type (configs vs commands)
+    const COMMAND_TYPES = [
+      "CURSOR_COMMAND", "CLAUDE_COMMAND", "WINDSURF_WORKFLOW", 
+      "COPILOT_PROMPT", "CONTINUE_PROMPT", "OPENCODE_COMMAND"
+    ];
+    if (typeFilter === "commands") {
+      where.type = { in: COMMAND_TYPES };
+    } else if (typeFilter === "configs") {
+      where.type = { notIn: COMMAND_TYPES };
     }
 
     // Get total count for pagination
@@ -413,10 +449,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate type - accept old formats and normalize
+    // Validate type - accept exact type or normalize from old formats
     let normalizedType: BlueprintType = "CUSTOM";
     const upperType = (type || "").toUpperCase().replace(/-/g, "_");
-    if (upperType.includes("CURSOR")) normalizedType = "CURSOR_RULES";
+    
+    // First check for exact match (including command types)
+    if (BLUEPRINT_TYPES.includes(upperType as BlueprintType)) {
+      normalizedType = upperType as BlueprintType;
+    }
+    // Then try partial matching for backwards compatibility
+    else if (upperType.includes("CURSOR_COMMAND")) normalizedType = "CURSOR_COMMAND";
+    else if (upperType.includes("CLAUDE_COMMAND")) normalizedType = "CLAUDE_COMMAND";
+    else if (upperType.includes("WINDSURF_WORKFLOW")) normalizedType = "WINDSURF_WORKFLOW";
+    else if (upperType.includes("COPILOT_PROMPT")) normalizedType = "COPILOT_PROMPT";
+    else if (upperType.includes("CONTINUE_PROMPT")) normalizedType = "CONTINUE_PROMPT";
+    else if (upperType.includes("OPENCODE_COMMAND")) normalizedType = "OPENCODE_COMMAND";
+    else if (upperType.includes("CURSOR")) normalizedType = "CURSOR_RULES";
     else if (upperType.includes("CLAUDE")) normalizedType = "CLAUDE_MD";
     else if (upperType.includes("COPILOT")) normalizedType = "COPILOT_INSTRUCTIONS";
     else if (upperType.includes("WINDSURF")) normalizedType = "WINDSURF_RULES";

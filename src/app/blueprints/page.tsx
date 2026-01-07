@@ -50,6 +50,13 @@ const SORT_OPTIONS = [
   { value: "favorites", label: "Favorites", icon: Heart },
 ] as const;
 
+// Blueprint type filter (AI Configs vs Commands)
+const TYPE_FILTERS = [
+  { id: "all", label: "All Types" },
+  { id: "configs", label: "AI Configs", description: "Rules & configurations" },
+  { id: "commands", label: "Commands", description: "Slash commands & workflows" },
+];
+
 type SortOption = (typeof SORT_OPTIONS)[number]["value"];
 
 interface Blueprint {
@@ -112,6 +119,7 @@ function BlueprintsContent() {
   );
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get("category") || "all");
   const [selectedTier, setSelectedTier] = useState(searchParams.get("tier") || "all");
+  const [selectedType, setSelectedType] = useState(searchParams.get("type") || "all");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showAllTags, setShowAllTags] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -139,7 +147,7 @@ function BlueprintsContent() {
   // Reset page when filters change
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, selectedCategory, selectedTier, selectedTags, sortParam]);
+  }, [debouncedSearch, selectedCategory, selectedTier, selectedType, selectedTags, sortParam]);
 
   // Fetch blueprints
   useEffect(() => {
@@ -151,6 +159,7 @@ function BlueprintsContent() {
         if (debouncedSearch) params.set("q", debouncedSearch);
         if (selectedCategory && selectedCategory !== "all") params.set("category", selectedCategory);
         if (selectedTier && selectedTier !== "all") params.set("tier", selectedTier);
+        if (selectedType && selectedType !== "all") params.set("type", selectedType);
         if (selectedTags.length > 0) params.set("tags", selectedTags.join(","));
         params.set("page", page.toString());
         params.set("limit", "12");
@@ -175,7 +184,7 @@ function BlueprintsContent() {
     };
 
     fetchData();
-  }, [sortParam, debouncedSearch, selectedCategory, selectedTier, selectedTags, page]);
+  }, [sortParam, debouncedSearch, selectedCategory, selectedTier, selectedType, selectedTags, page]);
 
   // Fetch user's favorites when logged in
   useEffect(() => {
@@ -327,8 +336,8 @@ function BlueprintsContent() {
               Blueprints Catalog
             </h1>
             <p className="mt-4 text-lg text-muted-foreground">
-              Discover community-created AI configurations or share your own.
-              Find the perfect setup for any workflow.
+              Discover community-created AI configurations, slash commands, and workflows.
+              Find the perfect setup for any AI IDE or tool.
             </p>
 
             {/* CTA Buttons */}
@@ -632,21 +641,42 @@ function BlueprintsContent() {
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-1 rounded-lg border bg-background p-1">
-                {SORT_OPTIONS.map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => handleSortChange(option.value)}
-                    className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors ${
-                      sortParam === option.value
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-muted"
-                    }`}
-                  >
-                    <option.icon className="h-4 w-4" />
-                    <span className="hidden sm:inline">{option.label}</span>
-                  </button>
-                ))}
+              <div className="flex items-center gap-3">
+                {/* Type filter (AI Configs / Commands) */}
+                <div className="flex items-center gap-1 rounded-lg border bg-background p-1">
+                  {TYPE_FILTERS.map((filter) => (
+                    <button
+                      key={filter.id}
+                      onClick={() => setSelectedType(filter.id)}
+                      className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors ${
+                        selectedType === filter.id
+                          ? "bg-violet-500 text-white"
+                          : "hover:bg-muted"
+                      }`}
+                    >
+                      {filter.id === "commands" && <span>⚡</span>}
+                      <span className="hidden sm:inline">{filter.label}</span>
+                      <span className="sm:hidden">{filter.id === "all" ? "All" : filter.id === "configs" ? "Configs" : "⚡"}</span>
+                    </button>
+                  ))}
+                </div>
+                {/* Sort options */}
+                <div className="flex items-center gap-1 rounded-lg border bg-background p-1">
+                  {SORT_OPTIONS.map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => handleSortChange(option.value)}
+                      className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors ${
+                        sortParam === option.value
+                          ? "bg-primary text-primary-foreground"
+                          : "hover:bg-muted"
+                      }`}
+                    >
+                      <option.icon className="h-4 w-4" />
+                      <span className="hidden sm:inline">{option.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -659,7 +689,7 @@ function BlueprintsContent() {
                 <Users className="mx-auto h-12 w-12 text-muted-foreground" />
                 <h3 className="mt-4 font-semibold">No blueprints found</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  {debouncedSearch || selectedCategory !== "all" || selectedTier !== "all" || selectedTags.length > 0
+                  {debouncedSearch || selectedCategory !== "all" || selectedTier !== "all" || selectedType !== "all" || selectedTags.length > 0
                     ? "Try adjusting your filters"
                     : "Be the first to contribute a blueprint!"}
                 </p>
