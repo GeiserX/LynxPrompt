@@ -53,7 +53,7 @@ const CLI_FEATURES = [
   },
   {
     icon: Globe,
-    title: "27+ AI Agents",
+    title: "30+ AI IDEs & Tools",
     description: "Cursor, Claude, Copilot, Windsurf, Zed, and more. One source, all formats.",
   },
 ];
