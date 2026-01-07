@@ -654,6 +654,87 @@ const DATA_HANDLING_OPTIONS = [
   { id: "other", label: "Other", description: "Custom data handling" },
 ];
 
+// Auth providers (social/enterprise login options)
+const AUTH_PROVIDERS_OPTIONS = [
+  { id: "email_password", label: "Email/Password", description: "Traditional credentials" },
+  { id: "google", label: "Google", description: "Google OAuth" },
+  { id: "github", label: "GitHub", description: "GitHub OAuth" },
+  { id: "gitlab", label: "GitLab", description: "GitLab OAuth" },
+  { id: "microsoft", label: "Microsoft", description: "Azure AD / Microsoft" },
+  { id: "apple", label: "Apple", description: "Sign in with Apple" },
+  { id: "facebook", label: "Facebook", description: "Facebook Login" },
+  { id: "twitter", label: "Twitter/X", description: "Twitter OAuth" },
+  { id: "linkedin", label: "LinkedIn", description: "LinkedIn OAuth" },
+  { id: "discord", label: "Discord", description: "Discord OAuth" },
+  { id: "slack", label: "Slack", description: "Slack OAuth" },
+  { id: "twitch", label: "Twitch", description: "Twitch OAuth" },
+  { id: "spotify", label: "Spotify", description: "Spotify OAuth" },
+  { id: "magic_link", label: "Magic Link", description: "Email magic links" },
+  { id: "sms_otp", label: "SMS OTP", description: "SMS verification codes" },
+  { id: "passkeys", label: "Passkeys/WebAuthn", description: "Passwordless biometric" },
+  { id: "saml_sso", label: "SAML SSO", description: "Enterprise SAML" },
+  { id: "oidc_generic", label: "Generic OIDC", description: "Custom OIDC provider" },
+  { id: "ldap", label: "LDAP/AD", description: "Directory services" },
+  { id: "other", label: "Other", description: "Custom provider" },
+];
+
+// Version tag formats
+const VERSION_TAG_FORMATS = [
+  { id: "v_prefix", label: "v-prefix (v1.0.0)", description: "Most common format" },
+  { id: "no_prefix", label: "No prefix (1.0.0)", description: "Plain version number" },
+  { id: "package_prefix", label: "Package prefix (@pkg/v1.0.0)", description: "Monorepo scoped" },
+  { id: "date_based", label: "Date-based (2024.01.15)", description: "CalVer style" },
+  { id: "custom", label: "Custom format", description: "Define your own" },
+];
+
+// Changelog tools
+const CHANGELOG_OPTIONS = [
+  { id: "manual", label: "Manual", description: "Write changelogs by hand" },
+  { id: "conventional_changelog", label: "Conventional Changelog", description: "Auto-generate from commits" },
+  { id: "release_please", label: "Release Please", description: "Google's release automation" },
+  { id: "semantic_release", label: "Semantic Release", description: "Full automation" },
+  { id: "changesets", label: "Changesets", description: "Monorepo versioning" },
+  { id: "github_releases", label: "GitHub Releases", description: "Use GH release notes" },
+  { id: "keep_a_changelog", label: "Keep a Changelog", description: "Standard format" },
+  { id: "other", label: "Other", description: "Custom tooling" },
+];
+
+// Plan mode frequency options
+const PLAN_MODE_FREQUENCY_OPTIONS = [
+  { id: "always", label: "Always", description: "Plan before every task" },
+  { id: "complex_tasks", label: "Complex Tasks", description: "Multi-step or risky changes" },
+  { id: "multi_file", label: "Multi-file Changes", description: "When touching multiple files" },
+  { id: "new_features", label: "New Features Only", description: "Only for new functionality" },
+  { id: "on_request", label: "On Request", description: "Only when explicitly asked" },
+  { id: "never", label: "Never", description: "Skip planning entirely" },
+];
+
+// Compliance standards
+const COMPLIANCE_OPTIONS = [
+  { id: "gdpr", label: "GDPR", description: "EU data protection" },
+  { id: "ccpa", label: "CCPA", description: "California privacy" },
+  { id: "hipaa", label: "HIPAA", description: "Healthcare data" },
+  { id: "soc2", label: "SOC 2", description: "Service controls" },
+  { id: "pci_dss", label: "PCI-DSS", description: "Payment card data" },
+  { id: "iso27001", label: "ISO 27001", description: "Information security" },
+  { id: "fedramp", label: "FedRAMP", description: "US federal cloud" },
+  { id: "other", label: "Other", description: "Custom compliance" },
+];
+
+// Analytics options
+const ANALYTICS_OPTIONS = [
+  { id: "google_analytics", label: "Google Analytics", description: "GA4" },
+  { id: "plausible", label: "Plausible", description: "Privacy-focused" },
+  { id: "posthog", label: "PostHog", description: "Product analytics" },
+  { id: "mixpanel", label: "Mixpanel", description: "Event analytics" },
+  { id: "amplitude", label: "Amplitude", description: "Product analytics" },
+  { id: "segment", label: "Segment", description: "Data pipeline" },
+  { id: "umami", label: "Umami", description: "Self-hosted analytics" },
+  { id: "matomo", label: "Matomo", description: "Self-hosted (Piwik)" },
+  { id: "none", label: "No Analytics", description: "Privacy-first approach" },
+  { id: "other", label: "Other", description: "Custom analytics" },
+];
+
 // Project types define AI behavior flexibility
 const PROJECT_TYPES = [
   {
@@ -836,6 +917,8 @@ type WizardConfig = {
   fundingYml: string;
   conventionalCommits: boolean;
   semver: boolean;
+  versionTagFormat: string;
+  changelogTool: string;
   dependabot: boolean;
   branchStrategy: string; // gitflow, github_flow, trunk_based, gitlab_flow
   defaultBranch: string; // main, master, develop
@@ -849,6 +932,7 @@ type WizardConfig = {
   containerRegistryOther: string;
   registryUsername: string;
   aiBehaviorRules: string[];
+  planModeFrequency: string; // always, complex_tasks, multi_file, new_features, on_request, never
   explanationVerbosity: string; // concise, balanced, detailed
   accessibilityFocus: boolean;
   performanceFocus: boolean;
@@ -872,10 +956,13 @@ type WizardConfig = {
 
 // Security configuration (FREE tier)
 type SecurityConfig = {
+  authProviders: string[];
   secretsManagement: string[];
   securityTooling: string[];
   authPatterns: string[];
   dataHandling: string[];
+  compliance: string[];
+  analytics: string[];
   additionalNotes: string;
 };
 
@@ -978,6 +1065,8 @@ function WizardPageContent() {
     fundingYml: "",
     conventionalCommits: true,
     semver: true,
+    versionTagFormat: "v_prefix",
+    changelogTool: "manual",
     dependabot: true,
     branchStrategy: "github_flow",
     defaultBranch: "main",
@@ -991,6 +1080,7 @@ function WizardPageContent() {
     containerRegistryOther: "",
     registryUsername: "",
     aiBehaviorRules: ["always_debug_after_build", "check_logs_after_build", "run_tests_before_commit", "follow_existing_patterns", "ask_before_large_refactors"],
+    planModeFrequency: "complex_tasks",
     explanationVerbosity: "balanced",
     accessibilityFocus: false,
     performanceFocus: false,
@@ -1037,10 +1127,13 @@ function WizardPageContent() {
     },
     // Security configuration (FREE tier)
     security: {
+      authProviders: [],
       secretsManagement: ["env_vars"],  // Default to environment variables
       securityTooling: ["dependabot", "renovate"],  // Default recommended tools
       authPatterns: [],
       dataHandling: ["encryption_at_rest", "encryption_in_transit"],  // Default recommended
+      compliance: [],
+      analytics: [],
       additionalNotes: "",
     },
   });
@@ -2587,6 +2680,8 @@ ${syncCommands}
                 <StepAIBehavior
                   selected={config.aiBehaviorRules}
                   onToggle={(v) => toggleArrayValue("aiBehaviorRules", v)}
+                  planModeFrequency={config.planModeFrequency}
+                  onPlanModeFrequencyChange={(v) => setConfig({ ...config, planModeFrequency: v })}
                   explanationVerbosity={config.explanationVerbosity}
                   onExplanationVerbosityChange={(v) => setConfig({ ...config, explanationVerbosity: v })}
                   accessibilityFocus={config.accessibilityFocus}
@@ -4240,6 +4335,53 @@ function StepRepository({
           {/* Dependabot/Renovate moved to Security step */}
         </div>
 
+        {/* Conditional Semver Options */}
+        {config.semver && (
+          <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-4">
+            <p className="text-sm font-medium text-primary">Versioning Options</p>
+            
+            <div>
+              <label className="block text-sm font-medium mb-2">Version Tag Format</label>
+              <div className="flex flex-wrap gap-2">
+                {VERSION_TAG_FORMATS.map((format) => (
+                  <button
+                    key={format.id}
+                    onClick={() => onChange({ versionTagFormat: format.id })}
+                    className={`rounded-lg border px-3 py-2 text-sm transition-all ${
+                      config.versionTagFormat === format.id
+                        ? "border-primary bg-primary/10 ring-1 ring-primary"
+                        : "hover:border-primary"
+                    }`}
+                    title={format.description}
+                  >
+                    {format.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-2">Changelog Management</label>
+              <div className="flex flex-wrap gap-2">
+                {CHANGELOG_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.id}
+                    onClick={() => onChange({ changelogTool: opt.id })}
+                    className={`rounded-lg border px-3 py-2 text-sm transition-all ${
+                      config.changelogTool === opt.id
+                        ? "border-primary bg-primary/10 ring-1 ring-primary"
+                        : "hover:border-primary"
+                    }`}
+                    title={opt.description}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Branch Strategy */}
         <div>
           <label className="block text-sm font-medium mb-2">Branch Strategy</label>
@@ -4529,12 +4671,19 @@ function StepSecurity({
   config: SecurityConfig;
   onChange: (updates: Partial<SecurityConfig>) => void;
 }) {
+  const [authProvidersSearch, setAuthProvidersSearch] = useState("");
   const [secretsSearch, setSecretsSearch] = useState("");
   const [toolingSearch, setToolingSearch] = useState("");
   const [authSearch, setAuthSearch] = useState("");
   const [dataSearch, setDataSearch] = useState("");
+  const [complianceSearch, setComplianceSearch] = useState("");
+  const [analyticsSearch, setAnalyticsSearch] = useState("");
 
   // Filter functions
+  const filteredAuthProviders = AUTH_PROVIDERS_OPTIONS.filter(opt =>
+    opt.label.toLowerCase().includes(authProvidersSearch.toLowerCase()) ||
+    opt.description.toLowerCase().includes(authProvidersSearch.toLowerCase())
+  );
   const filteredSecrets = SECRETS_MANAGEMENT_OPTIONS.filter(opt =>
     opt.label.toLowerCase().includes(secretsSearch.toLowerCase()) ||
     opt.description.toLowerCase().includes(secretsSearch.toLowerCase())
@@ -4550,6 +4699,14 @@ function StepSecurity({
   const filteredData = DATA_HANDLING_OPTIONS.filter(opt =>
     opt.label.toLowerCase().includes(dataSearch.toLowerCase()) ||
     opt.description.toLowerCase().includes(dataSearch.toLowerCase())
+  );
+  const filteredCompliance = COMPLIANCE_OPTIONS.filter(opt =>
+    opt.label.toLowerCase().includes(complianceSearch.toLowerCase()) ||
+    opt.description.toLowerCase().includes(complianceSearch.toLowerCase())
+  );
+  const filteredAnalytics = ANALYTICS_OPTIONS.filter(opt =>
+    opt.label.toLowerCase().includes(analyticsSearch.toLowerCase()) ||
+    opt.description.toLowerCase().includes(analyticsSearch.toLowerCase())
   );
 
   const toggleItem = (field: keyof SecurityConfig, id: string) => {
@@ -4584,10 +4741,48 @@ function StepSecurity({
       </div>
 
       <div className="mt-6 space-y-8">
-        {/* 1. Secrets Management */}
+        {/* 1. Authentication Providers */}
         <div>
           <h3 className="text-lg font-semibold flex items-center gap-2">
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">1</span>
+            Authentication Providers
+          </h3>
+          <p className="mt-1 text-sm text-muted-foreground">Which login methods should your app support?</p>
+          
+          <div className="mt-3 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={authProvidersSearch}
+              onChange={(e) => setAuthProvidersSearch(e.target.value)}
+              placeholder="Search auth providers..."
+              className="w-full rounded-lg border bg-background pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          
+          <div className="mt-3 flex flex-wrap gap-2 max-h-48 overflow-y-auto p-1">
+            {filteredAuthProviders.map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => toggleItem("authProviders", opt.id)}
+                className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all ${
+                  config.authProviders.includes(opt.id)
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "hover:border-primary"
+                }`}
+                title={opt.description}
+              >
+                {opt.label}
+                {config.authProviders.includes(opt.id) && <Check className="h-3 w-3" />}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 2. Secrets Management */}
+        <div>
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">2</span>
             Secrets Management
           </h3>
           <p className="mt-1 text-sm text-muted-foreground">How do you manage secrets and credentials?</p>
@@ -4623,10 +4818,10 @@ function StepSecurity({
           </div>
         </div>
 
-        {/* 2. Security Tooling */}
+        {/* 3. Security Tooling */}
         <div>
           <h3 className="text-lg font-semibold flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">2</span>
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">3</span>
             Security Tooling
           </h3>
           <p className="mt-1 text-sm text-muted-foreground">Security scanning, dependency updates, and vulnerability detection.</p>
@@ -4662,10 +4857,10 @@ function StepSecurity({
           </div>
         </div>
 
-        {/* 3. Authentication Patterns */}
+        {/* 4. Authentication Patterns */}
         <div>
           <h3 className="text-lg font-semibold flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">3</span>
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">4</span>
             Authentication Patterns
           </h3>
           <p className="mt-1 text-sm text-muted-foreground">How users and services authenticate with your application.</p>
@@ -4701,10 +4896,10 @@ function StepSecurity({
           </div>
         </div>
 
-        {/* 4. Data Handling */}
+        {/* 5. Data Handling */}
         <div>
           <h3 className="text-lg font-semibold flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">4</span>
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">5</span>
             Data Handling & Compliance
           </h3>
           <p className="mt-1 text-sm text-muted-foreground">Data protection, encryption, and compliance requirements.</p>
@@ -4740,6 +4935,82 @@ function StepSecurity({
           </div>
         </div>
 
+        {/* 6. Compliance Standards */}
+        <div>
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">6</span>
+            Compliance Standards
+          </h3>
+          <p className="mt-1 text-sm text-muted-foreground">Regulatory compliance requirements for your application.</p>
+          
+          <div className="mt-3 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={complianceSearch}
+              onChange={(e) => setComplianceSearch(e.target.value)}
+              placeholder="Search compliance..."
+              className="w-full rounded-lg border bg-background pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          
+          <div className="mt-3 flex flex-wrap gap-2 max-h-48 overflow-y-auto p-1">
+            {filteredCompliance.map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => toggleItem("compliance", opt.id)}
+                className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all ${
+                  config.compliance.includes(opt.id)
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "hover:border-primary"
+                }`}
+                title={opt.description}
+              >
+                {opt.label}
+                {config.compliance.includes(opt.id) && <Check className="h-3 w-3" />}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 7. Analytics */}
+        <div>
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">7</span>
+            Analytics & Telemetry
+          </h3>
+          <p className="mt-1 text-sm text-muted-foreground">Usage analytics and monitoring solutions.</p>
+          
+          <div className="mt-3 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={analyticsSearch}
+              onChange={(e) => setAnalyticsSearch(e.target.value)}
+              placeholder="Search analytics..."
+              className="w-full rounded-lg border bg-background pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          
+          <div className="mt-3 flex flex-wrap gap-2 max-h-48 overflow-y-auto p-1">
+            {filteredAnalytics.map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => toggleItem("analytics", opt.id)}
+                className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all ${
+                  config.analytics.includes(opt.id)
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "hover:border-primary"
+                }`}
+                title={opt.description}
+              >
+                {opt.label}
+                {config.analytics.includes(opt.id) && <Check className="h-3 w-3" />}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Additional Notes */}
         <div>
           <label className="text-sm font-medium">Additional Security Notes</label>
@@ -4753,14 +5024,17 @@ function StepSecurity({
         </div>
 
         {/* Summary */}
-        {(config.secretsManagement.length > 0 || config.securityTooling.length > 0 || 
-          config.authPatterns.length > 0 || config.dataHandling.length > 0) && (
+        {(config.authProviders.length > 0 || config.secretsManagement.length > 0 || config.securityTooling.length > 0 || 
+          config.authPatterns.length > 0 || config.dataHandling.length > 0 || config.compliance.length > 0 || config.analytics.length > 0) && (
           <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-950/30">
             <h4 className="font-medium text-green-800 dark:text-green-200 flex items-center gap-2">
               <Check className="h-4 w-4" />
               Security Configuration Summary
             </h4>
             <div className="mt-2 text-sm text-green-700 dark:text-green-300 space-y-1">
+              {config.authProviders.length > 0 && (
+                <p>• <strong>Auth Providers:</strong> {config.authProviders.length} provider(s) selected</p>
+              )}
               {config.secretsManagement.length > 0 && (
                 <p>• <strong>Secrets:</strong> {config.secretsManagement.length} method(s) selected</p>
               )}
@@ -4768,10 +5042,16 @@ function StepSecurity({
                 <p>• <strong>Tooling:</strong> {config.securityTooling.length} tool(s) selected</p>
               )}
               {config.authPatterns.length > 0 && (
-                <p>• <strong>Auth:</strong> {config.authPatterns.length} pattern(s) selected</p>
+                <p>• <strong>Auth Patterns:</strong> {config.authPatterns.length} pattern(s) selected</p>
               )}
               {config.dataHandling.length > 0 && (
                 <p>• <strong>Data:</strong> {config.dataHandling.length} policy/policies selected</p>
+              )}
+              {config.compliance.length > 0 && (
+                <p>• <strong>Compliance:</strong> {config.compliance.length} standard(s) selected</p>
+              )}
+              {config.analytics.length > 0 && (
+                <p>• <strong>Analytics:</strong> {config.analytics.length} tool(s) selected</p>
               )}
             </div>
           </div>
@@ -4784,6 +5064,8 @@ function StepSecurity({
 function StepAIBehavior({
   selected,
   onToggle,
+  planModeFrequency,
+  onPlanModeFrequencyChange,
   explanationVerbosity,
   onExplanationVerbosityChange,
   accessibilityFocus,
@@ -4803,6 +5085,8 @@ function StepAIBehavior({
 }: {
   selected: string[];
   onToggle: (v: string) => void;
+  planModeFrequency: string;
+  onPlanModeFrequencyChange: (v: string) => void;
   explanationVerbosity: string;
   onExplanationVerbosityChange: (v: string) => void;
   accessibilityFocus: boolean;
@@ -4926,6 +5210,28 @@ function StepAIBehavior({
             </p>
           </div>
         </button>
+      </div>
+
+      {/* Plan Mode Frequency */}
+      <div className="mt-8">
+        <h3 className="font-semibold">Plan Mode Frequency</h3>
+        <p className="mt-1 text-sm text-muted-foreground">When should the AI enter plan mode before making changes?</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {PLAN_MODE_FREQUENCY_OPTIONS.map((opt) => (
+            <button
+              key={opt.id}
+              onClick={() => onPlanModeFrequencyChange(opt.id)}
+              className={`rounded-lg border px-3 py-2 text-sm transition-all ${
+                planModeFrequency === opt.id
+                  ? "border-primary bg-primary/5 ring-1 ring-primary"
+                  : "hover:border-primary"
+              }`}
+              title={opt.description}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Explanation Verbosity */}
