@@ -2635,7 +2635,6 @@ const DEV_OS_OPTIONS = [
   { id: "macos", label: "macOS", icon: "🍎", desc: "Mac with zsh/bash" },
   { id: "windows", label: "Windows", icon: "🪟", desc: "PowerShell, CMD, or WSL" },
   { id: "wsl", label: "Windows + WSL", icon: "🐧🪟", desc: "Windows with Linux subsystem" },
-  { id: "multi", label: "Multi-platform", icon: "🌐", desc: "Cross-platform commands" },
 ];
 
 // Helper component for detected badge
