@@ -568,6 +568,9 @@ type BoundariesConfig = {
   always: string[];
   ask: string[];
   never: string[];
+  customAlways: string;
+  customAsk: string;
+  customNever: string;
   savePreferences: boolean;
 };
 
@@ -835,8 +838,8 @@ function WizardPageContent() {
     tokenEnvVar: "LYNXPROMPT_API_TOKEN",
     additionalFeedback: "",
     commands: { build: "", test: "", lint: "", dev: "", format: "", typecheck: "", clean: "", preCommit: "", additional: [], savePreferences: false },
-    codeStyle: { naming: "language_default", errorHandling: "", errorHandlingOther: "", loggingConventions: "", loggingConventionsOther: "", maxFileLength: 300, importOrder: "grouped", commentLanguage: "english", docStyle: "", notes: "", savePreferences: false },
-    boundaries: { always: [], ask: [], never: [], savePreferences: false },
+    codeStyle: { naming: "language_default", errorHandling: "", errorHandlingOther: "", loggingConventions: "", loggingConventionsOther: "", maxFileLength: 300, importOrder: "", commentLanguage: "", docStyle: "", notes: "", savePreferences: false },
+    boundaries: { always: [], ask: [], never: [], customAlways: "", customAsk: "", customNever: "", savePreferences: false },
     testing: { levels: [], coverage: 80, frameworks: [], tddPreference: false, snapshotTesting: false, mockStrategy: "minimal", notes: "", savePreferences: false },
     staticFiles: {
       funding: false,
@@ -2507,6 +2510,7 @@ ${syncCommands}
                   isPublic={config.isPublic}
                   buildContainer={config.buildContainer}
                   onChange={(updates) => setConfig({ ...config, staticFiles: { ...config.staticFiles, ...updates } })}
+                  hasDetectedRepo={!!detectedFields.size}
                 />
               )}
               {currentStep === 10 && (
@@ -5691,32 +5695,40 @@ function StepCodeStyle({
         {/* Max file length */}
         <div>
           <label className="text-sm font-medium">Max file length (lines)</label>
-          <p className="mt-1 text-xs text-muted-foreground">Suggest splitting files when they exceed this length</p>
+          <p className="mt-1 text-xs text-muted-foreground">Suggest splitting files when they exceed this length (100-10,000)</p>
           <div className="mt-2 flex items-center gap-3">
             <input
               type="range"
               min="100"
-              max="1000"
-              step="50"
+              max="10000"
+              step="100"
               value={config.maxFileLength}
               onChange={(e) => onChange({ maxFileLength: parseInt(e.target.value) })}
               className="flex-1"
             />
-            <span className="w-16 text-sm font-mono">{config.maxFileLength}</span>
+            <input
+              type="number"
+              min="100"
+              max="10000"
+              value={config.maxFileLength}
+              onChange={(e) => onChange({ maxFileLength: Math.min(10000, Math.max(100, parseInt(e.target.value) || 300)) })}
+              className="w-20 rounded border bg-background px-2 py-1 text-sm font-mono"
+            />
           </div>
         </div>
 
         {/* Import order */}
         <div>
-          <label className="text-sm font-medium">Import order preference</label>
+          <label className="text-sm font-medium">Import order preference (optional)</label>
           <div className="mt-2 flex flex-wrap gap-2">
             {[
+              { id: "", label: "Skip", desc: "Don't specify" },
               { id: "grouped", label: "Grouped", desc: "External → internal → relative" },
               { id: "sorted", label: "Alphabetical", desc: "Sort all imports A-Z" },
               { id: "natural", label: "Natural", desc: "Leave as written" },
             ].map((opt) => (
               <button
-                key={opt.id}
+                key={opt.id || "skip"}
                 onClick={() => onChange({ importOrder: opt.id })}
                 className={`rounded-lg border px-3 py-2 transition-all ${
                   config.importOrder === opt.id
@@ -5733,27 +5745,73 @@ function StepCodeStyle({
 
         {/* Comment language */}
         <div>
-          <label className="text-sm font-medium">Comment language</label>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {[
-              { id: "english", label: "English", icon: "🇬🇧" },
-              { id: "native", label: "Native language", icon: "🌍" },
-              { id: "any", label: "Any (team preference)", icon: "🗣️" },
-            ].map((opt) => (
-              <button
-                key={opt.id}
-                onClick={() => onChange({ commentLanguage: opt.id })}
-                className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-all ${
-                  config.commentLanguage === opt.id
-                    ? "border-primary bg-primary/5 ring-1 ring-primary"
-                    : "hover:border-primary"
-                }`}
-              >
-                <span>{opt.icon}</span>
-                <span className="text-sm font-medium">{opt.label}</span>
-              </button>
-            ))}
-          </div>
+          <label className="text-sm font-medium">Comment language (optional)</label>
+          <p className="mt-1 text-xs text-muted-foreground">Language for code comments and documentation</p>
+          <select
+            value={config.commentLanguage}
+            onChange={(e) => onChange({ commentLanguage: e.target.value })}
+            className="mt-2 w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            <option value="">Skip</option>
+            <option value="english">🇬🇧 English</option>
+            <option value="spanish">🇪🇸 Spanish (Español)</option>
+            <option value="french">🇫🇷 French (Français)</option>
+            <option value="german">🇩🇪 German (Deutsch)</option>
+            <option value="italian">🇮🇹 Italian (Italiano)</option>
+            <option value="portuguese">🇵🇹 Portuguese (Português)</option>
+            <option value="brazilian_portuguese">🇧🇷 Brazilian Portuguese</option>
+            <option value="dutch">🇳🇱 Dutch (Nederlands)</option>
+            <option value="russian">🇷🇺 Russian (Русский)</option>
+            <option value="chinese_simplified">🇨🇳 Chinese Simplified (简体中文)</option>
+            <option value="chinese_traditional">🇹🇼 Chinese Traditional (繁體中文)</option>
+            <option value="japanese">🇯🇵 Japanese (日本語)</option>
+            <option value="korean">🇰🇷 Korean (한국어)</option>
+            <option value="arabic">🇸🇦 Arabic (العربية)</option>
+            <option value="hebrew">🇮🇱 Hebrew (עברית)</option>
+            <option value="hindi">🇮🇳 Hindi (हिन्दी)</option>
+            <option value="bengali">🇧🇩 Bengali (বাংলা)</option>
+            <option value="urdu">🇵🇰 Urdu (اردو)</option>
+            <option value="thai">🇹🇭 Thai (ไทย)</option>
+            <option value="vietnamese">🇻🇳 Vietnamese (Tiếng Việt)</option>
+            <option value="indonesian">🇮🇩 Indonesian (Bahasa Indonesia)</option>
+            <option value="malay">🇲🇾 Malay (Bahasa Melayu)</option>
+            <option value="filipino">🇵🇭 Filipino (Tagalog)</option>
+            <option value="polish">🇵🇱 Polish (Polski)</option>
+            <option value="czech">🇨🇿 Czech (Čeština)</option>
+            <option value="slovak">🇸🇰 Slovak (Slovenčina)</option>
+            <option value="hungarian">🇭🇺 Hungarian (Magyar)</option>
+            <option value="romanian">🇷🇴 Romanian (Română)</option>
+            <option value="bulgarian">🇧🇬 Bulgarian (Български)</option>
+            <option value="ukrainian">🇺🇦 Ukrainian (Українська)</option>
+            <option value="greek">🇬🇷 Greek (Ελληνικά)</option>
+            <option value="turkish">🇹🇷 Turkish (Türkçe)</option>
+            <option value="swedish">🇸🇪 Swedish (Svenska)</option>
+            <option value="norwegian">🇳🇴 Norwegian (Norsk)</option>
+            <option value="danish">🇩🇰 Danish (Dansk)</option>
+            <option value="finnish">🇫🇮 Finnish (Suomi)</option>
+            <option value="estonian">🇪🇪 Estonian (Eesti)</option>
+            <option value="latvian">🇱🇻 Latvian (Latviešu)</option>
+            <option value="lithuanian">🇱🇹 Lithuanian (Lietuvių)</option>
+            <option value="slovenian">🇸🇮 Slovenian (Slovenščina)</option>
+            <option value="croatian">🇭🇷 Croatian (Hrvatski)</option>
+            <option value="serbian">🇷🇸 Serbian (Српски)</option>
+            <option value="persian">🇮🇷 Persian/Farsi (فارسی)</option>
+            <option value="afrikaans">🇿🇦 Afrikaans</option>
+            <option value="swahili">🇳🇬 Swahili (Kiswahili)</option>
+            <option value="latam_spanish">🇲🇽 Latin American Spanish</option>
+            <option value="canadian_french">🇨🇦 Canadian French</option>
+            <option value="austrian_german">🇦🇹 Austrian German</option>
+            <option value="swiss_german">🇨🇭 Swiss German</option>
+            <option value="other">🔤 Other (specify below)</option>
+          </select>
+          {config.commentLanguage === "other" && (
+            <input
+              type="text"
+              placeholder="Enter language name..."
+              onChange={(e) => onChange({ commentLanguage: e.target.value || "other" })}
+              className="mt-2 w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          )}
         </div>
 
         {/* Documentation style */}
@@ -5848,7 +5906,7 @@ function StepBoundaries({
     if (!current) return;
     const exists = current.includes(value);
     const updated = exists ? current.filter((v) => v !== value) : [...current, value];
-    onChange({ [bucket]: updated } as any);
+    onChange({ [bucket]: updated } as Partial<BoundariesConfig>);
   };
 
   // Get options already selected in other buckets
@@ -5860,10 +5918,18 @@ function StepBoundaries({
     return used;
   };
 
+  const customFieldMap = {
+    always: "customAlways" as const,
+    ask: "customAsk" as const,
+    never: "customNever" as const,
+  };
+
   const renderBucket = (title: string, bucket: "always" | "ask" | "never", description: string) => {
     const usedInOther = getUsedOptions(bucket);
     const availableOptions = BOUNDARY_OPTIONS.filter(opt => !usedInOther.has(opt));
     const selectedInBucket = config[bucket] || [];
+    const customField = customFieldMap[bucket];
+    const customValue = config[customField] || "";
     
     return (
       <div className="rounded-lg border p-3">
@@ -5899,6 +5965,14 @@ function StepBoundaries({
             </>
           )}
         </div>
+        {/* Custom input for other items */}
+        <input
+          type="text"
+          placeholder="Add custom (comma-separated)..."
+          value={customValue}
+          onChange={(e) => onChange({ [customField]: e.target.value })}
+          className="mt-2 w-full rounded border bg-background px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+        />
       </div>
     );
   };
@@ -6116,8 +6190,8 @@ function StepTesting({
             onChange={(v) => onChange({ tddPreference: v })}
           />
           <ToggleOption
-            label="📸 Snapshot Testing"
-            description="Use snapshot tests for UI components"
+            label="📸 Snapshot Testing (optional)"
+            description="Captures expected output (HTML, JSON, etc.) and compares future runs against it. Useful for UI components, API responses, serialization."
             checked={config.snapshotTesting}
             onChange={(v) => onChange({ snapshotTesting: v })}
           />
@@ -6241,19 +6315,41 @@ function StepStaticFiles({
   isPublic,
   buildContainer,
   onChange,
+  hasDetectedRepo,
 }: {
   config: StaticFilesConfig;
   isGithub: boolean;
   isPublic: boolean;
   buildContainer: boolean;
   onChange: (updates: Partial<StaticFilesConfig>) => void;
+  hasDetectedRepo?: boolean;
 }) {
+  const [showFiles, setShowFiles] = useState(!hasDetectedRepo);
+
   return (
     <div>
       <h2 className="text-2xl font-bold">Static Files</h2>
       <p className="mt-2 text-muted-foreground">
         Enable files to embed in your AI config.
       </p>
+      
+      {hasDetectedRepo && (
+        <div className="mt-4 rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-3">
+          <p className="text-sm text-muted-foreground">
+            Since you&apos;re working with an existing repository, you may already have these files configured.
+          </p>
+          <button
+            onClick={() => setShowFiles(!showFiles)}
+            className="mt-2 text-sm font-medium text-primary hover:underline"
+          >
+            {showFiles ? "Hide static files configuration" : "Show static files configuration"}
+          </button>
+        </div>
+      )}
+      
+      {!showFiles && hasDetectedRepo ? (
+        <p className="mt-4 text-sm text-muted-foreground italic">Static files configuration skipped.</p>
+      ) : (
 
       <div className="mt-4 space-y-3">
         <StaticFileEditor
@@ -6465,6 +6561,7 @@ dist/`}
           )}
         </div>
       </div>
+      )}
     </div>
   );
 }
