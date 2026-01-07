@@ -76,6 +76,11 @@ export const docsConfig: DocsSection[] = [
         description: "Share your configurations with the community",
       },
       {
+        title: "Commands & Workflows",
+        href: "/docs/blueprints/commands",
+        description: "Slash commands for AI IDEs (Cursor, Claude, etc.)",
+      },
+      {
         title: "Template Variables",
         href: "/docs/blueprints/variables",
         description: "Using [[VARIABLE]] and [[VARIABLE|default]] placeholders",
