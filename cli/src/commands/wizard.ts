@@ -1534,9 +1534,9 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
       console.log(y("  │") + g(pad(" 🚀 Unlock LynxPrompt Cloud (FREE)", W)) + y("│"));
       console.log(y("  │") + " ".repeat(W) + y("│"));
       console.log(y("  │") + pad("    ✓ Sync configs across all your devices", W) + y("│"));
-      console.log(y("  │") + pad("    ✓ Share blueprints with your team", W) + y("│"));
       console.log(y("  │") + pad("    ✓ Save preferences for future wizards", W) + y("│"));
       console.log(y("  │") + pad("    ✓ Auto-update configs via lynxp push/pull", W) + y("│"));
+      console.log(y("  │") + pad("    ✓ Create reusable blueprint templates", W) + y("│"));
       console.log(y("  │") + " ".repeat(W) + y("│"));
       console.log(y("  │") + pad("    Sign in now:  " + chalk.cyan("lynxp login"), W + 10) + y("│"));
       console.log(y("  ╰" + "─".repeat(W) + "╯"));
