@@ -753,7 +753,9 @@ type WizardConfig = {
   semver: boolean;
   dependabot: boolean;
   cicd: string;
-  deploymentTargets: string[];
+  deploymentEnvironment: string[]; // "self_hosted" | "cloud"
+  selfHostedTargets: string[];
+  cloudTargets: string[];
   buildContainer: boolean;
   containerRegistry: string;
   containerRegistryOther: string;
@@ -883,7 +885,9 @@ function WizardPageContent() {
     semver: true,
     dependabot: true,
     cicd: "github_actions",
-    deploymentTargets: [],
+    deploymentEnvironment: [],
+    selfHostedTargets: [],
+    cloudTargets: [],
     buildContainer: false,
     containerRegistry: "",
     containerRegistryOther: "",
@@ -1380,7 +1384,8 @@ function WizardPageContent() {
       
       // CI/CD & Deployment
       cicd: config.cicd ? [config.cicd] : [],
-      deploymentTarget: config.deploymentTargets,
+      deploymentTarget: [...config.selfHostedTargets, ...config.cloudTargets],
+      deploymentEnvironment: config.deploymentEnvironment,
       buildContainer: config.buildContainer,
       containerRegistry: config.containerRegistry,
       customRegistry: config.containerRegistryOther,
@@ -3618,36 +3623,70 @@ const CICD_OPTIONS = [
   { id: "none", label: "None / Manual", icon: "🔧" },
 ];
 
-const DEPLOYMENT_TARGETS = [
+// Deployment environment type (first question)
+const DEPLOYMENT_ENVIRONMENTS = [
+  { id: "self_hosted", label: "Self-hosted / On-prem", icon: "🏠", desc: "Your own servers, homelab, or private infrastructure" },
+  { id: "cloud", label: "Cloud", icon: "☁️", desc: "Public cloud providers and managed platforms" },
+];
+
+// Self-hosted deployment targets (shown if self_hosted selected)
+const SELF_HOSTED_TARGETS = [
+  // Container Management
+  { id: "docker_compose", label: "Docker Compose", icon: "🐳" },
+  { id: "portainer", label: "Portainer", icon: "📦" },
+  { id: "kubernetes_selfhosted", label: "Kubernetes (self-hosted)", icon: "☸️" },
+  { id: "k3s", label: "K3s / K0s", icon: "☸️" },
+  { id: "rancher", label: "Rancher", icon: "🐄" },
+  { id: "openshift", label: "OpenShift", icon: "🎩" },
+  { id: "nomad", label: "HashiCorp Nomad", icon: "🔷" },
+  // Homelab / NAS
+  { id: "unraid", label: "Unraid", icon: "🏠" },
+  { id: "truenas", label: "TrueNAS / FreeNAS", icon: "🐟" },
+  { id: "synology", label: "Synology NAS", icon: "📦" },
+  { id: "qnap", label: "QNAP NAS", icon: "📦" },
+  { id: "proxmox", label: "Proxmox VE", icon: "🖥️" },
+  { id: "esxi", label: "VMware ESXi", icon: "🖥️" },
+  // Linux Distros
+  { id: "ubuntu", label: "Ubuntu Server", icon: "🐧" },
+  { id: "debian", label: "Debian", icon: "🐧" },
+  { id: "rhel", label: "RHEL / CentOS / Rocky", icon: "🎩" },
+  { id: "alpine", label: "Alpine Linux", icon: "🏔️" },
+  { id: "nixos", label: "NixOS", icon: "❄️" },
+  // Bare metal
+  { id: "baremetal", label: "Bare Metal (systemd)", icon: "🔧" },
+  { id: "ansible", label: "Ansible managed", icon: "🔴" },
+  { id: "puppet", label: "Puppet managed", icon: "🎭" },
+  { id: "chef", label: "Chef managed", icon: "👨‍🍳" },
+];
+
+// Cloud deployment targets (shown if cloud selected)
+const CLOUD_TARGETS = [
   // Major Cloud Providers
   { id: "aws", label: "AWS", icon: "☁️" },
   { id: "gcp", label: "Google Cloud", icon: "☁️" },
   { id: "azure", label: "Microsoft Azure", icon: "☁️" },
-  // Kubernetes Platforms
-  { id: "kubernetes", label: "Kubernetes (self-hosted)", icon: "☸️" },
+  // Managed Kubernetes
   { id: "eks", label: "AWS EKS", icon: "☸️" },
   { id: "gke", label: "GCP GKE", icon: "☸️" },
   { id: "aks", label: "Azure AKS", icon: "☸️" },
-  { id: "openshift", label: "OpenShift", icon: "🎩" },
-  { id: "rancher", label: "Rancher", icon: "🐄" },
-  // PaaS & Serverless
+  { id: "digitalocean_k8s", label: "DigitalOcean Kubernetes", icon: "☸️" },
+  // PaaS
   { id: "vercel", label: "Vercel", icon: "▲" },
   { id: "netlify", label: "Netlify", icon: "🌐" },
   { id: "heroku", label: "Heroku", icon: "🟣" },
   { id: "railway", label: "Railway", icon: "🚂" },
   { id: "render", label: "Render", icon: "🔷" },
   { id: "flyio", label: "Fly.io", icon: "🪁" },
-  { id: "cloudflare", label: "Cloudflare", icon: "☁️" },
-  // VPS & Bare Metal
-  { id: "digitalocean", label: "DigitalOcean", icon: "🌊" },
+  { id: "cloudflare_pages", label: "Cloudflare Pages", icon: "☁️" },
+  // VPS Providers
+  { id: "digitalocean", label: "DigitalOcean Droplets", icon: "🌊" },
   { id: "linode", label: "Linode/Akamai", icon: "🖥️" },
   { id: "vultr", label: "Vultr", icon: "🖥️" },
-  { id: "hetzner", label: "Hetzner", icon: "🖥️" },
+  { id: "hetzner", label: "Hetzner Cloud", icon: "🖥️" },
   { id: "ovh", label: "OVH", icon: "🖥️" },
   { id: "scaleway", label: "Scaleway", icon: "🖥️" },
   { id: "upcloud", label: "UpCloud", icon: "🖥️" },
-  { id: "baremetal", label: "Bare Metal / On-Prem", icon: "🏠" },
-  // Serverless Functions
+  // Serverless
   { id: "lambda", label: "AWS Lambda", icon: "λ" },
   { id: "cloud_functions", label: "GCP Cloud Functions", icon: "λ" },
   { id: "azure_functions", label: "Azure Functions", icon: "λ" },
@@ -3656,6 +3695,9 @@ const DEPLOYMENT_TARGETS = [
   // Edge
   { id: "edge", label: "Edge (CDN)", icon: "🌐" },
 ];
+
+// Combined for backward compatibility
+const DEPLOYMENT_TARGETS = [...SELF_HOSTED_TARGETS, ...CLOUD_TARGETS];
 
 const CONTAINER_REGISTRIES = [
   { id: "dockerhub", label: "Docker Hub", icon: "🐳" },
@@ -3934,58 +3976,156 @@ function StepRepository({
           </details>
         </div>
 
-        {/* Deployment Targets */}
+        {/* Deployment Environment - First Question */}
         <div>
-          <label className="block text-sm font-medium">Deployment Targets</label>
+          <label className="block text-sm font-medium">Deployment Environment</label>
           <p className="text-xs text-muted-foreground mb-2">Where will this project be deployed? (select all that apply)</p>
-          <div className="flex flex-wrap gap-2">
-            {DEPLOYMENT_TARGETS.slice(0, 12).map((target) => (
-              <button
-                key={target.id}
-                onClick={() => {
-                  const exists = config.deploymentTargets.includes(target.id);
-                  onChange({ 
-                    deploymentTargets: exists 
-                      ? config.deploymentTargets.filter(t => t !== target.id)
-                      : [...config.deploymentTargets, target.id]
-                  });
-                }}
-                className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all ${
-                  config.deploymentTargets.includes(target.id) ? "border-primary bg-primary/10" : "hover:border-primary"
-                }`}
-              >
-                <span>{target.icon}</span>
-                <span>{target.label}</span>
-                {config.deploymentTargets.includes(target.id) && <span>✓</span>}
-              </button>
-            ))}
-          </div>
-          <details className="mt-2">
-            <summary className="cursor-pointer text-xs text-muted-foreground hover:text-primary">Show more deployment targets...</summary>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {DEPLOYMENT_TARGETS.slice(12).map((target) => (
+          <div className="flex flex-wrap gap-3">
+            {DEPLOYMENT_ENVIRONMENTS.map((env) => {
+              const isSelected = config.deploymentEnvironment.includes(env.id);
+              return (
                 <button
-                  key={target.id}
+                  key={env.id}
                   onClick={() => {
-                    const exists = config.deploymentTargets.includes(target.id);
                     onChange({ 
-                      deploymentTargets: exists 
-                        ? config.deploymentTargets.filter(t => t !== target.id)
-                        : [...config.deploymentTargets, target.id]
+                      deploymentEnvironment: isSelected 
+                        ? config.deploymentEnvironment.filter(e => e !== env.id)
+                        : [...config.deploymentEnvironment, env.id]
                     });
                   }}
-                  className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all ${
-                    config.deploymentTargets.includes(target.id) ? "border-primary bg-primary/10" : "hover:border-primary"
+                  className={`flex flex-col items-start gap-1 rounded-lg border p-3 text-left transition-all ${
+                    isSelected ? "border-primary bg-primary/10 ring-1 ring-primary" : "hover:border-primary"
                   }`}
                 >
-                  <span>{target.icon}</span>
-                  <span>{target.label}</span>
-                  {config.deploymentTargets.includes(target.id) && <span>✓</span>}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">{env.icon}</span>
+                    <span className="font-medium">{env.label}</span>
+                    {isSelected && <span className="text-primary">✓</span>}
+                  </div>
+                  <span className="text-xs text-muted-foreground">{env.desc}</span>
                 </button>
-              ))}
-            </div>
-          </details>
+              );
+            })}
+          </div>
         </div>
+
+        {/* Self-hosted Targets - Shown if self_hosted selected */}
+        {config.deploymentEnvironment.includes("self_hosted") && (
+          <div className="rounded-lg border bg-muted/30 p-4">
+            <label className="block text-sm font-medium">Self-hosted Deployment Targets</label>
+            <p className="text-xs text-muted-foreground mb-2">How do you deploy to your own infrastructure?</p>
+            <div className="flex flex-wrap gap-2">
+              {SELF_HOSTED_TARGETS.slice(0, 12).map((target) => {
+                const isSelected = config.selfHostedTargets.includes(target.id);
+                return (
+                  <button
+                    key={target.id}
+                    onClick={() => {
+                      onChange({ 
+                        selfHostedTargets: isSelected 
+                          ? config.selfHostedTargets.filter(t => t !== target.id)
+                          : [...config.selfHostedTargets, target.id]
+                      });
+                    }}
+                    className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all ${
+                      isSelected ? "border-primary bg-primary/10" : "hover:border-primary"
+                    }`}
+                  >
+                    <span>{target.icon}</span>
+                    <span>{target.label}</span>
+                    {isSelected && <span>✓</span>}
+                  </button>
+                );
+              })}
+            </div>
+            <details className="mt-2">
+              <summary className="cursor-pointer text-xs text-muted-foreground hover:text-primary">Show more self-hosted options...</summary>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {SELF_HOSTED_TARGETS.slice(12).map((target) => {
+                  const isSelected = config.selfHostedTargets.includes(target.id);
+                  return (
+                    <button
+                      key={target.id}
+                      onClick={() => {
+                        onChange({ 
+                          selfHostedTargets: isSelected 
+                            ? config.selfHostedTargets.filter(t => t !== target.id)
+                            : [...config.selfHostedTargets, target.id]
+                        });
+                      }}
+                      className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all ${
+                        isSelected ? "border-primary bg-primary/10" : "hover:border-primary"
+                      }`}
+                    >
+                      <span>{target.icon}</span>
+                      <span>{target.label}</span>
+                      {isSelected && <span>✓</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </details>
+          </div>
+        )}
+
+        {/* Cloud Targets - Shown if cloud selected */}
+        {config.deploymentEnvironment.includes("cloud") && (
+          <div className="rounded-lg border bg-muted/30 p-4">
+            <label className="block text-sm font-medium">Cloud Deployment Targets</label>
+            <p className="text-xs text-muted-foreground mb-2">Which cloud platforms do you deploy to?</p>
+            <div className="flex flex-wrap gap-2">
+              {CLOUD_TARGETS.slice(0, 12).map((target) => {
+                const isSelected = config.cloudTargets.includes(target.id);
+                return (
+                  <button
+                    key={target.id}
+                    onClick={() => {
+                      onChange({ 
+                        cloudTargets: isSelected 
+                          ? config.cloudTargets.filter(t => t !== target.id)
+                          : [...config.cloudTargets, target.id]
+                      });
+                    }}
+                    className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all ${
+                      isSelected ? "border-primary bg-primary/10" : "hover:border-primary"
+                    }`}
+                  >
+                    <span>{target.icon}</span>
+                    <span>{target.label}</span>
+                    {isSelected && <span>✓</span>}
+                  </button>
+                );
+              })}
+            </div>
+            <details className="mt-2">
+              <summary className="cursor-pointer text-xs text-muted-foreground hover:text-primary">Show more cloud options...</summary>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {CLOUD_TARGETS.slice(12).map((target) => {
+                  const isSelected = config.cloudTargets.includes(target.id);
+                  return (
+                    <button
+                      key={target.id}
+                      onClick={() => {
+                        onChange({ 
+                          cloudTargets: isSelected 
+                            ? config.cloudTargets.filter(t => t !== target.id)
+                            : [...config.cloudTargets, target.id]
+                        });
+                      }}
+                      className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all ${
+                        isSelected ? "border-primary bg-primary/10" : "hover:border-primary"
+                      }`}
+                    >
+                      <span>{target.icon}</span>
+                      <span>{target.label}</span>
+                      {isSelected && <span>✓</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </details>
+          </div>
+        )}
 
         {/* Container Build Options */}
         <ToggleOption
