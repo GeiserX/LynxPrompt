@@ -245,6 +245,7 @@ export async function GET(request: NextRequest) {
         likes: t.favorites,
         tags: t.tags || [],
         tier: t.tier,
+        type: t.type, // For command badge display
         category: t.category || "other",
         isOfficial: t.isOfficial || false,
         aiAssisted: t.aiAssisted || false,
