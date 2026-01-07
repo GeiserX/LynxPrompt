@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FileCode, Search, Plus, Variable, ArrowRight } from "lucide-react";
+import { FileCode, Search, Plus, Variable, ArrowRight, Zap } from "lucide-react";
 
 export default function BlueprintsOverviewPage() {
   return (
@@ -44,6 +44,18 @@ export default function BlueprintsOverviewPage() {
               <p className="font-medium">Creating Blueprints</p>
               <p className="text-sm text-muted-foreground">
                 Share your configurations
+              </p>
+            </div>
+          </Link>
+          <Link
+            href="/docs/blueprints/commands"
+            className="flex items-center gap-3 rounded-lg border bg-gradient-to-br from-violet-500/10 to-purple-500/10 p-4 transition-colors hover:bg-muted"
+          >
+            <Zap className="h-5 w-5 text-violet-500" />
+            <div>
+              <p className="font-medium">Commands & Workflows</p>
+              <p className="text-sm text-muted-foreground">
+                Slash commands for AI IDEs
               </p>
             </div>
           </Link>
