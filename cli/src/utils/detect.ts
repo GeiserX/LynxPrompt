@@ -1480,14 +1480,14 @@ export interface CommandFileInfo {
   path: string;
   /** Filename without extension */
   name: string;
-  /** Command type (cursor-command, claude-command) */
-  type: "cursor-command" | "claude-command";
+  /** Command type (cursor-command, claude-command, windsurf-workflow, etc.) */
+  type: "cursor-command" | "claude-command" | "windsurf-workflow" | "copilot-prompt" | "continue-prompt" | "opencode-command";
   /** Content of the command file */
   content: string;
   /** IDE platform this command belongs to */
-  platform: "cursor" | "claude";
+  platform: "cursor" | "claude" | "windsurf" | "copilot" | "continue" | "opencode";
   /** Template type for database storage */
-  templateType: "CURSOR_COMMAND" | "CLAUDE_COMMAND";
+  templateType: "CURSOR_COMMAND" | "CLAUDE_COMMAND" | "WINDSURF_WORKFLOW" | "COPILOT_PROMPT" | "CONTINUE_PROMPT" | "OPENCODE_COMMAND";
 }
 
 /**
