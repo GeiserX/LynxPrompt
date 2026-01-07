@@ -22,6 +22,9 @@ import {
   Zap,
   Key,
   FileText,
+  ChevronDown,
+  ChevronUp,
+  Mail,
 } from "lucide-react";
 
 // Types for the stats data
@@ -51,6 +54,16 @@ interface TopBlueprint {
   author: string;
 }
 
+interface UserInfo {
+  id: string;
+  name: string;
+  email: string;
+  plan: string;
+  role: string;
+  createdAt: string;
+  blueprintsCount: number;
+}
+
 interface StatsData {
   period: {
     days: number;
@@ -63,6 +76,7 @@ interface StatsData {
     byRole: Record<string, number>;
     newThisPeriod: number;
     growthData: UserGrowthData[];
+    list: UserInfo[];
   };
   revenue: {
     estimatedMRR: number;
@@ -138,6 +152,7 @@ export default function AdminStatsPage() {
     FREE: true,
     TEAMS: true,
   });
+  const [showUsersList, setShowUsersList] = useState(false);
 
   // Check for superadmin access
   useEffect(() => {
@@ -255,13 +270,18 @@ export default function AdminStatsPage() {
 
         {/* KPI Cards */}
         <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <KPICard
-            title="Total Users"
-            value={data.users.total.toLocaleString()}
-            subtitle={`+${data.users.newThisPeriod} this period`}
-            icon={Users}
-            color="purple"
-          />
+          <button
+            onClick={() => setShowUsersList(!showUsersList)}
+            className="text-left"
+          >
+            <KPICard
+              title="Total Users"
+              value={data.users.total.toLocaleString()}
+              subtitle={`+${data.users.newThisPeriod} this period • Click to ${showUsersList ? "hide" : "view"}`}
+              icon={Users}
+              color="purple"
+            />
+          </button>
           <KPICard
             title="Estimated MRR"
             value={data.revenue.estimatedMRRFormatted}
@@ -284,6 +304,84 @@ export default function AdminStatsPage() {
             color="orange"
           />
         </div>
+
+        {/* Expandable Users List */}
+        {showUsersList && (
+          <div className="mb-8 rounded-xl border bg-card p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold">All Users</h3>
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                  {data.users.list.length} shown
+                </span>
+              </div>
+              <button
+                onClick={() => setShowUsersList(false)}
+                className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <ChevronUp className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="max-h-96 overflow-y-auto">
+              <table className="w-full text-sm">
+                <thead className="sticky top-0 bg-card text-left text-xs text-muted-foreground">
+                  <tr className="border-b">
+                    <th className="pb-2 pr-4">User</th>
+                    <th className="pb-2 pr-4">Plan</th>
+                    <th className="pb-2 pr-4">Role</th>
+                    <th className="pb-2 pr-4">Blueprints</th>
+                    <th className="pb-2">Joined</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {data.users.list.map((user) => (
+                    <tr key={user.id} className="hover:bg-muted/50">
+                      <td className="py-2 pr-4">
+                        <div>
+                          <p className="font-medium">{user.name}</p>
+                          <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Mail className="h-3 w-3" />
+                            {user.email}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="py-2 pr-4">
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                            user.plan === "TEAMS"
+                              ? "bg-cyan-500/20 text-cyan-500"
+                              : "bg-gray-500/20 text-gray-500"
+                          }`}
+                        >
+                          {user.plan === "TEAMS" ? "Teams" : "Free"}
+                        </span>
+                      </td>
+                      <td className="py-2 pr-4">
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                            user.role === "SUPERADMIN"
+                              ? "bg-purple-500/20 text-purple-500"
+                              : user.role === "ADMIN"
+                                ? "bg-blue-500/20 text-blue-500"
+                                : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          {user.role}
+                        </span>
+                      </td>
+                      <td className="py-2 pr-4 text-center">
+                        {user.blueprintsCount}
+                      </td>
+                      <td className="py-2 text-muted-foreground">
+                        {new Date(user.createdAt).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         {/* Main Charts Section */}
         <div className="mb-8 grid gap-6 lg:grid-cols-2">
@@ -675,6 +773,17 @@ function UserGrowthChart({
   const step = Math.ceil(data.length / 30);
   const filteredData = cumulativeData.filter((_, i) => i % step === 0);
 
+  // Check if there's any data
+  const hasData = cumulativeData.some(d => d.total > 0);
+
+  if (!hasData) {
+    return (
+      <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">
+        No user signups in this period
+      </div>
+    );
+  }
+
   return (
     <div className="h-48">
       <div className="flex h-full items-end gap-[2px]">
@@ -683,26 +792,26 @@ function UserGrowthChart({
 
           // Calculate stacked bar heights
           const plans = ["FREE", "TEAMS"] as const;
-          let totalHeight = 0;
 
           return (
             <div
               key={day.date}
               className="group relative flex-1"
-              title={`${day.date}`}
+              title={`${day.date}: FREE ${day.FREE}, TEAMS ${day.TEAMS}`}
             >
               <div className="flex h-full flex-col-reverse gap-[1px]">
                 {plans.map((plan) => {
                   if (!visiblePlans[plan]) return null;
                   const value = day[plan];
                   const height = (value / maxValue) * 100;
-                  totalHeight += height;
+                  // Ensure minimum visible height when value > 0
+                  const minHeight = value > 0 ? Math.max(height, 4) : 0;
                   return (
                     <div
                       key={plan}
                       className="w-full rounded-[2px] transition-all group-hover:opacity-80"
                       style={{
-                        height: `${Math.max(height, 0)}%`,
+                        height: `${minHeight}%`,
                         backgroundColor: PLAN_COLORS[plan],
                       }}
                     />
@@ -735,12 +844,23 @@ function DownloadsChart({ data }: { data: DownloadGrowthData[] }) {
   const maxDownloads = Math.max(...data.map((d) => d.downloads), 1);
   const step = Math.ceil(data.length / 30);
   const filteredData = data.filter((_, i) => i % step === 0);
+  const totalDownloads = data.reduce((sum, d) => sum + d.downloads, 0);
+
+  if (totalDownloads === 0) {
+    return (
+      <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">
+        No downloads in this period
+      </div>
+    );
+  }
 
   return (
     <div className="h-48">
       <div className="flex h-full items-end gap-[2px]">
         {filteredData.map((day, i) => {
           const height = (day.downloads / maxDownloads) * 100;
+          // Ensure minimum visible height when value > 0
+          const minHeight = day.downloads > 0 ? Math.max(height, 4) : 0;
           const date = new Date(day.date);
 
           return (
@@ -751,7 +871,7 @@ function DownloadsChart({ data }: { data: DownloadGrowthData[] }) {
             >
               <div
                 className="w-full rounded-t-sm bg-blue-500 transition-all group-hover:bg-blue-400"
-                style={{ height: `${Math.max(height, 2)}%` }}
+                style={{ height: `${minHeight}%` }}
               />
 
               {(i === 0 ||
