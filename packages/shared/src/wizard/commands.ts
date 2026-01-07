@@ -248,3 +248,4 @@ export const COMMANDS_BY_CATEGORY = {
   additional: getCommandsByCategory("other"),
 };
 
+
