@@ -922,6 +922,7 @@ type WizardConfig = {
   dependabot: boolean;
   branchStrategy: string; // gitflow, github_flow, trunk_based, gitlab_flow
   defaultBranch: string; // main, master, develop
+  commitWorkflow: string; // branch_pr, direct_main
   commitSigning: boolean; // GPG/SSH signing
   cicd: string;
   deploymentEnvironment: string[]; // "self_hosted" | "cloud"
@@ -1070,6 +1071,7 @@ function WizardPageContent() {
     dependabot: true,
     branchStrategy: "github_flow",
     defaultBranch: "main",
+    commitWorkflow: "branch_pr",
     commitSigning: false,
     cicd: "github_actions",
     deploymentEnvironment: [],
@@ -3977,6 +3979,12 @@ const DEFAULT_BRANCHES = [
   { id: "trunk", label: "trunk" },
 ];
 
+// Commit workflow preferences
+const COMMIT_WORKFLOW_OPTIONS = [
+  { id: "branch_pr", label: "Branch + PR", desc: "Create branches and open pull requests", icon: "🔀" },
+  { id: "direct_main", label: "Direct to main", desc: "Commit directly to main/master branch", icon: "⬆️" },
+];
+
 const REPO_HOSTS = [
   { id: "github", label: "GitHub", icon: "🐙" },
   { id: "gitlab", label: "GitLab", icon: "🦊" },
@@ -4421,6 +4429,31 @@ function StepRepository({
                 }`}
               >
                 {branch.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Commit Workflow */}
+        <div>
+          <label className="block text-sm font-medium mb-2">Commit Workflow</label>
+          <p className="text-xs text-muted-foreground mb-2">Do you prefer branches + PRs or committing directly to main?</p>
+          <div className="flex gap-2">
+            {COMMIT_WORKFLOW_OPTIONS.map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => onChange({ commitWorkflow: opt.id })}
+                className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-all ${
+                  config.commitWorkflow === opt.id
+                    ? "border-primary bg-primary/5 ring-1 ring-primary"
+                    : "hover:border-primary"
+                }`}
+              >
+                <span>{opt.icon}</span>
+                <div className="text-left">
+                  <span className="text-sm font-medium">{opt.label}</span>
+                  <p className="text-xs text-muted-foreground">{opt.desc}</p>
+                </div>
               </button>
             ))}
           </div>
