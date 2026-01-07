@@ -110,9 +110,9 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Build shared package
-        working-directory: packages/shared
         run: |
-          npm install typescript --save-dev
+          cd packages/shared
+          npm install --ignore-scripts --no-save typescript
           npx tsc
 
       - name: Build CLI from source
@@ -229,9 +229,9 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Build shared package
-        working-directory: packages/shared
         run: |
-          npm install typescript --save-dev
+          cd packages/shared
+          npm install --ignore-scripts --no-save typescript
           npx tsc
 
       - name: Install dependencies
