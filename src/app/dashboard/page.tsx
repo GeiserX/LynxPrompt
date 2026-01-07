@@ -208,8 +208,15 @@ export default function DashboardPage() {
   const [showDrafts, setShowDrafts] = useState(false);
   const [isDeletingDraft, setIsDeletingDraft] = useState<string | null>(null);
   
-  // My Blueprints search
+  // My Blueprints search and pagination
   const [blueprintSearch, setBlueprintSearch] = useState("");
+  const [blueprintPage, setBlueprintPage] = useState(1);
+  const BLUEPRINTS_PER_PAGE = 10;
+  
+  // Favorites search and pagination
+  const [favoritesSearch, setFavoritesSearch] = useState("");
+  const [favoritesPage, setFavoritesPage] = useState(1);
+  const FAVORITES_PER_PAGE = 10;
   
   // Hierarchical blueprints toggle
   const [showHierarchical, setShowHierarchical] = useState(false);
@@ -995,90 +1002,141 @@ export default function DashboardPage() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {dashboardData?.myTemplates
-                      .filter((template) =>
+                    {(() => {
+                      // Filter blueprints by search
+                      const filteredBlueprints = dashboardData?.myTemplates?.filter((template) =>
                         blueprintSearch.trim() === "" ||
                         template.name.toLowerCase().includes(blueprintSearch.toLowerCase())
-                      )
-                      .map((template) => (
-                      <div
-                        key={template.id}
-                        className="flex items-center justify-between rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="rounded-lg bg-muted p-2">
-                            <FileText className="h-5 w-5" />
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-medium">{template.name}</h4>
-                              {template.version && template.version > 0 && (
-                                <span className="flex items-center gap-0.5 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
-                                  <GitBranch className="h-3 w-3" />
-                                  v{template.version}
+                      ) || [];
+                      
+                      // Paginate
+                      const totalPages = Math.ceil(filteredBlueprints.length / BLUEPRINTS_PER_PAGE);
+                      const startIndex = (blueprintPage - 1) * BLUEPRINTS_PER_PAGE;
+                      const paginatedBlueprints = filteredBlueprints.slice(startIndex, startIndex + BLUEPRINTS_PER_PAGE);
+                      
+                      // Reset to page 1 if current page is out of bounds after search
+                      if (blueprintPage > totalPages && totalPages > 0) {
+                        setBlueprintPage(1);
+                      }
+                      
+                      return (
+                        <>
+                          {paginatedBlueprints.map((template) => (
+                            <div
+                              key={template.id}
+                              className="flex items-center justify-between rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50"
+                            >
+                              <div className="flex items-center gap-4">
+                                <div className="rounded-lg bg-muted p-2">
+                                  <FileText className="h-5 w-5" />
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <h4 className="font-medium">{template.name}</h4>
+                                    {template.version && template.version > 0 && (
+                                      <span className="flex items-center gap-0.5 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                                        <GitBranch className="h-3 w-3" />
+                                        v{template.version}
+                                      </span>
+                                    )}
+                                    {/* Command badge */}
+                                    {["CURSOR_COMMAND", "CLAUDE_COMMAND", "WINDSURF_WORKFLOW", "COPILOT_PROMPT", "CONTINUE_PROMPT", "OPENCODE_COMMAND"].includes(template.type || "") && (
+                                      <span className="rounded bg-gradient-to-r from-violet-500 to-purple-500 px-1.5 py-0.5 text-xs font-medium text-white">
+                                        ⚡ {template.type === "CURSOR_COMMAND" ? "Cursor" : template.type === "CLAUDE_COMMAND" ? "Claude" : template.type === "WINDSURF_WORKFLOW" ? "Windsurf" : template.type === "COPILOT_PROMPT" ? "Copilot" : template.type === "CONTINUE_PROMPT" ? "Continue" : "OpenCode"} Command
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                                    <span className="flex items-center gap-1">
+                                      <Download className="h-3 w-3" />
+                                      {template.downloads}
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                      <Heart className="h-3 w-3" />
+                                      {template.favorites}
+                                    </span>
+                                    <span
+                                      className={`rounded-full px-2 py-0.5 text-xs ${
+                                        template.visibility === "PUBLIC"
+                                          ? "bg-green-500/10 text-green-600"
+                                          : template.visibility === "TEAM"
+                                          ? "bg-teal-500/10 text-teal-600"
+                                          : "bg-yellow-500/10 text-yellow-600"
+                                      }`}
+                                    >
+                                      {template.visibility === "PUBLIC" ? "Public" : template.visibility === "TEAM" ? "Team" : "Private"}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex gap-1">
+                                <Button variant="ghost" size="icon" asChild title="View">
+                                  <Link href={`/blueprints/${template.id}`}>
+                                    <Eye className="h-4 w-4" />
+                                  </Link>
+                                </Button>
+                                <Button variant="ghost" size="icon" asChild title="Edit">
+                                  <Link href={`/blueprints/${template.id}/edit`}>
+                                    <Pencil className="h-4 w-4" />
+                                  </Link>
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  title="Delete"
+                                  onClick={() => {
+                                    setDeleteError(null);
+                                    setDeleteModalTemplate(template);
+                                  }}
+                                  className="text-muted-foreground hover:text-destructive"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                          
+                          {/* No results message */}
+                          {paginatedBlueprints.length === 0 && blueprintSearch.trim() !== "" && (
+                            <div className="rounded-lg border bg-card p-6 text-center">
+                              <p className="text-sm text-muted-foreground">
+                                No blueprints match &quot;{blueprintSearch}&quot;
+                              </p>
+                            </div>
+                          )}
+                          
+                          {/* Pagination controls */}
+                          {totalPages > 1 && (
+                            <div className="flex items-center justify-between pt-4 border-t">
+                              <p className="text-sm text-muted-foreground">
+                                Showing {startIndex + 1}-{Math.min(startIndex + BLUEPRINTS_PER_PAGE, filteredBlueprints.length)} of {filteredBlueprints.length}
+                              </p>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setBlueprintPage(p => Math.max(1, p - 1))}
+                                  disabled={blueprintPage === 1}
+                                >
+                                  Previous
+                                </Button>
+                                <span className="text-sm text-muted-foreground">
+                                  Page {blueprintPage} of {totalPages}
                                 </span>
-                              )}
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setBlueprintPage(p => Math.min(totalPages, p + 1))}
+                                  disabled={blueprintPage === totalPages}
+                                >
+                                  Next
+                                </Button>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                              <span className="flex items-center gap-1">
-                                <Download className="h-3 w-3" />
-                                {template.downloads}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Heart className="h-3 w-3" />
-                                {template.favorites}
-                              </span>
-                              <span
-                                className={`rounded-full px-2 py-0.5 text-xs ${
-                                  template.visibility === "PUBLIC"
-                                    ? "bg-green-500/10 text-green-600"
-                                    : template.visibility === "TEAM"
-                                    ? "bg-teal-500/10 text-teal-600"
-                                    : "bg-yellow-500/10 text-yellow-600"
-                                }`}
-                              >
-                                {template.visibility === "PUBLIC" ? "Public" : template.visibility === "TEAM" ? "Team" : "Private"}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" asChild title="View">
-                            <Link href={`/blueprints/${template.id}`}>
-                              <Eye className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                          <Button variant="ghost" size="icon" asChild title="Edit">
-                            <Link href={`/blueprints/${template.id}/edit`}>
-                              <Pencil className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            title="Delete"
-                            onClick={() => {
-                              setDeleteError(null);
-                              setDeleteModalTemplate(template);
-                            }}
-                            className="text-muted-foreground hover:text-destructive"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                    {/* No results message */}
-                    {blueprintSearch.trim() !== "" && 
-                      dashboardData?.myTemplates.filter(t => 
-                        t.name.toLowerCase().includes(blueprintSearch.toLowerCase())
-                      ).length === 0 && (
-                      <div className="rounded-lg border bg-card p-6 text-center">
-                        <p className="text-sm text-muted-foreground">
-                          No blueprints match &quot;{blueprintSearch}&quot;
-                        </p>
-                      </div>
-                    )}
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 )}
               </div>
@@ -1094,6 +1152,23 @@ export default function DashboardPage() {
                     </Link>
                   </Button>
                 </div>
+
+                {/* Search input for favorites */}
+                {!loading && dashboardData && dashboardData.favoriteTemplates.length > 0 && (
+                  <div className="relative mb-4">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      type="text"
+                      placeholder="Search your favorites..."
+                      value={favoritesSearch}
+                      onChange={(e) => {
+                        setFavoritesSearch(e.target.value);
+                        setFavoritesPage(1); // Reset to first page on search
+                      }}
+                      className="w-full rounded-lg border bg-background py-2 pl-10 pr-4 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                )}
 
                 {loading ? (
                   <div className="grid gap-3 sm:grid-cols-2">
@@ -1122,45 +1197,101 @@ export default function DashboardPage() {
                     </Button>
                   </div>
                 ) : (
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {dashboardData.favoriteTemplates
-                      .slice(0, 4)
-                      .map((template) => (
-                        <Link
-                          key={template.id}
-                          href={`/blueprints/${template.id}`}
-                          className="group rounded-lg border bg-card p-4 transition-colors hover:border-primary"
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="min-w-0 flex-1">
-                              <h4 className="truncate font-medium group-hover:text-primary">
-                                {template.name}
-                              </h4>
-                              <p className="mt-0.5 text-xs text-muted-foreground">
-                                {template.isOfficial
-                                  ? "LynxPrompt"
-                                  : template.author}
+                  <>
+                    {(() => {
+                      // Filter favorites by search
+                      const filteredFavorites = dashboardData.favoriteTemplates.filter((template) =>
+                        favoritesSearch.trim() === "" ||
+                        template.name.toLowerCase().includes(favoritesSearch.toLowerCase())
+                      );
+                      
+                      // Paginate
+                      const totalPages = Math.ceil(filteredFavorites.length / FAVORITES_PER_PAGE);
+                      const startIndex = (favoritesPage - 1) * FAVORITES_PER_PAGE;
+                      const paginatedFavorites = filteredFavorites.slice(startIndex, startIndex + FAVORITES_PER_PAGE);
+                      
+                      return (
+                        <>
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            {paginatedFavorites.map((template) => (
+                              <Link
+                                key={template.id}
+                                href={`/blueprints/${template.id}`}
+                                className="group rounded-lg border bg-card p-4 transition-colors hover:border-primary"
+                              >
+                                <div className="flex items-start justify-between">
+                                  <div className="min-w-0 flex-1">
+                                    <h4 className="truncate font-medium group-hover:text-primary">
+                                      {template.name}
+                                    </h4>
+                                    <p className="mt-0.5 text-xs text-muted-foreground">
+                                      {template.isOfficial
+                                        ? "LynxPrompt"
+                                        : template.author}
+                                    </p>
+                                  </div>
+                                  {template.isOfficial && (
+                                    <span className="ml-2 rounded bg-primary/10 px-1.5 py-0.5 text-xs text-primary">
+                                      Official
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+                                  <span className="flex items-center gap-1">
+                                    <Download className="h-3 w-3" />
+                                    {template.downloads}
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    <Heart className="h-3 w-3" />
+                                    {template.favorites}
+                                  </span>
+                                </div>
+                              </Link>
+                            ))}
+                          </div>
+                          
+                          {/* No results message */}
+                          {paginatedFavorites.length === 0 && favoritesSearch.trim() !== "" && (
+                            <div className="rounded-lg border bg-card p-6 text-center">
+                              <p className="text-sm text-muted-foreground">
+                                No favorites match &quot;{favoritesSearch}&quot;
                               </p>
                             </div>
-                            {template.isOfficial && (
-                              <span className="ml-2 rounded bg-primary/10 px-1.5 py-0.5 text-xs text-primary">
-                                Official
-                              </span>
-                            )}
-                          </div>
-                          <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Download className="h-3 w-3" />
-                              {template.downloads}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Heart className="h-3 w-3" />
-                              {template.favorites}
-                            </span>
-                          </div>
-                        </Link>
-                      ))}
-                  </div>
+                          )}
+                          
+                          {/* Pagination controls */}
+                          {totalPages > 1 && (
+                            <div className="flex items-center justify-between pt-4 border-t mt-4">
+                              <p className="text-sm text-muted-foreground">
+                                Showing {startIndex + 1}-{Math.min(startIndex + FAVORITES_PER_PAGE, filteredFavorites.length)} of {filteredFavorites.length}
+                              </p>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setFavoritesPage(p => Math.max(1, p - 1))}
+                                  disabled={favoritesPage === 1}
+                                >
+                                  Previous
+                                </Button>
+                                <span className="text-sm text-muted-foreground">
+                                  Page {favoritesPage} of {totalPages}
+                                </span>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setFavoritesPage(p => Math.min(totalPages, p + 1))}
+                                  disabled={favoritesPage === totalPages}
+                                >
+                                  Next
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </>
                 )}
               </div>
 
