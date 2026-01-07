@@ -1211,23 +1211,8 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
   const userPlanDisplay = userTier === "teams" ? "TEAMS" : "USERS";
   
   if (!authenticated) {
-    // Show login notice for guests (box width: 55 inner chars)
-    const W = 55;
-    const y = chalk.yellow;
-    const pad = (s: string, len: number) => s + " ".repeat(Math.max(0, len - s.length));
-    
-    console.log(y("┌" + "─".repeat(W) + "┐"));
-    console.log(y("│") + pad(" 💡 Log in for full wizard features:", W - 1) + y("│"));
-    console.log(y("│") + " ".repeat(W) + y("│"));
-    console.log(y("│") + pad("    • Full wizard with all steps", W) + y("│"));
-    console.log(y("│") + pad("    • Auto-detect from repos [TEAMS]", W) + y("│"));
-    console.log(y("│") + pad("    • AI assistant for configs [TEAMS]", W) + y("│"));
-    console.log(y("│") + pad("    • Save preferences to your profile", W) + y("│"));
-    console.log(y("│") + pad("    • Push configs to cloud (lynxp push)", W) + y("│"));
-    console.log(y("│") + pad("    • Share across devices (lynxp push/pull)", W) + y("│"));
-    console.log(y("│") + " ".repeat(W) + y("│"));
-    console.log(y("│") + pad("    Run: " + chalk.cyan("lynxp login"), W + 10) + y("│")); // +10 for chalk codes
-    console.log(y("└" + "─".repeat(W) + "┘"));
+    // Brief notice that cloud features require login
+    console.log(chalk.gray(`  👤 Running as guest. ${chalk.cyan("lynxp login")} for cloud sync & sharing.`));
     console.log();
   } else {
     // Show logged-in status with plan
@@ -1531,14 +1516,32 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
       nextStepsLines.push(chalk.cyan("  lynxp push     ") + chalk.gray("Upload to cloud"));
       nextStepsLines.push(chalk.cyan("  lynxp link     ") + chalk.gray("Link to a blueprint"));
       nextStepsLines.push(chalk.cyan("  lynxp diff     ") + chalk.gray("Compare with cloud blueprint"));
-    } else {
-      nextStepsLines.push(chalk.gray("  lynxp login    ") + chalk.yellow("Log in to push & sync"));
     }
     
     nextStepsLines.push(chalk.cyan("  lynxp status   ") + chalk.gray("View current setup"));
     
     printBox(nextStepsLines, chalk.gray);
     console.log();
+    
+    // Show cloud benefits prominently for non-authenticated users
+    if (!authenticated) {
+      const W = 60;
+      const y = chalk.yellow;
+      const g = chalk.green;
+      const pad = (s: string, len: number) => s + " ".repeat(Math.max(0, len - s.length));
+      
+      console.log(y("  ╭" + "─".repeat(W) + "╮"));
+      console.log(y("  │") + g(pad(" 🚀 Unlock LynxPrompt Cloud (FREE)", W)) + y("│"));
+      console.log(y("  │") + " ".repeat(W) + y("│"));
+      console.log(y("  │") + pad("    ✓ Sync configs across all your devices", W) + y("│"));
+      console.log(y("  │") + pad("    ✓ Share blueprints with your team", W) + y("│"));
+      console.log(y("  │") + pad("    ✓ Save preferences for future wizards", W) + y("│"));
+      console.log(y("  │") + pad("    ✓ Auto-update configs via lynxp push/pull", W) + y("│"));
+      console.log(y("  │") + " ".repeat(W) + y("│"));
+      console.log(y("  │") + pad("    Sign in now:  " + chalk.cyan("lynxp login"), W + 10) + y("│"));
+      console.log(y("  ╰" + "─".repeat(W) + "╯"));
+      console.log();
+    }
     
     // Save draft if requested
     if (options.saveDraft) {

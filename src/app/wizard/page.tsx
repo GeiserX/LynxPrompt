@@ -930,8 +930,9 @@ function WizardPageContent() {
     }
   }, [showLoadDraftModal, fetchDrafts]);
 
-  // Save draft function
+  // Save draft function (requires login)
   const handleSaveDraft = async () => {
+    if (requireLogin("draft")) return;
     if (!draftName.trim()) return;
     
     setIsSavingDraft(true);
@@ -1513,16 +1514,28 @@ function WizardPageContent() {
     });
   };
 
+  // State for login prompt modal
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [loginPromptAction, setLoginPromptAction] = useState<"save" | "share" | "draft">("save");
+
   // Generate preview when entering the generate step (regardless of how user got there)
+  // Works for both logged-in and guest users
   useEffect(() => {
-    if (currentStep === WIZARD_STEPS.length - 1 && session?.user) {
-      const files = generateAllFiles(buildGeneratorConfig(), {
+    if (currentStep === WIZARD_STEPS.length - 1) {
+      const userProfile = session?.user ? {
         displayName: session.user.displayName,
         name: session.user.name,
         persona: session.user.persona,
         skillLevel: session.user.skillLevel,
-        tier: userTier, // Pass user tier to respect feature access
-      });
+        tier: userTier,
+      } : {
+        displayName: "Developer",
+        name: "Guest",
+        persona: "fullstack",
+        skillLevel: "intermediate",
+        tier: "free",
+      };
+      const files = generateAllFiles(buildGeneratorConfig(), userProfile);
       setPreviewFiles(files);
       // When files change (e.g., IDE switch), always keep the first file expanded
       // This ensures the user always sees content, even after switching platforms
@@ -1532,8 +1545,8 @@ function WizardPageContent() {
     }
   }, [currentStep, session?.user, config, userTier]);
 
-  // Auth/loading gates must live after all hooks to keep hook order stable
-  if (status === "loading" || tierLoading) {
+  // Auth/loading gates - only show loading when checking auth status
+  if (status === "loading") {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="animate-pulse text-muted-foreground">Loading...</div>
@@ -1541,13 +1554,24 @@ function WizardPageContent() {
     );
   }
 
-  if (status === "unauthenticated" || !session) {
-    return <LoginRequired />;
-  }
-
-  if (!session.user.profileCompleted) {
+  // Allow guests to use wizard - no longer blocking unauthenticated users
+  // Profile setup is only required for logged-in users who haven't completed it
+  if (session?.user && !session.user.profileCompleted) {
     return <ProfileSetupRequired />;
   }
+  
+  // Helper to check if user is logged in
+  const isLoggedIn = status === "authenticated" && !!session;
+  
+  // Helper to prompt login for certain actions
+  const requireLogin = (action: "save" | "share" | "draft") => {
+    if (!isLoggedIn) {
+      setLoginPromptAction(action);
+      setShowLoginPrompt(true);
+      return true;
+    }
+    return false;
+  };
 
   // Helper to change step and scroll to top
   const goToStep = (step: number) => {
@@ -1752,13 +1776,22 @@ function WizardPageContent() {
     setIsSavingBlueprint(config.enableApiSync);
     
     try {
-      await savePreferences();
-      const userProfile = {
+      // Only save preferences if logged in
+      if (isLoggedIn) {
+        await savePreferences();
+      }
+      const userProfile = session?.user ? {
         displayName: session.user.displayName,
         name: session.user.name,
         persona: session.user.persona,
         skillLevel: session.user.skillLevel,
-        tier: userTier, // Pass user tier to respect feature access
+        tier: userTier,
+      } : {
+        displayName: "Developer",
+        name: "Guest",
+        persona: "fullstack",
+        skillLevel: "intermediate",
+        tier: "free",
       };
       
       // Build config (keep variables intact for blueprint saving)
@@ -1905,8 +1938,10 @@ ${syncCommands}
 `;
   };
 
-  // Handle saving as blueprint
+  // Handle saving as blueprint (requires login)
   const handleShareAsBlueprint = () => {
+    if (requireLogin("share")) return;
+    
     // Get the generated content (keep variables intact for blueprints)
     if (previewFiles.length === 0) return;
     const content = previewFiles[0].content; // Don't replace variables - blueprints should keep [[VAR|default]] syntax
@@ -1967,6 +2002,52 @@ ${syncCommands}
 
   return (
     <div className="flex min-h-screen flex-col bg-muted/30">
+      {/* Login Required Modal for Save/Share */}
+      {showLoginPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="relative mx-4 w-full max-w-md rounded-2xl bg-background p-6 shadow-2xl">
+            <button
+              onClick={() => setShowLoginPrompt(false)}
+              className="absolute right-4 top-4 rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+              aria-label="Close login modal"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            
+            <div className="flex flex-col items-center text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                <Lock className="h-8 w-8 text-primary" />
+              </div>
+              
+              <h2 className="mt-4 text-xl font-bold">Sign in to {loginPromptAction === "save" ? "Save" : loginPromptAction === "share" ? "Share" : "Save Drafts"}</h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {loginPromptAction === "draft" 
+                  ? "Create an account or sign in to save your wizard progress and continue later."
+                  : loginPromptAction === "share"
+                  ? "Create an account or sign in to save your configuration as a reusable blueprint that you can share with others."
+                  : "Create an account or sign in to save your preferences and sync across devices."}
+              </p>
+              
+              <div className="mt-6 w-full space-y-3">
+                <Button asChild className="w-full">
+                  <Link href={`/auth/signin?callbackUrl=${encodeURIComponent("/wizard")}`}>
+                    <LogIn className="mr-2 h-5 w-5" />
+                    Sign in
+                  </Link>
+                </Button>
+                <Button variant="outline" onClick={() => setShowLoginPrompt(false)} className="w-full">
+                  Continue as Guest
+                </Button>
+              </div>
+              
+              <p className="mt-4 text-xs text-muted-foreground">
+                You can still download your configuration without signing in.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Variable Fill Modal */}
       {showVariableModal && variablesWithoutDefaults.length > 0 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -2282,39 +2363,53 @@ ${syncCommands}
           <div className="sticky top-24 space-y-2">
             {/* User Profile Info */}
             <div className="mb-6 rounded-lg border bg-card p-4">
-              <div className="flex items-center gap-3">
-                {session.user.image ? (
-                  <img
-                    src={session.user.image}
-                    alt=""
-                    className="h-10 w-10 rounded-full"
-                  />
-                ) : (
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                    <span className="text-lg">
-                      {
-                        (session.user.displayName ||
-                          session.user.name ||
-                          "U")[0]
-                      }
-                    </span>
+              {isLoggedIn && session?.user ? (
+                <>
+                  <div className="flex items-center gap-3">
+                    {session.user.image ? (
+                      <img
+                        src={session.user.image}
+                        alt=""
+                        className="h-10 w-10 rounded-full"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                        <span className="text-lg">
+                          {(session.user.displayName || session.user.name || "U")[0]}
+                        </span>
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium">
+                        {session.user.displayName || session.user.name || "User"}
+                      </p>
+                      <p className="truncate text-xs capitalize text-muted-foreground">
+                        {session.user.persona || "Developer"} • {session.user.skillLevel || "Intermediate"}
+                      </p>
+                    </div>
                   </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">
-                    {session.user.displayName || session.user.name || "User"}
-                  </p>
-                  <p className="truncate text-xs capitalize text-muted-foreground">
-                    {session.user.persona || "Developer"} • {session.user.skillLevel || "Intermediate"}
-                  </p>
+                  <Button variant="ghost" size="sm" asChild className="mt-2 w-full">
+                    <Link href="/settings/profile">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Edit Profile
+                    </Link>
+                  </Button>
+                </>
+              ) : (
+                <div className="text-center">
+                  <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+                    <User className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <p className="mt-2 text-sm font-medium">Guest User</p>
+                  <p className="text-xs text-muted-foreground">Sign in to save your preferences</p>
+                  <Button variant="outline" size="sm" asChild className="mt-2 w-full">
+                    <Link href={`/auth/signin?callbackUrl=${encodeURIComponent("/wizard")}`}>
+                      <LogIn className="mr-2 h-4 w-4" />
+                      Sign In
+                    </Link>
+                  </Button>
                 </div>
-              </div>
-              <Button variant="ghost" size="sm" asChild className="mt-2 w-full">
-                <Link href="/settings/profile">
-                  <Settings className="mr-2 h-4 w-4" />
-                  Edit Profile
-                </Link>
-              </Button>
+              )}
             </div>
 
             {WIZARD_STEPS.map((step, index) => {
@@ -2487,8 +2582,8 @@ ${syncCommands}
                   onAutoUpdateChange={(v) => setConfig({ ...config, enableAutoUpdate: v })}
                   includePersonalData={config.includePersonalData}
                   onIncludePersonalDataChange={(v) => setConfig({ ...config, includePersonalData: v })}
-                  userPersona={session.user.persona}
-                  userSkillLevel={session.user.skillLevel}
+                  userPersona={session?.user?.persona}
+                  userSkillLevel={session?.user?.skillLevel}
                 />
               )}
               {currentStep === 7 && (
@@ -6665,7 +6760,7 @@ function StepGenerate({
       persona?: string | null;
       skillLevel?: string | null;
     };
-  };
+  } | null;
   previewFiles: GeneratedFile[];
   expandedFile: string | null;
   copiedFile: string | null;
@@ -6786,11 +6881,11 @@ function StepGenerate({
         <div className="rounded-lg border bg-muted/30 p-4">
           <h3 className="font-medium">Using your profile settings:</h3>
           <div className="mt-2 flex gap-4 text-sm text-muted-foreground">
-            <span>Author: {session.user.displayName || session.user.name || "User"}</span>
+            <span>Author: {session?.user?.displayName || session?.user?.name || "Guest"}</span>
             <span>•</span>
-            <span className="capitalize">{session.user.persona || "Developer"}</span>
+            <span className="capitalize">{session?.user?.persona || "Developer"}</span>
             <span>•</span>
-            <span className="capitalize">{session.user.skillLevel || "Intermediate"} level</span>
+            <span className="capitalize">{session?.user?.skillLevel || "Intermediate"} level</span>
           </div>
         </div>
 
