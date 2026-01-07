@@ -841,6 +841,7 @@ function WizardPageContent() {
     name: string | null;
     description: string | null;
     stack: string[];
+    databases: string[];
     commands: { build?: string; test?: string; lint?: string; dev?: string };
     license: string | null;
     repoHost: string;
@@ -1122,6 +1123,7 @@ function WizardPageContent() {
       newDetectedFields.add("languages");
       newDetectedFields.add("frameworks");
     }
+    if (detectedData.databases?.length > 0) newDetectedFields.add("databases");
     if (detectedData.repoHost) newDetectedFields.add("repoHost");
     if (detectedData.license) newDetectedFields.add("license");
     if (detectedData.cicd) newDetectedFields.add("cicd");
@@ -1134,17 +1136,23 @@ function WizardPageContent() {
     
     setDetectedFields(prev => new Set([...prev, ...newDetectedFields]));
 
+    // Extract languages and frameworks from stack
+    const detectedLanguages = detectedData.stack.filter(s => 
+      ["javascript", "typescript", "python", "go", "rust", "java", "csharp", "ruby", "php", "swift", "kotlin", "cpp", "c", "scala", "elixir", "clojure", "haskell", "fsharp", "dart", "lua", "perl", "r", "julia", "zig", "nim", "crystal", "ocaml", "erlang", "groovy"].includes(s)
+    );
+    const detectedFrameworks = detectedData.stack.filter(s => 
+      ["nextjs", "react", "vue", "nuxt", "angular", "svelte", "sveltekit", "solid", "qwik", "astro", "remix", "gatsby", "express", "nestjs", "fastify", "hono", "koa", "fastapi", "django", "flask", "starlette", "tornado", "pyramid", "spring", "quarkus", "micronaut", "ktor", "dotnet", "blazor", "rails", "sinatra", "hanami", "gin", "echo", "fiber", "chi", "actix", "rocket", "axum", "warp", "phoenix", "prisma", "drizzle", "tailwind", "vite", "vitest", "jest", "playwright", "cypress", "mocha"].includes(s)
+    );
+    const detectedDatabases = detectedData.databases || [];
+
     setConfig(prev => ({
       ...prev,
       projectName: detectedData.name || prev.projectName,
       projectDescription: detectedData.description || prev.projectDescription,
       projectType: detectedData.projectType || prev.projectType,
-      languages: detectedData.stack.filter(s => 
-        ["javascript", "typescript", "python", "go", "rust", "java", "csharp", "ruby", "php", "swift", "kotlin", "cpp"].includes(s)
-      ),
-      frameworks: detectedData.stack.filter(s => 
-        ["nextjs", "react", "vue", "angular", "svelte", "express", "fastapi", "django", "flask", "rails", "laravel", "nestjs", "prisma", "drizzle", "tailwind", "vite", "vitest", "jest", "playwright", "cypress"].includes(s)
-      ),
+      languages: detectedLanguages.length > 0 ? detectedLanguages : prev.languages,
+      frameworks: detectedFrameworks.length > 0 ? detectedFrameworks : prev.frameworks,
+      databases: detectedDatabases.length > 0 ? detectedDatabases : prev.databases,
       repoHost: detectedData.repoHost || prev.repoHost,
       repoHosts: detectedData.repoHost ? [detectedData.repoHost] : prev.repoHosts,
       license: detectedData.license || prev.license,
@@ -2679,6 +2687,7 @@ function StepProject({
     name: string | null;
     description: string | null;
     stack: string[];
+    databases: string[];
     commands: { build?: string; test?: string; lint?: string; dev?: string };
     license: string | null;
     repoHost: string;
@@ -2787,6 +2796,9 @@ function StepProject({
                         {detectedData.isOpenSource && <p>• Type: <strong>Open Source</strong></p>}
                         {detectedData.stack.length > 0 && (
                           <p>• Stack: {detectedData.stack.slice(0, 6).join(", ")}{detectedData.stack.length > 6 ? "..." : ""}</p>
+                        )}
+                        {detectedData.databases?.length > 0 && (
+                          <p>• Databases: {detectedData.databases.join(", ")}</p>
                         )}
                         {detectedData.license && <p>• License: {detectedData.license.toUpperCase()}</p>}
                         {detectedData.repoHost && <p>• Host: {detectedData.repoHost}</p>}
