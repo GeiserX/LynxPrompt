@@ -248,8 +248,8 @@ $ lynxp wizard --load-draft myproject`}</code>
         <div className="rounded-lg border bg-card p-4">
           <h4 className="font-semibold text-sm mb-2">Remote Repository Detection</h4>
           <p className="text-sm text-muted-foreground">
-            Teams users can analyze remote repositories via GitHub or GitLab API. 
-            For other hosts, a shallow clone is used automatically.
+            Analyze remote repositories via GitHub or GitLab API to auto-detect tech stack, 
+            databases, CI/CD, Docker, and more. For other hosts, a shallow clone is used automatically.
           </p>
         </div>
       </section>

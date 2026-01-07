@@ -384,20 +384,45 @@ const CICD_OPTIONS = [
   { id: "buildkite", label: "Buildkite", icon: "🧱" },
 ];
 
-// Deployment targets - ensure consistent icon spacing
-const DEPLOYMENT_TARGETS = [
+// Cloud deployment targets
+const CLOUD_TARGETS = [
   { id: "vercel", label: "Vercel", icon: "▲ " },
   { id: "netlify", label: "Netlify", icon: "🌐" },
-  { id: "aws", label: "AWS", icon: "☁️ " },
-  { id: "gcp", label: "Google Cloud", icon: "🌈" },
-  { id: "azure", label: "Azure", icon: "🔷" },
-  { id: "docker", label: "Docker", icon: "🐳" },
-  { id: "kubernetes", label: "Kubernetes", icon: "☸️ " },
-  { id: "heroku", label: "Heroku", icon: "🟣" },
-  { id: "digitalocean", label: "DigitalOcean", icon: "🔵" },
+  { id: "cloudflare_pages", label: "Cloudflare Pages", icon: "🔶" },
+  { id: "cloudflare_workers", label: "Cloudflare Workers", icon: "🔶" },
+  { id: "aws_lambda", label: "AWS Lambda", icon: "☁️ " },
+  { id: "aws_ecs", label: "AWS ECS", icon: "☁️ " },
+  { id: "aws_ec2", label: "AWS EC2", icon: "☁️ " },
+  { id: "gcp_cloudrun", label: "GCP Cloud Run", icon: "🌈" },
+  { id: "gcp_appengine", label: "GCP App Engine", icon: "🌈" },
+  { id: "azure_appservice", label: "Azure App Service", icon: "🔷" },
+  { id: "azure_functions", label: "Azure Functions", icon: "🔷" },
   { id: "railway", label: "Railway", icon: "🚂" },
+  { id: "render", label: "Render", icon: "🎨" },
   { id: "fly", label: "Fly.io", icon: "✈️ " },
-  { id: "cloudflare", label: "Cloudflare", icon: "🔶" },
+  { id: "heroku", label: "Heroku", icon: "🟣" },
+  { id: "digitalocean_app", label: "DigitalOcean App Platform", icon: "🔵" },
+  { id: "deno_deploy", label: "Deno Deploy", icon: "🦕" },
+];
+
+// Self-hosted deployment targets
+const SELF_HOSTED_TARGETS = [
+  { id: "docker", label: "Docker", icon: "🐳" },
+  { id: "docker_compose", label: "Docker Compose", icon: "🐳" },
+  { id: "kubernetes", label: "Kubernetes", icon: "☸️ " },
+  { id: "k3s", label: "K3s", icon: "☸️ " },
+  { id: "podman", label: "Podman", icon: "🦭" },
+  { id: "bare_metal", label: "Bare Metal", icon: "🖥️ " },
+  { id: "vm", label: "Virtual Machine", icon: "💻" },
+  { id: "proxmox", label: "Proxmox", icon: "🔷" },
+  { id: "unraid", label: "Unraid", icon: "🟠" },
+  { id: "truenas", label: "TrueNAS", icon: "🔵" },
+  { id: "synology", label: "Synology NAS", icon: "📁" },
+  { id: "coolify", label: "Coolify", icon: "❄️ " },
+  { id: "dokku", label: "Dokku", icon: "🐳" },
+  { id: "caprover", label: "CapRover", icon: "🚢" },
+  { id: "portainer", label: "Portainer", icon: "🐋" },
+  { id: "rancher", label: "Rancher", icon: "🐄" },
 ];
 
 // Container registries
@@ -2112,14 +2137,14 @@ async function runInteractiveWizard(
       name: "changelogTool",
       message: chalk.white("Changelog management:"),
       choices: [
-        { title: "Manual", value: "manual" },
-        { title: "Conventional Changelog", value: "conventional_changelog" },
-        { title: "Release Please", value: "release_please" },
-        { title: "Semantic Release", value: "semantic_release" },
-        { title: "Changesets", value: "changesets" },
-        { title: "GitHub Releases", value: "github_releases" },
-        { title: "Keep a Changelog", value: "keep_a_changelog" },
-        { title: "Other", value: "other" },
+        { title: "Manual - Write CHANGELOG.md by hand", value: "manual" },
+        { title: "Conventional Changelog - Auto-generate from commit messages", value: "conventional_changelog" },
+        { title: "Release Please - Google's automated release management", value: "release_please" },
+        { title: "Semantic Release - Fully automated versioning & publishing", value: "semantic_release" },
+        { title: "Changesets - Monorepo-friendly version management", value: "changesets" },
+        { title: "GitHub Releases - Use GitHub's built-in release notes", value: "github_releases" },
+        { title: "Keep a Changelog - Manual following keepachangelog.com format", value: "keep_a_changelog" },
+        { title: "Other - Custom changelog tooling", value: "other" },
       ],
       initial: 0,
     }, promptConfig);
@@ -2143,13 +2168,14 @@ async function runInteractiveWizard(
     name: "branchStrategy",
     message: chalk.white("Branch strategy:"),
     choices: [
+      { title: "🎮 None (toy project) - No branching, commit directly to main", value: "none" },
       { title: "🌊 GitHub Flow - Simple: main + feature branches", value: "github_flow" },
       { title: "🌳 Gitflow - develop, feature, release, hotfix branches", value: "gitflow" },
       { title: "🚂 Trunk-Based - Short-lived branches, continuous integration", value: "trunk_based" },
       { title: "🦊 GitLab Flow - Environment branches (staging, production)", value: "gitlab_flow" },
       { title: "🚀 Release Flow - main + release branches", value: "release_flow" },
     ],
-    initial: 0,
+    initial: 1, // Default to GitHub Flow (index 1 after adding "none")
   }, promptConfig);
   answers.branchStrategy = branchStrategyResponse.branchStrategy || "github_flow";
 
@@ -2168,18 +2194,9 @@ async function runInteractiveWizard(
   }, promptConfig);
   answers.defaultBranch = defaultBranchResponse.defaultBranch || "main";
 
-  // Commit workflow preference
-  const commitWorkflowResponse = await prompts({
-    type: "select",
-    name: "commitWorkflow",
-    message: chalk.white("Commit workflow preference:"),
-    choices: [
-      { title: "🔀 Branch + PR - Create branches and open pull requests", value: "branch_pr" },
-      { title: "⬆️ Direct to main - Commit directly to main/master branch", value: "direct_main" },
-    ],
-    initial: 0, // Default to branch + PR
-  }, promptConfig);
-  answers.commitWorkflow = commitWorkflowResponse.commitWorkflow || "branch_pr";
+  // Commit workflow is automatically determined by branch strategy
+  // Toy projects (no branching) → direct commits; all others → branch + PR
+  answers.commitWorkflow = answers.branchStrategy === "none" ? "direct_main" : "branch_pr";
 
   // Dependabot/Renovate moved to Security step
 
@@ -2206,31 +2223,71 @@ async function runInteractiveWizard(
   }, promptConfig);
   answers.cicd = cicdResponse.cicd || "";
 
-  // Deployment targets - pre-select Docker if Dockerfile detected (with search)
-  const deployChoices = sortSelectedFirst(DEPLOYMENT_TARGETS.map(t => ({
-    title: (t.id === "docker" && detected?.hasDocker)
-      ? `${t.icon}${t.label} ${chalk.green("(detected)")}`
-      : `${t.icon}${t.label}`,
-    selected: t.id === "docker" && detected?.hasDocker,
-    value: t.id,
-  })));
-  const deployResponse = await prompts({
-    type: "autocompleteMultiselect",
-    name: "deploymentTargets",
-    message: chalk.white("Deployment targets (type to search):"),
-    choices: deployChoices,
-    hint: chalk.gray("type to filter • space select • enter confirm"),
-    instructions: false,
+  // First ask: cloud, self-hosted, or both
+  const deployTypeResponse = await prompts({
+    type: "select",
+    name: "deployType",
+    message: chalk.white("Deployment environment:"),
+    choices: [
+      { title: "☁️  Cloud only - PaaS, serverless, managed services", value: "cloud" },
+      { title: "🏠 Self-hosted only - On-premise, homelab, VPS", value: "self_hosted" },
+      { title: "🔄 Both cloud and self-hosted", value: "both" },
+      { title: chalk.gray("⏭ Skip"), value: "skip" },
+    ],
+    initial: 0,
   }, promptConfig);
-  answers.deploymentTargets = deployResponse.deploymentTargets || [];
+  const deployType = deployTypeResponse.deployType || "skip";
+  
+  let allDeployTargets: string[] = [];
+  
+  // Show cloud targets if selected
+  if (deployType === "cloud" || deployType === "both") {
+    const cloudChoices = CLOUD_TARGETS.map(t => ({
+      title: `${t.icon}${t.label}`,
+      value: t.id,
+    }));
+    const cloudResponse = await prompts({
+      type: "autocompleteMultiselect",
+      name: "cloudTargets",
+      message: chalk.white("Cloud deployment targets (type to search):"),
+      choices: cloudChoices,
+      hint: chalk.gray("type to filter • space select • enter confirm"),
+      instructions: false,
+    }, promptConfig);
+    allDeployTargets = [...(cloudResponse.cloudTargets || [])];
+  }
+  
+  // Show self-hosted targets if selected
+  if (deployType === "self_hosted" || deployType === "both") {
+    const selfHostedChoices = sortSelectedFirst(SELF_HOSTED_TARGETS.map(t => ({
+      title: (t.id === "docker" && detected?.hasDocker)
+        ? `${t.icon}${t.label} ${chalk.green("(detected)")}`
+        : `${t.icon}${t.label}`,
+      selected: t.id === "docker" && detected?.hasDocker,
+      value: t.id,
+    })));
+    const selfHostedResponse = await prompts({
+      type: "autocompleteMultiselect",
+      name: "selfHostedTargets",
+      message: chalk.white("Self-hosted deployment targets (type to search):"),
+      choices: selfHostedChoices,
+      hint: chalk.gray("type to filter • space select • enter confirm"),
+      instructions: false,
+    }, promptConfig);
+    allDeployTargets = [...allDeployTargets, ...(selfHostedResponse.selfHostedTargets || [])];
+  }
+  
+  answers.deploymentTargets = allDeployTargets;
 
-  // Container build - default to Yes if Docker is selected in deployment targets
-  const dockerSelected = (answers.deploymentTargets as string[] || []).includes("docker");
+  // Container build - default to Yes if Docker/Docker Compose is selected in deployment targets
+  const dockerSelected = (answers.deploymentTargets as string[] || []).some(t => 
+    ["docker", "docker_compose", "kubernetes", "k3s", "podman"].includes(t)
+  ) || detected?.hasDocker;
   const containerResponse = await prompts({
     type: "toggle",
     name: "buildContainer",
     message: chalk.white("Build container images (Docker)?"),
-    initial: dockerSelected, // Default Yes if Docker selected
+    initial: dockerSelected, // Default Yes if container platform selected
     active: "Yes",
     inactive: "No",
   }, promptConfig);
