@@ -2056,6 +2056,42 @@ async function runInteractiveWizard(
   }, promptConfig);
   answers.semver = semverResponse.semver ?? true;
 
+  // Conditional semver options
+  if (answers.semver) {
+    const tagFormatResponse = await prompts({
+      type: "select",
+      name: "versionTagFormat",
+      message: chalk.white("Version tag format:"),
+      choices: [
+        { title: "v-prefix (v1.0.0)", value: "v_prefix" },
+        { title: "No prefix (1.0.0)", value: "no_prefix" },
+        { title: "Package prefix (@pkg/v1.0.0)", value: "package_prefix" },
+        { title: "Date-based (2024.01.15)", value: "date_based" },
+        { title: "Custom format", value: "custom" },
+      ],
+      initial: 0,
+    }, promptConfig);
+    answers.versionTagFormat = tagFormatResponse.versionTagFormat || "v_prefix";
+
+    const changelogResponse = await prompts({
+      type: "select",
+      name: "changelogTool",
+      message: chalk.white("Changelog management:"),
+      choices: [
+        { title: "Manual", value: "manual" },
+        { title: "Conventional Changelog", value: "conventional_changelog" },
+        { title: "Release Please", value: "release_please" },
+        { title: "Semantic Release", value: "semantic_release" },
+        { title: "Changesets", value: "changesets" },
+        { title: "GitHub Releases", value: "github_releases" },
+        { title: "Keep a Changelog", value: "keep_a_changelog" },
+        { title: "Other", value: "other" },
+      ],
+      initial: 0,
+    }, promptConfig);
+    answers.changelogTool = changelogResponse.changelogTool || "manual";
+  }
+
   // Commit signing
   const signingResponse = await prompts({
     type: "toggle",
@@ -2213,6 +2249,47 @@ async function runInteractiveWizard(
   const securityStep = getCurrentStep("security")!;
   showStep(currentStepNum, securityStep, userTier);
 
+  // 1. Authentication Providers (login methods)
+  console.log();
+  console.log(chalk.cyan("  1️⃣  Authentication Providers"));
+  console.log(chalk.gray("     Which login methods should your app support?"));
+  console.log();
+
+  const authProvidersResponse = await prompts({
+    type: "autocompleteMultiselect",
+    name: "authProviders",
+    message: chalk.white("Auth providers (type to search):"),
+    choices: [
+      { title: "Email/Password", value: "email_password", description: chalk.gray("Traditional credentials") },
+      { title: "Google", value: "google", description: chalk.gray("Google OAuth") },
+      { title: "GitHub", value: "github", description: chalk.gray("GitHub OAuth") },
+      { title: "GitLab", value: "gitlab", description: chalk.gray("GitLab OAuth") },
+      { title: "Microsoft", value: "microsoft", description: chalk.gray("Azure AD / Microsoft") },
+      { title: "Apple", value: "apple", description: chalk.gray("Sign in with Apple") },
+      { title: "Facebook", value: "facebook", description: chalk.gray("Facebook Login") },
+      { title: "Twitter/X", value: "twitter", description: chalk.gray("Twitter OAuth") },
+      { title: "LinkedIn", value: "linkedin", description: chalk.gray("LinkedIn OAuth") },
+      { title: "Discord", value: "discord", description: chalk.gray("Discord OAuth") },
+      { title: "Slack", value: "slack", description: chalk.gray("Slack OAuth") },
+      { title: "Magic Link", value: "magic_link", description: chalk.gray("Email magic links") },
+      { title: "SMS OTP", value: "sms_otp", description: chalk.gray("SMS verification codes") },
+      { title: "Passkeys/WebAuthn", value: "passkeys", description: chalk.gray("Passwordless biometric") },
+      { title: "SAML SSO", value: "saml_sso", description: chalk.gray("Enterprise SAML") },
+      { title: "Generic OIDC", value: "oidc_generic", description: chalk.gray("Custom OIDC provider") },
+      { title: "LDAP/AD", value: "ldap", description: chalk.gray("Directory services") },
+      { title: "Other", value: "other", description: chalk.gray("Custom provider") },
+    ],
+    hint: chalk.gray("type to filter • space select • enter confirm"),
+    instructions: false,
+  }, promptConfig);
+  answers.authProviders = authProvidersResponse.authProviders || [];
+
+  // 2. Secrets Management
+  console.log();
+  console.log(chalk.cyan("  2️⃣  Secrets Management"));
+  console.log(chalk.gray("     How do you manage secrets and credentials?"));
+  console.log();
+
   const secretsResponse = await prompts({
     type: "autocompleteMultiselect",
     name: "secretsManagement",
@@ -2241,9 +2318,9 @@ async function runInteractiveWizard(
     answers.secretsManagementOther = customSecretsResponse.customSecretsManagement || "";
   }
 
-  // 2. Security Tooling (includes Dependabot/Renovate - multi-select, searchable)
+  // 3. Security Tooling (includes Dependabot/Renovate - multi-select, searchable)
   console.log();
-  console.log(chalk.cyan("  2️⃣  Security Tooling"));
+  console.log(chalk.cyan("  3️⃣  Security Tooling"));
   console.log(chalk.gray("     Security scanning, dependency updates, and vulnerability detection."));
   console.log();
   
@@ -2275,9 +2352,9 @@ async function runInteractiveWizard(
     answers.securityToolingOther = customSecurityToolingResponse.customSecurityTooling || "";
   }
 
-  // 3. Authentication Patterns (multi-select, searchable)
+  // 4. Authentication Patterns (multi-select, searchable)
   console.log();
-  console.log(chalk.cyan("  3️⃣  Authentication Patterns"));
+  console.log(chalk.cyan("  4️⃣  Authentication Patterns"));
   console.log(chalk.gray("     How users and services authenticate with your application."));
   console.log();
   
@@ -2308,9 +2385,9 @@ async function runInteractiveWizard(
     answers.authPatternsOther = customAuthResponse.customAuthPatterns || "";
   }
 
-  // 4. Data Handling (multi-select, searchable)
+  // 5. Data Handling (multi-select, searchable)
   console.log();
-  console.log(chalk.cyan("  4️⃣  Data Handling & Compliance"));
+  console.log(chalk.cyan("  5️⃣  Data Handling & Compliance"));
   console.log(chalk.gray("     Data protection, encryption, and compliance requirements."));
   console.log();
   
@@ -2342,6 +2419,58 @@ async function runInteractiveWizard(
     answers.dataHandlingOther = customDataHandlingResponse.customDataHandling || "";
   }
 
+  // 6. Compliance Standards
+  console.log();
+  console.log(chalk.cyan("  6️⃣  Compliance Standards"));
+  console.log(chalk.gray("     Regulatory compliance requirements for your application."));
+  console.log();
+
+  const complianceResponse = await prompts({
+    type: "autocompleteMultiselect",
+    name: "compliance",
+    message: chalk.white("Compliance standards (type to search):"),
+    choices: [
+      { title: "GDPR - EU data protection", value: "gdpr" },
+      { title: "CCPA - California privacy", value: "ccpa" },
+      { title: "HIPAA - Healthcare data", value: "hipaa" },
+      { title: "SOC 2 - Service controls", value: "soc2" },
+      { title: "PCI-DSS - Payment card data", value: "pci_dss" },
+      { title: "ISO 27001 - Information security", value: "iso27001" },
+      { title: "FedRAMP - US federal cloud", value: "fedramp" },
+      { title: "Other", value: "other" },
+    ],
+    hint: chalk.gray("type to filter • space select • enter confirm"),
+    instructions: false,
+  }, promptConfig);
+  answers.compliance = complianceResponse.compliance || [];
+
+  // 7. Analytics & Telemetry
+  console.log();
+  console.log(chalk.cyan("  7️⃣  Analytics & Telemetry"));
+  console.log(chalk.gray("     Usage analytics and monitoring solutions."));
+  console.log();
+
+  const analyticsResponse = await prompts({
+    type: "autocompleteMultiselect",
+    name: "analytics",
+    message: chalk.white("Analytics tools (type to search):"),
+    choices: [
+      { title: "Google Analytics (GA4)", value: "google_analytics" },
+      { title: "Plausible - Privacy-focused", value: "plausible" },
+      { title: "PostHog - Product analytics", value: "posthog" },
+      { title: "Mixpanel - Event analytics", value: "mixpanel" },
+      { title: "Amplitude - Product analytics", value: "amplitude" },
+      { title: "Segment - Data pipeline", value: "segment" },
+      { title: "Umami - Self-hosted analytics", value: "umami" },
+      { title: "Matomo - Self-hosted (Piwik)", value: "matomo" },
+      { title: "No Analytics - Privacy-first approach", value: "none" },
+      { title: "Other", value: "other" },
+    ],
+    hint: chalk.gray("type to filter • space select • enter confirm"),
+    instructions: false,
+  }, promptConfig);
+  answers.analytics = analyticsResponse.analytics || [];
+
   // Additional security notes
   const securityNotesResponse = await prompts({
     type: "text",
@@ -2354,6 +2483,9 @@ async function runInteractiveWizard(
   // Show security summary
   console.log();
   console.log(chalk.green("  ✓ Security configuration complete:"));
+  if ((answers.authProviders as string[]).length > 0) {
+    console.log(chalk.gray(`    • Auth Providers: ${(answers.authProviders as string[]).join(", ")}`));
+  }
   if ((answers.secretsManagement as string[]).length > 0) {
     console.log(chalk.gray(`    • Secrets: ${(answers.secretsManagement as string[]).join(", ")}`));
   }
@@ -2361,10 +2493,16 @@ async function runInteractiveWizard(
     console.log(chalk.gray(`    • Tooling: ${(answers.securityTooling as string[]).join(", ")}`));
   }
   if ((answers.authPatterns as string[]).length > 0) {
-    console.log(chalk.gray(`    • Auth: ${(answers.authPatterns as string[]).join(", ")}`));
+    console.log(chalk.gray(`    • Auth Patterns: ${(answers.authPatterns as string[]).join(", ")}`));
   }
   if ((answers.dataHandling as string[]).length > 0) {
     console.log(chalk.gray(`    • Data: ${(answers.dataHandling as string[]).join(", ")}`));
+  }
+  if ((answers.compliance as string[]).length > 0) {
+    console.log(chalk.gray(`    • Compliance: ${(answers.compliance as string[]).join(", ")}`));
+  }
+  if ((answers.analytics as string[]).length > 0) {
+    console.log(chalk.gray(`    • Analytics: ${(answers.analytics as string[]).join(", ")}`));
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -2717,6 +2855,23 @@ async function runInteractiveWizard(
       if (rule) console.log(chalk.cyan(`    • ${rule.label}`));
     }
   }
+
+  // Plan mode frequency
+  const planModeResponse = await prompts({
+    type: "select",
+    name: "planModeFrequency",
+    message: chalk.white("When should AI enter plan mode before changes?"),
+    choices: [
+      { title: "Always - Plan before every task", value: "always" },
+      { title: "Complex Tasks - Multi-step or risky changes", value: "complex_tasks" },
+      { title: "Multi-file Changes - When touching multiple files", value: "multi_file" },
+      { title: "New Features Only - Only for new functionality", value: "new_features" },
+      { title: "On Request - Only when explicitly asked", value: "on_request" },
+      { title: "Never - Skip planning entirely", value: "never" },
+    ],
+    initial: 1, // Default to complex_tasks
+  }, promptConfig);
+  answers.planModeFrequency = planModeResponse.planModeFrequency || "complex_tasks";
 
   // Explanation verbosity
   const verbosityResponse = await prompts({
@@ -3431,11 +3586,19 @@ async function runInteractiveWizard(
     loggingConventionsOther: answers.loggingConventionsOther as string,
     // Security configuration (NEW)
     security: {
+      authProviders: answers.authProviders as string[],
       secretsManagement: answers.secretsManagement as string[],
       securityTooling: answers.securityTooling as string[],
       authPatterns: answers.authPatterns as string[],
       dataHandling: answers.dataHandling as string[],
+      compliance: answers.compliance as string[],
+      analytics: answers.analytics as string[],
       additionalNotes: answers.securityNotes as string,
     },
+    // Versioning (conditional)
+    versionTagFormat: answers.versionTagFormat as string,
+    changelogTool: answers.changelogTool as string,
+    // AI Behavior
+    planModeFrequency: answers.planModeFrequency as string,
   };
 }
