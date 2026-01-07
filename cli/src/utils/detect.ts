@@ -14,6 +14,20 @@ export interface DetectedProject {
     dev?: string;
     format?: string;
   };
+  // Extended commands - multiple per category with descriptions
+  detectedCommands?: {
+    test?: { cmd: string; desc?: string }[];
+    testCoverage?: { cmd: string; desc?: string }[];
+    install?: { cmd: string; desc?: string }[];
+    dev?: { cmd: string; desc?: string }[];
+    build?: { cmd: string; desc?: string }[];
+    lint?: { cmd: string; desc?: string }[];
+    format?: { cmd: string; desc?: string }[];
+    typecheck?: { cmd: string; desc?: string }[];
+    clean?: { cmd: string; desc?: string }[];
+    preCommit?: { cmd: string; desc?: string }[];
+    additional?: { cmd: string; desc?: string }[];
+  };
   packageManager: "npm" | "yarn" | "pnpm" | "bun" | null;
   type: "monorepo" | "library" | "application" | "unknown";
   description?: string;
@@ -67,6 +81,343 @@ const JS_TOOL_PATTERNS: Record<string, string[]> = {
   webpack: ["webpack"],
   turbo: ["turbo"],
 };
+
+/**
+ * Detects extended commands from various sources in the repository:
+ * - package.json scripts
+ * - pyproject.toml (poetry/poe/pdm scripts)
+ * - Makefile targets
+ * - docker-compose services
+ * - Common patterns
+ */
+async function detectExtendedCommands(cwd: string): Promise<DetectedProject["detectedCommands"]> {
+  const cmds: NonNullable<DetectedProject["detectedCommands"]> = {
+    test: [],
+    testCoverage: [],
+    install: [],
+    dev: [],
+    build: [],
+    lint: [],
+    format: [],
+    typecheck: [],
+    clean: [],
+    preCommit: [],
+    additional: [],
+  };
+
+  // Helper to add command if not duplicate
+  const addCmd = (category: keyof typeof cmds, cmd: string, desc?: string) => {
+    if (!cmds[category]!.some(c => c.cmd === cmd)) {
+      cmds[category]!.push({ cmd, desc });
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════════════
+  // 1. Parse package.json scripts
+  // ═══════════════════════════════════════════════════════════════
+  const packageJsonPath = join(cwd, "package.json");
+  if (await fileExists(packageJsonPath)) {
+    try {
+      const content = await readFile(packageJsonPath, "utf-8");
+      const pkg = JSON.parse(content);
+      if (pkg.scripts) {
+        for (const [name, script] of Object.entries(pkg.scripts)) {
+          const scriptStr = String(script);
+          const fullCmd = `npm run ${name}`;
+          
+          // Categorize by script name patterns
+          if (name.match(/^test$|^test:/i) || scriptStr.includes("jest") || scriptStr.includes("vitest") || scriptStr.includes("mocha")) {
+            if (name.includes("cov") || scriptStr.includes("--coverage")) {
+              addCmd("testCoverage", fullCmd, `Run ${name}`);
+            } else {
+              addCmd("test", fullCmd, `Run ${name}`);
+            }
+          } else if (name.match(/^lint$|^lint:/i) || scriptStr.includes("eslint") || scriptStr.includes("biome")) {
+            addCmd("lint", fullCmd, `Run ${name}`);
+          } else if (name.match(/^format$|^fmt$|format:/i) || scriptStr.includes("prettier")) {
+            addCmd("format", fullCmd, `Run ${name}`);
+          } else if (name.match(/^build$|^build:/i) || scriptStr.includes("tsc") || scriptStr.includes("webpack") || scriptStr.includes("vite build")) {
+            addCmd("build", fullCmd, `Run ${name}`);
+          } else if (name.match(/^dev$|^start$|^serve$/i)) {
+            addCmd("dev", fullCmd, `Run ${name}`);
+          } else if (name.match(/^typecheck$|^type-check$|^types$|^check:types/i) || scriptStr.includes("tsc --noEmit")) {
+            addCmd("typecheck", fullCmd, `Run ${name}`);
+          } else if (name.match(/^clean$|^clean:/i) || scriptStr.includes("rimraf") || scriptStr.includes("rm -rf")) {
+            addCmd("clean", fullCmd, `Run ${name}`);
+          } else if (name.match(/^prepare$|^precommit$|^pre-commit$|^husky/i)) {
+            addCmd("preCommit", fullCmd, `Run ${name}`);
+          } else if (name === "install" || name === "postinstall") {
+            addCmd("install", fullCmd, `Run ${name}`);
+          } else if (!["publish", "prepublish", "prepublishOnly", "version", "postversion"].includes(name)) {
+            // Add other scripts as additional commands
+            addCmd("additional", fullCmd, `Run ${name}`);
+          }
+        }
+      }
+    } catch {
+      // Failed to parse package.json
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 2. Parse pyproject.toml for Python projects
+  // ═══════════════════════════════════════════════════════════════
+  const pyprojectPath = join(cwd, "pyproject.toml");
+  if (await fileExists(pyprojectPath)) {
+    try {
+      const content = await readFile(pyprojectPath, "utf-8");
+      
+      // Detect pytest
+      if (content.includes("pytest") || content.includes("[tool.pytest")) {
+        addCmd("test", "python -m pytest tests/ -v --tb=short", "Run pytest");
+        addCmd("testCoverage", "python -m pytest tests/ --cov=src --cov-report=term-missing", "Run pytest with coverage");
+      }
+      
+      // Detect ruff/black for linting/formatting
+      if (content.includes("ruff")) {
+        addCmd("lint", "ruff check .", "Run ruff linter");
+        addCmd("format", "ruff format .", "Run ruff formatter");
+      }
+      if (content.includes("black")) {
+        addCmd("format", "black .", "Run black formatter");
+      }
+      if (content.includes("mypy")) {
+        addCmd("typecheck", "mypy .", "Run mypy type checker");
+      }
+      
+      // Detect Poetry scripts
+      const poetryScriptsMatch = content.match(/\[tool\.poetry\.scripts\]([\s\S]*?)(?=\n\[|$)/);
+      if (poetryScriptsMatch) {
+        const scriptLines = poetryScriptsMatch[1].split("\n").filter(l => l.includes("="));
+        for (const line of scriptLines) {
+          const match = line.match(/(\w+)\s*=\s*"([^"]+)"/);
+          if (match) {
+            const [, name, entry] = match;
+            addCmd("additional", `poetry run ${name}`, entry);
+          }
+        }
+      }
+      
+      // Detect Poe the Poet tasks
+      const poeMatch = content.match(/\[tool\.poe\.tasks\]([\s\S]*?)(?=\n\[tool\.|$)/);
+      if (poeMatch) {
+        const taskLines = poeMatch[1].split("\n").filter(l => l.includes("="));
+        for (const line of taskLines) {
+          const match = line.match(/(\w+)\s*=\s*"([^"]+)"/);
+          if (match) {
+            const [, name, cmd] = match;
+            // Categorize poe tasks
+            if (name.match(/test/i)) {
+              addCmd("test", `poe ${name}`, cmd);
+            } else if (name.match(/lint/i)) {
+              addCmd("lint", `poe ${name}`, cmd);
+            } else if (name.match(/format/i)) {
+              addCmd("format", `poe ${name}`, cmd);
+            } else {
+              addCmd("additional", `poe ${name}`, cmd);
+            }
+          }
+        }
+      }
+      
+      // Detect if using FastAPI/uvicorn
+      if (content.includes("fastapi") || content.includes("uvicorn")) {
+        addCmd("dev", "uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload", "Run FastAPI dev server");
+      }
+      
+      // Detect requirements install
+      if (content.includes("[tool.poetry]")) {
+        addCmd("install", "poetry install", "Install dependencies with Poetry");
+      } else if (await fileExists(join(cwd, "uv.lock"))) {
+        addCmd("install", "uv sync", "Sync dependencies with uv");
+      } else {
+        addCmd("install", "pip install -r requirements.txt", "Install dependencies with pip");
+      }
+    } catch {
+      // Failed to parse pyproject.toml
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 3. Parse requirements.txt for Python projects
+  // ═══════════════════════════════════════════════════════════════
+  const requirementsPath = join(cwd, "requirements.txt");
+  if (await fileExists(requirementsPath)) {
+    try {
+      const content = await readFile(requirementsPath, "utf-8");
+      if (content.includes("pytest")) {
+        addCmd("test", "python -m pytest tests/ -v", "Run pytest");
+      }
+      addCmd("install", "pip install -r requirements.txt", "Install dependencies");
+    } catch {
+      // ignore
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 4. Parse Makefile targets
+  // ═══════════════════════════════════════════════════════════════
+  const makefilePath = join(cwd, "Makefile");
+  if (await fileExists(makefilePath)) {
+    try {
+      const content = await readFile(makefilePath, "utf-8");
+      
+      // Extract targets (lines starting with word: at the beginning)
+      const targetMatches = content.matchAll(/^([a-zA-Z_][a-zA-Z0-9_-]*):\s*(?:[a-zA-Z0-9_\- ]*)?$/gm);
+      for (const match of targetMatches) {
+        const target = match[1];
+        const cmd = `make ${target}`;
+        
+        // Categorize by target name
+        if (target.match(/^test$|^tests$/i)) {
+          addCmd("test", cmd, `Make ${target}`);
+        } else if (target.match(/^test[-_]?cov|^coverage$/i)) {
+          addCmd("testCoverage", cmd, `Make ${target}`);
+        } else if (target.match(/^lint$/i)) {
+          addCmd("lint", cmd, `Make ${target}`);
+        } else if (target.match(/^format$|^fmt$/i)) {
+          addCmd("format", cmd, `Make ${target}`);
+        } else if (target.match(/^build$/i)) {
+          addCmd("build", cmd, `Make ${target}`);
+        } else if (target.match(/^dev$|^run$|^serve$/i)) {
+          addCmd("dev", cmd, `Make ${target}`);
+        } else if (target.match(/^typecheck$|^types$/i)) {
+          addCmd("typecheck", cmd, `Make ${target}`);
+        } else if (target.match(/^clean$/i)) {
+          addCmd("clean", cmd, `Make ${target}`);
+        } else if (target.match(/^install$|^deps$/i)) {
+          addCmd("install", cmd, `Make ${target}`);
+        } else if (!["all", "default", ".PHONY", ".DEFAULT_GOAL"].includes(target)) {
+          addCmd("additional", cmd, `Make ${target}`);
+        }
+      }
+    } catch {
+      // Failed to read Makefile
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 5. Parse docker-compose.yml
+  // ═══════════════════════════════════════════════════════════════
+  const dockerComposePath = join(cwd, "docker-compose.yml");
+  const dockerComposeYamlPath = join(cwd, "docker-compose.yaml");
+  const composePath = await fileExists(dockerComposePath) ? dockerComposePath : 
+                      await fileExists(dockerComposeYamlPath) ? dockerComposeYamlPath : null;
+  if (composePath) {
+    try {
+      const content = await readFile(composePath, "utf-8");
+      
+      // Extract service names (basic YAML parsing)
+      const serviceMatches = content.matchAll(/^\s{2}([a-zA-Z_][a-zA-Z0-9_-]*):\s*$/gm);
+      for (const match of serviceMatches) {
+        const service = match[1];
+        addCmd("additional", `docker compose up ${service}`, `Run ${service} service`);
+      }
+      
+      // Add common docker-compose commands
+      addCmd("dev", "docker compose up", "Start all services");
+      addCmd("build", "docker compose build", "Build all services");
+      addCmd("clean", "docker compose down -v", "Stop and remove volumes");
+    } catch {
+      // Failed to read docker-compose.yml
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 6. Detect Dockerfile commands
+  // ═══════════════════════════════════════════════════════════════
+  const dockerfilePath = join(cwd, "Dockerfile");
+  if (await fileExists(dockerfilePath)) {
+    try {
+      const content = await readFile(dockerfilePath, "utf-8");
+      
+      // Extract FROM image name for context
+      const fromMatch = content.match(/FROM\s+([^\s]+)/);
+      const imageName = fromMatch ? fromMatch[1].split(":")[0] : "app";
+      
+      addCmd("build", `docker build -t ${imageName} .`, "Build Docker image");
+      addCmd("dev", `docker run -it --rm ${imageName}`, "Run Docker container");
+    } catch {
+      // ignore
+    }
+  }
+
+  // Check for additional Dockerfiles
+  try {
+    const files = await readFile(join(cwd, "."), "utf-8").catch(() => "");
+    // This won't work - let's just check common patterns
+    const dockerViewerPath = join(cwd, "Dockerfile.viewer");
+    if (await fileExists(dockerViewerPath)) {
+      addCmd("build", "docker build -f Dockerfile.viewer -t app-viewer .", "Build viewer Docker image");
+    }
+  } catch {
+    // ignore
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 7. Detect Cargo.toml for Rust
+  // ═══════════════════════════════════════════════════════════════
+  const cargoPath = join(cwd, "Cargo.toml");
+  if (await fileExists(cargoPath)) {
+    addCmd("build", "cargo build", "Build Rust project");
+    addCmd("build", "cargo build --release", "Build release");
+    addCmd("test", "cargo test", "Run Rust tests");
+    addCmd("lint", "cargo clippy", "Run Clippy linter");
+    addCmd("format", "cargo fmt", "Format Rust code");
+    addCmd("dev", "cargo run", "Run Rust binary");
+    addCmd("clean", "cargo clean", "Clean build artifacts");
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 8. Detect go.mod for Go
+  // ═══════════════════════════════════════════════════════════════
+  const goModPath = join(cwd, "go.mod");
+  if (await fileExists(goModPath)) {
+    addCmd("build", "go build", "Build Go project");
+    addCmd("test", "go test ./...", "Run Go tests");
+    addCmd("lint", "golangci-lint run", "Run golangci-lint");
+    addCmd("format", "go fmt ./...", "Format Go code");
+    addCmd("dev", "go run .", "Run Go binary");
+    addCmd("clean", "go clean", "Clean build cache");
+    addCmd("typecheck", "go vet ./...", "Run go vet");
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 9. Detect common Python entrypoints
+  // ═══════════════════════════════════════════════════════════════
+  const srcMainPath = join(cwd, "src", "main.py");
+  const mainPath = join(cwd, "main.py");
+  const appPath = join(cwd, "app.py");
+  if (await fileExists(srcMainPath)) {
+    addCmd("dev", "python -m src.main", "Run main module");
+  }
+  if (await fileExists(mainPath)) {
+    addCmd("dev", "python main.py", "Run main.py");
+  }
+  if (await fileExists(appPath)) {
+    addCmd("dev", "python app.py", "Run app.py");
+  }
+
+  // Check for scheduler patterns
+  const schedulerPath = join(cwd, "src", "scheduler.py");
+  if (await fileExists(schedulerPath)) {
+    addCmd("additional", "python -m src.scheduler", "Run scheduler");
+  }
+
+  // Check for setup_auth or similar
+  const setupAuthPath = join(cwd, "src", "setup_auth.py");
+  if (await fileExists(setupAuthPath)) {
+    addCmd("additional", "python -m src.setup_auth", "Setup authentication");
+  }
+
+  // Check for web app patterns
+  const webMainPath = join(cwd, "src", "web", "main.py");
+  if (await fileExists(webMainPath)) {
+    addCmd("dev", "uvicorn src.web.main:app --host 0.0.0.0 --port 8080", "Run web viewer");
+  }
+
+  return cmds;
+}
 
 export async function detectProject(cwd: string): Promise<DetectedProject | null> {
   const detected: DetectedProject = {
@@ -449,6 +800,9 @@ export async function detectProject(cwd: string): Promise<DetectedProject | null
     }
   }
 
+  // Detect extended commands from all sources
+  detected.detectedCommands = await detectExtendedCommands(cwd);
+
   return detected.stack.length > 0 || detected.name ? detected : null;
 }
 
@@ -537,7 +891,7 @@ interface PackageJson {
 const OPEN_SOURCE_LICENSES = ["mit", "apache-2.0", "gpl-3.0", "lgpl-3.0", "agpl-3.0", "bsd-2-clause", "bsd-3-clause", "mpl-2.0", "unlicense", "cc0-1.0", "isc"];
 
 // Static files to detect
-const STATIC_FILES = [".editorconfig", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md", "SECURITY.md", "ROADMAP.md", ".gitignore", "LICENSE", "README.md", "ARCHITECTURE.md", "CHANGELOG.md"];
+const STATIC_FILES = [".editorconfig", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md", "SECURITY.md", "ROADMAP.md", ".gitignore", ".github/FUNDING.yml", "LICENSE", "README.md", "ARCHITECTURE.md", "CHANGELOG.md"];
 
 async function detectFromGitHubApi(repoUrl: string): Promise<DetectedProject | null> {
   const parsed = parseGitHubUrl(repoUrl);
@@ -585,10 +939,25 @@ async function detectFromGitHubApi(repoUrl: string): Promise<DetectedProject | n
     const files = await filesRes.json() as GitHubFile[];
     const fileNames = new Set(files.map((f) => f.name.toLowerCase()));
     
-    // Detect existing static files
+    // Detect existing static files (root level)
     for (const file of STATIC_FILES) {
+      // Skip files in subdirectories - we'll check those separately
+      if (file.includes("/")) continue;
       if (files.some((f) => f.name.toLowerCase() === file.toLowerCase())) {
         detected.existingFiles!.push(file);
+      }
+    }
+    
+    // Check .github directory for FUNDING.yml and other files
+    if (files.some((f) => f.name === ".github" && f.type === "dir")) {
+      const ghFilesRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/.github`, {
+        headers: { "User-Agent": "LynxPrompt-CLI" },
+      });
+      if (ghFilesRes.ok) {
+        const ghFiles = await ghFilesRes.json() as GitHubFile[];
+        if (ghFiles.some((f) => f.name.toLowerCase() === "funding.yml")) {
+          detected.existingFiles!.push(".github/FUNDING.yml");
+        }
       }
     }
     
