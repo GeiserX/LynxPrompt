@@ -1134,13 +1134,28 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
       console.log();
       console.log(chalk.white(`  Name: ${detected.name || "unknown"}`));
       if (detected.description) console.log(chalk.gray(`  Description: ${detected.description}`));
+      console.log(chalk.white(`  Type: ${detected.isOpenSource ? "Open Source" : detected.type}`));
       console.log(chalk.white(`  Stack: ${detected.stack.join(", ") || "none detected"}`));
-      console.log(chalk.white(`  Type: ${detected.type}`));
+      if (detected.databases && detected.databases.length > 0) {
+        console.log(chalk.white(`  Databases: ${detected.databases.join(", ")}`));
+      }
       if (detected.packageManager) console.log(chalk.white(`  Package Manager: ${detected.packageManager}`));
-      if (detected.repoHost) console.log(chalk.white(`  Repository Host: ${detected.repoHost}`));
-      if (detected.license) console.log(chalk.white(`  License: ${detected.license}`));
-      if (detected.cicd) console.log(chalk.white(`  CI/CD: ${detected.cicd}`));
-      if (detected.hasDocker) console.log(chalk.white(`  Docker: yes`));
+      if (detected.repoHost) console.log(chalk.white(`  Host: ${detected.repoHost}`));
+      if (detected.license) console.log(chalk.white(`  License: ${detected.license.toUpperCase()}`));
+      if (detected.cicd) console.log(chalk.white(`  CI/CD: ${detected.cicd.replace("_", " ")}`));
+      if (detected.hasDocker) {
+        const dockerInfo = detected.containerRegistry 
+          ? `detected (registry: ${detected.containerRegistry})`
+          : "detected";
+        console.log(chalk.white(`  Docker: ${dockerInfo}`));
+      }
+      if (detected.testFramework) console.log(chalk.white(`  Test Framework: ${detected.testFramework}`));
+      if (detected.existingFiles && detected.existingFiles.length > 0) {
+        const filesDisplay = detected.existingFiles.length > 3
+          ? `${detected.existingFiles.slice(0, 3).join(", ")}... (+${detected.existingFiles.length - 3})`
+          : detected.existingFiles.join(", ");
+        console.log(chalk.white(`  Static files found: ${detected.existingFiles.length} (${filesDisplay})`));
+      }
       if (detected.commands) {
         console.log(chalk.white(`  Commands:`));
         if (detected.commands.build) console.log(chalk.gray(`    build: ${detected.commands.build}`));
@@ -1314,12 +1329,31 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
             detected = remoteDetected;
             remoteSpinner.succeed("Remote repository analyzed");
             
-            // Show remote detection results
+            // Show remote detection results (aligned with WebUI output)
             const detectedInfo = [
               chalk.green("✓ Remote project detected"),
             ];
             if (detected.name) detectedInfo.push(chalk.gray(`  Name: ${detected.name}`));
+            if (detected.isOpenSource) detectedInfo.push(chalk.gray(`  Type: Open Source`));
             if (detected.stack.length > 0) detectedInfo.push(chalk.gray(`  Stack: ${detected.stack.join(", ")}`));
+            if (detected.databases && detected.databases.length > 0) {
+              detectedInfo.push(chalk.gray(`  Databases: ${detected.databases.join(", ")}`));
+            }
+            if (detected.license) detectedInfo.push(chalk.gray(`  License: ${detected.license.toUpperCase()}`));
+            if (detected.repoHost) detectedInfo.push(chalk.gray(`  Host: ${detected.repoHost}`));
+            if (detected.cicd) detectedInfo.push(chalk.gray(`  CI/CD: ${detected.cicd.replace("_", " ")}`));
+            if (detected.hasDocker) {
+              const dockerInfo = detected.containerRegistry 
+                ? `detected (registry: ${detected.containerRegistry})`
+                : "detected";
+              detectedInfo.push(chalk.gray(`  Docker: ${dockerInfo}`));
+            }
+            if (detected.existingFiles && detected.existingFiles.length > 0) {
+              const filesDisplay = detected.existingFiles.length > 3
+                ? `${detected.existingFiles.slice(0, 3).join(", ")}...`
+                : detected.existingFiles.join(", ");
+              detectedInfo.push(chalk.gray(`  Static files found: ${detected.existingFiles.length} (${filesDisplay})`));
+            }
             if (detected.repoUrl) detectedInfo.push(chalk.gray(`  Source: ${detected.repoUrl}`));
             
             printBox(detectedInfo, chalk.gray);
