@@ -468,6 +468,76 @@ const DATABASES = [
   { value: "intersystems_cache", label: "InterSystems Caché", icon: "💎", category: "proprietary" },
 ];
 
+// Package managers (JS/TS only)
+const PACKAGE_MANAGERS = [
+  { id: "npm", label: "npm", icon: "📦", desc: "Node Package Manager (default)" },
+  { id: "yarn", label: "Yarn", icon: "🧶", desc: "Fast, reliable, and secure" },
+  { id: "pnpm", label: "pnpm", icon: "📀", desc: "Fast, disk space efficient" },
+  { id: "bun", label: "Bun", icon: "🥟", desc: "All-in-one JS runtime + PM" },
+];
+
+// Monorepo tools (JS/TS only)
+const MONOREPO_TOOLS = [
+  { id: "", label: "None", icon: "📁", desc: "Single package repository" },
+  { id: "turborepo", label: "Turborepo", icon: "⚡", desc: "High-performance build system" },
+  { id: "nx", label: "Nx", icon: "🔷", desc: "Smart, extensible build framework" },
+  { id: "lerna", label: "Lerna", icon: "🐉", desc: "Multi-package repositories" },
+  { id: "pnpm_workspaces", label: "pnpm Workspaces", icon: "📀", desc: "Native pnpm monorepo" },
+  { id: "yarn_workspaces", label: "Yarn Workspaces", icon: "🧶", desc: "Native Yarn monorepo" },
+  { id: "npm_workspaces", label: "npm Workspaces", icon: "📦", desc: "Native npm monorepo" },
+  { id: "rush", label: "Rush", icon: "🚀", desc: "Microsoft's scalable monorepo" },
+  { id: "moon", label: "moon", icon: "🌙", desc: "Repository management tool" },
+];
+
+// JS/TS runtimes
+const JS_RUNTIMES = [
+  { id: "node", label: "Node.js", icon: "🟢", desc: "Standard JavaScript runtime" },
+  { id: "deno", label: "Deno", icon: "🦕", desc: "Secure runtime with TypeScript" },
+  { id: "bun", label: "Bun", icon: "🥟", desc: "Fast all-in-one JS runtime" },
+];
+
+// ORMs and Database tools
+const ORM_OPTIONS = [
+  { id: "", label: "None / Raw SQL", icon: "📝", desc: "Direct database queries" },
+  // JavaScript/TypeScript
+  { id: "prisma", label: "Prisma", icon: "🔷", desc: "Type-safe ORM for JS/TS", lang: ["typescript", "javascript"] },
+  { id: "drizzle", label: "Drizzle", icon: "💧", desc: "TypeScript ORM", lang: ["typescript", "javascript"] },
+  { id: "typeorm", label: "TypeORM", icon: "🔶", desc: "TypeScript/JS ORM", lang: ["typescript", "javascript"] },
+  { id: "sequelize", label: "Sequelize", icon: "📘", desc: "Promise-based ORM", lang: ["typescript", "javascript"] },
+  { id: "knex", label: "Knex.js", icon: "🔧", desc: "SQL query builder", lang: ["typescript", "javascript"] },
+  { id: "kysely", label: "Kysely", icon: "🎯", desc: "Type-safe SQL builder", lang: ["typescript", "javascript"] },
+  { id: "mikro-orm", label: "MikroORM", icon: "🔵", desc: "TypeScript ORM", lang: ["typescript", "javascript"] },
+  { id: "objection", label: "Objection.js", icon: "📊", desc: "SQL-friendly ORM", lang: ["typescript", "javascript"] },
+  // Python
+  { id: "sqlalchemy", label: "SQLAlchemy", icon: "🐍", desc: "Python SQL toolkit", lang: ["python"] },
+  { id: "django_orm", label: "Django ORM", icon: "🎸", desc: "Django's built-in ORM", lang: ["python"] },
+  { id: "tortoise", label: "Tortoise ORM", icon: "🐢", desc: "Async Python ORM", lang: ["python"] },
+  { id: "sqlmodel", label: "SQLModel", icon: "⚡", desc: "Pydantic + SQLAlchemy", lang: ["python"] },
+  { id: "peewee", label: "Peewee", icon: "🐦", desc: "Simple Python ORM", lang: ["python"] },
+  // Go
+  { id: "gorm", label: "GORM", icon: "🐹", desc: "Go ORM library", lang: ["go"] },
+  { id: "ent", label: "Ent", icon: "🏗️", desc: "Entity framework for Go", lang: ["go"] },
+  { id: "sqlc", label: "sqlc", icon: "📝", desc: "Generate Go from SQL", lang: ["go"] },
+  { id: "bun_go", label: "Bun (Go)", icon: "🥟", desc: "Lightweight Go ORM", lang: ["go"] },
+  // Rust
+  { id: "diesel", label: "Diesel", icon: "🦀", desc: "Safe Rust ORM", lang: ["rust"] },
+  { id: "sea-orm", label: "SeaORM", icon: "🌊", desc: "Async Rust ORM", lang: ["rust"] },
+  { id: "sqlx", label: "SQLx", icon: "📦", desc: "Async Rust SQL toolkit", lang: ["rust"] },
+  // Java/Kotlin
+  { id: "hibernate", label: "Hibernate", icon: "☕", desc: "Java ORM framework", lang: ["java", "kotlin"] },
+  { id: "jooq", label: "jOOQ", icon: "🎵", desc: "Typesafe SQL in Java", lang: ["java", "kotlin"] },
+  { id: "exposed", label: "Exposed", icon: "🎨", desc: "Kotlin SQL framework", lang: ["kotlin"] },
+  // .NET
+  { id: "ef_core", label: "Entity Framework", icon: "🔷", desc: ".NET ORM", lang: ["csharp"] },
+  { id: "dapper", label: "Dapper", icon: "⚡", desc: "Micro ORM for .NET", lang: ["csharp"] },
+  // Ruby
+  { id: "activerecord", label: "ActiveRecord", icon: "💎", desc: "Rails ORM", lang: ["ruby"] },
+  { id: "sequel", label: "Sequel", icon: "📚", desc: "Ruby database toolkit", lang: ["ruby"] },
+  // PHP
+  { id: "eloquent", label: "Eloquent", icon: "🐘", desc: "Laravel ORM", lang: ["php"] },
+  { id: "doctrine", label: "Doctrine", icon: "📖", desc: "PHP ORM", lang: ["php"] },
+];
+
 // AI Behavior rules (security moved to dedicated Security step)
 const AI_BEHAVIOR_RULES = [
   { id: "always_debug_after_build", label: "Always Debug After Building", description: "Run and test locally after making changes", recommended: true },
@@ -667,6 +737,10 @@ type CommandsConfig = {
   test: string;
   lint: string;
   dev: string;
+  format: string;
+  typecheck: string;
+  clean: string;
+  preCommit: string; // husky, lefthook, etc
   additional: string[];
   savePreferences: boolean;
 };
@@ -684,6 +758,10 @@ type CodeStyleConfig = {
   errorHandlingOther: string;
   loggingConventions: string;
   loggingConventionsOther: string;
+  maxFileLength: number; // max lines per file
+  importOrder: string; // sorted, grouped, natural
+  commentLanguage: string; // english, native, any
+  docStyle: string; // jsdoc, tsdoc, pydoc, etc
   notes: string;
   savePreferences: boolean;
 };
@@ -692,6 +770,9 @@ type TestingStrategyConfig = {
   levels: string[];
   coverage: number;
   frameworks: string[];
+  tddPreference: boolean; // Test-Driven Development
+  snapshotTesting: boolean;
+  mockStrategy: string; // minimal, comprehensive, none
   notes: string;
   savePreferences: boolean;
 };
@@ -734,6 +815,10 @@ type WizardConfig = {
   languages: string[];
   frameworks: string[];
   databases: string[]; // preferred databases (multi-select)
+  packageManager: string; // npm, yarn, pnpm, bun (JS/TS only)
+  monorepoTool: string; // turborepo, nx, lerna, pnpm-workspaces (JS/TS only)
+  jsRuntime: string; // node, deno, bun (JS/TS only)
+  orm: string; // prisma, drizzle, typeorm, sqlalchemy, etc.
   letAiDecide: boolean;
   repoHost: string;
   repoHostOther: string;
@@ -752,6 +837,9 @@ type WizardConfig = {
   conventionalCommits: boolean;
   semver: boolean;
   dependabot: boolean;
+  branchStrategy: string; // gitflow, github_flow, trunk_based, gitlab_flow
+  defaultBranch: string; // main, master, develop
+  commitSigning: boolean; // GPG/SSH signing
   cicd: string;
   deploymentEnvironment: string[]; // "self_hosted" | "cloud"
   selfHostedTargets: string[];
@@ -761,6 +849,9 @@ type WizardConfig = {
   containerRegistryOther: string;
   registryUsername: string;
   aiBehaviorRules: string[];
+  explanationVerbosity: string; // concise, balanced, detailed
+  accessibilityFocus: boolean;
+  performanceFocus: boolean;
   importantFiles: string[];
   importantFilesOther: string;
   enableAutoUpdate: boolean;
@@ -866,6 +957,10 @@ function WizardPageContent() {
     languages: [],
     frameworks: [],
     databases: [],
+    packageManager: "",
+    monorepoTool: "",
+    jsRuntime: "",
+    orm: "",
     letAiDecide: false,
     repoHost: "github",
     repoHostOther: "",
@@ -884,6 +979,9 @@ function WizardPageContent() {
     conventionalCommits: true,
     semver: true,
     dependabot: true,
+    branchStrategy: "github_flow",
+    defaultBranch: "main",
+    commitSigning: false,
     cicd: "github_actions",
     deploymentEnvironment: [],
     selfHostedTargets: [],
@@ -893,6 +991,9 @@ function WizardPageContent() {
     containerRegistryOther: "",
     registryUsername: "",
     aiBehaviorRules: ["always_debug_after_build", "check_logs_after_build", "run_tests_before_commit", "follow_existing_patterns", "ask_before_large_refactors"],
+    explanationVerbosity: "balanced",
+    accessibilityFocus: false,
+    performanceFocus: false,
     importantFiles: [],
     importantFilesOther: "",
     enableAutoUpdate: false,
@@ -903,10 +1004,10 @@ function WizardPageContent() {
     preferCliSync: true, // Default to CLI (recommended, no token in file)
     tokenEnvVar: "LYNXPROMPT_API_TOKEN",
     additionalFeedback: "",
-    commands: { build: "", test: "", lint: "", dev: "", additional: [], savePreferences: false },
-    codeStyle: { naming: "language_default", errorHandling: "", errorHandlingOther: "", loggingConventions: "", loggingConventionsOther: "", notes: "", savePreferences: false },
+    commands: { build: "", test: "", lint: "", dev: "", format: "", typecheck: "", clean: "", preCommit: "", additional: [], savePreferences: false },
+    codeStyle: { naming: "language_default", errorHandling: "", errorHandlingOther: "", loggingConventions: "", loggingConventionsOther: "", maxFileLength: 300, importOrder: "grouped", commentLanguage: "english", docStyle: "", notes: "", savePreferences: false },
     boundaries: { always: [], ask: [], never: [], savePreferences: false },
-    testing: { levels: [], coverage: 80, frameworks: [], notes: "", savePreferences: false },
+    testing: { levels: [], coverage: 80, frameworks: [], tddPreference: false, snapshotTesting: false, mockStrategy: "minimal", notes: "", savePreferences: false },
     staticFiles: {
       funding: false,
       fundingYml: "",
@@ -2440,11 +2541,19 @@ ${syncCommands}
                   selectedLanguages={config.languages}
                   selectedFrameworks={config.frameworks}
                   selectedDatabases={config.databases}
+                  packageManager={config.packageManager}
+                  monorepoTool={config.monorepoTool}
+                  jsRuntime={config.jsRuntime}
+                  orm={config.orm}
                   letAiDecide={config.letAiDecide}
                   detectedFields={detectedFields}
                   onToggleLanguage={(v) => toggleArrayValue("languages", v)}
                   onToggleFramework={(v) => toggleArrayValue("frameworks", v)}
                   onToggleDatabase={(v) => toggleArrayValue("databases", v)}
+                  onPackageManagerChange={(v) => setConfig({ ...config, packageManager: v })}
+                  onMonorepoToolChange={(v) => setConfig({ ...config, monorepoTool: v })}
+                  onJsRuntimeChange={(v) => setConfig({ ...config, jsRuntime: v })}
+                  onOrmChange={(v) => setConfig({ ...config, orm: v })}
                   onLetAiDecide={(v) => setConfig({ ...config, letAiDecide: v })}
                 />
               )}
@@ -2478,6 +2587,12 @@ ${syncCommands}
                 <StepAIBehavior
                   selected={config.aiBehaviorRules}
                   onToggle={(v) => toggleArrayValue("aiBehaviorRules", v)}
+                  explanationVerbosity={config.explanationVerbosity}
+                  onExplanationVerbosityChange={(v) => setConfig({ ...config, explanationVerbosity: v })}
+                  accessibilityFocus={config.accessibilityFocus}
+                  onAccessibilityFocusChange={(v) => setConfig({ ...config, accessibilityFocus: v })}
+                  performanceFocus={config.performanceFocus}
+                  onPerformanceFocusChange={(v) => setConfig({ ...config, performanceFocus: v })}
                   importantFiles={config.importantFiles}
                   importantFilesOther={config.importantFilesOther}
                   onImportantFilesToggle={(v) => toggleArrayValue("importantFiles", v)}
@@ -3018,21 +3133,37 @@ function StepTechStack({
   selectedLanguages,
   selectedFrameworks,
   selectedDatabases,
+  packageManager,
+  monorepoTool,
+  jsRuntime,
+  orm,
   letAiDecide,
   detectedFields,
   onToggleLanguage,
   onToggleFramework,
   onToggleDatabase,
+  onPackageManagerChange,
+  onMonorepoToolChange,
+  onJsRuntimeChange,
+  onOrmChange,
   onLetAiDecide,
 }: {
   selectedLanguages: string[];
   selectedFrameworks: string[];
   selectedDatabases: string[];
+  packageManager: string;
+  monorepoTool: string;
+  jsRuntime: string;
+  orm: string;
   letAiDecide: boolean;
   detectedFields: Set<string>;
   onToggleLanguage: (v: string) => void;
   onToggleFramework: (v: string) => void;
   onToggleDatabase: (v: string) => void;
+  onPackageManagerChange: (v: string) => void;
+  onMonorepoToolChange: (v: string) => void;
+  onJsRuntimeChange: (v: string) => void;
+  onOrmChange: (v: string) => void;
   onLetAiDecide: (v: boolean) => void;
 }) {
   const [langSearch, setLangSearch] = useState("");
@@ -3580,9 +3711,176 @@ function StepTechStack({
           </button>
         )}
       </div>
+
+      {/* JS/TS Specific Options - shown only when JS or TS is selected */}
+      {(selectedLanguages.includes("javascript") || selectedLanguages.includes("typescript")) && (
+        <div className="mt-8 rounded-lg border bg-muted/30 p-4">
+          <h3 className="mb-4 font-semibold">JavaScript/TypeScript Options</h3>
+          
+          {/* Package Manager */}
+          <div className="mb-4">
+            <label className="mb-2 block text-sm font-medium">Package Manager</label>
+            <div className="flex flex-wrap gap-2">
+              {PACKAGE_MANAGERS.map((pm) => (
+                <button
+                  key={pm.id}
+                  onClick={() => onPackageManagerChange(pm.id)}
+                  className={`flex items-center gap-2 rounded-lg border p-2.5 transition-all ${
+                    packageManager === pm.id
+                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                      : "hover:border-primary"
+                  }`}
+                >
+                  <span>{pm.icon}</span>
+                  <div className="text-left">
+                    <span className="text-sm font-medium">{pm.label}</span>
+                    <p className="text-xs text-muted-foreground">{pm.desc}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* JS Runtime */}
+          <div className="mb-4">
+            <label className="mb-2 block text-sm font-medium">JavaScript Runtime</label>
+            <div className="flex flex-wrap gap-2">
+              {JS_RUNTIMES.map((rt) => (
+                <button
+                  key={rt.id}
+                  onClick={() => onJsRuntimeChange(rt.id)}
+                  className={`flex items-center gap-2 rounded-lg border p-2.5 transition-all ${
+                    jsRuntime === rt.id
+                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                      : "hover:border-primary"
+                  }`}
+                >
+                  <span>{rt.icon}</span>
+                  <div className="text-left">
+                    <span className="text-sm font-medium">{rt.label}</span>
+                    <p className="text-xs text-muted-foreground">{rt.desc}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Monorepo Tool */}
+          <div>
+            <label className="mb-2 block text-sm font-medium">Monorepo Tool</label>
+            <div className="flex flex-wrap gap-2">
+              {MONOREPO_TOOLS.slice(0, 5).map((tool) => (
+                <button
+                  key={tool.id || "none"}
+                  onClick={() => onMonorepoToolChange(tool.id)}
+                  className={`flex items-center gap-2 rounded-lg border p-2.5 transition-all ${
+                    monorepoTool === tool.id
+                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                      : "hover:border-primary"
+                  }`}
+                >
+                  <span>{tool.icon}</span>
+                  <div className="text-left">
+                    <span className="text-sm font-medium">{tool.label}</span>
+                    <p className="text-xs text-muted-foreground">{tool.desc}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <details className="mt-2">
+              <summary className="cursor-pointer text-xs text-muted-foreground hover:text-primary">More monorepo options...</summary>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {MONOREPO_TOOLS.slice(5).map((tool) => (
+                  <button
+                    key={tool.id}
+                    onClick={() => onMonorepoToolChange(tool.id)}
+                    className={`flex items-center gap-2 rounded-lg border p-2.5 transition-all ${
+                      monorepoTool === tool.id
+                        ? "border-primary bg-primary/5 ring-1 ring-primary"
+                        : "hover:border-primary"
+                    }`}
+                  >
+                    <span>{tool.icon}</span>
+                    <div className="text-left">
+                      <span className="text-sm font-medium">{tool.label}</span>
+                      <p className="text-xs text-muted-foreground">{tool.desc}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </details>
+          </div>
+        </div>
+      )}
+
+      {/* ORM Selection - shown when databases are selected, filtered by language */}
+      {selectedDatabases.length > 0 && (
+        <div className="mt-8">
+          <h3 className="mb-2 font-semibold">ORM / Database Library</h3>
+          <p className="mb-3 text-sm text-muted-foreground">
+            Select your preferred ORM or database library (optional)
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {ORM_OPTIONS.filter(o => 
+              !o.lang || o.lang.some(l => selectedLanguages.includes(l))
+            ).slice(0, 10).map((o) => (
+              <button
+                key={o.id || "none"}
+                onClick={() => onOrmChange(o.id)}
+                className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-all ${
+                  orm === o.id
+                    ? "border-primary bg-primary/5 ring-1 ring-primary"
+                    : "hover:border-primary"
+                }`}
+              >
+                <span>{o.icon}</span>
+                <span className="text-sm font-medium">{o.label}</span>
+              </button>
+            ))}
+          </div>
+          <details className="mt-2">
+            <summary className="cursor-pointer text-xs text-muted-foreground hover:text-primary">More ORM options...</summary>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {ORM_OPTIONS.filter(o => 
+                !o.lang || o.lang.some(l => selectedLanguages.includes(l))
+              ).slice(10).map((o) => (
+                <button
+                  key={o.id}
+                  onClick={() => onOrmChange(o.id)}
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-all ${
+                    orm === o.id
+                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                      : "hover:border-primary"
+                  }`}
+                >
+                  <span>{o.icon}</span>
+                  <span className="text-sm font-medium">{o.label}</span>
+                </button>
+              ))}
+            </div>
+          </details>
+        </div>
+      )}
     </div>
   );
 }
+
+// Branch strategies
+const BRANCH_STRATEGIES = [
+  { id: "github_flow", label: "GitHub Flow", desc: "Simple: main + feature branches", icon: "🌊" },
+  { id: "gitflow", label: "Gitflow", desc: "develop, feature, release, hotfix branches", icon: "🌳" },
+  { id: "trunk_based", label: "Trunk-Based", desc: "Short-lived branches, continuous integration", icon: "🚂" },
+  { id: "gitlab_flow", label: "GitLab Flow", desc: "Environment branches (staging, production)", icon: "🦊" },
+  { id: "release_flow", label: "Release Flow", desc: "Microsoft style: main + release branches", icon: "🚀" },
+];
+
+// Default branch names
+const DEFAULT_BRANCHES = [
+  { id: "main", label: "main" },
+  { id: "master", label: "master" },
+  { id: "develop", label: "develop" },
+  { id: "trunk", label: "trunk" },
+];
 
 const REPO_HOSTS = [
   { id: "github", label: "GitHub", icon: "🐙" },
@@ -3933,7 +4231,57 @@ function StepRepository({
             checked={config.semver}
             onChange={(v) => onChange({ semver: v })}
           />
+          <ToggleOption
+            label="Commit Signing"
+            description="Require GPG/SSH signed commits"
+            checked={config.commitSigning}
+            onChange={(v) => onChange({ commitSigning: v })}
+          />
           {/* Dependabot/Renovate moved to Security step */}
+        </div>
+
+        {/* Branch Strategy */}
+        <div>
+          <label className="block text-sm font-medium mb-2">Branch Strategy</label>
+          <div className="flex flex-wrap gap-2">
+            {BRANCH_STRATEGIES.map((strategy) => (
+              <button
+                key={strategy.id}
+                onClick={() => onChange({ branchStrategy: strategy.id })}
+                className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-all ${
+                  config.branchStrategy === strategy.id
+                    ? "border-primary bg-primary/5 ring-1 ring-primary"
+                    : "hover:border-primary"
+                }`}
+              >
+                <span>{strategy.icon}</span>
+                <div className="text-left">
+                  <span className="text-sm font-medium">{strategy.label}</span>
+                  <p className="text-xs text-muted-foreground">{strategy.desc}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Default Branch */}
+        <div>
+          <label className="block text-sm font-medium mb-2">Default Branch</label>
+          <div className="flex gap-2">
+            {DEFAULT_BRANCHES.map((branch) => (
+              <button
+                key={branch.id}
+                onClick={() => onChange({ defaultBranch: branch.id })}
+                className={`rounded-lg border px-4 py-2 text-sm font-mono transition-all ${
+                  config.defaultBranch === branch.id
+                    ? "border-primary bg-primary/5 ring-1 ring-primary"
+                    : "hover:border-primary"
+                }`}
+              >
+                {branch.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* CI/CD Selection */}
@@ -4436,6 +4784,12 @@ function StepSecurity({
 function StepAIBehavior({
   selected,
   onToggle,
+  explanationVerbosity,
+  onExplanationVerbosityChange,
+  accessibilityFocus,
+  onAccessibilityFocusChange,
+  performanceFocus,
+  onPerformanceFocusChange,
   importantFiles,
   importantFilesOther,
   onImportantFilesToggle,
@@ -4449,6 +4803,12 @@ function StepAIBehavior({
 }: {
   selected: string[];
   onToggle: (v: string) => void;
+  explanationVerbosity: string;
+  onExplanationVerbosityChange: (v: string) => void;
+  accessibilityFocus: boolean;
+  onAccessibilityFocusChange: (v: boolean) => void;
+  performanceFocus: boolean;
+  onPerformanceFocusChange: (v: boolean) => void;
   importantFiles: string[];
   importantFilesOther: string;
   onImportantFilesToggle: (v: string) => void;
@@ -4566,6 +4926,50 @@ function StepAIBehavior({
             </p>
           </div>
         </button>
+      </div>
+
+      {/* Explanation Verbosity */}
+      <div className="mt-8">
+        <h3 className="font-semibold">Explanation Verbosity</h3>
+        <p className="mt-1 text-sm text-muted-foreground">How detailed should AI explanations be?</p>
+        <div className="mt-3 flex gap-2">
+          {[
+            { id: "concise", label: "Concise", desc: "Brief, to the point", icon: "📝" },
+            { id: "balanced", label: "Balanced", desc: "Clear with context", icon: "⚖️" },
+            { id: "detailed", label: "Detailed", desc: "In-depth explanations", icon: "📚" },
+          ].map((opt) => (
+            <button
+              key={opt.id}
+              onClick={() => onExplanationVerbosityChange(opt.id)}
+              className={`flex-1 rounded-lg border p-3 text-center transition-all ${
+                explanationVerbosity === opt.id
+                  ? "border-primary bg-primary/5 ring-1 ring-primary"
+                  : "hover:border-primary"
+              }`}
+            >
+              <span className="text-xl">{opt.icon}</span>
+              <div className="mt-1 text-sm font-medium">{opt.label}</div>
+              <div className="text-xs text-muted-foreground">{opt.desc}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Focus Areas */}
+      <div className="mt-6 space-y-3">
+        <h3 className="font-semibold">Focus Areas</h3>
+        <ToggleOption
+          label="♿ Accessibility Focus"
+          description="Prioritize WCAG compliance and a11y best practices"
+          checked={accessibilityFocus}
+          onChange={onAccessibilityFocusChange}
+        />
+        <ToggleOption
+          label="⚡ Performance Focus"
+          description="Prioritize performance optimizations and efficiency"
+          checked={performanceFocus}
+          onChange={onPerformanceFocusChange}
+        />
       </div>
 
       {/* Important Files to Read First */}
@@ -4778,15 +5182,84 @@ const COMMON_COMMANDS = [
   { cmd: "tilt up", category: "dev" },
   { cmd: "telepresence connect", category: "dev" },
   
+  // Format commands - JavaScript
+  { cmd: "prettier --write .", category: "format" },
+  { cmd: "prettier --write 'src/**/*.{ts,tsx}'", category: "format" },
+  { cmd: "npm run format", category: "format" },
+  { cmd: "pnpm format", category: "format" },
+  { cmd: "biome format --write .", category: "format" },
+  { cmd: "dprint fmt", category: "format" },
+  // Format - Python
+  { cmd: "black .", category: "format" },
+  { cmd: "ruff format .", category: "format" },
+  { cmd: "isort .", category: "format" },
+  { cmd: "autopep8 --in-place -r .", category: "format" },
+  { cmd: "yapf -i -r .", category: "format" },
+  // Format - Go
+  { cmd: "go fmt ./...", category: "format" },
+  { cmd: "gofmt -w .", category: "format" },
+  { cmd: "goimports -w .", category: "format" },
+  // Format - Rust
+  { cmd: "cargo fmt", category: "format" },
+  // Format - Other
+  { cmd: "shfmt -w .", category: "format" },
+  { cmd: "terraform fmt -recursive", category: "format" },
+
+  // Typecheck commands - TypeScript
+  { cmd: "tsc --noEmit", category: "typecheck" },
+  { cmd: "npm run typecheck", category: "typecheck" },
+  { cmd: "pnpm typecheck", category: "typecheck" },
+  { cmd: "tsc -b", category: "typecheck" },
+  { cmd: "vue-tsc --noEmit", category: "typecheck" },
+  // Typecheck - Python
+  { cmd: "mypy .", category: "typecheck" },
+  { cmd: "pyright", category: "typecheck" },
+  { cmd: "pyre check", category: "typecheck" },
+  // Typecheck - Go (static analysis)
+  { cmd: "go vet ./...", category: "typecheck" },
+  { cmd: "staticcheck ./...", category: "typecheck" },
+  // Typecheck - Rust
+  { cmd: "cargo check", category: "typecheck" },
+
+  // Clean commands
+  { cmd: "npm run clean", category: "clean" },
+  { cmd: "rm -rf node_modules", category: "clean" },
+  { cmd: "rm -rf dist", category: "clean" },
+  { cmd: "rm -rf .next", category: "clean" },
+  { cmd: "rm -rf build", category: "clean" },
+  { cmd: "rm -rf coverage", category: "clean" },
+  { cmd: "pnpm clean", category: "clean" },
+  // Clean - Python
+  { cmd: "rm -rf __pycache__", category: "clean" },
+  { cmd: "rm -rf .pytest_cache", category: "clean" },
+  { cmd: "rm -rf .mypy_cache", category: "clean" },
+  { cmd: "find . -name '*.pyc' -delete", category: "clean" },
+  // Clean - Go
+  { cmd: "go clean -cache", category: "clean" },
+  { cmd: "go clean -testcache", category: "clean" },
+  // Clean - Rust
+  { cmd: "cargo clean", category: "clean" },
+  // Clean - Containers
+  { cmd: "docker system prune -af", category: "clean" },
+  { cmd: "docker compose down -v", category: "clean" },
+
+  // Pre-commit hooks
+  { cmd: "npx husky install", category: "preCommit" },
+  { cmd: "npx husky add .husky/pre-commit", category: "preCommit" },
+  { cmd: "pnpm dlx husky install", category: "preCommit" },
+  { cmd: "lefthook install", category: "preCommit" },
+  { cmd: "pre-commit install", category: "preCommit" },
+  { cmd: "pre-commit run --all-files", category: "preCommit" },
+  { cmd: "lint-staged", category: "preCommit" },
+  { cmd: "npx lint-staged", category: "preCommit" },
+  { cmd: "simple-git-hooks", category: "preCommit" },
+
   // Other/Misc commands
   { cmd: "npm run storybook", category: "other" },
   { cmd: "prisma db push", category: "other" },
   { cmd: "prisma generate", category: "other" },
   { cmd: "prisma migrate dev", category: "other" },
   { cmd: "drizzle-kit push", category: "other" },
-  { cmd: "npm run typecheck", category: "other" },
-  { cmd: "npm run format", category: "other" },
-  { cmd: "pre-commit run --all-files", category: "other" },
   // Deploy
   { cmd: "terraform apply", category: "other" },
   { cmd: "pulumi up", category: "other" },
@@ -4797,12 +5270,6 @@ const COMMON_COMMANDS = [
   { cmd: "kubectl apply -f", category: "other" },
   { cmd: "argocd app sync", category: "other" },
   { cmd: "flux reconcile", category: "other" },
-  // Clean
-  { cmd: "npm run clean", category: "other" },
-  { cmd: "rm -rf node_modules", category: "other" },
-  { cmd: "docker system prune", category: "other" },
-  { cmd: "go clean -cache", category: "other" },
-  { cmd: "cargo clean", category: "other" },
 ];
 
 function StepCommands({
@@ -4812,7 +5279,7 @@ function StepCommands({
   config: CommandsConfig;
   onChange: (updates: Partial<CommandsConfig>) => void;
 }) {
-  const [searches, setSearches] = useState<Record<string, string>>({ build: "", test: "", lint: "", dev: "", other: "" });
+  const [searches, setSearches] = useState<Record<string, string>>({ build: "", test: "", lint: "", dev: "", format: "", typecheck: "", clean: "", preCommit: "", other: "" });
   const [newCommand, setNewCommand] = useState("");
   const [expandedCategories, setExpandedCategories] = useState<string[]>(["build", "test", "lint", "dev"]);
   
@@ -4821,6 +5288,10 @@ function StepCommands({
     ...(config.test ? [config.test] : []),
     ...(config.lint ? [config.lint] : []),
     ...(config.dev ? [config.dev] : []),
+    ...(config.format ? [config.format] : []),
+    ...(config.typecheck ? [config.typecheck] : []),
+    ...(config.clean ? [config.clean] : []),
+    ...(config.preCommit ? [config.preCommit] : []),
     ...config.additional,
   ];
   
@@ -4833,6 +5304,14 @@ function StepCommands({
       onChange({ lint: config.lint === cmd ? "" : cmd });
     } else if (category === "dev") {
       onChange({ dev: config.dev === cmd ? "" : cmd });
+    } else if (category === "format") {
+      onChange({ format: config.format === cmd ? "" : cmd });
+    } else if (category === "typecheck") {
+      onChange({ typecheck: config.typecheck === cmd ? "" : cmd });
+    } else if (category === "clean") {
+      onChange({ clean: config.clean === cmd ? "" : cmd });
+    } else if (category === "preCommit") {
+      onChange({ preCommit: config.preCommit === cmd ? "" : cmd });
     } else {
       const exists = config.additional.includes(cmd);
       onChange({ additional: exists ? config.additional.filter(c => c !== cmd) : [...config.additional, cmd] });
@@ -4852,7 +5331,11 @@ function StepCommands({
     { id: "test", label: "Test", desc: "Run tests" },
     { id: "lint", label: "Lint", desc: "Check code quality" },
     { id: "dev", label: "Dev", desc: "Development server" },
-    { id: "other", label: "Other", desc: "Deploy, clean, etc." },
+    { id: "format", label: "Format", desc: "Code formatting" },
+    { id: "typecheck", label: "Typecheck", desc: "Type checking" },
+    { id: "clean", label: "Clean", desc: "Clean build artifacts" },
+    { id: "preCommit", label: "Pre-commit", desc: "Git hooks" },
+    { id: "other", label: "Other", desc: "Deploy, storybook, etc." },
   ] as const;
 
   return (
@@ -4874,6 +5357,10 @@ function StepCommands({
             : cat.id === "test" ? config.test 
             : cat.id === "lint" ? config.lint 
             : cat.id === "dev" ? config.dev 
+            : cat.id === "format" ? config.format
+            : cat.id === "typecheck" ? config.typecheck
+            : cat.id === "clean" ? config.clean
+            : cat.id === "preCommit" ? config.preCommit
             : null;
           
           return (
@@ -5146,6 +5633,103 @@ function StepCodeStyle({
               className="mt-2 w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           )}
+        </div>
+
+        {/* Max file length */}
+        <div>
+          <label className="text-sm font-medium">Max file length (lines)</label>
+          <p className="mt-1 text-xs text-muted-foreground">Suggest splitting files when they exceed this length</p>
+          <div className="mt-2 flex items-center gap-3">
+            <input
+              type="range"
+              min="100"
+              max="1000"
+              step="50"
+              value={config.maxFileLength}
+              onChange={(e) => onChange({ maxFileLength: parseInt(e.target.value) })}
+              className="flex-1"
+            />
+            <span className="w-16 text-sm font-mono">{config.maxFileLength}</span>
+          </div>
+        </div>
+
+        {/* Import order */}
+        <div>
+          <label className="text-sm font-medium">Import order preference</label>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {[
+              { id: "grouped", label: "Grouped", desc: "External → internal → relative" },
+              { id: "sorted", label: "Alphabetical", desc: "Sort all imports A-Z" },
+              { id: "natural", label: "Natural", desc: "Leave as written" },
+            ].map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => onChange({ importOrder: opt.id })}
+                className={`rounded-lg border px-3 py-2 transition-all ${
+                  config.importOrder === opt.id
+                    ? "border-primary bg-primary/5 ring-1 ring-primary"
+                    : "hover:border-primary"
+                }`}
+              >
+                <span className="text-sm font-medium">{opt.label}</span>
+                <p className="text-xs text-muted-foreground">{opt.desc}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Comment language */}
+        <div>
+          <label className="text-sm font-medium">Comment language</label>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {[
+              { id: "english", label: "English", icon: "🇬🇧" },
+              { id: "native", label: "Native language", icon: "🌍" },
+              { id: "any", label: "Any (team preference)", icon: "🗣️" },
+            ].map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => onChange({ commentLanguage: opt.id })}
+                className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-all ${
+                  config.commentLanguage === opt.id
+                    ? "border-primary bg-primary/5 ring-1 ring-primary"
+                    : "hover:border-primary"
+                }`}
+              >
+                <span>{opt.icon}</span>
+                <span className="text-sm font-medium">{opt.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Documentation style */}
+        <div>
+          <label className="text-sm font-medium">Documentation style (optional)</label>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {[
+              { id: "", label: "None / Language default" },
+              { id: "jsdoc", label: "JSDoc" },
+              { id: "tsdoc", label: "TSDoc" },
+              { id: "pydoc", label: "Python docstrings" },
+              { id: "godoc", label: "Go doc comments" },
+              { id: "rustdoc", label: "Rust doc (///)" },
+              { id: "javadoc", label: "Javadoc" },
+              { id: "xmldoc", label: "C# XML docs" },
+            ].map((opt) => (
+              <button
+                key={opt.id || "none"}
+                onClick={() => onChange({ docStyle: opt.id })}
+                className={`rounded-lg border px-3 py-2 text-sm transition-all ${
+                  config.docStyle === opt.id
+                    ? "border-primary bg-primary/5 ring-1 ring-primary"
+                    : "hover:border-primary"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div>
@@ -5469,6 +6053,48 @@ function StepTesting({
           </div>
         </div>
         
+        {/* Testing Practices */}
+        <div className="space-y-3">
+          <label className="text-sm font-medium">Testing Practices</label>
+          <ToggleOption
+            label="🧪 Test-Driven Development (TDD)"
+            description="Write tests before implementation"
+            checked={config.tddPreference}
+            onChange={(v) => onChange({ tddPreference: v })}
+          />
+          <ToggleOption
+            label="📸 Snapshot Testing"
+            description="Use snapshot tests for UI components"
+            checked={config.snapshotTesting}
+            onChange={(v) => onChange({ snapshotTesting: v })}
+          />
+        </div>
+
+        {/* Mock Strategy */}
+        <div>
+          <label className="text-sm font-medium">Mock Strategy</label>
+          <div className="mt-2 flex gap-2">
+            {[
+              { id: "minimal", label: "Minimal", desc: "Only mock external deps" },
+              { id: "comprehensive", label: "Comprehensive", desc: "Mock for isolation" },
+              { id: "none", label: "None", desc: "No mocking preferred" },
+            ].map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => onChange({ mockStrategy: opt.id })}
+                className={`flex-1 rounded-lg border p-2 text-center transition-all ${
+                  config.mockStrategy === opt.id
+                    ? "border-primary bg-primary/5 ring-1 ring-primary"
+                    : "hover:border-primary"
+                }`}
+              >
+                <div className="text-sm font-medium">{opt.label}</div>
+                <div className="text-xs text-muted-foreground">{opt.desc}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div>
           <label className="text-sm font-medium">Notes</label>
           <textarea
