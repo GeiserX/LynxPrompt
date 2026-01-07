@@ -121,7 +121,13 @@ function toWebFormat<T extends WizardOption>(options: T[]): Array<{ value: strin
 // Tech Stack
 export const LANGUAGES = toWebFormat(SHARED_LANGUAGES);
 export const FRAMEWORKS = toWebFormat(SHARED_FRAMEWORKS);
-export const DATABASES = toWebFormat(SHARED_DATABASES);
+// Databases need category preserved
+export const DATABASES = SHARED_DATABASES.map((o) => ({
+  value: o.id,
+  label: o.label,
+  icon: o.icon,
+  category: o.category,
+}));
 export const PACKAGE_MANAGERS = SHARED_PACKAGE_MANAGERS.map((o) => ({
   id: o.id,
   label: o.label,

@@ -44,6 +44,15 @@ export const LANGUAGES: LanguageOption[] = [
   { id: "move", label: "Move", icon: "🔒" },
   { id: "cairo", label: "Cairo", icon: "🏛️" },
   { id: "wasm", label: "WebAssembly", icon: "🌐" },
+  // IaC & DevOps Languages
+  { id: "hcl", label: "HCL (Terraform)", icon: "🏗️" },
+  { id: "yaml", label: "YAML", icon: "📄" },
+  { id: "jsonnet", label: "Jsonnet", icon: "🔧" },
+  { id: "dhall", label: "Dhall", icon: "⚙️" },
+  { id: "cue", label: "CUE", icon: "🔷" },
+  { id: "starlark", label: "Starlark", icon: "⭐" },
+  { id: "rego", label: "Rego (OPA)", icon: "🛡️" },
+  { id: "nix", label: "Nix", icon: "❄️" },
 ];
 
 /**
