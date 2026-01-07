@@ -4,7 +4,7 @@ import ora from "ora";
 import { readFile, access, readdir } from "fs/promises";
 import { join, relative, dirname, basename } from "path";
 
-import { detectCommandFiles, CommandFileInfo } from "../utils/detect.js";
+import { detectCommandFiles } from "../utils/detect.js";
 
 // Import command configuration
 const CONFIG_FILE_PATTERNS = [
@@ -14,16 +14,8 @@ const CONFIG_FILE_PATTERNS = [
   ".windsurfrules",
 ];
 
-// Command directories to scan for AI agent commands
+// Command directories are defined in detect.ts
 // All commands are plain markdown - conversion is just renaming to different directories
-const COMMAND_DIRECTORIES = [
-  ".cursor/commands",
-  ".claude/commands",
-  ".windsurf/workflows",
-  ".copilot/prompts",
-  ".continue/prompts",
-  ".opencode/commands",
-];
 
 interface AgentsMdFile {
   path: string;          // Full path to file

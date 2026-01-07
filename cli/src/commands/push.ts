@@ -12,7 +12,7 @@ import {
   updateChecksum,
   loadBlueprints,
 } from "../utils/blueprint-tracker.js";
-import { isCommandFilePath, inferCommandTypeFromPath, detectCommandFiles } from "../utils/detect.js";
+import { inferCommandTypeFromPath } from "../utils/detect.js";
 
 interface PushOptions {
   name?: string;
@@ -283,10 +283,6 @@ async function createOrLinkBlueprint(
   content: string,
   options: PushOptions
 ): Promise<void> {
-  // Detect if this is a command file
-  const isCommand = isCommandFilePath(file);
-  const commandInfo = isCommand ? inferCommandTypeFromPath(file) : null;
-  
   // Check if pushing AGENTS.md and scan for more AGENTS.md files
   const isAgentsMd = filename === "AGENTS.md";
   
