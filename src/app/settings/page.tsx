@@ -3026,7 +3026,7 @@ function ApiTokensSection({ setError, setSuccess }: ApiTokensSectionProps) {
                       ) : (
                         <>
                           <Trash2 className="mr-2 h-3 w-3" />
-                          Revoke
+                          {token.isExpired ? "Delete" : "Revoke"}
                         </>
                       )}
                     </Button>
