@@ -910,7 +910,6 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
   lines.push("");
   lines.push("Always follow these guidelines when working on this project:");
   lines.push("");
-  lines.push("- **Follow existing patterns**: Match the codebase's existing style and conventions");
   lines.push("- **Write clean code**: Prioritize readability and maintainability");
   lines.push("- **Handle errors properly**: Don't ignore errors, handle them appropriately");
   lines.push("- **Consider security**: Review code for potential security vulnerabilities");
@@ -1127,7 +1126,6 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
   }
 
   // Security Notice - always include
-  lines.push("");
   lines.push("## ⚠️ Security Notice");
   lines.push("");
   lines.push("> **Do not commit secrets to the repository or to the live app.**");
@@ -1187,8 +1185,6 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
   const bp = config.blueprintMode;
 
   lines.push(`# ${bpVar(bp, "PROJECT_NAME", config.projectName || "Project")} - AI Agent Instructions`);
-  lines.push("");
-  lines.push("> **Universal AI Configuration** - Compatible with Cursor, Claude Code, GitHub Copilot, and other AI IDEs.");
   lines.push("");
   
   // Project Overview
@@ -1557,7 +1553,6 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
   // Best practices
   lines.push("## Best Practices");
   lines.push("");
-  lines.push("- **Follow existing patterns**: Match the codebase's existing style and conventions");
   lines.push("- **Write clean code**: Prioritize readability and maintainability");
   lines.push("- **Handle errors properly**: Don't ignore errors, handle them appropriately");
   lines.push("- **Consider security**: Review code for potential security vulnerabilities");
@@ -1692,7 +1687,6 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
   }
 
   // Security Notice - always include
-  lines.push("");
   lines.push("## ⚠️ Security Notice");
   lines.push("");
   lines.push("> **Do not commit secrets to the repository or to the live app.**");
@@ -1993,7 +1987,6 @@ function generateAiderConfig(config: WizardConfig, user: UserProfile): string {
   // Best Practices
   lines.push("# ─── Best Practices ───────────────────────────────────────────────────────");
   lines.push("#");
-  lines.push("# - Follow existing patterns: Match the codebase's existing style");
   lines.push("# - Write clean code: Prioritize readability and maintainability");
   lines.push("# - Handle errors properly: Don't ignore errors");
   lines.push("# - Consider security: Review code for vulnerabilities");
@@ -3614,7 +3607,6 @@ function generateVoidConfig(config: WizardConfig, user: UserProfile): string {
   // Best Practices
   rulesParts.push("## Best Practices");
   rulesParts.push("");
-  rulesParts.push("- **Follow existing patterns**: Match the codebase's existing style");
   rulesParts.push("- **Write clean code**: Prioritize readability and maintainability");
   rulesParts.push("- **Handle errors**: Don't ignore errors, handle them appropriately");
   rulesParts.push("- **Security**: Review code for potential vulnerabilities");
