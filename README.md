@@ -103,70 +103,69 @@ Commands are slash commands/workflows you invoke with `/command-name`. LynxPromp
 
 The heart of LynxPrompt — a step-by-step generator that creates AI config files tailored to your project:
 
-- **Auto-detect** — Automatically detects your tech stack, frameworks, and existing configs from your codebase
-- **Smart Defaults** — Pre-filled options based on your project type and detected technologies
-- **Dynamic Sections** — Tech stack, code style, testing, CI/CD, branch strategy, security rules, and more
-- **Multiple Formats** — Export to any supported AI IDE format with one click
-- **Profile Integration** — Optionally include your author info and preferences
-- **Guest Mode** — Use the wizard without signing up (login required to save/share)
+- 🔍 **Auto-detect** — Automatically detects your tech stack, frameworks, and existing configs from your codebase
+- ⚡ **Smart Defaults** — Pre-filled options based on your project type and detected technologies
+- 🧩 **Dynamic Sections** — Tech stack, code style, testing, CI/CD, branch strategy, security rules, and more
+- 🔄 **Multiple Formats** — Export to any supported AI IDE format with one click
+- 👤 **Profile Integration** — Optionally include your author info and preferences
+- 👻 **Guest Mode** — Use the wizard without signing up (login required to save/share)
 
 ### Blueprint Marketplace
 
 Browse, share, and sell AI configurations and commands:
 
-- **Two Types** — AI Configs (rules/instructions) and Commands (slash commands/workflows)
-- **Categories & Tags** — Filter by category, platform, and tags
-- **Search** — Full-text search across all blueprints
-- **Favorites** — Save blueprints to your favorites list
-- **Paid Blueprints** — Sell your blueprints and earn from your expertise
-- **Versioning** — Track changes with changelogs, update published blueprints
-- **Template Variables** — Use `[[VARIABLE]]` placeholders for dynamic inputs
+- 📂 **Two Types** — AI Configs (rules/instructions) and Commands (slash commands/workflows)
+- 🏷️ **Categories & Tags** — Filter by category, platform, and tags
+- 🔎 **Search** — Full-text search across all blueprints
+- ❤️ **Favorites** — Save blueprints to your favorites list
+- 💰 **Paid Blueprints** — Sell your blueprints and earn from your expertise
 
-### Commands & Workflows
+### Blueprints, Commands & Workflows
 
-Slash commands are executable prompts you invoke with `/command-name`:
+Both AI configs and slash commands share powerful features:
 
-- **Marketplace** — Browse and download community commands
-- **Variables** — Like in AI Configs, use `[[VARIABLE]]` placeholders for dynamic inputs
+- 📝 **Template Variables** — Use `[[VARIABLE]]` placeholders for dynamic inputs
+- 📜 **Versioning** — Track changes with changelogs, update published blueprints
+- ⚡ **Commands** — Slash commands are executable prompts you invoke with `/command-name`
 
 ### Teams
 
 Collaborate on AI configurations and commands within your organization:
 
-- **Team Blueprints** — Share blueprints only with team members
-- **Centralized Billing** — Single invoice for the entire team
-- **AI Editing** — AI-assisted blueprint creation and editing
+- 👥 **Team Blueprints** — Share blueprints only with team members
+- 💳 **Centralized Billing** — Single invoice for the entire team
+- 🤖 **AI Editing** — AI-assisted blueprint creation and editing
 
 ### Monorepo Support
 
 First-class support for monorepo architectures:
 
-- **Hierarchy** — Define parent-child relationships between AGENTS.md files
-- **Auto-detect** — CLI detects AGENTS.md files in subfolders and offers bulk hierarchy creation
+- 🌳 **Hierarchy** — Define parent-child relationships between AGENTS.md files
+- 🔍 **Auto-detect** — CLI detects AGENTS.md files in subfolders and offers bulk hierarchy creation
 
 ### API Access
 
 Programmatic access for automation and integrations:
 
-- **Public API** — Fetch blueprints, search, and download via REST API
-- **API Tokens** — Generate tokens for authenticated access
+- 🌐 **Public API** — Fetch blueprints, search, and download via REST API
+- 🔑 **API Tokens** — Generate tokens for authenticated access
 
 ### Seller Payouts
 
 Earn money from your AI expertise:
 
-- **PayPal Integration** — Configure PayPal for receiving payouts
-- **Earnings Dashboard** — Track your sales and earnings
-- **Payout Requests** — Request payouts when you're ready
+- 💸 **PayPal Integration** — Configure PayPal for receiving payouts
+- 📊 **Earnings Dashboard** — Track your sales and earnings
+- 📤 **Payout Requests** — Request payouts when you're ready
 
 ### Privacy-First
 
 Built with privacy in mind:
 
-- **Self-hosted Analytics** — Umami (cookieless, GDPR-compliant)
-- **No Third-party Tracking** — No Google Analytics, no cookies
-- **Gravatar Support** — Optional profile pictures via Gravatar
-- **Turnstile CAPTCHA** — Cloudflare Turnstile for bot protection (no cookies)
+- 📈 **Self-hosted Analytics** — Umami (cookieless, GDPR-compliant)
+- 🚫 **No Third-party Tracking** — No Google Analytics, no cookies
+- 🖼️ **Gravatar Support** — Optional profile pictures via Gravatar
+- 🛡️ **Turnstile CAPTCHA** — Cloudflare Turnstile for bot protection (no cookies)
 
 ### CLI
 
@@ -209,10 +208,10 @@ lynxp login
 ```
 
 CLI features:
-- **Auto-detect** — Scans your project and detects tech stack, frameworks, databases
-- **Hierarchy Detection** — Finds AGENTS.md files in subfolders for monorepo support
-- **Push/Pull** — Sync local configs with your LynxPrompt account
-- **Offline Support** — Generate configs without an account
+- 🔍 **Auto-detect** — Scans your project and detects tech stack, frameworks, databases
+- 🌳 **Hierarchy Detection** — Finds AGENTS.md files in subfolders for monorepo support
+- 🔄 **Push/Pull** — Sync local configs with your LynxPrompt account
+- 📴 **Offline Support** — Generate configs without an account
 
 See [CLI Documentation](https://lynxprompt.com/docs/cli) for all commands.
 
