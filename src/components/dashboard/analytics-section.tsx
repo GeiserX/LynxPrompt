@@ -71,7 +71,7 @@ const PLATFORM_COLORS = [
 export function AnalyticsSection() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeChart, setActiveChart] = useState<ChartType>("downloads");
+  const [activeChart, setActiveChart] = useState<ChartType>("performance");
 
   useEffect(() => {
     fetchAnalytics();
