@@ -13,12 +13,14 @@
 services:
   # ==========================================================================
   # APP DATABASE - System templates, platforms, languages
-  # Critical backups - contains marketplace configuration
+  # Uses Percona PostgreSQL 18 with pg_tde for Transparent Data Encryption
   # ==========================================================================
   postgres-app:
-    image: postgres:18-alpine
+    image: percona/percona-distribution-postgresql:18
     container_name: lynxprompt-postgres-app
     restart: unless-stopped
+    command: >
+      -c shared_preload_libraries=pg_tde
     logging:
       driver: "json-file"
       options:
@@ -28,9 +30,9 @@ services:
       POSTGRES_DB: lynxprompt_app
       POSTGRES_USER: lynxprompt_app
       POSTGRES_PASSWORD: ${POSTGRES_APP_PASSWORD:-dev_app_password_change_me}
-      PGDATA: /data/pgdata
     volumes:
-      - postgres_app_data:/data
+      - postgres_app_data:/data/db
+      - postgres_app_keyring:/keyring
     networks:
       - lynxprompt
     healthcheck:
@@ -49,12 +51,14 @@ services:
 
   # ==========================================================================
   # USER DATABASE - Golden data (users, sessions, projects)
-  # Critical backups - high priority
+  # Uses Percona PostgreSQL 18 with pg_tde for Transparent Data Encryption
   # ==========================================================================
   postgres-users:
-    image: postgres:18-alpine
+    image: percona/percona-distribution-postgresql:18
     container_name: lynxprompt-postgres-users
     restart: unless-stopped
+    command: >
+      -c shared_preload_libraries=pg_tde
     logging:
       driver: "json-file"
       options:
@@ -64,9 +68,9 @@ services:
       POSTGRES_DB: lynxprompt_users
       POSTGRES_USER: lynxprompt_users
       POSTGRES_PASSWORD: ${POSTGRES_USERS_PASSWORD:-dev_users_password_change_me}
-      PGDATA: /data/pgdata
     volumes:
-      - postgres_users_data:/data
+      - postgres_users_data:/data/db
+      - postgres_users_keyring:/keyring
     networks:
       - lynxprompt
     healthcheck:
@@ -285,7 +289,9 @@ services:
 
 volumes:
   postgres_app_data:
+  postgres_app_keyring:
   postgres_users_data:
+  postgres_users_keyring:
   postgres_blog_data:
   postgres_support_data:
   clickhouse_data:
