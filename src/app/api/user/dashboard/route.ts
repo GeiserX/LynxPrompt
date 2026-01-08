@@ -120,12 +120,13 @@ export async function GET() {
             { userId }, // Downloads by user
             {
               templateId: {
+                // Template IDs in downloads are stored WITH prefix (bp_xxx)
                 in: await prismaUsers.userTemplate
                   .findMany({
                     where: { userId },
                     select: { id: true },
                   })
-                  .then((t) => t.map((x) => x.id)),
+                  .then((t) => t.map((x) => `bp_${x.id}`)),
               },
               templateType: "user",
             }, // Downloads of user's templates

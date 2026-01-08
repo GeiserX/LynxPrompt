@@ -48,13 +48,16 @@ export async function GET() {
     const ninetyDaysAgo = new Date();
     ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
 
+    // Build template IDs with prefixes for query
+    const prefixedTemplateIds = userTemplateIds.flatMap((id) => [`bp_${id}`, `usr_${id}`]);
+    
     const downloads = await prismaUsers.templateDownload.findMany({
       where: {
         OR: [
           { userId }, // Downloads by this user
           {
             // Handle both bp_ (current) and usr_ (legacy) prefixes
-            templateId: { in: userTemplateIds.flatMap((id) => [`bp_${id}`, `usr_${id}`]) },
+            templateId: { in: prefixedTemplateIds },
             templateType: "user",
           }, // Downloads of user's templates
         ],
