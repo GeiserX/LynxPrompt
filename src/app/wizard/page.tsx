@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { AiEditPanel } from "@/components/ai-edit-panel";
 import {
@@ -721,9 +721,13 @@ interface WizardDraftSummary {
   platform: string;
 }
 
+// localStorage key for preserving wizard state across auth flow
+const WIZARD_GUEST_STATE_KEY = "lynxprompt_wizard_guest_state";
+
 function WizardPageContent() {
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
   const [previewFiles, setPreviewFiles] = useState<GeneratedFile[]>([]);
@@ -738,6 +742,7 @@ function WizardPageContent() {
   const [existingBlueprintId, setExistingBlueprintId] = useState<string | null>(null);
   const [isSavingBlueprint, setIsSavingBlueprint] = useState(false);
   const [savedBlueprintId, setSavedBlueprintId] = useState<string | null>(null);
+  const [guestStateRestored, setGuestStateRestored] = useState(false);
   
   // Draft state
   const [showDraftModal, setShowDraftModal] = useState(false);
@@ -880,6 +885,81 @@ function WizardPageContent() {
       additionalNotes: "",
     },
   });
+
+  // Save guest wizard state to localStorage before auth redirect
+  const saveGuestStateAndRedirect = (redirectUrl: string) => {
+    const guestState = {
+      config,
+      currentStep,
+      timestamp: Date.now(),
+    };
+    try {
+      localStorage.setItem(WIZARD_GUEST_STATE_KEY, JSON.stringify(guestState));
+    } catch (e) {
+      console.error("Failed to save guest wizard state:", e);
+    }
+    router.push(redirectUrl);
+  };
+
+  // Restore guest state from localStorage on mount (runs once)
+  useEffect(() => {
+    if (guestStateRestored) return;
+    
+    try {
+      const savedState = localStorage.getItem(WIZARD_GUEST_STATE_KEY);
+      if (savedState) {
+        const parsed = JSON.parse(savedState);
+        // Only restore if saved within the last hour
+        if (parsed.timestamp && Date.now() - parsed.timestamp < 60 * 60 * 1000) {
+          if (parsed.config) {
+            setConfig(parsed.config);
+          }
+          if (typeof parsed.currentStep === "number") {
+            setCurrentStep(parsed.currentStep);
+          }
+          console.log("[Wizard] Restored guest state from localStorage");
+        }
+        // Clear the saved state after restoration
+        localStorage.removeItem(WIZARD_GUEST_STATE_KEY);
+      }
+    } catch (e) {
+      console.error("Failed to restore guest wizard state:", e);
+      localStorage.removeItem(WIZARD_GUEST_STATE_KEY);
+    }
+    setGuestStateRestored(true);
+  }, [guestStateRestored]);
+
+  // Auto-save as draft when user becomes authenticated after restoring guest state
+  useEffect(() => {
+    const autoSaveDraft = async () => {
+      if (status !== "authenticated" || !guestStateRestored) return;
+      if (!config.projectName || config.projectName.trim() === "") return;
+      // Only auto-save if we actually have meaningful config (not default)
+      if (config.languages.length === 0 && config.frameworks.length === 0) return;
+      
+      try {
+        const res = await fetch("/api/wizard/drafts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: config.projectName || "Auto-saved from guest session",
+            step: currentStep,
+            config,
+          }),
+        });
+        if (res.ok) {
+          const draft = await res.json();
+          setCurrentDraftId(draft.id);
+          setDraftName(draft.name);
+          console.log("[Wizard] Auto-saved guest configuration as draft");
+        }
+      } catch (error) {
+        console.error("Failed to auto-save draft:", error);
+      }
+    };
+    
+    autoSaveDraft();
+  }, [status, guestStateRestored]);
 
   // Fetch user's drafts
   const fetchDrafts = useCallback(async () => {
@@ -2029,11 +2109,15 @@ ${syncCommands}
               </p>
               
               <div className="mt-6 w-full space-y-3">
-                <Button asChild className="w-full">
-                  <Link href={`/auth/signin?callbackUrl=${encodeURIComponent("/wizard")}`}>
-                    <LogIn className="mr-2 h-5 w-5" />
-                    Sign in
-                  </Link>
+                <Button 
+                  className="w-full"
+                  onClick={() => {
+                    setShowLoginPrompt(false);
+                    saveGuestStateAndRedirect(`/auth/signin?callbackUrl=${encodeURIComponent("/wizard")}`);
+                  }}
+                >
+                  <LogIn className="mr-2 h-5 w-5" />
+                  Sign in
                 </Button>
                 <Button variant="outline" onClick={() => setShowLoginPrompt(false)} className="w-full">
                   Continue as Guest
@@ -2041,7 +2125,7 @@ ${syncCommands}
               </div>
               
               <p className="mt-4 text-xs text-muted-foreground">
-                You can still download your configuration without signing in.
+                Your wizard progress will be saved and restored after sign in.
               </p>
             </div>
           </div>
@@ -2402,11 +2486,14 @@ ${syncCommands}
                   </div>
                   <p className="mt-2 text-sm font-medium">Guest User</p>
                   <p className="text-xs text-muted-foreground">Sign in to save your preferences</p>
-                  <Button variant="outline" size="sm" asChild className="mt-2 w-full">
-                    <Link href={`/auth/signin?callbackUrl=${encodeURIComponent("/wizard")}`}>
-                      <LogIn className="mr-2 h-4 w-4" />
-                      Sign In
-                    </Link>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-2 w-full"
+                    onClick={() => saveGuestStateAndRedirect(`/auth/signin?callbackUrl=${encodeURIComponent("/wizard")}`)}
+                  >
+                    <LogIn className="mr-2 h-4 w-4" />
+                    Sign In
                   </Button>
                 </div>
               )}
