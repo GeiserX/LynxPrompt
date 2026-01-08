@@ -211,12 +211,12 @@ export default function DashboardPage() {
   // My Blueprints search and pagination
   const [blueprintSearch, setBlueprintSearch] = useState("");
   const [blueprintPage, setBlueprintPage] = useState(1);
-  const BLUEPRINTS_PER_PAGE = 10;
+  const BLUEPRINTS_PER_PAGE = 5;
   
   // Favorites search and pagination
   const [favoritesSearch, setFavoritesSearch] = useState("");
   const [favoritesPage, setFavoritesPage] = useState(1);
-  const FAVORITES_PER_PAGE = 10;
+  const FAVORITES_PER_PAGE = 5;
   
   // Hierarchical blueprints toggle
   const [showHierarchical, setShowHierarchical] = useState(false);
