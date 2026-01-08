@@ -18,7 +18,7 @@
 
 ## What is LynxPrompt?
 
-LynxPrompt is a web platform and CLI for generating and sharing **AI IDE configuration files** and **commands (workflows)**. Instead of manually writing `AGENTS.md`, `CLAUDE.md`, or `.github/copilot-instructions.md` for every project, use our wizard or browse community blueprints.
+LynxPrompt is a web platform and CLI for generating and sharing **AI IDE configuration files** and **commands (workflows)**. Instead of manually writing `AGENTS.md`, `CLAUDE.md`, or `.cursor/rules/` for every project, use our wizard or browse community blueprints.
 
 - **AI Configs** — Rules and instructions that define how AI assistants behave in your project
 - **Commands** — Slash commands (`.cursor/commands/`, `.claude/commands/`) that execute specific workflows on demand
@@ -120,22 +120,22 @@ Browse, share, and sell AI configurations and commands:
 - **Favorites** — Save blueprints to your favorites list
 - **Paid Blueprints** — Sell your blueprints and earn from your expertise
 - **Versioning** — Track changes with changelogs, update published blueprints
+- **Template Variables** — Use `[[VARIABLE]]` placeholders for dynamic inputs
 
 ### Commands & Workflows
 
 Slash commands are executable prompts you invoke with `/command-name`:
 
 - **Marketplace** — Browse and download community commands
-- **Variables** — Use `[[VARIABLE]]` placeholders for dynamic inputs
-- **Examples** — Security audits, code reviews, refactoring workflows
+- **Variables** — Like in AI Configs, use `[[VARIABLE]]` placeholders for dynamic inputs
 
-### Teams (PRO)
+### Teams
 
-Collaborate on AI configurations within your organization:
+Collaborate on AI configurations and commands within your organization:
 
-- **Private Blueprints** — Share blueprints only with team members
+- **Team Blueprints** — Share blueprints only with team members
 - **Centralized Billing** — Single invoice for the entire team
-- **AI Editing** — AI-assisted blueprint creation and editing (Teams only)
+- **AI Editing** — AI-assisted blueprint creation and editing
 
 ### Monorepo Support
 
@@ -143,7 +143,6 @@ First-class support for monorepo architectures:
 
 - **Hierarchy** — Define parent-child relationships between AGENTS.md files
 - **Auto-detect** — CLI detects AGENTS.md files in subfolders and offers bulk hierarchy creation
-- **Inheritance** — Child configs inherit from parent with local overrides
 
 ### API Access
 
@@ -151,7 +150,6 @@ Programmatic access for automation and integrations:
 
 - **Public API** — Fetch blueprints, search, and download via REST API
 - **API Tokens** — Generate tokens for authenticated access
-- **Available to All** — API access included in free tier
 
 ### Seller Payouts
 
@@ -172,7 +170,7 @@ Built with privacy in mind:
 
 ### CLI
 
-Local workflow integration — generate configs directly in your terminal:
+Local workflow integration with feature parity to the web platform — generate configs directly in your terminal:
 
 ```bash
 # npm (cross-platform)
