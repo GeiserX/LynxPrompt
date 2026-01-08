@@ -1,0 +1,29 @@
+# LynxPrompt
+
+> Your universal AI config hub
+
+LynxPrompt is a web platform and CLI for generating and sharing AI IDE configuration files (AGENTS.md, .cursor/rules/, CLAUDE.md, etc.) and commands (slash commands/workflows). Instead of manually writing configs for every project, use our wizard or browse community blueprints.
+
+## What LynxPrompt Does
+
+- **AI Configs**: Rules and instructions that define how AI assistants behave in your project
+- **Commands**: Slash commands that execute specific workflows on demand (e.g., /security-audit)
+- **Blueprints**: Shareable, versioned config templates with [[VARIABLE]] placeholders
+
+## Supported Platforms
+
+30+ AI coding assistants including: Cursor, Claude Code, GitHub Copilot, Windsurf, Zed, Aider, Antigravity (Gemini), Cline, Roo Code, Continue.dev, Amazon Q, and more.
+
+## Documentation
+
+- [Getting Started](https://lynxprompt.com/docs/getting-started): Quick start guide
+- [Wizard Docs](https://lynxprompt.com/docs/wizard): Configuration wizard guide
+- [Blueprints Docs](https://lynxprompt.com/docs/blueprints): Blueprint marketplace and features
+- [CLI Docs](https://lynxprompt.com/docs/cli): Command-line interface reference
+- [API Docs](https://lynxprompt.com/docs/api): REST API documentation
+- [Platforms](https://lynxprompt.com/docs/platforms): Supported AI IDEs and tools
+
+## Optional
+
+- [Full Documentation](https://lynxprompt.com/llms-full.txt): Complete documentation for LLMs
+
