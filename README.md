@@ -18,7 +18,10 @@
 
 ## What is LynxPrompt?
 
-LynxPrompt is a web platform and CLI for generating and sharing **AI IDE configuration files**. Instead of manually writing `AGENTS.md`, `CLAUDE.md`, or `.github/copilot-instructions.md` for every project, use our wizard or browse community blueprints.
+LynxPrompt is a web platform and CLI for generating and sharing **AI IDE configuration files** and **commands (workflows)**. Instead of manually writing `AGENTS.md`, `CLAUDE.md`, or `.github/copilot-instructions.md` for every project, use our wizard or browse community blueprints.
+
+- **AI Configs** — Rules and instructions that define how AI assistants behave in your project
+- **Commands** — Slash commands (`.cursor/commands/`, `.claude/commands/`) that execute specific workflows on demand
 
 **🌐 Live at:** [lynxprompt.com](https://lynxprompt.com)
 
@@ -79,20 +82,97 @@ Use `AGENTS.md` as a universal format that works with:
 
 ---
 
+## Supported Commands (Workflows)
+
+Commands are slash commands/workflows you invoke with `/command-name`. LynxPrompt supports creating and sharing commands for:
+
+| Platform | Command Location | Status |
+|----------|------------------|:------:|
+| **Cursor** | `.cursor/commands/` | ✅ |
+| **Claude Code** | `.claude/commands/` | ✅ |
+| **Windsurf** | `.windsurf/workflows/` | ✅ |
+| **GitHub Copilot** | `.github/copilot/prompts/` | ✅ |
+| **Continue.dev** | `.continue/prompts/` | ✅ |
+| **Open Code** | `.opencode/commands/` | ✅ |
+
+---
+
 ## Features
 
-### Web Platform
+### Configuration Wizard
 
-- **Configuration Wizard** — Step-by-step generator with smart defaults
-- **Blueprint Marketplace** — Browse, share, and sell AI configurations
-- **Blueprint Versioning** — Track changes with changelogs
-- **Teams** — Share blueprints privately within your organization
-- **Template Variables** — Dynamic `[[VARIABLE]]` placeholders
-- **API Access** — Programmatic access for all users
+The heart of LynxPrompt — a step-by-step generator that creates AI config files tailored to your project:
 
-### CLI (Command Line Interface)
+- **Auto-detect** — Automatically detects your tech stack, frameworks, and existing configs from your codebase
+- **Smart Defaults** — Pre-filled options based on your project type and detected technologies
+- **Dynamic Sections** — Tech stack, code style, testing, CI/CD, branch strategy, security rules, and more
+- **Multiple Formats** — Export to any supported AI IDE format with one click
+- **Profile Integration** — Optionally include your author info and preferences
+- **Guest Mode** — Use the wizard without signing up (login required to save/share)
 
-Install the CLI for local workflow integration:
+### Blueprint Marketplace
+
+Browse, share, and sell AI configurations and commands:
+
+- **Two Types** — AI Configs (rules/instructions) and Commands (slash commands/workflows)
+- **Categories & Tags** — Filter by category, platform, and tags
+- **Search** — Full-text search across all blueprints
+- **Favorites** — Save blueprints to your favorites list
+- **Paid Blueprints** — Sell your blueprints and earn from your expertise
+- **Versioning** — Track changes with changelogs, update published blueprints
+
+### Commands & Workflows
+
+Slash commands are executable prompts you invoke with `/command-name`:
+
+- **Marketplace** — Browse and download community commands
+- **Variables** — Use `[[VARIABLE]]` placeholders for dynamic inputs
+- **Examples** — Security audits, code reviews, refactoring workflows
+
+### Teams (PRO)
+
+Collaborate on AI configurations within your organization:
+
+- **Private Blueprints** — Share blueprints only with team members
+- **Centralized Billing** — Single invoice for the entire team
+- **AI Editing** — AI-assisted blueprint creation and editing (Teams only)
+
+### Monorepo Support
+
+First-class support for monorepo architectures:
+
+- **Hierarchy** — Define parent-child relationships between AGENTS.md files
+- **Auto-detect** — CLI detects AGENTS.md files in subfolders and offers bulk hierarchy creation
+- **Inheritance** — Child configs inherit from parent with local overrides
+
+### API Access
+
+Programmatic access for automation and integrations:
+
+- **Public API** — Fetch blueprints, search, and download via REST API
+- **API Tokens** — Generate tokens for authenticated access
+- **Available to All** — API access included in free tier
+
+### Seller Payouts
+
+Earn money from your AI expertise:
+
+- **PayPal Integration** — Configure PayPal for receiving payouts
+- **Earnings Dashboard** — Track your sales and earnings
+- **Payout Requests** — Request payouts when you're ready
+
+### Privacy-First
+
+Built with privacy in mind:
+
+- **Self-hosted Analytics** — Umami (cookieless, GDPR-compliant)
+- **No Third-party Tracking** — No Google Analytics, no cookies
+- **Gravatar Support** — Optional profile pictures via Gravatar
+- **Turnstile CAPTCHA** — Cloudflare Turnstile for bot protection (no cookies)
+
+### CLI
+
+Local workflow integration — generate configs directly in your terminal:
 
 ```bash
 # npm (cross-platform)
@@ -129,6 +209,12 @@ lynxp status
 # Login to sync with cloud
 lynxp login
 ```
+
+CLI features:
+- **Auto-detect** — Scans your project and detects tech stack, frameworks, databases
+- **Hierarchy Detection** — Finds AGENTS.md files in subfolders for monorepo support
+- **Push/Pull** — Sync local configs with your LynxPrompt account
+- **Offline Support** — Generate configs without an account
 
 See [CLI Documentation](https://lynxprompt.com/docs/cli) for all commands.
 
@@ -168,60 +254,6 @@ curl -H "Authorization: Bearer lp_xxxxx" \
 ```
 
 Generate API tokens at [lynxprompt.com/settings?tab=api-tokens](https://lynxprompt.com/settings?tab=api-tokens)
-
----
-
-## Self-Hosting
-
-### Prerequisites
-
-- Node.js 20+
-- PostgreSQL 15+
-
-### Installation
-
-```bash
-git clone https://github.com/GeiserX/LynxPrompt.git
-cd LynxPrompt
-
-npm install
-cp env.example .env
-
-npm run db:generate
-npm run db:push
-npm run db:seed
-
-npm run dev
-```
-
-### Docker
-
-```bash
-docker-compose up -d
-```
-
----
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| Framework | Next.js 15, React 19 |
-| Language | TypeScript |
-| Database | PostgreSQL (Prisma ORM) |
-| Auth | NextAuth.js (GitHub, Google, Magic Link, Passkeys) |
-| Payments | Stripe |
-| Analytics | ClickHouse, Umami (self-hosted, cookieless) |
-| Styling | Tailwind CSS, shadcn/ui |
-
----
-
-## Pricing
-
-| Tier | Price | Features |
-|------|-------|----------|
-| **Users** | €0 | Full wizard access, browse & download blueprints, sell blueprints, API access |
-| **Teams** | €30/seat/mo | Everything in Users + AI editing, team blueprints, SSO, centralized billing |
 
 ---
 
