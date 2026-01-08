@@ -6,7 +6,7 @@
 
 # LynxPrompt
 
-> **Generate AI IDE configuration files in clicks, not keystrokes.**
+> **Your universal AI config hub**
 
 [![Website](https://img.shields.io/badge/🌐_Website-lynxprompt.com-6366f1?style=flat-square)](https://lynxprompt.com)
 [![npm](https://img.shields.io/npm/v/lynxprompt?style=flat-square&logo=npm&label=CLI)](https://www.npmjs.com/package/lynxprompt)
