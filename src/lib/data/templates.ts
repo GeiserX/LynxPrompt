@@ -37,6 +37,8 @@ export interface TemplateData {
   currency?: string;
   // Visibility
   isPublic?: boolean;
+  // Blueprint type (for command detection)
+  type?: string;
 }
 
 export interface CategoryData {
@@ -696,6 +698,7 @@ export async function getTemplateById(
       price: template.price,
       currency: template.currency || "EUR",
       isPublic: template.isPublic,
+      type: template.type,
     };
   }
 
