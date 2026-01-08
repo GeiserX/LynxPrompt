@@ -99,7 +99,7 @@ Commands are slash commands/workflows you invoke with `/command-name`. LynxPromp
 
 ## Features
 
-### Configuration Wizard
+### [Configuration Wizard](https://lynxprompt.com/docs/wizard)
 
 The heart of LynxPrompt — a step-by-step generator that creates AI config files tailored to your project:
 
@@ -110,7 +110,7 @@ The heart of LynxPrompt — a step-by-step generator that creates AI config file
 - 🔄 **Multiple Formats** — Export to any supported AI IDE format with one click
 - 👻 **Guest Mode** — Use the wizard without signing up (login required to save/share)
 
-### Blueprint Marketplace
+### [Blueprint Marketplace](https://lynxprompt.com/docs/marketplace)
 
 Browse, share, and sell AI configurations and commands:
 
@@ -121,7 +121,7 @@ Browse, share, and sell AI configurations and commands:
 - 💰 **Paid Blueprints** — Sell your blueprints and earn from your expertise
 - 👤 **Public Profiles** — Author pages with social links and all their blueprints
 
-### Blueprints, Commands & Workflows
+### [Blueprints, Commands & Workflows](https://lynxprompt.com/docs/blueprints)
 
 Both AI configs and slash commands share powerful features:
 
@@ -137,21 +137,21 @@ Collaborate on AI configurations and commands within your organization:
 - 💳 **Centralized Billing** — Single invoice for the entire team
 - 🤖 **AI Editing** — AI-assisted blueprint creation and editing
 
-### Monorepo Support
+### [Monorepo Support](https://lynxprompt.com/docs/blueprints/hierarchy)
 
 First-class support for monorepo architectures:
 
 - 🌳 **Hierarchy** — Define parent-child relationships between AGENTS.md files
 - 🔍 **Auto-detect** — CLI detects AGENTS.md files in subfolders and offers bulk hierarchy creation
 
-### API Access
+### [API Access](https://lynxprompt.com/docs/api)
 
 Programmatic access for automation and integrations:
 
 - 🌐 **Public API** — Fetch blueprints, search, and download via REST API
 - 🔑 **API Tokens** — Generate tokens for authenticated access
 
-### Seller Payouts
+### [Seller Payouts](https://lynxprompt.com/docs/marketplace/payouts)
 
 Earn money from your AI expertise:
 
@@ -168,7 +168,7 @@ Built with privacy in mind:
 - 🖼️ **Gravatar Support** — Optional profile pictures via Gravatar
 - 🛡️ **Turnstile CAPTCHA** — Cloudflare Turnstile for bot protection (no cookies)
 
-### Authentication
+### [Authentication](https://lynxprompt.com/docs/getting-started/account)
 
 Multiple ways to sign in:
 
@@ -177,7 +177,7 @@ Multiple ways to sign in:
 - 🔑 **Passkeys** — WebAuthn biometric/hardware key authentication
 - 🔗 **Linked Accounts** — Connect multiple providers to one account
 
-### CLI
+### [CLI](https://lynxprompt.com/docs/cli)
 
 Local workflow integration with feature parity to the web platform:
 
@@ -186,20 +186,20 @@ Local workflow integration with feature parity to the web platform:
 - 📤 **`lynxp push`** — Upload local configs to your account
 - 📋 **`lynxp status`** — Check your linked configs and hierarchy
 - 📂 **`lynxp import`** — Import existing AGENTS.md files into your account
-- 🔄 **`lynxp convert`** — Convert between formats (AGENTS.md ↔ .cursor/rules/)
+- 🔄 **`lynxp convert`** — Convert between formats (e.g. AGENTS.md ↔ .cursor/rules/)
 - 🔍 **`lynxp analyze`** — Analyze a project and output detected stack
 - 🌳 **`lynxp hierarchy`** — Manage monorepo parent-child relationships
 - 📴 **Offline Support** — Generate configs without an account
 
-Install via npm, Homebrew, or Chocolatey. See [CLI Documentation](https://lynxprompt.com/docs/cli).
+Install via npm, Homebrew, or Chocolatey.
 
-### User Preferences
+### Personalization & Support
 
-Personalize your LynxPrompt experience:
+Tailor LynxPrompt to your workflow:
 
 - ⚙️ **Saved Preferences** — Store wizard defaults (tech stack, code style) for future sessions
 - 📝 **Saved Variables** — Remember your template variable values across blueprints
-- 📚 **Blog & Support Forum** — Community resources, guides, and help
+- 📚 **[Blog & Support Forum](https://lynxprompt.com/support)** — Community resources, guides, and help
 
 ---
 
@@ -223,8 +223,8 @@ choco install lynxprompt           # Chocolatey (Windows)
 # Generate config interactively
 lynxp wizard
 
-# Or quick mode with defaults
-lynxp wizard -y
+# Or download a blueprint from marketplace
+lynxp pull bp_abc123
 ```
 
 ### Option 3: Use the API
