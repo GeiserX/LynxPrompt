@@ -103,11 +103,11 @@ Commands are slash commands/workflows you invoke with `/command-name`. LynxPromp
 
 The heart of LynxPrompt — a step-by-step generator that creates AI config files tailored to your project:
 
-- 🔍 **Auto-detect** — Automatically detects your tech stack, frameworks, and existing configs from your codebase
-- ⚡ **Smart Defaults** — Pre-filled options based on your project type and detected technologies
+- 🔍 **Auto-detect** — Detects your tech stack, frameworks, databases, and repo info from GitHub/GitLab URLs
 - 🧩 **Dynamic Sections** — Tech stack, code style, testing, CI/CD, branch strategy, security rules, and more
+- ⚠️ **Sensitive Data Detection** — Warns about potential secrets or credentials before you share
+- 💾 **Wizard Drafts** — Auto-saves your progress so you can continue later
 - 🔄 **Multiple Formats** — Export to any supported AI IDE format with one click
-- 👤 **Profile Integration** — Optionally include your author info and preferences
 - 👻 **Guest Mode** — Use the wizard without signing up (login required to save/share)
 
 ### Blueprint Marketplace
@@ -119,6 +119,7 @@ Browse, share, and sell AI configurations and commands:
 - 🔎 **Search** — Full-text search across all blueprints
 - ❤️ **Favorites** — Save blueprints to your favorites list
 - 💰 **Paid Blueprints** — Sell your blueprints and earn from your expertise
+- 👤 **Public Profiles** — Author pages with social links and all their blueprints
 
 ### Blueprints, Commands & Workflows
 
@@ -126,7 +127,7 @@ Both AI configs and slash commands share powerful features:
 
 - 📝 **Template Variables** — Use `[[VARIABLE]]` placeholders for dynamic inputs
 - 📜 **Versioning** — Track changes with changelogs, update published blueprints
-- ⚡ **Commands** — Slash commands are executable prompts you invoke with `/command-name`
+- 🔄 **Multi-format Export** — Download for any supported IDE or transform to a different format
 
 ### Teams
 
@@ -167,53 +168,38 @@ Built with privacy in mind:
 - 🖼️ **Gravatar Support** — Optional profile pictures via Gravatar
 - 🛡️ **Turnstile CAPTCHA** — Cloudflare Turnstile for bot protection (no cookies)
 
+### Authentication
+
+Multiple ways to sign in:
+
+- 🔐 **OAuth Providers** — GitHub, Google
+- ✉️ **Magic Link** — Passwordless email login
+- 🔑 **Passkeys** — WebAuthn biometric/hardware key authentication
+- 🔗 **Linked Accounts** — Connect multiple providers to one account
+
 ### CLI
 
-Local workflow integration with feature parity to the web platform — generate configs directly in your terminal:
+Local workflow integration with feature parity to the web platform:
 
-```bash
-# npm (cross-platform)
-npm install -g lynxprompt
-
-# Homebrew (macOS)
-brew install GeiserX/lynxprompt/lynxprompt
-
-# Chocolatey (Windows)
-choco install lynxprompt
-
-# Or use with npx
-npx lynxprompt
-```
-
-Quick commands:
-
-```bash
-# Generate an AI config file (recommended)
-lynxp wizard
-
-# Quick generation with defaults (creates AGENTS.md)
-lynxp wizard -y
-
-# Generate for specific format
-lynxp wizard -f cursor
-
-# Download a blueprint from marketplace
-lynxp pull bp_abc123
-
-# Check your config status
-lynxp status
-
-# Login to sync with cloud
-lynxp login
-```
-
-CLI features:
-- 🔍 **Auto-detect** — Scans your project and detects tech stack, frameworks, databases
-- 🌳 **Hierarchy Detection** — Finds AGENTS.md files in subfolders for monorepo support
-- 🔄 **Push/Pull** — Sync local configs with your LynxPrompt account
+- 🧙 **`lynxp wizard`** — Interactive config generator with auto-detection
+- 📥 **`lynxp pull`** — Download blueprints from the marketplace
+- 📤 **`lynxp push`** — Upload local configs to your account
+- 📋 **`lynxp status`** — Check your linked configs and hierarchy
+- 📂 **`lynxp import`** — Import existing AGENTS.md files into your account
+- 🔄 **`lynxp convert`** — Convert between formats (AGENTS.md ↔ .cursor/rules/)
+- 🔍 **`lynxp analyze`** — Analyze a project and output detected stack
+- 🌳 **`lynxp hierarchy`** — Manage monorepo parent-child relationships
 - 📴 **Offline Support** — Generate configs without an account
 
-See [CLI Documentation](https://lynxprompt.com/docs/cli) for all commands.
+Install via npm, Homebrew, or Chocolatey. See [CLI Documentation](https://lynxprompt.com/docs/cli).
+
+### User Preferences
+
+Personalize your LynxPrompt experience:
+
+- ⚙️ **Saved Preferences** — Store wizard defaults (tech stack, code style) for future sessions
+- 📝 **Saved Variables** — Remember your template variable values across blueprints
+- 📚 **Blog & Support Forum** — Community resources, guides, and help
 
 ---
 
@@ -229,8 +215,10 @@ See [CLI Documentation](https://lynxprompt.com/docs/cli) for all commands.
 ### Option 2: Use the CLI
 
 ```bash
-# Install
-npm install -g lynxprompt
+# Install (pick one)
+npm install -g lynxprompt          # npm (cross-platform)
+brew install GeiserX/lynxprompt/lynxprompt  # Homebrew (macOS)
+choco install lynxprompt           # Chocolatey (Windows)
 
 # Generate config interactively
 lynxp wizard
