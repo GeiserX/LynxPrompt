@@ -18,11 +18,13 @@ import { Footer } from "@/components/footer";
 export const metadata: Metadata = {
   title: "Security",
   description:
-    "LynxPrompt Security practices. Learn how we protect your data with EU hosting, encryption, secure authentication, and privacy-first infrastructure.",
+    "LynxPrompt Security practices. Learn how we protect your data with EU hosting, encryption at rest and in transit, secure authentication, and privacy-first infrastructure.",
   keywords: [
     "security",
     "data protection",
     "encryption",
+    "encryption at rest",
+    "TDE",
     "GDPR",
     "EU hosting",
     "LynxPrompt security",
@@ -66,7 +68,7 @@ export default function SecurityPage() {
         <div className="container mx-auto px-4 py-12 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl">
             {/* Trust Summary */}
-            <div className="mb-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mb-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className="rounded-lg border bg-card p-4 text-center">
                 <Globe className="mx-auto h-8 w-8 text-primary" />
                 <p className="mt-2 font-medium">EU Data Hosting</p>
@@ -79,6 +81,13 @@ export default function SecurityPage() {
                 <p className="mt-2 font-medium">Encrypted in Transit</p>
                 <p className="text-sm text-muted-foreground">
                   TLS 1.3 encryption
+                </p>
+              </div>
+              <div className="rounded-lg border bg-card p-4 text-center">
+                <Database className="mx-auto h-8 w-8 text-primary" />
+                <p className="mt-2 font-medium">Encrypted at Rest</p>
+                <p className="text-sm text-muted-foreground">
+                  Database-level TDE
                 </p>
               </div>
               <div className="rounded-lg border bg-card p-4 text-center">
@@ -163,6 +172,20 @@ export default function SecurityPage() {
                       version of the Transport Layer Security protocol. We
                       enforce HTTPS on all connections and use HSTS
                       (HTTP Strict Transport Security) headers.
+                    </p>
+                  </div>
+                  <div className="rounded-lg border p-4">
+                    <h3 className="flex items-center gap-2 font-medium text-foreground">
+                      <Database className="h-4 w-4" />
+                      Encryption at Rest
+                    </h3>
+                    <p className="mt-1 text-sm">
+                      User data is encrypted at rest using Transparent Data
+                      Encryption (TDE) at the database level. This means your
+                      account information, sessions, API tokens, and other
+                      sensitive data are encrypted on disk using AES-256
+                      encryption, protecting against unauthorized access to
+                      physical storage or database files.
                     </p>
                   </div>
                   <div className="rounded-lg border p-4">
