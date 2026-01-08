@@ -129,7 +129,7 @@ Both AI configs and slash commands share powerful features:
 - 📜 **Versioning** — Track changes with changelogs, update published blueprints
 - 🔄 **Multi-format Export** — Download for any supported IDE or transform to a different format
 
-### Teams
+### [Teams](https://lynxprompt.com/docs/marketplace/pricing)
 
 Collaborate on AI configurations and commands within your organization:
 
@@ -159,7 +159,7 @@ Earn money from your AI expertise:
 - 📊 **Earnings Dashboard** — Track your sales and earnings
 - 📤 **Payout Requests** — Request payouts when you're ready
 
-### Privacy-First
+### [Privacy-First](https://lynxprompt.com/privacy)
 
 Built with privacy in mind:
 
@@ -193,7 +193,7 @@ Local workflow integration with feature parity to the web platform:
 
 Install via npm, Homebrew, or Chocolatey.
 
-### Personalization & Support
+### [Personalization & Support](https://lynxprompt.com/docs/faq/support)
 
 Tailor LynxPrompt to your workflow:
 
