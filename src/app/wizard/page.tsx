@@ -1596,7 +1596,7 @@ function WizardPageContent() {
 
   // State for login prompt modal
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-  const [loginPromptAction, setLoginPromptAction] = useState<"save" | "share" | "draft">("save");
+  const [loginPromptAction, setLoginPromptAction] = useState<"save" | "share" | "draft" | "download">("save");
 
   // Generate preview when entering the generate step (regardless of how user got there)
   // Works for both logged-in and guest users
@@ -1819,6 +1819,13 @@ function WizardPageContent() {
     
     if (unfilledWithoutDefaults.length > 0) {
       setShowVariableModal(true);
+      return;
+    }
+    
+    // If guest user, show a prompt offering to sign in first to save their work
+    if (!isLoggedIn) {
+      setLoginPromptAction("download");
+      setShowLoginPrompt(true);
       return;
     }
     
@@ -2082,7 +2089,7 @@ ${syncCommands}
 
   return (
     <div className="flex min-h-screen flex-col bg-muted/30">
-      {/* Login Required Modal for Save/Share */}
+      {/* Login Required Modal for Save/Share/Download */}
       {showLoginPrompt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="relative mx-4 w-full max-w-md rounded-2xl bg-background p-6 shadow-2xl">
@@ -2096,12 +2103,26 @@ ${syncCommands}
             
             <div className="flex flex-col items-center text-center">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                <Lock className="h-8 w-8 text-primary" />
+                {loginPromptAction === "download" ? (
+                  <Download className="h-8 w-8 text-primary" />
+                ) : (
+                  <Lock className="h-8 w-8 text-primary" />
+                )}
               </div>
               
-              <h2 className="mt-4 text-xl font-bold">Sign in to {loginPromptAction === "save" ? "Save" : loginPromptAction === "share" ? "Share" : "Save Drafts"}</h2>
+              <h2 className="mt-4 text-xl font-bold">
+                {loginPromptAction === "download" 
+                  ? "Save Your Configuration?" 
+                  : loginPromptAction === "save" 
+                  ? "Sign in to Save" 
+                  : loginPromptAction === "share" 
+                  ? "Sign in to Share" 
+                  : "Sign in to Save Drafts"}
+              </h2>
               <p className="mt-2 text-sm text-muted-foreground">
-                {loginPromptAction === "draft" 
+                {loginPromptAction === "download"
+                  ? "Sign in to save your configuration as a reusable blueprint. You can download now or sign in first to keep your work."
+                  : loginPromptAction === "draft" 
                   ? "Create an account or sign in to save your wizard progress and continue later."
                   : loginPromptAction === "share"
                   ? "Create an account or sign in to save your configuration as a reusable blueprint that you can share with others."
@@ -2117,15 +2138,34 @@ ${syncCommands}
                   }}
                 >
                   <LogIn className="mr-2 h-5 w-5" />
-                  Sign in
+                  Sign in {loginPromptAction === "download" ? "& Save" : ""}
                 </Button>
-                <Button variant="outline" onClick={() => setShowLoginPrompt(false)} className="w-full">
-                  Continue as Guest
+                <Button 
+                  variant="outline" 
+                  onClick={async () => {
+                    setShowLoginPrompt(false);
+                    if (loginPromptAction === "download") {
+                      // Proceed with download without signing in
+                      await handleDownload();
+                    }
+                  }} 
+                  className="w-full"
+                >
+                  {loginPromptAction === "download" ? (
+                    <>
+                      <Download className="mr-2 h-5 w-5" />
+                      Download without Signing in
+                    </>
+                  ) : (
+                    "Continue as Guest"
+                  )}
                 </Button>
               </div>
               
               <p className="mt-4 text-xs text-muted-foreground">
-                Your wizard progress will be saved and restored after sign in.
+                {loginPromptAction === "download"
+                  ? "Your configuration will be ready to download after signing in."
+                  : "Your wizard progress will be saved and restored after sign in."}
               </p>
             </div>
           </div>
