@@ -62,14 +62,21 @@ export interface GenerateOptions {
   extraNotes?: string;
   // Security configuration (FREE tier)
   security?: {
-    authProviders?: string[];      // Login providers (Google, GitHub, etc.)
-    secretsManagement?: string[];  // Secrets management strategies
-    securityTooling?: string[];    // Security scanning tools (includes dependabot/renovate)
-    authPatterns?: string[];       // Authentication patterns
-    dataHandling?: string[];       // Data handling policies
-    compliance?: string[];         // Compliance standards (GDPR, HIPAA, etc.)
-    analytics?: string[];          // Analytics tools
-    additionalNotes?: string;      // Custom security notes
+    authProviders?: string[];          // Login providers (Google, GitHub, etc.)
+    authProvidersOther?: string;       // Custom auth provider description
+    secretsManagement?: string[];      // Secrets management strategies
+    secretsManagementOther?: string;   // Custom secrets management description
+    securityTooling?: string[];        // Security scanning tools (includes dependabot/renovate)
+    securityToolingOther?: string;     // Custom security tooling description
+    authPatterns?: string[];           // Authentication patterns
+    authPatternsOther?: string;        // Custom auth pattern description
+    dataHandling?: string[];           // Data handling policies
+    dataHandlingOther?: string;        // Custom data handling description
+    compliance?: string[];             // Compliance standards (GDPR, HIPAA, etc.)
+    complianceOther?: string;          // Custom compliance description
+    analytics?: string[];              // Analytics tools
+    analyticsOther?: string;           // Custom analytics description
+    additionalNotes?: string;          // Custom security notes
   };
   // Versioning (conditional on semver)
   versionTagFormat?: string;       // v_prefix, no_prefix, package_prefix, etc.
@@ -1315,7 +1322,11 @@ function generateFileContent(options: GenerateOptions, platform: string): string
           ldap: "LDAP/Active Directory",
         };
         for (const p of security.authProviders) {
-          sections.push(`- ${authProviderLabels[p] || p}`);
+          if (p === "other" && security.authProvidersOther) {
+            sections.push(`- Other: ${security.authProvidersOther}`);
+          } else {
+            sections.push(`- ${authProviderLabels[p] || p}`);
+          }
         }
         sections.push("");
       }
@@ -1345,7 +1356,11 @@ function generateFileContent(options: GenerateOptions, platform: string): string
           berglas: "Berglas",
         };
         for (const s of security.secretsManagement) {
-          sections.push(`- ${secretsLabels[s] || s}`);
+          if (s === "other" && security.secretsManagementOther) {
+            sections.push(`- Other: ${security.secretsManagementOther}`);
+          } else {
+            sections.push(`- ${secretsLabels[s] || s}`);
+          }
         }
         sections.push("");
       }
@@ -1383,7 +1398,11 @@ function generateFileContent(options: GenerateOptions, platform: string): string
           fossa: "FOSSA",
         };
         for (const t of security.securityTooling) {
-          sections.push(`- ${toolingLabels[t] || t}`);
+          if (t === "other" && security.securityToolingOther) {
+            sections.push(`- Other: ${security.securityToolingOther}`);
+          } else {
+            sections.push(`- ${toolingLabels[t] || t}`);
+          }
         }
         sections.push("");
       }
@@ -1415,7 +1434,11 @@ function generateFileContent(options: GenerateOptions, platform: string): string
           workos: "WorkOS",
         };
         for (const a of security.authPatterns) {
-          sections.push(`- ${authLabels[a] || a}`);
+          if (a === "other" && security.authPatternsOther) {
+            sections.push(`- Other: ${security.authPatternsOther}`);
+          } else {
+            sections.push(`- ${authLabels[a] || a}`);
+          }
         }
         sections.push("");
       }
@@ -1446,7 +1469,11 @@ function generateFileContent(options: GenerateOptions, platform: string): string
           dlp: "DLP (Data Loss Prevention)",
         };
         for (const d of security.dataHandling) {
-          sections.push(`- ${dataLabels[d] || d}`);
+          if (d === "other" && security.dataHandlingOther) {
+            sections.push(`- Other: ${security.dataHandlingOther}`);
+          } else {
+            sections.push(`- ${dataLabels[d] || d}`);
+          }
         }
         sections.push("");
       }
@@ -1466,7 +1493,11 @@ function generateFileContent(options: GenerateOptions, platform: string): string
           none: "No specific requirements",
         };
         for (const c of security.compliance) {
-          sections.push(`- ${complianceLabels[c] || c}`);
+          if (c === "other" && security.complianceOther) {
+            sections.push(`- Other: ${security.complianceOther}`);
+          } else {
+            sections.push(`- ${complianceLabels[c] || c}`);
+          }
         }
         sections.push("");
       }
@@ -1492,7 +1523,11 @@ function generateFileContent(options: GenerateOptions, platform: string): string
           countly: "Countly",
         };
         for (const a of security.analytics) {
-          sections.push(`- ${analyticsLabels[a] || a}`);
+          if (a === "other" && security.analyticsOther) {
+            sections.push(`- Other: ${security.analyticsOther}`);
+          } else {
+            sections.push(`- ${analyticsLabels[a] || a}`);
+          }
         }
         sections.push("");
       }

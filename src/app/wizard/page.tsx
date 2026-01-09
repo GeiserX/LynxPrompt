@@ -703,12 +703,19 @@ type WizardConfig = {
 // Security configuration (FREE tier)
 type SecurityConfig = {
   authProviders: string[];
+  authProvidersOther: string;
   secretsManagement: string[];
+  secretsManagementOther: string;
   securityTooling: string[];
+  securityToolingOther: string;
   authPatterns: string[];
+  authPatternsOther: string;
   dataHandling: string[];
+  dataHandlingOther: string;
   compliance: string[];
+  complianceOther: string;
   analytics: string[];
+  analyticsOther: string;
   additionalNotes: string;
 };
 
@@ -883,12 +890,19 @@ function WizardPageContent() {
     // Security configuration (FREE tier)
     security: {
       authProviders: [],
+      authProvidersOther: "",
       secretsManagement: ["env_vars"],  // Default to environment variables
+      secretsManagementOther: "",
       securityTooling: ["dependabot", "renovate"],  // Default recommended tools
+      securityToolingOther: "",
       authPatterns: [],
+      authPatternsOther: "",
       dataHandling: ["encryption_at_rest", "encryption_in_transit"],  // Default recommended
+      dataHandlingOther: "",
       compliance: [],
+      complianceOther: "",
       analytics: [],
+      analyticsOther: "",
       additionalNotes: "",
     },
   });
@@ -4781,35 +4795,104 @@ function StepSecurity({
   const [complianceSearch, setComplianceSearch] = useState("");
   const [analyticsSearch, setAnalyticsSearch] = useState("");
 
-  // Filter functions
-  const filteredAuthProviders = AUTH_PROVIDERS_OPTIONS.filter(opt =>
-    opt.label.toLowerCase().includes(authProvidersSearch.toLowerCase()) ||
-    opt.description.toLowerCase().includes(authProvidersSearch.toLowerCase())
-  );
-  const filteredSecrets = SECRETS_MANAGEMENT_OPTIONS.filter(opt =>
-    opt.label.toLowerCase().includes(secretsSearch.toLowerCase()) ||
-    opt.description.toLowerCase().includes(secretsSearch.toLowerCase())
-  );
-  const filteredTooling = SECURITY_TOOLING_OPTIONS.filter(opt =>
-    opt.label.toLowerCase().includes(toolingSearch.toLowerCase()) ||
-    opt.description.toLowerCase().includes(toolingSearch.toLowerCase())
-  );
-  const filteredAuth = AUTH_PATTERNS_OPTIONS.filter(opt =>
-    opt.label.toLowerCase().includes(authSearch.toLowerCase()) ||
-    opt.description.toLowerCase().includes(authSearch.toLowerCase())
-  );
-  const filteredData = DATA_HANDLING_OPTIONS.filter(opt =>
-    opt.label.toLowerCase().includes(dataSearch.toLowerCase()) ||
-    opt.description.toLowerCase().includes(dataSearch.toLowerCase())
-  );
-  const filteredCompliance = COMPLIANCE_OPTIONS.filter(opt =>
-    opt.label.toLowerCase().includes(complianceSearch.toLowerCase()) ||
-    opt.description.toLowerCase().includes(complianceSearch.toLowerCase())
-  );
-  const filteredAnalytics = ANALYTICS_OPTIONS.filter(opt =>
-    opt.label.toLowerCase().includes(analyticsSearch.toLowerCase()) ||
-    opt.description.toLowerCase().includes(analyticsSearch.toLowerCase())
-  );
+  // Filter and sort functions - selected items appear first
+  const filteredAuthProviders = useMemo(() => {
+    const filtered = AUTH_PROVIDERS_OPTIONS.filter(opt =>
+      opt.label.toLowerCase().includes(authProvidersSearch.toLowerCase()) ||
+      opt.description.toLowerCase().includes(authProvidersSearch.toLowerCase())
+    );
+    return [...filtered].sort((a, b) => {
+      const aSelected = config.authProviders.includes(a.id);
+      const bSelected = config.authProviders.includes(b.id);
+      if (aSelected && !bSelected) return -1;
+      if (!aSelected && bSelected) return 1;
+      return 0;
+    });
+  }, [authProvidersSearch, config.authProviders]);
+
+  const filteredSecrets = useMemo(() => {
+    const filtered = SECRETS_MANAGEMENT_OPTIONS.filter(opt =>
+      opt.label.toLowerCase().includes(secretsSearch.toLowerCase()) ||
+      opt.description.toLowerCase().includes(secretsSearch.toLowerCase())
+    );
+    return [...filtered].sort((a, b) => {
+      const aSelected = config.secretsManagement.includes(a.id);
+      const bSelected = config.secretsManagement.includes(b.id);
+      if (aSelected && !bSelected) return -1;
+      if (!aSelected && bSelected) return 1;
+      return 0;
+    });
+  }, [secretsSearch, config.secretsManagement]);
+
+  const filteredTooling = useMemo(() => {
+    const filtered = SECURITY_TOOLING_OPTIONS.filter(opt =>
+      opt.label.toLowerCase().includes(toolingSearch.toLowerCase()) ||
+      opt.description.toLowerCase().includes(toolingSearch.toLowerCase())
+    );
+    return [...filtered].sort((a, b) => {
+      const aSelected = config.securityTooling.includes(a.id);
+      const bSelected = config.securityTooling.includes(b.id);
+      if (aSelected && !bSelected) return -1;
+      if (!aSelected && bSelected) return 1;
+      return 0;
+    });
+  }, [toolingSearch, config.securityTooling]);
+
+  const filteredAuth = useMemo(() => {
+    const filtered = AUTH_PATTERNS_OPTIONS.filter(opt =>
+      opt.label.toLowerCase().includes(authSearch.toLowerCase()) ||
+      opt.description.toLowerCase().includes(authSearch.toLowerCase())
+    );
+    return [...filtered].sort((a, b) => {
+      const aSelected = config.authPatterns.includes(a.id);
+      const bSelected = config.authPatterns.includes(b.id);
+      if (aSelected && !bSelected) return -1;
+      if (!aSelected && bSelected) return 1;
+      return 0;
+    });
+  }, [authSearch, config.authPatterns]);
+
+  const filteredData = useMemo(() => {
+    const filtered = DATA_HANDLING_OPTIONS.filter(opt =>
+      opt.label.toLowerCase().includes(dataSearch.toLowerCase()) ||
+      opt.description.toLowerCase().includes(dataSearch.toLowerCase())
+    );
+    return [...filtered].sort((a, b) => {
+      const aSelected = config.dataHandling.includes(a.id);
+      const bSelected = config.dataHandling.includes(b.id);
+      if (aSelected && !bSelected) return -1;
+      if (!aSelected && bSelected) return 1;
+      return 0;
+    });
+  }, [dataSearch, config.dataHandling]);
+
+  const filteredCompliance = useMemo(() => {
+    const filtered = COMPLIANCE_OPTIONS.filter(opt =>
+      opt.label.toLowerCase().includes(complianceSearch.toLowerCase()) ||
+      opt.description.toLowerCase().includes(complianceSearch.toLowerCase())
+    );
+    return [...filtered].sort((a, b) => {
+      const aSelected = config.compliance.includes(a.id);
+      const bSelected = config.compliance.includes(b.id);
+      if (aSelected && !bSelected) return -1;
+      if (!aSelected && bSelected) return 1;
+      return 0;
+    });
+  }, [complianceSearch, config.compliance]);
+
+  const filteredAnalytics = useMemo(() => {
+    const filtered = ANALYTICS_OPTIONS.filter(opt =>
+      opt.label.toLowerCase().includes(analyticsSearch.toLowerCase()) ||
+      opt.description.toLowerCase().includes(analyticsSearch.toLowerCase())
+    );
+    return [...filtered].sort((a, b) => {
+      const aSelected = config.analytics.includes(a.id);
+      const bSelected = config.analytics.includes(b.id);
+      if (aSelected && !bSelected) return -1;
+      if (!aSelected && bSelected) return 1;
+      return 0;
+    });
+  }, [analyticsSearch, config.analytics]);
 
   const toggleItem = (field: keyof SecurityConfig, id: string) => {
     const current = config[field] as string[];
@@ -4879,6 +4962,17 @@ function StepSecurity({
               </button>
             ))}
           </div>
+          
+          {/* Custom input when "other" is selected */}
+          {config.authProviders.includes("other") && (
+            <input
+              type="text"
+              value={config.authProvidersOther}
+              onChange={(e) => onChange({ authProvidersOther: e.target.value })}
+              placeholder="Describe your custom auth provider..."
+              className="mt-3 w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          )}
         </div>
 
         {/* 2. Secrets Management */}
@@ -4918,6 +5012,17 @@ function StepSecurity({
               </button>
             ))}
           </div>
+          
+          {/* Custom input when "other" is selected */}
+          {config.secretsManagement.includes("other") && (
+            <input
+              type="text"
+              value={config.secretsManagementOther}
+              onChange={(e) => onChange({ secretsManagementOther: e.target.value })}
+              placeholder="Describe your custom secrets management approach..."
+              className="mt-3 w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          )}
         </div>
 
         {/* 3. Security Tooling */}
@@ -4957,6 +5062,17 @@ function StepSecurity({
               </button>
             ))}
           </div>
+          
+          {/* Custom input when "other" is selected */}
+          {config.securityTooling.includes("other") && (
+            <input
+              type="text"
+              value={config.securityToolingOther}
+              onChange={(e) => onChange({ securityToolingOther: e.target.value })}
+              placeholder="Describe your custom security tooling..."
+              className="mt-3 w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          )}
         </div>
 
         {/* 4. Authentication Patterns */}
@@ -4996,6 +5112,17 @@ function StepSecurity({
               </button>
             ))}
           </div>
+          
+          {/* Custom input when "other" is selected */}
+          {config.authPatterns.includes("other") && (
+            <input
+              type="text"
+              value={config.authPatternsOther}
+              onChange={(e) => onChange({ authPatternsOther: e.target.value })}
+              placeholder="Describe your custom authentication pattern..."
+              className="mt-3 w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          )}
         </div>
 
         {/* 5. Data Handling */}
@@ -5035,6 +5162,17 @@ function StepSecurity({
               </button>
             ))}
           </div>
+          
+          {/* Custom input when "other" is selected */}
+          {config.dataHandling.includes("other") && (
+            <input
+              type="text"
+              value={config.dataHandlingOther}
+              onChange={(e) => onChange({ dataHandlingOther: e.target.value })}
+              placeholder="Describe your custom data handling policy..."
+              className="mt-3 w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          )}
         </div>
 
         {/* 6. Compliance Standards */}
@@ -5073,6 +5211,17 @@ function StepSecurity({
               </button>
             ))}
           </div>
+          
+          {/* Custom input when "other" is selected */}
+          {config.compliance.includes("other") && (
+            <input
+              type="text"
+              value={config.complianceOther}
+              onChange={(e) => onChange({ complianceOther: e.target.value })}
+              placeholder="Describe your custom compliance requirements..."
+              className="mt-3 w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          )}
         </div>
 
         {/* 7. Analytics */}
@@ -5111,6 +5260,17 @@ function StepSecurity({
               </button>
             ))}
           </div>
+          
+          {/* Custom input when "other" is selected */}
+          {config.analytics.includes("other") && (
+            <input
+              type="text"
+              value={config.analyticsOther}
+              onChange={(e) => onChange({ analyticsOther: e.target.value })}
+              placeholder="Describe your custom analytics solution..."
+              className="mt-3 w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          )}
         </div>
 
         {/* Additional Notes */}
