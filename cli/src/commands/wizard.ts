@@ -2116,9 +2116,9 @@ async function runInteractiveWizard(
     name: "license",
     message: chalk.white("License:"),
     choices: licenseChoices,
-    initial: detectedLicenseIndex > 0 ? detectedLicenseIndex : 0,
+    initial: detectedLicenseIndex > 0 ? detectedLicenseIndex : 1, // Default to MIT (index 1 after Skip)
   }, promptConfig);
-  answers.license = licenseResponse.license || "";
+  answers.license = licenseResponse.license || "mit";
 
   const conventionalResponse = await prompts({
     type: "toggle",
@@ -2232,20 +2232,17 @@ async function runInteractiveWizard(
     answers.defaultBranchOther = customBranchResponse.defaultBranchOther || "";
   }
 
-  // Commit workflow - let user choose (with smart default based on branch strategy)
-  const defaultWorkflow = answers.branchStrategy === "none" ? "direct_main" : "hybrid";
-  const commitWorkflowResponse = await prompts({
-    type: "select",
-    name: "commitWorkflow",
-    message: chalk.white("Commit workflow:"),
-    choices: [
-      { title: "🌿 Feature Branches + PRs - All changes via pull requests", value: "branch_pr" },
-      { title: "🔀 Hybrid - PRs for features, direct commits for small fixes", value: "hybrid" },
-      { title: "⚡ Direct to Main - Commit directly, no branches", value: "direct_main" },
-    ],
-    initial: defaultWorkflow === "direct_main" ? 2 : 1, // Default to hybrid for most projects
+  // Allow direct commits for small fixes
+  const allowDirectCommitsResponse = await prompts({
+    type: "toggle",
+    name: "allowDirectCommits",
+    message: chalk.white("Allow direct commits for small fixes?"),
+    initial: answers.branchStrategy === "none", // Default yes for toy projects
+    active: "Yes",
+    inactive: "No",
+    hint: chalk.gray("Enable for typos, docs, and minor fixes (bypassing PRs)"),
   }, promptConfig);
-  answers.commitWorkflow = commitWorkflowResponse.commitWorkflow || defaultWorkflow;
+  answers.allowDirectCommits = allowDirectCommitsResponse.allowDirectCommits ?? (answers.branchStrategy === "none");
 
   // Git Worktrees for parallel AI sessions
   const useGitWorktreesResponse = await prompts({
@@ -3990,8 +3987,8 @@ async function runInteractiveWizard(
     changelogTool: answers.changelogTool as string,
     // AI Behavior
     planModeFrequency: answers.planModeFrequency as string,
-    // Commit workflow
-    commitWorkflow: answers.commitWorkflow as string,
+    // Direct commits for small fixes
+    allowDirectCommits: answers.allowDirectCommits as boolean,
     // Git worktrees for parallel AI sessions
     useGitWorktrees: answers.useGitWorktrees as boolean,
     // Additional libraries (not in predefined lists)
