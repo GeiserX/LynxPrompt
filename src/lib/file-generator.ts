@@ -114,6 +114,7 @@ interface WizardConfig {
   staticFiles?: StaticFilesConfig;
   saveAllPreferences?: boolean;
   security?: SecurityConfig;
+  useGitWorktrees?: boolean; // Use git worktrees for parallel AI agent sessions
 }
 
 // Security configuration (FREE tier)
@@ -454,6 +455,18 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
   lines.push("");
   lines.push(`# ${bpVar(bp, "PROJECT_NAME", config.projectName || "Project")} - AI Rules`);
   lines.push("");
+  
+  // Git Worktrees for parallel AI sessions
+  if (config.useGitWorktrees) {
+    lines.push("## Before Starting Any Coding Task");
+    lines.push("");
+    lines.push("1. Always create a new git worktree for the task");
+    lines.push("2. Use the naming convention: `git worktree add -b ai/[task-description] ../[repo-name]-ai-[task-description]`");
+    lines.push("3. Navigate to the worktree directory before making any changes");
+    lines.push("4. Commit changes when the task is finished. Merge to main, and clean the worktree.");
+    lines.push("");
+  }
+  
   lines.push("## Project Overview");
   lines.push("");
   lines.push(`**Description**: ${bpVar(bp, "PROJECT_DESCRIPTION", config.projectDescription || "A software project.")}`);
@@ -1186,6 +1199,17 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
 
   lines.push(`# ${bpVar(bp, "PROJECT_NAME", config.projectName || "Project")} - AI Agent Instructions`);
   lines.push("");
+  
+  // Git Worktrees for parallel AI sessions
+  if (config.useGitWorktrees) {
+    lines.push("## Before Starting Any Coding Task");
+    lines.push("");
+    lines.push("1. Always create a new git worktree for the task");
+    lines.push("2. Use the naming convention: `git worktree add -b ai/[task-description] ../[repo-name]-ai-[task-description]`");
+    lines.push("3. Navigate to the worktree directory before making any changes");
+    lines.push("4. Commit changes when the task is finished. Merge to main, and clean the worktree.");
+    lines.push("");
+  }
   
   // Project Overview
   lines.push("## Project Overview");
