@@ -184,7 +184,7 @@ export function TemplateDownloadModal({
     const parsedDefaults: Record<string, string> = {};
 
     // 1. Parse creator defaults from content using [[VAR|default]] syntax
-    const contentDefaults = parseVariablesWithDefaults(template.content);
+    const contentDefaults = parseVariablesWithDefaults(template.content || "");
     for (const [key, defaultVal] of Object.entries(contentDefaults)) {
       if (defaultVal !== undefined) {
         parsedDefaults[key] = defaultVal;
@@ -275,7 +275,7 @@ export function TemplateDownloadModal({
   // Process template content with variable substitution
   // Uses [[VARIABLE]] or [[VARIABLE|default]] syntax
   const processedContent = (() => {
-    let content = template.content;
+    let content = template.content || "";
     // Replace all variable patterns (with or without defaults)
     const regex = /\[\[([A-Za-z_][A-Za-z0-9_]*)(?:\|([^\]]*))?\]\]/g;
     return content.replace(regex, (match, varName, defaultVal) => {

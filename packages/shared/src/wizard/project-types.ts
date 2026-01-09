@@ -31,6 +31,7 @@ export const ARCHITECTURE_PATTERNS: ArchitectureOption[] = [
   { id: "hexagonal", label: "Hexagonal / Ports & Adapters", description: "Domain-centric, pluggable" },
   { id: "ddd", label: "Domain-Driven Design", description: "Bounded contexts, aggregates" },
   { id: "microservices", label: "Microservices", description: "Distributed services" },
+  { id: "multi_image_docker", label: "Multi-Image Docker", description: "Shared codebase, multiple container images" },
   { id: "serverless", label: "Serverless", description: "FaaS, event-driven" },
   { id: "event_driven", label: "Event-Driven", description: "Event sourcing, CQRS" },
   { id: "modular_monolith", label: "Modular Monolith", description: "Organized monolith" },

@@ -218,9 +218,20 @@ export default function DashboardPage() {
   const [favoritesPage, setFavoritesPage] = useState(1);
   const FAVORITES_PER_PAGE = 5;
   
-  // Hierarchical blueprints toggle
+  // Hierarchical AGENTS.md toggle and management
   const [showHierarchical, setShowHierarchical] = useState(false);
   const [expandedHierarchies, setExpandedHierarchies] = useState<Set<string>>(new Set());
+  const [showCreateHierarchy, setShowCreateHierarchy] = useState(false);
+  const [showEditHierarchy, setShowEditHierarchy] = useState<HierarchyGroup | null>(null);
+  const [showDeleteHierarchy, setShowDeleteHierarchy] = useState<HierarchyGroup | null>(null);
+  const [hierarchyFormData, setHierarchyFormData] = useState({ name: "", description: "", repositoryRoot: "" });
+  const [isCreatingHierarchy, setIsCreatingHierarchy] = useState(false);
+  const [isDeletingHierarchy, setIsDeletingHierarchy] = useState(false);
+  const [hierarchyError, setHierarchyError] = useState<string | null>(null);
+  const [availableBlueprints, setAvailableBlueprints] = useState<MyTemplate[]>([]);
+  const [selectedBlueprintToAdd, setSelectedBlueprintToAdd] = useState<string>("");
+  const [blueprintPath, setBlueprintPath] = useState("");
+  const [isAddingBlueprint, setIsAddingBlueprint] = useState(false);
 
   useEffect(() => {
     if (status === "authenticated") {
