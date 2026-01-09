@@ -2226,6 +2226,16 @@ async function runInteractiveWizard(
   }, promptConfig);
   answers.commitWorkflow = commitWorkflowResponse.commitWorkflow || defaultWorkflow;
 
+  // Git Worktrees for parallel AI sessions
+  const useGitWorktreesResponse = await prompts({
+    type: "confirm",
+    name: "useGitWorktrees",
+    message: chalk.white("🌲 Do you plan on working with several AI agent sessions in this repository?"),
+    initial: true,
+    hint: "If yes, AI will be instructed to always use git worktrees for each task",
+  }, promptConfig);
+  answers.useGitWorktrees = useGitWorktreesResponse.useGitWorktrees ?? true;
+
   // Dependabot/Renovate moved to Security step
 
   // CI/CD Platform - use detected value if available
@@ -3909,6 +3919,8 @@ async function runInteractiveWizard(
     planModeFrequency: answers.planModeFrequency as string,
     // Commit workflow
     commitWorkflow: answers.commitWorkflow as string,
+    // Git worktrees for parallel AI sessions
+    useGitWorktrees: answers.useGitWorktrees as boolean,
     // Additional libraries (not in predefined lists)
     additionalLibraries: answers.additionalLibraries as string,
     // Docker image names
