@@ -1404,6 +1404,7 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
       persona: options.persona || "fullstack",
       boundaries: options.boundaries as "conservative" | "standard" | "permissive" || "standard",
       commands: detected?.commands || {},
+      useGitWorktrees: true, // Default to true for parallel AI sessions
     };
   } else {
     // Interactive mode
