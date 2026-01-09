@@ -119,10 +119,20 @@ interface WizardConfig {
 
 // Security configuration (FREE tier)
 interface SecurityConfig {
+  authProviders?: string[];
+  authProvidersOther?: string;
   secretsManagement?: string[];
+  secretsManagementOther?: string;
   securityTooling?: string[];
+  securityToolingOther?: string;
   authPatterns?: string[];
+  authPatternsOther?: string;
   dataHandling?: string[];
+  dataHandlingOther?: string;
+  compliance?: string[];
+  complianceOther?: string;
+  analytics?: string[];
+  analyticsOther?: string;
   additionalNotes?: string;
 }
 
@@ -1624,11 +1634,33 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
 
   // Security Configuration - FREE tier feature (for AGENTS.md)
   const security2 = config.security;
-  if (security2 && (security2.secretsManagement?.length || security2.securityTooling?.length || 
-      security2.authPatterns?.length || security2.dataHandling?.length || security2.additionalNotes)) {
+  if (security2 && (security2.authProviders?.length || security2.secretsManagement?.length || security2.securityTooling?.length || 
+      security2.authPatterns?.length || security2.dataHandling?.length || security2.compliance?.length || 
+      security2.analytics?.length || security2.additionalNotes)) {
     lines.push("## 🔐 Security Configuration");
     lines.push("");
     
+    // Auth Providers
+    if (security2.authProviders?.length) {
+      lines.push("### Auth Providers");
+      lines.push("");
+      const authProviderLabels: Record<string, string> = {
+        email_password: "Email/Password", google: "Google", github: "GitHub", gitlab: "GitLab",
+        microsoft: "Microsoft", apple: "Apple", facebook: "Facebook", twitter: "Twitter/X",
+        linkedin: "LinkedIn", discord: "Discord", slack: "Slack", twitch: "Twitch", spotify: "Spotify",
+        magic_link: "Magic Link", sms_otp: "SMS OTP", passkeys: "Passkeys/WebAuthn",
+        saml_sso: "SAML SSO", oidc_generic: "Generic OIDC", ldap: "LDAP/AD",
+      };
+      for (const p of security2.authProviders) {
+        if (p === "other" && security2.authProvidersOther) {
+          lines.push(`- Other: ${security2.authProvidersOther}`);
+        } else {
+          lines.push(`- ${authProviderLabels[p] || p}`);
+        }
+      }
+      lines.push("");
+    }
+
     // Secrets Management
     if (security2.secretsManagement?.length) {
       lines.push("### Secrets Management");
@@ -1642,7 +1674,11 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
         chamber: "Chamber", berglas: "Berglas",
       };
       for (const s of security2.secretsManagement) {
-        lines.push(`- ${secretsLabels[s] || s}`);
+        if (s === "other" && security2.secretsManagementOther) {
+          lines.push(`- Other: ${security2.secretsManagementOther}`);
+        } else {
+          lines.push(`- ${secretsLabels[s] || s}`);
+        }
       }
       lines.push("");
     }
@@ -1661,7 +1697,11 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
         socket: "Socket.dev", mend: "Mend", fossa: "FOSSA",
       };
       for (const t of security2.securityTooling) {
-        lines.push(`- ${toolingLabels[t] || t}`);
+        if (t === "other" && security2.securityToolingOther) {
+          lines.push(`- Other: ${security2.securityToolingOther}`);
+        } else {
+          lines.push(`- ${toolingLabels[t] || t}`);
+        }
       }
       lines.push("");
     }
@@ -1678,7 +1718,11 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
         okta: "Okta", cognito: "AWS Cognito", workos: "WorkOS",
       };
       for (const a of security2.authPatterns) {
-        lines.push(`- ${authLabels[a] || a}`);
+        if (a === "other" && security2.authPatternsOther) {
+          lines.push(`- Other: ${security2.authPatternsOther}`);
+        } else {
+          lines.push(`- ${authLabels[a] || a}`);
+        }
       }
       lines.push("");
     }
@@ -1697,7 +1741,48 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
         data_classification: "Data Classification", dlp: "DLP",
       };
       for (const d of security2.dataHandling) {
-        lines.push(`- ${dataLabels[d] || d}`);
+        if (d === "other" && security2.dataHandlingOther) {
+          lines.push(`- Other: ${security2.dataHandlingOther}`);
+        } else {
+          lines.push(`- ${dataLabels[d] || d}`);
+        }
+      }
+      lines.push("");
+    }
+
+    // Compliance Standards
+    if (security2.compliance?.length) {
+      lines.push("### Compliance");
+      lines.push("");
+      const complianceLabels: Record<string, string> = {
+        gdpr: "GDPR", ccpa: "CCPA", hipaa: "HIPAA", soc2: "SOC 2",
+        pci_dss: "PCI-DSS", iso27001: "ISO 27001", fedramp: "FedRAMP",
+      };
+      for (const c of security2.compliance) {
+        if (c === "other" && security2.complianceOther) {
+          lines.push(`- Other: ${security2.complianceOther}`);
+        } else {
+          lines.push(`- ${complianceLabels[c] || c}`);
+        }
+      }
+      lines.push("");
+    }
+
+    // Analytics
+    if (security2.analytics?.length) {
+      lines.push("### Analytics & Telemetry");
+      lines.push("");
+      const analyticsLabels: Record<string, string> = {
+        google_analytics: "Google Analytics", plausible: "Plausible", posthog: "PostHog",
+        mixpanel: "Mixpanel", amplitude: "Amplitude", segment: "Segment",
+        umami: "Umami", matomo: "Matomo", none: "No Analytics (Privacy-first)",
+      };
+      for (const a of security2.analytics) {
+        if (a === "other" && security2.analyticsOther) {
+          lines.push(`- Other: ${security2.analyticsOther}`);
+        } else {
+          lines.push(`- ${analyticsLabels[a] || a}`);
+        }
       }
       lines.push("");
     }
