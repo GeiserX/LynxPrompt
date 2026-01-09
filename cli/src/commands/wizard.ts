@@ -3345,37 +3345,42 @@ async function runInteractiveWizard(
     console.log(chalk.green(`  ✓ ${answers.primarySyncFormat} will be synced to cloud, others are local-only`));
   }
 
-  // Include personal data from profile
+  // Include personal data from profile - only available for authenticated users
   console.log();
-  console.log(chalk.gray("  👤 Include your profile info (name, email, persona) in the generated config."));
-  console.log(chalk.gray("     This helps AI tools personalize responses to your expertise level."));
-  const includePersonalResponse = await prompts({
-    type: "toggle",
-    name: "includePersonalData",
-    message: chalk.white("Include your profile data in config?"),
-    initial: false,
-    active: "Yes",
-    inactive: "No",
-    hint: chalk.gray("Name, email, expertise from your profile"),
-  }, promptConfig);
-  answers.includePersonalData = includePersonalResponse.includePersonalData || false;
+  if (authenticated) {
+    console.log(chalk.gray("  👤 Include your profile info (name, email, persona) in the generated config."));
+    console.log(chalk.gray("     This helps AI tools personalize responses to your expertise level."));
+    const includePersonalResponse = await prompts({
+      type: "toggle",
+      name: "includePersonalData",
+      message: chalk.white("Include your profile data in config?"),
+      initial: false,
+      active: "Yes",
+      inactive: "No",
+      hint: chalk.gray("Name, email, expertise from your profile"),
+    }, promptConfig);
+    answers.includePersonalData = includePersonalResponse.includePersonalData || false;
 
-  // If personal data enabled, fetch user profile from API
-  if (answers.includePersonalData && api) {
-    try {
-      console.log(chalk.gray("  Fetching profile from LynxPrompt..."));
-      const userResponse = await api.getUser();
-      if (userResponse.user) {
-        answers.userName = userResponse.user.name || userResponse.user.display_name || "";
-        answers.userEmail = userResponse.user.email || "";
-        answers.userPersona = userResponse.user.persona || "";
-        // skill_level can serve as expertise
-        answers.userExpertise = userResponse.user.skill_level || "";
-        console.log(chalk.green("  ✓ Profile loaded"));
+    // If personal data enabled, fetch user profile from API
+    if (answers.includePersonalData && api) {
+      try {
+        console.log(chalk.gray("  Fetching profile from LynxPrompt..."));
+        const userResponse = await api.getUser();
+        if (userResponse.user) {
+          answers.userName = userResponse.user.name || userResponse.user.display_name || "";
+          answers.userEmail = userResponse.user.email || "";
+          answers.userPersona = userResponse.user.persona || "";
+          // skill_level can serve as expertise
+          answers.userExpertise = userResponse.user.skill_level || "";
+          console.log(chalk.green("  ✓ Profile loaded"));
+        }
+      } catch {
+        console.log(chalk.yellow("  Could not fetch profile data. Using defaults."));
       }
-    } catch {
-      console.log(chalk.yellow("  Could not fetch profile data. Using defaults."));
     }
+  } else {
+    console.log(chalk.gray("  🔒 Profile inclusion requires sign-in. Run ") + chalk.cyan("lynxp login") + chalk.gray(" to enable."));
+    answers.includePersonalData = false;
   }
 
   // ═══════════════════════════════════════════════════════════════
