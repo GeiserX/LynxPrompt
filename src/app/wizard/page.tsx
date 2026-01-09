@@ -1988,11 +1988,12 @@ function WizardPageContent() {
       if (currentDraftId) {
         setPendingAction("download");
         setShowDeleteDraftModal(true);
-      } else {
-        // No draft, ask if they want to save as blueprint
+      } else if (isLoggedIn) {
+        // Only ask to save as blueprint if logged in
         setPendingAction("download");
         setShowSaveBlueprintModal(true);
       }
+      // If not logged in and no draft, just download without additional prompts
     } catch (error) {
       console.error("Error generating files:", error);
       alert("Failed to generate files. Please try again.");
@@ -2093,8 +2094,8 @@ ${syncCommands}
     // After draft decision, proceed with next step
     if (pendingAction === "share") {
       window.location.href = "/blueprints/create";
-    } else if (pendingAction === "download") {
-      // Show save blueprint modal for download action
+    } else if (pendingAction === "download" && isLoggedIn) {
+      // Show save blueprint modal only if logged in
       setShowSaveBlueprintModal(true);
     }
     setPendingAction(null);
