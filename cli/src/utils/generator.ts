@@ -78,6 +78,8 @@ export interface GenerateOptions {
   planModeFrequency?: string;      // always, complex_tasks, multi_file, etc.
   // Commit workflow
   commitWorkflow?: string;         // branch_pr, direct_main
+  // Git worktrees for parallel AI sessions
+  useGitWorktrees?: boolean;       // Use git worktrees for each task
   // Additional libraries not in predefined lists
   additionalLibraries?: string;    // comma-separated (e.g., "Telethon, APScheduler, alembic")
   // Docker image names
@@ -687,6 +689,17 @@ function generateFileContent(options: GenerateOptions, platform: string): string
   // Header for regular markdown
   if (isMarkdown) {
     sections.push(`# ${projectName} - AI Assistant Configuration`);
+    sections.push("");
+  }
+  
+  // Git Worktrees for parallel AI sessions
+  if (options.useGitWorktrees && (isMarkdown || isMdc)) {
+    sections.push("## Before Starting Any Coding Task");
+    sections.push("");
+    sections.push("1. Always create a new git worktree for the task");
+    sections.push("2. Use the naming convention: `git worktree add -b ai/[task-description] ../[repo-name]-ai-[task-description]`");
+    sections.push("3. Navigate to the worktree directory before making any changes");
+    sections.push("4. Commit changes when the task is finished. Merge to main, and clean the worktree.");
     sections.push("");
   }
 
