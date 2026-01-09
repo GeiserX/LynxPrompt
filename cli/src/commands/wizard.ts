@@ -382,6 +382,12 @@ const CICD_OPTIONS = [
   { id: "teamcity", label: "TeamCity", icon: "🏢" },
   { id: "drone", label: "Drone", icon: "🚁" },
   { id: "buildkite", label: "Buildkite", icon: "🧱" },
+  { id: "concourse", label: "Concourse", icon: "✈️" },
+  { id: "woodpecker", label: "Woodpecker", icon: "🐦" },
+  { id: "argocd", label: "ArgoCD", icon: "🐙" },
+  { id: "fluxcd", label: "FluxCD", icon: "🔄" },
+  { id: "none", label: "None / Manual", icon: "🔧" },
+  { id: "other", label: "Other", icon: "📦" },
 ];
 
 // Cloud deployment targets
@@ -2082,10 +2088,11 @@ async function runInteractiveWizard(
   const visibilityResponse = await prompts({
     type: "toggle",
     name: "isPublic",
-    message: chalk.white("Public repository?"),
+    message: chalk.white("Public Repository?"),
     initial: true, // Default Yes
     active: "Yes",
     inactive: "No",
+    hint: chalk.gray("Enable if this is an existing public project"),
   }, promptConfig);
   answers.isPublic = visibilityResponse.isPublic ?? true;
 
@@ -2206,10 +2213,23 @@ async function runInteractiveWizard(
       { title: "master", value: "master" },
       { title: "develop", value: "develop" },
       { title: "trunk", value: "trunk" },
+      { title: "Other (specify)", value: "other" },
     ],
     initial: 0,
   }, promptConfig);
   answers.defaultBranch = defaultBranchResponse.defaultBranch || "main";
+
+  // If "other" is selected, ask for custom branch name
+  if (answers.defaultBranch === "other") {
+    const customBranchResponse = await prompts({
+      type: "text",
+      name: "defaultBranchOther",
+      message: chalk.white("Enter custom branch name:"),
+      hint: chalk.gray("e.g., production, release, staging"),
+      validate: (v) => v && v.trim() !== "" ? true : "Branch name is required",
+    }, promptConfig);
+    answers.defaultBranchOther = customBranchResponse.defaultBranchOther || "";
+  }
 
   // Commit workflow - let user choose (with smart default based on branch strategy)
   const defaultWorkflow = answers.branchStrategy === "none" ? "direct_main" : "hybrid";
@@ -2238,28 +2258,35 @@ async function runInteractiveWizard(
 
   // Dependabot/Renovate moved to Security step
 
-  // CI/CD Platform - use detected value if available
-  const cicdChoices = [
-    { title: chalk.gray("⏭ Skip"), value: "" },
-    ...CICD_OPTIONS.map(c => ({
-      title: detected?.cicd === c.id
-        ? `${c.icon} ${c.label} ${chalk.green("(detected)")}`
-        : `${c.icon} ${c.label}`,
-      value: c.id,
-    })),
-  ];
-  const detectedCicdIndex = detected?.cicd
-    ? cicdChoices.findIndex(c => c.value === detected.cicd)
-    : 0;
+  // CI/CD Platform - multiselect with detected value pre-selected
+  const cicdChoices = CICD_OPTIONS.map(c => ({
+    title: detected?.cicd === c.id
+      ? `${c.icon} ${c.label} ${chalk.green("(detected)")}`
+      : `${c.icon} ${c.label}`,
+    value: c.id,
+    selected: detected?.cicd === c.id,
+  }));
 
   const cicdResponse = await prompts({
-    type: "select",
+    type: "autocompleteMultiselect",
     name: "cicd",
-    message: chalk.white("CI/CD Platform:"),
+    message: chalk.white("CI/CD Platform(s) (type to search, select all that apply):"),
     choices: cicdChoices,
-    initial: detectedCicdIndex > 0 ? detectedCicdIndex : 0,
+    hint: chalk.gray("type to filter • space select • enter confirm"),
+    instructions: false,
   }, promptConfig);
-  answers.cicd = cicdResponse.cicd || "";
+  answers.cicd = cicdResponse.cicd || [];
+
+  // If "other" is selected, ask for custom CI/CD platform name
+  if ((answers.cicd as string[]).includes("other")) {
+    const customCicdResponse = await prompts({
+      type: "text",
+      name: "cicdOther",
+      message: chalk.white("Enter custom CI/CD platform name:"),
+      hint: chalk.gray("e.g., Tekton, Harness, custom scripts"),
+    }, promptConfig);
+    answers.cicdOther = customCicdResponse.cicdOther || "";
+  }
 
   // First ask: cloud, self-hosted, or both
   const deployTypeResponse = await prompts({
@@ -2374,24 +2401,24 @@ async function runInteractiveWizard(
 
   // Example repository URL
   console.log();
-  console.log(chalk.gray("  📚 Point the AI to a well-structured public repository as a reference."));
+  console.log(chalk.gray("  📚 Optionally, point the AI to a well-structured public repository as a reference."));
   console.log(chalk.gray("     The AI will study its code patterns, architecture, and conventions to better assist you."));
   const exampleRepoResponse = await prompts({
     type: "text",
     name: "exampleRepoUrl",
-    message: chalk.white("Reference repository URL (optional):"),
+    message: chalk.white("Reference repository URL:"),
     hint: chalk.gray("e.g., https://github.com/vercel/next.js"),
   }, promptConfig);
   answers.exampleRepoUrl = exampleRepoResponse.exampleRepoUrl || "";
 
   // External documentation URL
   console.log();
-  console.log(chalk.gray("  📖 Link to your team's external documentation for project context."));
+  console.log(chalk.gray("  📖 Optionally, link to your team's external documentation for project context."));
   console.log(chalk.gray("     The AI will read these docs to understand your project's domain and conventions."));
   const docsUrlResponse = await prompts({
     type: "text",
     name: "documentationUrl",
-    message: chalk.white("External docs URL (optional):"),
+    message: chalk.white("External docs URL:"),
     hint: chalk.gray("e.g., Confluence, Notion, GitBook, internal wiki"),
   }, promptConfig);
   answers.documentationUrl = docsUrlResponse.documentationUrl || "";
