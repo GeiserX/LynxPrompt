@@ -5912,7 +5912,7 @@ function StepCommands({
 }) {
   const [searches, setSearches] = useState<Record<string, string>>({ build: "", test: "", lint: "", dev: "", format: "", typecheck: "", clean: "", preCommit: "", other: "" });
   const [newCommand, setNewCommand] = useState("");
-  const [expandedCategories, setExpandedCategories] = useState<string[]>(["build", "test", "lint", "dev"]);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   
   const allSelected = [
     ...(config.build ? [config.build] : []),
