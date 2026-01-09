@@ -60,6 +60,7 @@ interface MyTemplate {
   createdAt: string;
   version?: number;
   publishedVersion?: number | null;
+  hierarchyId?: string | null;
 }
 
 interface RecentActivity {
@@ -848,117 +849,197 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              {/* Hierarchical Blueprints (Monorepo AGENTS.md) */}
-              {dashboardData?.hierarchicalBlueprints && dashboardData.hierarchicalBlueprints.length > 0 && (
-                <div className="mb-8">
+              {/* Hierarchical AGENTS.md (Monorepo support) */}
+              <div className="mb-8">
+                <div className="mb-4 flex items-center justify-between">
                   <button
                     onClick={() => setShowHierarchical(!showHierarchical)}
-                    className="mb-4 flex w-full items-center justify-between text-left"
+                    className="flex items-center gap-2 text-left"
                   >
-                    <div className="flex items-center gap-2">
-                      <FolderTree className="h-5 w-5 text-purple-500" />
-                      <h2 className="text-lg font-semibold">Hierarchical Blueprints</h2>
+                    <FolderTree className="h-5 w-5 text-purple-500" />
+                    <h2 className="text-lg font-semibold">Hierarchical AGENTS.md</h2>
+                    {dashboardData?.hierarchicalBlueprints && dashboardData.hierarchicalBlueprints.length > 0 && (
                       <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
                         {dashboardData.hierarchicalBlueprints.reduce((acc, g) => acc + g.blueprints.length, 0)} files
                       </span>
-                    </div>
+                    )}
                     {showHierarchical ? (
                       <ChevronDown className="h-4 w-4 text-muted-foreground" />
                     ) : (
                       <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     )}
                   </button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => {
+                      setHierarchyFormData({ name: "", description: "", repositoryRoot: "" });
+                      setHierarchyError(null);
+                      setShowCreateHierarchy(true);
+                    }}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create New
+                  </Button>
+                </div>
 
-                  {showHierarchical && (
-                    <div className="space-y-4">
-                      {dashboardData.hierarchicalBlueprints.map((group) => (
+                {showHierarchical && (
+                  <div className="space-y-4">
+                    {!dashboardData?.hierarchicalBlueprints || dashboardData.hierarchicalBlueprints.length === 0 ? (
+                      <div className="rounded-lg border border-dashed border-purple-500/30 bg-purple-500/5 p-6 text-center">
+                        <FolderTree className="mx-auto h-10 w-10 text-purple-500/50" />
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          No hierarchical AGENTS.md configurations yet.
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Create one to organize multiple AGENTS.md files across a monorepo.
+                        </p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-4"
+                          onClick={() => {
+                            setHierarchyFormData({ name: "", description: "", repositoryRoot: "" });
+                            setHierarchyError(null);
+                            setShowCreateHierarchy(true);
+                          }}
+                        >
+                          <Plus className="mr-2 h-4 w-4" />
+                          Create Hierarchy
+                        </Button>
+                      </div>
+                    ) : (
+                      dashboardData.hierarchicalBlueprints.map((group) => (
                         <div
                           key={group.id}
                           className="rounded-lg border border-purple-500/20 bg-gradient-to-r from-purple-500/5 to-background"
                         >
-                          <button
-                            onClick={() => {
-                              const newExpanded = new Set(expandedHierarchies);
-                              if (newExpanded.has(group.id)) {
-                                newExpanded.delete(group.id);
-                              } else {
-                                newExpanded.add(group.id);
-                              }
-                              setExpandedHierarchies(newExpanded);
-                            }}
-                            className="flex w-full items-center justify-between p-4 text-left"
-                          >
-                            <div className="flex items-center gap-3">
+                          <div className="flex items-center justify-between p-4">
+                            <button
+                              onClick={() => {
+                                const newExpanded = new Set(expandedHierarchies);
+                                if (newExpanded.has(group.id)) {
+                                  newExpanded.delete(group.id);
+                                } else {
+                                  newExpanded.add(group.id);
+                                }
+                                setExpandedHierarchies(newExpanded);
+                              }}
+                              className="flex flex-1 items-center gap-3 text-left"
+                            >
                               <div className="rounded-lg bg-purple-500/10 p-2">
                                 <GitBranch className="h-5 w-5 text-purple-500" />
                               </div>
                               <div>
                                 <h3 className="font-medium">{group.name}</h3>
                                 <p className="text-xs text-muted-foreground">
-                                  {group.id} • {group.blueprints.length} AGENTS.md file{group.blueprints.length !== 1 ? "s" : ""}
+                                  {group.repositoryRoot} • {group.blueprints.length} AGENTS.md file{group.blueprints.length !== 1 ? "s" : ""}
                                 </p>
                               </div>
+                              {expandedHierarchies.has(group.id) ? (
+                                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                              )}
+                            </button>
+                            <div className="flex items-center gap-1">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                title="Edit hierarchy"
+                                onClick={() => {
+                                  setShowEditHierarchy(group);
+                                  setHierarchyFormData({
+                                    name: group.name,
+                                    description: group.description || "",
+                                    repositoryRoot: group.repositoryRoot,
+                                  });
+                                  // Load available blueprints for adding
+                                  const available = dashboardData?.myTemplates?.filter(
+                                    t => !t.hierarchyId || t.hierarchyId === group.id
+                                  ) || [];
+                                  setAvailableBlueprints(available);
+                                  setSelectedBlueprintToAdd("");
+                                  setBlueprintPath("");
+                                }}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                title="Delete hierarchy"
+                                onClick={() => setShowDeleteHierarchy(group)}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
                             </div>
-                            {expandedHierarchies.has(group.id) ? (
-                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                            ) : (
-                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                            )}
-                          </button>
+                          </div>
 
                           {expandedHierarchies.has(group.id) && (
                             <div className="border-t border-purple-500/10">
-                              {group.blueprints.map((bp, idx) => (
-                                <div
-                                  key={bp.id}
-                                  className={`flex items-center justify-between px-4 py-3 ${
-                                    idx !== group.blueprints.length - 1 ? "border-b border-purple-500/10" : ""
-                                  }`}
-                                >
-                                  <div className="flex items-center gap-3">
-                                    <div className="flex items-center gap-2 text-muted-foreground">
-                                      {bp.parentId ? (
-                                        <span className="text-xs">└─</span>
-                                      ) : null}
-                                      <FileText className="h-4 w-4" />
-                                    </div>
-                                    <div>
-                                      <h4 className="text-sm font-medium">{bp.name}</h4>
-                                      {bp.repositoryPath && (
-                                        <p className="text-xs text-muted-foreground font-mono">
-                                          {bp.repositoryPath}
-                                        </p>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <span
-                                      className={`rounded-full px-2 py-0.5 text-xs ${
-                                        bp.visibility === "PUBLIC"
-                                          ? "bg-green-500/10 text-green-600"
-                                          : bp.visibility === "TEAM"
-                                          ? "bg-teal-500/10 text-teal-600"
-                                          : "bg-yellow-500/10 text-yellow-600"
-                                      }`}
-                                    >
-                                      {bp.visibility === "PUBLIC" ? "Public" : bp.visibility === "TEAM" ? "Team" : "Private"}
-                                    </span>
-                                    <Button variant="ghost" size="icon" asChild title="View">
-                                      <Link href={`/blueprints/${bp.id}`}>
-                                        <Eye className="h-4 w-4" />
-                                      </Link>
-                                    </Button>
-                                  </div>
+                              {group.blueprints.length === 0 ? (
+                                <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+                                  No AGENTS.md files in this hierarchy yet. Edit to add blueprints.
                                 </div>
-                              ))}
+                              ) : (
+                                group.blueprints.map((bp, idx) => (
+                                  <div
+                                    key={bp.id}
+                                    className={`flex items-center justify-between px-4 py-3 ${
+                                      idx !== group.blueprints.length - 1 ? "border-b border-purple-500/10" : ""
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <div className="flex items-center gap-2 text-muted-foreground">
+                                        {bp.parentId ? (
+                                          <span className="text-xs">└─</span>
+                                        ) : null}
+                                        <FileText className="h-4 w-4" />
+                                      </div>
+                                      <div>
+                                        <h4 className="text-sm font-medium">{bp.name}</h4>
+                                        {bp.repositoryPath && (
+                                          <p className="text-xs text-muted-foreground font-mono">
+                                            {bp.repositoryPath}
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <span
+                                        className={`rounded-full px-2 py-0.5 text-xs ${
+                                          bp.visibility === "PUBLIC"
+                                            ? "bg-green-500/10 text-green-600"
+                                            : bp.visibility === "TEAM"
+                                            ? "bg-teal-500/10 text-teal-600"
+                                            : "bg-yellow-500/10 text-yellow-600"
+                                        }`}
+                                      >
+                                        {bp.visibility === "PUBLIC" ? "Public" : bp.visibility === "TEAM" ? "Team" : "Private"}
+                                      </span>
+                                      <Button variant="ghost" size="icon" asChild title="View">
+                                        <Link href={`/blueprints/${bp.id}`}>
+                                          <Eye className="h-4 w-4" />
+                                        </Link>
+                                      </Button>
+                                      <Button variant="ghost" size="icon" asChild title="Edit">
+                                        <Link href={`/blueprints/${bp.id}/edit`}>
+                                          <Pencil className="h-4 w-4" />
+                                        </Link>
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ))
+                              )}
                             </div>
                           )}
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* My Blueprints */}
               <div>
@@ -1672,6 +1753,295 @@ export default function DashboardPage() {
       </main>
 
       <Footer />
+
+      {/* Create Hierarchy Modal */}
+      {showCreateHierarchy && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-lg bg-background p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Create Hierarchical AGENTS.md</h2>
+              <button onClick={() => setShowCreateHierarchy(false)} className="text-muted-foreground hover:text-foreground">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Name *</label>
+                <input
+                  type="text"
+                  value={hierarchyFormData.name}
+                  onChange={(e) => setHierarchyFormData({ ...hierarchyFormData, name: e.target.value })}
+                  placeholder="e.g., My Monorepo"
+                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Repository Root *</label>
+                <input
+                  type="text"
+                  value={hierarchyFormData.repositoryRoot}
+                  onChange={(e) => setHierarchyFormData({ ...hierarchyFormData, repositoryRoot: e.target.value })}
+                  placeholder="e.g., github.com/user/monorepo"
+                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Unique identifier for your repository</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Description</label>
+                <textarea
+                  value={hierarchyFormData.description}
+                  onChange={(e) => setHierarchyFormData({ ...hierarchyFormData, description: e.target.value })}
+                  placeholder="Optional description..."
+                  rows={2}
+                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                />
+              </div>
+              {hierarchyError && (
+                <p className="text-sm text-destructive">{hierarchyError}</p>
+              )}
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setShowCreateHierarchy(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={async () => {
+                    if (!hierarchyFormData.name.trim() || !hierarchyFormData.repositoryRoot.trim()) {
+                      setHierarchyError("Name and repository root are required");
+                      return;
+                    }
+                    setIsCreatingHierarchy(true);
+                    setHierarchyError(null);
+                    try {
+                      const res = await fetch("/api/hierarchies", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          name: hierarchyFormData.name.trim(),
+                          description: hierarchyFormData.description.trim() || null,
+                          repositoryRoot: hierarchyFormData.repositoryRoot.trim(),
+                        }),
+                      });
+                      if (!res.ok) {
+                        const data = await res.json();
+                        throw new Error(data.error || "Failed to create hierarchy");
+                      }
+                      setShowCreateHierarchy(false);
+                      fetchDashboardData();
+                    } catch (err) {
+                      setHierarchyError(err instanceof Error ? err.message : "Failed to create hierarchy");
+                    } finally {
+                      setIsCreatingHierarchy(false);
+                    }
+                  }}
+                  disabled={isCreatingHierarchy}
+                >
+                  {isCreatingHierarchy ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    "Create"
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Hierarchy Modal */}
+      {showEditHierarchy && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-lg rounded-lg bg-background p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Edit Hierarchy: {showEditHierarchy.name}</h2>
+              <button onClick={() => setShowEditHierarchy(null)} className="text-muted-foreground hover:text-foreground">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Name</label>
+                <input
+                  type="text"
+                  value={hierarchyFormData.name}
+                  onChange={(e) => setHierarchyFormData({ ...hierarchyFormData, name: e.target.value })}
+                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Description</label>
+                <textarea
+                  value={hierarchyFormData.description}
+                  onChange={(e) => setHierarchyFormData({ ...hierarchyFormData, description: e.target.value })}
+                  placeholder="Optional description..."
+                  rows={2}
+                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                />
+              </div>
+              
+              <div className="border-t pt-4 mt-4">
+                <h3 className="font-medium mb-3">Add Blueprint to Hierarchy</h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Select Blueprint</label>
+                    <select
+                      value={selectedBlueprintToAdd}
+                      onChange={(e) => setSelectedBlueprintToAdd(e.target.value)}
+                      className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <option value="">Choose a blueprint...</option>
+                      {availableBlueprints
+                        .filter(b => !showEditHierarchy.blueprints.some(hb => hb.id === b.id))
+                        .map(bp => (
+                          <option key={bp.id} value={bp.id}>{bp.name}</option>
+                        ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Repository Path *</label>
+                    <input
+                      type="text"
+                      value={blueprintPath}
+                      onChange={(e) => setBlueprintPath(e.target.value)}
+                      placeholder="e.g., packages/core/AGENTS.md"
+                      className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Path relative to repository root</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!selectedBlueprintToAdd || !blueprintPath.trim() || isAddingBlueprint}
+                    onClick={async () => {
+                      if (!selectedBlueprintToAdd || !blueprintPath.trim()) return;
+                      setIsAddingBlueprint(true);
+                      try {
+                        const res = await fetch(`/api/hierarchies/${showEditHierarchy.id}/blueprints`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            blueprintId: selectedBlueprintToAdd,
+                            repositoryPath: blueprintPath.trim(),
+                          }),
+                        });
+                        if (!res.ok) {
+                          const data = await res.json();
+                          throw new Error(data.error || "Failed to add blueprint");
+                        }
+                        setSelectedBlueprintToAdd("");
+                        setBlueprintPath("");
+                        fetchDashboardData();
+                        // Update local state
+                        const updatedRes = await fetch(`/api/hierarchies/${showEditHierarchy.id}`);
+                        if (updatedRes.ok) {
+                          const data = await updatedRes.json();
+                          setShowEditHierarchy(data.hierarchy);
+                        }
+                      } catch (err) {
+                        setHierarchyError(err instanceof Error ? err.message : "Failed to add blueprint");
+                      } finally {
+                        setIsAddingBlueprint(false);
+                      }
+                    }}
+                  >
+                    {isAddingBlueprint ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Plus className="mr-2 h-4 w-4" />
+                    )}
+                    Add Blueprint
+                  </Button>
+                </div>
+              </div>
+
+              {hierarchyError && (
+                <p className="text-sm text-destructive">{hierarchyError}</p>
+              )}
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button variant="outline" onClick={() => setShowEditHierarchy(null)}>
+                  Close
+                </Button>
+                <Button
+                  onClick={async () => {
+                    try {
+                      const res = await fetch(`/api/hierarchies/${showEditHierarchy.id}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          name: hierarchyFormData.name.trim(),
+                          description: hierarchyFormData.description.trim() || null,
+                        }),
+                      });
+                      if (!res.ok) {
+                        const data = await res.json();
+                        throw new Error(data.error || "Failed to update hierarchy");
+                      }
+                      setShowEditHierarchy(null);
+                      fetchDashboardData();
+                    } catch (err) {
+                      setHierarchyError(err instanceof Error ? err.message : "Failed to update hierarchy");
+                    }
+                  }}
+                >
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Hierarchy Confirmation Modal */}
+      {showDeleteHierarchy && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-lg bg-background p-6 shadow-xl">
+            <h2 className="text-lg font-semibold mb-2">Delete Hierarchy</h2>
+            <p className="text-muted-foreground mb-4">
+              Are you sure you want to delete <strong>{showDeleteHierarchy.name}</strong>? 
+              This will unlink {showDeleteHierarchy.blueprints.length} blueprint{showDeleteHierarchy.blueprints.length !== 1 ? "s" : ""} from this hierarchy.
+              The blueprints themselves will not be deleted.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowDeleteHierarchy(null)} disabled={isDeletingHierarchy}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                disabled={isDeletingHierarchy}
+                onClick={async () => {
+                  setIsDeletingHierarchy(true);
+                  try {
+                    const res = await fetch(`/api/hierarchies/${showDeleteHierarchy.id}`, {
+                      method: "DELETE",
+                    });
+                    if (!res.ok) {
+                      const data = await res.json();
+                      throw new Error(data.error || "Failed to delete hierarchy");
+                    }
+                    setShowDeleteHierarchy(null);
+                    fetchDashboardData();
+                  } catch (err) {
+                    setHierarchyError(err instanceof Error ? err.message : "Failed to delete hierarchy");
+                  } finally {
+                    setIsDeletingHierarchy(false);
+                  }
+                }}
+              >
+                {isDeletingHierarchy ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  "Delete"
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
