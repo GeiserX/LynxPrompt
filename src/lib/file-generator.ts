@@ -470,7 +470,7 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
   if (config.useGitWorktrees) {
     lines.push("## Before Starting Any Coding Task");
     lines.push("");
-    lines.push("1. Always create a new git worktree for the task");
+    lines.push("1. Check existing worktrees with `git worktree list` and create a new one for this task if needed");
     lines.push("2. Use the naming convention: `git worktree add -b ai/[task-description] ../[repo-name]-ai-[task-description]`");
     lines.push("3. Navigate to the worktree directory before making any changes");
     lines.push("4. Commit changes when the task is finished. Merge to main, and clean the worktree.");
@@ -1214,7 +1214,7 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
   if (config.useGitWorktrees) {
     lines.push("## Before Starting Any Coding Task");
     lines.push("");
-    lines.push("1. Always create a new git worktree for the task");
+    lines.push("1. Check existing worktrees with `git worktree list` and create a new one for this task if needed");
     lines.push("2. Use the naming convention: `git worktree add -b ai/[task-description] ../[repo-name]-ai-[task-description]`");
     lines.push("3. Navigate to the worktree directory before making any changes");
     lines.push("4. Commit changes when the task is finished. Merge to main, and clean the worktree.");
