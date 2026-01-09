@@ -6196,7 +6196,7 @@ function StepCodeStyle({
         
         {/* Error Handling Pattern */}
         <div>
-          <label className="text-sm font-medium">Error Handling Pattern (optional)</label>
+          <label className="text-sm font-medium">Error Handling Pattern</label>
           <p className="mt-1 text-xs text-muted-foreground">How should errors be handled in this project? Click again to deselect.</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {ERROR_HANDLING_PATTERNS.map((pattern) => (
@@ -6226,7 +6226,7 @@ function StepCodeStyle({
 
         {/* Logging Conventions */}
         <div>
-          <label className="text-sm font-medium">Logging Conventions (optional)</label>
+          <label className="text-sm font-medium">Logging Conventions</label>
           <p className="mt-1 text-xs text-muted-foreground">How should logging be handled? Click again to deselect.</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {[
@@ -6293,7 +6293,7 @@ function StepCodeStyle({
 
         {/* Import order */}
         <div>
-          <label className="text-sm font-medium">Import order preference (optional)</label>
+          <label className="text-sm font-medium">Import order preference</label>
           <div className="mt-2 flex flex-wrap gap-2">
             {[
               { id: "", label: "Skip", desc: "Don't specify" },
@@ -6319,7 +6319,7 @@ function StepCodeStyle({
 
         {/* Comment language */}
         <div>
-          <label className="text-sm font-medium">Comment language (optional)</label>
+          <label className="text-sm font-medium">Comment language</label>
           <p className="mt-1 text-xs text-muted-foreground">Language for code comments and documentation</p>
           <select
             value={config.commentLanguage}
@@ -6390,7 +6390,7 @@ function StepCodeStyle({
 
         {/* Documentation style */}
         <div>
-          <label className="text-sm font-medium">Documentation style (optional)</label>
+          <label className="text-sm font-medium">Documentation style</label>
           <div className="mt-2 flex flex-wrap gap-2">
             {[
               { id: "", label: "None / Language default" },
