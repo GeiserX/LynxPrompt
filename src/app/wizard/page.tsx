@@ -667,6 +667,7 @@ type WizardConfig = {
   defaultBranch: string; // main, master, develop
   commitWorkflow: string; // branch_pr, direct_main, hybrid
   commitSigning: boolean; // GPG/SSH signing
+  useGitWorktrees: boolean; // Use git worktrees for parallel AI agent sessions
   cicd: string;
   deploymentEnvironment: string[]; // "self_hosted" | "cloud"
   selfHostedTargets: string[];
@@ -823,6 +824,7 @@ function WizardPageContent() {
     defaultBranch: "main",
     commitWorkflow: "branch_pr",
     commitSigning: false,
+    useGitWorktrees: true, // Default to yes for parallel AI sessions
     cicd: "github_actions",
     deploymentEnvironment: [],
     selfHostedTargets: [],
@@ -4478,6 +4480,33 @@ function StepRepository({
                 <p className="text-xs text-muted-foreground">Commit directly, no branches</p>
               </div>
             </button>
+          </div>
+        </div>
+
+        {/* Git Worktrees for Parallel AI Sessions */}
+        <div className="rounded-lg border border-purple-500/30 bg-purple-500/5 p-4">
+          <div className="flex items-start gap-3">
+            <div className="pt-0.5">
+              <input
+                type="checkbox"
+                id="useGitWorktrees"
+                checked={config.useGitWorktrees}
+                onChange={(e) => onChange({ useGitWorktrees: e.target.checked })}
+                className="h-5 w-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+              />
+            </div>
+            <div className="flex-1">
+              <label htmlFor="useGitWorktrees" className="block text-sm font-medium cursor-pointer">
+                🌲 Use Git Worktrees for AI Sessions
+              </label>
+              <p className="text-xs text-muted-foreground mt-1">
+                Do you plan on working with several AI agent sessions in this repository at the same time?
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                If enabled, we&apos;ll instruct AI agents to always create git worktrees for each task, 
+                allowing multiple parallel coding sessions without branch conflicts.
+              </p>
+            </div>
           </div>
         </div>
 
