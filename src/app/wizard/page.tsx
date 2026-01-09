@@ -666,7 +666,7 @@ type WizardConfig = {
   branchStrategy: string; // gitflow, github_flow, trunk_based, gitlab_flow
   defaultBranch: string; // main, master, develop, trunk, other
   defaultBranchOther: string; // custom branch name when defaultBranch is "other"
-  commitWorkflow: string; // branch_pr, direct_main, hybrid
+  allowDirectCommits: boolean; // Allow direct commits for small fixes (typos, docs, etc.)
   commitSigning: boolean; // GPG/SSH signing
   useGitWorktrees: boolean; // Use git worktrees for parallel AI agent sessions
   cicd: string[]; // multi-select CI/CD platforms
@@ -816,7 +816,7 @@ function WizardPageContent() {
     exampleRepoUrl: "",
     documentationUrl: "",
     isPublic: true,
-    license: "none",
+    license: "mit",
     licenseOther: "",
     licenseNotes: "",
     licenseSave: false,
@@ -832,7 +832,7 @@ function WizardPageContent() {
     branchStrategy: "github_flow",
     defaultBranch: "main",
     defaultBranchOther: "",
-    commitWorkflow: "branch_pr",
+    allowDirectCommits: false,
     commitSigning: false,
     useGitWorktrees: true, // Default to yes for parallel AI sessions
     cicd: [],
@@ -1473,6 +1473,7 @@ function WizardPageContent() {
       conventionalCommits: config.conventionalCommits,
       semver: config.semver,
       dependabot: config.dependabot,
+      allowDirectCommits: config.allowDirectCommits,
       
       // CI/CD & Deployment
       cicd: config.cicd || [],
@@ -4140,6 +4141,53 @@ function StepRepository({
   detectedFields: Set<string>;
   onChange: (updates: Partial<WizardConfig>) => void;
 }) {
+  // Search states for multi-selects
+  const [cicdSearch, setCicdSearch] = useState("");
+  const [selfHostedSearch, setSelfHostedSearch] = useState("");
+  const [cloudSearch, setCloudSearch] = useState("");
+
+  // Filtered and sorted CI/CD options (selected first)
+  const filteredCicd = useMemo(() => {
+    const filtered = CICD_OPTIONS.filter(opt =>
+      opt.label.toLowerCase().includes(cicdSearch.toLowerCase())
+    );
+    return [...filtered].sort((a, b) => {
+      const aSelected = config.cicd.includes(a.id);
+      const bSelected = config.cicd.includes(b.id);
+      if (aSelected && !bSelected) return -1;
+      if (!aSelected && bSelected) return 1;
+      return 0;
+    });
+  }, [cicdSearch, config.cicd]);
+
+  // Filtered and sorted self-hosted targets (selected first)
+  const filteredSelfHosted = useMemo(() => {
+    const filtered = SELF_HOSTED_TARGETS.filter(opt =>
+      opt.label.toLowerCase().includes(selfHostedSearch.toLowerCase())
+    );
+    return [...filtered].sort((a, b) => {
+      const aSelected = config.selfHostedTargets.includes(a.id);
+      const bSelected = config.selfHostedTargets.includes(b.id);
+      if (aSelected && !bSelected) return -1;
+      if (!aSelected && bSelected) return 1;
+      return 0;
+    });
+  }, [selfHostedSearch, config.selfHostedTargets]);
+
+  // Filtered and sorted cloud targets (selected first)
+  const filteredCloud = useMemo(() => {
+    const filtered = CLOUD_TARGETS.filter(opt =>
+      opt.label.toLowerCase().includes(cloudSearch.toLowerCase())
+    );
+    return [...filtered].sort((a, b) => {
+      const aSelected = config.cloudTargets.includes(a.id);
+      const bSelected = config.cloudTargets.includes(b.id);
+      if (aSelected && !bSelected) return -1;
+      if (!aSelected && bSelected) return 1;
+      return 0;
+    });
+  }, [cloudSearch, config.cloudTargets]);
+
   const toggleRepoHost = (hostId: string) => {
     const currentHosts = config.repoHosts || [];
     const isSelected = currentHosts.includes(hostId);
@@ -4244,7 +4292,7 @@ function StepRepository({
 
         <div>
           <label className="text-sm font-medium">
-            License (preference)
+            License
             {detectedFields.has("license") && <DetectedBadge />}
           </label>
           <div className="mt-2 grid grid-cols-3 gap-2">
@@ -4306,7 +4354,7 @@ function StepRepository({
                 })
               }
             />
-            Save as default license preference
+            Save as default license
           </label>
         </div>
 
@@ -4416,8 +4464,8 @@ function StepRepository({
                 key={strategy.id}
                 onClick={() => onChange({ 
                   branchStrategy: strategy.id,
-                  // Auto-set commit workflow: toy projects = direct commits, others = branch + PR
-                  commitWorkflow: strategy.id === "none" ? "direct_main" : "branch_pr"
+                  // Auto-enable direct commits for toy projects
+                  allowDirectCommits: strategy.id === "none"
                 })}
                 className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-all h-full ${
                   config.branchStrategy === strategy.id
@@ -4464,55 +4512,13 @@ function StepRepository({
           )}
         </div>
 
-        {/* Commit Workflow */}
-        <div>
-          <label className="block text-sm font-medium mb-2">Commit Workflow</label>
-          <p className="text-xs text-muted-foreground mb-2">How should changes be committed to the repository?</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-            <button
-              onClick={() => onChange({ commitWorkflow: "branch_pr" })}
-              className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-all h-full ${
-                config.commitWorkflow === "branch_pr"
-                  ? "border-primary bg-primary/5 ring-1 ring-primary"
-                  : "hover:border-primary"
-              }`}
-            >
-              <span className="shrink-0">🌿</span>
-              <div className="text-left min-w-0">
-                <span className="text-sm font-medium block">Feature Branches + PRs</span>
-                <p className="text-xs text-muted-foreground line-clamp-2">All changes via pull requests</p>
-              </div>
-            </button>
-            <button
-              onClick={() => onChange({ commitWorkflow: "hybrid" })}
-              className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-all h-full ${
-                config.commitWorkflow === "hybrid"
-                  ? "border-primary bg-primary/5 ring-1 ring-primary"
-                  : "hover:border-primary"
-              }`}
-            >
-              <span className="shrink-0">🔀</span>
-              <div className="text-left min-w-0">
-                <span className="text-sm font-medium block">Hybrid</span>
-                <p className="text-xs text-muted-foreground line-clamp-2">PRs for features, direct commits for small fixes</p>
-              </div>
-            </button>
-            <button
-              onClick={() => onChange({ commitWorkflow: "direct_main" })}
-              className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-all h-full ${
-                config.commitWorkflow === "direct_main"
-                  ? "border-primary bg-primary/5 ring-1 ring-primary"
-                  : "hover:border-primary"
-              }`}
-            >
-              <span className="shrink-0">⚡</span>
-              <div className="text-left min-w-0">
-                <span className="text-sm font-medium block">Direct to Main</span>
-                <p className="text-xs text-muted-foreground line-clamp-2">Commit directly, no branches</p>
-              </div>
-            </button>
-          </div>
-        </div>
+        {/* Direct Commits for Small Fixes */}
+        <ToggleOption
+          label="Allow direct commits for small fixes"
+          description="Enable direct commits to main for typos, docs, and minor fixes (bypassing PRs)"
+          checked={config.allowDirectCommits}
+          onChange={(v) => onChange({ allowDirectCommits: v })}
+        />
 
         {/* Git Worktrees for Parallel AI Sessions */}
         <div>
@@ -4553,8 +4559,20 @@ function StepRepository({
             {detectedFields.has("cicd") && <DetectedBadge />}
           </label>
           <p className="text-xs text-muted-foreground mb-2">Select your continuous integration/deployment tools (select all that apply)</p>
-          <div className="flex flex-wrap gap-2">
-            {CICD_OPTIONS.slice(0, 10).map((opt) => {
+          
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={cicdSearch}
+              onChange={(e) => setCicdSearch(e.target.value)}
+              placeholder="Search CI/CD platforms..."
+              className="w-full rounded-lg border bg-background pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          
+          <div className="mt-3 flex flex-wrap gap-2 max-h-48 overflow-y-auto p-1">
+            {filteredCicd.map((opt) => {
               const isSelected = config.cicd.includes(opt.id);
               return (
                 <button
@@ -4567,50 +4585,24 @@ function StepRepository({
                     });
                   }}
                   className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all ${
-                    isSelected ? "border-primary bg-primary/10" : "hover:border-primary"
+                    isSelected ? "border-primary bg-primary/10 text-primary" : "hover:border-primary"
                   }`}
                 >
                   <span>{opt.icon}</span>
                   <span>{opt.label}</span>
-                  {isSelected && <span className="text-primary">✓</span>}
+                  {isSelected && <Check className="h-3 w-3" />}
                 </button>
               );
             })}
           </div>
-          <details className="mt-2">
-            <summary className="cursor-pointer text-xs text-muted-foreground hover:text-primary">Show more CI/CD options...</summary>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {CICD_OPTIONS.slice(10).map((opt) => {
-                const isSelected = config.cicd.includes(opt.id);
-                return (
-                  <button
-                    key={opt.id}
-                    onClick={() => {
-                      onChange({ 
-                        cicd: isSelected 
-                          ? config.cicd.filter(c => c !== opt.id)
-                          : [...config.cicd, opt.id]
-                      });
-                    }}
-                    className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all ${
-                      isSelected ? "border-primary bg-primary/10" : "hover:border-primary"
-                    }`}
-                  >
-                    <span>{opt.icon}</span>
-                    <span>{opt.label}</span>
-                    {isSelected && <span className="text-primary">✓</span>}
-                  </button>
-                );
-              })}
-            </div>
-          </details>
+          
           {config.cicd.includes("other") && (
             <input
               type="text"
               value={config.cicdOther || ""}
               onChange={(e) => onChange({ cicdOther: e.target.value })}
               placeholder="Enter your CI/CD platform name"
-              className="mt-2 w-full max-w-md rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="mt-3 w-full max-w-md rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           )}
         </div>
@@ -4653,12 +4645,20 @@ function StepRepository({
           <div className="rounded-lg border bg-muted/30 p-4">
             <label className="block text-sm font-medium">Self-hosted Deployment Targets</label>
             <p className="text-xs text-muted-foreground mb-2">How do you deploy to your own infrastructure?</p>
-            <div className="flex flex-wrap gap-2">
-              {/* Show selected items first, then unselected from main list */}
-              {[
-                ...SELF_HOSTED_TARGETS.filter(t => config.selfHostedTargets.includes(t.id)),
-                ...SELF_HOSTED_TARGETS.slice(0, 12).filter(t => !config.selfHostedTargets.includes(t.id))
-              ].map((target) => {
+            
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                value={selfHostedSearch}
+                onChange={(e) => setSelfHostedSearch(e.target.value)}
+                placeholder="Search self-hosted targets..."
+                className="w-full rounded-lg border bg-background pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            
+            <div className="mt-3 flex flex-wrap gap-2 max-h-48 overflow-y-auto p-1">
+              {filteredSelfHosted.map((target) => {
                 const isSelected = config.selfHostedTargets.includes(target.id);
                 return (
                   <button
@@ -4671,35 +4671,16 @@ function StepRepository({
                       });
                     }}
                     className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all ${
-                      isSelected ? "border-primary bg-primary/10" : "hover:border-primary"
+                      isSelected ? "border-primary bg-primary/10 text-primary" : "hover:border-primary"
                     }`}
                   >
                     <span>{target.icon}</span>
                     <span>{target.label}</span>
-                    {isSelected && <span className="text-primary">✓</span>}
+                    {isSelected && <Check className="h-3 w-3" />}
                   </button>
                 );
               })}
             </div>
-            <details className="mt-2">
-              <summary className="cursor-pointer text-xs text-muted-foreground hover:text-primary">Show more self-hosted options...</summary>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {SELF_HOSTED_TARGETS.slice(12).filter(t => !config.selfHostedTargets.includes(t.id)).map((target) => (
-                  <button
-                    key={target.id}
-                    onClick={() => {
-                      onChange({ 
-                        selfHostedTargets: [...config.selfHostedTargets, target.id]
-                      });
-                    }}
-                    className="flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all hover:border-primary"
-                  >
-                    <span>{target.icon}</span>
-                    <span>{target.label}</span>
-                  </button>
-                ))}
-              </div>
-            </details>
           </div>
         )}
 
@@ -4708,12 +4689,20 @@ function StepRepository({
           <div className="rounded-lg border bg-muted/30 p-4">
             <label className="block text-sm font-medium">Cloud Deployment Targets</label>
             <p className="text-xs text-muted-foreground mb-2">Which cloud platforms do you deploy to?</p>
-            <div className="flex flex-wrap gap-2">
-              {/* Show selected items first, then unselected from main list */}
-              {[
-                ...CLOUD_TARGETS.filter(t => config.cloudTargets.includes(t.id)),
-                ...CLOUD_TARGETS.slice(0, 12).filter(t => !config.cloudTargets.includes(t.id))
-              ].map((target) => {
+            
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                value={cloudSearch}
+                onChange={(e) => setCloudSearch(e.target.value)}
+                placeholder="Search cloud targets..."
+                className="w-full rounded-lg border bg-background pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            
+            <div className="mt-3 flex flex-wrap gap-2 max-h-48 overflow-y-auto p-1">
+              {filteredCloud.map((target) => {
                 const isSelected = config.cloudTargets.includes(target.id);
                 return (
                   <button
@@ -4726,35 +4715,16 @@ function StepRepository({
                       });
                     }}
                     className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all ${
-                      isSelected ? "border-primary bg-primary/10" : "hover:border-primary"
+                      isSelected ? "border-primary bg-primary/10 text-primary" : "hover:border-primary"
                     }`}
                   >
                     <span>{target.icon}</span>
                     <span>{target.label}</span>
-                    {isSelected && <span className="text-primary">✓</span>}
+                    {isSelected && <Check className="h-3 w-3" />}
                   </button>
                 );
               })}
             </div>
-            <details className="mt-2">
-              <summary className="cursor-pointer text-xs text-muted-foreground hover:text-primary">Show more cloud options...</summary>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {CLOUD_TARGETS.slice(12).filter(t => !config.cloudTargets.includes(t.id)).map((target) => (
-                  <button
-                    key={target.id}
-                    onClick={() => {
-                      onChange({ 
-                        cloudTargets: [...config.cloudTargets, target.id]
-                      });
-                    }}
-                    className="flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all hover:border-primary"
-                  >
-                    <span>{target.icon}</span>
-                    <span>{target.label}</span>
-                  </button>
-                ))}
-              </div>
-            </details>
           </div>
         )}
 

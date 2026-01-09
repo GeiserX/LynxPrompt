@@ -83,8 +83,8 @@ export interface GenerateOptions {
   changelogTool?: string;          // manual, conventional_changelog, etc.
   // AI Behavior
   planModeFrequency?: string;      // always, complex_tasks, multi_file, etc.
-  // Commit workflow
-  commitWorkflow?: string;         // branch_pr, direct_main
+  // Direct commits for small fixes
+  allowDirectCommits?: boolean;    // Allow direct commits for typos, docs, minor fixes
   // Git worktrees for parallel AI sessions
   useGitWorktrees?: boolean;       // Use git worktrees for each task
   // Additional libraries not in predefined lists
@@ -1023,23 +1023,16 @@ function generateFileContent(options: GenerateOptions, platform: string): string
   }
 
   // Git workflow preference
-  if (options.commitWorkflow && (isMarkdown || isMdc)) {
+  if ((isMarkdown || isMdc)) {
     sections.push("## Git Workflow");
     sections.push("");
-    if (options.commitWorkflow === "branch_pr") {
-      sections.push("- **Workflow:** Create feature branches and submit pull requests");
+    sections.push("- **Workflow:** Create feature branches and submit pull requests");
+    sections.push("- Create a descriptive branch name (e.g., `feat/add-login`, `fix/button-styling`)");
+    sections.push("- Open a PR for review before merging");
+    if (options.allowDirectCommits) {
+      sections.push("- **Exception:** Direct commits to main are acceptable for small fixes (typos, docs, minor fixes)");
+    } else {
       sections.push("- Do NOT commit directly to main/master branch");
-      sections.push("- Create a descriptive branch name (e.g., `feat/add-login`, `fix/button-styling`)");
-      sections.push("- Open a PR for review before merging");
-    } else if (options.commitWorkflow === "hybrid") {
-      sections.push("- **Workflow:** Hybrid - feature branches for larger changes");
-      sections.push("- Direct commits to main are acceptable for small fixes and documentation");
-      sections.push("- For larger features or breaking changes, create a feature branch and open a PR");
-      sections.push("- Create descriptive branch names when needed (e.g., `feat/add-login`, `fix/button-styling`)");
-    } else if (options.commitWorkflow === "direct_main") {
-      sections.push("- **Workflow:** Commit directly to main/master branch");
-      sections.push("- Small, focused commits are preferred");
-      sections.push("- Ensure tests pass before pushing");
     }
     sections.push("");
   }
