@@ -2689,7 +2689,7 @@ async function runInteractiveWizard(
   const securityNotesResponse = await prompts({
     type: "text",
     name: "securityNotes",
-    message: chalk.white("Additional security notes (optional):"),
+    message: chalk.white("Additional security notes:"),
     hint: chalk.gray("e.g., specific compliance requirements, custom security practices"),
   }, promptConfig);
   answers.securityNotes = securityNotesResponse.securityNotes || "";
@@ -2885,7 +2885,7 @@ async function runInteractiveWizard(
     const customCmdResponse = await prompts({
       type: "text",
       name: "custom",
-      message: chalk.white("Custom command (optional):"),
+      message: chalk.white("Custom command:"),
       hint: chalk.gray("e.g., npm run migrate, make deploy"),
     }, promptConfig);
     if (customCmdResponse.custom) {
@@ -3097,7 +3097,7 @@ async function runInteractiveWizard(
     const styleNotesResponse = await prompts({
       type: "text",
       name: "styleNotes",
-      message: chalk.white("Additional style notes (optional):"),
+      message: chalk.white("Additional style notes:"),
       hint: chalk.gray("e.g., prefer named exports, max line length 100"),
     }, promptConfig);
     answers.styleNotes = styleNotesResponse.styleNotes || "";
@@ -3619,7 +3619,7 @@ async function runInteractiveWizard(
     const testNotesResponse = await prompts({
       type: "text",
       name: "testNotes",
-      message: chalk.white("Testing notes (optional):"),
+      message: chalk.white("Testing notes:"),
       hint: chalk.gray("e.g., run e2e on main only, use msw for mocking"),
     }, promptConfig);
     answers.testNotes = testNotesResponse.testNotes || "";
@@ -3857,7 +3857,7 @@ async function runInteractiveWizard(
   const extraNotesResponse = await prompts({
     type: "text",
     name: "extraNotes",
-    message: chalk.white("Anything else AI should know? (optional):"),
+    message: chalk.white("Anything else AI should know?"),
     hint: hasAIAccess 
       ? chalk.gray("Enter text or type 'ai:' followed by your request")
       : chalk.gray("Special requirements, gotchas, team conventions..."),

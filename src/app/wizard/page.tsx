@@ -3093,7 +3093,7 @@ function StepProject({
 
         <div>
           <label className="mb-2 block text-sm font-medium">
-            Description (optional)
+            Description
             {detectedFields.has("projectDescription") && <DetectedBadge />}
           </label>
           <textarea
@@ -3181,7 +3181,7 @@ function StepProject({
         {/* Architecture Pattern */}
         <div>
           <label className="mb-2 block text-sm font-medium">
-            Architecture Pattern (optional)
+            Architecture Pattern
           </label>
           <p className="mb-3 text-sm text-muted-foreground">
             What architectural approach does this project follow? Click again to deselect.
@@ -3644,7 +3644,7 @@ function StepTechStack({
         </div>
 
         <p className="mb-3 text-sm text-muted-foreground">
-          Select your preferred databases (optional). You can select multiple. This helps AI understand your data storage preferences.
+          Select your preferred databases. You can select multiple. This helps AI understand your data storage preferences.
         </p>
 
         {/* Search */}
@@ -3916,7 +3916,7 @@ function StepTechStack({
         <div className="mt-8">
           <h3 className="mb-2 font-semibold">ORM / Database Library</h3>
           <p className="mb-3 text-sm text-muted-foreground">
-            Select your preferred ORM or database library (optional)
+            Select your preferred ORM or database library
           </p>
           <div className="flex flex-wrap gap-2">
             {ORM_OPTIONS.filter(o => 
@@ -4285,7 +4285,7 @@ function StepRepository({
           )}
           {config.license && config.license !== "none" && (
             <div className="mt-3">
-              <label className="text-xs text-muted-foreground">Additional license notes (optional)</label>
+              <label className="text-xs text-muted-foreground">Additional license notes</label>
               <input
                 type="text"
                 value={config.licenseNotes || ""}
@@ -6754,7 +6754,7 @@ function StepTesting({
             onChange={(v) => onChange({ tddPreference: v })}
           />
           <ToggleOption
-            label="📸 Snapshot Testing (optional)"
+            label="📸 Snapshot Testing"
             description="Captures expected output (HTML, JSON, etc.) and compares future runs against it. Useful for UI components, API responses, serialization."
             checked={config.snapshotTesting}
             onChange={(v) => onChange({ snapshotTesting: v })}
