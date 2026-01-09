@@ -2741,6 +2741,7 @@ ${syncCommands}
                   userPersona={session?.user?.persona}
                   userSkillLevel={session?.user?.skillLevel}
                   selectedLanguages={config.languages}
+                  isLoggedIn={isLoggedIn}
                 />
               )}
               {currentStep === 7 && (
@@ -5382,6 +5383,7 @@ function StepAIBehavior({
   userPersona,
   userSkillLevel,
   selectedLanguages,
+  isLoggedIn,
 }: {
   selected: string[];
   onToggle: (v: string) => void;
@@ -5404,6 +5406,7 @@ function StepAIBehavior({
   userPersona?: string | null;
   userSkillLevel?: string | null;
   selectedLanguages?: string[];
+  isLoggedIn: boolean;
 }) {
   const personaLabel = userPersona ? userPersona.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()) : "Not set";
   const skillLabel = userSkillLevel ? userSkillLevel.replace(/\b\w/g, c => c.toUpperCase()) : "Not set";
@@ -5415,102 +5418,84 @@ function StepAIBehavior({
         Define how AI assistants should behave when helping you code.
       </p>
       
-      {/* Personal Data Section */}
-      <div className="mt-6 rounded-lg border-2 border-blue-600 bg-white p-4 shadow-sm dark:border-blue-800 dark:bg-blue-900/20">
-        <div className="flex items-start gap-3">
-          <User className="h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
-          <div className="flex-1">
-            <h3 className="font-semibold text-gray-900 dark:text-blue-200">Include Your Profile in Blueprint</h3>
-            <p className="mt-1 text-sm text-gray-700 dark:text-blue-300">
-              Your developer role (<strong>{personaLabel}</strong>) and skill level (<strong>{skillLabel}</strong>) 
-              can be included in the generated config file. This helps the AI tailor its responses to your experience level.
-            </p>
-            <p className="mt-2 text-xs text-gray-600 dark:text-blue-400 italic">
-              Note: This information is only used in the downloaded config file — it doesn&apos;t affect the wizard itself.
-            </p>
-            <div className="mt-3 flex items-center gap-3">
-              <input
-                type="checkbox"
-                id="includePersonalData"
-                checked={includePersonalData}
-                onChange={(e) => onIncludePersonalDataChange(e.target.checked)}
-                className="h-4 w-4 rounded border-blue-600 accent-blue-600"
-              />
-              <label htmlFor="includePersonalData" className="text-sm font-medium text-gray-800 dark:text-blue-200">
-                Include my role &amp; skill level in the AI config file
-              </label>
+      {/* Personal Data Section - Only available for signed-in users */}
+      {isLoggedIn ? (
+        <div className="mt-6 rounded-lg border-2 border-blue-600 bg-white p-4 shadow-sm dark:border-blue-800 dark:bg-blue-900/20">
+          <div className="flex items-start gap-3">
+            <User className="h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="font-semibold text-gray-900 dark:text-blue-200">Include Your Profile in Blueprint</h3>
+              <p className="mt-1 text-sm text-gray-700 dark:text-blue-300">
+                Your developer role (<strong>{personaLabel}</strong>) and skill level (<strong>{skillLabel}</strong>) 
+                can be included in the generated config file. This helps the AI tailor its responses to your experience level.
+              </p>
+              <p className="mt-2 text-xs text-gray-600 dark:text-blue-400 italic">
+                Note: This information is only used in the downloaded config file — it doesn&apos;t affect the wizard itself.
+              </p>
+              <div className="mt-3 flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="includePersonalData"
+                  checked={includePersonalData}
+                  onChange={(e) => onIncludePersonalDataChange(e.target.checked)}
+                  className="h-4 w-4 rounded border-blue-600 accent-blue-600"
+                />
+                <label htmlFor="includePersonalData" className="text-sm font-medium text-gray-800 dark:text-blue-200">
+                  Include my role &amp; skill level in the AI config file
+                </label>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="mt-6 rounded-lg border-2 border-muted bg-muted/30 p-4 shadow-sm opacity-60">
+          <div className="flex items-start gap-3">
+            <Lock className="h-5 w-5 flex-shrink-0 text-muted-foreground mt-0.5" />
+            <div className="flex-1">
+              <h3 className="font-semibold text-muted-foreground">Include Your Profile in Blueprint</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Sign in to include your developer role and skill level in the generated config file.
+              </p>
+              <p className="mt-2 text-xs text-muted-foreground italic">
+                This helps the AI tailor its responses to your experience level.
+              </p>
+              <div className="mt-3 flex items-center gap-3 pointer-events-none">
+                <input
+                  type="checkbox"
+                  disabled
+                  className="h-4 w-4 rounded border-muted-foreground cursor-not-allowed"
+                />
+                <span className="text-sm text-muted-foreground">
+                  Sign in required
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
+      {/* AI Behavior Toggles */}
       <div className="mt-6 space-y-3">
         {AI_BEHAVIOR_RULES.map((rule) => (
-          <button
+          <ToggleOption
             key={rule.id}
-            onClick={() => onToggle(rule.id)}
-            className={`flex w-full items-start gap-4 rounded-lg border p-4 text-left transition-all ${
-              selected.includes(rule.id)
-                ? "border-primary bg-primary/5"
-                : "hover:border-primary"
-            }`}
-          >
-            <div
-              className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
-                selected.includes(rule.id)
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-muted-foreground"
-              }`}
-            >
-              {selected.includes(rule.id) && <Check className="h-3 w-3" />}
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <span className="font-medium">{rule.label}</span>
-                {rule.recommended && (
-                  <span className="rounded bg-primary/10 px-2 py-0.5 text-xs text-primary">
-                    Recommended
-                  </span>
-                )}
-              </div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {rule.description}
-              </p>
-            </div>
-          </button>
+            label={rule.label}
+            description={rule.description}
+            checked={selected.includes(rule.id)}
+            onChange={() => onToggle(rule.id)}
+            recommended={rule.recommended}
+          />
         ))}
       </div>
 
       {/* Self-Improving Blueprint Option */}
       <div className="mt-3">
-        <button
-          onClick={() => onAutoUpdateChange(!enableAutoUpdate)}
-          className={`flex w-full items-start gap-4 rounded-lg border p-4 text-left transition-all ${
-            enableAutoUpdate
-              ? "border-primary bg-primary/5"
-              : "hover:border-primary"
-          }`}
-        >
-          <div
-            className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
-              enableAutoUpdate
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-muted-foreground"
-            }`}
-          >
-            {enableAutoUpdate && <Check className="h-3 w-3" />}
-          </div>
-          <div className="flex-1">
-            <span className="font-semibold">
-              Enable Self-Improving Blueprint
-            </span>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Include an instruction for AI agents to track your coding patterns and automatically
-              update this configuration file as you work. The AI will learn from your preferences
-              and improve the rules over time.
-            </p>
-          </div>
-        </button>
+        <ToggleOption
+          label="Enable Self-Improving Blueprint"
+          description="Include an instruction for AI agents to track your coding patterns and automatically update this configuration file as you work."
+          checked={enableAutoUpdate}
+          onChange={onAutoUpdateChange}
+        />
       </div>
 
       {/* Plan Mode Frequency */}
@@ -7591,11 +7576,13 @@ function ToggleOption({
   description,
   checked,
   onChange,
+  recommended,
 }: {
   label: string;
   description: string;
   checked: boolean;
   onChange: (v: boolean) => void;
+  recommended?: boolean;
 }) {
   return (
     <button
@@ -7605,11 +7592,18 @@ function ToggleOption({
       }`}
     >
       <div>
-        <p className="font-medium">{label}</p>
+        <div className="flex items-center gap-2">
+          <p className="font-medium">{label}</p>
+          {recommended && (
+            <span className="rounded bg-primary/10 px-2 py-0.5 text-xs text-primary">
+              Recommended
+            </span>
+          )}
+        </div>
         <p className="text-sm text-muted-foreground">{description}</p>
       </div>
       <div
-        className={`flex h-6 w-11 items-center rounded-full p-1 transition-colors ${
+        className={`ml-4 flex h-6 w-11 shrink-0 items-center rounded-full p-1 transition-colors ${
           checked ? "bg-green-500" : "bg-muted"
         }`}
       >
