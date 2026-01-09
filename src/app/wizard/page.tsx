@@ -4515,28 +4515,33 @@ function StepRepository({
         </div>
 
         {/* Git Worktrees for Parallel AI Sessions */}
-        <div className="rounded-lg border border-purple-500/30 bg-purple-500/5 p-4">
-          <div className="flex items-start gap-3">
-            <div className="pt-0.5">
-              <input
-                type="checkbox"
-                id="useGitWorktrees"
-                checked={config.useGitWorktrees}
-                onChange={(e) => onChange({ useGitWorktrees: e.target.checked })}
-                className="h-5 w-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-              />
-            </div>
-            <div className="flex-1">
-              <label htmlFor="useGitWorktrees" className="block text-sm font-medium cursor-pointer">
-                🌲 Use Git Worktrees for AI Sessions
-              </label>
-              <p className="text-xs text-muted-foreground mt-1">
-                Do you plan on working with several AI agent sessions in this repository at the same time?
-              </p>
-              <p className="text-xs text-muted-foreground mt-2">
-                If enabled, we&apos;ll instruct AI agents to always create git worktrees for each task, 
-                allowing multiple parallel coding sessions without branch conflicts.
-              </p>
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            🌲 Parallel AI Sessions
+          </label>
+          <div className="rounded-lg border border-purple-500/30 bg-purple-500/5 p-4">
+            <div className="flex items-start gap-3">
+              <div className="pt-0.5">
+                <input
+                  type="checkbox"
+                  id="useGitWorktrees"
+                  checked={config.useGitWorktrees}
+                  onChange={(e) => onChange({ useGitWorktrees: e.target.checked })}
+                  className="h-5 w-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                />
+              </div>
+              <div className="flex-1">
+                <label htmlFor="useGitWorktrees" className="block text-sm font-medium cursor-pointer">
+                  Use Git Worktrees for multi-agent work
+                </label>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Enable if you work with multiple AI agents (Cursor, Claude, Copilot) on the same repo simultaneously.
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  AI agents will be instructed to create separate git worktrees for each task, 
+                  preventing branch conflicts between parallel sessions.
+                </p>
+              </div>
             </div>
           </div>
         </div>
