@@ -96,7 +96,7 @@ export default function MonorepoHierarchyPage() {
         </div>
         <p className="text-muted-foreground">
           When you create a hierarchy, the name <strong>defaults to the folder name</strong> where your root 
-          AGENTS.md is located. You can change it later via the API.
+          AGENTS.md is located. You can change it later via the API or CLI.
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-lg border bg-card p-4">
