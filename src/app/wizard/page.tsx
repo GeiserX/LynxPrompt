@@ -7252,8 +7252,9 @@ function StepGenerate({
     const searchLower = ideSearch.toLowerCase();
     return PLATFORMS.filter(
       (p) =>
-        p.name.toLowerCase().includes(searchLower) ||
-        p.note.toLowerCase().includes(searchLower)
+        !p.isCommand && // Exclude commands - wizard is for config files only
+        (p.name.toLowerCase().includes(searchLower) ||
+        p.note.toLowerCase().includes(searchLower))
     );
   }, [ideSearch]);
   
@@ -7359,7 +7360,7 @@ function StepGenerate({
         </div>
 
         {/* Cloud Sync Option */}
-        <div className={`rounded-lg border p-4 transition-colors ${enableApiSync ? "border-primary bg-primary/5" : "border-dashed"}`}>
+        <div className={`rounded-lg border p-4 transition-colors ${enableApiSync ? "border-green-500 bg-green-500/5" : "border-dashed"}`}>
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <div className="flex items-center gap-2 flex-wrap">
@@ -7368,12 +7369,12 @@ function StepGenerate({
                 </label>
               </div>
               <p className="mt-1 text-sm text-muted-foreground">
-                Save as private blueprint &amp; include sync commands in the downloaded file.
+                Save as private blueprint &amp; include sync commands in the downloaded file. Your AI agent will read these instructions and automatically sync changes to LynxPrompt Cloud.
               </p>
             </div>
             <button
               onClick={() => onApiSyncChange(!enableApiSync)}
-              className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${enableApiSync ? "bg-primary" : "bg-muted"}`}
+              className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${enableApiSync ? "bg-green-500" : "bg-muted"}`}
               aria-label="Toggle cloud sync"
             >
               <span
@@ -7592,11 +7593,11 @@ function ToggleOption({
   return (
     <button
       onClick={() => onChange(!checked)}
-      className={`flex w-full items-center justify-between rounded-lg border p-4 text-left transition-all ${
+      className={`flex w-full items-center justify-between gap-4 rounded-lg border p-4 text-left transition-all ${
         checked ? "border-primary bg-primary/5" : "hover:border-primary"
       }`}
     >
-      <div>
+      <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <p className="font-medium">{label}</p>
           {recommended && (
@@ -7608,7 +7609,7 @@ function ToggleOption({
         <p className="text-sm text-muted-foreground">{description}</p>
       </div>
       <div
-        className={`ml-4 flex h-6 w-11 shrink-0 items-center rounded-full p-1 transition-colors ${
+        className={`flex h-6 w-11 shrink-0 items-center rounded-full p-1 transition-colors ${
           checked ? "bg-green-500" : "bg-muted"
         }`}
       >
