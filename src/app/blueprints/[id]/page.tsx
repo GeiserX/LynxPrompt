@@ -900,7 +900,7 @@ export default function BlueprintDetailPage() {
             content: selectedVersionContent || blueprint.content || "",
             variables: blueprint.variables,
             sensitiveFields: blueprint.sensitiveFields,
-            targetPlatform: blueprint.targetPlatform,
+            targetPlatform: blueprint.targetPlatform || blueprint.type,
             compatibleWith: blueprint.compatibleWith,
           }}
         />

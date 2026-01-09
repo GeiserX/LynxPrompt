@@ -867,6 +867,7 @@ function detectCurrentOS(): string {
 const ARCHITECTURE_PATTERNS = [
   { id: "monolith", label: "Monolith" },
   { id: "microservices", label: "Microservices" },
+  { id: "multi_image_docker", label: "Multi-Image Docker (shared codebase)" },
   { id: "serverless", label: "Serverless" },
   { id: "mvc", label: "MVC" },
   { id: "layered", label: "Layered/N-tier" },
@@ -2024,6 +2025,19 @@ async function runInteractiveWizard(
     answers.orm = ormResponse.orm || "";
   }
 
+  // Additional libraries (for domain-specific libs not in predefined lists)
+  console.log();
+  console.log(chalk.cyan("  📦 Additional Libraries"));
+  console.log(chalk.gray("     Add key libraries not listed above (e.g., Telethon, APScheduler, boto3)"));
+  console.log();
+  const additionalLibsResponse = await prompts({
+    type: "text",
+    name: "additionalLibraries",
+    message: chalk.white("Additional libraries (comma-separated, optional):"),
+    hint: chalk.gray("e.g., Telethon, APScheduler, uvicorn, alembic"),
+  }, promptConfig);
+  answers.additionalLibraries = additionalLibsResponse.additionalLibraries || "";
+
   // Combine all stack selections
   answers.stack = [...selectedLanguages, ...selectedFrameworks, ...selectedDatabases];
 
@@ -2197,9 +2211,20 @@ async function runInteractiveWizard(
   }, promptConfig);
   answers.defaultBranch = defaultBranchResponse.defaultBranch || "main";
 
-  // Commit workflow is automatically determined by branch strategy
-  // Toy projects (no branching) → direct commits; all others → branch + PR
-  answers.commitWorkflow = answers.branchStrategy === "none" ? "direct_main" : "branch_pr";
+  // Commit workflow - let user choose (with smart default based on branch strategy)
+  const defaultWorkflow = answers.branchStrategy === "none" ? "direct_main" : "hybrid";
+  const commitWorkflowResponse = await prompts({
+    type: "select",
+    name: "commitWorkflow",
+    message: chalk.white("Commit workflow:"),
+    choices: [
+      { title: "🌿 Feature Branches + PRs - All changes via pull requests", value: "branch_pr" },
+      { title: "🔀 Hybrid - PRs for features, direct commits for small fixes", value: "hybrid" },
+      { title: "⚡ Direct to Main - Commit directly, no branches", value: "direct_main" },
+    ],
+    initial: defaultWorkflow === "direct_main" ? 2 : 1, // Default to hybrid for most projects
+  }, promptConfig);
+  answers.commitWorkflow = commitWorkflowResponse.commitWorkflow || defaultWorkflow;
 
   // Dependabot/Renovate moved to Security step
 
@@ -2324,6 +2349,17 @@ async function runInteractiveWizard(
       }, promptConfig);
       answers.customRegistryUrl = customRegistryResponse.customRegistryUrl || "";
     }
+    
+    // Docker image names
+    console.log();
+    console.log(chalk.gray("  📦 Specify published Docker image names (helps AI understand deployment)"));
+    const dockerImagesResponse = await prompts({
+      type: "text",
+      name: "dockerImageNames",
+      message: chalk.white("Docker image names (comma-separated, optional):"),
+      hint: chalk.gray("e.g., myuser/myapp, myuser/myapp-viewer"),
+    }, promptConfig);
+    answers.dockerImageNames = dockerImagesResponse.dockerImageNames || "";
   }
 
   // Example repository URL
@@ -3097,13 +3133,34 @@ async function runInteractiveWizard(
   }, promptConfig);
   answers.importantFiles = importantFilesResponse.importantFiles || [];
 
-  // Ask for custom important files
+  // Ask for custom important files - with language-aware hints
   console.log();
+  const stackLanguages = (answers.stack as string[]) || [];
+  const importantFileHints: string[] = [];
+  if (stackLanguages.includes("python")) {
+    importantFileHints.push("src/config.py", "requirements.txt", ".env.example");
+  }
+  if (stackLanguages.includes("typescript") || stackLanguages.includes("javascript")) {
+    importantFileHints.push("src/config/index.ts", "tsconfig.json", ".env.example");
+  }
+  if (stackLanguages.includes("go")) {
+    importantFileHints.push("cmd/main.go", "internal/config/config.go", "go.mod");
+  }
+  if (stackLanguages.includes("rust")) {
+    importantFileHints.push("src/main.rs", "src/config.rs", "Cargo.toml");
+  }
+  if (stackLanguages.includes("java") || stackLanguages.includes("kotlin")) {
+    importantFileHints.push("src/main/resources/application.yml", "pom.xml");
+  }
+  const hintText = importantFileHints.length > 0
+    ? `e.g., ${importantFileHints.slice(0, 3).join(", ")}`
+    : "e.g., src/config/index.ts, docs/api.md, prisma/schema.prisma";
+  
   const customImportantFilesResponse = await prompts({
     type: "text",
     name: "importantFilesOther",
     message: chalk.white("Other important files (comma-separated, optional):"),
-    hint: chalk.gray("e.g., src/config/index.ts, docs/api.md, prisma/schema.prisma"),
+    hint: chalk.gray(hintText),
   }, promptConfig);
   answers.importantFilesOther = customImportantFilesResponse.importantFilesOther || "";
 
@@ -3852,5 +3909,9 @@ async function runInteractiveWizard(
     planModeFrequency: answers.planModeFrequency as string,
     // Commit workflow
     commitWorkflow: answers.commitWorkflow as string,
+    // Additional libraries (not in predefined lists)
+    additionalLibraries: answers.additionalLibraries as string,
+    // Docker image names
+    dockerImageNames: answers.dockerImageNames as string,
   };
 }

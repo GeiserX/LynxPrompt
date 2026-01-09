@@ -510,6 +510,7 @@ const ARCHITECTURE_PATTERNS = [
   { id: "monolith", label: "Monolith" },
   { id: "modular_monolith", label: "Modular Monolith" },
   { id: "microservices", label: "Microservices" },
+  { id: "multi_image_docker", label: "Multi-Image Docker", description: "Shared codebase, multiple container images" },
   { id: "serverless", label: "Serverless" },
   { id: "event_driven", label: "Event-Driven" },
   { id: "layered", label: "Layered / N-Tier" },
@@ -641,6 +642,7 @@ type WizardConfig = {
   monorepoTool: string; // turborepo, nx, lerna, pnpm-workspaces (JS/TS only)
   jsRuntime: string; // node, deno, bun (JS/TS only)
   orm: string; // prisma, drizzle, typeorm, sqlalchemy, etc.
+  additionalLibraries: string; // comma-separated list of additional libs not in predefined lists (e.g., Telethon, APScheduler)
   letAiDecide: boolean;
   repoHost: string;
   repoHostOther: string;
@@ -663,7 +665,7 @@ type WizardConfig = {
   dependabot: boolean;
   branchStrategy: string; // gitflow, github_flow, trunk_based, gitlab_flow
   defaultBranch: string; // main, master, develop
-  commitWorkflow: string; // branch_pr, direct_main
+  commitWorkflow: string; // branch_pr, direct_main, hybrid
   commitSigning: boolean; // GPG/SSH signing
   cicd: string;
   deploymentEnvironment: string[]; // "self_hosted" | "cloud"
@@ -672,6 +674,7 @@ type WizardConfig = {
   buildContainer: boolean;
   containerRegistry: string;
   containerRegistryOther: string;
+  dockerImageNames: string; // comma-separated list of published image names (e.g., "user/app, user/app-viewer")
   registryUsername: string;
   aiBehaviorRules: string[];
   planModeFrequency: string; // always, complex_tasks, multi_file, new_features, on_request, never
@@ -795,6 +798,7 @@ function WizardPageContent() {
     monorepoTool: "",
     jsRuntime: "",
     orm: "",
+    additionalLibraries: "",
     letAiDecide: false,
     repoHost: "github",
     repoHostOther: "",
@@ -826,6 +830,7 @@ function WizardPageContent() {
     buildContainer: false,
     containerRegistry: "",
     containerRegistryOther: "",
+    dockerImageNames: "",
     registryUsername: "",
     aiBehaviorRules: ["always_debug_after_build", "check_logs_after_build", "run_tests_before_commit", "follow_existing_patterns", "ask_before_large_refactors"],
     planModeFrequency: "complex_tasks",
@@ -1426,6 +1431,7 @@ function WizardPageContent() {
       languages: config.languages,
       frameworks: config.frameworks,
       databases: config.databases,
+      additionalLibraries: config.additionalLibraries,
       letAiDecide: config.letAiDecide,
       
       // Repository
@@ -1455,6 +1461,7 @@ function WizardPageContent() {
       buildContainer: config.buildContainer,
       containerRegistry: config.containerRegistry,
       customRegistry: config.containerRegistryOther,
+      dockerImageNames: config.dockerImageNames,
       
       // Funding
       funding: config.funding,
@@ -2651,6 +2658,7 @@ ${syncCommands}
                   monorepoTool={config.monorepoTool}
                   jsRuntime={config.jsRuntime}
                   orm={config.orm}
+                  additionalLibraries={config.additionalLibraries}
                   letAiDecide={config.letAiDecide}
                   detectedFields={detectedFields}
                   onToggleLanguage={(v) => toggleArrayValue("languages", v)}
@@ -2660,6 +2668,7 @@ ${syncCommands}
                   onMonorepoToolChange={(v) => setConfig({ ...config, monorepoTool: v })}
                   onJsRuntimeChange={(v) => setConfig({ ...config, jsRuntime: v })}
                   onOrmChange={(v) => setConfig({ ...config, orm: v })}
+                  onAdditionalLibrariesChange={(v) => setConfig({ ...config, additionalLibraries: v })}
                   onLetAiDecide={(v) => setConfig({ ...config, letAiDecide: v })}
                 />
               )}
@@ -2711,6 +2720,7 @@ ${syncCommands}
                   onIncludePersonalDataChange={(v) => setConfig({ ...config, includePersonalData: v })}
                   userPersona={session?.user?.persona}
                   userSkillLevel={session?.user?.skillLevel}
+                  selectedLanguages={config.languages}
                 />
               )}
               {currentStep === 7 && (
@@ -3200,6 +3210,7 @@ function StepTechStack({
   monorepoTool,
   jsRuntime,
   orm,
+  additionalLibraries,
   letAiDecide,
   detectedFields,
   onToggleLanguage,
@@ -3209,6 +3220,7 @@ function StepTechStack({
   onMonorepoToolChange,
   onJsRuntimeChange,
   onOrmChange,
+  onAdditionalLibrariesChange,
   onLetAiDecide,
 }: {
   selectedLanguages: string[];
@@ -3218,6 +3230,7 @@ function StepTechStack({
   monorepoTool: string;
   jsRuntime: string;
   orm: string;
+  additionalLibraries: string;
   letAiDecide: boolean;
   detectedFields: Set<string>;
   onToggleLanguage: (v: string) => void;
@@ -3227,6 +3240,7 @@ function StepTechStack({
   onMonorepoToolChange: (v: string) => void;
   onJsRuntimeChange: (v: string) => void;
   onOrmChange: (v: string) => void;
+  onAdditionalLibrariesChange: (v: string) => void;
   onLetAiDecide: (v: boolean) => void;
 }) {
   const [langSearch, setLangSearch] = useState("");
@@ -3924,6 +3938,24 @@ function StepTechStack({
           </details>
         </div>
       )}
+
+      {/* Additional Libraries - for domain-specific libs not in predefined lists */}
+      <div className="mt-8">
+        <h3 className="mb-2 font-semibold">Additional Libraries / Tools</h3>
+        <p className="mb-3 text-sm text-muted-foreground">
+          Add any key libraries not listed above (e.g., Telethon, APScheduler, boto3, alembic)
+        </p>
+        <input
+          type="text"
+          value={additionalLibraries}
+          onChange={(e) => onAdditionalLibrariesChange(e.target.value)}
+          placeholder="e.g., Telethon, APScheduler, uvicorn, alembic"
+          className="w-full rounded-lg border bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+        />
+        <p className="mt-2 text-xs text-muted-foreground">
+          💡 Separate multiple libraries with commas. These will appear in your Tech Stack section.
+        </p>
+      </div>
     </div>
   );
 }
@@ -4399,6 +4431,56 @@ function StepRepository({
           </div>
         </div>
 
+        {/* Commit Workflow */}
+        <div>
+          <label className="block text-sm font-medium mb-2">Commit Workflow</label>
+          <p className="text-xs text-muted-foreground mb-2">How should changes be committed to the repository?</p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => onChange({ commitWorkflow: "branch_pr" })}
+              className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-all ${
+                config.commitWorkflow === "branch_pr"
+                  ? "border-primary bg-primary/5 ring-1 ring-primary"
+                  : "hover:border-primary"
+              }`}
+            >
+              <span>🌿</span>
+              <div className="text-left">
+                <span className="text-sm font-medium">Feature Branches + PRs</span>
+                <p className="text-xs text-muted-foreground">All changes via pull requests</p>
+              </div>
+            </button>
+            <button
+              onClick={() => onChange({ commitWorkflow: "hybrid" })}
+              className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-all ${
+                config.commitWorkflow === "hybrid"
+                  ? "border-primary bg-primary/5 ring-1 ring-primary"
+                  : "hover:border-primary"
+              }`}
+            >
+              <span>🔀</span>
+              <div className="text-left">
+                <span className="text-sm font-medium">Hybrid</span>
+                <p className="text-xs text-muted-foreground">PRs for features, direct commits for small fixes</p>
+              </div>
+            </button>
+            <button
+              onClick={() => onChange({ commitWorkflow: "direct_main" })}
+              className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-all ${
+                config.commitWorkflow === "direct_main"
+                  ? "border-primary bg-primary/5 ring-1 ring-primary"
+                  : "hover:border-primary"
+              }`}
+            >
+              <span>⚡</span>
+              <div className="text-left">
+                <span className="text-sm font-medium">Direct to Main</span>
+                <p className="text-xs text-muted-foreground">Commit directly, no branches</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
         {/* CI/CD Selection */}
         <div>
           <label className="block text-sm font-medium">
@@ -4626,6 +4708,24 @@ function StepRepository({
                 className="mt-2 w-full rounded-lg border bg-background px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
               />
             )}
+
+            {/* Docker Image Names */}
+            <div className="mt-4">
+              <label className="block text-sm font-medium">Docker Image Names</label>
+              <p className="text-xs text-muted-foreground mb-2">
+                Published image names for this project (helps AI understand deployment)
+              </p>
+              <input
+                type="text"
+                value={config.dockerImageNames}
+                onChange={(e) => onChange({ dockerImageNames: e.target.value })}
+                placeholder="e.g., myuser/myapp, myuser/myapp-viewer"
+                className="w-full rounded-lg border bg-background px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                💡 Separate multiple images with commas. These will appear in your generated config.
+              </p>
+            </div>
           </div>
         )}
 
@@ -5055,6 +5155,7 @@ function StepAIBehavior({
   onIncludePersonalDataChange,
   userPersona,
   userSkillLevel,
+  selectedLanguages,
 }: {
   selected: string[];
   onToggle: (v: string) => void;
@@ -5076,6 +5177,7 @@ function StepAIBehavior({
   onIncludePersonalDataChange: (v: boolean) => void;
   userPersona?: string | null;
   userSkillLevel?: string | null;
+  selectedLanguages?: string[];
 }) {
   const personaLabel = userPersona ? userPersona.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()) : "Not set";
   const skillLabel = userSkillLevel ? userSkillLevel.replace(/\b\w/g, c => c.toUpperCase()) : "Not set";
@@ -5275,13 +5377,37 @@ function StepAIBehavior({
         </div>
         <div className="mt-3">
           <label className="text-xs text-muted-foreground">Other important files (comma-separated)</label>
-          <input
-            type="text"
-            value={importantFilesOther}
-            onChange={(e) => onImportantFilesOtherChange(e.target.value)}
-            placeholder="e.g., src/config/index.ts, docs/api.md, prisma/schema.prisma"
-            className="mt-1 w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-          />
+          {(() => {
+            // Language-aware placeholder hints
+            const hints: string[] = [];
+            if (selectedLanguages?.includes("python")) {
+              hints.push("src/config.py", "requirements.txt", ".env.example");
+            }
+            if (selectedLanguages?.includes("typescript") || selectedLanguages?.includes("javascript")) {
+              hints.push("src/config/index.ts", "tsconfig.json", ".env.example");
+            }
+            if (selectedLanguages?.includes("go")) {
+              hints.push("cmd/main.go", "internal/config/config.go", "go.mod");
+            }
+            if (selectedLanguages?.includes("rust")) {
+              hints.push("src/main.rs", "src/config.rs", "Cargo.toml");
+            }
+            if (selectedLanguages?.includes("java") || selectedLanguages?.includes("kotlin")) {
+              hints.push("src/main/resources/application.yml", "pom.xml");
+            }
+            const placeholder = hints.length > 0 
+              ? `e.g., ${hints.slice(0, 3).join(", ")}`
+              : "e.g., src/config/index.ts, docs/api.md, prisma/schema.prisma";
+            return (
+              <input
+                type="text"
+                value={importantFilesOther}
+                onChange={(e) => onImportantFilesOtherChange(e.target.value)}
+                placeholder={placeholder}
+                className="mt-1 w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            );
+          })()}
         </div>
       </div>
     </div>

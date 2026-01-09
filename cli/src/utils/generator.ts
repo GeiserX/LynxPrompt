@@ -78,6 +78,10 @@ export interface GenerateOptions {
   planModeFrequency?: string;      // always, complex_tasks, multi_file, etc.
   // Commit workflow
   commitWorkflow?: string;         // branch_pr, direct_main
+  // Additional libraries not in predefined lists
+  additionalLibraries?: string;    // comma-separated (e.g., "Telethon, APScheduler, alembic")
+  // Docker image names
+  dockerImageNames?: string;       // comma-separated (e.g., "myuser/myapp, myuser/myapp-viewer")
 }
 
 /**
@@ -783,7 +787,7 @@ function generateFileContent(options: GenerateOptions, platform: string): string
   sections.push("");
 
   // Tech Stack section
-  if (options.stack.length > 0) {
+  if (options.stack.length > 0 || options.additionalLibraries) {
     if (isMarkdown || isMdc) {
       sections.push("## Tech Stack");
       sections.push("");
@@ -796,8 +800,20 @@ function generateFileContent(options: GenerateOptions, platform: string): string
       for (const tech of stackList) {
         sections.push(`- ${tech}`);
       }
+      // Add additional libraries
+      if (options.additionalLibraries) {
+        const libs = options.additionalLibraries.split(",").map(l => l.trim()).filter(Boolean);
+        for (const lib of libs) {
+          sections.push(`- ${lib}`);
+        }
+      }
     } else {
-      sections.push(stackList.join(", "));
+      const allTech = [...stackList];
+      if (options.additionalLibraries) {
+        const libs = options.additionalLibraries.split(",").map(l => l.trim()).filter(Boolean);
+        allTech.push(...libs);
+      }
+      sections.push(allTech.join(", "));
     }
     sections.push("");
   }
@@ -824,7 +840,24 @@ function generateFileContent(options: GenerateOptions, platform: string): string
         sections.push(`- **License:** ${license || options.license.toUpperCase()}`);
       }
       if (options.architecture) {
-        sections.push(`- **Architecture:** ${architecture || options.architecture}`);
+        const archNames: Record<string, string> = {
+          monolith: "Monolith",
+          modular_monolith: "Modular Monolith",
+          microservices: "Microservices",
+          multi_image_docker: "Multi-Image Docker (shared codebase, separate entrypoints)",
+          serverless: "Serverless",
+          event_driven: "Event-Driven",
+          layered: "Layered / N-Tier",
+          hexagonal: "Hexagonal / Ports & Adapters",
+          clean: "Clean Architecture",
+          cqrs: "CQRS",
+          mvc: "MVC / MVVM",
+          ddd: "Domain-Driven Design",
+          component_based: "Component-Based",
+          plugin: "Plugin Architecture",
+        };
+        const archDisplay = archNames[options.architecture] || architecture || options.architecture;
+        sections.push(`- **Architecture:** ${archDisplay}`);
       }
       if (options.cicd) {
         sections.push(`- **CI/CD:** ${cicd || options.cicd}`);
@@ -885,6 +918,16 @@ function generateFileContent(options: GenerateOptions, platform: string): string
           containerInfo += ` → ${registryNames[options.containerRegistry] || options.containerRegistry}`;
         }
         sections.push(`- **Containers:** ${containerInfo}`);
+      }
+      // Docker image names
+      if (options.dockerImageNames) {
+        const images = options.dockerImageNames.split(",").map(i => i.trim()).filter(Boolean);
+        if (images.length > 0) {
+          sections.push("- **Docker Images:**");
+          for (const img of images) {
+            sections.push(`  - \`${img}\``);
+          }
+        }
       }
       if (options.exampleRepoUrl) {
         sections.push(`- **Example Repo:** ${options.exampleRepoUrl} (use as reference for style/structure)`);
@@ -968,6 +1011,11 @@ function generateFileContent(options: GenerateOptions, platform: string): string
       sections.push("- Do NOT commit directly to main/master branch");
       sections.push("- Create a descriptive branch name (e.g., `feat/add-login`, `fix/button-styling`)");
       sections.push("- Open a PR for review before merging");
+    } else if (options.commitWorkflow === "hybrid") {
+      sections.push("- **Workflow:** Hybrid - feature branches for larger changes");
+      sections.push("- Direct commits to main are acceptable for small fixes and documentation");
+      sections.push("- For larger features or breaking changes, create a feature branch and open a PR");
+      sections.push("- Create descriptive branch names when needed (e.g., `feat/add-login`, `fix/button-styling`)");
     } else if (options.commitWorkflow === "direct_main") {
       sections.push("- **Workflow:** Commit directly to main/master branch");
       sections.push("- Small, focused commits are preferred");
