@@ -3347,7 +3347,7 @@ async function runInteractiveWizard(
 
   // Include personal data from profile - only available for authenticated users
   console.log();
-  if (authenticated) {
+  if (isAuthenticated()) {
     console.log(chalk.gray("  👤 Include your profile info (name, email, persona) in the generated config."));
     console.log(chalk.gray("     This helps AI tools personalize responses to your expertise level."));
     const includePersonalResponse = await prompts({
