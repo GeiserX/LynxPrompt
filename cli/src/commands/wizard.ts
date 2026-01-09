@@ -2437,6 +2437,17 @@ async function runInteractiveWizard(
   }, promptConfig);
   answers.authProviders = authProvidersResponse.authProviders || [];
 
+  // If "other" selected, ask for custom input
+  if ((answers.authProviders as string[]).includes("other")) {
+    const customAuthProvidersResponse = await prompts({
+      type: "text",
+      name: "customAuthProviders",
+      message: chalk.white("Describe your custom auth provider:"),
+      hint: chalk.gray("e.g., custom SSO, proprietary identity provider"),
+    }, promptConfig);
+    answers.authProvidersOther = customAuthProvidersResponse.customAuthProviders || "";
+  }
+
   // 2. Secrets Management
   console.log();
   console.log(chalk.cyan("  2️⃣  Secrets Management"));
@@ -2597,6 +2608,17 @@ async function runInteractiveWizard(
   }, promptConfig);
   answers.compliance = complianceResponse.compliance || [];
 
+  // If "other" selected, ask for custom input
+  if ((answers.compliance as string[]).includes("other")) {
+    const customComplianceResponse = await prompts({
+      type: "text",
+      name: "customCompliance",
+      message: chalk.white("Describe your compliance requirements:"),
+      hint: chalk.gray("e.g., custom industry regulations, internal policies"),
+    }, promptConfig);
+    answers.complianceOther = customComplianceResponse.customCompliance || "";
+  }
+
   // 7. Analytics & Telemetry
   console.log();
   console.log(chalk.cyan("  7️⃣  Analytics & Telemetry"));
@@ -2623,6 +2645,17 @@ async function runInteractiveWizard(
     instructions: false,
   }, promptConfig);
   answers.analytics = analyticsResponse.analytics || [];
+
+  // If "other" selected, ask for custom input
+  if ((answers.analytics as string[]).includes("other")) {
+    const customAnalyticsResponse = await prompts({
+      type: "text",
+      name: "customAnalytics",
+      message: chalk.white("Describe your analytics solution:"),
+      hint: chalk.gray("e.g., custom analytics platform, self-hosted solution"),
+    }, promptConfig);
+    answers.analyticsOther = customAnalyticsResponse.customAnalytics || "";
+  }
 
   // Additional security notes
   const securityNotesResponse = await prompts({
@@ -3904,12 +3937,19 @@ async function runInteractiveWizard(
     // Security configuration (NEW)
     security: {
       authProviders: answers.authProviders as string[],
+      authProvidersOther: answers.authProvidersOther as string || "",
       secretsManagement: answers.secretsManagement as string[],
+      secretsManagementOther: answers.secretsManagementOther as string || "",
       securityTooling: answers.securityTooling as string[],
+      securityToolingOther: answers.securityToolingOther as string || "",
       authPatterns: answers.authPatterns as string[],
+      authPatternsOther: answers.authPatternsOther as string || "",
       dataHandling: answers.dataHandling as string[],
+      dataHandlingOther: answers.dataHandlingOther as string || "",
       compliance: answers.compliance as string[],
+      complianceOther: answers.complianceOther as string || "",
       analytics: answers.analytics as string[],
+      analyticsOther: answers.analyticsOther as string || "",
       additionalNotes: answers.securityNotes as string,
     },
     // Versioning (conditional)
