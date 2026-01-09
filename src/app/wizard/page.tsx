@@ -664,11 +664,13 @@ type WizardConfig = {
   changelogTool: string;
   dependabot: boolean;
   branchStrategy: string; // gitflow, github_flow, trunk_based, gitlab_flow
-  defaultBranch: string; // main, master, develop
+  defaultBranch: string; // main, master, develop, trunk, other
+  defaultBranchOther: string; // custom branch name when defaultBranch is "other"
   commitWorkflow: string; // branch_pr, direct_main, hybrid
   commitSigning: boolean; // GPG/SSH signing
   useGitWorktrees: boolean; // Use git worktrees for parallel AI agent sessions
-  cicd: string;
+  cicd: string[]; // multi-select CI/CD platforms
+  cicdOther: string; // custom CI/CD platform when "other" is selected
   deploymentEnvironment: string[]; // "self_hosted" | "cloud"
   selfHostedTargets: string[];
   cloudTargets: string[];
@@ -822,10 +824,12 @@ function WizardPageContent() {
     dependabot: true,
     branchStrategy: "github_flow",
     defaultBranch: "main",
+    defaultBranchOther: "",
     commitWorkflow: "branch_pr",
     commitSigning: false,
     useGitWorktrees: true, // Default to yes for parallel AI sessions
-    cicd: "github_actions",
+    cicd: [],
+    cicdOther: "",
     deploymentEnvironment: [],
     selfHostedTargets: [],
     cloudTargets: [],
@@ -1173,7 +1177,7 @@ function WizardPageContent() {
       ),
       databases: detectedResult.databases || prev.databases,
       license: detectedResult.license || prev.license,
-      cicd: detectedResult.cicd || prev.cicd,
+      cicd: detectedResult.cicd ? [detectedResult.cicd] : prev.cicd,
       projectType: detectedResult.isOpenSource ? "open_source" : prev.projectType,
       buildContainer: detectedResult.hasDocker || prev.buildContainer,
       containerRegistry: detectedResult.containerRegistry || prev.containerRegistry,
@@ -1233,7 +1237,7 @@ function WizardPageContent() {
       repoHost: detectedData.repoHost || prev.repoHost,
       repoHosts: detectedData.repoHost ? [detectedData.repoHost] : prev.repoHosts,
       license: detectedData.license || prev.license,
-      cicd: detectedData.cicd || prev.cicd,
+      cicd: detectedData.cicd ? [detectedData.cicd] : prev.cicd,
       buildContainer: detectedData.hasDocker,
       containerRegistry: detectedData.containerRegistry || prev.containerRegistry,
       isPublic: detectedData.isOpenSource,
@@ -1457,7 +1461,7 @@ function WizardPageContent() {
       dependabot: config.dependabot,
       
       // CI/CD & Deployment
-      cicd: config.cicd ? [config.cicd] : [],
+      cicd: config.cicd || [],
       deploymentTarget: [...config.selfHostedTargets, ...config.cloudTargets],
       deploymentEnvironment: config.deploymentEnvironment,
       buildContainer: config.buildContainer,
@@ -3978,6 +3982,7 @@ const DEFAULT_BRANCHES = [
   { id: "master", label: "master" },
   { id: "develop", label: "develop" },
   { id: "trunk", label: "trunk" },
+  { id: "other", label: "Other" },
 ];
 
 const REPO_HOSTS = [
@@ -4017,6 +4022,7 @@ const CICD_OPTIONS = [
   { id: "spinnaker", label: "Spinnaker", icon: "🎡" },
   { id: "woodpecker", label: "Woodpecker", icon: "🐦" },
   { id: "none", label: "None / Manual", icon: "🔧" },
+  { id: "other", label: "Other", icon: "📦" },
 ];
 
 // Deployment environment type (first question)
@@ -4134,15 +4140,16 @@ function StepRepository({
       // Select
       const newHosts = [...currentHosts, hostId];
       
-      // Auto-select CI/CD based on repo host, but only if current CI/CD is the default
+      // Auto-select CI/CD based on repo host, but only if current CI/CD is empty or default
       // Don't override if user already selected something different
       let cicdUpdate: Partial<WizardConfig> = {};
-      const defaultCiCd = "github_actions";
-      if (config.cicd === defaultCiCd || config.cicd === "gitlab_ci") {
+      const hasDefaultCicd = config.cicd.length === 0 || 
+        (config.cicd.length === 1 && (config.cicd[0] === "github_actions" || config.cicd[0] === "gitlab_ci"));
+      if (hasDefaultCicd) {
         if (hostId === "github" && !newHosts.includes("gitlab")) {
-          cicdUpdate = { cicd: "github_actions" };
+          cicdUpdate = { cicd: ["github_actions"] };
         } else if (hostId === "gitlab" && !newHosts.includes("github")) {
-          cicdUpdate = { cicd: "gitlab_ci" };
+          cicdUpdate = { cicd: ["gitlab_ci"] };
         }
       }
       
@@ -4213,8 +4220,8 @@ function StepRepository({
         <div className="space-y-2">
           <label className="text-sm font-medium">Visibility</label>
           <ToggleOption
-            label="Make repository public"
-            description="Public repos unlock funding and sharing."
+            label="Public Repository"
+            description="Public repos unlock funding and sharing. Enable this if this is an existing public project."
             checked={config.isPublic}
             onChange={(v) => onChange({ isPublic: v })}
           />
@@ -4289,9 +4296,9 @@ function StepRepository({
         </div>
 
         <div>
-          <label className="text-sm font-medium">Example Repository (optional)</label>
+          <label className="text-sm font-medium">Example Repository</label>
           <p className="mt-1 text-xs text-muted-foreground">
-            Provide a public repo similar to this project to guide AI on style and structure.
+            Optionally, provide a public repo similar to this project to guide AI on style and structure.
           </p>
           <input
             type="text"
@@ -4303,9 +4310,9 @@ function StepRepository({
         </div>
 
         <div>
-          <label className="text-sm font-medium">External Documentation (optional)</label>
+          <label className="text-sm font-medium">External Documentation</label>
           <p className="mt-1 text-xs text-muted-foreground">
-            Link to Confluence, Notion, GitBook, or internal wiki for additional context.
+            Optionally, link to Confluence, Notion, GitBook, or internal wiki for additional context.
           </p>
           <input
             type="text"
@@ -4388,7 +4395,7 @@ function StepRepository({
         {/* Branch Strategy */}
         <div>
           <label className="block text-sm font-medium mb-2">Branch Strategy</label>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
             {BRANCH_STRATEGIES.map((strategy) => (
               <button
                 key={strategy.id}
@@ -4397,16 +4404,16 @@ function StepRepository({
                   // Auto-set commit workflow: toy projects = direct commits, others = branch + PR
                   commitWorkflow: strategy.id === "none" ? "direct_main" : "branch_pr"
                 })}
-                className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-all ${
+                className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-all h-full ${
                   config.branchStrategy === strategy.id
                     ? "border-primary bg-primary/5 ring-1 ring-primary"
                     : "hover:border-primary"
                 }`}
               >
-                <span>{strategy.icon}</span>
-                <div className="text-left">
-                  <span className="text-sm font-medium">{strategy.label}</span>
-                  <p className="text-xs text-muted-foreground">{strategy.desc}</p>
+                <span className="shrink-0">{strategy.icon}</span>
+                <div className="text-left min-w-0">
+                  <span className="text-sm font-medium block">{strategy.label}</span>
+                  <p className="text-xs text-muted-foreground line-clamp-2">{strategy.desc}</p>
                 </div>
               </button>
             ))}
@@ -4416,7 +4423,7 @@ function StepRepository({
         {/* Default Branch */}
         <div>
           <label className="block text-sm font-medium mb-2">Default Branch</label>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {DEFAULT_BRANCHES.map((branch) => (
               <button
                 key={branch.id}
@@ -4431,53 +4438,62 @@ function StepRepository({
               </button>
             ))}
           </div>
+          {config.defaultBranch === "other" && (
+            <input
+              type="text"
+              value={config.defaultBranchOther || ""}
+              onChange={(e) => onChange({ defaultBranchOther: e.target.value })}
+              placeholder="Enter custom branch name"
+              className="mt-2 w-full max-w-xs rounded-lg border bg-background px-4 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          )}
         </div>
 
         {/* Commit Workflow */}
         <div>
           <label className="block text-sm font-medium mb-2">Commit Workflow</label>
           <p className="text-xs text-muted-foreground mb-2">How should changes be committed to the repository?</p>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             <button
               onClick={() => onChange({ commitWorkflow: "branch_pr" })}
-              className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-all ${
+              className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-all h-full ${
                 config.commitWorkflow === "branch_pr"
                   ? "border-primary bg-primary/5 ring-1 ring-primary"
                   : "hover:border-primary"
               }`}
             >
-              <span>🌿</span>
-              <div className="text-left">
-                <span className="text-sm font-medium">Feature Branches + PRs</span>
-                <p className="text-xs text-muted-foreground">All changes via pull requests</p>
+              <span className="shrink-0">🌿</span>
+              <div className="text-left min-w-0">
+                <span className="text-sm font-medium block">Feature Branches + PRs</span>
+                <p className="text-xs text-muted-foreground line-clamp-2">All changes via pull requests</p>
               </div>
             </button>
             <button
               onClick={() => onChange({ commitWorkflow: "hybrid" })}
-              className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-all ${
+              className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-all h-full ${
                 config.commitWorkflow === "hybrid"
                   ? "border-primary bg-primary/5 ring-1 ring-primary"
                   : "hover:border-primary"
               }`}
             >
-              <span>🔀</span>
-              <div className="text-left">
-                <span className="text-sm font-medium">Hybrid</span>
-                <p className="text-xs text-muted-foreground">PRs for features, direct commits for small fixes</p>
+              <span className="shrink-0">🔀</span>
+              <div className="text-left min-w-0">
+                <span className="text-sm font-medium block">Hybrid</span>
+                <p className="text-xs text-muted-foreground line-clamp-2">PRs for features, direct commits for small fixes</p>
               </div>
             </button>
             <button
               onClick={() => onChange({ commitWorkflow: "direct_main" })}
-              className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-all ${
+              className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-all h-full ${
                 config.commitWorkflow === "direct_main"
                   ? "border-primary bg-primary/5 ring-1 ring-primary"
                   : "hover:border-primary"
               }`}
             >
-              <span>⚡</span>
-              <div className="text-left">
-                <span className="text-sm font-medium">Direct to Main</span>
-                <p className="text-xs text-muted-foreground">Commit directly, no branches</p>
+              <span className="shrink-0">⚡</span>
+              <div className="text-left min-w-0">
+                <span className="text-sm font-medium block">Direct to Main</span>
+                <p className="text-xs text-muted-foreground line-clamp-2">Commit directly, no branches</p>
               </div>
             </button>
           </div>
@@ -4510,51 +4526,80 @@ function StepRepository({
           </div>
         </div>
 
-        {/* CI/CD Selection */}
+        {/* CI/CD Selection - Multi-select */}
         <div>
           <label className="block text-sm font-medium">
             CI/CD Platform
             {detectedFields.has("cicd") && <DetectedBadge />}
           </label>
-          <p className="text-xs text-muted-foreground mb-2">Select your continuous integration/deployment tool</p>
+          <p className="text-xs text-muted-foreground mb-2">Select your continuous integration/deployment tools (select all that apply)</p>
           <div className="flex flex-wrap gap-2">
-            {CICD_OPTIONS.slice(0, 8).map((opt) => (
-              <button
-                key={opt.id}
-                onClick={() => onChange({ cicd: opt.id })}
-                className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all ${
-                  config.cicd === opt.id ? "border-primary bg-primary/10" : "hover:border-primary"
-                }`}
-              >
-                <span>{opt.icon}</span>
-                <span>{opt.label}</span>
-              </button>
-            ))}
-          </div>
-          <details className="mt-2">
-            <summary className="cursor-pointer text-xs text-muted-foreground hover:text-primary">Show more CI/CD options...</summary>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {CICD_OPTIONS.slice(8).map((opt) => (
+            {CICD_OPTIONS.slice(0, 10).map((opt) => {
+              const isSelected = config.cicd.includes(opt.id);
+              return (
                 <button
                   key={opt.id}
-                  onClick={() => onChange({ cicd: opt.id })}
+                  onClick={() => {
+                    onChange({ 
+                      cicd: isSelected 
+                        ? config.cicd.filter(c => c !== opt.id)
+                        : [...config.cicd, opt.id]
+                    });
+                  }}
                   className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all ${
-                    config.cicd === opt.id ? "border-primary bg-primary/10" : "hover:border-primary"
+                    isSelected ? "border-primary bg-primary/10" : "hover:border-primary"
                   }`}
                 >
                   <span>{opt.icon}</span>
                   <span>{opt.label}</span>
+                  {isSelected && <span className="text-primary">✓</span>}
                 </button>
-              ))}
+              );
+            })}
+          </div>
+          <details className="mt-2">
+            <summary className="cursor-pointer text-xs text-muted-foreground hover:text-primary">Show more CI/CD options...</summary>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {CICD_OPTIONS.slice(10).map((opt) => {
+                const isSelected = config.cicd.includes(opt.id);
+                return (
+                  <button
+                    key={opt.id}
+                    onClick={() => {
+                      onChange({ 
+                        cicd: isSelected 
+                          ? config.cicd.filter(c => c !== opt.id)
+                          : [...config.cicd, opt.id]
+                      });
+                    }}
+                    className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all ${
+                      isSelected ? "border-primary bg-primary/10" : "hover:border-primary"
+                    }`}
+                  >
+                    <span>{opt.icon}</span>
+                    <span>{opt.label}</span>
+                    {isSelected && <span className="text-primary">✓</span>}
+                  </button>
+                );
+              })}
             </div>
           </details>
+          {config.cicd.includes("other") && (
+            <input
+              type="text"
+              value={config.cicdOther || ""}
+              onChange={(e) => onChange({ cicdOther: e.target.value })}
+              placeholder="Enter your CI/CD platform name"
+              className="mt-2 w-full max-w-md rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          )}
         </div>
 
         {/* Deployment Environment - First Question */}
         <div>
           <label className="block text-sm font-medium">Deployment Environment</label>
           <p className="text-xs text-muted-foreground mb-2">Where will this project be deployed? (select all that apply)</p>
-          <div className="flex flex-wrap gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {DEPLOYMENT_ENVIRONMENTS.map((env) => {
               const isSelected = config.deploymentEnvironment.includes(env.id);
               return (
@@ -4567,14 +4612,14 @@ function StepRepository({
                         : [...config.deploymentEnvironment, env.id]
                     });
                   }}
-                  className={`flex flex-col items-start gap-1 rounded-lg border p-3 text-left transition-all ${
+                  className={`flex flex-col items-start gap-1 rounded-lg border p-3 text-left transition-all h-full ${
                     isSelected ? "border-primary bg-primary/10 ring-1 ring-primary" : "hover:border-primary"
                   }`}
                 >
                   <div className="flex items-center gap-2">
-                    <span className="text-xl">{env.icon}</span>
+                    <span className="text-xl shrink-0">{env.icon}</span>
                     <span className="font-medium">{env.label}</span>
-                    {isSelected && <span className="text-primary">✓</span>}
+                    {isSelected && <span className="text-primary shrink-0">✓</span>}
                   </div>
                   <span className="text-xs text-muted-foreground">{env.desc}</span>
                 </button>
@@ -4589,7 +4634,11 @@ function StepRepository({
             <label className="block text-sm font-medium">Self-hosted Deployment Targets</label>
             <p className="text-xs text-muted-foreground mb-2">How do you deploy to your own infrastructure?</p>
             <div className="flex flex-wrap gap-2">
-              {SELF_HOSTED_TARGETS.slice(0, 12).map((target) => {
+              {/* Show selected items first, then unselected from main list */}
+              {[
+                ...SELF_HOSTED_TARGETS.filter(t => config.selfHostedTargets.includes(t.id)),
+                ...SELF_HOSTED_TARGETS.slice(0, 12).filter(t => !config.selfHostedTargets.includes(t.id))
+              ].map((target) => {
                 const isSelected = config.selfHostedTargets.includes(target.id);
                 return (
                   <button
@@ -4607,7 +4656,7 @@ function StepRepository({
                   >
                     <span>{target.icon}</span>
                     <span>{target.label}</span>
-                    {isSelected && <span>✓</span>}
+                    {isSelected && <span className="text-primary">✓</span>}
                   </button>
                 );
               })}
@@ -4615,28 +4664,20 @@ function StepRepository({
             <details className="mt-2">
               <summary className="cursor-pointer text-xs text-muted-foreground hover:text-primary">Show more self-hosted options...</summary>
               <div className="mt-2 flex flex-wrap gap-2">
-                {SELF_HOSTED_TARGETS.slice(12).map((target) => {
-                  const isSelected = config.selfHostedTargets.includes(target.id);
-                  return (
-                    <button
-                      key={target.id}
-                      onClick={() => {
-                        onChange({ 
-                          selfHostedTargets: isSelected 
-                            ? config.selfHostedTargets.filter(t => t !== target.id)
-                            : [...config.selfHostedTargets, target.id]
-                        });
-                      }}
-                      className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all ${
-                        isSelected ? "border-primary bg-primary/10" : "hover:border-primary"
-                      }`}
-                    >
-                      <span>{target.icon}</span>
-                      <span>{target.label}</span>
-                      {isSelected && <span>✓</span>}
-                    </button>
-                  );
-                })}
+                {SELF_HOSTED_TARGETS.slice(12).filter(t => !config.selfHostedTargets.includes(t.id)).map((target) => (
+                  <button
+                    key={target.id}
+                    onClick={() => {
+                      onChange({ 
+                        selfHostedTargets: [...config.selfHostedTargets, target.id]
+                      });
+                    }}
+                    className="flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all hover:border-primary"
+                  >
+                    <span>{target.icon}</span>
+                    <span>{target.label}</span>
+                  </button>
+                ))}
               </div>
             </details>
           </div>
@@ -4648,7 +4689,11 @@ function StepRepository({
             <label className="block text-sm font-medium">Cloud Deployment Targets</label>
             <p className="text-xs text-muted-foreground mb-2">Which cloud platforms do you deploy to?</p>
             <div className="flex flex-wrap gap-2">
-              {CLOUD_TARGETS.slice(0, 12).map((target) => {
+              {/* Show selected items first, then unselected from main list */}
+              {[
+                ...CLOUD_TARGETS.filter(t => config.cloudTargets.includes(t.id)),
+                ...CLOUD_TARGETS.slice(0, 12).filter(t => !config.cloudTargets.includes(t.id))
+              ].map((target) => {
                 const isSelected = config.cloudTargets.includes(target.id);
                 return (
                   <button
@@ -4666,7 +4711,7 @@ function StepRepository({
                   >
                     <span>{target.icon}</span>
                     <span>{target.label}</span>
-                    {isSelected && <span>✓</span>}
+                    {isSelected && <span className="text-primary">✓</span>}
                   </button>
                 );
               })}
@@ -4674,28 +4719,20 @@ function StepRepository({
             <details className="mt-2">
               <summary className="cursor-pointer text-xs text-muted-foreground hover:text-primary">Show more cloud options...</summary>
               <div className="mt-2 flex flex-wrap gap-2">
-                {CLOUD_TARGETS.slice(12).map((target) => {
-                  const isSelected = config.cloudTargets.includes(target.id);
-                  return (
-                    <button
-                      key={target.id}
-                      onClick={() => {
-                        onChange({ 
-                          cloudTargets: isSelected 
-                            ? config.cloudTargets.filter(t => t !== target.id)
-                            : [...config.cloudTargets, target.id]
-                        });
-                      }}
-                      className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all ${
-                        isSelected ? "border-primary bg-primary/10" : "hover:border-primary"
-                      }`}
-                    >
-                      <span>{target.icon}</span>
-                      <span>{target.label}</span>
-                      {isSelected && <span>✓</span>}
-                    </button>
-                  );
-                })}
+                {CLOUD_TARGETS.slice(12).filter(t => !config.cloudTargets.includes(t.id)).map((target) => (
+                  <button
+                    key={target.id}
+                    onClick={() => {
+                      onChange({ 
+                        cloudTargets: [...config.cloudTargets, target.id]
+                      });
+                    }}
+                    className="flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all hover:border-primary"
+                  >
+                    <span>{target.icon}</span>
+                    <span>{target.label}</span>
+                  </button>
+                ))}
               </div>
             </details>
           </div>

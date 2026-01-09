@@ -88,6 +88,7 @@ export const DEFAULT_BRANCHES: WizardOption[] = [
   { id: "master", label: "master" },
   { id: "develop", label: "develop" },
   { id: "trunk", label: "trunk" },
+  { id: "other", label: "Other" },
 ];
 
 /**
