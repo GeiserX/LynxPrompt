@@ -435,7 +435,7 @@ export default function PricingPage() {
                   </span>
                 </summary>
                 <p className="border-t px-4 py-3 text-sm text-muted-foreground">
-                  Teams is billed at <strong>€30 per seat per month</strong>, with a minimum of 3 seats.
+                  Teams is billed at <strong>€10 per seat per month</strong>, with a minimum of 3 seats.
                   You only pay for <strong>active users</strong> — team members who haven&apos;t logged in 
                   during the billing cycle aren&apos;t charged. If you add users mid-cycle, you pay a 
                   prorated amount for the remaining days. Unused seat credits roll over to the next cycle.
