@@ -53,7 +53,7 @@ const softwareJsonLd = {
     "@type": "AggregateOffer",
     priceCurrency: "EUR",
     lowPrice: "0",
-    highPrice: "30",
+    highPrice: "10",
     offerCount: "4",
   },
   featureList: [

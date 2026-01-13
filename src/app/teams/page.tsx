@@ -59,7 +59,7 @@ const TEAMS_FEATURES = [
 ];
 
 const PRICING_DETAILS = [
-  { label: "Price per seat", value: "€30/month or €324/year (10% off)" },
+  { label: "Price per seat", value: "€10/month or €108/year (10% off)" },
   { label: "Minimum seats", value: "3" },
   { label: "Maximum seats", value: "Unlimited" },
   { label: "Billing cycle", value: "Monthly or Annual" },
@@ -77,7 +77,7 @@ export default function TeamsPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Calculate price based on seats and interval
-  const pricePerSeat = billingInterval === "annual" ? 27 : 30; // 10% off for annual
+  const pricePerSeat = billingInterval === "annual" ? 9 : 10; // 10% off for annual
   const totalPrice = seats * pricePerSeat;
   const billingPeriod = billingInterval === "annual" ? "/year" : "/month";
 
@@ -217,7 +217,7 @@ export default function TeamsPage() {
             <div className="rounded-xl border bg-card overflow-hidden">
               <div className="bg-gradient-to-r from-teal-500 to-cyan-500 p-6 text-white">
                 <div className="flex items-end gap-2">
-                  <span className="text-5xl font-bold">€30</span>
+                  <span className="text-5xl font-bold">€10</span>
                   <span className="mb-1 text-lg opacity-80">/seat/month</span>
                 </div>
                 <p className="mt-2 opacity-90">
@@ -482,7 +482,7 @@ export default function TeamsPage() {
                 <p className="border-t px-4 py-3 text-sm text-muted-foreground">
                   Yes! When you add seats mid-cycle, you pay a pro-rated amount for the remaining
                   days in your billing period. For example, if you add 2 seats with 15 days left,
-                  you pay (€30 ÷ 30 days) × 15 days × 2 seats = €30.
+                  you pay (€10 ÷ 30 days) × 15 days × 2 seats = €10.
                 </p>
               </details>
 
