@@ -486,7 +486,7 @@ export default function AdminStatsPage() {
                     {data.revenue.activeTeamSeats}
                   </span>
                   <span className="ml-1 text-xs text-muted-foreground">
-                    × €30
+                    × €10
                   </span>
                 </div>
               </div>

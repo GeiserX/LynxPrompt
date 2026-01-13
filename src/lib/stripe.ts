@@ -36,8 +36,8 @@ export type BillingInterval = "monthly" | "annual";
 // Pricing in cents - Now only Teams
 export const PLAN_PRICES = {
   teams: {
-    monthly: 3000, // €30/seat
-    annual: 32400, // €324/seat (€27/month - 10% off)
+    monthly: 1000, // €10/seat
+    annual: 10800, // €108/seat (€9/month - 10% off)
   },
 } as const;
 

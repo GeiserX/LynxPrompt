@@ -91,7 +91,7 @@ export default function PricingPage() {
               </div>
               <h3 className="text-lg font-semibold bg-gradient-to-r from-teal-500 to-cyan-500 bg-clip-text text-transparent">Teams</h3>
               <div className="mt-2">
-                <span className="text-3xl font-bold">€30</span>
+                <span className="text-3xl font-bold">€10</span>
                 <span className="text-muted-foreground">/seat/month</span>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
@@ -174,7 +174,7 @@ export default function PricingPage() {
           <div className="rounded-lg border bg-card p-4">
             <h3 className="font-medium">How does Teams billing work?</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Teams is billed at <strong>€30 per seat per month</strong> (€27/seat/month with annual), 
+              Teams is billed at <strong>€10 per seat per month</strong> (€9/seat/month with annual), 
               with a minimum of 3 seats. You only pay for <strong>active users</strong> — team members who 
               haven&apos;t logged in during the billing cycle aren&apos;t charged. Pro-rated billing applies 
               when adding seats mid-cycle.
