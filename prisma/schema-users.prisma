@@ -199,7 +199,7 @@ model Team {
   maxSeats             Int       @default(3) // Prepaid seats (minimum 3)
   
   // AI Usage Settings (Teams get higher limits)
-  aiUsageLimitPerUser  Int       @default(1500) // €15 = 1500 cents max AI spend per user/month
+  aiUsageLimitPerUser  Int       @default(500) // €5 = 500 cents max AI spend per user/month
   
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -303,7 +303,7 @@ model TeamBillingRecord {
   billedSeats    Int // MAX(activeSeats, 3) - what was actually charged
   
   // Financial
-  amountBilled   Int // Total amount in cents (billedSeats × €30)
+  amountBilled   Int // Total amount in cents (billedSeats × €10)
   currency       String @default("EUR")
   stripeInvoiceId String? // Reference to Stripe invoice
   

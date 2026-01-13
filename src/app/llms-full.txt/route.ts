@@ -89,7 +89,7 @@ Use [[VARIABLE]] or [[VARIABLE|default]] placeholders for dynamic inputs. Variab
 ### Teams
 Collaborate on AI configurations within your organization.
 - Team Blueprints: Share blueprints only with team members (Private, Team, or Public visibility)
-- Centralized Billing: Single invoice for the entire team (€30/seat/month)
+- Centralized Billing: Single invoice for the entire team (€10/seat/month)
 - AI Editing: AI-assisted blueprint creation and editing
 - SSO Support: SAML 2.0 (Okta, Azure AD), OpenID Connect (Google Workspace, Auth0)
 
@@ -148,7 +148,7 @@ Multiple sign-in methods:
   sections.push(`## Pricing
 
 - Users (Free): Full wizard access, browse & download blueprints, sell blueprints, API access
-- Teams (€30/seat/month): Everything in Users + AI editing, team blueprints, SSO, centralized billing
+- Teams (€10/seat/month): Everything in Users + AI editing, team blueprints, SSO, centralized billing
 - Annual billing offers 10% discount
 `);
 

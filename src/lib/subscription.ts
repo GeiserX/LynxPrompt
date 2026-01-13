@@ -16,12 +16,12 @@ export type WizardTier = "basic" | "intermediate" | "advanced";
 export type UserRole = "USER" | "ADMIN" | "SUPERADMIN";
 
 /**
- * Teams pricing: €30/seat/month (minimum 3 seats)
+ * Teams pricing: €10/seat/month (minimum 3 seats)
  * Only active users (logged in during billing period) are charged
  */
-export const TEAMS_PRICE_PER_SEAT = 3000; // €30.00 in cents
+export const TEAMS_PRICE_PER_SEAT = 1000; // €10.00 in cents
 export const TEAMS_MIN_SEATS = 3;
-export const TEAMS_AI_LIMIT_PER_USER = 1500; // €15.00 max AI spend per user/month
+export const TEAMS_AI_LIMIT_PER_USER = 500; // €5.00 max AI spend per user/month
 
 /**
  * Blueprint limits per tier

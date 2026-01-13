@@ -70,7 +70,7 @@ export default function BillingFAQPage() {
             ability to sell blueprints (70% revenue), browse and download blueprints.
             <br />
             <br />
-            <strong>Teams (€30/seat/month):</strong> Everything in Users, plus AI-powered
+            <strong>Teams (€10/seat/month):</strong> Everything in Users, plus AI-powered
             blueprint editing, team-shared blueprints, SSO (SAML, OIDC, LDAP),
             centralized billing, and 10% off all paid blueprint purchases.
           </p>
@@ -85,7 +85,7 @@ export default function BillingFAQPage() {
             </Link>
             . Annual plans offer a <strong>10% discount</strong> compared to monthly billing:
             <br /><br />
-            <strong>Teams:</strong> €324/seat/year (€27/seat/month) vs €30/seat/month
+            <strong>Teams:</strong> €108/seat/year (€9/seat/month) vs €10/seat/month
             <br /><br />
             Note: Annual subscriptions are a yearly commitment and cannot be canceled or refunded mid-cycle.
           </p>
