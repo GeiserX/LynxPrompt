@@ -1417,8 +1417,8 @@ const PLAN_DETAILS = {
   teams: {
     name: "Teams",
     description: "All features including AI editing, SSO, and team blueprints",
-    price: "€30/seat/month",
-    priceAnnual: "€30/seat/month",
+    price: "€10/seat/month",
+    priceAnnual: "€10/seat/month",
     icon: Users,
     color: "text-teal-500",
   },
@@ -1757,7 +1757,7 @@ function BillingSection({ setError, setSuccess }: BillingSectionProps) {
               <p className="bg-gradient-to-r from-teal-500 to-cyan-500 bg-clip-text font-semibold text-transparent">
                 Teams
               </p>
-              <p className="text-sm text-muted-foreground">€30/seat/month</p>
+              <p className="text-sm text-muted-foreground">€10/seat/month</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 AI editing, SSO, team blueprints
               </p>
