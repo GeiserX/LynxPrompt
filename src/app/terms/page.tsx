@@ -97,7 +97,7 @@ export default function TermsPage() {
                   The Teams subscription is designed for organizations and includes the following terms:
                 </p>
                 <ul className="mt-3 list-inside list-disc space-y-1">
-                  <li><strong>Seat-based pricing:</strong> Teams is billed at €30 per seat per month, with a minimum of 3 seats</li>
+                  <li><strong>Seat-based pricing:</strong> Teams is billed at €10 per seat per month, with a minimum of 3 seats</li>
                   <li><strong>Active user billing:</strong> You are only charged for users who logged in during the billing period. Users who did not log in are not counted toward billing (minimum 3 always applies)</li>
                   <li><strong>Team Administrator:</strong> The person who creates the team is the initial administrator and is responsible for billing</li>
                   <li><strong>Member management:</strong> Team administrators can invite members, assign roles, and remove members at any time</li>
