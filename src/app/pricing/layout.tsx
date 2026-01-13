@@ -50,11 +50,11 @@ const pricingJsonLd = {
       {
         "@type": "Offer",
         name: "Teams",
-        price: "30",
+        price: "10",
         priceCurrency: "EUR",
         priceSpecification: {
           "@type": "UnitPriceSpecification",
-          price: "30",
+          price: "10",
           priceCurrency: "EUR",
           unitCode: "MON",
           referenceQuantity: {
@@ -68,11 +68,11 @@ const pricingJsonLd = {
       {
         "@type": "Offer",
         name: "Teams",
-        price: "30",
+        price: "10",
         priceCurrency: "EUR",
         priceSpecification: {
           "@type": "UnitPriceSpecification",
-          price: "30",
+          price: "10",
           priceCurrency: "EUR",
           unitCode: "MON",
           referenceQuantity: {
