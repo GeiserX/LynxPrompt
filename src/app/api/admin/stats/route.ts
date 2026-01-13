@@ -8,7 +8,7 @@ import { prismaSupport } from "@/lib/db-support";
 // Subscription plan prices in cents (monthly)
 const PLAN_PRICES = {
   FREE: 0,
-  TEAMS: 3000, // €30/seat
+  TEAMS: 1000, // €10/seat
 };
 
 export async function GET(req: NextRequest) {

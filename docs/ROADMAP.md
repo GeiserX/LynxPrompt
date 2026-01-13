@@ -453,7 +453,7 @@ When downloading, user sees:
 | **Free**  | €0/month       | €0/year          | Basic templates, limited wizard features                       |
 | **Pro**   | €5/month       | €54/year         | Intermediate repo wizards, priority support                    |
 | **Max**   | €20/month      | €216/year        | Advanced wizards + ALL community prompts (including paid ones) |
-| **Teams** | €30/seat/month | €324/seat/year   | Everything in Max + team features, SSO, centralized billing    |
+| **Teams** | €10/seat/month | €108/seat/year   | Everything in Max + team features, SSO, centralized billing    |
 
 #### Key Subscription Rules
 
@@ -469,11 +469,11 @@ When downloading, user sees:
 
 | Setting | Value |
 |---------|-------|
-| Price | €30/seat/month |
+| Price | €10/seat/month |
 | Minimum seats | 3 |
 | Maximum seats | Unlimited |
 | Color | Teal/Cyan gradient |
-| AI usage limit | €15/user/month |
+| AI usage limit | €5/user/month |
 
 #### Teams Features
 
@@ -490,13 +490,13 @@ When downloading, user sees:
 #### Teams Billing Logic
 
 ```
-Monthly Bill = €30 × MAX(active_users, 3)
+Monthly Bill = €10 × MAX(active_users, 3)
 
 Where:
 - active_users = users who logged in during the billing period
 - Minimum 3 seats always billed (even if only 2 active)
-- Mid-cycle additions: (€30 / 30 days) × days_remaining × new_seats
-- Credits: (billed_seats - active_seats) × €30 → next cycle
+- Mid-cycle additions: (€10 / 30 days) × days_remaining × new_seats
+- Credits: (billed_seats - active_seats) × €10 → next cycle
 ```
 
 ### Template Marketplace Pricing

@@ -547,7 +547,7 @@ export default function TeamManagementPage() {
                             className="bg-amber-600 hover:bg-amber-700"
                           >
                             <CreditCard className="mr-2 h-4 w-4" />
-                            Purchase Seat ({team?.subscriptionInterval === "annual" ? "€27/seat (annual)" : "€30/seat"})
+                            Purchase Seat ({team?.subscriptionInterval === "annual" ? "€9/seat (annual)" : "€10/seat"})
                           </Button>
                           <Button
                             type="button"
