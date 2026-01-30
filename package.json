@@ -4,7 +4,7 @@
   "private": true,
   "description": "LynxPrompt - Transform your development setup into a mouse-click experience with AI IDE configuration generation",
   "author": "LynxPrompt Contributors",
-  "license": "SEE LICENSE FILE",
+  "license": "GPL-3.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/GeiserX/LynxPrompt.git"

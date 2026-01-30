@@ -11,7 +11,7 @@
 [![Website](https://img.shields.io/badge/🌐_Website-lynxprompt.com-6366f1?style=flat-square)](https://lynxprompt.com)
 [![npm](https://img.shields.io/npm/v/lynxprompt?style=flat-square&logo=npm&label=CLI)](https://www.npmjs.com/package/lynxprompt)
 [![Status](https://img.shields.io/badge/🟢_Status-Operational-22c55e?style=flat-square)](https://status.lynxprompt.com)
-[![License](https://img.shields.io/badge/📜_License-Source_Available-f59e0b?style=flat-square)](LICENSE)
+[![License](https://img.shields.io/badge/📜_License-GPL--3.0-blue?style=flat-square)](LICENSE)
 [![GitHub Stars](https://img.shields.io/github/stars/GeiserX/LynxPrompt?style=flat-square&logo=github)](https://github.com/GeiserX/LynxPrompt)
 
 ---
@@ -250,11 +250,7 @@ Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-Source Available with commercial restrictions. See [LICENSE](LICENSE).
-
-- ✅ Personal and non-commercial use
-- ✅ Contributions welcome
-- ❌ Commercial use requires license
+This project is licensed under the [GNU General Public License v3.0](LICENSE).
 
 **Author:** Sergio Fernández Rubio ([GeiserCloud](https://lynxprompt.com/about))
 
