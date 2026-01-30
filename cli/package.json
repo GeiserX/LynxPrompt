@@ -3,7 +3,7 @@
   "version": "1.4.11",
   "description": "CLI for LynxPrompt - Generate AI IDE configuration files",
   "author": "LynxPrompt Contributors",
-  "license": "SEE LICENSE FILE",
+  "license": "GPL-3.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/GeiserX/LynxPrompt.git",
