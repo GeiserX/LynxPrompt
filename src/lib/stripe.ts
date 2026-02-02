@@ -6,7 +6,7 @@ const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 
 export const stripe = stripeSecretKey
   ? new Stripe(stripeSecretKey, {
-      apiVersion: "2025-12-15.clover",
+      apiVersion: "2026-01-28.clover",
       typescript: true,
     })
   : (null as unknown as Stripe); // Type assertion for build-time

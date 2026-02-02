@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.72.1",
-    "@sentry/nextjs": "^9.31.0",
+    "@sentry/nextjs": "^10.38.0",
     "@auth/prisma-adapter": "^2.11.1",
     "@hookform/resolvers": "^3.9.1",
     "@marsidev/react-turnstile": "^1.4.1",
