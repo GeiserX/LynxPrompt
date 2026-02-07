@@ -3,6 +3,9 @@ $ErrorActionPreference = 'Stop'
 $packageName = 'lynxprompt'
 $version = '0.4.4'
 
+# Refresh environment variables so node/npm are in PATH after nodejs dependency install
+Update-SessionEnvironment
+
 # Check if Node.js is installed
 $node = Get-Command node -ErrorAction SilentlyContinue
 if (-not $node) {

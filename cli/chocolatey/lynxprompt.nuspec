@@ -8,6 +8,7 @@
     <owners>GeiserCloud</owners>
     <projectUrl>https://lynxprompt.com</projectUrl>
     <projectSourceUrl>https://github.com/GeiserX/LynxPrompt</projectSourceUrl>
+    <packageSourceUrl>https://github.com/GeiserX/LynxPrompt/tree/main/cli/chocolatey</packageSourceUrl>
     <docsUrl>https://lynxprompt.com/docs/cli</docsUrl>
     <bugTrackerUrl>https://github.com/GeiserX/LynxPrompt/issues</bugTrackerUrl>
     <licenseUrl>https://github.com/GeiserX/LynxPrompt/blob/main/LICENSE</licenseUrl>
