@@ -91,6 +91,16 @@ export interface GenerateOptions {
   additionalLibraries?: string;    // comma-separated (e.g., "Telethon, APScheduler, alembic")
   // Docker image names
   dockerImageNames?: string;       // comma-separated (e.g., "myuser/myapp, myuser/myapp-viewer")
+  // MCP servers the developer uses (e.g., "filesystem, github, postgres")
+  mcpServers?: string;
+  // Whether AI should attempt workarounds when stuck, or stop and ask
+  attemptWorkarounds?: boolean;
+  // Server/SSH access
+  serverAccess?: boolean;        // Whether the project requires server access
+  sshKeyPath?: string;           // SSH key path (empty = default location)
+  // Manual deployment (when no CI/CD)
+  manualDeployment?: boolean;    // Whether deployment is manual (no CI/CD)
+  deploymentMethod?: string;     // portainer, docker_compose, kubernetes, bare_metal, etc.
 }
 
 /**
@@ -189,7 +199,7 @@ const PLATFORM_FILES: Record<string, string> = {
   firebender: "firebender.json",
 };
 
-// Persona descriptions
+// Persona descriptions - these describe the developer's background so the AI can adapt
 const PERSONA_DESCRIPTIONS: Record<string, string> = {
   backend: "a senior backend developer specializing in APIs, databases, and microservices architecture",
   frontend: "a senior frontend developer specializing in UI components, styling, and user experience",
@@ -259,6 +269,12 @@ const AI_BEHAVIOR_DESCRIPTIONS: Record<string, string> = {
   test_first: "Write tests before implementing new functionality (TDD)",
   no_console: "Remove console.log/print statements before committing",
   type_strict: "Be strict with types - avoid any/Any/Object types",
+  // Burke Holland-inspired rules
+  code_for_llms: "Optimize code for LLM reasoning: prefer flat/explicit patterns, minimal abstractions, structured logging, and linear control flow",
+  self_improving: "When you learn new project patterns or conventions, suggest updates to this configuration file",
+  verify_work: "Always verify your work before returning: run tests, check builds, confirm changes work as expected",
+  terminal_management: "Reuse existing terminals when possible. Close terminals you no longer need",
+  check_docs_first: "Always check documentation (via MCP or project docs) before assuming knowledge about APIs or libraries",
 };
 
 // Important files descriptions - must match wizard options
@@ -787,16 +803,15 @@ function generateFileContent(options: GenerateOptions, platform: string): string
   if (isMarkdown || isMdc) {
     sections.push("## Persona");
     sections.push("");
+    sections.push(`You assist developers working on ${projectName}.`);
     if (personaDesc) {
-      sections.push(`You are ${personaDesc}. You assist developers working on ${projectName}.`);
-    } else {
-      sections.push(`You assist developers working on ${projectName}.`);
+      sections.push("");
+      sections.push(`Developer background: ${personaDesc}. Adapt your suggestions and level of explanation to this expertise.`);
     }
   } else {
+    sections.push(`You assist developers working on ${projectName}.`);
     if (personaDesc) {
-      sections.push(`You are ${personaDesc}. You assist developers working on ${projectName}.`);
-    } else {
-      sections.push(`You assist developers working on ${projectName}.`);
+      sections.push(`Developer background: ${personaDesc}. Adapt your suggestions and level of explanation to this expertise.`);
     }
   }
   
@@ -1018,6 +1033,12 @@ function generateFileContent(options: GenerateOptions, platform: string): string
           sections.push(`- ${planModeDescriptions[options.planModeFrequency]}`);
         }
       }
+      // Workaround behavior
+      if (options.attemptWorkarounds === true) {
+        sections.push("- When stuck, **attempt creative workarounds** before asking for help");
+      } else if (options.attemptWorkarounds === false) {
+        sections.push("- When stuck, **stop and ask** rather than attempting workarounds");
+      }
       sections.push("");
     }
   }
@@ -1033,6 +1054,43 @@ function generateFileContent(options: GenerateOptions, platform: string): string
       sections.push("- **Exception:** Direct commits to main are acceptable for small fixes (typos, docs, minor fixes)");
     } else {
       sections.push("- Do NOT commit directly to main/master branch");
+    }
+    sections.push("");
+  }
+
+  // MCP Servers
+  if (options.mcpServers) {
+    const servers = options.mcpServers.split(",").map(s => s.trim()).filter(Boolean);
+    if (servers.length > 0 && (isMarkdown || isMdc)) {
+      sections.push("## MCP Servers");
+      sections.push("");
+      sections.push("The developer has these MCP (Model Context Protocol) servers available. Use them when relevant:");
+      sections.push("");
+      for (const server of servers) {
+        sections.push(`- ${server}`);
+      }
+      sections.push("");
+    }
+  }
+
+  // Server access & deployment
+  if ((options.serverAccess || options.manualDeployment) && (isMarkdown || isMdc)) {
+    sections.push("## Infrastructure");
+    sections.push("");
+    if (options.serverAccess) {
+      const keyInfo = options.sshKeyPath
+        ? `SSH key: \`${options.sshKeyPath}\``
+        : "SSH key in default location (~/.ssh/)";
+      sections.push(`- **Server access**: via SSH. ${keyInfo}`);
+    }
+    if (options.manualDeployment && options.deploymentMethod) {
+      const methods: Record<string, string> = {
+        portainer: "Portainer (GitOps stacks)",
+        docker_compose: "Docker Compose (manual)",
+        kubernetes: "Kubernetes (kubectl apply)",
+        bare_metal: "Bare metal (direct deployment)",
+      };
+      sections.push(`- **Deployment**: ${methods[options.deploymentMethod] || options.deploymentMethod}`);
     }
     sections.push("");
   }
