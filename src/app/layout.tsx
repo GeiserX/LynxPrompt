@@ -3,7 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import Script from "next/script";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { SessionProvider } from "@/components/providers/session-provider";
-import { AnalyticsProvider } from "@/components/providers/analytics-provider";
+
 import { SentryProvider } from "@/components/providers/sentry-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { CookieBanner } from "@/components/cookie-banner";
@@ -140,7 +140,7 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <SentryProvider>
-              <AnalyticsProvider>{children}</AnalyticsProvider>
+              {children}
             </SentryProvider>
             <Toaster />
             <CookieBanner />
