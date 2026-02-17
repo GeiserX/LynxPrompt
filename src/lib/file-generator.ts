@@ -115,6 +115,12 @@ interface WizardConfig {
   saveAllPreferences?: boolean;
   security?: SecurityConfig;
   useGitWorktrees?: boolean; // Use git worktrees for parallel AI agent sessions
+  mcpServers?: string; // Comma-separated list of MCP servers (e.g., "filesystem, github, postgres")
+  attemptWorkarounds?: boolean; // Whether AI should attempt workarounds when stuck
+  serverAccess?: boolean; // Whether project requires server login
+  sshKeyPath?: string; // Custom SSH key path (empty = default)
+  manualDeployment?: boolean; // Whether deployment is manual (no CI/CD)
+  deploymentMethod?: string; // portainer, docker_compose, kubernetes, bare_metal
 }
 
 // Security configuration (FREE tier)
@@ -613,7 +619,7 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     const authorName = user.displayName || user.name || "Developer";
     lines.push(`- **Author**: ${bpVar(bp, "AUTHOR_NAME", authorName)}`);
     if (user.persona) {
-      lines.push(`- **Developer Type**: ${user.persona.replace(/_/g, " ")}`);
+      lines.push(`- **Developer Background**: ${user.persona.replace(/_/g, " ")} — adapt responses to this domain expertise`);
     }
     lines.push(`- **Experience Level**: ${user.skillLevel.charAt(0).toUpperCase() + user.skillLevel.slice(1)}`);
     lines.push("");
@@ -688,6 +694,48 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
       const ruleText = getRuleDescription(rule);
       if (ruleText) lines.push(`- ${ruleText}`);
     });
+    if (config.attemptWorkarounds === true) {
+      lines.push("- When stuck, **attempt creative workarounds** before asking for help");
+    } else if (config.attemptWorkarounds === false) {
+      lines.push("- When stuck, **stop and ask** rather than attempting workarounds");
+    }
+    lines.push("");
+  }
+
+  // MCP Servers
+  if (config.mcpServers) {
+    const servers = config.mcpServers.split(",").map((s: string) => s.trim()).filter(Boolean);
+    if (servers.length > 0) {
+      lines.push("## MCP Servers");
+      lines.push("");
+      lines.push("The developer has these MCP (Model Context Protocol) servers available. Use them when relevant:");
+      lines.push("");
+      servers.forEach((server: string) => {
+        lines.push(`- ${server}`);
+      });
+      lines.push("");
+    }
+  }
+
+  // Server access & deployment
+  if (config.serverAccess || config.manualDeployment) {
+    lines.push("## Infrastructure");
+    lines.push("");
+    if (config.serverAccess) {
+      const keyInfo = config.sshKeyPath
+        ? `SSH key: \`${config.sshKeyPath}\``
+        : "SSH key in default location (~/.ssh/)";
+      lines.push(`- **Server access**: via SSH. ${keyInfo}`);
+    }
+    if (config.manualDeployment && config.deploymentMethod) {
+      const methods: Record<string, string> = {
+        portainer: "Portainer (GitOps stacks)",
+        docker_compose: "Docker Compose (manual)",
+        kubernetes: "Kubernetes (kubectl apply)",
+        bare_metal: "Bare metal (direct deployment)",
+      };
+      lines.push(`- **Deployment**: ${methods[config.deploymentMethod] || config.deploymentMethod}`);
+    }
     lines.push("");
   }
 
@@ -1361,7 +1409,7 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
       lines.push("- Be concise and direct");
     }
     if (user.persona) {
-      lines.push(`- Developer context: ${user.persona.replace(/_/g, " ")}`);
+      lines.push(`- Developer background: ${user.persona.replace(/_/g, " ")} — adapt responses to this domain expertise`);
     }
     lines.push(`- Skill level: ${user.skillLevel.charAt(0).toUpperCase() + user.skillLevel.slice(1)}`);
     lines.push("");
@@ -1938,7 +1986,7 @@ function generateAiderConfig(config: WizardConfig, user: UserProfile): string {
     lines.push(`# Author: ${bpVar(bp, "AUTHOR_NAME", authorName)}`);
     lines.push(`# Skill Level: ${user.skillLevel.charAt(0).toUpperCase() + user.skillLevel.slice(1)}`);
     if (user.persona) {
-      lines.push(`# Developer Type: ${user.persona.replace(/_/g, " ")}`);
+      lines.push(`# Developer Background: ${user.persona.replace(/_/g, " ")} - adapt responses to this domain expertise`);
     }
     lines.push("#");
     lines.push("# Communication Style:");
@@ -2737,7 +2785,7 @@ function generateTabnineConfig(config: WizardConfig, user: UserProfile): string 
     lines.push(`# Author: ${authorName}`);
     lines.push(`# Skill Level: ${user.skillLevel.charAt(0).toUpperCase() + user.skillLevel.slice(1)}`);
     if (user.persona) {
-      lines.push(`# Developer Type: ${user.persona.replace(/_/g, " ")}`);
+      lines.push(`# Developer Background: ${user.persona.replace(/_/g, " ")} - adapt responses to this domain expertise`);
     }
     lines.push("#");
   }
@@ -3482,7 +3530,7 @@ function generateVoidConfig(config: WizardConfig, user: UserProfile): string {
     const authorName = user.displayName || user.name || "Developer";
     rulesParts.push(`- **Author**: ${bpVar(bp, "AUTHOR_NAME", authorName)}`);
     if (user.persona) {
-      rulesParts.push(`- **Type**: ${user.persona.replace(/_/g, " ")}`);
+      rulesParts.push(`- **Developer Background**: ${user.persona.replace(/_/g, " ")} — adapt responses to this domain expertise`);
     }
     rulesParts.push(`- **Experience**: ${user.skillLevel.charAt(0).toUpperCase() + user.skillLevel.slice(1)}`);
     rulesParts.push("");
@@ -3947,6 +3995,12 @@ function getRuleDescription(ruleId: string): string {
     check_for_security_issues: "Review code for security vulnerabilities",
     document_complex_logic: "Add documentation for complex implementations",
     use_conventional_commits: "Follow conventional commit message format",
+    // Burke Holland-inspired rules
+    code_for_llms: "Optimize code for LLM reasoning: prefer flat/explicit patterns, minimal abstractions, structured logging, and linear control flow",
+    self_improving: "When you learn new project patterns or conventions, suggest updates to this configuration file",
+    verify_work: "Always verify your work before returning: run tests, check builds, confirm changes work as expected",
+    terminal_management: "Reuse existing terminals when possible. Close terminals you no longer need",
+    check_docs_first: "Always check documentation (via MCP or project docs) before assuming knowledge about APIs or libraries",
   };
   return rules[ruleId] || ruleId;
 }
