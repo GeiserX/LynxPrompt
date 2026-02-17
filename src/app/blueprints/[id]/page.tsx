@@ -72,7 +72,7 @@ interface TemplateData {
   type?: string; // AGENTS_MD, CURSOR_COMMAND, CLAUDE_COMMAND, etc.
   targetPlatform?: string;
   compatibleWith?: string[];
-  variables?: Record<string, string>;
+  variables?: Record<string, string> | Array<{ name: string; defaultVal?: string }>;
   sensitiveFields?: Record<
     string,
     { label: string; required: boolean; placeholder?: string }
@@ -826,7 +826,7 @@ export default function BlueprintDetailPage() {
                     </div>
                   </div>
                   {/* Show customizable variables even for locked templates */}
-                  {blueprint.variables && blueprint.variables.length > 0 && (
+                  {Array.isArray(blueprint.variables) && blueprint.variables.length > 0 && (
                     <div className="mt-4 rounded-xl border border-purple-500/20 bg-purple-500/5 p-4">
                       <h4 className="mb-2 text-sm font-medium text-purple-400">
                         Customizable Variables ({blueprint.variables.length})
@@ -835,7 +835,7 @@ export default function BlueprintDetailPage() {
                         This template includes variables you can customize after purchase:
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {blueprint.variables.map((v: { name: string; defaultVal?: string }) => (
+                        {blueprint.variables.map((v) => (
                           <span
                             key={v.name}
                             className="inline-flex items-center rounded-md border border-purple-500/30 bg-purple-500/10 px-2 py-1 text-xs font-mono"
