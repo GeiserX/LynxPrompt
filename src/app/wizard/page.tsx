@@ -283,6 +283,12 @@ const AI_BEHAVIOR_RULES = [
   { id: "run_tests_before_commit", label: "Run Tests Before Commit", description: "Ensure tests pass before committing", recommended: true },
   { id: "follow_existing_patterns", label: "Follow Existing Patterns", description: "Match the codebase's existing style", recommended: true },
   { id: "ask_before_large_refactors", label: "Ask Before Large Refactors", description: "Confirm before significant changes", recommended: true },
+  // Burke Holland-inspired rules
+  { id: "code_for_llms", label: "Code for LLMs", description: "Optimize for LLM reasoning: flat patterns, minimal abstractions" },
+  { id: "self_improving", label: "Self-Improving Config", description: "AI updates this config when it learns project patterns" },
+  { id: "verify_work", label: "Always Verify Work", description: "Run tests and check builds before returning control", recommended: true },
+  { id: "terminal_management", label: "Terminal Management", description: "Reuse existing terminals, close unused ones" },
+  { id: "check_docs_first", label: "Check Docs First", description: "Check docs via MCP before assuming API knowledge" },
 ];
 
 // ═══════════════════════════════════════════════════════════════
@@ -684,6 +690,12 @@ type WizardConfig = {
   explanationVerbosity: string; // concise, balanced, detailed
   accessibilityFocus: boolean;
   performanceFocus: boolean;
+  mcpServers: string; // Comma-separated list of MCP servers (e.g., "filesystem, github, postgres")
+  attemptWorkarounds: boolean; // Whether AI should attempt workarounds when stuck
+  serverAccess: boolean; // Whether project requires server login
+  sshKeyPath: string; // Custom SSH key path (empty = default)
+  manualDeployment: boolean; // Whether deployment is manual (no CI/CD)
+  deploymentMethod: string; // portainer, docker_compose, kubernetes, bare_metal
   importantFiles: string[];
   importantFilesOther: string;
   enableAutoUpdate: boolean;
@@ -845,11 +857,17 @@ function WizardPageContent() {
     containerRegistryOther: "",
     dockerImageNames: "",
     registryUsername: "",
-    aiBehaviorRules: ["always_debug_after_build", "check_logs_after_build", "run_tests_before_commit", "follow_existing_patterns", "ask_before_large_refactors"],
+    aiBehaviorRules: ["always_debug_after_build", "check_logs_after_build", "run_tests_before_commit", "follow_existing_patterns", "ask_before_large_refactors", "verify_work"],
     planModeFrequency: "complex_tasks",
     explanationVerbosity: "balanced",
     accessibilityFocus: false,
     performanceFocus: false,
+    mcpServers: "",
+    attemptWorkarounds: true,
+    serverAccess: false,
+    sshKeyPath: "",
+    manualDeployment: false,
+    deploymentMethod: "",
     importantFiles: [],
     importantFilesOther: "",
     enableAutoUpdate: false,
@@ -1490,6 +1508,12 @@ function WizardPageContent() {
       
       // AI behavior
       aiBehaviorRules: config.aiBehaviorRules,
+      mcpServers: config.mcpServers,
+      attemptWorkarounds: config.attemptWorkarounds,
+      serverAccess: config.serverAccess,
+      sshKeyPath: config.sshKeyPath,
+      manualDeployment: config.manualDeployment,
+      deploymentMethod: config.deploymentMethod,
       importantFiles: config.importantFiles,
       importantFilesOther: config.importantFilesOther,
       enableAutoUpdate: config.enableAutoUpdate,
@@ -2732,6 +2756,19 @@ ${syncCommands}
                   onAccessibilityFocusChange={(v) => setConfig({ ...config, accessibilityFocus: v })}
                   performanceFocus={config.performanceFocus}
                   onPerformanceFocusChange={(v) => setConfig({ ...config, performanceFocus: v })}
+                  mcpServers={config.mcpServers}
+                  onMcpServersChange={(v) => setConfig({ ...config, mcpServers: v })}
+                  attemptWorkarounds={config.attemptWorkarounds}
+                  onAttemptWorkaroundsChange={(v) => setConfig({ ...config, attemptWorkarounds: v })}
+                  serverAccess={config.serverAccess}
+                  onServerAccessChange={(v) => setConfig({ ...config, serverAccess: v })}
+                  sshKeyPath={config.sshKeyPath}
+                  onSshKeyPathChange={(v) => setConfig({ ...config, sshKeyPath: v })}
+                  manualDeployment={config.manualDeployment}
+                  onManualDeploymentChange={(v) => setConfig({ ...config, manualDeployment: v })}
+                  deploymentMethod={config.deploymentMethod}
+                  onDeploymentMethodChange={(v) => setConfig({ ...config, deploymentMethod: v })}
+                  hasCicd={(config.cicd?.length ?? 0) > 0}
                   importantFiles={config.importantFiles}
                   importantFilesOther={config.importantFilesOther}
                   onImportantFilesToggle={(v) => toggleArrayValue("importantFiles", v)}
@@ -5348,6 +5385,19 @@ function StepAIBehavior({
   onAccessibilityFocusChange,
   performanceFocus,
   onPerformanceFocusChange,
+  mcpServers,
+  onMcpServersChange,
+  attemptWorkarounds,
+  onAttemptWorkaroundsChange,
+  serverAccess,
+  onServerAccessChange,
+  sshKeyPath,
+  onSshKeyPathChange,
+  manualDeployment,
+  onManualDeploymentChange,
+  deploymentMethod,
+  onDeploymentMethodChange,
+  hasCicd,
   importantFiles,
   importantFilesOther,
   onImportantFilesToggle,
@@ -5371,6 +5421,19 @@ function StepAIBehavior({
   onAccessibilityFocusChange: (v: boolean) => void;
   performanceFocus: boolean;
   onPerformanceFocusChange: (v: boolean) => void;
+  mcpServers: string;
+  onMcpServersChange: (v: string) => void;
+  attemptWorkarounds: boolean;
+  onAttemptWorkaroundsChange: (v: boolean) => void;
+  serverAccess: boolean;
+  onServerAccessChange: (v: boolean) => void;
+  sshKeyPath: string;
+  onSshKeyPathChange: (v: string) => void;
+  manualDeployment: boolean;
+  onManualDeploymentChange: (v: boolean) => void;
+  deploymentMethod: string;
+  onDeploymentMethodChange: (v: string) => void;
+  hasCicd: boolean;
   importantFiles: string[];
   importantFilesOther: string;
   onImportantFilesToggle: (v: string) => void;
@@ -5538,6 +5601,84 @@ function StepAIBehavior({
           checked={performanceFocus}
           onChange={onPerformanceFocusChange}
         />
+        <ToggleOption
+          label="🔧 Attempt Workarounds"
+          description="When stuck, try creative workarounds instead of stopping to ask"
+          checked={attemptWorkarounds}
+          onChange={onAttemptWorkaroundsChange}
+        />
+      </div>
+
+      {/* MCP Servers */}
+      <div className="mt-8">
+        <h3 className="font-semibold">🔌 MCP Servers</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          List any <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">Model Context Protocol</a> servers you have configured. The AI will know to use them when relevant.
+        </p>
+        <input
+          type="text"
+          value={mcpServers}
+          onChange={(e) => onMcpServersChange(e.target.value)}
+          placeholder="e.g. filesystem, github, postgres, docker"
+          className="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm"
+        />
+      </div>
+
+      {/* Server Access */}
+      <div className="mt-8">
+        <h3 className="font-semibold">🖥️ Infrastructure</h3>
+        <div className="mt-3 space-y-3">
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="serverAccess"
+              checked={serverAccess}
+              onChange={(e) => onServerAccessChange(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            <label htmlFor="serverAccess" className="text-sm cursor-pointer">
+              This project requires logging into a server (SSH)
+            </label>
+          </div>
+          {serverAccess && (
+            <input
+              type="text"
+              value={sshKeyPath}
+              onChange={(e) => onSshKeyPathChange(e.target.value)}
+              placeholder="SSH key path (leave empty for default ~/.ssh/)"
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+            />
+          )}
+          {!hasCicd && (
+            <>
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="manualDeployment"
+                  checked={manualDeployment}
+                  onChange={(e) => onManualDeploymentChange(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <label htmlFor="manualDeployment" className="text-sm cursor-pointer">
+                  I deploy manually (no CI/CD)
+                </label>
+              </div>
+              {manualDeployment && (
+                <select
+                  value={deploymentMethod}
+                  onChange={(e) => onDeploymentMethodChange(e.target.value)}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                >
+                  <option value="">Select deployment method...</option>
+                  <option value="portainer">Portainer (GitOps stacks)</option>
+                  <option value="docker_compose">Docker Compose (manual)</option>
+                  <option value="kubernetes">Kubernetes (kubectl)</option>
+                  <option value="bare_metal">Bare metal (direct)</option>
+                </select>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Important Files to Read First */}
