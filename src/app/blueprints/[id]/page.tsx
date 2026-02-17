@@ -28,10 +28,7 @@ import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Footer } from "@/components/footer";
-import {
-  trackTemplateView,
-  trackTemplateFavorite,
-} from "@/lib/analytics/client";
+
 
 // Platform info
 const platformInfo: Record<string, { name: string; file: string }> = {
@@ -144,8 +141,6 @@ export default function BlueprintDetailPage() {
         if (res.ok) {
           const data = await res.json();
           setBlueprint(data);
-          // Track blueprint view
-          trackTemplateView(data.id, data.name, data.category);
         } else {
           router.push("/blueprints");
         }
@@ -189,8 +184,6 @@ export default function BlueprintDetailPage() {
       if (res.ok) {
         const data = await res.json();
         setIsFavorited(data.favorited);
-        // Track favorite action
-        trackTemplateFavorite(params.id as string, data.favorited);
         // Update local like count
         if (blueprint) {
           setBlueprint({

@@ -160,42 +160,6 @@ services:
       - no-new-privileges:true
 
   # ==========================================================================
-  # CLICKHOUSE - Analytics & Event Data (OLAP)
-  # High-performance analytics for user behavior, trends, recommendations
-  # ==========================================================================
-  clickhouse:
-    image: clickhouse/clickhouse-server:25-alpine
-    container_name: lynxprompt-clickhouse
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "50m"
-        max-file: "3"
-    environment:
-      CLICKHOUSE_DB: lynxprompt_analytics
-      CLICKHOUSE_USER: lynxprompt
-      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-dev_clickhouse_password_change_me}
-      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
-    volumes:
-      - clickhouse_data:/var/lib/clickhouse
-      - clickhouse_logs:/var/log/clickhouse-server
-    networks:
-      - lynxprompt
-    deploy:
-      resources:
-        limits:
-          memory: 2G
-        reservations:
-          memory: 512M
-    security_opt:
-      - no-new-privileges:true
-    ulimits:
-      nofile:
-        soft: 262144
-        hard: 262144
-
-  # ==========================================================================
   # LYNXPROMPT APPLICATION
   # ==========================================================================
   app:
@@ -218,8 +182,6 @@ services:
         condition: service_healthy
       postgres-support:
         condition: service_healthy
-      clickhouse:
-        condition: service_started
     deploy:
       resources:
         limits:
@@ -243,12 +205,6 @@ services:
       DATABASE_URL_USERS: postgresql://lynxprompt_users:${POSTGRES_USERS_PASSWORD:-dev_users_password_change_me}@postgres-users:5432/lynxprompt_users?schema=public
       DATABASE_URL_BLOG: postgresql://lynxprompt_blog:${POSTGRES_BLOG_PASSWORD:-dev_blog_password_change_me}@postgres-blog:5432/lynxprompt_blog?schema=public
       DATABASE_URL_SUPPORT: postgresql://lynxprompt_support:${POSTGRES_SUPPORT_PASSWORD:-dev_support_password_change_me}@postgres-support:5432/lynxprompt_support?schema=public
-      # ClickHouse Analytics
-      CLICKHOUSE_HOST: clickhouse
-      CLICKHOUSE_PORT: 8123
-      CLICKHOUSE_DB: lynxprompt_analytics
-      CLICKHOUSE_USER: lynxprompt
-      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-dev_clickhouse_password_change_me}
       # NextAuth
       NEXTAUTH_URL: http://localhost:3000
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-dev-secret-change-in-production}
@@ -294,8 +250,6 @@ volumes:
   postgres_users_keyring:
   postgres_blog_data:
   postgres_support_data:
-  clickhouse_data:
-  clickhouse_logs:
   uploads_data:
 
 networks:
