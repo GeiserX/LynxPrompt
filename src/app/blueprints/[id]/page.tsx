@@ -918,7 +918,7 @@ export default function BlueprintDetailPage() {
             name: selectedVersion ? `${blueprint.name} (v${selectedVersion})` : blueprint.name,
             description: blueprint.description,
             content: selectedVersionContent || blueprint.content || "",
-            variables: blueprint.variables,
+            variables: Array.isArray(blueprint.variables) ? undefined : blueprint.variables,
             sensitiveFields: blueprint.sensitiveFields,
             targetPlatform: blueprint.targetPlatform || blueprint.type,
             compatibleWith: blueprint.compatibleWith,
