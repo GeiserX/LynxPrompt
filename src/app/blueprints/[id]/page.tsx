@@ -72,7 +72,7 @@ interface TemplateData {
   type?: string; // AGENTS_MD, CURSOR_COMMAND, CLAUDE_COMMAND, etc.
   targetPlatform?: string;
   compatibleWith?: string[];
-  variables?: Record<string, string>;
+  variables?: Record<string, string> | Array<{ name: string; defaultVal?: string }>;
   sensitiveFields?: Record<
     string,
     { label: string; required: boolean; placeholder?: string }
@@ -799,31 +799,58 @@ export default function BlueprintDetailPage() {
                 </span>
               </div>
               {blueprint.isPaid && !blueprint.hasPurchased ? (
-                <div className="relative rounded-xl border bg-muted/50 p-6">
-                  {/* Blurred preview */}
-                  <pre className="max-h-64 overflow-hidden whitespace-pre-wrap text-sm opacity-50 blur-sm">
-                    <code>{blueprint.preview}</code>
-                  </pre>
-                  {/* Overlay */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center rounded-xl bg-gradient-to-t from-background via-background/80 to-transparent">
-                    <Lock className="mb-3 h-8 w-8 text-muted-foreground" />
-                    <p className="mb-4 text-center text-muted-foreground">
-                      Full content is locked. Purchase to access.
-                    </p>
-                    <Button
-                      onClick={handlePurchase}
-                      disabled={purchasing}
-                      className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                    >
-                      {purchasing ? (
-                        <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                      ) : (
-                        <ShoppingCart className="mr-2 h-4 w-4" />
-                      )}
-                      {purchasing ? "Processing..." : `Purchase for €${((blueprint.price || 0) / 100).toFixed(2)}`}
-                    </Button>
+                <>
+                  <div className="relative rounded-xl border bg-muted/50 p-6">
+                    {/* Blurred preview */}
+                    <pre className="max-h-64 overflow-hidden whitespace-pre-wrap text-sm opacity-50 blur-sm">
+                      <code>{blueprint.preview}</code>
+                    </pre>
+                    {/* Overlay */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center rounded-xl bg-gradient-to-t from-background via-background/80 to-transparent">
+                      <Lock className="mb-3 h-8 w-8 text-muted-foreground" />
+                      <p className="mb-4 text-center text-muted-foreground">
+                        Full content is locked. Purchase to access.
+                      </p>
+                      <Button
+                        onClick={handlePurchase}
+                        disabled={purchasing}
+                        className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                      >
+                        {purchasing ? (
+                          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        ) : (
+                          <ShoppingCart className="mr-2 h-4 w-4" />
+                        )}
+                        {purchasing ? "Processing..." : `Purchase for €${((blueprint.price || 0) / 100).toFixed(2)}`}
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                  {/* Show customizable variables even for locked templates */}
+                  {Array.isArray(blueprint.variables) && blueprint.variables.length > 0 && (
+                    <div className="mt-4 rounded-xl border border-purple-500/20 bg-purple-500/5 p-4">
+                      <h4 className="mb-2 text-sm font-medium text-purple-400">
+                        Customizable Variables ({blueprint.variables.length})
+                      </h4>
+                      <p className="mb-3 text-xs text-muted-foreground">
+                        This template includes variables you can customize after purchase:
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {blueprint.variables.map((v) => (
+                          <span
+                            key={v.name}
+                            className="inline-flex items-center rounded-md border border-purple-500/30 bg-purple-500/10 px-2 py-1 text-xs font-mono"
+                            title={v.defaultVal ? `Default: ${v.defaultVal}` : undefined}
+                          >
+                            {v.name}
+                            {v.defaultVal && (
+                              <span className="ml-1 text-muted-foreground">= {v.defaultVal}</span>
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="rounded-xl border bg-muted/50 p-6">
                   <pre className="max-h-96 overflow-auto whitespace-pre-wrap text-sm">
@@ -891,7 +918,7 @@ export default function BlueprintDetailPage() {
             name: selectedVersion ? `${blueprint.name} (v${selectedVersion})` : blueprint.name,
             description: blueprint.description,
             content: selectedVersionContent || blueprint.content || "",
-            variables: blueprint.variables,
+            variables: Array.isArray(blueprint.variables) ? undefined : blueprint.variables,
             sensitiveFields: blueprint.sensitiveFields,
             targetPlatform: blueprint.targetPlatform || blueprint.type,
             compatibleWith: blueprint.compatibleWith,

@@ -1,8 +1,6 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://lynxprompt.com/logos/brand/lynxp.png">
-  <source media="(prefers-color-scheme: light)" srcset="https://lynxprompt.com/logos/brand/lynxp.png">
-  <img alt="LynxPrompt" src="https://lynxprompt.com/logos/brand/lynxp.png" width="150">
-</picture>
+<a href="https://lynxprompt.com">
+  <img src="https://socialify.git.ci/GeiserX/LynxPrompt?custom_description=AI%20IDE%2FTools%20rule%20config%20generator%20via%20WebUI%20or%20CLI%20-%20Generate%2C%20browse%2C%20store%20%26%20share%20AGENTS.md%2C%20CLAUDE.md%2C%20and%20more&description=1&font=Inter&forks=1&issues=1&language=1&logo=https%3A%2F%2Flynxprompt.com%2Flogos%2Fbrand%2Flynxp.png&name=1&owner=1&pattern=Circuit%20Board&pulls=1&stargazers=1&theme=Auto" alt="LynxPrompt" width="100%" />
+</a>
 
 # LynxPrompt
 

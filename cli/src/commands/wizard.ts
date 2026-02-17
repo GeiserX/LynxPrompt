@@ -9,6 +9,12 @@ import { detectProject, detectFromRemoteUrl, isGitUrl } from "../utils/detect.js
 import { generateConfig, GenerateOptions, parseVariablesString } from "../utils/generator.js";
 import { isAuthenticated, getUser } from "../config.js";
 import { api, ApiRequestError } from "../api.js";
+import {
+  LANGUAGES as SHARED_LANGUAGES,
+  FRAMEWORKS as SHARED_FRAMEWORKS,
+  DATABASES as SHARED_DATABASES,
+  TEST_FRAMEWORKS as SHARED_TEST_FRAMEWORKS,
+} from "../utils/wizard-options.js";
 
 // Draft management - local storage in .lynxprompt/drafts/
 const DRAFTS_DIR = ".lynxprompt/drafts";
@@ -238,52 +244,10 @@ const ALL_PLATFORMS = [
 ];
 
 
-// Languages
-const LANGUAGES = [
-  { title: "🔷 TypeScript", value: "typescript" },
-  { title: "🟡 JavaScript", value: "javascript" },
-  { title: "🐍 Python", value: "python" },
-  { title: "🔵 Go", value: "go" },
-  { title: "🦀 Rust", value: "rust" },
-  { title: "☕ Java", value: "java" },
-  { title: "💜 C#/.NET", value: "csharp" },
-  { title: "💎 Ruby", value: "ruby" },
-  { title: "🐘 PHP", value: "php" },
-  { title: "🍎 Swift", value: "swift" },
-  { title: "🔶 Kotlin", value: "kotlin" },
-  { title: "⬛ C/C++", value: "cpp" },
-];
-
-// Frameworks
-const FRAMEWORKS = [
-  { title: "⚛️  React", value: "react" },
-  { title: "▲  Next.js", value: "nextjs" },
-  { title: "💚 Vue.js", value: "vue" },
-  { title: "🅰️  Angular", value: "angular" },
-  { title: "🔥 Svelte", value: "svelte" },
-  { title: "🚂 Express", value: "express" },
-  { title: "⚡ FastAPI", value: "fastapi" },
-  { title: "🎸 Django", value: "django" },
-  { title: "🧪 Flask", value: "flask" },
-  { title: "🍃 Spring", value: "spring" },
-  { title: "💎 Rails", value: "rails" },
-  { title: "🔴 Laravel", value: "laravel" },
-  { title: "🏗️  NestJS", value: "nestjs" },
-  { title: "⚡ Vite", value: "vite" },
-  { title: "📱 React Native", value: "react-native" },
-];
-
-// Databases
-const DATABASES = [
-  { title: "🐘 PostgreSQL", value: "postgresql" },
-  { title: "🐬 MySQL", value: "mysql" },
-  { title: "🍃 MongoDB", value: "mongodb" },
-  { title: "🔴 Redis", value: "redis" },
-  { title: "📊 SQLite", value: "sqlite" },
-  { title: "☁️  Supabase", value: "supabase" },
-  { title: "🔥 Firebase", value: "firebase" },
-  { title: "📂 Prisma", value: "prisma" },
-];
+// Languages, frameworks, and databases imported from shared package (wizard-options.ts)
+const LANGUAGES = SHARED_LANGUAGES;
+const FRAMEWORKS = SHARED_FRAMEWORKS;
+const DATABASES = SHARED_DATABASES;
 
 // Package managers (JS/TS only)
 const PACKAGE_MANAGERS = [
@@ -641,6 +605,12 @@ const AI_BEHAVIOR_RULES = [
   { id: "run_tests_before_commit", label: "Run Tests Before Commit", description: "AI must run the test suite and ensure all tests pass before suggesting a commit", recommended: true },
   { id: "follow_existing_patterns", label: "Follow Existing Patterns", description: "AI should study existing code and follow the same naming, structure, and conventions used in the codebase", recommended: true },
   { id: "ask_before_large_refactors", label: "Ask Before Large Refactors", description: "AI should always ask for explicit approval before making significant architectural changes or refactoring multiple files", recommended: true },
+  // Burke Holland-inspired rules
+  { id: "code_for_llms", label: "Code for LLMs", description: "Optimize code for LLM reasoning: flat/explicit patterns, minimal abstractions, structured logging" },
+  { id: "self_improving", label: "Self-Improving Config", description: "AI updates this config file when it learns new project patterns or conventions" },
+  { id: "verify_work", label: "Always Verify Work", description: "Run tests, check builds, and confirm changes work before returning control", recommended: true },
+  { id: "terminal_management", label: "Terminal Management", description: "Reuse existing terminals and close unused ones" },
+  { id: "check_docs_first", label: "Check Docs First", description: "Check documentation via MCP or project docs before assuming knowledge about APIs" },
 ];
 
 // ═══════════════════════════════════════════════════════════════
@@ -789,49 +759,8 @@ const BOUNDARY_OPTIONS = [
   "Skip tests temporarily",
 ];
 
-// Testing frameworks - expanded to match WebUI
-const TEST_FRAMEWORKS = [
-  // JavaScript/TypeScript
-  "jest", "vitest", "mocha", "ava", "tap", "bun:test",
-  // E2E/Integration
-  "playwright", "cypress", "puppeteer", "selenium", "webdriverio", "testcafe",
-  // React/Frontend
-  "rtl", "enzyme", "storybook", "chromatic",
-  // API/Mocking
-  "msw", "supertest", "pact", "dredd", "karate", "postman", "insomnia",
-  // Python
-  "pytest", "unittest", "nose2", "hypothesis", "behave", "robot",
-  // Go
-  "go-test", "testify", "ginkgo", "gomega",
-  // Java/JVM
-  "junit", "testng", "mockito", "spock", "cucumber-jvm",
-  // Ruby
-  "rspec", "minitest", "capybara", "factory_bot",
-  // .NET
-  "xunit", "nunit", "mstest", "specflow",
-  // Infrastructure/DevOps
-  "terratest", "conftest", "opa", "inspec", "serverspec", "molecule", "kitchen", "goss",
-  // Kubernetes
-  "kubetest", "kuttl", "chainsaw", "helm-unittest",
-  // Security
-  "owasp-zap", "burpsuite", "nuclei", "semgrep",
-  // Load/Performance
-  "k6", "locust", "jmeter", "artillery", "gatling", "vegeta", "wrk", "ab",
-  // Chaos Engineering
-  "chaos-mesh", "litmus", "gremlin", "toxiproxy",
-  // Contract Testing
-  "spring-cloud-contract", "specmatic",
-  // BDD
-  "cucumber", "gauge", "concordion",
-  // Mutation Testing
-  "stryker", "pitest", "mutmut",
-  // Fuzzing
-  "go-fuzz", "afl", "libfuzzer", "jazzer",
-  // PHP
-  "phpunit", "pest", "codeception",
-  // Rust
-  "cargo-test", "rstest", "proptest",
-];
+// Testing frameworks imported from shared package (includes XCTest, Espresso, etc.)
+const TEST_FRAMEWORKS: string[] = SHARED_TEST_FRAMEWORKS;
 
 // Test levels
 const TEST_LEVELS = [
@@ -2250,7 +2179,7 @@ async function runInteractiveWizard(
     name: "useGitWorktrees",
     message: chalk.white("🌲 Do you plan on working with several AI agent sessions in this repository?"),
     initial: true,
-    hint: "If yes, AI will be instructed to always use git worktrees for each task",
+    hint: "Enable if you use multiple AI agents (Cursor, Claude, Copilot) in parallel. Each task gets its own git worktree to prevent branch conflicts.",
   }, promptConfig);
   answers.useGitWorktrees = useGitWorktreesResponse.useGitWorktrees ?? true;
 
@@ -3163,6 +3092,17 @@ async function runInteractiveWizard(
   }, promptConfig);
   answers.explanationVerbosity = verbosityResponse.explanationVerbosity || "balanced";
 
+  // Workaround behavior
+  const workaroundResponse = await prompts({
+    type: "toggle",
+    name: "attemptWorkarounds",
+    message: chalk.white("When stuck, should the AI attempt workarounds?"),
+    initial: true,
+    active: "Yes, try workarounds",
+    inactive: "No, stop and ask",
+  }, promptConfig);
+  answers.attemptWorkarounds = workaroundResponse.attemptWorkarounds ?? true;
+
   // Focus areas
   const accessibilityResponse = await prompts({
     type: "toggle",
@@ -3183,6 +3123,68 @@ async function runInteractiveWizard(
     inactive: "No",
   }, promptConfig);
   answers.performanceFocus = performanceResponse.performanceFocus ?? false;
+
+  // MCP Servers
+  console.log();
+  console.log(chalk.gray("  🔌 MCP (Model Context Protocol) servers let the AI interact with external tools"));
+  console.log(chalk.gray("     like databases, APIs, file systems, and more. List any you have configured."));
+  const mcpServersResponse = await prompts({
+    type: "text",
+    name: "mcpServers",
+    message: chalk.white("MCP servers (comma-separated, or leave empty):"),
+    hint: chalk.gray("e.g. filesystem, github, postgres, docker"),
+  }, promptConfig);
+  answers.mcpServers = mcpServersResponse.mcpServers || "";
+
+  // Server access
+  const serverAccessResponse = await prompts({
+    type: "toggle",
+    name: "serverAccess",
+    message: chalk.white("Does this project require logging into a server?"),
+    initial: false,
+    active: "Yes",
+    inactive: "No",
+  }, promptConfig);
+  answers.serverAccess = serverAccessResponse.serverAccess ?? false;
+
+  if (answers.serverAccess) {
+    const sshKeyPathResponse = await prompts({
+      type: "text",
+      name: "sshKeyPath",
+      message: chalk.white("SSH key path (leave empty for default ~/.ssh/):"),
+      hint: chalk.gray("e.g. ~/.ssh/id_ed25519"),
+    }, promptConfig);
+    answers.sshKeyPath = sshKeyPathResponse.sshKeyPath || "";
+  }
+
+  // Manual deployment (only ask if no CI/CD was selected)
+  const hasCicd = (answers.cicd as string[])?.length > 0;
+  if (!hasCicd) {
+    const manualDeployResponse = await prompts({
+      type: "toggle",
+      name: "manualDeployment",
+      message: chalk.white("Do you deploy manually (no CI/CD)?"),
+      initial: false,
+      active: "Yes",
+      inactive: "No",
+    }, promptConfig);
+    answers.manualDeployment = manualDeployResponse.manualDeployment ?? false;
+
+    if (answers.manualDeployment) {
+      const deployMethodResponse = await prompts({
+        type: "select",
+        name: "deploymentMethod",
+        message: chalk.white("How do you deploy?"),
+        choices: [
+          { title: "🐳 Portainer (GitOps stacks)", value: "portainer" },
+          { title: "📦 Docker Compose (manual)", value: "docker_compose" },
+          { title: "☸️  Kubernetes (kubectl)", value: "kubernetes" },
+          { title: "🖥️  Bare metal (direct)", value: "bare_metal" },
+        ],
+      }, promptConfig);
+      answers.deploymentMethod = deployMethodResponse.deploymentMethod || "";
+    }
+  }
 
   console.log();
   console.log(chalk.gray("  📁 Select files the AI should read first to understand your project context."));
@@ -3995,5 +3997,15 @@ async function runInteractiveWizard(
     additionalLibraries: answers.additionalLibraries as string,
     // Docker image names
     dockerImageNames: answers.dockerImageNames as string,
+    // MCP servers
+    mcpServers: answers.mcpServers as string,
+    // Workaround behavior
+    attemptWorkarounds: answers.attemptWorkarounds as boolean,
+    // Server access
+    serverAccess: answers.serverAccess as boolean,
+    sshKeyPath: answers.sshKeyPath as string,
+    // Manual deployment
+    manualDeployment: answers.manualDeployment as boolean,
+    deploymentMethod: answers.deploymentMethod as string,
   };
 }
