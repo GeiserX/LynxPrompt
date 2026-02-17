@@ -126,7 +126,6 @@ Per EU Consumer Rights Directive, digital content can waive 14-day withdrawal IF
 
 - [x] Project scaffolding with Next.js 15, React 19, TypeScript
 - [x] PostgreSQL database with Prisma ORM (dual-database architecture)
-- [x] ClickHouse for analytics (self-hosted EU)
 - [x] Umami analytics (self-hosted EU, cookieless)
 - [x] Authentication with NextAuth.js (GitHub, Google, Magic Link, Passkeys)
 - [x] Homepage with platform carousel
@@ -437,7 +436,7 @@ When downloading, user sees:
 
 #### Template Analytics
 
-- [ ] Track template downloads/usage (ClickHouse)
+- [ ] Track template downloads/usage
 - [ ] Show trending templates
 - [ ] Usage statistics for template authors
 - [ ] Revenue reports for paid templates
@@ -743,7 +742,6 @@ POST   /api/generate               - Generate config files from wizard data
 ### Current Infrastructure
 
 - [x] PostgreSQL (4 databases: app, users, blog, support)
-- [x] ClickHouse (self-hosted EU, analytics)
 - [x] Umami (self-hosted EU, cookieless analytics)
 - [x] Docker deployment with GitOps (Portainer)
 - [x] Cloudflare DDoS protection and WAF
@@ -760,7 +758,7 @@ POST   /api/generate               - Generate config files from wizard data
 - [ ] Annual third-party penetration test
 - [ ] Bug bounty program (HackerOne or similar)
 
-> **Note:** GlitchTip is preferred over Sentry for self-hosted error tracking. It integrates well with our existing ClickHouse setup and keeps all data in EU.
+> **Note:** GlitchTip is preferred over Sentry for self-hosted error tracking. It keeps all data in EU.
 
 ---
 

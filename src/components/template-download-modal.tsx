@@ -20,7 +20,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import Link from "next/link";
-import { trackTemplateDownload } from "@/lib/analytics/client";
+
 import { parseVariablesWithDefaults, detectDuplicateVariableDefaults, type DuplicateVariableDefault } from "@/lib/file-generator";
 import { PLATFORMS } from "@/lib/platforms";
 
@@ -320,10 +320,7 @@ export function TemplateDownloadModal({
 
     // Track the download if template has an ID
     if (template.id) {
-      // Track in ClickHouse for real-time analytics
-      trackTemplateDownload(template.id, isCommand ? `command-${commandExportTarget}` : selectedPlatform, template.name);
-
-      // Also track in PostgreSQL for denormalized counts
+      // Track in PostgreSQL for denormalized counts
       try {
         await fetch(`/api/blueprints/${template.id}/download`, {
           method: "POST",
