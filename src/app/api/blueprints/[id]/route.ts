@@ -109,6 +109,19 @@ export async function GET(
 
     // If not purchased AND not owner, hide the content
     if (isPaid && !hasPurchased && !isOwner) {
+      // Extract variables from content so users can see what's customizable
+      const variableRegex = /\[\[([A-Z_][A-Z0-9_]*)(?:\|([^\]]*))?\]\]/g;
+      const variables: Array<{ name: string; defaultVal?: string }> = [];
+      const seen = new Set<string>();
+      let match;
+      const content = templateWithShowcase.content || "";
+      while ((match = variableRegex.exec(content)) !== null) {
+        if (!seen.has(match[1])) {
+          seen.add(match[1]);
+          variables.push({ name: match[1], defaultVal: match[2] || undefined });
+        }
+      }
+
       return NextResponse.json({
         ...templateWithShowcase,
         content: null, // Hide content
@@ -121,6 +134,8 @@ export async function GET(
           (templateWithShowcase.content && templateWithShowcase.content.length > 500
             ? "\n\n... [Purchase to view full content]"
             : ""),
+        // Show variables even for unpurchased templates
+        variables: variables.length > 0 ? variables : undefined,
       });
     }
 
