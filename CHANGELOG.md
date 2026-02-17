@@ -5,7 +5,24 @@ All notable changes to LynxPrompt will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.6.0] - February 2026
+
+### Added
+- **MCP Servers config**: New wizard field (CLI + WebUI) to list MCP servers the developer uses. Generated output tells the AI to use them when relevant.
+- **Workaround behavior toggle**: New toggle to control whether the AI should attempt creative workarounds when stuck, or stop and ask.
+- **Infrastructure questions**: Conditional wizard questions for SSH server access (key path) and manual deployment method (Portainer, Docker Compose, Kubernetes, bare metal).
+- **Burke Holland-inspired AI rules**: New behavior options — "Code for LLMs", "Self-Improving Config", "Always Verify Work", "Terminal Management", "Check Docs First".
+- **Paid template variable preview**: Locked paid templates now show their customizable variables (name + default) so users can see what they'll get before purchasing.
+- **Socialify banner**: Added dynamic Socialify image to README for better GitHub social previews.
+- **XCTest support**: Now available in test frameworks (via shared package import).
+
+### Changed
+- **Persona wording**: Generated output now uses "Developer background: X. Adapt your suggestions..." instead of "I am X" or "You are X" — properly tells the AI about the developer's expertise without roleplaying.
+- **CLI wizard refactored**: Languages, frameworks, databases, and test frameworks now imported from the shared package instead of being hardcoded in the CLI.
+- **CLI agent sessions hint**: Improved explanation for the "multiple AI agent sessions" wizard question.
+
+### Removed
+- **ClickHouse references**: Cleaned up remaining ClickHouse mentions from ROADMAP.md documentation.
 
 ---
 
