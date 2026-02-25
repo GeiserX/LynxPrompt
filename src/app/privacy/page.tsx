@@ -337,7 +337,7 @@ export default function PrivacyPage() {
 
                   <div className="rounded-lg border p-4">
                     <h3 className="font-medium text-foreground">
-                      GlitchTip (Self-Hosted)
+                      Error Tracking (Optional, Sentry-Compatible)
                     </h3>
                     <p className="mt-1 text-sm">
                       <strong>Data collected:</strong> Error messages, stack traces,
