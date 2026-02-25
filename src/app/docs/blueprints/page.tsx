@@ -13,9 +13,10 @@ export default function BlueprintsOverviewPage() {
           <h1 className="text-3xl font-bold tracking-tight">Blueprints</h1>
         </div>
         <p className="max-w-2xl text-lg text-muted-foreground">
-          Blueprints are reusable AI IDE configuration files created by the
-          community. Browse, download, and share configurations that work across
-          multiple AI platforms.
+          Blueprints are your personal library of reusable AI IDE configuration
+          files. Store, organize, and version your configurations — then share
+          them with the community or keep them private. Works across multiple AI
+          platforms.
         </p>
       </div>
 
@@ -78,9 +79,10 @@ export default function BlueprintsOverviewPage() {
       <section className="space-y-4">
         <h2 className="text-2xl font-bold">What are Blueprints?</h2>
         <p className="text-muted-foreground">
-          Blueprints are pre-made AI IDE configuration files that you can
-          download and use in your projects. They contain rules, guidelines, and
-          best practices that tell AI coding assistants how to help you code.
+          Blueprints are AI IDE configuration files that you store and manage in
+          LynxPrompt. Use them as your personal config library, share them with
+          the community, or keep them private. They contain rules, guidelines,
+          and best practices that tell AI coding assistants how to help you code.
         </p>
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="rounded-lg border bg-card p-4">
@@ -175,14 +177,17 @@ export default function BlueprintsOverviewPage() {
           </div>
           <div className="rounded-xl border bg-card p-6">
             <h3 className="text-lg font-semibold">Paid Blueprints</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Available on instances with Stripe enabled
+            </p>
             <ul className="mt-3 space-y-2 text-muted-foreground">
               <li className="flex items-center gap-2">
                 <span className="text-purple-500">★</span>
-                Premium configurations
+                Premium configurations by any user
               </li>
               <li className="flex items-center gap-2">
                 <span className="text-purple-500">★</span>
-                Created by Teams users
+                Creators earn 70% of each sale
               </li>
               <li className="flex items-center gap-2">
                 <span className="text-purple-500">★</span>

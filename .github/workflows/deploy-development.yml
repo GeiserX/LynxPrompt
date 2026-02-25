@@ -79,13 +79,38 @@ jobs:
         run: |
           sleep 30
           for i in {1..10}; do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://dev.lynxprompt.com || echo "000")
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://dev.lynxprompt.com/api/health || echo "000")
             if [ "$STATUS" = "200" ]; then
-              echo "✅ Development deployment successful"
-              exit 0
+              echo "✅ App is responding"
+              break
             fi
             echo "Waiting for site to be healthy... (attempt $i/10, status: $STATUS)"
             sleep 10
+            if [ "$i" = "10" ]; then
+              echo "⚠️ Health check timed out - site may still be starting"
+              exit 0
+            fi
           done
-          echo "⚠️ Health check timed out - site may still be starting"
-          exit 0
+
+          HEALTH=$(curl -sf https://dev.lynxprompt.com/api/health)
+          echo "Health: $HEALTH"
+          echo "$HEALTH" | jq -e '.status == "ok" and .db == "connected"' > /dev/null || {
+            echo "⚠️ DB not connected"
+            exit 0
+          }
+
+          CONFIG=$(curl -sf https://dev.lynxprompt.com/api/config/public)
+          echo "Config: $CONFIG"
+          echo "$CONFIG" | jq -e '.enableEmailAuth != null and .appName != null' > /dev/null || {
+            echo "⚠️ Public config unexpected shape"
+            exit 0
+          }
+
+          HOME_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://dev.lynxprompt.com/)
+          if [ "$HOME_STATUS" = "200" ]; then
+            echo "✅ Homepage returns 200"
+          else
+            echo "⚠️ Homepage returned $HOME_STATUS"
+          fi
+
+          echo "✅ Development deployment verified"

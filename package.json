@@ -1,6 +1,6 @@
 {
   "name": "lynxprompt",
-  "version": "2.0.24",
+  "version": "2.0.25",
   "private": true,
   "description": "LynxPrompt - Transform your development setup into a mouse-click experience with AI IDE configuration generation",
   "author": "LynxPrompt Contributors",
@@ -87,6 +87,7 @@
     "@prisma/client": "^7.4.1",
     "@tailwindcss/postcss": "^4.2.0",
     "@tailwindcss/typography": "^0.5.15",
+    "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^22.19.11",

@@ -12,6 +12,9 @@ import {
   Fingerprint,
   RefreshCw,
   AlertTriangle,
+  KeyRound,
+  Network,
+  Code,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
@@ -19,7 +22,7 @@ import { Footer } from "@/components/footer";
 export const metadata: Metadata = {
   title: "Security",
   description:
-    "LynxPrompt Security practices. Learn how we protect your data with EU hosting, encryption at rest and in transit, secure authentication, and privacy-first infrastructure.",
+    "LynxPrompt Security practices. Learn how we protect your data with EU hosting, encryption, secure authentication, blueprint secret detection, federation security, and open-source transparency.",
   keywords: [
     "security",
     "data protection",
@@ -29,6 +32,11 @@ export const metadata: Metadata = {
     "GDPR",
     "EU hosting",
     "LynxPrompt security",
+    "blueprint security",
+    "secret detection",
+    "federation",
+    "open source",
+    "self-hosted",
   ],
   openGraph: {
     title: "Security - LynxPrompt",
@@ -153,6 +161,16 @@ export default function SecurityPage() {
                       networks with strict access controls.
                     </p>
                   </div>
+                  <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-4">
+                    <h3 className="font-medium text-foreground">
+                      Self-Hosting Note
+                    </h3>
+                    <p className="mt-1 text-sm">
+                      Self-hosted instances inherit these security practices.
+                      Operators are responsible for their own infrastructure
+                      security, network configuration, and TLS certificates.
+                    </p>
+                  </div>
                 </div>
               </section>
 
@@ -182,9 +200,9 @@ export default function SecurityPage() {
                     </h3>
                     <p className="mt-1 text-sm">
                       Self-hosted instances can be configured with database-level
-                      encryption at rest (e.g., PostgreSQL TDE or disk encryption).
-                      All data in transit is encrypted via TLS. Sensitive fields
-                      like API tokens use server-side hashing.
+                      encryption at rest (e.g., PostgreSQL TDE or full-disk
+                      encryption). Sensitive fields like API tokens and
+                      credentials use server-side hashing with modern algorithms.
                     </p>
                   </div>
                   <div className="rounded-lg border p-4">
@@ -345,10 +363,10 @@ export default function SecurityPage() {
                       Dependency Management
                     </h3>
                     <p className="mt-1 text-sm">
-                      We regularly update our dependencies to patch known
-                      vulnerabilities. Our build process includes security
-                      scanning to identify and address potential issues before
-                      deployment.
+                      Dependencies are continuously monitored and updated via
+                      automated tooling (Renovate). Our build pipeline includes
+                      security scanning to identify and address potential
+                      vulnerabilities before deployment.
                     </p>
                   </div>
                 </div>
@@ -400,6 +418,172 @@ export default function SecurityPage() {
                       </Link>
                       . Each subprocessor is vetted for GDPR compliance and
                       appropriate data protection measures.
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              {/* Blueprint Security */}
+              <section>
+                <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold text-foreground">
+                  <KeyRound className="h-5 w-5" />
+                  Blueprint Security
+                </h2>
+                <div className="space-y-4">
+                  <div className="rounded-lg border p-4">
+                    <h3 className="font-medium text-foreground">
+                      Secret Detection
+                    </h3>
+                    <p className="mt-1 text-sm">
+                      Blueprints can inadvertently contain API keys, tokens, or
+                      passwords. LynxPrompt scans blueprint content for common
+                      secret patterns—such as AWS keys, bearer tokens, and
+                      connection strings—and warns you before saving. This helps
+                      prevent accidental exposure, especially when sharing
+                      blueprints publicly or across a federation.
+                    </p>
+                  </div>
+                  <div className="rounded-lg border p-4">
+                    <h3 className="font-medium text-foreground">
+                      Template Variables
+                    </h3>
+                    <p className="mt-1 text-sm">
+                      Instead of hardcoding secrets in your blueprints, use{" "}
+                      <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">
+                        {"[[VARIABLE_NAME]]"}
+                      </code>{" "}
+                      placeholders. For example, use{" "}
+                      <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">
+                        {"[[API_KEY]]"}
+                      </code>{" "}
+                      instead of pasting an actual API key. Variables are
+                      resolved at execution time and never stored in the
+                      blueprint itself.
+                    </p>
+                  </div>
+                  <div className="rounded-lg border p-4">
+                    <h3 className="font-medium text-foreground">
+                      External Secret Managers
+                    </h3>
+                    <p className="mt-1 text-sm">
+                      For production workflows, we recommend integrating with a
+                      dedicated secret manager to supply values for blueprint
+                      variables. Compatible solutions include HashiCorp Vault,
+                      Doppler, 1Password CLI, Infisical, and SOPS. This keeps
+                      secrets out of LynxPrompt entirely and centralizes access
+                      control and rotation.
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              {/* Federation Security */}
+              <section>
+                <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold text-foreground">
+                  <Network className="h-5 w-5" />
+                  Federation Security
+                </h2>
+                <div className="space-y-4">
+                  <div className="rounded-lg border p-4">
+                    <h3 className="font-medium text-foreground">
+                      Independent Instances
+                    </h3>
+                    <p className="mt-1 text-sm">
+                      Each instance in the LynxPrompt federation is
+                      independently operated. Operators maintain full control
+                      over their data, users, and configuration. No central
+                      authority can access or modify data on a federated
+                      instance.
+                    </p>
+                  </div>
+                  <div className="rounded-lg border p-4">
+                    <h3 className="font-medium text-foreground">
+                      Read-Only Blueprint Browsing
+                    </h3>
+                    <p className="mt-1 text-sm">
+                      Blueprint discovery across federated instances is strictly
+                      read-only. Remote instances can list and view public
+                      blueprints but cannot modify, delete, or execute them.
+                      Write operations are always local to the instance that owns
+                      the blueprint.
+                    </p>
+                  </div>
+                  <div className="rounded-lg border p-4">
+                    <h3 className="font-medium text-foreground">
+                      No Credential Sharing
+                    </h3>
+                    <p className="mt-1 text-sm">
+                      Credentials, secrets, and user sessions are never shared
+                      between federated instances. Authentication is local to
+                      each instance, and inter-instance communication carries no
+                      user tokens or private data.
+                    </p>
+                  </div>
+                  <div className="rounded-lg border p-4">
+                    <h3 className="font-medium text-foreground">
+                      Domain Verification
+                    </h3>
+                    <p className="mt-1 text-sm">
+                      The federation protocol uses domain verification via a{" "}
+                      <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">
+                        .well-known/lynxprompt.json
+                      </code>{" "}
+                      endpoint. Instances must serve a valid manifest at this
+                      path to be recognized as legitimate federation
+                      participants, preventing impersonation and man-in-the-middle
+                      attacks.
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              {/* Open Source Security */}
+              <section>
+                <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold text-foreground">
+                  <Code className="h-5 w-5" />
+                  Open Source Security
+                </h2>
+                <div className="space-y-4">
+                  <div className="rounded-lg border p-4">
+                    <h3 className="font-medium text-foreground">
+                      GPL v3 License
+                    </h3>
+                    <p className="mt-1 text-sm">
+                      LynxPrompt is open-source software released under the GNU
+                      General Public License v3. This ensures that the source
+                      code remains freely available and that any derivative works
+                      must also be open-source, fostering transparency and trust.
+                    </p>
+                  </div>
+                  <div className="rounded-lg border p-4">
+                    <h3 className="font-medium text-foreground">
+                      Publicly Auditable Code
+                    </h3>
+                    <p className="mt-1 text-sm">
+                      The complete source code is available at{" "}
+                      <a
+                        href="https://github.com/GeiserX/LynxPrompt"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline"
+                      >
+                        github.com/GeiserX/LynxPrompt
+                      </a>
+                      . Anyone can review the codebase, verify security claims,
+                      and inspect how data is handled. There are no hidden
+                      components or proprietary black boxes.
+                    </p>
+                  </div>
+                  <div className="rounded-lg border p-4">
+                    <h3 className="font-medium text-foreground">
+                      Community-Driven Improvements
+                    </h3>
+                    <p className="mt-1 text-sm">
+                      Security benefits from many eyes. Our open-source model
+                      allows the community to identify vulnerabilities, suggest
+                      fixes, and contribute security improvements. We welcome
+                      responsible disclosure and actively review community
+                      contributions for security implications.
                     </p>
                   </div>
                 </div>

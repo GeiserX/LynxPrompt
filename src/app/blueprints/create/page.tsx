@@ -1199,6 +1199,15 @@ export default function ShareBlueprintPage() {
                             }`}>
                               {match.snippet}
                             </code>
+                            {match.suggestion && (
+                              <span className={`ml-2 italic ${
+                                sensitiveWarningDismissed
+                                  ? 'text-green-600 dark:text-green-400'
+                                  : 'text-yellow-600 dark:text-yellow-400'
+                              }`}>
+                                — {match.suggestion}
+                              </span>
+                            )}
                           </div>
                         ))}
                       </div>

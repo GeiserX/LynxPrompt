@@ -4,7 +4,7 @@
  * for minimal self-hosted deployments.
  */
 
-function envBool(key: string, defaultValue: boolean): boolean {
+export function envBool(key: string, defaultValue: boolean): boolean {
   const val = process.env[key];
   if (val === undefined || val === "") return defaultValue;
   return val === "true" || val === "1";
@@ -49,26 +49,26 @@ export const PLATFORM_OWNER_EMAIL = process.env.PLATFORM_OWNER_EMAIL || "";
 
 /**
  * Public feature flags exposed to the client via /api/config/public.
- * Only include flags safe to expose publicly.
+ * Reads process.env at call time to avoid build-time baking in standalone mode.
  */
 export function getPublicFlags() {
   return {
-    enableGithubOAuth: ENABLE_GITHUB_OAUTH,
-    enableGoogleOAuth: ENABLE_GOOGLE_OAUTH,
-    enableEmailAuth: ENABLE_EMAIL_AUTH,
-    enablePasskeys: ENABLE_PASSKEYS,
-    enableTurnstile: ENABLE_TURNSTILE,
-    enableSSO: ENABLE_SSO,
-    enableUserRegistration: ENABLE_USER_REGISTRATION,
-    enableAI: ENABLE_AI,
-    enableBlog: ENABLE_BLOG,
-    enableSupportForum: ENABLE_SUPPORT_FORUM,
-    enableStripe: ENABLE_STRIPE,
-    enableFederation: ENABLE_FEDERATION,
-    federationRegistryUrl: FEDERATION_REGISTRY_URL,
-    appName: APP_NAME,
-    appUrl: APP_URL,
-    appLogoUrl: APP_LOGO_URL,
-    statusPageUrl: STATUS_PAGE_URL,
+    enableGithubOAuth: envBool("ENABLE_GITHUB_OAUTH", false),
+    enableGoogleOAuth: envBool("ENABLE_GOOGLE_OAUTH", false),
+    enableEmailAuth: envBool("ENABLE_EMAIL_AUTH", true),
+    enablePasskeys: envBool("ENABLE_PASSKEYS", true),
+    enableTurnstile: envBool("ENABLE_TURNSTILE", false),
+    enableSSO: envBool("ENABLE_SSO", false),
+    enableUserRegistration: envBool("ENABLE_USER_REGISTRATION", true),
+    enableAI: envBool("ENABLE_AI", false),
+    enableBlog: envBool("ENABLE_BLOG", false),
+    enableSupportForum: envBool("ENABLE_SUPPORT_FORUM", false),
+    enableStripe: envBool("ENABLE_STRIPE", false),
+    enableFederation: envBool("ENABLE_FEDERATION", true),
+    federationRegistryUrl: process.env.FEDERATION_REGISTRY_URL || "https://lynxprompt.com",
+    appName: process.env.APP_NAME || "LynxPrompt",
+    appUrl: process.env.APP_URL || process.env.NEXTAUTH_URL || "http://localhost:3000",
+    appLogoUrl: process.env.APP_LOGO_URL || "",
+    statusPageUrl: process.env.STATUS_PAGE_URL || "",
   };
 }
