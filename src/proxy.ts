@@ -94,7 +94,7 @@ function buildCSP(): string {
     connectSrc.push("https://cloudflareinsights.com");
   }
 
-  // Sentry/GlitchTip
+  // Sentry (optional error tracking)
   const sentryDsn = process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN;
   if (sentryDsn) {
     try {
