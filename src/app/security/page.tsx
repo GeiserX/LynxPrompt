@@ -298,16 +298,6 @@ export default function SecurityPage() {
                   </div>
                   <div className="rounded-lg border p-4">
                     <h3 className="font-medium text-foreground">
-                      Optional Error Tracking (Sentry-Compatible)
-                    </h3>
-                    <p className="mt-1 text-sm">
-                      Error tracking is optional and only active when a Sentry DSN
-                      is configured. When enabled, error data is sent to the configured
-                      Sentry-compatible endpoint. No error data is collected by default.
-                    </p>
-                  </div>
-                  <div className="rounded-lg border p-4">
-                    <h3 className="font-medium text-foreground">
                       No Third-Party Tracking
                     </h3>
                     <p className="mt-1 text-sm">

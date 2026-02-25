@@ -29,11 +29,9 @@ Companies deploy their own instance to manage AI IDE configurations (AGENTS.md, 
 - Companies that want their own Stripe account must provide their own keys explicitly
 - This is the monetization model for the open-source platform: free to deploy, LynxPrompt earns from marketplace transactions across all federated instances
 
-#### 3. Remove GlitchTip (Error Tracking)
-- Remove all GlitchTip-specific code and hardcoded DSNs
-- Make Sentry integration optional — works if `SENTRY_DSN` is set, skip entirely if not
+#### 3. Remove Error Tracking Dependencies
+- Remove all GlitchTip-specific code, hardcoded DSNs, and Sentry packages
 - Delete GlitchTip infrastructure (containers, Caddy entry, DNS record, gitea repo)
-- Keep `@sentry/nextjs` as optional for companies that want their own Sentry/GlitchTip
 
 #### 4. Remove ClickHouse (Analytics)
 - Remove all ClickHouse code (analytics lib, API routes, env vars, docker-compose service)
@@ -82,7 +80,7 @@ All features configurable via env vars for maximum deployment flexibility:
 
 #### 7. Dynamic CSP Headers
 - Build Content-Security-Policy in `proxy.ts` based on enabled services
-- Only include Umami, Turnstile, Sentry domains when those services are configured
+- Only include Umami, Turnstile domains when those services are configured
 - Cleaner security headers for minimal deployments
 
 #### 8. Hardcoded URL Audit
@@ -152,7 +150,7 @@ A decentralized blueprint sharing network across LynxPrompt instances.
 - Update prod docker-compose (gitea/watchtower/lynxprompt/) with all new feature flags enabled
 - Update dev docker-compose (gitea/geiserback/lynxprompt-dev/) with all new feature flags enabled
 - Bump image tag to `drumsergio/lynxprompt:2.0.0`
-- Remove Sentry DSN env vars from prod/dev docker-compose
+- Remove error tracking env vars from prod/dev docker-compose
 
 ### Version
 
@@ -847,7 +845,7 @@ POST   /api/generate               - Generate config files from wizard data
 
 - [ ] Redis for caching/sessions
 - [ ] S3/R2 for file storage (template assets, user uploads)
-- [x] ~~GlitchTip error tracking~~ → **Removed in v2.0** (Sentry optional via env var)
+- [x] ~~GlitchTip error tracking~~ → **Removed in v2.0**
 - [x] Status page (Uptime Kuma) at status.lynxprompt.com
 - [ ] CDN for static assets
 - [ ] Database backups automation
@@ -873,7 +871,7 @@ POST   /api/generate               - Generate config files from wizard data
 - [ ] Annual third-party penetration test
 - [ ] Bug bounty program (HackerOne or similar)
 
-> **Note (v2.0):** GlitchTip and ClickHouse have been removed. Error tracking is optional via generic Sentry DSN env var. Companies can point to their own Sentry/GlitchTip instance if desired.
+> **Note (v2.0):** GlitchTip and ClickHouse have been removed.
 
 ---
 
@@ -887,7 +885,7 @@ POST   /api/generate               - Generate config files from wizard data
 - [ ] Mobile responsiveness improvements
 - [ ] Dark mode refinements
 - [ ] Fix unused import warnings
-- [ ] **Remove `--legacy-peer-deps` from npm install**: Currently required because `@sentry/nextjs` doesn't support Next.js 16 yet (peer dependency conflict). Once Sentry releases a version supporting Next.js 16, update `@sentry/nextjs` and remove `--legacy-peer-deps` from both local install commands and the Dockerfile
+- [ ] **Remove `--legacy-peer-deps` from npm install**: Check if still needed after removing `@sentry/nextjs` (was required due to Sentry peer dependency conflict with Next.js 16)
 
 ---
 

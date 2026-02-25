@@ -105,7 +105,6 @@ All responses include:
 
 6. **Set up Monitoring**
    - Uptime monitoring (Uptime Kuma)
-   - Error tracking (Sentry)
    - Performance monitoring
 
 ### Long-Term

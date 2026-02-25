@@ -60,9 +60,6 @@ ignore:
   - "src/generated/**"
   - "prisma/**"
   
-  # Sentry configuration (required at root)
-  - "sentry.*.config.ts"
-  
   # Tooling
   - "tooling/**"
   - "scripts/**"
