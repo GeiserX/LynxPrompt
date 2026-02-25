@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import {
   Sparkles,
   User,
-  Users,
   Shield,
   CreditCard,
   Key,
@@ -26,10 +25,7 @@ import {
   Smartphone,
   Laptop,
   Clock,
-  ExternalLink,
-  Star,
   Crown,
-  Zap,
   Variable,
   X,
   FileCode,
@@ -91,7 +87,7 @@ const SECTIONS = [
   { id: "accounts", label: "Linked Accounts", icon: Link2 },
   { id: "security", label: "Security", icon: Shield },
   { id: "api-tokens", label: "API Tokens", icon: Code },
-  { id: "billing", label: "Billing", icon: CreditCard },
+  { id: "seller-payouts", label: "Seller Payouts", icon: CreditCard },
 ];
 
 interface UserProfile {
@@ -1326,9 +1322,9 @@ function SettingsContent() {
               <ApiTokensSection error={error} setError={setError} success={success} setSuccess={setSuccess} />
             )}
 
-            {/* Billing Section */}
-            {activeSection === "billing" && (
-              <BillingSection error={error} setError={setError} success={success} setSuccess={setSuccess} />
+            {/* Seller Payouts Section */}
+            {activeSection === "seller-payouts" && (
+              <SellerPayoutsSection error={error} setError={setError} success={success} setSuccess={setSuccess} />
             )}
           </div>
         </main>
@@ -1339,32 +1335,12 @@ function SettingsContent() {
   );
 }
 
-// Billing Section Component
-interface BillingSectionProps {
+// Seller Payouts Section Component
+interface SellerPayoutsSectionProps {
   error: string | null;
   setError: (error: string | null) => void;
   success: string | null;
   setSuccess: (success: string | null) => void;
-}
-
-interface SubscriptionStatus {
-  plan: string;
-  interval?: "monthly" | "annual";
-  status: string | null;
-  currentPeriodEnd: string | null;
-  cancelAtPeriodEnd: boolean;
-  hasStripeAccount: boolean;
-  hasActiveSubscription: boolean;
-  isAdmin?: boolean;
-  pendingChange?: string | null;
-  isAnnual?: boolean;
-  isTeamsUser?: boolean;
-  team?: {
-    id: string;
-    name: string;
-    role: string;
-    slug: string;
-  } | null;
 }
 
 interface SellerEarnings {
@@ -1388,50 +1364,7 @@ interface PayoutHistory {
   processedAt: string | null;
 }
 
-const PLAN_DETAILS = {
-  free: {
-    name: "User",
-    description: "Full wizard access, all features except AI",
-    price: "€0",
-    priceAnnual: "€0",
-    icon: Star,
-    color: "text-primary",
-  },
-  // Legacy plans mapped to User tier
-  pro: {
-    name: "User",
-    description: "Full wizard access, all features except AI",
-    price: "€0",
-    priceAnnual: "€0",
-    icon: Star,
-    color: "text-primary",
-  },
-  max: {
-    name: "User",
-    description: "Full wizard access, all features except AI",
-    price: "€0",
-    priceAnnual: "€0",
-    icon: Star,
-    color: "text-primary",
-  },
-  teams: {
-    name: "Teams",
-    description: "All features including AI editing, SSO, and team blueprints",
-    price: "€10/seat/month",
-    priceAnnual: "€10/seat/month",
-    icon: Users,
-    color: "text-teal-500",
-  },
-};
-
-function BillingSection({ setError, setSuccess }: BillingSectionProps) {
-  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [upgrading, setUpgrading] = useState<string | null>(null);
-  const [openingPortal, setOpeningPortal] = useState(false);
-  const [euConsent, setEuConsent] = useState(false);
-  
-  // Seller payout state
+function SellerPayoutsSection({ setError, setSuccess }: SellerPayoutsSectionProps) {
   const [earnings, setEarnings] = useState<SellerEarnings | null>(null);
   const [payoutHistory, setPayoutHistory] = useState<PayoutHistory[]>([]);
   const [loadingEarnings, setLoadingEarnings] = useState(false);
@@ -1439,20 +1372,6 @@ function BillingSection({ setError, setSuccess }: BillingSectionProps) {
   const [savingPaypal, setSavingPaypal] = useState(false);
   const [requestingPayout, setRequestingPayout] = useState(false);
   const [showPayoutHistory, setShowPayoutHistory] = useState(false);
-
-  const fetchSubscription = async () => {
-    try {
-      const res = await fetch("/api/billing/status");
-      if (res.ok) {
-        const data = await res.json();
-        setSubscription(data);
-      }
-    } catch {
-      setError("Failed to load subscription info");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const fetchEarnings = async () => {
     setLoadingEarnings(true);
@@ -1529,512 +1448,188 @@ function BillingSection({ setError, setSuccess }: BillingSectionProps) {
   };
 
   useEffect(() => {
-    fetchSubscription();
     fetchEarnings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handlePlanChange = async (plan: string) => {
-    setUpgrading(plan);
-    setError(null);
-
-    try {
-      // If user has active subscription, use change-plan API
-      if (subscription?.hasActiveSubscription) {
-        // Determine if this is an upgrade (Pro → Max)
-        const planOrder: Record<string, number> = { free: 0, pro: 1, max: 2, teams: 3 };
-        const isUpgrade = planOrder[plan] > planOrder[currentPlan];
-
-        // EU Digital Content Directive: require consent for upgrades (gaining new digital content)
-        if (isUpgrade && !euConsent) {
-          throw new Error("Please accept the terms to proceed with your upgrade.");
-        }
-
-        const res = await fetch("/api/billing/change-plan", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ plan, euDigitalContentConsent: isUpgrade ? euConsent : undefined }),
-        });
-
-        const data = await res.json();
-        
-        if (!res.ok) {
-          throw new Error(data.error || "Failed to change plan");
-        }
-
-        // Show success message based on upgrade/downgrade
-        if (data.type === "upgrade") {
-          setSuccess(`Upgraded to ${plan.toUpperCase()}! Changes are effective immediately.`);
-        } else if (data.type === "downgrade") {
-          const effectiveDate = new Date(data.effectiveDate).toLocaleDateString();
-          setSuccess(`Downgrade to ${plan.toUpperCase()} scheduled. You'll keep your current plan until ${effectiveDate}.`);
-        }
-
-        // Refresh subscription status
-        await fetchSubscription();
-      } else {
-        // No active subscription, use checkout
-        // Check EU consent first
-        if (!euConsent) {
-          throw new Error("Please accept the terms to proceed with your subscription.");
-        }
-
-        const res = await fetch("/api/billing/checkout", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ plan, euDigitalContentConsent: euConsent }),
-        });
-
-        if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || "Failed to create checkout session");
-        }
-
-        const { url } = await res.json();
-        if (url) {
-          window.location.href = url;
-        }
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to change plan");
-    } finally {
-      setUpgrading(null);
-    }
-  };
-
-  const handleManageBilling = async () => {
-    setOpeningPortal(true);
-    setError(null);
-
-    try {
-      const res = await fetch("/api/billing/portal", {
-        method: "POST",
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to open billing portal");
-      }
-
-      const { url } = await res.json();
-      if (url) {
-        window.location.href = url;
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to open billing portal");
-    } finally {
-      setOpeningPortal(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
-
-  const currentPlan = subscription?.plan || "free";
-  const planInfo = PLAN_DETAILS[currentPlan as keyof typeof PLAN_DETAILS] || PLAN_DETAILS.free;
-  const PlanIcon = planInfo.icon;
-
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Billing</h1>
+        <h1 className="text-2xl font-bold">Seller Payouts</h1>
         <p className="text-muted-foreground">
-          Manage your subscription and payment methods
+          Manage earnings from your blueprint sales
         </p>
       </div>
 
-      {/* Current Plan */}
+      {/* Earnings Overview */}
       <div className="rounded-xl border bg-card p-6">
-        <h2 className="mb-4 font-semibold">Current Plan</h2>
-        <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-4">
-          <div className="flex items-center gap-4">
-            <div className={`rounded-lg bg-muted p-2 ${planInfo.color}`}>
-              <PlanIcon className="h-6 w-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <p className="text-lg font-semibold">{planInfo.name}</p>
-                {subscription?.isAdmin && (
-                  <span className="rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                    Admin
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {subscription?.isAdmin 
-                  ? "Full access granted as administrator"
-                  : planInfo.description}
+        <h2 className="mb-4 font-semibold">Earnings Overview</h2>
+        {loadingEarnings ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          </div>
+        ) : earnings ? (
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="rounded-lg border bg-muted/30 p-4">
+              <p className="text-sm text-muted-foreground">Total Earnings</p>
+              <p className="text-2xl font-bold text-green-600">
+                €{(earnings.totalEarnings / 100).toFixed(2)}
               </p>
-              {!subscription?.isAdmin && subscription?.currentPeriodEnd && subscription.status === "active" && (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {subscription.cancelAtPeriodEnd
-                    ? `Cancels on ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`
-                    : `Renews on ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`}
-                  {subscription?.isAnnual && !subscription.cancelAtPeriodEnd && (
-                    <span className="ml-1">(Annual commitment)</span>
-                  )}
+              <p className="text-xs text-muted-foreground">
+                from {earnings.totalSales} sales
+              </p>
+            </div>
+            <div className="rounded-lg border bg-muted/30 p-4">
+              <p className="text-sm text-muted-foreground">Available Balance</p>
+              <p className="text-2xl font-bold">
+                €{(earnings.availableBalance / 100).toFixed(2)}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                ready for payout
+              </p>
+            </div>
+            <div className="rounded-lg border bg-muted/30 p-4">
+              <p className="text-sm text-muted-foreground">Paid Out</p>
+              <p className="text-2xl font-bold text-muted-foreground">
+                €{(earnings.completedPayoutAmount / 100).toFixed(2)}
+              </p>
+              {earnings.pendingPayoutAmount > 0 && (
+                <p className="text-xs text-yellow-600">
+                  €{(earnings.pendingPayoutAmount / 100).toFixed(2)} pending
                 </p>
               )}
             </div>
           </div>
-          <div className="text-right">
-            <p className="text-lg font-semibold">
-              {subscription?.isAdmin ? "Free" : (subscription?.isAnnual ? planInfo.priceAnnual : planInfo.price)}
-            </p>
-            {!subscription?.isAdmin && subscription?.isAnnual && (
-              <span className="rounded bg-green-500/10 px-2 py-0.5 text-xs text-green-600">
-                Annual (10% off)
-              </span>
-            )}
-            {!subscription?.isAdmin && subscription?.status && subscription.status !== "active" && (
-              <span className="rounded bg-yellow-500/10 px-2 py-0.5 text-xs text-yellow-600">
-                {subscription.status}
-              </span>
-            )}
-          </div>
-        </div>
+        ) : (
+          <p className="text-center text-muted-foreground">
+            No earnings data available
+          </p>
+        )}
       </div>
 
-      {/* Pending Downgrade Notice */}
-      {subscription?.pendingChange && (
-        <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/5 p-6">
-          <div className="flex items-center gap-3">
-            <AlertCircle className="h-5 w-5 text-yellow-600" />
-            <div>
-              <p className="font-semibold text-yellow-700 dark:text-yellow-400">
-                Downgrade Scheduled
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Your plan will change to {subscription.pendingChange.toUpperCase()} at the end of your billing period
-                {subscription.currentPeriodEnd && ` (${new Date(subscription.currentPeriodEnd).toLocaleDateString()})`}.
-                You&apos;ll keep {currentPlan.toUpperCase()} access until then.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* EU Digital Content Consent - No longer needed here since Teams upgrades go to /teams page */}
-      {false && currentPlan !== "teams" && !subscription?.isAdmin && !subscription?.isTeamsUser && (
-        <div className="rounded-xl border bg-card p-6">
-          <div className="flex items-start gap-3">
-            <input
-              type="checkbox"
-              id="euConsent"
-              checked={euConsent}
-              onChange={(e) => setEuConsent(e.target.checked)}
-              className="mt-1 h-4 w-4 shrink-0 cursor-pointer accent-primary"
-            />
-            <label htmlFor="euConsent" className="cursor-pointer text-sm text-muted-foreground">
-              I consent to immediate access to digital content and acknowledge that I lose my right to 
-              withdraw from this purchase within 14 days once I access the subscription features.
-              <span className="text-red-500 ml-1">*</span>
-            </label>
-          </div>
-        </div>
-      )}
-
-      {/* Upgrade to Teams - Hide for admins (they already have Teams-level access) and existing Teams users */}
-      {currentPlan !== "teams" && !subscription?.isAdmin && !subscription?.isTeamsUser && (
-        <div className="rounded-xl border bg-card p-6">
-          <h2 className="mb-4 font-semibold">Upgrade to Teams</h2>
-          <p className="mb-4 text-sm text-muted-foreground">
-            You already have full wizard access. Teams adds AI-powered editing, SSO, and team-shared blueprints.
-          </p>
-          <Link
-            href="/teams"
-            className="inline-flex items-center gap-2 rounded-lg border border-teal-500/30 bg-gradient-to-br from-teal-500/5 to-cyan-500/5 px-4 py-3 text-left transition-all hover:border-teal-500 hover:from-teal-500/10 hover:to-cyan-500/10"
+      {/* PayPal Configuration */}
+      <div className="rounded-xl border bg-card p-6">
+        <h2 className="mb-4 font-semibold">Payout Settings</h2>
+        <p className="mb-4 text-sm text-muted-foreground">
+          Configure your PayPal email to receive payouts from blueprint sales.
+          We send payouts via PayPal within 5 business days of your request.
+        </p>
+        <div className="flex gap-2">
+          <input
+            type="email"
+            value={paypalEmail}
+            onChange={(e) => setPaypalEmail(e.target.value)}
+            placeholder="your.paypal@email.com"
+            className="flex-1 rounded-lg border bg-background px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+          <Button
+            onClick={handleSavePaypalEmail}
+            disabled={savingPaypal || !paypalEmail.trim()}
           >
-            <div className="rounded-lg bg-gradient-to-br from-teal-500 to-cyan-500 p-2 text-white">
-              <Users className="h-5 w-5" />
-            </div>
-            <div className="flex-1">
-              <p className="bg-gradient-to-r from-teal-500 to-cyan-500 bg-clip-text font-semibold text-transparent">
-                Teams
+            {savingPaypal ? "Saving..." : "Save"}
+          </Button>
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Important: Use the email associated with your PayPal account.
+        </p>
+      </div>
+
+      {/* Request Payout */}
+      {earnings && earnings.paypalEmail && (
+        <div className="rounded-xl border bg-card p-6">
+          <h2 className="mb-4 font-semibold">Request Payout</h2>
+          <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-4">
+            <div>
+              <p className="font-medium">Available Balance</p>
+              <p className="text-2xl font-bold text-green-600">
+                €{(earnings.availableBalance / 100).toFixed(2)}
               </p>
-              <p className="text-sm text-muted-foreground">€10/seat/month</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                AI editing, SSO, team blueprints
+              <p className="text-xs text-muted-foreground">
+                Minimum payout: €{(earnings.minimumPayout / 100).toFixed(2)}
               </p>
             </div>
             <Button
-              size="sm"
-              className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white hover:from-teal-600 hover:to-cyan-600"
+              onClick={handleRequestPayout}
+              disabled={
+                requestingPayout ||
+                earnings.availableBalance < earnings.minimumPayout ||
+                earnings.pendingPayoutAmount > 0
+              }
             >
-              Learn More
+              {requestingPayout ? (
+                "Requesting..."
+              ) : earnings.pendingPayoutAmount > 0 ? (
+                "Payout Pending"
+              ) : (
+                "Request Payout"
+              )}
             </Button>
-          </Link>
-        </div>
-      )}
-
-      {/* Teams Plan Info - Only for Teams users */}
-      {subscription?.isTeamsUser && subscription?.team && (
-        <div className="rounded-xl border border-teal-500/20 bg-gradient-to-br from-teal-500/5 to-cyan-500/5 p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-gradient-to-br from-teal-500 to-cyan-500 p-2 text-white">
-                <Users className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="font-semibold">Team: {subscription.team.name}</p>
-                <p className="text-sm text-muted-foreground">
-                  Role: {subscription.team.role === "ADMIN" ? "Administrator" : "Member"}
-                </p>
-              </div>
-            </div>
-            <Link
-              href={`/teams/${subscription.team.slug}`}
-              className="inline-flex items-center gap-2 rounded-lg border border-teal-500/30 px-4 py-2 text-sm font-medium text-teal-600 transition-colors hover:bg-teal-500/10 dark:text-teal-400"
-            >
-              <Users className="h-4 w-4" />
-              {subscription.team.role === "ADMIN" ? "Manage Team" : "View Team"}
-            </Link>
           </div>
-          <p className="mt-3 text-sm text-muted-foreground">
-            Your subscription is managed at the team level. {subscription.team.role === "ADMIN" 
-              ? "You can manage members and billing from the team page." 
-              : "Contact your team admin for billing inquiries."}
-          </p>
+          {earnings.availableBalance < earnings.minimumPayout && earnings.availableBalance > 0 && (
+            <p className="mt-2 text-sm text-yellow-600">
+              You need €{((earnings.minimumPayout - earnings.availableBalance) / 100).toFixed(2)} more to reach the minimum payout amount.
+            </p>
+          )}
         </div>
       )}
 
-      {/* Downgrade Option removed - no longer have Pro/Max tiers */}
-
-      {/* Manage Subscription */}
-      {subscription?.hasStripeAccount && (
+      {/* Payout History */}
+      {payoutHistory.length > 0 && (
         <div className="rounded-xl border bg-card p-6">
-          <h2 className="mb-4 font-semibold">Manage Subscription</h2>
-          <p className="mb-4 text-sm text-muted-foreground">
-            Update payment methods, view invoices, or cancel your subscription
-            through the Stripe customer portal.
-          </p>
-          <Button
-            onClick={handleManageBilling}
-            disabled={openingPortal}
-            variant="outline"
+          <button
+            onClick={() => setShowPayoutHistory(!showPayoutHistory)}
+            className="flex w-full items-center justify-between"
           >
-            {openingPortal ? (
-              "Opening..."
-            ) : (
-              <>
-                <ExternalLink className="mr-2 h-4 w-4" />
-                Open Billing Portal
-              </>
-            )}
-          </Button>
+            <h2 className="font-semibold">Payout History</h2>
+            <span className="text-sm text-muted-foreground">
+              {showPayoutHistory ? "Hide" : "Show"} ({payoutHistory.length})
+            </span>
+          </button>
+
+          {showPayoutHistory && (
+            <div className="mt-4 space-y-3">
+              {payoutHistory.map((payout) => (
+                <div
+                  key={payout.id}
+                  className="flex items-center justify-between rounded-lg border bg-muted/30 p-3"
+                >
+                  <div>
+                    <p className="font-medium">
+                      €{(payout.amount / 100).toFixed(2)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(payout.requestedAt).toLocaleDateString()} → {payout.paypalEmail}
+                    </p>
+                  </div>
+                  <span
+                    className={`rounded px-2 py-0.5 text-xs font-medium ${
+                      payout.status === "COMPLETED"
+                        ? "bg-green-500/10 text-green-600"
+                        : payout.status === "PENDING" || payout.status === "PROCESSING"
+                        ? "bg-yellow-500/10 text-yellow-600"
+                        : payout.status === "FAILED"
+                        ? "bg-red-500/10 text-red-600"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {payout.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      {/* No Stripe Account */}
-      {!subscription?.hasStripeAccount && (
-        <div className="rounded-xl border bg-card p-6">
-          <h2 className="mb-4 font-semibold">Payment Methods</h2>
-          <div className="rounded-lg border border-dashed bg-muted/30 p-8 text-center">
-            <CreditCard className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
-            <p className="text-muted-foreground">
-              No payment methods added
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Add a payment method when you upgrade to a paid plan
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Billing Info */}
+      {/* Seller Info */}
       <div className="rounded-lg border border-muted/50 bg-muted/20 p-4">
         <p className="text-xs text-muted-foreground">
-          <strong>Secure payments by Stripe.</strong> We never store your card details.
-          Monthly subscriptions can be canceled anytime. Annual subscriptions commit for the full year 
-          and cannot be canceled mid-cycle (you keep access until the period ends).
-          Prices are in EUR and include VAT where applicable.
+          <strong>Revenue split:</strong> You receive 70% of each blueprint sale.
+          LynxPrompt retains 30% as a platform fee.
+          Payouts are processed via PayPal within 5 business days after request.
+          Minimum payout is €10.00.
         </p>
       </div>
-
-      {/* Seller Payouts Section - All users can sell blueprints */}
-      <div className="mt-8 space-y-6 border-t pt-8">
-          <div>
-            <h1 className="text-2xl font-bold">Seller Payouts</h1>
-            <p className="text-muted-foreground">
-              Manage earnings from your blueprint sales
-            </p>
-          </div>
-
-          {/* Earnings Overview */}
-          <div className="rounded-xl border bg-card p-6">
-            <h2 className="mb-4 font-semibold">Earnings Overview</h2>
-            {loadingEarnings ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-              </div>
-            ) : earnings ? (
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div className="rounded-lg border bg-muted/30 p-4">
-                  <p className="text-sm text-muted-foreground">Total Earnings</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    €{(earnings.totalEarnings / 100).toFixed(2)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    from {earnings.totalSales} sales
-                  </p>
-                </div>
-                <div className="rounded-lg border bg-muted/30 p-4">
-                  <p className="text-sm text-muted-foreground">Available Balance</p>
-                  <p className="text-2xl font-bold">
-                    €{(earnings.availableBalance / 100).toFixed(2)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    ready for payout
-                  </p>
-                </div>
-                <div className="rounded-lg border bg-muted/30 p-4">
-                  <p className="text-sm text-muted-foreground">Paid Out</p>
-                  <p className="text-2xl font-bold text-muted-foreground">
-                    €{(earnings.completedPayoutAmount / 100).toFixed(2)}
-                  </p>
-                  {earnings.pendingPayoutAmount > 0 && (
-                    <p className="text-xs text-yellow-600">
-                      €{(earnings.pendingPayoutAmount / 100).toFixed(2)} pending
-                    </p>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <p className="text-center text-muted-foreground">
-                No earnings data available
-              </p>
-            )}
-          </div>
-
-          {/* PayPal Configuration */}
-          <div className="rounded-xl border bg-card p-6">
-            <h2 className="mb-4 font-semibold">Payout Settings</h2>
-            <p className="mb-4 text-sm text-muted-foreground">
-              Configure your PayPal email to receive payouts from blueprint sales.
-              We send payouts via PayPal within 5 business days of your request.
-            </p>
-            <div className="flex gap-2">
-              <input
-                type="email"
-                value={paypalEmail}
-                onChange={(e) => setPaypalEmail(e.target.value)}
-                placeholder="your.paypal@email.com"
-                className="flex-1 rounded-lg border bg-background px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-              <Button
-                onClick={handleSavePaypalEmail}
-                disabled={savingPaypal || !paypalEmail.trim()}
-              >
-                {savingPaypal ? "Saving..." : "Save"}
-              </Button>
-            </div>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Important: Use the email associated with your PayPal account.
-            </p>
-          </div>
-
-          {/* Request Payout */}
-          {earnings && earnings.paypalEmail && (
-            <div className="rounded-xl border bg-card p-6">
-              <h2 className="mb-4 font-semibold">Request Payout</h2>
-              <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-4">
-                <div>
-                  <p className="font-medium">Available Balance</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    €{(earnings.availableBalance / 100).toFixed(2)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Minimum payout: €{(earnings.minimumPayout / 100).toFixed(2)}
-                  </p>
-                </div>
-                <Button
-                  onClick={handleRequestPayout}
-                  disabled={
-                    requestingPayout ||
-                    earnings.availableBalance < earnings.minimumPayout ||
-                    earnings.pendingPayoutAmount > 0
-                  }
-                >
-                  {requestingPayout ? (
-                    "Requesting..."
-                  ) : earnings.pendingPayoutAmount > 0 ? (
-                    "Payout Pending"
-                  ) : (
-                    "Request Payout"
-                  )}
-                </Button>
-              </div>
-              {earnings.availableBalance < earnings.minimumPayout && earnings.availableBalance > 0 && (
-                <p className="mt-2 text-sm text-yellow-600">
-                  You need €{((earnings.minimumPayout - earnings.availableBalance) / 100).toFixed(2)} more to reach the minimum payout amount.
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* Payout History */}
-          {payoutHistory.length > 0 && (
-            <div className="rounded-xl border bg-card p-6">
-              <button
-                onClick={() => setShowPayoutHistory(!showPayoutHistory)}
-                className="flex w-full items-center justify-between"
-              >
-                <h2 className="font-semibold">Payout History</h2>
-                <span className="text-sm text-muted-foreground">
-                  {showPayoutHistory ? "Hide" : "Show"} ({payoutHistory.length})
-                </span>
-              </button>
-              
-              {showPayoutHistory && (
-                <div className="mt-4 space-y-3">
-                  {payoutHistory.map((payout) => (
-                    <div
-                      key={payout.id}
-                      className="flex items-center justify-between rounded-lg border bg-muted/30 p-3"
-                    >
-                      <div>
-                        <p className="font-medium">
-                          €{(payout.amount / 100).toFixed(2)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(payout.requestedAt).toLocaleDateString()} → {payout.paypalEmail}
-                        </p>
-                      </div>
-                      <span
-                        className={`rounded px-2 py-0.5 text-xs font-medium ${
-                          payout.status === "COMPLETED"
-                            ? "bg-green-500/10 text-green-600"
-                            : payout.status === "PENDING" || payout.status === "PROCESSING"
-                            ? "bg-yellow-500/10 text-yellow-600"
-                            : payout.status === "FAILED"
-                            ? "bg-red-500/10 text-red-600"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {payout.status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Seller Info */}
-          <div className="rounded-lg border border-muted/50 bg-muted/20 p-4">
-            <p className="text-xs text-muted-foreground">
-              <strong>Revenue split:</strong> You receive 70% of each blueprint sale.
-              LynxPrompt retains 30% as a platform fee.
-              Payouts are processed via PayPal within 5 business days after request.
-              Minimum payout is €10.00.
-            </p>
-          </div>
-        </div>
     </div>
   );
 }
@@ -2679,24 +2274,10 @@ function ApiTokensSection({ setError, setSuccess }: ApiTokensSectionProps) {
   const [createdToken, setCreatedToken] = useState<string | null>(null);
   const [showToken, setShowToken] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [subscriptionPlan, setSubscriptionPlan] = useState<string>("FREE");
 
   useEffect(() => {
     fetchTokens();
-    fetchSubscription();
   }, []);
-
-  const fetchSubscription = async () => {
-    try {
-      const res = await fetch("/api/billing/status");
-      if (res.ok) {
-        const data = await res.json();
-        setSubscriptionPlan(data.plan || "FREE");
-      }
-    } catch {
-      // Ignore errors
-    }
-  };
 
   const fetchTokens = async () => {
     setLoading(true);

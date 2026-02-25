@@ -20,7 +20,7 @@ export async function whoamiCommand(): Promise<void> {
       id: user.id,
       email: user.email,
       name: user.name,
-      plan: user.subscription.plan,
+      plan: user.plan,
     });
 
     console.log();
@@ -33,14 +33,6 @@ export async function whoamiCommand(): Promise<void> {
     if (user.display_name) {
       console.log(`  ${chalk.gray("Display:")}     ${user.display_name}`);
     }
-    console.log(`  ${chalk.gray("Plan:")}        ${formatPlan(user.subscription.plan)}`);
-    if (user.subscription.status) {
-      console.log(`  ${chalk.gray("Status:")}      ${user.subscription.status}`);
-    }
-    if (user.subscription.current_period_end) {
-      const endDate = new Date(user.subscription.current_period_end);
-      console.log(`  ${chalk.gray("Renews:")}      ${endDate.toLocaleDateString()}`);
-    }
     console.log();
     console.log(`  ${chalk.gray("Blueprints:")}  ${user.stats.blueprints_count}`);
     console.log(`  ${chalk.gray("Member since:")} ${new Date(user.created_at).toLocaleDateString()}`);
@@ -52,8 +44,7 @@ export async function whoamiCommand(): Promise<void> {
       if (error.statusCode === 401) {
         console.error(chalk.red("Your session has expired. Please run 'lynxprompt login' again."));
       } else if (error.statusCode === 403) {
-        console.error(chalk.red("API access error. Please check your subscription."));
-        console.error(chalk.gray("Visit https://lynxprompt.com/pricing for plan details."));
+        console.error(chalk.red("API access error."));
       } else {
         console.error(chalk.red(`Error: ${error.message}`));
       }
@@ -62,19 +53,6 @@ export async function whoamiCommand(): Promise<void> {
     }
     process.exit(1);
   }
-}
-
-function formatPlan(plan: string): string {
-  const planColors: Record<string, (s: string) => string> = {
-    FREE: chalk.gray,
-    TEAMS: chalk.cyan,
-  };
-  
-  // Map legacy PRO/MAX to FREE display
-  const displayPlan = plan === "PRO" || plan === "MAX" ? "FREE" : plan;
-  const displayName = displayPlan === "FREE" ? "Users" : displayPlan;
-  const colorFn = planColors[displayPlan] || chalk.white;
-  return colorFn(displayName);
 }
 
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { authenticateRequest } from "@/lib/api-auth";
 import { prismaUsers } from "@/lib/db-users";
+import { ENABLE_AI } from "@/lib/feature-flags";
 import Anthropic from "@anthropic-ai/sdk";
 
 // Cost tracking constants (in tokens)
@@ -53,6 +54,13 @@ STRICT RULES:
 Output ONLY the formatted content that can be added to an AI configuration file.`;
 
 export async function POST(request: Request) {
+  if (!ENABLE_AI) {
+    return NextResponse.json(
+      { error: "AI features are not enabled on this instance" },
+      { status: 404 }
+    );
+  }
+
   try {
     // Authenticate via session OR Bearer token
     const auth = await authenticateRequest(request);

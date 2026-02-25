@@ -3,10 +3,18 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { ensureStripe } from "@/lib/stripe";
 import { prismaUsers } from "@/lib/db-users";
+import { ENABLE_STRIPE } from "@/lib/feature-flags";
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 export async function POST(request: NextRequest) {
+  if (!ENABLE_STRIPE) {
+    return NextResponse.json(
+      { error: "Payments are not enabled on this instance" },
+      { status: 404 }
+    );
+  }
+
   if (!webhookSecret) {
     console.error("STRIPE_WEBHOOK_SECRET is not set");
     return NextResponse.json(

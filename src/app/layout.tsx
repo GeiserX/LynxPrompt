@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { SessionProvider } from "@/components/providers/session-provider";
 
 import { SentryProvider } from "@/components/providers/sentry-provider";
+import { FeatureFlagsProvider } from "@/components/providers/feature-flags-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { CookieBanner } from "@/components/cookie-banner";
 import "./globals.css";
@@ -140,7 +141,9 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <SentryProvider>
-              {children}
+              <FeatureFlagsProvider>
+                {children}
+              </FeatureFlagsProvider>
             </SentryProvider>
             <Toaster />
             <CookieBanner />

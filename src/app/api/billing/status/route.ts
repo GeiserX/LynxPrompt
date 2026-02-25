@@ -45,16 +45,8 @@ export async function GET() {
 
     return NextResponse.json({
       plan: "free",
-      interval: "monthly",
-      status: "active",
-      currentPeriodEnd: null,
-      cancelAtPeriodEnd: false,
-      hasStripeAccount: false,
-      hasActiveSubscription: true,
       isAdmin,
       isTeamsUser: !!teamMembership,
-      pendingChange: null,
-      isAnnual: false,
       team: teamMembership ? {
         id: teamMembership.team.id,
         name: teamMembership.team.name,
