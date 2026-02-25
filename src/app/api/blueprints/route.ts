@@ -390,16 +390,6 @@ export async function POST(request: NextRequest) {
     //   }
     // }
 
-    // Check if user can create paid blueprints (Teams only)
-    if (price !== null && price !== undefined && price > 0) {
-      if (!isTeamsUser) {
-        return NextResponse.json(
-          { error: "Only Teams subscribers can create paid blueprints. Upgrade to Teams to unlock this feature." },
-          { status: 403 }
-        );
-      }
-    }
-
     // Validation
     if (!name || typeof name !== "string" || name.trim().length < 3) {
       return NextResponse.json(

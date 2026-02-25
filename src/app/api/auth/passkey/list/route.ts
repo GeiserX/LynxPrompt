@@ -2,8 +2,13 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
+import { ENABLE_PASSKEYS } from "@/lib/feature-flags";
 
 export async function GET() {
+  if (!ENABLE_PASSKEYS) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   try {
     const session = await getServerSession(authOptions);
 
@@ -35,6 +40,10 @@ export async function GET() {
 }
 
 export async function DELETE(request: Request) {
+  if (!ENABLE_PASSKEYS) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   try {
     const session = await getServerSession(authOptions);
 

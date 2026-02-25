@@ -1142,18 +1142,13 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
   const authenticated = isAuthenticated();
   const user = getUser();
   const userPlanRaw = user?.plan?.toLowerCase() || "free";
-  // Map legacy pro/max to users (free), only teams is a paid tier now
   const userTier: UserTier = userPlanRaw === "teams" ? "teams" : "users";
-  const userPlanDisplay = userTier === "teams" ? "TEAMS" : "USERS";
   
   if (!authenticated) {
-    // Brief notice that cloud features require login
     console.log(chalk.gray(`  👤 Running as guest. ${chalk.cyan("lynxp login")} for cloud sync & sharing.`));
     console.log();
   } else {
-    // Show logged-in status with plan
-    const planEmoji = userTier === "teams" ? "👥" : "🆓";
-    console.log(chalk.green(`  ✓ Logged in as ${chalk.bold(user?.name || user?.email)} ${planEmoji} ${chalk.gray(userPlanDisplay)}`));
+    console.log(chalk.green(`  ✓ Logged in as ${chalk.bold(user?.name || user?.email)}`));
     console.log();
   }
 

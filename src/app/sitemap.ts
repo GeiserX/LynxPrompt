@@ -1,8 +1,9 @@
 import { MetadataRoute } from "next";
 import { prismaUsers } from "@/lib/db-users";
 import { prismaBlog } from "@/lib/db-blog";
+import { APP_URL } from "@/lib/feature-flags";
 
-const baseUrl = "https://lynxprompt.com";
+const baseUrl = APP_URL;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Static pages with their priorities and change frequencies
@@ -12,12 +13,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 1,
-    },
-    {
-      url: `${baseUrl}/pricing`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.9,
     },
     {
       url: `${baseUrl}/blueprints`,

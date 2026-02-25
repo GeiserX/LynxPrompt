@@ -73,12 +73,7 @@ export interface UserResponse {
     display_name: string | null;
     persona: string | null;
     skill_level: string | null;
-    subscription: {
-      plan: string;
-      status: string | null;
-      interval: string | null;
-      current_period_end: string | null;
-    };
+    plan: string;
     stats: {
       blueprints_count: number;
     };

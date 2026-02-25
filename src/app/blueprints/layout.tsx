@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { APP_NAME, APP_URL } from "@/lib/feature-flags";
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | LynxPrompt Blueprints",
+    template: `%s | ${APP_NAME} Blueprints`,
     default: "Blueprints - AI Configuration Marketplace",
   },
   description:
@@ -19,18 +20,18 @@ export const metadata: Metadata = {
     "TypeScript AI rules",
   ],
   openGraph: {
-    title: "Blueprints - LynxPrompt Marketplace",
+    title: `Blueprints - ${APP_NAME} Marketplace`,
     description:
       "Browse AI IDE configuration blueprints. Find ready-made configs for React, Python, TypeScript, and more.",
     type: "website",
   },
   twitter: {
     card: "summary",
-    title: "Blueprints - LynxPrompt Marketplace",
+    title: `Blueprints - ${APP_NAME} Marketplace`,
     description: "Browse AI IDE configuration blueprints for developers.",
   },
   alternates: {
-    canonical: "https://lynxprompt.com/blueprints",
+    canonical: `${APP_URL}/blueprints`,
   },
 };
 

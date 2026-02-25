@@ -17,6 +17,7 @@ import { convertCommand } from "./commands/convert.js";
 import { mergeCommand } from "./commands/merge.js";
 import { importCommand } from "./commands/import.js";
 import { hierarchiesCommand } from "./commands/hierarchies.js";
+import { configCommand } from "./commands/config.js";
 
 // CLI version injected at build time via tsup.config.ts define option
 const CLI_VERSION = process.env.CLI_VERSION || "0.0.0";
@@ -191,6 +192,11 @@ program
   .description("Show current authenticated user")
   .action(whoamiCommand);
 
+program
+  .command("config [action] [value]")
+  .description("View or change CLI settings (set-url, reset-url, path)")
+  .action(configCommand);
+
 // ============================================
 // Help formatting
 // ============================================
@@ -235,6 +241,12 @@ ${chalk.cyan("Blueprint Tracking:")}
 
 ${chalk.cyan("CI/CD:")}
   ${chalk.white("$ lynxp check --ci")}            ${chalk.gray("Validate config (exit code)")}
+
+${chalk.cyan("Configuration:")}
+  ${chalk.white("$ lynxp config")}                 ${chalk.gray("Show current settings")}
+  ${chalk.white("$ lynxp config set-url <url>")}   ${chalk.gray("Point CLI to a self-hosted instance")}
+  ${chalk.white("$ lynxp config reset-url")}       ${chalk.gray("Reset to https://lynxprompt.com")}
+  ${chalk.white("$ lynxp config path")}            ${chalk.gray("Show config file location")}
 
 ${chalk.gray("Docs: https://lynxprompt.com/docs/cli")}
 `

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
+import { APP_NAME, APP_URL } from "@/lib/feature-flags";
 import { Button } from "@/components/ui/button";
 import {
   Heart,
@@ -39,7 +40,7 @@ export const metadata: Metadata = {
       "Born from frustration—AI IDE configs are tedious. LynxPrompt makes it effortless.",
   },
   alternates: {
-    canonical: "https://lynxprompt.com/about",
+    canonical: `${APP_URL}/about`,
   },
 };
 

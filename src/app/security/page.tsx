@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { APP_URL } from "@/lib/feature-flags";
 import {
   ShieldCheck,
   Server,
@@ -36,7 +37,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   alternates: {
-    canonical: "https://lynxprompt.com/security",
+    canonical: `${APP_URL}/security`,
   },
   robots: {
     index: true,

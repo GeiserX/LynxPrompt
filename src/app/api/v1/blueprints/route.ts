@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createHash } from "crypto";
 import { prismaUsers } from "@/lib/db-users";
+import { APP_URL } from "@/lib/feature-flags";
 import {
   validateApiToken,
   checkTokenExpiration,
@@ -38,7 +39,7 @@ export async function GET(request: NextRequest) {
         {
           error: "Token expired",
           expired_at: expirationCheck.expiredAt?.toISOString(),
-          message: "Your API token has expired. Please generate a new token at https://lynxprompt.com/settings?tab=api-tokens",
+          message: `Your API token has expired. Please generate a new token at ${APP_URL}/settings?tab=api-tokens`,
         },
         { status: 401 }
       );
@@ -179,7 +180,7 @@ export async function POST(request: NextRequest) {
         {
           error: "Token expired",
           expired_at: expirationCheck.expiredAt?.toISOString(),
-          message: "Your API token has expired. Please generate a new token at https://lynxprompt.com/settings?tab=api-tokens",
+          message: `Your API token has expired. Please generate a new token at ${APP_URL}/settings?tab=api-tokens`,
         },
         { status: 401 }
       );

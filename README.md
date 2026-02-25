@@ -1,248 +1,189 @@
 <a href="https://lynxprompt.com">
-  <img src="https://socialify.git.ci/GeiserX/LynxPrompt?custom_description=AI%20IDE%2FTools%20rule%20config%20generator%20via%20WebUI%20or%20CLI%20-%20Generate%2C%20browse%2C%20store%20%26%20share%20AGENTS.md%2C%20CLAUDE.md%2C%20and%20more&description=1&font=Inter&forks=1&issues=1&language=1&logo=https%3A%2F%2Flynxprompt.com%2Flogos%2Fbrand%2Flynxp.png&name=1&owner=1&pattern=Circuit%20Board&pulls=1&stargazers=1&theme=Auto" alt="LynxPrompt" width="100%" />
+  <img src="https://socialify.git.ci/GeiserX/LynxPrompt?custom_description=Self-hostable%20platform%20for%20managing%20AI%20IDE%20configurations%20%E2%80%94%20AGENTS.md%2C%20.cursor%2Frules%2F%2C%20CLAUDE.md%20and%2030%2B%20formats&description=1&font=Inter&forks=1&issues=1&language=1&logo=https%3A%2F%2Flynxprompt.com%2Flogos%2Fbrand%2Flynxp.png&name=1&owner=1&pattern=Circuit%20Board&pulls=1&stargazers=1&theme=Auto" alt="LynxPrompt" width="100%" />
 </a>
 
 # LynxPrompt
 
-> **Your universal AI config hub**
+> **Self-hostable AI config management for teams and individuals**
 
 [![Website](https://img.shields.io/badge/🌐_Website-lynxprompt.com-6366f1?style=flat-square)](https://lynxprompt.com)
 [![npm](https://img.shields.io/npm/v/lynxprompt?style=flat-square&logo=npm&label=CLI)](https://www.npmjs.com/package/lynxprompt)
-[![Status](https://img.shields.io/badge/🟢_Status-Operational-22c55e?style=flat-square)](https://status.lynxprompt.com)
 [![License](https://img.shields.io/badge/📜_License-GPL--3.0-blue?style=flat-square)](LICENSE)
 [![GitHub Stars](https://img.shields.io/github/stars/GeiserX/LynxPrompt?style=flat-square&logo=github)](https://github.com/GeiserX/LynxPrompt)
+[![Docker](https://img.shields.io/badge/🐳_Docker-Self--Host-2496ED?style=flat-square)](https://github.com/GeiserX/LynxPrompt)
 
 ---
 
 ## What is LynxPrompt?
 
-LynxPrompt is a web platform and CLI for generating and sharing **AI IDE configuration files** and **commands (workflows)**. Instead of manually writing `AGENTS.md`, `CLAUDE.md`, or `.cursor/rules/` for every project, use our wizard or browse community blueprints.
+LynxPrompt is a **self-hostable platform** for managing AI IDE configuration files — `AGENTS.md`, `.cursor/rules/`, `CLAUDE.md`, slash commands, and 30+ other formats. Deploy it on your own infrastructure and give your team a central hub to create, share, and standardize AI coding assistant configurations across every project.
 
-- **AI Configs** — Rules and instructions that define how AI assistants behave in your project
-- **Commands** — Slash commands (`.cursor/commands/`, `.claude/commands/`) that execute specific workflows on demand
+Instead of manually writing configuration files for every project and every AI tool, use LynxPrompt to:
 
-**🌐 Live at:** [lynxprompt.com](https://lynxprompt.com)
+- **Generate** configs through an interactive wizard (web or CLI)
+- **Share** blueprints through a private or federated marketplace
+- **Standardize** AI behavior across projects with reusable templates
+- **Export** to any supported format with one click
 
----
-
-## Supported AI IDEs & Tools
-
-LynxPrompt supports **30+ AI coding assistants** across all major platforms:
-
-### Popular Platforms
-
-| Platform | Config File | Status |
-|----------|-------------|:------:|
-| **Cursor** | `.cursor/rules/` | ✅ |
-| **Claude Code** | `CLAUDE.md` / `AGENTS.md` | ✅ |
-| **GitHub Copilot** | `.github/copilot-instructions.md` | ✅ |
-| **Windsurf** | `.windsurfrules` | ✅ |
-| **Zed** | `.zed/instructions.md` | ✅ |
-| **Aider** | `AIDER.md` | ✅ |
-| **Antigravity** (Google) | `GEMINI.md` | ✅ |
-
-### Editor Extensions
-
-| Platform | Config File | Status |
-|----------|-------------|:------:|
-| **Cline** | `.clinerules` | ✅ |
-| **Roo Code** | `.roo/rules/` | ✅ |
-| **Continue.dev** | `.continue/config.json` | ✅ |
-| **Sourcegraph Cody** | `.cody/config.json` | ✅ |
-| **Amazon Q** | `.amazonq/rules/` | ✅ |
-| **Tabnine** | `.tabnine.yaml` | ✅ |
-| **Supermaven** | `.supermaven/config.json` | ✅ |
-| **CodeGPT** | `.codegpt/config.json` | ✅ |
-| **Augment Code** | `.augment/rules/` | ✅ |
-| **Kilo Code** | `.kilocode/rules/` | ✅ |
-| **JetBrains Junie** | `.junie/guidelines.md` | ✅ |
-
-### CLI Tools & Other
-
-| Platform | Config File | Status |
-|----------|-------------|:------:|
-| **Goose** | `.goosehints` | ✅ |
-| **Warp AI** | `WARP.md` | ✅ |
-| **Gemini CLI** | `GEMINI.md` | ✅ |
-| **OpenHands** | `.openhands/microagents/repo.md` | ✅ |
-| **Kiro** (AWS) | `.kiro/steering/` | ✅ |
-| **Trae AI** (ByteDance) | `.trae/rules/` | ✅ |
-| **Firebase Studio** | `.idx/` | ✅ |
-| **Void** | `.void/config.json` | ✅ |
-| **Open Code** | `opencode.json` | ✅ |
-
-### Universal Format
-
-Use `AGENTS.md` as a universal format that works with:
-- Claude Code, Aider, Devin, SWE-agent, and most AI coding tools
-- Readable by humans and AI alike
-- Future-proof and editor-agnostic
+LynxPrompt is **free and open-source**. Self-host it for personal use, or deploy it within your organization to enforce coding standards, share institutional knowledge, and ensure consistent AI assistant behavior across your engineering teams. A hosted instance is also available at [lynxprompt.com](https://lynxprompt.com) for those who prefer not to self-host.
 
 ---
 
-## Supported Commands (Workflows)
+## Key Features
 
-Commands are slash commands/workflows you invoke with `/command-name`. LynxPrompt supports creating and sharing commands for:
+### Universal AI Config Hub
 
-| Platform | Command Location | Status |
-|----------|------------------|:------:|
-| **Cursor** | `.cursor/commands/` | ✅ |
-| **Claude Code** | `.claude/commands/` | ✅ |
-| **Windsurf** | `.windsurf/workflows/` | ✅ |
-| **GitHub Copilot** | `.github/copilot/prompts/` | ✅ |
-| **Continue.dev** | `.continue/prompts/` | ✅ |
-| **Open Code** | `.opencode/commands/` | ✅ |
+Supports **30+ AI coding assistants** — Cursor, Claude Code, GitHub Copilot, Windsurf, Zed, Aider, Gemini CLI, Cline, Roo Code, Amazon Q, JetBrains Junie, and many more. Write once, export to any format.
 
----
+### Blueprint Marketplace
 
-## Features
+Internal or federated marketplace for sharing AI configurations and slash commands within your organization. Browse, search, favorite, and reuse blueprints across teams.
 
-### [Configuration Wizard](https://lynxprompt.com/docs/wizard)
+### Interactive Wizard
 
-The heart of LynxPrompt — a step-by-step generator that creates AI config files tailored to your project:
+Step-by-step config generator available on both web and CLI. Auto-detects your tech stack, frameworks, and repo structure from GitHub/GitLab URLs. Supports template variables, monorepo hierarchies, and draft auto-saving.
 
-- 🔍 **Auto-detect** — Detects your tech stack, frameworks, databases, and repo info from GitHub/GitLab URLs
-- 🧩 **Dynamic Sections** — Tech stack, code style, testing, CI/CD, branch strategy, security rules, and more
-- ⚠️ **Sensitive Data Detection** — Warns about potential secrets or credentials before you share
-- 💾 **Wizard Drafts** — Auto-saves your progress so you can continue later
-- 🔄 **Multiple Formats** — Export to any supported AI IDE format with one click
-- 👻 **Guest Mode** — Use the wizard without signing up (login required to save/share)
+### Configurable Authentication
 
-### [Blueprint Marketplace](https://lynxprompt.com/docs/marketplace)
+Flexible auth to fit your environment:
 
-Browse, share, and sell AI configurations and commands:
+- **OAuth** — GitHub, Google
+- **Email** — Passwordless magic link login
+- **Passkeys** — WebAuthn biometric/hardware key authentication
+- **SSO** — SAML, OIDC, and LDAP for enterprise identity providers
 
-- 📂 **Two Types** — AI Configs (rules/instructions) and Commands (slash commands/workflows)
-- 🏷️ **Categories & Tags** — Filter by category, platform, and tags
-- 🔎 **Search** — Full-text search across all blueprints
-- ❤️ **Favorites** — Save blueprints to your favorites list
-- 💰 **Paid Blueprints** — Sell your blueprints and earn from your expertise
-- 👤 **Public Profiles** — Author pages with social links and all their blueprints
+### Optional AI-Powered Editing
 
-### [Blueprints, Commands & Workflows](https://lynxprompt.com/docs/blueprints)
+Enable AI-assisted blueprint creation and editing with your own Anthropic API key. Entirely optional — works fully without it.
 
-Both AI configs and slash commands share powerful features:
+### Full REST API + CLI Tool
 
-- 📝 **Template Variables** — Use `[[VARIABLE]]` placeholders for dynamic inputs
-- 📜 **Versioning** — Track changes with changelogs, update published blueprints
-- 🔄 **Multi-format Export** — Download for any supported IDE or transform to a different format
+Programmatic access for automation and CI/CD integration. Generate API tokens, fetch blueprints, search, and download via REST. The CLI (`lynxp`) mirrors the full web platform feature set.
 
-### [Teams](https://lynxprompt.com/docs/marketplace/pricing)
+### Self-Hostable with Docker Compose
 
-Collaborate on AI configurations and commands within your organization:
-
-- 👥 **Team Blueprints** — Share blueprints only with team members
-- 💳 **Centralized Billing** — Single invoice for the entire team
-- 🤖 **AI Editing** — AI-assisted blueprint creation and editing
-
-### [Monorepo Support](https://lynxprompt.com/docs/blueprints/hierarchy)
-
-First-class support for monorepo architectures:
-
-- 🌳 **Hierarchy** — Define parent-child relationships between AGENTS.md files
-- 🔍 **Auto-detect** — CLI detects AGENTS.md files in subfolders and offers bulk hierarchy creation
-
-### [API Access](https://lynxprompt.com/docs/api)
-
-Programmatic access for automation and integrations:
-
-- 🌐 **Public API** — Fetch blueprints, search, and download via REST API
-- 🔑 **API Tokens** — Generate tokens for authenticated access
-
-### [Seller Payouts](https://lynxprompt.com/docs/marketplace/payouts)
-
-Earn money from your AI expertise:
-
-- 💸 **PayPal Integration** — Configure PayPal for receiving payouts
-- 📊 **Earnings Dashboard** — Track your sales and earnings
-- 📤 **Payout Requests** — Request payouts when you're ready
-
-### [Privacy-First](https://lynxprompt.com/privacy)
-
-Built with privacy in mind:
-
-- 📈 **Self-hosted Analytics** — Umami (cookieless, GDPR-compliant)
-- 🚫 **No Third-party Tracking** — No Google Analytics, no cookies
-- 🖼️ **Gravatar Support** — Optional profile pictures via Gravatar
-- 🛡️ **Turnstile CAPTCHA** — Cloudflare Turnstile for bot protection (no cookies)
-
-### [Authentication](https://lynxprompt.com/docs/getting-started/account)
-
-Multiple ways to sign in:
-
-- 🔐 **OAuth Providers** — GitHub, Google
-- ✉️ **Magic Link** — Passwordless email login
-- 🔑 **Passkeys** — WebAuthn biometric/hardware key authentication
-- 🔗 **Linked Accounts** — Connect multiple providers to one account
-
-### [CLI](https://lynxprompt.com/docs/cli)
-
-Local workflow integration with feature parity to the web platform:
-
-- 🧙 **`lynxp wizard`** — Interactive config generator with auto-detection
-- 📥 **`lynxp pull`** — Download blueprints from the marketplace
-- 📤 **`lynxp push`** — Upload local configs to your account
-- 📋 **`lynxp status`** — Check your linked configs and hierarchy
-- 📂 **`lynxp import`** — Import existing AGENTS.md files into your account
-- 🔄 **`lynxp convert`** — Convert between formats (e.g. AGENTS.md ↔ .cursor/rules/)
-- 🔍 **`lynxp analyze`** — Analyze a project and output detected stack
-- 🌳 **`lynxp hierarchy`** — Manage monorepo parent-child relationships
-- 📴 **Offline Support** — Generate configs without an account
-
-Install via npm, Homebrew, or Chocolatey.
-
-### [Personalization & Support](https://lynxprompt.com/docs/faq/support)
-
-Tailor LynxPrompt to your workflow:
-
-- ⚙️ **Saved Preferences** — Store wizard defaults (tech stack, code style) for future sessions
-- 📝 **Saved Variables** — Remember your template variable values across blueprints
-- 📚 **[Blog & Support Forum](https://lynxprompt.com/support)** — Community resources, guides, and help
+Single `docker compose up` to run the entire stack. PostgreSQL included. Auto-runs database migrations on startup. Toggle every feature via environment variables.
 
 ---
 
-## Quick Start
-
-### Option 1: Use the Web App
-
-1. Visit [lynxprompt.com](https://lynxprompt.com)
-2. Sign in with GitHub, Google, or email
-3. Use the wizard or browse blueprints
-4. Download your configuration files
-
-### Option 2: Use the CLI
+## Quick Start (Self-Hosting)
 
 ```bash
-# Install (pick one)
-npm install -g lynxprompt          # npm (cross-platform)
-brew install GeiserX/lynxprompt/lynxprompt  # Homebrew (macOS)
-choco install lynxprompt           # Chocolatey (Windows)
+# 1. Create a .env file
+cat > .env <<EOF
+NEXTAUTH_SECRET=$(openssl rand -base64 32)
+SUPERADMIN_EMAIL=your@email.com
+APP_URL=http://localhost:3000
+EOF
 
-# Generate config interactively
+# 2. Download the self-host compose file and start LynxPrompt
+curl -O https://raw.githubusercontent.com/GeiserX/LynxPrompt/main/docker-compose.selfhost.yml
+docker compose -f docker-compose.selfhost.yml up -d
+
+# 3. Open http://localhost:3000
+```
+
+That's it. LynxPrompt is running with PostgreSQL, automatic migrations, and email authentication enabled by default.
+
+---
+
+## Configuration
+
+All features are controlled via environment variables. Toggle what you need, disable what you don't.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `NEXTAUTH_SECRET` | *(required)* | Session encryption key |
+| `APP_URL` | `http://localhost:3000` | Base URL of your instance |
+| `APP_NAME` | `LynxPrompt` | Instance name shown in the UI |
+| `ENABLE_GITHUB_OAUTH` | `false` | GitHub OAuth login |
+| `ENABLE_GOOGLE_OAUTH` | `false` | Google OAuth login |
+| `ENABLE_EMAIL_AUTH` | `true` | Magic link email login |
+| `ENABLE_PASSKEYS` | `true` | WebAuthn passkey authentication |
+| `ENABLE_TURNSTILE` | `false` | Cloudflare Turnstile CAPTCHA |
+| `ENABLE_SSO` | `false` | SAML / OIDC / LDAP authentication |
+| `ENABLE_USER_REGISTRATION` | `true` | Allow public sign-ups |
+| `ENABLE_AI` | `false` | AI-powered editing features |
+| `AI_MODEL` | `claude-3-5-haiku-latest` | AI model for editing |
+| `ANTHROPIC_API_KEY` | | Required when `ENABLE_AI=true` |
+| `ENABLE_BLOG` | `false` | Blog module |
+| `ENABLE_SUPPORT_FORUM` | `false` | Support forum module |
+| `ENABLE_STRIPE` | `false` | Stripe payments for marketplace |
+| `SUPERADMIN_EMAIL` | | Auto-promote this email to superadmin |
+
+---
+
+## CLI
+
+The CLI tool mirrors the web platform and works against any LynxPrompt instance. By default it connects to `lynxprompt.com`, but you can point it to any self-hosted deployment.
+
+```bash
+# Install
+npm install -g lynxprompt
+
+# (Optional) Point to a self-hosted instance — two ways:
+lynxp config set-url https://lynxprompt.your-company.com
+# or: export LYNXPROMPT_API_URL=https://lynxprompt.your-company.com
+
+# Authenticate (opens browser on the configured instance)
+lynxp login
+
+# Generate AI config files interactively
 lynxp wizard
 
-# Or download a blueprint from marketplace
+# Pull a blueprint
 lynxp pull bp_abc123
+
+# Push local configs
+lynxp push
+
+# View current CLI configuration
+lynxp config
 ```
 
-### Option 3: Use the API
+The API URL is stored in the CLI config file (see `lynxp config path`). The `LYNXPROMPT_API_URL` environment variable takes precedence if set.
 
-```bash
-# List public blueprints
-curl https://lynxprompt.com/api/v1/blueprints
-
-# Get a specific blueprint (with auth for private)
-curl -H "Authorization: Bearer lp_xxxxx" \
-  https://lynxprompt.com/api/v1/blueprints/bp_abc123
-```
-
-Generate API tokens at [lynxprompt.com/settings?tab=api-tokens](https://lynxprompt.com/settings?tab=api-tokens)
+Also available via Homebrew (`brew install GeiserX/lynxprompt/lynxprompt`) and Chocolatey (`choco install lynxprompt`).
 
 ---
 
-## Contributing
+## Architecture
 
-Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Frontend + API**: Next.js 16 with App Router
+- **Database**: PostgreSQL with Prisma ORM
+- **Deployment**: Docker Compose with auto-migration on startup
+- **Auth**: NextAuth.js with configurable providers
+- **Search**: Full-text search via PostgreSQL
+
+Supports single-database or multi-database setups depending on your scale requirements.
+
+---
+
+## Development
+
+```bash
+git clone https://github.com/GeiserX/LynxPrompt.git
+cd LynxPrompt
+cp env.example .env
+docker compose up -d
+npm install --legacy-peer-deps
+npm run dev
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
+
+---
+
+## Documentation
+
+Full documentation is available at [lynxprompt.com/docs](https://lynxprompt.com/docs), covering:
+
+- [Getting Started](https://lynxprompt.com/docs/getting-started)
+- [Configuration Wizard](https://lynxprompt.com/docs/wizard)
+- [Blueprints & Commands](https://lynxprompt.com/docs/blueprints)
+- [CLI Reference](https://lynxprompt.com/docs/cli)
+- [API Reference](https://lynxprompt.com/docs/api)
+- [Self-Hosting Guide](https://lynxprompt.com/docs/self-hosting)
 
 ---
 
@@ -250,14 +191,4 @@ Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 This project is licensed under the [GNU General Public License v3.0](LICENSE).
 
-**Author:** Sergio Fernández Rubio ([GeiserCloud](https://lynxprompt.com/about))
-
----
-
-## Links
-
-- 🌐 [Website](https://lynxprompt.com)
-- 📚 [Documentation](https://lynxprompt.com/docs)
-- 💻 [CLI Docs](https://lynxprompt.com/docs/cli)
-- 🟢 [Status Page](https://status.lynxprompt.com)
-- 🔒 [Security](SECURITY.md)
+**Author:** Sergio Fernández Rubio ([GeiserX](https://github.com/GeiserX))
