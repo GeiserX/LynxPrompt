@@ -104,11 +104,6 @@ export async function GET(
         slug: team.slug,
         logo: team.logo,
         maxSeats: team.maxSeats,
-        subscriptionInterval: team.subscriptionInterval, // "monthly" or "annual"
-        billingCycleStart: team.billingCycleStart,
-        stripeCustomerId: team.stripeCustomerId,
-        stripeSubscriptionId: team.stripeSubscriptionId,
-        aiUsageLimitPerUser: team.aiUsageLimitPerUser,
         createdAt: team.createdAt,
         memberCount: team._count.members,
         blueprintCount: team._count.blueprints,
@@ -222,30 +217,13 @@ export async function DELETE(
       );
     }
 
-    // Get all team members to downgrade their subscriptions
-    const members = await prismaUsers.teamMember.findMany({
-      where: { teamId },
-      select: { userId: true },
-    });
-
     // Delete the team (cascades to members, invitations, etc.)
     await prismaUsers.team.delete({
       where: { id: teamId },
     });
 
-    // Downgrade all former team members to FREE plan
-    await prismaUsers.user.updateMany({
-      where: {
-        id: { in: members.map((m) => m.userId) },
-        subscriptionPlan: "TEAMS",
-      },
-      data: {
-        subscriptionPlan: "FREE",
-      },
-    });
-
     return NextResponse.json({
-      message: "Team deleted successfully. All members have been downgraded to Free plan.",
+      message: "Team deleted successfully.",
     });
   } catch (error) {
     console.error("Error deleting team:", error);
