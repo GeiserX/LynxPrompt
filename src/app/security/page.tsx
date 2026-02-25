@@ -300,13 +300,12 @@ export default function SecurityPage() {
                   </div>
                   <div className="rounded-lg border p-4">
                     <h3 className="font-medium text-foreground">
-                      Self-Hosted Error Tracking (GlitchTip)
+                      Optional Error Tracking (Sentry-Compatible)
                     </h3>
                     <p className="mt-1 text-sm">
-                      Error tracking is handled by GlitchTip, which we self-host
-                      on EU servers. Error data stays within our infrastructure
-                      and is automatically deleted after 90 days. No error data
-                      is sent to third-party services.
+                      Error tracking is optional and only active when a Sentry DSN
+                      is configured. When enabled, error data is sent to the configured
+                      Sentry-compatible endpoint. No error data is collected by default.
                     </p>
                   </div>
                   <div className="rounded-lg border p-4">
