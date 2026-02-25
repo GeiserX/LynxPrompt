@@ -814,7 +814,7 @@ export default function EditBlueprintPage() {
 
                       {!canCreatePaidBlueprints && (
                         <p className="mt-2 text-sm text-muted-foreground">
-                          Upgrade to <Link href="/pricing" className="text-primary hover:underline font-medium">Teams</Link> to create paid blueprints and earn 70% of each sale.
+                          Upgrade to <Link href="/auth/signin?plan=teams" className="text-primary hover:underline font-medium">Teams</Link> to create paid blueprints and earn 70% of each sale.
                         </p>
                       )}
 

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { authenticateRequest, isTeams } from "@/lib/api-auth";
+import { authenticateRequest } from "@/lib/api-auth";
 import { prismaUsers } from "@/lib/db-users";
 import Anthropic from "@anthropic-ai/sdk";
 
@@ -64,29 +64,18 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if user is Teams subscriber (AI features are Teams-only)
     const user = await prismaUsers.user.findUnique({
       where: { id: auth.user.id },
       select: {
-        subscriptionPlan: true,
-        role: true,
         aiTokensUsedThisPeriod: true,
         aiUsageResetAt: true,
         aiLastRequestAt: true,
         aiRequestsThisMinute: true,
-        currentPeriodEnd: true,
       },
     });
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    if (!isTeams(auth.user)) {
-      return NextResponse.json(
-        { error: "AI editing is only available for Teams subscribers" },
-        { status: 403 }
-      );
     }
 
     // Check rate limiting
@@ -116,7 +105,7 @@ export async function POST(request: Request) {
 
     // Check usage reset (aligned with billing period)
     let tokensUsed = user.aiTokensUsedThisPeriod;
-    const resetAt = user.aiUsageResetAt || user.currentPeriodEnd;
+    const resetAt = user.aiUsageResetAt;
     
     if (resetAt && now > resetAt) {
       // Reset usage at billing period end
@@ -254,7 +243,7 @@ export async function POST(request: Request) {
         aiTokensUsedThisPeriod: tokensUsed + costUnits,
         aiLastRequestAt: now,
         aiRequestsThisMinute: requestsThisMinute,
-        aiUsageResetAt: user.currentPeriodEnd || new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000), // Default: 30 days
+        aiUsageResetAt: user.aiUsageResetAt || new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
       },
     });
 

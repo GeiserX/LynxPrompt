@@ -167,9 +167,6 @@ export default function BlogAdminPage() {
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <Logo />
           <nav className="flex items-center gap-4">
-            <Link href="/pricing" className="text-sm hover:underline">
-              Pricing
-            </Link>
             <Link href="/blueprints" className="text-sm hover:underline">
               Blueprints
             </Link>

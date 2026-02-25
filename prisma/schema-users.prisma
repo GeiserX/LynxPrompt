@@ -92,16 +92,10 @@ model User {
   socialMastodon   String?   // Mastodon handle (e.g., @user@instance.social)
   socialDiscord    String?   // Discord username
 
-  // Subscription & Billing (Stripe)
-  stripeCustomerId       String?   @unique // Stripe Customer ID
-  stripeSubscriptionId   String?   // Stripe Subscription ID
+  // Subscription (billing removed - all users get full access)
   subscriptionPlan       SubscriptionPlan @default(FREE)
-  subscriptionStatus     String?   // active, canceled, past_due, unpaid, trialing
-  subscriptionInterval   String?   // monthly or annual
-  currentPeriodEnd       DateTime? // When current billing period ends
-  cancelAtPeriodEnd      Boolean   @default(false)
 
-  // AI Usage Tracking (for MAX users)
+  // AI Usage Tracking
   aiTokensUsedThisPeriod Int       @default(0)   // Total tokens used this billing period
   aiUsageResetAt         DateTime? // When to reset token count (aligned with billing period)
   aiLastRequestAt        DateTime? // For rate limiting
@@ -116,7 +110,7 @@ model User {
   // Seller Payout Settings
   paypalEmail    String?   // PayPal email for receiving payouts
 
-  // Activity tracking (for Teams billing - track last login)
+  // Activity tracking
   lastLoginAt    DateTime? // Last time user logged in (updated on session creation)
 
   // Relations
@@ -139,8 +133,6 @@ model User {
 
   @@index([email])
   @@index([role])
-  @@index([stripeCustomerId])
-  @@index([subscriptionPlan])
   @@index([lastLoginAt])
 }
 
@@ -151,10 +143,8 @@ enum UserRole {
 }
 
 enum SubscriptionPlan {
-  FREE    // Standard user - all features except AI
-  TEAMS   // Teams user - all features including AI, SSO, team sharing
-  // DEPRECATED: PRO and MAX no longer used - all users get full wizard access
-  // Keeping enum values would require database migration, so we just use FREE for all non-Teams users
+  FREE    // All users - everyone gets full access
+  TEAMS   // Kept for DB backwards compatibility (no longer used for gating)
 }
 
 // ============================================================================
@@ -191,15 +181,8 @@ model Team {
   slug          String   @unique // URL-friendly identifier (e.g., "acme-corp")
   logo          String?  // Team logo URL (uploaded image)
   
-  // Billing - handled by team admin(s)
-  stripeCustomerId     String?   @unique // Stripe Customer ID for the team
-  stripeSubscriptionId String?   // Stripe Subscription ID (per-seat)
-  subscriptionInterval String?   // monthly or annual
-  billingCycleStart    DateTime? // When current billing cycle started
-  maxSeats             Int       @default(3) // Prepaid seats (minimum 3)
-  
-  // AI Usage Settings (Teams get higher limits)
-  aiUsageLimitPerUser  Int       @default(500) // €5 = 500 cents max AI spend per user/month
+  // Organization limits
+  maxSeats             Int       @default(50) // Max members in the team
   
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -208,12 +191,10 @@ model Team {
   members       TeamMember[]
   invitations   TeamInvitation[]
   ssoConfig     TeamSSOConfig?
-  billingRecords TeamBillingRecord[]
   blueprints    UserTemplate[]  // Team-shared blueprints
   purchases     BlueprintPurchase[]  // Templates purchased by team members (shared with all)
   
   @@index([slug])
-  @@index([stripeCustomerId])
 }
 
 model TeamMember {
@@ -287,37 +268,6 @@ model TeamSSOConfig {
   lastSyncAt DateTime? // Last successful SSO sync
   
   team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
-}
-
-model TeamBillingRecord {
-  id        String   @id @default(cuid())
-  teamId    String
-  
-  // Billing period
-  periodStart DateTime
-  periodEnd   DateTime
-  
-  // Seat counts for this period
-  totalSeats     Int // Max seats configured
-  activeSeats    Int // Users who logged in during period
-  billedSeats    Int // MAX(activeSeats, 3) - what was actually charged
-  
-  // Financial
-  amountBilled   Int // Total amount in cents (billedSeats × €10)
-  currency       String @default("EUR")
-  stripeInvoiceId String? // Reference to Stripe invoice
-  
-  // Credits (for unused seats from previous cycle)
-  creditApplied  Int @default(0) // Credit in cents applied to this invoice
-  creditGenerated Int @default(0) // Credit generated for next cycle (if active < billed)
-  
-  createdAt DateTime @default(now())
-  
-  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  
-  @@index([teamId])
-  @@index([periodStart])
-  @@index([periodEnd])
 }
 
 // ============================================================================

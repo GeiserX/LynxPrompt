@@ -209,8 +209,8 @@ export default function PricingPage() {
           </p>
         </div>
         <Button asChild>
-          <Link href="/pricing">
-            View Pricing Page <ArrowRight className="ml-2 h-4 w-4" />
+          <Link href="/auth/signin">
+            Get Started <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
         </Button>
       </div>
