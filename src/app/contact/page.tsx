@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, MapPin, Send, CheckCircle, AlertCircle } from "lucide-react";
+import { Mail, Send, CheckCircle, AlertCircle } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
@@ -64,6 +64,9 @@ export default function ContactPage() {
             </h1>
             <p className="mt-3 text-lg text-muted-foreground">
               Have a question, feedback, or just want to say hello? We&apos;d love to hear from you.
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              This contact form reaches GeiserCloud, the creator and maintainer of the LynxPrompt project. If you&apos;re using a self-hosted instance, please contact your instance administrator.
             </p>
           </div>
         </div>
@@ -177,13 +180,13 @@ export default function ContactPage() {
               </Button>
             </form>
 
-            {/* Location Info */}
+            {/* Contact Info */}
             <div className="mt-12 rounded-lg border bg-muted/30 p-6">
               <div className="flex items-center gap-3">
-                <MapPin className="h-5 w-5 text-primary" />
+                <Mail className="h-5 w-5 text-primary" />
                 <div>
-                  <h3 className="font-semibold">Location</h3>
-                  <p className="text-sm text-muted-foreground">Murcia, Spain</p>
+                  <h3 className="font-semibold">Email</h3>
+                  <p className="text-sm text-muted-foreground">contact@lynxprompt.com — GeiserCloud, Europe</p>
                 </div>
               </div>
             </div>

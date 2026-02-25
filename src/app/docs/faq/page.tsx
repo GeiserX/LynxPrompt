@@ -30,9 +30,9 @@ export default function FAQOverviewPage() {
           >
             <CreditCard className="h-5 w-5 text-primary" />
             <div>
-              <p className="font-medium">Billing & Subscriptions</p>
+              <p className="font-medium">Marketplace Payments</p>
               <p className="text-sm text-muted-foreground">
-                Payments, plans, refunds
+                Buying, selling, refunds
               </p>
             </div>
           </Link>
@@ -58,10 +58,10 @@ export default function FAQOverviewPage() {
           <div className="rounded-lg border bg-card p-4">
             <h3 className="font-semibold">Is LynxPrompt free to use?</h3>
             <p className="mt-2 text-muted-foreground">
-              Yes! The basic features are free. You can use the basic wizard,
-              download free blueprints, and browse the community library.
-              Premium features like advanced wizard steps and AI editing require
-              a subscription.
+              Yes! LynxPrompt is free and open-source (GPL v3). All features —
+              the wizard, blueprints, AI editing, teams, API, and CLI — are
+              available at no cost. The only payments are optional marketplace
+              purchases when a blueprint creator sets a price.
             </p>
           </div>
 
@@ -166,7 +166,7 @@ export default function FAQOverviewPage() {
             </h3>
             <p className="mt-2 text-muted-foreground">
               Free blueprints are available to everyone. Paid blueprints are
-              premium configurations created by Teams users who set their own
+              configurations created by community members who set their own
               prices. Authors receive 70% of each sale.
             </p>
           </div>

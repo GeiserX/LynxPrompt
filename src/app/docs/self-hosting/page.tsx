@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Server, Database, Shield, Sparkles, Paintbrush, Terminal, HeartPulse } from "lucide-react";
+import { Server, Database, Shield, Sparkles, Paintbrush, Terminal, HeartPulse, Globe } from "lucide-react";
 
 export default function SelfHostingPage() {
   return (
@@ -263,6 +263,32 @@ APP_URL=https://lynxprompt.yourcompany.com`}</code>
                 <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">ENABLE_STRIPE</code></td>
                 <td className="px-4 py-2 text-muted-foreground">false</td>
                 <td className="px-4 py-2">Enable paid blueprint purchases (requires Stripe keys)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* Federation */}
+        <h3 className="text-lg font-semibold mt-6">Federation</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b">
+                <th className="py-2 pr-4 text-left font-medium">Variable</th>
+                <th className="px-4 py-2 text-left font-medium">Default</th>
+                <th className="px-4 py-2 text-left font-medium">Description</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              <tr>
+                <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">ENABLE_FEDERATION</code></td>
+                <td className="px-4 py-2 text-muted-foreground">false</td>
+                <td className="px-4 py-2">Join the federated network to share and discover blueprints across instances</td>
+              </tr>
+              <tr>
+                <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">FEDERATION_REGISTRY_URL</code></td>
+                <td className="px-4 py-2 text-muted-foreground">—</td>
+                <td className="px-4 py-2">URL of the federation registry to connect to (provided by the network operator)</td>
               </tr>
             </tbody>
           </table>
@@ -533,6 +559,64 @@ lynxp login`}</code>
           pull, sync) will target your self-hosted instance instead of the
           public service.
         </p>
+      </section>
+
+      {/* Federation */}
+      <section className="space-y-4" id="federation">
+        <div className="flex items-center gap-3">
+          <Globe className="h-6 w-6 text-primary" />
+          <h2 className="text-2xl font-bold">Federation</h2>
+        </div>
+        <p className="text-muted-foreground">
+          Federation connects independent LynxPrompt instances into a shared
+          network. Users on any federated instance can discover and download
+          blueprints published on other instances.
+        </p>
+        <div className="rounded-xl border bg-card p-6 space-y-3">
+          <div className="flex items-start gap-4">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+              1
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="font-semibold">Enable federation</h3>
+              <pre className="mt-2 overflow-x-auto rounded-lg bg-muted p-3 text-sm">
+                <code>{`ENABLE_FEDERATION=true
+FEDERATION_REGISTRY_URL=https://registry.lynxprompt.com`}</code>
+              </pre>
+            </div>
+          </div>
+          <div className="flex items-start gap-4">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+              2
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="font-semibold">Restart the container</h3>
+              <p className="mt-1 text-muted-foreground">
+                Your instance will register with the federation registry and
+                begin syncing the blueprint index.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-4">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+              3
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="font-semibold">Browse federated blueprints</h3>
+              <p className="mt-1 text-muted-foreground">
+                Blueprints from other instances appear alongside local ones in the
+                browse page, tagged with their origin instance.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
+          <p className="text-sm">
+            <strong>Note:</strong> Federation is optional. Without it, your instance
+            works as a fully standalone platform with its own local blueprint
+            library.
+          </p>
+        </div>
       </section>
 
       {/* Health check */}

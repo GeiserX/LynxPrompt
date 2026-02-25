@@ -45,7 +45,7 @@ export default function DPAPage() {
               Data Processing Agreement
             </h1>
             <p className="mt-3 text-lg text-muted-foreground">
-              Version 1.0 – Effective December 2025
+              Version 1.1 – Effective February 2026
             </p>
           </div>
         </div>
@@ -63,10 +63,13 @@ export default function DPAPage() {
               <p className="mt-2 text-sm text-muted-foreground">
                 This Data Processing Agreement (&quot;DPA&quot;) forms part of
                 the agreement between you (&quot;Customer&quot;,
-                &quot;Controller&quot;) and LynxPrompt (&quot;Processor&quot;)
-                for the provision of services. By using LynxPrompt, you
-                automatically accept this DPA. Business customers may request a
-                signed copy by emailing{" "}
+                &quot;Controller&quot;) and GeiserCloud, operating LynxPrompt
+                (&quot;Processor&quot;), for the provision of services. By using
+                LynxPrompt, you automatically accept this DPA. LynxPrompt is
+                open-source software licensed under GPL v3, but this DPA governs
+                data processing specifically on the official instance at
+                lynxprompt.com. Business customers may request a signed copy by
+                emailing{" "}
                 <a
                   href="mailto:legal@lynxprompt.com"
                   className="text-primary hover:underline"
@@ -144,7 +147,10 @@ export default function DPAPage() {
                 </h2>
                 <p className="mb-3">
                   This DPA applies to the Processing of Personal Data by
-                  LynxPrompt in connection with providing the Services.
+                  LynxPrompt in connection with providing the Services on the
+                  official instance at lynxprompt.com. Self-hosted LynxPrompt
+                  instances are independently operated; their operators are
+                  responsible for their own data processing agreements.
                 </p>
                 <div className="rounded-lg border p-4">
                   <p className="mb-2">
@@ -560,9 +566,8 @@ export default function DPAPage() {
                 </h2>
                 <p>
                   This DPA is governed by the laws of Spain. The courts of
-                  Cartagena (Murcia), Spain shall have jurisdiction over any
-                  disputes arising from this DPA, unless mandatory law provides
-                  otherwise.
+                  Spain shall have jurisdiction over any disputes arising from
+                  this DPA, unless mandatory law provides otherwise.
                 </p>
               </section>
 
@@ -573,11 +578,9 @@ export default function DPAPage() {
                 </h2>
                 <div className="rounded-lg border p-4">
                   <p>
-                    <strong className="text-foreground">Data Processor:</strong>
+                    <strong className="text-foreground">Data Processor:</strong>{" "}
+                    GeiserCloud
                   </p>
-                  <p className="mt-1">Sergio Fernández Rubio (GeiserCloud)</p>
-                  <p>Calle Tierno Galván 25</p>
-                  <p>30203 Cartagena, Murcia, Spain</p>
                   <p className="mt-2">
                     <strong>Privacy inquiries:</strong>{" "}
                     <a
@@ -594,6 +597,15 @@ export default function DPAPage() {
                       className="text-primary hover:underline"
                     >
                       legal@lynxprompt.com
+                    </a>
+                  </p>
+                  <p>
+                    <strong>Support:</strong>{" "}
+                    <a
+                      href="mailto:support@lynxprompt.com"
+                      className="text-primary hover:underline"
+                    >
+                      support@lynxprompt.com
                     </a>
                   </p>
                 </div>

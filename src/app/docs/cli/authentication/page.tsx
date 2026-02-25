@@ -43,8 +43,7 @@ export default function CliAuthenticationPage() {
 
 Waiting for authentication... ✓
 
-✅ Logged in as sergio@example.com
-   Plan: Pro
+✅ Logged in as user@example.com
    Token stored securely in config
 
 You're ready to use LynxPrompt CLI!`}</code>
@@ -80,8 +79,7 @@ You're ready to use LynxPrompt CLI!`}</code>
           <pre className="text-sm text-zinc-100">
             <code>{`$ lynxprompt whoami
 
-👤 Logged in as sergio@example.com
-   Plan: Pro
+👤 Logged in as user@example.com
    Member since: January 2025`}</code>
           </pre>
         </div>

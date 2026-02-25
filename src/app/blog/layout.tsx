@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { ENABLE_BLOG, APP_NAME, APP_URL } from "@/lib/feature-flags";
+import { envBool, APP_NAME, APP_URL } from "@/lib/feature-flags";
 
 export const metadata: Metadata = {
   title: {
@@ -41,7 +41,7 @@ export default function BlogLayout({
 }: {
   children: React.ReactNode;
 }) {
-  if (!ENABLE_BLOG) notFound();
+  if (!envBool("ENABLE_BLOG", false)) notFound();
   return children;
 }
 

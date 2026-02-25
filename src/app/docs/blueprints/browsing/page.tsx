@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Search, Filter, Heart, Download, ArrowRight } from "lucide-react";
+import { Search, Filter, Heart, Download, ArrowRight, Globe } from "lucide-react";
 
 export default function BrowsingBlueprintsPage() {
   return (
@@ -191,6 +191,38 @@ export default function BrowsingBlueprintsPage() {
             <li className="flex items-center gap-2">
               <span className="text-green-500">✓</span>
               Favorites sync across devices when signed in
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      {/* Federated Browsing */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg bg-primary/10 p-2">
+            <Globe className="h-5 w-5 text-primary" />
+          </div>
+          <h2 className="text-2xl font-bold">Federated Browsing</h2>
+        </div>
+        <p className="text-muted-foreground">
+          On instances with federation enabled, the blueprint catalog includes
+          configurations published on other LynxPrompt instances in the network.
+          Federated blueprints are tagged with their origin instance so you
+          always know where they come from.
+        </p>
+        <div className="rounded-lg border bg-card p-4">
+          <ul className="space-y-2 text-muted-foreground">
+            <li className="flex items-center gap-2">
+              <span className="text-green-500">✓</span>
+              Browse blueprints from any federated instance
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="text-green-500">✓</span>
+              Search and filter work across local and federated results
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="text-green-500">✓</span>
+              Download federated blueprints the same way as local ones
             </li>
           </ul>
         </div>

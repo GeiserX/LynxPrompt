@@ -209,12 +209,9 @@ export default function WizardOverviewPage() {
       <section id="ai-features" className="space-y-4">
         <div className="flex items-center gap-3">
           <h2 className="text-2xl font-bold">AI Features</h2>
-          <span className="rounded-full bg-teal-500/10 px-3 py-1 text-sm font-medium text-teal-600 dark:text-teal-400">
-            Teams
-          </span>
         </div>
         <p className="text-muted-foreground">
-          When AI features are enabled (ENABLE_AI), you get access to AI-powered enhancements in the wizard:
+          When AI features are enabled on the instance (ENABLE_AI), all users get access to AI-powered enhancements in the wizard:
         </p>
         
         <div className="grid gap-4 sm:grid-cols-2">

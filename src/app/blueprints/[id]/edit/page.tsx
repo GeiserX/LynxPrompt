@@ -865,6 +865,11 @@ export default function EditBlueprintPage() {
                             <code className="ml-2 text-yellow-700 dark:text-yellow-300">
                               {match.snippet}
                             </code>
+                            {match.suggestion && (
+                              <span className="ml-2 italic text-yellow-600 dark:text-yellow-400">
+                                — {match.suggestion}
+                              </span>
+                            )}
                           </div>
                         ))}
                       </div>

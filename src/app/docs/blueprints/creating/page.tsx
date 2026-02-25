@@ -18,49 +18,37 @@ export default function CreatingBlueprintsPage() {
           Creating Blueprints
         </h1>
         <p className="max-w-2xl text-lg text-muted-foreground">
-          Share your AI IDE configurations with the community. Create free
-          blueprints or sell premium ones.
+          Share your AI IDE configurations with the community. Any signed-in
+          user can create blueprints — free or paid.
         </p>
       </div>
 
       {/* Who can create */}
       <section className="space-y-4">
         <h2 className="text-2xl font-bold">Who Can Create Blueprints?</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-xl border bg-card p-6">
-            <h3 className="text-lg font-semibold">Free Users</h3>
-            <ul className="mt-3 space-y-2 text-muted-foreground">
-              <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                Can create free blueprints
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                Share with the community
-              </li>
-              <li className="flex items-center gap-2 text-muted-foreground/60">
-                <span>—</span>
-                Cannot create paid blueprints
-              </li>
-            </ul>
-          </div>
-          <div className="rounded-xl border bg-card p-6">
-            <h3 className="text-lg font-semibold">Teams Users</h3>
-            <ul className="mt-3 space-y-2 text-muted-foreground">
-              <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                Can create free blueprints
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                Can create paid blueprints
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                Earn 70% of sales revenue
-              </li>
-            </ul>
-          </div>
+        <div className="rounded-xl border bg-card p-6">
+          <p className="text-muted-foreground">
+            Any signed-in user can create and share blueprints. On instances with
+            Stripe enabled, you can also set a price and earn from your work.
+          </p>
+          <ul className="mt-3 space-y-2 text-muted-foreground">
+            <li className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-green-500" />
+              Create unlimited free blueprints
+            </li>
+            <li className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-green-500" />
+              Share with the community
+            </li>
+            <li className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-green-500" />
+              Create paid blueprints (when Stripe is enabled on the instance)
+            </li>
+            <li className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-green-500" />
+              Earn 70% of each sale
+            </li>
+          </ul>
         </div>
       </section>
 
@@ -187,7 +175,7 @@ export default function CreatingBlueprintsPage() {
               <div className="space-y-3">
                 <h3 className="text-lg font-semibold">Set Pricing (Optional)</h3>
                 <p className="text-muted-foreground">
-                  Teams users can set a price for their blueprints:
+                  On instances with Stripe enabled, you can set a price for your blueprints:
                 </p>
                 <ul className="list-inside list-disc space-y-1 text-muted-foreground">
                   <li>Minimum price: €5</li>

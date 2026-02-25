@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     template: `%s | ${APP_NAME}`,
   },
   description:
-    "Transform your development setup into a mouse-click experience. Generate .cursorrules, CLAUDE.md, and more with smart conditional logic.",
+    "Open-source platform to generate, store, and sync AI IDE configurations. Create .cursorrules, CLAUDE.md, AGENTS.md and more — self-hostable and federated.",
   keywords: [
     "AI IDE",
     "Cursor",
@@ -40,6 +40,9 @@ export const metadata: Metadata = {
     "IDE rules",
     "AGENTS.md",
     "cursorrules",
+    "open-source",
+    "self-hosted",
+    "blueprint",
   ],
   authors: [{ name: "GeiserCloud", url: "https://geiser.cloud" }],
   creator: "GeiserCloud",

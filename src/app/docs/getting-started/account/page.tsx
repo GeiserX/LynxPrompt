@@ -17,7 +17,7 @@ export default function AccountSetupPage() {
         <h1 className="text-3xl font-bold tracking-tight">Account Setup</h1>
         <p className="max-w-2xl text-lg text-muted-foreground">
           Create an account to save your preferences, manage blueprints, and
-          access premium features.
+          access all features.
         </p>
       </div>
 
@@ -45,9 +45,10 @@ export default function AccountSetupPage() {
             </p>
           </div>
           <div className="rounded-lg border bg-card p-4">
-            <h3 className="font-medium">Premium Features</h3>
+            <h3 className="font-medium">AI Features</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Enable ENABLE_AI in your environment for advanced wizard steps and AI features
+              Access AI-powered wizard enhancements when ENABLE_AI is configured
+              on the instance
             </p>
           </div>
         </div>
@@ -180,9 +181,9 @@ export default function AccountSetupPage() {
             </p>
           </div>
           <div className="rounded-lg border bg-card p-4">
-            <h3 className="font-medium">Billing</h3>
+            <h3 className="font-medium">Marketplace</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Manage your subscription and payment methods
+              Manage your Stripe payouts for marketplace sales
             </p>
           </div>
           <div className="rounded-lg border bg-card p-4">

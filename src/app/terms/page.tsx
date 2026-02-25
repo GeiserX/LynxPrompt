@@ -38,7 +38,7 @@ export default function TermsPage() {
               Terms of Service
             </h1>
             <p className="mt-3 text-lg text-muted-foreground">
-              Last updated: December 2025
+              Last updated: February 2026
             </p>
           </div>
         </div>
@@ -56,9 +56,8 @@ export default function TermsPage() {
                   Welcome to LynxPrompt. By accessing or using our platform, you agree to be bound by these Terms of Service. If you disagree with any part of these terms, you may not access the service.
                 </p>
                 <div className="mt-4 rounded-lg border p-4">
-                  <p><strong className="text-foreground">Operator:</strong> Sergio Fernández Rubio, trading as GeiserCloud</p>
-                  <p><strong className="text-foreground">Address:</strong> Calle Tierno Galván 25, 30203 Cartagena, Murcia, Spain</p>
-                  <p><strong className="text-foreground">Contact:</strong> <a href="mailto:legal@lynxprompt.com" className="text-primary hover:underline">legal@lynxprompt.com</a></p>
+                  <p><strong className="text-foreground">Operator:</strong> GeiserCloud</p>
+                  <p><strong className="text-foreground">Contact:</strong> <a href="mailto:support@lynxprompt.com" className="text-primary hover:underline">support@lynxprompt.com</a></p>
                 </div>
               </section>
 
@@ -87,38 +86,27 @@ export default function TermsPage() {
                   <li>LynxPrompt facilitates the transaction, handles payments, and takes a platform commission</li>
                 </ul>
                 <p className="mt-3">
-                  For subscription services (Users and Teams tiers), the contract is directly between you and LynxPrompt.
+                  For subscription services, the contract is directly between you and GeiserCloud.
                 </p>
               </section>
 
-              {/* 3.1 Teams Subscription */}
+              {/* 3.1 Teams */}
               <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">3.1 Teams Subscription</h2>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">3.1 Teams</h2>
                 <p>
-                  The Teams subscription is designed for organizations and includes the following terms:
+                  Teams is a free organizational feature that allows users to group together and share blueprints. The following terms apply:
                 </p>
                 <ul className="mt-3 list-inside list-disc space-y-1">
-                  <li><strong>Seat-based pricing:</strong> Teams is billed at €10 per seat per month, with a minimum of 3 seats</li>
-                  <li><strong>Active user billing:</strong> You are only charged for users who logged in during the billing period. Users who did not log in are not counted toward billing (minimum 3 always applies)</li>
-                  <li><strong>Team Administrator:</strong> The person who creates the team is the initial administrator and is responsible for billing</li>
+                  <li><strong>Team Administrator:</strong> The person who creates the team is the initial administrator and is responsible for managing the team</li>
                   <li><strong>Member management:</strong> Team administrators can invite members, assign roles, and remove members at any time</li>
-                  <li><strong>Pro-rated billing:</strong> If you add seats mid-cycle, you pay a pro-rated amount for the remaining days in the billing period</li>
-                  <li><strong>Credits:</strong> Unused seats generate credits that are applied to your next billing cycle</li>
                 </ul>
               </section>
 
-              {/* 3.2 Billing Intervals & Cancellation */}
+              {/* 3.2 Marketplace Payments */}
               <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">3.2 Billing Intervals & Cancellation</h2>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">3.2 Marketplace Payments</h2>
                 <p>
-                  Subscriptions are available in two billing intervals:
-                </p>
-                <ul className="mt-3 list-inside list-disc space-y-1">
-                  <li><strong>Monthly billing:</strong> Billed each month. You may cancel at any time. Access continues until the end of the current billing period.</li>
-                  <li><strong>Annual billing:</strong> Billed once per year at a 10% discount. <strong>Annual subscriptions are a yearly commitment and cannot be canceled or refunded mid-cycle.</strong> You retain full access until the annual period ends.</li>
-                </ul>
-                <p className="mt-3">
-                  To change or cancel your subscription, visit Settings → Billing. Downgrades take effect at the end of your current billing period.
+                  Payments on LynxPrompt are limited to marketplace blueprint purchases. When a buyer purchases a blueprint, the revenue is split between the Seller (70%) and LynxPrompt (30%). All transactions are processed by Stripe.
                 </p>
               </section>
 
@@ -304,7 +292,7 @@ export default function TermsPage() {
                   <strong>Your Content:</strong> You retain ownership of prompts and content you create. By uploading content to LynxPrompt, you grant us a non-exclusive license to host, display, and distribute your content through our service.
                 </p>
                 <p className="mt-3">
-                  <strong>Our Content:</strong> The LynxPrompt platform, including its design, code, and branding, is owned by Sergio Fernández Rubio (GeiserCloud). You may not copy or reproduce our platform without permission.
+                  <strong>Our Content:</strong> The LynxPrompt platform, including its design, code, and branding, is owned by GeiserCloud. LynxPrompt is open-source software licensed under the GNU General Public License v3.0 (GPL-3.0). The source code is available at <a href="https://github.com/GeiserX/LynxPrompt" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">github.com/GeiserX/LynxPrompt</a>.
                 </p>
               </section>
 
@@ -332,7 +320,7 @@ export default function TermsPage() {
               <section>
                 <h2 className="mb-3 text-lg font-semibold text-foreground">16. Indemnification</h2>
                 <p>
-                  You agree to indemnify and hold harmless Sergio Fernández Rubio (GeiserCloud) and LynxPrompt from any claims, damages, or expenses arising from your use of the service, your content, or your violation of these terms.
+                  You agree to indemnify and hold harmless GeiserCloud and LynxPrompt from any claims, damages, or expenses arising from your use of the service, your content, or your violation of these terms.
                 </p>
               </section>
 
@@ -358,28 +346,36 @@ export default function TermsPage() {
                 </p>
               </section>
 
-              {/* 19. Governing Law & Jurisdiction */}
+              {/* 19. Self-Hosted Instances */}
               <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">19. Governing Law & Jurisdiction</h2>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">19. Self-Hosted Instances</h2>
                 <p>
-                  These Terms are governed by the <strong>laws of Spain</strong>. The courts of <strong>Cartagena (Murcia), Spain</strong> shall have jurisdiction over any disputes, unless mandatory law provides otherwise.
+                  Self-hosted LynxPrompt instances are independently operated. These Terms apply only to <a href="https://lynxprompt.com" className="text-primary hover:underline">lynxprompt.com</a>. Self-hosted instance operators may establish their own terms of service.
+                </p>
+              </section>
+
+              {/* 20. Governing Law & Jurisdiction */}
+              <section>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">20. Governing Law & Jurisdiction</h2>
+                <p>
+                  These Terms are governed by the <strong>laws of Spain</strong>. The courts of <strong>Spain</strong> shall have jurisdiction over any disputes, unless mandatory law provides otherwise.
                 </p>
                 <p className="mt-3 text-sm text-muted-foreground">
                   <strong className="text-foreground">EU Consumer Notice:</strong> If you are a consumer in the EU, you may also benefit from mandatory consumer protections of your country of residence. Nothing in these Terms affects your statutory rights as a consumer.
                 </p>
               </section>
 
-              {/* 20. Changes to Terms */}
+              {/* 21. Changes to Terms */}
               <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">20. Changes to Terms</h2>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">21. Changes to Terms</h2>
                 <p>
                   We may update these terms from time to time. We will notify you of significant changes by posting a notice on our website or sending you an email. Continued use of the service after changes constitutes acceptance of the new terms.
                 </p>
               </section>
 
-              {/* 21. General Provisions */}
+              {/* 22. General Provisions */}
               <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">21. General Provisions</h2>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">22. General Provisions</h2>
                 <p>
                   <strong>Severability:</strong> If any provision of these Terms is found unenforceable, the remaining provisions will continue in effect.
                 </p>
@@ -397,11 +393,11 @@ export default function TermsPage() {
                 </p>
               </section>
 
-              {/* 22. Contact */}
+              {/* 23. Contact */}
               <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">22. Contact</h2>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">23. Contact</h2>
                 <p>
-                  For questions about these terms, contact us at <a href="mailto:legal@lynxprompt.com" className="text-primary hover:underline">legal@lynxprompt.com</a>.
+                  For questions about these terms, contact us at <a href="mailto:support@lynxprompt.com" className="text-primary hover:underline">support@lynxprompt.com</a>.
                 </p>
               </section>
             </div>
