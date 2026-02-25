@@ -1,4 +1,4 @@
-import { NextAuthOptions } from "next-auth";
+import { NextAuthOptions, Provider } from "next-auth";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import EmailProvider, {
@@ -7,6 +7,13 @@ import EmailProvider, {
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prismaUsers } from "@/lib/db-users";
+import {
+  ENABLE_GITHUB_OAUTH,
+  ENABLE_GOOGLE_OAUTH,
+  ENABLE_EMAIL_AUTH,
+  ENABLE_PASSKEYS,
+  ENABLE_USER_REGISTRATION,
+} from "@/lib/feature-flags";
 import {
   verifyAuthenticationResponse,
   type VerifiedAuthenticationResponse,
@@ -166,118 +173,150 @@ const rpID = process.env.NEXTAUTH_URL
   : "localhost";
 const rpOrigin = process.env.NEXTAUTH_URL || "http://localhost:3000";
 
-export const authOptions: NextAuthOptions = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  adapter: PrismaAdapter(prismaUsers as any) as NextAuthOptions["adapter"],
-  providers: [
-    GitHubProvider({
-      clientId: process.env.GITHUB_CLIENT_ID!,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-    }),
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
-    EmailProvider({
-      server: {
-        host: process.env.SMTP_HOST,
-        port: Number(process.env.SMTP_PORT) || 587,
-        secure: Number(process.env.SMTP_PORT) === 465, // Use SSL for port 465
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASSWORD,
+// Build providers list conditionally based on feature flags
+function buildProviders(): Provider[] {
+  const providers: Provider[] = [];
+
+  if (ENABLE_GITHUB_OAUTH) {
+    providers.push(
+      GitHubProvider({
+        clientId: process.env.GITHUB_CLIENT_ID!,
+        clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+      })
+    );
+  }
+
+  if (ENABLE_GOOGLE_OAUTH) {
+    providers.push(
+      GoogleProvider({
+        clientId: process.env.GOOGLE_CLIENT_ID!,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      })
+    );
+  }
+
+  if (ENABLE_EMAIL_AUTH) {
+    providers.push(
+      EmailProvider({
+        server: {
+          host: process.env.SMTP_HOST,
+          port: Number(process.env.SMTP_PORT) || 587,
+          secure: Number(process.env.SMTP_PORT) === 465,
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASSWORD,
+          },
         },
-      },
-      from: process.env.SMTP_FROM || "noreply@lynxprompt.com",
-      maxAge: 24 * 60 * 60, // 24 hours token validity
-      sendVerificationRequest,
-    }),
-    // Passkey authentication provider
-    CredentialsProvider({
-      id: "passkey",
-      name: "Passkey",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        authResponse: { label: "Auth Response", type: "text" },
-        challenge: { label: "Challenge", type: "text" },
-      },
-      async authorize(credentials) {
-        if (
-          !credentials?.email ||
-          !credentials?.authResponse ||
-          !credentials?.challenge
-        ) {
-          return null;
-        }
+        from: process.env.SMTP_FROM || "noreply@lynxprompt.com",
+        maxAge: 24 * 60 * 60,
+        sendVerificationRequest,
+      })
+    );
+  }
 
-        try {
-          const authResponse = JSON.parse(credentials.authResponse);
-
-          // Find user and their authenticator
-          const user = await prismaUsers.user.findUnique({
-            where: { email: credentials.email },
-            include: { authenticators: true },
-          });
-
-          if (!user || user.authenticators.length === 0) {
+  if (ENABLE_PASSKEYS) {
+    providers.push(
+      CredentialsProvider({
+        id: "passkey",
+        name: "Passkey",
+        credentials: {
+          email: { label: "Email", type: "email" },
+          authResponse: { label: "Auth Response", type: "text" },
+          challenge: { label: "Challenge", type: "text" },
+        },
+        async authorize(credentials) {
+          if (
+            !credentials?.email ||
+            !credentials?.authResponse ||
+            !credentials?.challenge
+          ) {
             return null;
           }
 
-          // Find the authenticator used
-          const authenticator = user.authenticators.find(
-            (a) => a.credentialID === authResponse.id
-          );
+          try {
+            const authResponse = JSON.parse(credentials.authResponse);
 
-          if (!authenticator) {
-            return null;
-          }
+            const user = await prismaUsers.user.findUnique({
+              where: { email: credentials.email },
+              include: { authenticators: true },
+            });
 
-          // Verify the authentication response
-          const verification: VerifiedAuthenticationResponse =
-            await verifyAuthenticationResponse({
-              response: authResponse,
-              expectedChallenge: credentials.challenge,
-              expectedOrigin: rpOrigin,
-              expectedRPID: rpID,
-              credential: {
-                id: authenticator.credentialID,
-                publicKey: authenticator.credentialPublicKey,
-                counter: Number(authenticator.counter),
+            if (!user || user.authenticators.length === 0) {
+              return null;
+            }
+
+            const authenticator = user.authenticators.find(
+              (a) => a.credentialID === authResponse.id
+            );
+
+            if (!authenticator) {
+              return null;
+            }
+
+            const verification: VerifiedAuthenticationResponse =
+              await verifyAuthenticationResponse({
+                response: authResponse,
+                expectedChallenge: credentials.challenge,
+                expectedOrigin: rpOrigin,
+                expectedRPID: rpID,
+                credential: {
+                  id: authenticator.credentialID,
+                  publicKey: authenticator.credentialPublicKey,
+                  counter: Number(authenticator.counter),
+                },
+              });
+
+            if (!verification.verified) {
+              return null;
+            }
+
+            await prismaUsers.authenticator.update({
+              where: { id: authenticator.id },
+              data: {
+                counter: BigInt(verification.authenticationInfo.newCounter),
+                lastUsedAt: new Date(),
               },
             });
 
-          if (!verification.verified) {
+            return {
+              id: user.id,
+              email: user.email,
+              name: user.name,
+              image: user.image,
+            };
+          } catch (error) {
+            console.error("Passkey authentication error:", error);
             return null;
           }
+        },
+      })
+    );
+  }
 
-          // Update counter and last used timestamp
-          await prismaUsers.authenticator.update({
-            where: { id: authenticator.id },
-            data: {
-              counter: BigInt(verification.authenticationInfo.newCounter),
-              lastUsedAt: new Date(),
-            },
-          });
+  return providers;
+}
 
-          return {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            image: user.image,
-          };
-        } catch (error) {
-          console.error("Passkey authentication error:", error);
-          return null;
-        }
-      },
-    }),
-  ],
+export const authOptions: NextAuthOptions = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  adapter: PrismaAdapter(prismaUsers as any) as NextAuthOptions["adapter"],
+  providers: buildProviders(),
   pages: {
     signIn: "/auth/signin",
     error: "/auth/error",
   },
   callbacks: {
     async signIn({ user, account, profile }) {
+      // Block new user registration when disabled
+      if (!ENABLE_USER_REGISTRATION && user.email) {
+        const existing = await prismaUsers.user.findUnique({
+          where: { email: user.email },
+          select: { id: true },
+        });
+        if (!existing) {
+          return "/auth/error?error=RegistrationDisabled";
+        }
+      }
+
       // Auto-promote superadmin on first sign-in
       const superadminEmail = process.env.SUPERADMIN_EMAIL;
       if (superadminEmail && user.email === superadminEmail) {

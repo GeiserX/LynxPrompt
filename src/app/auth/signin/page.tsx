@@ -8,12 +8,21 @@ import { Button } from "@/components/ui/button";
 import { Mail, Github, Chrome, ArrowLeft, Loader2, Terminal, CheckCircle, Building2, KeyRound } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Turnstile } from "@/components/turnstile";
+import { useFeatureFlags } from "@/components/providers/feature-flags-provider";
 
 function SignInContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
   const cliSession = searchParams.get("cli_session");
   const { data: session, status } = useSession();
+  const {
+    enableGithubOAuth,
+    enableGoogleOAuth,
+    enableEmailAuth,
+    enableTurnstile,
+    enableSSO,
+    enableUserRegistration,
+  } = useFeatureFlags();
   
   // ALL useState hooks must be declared before any conditional returns (React rules of hooks)
   const [cliAuthComplete, setCliAuthComplete] = useState(false);
@@ -134,8 +143,7 @@ function SignInContent() {
     return "/dashboard"; // Default safe redirect
   })();
 
-  // Turnstile is always enabled for magic link (component handles bypass internally)
-  const turnstileEnabled = true;
+  const turnstileEnabled = enableTurnstile;
 
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -325,9 +333,11 @@ function SignInContent() {
               <div className="mb-6 rounded-lg bg-destructive/10 p-4 text-sm text-destructive">
                 {error === "OAuthAccountNotLinked"
                   ? "This email is already associated with another account."
-                  : error === "Configuration"
-                    ? "Server configuration error. Please try again later."
-                    : "An error occurred. Please try again."}
+                  : error === "RegistrationDisabled"
+                    ? "New account registration is currently disabled. Only existing users can sign in."
+                    : error === "Configuration"
+                      ? "Server configuration error. Please try again later."
+                      : "An error occurred. Please try again."}
               </div>
             )}
 
@@ -340,47 +350,53 @@ function SignInContent() {
 
                 {/* OAuth Buttons */}
                 <div className="mt-8 space-y-3">
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start gap-3"
-                    onClick={() => handleOAuth("github")}
-                    disabled={isLoading}
-                  >
-                    {loadingProvider === "github" ? (
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                    ) : (
-                      <Github className="h-5 w-5" />
-                    )}
-                    Continue with GitHub
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start gap-3"
-                    onClick={() => handleOAuth("google")}
-                    disabled={isLoading}
-                  >
-                    {loadingProvider === "google" ? (
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                    ) : (
-                      <Chrome className="h-5 w-5" />
-                    )}
-                    Continue with Google
-                  </Button>
+                  {enableGithubOAuth && (
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start gap-3"
+                      onClick={() => handleOAuth("github")}
+                      disabled={isLoading}
+                    >
+                      {loadingProvider === "github" ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <Github className="h-5 w-5" />
+                      )}
+                      Continue with GitHub
+                    </Button>
+                  )}
+                  {enableGoogleOAuth && (
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start gap-3"
+                      onClick={() => handleOAuth("google")}
+                      disabled={isLoading}
+                    >
+                      {loadingProvider === "google" ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <Chrome className="h-5 w-5" />
+                      )}
+                      Continue with Google
+                    </Button>
+                  )}
 
                   {/* Teams SSO */}
-                  <Button
-                    variant="outline"
-                    className={`w-full justify-start gap-3 ${showSSO ? 'border-teal-500 bg-teal-500/5' : ''}`}
-                    onClick={() => setShowSSO(!showSSO)}
-                    disabled={isLoading}
-                  >
-                    <Building2 className="h-5 w-5 text-teal-500" />
-                    <span>Teams SSO</span>
-                    <span className="ml-auto text-xs text-muted-foreground">Enterprise</span>
-                  </Button>
+                  {enableSSO && (
+                    <Button
+                      variant="outline"
+                      className={`w-full justify-start gap-3 ${showSSO ? 'border-teal-500 bg-teal-500/5' : ''}`}
+                      onClick={() => setShowSSO(!showSSO)}
+                      disabled={isLoading}
+                    >
+                      <Building2 className="h-5 w-5 text-teal-500" />
+                      <span>Teams SSO</span>
+                      <span className="ml-auto text-xs text-muted-foreground">Enterprise</span>
+                    </Button>
+                  )}
 
                   {/* SSO Expanded Section */}
-                  {showSSO && (
+                  {enableSSO && showSSO && (
                     <div className="rounded-lg border border-teal-500/30 bg-teal-500/5 p-4">
                       <p className="mb-3 text-sm text-muted-foreground">
                         Enter your work email to sign in with your organization&apos;s SSO.
@@ -450,15 +466,17 @@ function SignInContent() {
                   )}
                 </div>
 
-                {/* Divider */}
-                <div className="my-8 flex items-center gap-4">
-                  <div className="h-px flex-1 bg-border" />
-                  <span className="text-sm text-muted-foreground">or</span>
-                  <div className="h-px flex-1 bg-border" />
-                </div>
+                {/* Divider - only show if both OAuth and email are enabled */}
+                {(enableGithubOAuth || enableGoogleOAuth || enableSSO) && enableEmailAuth && (
+                  <div className="my-8 flex items-center gap-4">
+                    <div className="h-px flex-1 bg-border" />
+                    <span className="text-sm text-muted-foreground">or</span>
+                    <div className="h-px flex-1 bg-border" />
+                  </div>
+                )}
 
                 {/* Magic Link */}
-                <form onSubmit={handleMagicLink}>
+                {enableEmailAuth && <form onSubmit={handleMagicLink}>
                   <label className="text-sm font-medium">Email address</label>
                   <div className="mt-2 flex gap-2">
                     <div className="relative flex-1">
@@ -515,7 +533,14 @@ function SignInContent() {
                       {magicLinkError}
                     </div>
                   )}
-                </form>
+                </form>}
+
+                {/* Registration disabled notice */}
+                {!enableUserRegistration && (
+                  <p className="mt-4 text-center text-sm text-muted-foreground">
+                    New account registration is currently disabled. Only existing users can sign in.
+                  </p>
+                )}
 
                 {/* Terms notice - consent required for new users on separate page */}
                 <p className="mt-8 text-center text-xs text-muted-foreground">

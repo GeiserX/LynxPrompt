@@ -1,21 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prismaUsers } from "@/lib/db-users";
+import { ENABLE_SSO } from "@/lib/feature-flags";
 
 /**
  * POST /api/auth/sso/initiate - Initiate SSO authentication
- * Body: { teamSlug: string, callbackUrl: string }
- * 
- * This endpoint handles the SSO flow initiation:
- * - SAML: Generates AuthnRequest and redirects to IdP
- * - OIDC: Redirects to authorization endpoint
- * - LDAP: Returns form for username/password (handled client-side)
- * 
- * TODO: Implement actual SSO provider integrations:
- * - SAML: Use @node-saml/node-saml
- * - OIDC: Use openid-client or NextAuth OIDC provider
- * - LDAP: Use ldapjs for direct authentication
  */
 export async function POST(request: NextRequest) {
+  if (!ENABLE_SSO) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   try {
     const { teamSlug, callbackUrl } = await request.json();
 
