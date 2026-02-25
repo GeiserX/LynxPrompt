@@ -1,6 +1,6 @@
 import Link from "next/link";
+import { Check, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Check, ArrowRight, X } from "lucide-react";
 
 export default function PricingPage() {
   return (
@@ -12,191 +12,108 @@ export default function PricingPage() {
             Marketplace
           </Link>
           <span>/</span>
-          <span>Pricing & Plans</span>
+          <span>Pricing</span>
         </div>
-        <h1 className="text-3xl font-bold tracking-tight">Pricing & Plans</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Pricing</h1>
         <p className="max-w-2xl text-lg text-muted-foreground">
-          LynxPrompt offers full wizard access to everyone. Teams adds AI assistance and enterprise features.
+          LynxPrompt is free and open-source. All core features are available to
+          every user at no cost.
         </p>
       </div>
 
-      {/* Plans comparison */}
+      {/* Free features */}
       <section className="space-y-6">
-        <h2 className="text-2xl font-bold">Subscription Plans</h2>
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Users (Free) */}
-          <div className="rounded-xl border-2 border-primary bg-card p-6">
-            <div className="mb-4">
-              <div className="mb-2 inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                Most Popular
-              </div>
-              <h3 className="text-lg font-semibold">Users</h3>
-              <div className="mt-2">
-                <span className="text-3xl font-bold">€0</span>
-                <span className="text-muted-foreground">/forever</span>
-              </div>
+        <h2 className="text-2xl font-bold">Everything is Free</h2>
+        <div className="rounded-xl border-2 border-primary bg-card p-6">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold">All Features Included</h3>
+            <div className="mt-2">
+              <span className="text-3xl font-bold">€0</span>
+              <span className="text-muted-foreground">/forever</span>
             </div>
-            <ul className="space-y-3 text-sm">
-              <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                Full wizard (all steps)
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                All 16+ platform outputs
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                API access for blueprints
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                Create &amp; store blueprints
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                Save wizard drafts
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                Sell blueprints (70% revenue)
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                Browse &amp; download blueprints
-              </li>
-              <li className="flex items-center gap-2 text-muted-foreground">
-                <X className="h-4 w-4" />
-                AI-powered editing
-              </li>
-              <li className="flex items-center gap-2 text-muted-foreground">
-                <X className="h-4 w-4" />
-                Team-shared blueprints
-              </li>
-              <li className="flex items-center gap-2 text-muted-foreground">
-                <X className="h-4 w-4" />
-                SSO integration
-              </li>
-            </ul>
-            <Button asChild variant="outline" className="mt-6 w-full">
-              <Link href="/auth/signin">Get Started Free</Link>
-            </Button>
           </div>
-
-          {/* Teams */}
-          <div className="rounded-xl border-2 border-teal-500 bg-gradient-to-b from-teal-500/5 to-cyan-500/5 p-6">
-            <div className="mb-4">
-              <div className="mb-2 inline-block rounded-full bg-gradient-to-r from-teal-500 to-cyan-500 px-3 py-1 text-xs font-medium text-white">
-                Enterprise
-              </div>
-              <h3 className="text-lg font-semibold bg-gradient-to-r from-teal-500 to-cyan-500 bg-clip-text text-transparent">Teams</h3>
-              <div className="mt-2">
-                <span className="text-3xl font-bold">€10</span>
-                <span className="text-muted-foreground">/seat/month</span>
-              </div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Minimum 3 seats • 10% off annual
-              </p>
-            </div>
-            <ul className="space-y-3 text-sm">
-              <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-teal-500" />
-                Everything in Users
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-teal-500" />
-                AI-powered blueprint editing
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-teal-500" />
-                AI wizard assistant
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-teal-500" />
-                Team-shared blueprints
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-teal-500" />
-                SSO (SAML, OIDC, LDAP)
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-teal-500" />
-                Centralized billing
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-teal-500" />
-                Only pay for active users
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-teal-500" />
-                Extended AI usage limits
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-teal-500" />
-                Priority support
-              </li>
-            </ul>
-            <Button
-              asChild
-              className="mt-6 w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
-            >
-              <Link href="/teams">Start Teams Trial</Link>
-            </Button>
-          </div>
+          <ul className="space-y-3 text-sm">
+            <li className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-green-500" />
+              Full wizard (all steps, all platform outputs)
+            </li>
+            <li className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-green-500" />
+              Create, store &amp; share blueprints
+            </li>
+            <li className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-green-500" />
+              Browse &amp; download community blueprints
+            </li>
+            <li className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-green-500" />
+              AI-powered editing &amp; wizard assistant (when enabled)
+            </li>
+            <li className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-green-500" />
+              REST API access
+            </li>
+            <li className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-green-500" />
+              CLI tool
+            </li>
+            <li className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-green-500" />
+              Sell blueprints on the marketplace (70% revenue)
+            </li>
+            <li className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-green-500" />
+              Self-hosting support
+            </li>
+          </ul>
         </div>
       </section>
 
-      {/* FAQ */}
+      {/* Marketplace payments */}
       <section className="space-y-4">
-        <h2 className="text-2xl font-bold">Common Questions</h2>
-        <div className="space-y-4">
-          <div className="rounded-lg border bg-card p-4">
-            <h3 className="font-medium">Why is most of LynxPrompt free?</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              We believe everyone should have access to great AI IDE configurations. The full wizard, 
-              all platform outputs, API access, and selling blueprints are all free. Teams is for 
-              organizations that need AI assistance (which costs us money to provide) and enterprise features.
-            </p>
+        <h2 className="text-2xl font-bold">Marketplace Payments</h2>
+        <p className="text-muted-foreground">
+          When marketplace payments are enabled (<code className="rounded bg-muted px-1.5 py-0.5 text-sm">ENABLE_STRIPE=true</code>),
+          blueprint creators can set prices on their blueprints. Buyers pay through Stripe at checkout.
+        </p>
+        <div className="rounded-xl border bg-card p-6 space-y-4">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="rounded-lg border p-4 text-center">
+              <p className="text-sm text-muted-foreground">Seller receives</p>
+              <p className="mt-1 text-2xl font-bold text-green-500">70%</p>
+            </div>
+            <div className="rounded-lg border p-4 text-center">
+              <p className="text-sm text-muted-foreground">Platform commission</p>
+              <p className="mt-1 text-2xl font-bold">30%</p>
+            </div>
+            <div className="rounded-lg border p-4 text-center">
+              <p className="text-sm text-muted-foreground">Minimum price</p>
+              <p className="mt-1 text-2xl font-bold">€5</p>
+            </div>
           </div>
-          <div className="rounded-lg border bg-card p-4">
-            <h3 className="font-medium">What payment methods do you accept?</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              We accept all major credit cards through Stripe.
-            </p>
-          </div>
-          <div className="rounded-lg border bg-card p-4">
-            <h3 className="font-medium">Do you offer annual billing?</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Yes! Annual Teams billing offers a <strong>10% discount</strong>. Annual subscriptions 
-              cannot be canceled mid-cycle but provide significant savings.
-            </p>
-          </div>
-          <div className="rounded-lg border bg-card p-4">
-            <h3 className="font-medium">How does Teams billing work?</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Teams is billed at <strong>€10 per seat per month</strong> (€9/seat/month with annual), 
-              with a minimum of 3 seats. You only pay for <strong>active users</strong> — team members who 
-              haven&apos;t logged in during the billing cycle aren&apos;t charged. Pro-rated billing applies 
-              when adding seats mid-cycle.
-            </p>
-          </div>
-          <div className="rounded-lg border bg-card p-4">
-            <h3 className="font-medium">What SSO providers does Teams support?</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Teams supports <strong>SAML 2.0</strong> (Okta, Azure AD, OneLogin), 
-              <strong> OpenID Connect</strong> (Google Workspace, Auth0), and 
-              <strong> LDAP/Active Directory</strong>. Team admins configure SSO from 
-              the team settings dashboard.
-            </p>
-          </div>
-          <div className="rounded-lg border bg-card p-4">
-            <h3 className="font-medium">Can team members share blueprints privately?</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Yes! Team blueprints have three visibility levels: <strong>Private</strong> (only you), 
-              <strong> Team</strong> (all team members), or <strong>Public</strong> (everyone). 
-              Great for sharing internal coding standards and company-specific configurations.
-            </p>
-          </div>
+          <p className="text-sm text-muted-foreground">
+            If <code className="rounded bg-muted px-1.5 py-0.5 text-xs">ENABLE_STRIPE</code> is
+            not set, the marketplace is browse-only and all blueprints are free to download.
+          </p>
+        </div>
+      </section>
+
+      {/* Self-hosting note */}
+      <section className="space-y-4">
+        <h2 className="text-2xl font-bold">Self-Hosting</h2>
+        <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
+          <p className="text-sm">
+            Running your own instance? All features work out of the box. AI features
+            require an <code className="rounded bg-muted px-1.5 py-0.5 text-xs">ANTHROPIC_API_KEY</code>,
+            and marketplace payments require Stripe credentials. See the{" "}
+            <Link
+              href="/docs/self-hosting"
+              className="text-primary hover:underline"
+            >
+              Self-Hosting Guide
+            </Link>{" "}
+            for full configuration details.
+          </p>
         </div>
       </section>
 
