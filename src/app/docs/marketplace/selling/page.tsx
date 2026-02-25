@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { DollarSign, Check, ArrowRight } from "lucide-react";
+import { Check, ArrowRight } from "lucide-react";
 
 export default function SellingBlueprintsPage() {
   return (
@@ -18,8 +18,18 @@ export default function SellingBlueprintsPage() {
           Selling Blueprints
         </h1>
         <p className="max-w-2xl text-lg text-muted-foreground">
-          Turn your AI configuration expertise into income. All users
-          can create and sell premium blueprints.
+          Turn your AI configuration expertise into income. Any user can create
+          and sell paid blueprints when marketplace payments are enabled.
+        </p>
+      </div>
+
+      {/* Stripe note */}
+      <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+        <p className="text-sm">
+          <strong>Note:</strong> Selling paid blueprints requires the platform to
+          have <code className="rounded bg-muted px-1.5 py-0.5 text-xs">ENABLE_STRIPE=true</code>{" "}
+          with valid Stripe API keys configured. On self-hosted instances without
+          Stripe, you can still share blueprints for free.
         </p>
       </div>
 
@@ -85,7 +95,7 @@ export default function SellingBlueprintsPage() {
       <section className="space-y-4">
         <h2 className="text-2xl font-bold">Your Earnings</h2>
         <p className="text-muted-foreground">
-          You keep 70% of every sale. Here&apos;s what that looks like:
+          You keep 70% of every sale. The platform takes a 30% commission.
         </p>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-sm">
@@ -199,11 +209,3 @@ export default function SellingBlueprintsPage() {
     </div>
   );
 }
-
-
-
-
-
-
-
-

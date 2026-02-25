@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export default function BillingFAQPage() {
+export default function MarketplacePaymentsFAQPage() {
   return (
     <div className="space-y-10">
       {/* Header */}
@@ -10,136 +10,70 @@ export default function BillingFAQPage() {
             FAQ
           </Link>
           <span>/</span>
-          <span>Billing & Subscriptions</span>
+          <span>Marketplace Payments</span>
         </div>
         <h1 className="text-3xl font-bold tracking-tight">
-          Billing & Subscriptions
+          Marketplace Payments
         </h1>
         <p className="max-w-2xl text-lg text-muted-foreground">
-          Common questions about payments, subscriptions, and refunds.
+          Common questions about buying and selling blueprints on the
+          marketplace.
         </p>
       </div>
 
       {/* FAQ items */}
       <section className="space-y-4">
         <div className="rounded-lg border bg-card p-4">
-          <h3 className="font-semibold">What payment methods do you accept?</h3>
+          <h3 className="font-semibold">Is LynxPrompt free to use?</h3>
           <p className="mt-2 text-muted-foreground">
-            We accept all major credit cards (Visa, Mastercard, American
-            Express) through Stripe.
-          </p>
-        </div>
-
-        <div className="rounded-lg border bg-card p-4">
-          <h3 className="font-semibold">Can I cancel my subscription?</h3>
-          <p className="mt-2 text-muted-foreground">
-            <strong>Monthly subscriptions:</strong> Yes, you can cancel anytime from{" "}
-            <Link
-              href="/settings/billing"
-              className="text-primary hover:underline"
-            >
-              Settings → Billing
-            </Link>
-            . You&apos;ll retain access until the end of your billing period.
-            <br /><br />
-            <strong>Annual subscriptions:</strong> Annual plans are a yearly commitment and cannot be 
-            canceled mid-cycle. You keep full access until the year ends, but no refunds are provided for 
-            the remaining period.
-          </p>
-        </div>
-
-        <div className="rounded-lg border bg-card p-4">
-          <h3 className="font-semibold">Do you offer refunds?</h3>
-          <p className="mt-2 text-muted-foreground">
-            <strong>Subscriptions:</strong> We don&apos;t offer refunds for
-            partial months, but you can cancel anytime and keep access until the
-            period ends.
-            <br />
-            <br />
-            <strong>Blueprint purchases:</strong> Per EU digital content
-            regulations, refunds aren&apos;t available after download because
-            you consent to immediate access. Refunds may be considered for
-            non-delivery or technical issues.
-          </p>
-        </div>
-
-        <div className="rounded-lg border bg-card p-4">
-          <h3 className="font-semibold">What&apos;s the difference between Users and Teams?</h3>
-          <p className="mt-2 text-muted-foreground">
-            <strong>Users (Free):</strong> Full wizard access, all platforms, API access,
-            ability to sell blueprints (70% revenue), browse and download blueprints.
-            <br />
-            <br />
-            <strong>Teams (€10/seat/month):</strong> Everything in Users, plus AI-powered
-            blueprint editing, team-shared blueprints, SSO (SAML, OIDC, LDAP),
-            centralized billing, and 10% off all paid blueprint purchases.
-          </p>
-        </div>
-
-        <div className="rounded-lg border bg-card p-4">
-          <h3 className="font-semibold">Do you offer annual billing?</h3>
-          <p className="mt-2 text-muted-foreground">
-            Yes! You can choose between monthly and annual billing. Annual plans offer a <strong>10% discount</strong> compared to monthly billing:
-            <br /><br />
-            <strong>Teams:</strong> €108/seat/year (€9/seat/month) vs €10/seat/month
-            <br /><br />
-            Note: Annual subscriptions are a yearly commitment and cannot be canceled or refunded mid-cycle.
-          </p>
-        </div>
-
-        <div className="rounded-lg border bg-card p-4">
-          <h3 className="font-semibold">How do I upgrade or downgrade?</h3>
-          <p className="mt-2 text-muted-foreground">
-            Go to{" "}
-            <Link
-              href="/settings/billing"
-              className="text-primary hover:underline"
-            >
-              Settings → Billing
-            </Link>{" "}
-            and click &quot;Change Plan&quot;. Changes take effect immediately,
-            and you&apos;ll be charged the prorated difference.
-          </p>
-        </div>
-
-        <div className="rounded-lg border bg-card p-4">
-          <h3 className="font-semibold">Where can I see my invoices?</h3>
-          <p className="mt-2 text-muted-foreground">
-            Click &quot;Manage Billing&quot; in{" "}
-            <Link
-              href="/settings/billing"
-              className="text-primary hover:underline"
-            >
-              Settings → Billing
-            </Link>{" "}
-            to access Stripe&apos;s customer portal, where you can view and
-            download all invoices.
+            Yes. All features — the wizard, blueprints, AI editing, API access,
+            and CLI — are free. The only payments that exist are optional
+            marketplace purchases when a blueprint creator sets a price.
           </p>
         </div>
 
         <div className="rounded-lg border bg-card p-4">
           <h3 className="font-semibold">
-            I&apos;m having trouble with payment. What should I do?
+            How do marketplace payments work?
           </h3>
           <p className="mt-2 text-muted-foreground">
-            First, check that your card details are correct in the billing
-            portal. If the problem persists, contact{" "}
+            When the platform has payments enabled (<code className="rounded bg-muted px-1.5 py-0.5 text-xs">ENABLE_STRIPE=true</code>),
+            blueprint creators can set a price (minimum €5) on their blueprints.
+            Buyers pay through Stripe at checkout. The seller receives 70% and
+            the platform takes a 30% commission.
+          </p>
+        </div>
+
+        <div className="rounded-lg border bg-card p-4">
+          <h3 className="font-semibold">What payment methods are accepted?</h3>
+          <p className="mt-2 text-muted-foreground">
+            All major credit cards (Visa, Mastercard, American Express) through
+            Stripe. The exact amount is shown before you confirm.
+          </p>
+        </div>
+
+        <div className="rounded-lg border bg-card p-4">
+          <h3 className="font-semibold">Can I get a refund for a blueprint purchase?</h3>
+          <p className="mt-2 text-muted-foreground">
+            Per EU digital content regulations, refunds aren&apos;t available
+            after download because you consent to immediate access. Refunds may
+            be considered for non-delivery or technical issues — contact{" "}
             <a
               href="mailto:support@lynxprompt.com"
               className="text-primary hover:underline"
             >
               support@lynxprompt.com
-            </a>{" "}
-            with your account email and we&apos;ll help resolve the issue.
+            </a>
+            .
           </p>
         </div>
 
         <div className="rounded-lg border bg-card p-4">
           <h3 className="font-semibold">How do seller payouts work?</h3>
           <p className="mt-2 text-muted-foreground">
-            If you sell blueprints, you can request a payout when you have at
-            least €5 in available earnings. Payouts are sent via PayPal and
-            typically process within 3-5 business days. See{" "}
+            When you have at least €5 in available earnings, you can request a
+            payout. Payouts are sent via PayPal and typically process within 3-5
+            business days. See{" "}
             <Link
               href="/docs/marketplace/payouts"
               className="text-primary hover:underline"
@@ -151,11 +85,22 @@ export default function BillingFAQPage() {
         </div>
 
         <div className="rounded-lg border bg-card p-4">
-          <h3 className="font-semibold">What currency do you charge in?</h3>
+          <h3 className="font-semibold">What currency are prices in?</h3>
           <p className="mt-2 text-muted-foreground">
             All prices are in Euros (EUR). Stripe automatically converts to your
-            card&apos;s currency at checkout. You&apos;ll see the converted
-            amount before confirming.
+            card&apos;s currency at checkout.
+          </p>
+        </div>
+
+        <div className="rounded-lg border bg-card p-4">
+          <h3 className="font-semibold">
+            Are payments available on self-hosted instances?
+          </h3>
+          <p className="mt-2 text-muted-foreground">
+            Only if the instance administrator enables Stripe by setting{" "}
+            <code className="rounded bg-muted px-1.5 py-0.5 text-xs">ENABLE_STRIPE=true</code>{" "}
+            and providing valid Stripe API keys. Without this, the marketplace
+            is free-only and all blueprints can be downloaded at no cost.
           </p>
         </div>
       </section>
@@ -178,4 +123,3 @@ export default function BillingFAQPage() {
     </div>
   );
 }
-

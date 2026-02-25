@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Sparkles, Wand2, MessageSquare, ArrowRight } from "lucide-react";
+import { Sparkles, Wand2, MessageSquare } from "lucide-react";
 
 export default function AIFeaturesOverviewPage() {
   return (
@@ -18,14 +18,20 @@ export default function AIFeaturesOverviewPage() {
         </p>
       </div>
 
-      {/* Teams note */}
-      <div className="rounded-xl border border-teal-500/30 bg-teal-500/5 p-4">
+      {/* Configuration note */}
+      <div className="rounded-xl border border-purple-500/30 bg-purple-500/5 p-4">
         <p className="text-sm">
-          <strong>Teams Feature:</strong> AI features are available to Teams
-          members.{" "}
-          <Link href="/teams" className="text-primary hover:underline">
-            Learn about Teams →
-          </Link>
+          <strong>Configuration:</strong> AI features are controlled by the{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">ENABLE_AI</code> environment
+          variable and require an{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">ANTHROPIC_API_KEY</code>.
+          The default model is <code className="rounded bg-muted px-1.5 py-0.5 text-xs">claude-3-5-haiku-latest</code>,
+          configurable via <code className="rounded bg-muted px-1.5 py-0.5 text-xs">AI_MODEL</code>.
+          See the{" "}
+          <Link href="/docs/self-hosting" className="text-primary hover:underline">
+            Self-Hosting Guide
+          </Link>{" "}
+          for setup details.
         </p>
       </div>
 
@@ -108,7 +114,7 @@ export default function AIFeaturesOverviewPage() {
             <div>
               <h3 className="font-semibold">AI Processes Your Request</h3>
               <p className="mt-1 text-muted-foreground">
-                Our AI understands your intent and generates the appropriate
+                The AI understands your intent and generates the appropriate
                 changes.
               </p>
             </div>
@@ -160,31 +166,6 @@ export default function AIFeaturesOverviewPage() {
           </div>
         </div>
       </section>
-
-      {/* CTA */}
-      <div className="flex flex-col gap-4 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 p-6 text-white sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-lg font-semibold">Unlock AI Features</h2>
-          <p className="mt-1 text-sm text-white/80">
-            Join a Team to access AI-powered editing and assistance.
-          </p>
-        </div>
-        <Link
-          href="/teams"
-          className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-teal-600 transition-colors hover:bg-white/90"
-        >
-          Get Teams
-          <ArrowRight className="h-4 w-4" />
-        </Link>
-      </div>
     </div>
   );
 }
-
-
-
-
-
-
-
-
