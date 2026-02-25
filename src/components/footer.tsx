@@ -1,12 +1,8 @@
-"use client";
-
 import Link from "next/link";
 import { MessageSquareHeart } from "lucide-react";
-import { useFeatureFlags } from "@/components/providers/feature-flags-provider";
+import { STATUS_PAGE_URL, ENABLE_FEDERATION } from "@/lib/feature-flags";
 
 export function Footer() {
-  const { enableFederation, statusPageUrl } = useFeatureFlags();
-
   return (
     <footer className="border-t py-8">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -72,7 +68,7 @@ export function Footer() {
             >
               Contact
             </Link>
-            {enableFederation && (
+            {ENABLE_FEDERATION && (
               <Link
                 href="/federation"
                 className="text-muted-foreground hover:underline"
@@ -80,16 +76,16 @@ export function Footer() {
                 Federation
               </Link>
             )}
-            {statusPageUrl && (
+            {STATUS_PAGE_URL ? (
               <a
-                href={statusPageUrl}
+                href={STATUS_PAGE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:underline"
               >
                 Status
               </a>
-            )}
+            ) : null}
           </div>
 
           {/* Actions and Social */}
