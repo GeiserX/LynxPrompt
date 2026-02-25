@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Wand2, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 export default function AIEditingPage() {
   return (
@@ -13,17 +13,27 @@ export default function AIEditingPage() {
           <span>/</span>
           <span>AI Blueprint Editing</span>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="rounded-full bg-teal-500/10 px-3 py-1 text-sm font-medium text-teal-600 dark:text-teal-400">
-            Teams Only
-          </span>
-        </div>
         <h1 className="text-3xl font-bold tracking-tight">
           AI Blueprint Editing
         </h1>
         <p className="max-w-2xl text-lg text-muted-foreground">
           Modify existing blueprints using natural language instructions. No
           manual editing required.
+        </p>
+      </div>
+
+      {/* Configuration note */}
+      <div className="rounded-xl border border-purple-500/30 bg-purple-500/5 p-4">
+        <p className="text-sm">
+          AI editing requires{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">ENABLE_AI=true</code> and
+          a valid{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">ANTHROPIC_API_KEY</code>.
+          Instance administrators can configure this in their environment. See{" "}
+          <Link href="/docs/self-hosting" className="text-primary hover:underline">
+            Self-Hosting Guide
+          </Link>{" "}
+          for details.
         </p>
       </div>
 
@@ -217,11 +227,3 @@ export default function AIEditingPage() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
