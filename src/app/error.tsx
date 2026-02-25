@@ -63,7 +63,7 @@ export default function Error({
         </div>
 
         {/* Status Link */}
-        {flags.statusPageUrl && (
+        {flags.statusPageUrl ? (
           <p className="text-slate-500 text-sm">
             Check our{" "}
             <a
@@ -76,14 +76,14 @@ export default function Error({
             </a>{" "}
             for updates.
           </p>
-        )}
+        ) : null}
 
         {/* Error digest for debugging */}
-        {error.digest && (
+        {error.digest ? (
           <p className="text-slate-600 text-xs font-mono">
             Error ID: {error.digest}
           </p>
-        )}
+        ) : null}
       </div>
     </div>
   );
