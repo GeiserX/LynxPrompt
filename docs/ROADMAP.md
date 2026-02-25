@@ -2,6 +2,167 @@
 
 This document tracks planned features, improvements, and business decisions for LynxPrompt.
 
+---
+
+## 🔥 v2.0 — Self-Hostable Platform Transformation (February 2026)
+
+### Vision
+
+LynxPrompt v2.0 pivots from a SaaS product to a **self-hostable platform** that companies can deploy on their own premises. The core product becomes open and deployable, with monetization shifting to marketplace commission and optional services.
+
+Companies deploy their own instance to manage AI IDE configurations (AGENTS.md, .cursor/rules/, etc.) internally. All features are available to all users — no tier gating.
+
+### Key Decisions (Confirmed)
+
+#### 1. Remove Pricing & Teams Subscription Tier
+- Delete the `/pricing` page entirely
+- Remove `SubscriptionPlan` enum and all tier-gating logic
+- All features (AI, SSO, wizard, API) available to everyone
+- Keep `Team` model for organizational grouping (useful for companies)
+- Remove `TeamBillingRecord`, Stripe subscription fields from Team
+- Remove all "Upgrade to Teams" CTAs from web UI, CLI, and docs
+
+#### 2. Stripe: Optional with Platform Commission
+- `ENABLE_STRIPE=false` by default — when disabled, all blueprints are free
+- When enabled, **the default Stripe account is LynxPrompt's (hardcoded)**
+- Any deployment that enables paid marketplace blueprints routes payments through LynxPrompt's Stripe account — LynxPrompt earns the 30% platform commission
+- Companies that want their own Stripe account must provide their own keys explicitly
+- This is the monetization model for the open-source platform: free to deploy, LynxPrompt earns from marketplace transactions across all federated instances
+
+#### 3. Remove GlitchTip (Error Tracking)
+- Remove all GlitchTip-specific code and hardcoded DSNs
+- Make Sentry integration optional — works if `SENTRY_DSN` is set, skip entirely if not
+- Delete GlitchTip infrastructure (containers, Caddy entry, DNS record, gitea repo)
+- Keep `@sentry/nextjs` as optional for companies that want their own Sentry/GlitchTip
+
+#### 4. Remove ClickHouse (Analytics)
+- Remove all ClickHouse code (analytics lib, API routes, env vars, docker-compose service)
+- ClickHouse was used for trending templates, search stats, wizard funnel
+- Keep ClickHouse as a wizard database option (it's a valid DB users might configure)
+
+#### 5. Feature Toggles via Environment Variables
+All features configurable via env vars for maximum deployment flexibility:
+
+**Auth:**
+- `ENABLE_GITHUB_OAUTH=false` — show/hide GitHub login
+- `ENABLE_GOOGLE_OAUTH=false` — show/hide Google login
+- `ENABLE_EMAIL_AUTH=true` — magic link / email login
+- `ENABLE_PASSKEYS=true` — WebAuthn passkeys
+- `ENABLE_TURNSTILE=false` — Cloudflare Turnstile CAPTCHA
+- `ENABLE_SSO=false` — SAML/OIDC/LDAP (promoted from Teams-only to first-class)
+- `ENABLE_USER_REGISTRATION=true` — set false for invite-only instances
+
+**AI:**
+- `ENABLE_AI=false` — master toggle for all AI features (editing, wizard assistant)
+- `ANTHROPIC_API_KEY` — required when AI enabled
+- `AI_MODEL=claude-3-5-haiku-latest` — configurable model
+
+**Content:**
+- `ENABLE_BLOG=false` — blog nav item and routes
+- `ENABLE_SUPPORT_FORUM=false` — support forum nav item and routes
+
+**Marketplace:**
+- `ENABLE_STRIPE=false` — paid blueprints and Stripe checkout
+
+**Analytics:**
+- `UMAMI_SCRIPT_URL` — configurable Umami script URL
+- `NEXT_PUBLIC_UMAMI_WEBSITE_ID` — Umami website ID (already exists)
+
+**Branding:**
+- `APP_NAME=LynxPrompt` — app title in header, emails, meta tags
+- `APP_URL=http://localhost:3000` — base URL
+- `APP_LOGO_URL` — custom logo URL
+
+#### 6. Database Consolidation
+- **Default**: single PostgreSQL database (all 4 Prisma schemas share one DB)
+- **Advanced**: users can split into separate databases via different `DATABASE_URL_*` vars
+- Remove Percona pg_tde from development docker-compose — use standard `postgres:18-alpine` everywhere
+- Keep Percona pg_tde only in production/dev-server docker-compose (gitea) where it's already deployed
+- New `docker-compose.selfhost.yml`: 1 Postgres + 1 LynxPrompt container
+
+#### 7. Dynamic CSP Headers
+- Build Content-Security-Policy in `proxy.ts` based on enabled services
+- Only include Umami, Turnstile, Sentry domains when those services are configured
+- Cleaner security headers for minimal deployments
+
+#### 8. Hardcoded URL Audit
+- Replace all `lynxprompt.com` hardcoded references with `APP_URL` env var
+- Affects: email templates, fallback URLs, image references, API fallbacks, structured data
+
+#### 9. Health Check Enhancement
+- `/api/health` checks actual DB connectivity, not just returns 200
+- Critical for container orchestration and monitoring
+
+#### 10. Auto-Migration on Startup
+- `entrypoint.sh` runs `prisma migrate deploy` for all schemas on container start
+- Idempotent — safe for every restart
+- Companies don't need to run migrations manually
+
+### Federated Interconnect (Planned v2.x)
+
+A decentralized blueprint sharing network across LynxPrompt instances.
+
+**Concept:**
+- Each instance opts in via `ENABLE_FEDERATION=true` (default `true`)
+- Instances register themselves in a central registry (GitHub Gist or lightweight discovery service)
+- Each instance publishes its public blueprints via a standardized API
+- When browsing the marketplace, users see blueprints from all federated instances
+- Each blueprint shows its origin domain (e.g., "from lynxprompt.com", "from acme-corp.internal")
+- Results are lazy-loaded to keep the marketplace responsive
+
+**Architecture:**
+- Central registry: a JSON file (Gist or static endpoint) listing participating instances
+  - Each instance writes its URL, name, and public API endpoint
+  - Registry is polled periodically by each instance
+- Federation API: `/api/v1/federation/blueprints` — returns public blueprints
+- Blueprint metadata includes `origin_domain`, `origin_instance_name`
+- Rate limiting and API key exchange for security
+- Instance verification (domain ownership check)
+
+**Stripe Integration with Federation:**
+- When a user purchases a paid blueprint from a remote federated instance, the payment routes through the origin instance's Stripe (which defaults to LynxPrompt's account)
+- This means LynxPrompt earns commission on all marketplace transactions across the entire federation
+
+**Testing Plan:**
+- Use prod (lynxprompt.com) and dev (dev.lynxprompt.com) as the first two federated instances
+- Dev instance should show prod blueprints with "from lynxprompt.com" label
+- Validate lazy loading, search across instances, and cross-instance purchases
+
+**Implementation Phases:**
+1. Define federation API schema and protocol
+2. Build the central registry mechanism
+3. Implement federation client (fetching remote blueprints)
+4. UI for federated blueprints (origin badges, lazy loading)
+5. Cross-instance purchasing via Stripe
+6. Admin controls (allowlist/blocklist federated instances)
+
+### Documentation Changes for v2.0
+
+- Delete: pricing page, pricing docs, billing FAQ
+- Rewrite: AI features docs (remove "Teams-only" language)
+- Rewrite: marketplace selling docs (Stripe optional)
+- Add: self-hosting guide with env var reference
+- Add: `docker-compose.selfhost.yml` quick start
+- Rewrite: README.md (self-hostable platform positioning)
+- Update: CLI docs (configurable server URL for self-hosted)
+
+### Infrastructure Changes for v2.0
+
+- Delete GlitchTip stack from watchtower (containers + gitea repo + Caddy entry + DNS)
+- Update prod docker-compose (gitea/watchtower/lynxprompt/) with all new feature flags enabled
+- Update dev docker-compose (gitea/geiserback/lynxprompt-dev/) with all new feature flags enabled
+- Bump image tag to `drumsergio/lynxprompt:2.0.0`
+- Remove Sentry DSN env vars from prod/dev docker-compose
+
+### Version
+
+- Web app: 2.0.0
+- CLI: 2.0.0
+- Single PR: `feat/v2.0-self-hosting` → `main`
+- Preservation branch: `sergio-before-internationalization` (captures pre-v2.0 state)
+
+---
+
 ## 🏢 Business & Legal Foundation
 
 ### Entity & Operator
@@ -61,7 +222,7 @@ Per EU Consumer Rights Directive, digital content can waive 14-day withdrawal IF
 - [x] GDPR Article 6 legal basis (Contract + Legitimate Interest)
 - [x] Physical address disclosure
 - [x] "No DPO appointed" statement
-- [x] Third-party processors detailed (GitHub, Google, Stripe, Umami, Anthropic, GlitchTip)
+- [x] Third-party processors detailed (GitHub, Google, Stripe, Umami, Anthropic, ~~GlitchTip~~ removed in v2.0)
 - [x] Umami: self-hosted in EU, cookieless, legitimate interest basis
 - [x] International transfers + SCCs
 - [x] No automated decision-making statement
@@ -126,6 +287,7 @@ Per EU Consumer Rights Directive, digital content can waive 14-day withdrawal IF
 
 - [x] Project scaffolding with Next.js 15, React 19, TypeScript
 - [x] PostgreSQL database with Prisma ORM (dual-database architecture)
+- [x] ClickHouse for analytics (self-hosted EU)
 - [x] Umami analytics (self-hosted EU, cookieless)
 - [x] Authentication with NextAuth.js (GitHub, Google, Magic Link, Passkeys)
 - [x] Homepage with platform carousel
@@ -295,23 +457,11 @@ Based on GitHub's recommended agents, offer one-click presets:
 | `@api-agent` | Builds API endpoints | `npm run dev`, `curl` tests | Modify routes, ask before schema changes |
 | `@deploy-agent` | Handles dev deployments | `npm run build`, `docker build` | Only deploy to dev, require approval |
 
-#### Wizard Tiers (Feature Gating) ✅ IMPLEMENTED
+#### ~~Wizard Tiers (Feature Gating)~~ — REMOVED in v2.0
 
-| Feature                                | Free | Pro | Max |
-| -------------------------------------- | ---- | --- | --- |
-| Basic wizard steps                     | ✅   | ✅  | ✅  |
-| Intermediate wizard steps              | ❌   | ✅  | ✅  |
-| Advanced wizard steps                  | ❌   | ❌  | ✅  |
-| All community blueprints (including paid) | ❌   | ❌  | ✅  |
+> **v2.0 Change:** All wizard steps are available to all users. No tier gating.
 
-**Wizard Step Tiers (Updated):**
-- **Basic** (Free): Project Info, Tech Stack, Platforms, Generate
-- **Intermediate** (Pro): + Repository, Release Strategy, Commands
-- **Advanced** (Max): + Persona, Code Style, Boundaries, Agent Presets
-
-**Admin Privileges:**
-- ADMIN and SUPERADMIN roles automatically receive MAX tier (no payment required)
-- Displayed as "Admin" badge in billing section
+All wizard steps (Basic, Intermediate, Advanced) are accessible to everyone.
 
 #### User Dashboard
 
@@ -436,7 +586,7 @@ When downloading, user sees:
 
 #### Template Analytics
 
-- [ ] Track template downloads/usage
+- [ ] Track template downloads/usage ~~(ClickHouse)~~ (alternative TBD post-v2.0)
 - [ ] Show trending templates
 - [ ] Usage statistics for template authors
 - [ ] Revenue reports for paid templates
@@ -445,58 +595,22 @@ When downloading, user sees:
 
 ## 💰 Monetization Strategy
 
-### Subscription Tiers
+### ~~Subscription Tiers~~ — REMOVED in v2.0
 
-| Tier      | Monthly        | Annual (10% off) | Features                                                       |
-| --------- | -------------- | ---------------- | -------------------------------------------------------------- |
-| **Free**  | €0/month       | €0/year          | Basic templates, limited wizard features                       |
-| **Pro**   | €5/month       | €54/year         | Intermediate repo wizards, priority support                    |
-| **Max**   | €20/month      | €216/year        | Advanced wizards + ALL community prompts (including paid ones) |
-| **Teams** | €10/seat/month | €108/seat/year   | Everything in Max + team features, SSO, centralized billing    |
+> **v2.0 Change:** All subscription tiers (Free/Pro/Max/Teams) have been removed. All features are available to all users. The monetization model is now marketplace commission (see v2.0 section above).
 
-#### Key Subscription Rules
+Previously:
 
-- **Users (free)**: Full wizard access, all platforms, API, sell blueprints
-- **Teams**: Everything in Users + AI features, SSO, team-shared blueprints
+| Tier | Status |
+|------|--------|
+| Free | Now the only tier — all features included |
+| Pro | Removed |
+| Max | Removed |
+| Teams | Removed (Team org model kept for grouping, billing removed) |
 
-#### Billing Intervals
+### ~~Teams Tier~~ — REMOVED in v2.0
 
-- **Monthly**: Can be canceled anytime. Access continues until end of billing period.
-- **Annual**: 10% discount. Cannot be canceled mid-cycle (yearly commitment). Access continues until year ends.
-
-### Teams Tier Details ✅ IMPLEMENTED
-
-| Setting | Value |
-|---------|-------|
-| Price | €10/seat/month |
-| Minimum seats | 3 |
-| Maximum seats | Unlimited |
-| Color | Teal/Cyan gradient |
-| AI usage limit | €5/user/month |
-
-#### Teams Features
-
-- **Team-shared blueprints**: Share blueprints privately within your team
-- **Blueprint visibility**: Private, Team, or Public options
-- **SSO authentication**: SAML 2.0, OpenID Connect, LDAP/Active Directory
-- **Centralized billing**: One admin pays for all seats
-- **Active user billing**: Only pay for users who logged in during the billing period
-- **Roles**: ADMIN (full control) and MEMBER (team access)
-- **Multiple admins**: Teams can have multiple administrators
-- **Pro-rated billing**: Adding seats mid-cycle charges prorated amount
-- **Credits**: Unused seats generate credits for next cycle
-
-#### Teams Billing Logic
-
-```
-Monthly Bill = €10 × MAX(active_users, 3)
-
-Where:
-- active_users = users who logged in during the billing period
-- Minimum 3 seats always billed (even if only 2 active)
-- Mid-cycle additions: (€10 / 30 days) × days_remaining × new_seats
-- Credits: (billed_seats - active_seats) × €10 → next cycle
-```
+> Team management (members, invitations, SSO) is kept as an organizational feature but is no longer a paid tier. SSO is promoted to a first-class feature available to all instances via `ENABLE_SSO` env var.
 
 ### Template Marketplace Pricing
 
@@ -733,7 +847,7 @@ POST   /api/generate               - Generate config files from wizard data
 
 - [ ] Redis for caching/sessions
 - [ ] S3/R2 for file storage (template assets, user uploads)
-- [x] GlitchTip error tracking (self-hosted at glitchtip.lynxprompt.com)
+- [x] ~~GlitchTip error tracking~~ → **Removed in v2.0** (Sentry optional via env var)
 - [x] Status page (Uptime Kuma) at status.lynxprompt.com
 - [ ] CDN for static assets
 - [ ] Database backups automation
@@ -741,8 +855,9 @@ POST   /api/generate               - Generate config files from wizard data
 
 ### Current Infrastructure
 
-- [x] PostgreSQL (4 databases: app, users, blog, support)
-- [x] Umami (self-hosted EU, cookieless analytics)
+- [x] PostgreSQL (4 databases: app, users, blog, support) — **v2.0: single DB default, multi-DB optional**
+- [x] ~~ClickHouse (self-hosted EU, analytics)~~ → **Removed in v2.0**
+- [x] Umami (self-hosted EU, cookieless analytics) — **v2.0: configurable via env var**
 - [x] Docker deployment with GitOps (Portainer)
 - [x] Cloudflare DDoS protection and WAF
 - [x] TLS 1.3 encryption in transit
@@ -758,7 +873,7 @@ POST   /api/generate               - Generate config files from wizard data
 - [ ] Annual third-party penetration test
 - [ ] Bug bounty program (HackerOne or similar)
 
-> **Note:** GlitchTip is preferred over Sentry for self-hosted error tracking. It keeps all data in EU.
+> **Note (v2.0):** GlitchTip and ClickHouse have been removed. Error tracking is optional via generic Sentry DSN env var. Companies can point to their own Sentry/GlitchTip instance if desired.
 
 ---
 
@@ -1477,7 +1592,7 @@ This enables:
 - Multi-language support (i18n) - only when user base justifies
 - **Cryptocurrency payments (Bitcoin, Ethereum, USDC) via Coinbase Commerce**
 - Custom integrations (Slack, Teams notifications)
-- White-label solutions for enterprise
+- ~~White-label solutions for enterprise~~ → **Partially addressed in v2.0** (custom branding via `APP_NAME`, `APP_LOGO_URL` env vars)
 
 ### Completed Ideas ✅
 - ~~Annual subscription discount~~ → 10% discount (~1.2 months free)
