@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { envBool } from "@/lib/feature-flags";
 
+export const dynamic = "force-dynamic";
+
 export default function SupportLayout({
   children,
 }: {
