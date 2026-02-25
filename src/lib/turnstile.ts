@@ -1,10 +1,16 @@
+import { ENABLE_TURNSTILE } from "@/lib/feature-flags";
+
 /**
- * Verify a Cloudflare Turnstile token server-side
+ * Verify a Cloudflare Turnstile token server-side.
+ * Returns true immediately if Turnstile is disabled via feature flag.
  */
 export async function verifyTurnstileToken(token: string): Promise<boolean> {
+  if (!ENABLE_TURNSTILE) {
+    return true;
+  }
+
   const secretKey = process.env.TURNSTILE_SECRET_KEY;
 
-  // If no secret key configured, skip verification (dev mode)
   if (!secretKey) {
     console.warn("Turnstile secret key not configured - skipping verification");
     return true;

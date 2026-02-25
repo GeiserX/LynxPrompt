@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { AiEditPanel } from "@/components/ai-edit-panel";
+import { useFeatureFlags } from "@/components/providers/feature-flags-provider";
 import {
   ArrowLeft,
   ArrowRight,
@@ -7252,6 +7253,7 @@ function StepFeedback({
   userTier: string;
 }) {
   const isTeamsUser = userTier === "teams";
+  const { enableAI } = useFeatureFlags();
   
   return (
     <div>
@@ -7261,8 +7263,8 @@ function StepFeedback({
         project that we haven&apos;t asked? Add any additional context.
       </p>
 
-      {/* AI Assist Panel - Teams users only */}
-      {isTeamsUser && (
+      {/* AI Assist Panel - Teams users only, when AI is enabled */}
+      {enableAI && isTeamsUser && (
         <div className="mt-6 rounded-lg border border-purple-200 bg-white p-4 shadow-sm dark:border-purple-800 dark:bg-purple-900/20">
           <div className="mb-3 flex items-center gap-2 text-sm font-medium text-purple-700 dark:text-purple-300">
             <Sparkles className="h-4 w-4" />

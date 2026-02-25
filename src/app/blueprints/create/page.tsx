@@ -33,6 +33,7 @@ import { UserMenu } from "@/components/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { CodeEditor } from "@/components/code-editor";
 import { AiEditPanel } from "@/components/ai-edit-panel";
+import { useFeatureFlags } from "@/components/providers/feature-flags-provider";
 import { Turnstile } from "@/components/turnstile";
 import { detectSensitiveData, type SensitiveMatch } from "@/lib/sensitive-data";
 import { detectVariables, detectDuplicateVariableDefaults, type DuplicateVariableDefault } from "@/lib/file-generator";
@@ -99,6 +100,7 @@ const getCommandPlatformName = (type: string) => {
 
 export default function ShareBlueprintPage() {
   const { status } = useSession();
+  const { enableAI } = useFeatureFlags();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -613,8 +615,8 @@ export default function ShareBlueprintPage() {
                   </p>
                 </div>
 
-                {/* AI Edit Panel - MAX users only */}
-                {userPlan === "max" && (
+                {/* AI Edit Panel - MAX users only, when AI is enabled */}
+                {enableAI && userPlan === "max" && (
                   <div className="mb-3 rounded-lg border border-purple-300 bg-purple-100 p-3 dark:border-purple-500/50 dark:bg-purple-900/30">
                     <div className="mb-2 flex items-center gap-2 text-sm">
                       <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-300" />
