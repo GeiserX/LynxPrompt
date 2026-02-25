@@ -13,61 +13,54 @@ import { AgentsMarquee } from "@/components/agents-marquee";
 import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
 import { CLISection } from "@/components/cli-section";
+import { APP_NAME, APP_URL, APP_LOGO_URL, CONTACT_EMAIL } from "@/lib/feature-flags";
 
-// JSON-LD Structured Data for Homepage
 const organizationJsonLd = {
   "@context": "https://schema.org",
   "@type": "Organization",
-  name: "LynxPrompt",
-  alternateName: "GeiserCloud",
-  url: "https://lynxprompt.com",
-  logo: "https://lynxprompt.com/lynxprompt.png",
+  name: APP_NAME,
+  url: APP_URL,
+  logo: APP_LOGO_URL || `${APP_URL}/lynxprompt.png`,
   description:
     "AI IDE configuration generator and marketplace. Create universal instructions for Cursor, Claude Code, Copilot, Antigravity, and more.",
   foundingDate: "2024",
-  sameAs: [
-    "https://github.com/GeiserX/LynxPrompt",
-    "https://geiser.cloud",
-  ],
-  contactPoint: {
-    "@type": "ContactPoint",
-    email: "support@lynxprompt.com",
-    contactType: "customer support",
-  },
+  ...(CONTACT_EMAIL ? {
+    contactPoint: {
+      "@type": "ContactPoint",
+      email: CONTACT_EMAIL,
+      contactType: "customer support",
+    },
+  } : {}),
 };
 
 const softwareJsonLd = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
-  name: "LynxPrompt",
+  name: APP_NAME,
   applicationCategory: "DeveloperApplication",
   operatingSystem: "Web",
   description:
     "Transform your development setup into a mouse-click experience. Generate .cursorrules, CLAUDE.md, GEMINI.md, copilot-instructions.md, and more.",
-  url: "https://lynxprompt.com",
-  author: {
-    "@type": "Organization",
-    name: "GeiserCloud",
-  },
+  url: APP_URL,
   featureList: [
     "IDE-agnostic AI configuration",
     "Wizard-based setup",
     "Blueprint marketplace",
   ],
-  screenshot: "https://lynxprompt.com/og-image.png",
+  screenshot: `${APP_URL}/og-image.png`,
 };
 
 const websiteJsonLd = {
   "@context": "https://schema.org",
   "@type": "WebSite",
-  name: "LynxPrompt",
-  url: "https://lynxprompt.com",
+  name: APP_NAME,
+  url: APP_URL,
   description: "AI IDE Configuration Generator & Marketplace",
   potentialAction: {
     "@type": "SearchAction",
     target: {
       "@type": "EntryPoint",
-      urlTemplate: "https://lynxprompt.com/blueprints?search={search_term_string}",
+      urlTemplate: `${APP_URL}/blueprints?search={search_term_string}`,
     },
     "query-input": "required name=search_term_string",
   },

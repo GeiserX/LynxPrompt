@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-const PLATFORM_OWNER_EMAIL = "dev@lynxprompt.com";
+import { PLATFORM_OWNER_EMAIL } from "@/lib/feature-flags";
 
 async function handleBlueprintPurchase(session: Stripe.Checkout.Session) {
   const { templateId, userId, originalPrice, paidPrice, isMaxDiscount, currency, teamId } = session.metadata || {};

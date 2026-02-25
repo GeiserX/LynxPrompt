@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { FileSignature } from "lucide-react";
+import { APP_URL } from "@/lib/feature-flags";
 import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
 
@@ -21,7 +22,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   alternates: {
-    canonical: "https://lynxprompt.com/dpa",
+    canonical: `${APP_URL}/dpa`,
   },
   robots: {
     index: true,

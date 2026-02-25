@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { APP_URL } from "@/lib/feature-flags";
 import { Key, ArrowRight, Shield, Terminal, LogOut, User, AlertTriangle } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -38,7 +39,7 @@ export default function CliAuthenticationPage() {
             <code>{`$ lynxprompt login
 
 🔐 Opening browser to authenticate...
-   https://lynxprompt.com/auth/signin?cli_session=abc123
+   ${APP_URL}/auth/signin?cli_session=abc123
 
 Waiting for authentication... ✓
 

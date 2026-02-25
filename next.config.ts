@@ -1,5 +1,15 @@
 import type { NextConfig } from "next";
 
+function getAppUrlHostname(): string | null {
+  const appUrl = process.env.APP_URL || process.env.NEXTAUTH_URL;
+  if (!appUrl) return null;
+  try {
+    return new URL(appUrl).hostname;
+  } catch {
+    return null;
+  }
+}
+
 const nextConfig: NextConfig = {
   // Enable React strict mode for highlighting potential problems
   reactStrictMode: true,
@@ -27,6 +37,9 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "lynxprompt.com",
       },
+      ...(getAppUrlHostname() && getAppUrlHostname() !== "lynxprompt.com" && getAppUrlHostname() !== "localhost"
+        ? [{ protocol: "https" as const, hostname: getAppUrlHostname()! }]
+        : []),
     ],
   },
 

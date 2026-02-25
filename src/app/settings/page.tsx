@@ -44,6 +44,7 @@ import { Footer } from "@/components/footer";
 import { UserMenu } from "@/components/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { getGravatarUrl } from "@/lib/utils";
+import { useFeatureFlags } from "@/components/providers/feature-flags-provider";
 import { startRegistration } from "@simplewebauthn/browser";
 
 const PERSONAS = [
@@ -146,6 +147,7 @@ function SettingsContent() {
   const { data: session, status, update: updateSession } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { appUrl } = useFeatureFlags();
 
   const [activeSection, setActiveSection] = useState(
     searchParams.get("tab") || "profile"
@@ -2633,7 +2635,7 @@ function ApiTokensSection({ setError, setSuccess }: ApiTokensSectionProps) {
               <div>
                 <h3 className="font-medium">List Blueprints</h3>
                 <code className="mt-2 block rounded-lg bg-muted px-3 py-2 font-mono text-xs">
-                  curl -H &quot;Authorization: Bearer $TOKEN&quot; https://lynxprompt.com/api/v1/blueprints
+                  curl -H &quot;Authorization: Bearer $TOKEN&quot; {appUrl}/api/v1/blueprints
                 </code>
               </div>
               <div>
@@ -2641,7 +2643,7 @@ function ApiTokensSection({ setError, setSuccess }: ApiTokensSectionProps) {
                 <code className="mt-2 block rounded-lg bg-muted px-3 py-2 font-mono text-xs overflow-x-auto">
                   curl -X PUT -H &quot;Authorization: Bearer $TOKEN&quot; -H &quot;Content-Type: application/json&quot; \<br />
                   &nbsp;&nbsp;-d &apos;{`{"content": "your updated content"}`}&apos; \<br />
-                  &nbsp;&nbsp;https://lynxprompt.com/api/v1/blueprints/bp_your_blueprint_id
+                  &nbsp;&nbsp;{appUrl}/api/v1/blueprints/bp_your_blueprint_id
                 </code>
               </div>
               <p className="text-muted-foreground">

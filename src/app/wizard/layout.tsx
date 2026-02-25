@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { APP_NAME, APP_URL } from "@/lib/feature-flags";
 
 export const metadata: Metadata = {
   title: "Wizard - AI IDE Configuration Generator",
@@ -14,18 +15,18 @@ export const metadata: Metadata = {
     "configuration wizard",
   ],
   openGraph: {
-    title: "Configuration Wizard - LynxPrompt",
+    title: `Configuration Wizard - ${APP_NAME}`,
     description:
       "Create AI IDE configurations in minutes. Generate .cursorrules, CLAUDE.md, and more.",
     type: "website",
   },
   twitter: {
     card: "summary",
-    title: "Configuration Wizard - LynxPrompt",
+    title: `Configuration Wizard - ${APP_NAME}`,
     description: "Create AI IDE configurations in minutes.",
   },
   alternates: {
-    canonical: "https://lynxprompt.com/wizard",
+    canonical: `${APP_URL}/wizard`,
   },
 };
 

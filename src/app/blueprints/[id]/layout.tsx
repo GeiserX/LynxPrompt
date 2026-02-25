@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { prismaUsers } from "@/lib/db-users";
 import { prismaApp } from "@/lib/db-app";
+import { APP_NAME, APP_URL } from "@/lib/feature-flags";
 
 // Helper to parse blueprint ID
 function parseBlueprintId(id: string): { type: "user" | "system"; realId: string } {
@@ -118,7 +119,7 @@ export async function generateMetadata({
       description,
     },
     alternates: {
-      canonical: `https://lynxprompt.com/blueprints/${id}`,
+      canonical: `${APP_URL}/blueprints/${id}`,
     },
   };
 }
@@ -191,10 +192,10 @@ async function getBlueprintJsonLd(id: string) {
     "@type": "Product",
     name: blueprint.name,
     description: blueprint.description || `AI configuration blueprint for ${blueprint.category || "developers"}`,
-    image: "https://lynxprompt.com/og-image.png",
+    image: `${APP_URL}/og-image.png`,
     brand: {
       "@type": "Brand",
-      name: "LynxPrompt",
+      name: APP_NAME,
     },
     author: {
       "@type": "Person",
@@ -205,7 +206,7 @@ async function getBlueprintJsonLd(id: string) {
       price: blueprint.price ? (blueprint.price / 100).toFixed(2) : "0",
       priceCurrency: "EUR",
       availability: "https://schema.org/InStock",
-      url: `https://lynxprompt.com/blueprints/${id}`,
+      url: `${APP_URL}/blueprints/${id}`,
     },
     aggregateRating:
       blueprint.favorites > 0

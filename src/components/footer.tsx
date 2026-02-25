@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MessageSquareHeart } from "lucide-react";
+import { STATUS_PAGE_URL } from "@/lib/feature-flags";
 
 export function Footer() {
   return (
@@ -67,14 +68,16 @@ export function Footer() {
             >
               Contact
             </Link>
-            <a
-              href="https://status.lynxprompt.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-muted-foreground hover:underline"
-            >
-              Status
-            </a>
+            {STATUS_PAGE_URL && (
+              <a
+                href={STATUS_PAGE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:underline"
+              >
+                Status
+              </a>
+            )}
           </div>
 
           {/* Actions and Social */}
