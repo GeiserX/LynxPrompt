@@ -14,6 +14,8 @@ interface FeatureFlags {
   enableBlog: boolean;
   enableSupportForum: boolean;
   enableStripe: boolean;
+  enableFederation: boolean;
+  federationRegistryUrl: string;
   appName: string;
   appUrl: string;
   appLogoUrl: string;
@@ -32,6 +34,8 @@ const defaultFlags: FeatureFlags = {
   enableBlog: false,
   enableSupportForum: false,
   enableStripe: false,
+  enableFederation: true,
+  federationRegistryUrl: "https://lynxprompt.com",
   appName: "LynxPrompt",
   appUrl: "http://localhost:3000",
   appLogoUrl: "",
