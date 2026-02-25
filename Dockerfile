@@ -81,14 +81,9 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/package.json ./package.json
 
-# Copy Prisma CLI and its transitive deps for migrations
+# Copy Prisma CLI and all @prisma/* deps for migrations
 COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder /app/node_modules/@prisma/engines ./node_modules/@prisma/engines
-COPY --from=builder /app/node_modules/@prisma/debug ./node_modules/@prisma/debug
-COPY --from=builder /app/node_modules/@prisma/config ./node_modules/@prisma/config
-COPY --from=builder /app/node_modules/@prisma/engines-version ./node_modules/@prisma/engines-version
-COPY --from=builder /app/node_modules/@prisma/fetch-engine ./node_modules/@prisma/fetch-engine
-COPY --from=builder /app/node_modules/@prisma/get-platform ./node_modules/@prisma/get-platform
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 # tsx for prisma config files (TypeScript)
 COPY --from=builder /app/node_modules/tsx ./node_modules/tsx
 COPY --from=builder /app/node_modules/esbuild ./node_modules/esbuild
@@ -97,9 +92,7 @@ COPY --from=builder /app/node_modules/resolve-pkg-maps ./node_modules/resolve-pk
 
 # Copy Prisma generated clients (Prisma 7 - generated to src/generated/)
 COPY --from=builder /app/src/generated ./src/generated
-# Copy Prisma adapter runtime dependencies
-COPY --from=builder /app/node_modules/@prisma/adapter-pg ./node_modules/@prisma/adapter-pg
-COPY --from=builder /app/node_modules/@prisma/driver-adapter-utils ./node_modules/@prisma/driver-adapter-utils
+# Copy pg driver (adapter-pg and driver-adapter-utils already in @prisma above)
 COPY --from=builder /app/node_modules/pg ./node_modules/pg
 COPY --from=builder /app/node_modules/pg-cloudflare ./node_modules/pg-cloudflare
 COPY --from=builder /app/node_modules/pg-connection-string ./node_modules/pg-connection-string
