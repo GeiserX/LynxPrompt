@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useTheme } from "next-themes";
 import { AlertCircle, Loader2, RefreshCw } from "lucide-react";
 import Script from "next/script";
+import { useFeatureFlags } from "@/components/providers/feature-flags-provider";
 
 declare global {
   interface Window {
@@ -30,6 +31,7 @@ interface TurnstileProps {
 }
 
 export function Turnstile({ onSuccess, onError, onExpire, className }: TurnstileProps) {
+  const { enableTurnstile } = useFeatureFlags();
   const { resolvedTheme } = useTheme();
   const [siteKey, setSiteKey] = useState<string | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "success" | "error">("loading");
@@ -41,8 +43,12 @@ export function Turnstile({ onSuccess, onError, onExpire, className }: Turnstile
   const hasSucceeded = useRef(false);
   const renderAttempts = useRef(0);
 
-  // Fetch site key on mount
+  // Auto-pass when Turnstile is disabled; fetch site key when enabled
   useEffect(() => {
+    if (!enableTurnstile) {
+      onSuccess("turnstile-disabled");
+      return;
+    }
     fetch("/api/config/public")
       .then((res) => res.json())
       .then((data) => {
@@ -60,7 +66,7 @@ export function Turnstile({ onSuccess, onError, onExpire, className }: Turnstile
         setStatus("error");
         onError?.();
       });
-  }, []); // Remove onSuccess from deps to prevent re-fetching
+  }, [enableTurnstile]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Render widget when script is loaded and we have a site key
   const renderWidget = useCallback(() => {
@@ -151,6 +157,10 @@ export function Turnstile({ onSuccess, onError, onExpire, className }: Turnstile
     setRetryCount(c => c + 1);
     setStatus("ready");
   };
+
+  if (!enableTurnstile) {
+    return null;
+  }
 
   // Loading state
   if (status === "loading") {

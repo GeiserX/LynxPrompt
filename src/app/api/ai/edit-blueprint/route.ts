@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { authenticateRequest } from "@/lib/api-auth";
 import { prismaUsers } from "@/lib/db-users";
-import { ENABLE_AI } from "@/lib/feature-flags";
+import { ENABLE_AI, AI_MODEL } from "@/lib/feature-flags";
 import Anthropic from "@anthropic-ai/sdk";
 
 // Cost tracking constants (in tokens)
@@ -190,7 +190,7 @@ export async function POST(request: Request) {
     const anthropic = new Anthropic({ apiKey });
 
     const response = await anthropic.messages.create({
-      model: "claude-3-5-haiku-latest",
+      model: AI_MODEL,
       max_tokens: isWizardMode ? 200 : 8000,
       // Use content blocks with cache_control for prompt caching
       system: [
