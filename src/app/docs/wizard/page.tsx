@@ -23,7 +23,7 @@ export default function WizardOverviewPage() {
       <div className="rounded-xl border border-green-500/30 bg-green-500/5 p-4">
         <p className="text-sm">
           <strong className="text-green-600 dark:text-green-400">Free for everyone:</strong>{" "}
-          The full wizard is available to all users at no cost. Teams subscribers get additional{" "}
+          The full wizard is available to all users at no cost. When AI is enabled, you also get{" "}
           <Link href="#ai-features" className="text-primary hover:underline">
             AI-powered features
           </Link>.
@@ -214,7 +214,7 @@ export default function WizardOverviewPage() {
           </span>
         </div>
         <p className="text-muted-foreground">
-          Teams subscribers get access to AI-powered enhancements in the wizard:
+          When AI features are enabled (ENABLE_AI), you get access to AI-powered enhancements in the wizard:
         </p>
         
         <div className="grid gap-4 sm:grid-cols-2">

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { ensureStripe } from "@/lib/stripe";
+import { ENABLE_STRIPE } from "@/lib/feature-flags";
 
 /**
  * Helper: Get user's team membership (if any)
@@ -54,6 +55,13 @@ async function checkExistingPurchase(userId: string, templateId: string, teamId?
  */
 export async function POST(request: NextRequest) {
   try {
+    if (!ENABLE_STRIPE) {
+      return NextResponse.json(
+        { error: "Payments are not enabled on this instance" },
+        { status: 404 }
+      );
+    }
+
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {

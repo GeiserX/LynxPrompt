@@ -35,9 +35,9 @@ const TEAMS_FEATURES = [
   },
   {
     icon: CreditCard,
-    title: "Active User Billing",
+    title: "Team Management",
     description:
-      "Only pay for team members who actually use the platform. Inactive users don't count toward your bill.",
+      "Track team member activity. Only active members consume resources on the platform.",
   },
   {
     icon: Building,

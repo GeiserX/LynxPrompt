@@ -285,7 +285,7 @@ export default function AdminStatsPage() {
           <KPICard
             title="Estimated MRR"
             value={data.revenue.estimatedMRRFormatted}
-            subtitle={`${data.revenue.activeTeamSeats} active Teams subscribers`}
+            subtitle={`${data.revenue.activeTeamSeats} active team members`}
             icon={DollarSign}
             color="green"
           />

@@ -30,7 +30,7 @@ export default function MarketplaceOverviewPage() {
             <div>
               <p className="font-medium">Pricing & Plans</p>
               <p className="text-sm text-muted-foreground">
-                Users & Teams plans
+                Plans & configuration
               </p>
             </div>
           </Link>
@@ -131,9 +131,9 @@ export default function MarketplaceOverviewPage() {
               <span>Creator gets €7.00, Platform gets €3.00</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Teams subscriber:</span>
+              <span className="text-muted-foreground">Team purchase:</span>
               <span>
-                Creator gets €7.00, Platform gets €3.00, User pays €10.00
+                Creator gets €7.00, Platform gets €3.00, shared with team
               </span>
             </div>
           </div>

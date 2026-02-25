@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { APP_URL } from "@/lib/feature-flags";
-import { Command, FileCode, Search, Download, User, LogIn, LogOut, Info, ArrowRight, Layers, Cloud, ArrowUp, ArrowDown, Link2, Unlink, CheckCircle, FileSearch, Sparkles, Scan, GitMerge, ArrowRightLeft, FolderSearch } from "lucide-react";
+import { Command, FileCode, Search, Download, User, LogIn, LogOut, Info, ArrowRight, Layers, Cloud, ArrowUp, ArrowDown, Link2, Unlink, CheckCircle, FileSearch, Sparkles, Scan, GitMerge, ArrowRightLeft, FolderSearch, Settings } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "CLI Commands",
@@ -159,6 +159,15 @@ export default function CliCommandsPage() {
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
                   Compare all tracked files with cloud
+                </td>
+              </tr>
+              {/* Config */}
+              <tr className="border-b">
+                <td className="py-3 pr-4">
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp config</code>
+                </td>
+                <td className="py-3 pr-4 text-muted-foreground">
+                  Show or change CLI settings (API URL, config path)
                 </td>
               </tr>
               {/* Advanced */}
@@ -846,6 +855,61 @@ Options:
               Show current user
             </p>
           </div>
+        </div>
+      </section>
+
+      {/* config command */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-3">
+          <Settings className="h-5 w-5 text-primary" />
+          <h2 className="text-2xl font-bold">lynxp config</h2>
+        </div>
+        <p className="text-muted-foreground">
+          View and manage CLI configuration. Point the CLI to a self-hosted instance or
+          inspect the current settings.
+        </p>
+
+        <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+          <pre className="text-sm text-zinc-100">
+            <code>{`lynxp config                    # Show current settings
+lynxp config set-url <url>      # Point to a self-hosted instance
+lynxp config reset-url          # Reset to default (lynxprompt.com)
+lynxp config path               # Show config file location`}</code>
+          </pre>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="font-semibold">Examples</h3>
+          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+            <pre className="text-sm text-zinc-100">
+              <code>{`# View current configuration
+$ lynxp config
+🐱 LynxPrompt CLI Configuration
+   API URL: https://lynxprompt.com
+   Logged in as: user@example.com
+
+# Point to self-hosted instance
+$ lynxp config set-url https://lynxprompt.yourcompany.com
+✓ API URL set to https://lynxprompt.yourcompany.com
+
+# Reset to default
+$ lynxp config reset-url
+✓ API URL reset to https://lynxprompt.com
+
+# Find config file
+$ lynxp config path
+~/.config/lynxprompt/config.json`}</code>
+            </pre>
+          </div>
+        </div>
+
+        <div className="rounded-lg border bg-card p-4">
+          <h4 className="font-semibold text-sm mb-2">Config precedence</h4>
+          <p className="text-sm text-muted-foreground">
+            The <code className="rounded bg-muted px-1">LYNXPROMPT_API_URL</code> environment variable
+            takes precedence over the stored config file value. This is useful for CI/CD
+            pipelines where you want to temporarily override the URL.
+          </p>
         </div>
       </section>
 

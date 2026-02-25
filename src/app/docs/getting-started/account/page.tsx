@@ -47,7 +47,7 @@ export default function AccountSetupPage() {
           <div className="rounded-lg border bg-card p-4">
             <h3 className="font-medium">Premium Features</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Subscribe to unlock advanced wizard steps and AI features
+              Enable ENABLE_AI in your environment for advanced wizard steps and AI features
             </p>
           </div>
         </div>

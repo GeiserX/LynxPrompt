@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MessageSquareHeart, Bug, Lightbulb, Crown, ChevronUp, Users, Shield } from "lucide-react";
+import { MessageSquareHeart, Bug, Lightbulb, ChevronUp, Users, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function SupportDocsPage() {
@@ -14,8 +14,7 @@ export default function SupportDocsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Support & Feedback</h1>
         </div>
         <p className="max-w-2xl text-lg text-muted-foreground">
-          Learn how to get help, report bugs, and suggest features. Teams
-          subscribers receive prioritized support.
+          Learn how to get help, report bugs, and suggest features.
         </p>
       </div>
 
@@ -81,33 +80,12 @@ export default function SupportDocsPage() {
 
       {/* Teams Priority */}
       <section className="space-y-4">
-        <h2 className="text-2xl font-bold">Priority Support for Teams</h2>
-        <div className="rounded-xl border border-purple-500/30 bg-purple-500/5 p-6">
-          <div className="flex items-start gap-4">
-            <Crown className="h-8 w-8 text-purple-500" />
-            <div>
-              <h3 className="text-lg font-semibold">Subscriber Benefits</h3>
-              <p className="mt-2 text-muted-foreground">
-                Teams subscribers receive prioritized attention for their
-                feedback:
-              </p>
-              <ul className="mt-4 space-y-3">
-                <li className="flex items-start gap-2">
-                  <span className="mt-1 rounded bg-gradient-to-r from-teal-500 to-cyan-500 px-2 py-0.5 text-xs font-bold text-white">
-                    Teams
-                  </span>
-                  <span className="text-sm text-muted-foreground">
-                    Your posts display a Teams badge for priority. Teams
-                    subscribers&apos; bug reports receive faster attention.
-                  </span>
-                </li>
-              </ul>
-              <p className="mt-4 text-sm text-muted-foreground">
-                We review all feedback, but subscribers&apos; issues and requests
-                are given priority in our development roadmap.
-              </p>
-            </div>
-          </div>
+        <h2 className="text-2xl font-bold">Community Support</h2>
+        <div className="rounded-xl border p-6">
+          <p className="text-muted-foreground">
+            We review all feedback and bug reports. Issues and feature requests
+            are prioritized based on impact and community interest.
+          </p>
         </div>
       </section>
 

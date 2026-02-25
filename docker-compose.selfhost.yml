@@ -26,6 +26,9 @@ services:
       retries: 5
 
   lynxprompt:
+    # Use the latest release tag from Docker Hub
+    # The CI pushes tags like: 2.0.0-<short_sha>
+    # Find available tags at: https://hub.docker.com/r/drumsergio/lynxprompt/tags
     image: drumsergio/lynxprompt:2.0.0
     restart: unless-stopped
     ports:

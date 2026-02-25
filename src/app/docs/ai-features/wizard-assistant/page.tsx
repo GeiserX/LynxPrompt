@@ -13,11 +13,6 @@ export default function WizardAssistantPage() {
           <span>/</span>
           <span>Wizard AI Assistant</span>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="rounded-full bg-teal-500/10 px-3 py-1 text-sm font-medium text-teal-600 dark:text-teal-400">
-            Teams Only
-          </span>
-        </div>
         <h1 className="text-3xl font-bold tracking-tight">
           Wizard AI Assistant
         </h1>
@@ -34,8 +29,8 @@ export default function WizardAssistantPage() {
         </h2>
         <p className="text-muted-foreground">
           In the advanced wizard steps, there&apos;s an &quot;Anything
-          Else&quot; section where you can add custom requirements. Teams users
-          get access to AI assistant that helps format these into proper configuration rules.
+          Else&quot; section where you can add custom requirements. When AI features are enabled,
+          an AI assistant helps format these into proper configuration rules.
         </p>
         <div className="rounded-xl border bg-card p-6">
           <h3 className="font-semibold">How it works:</h3>

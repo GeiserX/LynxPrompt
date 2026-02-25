@@ -58,7 +58,7 @@ const CATEGORIES = [
 
 export default function EditBlueprintPage() {
   const { status } = useSession();
-  const { enableAI } = useFeatureFlags();
+  const { enableAI, enableStripe } = useFeatureFlags();
   const router = useRouter();
   const params = useParams();
   const blueprintId = params.id as string;
@@ -158,7 +158,7 @@ export default function EditBlueprintPage() {
     }
   }, [status]);
 
-  const canCreatePaidBlueprints = userPlan === "pro" || userPlan === "max";
+  const canCreatePaidBlueprints = enableStripe;
 
   // Detect sensitive data in content
   const sensitiveMatches = useMemo<SensitiveMatch[]>(() => {
@@ -809,16 +809,10 @@ export default function EditBlueprintPage() {
                         </label>
                         {!canCreatePaidBlueprints && (
                           <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
-                            Teams required
+                            Payments not configured
                           </span>
                         )}
                       </div>
-
-                      {!canCreatePaidBlueprints && (
-                        <p className="mt-2 text-sm text-muted-foreground">
-                          Upgrade to <Link href="/auth/signin?plan=teams" className="text-primary hover:underline font-medium">Teams</Link> to create paid blueprints and earn 70% of each sale.
-                        </p>
-                      )}
 
                       {isPaid && canCreatePaidBlueprints && (
                         <div className="mt-4 space-y-3">

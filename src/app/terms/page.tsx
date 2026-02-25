@@ -124,9 +124,9 @@ export default function TermsPage() {
 
               {/* 3.3 Teams SSO */}
               <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">3.3 Enterprise SSO (Teams only)</h2>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">3.3 Enterprise SSO</h2>
                 <p>
-                  Teams subscribers may configure Single Sign-On (SSO) authentication:
+                  Administrators may configure Single Sign-On (SSO) authentication when enabled:
                 </p>
                 <ul className="mt-3 list-inside list-disc space-y-1">
                   <li><strong>Supported providers:</strong> SAML 2.0, OpenID Connect, and LDAP/Active Directory</li>
@@ -191,7 +191,7 @@ export default function TermsPage() {
                   <li>Share access credentials to circumvent purchase requirements</li>
                 </ul>
                 <p className="mt-3 text-sm text-muted-foreground">
-                  Teams subscribers purchasing blueprints receive the same license terms as other purchases.
+                  Team members purchasing blueprints receive the same license terms as other purchases.
                 </p>
               </section>
 
