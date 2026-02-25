@@ -121,10 +121,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Umami Analytics - privacy-focused, cookieless */}
-        {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (UMAMI_SCRIPT_URL || "https://umami.lynxprompt.com/script.js") && (
+        {/* Umami Analytics - only when explicitly configured */}
+        {UMAMI_SCRIPT_URL && process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (
           <Script
-            src={UMAMI_SCRIPT_URL || "https://umami.lynxprompt.com/script.js"}
+            src={UMAMI_SCRIPT_URL}
             data-website-id={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
             data-do-not-track="false"
             strategy="afterInteractive"

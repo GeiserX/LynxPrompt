@@ -11,6 +11,7 @@ import {
   BLUEPRINT_LIMITS,
   type SubscriptionTier 
 } from "@/lib/subscription";
+import { ENABLE_STRIPE } from "@/lib/feature-flags";
 
 // Blueprint type options (including command types)
 const BLUEPRINT_TYPES = [
@@ -501,6 +502,12 @@ export async function POST(request: NextRequest) {
     // Validate price if provided (minimum €5 = 500 cents)
     let validatedPrice: number | null = null;
     if (price !== null && price !== undefined) {
+      if (!ENABLE_STRIPE) {
+        return NextResponse.json(
+          { error: "Paid blueprints require ENABLE_STRIPE to be configured" },
+          { status: 400 }
+        );
+      }
       const priceNum = parseInt(String(price), 10);
       if (isNaN(priceNum) || priceNum < 500) {
         return NextResponse.json(

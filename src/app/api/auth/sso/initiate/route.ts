@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
         
         // Store state for verification (in production, use secure session storage)
         // For now, we'll include it in the callback URL for demo purposes
-        const ourCallbackUrl = `${process.env.NEXTAUTH_URL || 'https://lynxprompt.com'}/api/auth/sso/callback/oidc`;
+        const ourCallbackUrl = `${process.env.NEXTAUTH_URL || process.env.APP_URL || 'https://lynxprompt.com'}/api/auth/sso/callback/oidc`;
         
         const params = new URLSearchParams({
           client_id: clientId,

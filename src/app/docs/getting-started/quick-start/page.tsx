@@ -228,12 +228,12 @@ export default function QuickStartPage() {
             </p>
           </Link>
           <Link
-            href="/docs/marketplace/pricing"
+            href="/docs/ai-features/wizard-assistant"
             className="rounded-lg border bg-card p-4 transition-colors hover:bg-muted"
           >
-            <h3 className="font-medium">Upgrade Your Plan</h3>
+            <h3 className="font-medium">AI Features</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Unlock advanced wizard features
+              Learn about AI-powered wizard enhancements
             </p>
           </Link>
         </div>

@@ -133,10 +133,10 @@ export default function PrivacyPage() {
                     </ul>
                   </div>
                   <div>
-                    <strong className="text-foreground">Teams Data (Teams subscribers only):</strong>
+                    <strong className="text-foreground">Teams Data (Team members):</strong>
                     <ul className="ml-4 mt-1 list-inside list-disc">
                       <li>Team membership and role information</li>
-                      <li>Last login timestamps (for active user billing)</li>
+                      <li>Last login timestamps</li>
                       <li>Team-shared blueprints and configurations</li>
                       <li>SSO configuration data (if configured by team admin)</li>
                     </ul>
@@ -309,7 +309,7 @@ export default function PrivacyPage() {
                     </h3>
                     <p className="mt-1 text-sm">
                       <strong>Data shared:</strong> Blueprint content you submit
-                      for AI-assisted editing (Teams subscription feature only)
+                      for AI-assisted editing (when AI features are enabled)
                     </p>
                     <p className="text-sm">
                       <strong>Purpose:</strong> AI-powered blueprint modification
@@ -368,7 +368,7 @@ export default function PrivacyPage() {
 
                   <div className="rounded-lg border p-4">
                     <h3 className="font-medium text-foreground">
-                      Enterprise SSO Providers (Teams only)
+                      Enterprise SSO Providers (when SSO is enabled)
                     </h3>
                     <p className="mt-1 text-sm">
                       <strong>Data shared:</strong> Authentication tokens, user
@@ -376,7 +376,7 @@ export default function PrivacyPage() {
                     </p>
                     <p className="text-sm">
                       <strong>Purpose:</strong> Single Sign-On authentication for
-                      Teams subscribers
+                      team members
                     </p>
                     <p className="text-sm">
                       <strong>Providers supported:</strong> SAML 2.0 (Okta, Azure AD,

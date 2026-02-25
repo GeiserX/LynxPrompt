@@ -92,7 +92,7 @@ export default function FAQOverviewPage() {
             </h3>
             <p className="mt-2 text-muted-foreground">
               Absolutely! All generated files are plain text. Edit them however
-              you like. Teams subscribers can also use AI-powered editing to
+              you like. When AI features are enabled, you can also use AI-powered editing to
               modify blueprints with natural language instructions.
             </p>
           </div>
@@ -185,7 +185,7 @@ export default function FAQOverviewPage() {
             </h3>
             <p className="mt-2 text-muted-foreground">
               Most blueprints work across multiple platforms. Check the platform
-              tags before downloading. Teams subscribers can also use AI editing to
+              tags before downloading. When AI features are enabled, you can also use AI editing to
               adapt blueprints for different tools.
             </p>
           </div>

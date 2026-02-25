@@ -219,7 +219,7 @@ export default function DPAPage() {
                       <li>User-generated content (blueprints, configurations)</li>
                       <li>Usage data (pages visited, features used)</li>
                       <li>Payment information (processed by Stripe)</li>
-                      <li>Team membership data (for Teams subscribers)</li>
+                      <li>Team membership data (for team members)</li>
                     </ul>
                   </div>
                   <div className="rounded-lg border p-4">
@@ -361,7 +361,7 @@ export default function DPAPage() {
                       </tr>
                       <tr>
                         <td className="py-2 pr-4">Anthropic</td>
-                        <td className="py-2 pr-4">AI processing (Teams only)</td>
+                        <td className="py-2 pr-4">AI processing (when enabled)</td>
                         <td className="py-2">USA (SCCs)</td>
                       </tr>
                       <tr>

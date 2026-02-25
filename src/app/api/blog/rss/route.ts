@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prismaBlog } from "@/lib/db-blog";
 import { prismaUsers } from "@/lib/db-users";
-import { APP_URL, APP_NAME } from "@/lib/feature-flags";
+import { APP_URL, APP_NAME, ENABLE_BLOG } from "@/lib/feature-flags";
 
 // Escape special XML characters
 function escapeXml(text: string): string {
@@ -38,6 +38,10 @@ function markdownToPlainText(markdown: string): string {
 }
 
 export async function GET() {
+  if (!ENABLE_BLOG) {
+    return new Response("Not Found", { status: 404 });
+  }
+
   try {
     const siteUrl = APP_URL;
     const siteName = APP_NAME;

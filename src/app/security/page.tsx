@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     "data protection",
     "encryption",
     "encryption at rest",
-    "TDE",
+    "TLS",
     "GDPR",
     "EU hosting",
     "LynxPrompt security",
@@ -86,9 +86,9 @@ export default function SecurityPage() {
               </div>
               <div className="rounded-lg border bg-card p-4 text-center">
                 <Database className="mx-auto h-8 w-8 text-primary" />
-                <p className="mt-2 font-medium">Encrypted at Rest</p>
+                <p className="mt-2 font-medium">Encryption Support</p>
                 <p className="text-sm text-muted-foreground">
-                  Database-level TDE
+                  TLS in transit, configurable at-rest
                 </p>
               </div>
               <div className="rounded-lg border bg-card p-4 text-center">
@@ -181,12 +181,10 @@ export default function SecurityPage() {
                       Encryption at Rest
                     </h3>
                     <p className="mt-1 text-sm">
-                      User data is encrypted at rest using Transparent Data
-                      Encryption (TDE) at the database level. This means your
-                      account information, sessions, API tokens, and other
-                      sensitive data are encrypted on disk using AES-256
-                      encryption, protecting against unauthorized access to
-                      physical storage or database files.
+                      Self-hosted instances can be configured with database-level
+                      encryption at rest (e.g., PostgreSQL TDE or disk encryption).
+                      All data in transit is encrypted via TLS. Sensitive fields
+                      like API tokens use server-side hashing.
                     </p>
                   </div>
                   <div className="rounded-lg border p-4">

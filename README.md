@@ -72,7 +72,7 @@ Single `docker compose up` to run the entire stack. PostgreSQL included. Auto-ru
 # 1. Create a .env file
 cat > .env <<EOF
 NEXTAUTH_SECRET=$(openssl rand -base64 32)
-SUPERADMIN_EMAIL=your@email.com
+ADMIN_EMAIL=your@email.com
 APP_URL=http://localhost:3000
 EOF
 
@@ -110,6 +110,10 @@ All features are controlled via environment variables. Toggle what you need, dis
 | `ENABLE_SUPPORT_FORUM` | `false` | Support forum module |
 | `ENABLE_STRIPE` | `false` | Stripe payments for marketplace |
 | `SUPERADMIN_EMAIL` | | Auto-promote this email to superadmin |
+| `APP_LOGO_URL` | | Custom logo URL |
+| `UMAMI_SCRIPT_URL` | | Umami analytics script URL |
+| `CONTACT_EMAIL` | | Contact form destination |
+| `STATUS_PAGE_URL` | | Status page link |
 
 ---
 
