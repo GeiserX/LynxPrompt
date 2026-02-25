@@ -30,6 +30,10 @@ export const ENABLE_SUPPORT_FORUM = envBool("ENABLE_SUPPORT_FORUM", false);
 // Marketplace / Payments
 export const ENABLE_STRIPE = envBool("ENABLE_STRIPE", false);
 
+// Federation
+export const ENABLE_FEDERATION = envBool("ENABLE_FEDERATION", true);
+export const FEDERATION_REGISTRY_URL = process.env.FEDERATION_REGISTRY_URL || "https://lynxprompt.com";
+
 // Branding
 export const APP_NAME = process.env.APP_NAME || "LynxPrompt";
 export const APP_URL = process.env.APP_URL || process.env.NEXTAUTH_URL || "http://localhost:3000";
@@ -60,6 +64,8 @@ export function getPublicFlags() {
     enableBlog: ENABLE_BLOG,
     enableSupportForum: ENABLE_SUPPORT_FORUM,
     enableStripe: ENABLE_STRIPE,
+    enableFederation: ENABLE_FEDERATION,
+    federationRegistryUrl: FEDERATION_REGISTRY_URL,
     appName: APP_NAME,
     appUrl: APP_URL,
     appLogoUrl: APP_LOGO_URL,

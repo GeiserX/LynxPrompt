@@ -213,3 +213,24 @@ model Framework {
   @@index([languageId])
   @@index([isPopular])
 }
+
+// ============================================================================
+// FEDERATION - Instance discovery network
+// ============================================================================
+
+model FederatedInstance {
+  id                   String   @id @default(cuid())
+  domain               String   @unique
+  name                 String
+  version              String
+  logoUrl              String   @default("")
+  publicBlueprintCount Int      @default(0)
+  verified             Boolean  @default(false)
+  lastSeenAt           DateTime @default(now())
+  registeredAt         DateTime @default(now())
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([verified])
+  @@index([lastSeenAt])
+}
