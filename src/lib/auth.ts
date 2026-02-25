@@ -1,4 +1,5 @@
-import { NextAuthOptions, Provider } from "next-auth";
+import { NextAuthOptions } from "next-auth";
+import type { Provider } from "next-auth/providers/index";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import EmailProvider, {

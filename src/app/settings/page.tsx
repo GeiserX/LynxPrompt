@@ -2265,6 +2265,7 @@ const EXPIRATION_OPTIONS = [
 ];
 
 function ApiTokensSection({ setError, setSuccess }: ApiTokensSectionProps) {
+  const { appUrl } = useFeatureFlags();
   const [tokens, setTokens] = useState<ApiToken[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
