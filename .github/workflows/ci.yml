@@ -141,6 +141,47 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  integration-smoke:
+    name: Integration Smoke Tests
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.event_name == 'push'
+    continue-on-error: true
+    steps:
+      - name: Health endpoint
+        run: |
+          RESPONSE=$(curl -sf --max-time 15 https://dev.lynxprompt.com/api/health 2>&1) || {
+            echo "⚠️ dev.lynxprompt.com unreachable - skipping smoke tests"
+            exit 0
+          }
+          echo "$RESPONSE"
+          echo "$RESPONSE" | jq -e '.status == "ok" and .db == "connected"' > /dev/null
+          echo "✅ Health endpoint OK"
+
+      - name: Public config endpoint
+        run: |
+          RESPONSE=$(curl -sf --max-time 15 https://dev.lynxprompt.com/api/config/public 2>&1) || exit 0
+          echo "$RESPONSE" | jq -e '.enableEmailAuth != null and .appName != null and .appUrl != null' > /dev/null
+          echo "✅ Public config endpoint OK"
+
+      - name: Homepage returns 200
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 https://dev.lynxprompt.com/) || exit 0
+          if [ "$STATUS" != "200" ]; then
+            echo "❌ Homepage returned $STATUS"
+            exit 1
+          fi
+          echo "✅ Homepage returns 200"
+
+      - name: Login page returns 200
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 https://dev.lynxprompt.com/login) || exit 0
+          if [ "$STATUS" != "200" ]; then
+            echo "❌ Login page returned $STATUS"
+            exit 1
+          fi
+          echo "✅ Login page returns 200"
+
   summary:
     name: CI Summary
     runs-on: ubuntu-latest

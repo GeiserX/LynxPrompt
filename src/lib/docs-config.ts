@@ -251,6 +251,19 @@ export const docsConfig: DocsSection[] = [
     ],
   },
   {
+    title: "Federation",
+    href: "/docs/federation",
+    description: "Connect multiple LynxPrompt instances for cross-instance discovery.",
+    icon: "Globe",
+    items: [
+      {
+        title: "Federation Overview",
+        href: "/docs/federation",
+        description: "How federation works between LynxPrompt instances",
+      },
+    ],
+  },
+  {
     title: "FAQ",
     href: "/docs/faq",
     description: "Frequently asked questions and troubleshooting.",

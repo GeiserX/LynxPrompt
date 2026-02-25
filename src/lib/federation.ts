@@ -13,7 +13,7 @@ function getInstanceDomain(): string {
   return new URL(APP_URL).host;
 }
 
-function isSelfRegistry(): boolean {
+export function isSelfRegistry(): boolean {
   try {
     const registryHost = new URL(FEDERATION_REGISTRY_URL).host;
     return registryHost === getInstanceDomain();

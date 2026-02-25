@@ -39,7 +39,7 @@ export default function PrivacyPage() {
               Privacy Policy
             </h1>
             <p className="mt-3 text-lg text-muted-foreground">
-              Last updated: December 2025
+              Last updated: February 2026
             </p>
           </div>
         </div>
@@ -56,12 +56,19 @@ export default function PrivacyPage() {
                   1. Introduction
                 </h2>
                 <p>
-                  LynxPrompt is operated by GeiserCloud, a company registered in
-                  Spain. We respect your privacy and are committed to protecting
-                  your personal data. This policy explains how we collect, use,
-                  and safeguard your information in compliance with the General
-                  Data Protection Regulation (GDPR) and other applicable privacy
-                  laws.
+                  LynxPrompt is operated by GeiserCloud. We respect your privacy
+                  and are committed to protecting your personal data. This policy
+                  explains how we collect, use, and safeguard your information in
+                  compliance with the General Data Protection Regulation (GDPR)
+                  and other applicable privacy laws.
+                </p>
+                <p className="mt-3">
+                  LynxPrompt is open-source software licensed under GPL v3. This
+                  privacy policy governs data processing on lynxprompt.com.
+                  Self-hosted LynxPrompt instances are independently operated.
+                  This privacy policy applies only to the official instance at
+                  lynxprompt.com. Self-hosted instance operators are responsible
+                  for their own privacy policies.
                 </p>
               </section>
 
@@ -75,10 +82,6 @@ export default function PrivacyPage() {
                   personal data:
                 </p>
                 <ul className="list-inside list-disc space-y-1">
-                  <li>
-                    <strong>Address:</strong> Calle Tierno Galván 25, 30203
-                    Cartagena, Murcia, Spain
-                  </li>
                   <li>
                     <strong>Email:</strong>{" "}
                     <a
@@ -619,9 +622,6 @@ export default function PrivacyPage() {
                   <p>
                     <strong className="text-foreground">GeiserCloud</strong>
                   </p>
-                  <p>Calle Tierno Galván 25</p>
-                  <p>30203 Cartagena, Murcia</p>
-                  <p>Spain</p>
                   <p className="mt-2">
                     <strong>Email:</strong>{" "}
                     <a

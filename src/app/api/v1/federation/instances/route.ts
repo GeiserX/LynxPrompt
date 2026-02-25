@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ENABLE_FEDERATION } from "@/lib/feature-flags";
+import { envBool, APP_NAME, APP_URL } from "@/lib/feature-flags";
+import { isSelfRegistry } from "@/lib/federation";
 import { prismaApp } from "@/lib/db-app";
+import { prismaUsers } from "@/lib/db-users";
+import packageJson from "../../../../../package.json";
 
 export async function GET(request: NextRequest) {
-  if (!ENABLE_FEDERATION) {
+  if (!envBool("ENABLE_FEDERATION", true)) {
     return NextResponse.json({ error: "Federation disabled" }, { status: 404 });
   }
 
@@ -30,6 +33,30 @@ export async function GET(request: NextRequest) {
     },
     orderBy: { registeredAt: "asc" },
   });
+
+  if (isSelfRegistry()) {
+    let publicBlueprintCount = 0;
+    try {
+      publicBlueprintCount = await prismaUsers.userTemplate.count({
+        where: { OR: [{ visibility: "PUBLIC" }, { isPublic: true }] },
+      });
+    } catch {
+      // DB may not have the columns yet
+    }
+
+    const selfInstance = {
+      id: "registry",
+      domain: new URL(APP_URL).host,
+      name: APP_NAME,
+      version: packageJson.version,
+      logoUrl: null,
+      publicBlueprintCount,
+      lastSeenAt: new Date(),
+      registeredAt: new Date("2025-12-01"),
+    };
+
+    return NextResponse.json({ instances: [selfInstance, ...instances] });
+  }
 
   return NextResponse.json({ instances });
 }

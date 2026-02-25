@@ -63,7 +63,6 @@ export default function UserApiDocsPage() {
   "email": "user@example.com",
   "name": "John Doe",
   "image": "https://avatars.githubusercontent.com/u/12345",
-  "plan": "FREE",
   "createdAt": "2024-06-15T10:30:00.000Z"
 }`}</code>
               </pre>
@@ -123,15 +122,6 @@ export default function UserApiDocsPage() {
               </tr>
               <tr className="border-b">
                 <td className="py-2 pr-4">
-                  <code className="rounded bg-muted px-1.5 py-0.5">plan</code>
-                </td>
-                <td className="py-2 pr-4 text-muted-foreground">string</td>
-                <td className="py-2 text-muted-foreground">
-                  Subscription tier: FREE (Users) or TEAMS
-                </td>
-              </tr>
-              <tr className="border-b">
-                <td className="py-2 pr-4">
                   <code className="rounded bg-muted px-1.5 py-0.5">createdAt</code>
                 </td>
                 <td className="py-2 pr-4 text-muted-foreground">string</td>
@@ -157,7 +147,7 @@ export default function UserApiDocsPage() {
           <li className="flex gap-2">
             <span>•</span>
             <span>
-              Check your current subscription tier before making API calls
+              Check your account details before making API calls
             </span>
           </li>
           <li className="flex gap-2">

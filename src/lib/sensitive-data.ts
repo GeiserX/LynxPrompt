@@ -8,6 +8,7 @@ export interface SensitiveMatch {
   pattern: string;
   line: number;
   snippet: string;
+  suggestion?: string;
 }
 
 // Patterns to detect sensitive data
@@ -171,6 +172,51 @@ const FALSE_POSITIVE_PATTERNS = [
   /FIXME/i,  // FIXME markers
 ];
 
+const TYPE_TO_VARIABLE: Record<string, string> = {
+  "OpenAI Key": "OPENAI_API_KEY",
+  "Anthropic Key": "ANTHROPIC_API_KEY",
+  "Stripe Key": "STRIPE_KEY",
+  "Firebase Key": "FIREBASE_API_KEY",
+  "Supabase Key": "SUPABASE_KEY",
+  "Azure Key": "AZURE_KEY",
+  "Azure Connection": "AZURE_CONNECTION_STRING",
+  "Google API Key": "GOOGLE_API_KEY",
+  "Twilio Key": "TWILIO_KEY",
+  "SendGrid Key": "SENDGRID_API_KEY",
+  "Mailgun Key": "MAILGUN_API_KEY",
+  "API Key": "API_KEY",
+  "Password": "PASSWORD",
+  "Token": "AUTH_TOKEN",
+  "GitHub Token": "GITHUB_TOKEN",
+  "Slack Token": "SLACK_TOKEN",
+  "Discord Token": "DISCORD_TOKEN",
+  "NPM Token": "NPM_TOKEN",
+  "PyPI Token": "PYPI_TOKEN",
+  "Secret": "SECRET",
+  "Credential": "CREDENTIAL",
+  "AWS Key": "AWS_ACCESS_KEY_ID",
+  "AWS Secret": "AWS_SECRET_ACCESS_KEY",
+  "Database URL": "DATABASE_URL",
+  "Connection String": "CONNECTION_STRING",
+  "JDBC URL": "JDBC_URL",
+  "Private Key": "PRIVATE_KEY",
+  "SSH Key": "SSH_KEY",
+  "PEM Certificate": "CERTIFICATE",
+  "PGP Key": "PGP_KEY",
+  "Env Variable": "ENV_SECRET",
+  "Webhook Secret": "WEBHOOK_SECRET",
+  "JWT Token": "JWT_TOKEN",
+  "OAuth Token": "OAUTH_TOKEN",
+  "Base64 Secret": "SECRET_VALUE",
+  "Potential Secret": "SECRET_VALUE",
+  "Hex Secret": "SECRET_VALUE",
+};
+
+function getSuggestion(type: string): string {
+  const variable = TYPE_TO_VARIABLE[type] || "SECRET_VALUE";
+  return `Use [[${variable}]] template variable instead`;
+}
+
 /**
  * Check if a match is likely a false positive (placeholder, example, etc.)
  */
@@ -210,6 +256,7 @@ export function detectSensitiveData(content: string): SensitiveMatch[] {
           pattern: match[0].substring(0, 50) + (match[0].length > 50 ? '...' : ''),
           line: lineNum + 1,
           snippet: snippet.length > 60 ? snippet.substring(0, 60) + '...' : snippet,
+          suggestion: getSuggestion(type),
         });
       }
     }

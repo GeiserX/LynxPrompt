@@ -13,8 +13,8 @@ export default function MarketplaceOverviewPage() {
           <h1 className="text-3xl font-bold tracking-tight">Marketplace</h1>
         </div>
         <p className="max-w-2xl text-lg text-muted-foreground">
-          Buy, sell, and earn from premium AI IDE configurations. The
-          marketplace connects blueprint creators with developers who need them.
+          Buy, sell, and share AI IDE configurations. The marketplace
+          connects blueprint creators with developers who need them.
         </p>
       </div>
 
@@ -28,9 +28,9 @@ export default function MarketplaceOverviewPage() {
           >
             <CreditCard className="h-5 w-5 text-primary" />
             <div>
-              <p className="font-medium">Pricing & Plans</p>
+              <p className="font-medium">Marketplace Pricing</p>
               <p className="text-sm text-muted-foreground">
-                Plans & configuration
+                How pricing works
               </p>
             </div>
           </Link>
@@ -131,10 +131,8 @@ export default function MarketplaceOverviewPage() {
               <span>Creator gets €7.00, Platform gets €3.00</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Team purchase:</span>
-              <span>
-                Creator gets €7.00, Platform gets €3.00, shared with team
-              </span>
+              <span className="text-muted-foreground">Stripe fees:</span>
+              <span>Deducted by Stripe before the split</span>
             </div>
           </div>
         </div>
@@ -176,7 +174,7 @@ export default function MarketplaceOverviewPage() {
         <div>
           <h2 className="text-lg font-semibold">Ready to start earning?</h2>
           <p className="mt-1 text-sm text-white/80">
-            Upgrade to Pro and turn your expertise into income.
+            Create and sell blueprints to turn your expertise into income.
           </p>
         </div>
         <Link

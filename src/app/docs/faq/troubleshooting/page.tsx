@@ -104,14 +104,14 @@ export default function TroubleshootingPage() {
               <li>Sign out and sign back in</li>
               <li>Wait a few minutes and refresh the page</li>
               <li>
-                Check{" "}
+                Check your{" "}
                 <Link
-                  href="/settings/billing"
+                  href="/dashboard"
                   className="text-primary hover:underline"
                 >
-                  Settings → Billing
+                  Dashboard
                 </Link>{" "}
-                to verify your subscription status
+                to verify the purchase appears in your library
               </li>
               <li>
                 If the issue persists, contact{" "}
@@ -131,15 +131,9 @@ export default function TroubleshootingPage() {
           <h3 className="font-semibold">AI editing not available</h3>
           <div className="mt-2 space-y-2 text-muted-foreground">
             <ul className="list-inside list-disc space-y-1">
-              <li>AI editing is only available when AI features are enabled (ENABLE_AI)</li>
+              <li>AI editing requires the instance to have ENABLE_AI=true and a valid ANTHROPIC_API_KEY</li>
               <li>
-                Check your subscription status in{" "}
-                <Link
-                  href="/settings/billing"
-                  className="text-primary hover:underline"
-                >
-                  Settings → Billing
-                </Link>
+                On self-hosted instances, check with your administrator that AI is configured
               </li>
               <li>
                 If AI is enabled and you still can&apos;t access it,

@@ -21,9 +21,11 @@ export default function GettingStartedPage() {
           <h1 className="text-3xl font-bold tracking-tight">Getting Started</h1>
         </div>
         <p className="max-w-2xl text-lg text-muted-foreground">
-          LynxPrompt helps you generate AI IDE configuration files for tools
-          like Cursor, Claude Code, GitHub Copilot, Windsurf, and Antigravity.
-          Get started in just a few minutes.
+          LynxPrompt is an open-source platform for generating AI IDE
+          configuration files for tools like Cursor, Claude Code, GitHub
+          Copilot, Windsurf, and Antigravity. Self-host your own instance,
+          connect to a federated network, or use the public instance — get
+          started in just a few minutes.
         </p>
       </div>
 
@@ -62,10 +64,11 @@ export default function GettingStartedPage() {
       <section className="space-y-4">
         <h2 className="text-2xl font-bold">What is LynxPrompt?</h2>
         <p className="text-muted-foreground">
-          LynxPrompt is a platform that generates AI coding agent configuration
-          files through an intuitive wizard interface. It&apos;s also a marketplace
-          where you can create, share, buy, and sell AI prompts and templates
-          (called &quot;Blueprints&quot;).
+          LynxPrompt is a free, open-source (GPL v3) platform that generates AI
+          coding agent configuration files through an intuitive wizard interface.
+          It&apos;s also a place to store, organize, and share AI prompts and
+          templates (called &quot;Blueprints&quot;). You can self-host it, join a
+          federated network, or use the public instance.
         </p>
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="rounded-lg border bg-card p-4">
@@ -87,7 +90,8 @@ export default function GettingStartedPage() {
             <UserPlus className="mb-2 h-5 w-5 text-primary" />
             <h3 className="font-medium">Marketplace</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Share your configs and earn from premium blueprints
+              Share your configs or sell premium blueprints on the optional
+              marketplace
             </p>
           </div>
         </div>

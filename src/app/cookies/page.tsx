@@ -18,7 +18,7 @@ export default function CookiesPage() {
               Cookie Policy
             </h1>
             <p className="mt-3 text-lg text-muted-foreground">
-              Last updated: December 2025
+              Last updated: February 2026
             </p>
           </div>
         </div>
@@ -40,6 +40,12 @@ export default function CookiesPage() {
                   and improve your browsing experience. Some cookies are
                   essential for the website to function, while others are
                   optional.
+                </p>
+                <p className="mt-3 text-sm">
+                  <strong className="text-foreground">Note:</strong> This cookie
+                  policy applies to lynxprompt.com. Self-hosted LynxPrompt
+                  instances may have different cookie configurations depending
+                  on their setup.
                 </p>
               </section>
 

@@ -1,8 +1,13 @@
 import Link from "next/link";
 import { MessageSquareHeart } from "lucide-react";
-import { STATUS_PAGE_URL, ENABLE_FEDERATION } from "@/lib/feature-flags";
+import { envBool } from "@/lib/feature-flags";
 
 export function Footer() {
+  const enableFederation = envBool("ENABLE_FEDERATION", true);
+  const enableSupportForum = envBool("ENABLE_SUPPORT_FORUM", false);
+  const enableBlog = envBool("ENABLE_BLOG", false);
+  const statusPageUrl = process.env.STATUS_PAGE_URL || "";
+
   return (
     <footer className="border-t py-8">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -12,14 +17,14 @@ export function Footer() {
           <div className="flex items-center gap-2">
             <img src="/lynx-icon.png" alt="LynxPrompt" className="h-5 w-5" />
             <p className="text-sm text-muted-foreground">
-              © 2025 LynxPrompt by{" "}
+              © 2025–2026 LynxPrompt by{" "}
               <a
                 href="https://geiser.cloud"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:underline"
               >
-                Geiser Cloud
+                GeiserCloud
               </a>
             </p>
           </div>
@@ -68,7 +73,15 @@ export function Footer() {
             >
               Contact
             </Link>
-            {ENABLE_FEDERATION && (
+            {enableBlog && (
+              <Link
+                href="/blog"
+                className="text-muted-foreground hover:underline"
+              >
+                Blog
+              </Link>
+            )}
+            {enableFederation && (
               <Link
                 href="/federation"
                 className="text-muted-foreground hover:underline"
@@ -76,9 +89,9 @@ export function Footer() {
                 Federation
               </Link>
             )}
-            {STATUS_PAGE_URL ? (
+            {statusPageUrl ? (
               <a
-                href={STATUS_PAGE_URL}
+                href={statusPageUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:underline"
@@ -90,13 +103,15 @@ export function Footer() {
 
           {/* Actions and Social */}
           <div className="flex items-center gap-4">
-            <Link
-              href="/support"
-              className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
-            >
-              <MessageSquareHeart className="h-4 w-4" />
-              Support
-            </Link>
+            {enableSupportForum && (
+              <Link
+                href="/support"
+                className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
+              >
+                <MessageSquareHeart className="h-4 w-4" />
+                Support
+              </Link>
+            )}
             
             {/* Social icons */}
             <div className="flex items-center gap-3">
