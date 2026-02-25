@@ -4,6 +4,7 @@ import Script from "next/script";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { FeatureFlagsProvider } from "@/components/providers/feature-flags-provider";
+import { HydrationErrorBoundary } from "@/components/providers/error-boundary";
 import { Toaster } from "@/components/ui/sonner";
 import { CookieBanner } from "@/components/cookie-banner";
 import { APP_NAME, APP_URL, UMAMI_SCRIPT_URL } from "@/lib/feature-flags";
@@ -131,21 +132,24 @@ export default function RootLayout({
       </head>
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}
+        suppressHydrationWarning
       >
-        <SessionProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <FeatureFlagsProvider>
-              {children}
-            </FeatureFlagsProvider>
-            <Toaster />
-            <CookieBanner />
-          </ThemeProvider>
-        </SessionProvider>
+        <HydrationErrorBoundary>
+          <SessionProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <FeatureFlagsProvider>
+                {children}
+              </FeatureFlagsProvider>
+              <Toaster />
+              <CookieBanner />
+            </ThemeProvider>
+          </SessionProvider>
+        </HydrationErrorBoundary>
       </body>
     </html>
   );
