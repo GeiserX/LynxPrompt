@@ -49,19 +49,10 @@ const softwareJsonLd = {
     "@type": "Organization",
     name: "GeiserCloud",
   },
-  offers: {
-    "@type": "AggregateOffer",
-    priceCurrency: "EUR",
-    lowPrice: "0",
-    highPrice: "10",
-    offerCount: "4",
-  },
   featureList: [
     "IDE-agnostic AI configuration",
     "Wizard-based setup",
     "Blueprint marketplace",
-    "Team collaboration",
-    "SSO support",
   ],
   screenshot: "https://lynxprompt.com/og-image.png",
 };

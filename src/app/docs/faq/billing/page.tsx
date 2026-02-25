@@ -79,11 +79,7 @@ export default function BillingFAQPage() {
         <div className="rounded-lg border bg-card p-4">
           <h3 className="font-semibold">Do you offer annual billing?</h3>
           <p className="mt-2 text-muted-foreground">
-            Yes! You can choose between monthly and annual billing on our{" "}
-            <Link href="/pricing" className="text-primary hover:underline">
-              pricing page
-            </Link>
-            . Annual plans offer a <strong>10% discount</strong> compared to monthly billing:
+            Yes! You can choose between monthly and annual billing. Annual plans offer a <strong>10% discount</strong> compared to monthly billing:
             <br /><br />
             <strong>Teams:</strong> €108/seat/year (€9/seat/month) vs €10/seat/month
             <br /><br />

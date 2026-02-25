@@ -171,9 +171,6 @@ export default function TeamsPage() {
                   </Link>
                 </Button>
               )}
-              <Button size="lg" variant="outline" asChild>
-                <Link href="/pricing">Compare All Plans</Link>
-              </Button>
             </div>
           </div>
         </div>
