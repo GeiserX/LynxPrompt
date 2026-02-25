@@ -119,6 +119,20 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: [
+              "(function(){",
+              "var h=document.head,b={};",
+              "new MutationObserver(function(ml){ml.forEach(function(m){",
+              "m.addedNodes.forEach(function(n){if(n.nodeName==='LINK'&&n.rel==='stylesheet'&&n.dataset&&n.dataset.precedence&&!b[n.href]){b[n.href]=1;var c=document.createElement('link');c.rel='stylesheet';c.href=n.href;h.appendChild(c)}});",
+              "m.removedNodes.forEach(function(n){if(n.nodeName==='LINK'&&n.rel==='stylesheet'&&n.dataset&&n.dataset.precedence&&!b[n.href]){b[n.href]=1;var c=document.createElement('link');c.rel='stylesheet';c.href=n.href;h.appendChild(c)}});",
+              "})}).observe(h,{childList:true});",
+              "h.querySelectorAll('link[rel=stylesheet][data-precedence]').forEach(function(l){if(!b[l.href]){b[l.href]=1;var c=document.createElement('link');c.rel='stylesheet';c.href=l.href;h.appendChild(c)}});",
+              "})()",
+            ].join(""),
+          }}
+        />
         {/* Umami Analytics - only when explicitly configured */}
         {UMAMI_SCRIPT_URL && process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (
           <Script
