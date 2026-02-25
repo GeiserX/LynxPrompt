@@ -8,9 +8,14 @@ export async function GET() {
     return NextResponse.json({ error: "Federation disabled" }, { status: 404 });
   }
 
-  const publicBlueprintCount = await prismaUsers.userTemplate.count({
-    where: { OR: [{ visibility: "PUBLIC" }, { isPublic: true }] },
-  });
+  let publicBlueprintCount = 0;
+  try {
+    publicBlueprintCount = await prismaUsers.userTemplate.count({
+      where: { OR: [{ visibility: "PUBLIC" }, { isPublic: true }] },
+    });
+  } catch {
+    // DB may not be migrated yet on fresh instances
+  }
 
   return NextResponse.json({
     name: APP_NAME,
