@@ -3,7 +3,7 @@ import { envBool, APP_NAME, APP_URL } from "@/lib/feature-flags";
 import { isSelfRegistry } from "@/lib/federation";
 import { prismaApp } from "@/lib/db-app";
 import { prismaUsers } from "@/lib/db-users";
-import packageJson from "../../../../../package.json";
+import packageJson from "../../../../../../package.json";
 
 export async function GET(request: NextRequest) {
   if (!envBool("ENABLE_FEDERATION", true)) {
