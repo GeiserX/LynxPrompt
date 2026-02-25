@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import { Footer } from "@/components/footer";
 import { PageHeader } from "@/components/page-header";
+import { RelativeTime } from "@/components/hydration-date";
 import { WelcomeModal } from "@/components/dashboard/welcome-modal";
 import { PreferencesPanel } from "@/components/dashboard/preferences-panel";
 import { AnalyticsSection } from "@/components/dashboard/analytics-section";
@@ -473,20 +474,7 @@ export default function DashboardPage() {
     favoritesReceived: 0,
   };
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return "just now";
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return date.toLocaleDateString();
-  };
+  // formatDate removed - using <RelativeTime /> component instead
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -1637,7 +1625,7 @@ export default function DashboardPage() {
                               </p>
                               <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
                                 <Clock className="h-3 w-3" />
-                                {formatDate(activity.createdAt)}
+                                <RelativeTime date={activity.createdAt} />
                                 {activity.platform && (
                                   <span className="ml-2 rounded bg-muted px-1.5 py-0.5">
                                     {activity.platform}
