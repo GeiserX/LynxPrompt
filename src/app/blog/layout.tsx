@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { envBool, APP_NAME, APP_URL } from "@/lib/feature-flags";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: {
     template: `%s | ${APP_NAME} Blog`,
