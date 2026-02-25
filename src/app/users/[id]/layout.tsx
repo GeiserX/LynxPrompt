@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { prismaUsers } from "@/lib/db-users";
+import { APP_NAME, APP_URL } from "@/lib/feature-flags";
 
 export async function generateMetadata({
   params,
@@ -83,14 +84,14 @@ export async function generateMetadata({
         images: user.image ? [user.image] : ["/og-image.png"],
       },
       alternates: {
-        canonical: `https://lynxprompt.com/users/${id}`,
+        canonical: `${APP_URL}/users/${id}`,
       },
     };
   } catch (error) {
     console.error("Error fetching user for metadata:", error);
     return {
       title: "User Profile",
-      description: "View this user's profile on LynxPrompt.",
+      description: `View this user's profile on ${APP_NAME}.`,
     };
   }
 }
@@ -114,7 +115,7 @@ async function getUserJsonLd(id: string) {
 
     if (!user || !user.isProfilePublic) return null;
 
-    const displayName = user.displayName || user.name || "LynxPrompt User";
+    const displayName = user.displayName || user.name || `${APP_NAME} User`;
     
     const sameAs: string[] = [];
     if (user.socialGithub) sameAs.push(`https://github.com/${user.socialGithub}`);
@@ -132,8 +133,8 @@ async function getUserJsonLd(id: string) {
       "@context": "https://schema.org",
       "@type": "Person",
       name: displayName,
-      url: `https://lynxprompt.com/users/${id}`,
-      image: user.image || "https://lynxprompt.com/og-image.png",
+      url: `${APP_URL}/users/${id}`,
+      image: user.image || `${APP_URL}/og-image.png`,
       sameAs: sameAs.length > 0 ? sameAs : undefined,
     };
   } catch {

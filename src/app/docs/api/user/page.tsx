@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { APP_URL } from "@/lib/feature-flags";
 import { User } from "lucide-react";
 
 export default function UserApiDocsPage() {
@@ -49,7 +50,7 @@ export default function UserApiDocsPage() {
             <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
               <pre className="text-sm text-zinc-100">
                 <code>{`curl -H "Authorization: Bearer lp_your_token" \\
-     https://lynxprompt.com/api/v1/user`}</code>
+     ${APP_URL}/api/v1/user`}</code>
               </pre>
             </div>
           </div>

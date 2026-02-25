@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useFeatureFlags } from "@/components/providers/feature-flags-provider";
 
 export default function Error({
   error,
@@ -9,6 +10,8 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const flags = useFeatureFlags();
+
   useEffect(() => {
     console.error("Application error:", error);
   }, [error]);
@@ -60,18 +63,20 @@ export default function Error({
         </div>
 
         {/* Status Link */}
-        <p className="text-slate-500 text-sm">
-          Check our{" "}
-          <a
-            href="https://status.lynxprompt.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-amber-400 hover:text-amber-300 underline"
-          >
-            status page
-          </a>{" "}
-          for updates.
-        </p>
+        {flags.statusPageUrl && (
+          <p className="text-slate-500 text-sm">
+            Check our{" "}
+            <a
+              href={flags.statusPageUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-amber-400 hover:text-amber-300 underline"
+            >
+              status page
+            </a>{" "}
+            for updates.
+          </p>
+        )}
 
         {/* Error digest for debugging */}
         {error.digest && (

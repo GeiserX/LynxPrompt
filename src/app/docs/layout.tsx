@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { APP_NAME, APP_URL } from "@/lib/feature-flags";
 import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
 import { DocsSidebar, DocsSidebarMobile } from "@/components/docs-sidebar";
@@ -6,7 +7,7 @@ import { DocsToc } from "@/components/docs-toc";
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | LynxPrompt Docs",
+    template: `%s | ${APP_NAME} Docs`,
     default: "Documentation",
   },
   description:
@@ -22,13 +23,13 @@ export const metadata: Metadata = {
     "AGENTS.md",
   ],
   openGraph: {
-    title: "Documentation - LynxPrompt",
+    title: `Documentation - ${APP_NAME}`,
     description:
       "Learn how to create AI IDE configurations with LynxPrompt.",
     type: "website",
   },
   alternates: {
-    canonical: "https://lynxprompt.com/docs",
+    canonical: `${APP_URL}/docs`,
   },
 };
 

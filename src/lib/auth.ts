@@ -13,6 +13,9 @@ import {
   ENABLE_EMAIL_AUTH,
   ENABLE_PASSKEYS,
   ENABLE_USER_REGISTRATION,
+  APP_NAME,
+  APP_URL,
+  APP_LOGO_URL,
 } from "@/lib/feature-flags";
 import {
   verifyAuthenticationResponse,
@@ -38,8 +41,8 @@ async function sendVerificationRequest(
 
   const result = await transport.sendMail({
     to: email,
-    from: `"LynxPrompt" <${provider.from}>`,
-    subject: `Sign in to LynxPrompt`,
+    from: `"${APP_NAME}" <${provider.from}>`,
+    subject: `Sign in to ${APP_NAME}`,
     text: text({ url, host }),
     html: html({ url, host, email }),
   });
@@ -72,7 +75,7 @@ function html({
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light dark">
   <meta name="supported-color-schemes" content="light dark">
-  <title>Sign in to LynxPrompt</title>
+  <title>Sign in to ${APP_NAME}</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #1a1a2e;">
   <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #1a1a2e;">
@@ -85,7 +88,7 @@ function html({
               <table role="presentation" style="display: inline-table; border-collapse: collapse;">
                 <tr>
                   <td style="vertical-align: middle; padding-right: 10px;">
-                    <img src="https://lynxprompt.com/lynxprompt.png" alt="LynxPrompt" width="44" height="44" style="display: block;" />
+                    <img src="${APP_LOGO_URL || `${APP_URL}/lynxprompt.png`}" alt="${APP_NAME}" width="44" height="44" style="display: block;" />
                   </td>
                   <td style="vertical-align: middle;">
                     <span style="font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
@@ -101,7 +104,7 @@ function html({
           <tr>
             <td style="padding: 40px 32px;">
               <h1 style="margin: 0 0 20px 0; font-size: 26px; font-weight: 700; color: #ffffff; text-align: center;">
-                Sign in to LynxPrompt
+                Sign in to ${APP_NAME}
               </h1>
               
               <p style="margin: 0 0 8px 0; font-size: 16px; line-height: 26px; color: #cbd5e1; text-align: center;">
@@ -116,7 +119,7 @@ function html({
                 <tr>
                   <td align="center" style="padding: 0;">
                     <a href="${url}" target="_blank" style="display: inline-block; padding: 16px 40px; background-color: #a855f7; color: #ffffff; text-decoration: none; font-size: 17px; font-weight: 700; border-radius: 10px; border: 2px solid #c084fc;">
-                      Sign in to LynxPrompt →
+                      Sign in to ${APP_NAME} →
                     </a>
                   </td>
                 </tr>
@@ -147,7 +150,7 @@ function html({
           <tr>
             <td style="padding: 20px 32px; background-color: #0f172a; text-align: center;">
               <p style="margin: 0; font-size: 12px; color: #64748b;">
-                © 2025 LynxPrompt by <a href="https://geiser.cloud" style="color: #a855f7; text-decoration: none;">Geiser Cloud</a>
+                © ${new Date().getFullYear()} ${APP_NAME}
               </p>
               <p style="margin: 6px 0 0 0; font-size: 12px; color: #475569;">
                 AI IDE Configuration Generator
@@ -164,7 +167,7 @@ function html({
 }
 
 function text({ url, host }: { url: string; host: string }) {
-  return `Sign in to LynxPrompt (${host})\n\nClick here to sign in:\n${url}\n\nThis link expires in 24 hours and can only be used once.\n\nIf you didn't request this email, you can safely ignore it.`;
+  return `Sign in to ${APP_NAME} (${host})\n\nClick here to sign in:\n${url}\n\nThis link expires in 24 hours and can only be used once.\n\nIf you didn't request this email, you can safely ignore it.`;
 }
 
 // WebAuthn configuration
@@ -207,7 +210,7 @@ function buildProviders(): Provider[] {
             pass: process.env.SMTP_PASSWORD,
           },
         },
-        from: process.env.SMTP_FROM || "noreply@lynxprompt.com",
+        from: process.env.SMTP_FROM || `noreply@${new URL(APP_URL).hostname}`,
         maxAge: 24 * 60 * 60,
         sendVerificationRequest,
       })
@@ -678,6 +681,6 @@ export const authOptions: NextAuthOptions = {
 // Export WebAuthn config for use in API routes
 export const webAuthnConfig = {
   rpID,
-  rpName: "LynxPrompt",
+  rpName: APP_NAME,
   rpOrigin,
 };

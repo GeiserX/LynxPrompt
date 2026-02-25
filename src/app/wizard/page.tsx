@@ -2051,12 +2051,12 @@ function WizardPageContent() {
 #   # Token stored in $${tokenEnvVar} - NEVER put token directly in this file!
 #
 #   # Push local changes to cloud:
-#   curl -X PUT "https://lynxprompt.com/api/v1/blueprints/${bpId}" \\
+#   curl -X PUT "${appUrl}/api/v1/blueprints/${bpId}" \\
 #     -H "Authorization: Bearer \$${tokenEnvVar}" \\
 #     -H "Content-Type: application/json" \\
 #     -d "{\\"content\\": \\"$(cat ${fileName} | jq -Rs .)\\"}"\n#
 #   # Pull cloud changes to local:
-#   curl -s "https://lynxprompt.com/api/v1/blueprints/${bpId}" \\
+#   curl -s "${appUrl}/api/v1/blueprints/${bpId}" \\
 #     -H "Authorization: Bearer \$${tokenEnvVar}" | jq -r '.content' > ${fileName}
 #
 #   Set your token: export ${tokenEnvVar}="your_token_here"`;
@@ -2072,8 +2072,8 @@ function WizardPageContent() {
 #
 ${syncCommands}
 #
-# Generate an API token at: https://lynxprompt.com/settings
-# Docs: https://lynxprompt.com/docs/api
+# Generate an API token at: ${appUrl}/settings
+# Docs: ${appUrl}/docs/api
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 `;
@@ -7253,7 +7253,7 @@ function StepFeedback({
   userTier: string;
 }) {
   const isTeamsUser = userTier === "teams";
-  const { enableAI } = useFeatureFlags();
+  const { enableAI, appUrl } = useFeatureFlags();
   
   return (
     <div>
