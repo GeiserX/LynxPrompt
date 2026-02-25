@@ -2822,12 +2822,12 @@ function ApiTokensSection({ setError, setSuccess }: ApiTokensSectionProps) {
                 API tokens allow you to programmatically manage your blueprints via the command line or CI/CD pipelines.
                 Upgrade to Pro, Max, or Teams to unlock API access.
               </p>
-              <Link href="/pricing">
-                <Button className="mt-4" size="sm">
+              <Button className="mt-4" size="sm" asChild>
+                <Link href="/auth/signin">
                   <Sparkles className="mr-2 h-4 w-4" />
-                  View Plans
-                </Button>
-              </Link>
+                  Sign Up
+                </Link>
+              </Button>
             </div>
           </div>
         </div>

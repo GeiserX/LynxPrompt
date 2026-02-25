@@ -23,7 +23,7 @@ export default function AIFeaturesOverviewPage() {
         <p className="text-sm">
           <strong>Teams Exclusive:</strong> AI features are available only to Teams
           subscribers.{" "}
-          <Link href="/pricing" className="text-primary hover:underline">
+          <Link href="/auth/signin?plan=teams" className="text-primary hover:underline">
             Upgrade to Teams →
           </Link>
         </p>
