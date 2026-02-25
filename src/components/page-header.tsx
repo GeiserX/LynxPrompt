@@ -6,18 +6,12 @@ import { Menu, X, Github } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useFeatureFlags } from "@/components/providers/feature-flags-provider";
 
 interface NavItem {
   href: string;
   label: string;
 }
-
-const NAV_ITEMS: NavItem[] = [
-  { href: "/wizard", label: "Wizard" },
-  { href: "/blueprints", label: "Blueprints" },
-  { href: "/docs", label: "Docs" },
-  { href: "/blog", label: "Blog" },
-];
 
 interface PageHeaderProps {
   /** Current page identifier (e.g., "pricing", "blueprints", "docs") */
@@ -37,6 +31,14 @@ export function PageHeader({
   showBreadcrumb = true,
 }: PageHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { enableBlog } = useFeatureFlags();
+
+  const NAV_ITEMS: NavItem[] = [
+    { href: "/wizard", label: "Wizard" },
+    { href: "/blueprints", label: "Blueprints" },
+    { href: "/docs", label: "Docs" },
+    ...(enableBlog ? [{ href: "/blog", label: "Blog" }] : []),
+  ];
 
   // Generate display label for breadcrumb
   const displayLabel = breadcrumbLabel || (currentPage ? currentPage.charAt(0).toUpperCase() + currentPage.slice(1) : "");

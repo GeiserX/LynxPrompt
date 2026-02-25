@@ -405,10 +405,7 @@ export const authOptions: NextAuthOptions = {
                 skillLevel: true,
                 profileCompleted: true,
                 authenticators: { select: { id: true } },
-                // Subscription fields
                 subscriptionPlan: true,
-                subscriptionStatus: true,
-                subscriptionInterval: true,
               },
             });
             
@@ -420,11 +417,7 @@ export const authOptions: NextAuthOptions = {
             session.user.persona = dbUser?.persona || null;
             session.user.skillLevel = dbUser?.skillLevel || null;
             session.user.profileCompleted = dbUser?.profileCompleted || false;
-            
-            // Subscription fields
             session.user.subscriptionPlan = dbUser?.subscriptionPlan || "FREE";
-            session.user.subscriptionStatus = dbUser?.subscriptionStatus || null;
-            session.user.subscriptionInterval = dbUser?.subscriptionInterval || null;
             
             // Check if user has passkeys and if verification is needed
             const hasPasskeys = (dbUser?.authenticators?.length ?? 0) > 0;
@@ -450,8 +443,6 @@ export const authOptions: NextAuthOptions = {
             session.user.hasPasskeys = false;
             session.user.requiresPasskeyCheck = false;
             session.user.subscriptionPlan = "FREE";
-            session.user.subscriptionStatus = null;
-            session.user.subscriptionInterval = null;
           }
         }
         // For JWT sessions (Passkey)
@@ -465,10 +456,7 @@ export const authOptions: NextAuthOptions = {
           session.user.skillLevel = (token.skillLevel as string) || null;
           session.user.profileCompleted =
             (token.profileCompleted as boolean) || false;
-          // Subscription fields
           session.user.subscriptionPlan = (token.subscriptionPlan as string) || "FREE";
-          session.user.subscriptionStatus = (token.subscriptionStatus as string) || null;
-          session.user.subscriptionInterval = (token.subscriptionInterval as string) || null;
           // Passkey login sessions are already verified
           session.user.hasPasskeys = true;
           session.user.requiresPasskeyCheck = false;
@@ -489,8 +477,6 @@ export const authOptions: NextAuthOptions = {
             skillLevel: true,
             profileCompleted: true,
             subscriptionPlan: true,
-            subscriptionStatus: true,
-            subscriptionInterval: true,
           },
         });
         token.image = dbUser?.image || null;
@@ -500,8 +486,6 @@ export const authOptions: NextAuthOptions = {
         token.skillLevel = dbUser?.skillLevel || null;
         token.profileCompleted = dbUser?.profileCompleted || false;
         token.subscriptionPlan = dbUser?.subscriptionPlan || "FREE";
-        token.subscriptionStatus = dbUser?.subscriptionStatus || null;
-        token.subscriptionInterval = dbUser?.subscriptionInterval || null;
       }
       return token;
     },

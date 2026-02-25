@@ -68,11 +68,7 @@ export async function GET(request: NextRequest) {
         persona: true,
         skillLevel: true,
         subscriptionPlan: true,
-        subscriptionStatus: true,
-        subscriptionInterval: true,
-        currentPeriodEnd: true,
         createdAt: true,
-        // Count user's blueprints
         _count: {
           select: {
             templates: true,
@@ -96,12 +92,7 @@ export async function GET(request: NextRequest) {
         display_name: user.displayName,
         persona: user.persona,
         skill_level: user.skillLevel,
-        subscription: {
-          plan: user.subscriptionPlan,
-          status: user.subscriptionStatus,
-          interval: user.subscriptionInterval,
-          current_period_end: user.currentPeriodEnd?.toISOString() || null,
-        },
+        plan: user.subscriptionPlan,
         stats: {
           blueprints_count: user._count.templates,
         },

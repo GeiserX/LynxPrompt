@@ -18,13 +18,13 @@ export default function AIFeaturesOverviewPage() {
         </p>
       </div>
 
-      {/* Teams exclusive note */}
+      {/* Teams note */}
       <div className="rounded-xl border border-teal-500/30 bg-teal-500/5 p-4">
         <p className="text-sm">
-          <strong>Teams Exclusive:</strong> AI features are available only to Teams
-          subscribers.{" "}
-          <Link href="/auth/signin?plan=teams" className="text-primary hover:underline">
-            Upgrade to Teams →
+          <strong>Teams Feature:</strong> AI features are available to Teams
+          members.{" "}
+          <Link href="/teams" className="text-primary hover:underline">
+            Learn about Teams →
           </Link>
         </p>
       </div>
@@ -166,7 +166,7 @@ export default function AIFeaturesOverviewPage() {
         <div>
           <h2 className="text-lg font-semibold">Unlock AI Features</h2>
           <p className="mt-1 text-sm text-white/80">
-            Upgrade to Teams to access AI-powered editing and assistance.
+            Join a Team to access AI-powered editing and assistance.
           </p>
         </div>
         <Link
