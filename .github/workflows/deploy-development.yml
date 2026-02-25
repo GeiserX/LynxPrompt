@@ -39,7 +39,6 @@ jobs:
           docker buildx build --platform linux/amd64 \
             --build-arg NEXT_PUBLIC_UMAMI_WEBSITE_ID=${{ secrets.NEXT_PUBLIC_UMAMI_WEBSITE_ID }} \
             --build-arg NEXT_PUBLIC_TURNSTILE_SITE_KEY=${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }} \
-            --build-arg NEXT_PUBLIC_SENTRY_DSN=${{ secrets.NEXT_PUBLIC_SENTRY_DSN }} \
             -t drumsergio/lynxprompt:${{ steps.version.outputs.version }} \
             -t drumsergio/lynxprompt:dev-latest \
             --push .

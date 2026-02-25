@@ -3,8 +3,6 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import Script from "next/script";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { SessionProvider } from "@/components/providers/session-provider";
-
-import { SentryProvider } from "@/components/providers/sentry-provider";
 import { FeatureFlagsProvider } from "@/components/providers/feature-flags-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { CookieBanner } from "@/components/cookie-banner";
@@ -141,11 +139,9 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <SentryProvider>
-              <FeatureFlagsProvider>
-                {children}
-              </FeatureFlagsProvider>
-            </SentryProvider>
+            <FeatureFlagsProvider>
+              {children}
+            </FeatureFlagsProvider>
             <Toaster />
             <CookieBanner />
           </ThemeProvider>

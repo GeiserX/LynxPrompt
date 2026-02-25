@@ -61,11 +61,6 @@ Only the latest version receives security updates. We recommend always running t
 - **Reverse proxy** (Caddy) with automatic HTTPS
 - **Cloudflare** for DDoS protection and WAF
 
-### Error Tracking
-
-- **GlitchTip** (self-hosted, Sentry-compatible)
-- **Sensitive data filtering** - headers, passwords, and PII are filtered before sending
-
 ## Security Best Practices
 
 ### For Contributors
