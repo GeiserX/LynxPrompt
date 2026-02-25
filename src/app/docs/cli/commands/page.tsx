@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { APP_URL } from "@/lib/feature-flags";
 import { Command, FileCode, Search, Download, User, LogIn, LogOut, Info, ArrowRight, Layers, Cloud, ArrowUp, ArrowDown, Link2, Unlink, CheckCircle, FileSearch, Sparkles, Scan, GitMerge, ArrowRightLeft, FolderSearch } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -873,7 +874,7 @@ Options:
                   <code className="rounded bg-muted px-2 py-1 text-sm">LYNXPROMPT_API_URL</code>
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
-                  Custom API URL (default: https://lynxprompt.com)
+                  Custom API URL (default: {APP_URL})
                 </td>
               </tr>
             </tbody>

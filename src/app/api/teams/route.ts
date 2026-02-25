@@ -2,19 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
-import { ensureStripe, STRIPE_PRICE_IDS } from "@/lib/stripe";
 import { z } from "zod";
 
-const MIN_SEATS = 3;
-
-// Validation schema for team creation
 const createTeamSchema = z.object({
   name: z.string().min(2).max(100),
   slug: z.string().min(2).max(50).regex(/^[a-z0-9-]+$/, {
     message: "Slug must be lowercase alphanumeric with hyphens only",
   }),
-  interval: z.enum(["monthly", "annual"]).optional().default("monthly"),
-  seats: z.number().min(MIN_SEATS, `Minimum ${MIN_SEATS} seats required`).optional().default(MIN_SEATS),
 });
 
 /**
@@ -47,7 +41,6 @@ export async function GET() {
       role: m.role,
       memberCount: m.team._count.members,
       joinedAt: m.joinedAt,
-      billingCycleStart: m.team.billingCycleStart,
       maxSeats: m.team.maxSeats,
     }));
 
@@ -62,7 +55,7 @@ export async function GET() {
 }
 
 /**
- * POST /api/teams - Create a new team (redirects to Stripe checkout)
+ * POST /api/teams - Create a new team (no billing required)
  */
 export async function POST(request: NextRequest) {
   try {
@@ -81,7 +74,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name, slug, interval, seats } = validation.data;
+    const { name, slug } = validation.data;
 
     // Check if user is already in a team
     const existingMembership = await prismaUsers.teamMember.findFirst({
@@ -111,76 +104,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get or create Stripe customer
-    const stripe = ensureStripe();
-    let stripeCustomerId = await prismaUsers.user.findUnique({
-      where: { id: session.user.id },
-      select: { stripeCustomerId: true },
-    }).then(u => u?.stripeCustomerId);
-
-    if (!stripeCustomerId) {
-      const customer = await stripe.customers.create({
-        email: session.user.email,
-        name: session.user.name || undefined,
-        metadata: {
-          userId: session.user.id,
-        },
-      });
-      stripeCustomerId = customer.id;
-
-      await prismaUsers.user.update({
-        where: { id: session.user.id },
-        data: { stripeCustomerId },
-      });
-    }
-
-    // Determine price ID based on interval
-    const priceId = interval === "annual" 
-      ? STRIPE_PRICE_IDS.teams_seat_annual 
-      : STRIPE_PRICE_IDS.teams_seat_monthly;
-
-    if (!priceId) {
-      return NextResponse.json(
-        { error: "Teams pricing not configured. Please contact support." },
-        { status: 500 }
-      );
-    }
-
-    // Create Stripe checkout session for Teams subscription
-    const checkoutSession = await stripe.checkout.sessions.create({
-      customer: stripeCustomerId,
-      mode: "subscription",
-      payment_method_types: ["card"],
-      line_items: [
-        {
-          price: priceId,
-          quantity: seats,
-        },
-      ],
-      subscription_data: {
-        metadata: {
-          teamName: name,
-          teamSlug: slug,
-          creatorUserId: session.user.id,
-          type: "teams",
-          seats: seats.toString(),
+    // Create team directly (no billing)
+    const team = await prismaUsers.team.create({
+      data: {
+        name,
+        slug,
+        members: {
+          create: {
+            userId: session.user.id,
+            role: "ADMIN",
+          },
         },
       },
-      metadata: {
-        teamName: name,
-        teamSlug: slug,
-        creatorUserId: session.user.id,
-        type: "teams",
-        seats: seats.toString(),
-      },
-      success_url: `${process.env.NEXTAUTH_URL}/teams/${slug}?success=true`,
-      cancel_url: `${process.env.NEXTAUTH_URL}/teams?cancelled=true`,
-      allow_promotion_codes: true,
     });
 
     return NextResponse.json({
-      checkoutUrl: checkoutSession.url,
-      sessionId: checkoutSession.id,
+      team: {
+        id: team.id,
+        name: team.name,
+        slug: team.slug,
+      },
     });
   } catch (error) {
     console.error("Error creating team:", error);
@@ -190,4 +133,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

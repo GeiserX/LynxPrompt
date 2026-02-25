@@ -3,8 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 
-// Platform owner email - payments go directly to platform's Stripe account
-const PLATFORM_OWNER_EMAIL = "dev@lynxprompt.com";
+import { PLATFORM_OWNER_EMAIL } from "@/lib/feature-flags";
 
 // GET /api/seller/earnings - Get seller earnings summary
 export async function GET() {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prismaBlog } from "@/lib/db-blog";
 import { prismaUsers } from "@/lib/db-users";
+import { APP_URL, APP_NAME } from "@/lib/feature-flags";
 
 // Escape special XML characters
 function escapeXml(text: string): string {
@@ -38,8 +39,8 @@ function markdownToPlainText(markdown: string): string {
 
 export async function GET() {
   try {
-    const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://lynxprompt.com";
-    const siteName = "LynxPrompt";
+    const siteUrl = APP_URL;
+    const siteName = APP_NAME;
     const siteDescription =
       "Updates, tutorials, and insights about AI coding assistants and LynxPrompt.";
 

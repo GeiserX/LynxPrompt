@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { APP_URL } from "@/lib/feature-flags";
 import { Key, Shield, AlertTriangle, Copy } from "lucide-react";
 
 export default function AuthenticationDocsPage() {
@@ -158,7 +159,7 @@ export default function AuthenticationDocsPage() {
         </p>
         <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
           <pre className="text-sm text-zinc-100">
-            <code>{`curl -X GET https://lynxprompt.com/api/v1/blueprints \\
+            <code>{`curl -X GET ${APP_URL}/api/v1/blueprints \\
      -H "Authorization: Bearer lp_your_token_here" \\
      -H "Content-Type: application/json"`}</code>
           </pre>
@@ -175,7 +176,7 @@ export LYNXPROMPT_API_TOKEN="lp_your_token_here"
 
 # List all your blueprints
 curl -H "Authorization: Bearer $LYNXPROMPT_API_TOKEN" \\
-     https://lynxprompt.com/api/v1/blueprints`}</code>
+     ${APP_URL}/api/v1/blueprints`}</code>
           </pre>
         </div>
         <p className="text-sm text-muted-foreground">

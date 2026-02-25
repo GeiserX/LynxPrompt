@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prismaUsers } from "@/lib/db-users";
+import { ENABLE_SSO } from "@/lib/feature-flags";
 
 /**
  * POST /api/auth/sso/lookup - Check if an email domain has SSO configured
- * Body: { email: string }
- * 
- * Returns:
- * - { hasSSO: false } if no SSO for this domain
- * - { hasSSO: true, teamSlug, teamName, provider } if SSO is configured
  */
 export async function POST(request: NextRequest) {
+  if (!ENABLE_SSO) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   try {
     const { email } = await request.json();
 

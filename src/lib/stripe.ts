@@ -1,7 +1,5 @@
 import Stripe from "stripe";
 
-// Only initialize Stripe if the secret key is available
-// This allows the app to build even without Stripe credentials
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 
 export const stripe = stripeSecretKey
@@ -9,83 +7,11 @@ export const stripe = stripeSecretKey
       apiVersion: "2026-01-28.clover",
       typescript: true,
     })
-  : (null as unknown as Stripe); // Type assertion for build-time
+  : (null as unknown as Stripe);
 
 export function ensureStripe(): Stripe {
   if (!stripe) {
     throw new Error("STRIPE_SECRET_KEY is not configured");
   }
   return stripe;
-}
-
-// Price IDs - Now only Teams (Users/Free don't need Stripe)
-export const STRIPE_PRICE_IDS = {
-  // Teams pricing (per seat)
-  teams_seat_monthly: process.env.STRIPE_PRICE_TEAMS_SEAT_MONTHLY || "",
-  teams_seat_annual: process.env.STRIPE_PRICE_TEAMS_SEAT_ANNUAL || "",
-  // Legacy - kept for backwards compatibility during transition
-  pro_monthly: process.env.STRIPE_PRICE_PRO_MONTHLY || "",
-  max_monthly: process.env.STRIPE_PRICE_MAX_MONTHLY || "",
-  pro_annual: process.env.STRIPE_PRICE_PRO_ANNUAL || "",
-  max_annual: process.env.STRIPE_PRICE_MAX_ANNUAL || "",
-} as const;
-
-export type SubscriptionPlan = "free" | "teams";
-export type BillingInterval = "monthly" | "annual";
-
-// Pricing in cents - Now only Teams
-export const PLAN_PRICES = {
-  teams: {
-    monthly: 1000, // €10/seat
-    annual: 10800, // €108/seat (€9/month - 10% off)
-  },
-} as const;
-
-export interface SubscriptionInfo {
-  plan: SubscriptionPlan;
-  status: "active" | "canceled" | "past_due" | "unpaid" | "trialing" | null;
-  currentPeriodEnd: Date | null;
-  cancelAtPeriodEnd: boolean;
-  stripeCustomerId: string | null;
-  stripeSubscriptionId: string | null;
-  billingInterval: BillingInterval;
-}
-
-export interface TeamsSubscriptionInfo extends SubscriptionInfo {
-  plan: "teams";
-  teamId: string;
-  totalSeats: number;
-  activeSeats: number;
-  billingCycleStart: Date | null;
-  billingInterval: BillingInterval;
-}
-
-// Map Stripe price ID to plan name
-export function getPlanFromPriceId(priceId: string): SubscriptionPlan {
-  if (priceId === STRIPE_PRICE_IDS.teams_seat_monthly || priceId === STRIPE_PRICE_IDS.teams_seat_annual) return "teams";
-  // Legacy mapping - treat old pro/max as free (they get full access now anyway)
-  return "free";
-}
-
-// Get billing interval from price ID
-export function getIntervalFromPriceId(priceId: string): BillingInterval {
-  if (priceId === STRIPE_PRICE_IDS.teams_seat_annual) {
-    return "annual";
-  }
-  return "monthly";
-}
-
-// Get price ID for a plan and interval
-export function getPriceIdForPlan(plan: SubscriptionPlan, interval: BillingInterval = "monthly"): string | null {
-  switch (plan) {
-    case "teams":
-      return interval === "annual" ? STRIPE_PRICE_IDS.teams_seat_annual : STRIPE_PRICE_IDS.teams_seat_monthly;
-    default:
-      return null; // Free users don't need Stripe
-  }
-}
-
-// Teams-specific: Calculate seats to bill (minimum 3)
-export function calculateBillableSeats(activeSeats: number): number {
-  return Math.max(activeSeats, 3);
 }

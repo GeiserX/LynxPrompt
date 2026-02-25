@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createTransport } from "nodemailer";
 import { z } from "zod";
+import { APP_NAME, APP_URL, CONTACT_EMAIL } from "@/lib/feature-flags";
 
 const contactSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
@@ -46,10 +47,10 @@ export async function POST(request: Request) {
 
     // Send email
     await transporter.sendMail({
-      from: process.env.SMTP_FROM || "noreply@lynxprompt.com",
-      to: "info@lynxprompt.com",
+      from: process.env.SMTP_FROM || `noreply@${new URL(APP_URL).hostname}`,
+      to: CONTACT_EMAIL || `info@${new URL(APP_URL).hostname}`,
       replyTo: email,
-      subject: `[LynxPrompt Contact] ${subject}`,
+      subject: `[${APP_NAME} Contact] ${subject}`,
       text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
       html: `
         <!DOCTYPE html>

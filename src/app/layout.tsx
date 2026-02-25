@@ -5,8 +5,10 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { SessionProvider } from "@/components/providers/session-provider";
 
 import { SentryProvider } from "@/components/providers/sentry-provider";
+import { FeatureFlagsProvider } from "@/components/providers/feature-flags-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { CookieBanner } from "@/components/cookie-banner";
+import { APP_NAME, APP_URL, UMAMI_SCRIPT_URL } from "@/lib/feature-flags";
 import "./globals.css";
 
 const inter = Inter({
@@ -20,10 +22,10 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://lynxprompt.com"),
+  metadataBase: new URL(APP_URL),
   title: {
-    default: "LynxPrompt - AI IDE Configuration Generator",
-    template: "%s | LynxPrompt",
+    default: `${APP_NAME} - AI IDE Configuration Generator`,
+    template: `%s | ${APP_NAME}`,
   },
   description:
     "Transform your development setup into a mouse-click experience. Generate .cursorrules, CLAUDE.md, and more with smart conditional logic.",
@@ -43,7 +45,7 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "GeiserCloud", url: "https://geiser.cloud" }],
   creator: "GeiserCloud",
-  publisher: "LynxPrompt",
+  publisher: APP_NAME,
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -61,28 +63,28 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "LynxPrompt",
+    title: APP_NAME,
   },
   openGraph: {
-    title: "LynxPrompt — AI Rule/Configuration Files Hub",
+    title: `${APP_NAME} — AI Rule/Configuration Files Hub`,
     description:
       "AI IDE/Tools rule config generator via WebUI or CLI. Generate, browse, store & share AGENTS.md, CLAUDE.md, and more.",
     type: "website",
-    siteName: "LynxPrompt",
+    siteName: APP_NAME,
     locale: "en_US",
-    url: "https://lynxprompt.com",
+    url: APP_URL,
     images: [
       {
         url: "/og-image.png",
         width: 1280,
         height: 640,
-        alt: "LynxPrompt - AI IDE/Tools rule config generator",
+        alt: `${APP_NAME} - AI IDE/Tools rule config generator`,
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "LynxPrompt — AI Rule/Configuration Files Hub",
+    title: `${APP_NAME} — AI Rule/Configuration Files Hub`,
     description:
       "AI IDE/Tools rule config generator via WebUI or CLI. Generate, browse, store & share AGENTS.md, CLAUDE.md, and more.",
     images: ["/og-image.png"],
@@ -100,7 +102,7 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: "https://lynxprompt.com",
+    canonical: APP_URL,
     types: {
       "application/rss+xml": "/api/blog/rss",
     },
@@ -120,9 +122,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         {/* Umami Analytics - privacy-focused, cookieless */}
-        {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (
+        {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (UMAMI_SCRIPT_URL || "https://umami.lynxprompt.com/script.js") && (
           <Script
-            src="https://umami.lynxprompt.com/script.js"
+            src={UMAMI_SCRIPT_URL || "https://umami.lynxprompt.com/script.js"}
             data-website-id={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
             data-do-not-track="false"
             strategy="afterInteractive"
@@ -140,7 +142,9 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <SentryProvider>
-              {children}
+              <FeatureFlagsProvider>
+                {children}
+              </FeatureFlagsProvider>
             </SentryProvider>
             <Toaster />
             <CookieBanner />

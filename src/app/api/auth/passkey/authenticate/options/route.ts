@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { webAuthnConfig } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
+import { ENABLE_PASSKEYS } from "@/lib/feature-flags";
 import {
   generateAuthenticationOptions,
   type AuthenticatorTransportFuture,
 } from "@simplewebauthn/server";
 
 export async function POST(request: NextRequest) {
+  if (!ENABLE_PASSKEYS) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   try {
     const { email } = await request.json();
 

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Terminal, Users, Copy, Check, ArrowUpDown, Globe } from "lucide-react";
+import { useFeatureFlags } from "@/components/providers/feature-flags-provider";
 
 const INSTALL_COMMANDS = {
   npm: "npm install -g lynxprompt",
@@ -61,6 +62,7 @@ const CLI_FEATURES = [
 export function CLISection() {
   const [selectedPm, setSelectedPm] = useState<PackageManager>("npm");
   const [copied, setCopied] = useState(false);
+  const { appUrl } = useFeatureFlags();
 
   const copyToClipboard = async () => {
     await navigator.clipboard.writeText(INSTALL_COMMANDS[selectedPm]);
@@ -213,7 +215,7 @@ export function CLISection() {
               href="/docs/cli"
               className="text-purple-600 hover:underline dark:text-purple-400"
             >
-              lynxprompt.com/docs/cli
+              {new URL(appUrl).hostname}/docs/cli
             </a>
           </p>
         </div>

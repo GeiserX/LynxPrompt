@@ -13,14 +13,11 @@
 services:
   # ==========================================================================
   # APP DATABASE - System templates, platforms, languages
-  # Uses Percona PostgreSQL 18 with pg_tde for Transparent Data Encryption
   # ==========================================================================
   postgres-app:
-    image: percona/percona-distribution-postgresql:18
+    image: postgres:18-alpine
     container_name: lynxprompt-postgres-app
     restart: unless-stopped
-    command: >
-      -c shared_preload_libraries=pg_tde
     logging:
       driver: "json-file"
       options:
@@ -30,9 +27,9 @@ services:
       POSTGRES_DB: lynxprompt_app
       POSTGRES_USER: lynxprompt_app
       POSTGRES_PASSWORD: ${POSTGRES_APP_PASSWORD:-dev_app_password_change_me}
+      PGDATA: /data/pgdata
     volumes:
-      - postgres_app_data:/data/db
-      - postgres_app_keyring:/keyring
+      - postgres_app_data:/data
     networks:
       - lynxprompt
     healthcheck:
@@ -51,14 +48,11 @@ services:
 
   # ==========================================================================
   # USER DATABASE - Golden data (users, sessions, projects)
-  # Uses Percona PostgreSQL 18 with pg_tde for Transparent Data Encryption
   # ==========================================================================
   postgres-users:
-    image: percona/percona-distribution-postgresql:18
+    image: postgres:18-alpine
     container_name: lynxprompt-postgres-users
     restart: unless-stopped
-    command: >
-      -c shared_preload_libraries=pg_tde
     logging:
       driver: "json-file"
       options:
@@ -68,9 +62,9 @@ services:
       POSTGRES_DB: lynxprompt_users
       POSTGRES_USER: lynxprompt_users
       POSTGRES_PASSWORD: ${POSTGRES_USERS_PASSWORD:-dev_users_password_change_me}
+      PGDATA: /data/pgdata
     volumes:
-      - postgres_users_data:/data/db
-      - postgres_users_keyring:/keyring
+      - postgres_users_data:/data
     networks:
       - lynxprompt
     healthcheck:
@@ -234,20 +228,37 @@ services:
       TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
       # Anthropic API for AI features (configure in .env)
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-claude-3-5-haiku-latest}
       # Sentry/GlitchTip (configure in .env)
       SENTRY_DSN: ${SENTRY_DSN:-}
       NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
+      # Analytics
+      UMAMI_SCRIPT_URL: ${UMAMI_SCRIPT_URL:-}
+      NEXT_PUBLIC_UMAMI_WEBSITE_ID: ${NEXT_PUBLIC_UMAMI_WEBSITE_ID:-}
+      # Feature flags
+      ENABLE_GITHUB_OAUTH: ${ENABLE_GITHUB_OAUTH:-false}
+      ENABLE_GOOGLE_OAUTH: ${ENABLE_GOOGLE_OAUTH:-false}
+      ENABLE_EMAIL_AUTH: ${ENABLE_EMAIL_AUTH:-true}
+      ENABLE_PASSKEYS: ${ENABLE_PASSKEYS:-true}
+      ENABLE_TURNSTILE: ${ENABLE_TURNSTILE:-false}
+      ENABLE_SSO: ${ENABLE_SSO:-false}
+      ENABLE_USER_REGISTRATION: ${ENABLE_USER_REGISTRATION:-true}
+      ENABLE_AI: ${ENABLE_AI:-false}
+      ENABLE_BLOG: ${ENABLE_BLOG:-false}
+      ENABLE_SUPPORT_FORUM: ${ENABLE_SUPPORT_FORUM:-false}
+      ENABLE_STRIPE: ${ENABLE_STRIPE:-false}
+      # Branding
+      APP_NAME: ${APP_NAME:-LynxPrompt}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      APP_LOGO_URL: ${APP_LOGO_URL:-}
       # App
       NODE_ENV: ${NODE_ENV:-development}
-      MOCK: ${MOCK:-false}
       SUPERADMIN_EMAIL: ${SUPERADMIN_EMAIL:-}
       UPLOAD_DIR: /data/uploads/blog
 
 volumes:
   postgres_app_data:
-  postgres_app_keyring:
   postgres_users_data:
-  postgres_users_keyring:
   postgres_blog_data:
   postgres_support_data:
   uploads_data:

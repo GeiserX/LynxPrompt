@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { APP_URL } from "@/lib/feature-flags";
 import { Button } from "@/components/ui/button";
 import { Key, ArrowRight, FileCode, User, Shield, Clock } from "lucide-react";
 
@@ -108,7 +109,7 @@ export default function ApiDocsPage() {
               <div className="mt-3 overflow-x-auto rounded-lg bg-zinc-950 p-4">
                 <pre className="text-sm text-zinc-100">
                   <code>{`curl -H "Authorization: Bearer lp_your_token_here" \\
-     https://lynxprompt.com/api/v1/blueprints`}</code>
+     ${APP_URL}/api/v1/blueprints`}</code>
                 </pre>
               </div>
             </div>
@@ -136,7 +137,7 @@ export default function ApiDocsPage() {
         </p>
         <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
           <code className="text-sm text-zinc-100">
-            https://lynxprompt.com/api/v1
+            {APP_URL}/api/v1
           </code>
         </div>
       </section>

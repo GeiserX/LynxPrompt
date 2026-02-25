@@ -5,6 +5,49 @@ All notable changes to LynxPrompt will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - February 2026
+
+### BREAKING CHANGES
+- **Self-hostable platform**: LynxPrompt is now a self-hostable platform. Companies can deploy on their own infrastructure.
+- **Subscription tiers removed**: All features are available to all users. No more Free/Pro/Max/Teams tiers.
+- **GlitchTip removed**: Error tracking is now optional via generic `SENTRY_DSN` env var.
+- **ClickHouse removed**: Analytics engine fully removed from the stack.
+- **Database consolidation**: Default deployment uses a single PostgreSQL database.
+
+### Added
+- **Feature flags system**: All features configurable via environment variables (`ENABLE_AI`, `ENABLE_BLOG`, `ENABLE_STRIPE`, etc.).
+- **Self-hosting docker-compose**: New `docker-compose.selfhost.yml` for minimal 1-Postgres deployment.
+- **Custom branding**: `APP_NAME`, `APP_URL`, `APP_LOGO_URL` env vars for white-labeling.
+- **Dynamic CSP headers**: Content-Security-Policy built from enabled services at startup.
+- **Auto-migration on startup**: `entrypoint.sh` runs Prisma migrations automatically.
+- **FeatureFlagsProvider**: Client-side React context for feature flag access.
+- **Self-hosting documentation**: Comprehensive `/docs/self-hosting` guide with env var reference.
+- **Health check enhancement**: `/api/health` now checks database connectivity.
+- **Configurable auth**: Toggle GitHub/Google OAuth, Email, Passkeys, SSO, Turnstile, and user registration independently.
+- **Configurable AI**: `ENABLE_AI`, `AI_MODEL` env vars control AI feature availability.
+- **Configurable content modules**: Blog and support forum toggled via env vars (default off).
+- **Registration control**: `ENABLE_USER_REGISTRATION=false` for invite-only instances.
+
+### Changed
+- **Stripe is optional**: Marketplace payments controlled by `ENABLE_STRIPE`. When enabled, platform commission routes through LynxPrompt's Stripe by default.
+- **SSO promoted to first-class**: No longer gated behind Teams subscription.
+- **Team management simplified**: Billing removed, kept as organizational grouping.
+- **Sentry is optional**: Only initializes when DSN is configured.
+- **Umami script URL configurable**: `UMAMI_SCRIPT_URL` env var replaces hardcoded URL.
+- **CLI simplified**: Removed plan display from `whoami` and `wizard`.
+- **README rewritten**: Self-hostable platform positioning with deployment guide.
+
+### Removed
+- **Pricing page**: `/pricing` route deleted.
+- **Subscription billing**: Stripe subscription checkout, webhooks for subscriptions, plan change API.
+- **TeamBillingRecord model**: Schema and all references removed.
+- **Upgrade CTAs**: All "Upgrade to Teams" prompts removed from UI, CLI, and docs.
+- **GlitchTip infrastructure**: Containers, Caddy entry, DNS record deleted.
+- **ClickHouse**: All analytics code, env vars, docker-compose service removed.
+- **Percona pg_tde**: Replaced with standard PostgreSQL in dev docker-compose.
+
+---
+
 ## [1.6.0] - February 2026
 
 ### Added
