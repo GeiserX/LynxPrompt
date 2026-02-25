@@ -764,6 +764,7 @@ function WizardPageContent() {
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const [showVariableModal, setShowVariableModal] = useState(false);
   const [variableValues, setVariableValues] = useState<Record<string, string>>({});
+  const { appUrl } = useFeatureFlags();
   const [showOverwriteModal, setShowOverwriteModal] = useState(false);
   const [existingBlueprintId, setExistingBlueprintId] = useState<string | null>(null);
   const [isSavingBlueprint, setIsSavingBlueprint] = useState(false);
