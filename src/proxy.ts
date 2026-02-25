@@ -74,8 +74,7 @@ function buildCSP(): string {
 
   // Umami analytics
   const umamiUrl = process.env.UMAMI_SCRIPT_URL || "";
-  const umamiFallback = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID ? "https://umami.lynxprompt.com" : "";
-  const umamiOrigin = umamiUrl ? new URL(umamiUrl).origin : umamiFallback;
+  const umamiOrigin = umamiUrl ? new URL(umamiUrl).origin : "";
   if (umamiOrigin) {
     scriptSrc.push(umamiOrigin);
     connectSrc.push(umamiOrigin);
