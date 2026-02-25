@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Shield } from "lucide-react";
+import { APP_URL } from "@/lib/feature-flags";
 import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
 
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   alternates: {
-    canonical: "https://lynxprompt.com/privacy",
+    canonical: `${APP_URL}/privacy`,
   },
   robots: {
     index: true,

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { authenticateRequest, isTeams } from "@/lib/api-auth";
+import { authenticateRequest } from "@/lib/api-auth";
 import { prismaUsers } from "@/lib/db-users";
+import { ENABLE_AI, AI_MODEL } from "@/lib/feature-flags";
 import Anthropic from "@anthropic-ai/sdk";
 
 // Cost tracking constants (in tokens)
@@ -53,6 +54,13 @@ STRICT RULES:
 Output ONLY the formatted content that can be added to an AI configuration file.`;
 
 export async function POST(request: Request) {
+  if (!ENABLE_AI) {
+    return NextResponse.json(
+      { error: "AI features are not enabled on this instance" },
+      { status: 404 }
+    );
+  }
+
   try {
     // Authenticate via session OR Bearer token
     const auth = await authenticateRequest(request);
@@ -64,29 +72,18 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if user is Teams subscriber (AI features are Teams-only)
     const user = await prismaUsers.user.findUnique({
       where: { id: auth.user.id },
       select: {
-        subscriptionPlan: true,
-        role: true,
         aiTokensUsedThisPeriod: true,
         aiUsageResetAt: true,
         aiLastRequestAt: true,
         aiRequestsThisMinute: true,
-        currentPeriodEnd: true,
       },
     });
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    if (!isTeams(auth.user)) {
-      return NextResponse.json(
-        { error: "AI editing is only available for Teams subscribers" },
-        { status: 403 }
-      );
     }
 
     // Check rate limiting
@@ -116,7 +113,7 @@ export async function POST(request: Request) {
 
     // Check usage reset (aligned with billing period)
     let tokensUsed = user.aiTokensUsedThisPeriod;
-    const resetAt = user.aiUsageResetAt || user.currentPeriodEnd;
+    const resetAt = user.aiUsageResetAt;
     
     if (resetAt && now > resetAt) {
       // Reset usage at billing period end
@@ -193,7 +190,7 @@ export async function POST(request: Request) {
     const anthropic = new Anthropic({ apiKey });
 
     const response = await anthropic.messages.create({
-      model: "claude-3-5-haiku-latest",
+      model: AI_MODEL,
       max_tokens: isWizardMode ? 200 : 8000,
       // Use content blocks with cache_control for prompt caching
       system: [
@@ -254,7 +251,7 @@ export async function POST(request: Request) {
         aiTokensUsedThisPeriod: tokensUsed + costUnits,
         aiLastRequestAt: now,
         aiRequestsThisMinute: requestsThisMinute,
-        aiUsageResetAt: user.currentPeriodEnd || new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000), // Default: 30 days
+        aiUsageResetAt: user.aiUsageResetAt || new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
       },
     });
 

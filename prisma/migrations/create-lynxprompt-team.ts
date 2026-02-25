@@ -124,8 +124,6 @@ async function createLynxPromptTeam() {
         name: TEAM_NAME,
         slug: TEAM_SLUG,
         maxSeats: 10,
-        subscriptionInterval: "annual",
-        aiUsageLimitPerUser: 10000,
         members: {
           create: {
             userId: adminUser.id,
@@ -147,7 +145,6 @@ async function createLynxPromptTeam() {
     console.log(`   Name: ${team.name}`);
     console.log(`   Slug: ${team.slug}`);
     console.log(`   Max Seats: ${team.maxSeats}`);
-    console.log(`   Billing: ${team.subscriptionInterval}`);
     console.log(`   Members:`);
     team.members.forEach((m) => {
       console.log(`     - ${m.user.email} (${m.role})`);

@@ -6,6 +6,7 @@ import {
   hasPermission,
   canUseApi,
 } from "@/lib/api-tokens";
+import { APP_URL } from "@/lib/feature-flags";
 
 /**
  * GET /api/v1/user
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
         {
           error: "Token expired",
           expired_at: expirationCheck.expiredAt?.toISOString(),
-          message: "Your API token has expired. Please generate a new token at https://lynxprompt.com/settings?tab=api-tokens",
+          message: `Your API token has expired. Please generate a new token at ${APP_URL}/settings?tab=api-tokens`,
         },
         { status: 401 }
       );
@@ -68,11 +69,7 @@ export async function GET(request: NextRequest) {
         persona: true,
         skillLevel: true,
         subscriptionPlan: true,
-        subscriptionStatus: true,
-        subscriptionInterval: true,
-        currentPeriodEnd: true,
         createdAt: true,
-        // Count user's blueprints
         _count: {
           select: {
             templates: true,
@@ -96,12 +93,7 @@ export async function GET(request: NextRequest) {
         display_name: user.displayName,
         persona: user.persona,
         skill_level: user.skillLevel,
-        subscription: {
-          plan: user.subscriptionPlan,
-          status: user.subscriptionStatus,
-          interval: user.subscriptionInterval,
-          current_period_end: user.currentPeriodEnd?.toISOString() || null,
-        },
+        plan: user.subscriptionPlan,
         stats: {
           blueprints_count: user._count.templates,
         },

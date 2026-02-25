@@ -1,4 +1,4 @@
-import { NextAuthOptions } from "next-auth";
+import { NextAuthOptions, Provider } from "next-auth";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import EmailProvider, {
@@ -7,6 +7,16 @@ import EmailProvider, {
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prismaUsers } from "@/lib/db-users";
+import {
+  ENABLE_GITHUB_OAUTH,
+  ENABLE_GOOGLE_OAUTH,
+  ENABLE_EMAIL_AUTH,
+  ENABLE_PASSKEYS,
+  ENABLE_USER_REGISTRATION,
+  APP_NAME,
+  APP_URL,
+  APP_LOGO_URL,
+} from "@/lib/feature-flags";
 import {
   verifyAuthenticationResponse,
   type VerifiedAuthenticationResponse,
@@ -31,8 +41,8 @@ async function sendVerificationRequest(
 
   const result = await transport.sendMail({
     to: email,
-    from: `"LynxPrompt" <${provider.from}>`,
-    subject: `Sign in to LynxPrompt`,
+    from: `"${APP_NAME}" <${provider.from}>`,
+    subject: `Sign in to ${APP_NAME}`,
     text: text({ url, host }),
     html: html({ url, host, email }),
   });
@@ -65,7 +75,7 @@ function html({
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light dark">
   <meta name="supported-color-schemes" content="light dark">
-  <title>Sign in to LynxPrompt</title>
+  <title>Sign in to ${APP_NAME}</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #1a1a2e;">
   <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #1a1a2e;">
@@ -78,7 +88,7 @@ function html({
               <table role="presentation" style="display: inline-table; border-collapse: collapse;">
                 <tr>
                   <td style="vertical-align: middle; padding-right: 10px;">
-                    <img src="https://lynxprompt.com/lynxprompt.png" alt="LynxPrompt" width="44" height="44" style="display: block;" />
+                    <img src="${APP_LOGO_URL || `${APP_URL}/lynxprompt.png`}" alt="${APP_NAME}" width="44" height="44" style="display: block;" />
                   </td>
                   <td style="vertical-align: middle;">
                     <span style="font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
@@ -94,7 +104,7 @@ function html({
           <tr>
             <td style="padding: 40px 32px;">
               <h1 style="margin: 0 0 20px 0; font-size: 26px; font-weight: 700; color: #ffffff; text-align: center;">
-                Sign in to LynxPrompt
+                Sign in to ${APP_NAME}
               </h1>
               
               <p style="margin: 0 0 8px 0; font-size: 16px; line-height: 26px; color: #cbd5e1; text-align: center;">
@@ -109,7 +119,7 @@ function html({
                 <tr>
                   <td align="center" style="padding: 0;">
                     <a href="${url}" target="_blank" style="display: inline-block; padding: 16px 40px; background-color: #a855f7; color: #ffffff; text-decoration: none; font-size: 17px; font-weight: 700; border-radius: 10px; border: 2px solid #c084fc;">
-                      Sign in to LynxPrompt →
+                      Sign in to ${APP_NAME} →
                     </a>
                   </td>
                 </tr>
@@ -140,7 +150,7 @@ function html({
           <tr>
             <td style="padding: 20px 32px; background-color: #0f172a; text-align: center;">
               <p style="margin: 0; font-size: 12px; color: #64748b;">
-                © 2025 LynxPrompt by <a href="https://geiser.cloud" style="color: #a855f7; text-decoration: none;">Geiser Cloud</a>
+                © ${new Date().getFullYear()} ${APP_NAME}
               </p>
               <p style="margin: 6px 0 0 0; font-size: 12px; color: #475569;">
                 AI IDE Configuration Generator
@@ -157,7 +167,7 @@ function html({
 }
 
 function text({ url, host }: { url: string; host: string }) {
-  return `Sign in to LynxPrompt (${host})\n\nClick here to sign in:\n${url}\n\nThis link expires in 24 hours and can only be used once.\n\nIf you didn't request this email, you can safely ignore it.`;
+  return `Sign in to ${APP_NAME} (${host})\n\nClick here to sign in:\n${url}\n\nThis link expires in 24 hours and can only be used once.\n\nIf you didn't request this email, you can safely ignore it.`;
 }
 
 // WebAuthn configuration
@@ -166,118 +176,150 @@ const rpID = process.env.NEXTAUTH_URL
   : "localhost";
 const rpOrigin = process.env.NEXTAUTH_URL || "http://localhost:3000";
 
-export const authOptions: NextAuthOptions = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  adapter: PrismaAdapter(prismaUsers as any) as NextAuthOptions["adapter"],
-  providers: [
-    GitHubProvider({
-      clientId: process.env.GITHUB_CLIENT_ID!,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-    }),
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
-    EmailProvider({
-      server: {
-        host: process.env.SMTP_HOST,
-        port: Number(process.env.SMTP_PORT) || 587,
-        secure: Number(process.env.SMTP_PORT) === 465, // Use SSL for port 465
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASSWORD,
+// Build providers list conditionally based on feature flags
+function buildProviders(): Provider[] {
+  const providers: Provider[] = [];
+
+  if (ENABLE_GITHUB_OAUTH) {
+    providers.push(
+      GitHubProvider({
+        clientId: process.env.GITHUB_CLIENT_ID!,
+        clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+      })
+    );
+  }
+
+  if (ENABLE_GOOGLE_OAUTH) {
+    providers.push(
+      GoogleProvider({
+        clientId: process.env.GOOGLE_CLIENT_ID!,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      })
+    );
+  }
+
+  if (ENABLE_EMAIL_AUTH) {
+    providers.push(
+      EmailProvider({
+        server: {
+          host: process.env.SMTP_HOST,
+          port: Number(process.env.SMTP_PORT) || 587,
+          secure: Number(process.env.SMTP_PORT) === 465,
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASSWORD,
+          },
         },
-      },
-      from: process.env.SMTP_FROM || "noreply@lynxprompt.com",
-      maxAge: 24 * 60 * 60, // 24 hours token validity
-      sendVerificationRequest,
-    }),
-    // Passkey authentication provider
-    CredentialsProvider({
-      id: "passkey",
-      name: "Passkey",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        authResponse: { label: "Auth Response", type: "text" },
-        challenge: { label: "Challenge", type: "text" },
-      },
-      async authorize(credentials) {
-        if (
-          !credentials?.email ||
-          !credentials?.authResponse ||
-          !credentials?.challenge
-        ) {
-          return null;
-        }
+        from: process.env.SMTP_FROM || `noreply@${new URL(APP_URL).hostname}`,
+        maxAge: 24 * 60 * 60,
+        sendVerificationRequest,
+      })
+    );
+  }
 
-        try {
-          const authResponse = JSON.parse(credentials.authResponse);
-
-          // Find user and their authenticator
-          const user = await prismaUsers.user.findUnique({
-            where: { email: credentials.email },
-            include: { authenticators: true },
-          });
-
-          if (!user || user.authenticators.length === 0) {
+  if (ENABLE_PASSKEYS) {
+    providers.push(
+      CredentialsProvider({
+        id: "passkey",
+        name: "Passkey",
+        credentials: {
+          email: { label: "Email", type: "email" },
+          authResponse: { label: "Auth Response", type: "text" },
+          challenge: { label: "Challenge", type: "text" },
+        },
+        async authorize(credentials) {
+          if (
+            !credentials?.email ||
+            !credentials?.authResponse ||
+            !credentials?.challenge
+          ) {
             return null;
           }
 
-          // Find the authenticator used
-          const authenticator = user.authenticators.find(
-            (a) => a.credentialID === authResponse.id
-          );
+          try {
+            const authResponse = JSON.parse(credentials.authResponse);
 
-          if (!authenticator) {
-            return null;
-          }
+            const user = await prismaUsers.user.findUnique({
+              where: { email: credentials.email },
+              include: { authenticators: true },
+            });
 
-          // Verify the authentication response
-          const verification: VerifiedAuthenticationResponse =
-            await verifyAuthenticationResponse({
-              response: authResponse,
-              expectedChallenge: credentials.challenge,
-              expectedOrigin: rpOrigin,
-              expectedRPID: rpID,
-              credential: {
-                id: authenticator.credentialID,
-                publicKey: authenticator.credentialPublicKey,
-                counter: Number(authenticator.counter),
+            if (!user || user.authenticators.length === 0) {
+              return null;
+            }
+
+            const authenticator = user.authenticators.find(
+              (a) => a.credentialID === authResponse.id
+            );
+
+            if (!authenticator) {
+              return null;
+            }
+
+            const verification: VerifiedAuthenticationResponse =
+              await verifyAuthenticationResponse({
+                response: authResponse,
+                expectedChallenge: credentials.challenge,
+                expectedOrigin: rpOrigin,
+                expectedRPID: rpID,
+                credential: {
+                  id: authenticator.credentialID,
+                  publicKey: authenticator.credentialPublicKey,
+                  counter: Number(authenticator.counter),
+                },
+              });
+
+            if (!verification.verified) {
+              return null;
+            }
+
+            await prismaUsers.authenticator.update({
+              where: { id: authenticator.id },
+              data: {
+                counter: BigInt(verification.authenticationInfo.newCounter),
+                lastUsedAt: new Date(),
               },
             });
 
-          if (!verification.verified) {
+            return {
+              id: user.id,
+              email: user.email,
+              name: user.name,
+              image: user.image,
+            };
+          } catch (error) {
+            console.error("Passkey authentication error:", error);
             return null;
           }
+        },
+      })
+    );
+  }
 
-          // Update counter and last used timestamp
-          await prismaUsers.authenticator.update({
-            where: { id: authenticator.id },
-            data: {
-              counter: BigInt(verification.authenticationInfo.newCounter),
-              lastUsedAt: new Date(),
-            },
-          });
+  return providers;
+}
 
-          return {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            image: user.image,
-          };
-        } catch (error) {
-          console.error("Passkey authentication error:", error);
-          return null;
-        }
-      },
-    }),
-  ],
+export const authOptions: NextAuthOptions = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  adapter: PrismaAdapter(prismaUsers as any) as NextAuthOptions["adapter"],
+  providers: buildProviders(),
   pages: {
     signIn: "/auth/signin",
     error: "/auth/error",
   },
   callbacks: {
     async signIn({ user, account, profile }) {
+      // Block new user registration when disabled
+      if (!ENABLE_USER_REGISTRATION && user.email) {
+        const existing = await prismaUsers.user.findUnique({
+          where: { email: user.email },
+          select: { id: true },
+        });
+        if (!existing) {
+          return "/auth/error?error=RegistrationDisabled";
+        }
+      }
+
       // Auto-promote superadmin on first sign-in
       const superadminEmail = process.env.SUPERADMIN_EMAIL;
       if (superadminEmail && user.email === superadminEmail) {
@@ -405,10 +447,7 @@ export const authOptions: NextAuthOptions = {
                 skillLevel: true,
                 profileCompleted: true,
                 authenticators: { select: { id: true } },
-                // Subscription fields
                 subscriptionPlan: true,
-                subscriptionStatus: true,
-                subscriptionInterval: true,
               },
             });
             
@@ -420,11 +459,7 @@ export const authOptions: NextAuthOptions = {
             session.user.persona = dbUser?.persona || null;
             session.user.skillLevel = dbUser?.skillLevel || null;
             session.user.profileCompleted = dbUser?.profileCompleted || false;
-            
-            // Subscription fields
             session.user.subscriptionPlan = dbUser?.subscriptionPlan || "FREE";
-            session.user.subscriptionStatus = dbUser?.subscriptionStatus || null;
-            session.user.subscriptionInterval = dbUser?.subscriptionInterval || null;
             
             // Check if user has passkeys and if verification is needed
             const hasPasskeys = (dbUser?.authenticators?.length ?? 0) > 0;
@@ -450,8 +485,6 @@ export const authOptions: NextAuthOptions = {
             session.user.hasPasskeys = false;
             session.user.requiresPasskeyCheck = false;
             session.user.subscriptionPlan = "FREE";
-            session.user.subscriptionStatus = null;
-            session.user.subscriptionInterval = null;
           }
         }
         // For JWT sessions (Passkey)
@@ -465,10 +498,7 @@ export const authOptions: NextAuthOptions = {
           session.user.skillLevel = (token.skillLevel as string) || null;
           session.user.profileCompleted =
             (token.profileCompleted as boolean) || false;
-          // Subscription fields
           session.user.subscriptionPlan = (token.subscriptionPlan as string) || "FREE";
-          session.user.subscriptionStatus = (token.subscriptionStatus as string) || null;
-          session.user.subscriptionInterval = (token.subscriptionInterval as string) || null;
           // Passkey login sessions are already verified
           session.user.hasPasskeys = true;
           session.user.requiresPasskeyCheck = false;
@@ -489,8 +519,6 @@ export const authOptions: NextAuthOptions = {
             skillLevel: true,
             profileCompleted: true,
             subscriptionPlan: true,
-            subscriptionStatus: true,
-            subscriptionInterval: true,
           },
         });
         token.image = dbUser?.image || null;
@@ -500,8 +528,6 @@ export const authOptions: NextAuthOptions = {
         token.skillLevel = dbUser?.skillLevel || null;
         token.profileCompleted = dbUser?.profileCompleted || false;
         token.subscriptionPlan = dbUser?.subscriptionPlan || "FREE";
-        token.subscriptionStatus = dbUser?.subscriptionStatus || null;
-        token.subscriptionInterval = dbUser?.subscriptionInterval || null;
       }
       return token;
     },
@@ -655,6 +681,6 @@ export const authOptions: NextAuthOptions = {
 // Export WebAuthn config for use in API routes
 export const webAuthnConfig = {
   rpID,
-  rpName: "LynxPrompt",
+  rpName: APP_NAME,
   rpOrigin,
 };

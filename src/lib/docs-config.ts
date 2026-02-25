@@ -42,6 +42,19 @@ export const docsConfig: DocsSection[] = [
     ],
   },
   {
+    title: "Self-Hosting",
+    href: "/docs/self-hosting",
+    description: "Run your own LynxPrompt instance with Docker.",
+    icon: "Server",
+    items: [
+      {
+        title: "Self-Hosting Guide",
+        href: "/docs/self-hosting",
+        description: "Deploy, configure, and customize your instance",
+      },
+    ],
+  },
+  {
     title: "Wizard",
     href: "/docs/wizard",
     description: "Master the configuration wizard to generate perfect AI IDE configs.",
@@ -104,9 +117,9 @@ export const docsConfig: DocsSection[] = [
         description: "How the marketplace works",
       },
       {
-        title: "Pricing & Plans",
+        title: "Pricing",
         href: "/docs/marketplace/pricing",
-        description: "Users and Teams plans",
+        description: "Free features and marketplace commission",
       },
       {
         title: "Selling Blueprints",
@@ -249,9 +262,9 @@ export const docsConfig: DocsSection[] = [
         description: "Common questions about LynxPrompt",
       },
       {
-        title: "Billing & Subscriptions",
+        title: "Marketplace Payments",
         href: "/docs/faq/billing",
-        description: "Payment and subscription questions",
+        description: "Buying and selling blueprint questions",
       },
       {
         title: "Troubleshooting",

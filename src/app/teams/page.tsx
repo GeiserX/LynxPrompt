@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useState } from "react";
+import { useFeatureFlags } from "@/components/providers/feature-flags-provider";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
@@ -69,6 +70,7 @@ const PRICING_DETAILS = [
 
 export default function TeamsPage() {
   const { data: session, status } = useSession();
+  const { appUrl } = useFeatureFlags();
   const [isCreating, setIsCreating] = useState(false);
   const [teamName, setTeamName] = useState("");
   const [teamSlug, setTeamSlug] = useState("");
@@ -171,9 +173,6 @@ export default function TeamsPage() {
                   </Link>
                 </Button>
               )}
-              <Button size="lg" variant="outline" asChild>
-                <Link href="/pricing">Compare All Plans</Link>
-              </Button>
             </div>
           </div>
         </div>
@@ -297,7 +296,7 @@ export default function TeamsPage() {
                   </label>
                   <div className="flex items-center rounded-lg border bg-muted/50">
                     <span className="px-3 text-sm text-muted-foreground">
-                      lynxprompt.com/teams/
+                      {new URL(appUrl).hostname}/teams/
                     </span>
                     <input
                       id="teamSlug"

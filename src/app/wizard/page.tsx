@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { AiEditPanel } from "@/components/ai-edit-panel";
+import { useFeatureFlags } from "@/components/providers/feature-flags-provider";
 import {
   ArrowLeft,
   ArrowRight,
@@ -2050,12 +2051,12 @@ function WizardPageContent() {
 #   # Token stored in $${tokenEnvVar} - NEVER put token directly in this file!
 #
 #   # Push local changes to cloud:
-#   curl -X PUT "https://lynxprompt.com/api/v1/blueprints/${bpId}" \\
+#   curl -X PUT "${appUrl}/api/v1/blueprints/${bpId}" \\
 #     -H "Authorization: Bearer \$${tokenEnvVar}" \\
 #     -H "Content-Type: application/json" \\
 #     -d "{\\"content\\": \\"$(cat ${fileName} | jq -Rs .)\\"}"\n#
 #   # Pull cloud changes to local:
-#   curl -s "https://lynxprompt.com/api/v1/blueprints/${bpId}" \\
+#   curl -s "${appUrl}/api/v1/blueprints/${bpId}" \\
 #     -H "Authorization: Bearer \$${tokenEnvVar}" | jq -r '.content' > ${fileName}
 #
 #   Set your token: export ${tokenEnvVar}="your_token_here"`;
@@ -2071,8 +2072,8 @@ function WizardPageContent() {
 #
 ${syncCommands}
 #
-# Generate an API token at: https://lynxprompt.com/settings
-# Docs: https://lynxprompt.com/docs/api
+# Generate an API token at: ${appUrl}/settings
+# Docs: ${appUrl}/docs/api
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 `;
@@ -7252,6 +7253,7 @@ function StepFeedback({
   userTier: string;
 }) {
   const isTeamsUser = userTier === "teams";
+  const { enableAI, appUrl } = useFeatureFlags();
   
   return (
     <div>
@@ -7261,8 +7263,8 @@ function StepFeedback({
         project that we haven&apos;t asked? Add any additional context.
       </p>
 
-      {/* AI Assist Panel - Teams users only */}
-      {isTeamsUser && (
+      {/* AI Assist Panel - Teams users only, when AI is enabled */}
+      {enableAI && isTeamsUser && (
         <div className="mt-6 rounded-lg border border-purple-200 bg-white p-4 shadow-sm dark:border-purple-800 dark:bg-purple-900/20">
           <div className="mb-3 flex items-center gap-2 text-sm font-medium text-purple-700 dark:text-purple-300">
             <Sparkles className="h-4 w-4" />

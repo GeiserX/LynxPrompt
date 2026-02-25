@@ -1,0 +1,48 @@
+# docker-compose.selfhost.yml — Minimal self-hosted LynxPrompt deployment
+# Usage: docker compose -f docker-compose.selfhost.yml up -d
+#
+# Required env vars (set in .env or environment):
+#   NEXTAUTH_SECRET  — generate with: openssl rand -base64 32
+#   ADMIN_EMAIL      — your email (auto-promoted to superadmin)
+#
+# Optional:
+#   DB_PASSWORD      — database password (default: changeme)
+#   APP_URL          — your domain (default: http://localhost:3000)
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: lynxprompt
+      POSTGRES_USER: lynxprompt
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lynxprompt -d lynxprompt"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  lynxprompt:
+    image: drumsergio/lynxprompt:2.0.0
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL_APP: postgresql://lynxprompt:${DB_PASSWORD:-changeme}@postgres:5432/lynxprompt?schema=public
+      DATABASE_URL_USERS: postgresql://lynxprompt:${DB_PASSWORD:-changeme}@postgres:5432/lynxprompt?schema=public
+      DATABASE_URL_BLOG: postgresql://lynxprompt:${DB_PASSWORD:-changeme}@postgres:5432/lynxprompt?schema=public
+      DATABASE_URL_SUPPORT: postgresql://lynxprompt:${DB_PASSWORD:-changeme}@postgres:5432/lynxprompt?schema=public
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXTAUTH_URL: ${APP_URL:-http://localhost:3000}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      SUPERADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      NODE_ENV: production
+
+volumes:
+  pgdata:

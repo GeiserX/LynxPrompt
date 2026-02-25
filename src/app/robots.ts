@@ -1,7 +1,8 @@
 import { MetadataRoute } from "next";
+import { APP_URL } from "@/lib/feature-flags";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = "https://lynxprompt.com";
+  const baseUrl = APP_URL;
 
   return {
     rules: [

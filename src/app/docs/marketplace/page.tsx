@@ -180,10 +180,10 @@ export default function MarketplaceOverviewPage() {
           </p>
         </div>
         <Link
-          href="/pricing"
+          href="/auth/signin"
           className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-purple-600 transition-colors hover:bg-white/90"
         >
-          View Pricing
+          Get Started
           <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
