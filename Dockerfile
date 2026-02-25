@@ -63,6 +63,17 @@ RUN --mount=type=cache,target=/app/.next/cache \
     npm run build
 
 # -----------------------------------------------------------------------------
+# Prisma CLI stage - resolve full dep tree for migrations
+# -----------------------------------------------------------------------------
+FROM base AS prisma-deps
+
+WORKDIR /prisma-deps
+
+COPY --from=builder /app/package.json ./
+RUN --mount=type=cache,target=/root/.npm \
+    npm install --no-save prisma tsx esbuild get-tsconfig resolve-pkg-maps 2>/dev/null
+
+# -----------------------------------------------------------------------------
 # Production stage - minimal runtime image
 # -----------------------------------------------------------------------------
 FROM base AS production
@@ -81,18 +92,12 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/package.json ./package.json
 
-# Copy Prisma CLI and all @prisma/* deps for migrations
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-# tsx for prisma config files (TypeScript)
-COPY --from=builder /app/node_modules/tsx ./node_modules/tsx
-COPY --from=builder /app/node_modules/esbuild ./node_modules/esbuild
-COPY --from=builder /app/node_modules/get-tsconfig ./node_modules/get-tsconfig
-COPY --from=builder /app/node_modules/resolve-pkg-maps ./node_modules/resolve-pkg-maps
+# Copy Prisma CLI with full dependency tree (from dedicated stage)
+COPY --from=prisma-deps /prisma-deps/node_modules ./node_modules
 
 # Copy Prisma generated clients (Prisma 7 - generated to src/generated/)
 COPY --from=builder /app/src/generated ./src/generated
-# Copy pg driver (adapter-pg and driver-adapter-utils already in @prisma above)
+# Copy pg driver for Prisma adapter runtime
 COPY --from=builder /app/node_modules/pg ./node_modules/pg
 COPY --from=builder /app/node_modules/pg-cloudflare ./node_modules/pg-cloudflare
 COPY --from=builder /app/node_modules/pg-connection-string ./node_modules/pg-connection-string
