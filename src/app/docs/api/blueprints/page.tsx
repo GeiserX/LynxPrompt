@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { APP_URL } from "@/lib/feature-flags";
 import { FileCode, ArrowRight } from "lucide-react";
 
 export default function BlueprintsApiDocsPage() {
@@ -103,7 +104,7 @@ export default function BlueprintsApiDocsPage() {
             <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
               <pre className="text-sm text-zinc-100">
                 <code>{`curl -H "Authorization: Bearer lp_your_token" \\
-     "https://lynxprompt.com/api/v1/blueprints?visibility=private"`}</code>
+     "${APP_URL}/api/v1/blueprints?visibility=private"`}</code>
               </pre>
             </div>
           </div>
@@ -146,7 +147,7 @@ export default function BlueprintsApiDocsPage() {
             <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
               <pre className="text-sm text-zinc-100">
                 <code>{`curl -H "Authorization: Bearer lp_your_token" \\
-     https://lynxprompt.com/api/v1/blueprints/bp_clw2m8k0x0001`}</code>
+     ${APP_URL}/api/v1/blueprints/bp_clw2m8k0x0001`}</code>
               </pre>
             </div>
           </div>
@@ -202,7 +203,7 @@ export default function BlueprintsApiDocsPage() {
             <h4 className="mb-2 font-semibold">Example Request</h4>
             <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
               <pre className="text-sm text-zinc-100">
-                <code>{`curl -X POST https://lynxprompt.com/api/v1/blueprints \\
+                <code>{`curl -X POST ${APP_URL}/api/v1/blueprints \\
      -H "Authorization: Bearer lp_your_token" \\
      -H "Content-Type: application/json" \\
      -d '{
@@ -245,7 +246,7 @@ export default function BlueprintsApiDocsPage() {
             <h4 className="mb-2 font-semibold">Example Request</h4>
             <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
               <pre className="text-sm text-zinc-100">
-                <code>{`curl -X PUT https://lynxprompt.com/api/v1/blueprints/bp_clw2m8k0x0001 \\
+                <code>{`curl -X PUT ${APP_URL}/api/v1/blueprints/bp_clw2m8k0x0001 \\
      -H "Authorization: Bearer lp_your_token" \\
      -H "Content-Type: application/json" \\
      -d '{
@@ -285,7 +286,7 @@ export default function BlueprintsApiDocsPage() {
             <h4 className="mb-2 font-semibold">Example Request</h4>
             <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
               <pre className="text-sm text-zinc-100">
-                <code>{`curl -X DELETE https://lynxprompt.com/api/v1/blueprints/bp_clw2m8k0x0001 \\
+                <code>{`curl -X DELETE ${APP_URL}/api/v1/blueprints/bp_clw2m8k0x0001 \\
      -H "Authorization: Bearer lp_your_token"`}</code>
               </pre>
             </div>
@@ -317,7 +318,7 @@ export default function BlueprintsApiDocsPage() {
 export LYNXPROMPT_API_TOKEN="lp_your_token_here"
 
 # Update blueprint from file
-curl -X PUT https://lynxprompt.com/api/v1/blueprints/bp_your_id \\
+curl -X PUT ${APP_URL}/api/v1/blueprints/bp_your_id \\
      -H "Authorization: Bearer $LYNXPROMPT_API_TOKEN" \\
      -H "Content-Type: application/json" \\
      -d "{\\"content\\": $(cat .cursor/rules | jq -Rs .)}"
@@ -342,7 +343,7 @@ $env:LYNXPROMPT_API_TOKEN = "lp_your_token_here"
 # Read file and update blueprint
 $content = (Get-Content ".cursor\\rules" -Raw) -replace '"', '\\"'
 $body = @{ content = $content } | ConvertTo-Json
-Invoke-RestMethod -Uri "https://lynxprompt.com/api/v1/blueprints/bp_your_id" \`
+Invoke-RestMethod -Uri "${APP_URL}/api/v1/blueprints/bp_your_id" \`
   -Method PUT \`
   -Headers @{ "Authorization" = "Bearer $env:LYNXPROMPT_API_TOKEN"; "Content-Type" = "application/json" } \`
   -Body $body
@@ -387,7 +388,7 @@ jobs:
       
       - name: Sync to LynxPrompt
         run: |
-          curl -X PUT https://lynxprompt.com/api/v1/blueprints/bp_your_id \\
+          curl -X PUT ${APP_URL}/api/v1/blueprints/bp_your_id \\
                -H "Authorization: Bearer \${{ secrets.LYNXPROMPT_API_TOKEN }}" \\
                -H "Content-Type: application/json" \\
                -d "{\\"content\\": $(cat .cursor/rules | jq -Rs .)}"

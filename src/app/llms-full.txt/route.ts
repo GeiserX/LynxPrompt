@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { PLATFORMS, COMMANDS } from "@/lib/platforms";
 import { docsConfig } from "@/lib/docs-config";
+import { APP_NAME, APP_URL, CONTACT_EMAIL, STATUS_PAGE_URL } from "@/lib/feature-flags";
 
 /**
  * Dynamically generates llms-full.txt from the codebase
@@ -21,20 +22,20 @@ function generateLLMsFullContent(): string {
   const sections: string[] = [];
 
   // Header
-  sections.push(`# LynxPrompt - Full Documentation for LLMs
+  sections.push(`# ${APP_NAME} - Full Documentation for LLMs
 
 > Your universal AI config hub
 
-LynxPrompt is a web platform and CLI for generating and sharing AI IDE configuration files and commands (workflows). This document is auto-generated from the codebase.
+${APP_NAME} is a web platform and CLI for generating and sharing AI IDE configuration files and commands (workflows). This document is auto-generated from the codebase.
 
-Website: https://lynxprompt.com
+Website: ${APP_URL}
 GitHub: https://github.com/GeiserX/LynxPrompt
 `);
 
   // Overview
   sections.push(`## Overview
 
-LynxPrompt solves the problem of manually writing AI configuration files like AGENTS.md, CLAUDE.md, .cursor/rules/, or .github/copilot-instructions.md for every project. Users can:
+${APP_NAME} solves the problem of manually writing AI configuration files like AGENTS.md, CLAUDE.md, .cursor/rules/, or .github/copilot-instructions.md for every project. Users can:
 
 1. Use the **Configuration Wizard** to generate configs step-by-step
 2. Browse the **Blueprint Marketplace** to download community-created configs
@@ -162,7 +163,7 @@ ${generateDocsStructure()}
   sections.push(`## Quick Start
 
 ### Web App
-1. Visit lynxprompt.com
+1. Visit ${APP_URL}
 2. Sign in with GitHub, Google, or email
 3. Use the wizard or browse blueprints
 4. Download your configuration files
@@ -172,27 +173,25 @@ npm install -g lynxprompt
 lynxp wizard
 
 ### API
-curl https://lynxprompt.com/api/v1/blueprints
-curl -H "Authorization: Bearer lp_xxxxx" https://lynxprompt.com/api/v1/blueprints/bp_abc123
+curl ${APP_URL}/api/v1/blueprints
+curl -H "Authorization: Bearer lp_xxxxx" ${APP_URL}/api/v1/blueprints/bp_abc123
 `);
 
   // Links
-  sections.push(`## Links
+  const links = [
+    `- Website: ${APP_URL}`,
+    `- Documentation: ${APP_URL}/docs`,
+    `- CLI Docs: ${APP_URL}/docs/cli`,
+    `- API Docs: ${APP_URL}/docs/api`,
+    `- Blueprints: ${APP_URL}/blueprints`,
+    ...(STATUS_PAGE_URL ? [`- Status Page: ${STATUS_PAGE_URL}`] : []),
+    `- GitHub: https://github.com/GeiserX/LynxPrompt`,
+    `- Support: ${APP_URL}/support`,
+  ].join("\n");
 
-- Website: https://lynxprompt.com
-- Documentation: https://lynxprompt.com/docs
-- CLI Docs: https://lynxprompt.com/docs/cli
-- API Docs: https://lynxprompt.com/docs/api
-- Blueprints: https://lynxprompt.com/blueprints
-- Status Page: https://status.lynxprompt.com
-- GitHub: https://github.com/GeiserX/LynxPrompt
-- Support: https://lynxprompt.com/support
+  const contact = CONTACT_EMAIL ? `\n## Contact\n\n- Email: ${CONTACT_EMAIL}\n` : "";
 
-## Contact
-
-- Email: support@lynxprompt.com
-- Author: Sergio Fernández Rubio (GeiserCloud)
-`);
+  sections.push(`## Links\n\n${links}${contact}`);
 
   return sections.join("\n");
 }
@@ -228,7 +227,7 @@ function generateDocsStructure(): string {
   return docsConfig
     .map(section => {
       const items = section.items
-        .map(item => `  - ${item.title}: https://lynxprompt.com${item.href}`)
+        .map(item => `  - ${item.title}: ${APP_URL}${item.href}`)
         .join("\n");
       return `### ${section.title}\n${section.description}\n${items}`;
     })

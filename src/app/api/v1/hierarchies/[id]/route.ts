@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prismaUsers } from "@/lib/db-users";
+import { APP_URL } from "@/lib/feature-flags";
 import {
   validateApiToken,
   checkTokenExpiration,
@@ -28,7 +29,7 @@ export async function GET(
         {
           error: "Token expired",
           expired_at: expirationCheck.expiredAt?.toISOString(),
-          message: "Your API token has expired. Please generate a new token at https://lynxprompt.com/settings?tab=api-tokens",
+          message: `Your API token has expired. Please generate a new token at ${APP_URL}/settings?tab=api-tokens`,
         },
         { status: 401 }
       );
@@ -208,7 +209,7 @@ export async function PATCH(
         {
           error: "Token expired",
           expired_at: expirationCheck.expiredAt?.toISOString(),
-          message: "Your API token has expired. Please generate a new token at https://lynxprompt.com/settings?tab=api-tokens",
+          message: `Your API token has expired. Please generate a new token at ${APP_URL}/settings?tab=api-tokens`,
         },
         { status: 401 }
       );
@@ -338,7 +339,7 @@ export async function DELETE(
         {
           error: "Token expired",
           expired_at: expirationCheck.expiredAt?.toISOString(),
-          message: "Your API token has expired. Please generate a new token at https://lynxprompt.com/settings?tab=api-tokens",
+          message: `Your API token has expired. Please generate a new token at ${APP_URL}/settings?tab=api-tokens`,
         },
         { status: 401 }
       );

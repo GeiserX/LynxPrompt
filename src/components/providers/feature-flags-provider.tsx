@@ -17,6 +17,7 @@ interface FeatureFlags {
   appName: string;
   appUrl: string;
   appLogoUrl: string;
+  statusPageUrl: string;
 }
 
 const defaultFlags: FeatureFlags = {
@@ -34,6 +35,7 @@ const defaultFlags: FeatureFlags = {
   appName: "LynxPrompt",
   appUrl: "http://localhost:3000",
   appLogoUrl: "",
+  statusPageUrl: "",
 };
 
 const FeatureFlagsContext = createContext<FeatureFlags>(defaultFlags);

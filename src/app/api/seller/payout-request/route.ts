@@ -5,8 +5,7 @@ import { prismaUsers } from "@/lib/db-users";
 
 const MINIMUM_PAYOUT = 1000; // €10.00 in cents
 
-// Platform owner email - payments go directly to platform's Stripe account, no payouts needed
-const PLATFORM_OWNER_EMAIL = "dev@lynxprompt.com";
+import { PLATFORM_OWNER_EMAIL } from "@/lib/feature-flags";
 
 // GET /api/seller/payout-request - Get payout history
 export async function GET() {

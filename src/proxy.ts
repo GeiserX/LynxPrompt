@@ -60,6 +60,63 @@ function isRateLimited(key: string, maxRequests: number): boolean {
   return false;
 }
 
+// Content Security Policy - built dynamically based on enabled services
+let cachedCSP: string | null = null;
+function getCSP(): string {
+  if (!cachedCSP) cachedCSP = buildCSP();
+  return cachedCSP;
+}
+
+function buildCSP(): string {
+  const scriptSrc = ["'self'", "'unsafe-inline'", "'unsafe-eval'"];
+  const connectSrc = ["'self'"];
+  const frameSrc = ["'self'"];
+
+  // Umami analytics
+  const umamiUrl = process.env.UMAMI_SCRIPT_URL || "";
+  const umamiFallback = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID ? "https://umami.lynxprompt.com" : "";
+  const umamiOrigin = umamiUrl ? new URL(umamiUrl).origin : umamiFallback;
+  if (umamiOrigin) {
+    scriptSrc.push(umamiOrigin);
+    connectSrc.push(umamiOrigin);
+  }
+
+  // Cloudflare Turnstile
+  if (process.env.ENABLE_TURNSTILE === "true" || process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) {
+    scriptSrc.push("https://challenges.cloudflare.com");
+    connectSrc.push("https://challenges.cloudflare.com");
+    frameSrc.push("https://challenges.cloudflare.com");
+  }
+
+  // Cloudflare Insights (always include if in production)
+  if (process.env.NODE_ENV === "production") {
+    scriptSrc.push("https://static.cloudflareinsights.com");
+    connectSrc.push("https://cloudflareinsights.com");
+  }
+
+  // Sentry/GlitchTip
+  const sentryDsn = process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN;
+  if (sentryDsn) {
+    try {
+      const sentryOrigin = new URL(sentryDsn).origin;
+      connectSrc.push(sentryOrigin);
+    } catch {}
+  }
+
+  return [
+    "default-src 'self'",
+    `script-src ${scriptSrc.join(" ")}`,
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: https://avatars.githubusercontent.com https://lh3.googleusercontent.com https://*.gravatar.com https://gravatar.com",
+    "font-src 'self' data:",
+    `connect-src ${connectSrc.join(" ")}`,
+    `frame-src ${frameSrc.join(" ")}`,
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join("; ");
+}
+
 // Security headers
 function addSecurityHeaders(response: NextResponse): NextResponse {
   // Prevent clickjacking
@@ -81,21 +138,7 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
   );
 
   // Content Security Policy
-  response.headers.set(
-    "Content-Security-Policy",
-    [
-      "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://umami.lynxprompt.com https://challenges.cloudflare.com https://static.cloudflareinsights.com", // Next.js + Umami + Turnstile + CF Insights
-      "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: https://avatars.githubusercontent.com https://lh3.googleusercontent.com https://*.gravatar.com https://gravatar.com",
-      "font-src 'self' data:",
-      "connect-src 'self' https://umami.lynxprompt.com https://challenges.cloudflare.com https://cloudflareinsights.com",
-      "frame-src 'self' https://challenges.cloudflare.com", // Turnstile iframe
-      "frame-ancestors 'none'",
-      "base-uri 'self'",
-      "form-action 'self'",
-    ].join("; ")
-  );
+  response.headers.set("Content-Security-Policy", getCSP());
 
   // HSTS (only in production with HTTPS)
   if (process.env.NODE_ENV === "production") {

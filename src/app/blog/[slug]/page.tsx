@@ -7,6 +7,7 @@ import type { Metadata } from "next";
 import { authOptions } from "@/lib/auth";
 import { prismaBlog } from "@/lib/db-blog";
 import { prismaUsers } from "@/lib/db-users";
+import { APP_NAME, APP_URL, APP_LOGO_URL } from "@/lib/feature-flags";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
@@ -73,7 +74,7 @@ export async function generateMetadata({
       images: post.coverImage ? [post.coverImage] : undefined,
     },
     alternates: {
-      canonical: `https://lynxprompt.com/blog/${slug}`,
+      canonical: `${APP_URL}/blog/${slug}`,
     },
   };
 }
@@ -229,25 +230,25 @@ export default async function BlogPostPage({ params }: PageProps) {
     "@type": "Article",
     headline: post.title,
     description: post.excerpt || post.title,
-    image: post.coverImage || "https://lynxprompt.com/og-image.png",
+    image: post.coverImage || `${APP_URL}/og-image.png`,
     datePublished: (post.publishedAt || post.createdAt).toISOString(),
     dateModified: post.updatedAt?.toISOString() || (post.publishedAt || post.createdAt).toISOString(),
     author: {
       "@type": "Person",
       name: authorName,
-      url: `https://lynxprompt.com/users/${post.authorId}`,
+      url: `${APP_URL}/users/${post.authorId}`,
     },
     publisher: {
       "@type": "Organization",
-      name: "LynxPrompt",
+      name: APP_NAME,
       logo: {
         "@type": "ImageObject",
-        url: "https://lynxprompt.com/og-image.png",
+        url: APP_LOGO_URL || `${APP_URL}/og-image.png`,
       },
     },
     mainEntityOfPage: {
       "@type": "WebPage",
-      "@id": `https://lynxprompt.com/blog/${slug}`,
+      "@id": `${APP_URL}/blog/${slug}`,
     },
     keywords: post.tags.join(", "),
   };
