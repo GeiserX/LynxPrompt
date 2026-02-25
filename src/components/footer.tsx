@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { MessageSquareHeart } from "lucide-react";
-import { STATUS_PAGE_URL } from "@/lib/feature-flags";
+import { STATUS_PAGE_URL, ENABLE_FEDERATION } from "@/lib/feature-flags";
 
 export function Footer() {
   return (
@@ -68,6 +68,14 @@ export function Footer() {
             >
               Contact
             </Link>
+            {ENABLE_FEDERATION && (
+              <Link
+                href="/federation"
+                className="text-muted-foreground hover:underline"
+              >
+                Federation
+              </Link>
+            )}
             {STATUS_PAGE_URL && (
               <a
                 href={STATUS_PAGE_URL}
