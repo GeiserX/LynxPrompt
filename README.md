@@ -18,14 +18,14 @@
 
 LynxPrompt is a **self-hostable platform** for managing AI IDE configuration files — `AGENTS.md`, `.cursor/rules/`, `CLAUDE.md`, slash commands, and 30+ other formats. Deploy it on your own infrastructure and give your team a central hub to create, share, and standardize AI coding assistant configurations across every project.
 
-Instead of manually writing configuration files for every project and every AI tool, teams use LynxPrompt to:
+Instead of manually writing configuration files for every project and every AI tool, use LynxPrompt to:
 
 - **Generate** configs through an interactive wizard (web or CLI)
-- **Share** blueprints internally through a private marketplace
+- **Share** blueprints through a private or federated marketplace
 - **Standardize** AI behavior across projects with reusable templates
 - **Export** to any supported format with one click
 
-Companies deploy LynxPrompt internally to enforce coding standards, share institutional knowledge, and ensure consistent AI assistant behavior across their engineering organization.
+LynxPrompt is **free and open-source**. Self-host it for personal use, or deploy it within your organization to enforce coding standards, share institutional knowledge, and ensure consistent AI assistant behavior across your engineering teams. A hosted instance is also available at [lynxprompt.com](https://lynxprompt.com) for those who prefer not to self-host.
 
 ---
 
@@ -115,28 +115,33 @@ All features are controlled via environment variables. Toggle what you need, dis
 
 ## CLI
 
-The CLI tool mirrors the web platform and works against any LynxPrompt instance.
+The CLI tool mirrors the web platform and works against any LynxPrompt instance. By default it connects to `lynxprompt.com`, but you can point it to any self-hosted deployment.
 
 ```bash
 # Install
 npm install -g lynxprompt
 
-# Point to your instance and authenticate
-export LYNXPROMPT_API_URL=https://lynxprompt.your-company.com
+# (Optional) Point to a self-hosted instance — two ways:
+lynxp config set-url https://lynxprompt.your-company.com
+# or: export LYNXPROMPT_API_URL=https://lynxprompt.your-company.com
+
+# Authenticate (opens browser on the configured instance)
 lynxp login
 
 # Generate AI config files interactively
 lynxp wizard
 
-# Pull a blueprint from your instance
+# Pull a blueprint
 lynxp pull bp_abc123
 
-# Push local configs to your account
+# Push local configs
 lynxp push
 
-# Convert between formats
-lynxp convert --from agents.md --to .cursor/rules/
+# View current CLI configuration
+lynxp config
 ```
+
+The API URL is stored in the CLI config file (see `lynxp config path`). The `LYNXPROMPT_API_URL` environment variable takes precedence if set.
 
 Also available via Homebrew (`brew install GeiserX/lynxprompt/lynxprompt`) and Chocolatey (`choco install lynxprompt`).
 
