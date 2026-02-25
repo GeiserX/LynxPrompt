@@ -131,7 +131,7 @@ export default function TroubleshootingPage() {
           <h3 className="font-semibold">AI editing not available</h3>
           <div className="mt-2 space-y-2 text-muted-foreground">
             <ul className="list-inside list-disc space-y-1">
-              <li>AI editing is only available to Teams subscribers</li>
+              <li>AI editing is only available when AI features are enabled (ENABLE_AI)</li>
               <li>
                 Check your subscription status in{" "}
                 <Link
@@ -142,7 +142,7 @@ export default function TroubleshootingPage() {
                 </Link>
               </li>
               <li>
-                If you&apos;re a Teams subscriber and still can&apos;t access it,
+                If AI is enabled and you still can&apos;t access it,
                 try signing out and back in
               </li>
             </ul>

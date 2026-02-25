@@ -23,3 +23,10 @@ ALTER TABLE "Team" DROP COLUMN IF EXISTS "aiUsageLimitPerUser";
 -- Remove indexes on dropped Team columns
 DROP INDEX IF EXISTS "Team_stripeCustomerId_key";
 DROP INDEX IF EXISTS "Team_stripeSubscriptionId_key";
+
+-- Migrate any users with removed plan tiers to FREE
+UPDATE "User" SET "subscriptionPlan" = 'FREE' WHERE "subscriptionPlan" NOT IN ('FREE', 'TEAMS');
+
+-- Note: PostgreSQL enum value removal requires creating a new type.
+-- Prisma handles this automatically with prisma migrate deploy.
+-- The FREE and TEAMS values are kept for backwards compatibility.

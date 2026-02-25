@@ -525,8 +525,8 @@ DATABASE_URL_SUPPORT=postgresql://sup-db/forum`}</code>
           your instance:
         </p>
         <pre className="overflow-x-auto rounded-lg bg-muted p-4 text-sm">
-          <code>{`lynxprompt config set api-url https://lynxprompt.yourcompany.com
-lynxprompt login`}</code>
+          <code>{`lynxp config set-url https://lynxprompt.yourcompany.com
+lynxp login`}</code>
         </pre>
         <p className="text-sm text-muted-foreground">
           This stores the API URL locally. All subsequent CLI commands (push,

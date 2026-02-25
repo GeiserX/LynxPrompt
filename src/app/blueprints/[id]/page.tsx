@@ -28,6 +28,7 @@ import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Footer } from "@/components/footer";
+import { useFeatureFlags } from "@/components/providers/feature-flags-provider";
 
 
 // Platform info
@@ -125,6 +126,7 @@ export default function BlueprintDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { data: session } = useSession();
+  const { enableStripe } = useFeatureFlags();
   const [blueprint, setBlueprint] = useState<TemplateData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
@@ -529,26 +531,33 @@ export default function BlueprintDetailPage() {
                 </div>
                 {/* Action buttons - different for paid/unpurchased */}
                 {blueprint.isPaid && !blueprint.hasPurchased ? (
-                  <div className="flex flex-col items-end gap-2">
-                    <Button
-                      size="lg"
-                      onClick={handlePurchase}
-                      disabled={purchasing}
-                      className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                    >
-                      {purchasing ? (
-                        <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                      ) : (
-                        <ShoppingCart className="mr-2 h-5 w-5" />
+                  enableStripe ? (
+                    <div className="flex flex-col items-end gap-2">
+                      <Button
+                        size="lg"
+                        onClick={handlePurchase}
+                        disabled={purchasing}
+                        className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                      >
+                        {purchasing ? (
+                          <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        ) : (
+                          <ShoppingCart className="mr-2 h-5 w-5" />
+                        )}
+                        {purchasing ? "Processing..." : `Purchase for €${((blueprint.price || 0) / 100).toFixed(2)}`}
+                      </Button>
+                      {blueprint.currentVersion && blueprint.currentVersion > 0 && (
+                        <span className="text-xs text-muted-foreground">
+                          Purchasing version {blueprint.publishedVersion || blueprint.currentVersion}
+                        </span>
                       )}
-                      {purchasing ? "Processing..." : `Purchase for €${((blueprint.price || 0) / 100).toFixed(2)}`}
-                    </Button>
-                    {blueprint.currentVersion && blueprint.currentVersion > 0 && (
-                      <span className="text-xs text-muted-foreground">
-                        Purchasing version {blueprint.publishedVersion || blueprint.currentVersion}
-                      </span>
-                    )}
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-500/50 dark:bg-amber-900/30 dark:text-amber-200">
+                      <Lock className="mr-1 inline h-4 w-4" />
+                      This is a paid blueprint. Payments are not enabled on this instance.
+                    </div>
+                  )
                 ) : (
                   <div className="flex flex-wrap gap-2">
                     {blueprint.isOwner && !selectedVersion ? (
@@ -808,21 +817,29 @@ export default function BlueprintDetailPage() {
                     {/* Overlay */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center rounded-xl bg-gradient-to-t from-background via-background/80 to-transparent">
                       <Lock className="mb-3 h-8 w-8 text-muted-foreground" />
-                      <p className="mb-4 text-center text-muted-foreground">
-                        Full content is locked. Purchase to access.
-                      </p>
-                      <Button
-                        onClick={handlePurchase}
-                        disabled={purchasing}
-                        className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                      >
-                        {purchasing ? (
-                          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                        ) : (
-                          <ShoppingCart className="mr-2 h-4 w-4" />
-                        )}
-                        {purchasing ? "Processing..." : `Purchase for €${((blueprint.price || 0) / 100).toFixed(2)}`}
-                      </Button>
+                      {enableStripe ? (
+                        <>
+                          <p className="mb-4 text-center text-muted-foreground">
+                            Full content is locked. Purchase to access.
+                          </p>
+                          <Button
+                            onClick={handlePurchase}
+                            disabled={purchasing}
+                            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                          >
+                            {purchasing ? (
+                              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                            ) : (
+                              <ShoppingCart className="mr-2 h-4 w-4" />
+                            )}
+                            {purchasing ? "Processing..." : `Purchase for €${((blueprint.price || 0) / 100).toFixed(2)}`}
+                          </Button>
+                        </>
+                      ) : (
+                        <p className="text-center text-muted-foreground">
+                          This is a paid blueprint. Payments are not enabled on this instance.
+                        </p>
+                      )}
                     </div>
                   </div>
                   {/* Show customizable variables even for locked templates */}

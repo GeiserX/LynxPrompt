@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { getTemplateById, incrementTemplateUsage } from "@/lib/data/templates";
 import { prismaUsers } from "@/lib/db-users";
 import { detectSensitiveData } from "@/lib/sensitive-data";
+import { ENABLE_STRIPE } from "@/lib/feature-flags";
 
 
 // GET /api/blueprints/[id] - Get blueprint details
@@ -351,10 +352,10 @@ export async function PUT(
         user?.role === "SUPERADMIN";
 
       if (price !== null && price > 0) {
-        if (!isTeamsUser) {
+        if (!ENABLE_STRIPE) {
           return NextResponse.json(
-            { error: "Only Teams subscribers can create paid blueprints" },
-            { status: 403 }
+            { error: "Paid blueprints require ENABLE_STRIPE to be configured" },
+            { status: 400 }
           );
         }
         const priceNum = parseInt(String(price), 10);

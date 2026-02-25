@@ -25,7 +25,6 @@ import {
   Smartphone,
   Laptop,
   Clock,
-  Crown,
   Variable,
   X,
   FileCode,
@@ -2374,9 +2373,6 @@ function ApiTokensSection({ setError, setSuccess }: ApiTokensSectionProps) {
     }
   };
 
-  // All users can now use the API
-  const canUseApi = true;
-
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -2394,29 +2390,6 @@ function ApiTokensSection({ setError, setSuccess }: ApiTokensSectionProps) {
         </p>
       </div>
 
-      {!canUseApi ? (
-        <div className="rounded-xl border bg-card p-6">
-          <div className="flex items-start gap-4">
-            <div className="rounded-lg bg-amber-500/10 p-2">
-              <Crown className="h-6 w-6 text-amber-500" />
-            </div>
-            <div>
-              <h2 className="font-semibold">API Access Requires Pro or Higher</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                API tokens allow you to programmatically manage your blueprints via the command line or CI/CD pipelines.
-                Upgrade to Pro, Max, or Teams to unlock API access.
-              </p>
-              <Button className="mt-4" size="sm" asChild>
-                <Link href="/auth/signin">
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Sign Up
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <>
           {/* Created Token Display */}
           {createdToken && (
             <div className="rounded-xl border border-green-500/50 bg-green-500/10 p-6">
@@ -2654,8 +2627,6 @@ function ApiTokensSection({ setError, setSuccess }: ApiTokensSectionProps) {
               </p>
             </div>
           </div>
-        </>
-      )}
     </div>
   );
 }
