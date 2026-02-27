@@ -236,7 +236,7 @@ git merge develop
 
 - Clean, readable code without over-engineering
 - Proper GDPR/EU legal compliance
-- Self-hosted solutions (Umami analytics, GlitchTip)
+- Self-hosted solutions (Umami analytics)
 - Privacy-focused approaches (cookieless analytics, minimal data collection)
 - Semver versioning for Docker images (e.g., `2.0.22`, never `:latest`)
 - GitOps with Portainer for infrastructure management
@@ -287,7 +287,6 @@ git merge develop
 | PostgreSQL (users) | Users, sessions, passkeys | `@prisma/client-users` |
 | PostgreSQL (blog) | Blog posts and content | `@prisma/client-blog` |
 | PostgreSQL (support) | Feedback forum data | `@prisma/client-support` |
-| ClickHouse | Analytics, event tracking | HTTP client |
 
 ### Infrastructure
 | Component | Details |
@@ -297,7 +296,6 @@ git merge develop
 | Tailscale | VPN for internal services (always use MagicDNS hostnames) |
 | Umami | Self-hosted analytics (EU, cookieless) |
 | Caddy | Reverse proxy (production + dev) |
-| GlitchTip | Self-hosted error tracking (Sentry-compatible) |
 
 ### Payments & Billing
 | Component | Details |
@@ -453,7 +451,7 @@ LynxPrompt/
 │   │   └── utils.ts       # Utilities
 │   └── types/             # TypeScript types
 ├── tests/                 # Test files
-└── tooling/               # Internal tools (stripe images, etc.)
+└── tooling/               # Internal tools
 ```
 
 ### API Routes Pattern
@@ -514,8 +512,8 @@ See `env.example` for all required variables. Key categories:
 | Database | `DATABASE_URL_APP`, `DATABASE_URL_USERS`, `DATABASE_URL_BLOG`, `DATABASE_URL_SUPPORT` |
 | Auth | `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `GITHUB_*`, `GOOGLE_*` |
 | Email | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` |
-| Payments | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_*` |
-| Analytics | `CLICKHOUSE_*`, `NEXT_PUBLIC_UMAMI_WEBSITE_ID` |
+
+| Analytics | `NEXT_PUBLIC_UMAMI_WEBSITE_ID` |
 | Security | `TURNSTILE_SECRET_KEY`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY` |
 | Error Tracking | `SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_DSN` |
 
@@ -535,7 +533,7 @@ See `env.example` for all required variables. Key categories:
 
 | Type | Location | Example |
 |------|----------|---------|
-| Placeholder values | `env.example` | `STRIPE_SECRET_KEY=sk_test_...` |
+| Placeholder values | `env.example` | `SMTP_HOST=smtp.example.com` |
 | Development secrets | `.env` (local, gitignored) | Actual test keys |
 | Production secrets | Private GitOps repo | Actual live keys |
 | CI secrets | GitHub Secrets | Deploy tokens |

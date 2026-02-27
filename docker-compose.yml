@@ -214,9 +214,6 @@ services:
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_FROM: ${SMTP_FROM:-noreply@localhost}
       SMTP_FROM_NAME: ${SMTP_FROM_NAME:-LynxPrompt}
-      # Stripe (configure in .env)
-      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
-      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
       # Cloudflare Turnstile (configure in .env)
       NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
       TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
@@ -237,7 +234,6 @@ services:
       ENABLE_AI: ${ENABLE_AI:-false}
       ENABLE_BLOG: ${ENABLE_BLOG:-false}
       ENABLE_SUPPORT_FORUM: ${ENABLE_SUPPORT_FORUM:-false}
-      ENABLE_STRIPE: ${ENABLE_STRIPE:-false}
       # Branding
       APP_NAME: ${APP_NAME:-LynxPrompt}
       APP_URL: ${APP_URL:-http://localhost:3000}

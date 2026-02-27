@@ -23,9 +23,6 @@ const SENSITIVE_PATTERNS = [
   // Anthropic
   { type: "Anthropic Key", regex: /sk-ant-[a-zA-Z0-9-]{20,}/gi },
   
-  // Stripe
-  { type: "Stripe Key", regex: /(?:sk|pk|rk)_(?:live|test)_[a-zA-Z0-9]{20,}/gi },
-  
   // Firebase
   { type: "Firebase Key", regex: /AIza[a-zA-Z0-9_-]{35}/gi },
   
@@ -175,7 +172,6 @@ const FALSE_POSITIVE_PATTERNS = [
 const TYPE_TO_VARIABLE: Record<string, string> = {
   "OpenAI Key": "OPENAI_API_KEY",
   "Anthropic Key": "ANTHROPIC_API_KEY",
-  "Stripe Key": "STRIPE_KEY",
   "Firebase Key": "FIREBASE_API_KEY",
   "Supabase Key": "SUPABASE_KEY",
   "Azure Key": "AZURE_KEY",

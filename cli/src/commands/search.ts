@@ -45,11 +45,10 @@ export async function searchCommand(
 }
 
 function printSearchResult(result: SearchResult): void {
-  const priceInfo = result.price ? chalk.yellow(`€${(result.price / 100).toFixed(2)}`) : chalk.green("Free");
   const officialBadge = result.isOfficial ? chalk.magenta(" ★ Official") : "";
   
   console.log(`  ${chalk.bold(result.name)}${officialBadge}`);
-  console.log(`     ${chalk.cyan(result.id)} • ${priceInfo}`);
+  console.log(`     ${chalk.cyan(result.id)}`);
   if (result.description) {
     console.log(`     ${chalk.gray(truncate(result.description, 60))}`);
   }

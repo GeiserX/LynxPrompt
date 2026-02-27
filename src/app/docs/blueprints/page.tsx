@@ -150,58 +150,6 @@ export default function BlueprintsOverviewPage() {
         </div>
       </section>
 
-      {/* Free vs Paid */}
-      <section className="space-y-4">
-        <h2 className="text-2xl font-bold">Free vs. Paid Blueprints</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-xl border bg-card p-6">
-            <h3 className="text-lg font-semibold">Free Blueprints</h3>
-            <ul className="mt-3 space-y-2 text-muted-foreground">
-              <li className="flex items-center gap-2">
-                <span className="text-green-500">✓</span>
-                Available to everyone
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="text-green-500">✓</span>
-                Created by the community
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="text-green-500">✓</span>
-                Unlimited downloads
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="text-green-500">✓</span>
-                Can be favorited and shared
-              </li>
-            </ul>
-          </div>
-          <div className="rounded-xl border bg-card p-6">
-            <h3 className="text-lg font-semibold">Paid Blueprints</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Available on instances with Stripe enabled
-            </p>
-            <ul className="mt-3 space-y-2 text-muted-foreground">
-              <li className="flex items-center gap-2">
-                <span className="text-purple-500">★</span>
-                Premium configurations by any user
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="text-purple-500">★</span>
-                Creators earn 70% of each sale
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="text-purple-500">★</span>
-                Instant download after purchase
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="text-purple-500">★</span>
-                Support the creators
-              </li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
       {/* CTA */}
       <div className="flex flex-col gap-4 rounded-xl border bg-gradient-to-r from-primary/5 to-primary/10 p-6 sm:flex-row sm:items-center sm:justify-between">
         <div>

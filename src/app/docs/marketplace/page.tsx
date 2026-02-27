@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Store, CreditCard, DollarSign, ArrowRight } from "lucide-react";
+import { Store, ArrowRight } from "lucide-react";
 
 export default function MarketplaceOverviewPage() {
   return (
@@ -13,40 +13,9 @@ export default function MarketplaceOverviewPage() {
           <h1 className="text-3xl font-bold tracking-tight">Marketplace</h1>
         </div>
         <p className="max-w-2xl text-lg text-muted-foreground">
-          Buy, sell, and share AI IDE configurations. The marketplace
-          connects blueprint creators with developers who need them.
+          Discover and share AI IDE configurations. The marketplace connects
+          blueprint creators with developers who need them.
         </p>
-      </div>
-
-      {/* In this section */}
-      <div className="rounded-xl border bg-card p-6">
-        <h2 className="mb-4 font-semibold">In this section</h2>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <Link
-            href="/docs/marketplace/pricing"
-            className="flex items-center gap-3 rounded-lg border bg-background p-4 transition-colors hover:bg-muted"
-          >
-            <CreditCard className="h-5 w-5 text-primary" />
-            <div>
-              <p className="font-medium">Marketplace Pricing</p>
-              <p className="text-sm text-muted-foreground">
-                How pricing works
-              </p>
-            </div>
-          </Link>
-          <Link
-            href="/docs/marketplace/selling"
-            className="flex items-center gap-3 rounded-lg border bg-background p-4 transition-colors hover:bg-muted"
-          >
-            <DollarSign className="h-5 w-5 text-primary" />
-            <div>
-              <p className="font-medium">Selling Blueprints</p>
-              <p className="text-sm text-muted-foreground">
-                Set prices and earn
-              </p>
-            </div>
-          </Link>
-        </div>
       </div>
 
       {/* How it works */}
@@ -54,73 +23,25 @@ export default function MarketplaceOverviewPage() {
         <h2 className="text-2xl font-bold">How the Marketplace Works</h2>
         <p className="text-muted-foreground">
           LynxPrompt operates as a platform that connects blueprint creators
-          (sellers) with developers (buyers). We handle payments, hosting, and
-          discovery.
+          with developers. We handle hosting and discovery so you can focus on
+          building great configurations.
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-lg border bg-card p-4">
-            <h3 className="font-medium">For Buyers</h3>
+            <h3 className="font-medium">For Users</h3>
             <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
-              <li>• Browse free and paid blueprints</li>
-              <li>• Pay with credit card via Stripe</li>
-              <li>• Instant download after purchase</li>
+              <li>• Browse community blueprints</li>
+              <li>• Download and use instantly</li>
+              <li>• Save favorites for quick access</li>
             </ul>
           </div>
           <div className="rounded-lg border bg-card p-4">
-            <h3 className="font-medium">For Sellers</h3>
+            <h3 className="font-medium">For Creators</h3>
             <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
-              <li>• All users can sell blueprints</li>
-              <li>• Set your own prices (min €5)</li>
-              <li>• Keep 70% of each sale</li>
+              <li>• All users can share blueprints</li>
+              <li>• Build your reputation in the community</li>
+              <li>• Get feedback via downloads and favorites</li>
             </ul>
-          </div>
-        </div>
-      </section>
-
-      {/* Revenue split */}
-      <section className="space-y-4">
-        <h2 className="text-2xl font-bold">Revenue Split</h2>
-        <div className="rounded-xl border bg-card p-6">
-          <div className="flex items-center justify-center gap-8">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-green-500">70%</div>
-              <div className="mt-1 text-sm text-muted-foreground">
-                To Creator
-              </div>
-            </div>
-            <div className="h-16 w-px bg-border" />
-            <div className="text-center">
-              <div className="text-4xl font-bold text-muted-foreground">30%</div>
-              <div className="mt-1 text-sm text-muted-foreground">
-                Platform Fee
-              </div>
-            </div>
-          </div>
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            Platform fee covers payment processing, hosting, and marketplace
-            maintenance.
-          </p>
-        </div>
-      </section>
-
-      {/* Revenue Split */}
-      <section className="space-y-4">
-        <h2 className="text-2xl font-bold">Revenue Split</h2>
-        <p className="text-muted-foreground">
-          Blueprint authors receive 70% of each sale, while LynxPrompt retains
-          30% as a platform fee. This applies to all paid blueprint purchases.
-        </p>
-        <div className="rounded-lg bg-muted/50 p-4">
-          <h3 className="font-medium">Example: €10 Blueprint</h3>
-          <div className="mt-3 space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Regular purchase:</span>
-              <span>Creator gets €7.00, Platform gets €3.00</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Stripe fees:</span>
-              <span>Deducted by Stripe before the split</span>
-            </div>
           </div>
         </div>
       </section>
@@ -130,12 +51,6 @@ export default function MarketplaceOverviewPage() {
         <h2 className="text-2xl font-bold">Trust & Safety</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-lg border bg-card p-4">
-            <h3 className="font-medium">Secure Payments</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              All payments processed by Stripe, a PCI-compliant payment provider
-            </p>
-          </div>
-          <div className="rounded-lg border bg-card p-4">
             <h3 className="font-medium">Content Moderation</h3>
             <p className="mt-1 text-sm text-muted-foreground">
               Blueprints are reviewed to ensure quality and prevent abuse
@@ -144,13 +59,7 @@ export default function MarketplaceOverviewPage() {
           <div className="rounded-lg border bg-card p-4">
             <h3 className="font-medium">EU Compliant</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              GDPR compliant, data stored in EU, clear refund policy
-            </p>
-          </div>
-          <div className="rounded-lg border bg-card p-4">
-            <h3 className="font-medium">Dispute Resolution</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Support team available to resolve buyer-seller disputes
+              GDPR compliant with data stored in the EU
             </p>
           </div>
         </div>
@@ -159,9 +68,9 @@ export default function MarketplaceOverviewPage() {
       {/* CTA */}
       <div className="flex flex-col gap-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 p-6 text-white sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Ready to start earning?</h2>
+          <h2 className="text-lg font-semibold">Ready to get started?</h2>
           <p className="mt-1 text-sm text-white/80">
-            Create and sell blueprints to turn your expertise into income.
+            Browse community blueprints or share your own configurations.
           </p>
         </div>
         <Link
@@ -175,4 +84,3 @@ export default function MarketplaceOverviewPage() {
     </div>
   );
 }
-

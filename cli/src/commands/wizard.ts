@@ -1164,7 +1164,7 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
   const lockedSteps = WIZARD_STEPS.length - accessibleSteps.length;
   
   if (lockedSteps > 0) {
-    console.log(chalk.gray(`  ${lockedSteps} step${lockedSteps > 1 ? 's' : ''} locked. Upgrade at ${chalk.cyan("https://lynxprompt.com/pricing")}`));
+    console.log(chalk.gray(`  ${lockedSteps} step${lockedSteps > 1 ? 's' : ''} locked.`));
     console.log();
   }
 

@@ -13,7 +13,6 @@ interface FeatureFlags {
   enableAI: boolean;
   enableBlog: boolean;
   enableSupportForum: boolean;
-  enableStripe: boolean;
   enableFederation: boolean;
   federationRegistryUrl: string;
   appName: string;
@@ -33,7 +32,6 @@ const defaultFlags: FeatureFlags = {
   enableAI: false,
   enableBlog: false,
   enableSupportForum: false,
-  enableStripe: false,
   enableFederation: true,
   federationRegistryUrl: "https://lynxprompt.com",
   appName: "LynxPrompt",

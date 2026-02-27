@@ -215,7 +215,6 @@ export async function DELETE(
         await prismaUsers.$transaction([
           prismaUsers.templateDownload.deleteMany({ where: { templateId: { in: ids } } }),
           prismaUsers.templateFavorite.deleteMany({ where: { templateId: { in: ids } } }),
-          prismaUsers.blueprintPurchase.deleteMany({ where: { templateId: { in: ids } } }),
           prismaUsers.userTemplateVersion.deleteMany({ where: { templateId: { in: ids } } }),
           prismaUsers.userTemplate.deleteMany({ where: { id: { in: ids } } }),
           prismaUsers.hierarchy.delete({ where: { id: hierarchyId } }),

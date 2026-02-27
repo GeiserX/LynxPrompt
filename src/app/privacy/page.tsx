@@ -164,11 +164,9 @@ export default function PrivacyPage() {
                     <ul className="ml-4 mt-1 list-inside list-disc">
                       <li>To create and manage your account</li>
                       <li>To provide our service and save your blueprints</li>
-                      <li>To process payments through Stripe</li>
                       <li>
                         To send transactional emails (passwordless login links,
-                        payment receipts, critical security notices, service
-                        changes)
+                        critical security notices, service changes)
                       </li>
                     </ul>
                   </div>
@@ -198,7 +196,6 @@ export default function PrivacyPage() {
                   <li>To provide and maintain our service</li>
                   <li>To authenticate your account via OAuth providers</li>
                   <li>To save your preferences, blueprints, and configurations</li>
-                  <li>To process payments securely through Stripe</li>
                   <li>To analyze anonymized usage patterns for service improvement</li>
                   <li>To send essential service communications</li>
                 </ul>
@@ -255,29 +252,6 @@ export default function PrivacyPage() {
                       className="text-sm text-primary hover:underline"
                     >
                       Google Privacy Policy →
-                    </a>
-                  </div>
-
-                  <div className="rounded-lg border p-4">
-                    <h3 className="font-medium text-foreground">Stripe</h3>
-                    <p className="mt-1 text-sm">
-                      <strong>Data shared:</strong> Email, payment information
-                      (processed directly by Stripe)
-                    </p>
-                    <p className="text-sm">
-                      <strong>Purpose:</strong> Payment processing
-                    </p>
-                    <p className="text-sm">
-                      <strong>Location:</strong> USA/EU (EU SCCs in place,
-                      PCI-DSS compliant)
-                    </p>
-                    <a
-                      href="https://stripe.com/privacy"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline"
-                    >
-                      Stripe Privacy Policy →
                     </a>
                   </div>
 
@@ -378,8 +352,8 @@ export default function PrivacyPage() {
                 </h2>
                 <p className="mb-2">
                   Your data is primarily stored in the European Union. When data
-                  is transferred to third parties outside the EU (GitHub,
-                  Google, Stripe, Anthropic), we ensure appropriate safeguards are in
+                  is                   transferred to third parties outside the EU (GitHub,
+                  Google, Anthropic), we ensure appropriate safeguards are in
                   place:
                 </p>
                 <ul className="list-inside list-disc space-y-1">
@@ -424,11 +398,6 @@ export default function PrivacyPage() {
                   <li>
                     <strong>Access control:</strong> Database access is
                     restricted and password-protected
-                  </li>
-                  <li>
-                    <strong>Payments:</strong> We never store payment card
-                    details; all payment processing is handled by Stripe
-                    (PCI-DSS Level 1 certified)
                   </li>
                 </ul>
               </section>

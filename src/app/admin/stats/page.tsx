@@ -74,7 +74,6 @@ interface StatsData {
   featureFlags: {
     supportEnabled: boolean;
     blogEnabled: boolean;
-    stripeEnabled: boolean;
     aiEnabled: boolean;
   };
   users: {

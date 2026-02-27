@@ -103,6 +103,8 @@ interface WizardConfig {
   importantFiles?: string[];
   importantFilesOther?: string;
   enableAutoUpdate?: boolean;
+  preferCliSync?: boolean;
+  tokenEnvVar?: string;
   includePersonalData?: boolean;
   platform?: string;
   platforms?: string[];
@@ -4296,73 +4298,85 @@ export interface GeneratedFile {
 
 // Generate API sync header for files with auto-update enabled
 // devOS: linux, macos, windows, wsl - can be array for multi-platform
-function generateApiSyncHeader(blueprintId: string, platform: string, devOS: string | string[] = "linux"): string {
+function generateApiSyncHeader(blueprintId: string, platform: string, devOS: string | string[] = "linux", preferCliSync?: boolean, tokenEnvVar?: string): string {
   const lines: string[] = [];
   const fileName = getFileName(platform);
   
-  // Normalize devOS to array
-  const osList = Array.isArray(devOS) ? devOS : [devOS];
-  const hasWindows = osList.includes("windows");
-  const hasUnix = osList.includes("linux") || osList.includes("macos") || osList.includes("wsl");
-  const isMultiPlatform = (hasWindows && hasUnix) || osList.length > 1;
-  
-  // Add comment style based on platform
   const isJsonPlatform = ["continue", "cody", "supermaven", "codegpt", "void"].includes(platform);
   const isYamlPlatform = ["aider", "tabnine"].includes(platform);
   
   if (isJsonPlatform) {
-    // JSON files - add as a _sync property at the top level
-    return ""; // JSON platforms will handle this differently
+    return "";
   }
   
-  // Generate OS-specific curl command
-  let curlCommand = "";
-  if (isMultiPlatform) {
-    // Show both Unix and Windows commands
-    curlCommand = `# Linux/macOS:
+  let syncCommands = "";
+  const envVar = tokenEnvVar || "LYNXPROMPT_API_TOKEN";
+  
+  if (preferCliSync) {
+    syncCommands = [
+      "Using LynxPrompt CLI (recommended):",
+      "lynxp push    # Upload local changes to cloud",
+      "lynxp pull    # Download cloud changes to local",
+      "lynxp diff    # Compare local vs cloud versions",
+      "",
+      "Install CLI: npm install -g lynxprompt",
+      "Login: lynxp login",
+    ].join("\n");
+  } else {
+    const osList = Array.isArray(devOS) ? devOS : [devOS];
+    const hasWindows = osList.includes("windows");
+    const hasUnix = osList.includes("linux") || osList.includes("macos") || osList.includes("wsl");
+    const isMultiPlatform = (hasWindows && hasUnix) || osList.length > 1;
+    
+    if (isMultiPlatform) {
+      syncCommands = `To update this file on ${APP_NAME} (token stored in $${envVar}):
+
+# Linux/macOS:
 curl -X PUT ${APP_URL}/api/v1/blueprints/${blueprintId} \\
-  -H "Authorization: Bearer $LYNXPROMPT_API_TOKEN" \\
+  -H "Authorization: Bearer $${envVar}" \\
   -H "Content-Type: application/json" \\
   -d "{\\"content\\": $(cat ${fileName} | jq -Rs .)}"
 
 # Windows PowerShell:
-$c = Get-Content "${fileName}" -Raw; Invoke-RestMethod -Uri "${APP_URL}/api/v1/blueprints/${blueprintId}" -Method PUT -Headers @{ Authorization = "Bearer $env:LYNXPROMPT_API_TOKEN" } -Body (@{ content = $c } | ConvertTo-Json)`;
-  } else if (osList.includes("windows")) {
-    // PowerShell for Windows
-    curlCommand = `$content = (Get-Content "${fileName}" -Raw) -replace '"', '\\"'
+$c = Get-Content "${fileName}" -Raw; Invoke-RestMethod -Uri "${APP_URL}/api/v1/blueprints/${blueprintId}" -Method PUT -Headers @{ Authorization = "Bearer $env:${envVar}" } -Body (@{ content = $c } | ConvertTo-Json)`;
+    } else if (osList.includes("windows")) {
+      syncCommands = `To update this file on ${APP_NAME} (token stored in $env:${envVar}):
+
+$content = (Get-Content "${fileName}" -Raw) -replace '"', '\\"'
 Invoke-RestMethod -Uri "${APP_URL}/api/v1/blueprints/${blueprintId}" \`
-  -Method PUT -Headers @{ "Authorization" = "Bearer $env:LYNXPROMPT_API_TOKEN" } \`
+  -Method PUT -Headers @{ "Authorization" = "Bearer $env:${envVar}" } \`
   -Body (@{ content = $content } | ConvertTo-Json)`;
-  } else {
-    // Linux, macOS, WSL - bash-style
-    curlCommand = `curl -X PUT ${APP_URL}/api/v1/blueprints/${blueprintId} \\
-  -H "Authorization: Bearer $LYNXPROMPT_API_TOKEN" \\
+    } else {
+      syncCommands = `To update this file on ${APP_NAME} (token stored in $${envVar}):
+
+curl -X PUT ${APP_URL}/api/v1/blueprints/${blueprintId} \\
+  -H "Authorization: Bearer $${envVar}" \\
   -H "Content-Type: application/json" \\
   -d "{\\"content\\": $(cat ${fileName} | jq -Rs .)}"`;
+    }
   }
+  
+  const docsUrl = preferCliSync ? `${APP_URL}/docs/cli` : `${APP_URL}/docs/api`;
   
   if (isYamlPlatform) {
     lines.push("# ══════════════════════════════════════════════════════════════════");
-    lines.push(`# ${APP_NAME} API Sync`);
+    lines.push(`# ${APP_NAME} Cloud Sync`);
     lines.push(`# Blueprint ID: ${blueprintId}`);
     lines.push("#");
-    lines.push(`# To update this file on ${APP_NAME}:`);
-    curlCommand.split("\n").forEach(line => lines.push(`# ${line}`));
+    syncCommands.split("\n").forEach(line => lines.push(`# ${line}`));
     lines.push("#");
-    lines.push(`# Docs: ${APP_URL}/docs/api`);
+    lines.push(`# Docs: ${docsUrl}`);
     lines.push("# ══════════════════════════════════════════════════════════════════");
     lines.push("");
   } else {
-    // Markdown-based platforms (cursor, claude, copilot, windsurf, universal)
     lines.push("<!--");
     lines.push("══════════════════════════════════════════════════════════════════");
-    lines.push(`${APP_NAME} API Sync`);
+    lines.push(`${APP_NAME} Cloud Sync`);
     lines.push(`Blueprint ID: ${blueprintId}`);
     lines.push("");
-    lines.push(`To update this file on ${APP_NAME}:`);
-    lines.push(curlCommand);
+    lines.push(syncCommands);
     lines.push("");
-    lines.push(`Docs: ${APP_URL}/docs/api`);
+    lines.push(`Docs: ${docsUrl}`);
     lines.push("══════════════════════════════════════════════════════════════════");
     lines.push("-->");
     lines.push("");
@@ -4508,7 +4522,7 @@ export function generateAllFiles(
 
   // Add API sync header if blueprintId is provided and enableAutoUpdate is true
   if (content && options?.blueprintId && config.enableAutoUpdate) {
-    const syncHeader = generateApiSyncHeader(options.blueprintId, platform, config.devOS || "linux");
+    const syncHeader = generateApiSyncHeader(options.blueprintId, platform, config.devOS || "linux", config.preferCliSync, config.tokenEnvVar);
     if (syncHeader) {
       content = syncHeader + content;
     }

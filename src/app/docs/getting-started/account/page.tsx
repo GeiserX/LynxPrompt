@@ -181,12 +181,6 @@ export default function AccountSetupPage() {
             </p>
           </div>
           <div className="rounded-lg border bg-card p-4">
-            <h3 className="font-medium">Marketplace</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Manage marketplace sales and earnings
-            </p>
-          </div>
-          <div className="rounded-lg border bg-card p-4">
             <h3 className="font-medium">Preferences</h3>
             <p className="mt-1 text-sm text-muted-foreground">
               Set default wizard options and preferences
@@ -203,8 +197,8 @@ export default function AccountSetupPage() {
             <h3 className="font-semibold">Privacy & Security</h3>
             <p className="mt-1 text-muted-foreground">
               We take your privacy seriously. All data is stored in the EU with
-              GDPR compliance. We use secure authentication, don&apos;t store
-              passwords, and payments are handled by Stripe. Read our{" "}
+              GDPR compliance. We use secure authentication and don&apos;t store
+              passwords. Read our{" "}
               <Link href="/privacy" className="text-primary hover:underline">
                 Privacy Policy
               </Link>{" "}

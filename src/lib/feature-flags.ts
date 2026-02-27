@@ -27,9 +27,6 @@ export const AI_MODEL = process.env.AI_MODEL || "claude-3-5-haiku-latest";
 export const ENABLE_BLOG = envBool("ENABLE_BLOG", false);
 export const ENABLE_SUPPORT_FORUM = envBool("ENABLE_SUPPORT_FORUM", false);
 
-// Marketplace / Payments
-export const ENABLE_STRIPE = envBool("ENABLE_STRIPE", false);
-
 // Federation
 export const ENABLE_FEDERATION = envBool("ENABLE_FEDERATION", true);
 export const FEDERATION_REGISTRY_URL = process.env.FEDERATION_REGISTRY_URL || "https://lynxprompt.com";
@@ -63,7 +60,6 @@ export function getPublicFlags() {
     enableAI: envBool("ENABLE_AI", false),
     enableBlog: envBool("ENABLE_BLOG", false),
     enableSupportForum: envBool("ENABLE_SUPPORT_FORUM", false),
-    enableStripe: envBool("ENABLE_STRIPE", false),
     enableFederation: envBool("ENABLE_FEDERATION", true),
     federationRegistryUrl: process.env.FEDERATION_REGISTRY_URL || "https://lynxprompt.com",
     appName: process.env.APP_NAME || "LynxPrompt",

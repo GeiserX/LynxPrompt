@@ -11,7 +11,7 @@ import {
   BLUEPRINT_LIMITS,
   type SubscriptionTier 
 } from "@/lib/subscription";
-import { ENABLE_STRIPE } from "@/lib/feature-flags";
+
 
 // Blueprint type options (including command types)
 const BLUEPRINT_TYPES = [
@@ -194,8 +194,6 @@ export async function GET(request: NextRequest) {
         favorites: true,
         isOfficial: true,
         aiAssisted: true,
-        price: true,
-        currency: true,
         createdAt: true,
         userId: true,
         user: {
@@ -228,68 +226,32 @@ export async function GET(request: NextRequest) {
       .slice(0, 20)
       .map(([tag]) => tag);
 
-    // Check for purchased blueprints
     let userId: string | null = null;
-    let purchasedIds: Set<string> = new Set();
-    
     const session = await getServerSession(authOptions);
     if (session?.user?.id) {
       userId = session.user.id;
-      const user = await prismaUsers.user.findUnique({
-        where: { id: session.user.id },
-        select: { subscriptionPlan: true, role: true },
-      });
-      
-      
-      // Get user's team membership
-      const teamMembership = await prismaUsers.teamMember.findFirst({
-        where: { userId: session.user.id },
-        select: { teamId: true },
-      });
-      const userTeamId = teamMembership?.teamId;
-      
-      // Get all blueprints this user has purchased (individual + team purchases)
-      const individualPurchases = await prismaUsers.blueprintPurchase.findMany({
-        where: { userId: session.user.id },
-        select: { templateId: true },
-      });
-      purchasedIds = new Set(individualPurchases.map(p => p.templateId));
-      
-      // Also get team purchases if user is in a team
-      if (userTeamId) {
-        const teamPurchases = await prismaUsers.blueprintPurchase.findMany({
-          where: { teamId: userTeamId },
-          select: { templateId: true },
-        });
-        teamPurchases.forEach(p => purchasedIds.add(p.templateId));
-      }
     }
 
     // Format response
     const formattedBlueprints = blueprints.map((t) => {
       
       const isOwner = userId ? t.userId === userId : false;
-      const hasPurchased = purchasedIds.has(t.id);
       
       return {
         id: `bp_${t.id}`,
         name: t.name,
         description: t.description || "",
         author: t.user?.displayName || t.user?.name || "Anonymous",
-        // Show authorId if user has public profile OR if viewing own blueprint
         authorId: (t.user?.isProfilePublic || t.userId === userId) ? t.userId : undefined,
         downloads: t.downloads,
         likes: t.favorites,
         tags: t.tags || [],
         tier: t.tier,
-        type: t.type, // For command badge display
+        type: t.type,
         category: t.category || "other",
         isOfficial: t.isOfficial || false,
         aiAssisted: t.aiAssisted || false,
-        price: t.price,
-        currency: t.currency || "EUR",
         isOwner,
-        hasPurchased,
       };
     });
 
@@ -332,8 +294,6 @@ export async function POST(request: NextRequest) {
       visibility = "PRIVATE", // PRIVATE, TEAM, or PUBLIC
       teamId = null, // If visibility is TEAM, this should be set
       aiAssisted = false,
-      price, 
-      currency = "EUR",
       showcaseUrl,
       turnstileToken,
       sensitiveDataAcknowledged = false, // User acknowledged sensitive data warning
@@ -499,25 +459,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Validate price if provided (minimum €5 = 500 cents)
-    let validatedPrice: number | null = null;
-    if (price !== null && price !== undefined) {
-      if (!ENABLE_STRIPE) {
-        return NextResponse.json(
-          { error: "Paid blueprints require ENABLE_STRIPE to be configured" },
-          { status: 400 }
-        );
-      }
-      const priceNum = parseInt(String(price), 10);
-      if (isNaN(priceNum) || priceNum < 500) {
-        return NextResponse.json(
-          { error: "Minimum price is €5.00 (500 cents)" },
-          { status: 400 }
-        );
-      }
-      validatedPrice = priceNum;
-    }
-
     // Validate showcaseUrl if provided
     // Accept common user input like "github.com/user/repo" by prepending https://
     let validatedShowcaseUrl: string | null = null;
@@ -568,8 +509,6 @@ export async function POST(request: NextRequest) {
         aiAssisted: Boolean(aiAssisted),
         downloads: 0,
         favorites: 0,
-        price: validatedPrice,
-        currency: currency || "EUR",
         showcaseUrl: validatedShowcaseUrl,
         currentVersion: 1,
         publishedVersion: effectiveIsPublic ? 1 : null, // Set publishedVersion if public
