@@ -1126,6 +1126,15 @@ export default function DashboardPage() {
                                         ⚡ {template.type === "CURSOR_COMMAND" ? "Cursor" : template.type === "CLAUDE_COMMAND" ? "Claude" : template.type === "WINDSURF_WORKFLOW" ? "Windsurf" : template.type === "COPILOT_PROMPT" ? "Copilot" : template.type === "CONTINUE_PROMPT" ? "Continue" : "OpenCode"} Command
                                       </span>
                                     )}
+                                    {template.hierarchyId && (() => {
+                                      const hierarchy = dashboardData?.hierarchicalBlueprints?.find(h => h.id === template.hierarchyId);
+                                      return hierarchy ? (
+                                        <span className="flex items-center gap-1 rounded bg-purple-500/10 px-1.5 py-0.5 text-xs text-purple-600 dark:text-purple-400">
+                                          <FolderTree className="h-3 w-3" />
+                                          {hierarchy.name}
+                                        </span>
+                                      ) : null;
+                                    })()}
                                   </div>
                                   <div className="flex items-center gap-3 text-sm text-muted-foreground">
                                     <span className="flex items-center gap-1">
@@ -2052,3 +2061,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
