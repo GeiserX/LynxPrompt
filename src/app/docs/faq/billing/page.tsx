@@ -69,22 +69,6 @@ export default function MarketplacePaymentsFAQPage() {
         </div>
 
         <div className="rounded-lg border bg-card p-4">
-          <h3 className="font-semibold">How do seller payouts work?</h3>
-          <p className="mt-2 text-muted-foreground">
-            When you have at least €5 in available earnings, you can request a
-            payout. Payouts are sent via PayPal and typically process within 3-5
-            business days. See{" "}
-            <Link
-              href="/docs/marketplace/payouts"
-              className="text-primary hover:underline"
-            >
-              Payouts documentation
-            </Link>{" "}
-            for details.
-          </p>
-        </div>
-
-        <div className="rounded-lg border bg-card p-4">
           <h3 className="font-semibold">What currency are prices in?</h3>
           <p className="mt-2 text-muted-foreground">
             All prices are in Euros (EUR). Stripe automatically converts to your

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Store, CreditCard, DollarSign, Wallet, ArrowRight } from "lucide-react";
+import { Store, CreditCard, DollarSign, ArrowRight } from "lucide-react";
 
 export default function MarketplaceOverviewPage() {
   return (
@@ -46,18 +46,6 @@ export default function MarketplaceOverviewPage() {
               </p>
             </div>
           </Link>
-          <Link
-            href="/docs/marketplace/payouts"
-            className="flex items-center gap-3 rounded-lg border bg-background p-4 transition-colors hover:bg-muted"
-          >
-            <Wallet className="h-5 w-5 text-primary" />
-            <div>
-              <p className="font-medium">Payouts</p>
-              <p className="text-sm text-muted-foreground">
-                Get paid for sales
-              </p>
-            </div>
-          </Link>
         </div>
       </div>
 
@@ -84,7 +72,6 @@ export default function MarketplaceOverviewPage() {
               <li>• All users can sell blueprints</li>
               <li>• Set your own prices (min €5)</li>
               <li>• Keep 70% of each sale</li>
-              <li>• Monthly payouts via PayPal</li>
             </ul>
           </div>
         </div>

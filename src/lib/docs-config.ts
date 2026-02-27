@@ -126,11 +126,6 @@ export const docsConfig: DocsSection[] = [
         href: "/docs/marketplace/selling",
         description: "Set prices and earn from your work",
       },
-      {
-        title: "Payouts",
-        href: "/docs/marketplace/payouts",
-        description: "Getting paid for your sales",
-      },
     ],
   },
   {

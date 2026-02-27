@@ -149,9 +149,6 @@ export default function TroubleshootingPage() {
             <ul className="list-inside list-disc space-y-1">
               <li>All users can create paid blueprints</li>
               <li>Make sure you&apos;ve verified your email</li>
-              <li>
-                Configure your PayPal email in settings for receiving payouts
-              </li>
             </ul>
           </div>
         </div>

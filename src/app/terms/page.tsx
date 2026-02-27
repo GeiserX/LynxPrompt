@@ -210,15 +210,6 @@ export default function TermsPage() {
                 <p className="mt-2">
                   Sellers receive <strong>70%</strong> of each sale. LynxPrompt retains <strong>30%</strong> to cover platform costs, payment processing, and maintenance.
                 </p>
-
-                <h3 className="mt-4 font-medium text-foreground">Seller Payouts</h3>
-                <ul className="mt-2 list-inside list-disc space-y-1">
-                  <li>Minimum payout: <strong>€5</strong></li>
-                  <li>Payout method: <strong>PayPal</strong></li>
-                  <li>Payout frequency: <strong>Monthly or on-demand</strong> (when minimum is reached)</li>
-                  <li>Funds may be held until the chargeback window expires (typically 90–120 days for new sellers)</li>
-                </ul>
-
               </section>
 
               {/* 9. Refunds & Right of Withdrawal */}
@@ -334,7 +325,7 @@ export default function TermsPage() {
                   <strong>By You:</strong> You may delete your account at any time through your account settings or by contacting us.
                 </p>
                 <p className="mt-3">
-                  <strong>After Termination:</strong> Pending payouts (above minimum threshold) will be processed on the next payout cycle, less any chargebacks or disputes. Personal data is handled according to our <Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link>.
+                  <strong>After Termination:</strong> Personal data is handled according to our <Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link>.
                 </p>
               </section>
 
