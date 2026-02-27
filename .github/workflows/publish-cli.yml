@@ -111,6 +111,10 @@ jobs:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Build shared package
+        working-directory: .
+        run: npx --yes --package typescript tsc -p packages/shared/tsconfig.json
+
       - name: Install dependencies
         run: npm ci
 
@@ -169,6 +173,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+
+      - name: Build shared package
+        working-directory: .
+        run: npx --yes --package typescript tsc -p packages/shared/tsconfig.json
 
       - name: Install dependencies
         run: npm ci
