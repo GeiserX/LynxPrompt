@@ -19,7 +19,7 @@ export default function CreatingBlueprintsPage() {
         </h1>
         <p className="max-w-2xl text-lg text-muted-foreground">
           Share your AI IDE configurations with the community. Any signed-in
-          user can create blueprints — free or paid.
+          user can create blueprints.
         </p>
       </div>
 
@@ -28,25 +28,17 @@ export default function CreatingBlueprintsPage() {
         <h2 className="text-2xl font-bold">Who Can Create Blueprints?</h2>
         <div className="rounded-xl border bg-card p-6">
           <p className="text-muted-foreground">
-            Any signed-in user can create and share blueprints. On instances with
-            Stripe enabled, you can also set a price and earn from your work.
+            Any signed-in user can create and share blueprints with the
+            community.
           </p>
           <ul className="mt-3 space-y-2 text-muted-foreground">
             <li className="flex items-center gap-2">
               <Check className="h-4 w-4 text-green-500" />
-              Create unlimited free blueprints
+              Create unlimited blueprints
             </li>
             <li className="flex items-center gap-2">
               <Check className="h-4 w-4 text-green-500" />
               Share with the community
-            </li>
-            <li className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-green-500" />
-              Create paid blueprints (when Stripe is enabled on the instance)
-            </li>
-            <li className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-green-500" />
-              Earn 70% of each sale
             </li>
           </ul>
         </div>
@@ -162,32 +154,6 @@ export default function CreatingBlueprintsPage() {
                       Primary AI platform (Cursor, Claude, etc.)
                     </span>
                   </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-xl border bg-card p-6">
-            <div className="flex items-start gap-4">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
-                5
-              </div>
-              <div className="space-y-3">
-                <h3 className="text-lg font-semibold">Set Pricing (Optional)</h3>
-                <p className="text-muted-foreground">
-                  On instances with Stripe enabled, you can set a price for your blueprints:
-                </p>
-                <ul className="list-inside list-disc space-y-1 text-muted-foreground">
-                  <li>Minimum price: €5</li>
-                  <li>You keep 70% of each sale</li>
-                  <li>LynxPrompt takes 30% for platform fees</li>
-                </ul>
-                <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
-                  <p className="text-sm">
-                    <strong>Tip:</strong> Free blueprints get more downloads and
-                    help build your reputation. Consider offering both free and
-                    paid options.
-                  </p>
                 </div>
               </div>
             </div>

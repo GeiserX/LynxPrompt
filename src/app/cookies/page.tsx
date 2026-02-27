@@ -284,24 +284,6 @@ export default function CookiesPage() {
                 <div className="space-y-4">
                   <div className="rounded-lg border p-4">
                     <h3 className="font-medium text-foreground">
-                      Stripe (Payment Processing)
-                    </h3>
-                    <p className="mt-1 text-sm">
-                      When you make a payment, Stripe may set cookies for fraud
-                      prevention and security. These are set only during the
-                      checkout process.
-                    </p>
-                    <a
-                      href="https://stripe.com/cookies-policy/legal"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-2 inline-block text-sm text-primary hover:underline"
-                    >
-                      Stripe Cookie Policy →
-                    </a>
-                  </div>
-                  <div className="rounded-lg border p-4">
-                    <h3 className="font-medium text-foreground">
                       OAuth Providers (GitHub, Google)
                     </h3>
                     <p className="mt-1 text-sm">

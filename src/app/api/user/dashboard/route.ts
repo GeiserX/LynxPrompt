@@ -58,7 +58,6 @@ export async function GET() {
       favoritesReceived,
       myTemplates,
       recentActivity,
-      purchasedBlueprints,
     ] = await Promise.all([
       // Count templates created by user
       prismaUsers.userTemplate.count({
@@ -143,31 +142,6 @@ export async function GET() {
           userId: true,
         },
       }),
-
-      // Get purchased blueprints (individual purchases, max 6)
-      prismaUsers.blueprintPurchase.findMany({
-        where: { userId, teamId: null }, // Only individual purchases
-        orderBy: { createdAt: "desc" },
-        take: 6,
-        include: {
-          template: {
-            select: {
-              id: true,
-              name: true,
-              description: true,
-              downloads: true,
-              favorites: true,
-              tier: true,
-              price: true,
-              currentVersion: true,
-              publishedVersion: true,
-              user: {
-                select: { name: true, displayName: true },
-              },
-            },
-          },
-        },
-      }),
     ]);
     
     // Get user's hierarchies with their blueprints
@@ -218,9 +192,6 @@ export async function GET() {
     // Team-specific data (if user is in a team)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let teamBlueprints: any[] = [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let teamPurchases: any[] = [];
-    
     if (teamInfo) {
       // Get team-shared blueprints (created by team members and marked as TEAM visibility)
       teamBlueprints = await prismaUsers.userTemplate.findMany({
@@ -253,32 +224,6 @@ export async function GET() {
         createdAt: template.createdAt,
         author: template.user?.displayName || template.user?.name || "Team member",
       })));
-      
-      // Get team-purchased blueprints (shared with entire team)
-      teamPurchases = await prismaUsers.blueprintPurchase.findMany({
-        where: { teamId: teamInfo.teamId },
-        orderBy: { createdAt: "desc" },
-        take: 6,
-        include: {
-          template: {
-            select: {
-              id: true,
-              name: true,
-              description: true,
-              downloads: true,
-              favorites: true,
-              tier: true,
-              price: true,
-              user: {
-                select: { name: true, displayName: true },
-              },
-            },
-          },
-          user: {
-            select: { name: true, displayName: true },
-          },
-        },
-      });
     }
 
     // Enrich activity with template names
@@ -372,39 +317,6 @@ export async function GET() {
       })
     );
 
-    // Format purchased blueprints
-    const formattedPurchases = purchasedBlueprints
-      .filter(p => p.template) // Only include if template still exists
-      .map(p => ({
-        id: `bp_${p.template.id}`,
-        name: p.template.name,
-        description: p.template.description,
-        downloads: p.template.downloads,
-        favorites: p.template.favorites,
-        tier: p.template.tier,
-        price: p.template.price,
-        author: p.template.user?.displayName || p.template.user?.name || "Anonymous",
-        purchasedAt: p.createdAt,
-        purchasedVersion: p.versionNumber || 1,
-        currentVersion: p.template.publishedVersion || p.template.currentVersion || 1,
-      }));
-    
-    // Format team-purchased blueprints
-    const formattedTeamPurchases = teamPurchases
-      .filter(p => p.template)
-      .map(p => ({
-        id: `bp_${p.template.id}`,
-        name: p.template.name,
-        description: p.template.description,
-        downloads: p.template.downloads,
-        favorites: p.template.favorites,
-        tier: p.template.tier,
-        price: p.template.price,
-        author: p.template.user?.displayName || p.template.user?.name || "Anonymous",
-        purchasedAt: p.createdAt,
-        purchasedBy: p.user?.displayName || p.user?.name || "Team member",
-      }));
-
     return NextResponse.json({
       stats: {
         templatesCreated,
@@ -415,7 +327,6 @@ export async function GET() {
       myTemplates,
       recentActivity: enrichedActivity,
       favoriteTemplates: enrichedFavorites.filter((f) => f !== null),
-      purchasedBlueprints: formattedPurchases,
       // Hierarchical blueprints (grouped by repository)
       hierarchicalBlueprints,
       // Team data (only included if user is in a team)
@@ -427,7 +338,6 @@ export async function GET() {
         memberCount: teamInfo.memberCount,
       } : null,
       teamBlueprints: teamInfo ? teamBlueprints : [],
-      teamPurchases: teamInfo ? formattedTeamPurchases : [],
     });
   } catch (error) {
     console.error("Dashboard API error:", error);

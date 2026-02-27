@@ -83,7 +83,6 @@ function validateMarkdown(content: string, filename: string): { errors: string[]
 
   // Check for potential secrets (basic patterns)
   const secretPatterns = [
-    /sk[_-][a-zA-Z0-9]{20,}/,  // Stripe-like keys
     /ghp_[a-zA-Z0-9]{36}/,     // GitHub tokens
     /api[_-]?key[_-]?=\s*[a-zA-Z0-9]{20,}/i,
   ];

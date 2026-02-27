@@ -88,41 +88,7 @@ export default function TroubleshootingPage() {
             <ul className="list-inside list-disc space-y-1">
               <li>Try using the &quot;Copy to clipboard&quot; option instead</li>
               <li>Check if your browser is blocking downloads</li>
-              <li>
-                For paid blueprints, make sure your purchase was successful
-              </li>
               <li>Try refreshing the page and downloading again</li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="rounded-lg border bg-card p-4">
-          <h3 className="font-semibold">Payment was charged but no access</h3>
-          <div className="mt-2 space-y-2 text-muted-foreground">
-            <p>This is usually a temporary sync delay. Try:</p>
-            <ul className="list-inside list-disc space-y-1 pl-4">
-              <li>Sign out and sign back in</li>
-              <li>Wait a few minutes and refresh the page</li>
-              <li>
-                Check your{" "}
-                <Link
-                  href="/dashboard"
-                  className="text-primary hover:underline"
-                >
-                  Dashboard
-                </Link>{" "}
-                to verify the purchase appears in your library
-              </li>
-              <li>
-                If the issue persists, contact{" "}
-                <a
-                  href="mailto:support@lynxprompt.com"
-                  className="text-primary hover:underline"
-                >
-                  support@lynxprompt.com
-                </a>{" "}
-                with your payment confirmation
-              </li>
             </ul>
           </div>
         </div>
@@ -143,15 +109,6 @@ export default function TroubleshootingPage() {
           </div>
         </div>
 
-        <div className="rounded-lg border bg-card p-4">
-          <h3 className="font-semibold">Can&apos;t create paid blueprints</h3>
-          <div className="mt-2 space-y-2 text-muted-foreground">
-            <ul className="list-inside list-disc space-y-1">
-              <li>All users can create paid blueprints</li>
-              <li>Make sure you&apos;ve verified your email</li>
-            </ul>
-          </div>
-        </div>
       </section>
 
       {/* Still need help */}
@@ -178,13 +135,7 @@ export default function TroubleshootingPage() {
       </section>
 
       {/* Navigation */}
-      <section className="flex items-center justify-between border-t pt-6">
-        <Link
-          href="/docs/faq/billing"
-          className="text-sm text-muted-foreground hover:text-foreground"
-        >
-          ← Billing FAQ
-        </Link>
+      <section className="flex items-center justify-end border-t pt-6">
         <Link
           href="/docs"
           className="text-sm text-muted-foreground hover:text-foreground"

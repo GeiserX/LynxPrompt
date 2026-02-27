@@ -16,8 +16,6 @@ import {
   CheckCircle2,
   Info,
   AlertTriangle,
-  DollarSign,
-  Euro,
   Lock,
   Shield,
   ExternalLink,
@@ -100,7 +98,7 @@ const getCommandPlatformName = (type: string) => {
 
 export default function ShareBlueprintPage() {
   const { status } = useSession();
-  const { enableAI, enableStripe } = useFeatureFlags();
+  const { enableAI } = useFeatureFlags();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -116,8 +114,6 @@ export default function ShareBlueprintPage() {
   
   // Computed isPublic for backwards compatibility
   const isPublic = visibility === "PUBLIC";
-  const [isPaid, setIsPaid] = useState(false);
-  const [price, setPrice] = useState<number>(5);
   const [showcaseUrl, setShowcaseUrl] = useState("");
   
   // Hierarchy fields (for AGENTS_MD monorepo support)
@@ -194,8 +190,6 @@ export default function ShareBlueprintPage() {
       setLoadingPlan(false);
     }
   }, [status]);
-
-  const canCreatePaidBlueprints = enableStripe;
 
   // Fetch user's blueprints for hierarchy parent selection
   useEffect(() => {
@@ -348,8 +342,6 @@ export default function ShareBlueprintPage() {
           visibility, // New visibility field (PRIVATE, TEAM, PUBLIC)
           teamId: visibility === "TEAM" ? teamInfo?.id : null, // Set teamId if sharing with team
           aiAssisted: isPublic ? aiAssisted : false, // Only relevant if sharing publicly
-          price: isPaid ? Math.round(price * 100) : null, // Convert to cents
-          currency: "EUR",
           showcaseUrl: showcaseUrl.trim() || null,
           turnstileToken: requiresTurnstile ? turnstileToken : undefined,
           sensitiveDataAcknowledged: acknowledgedSensitiveData,
@@ -779,7 +771,7 @@ export default function ShareBlueprintPage() {
                     />
                     <p className="mt-1 text-xs text-muted-foreground">
                       Link to a live demo, GitHub repo, or website that showcases what this blueprint can build. 
-                      Especially recommended for paid blueprints to help buyers see the value.
+                      Helps users understand the context for this blueprint.
                     </p>
                   </div>
 
@@ -1089,59 +1081,6 @@ export default function ShareBlueprintPage() {
                     </div>
                   )}
 
-                  {/* Pricing - only show if public */}
-                  {isPublic && (
-                    <div className="rounded-lg border bg-muted/30 p-4">
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="checkbox"
-                          id="isPaid"
-                          checked={isPaid}
-                          onChange={(e) => setIsPaid(e.target.checked)}
-                          disabled={!canCreatePaidBlueprints}
-                          className={`h-4 w-4 rounded border-gray-300 ${!canCreatePaidBlueprints ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        />
-                        <label 
-                          htmlFor="isPaid" 
-                          className={`text-sm font-medium ${!canCreatePaidBlueprints ? 'opacity-50' : ''}`}
-                        >
-                          <DollarSign className="mr-1 inline h-4 w-4" />
-                          Set a price for this blueprint
-                        </label>
-                        {!canCreatePaidBlueprints && (
-                          <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
-                            <Lock className="h-3 w-3" />
-                            Payments not configured
-                          </span>
-                        )}
-                      </div>
-
-                      {isPaid && canCreatePaidBlueprints && (
-                        <div className="mt-4 space-y-3">
-                          <div className="flex items-center gap-3">
-                            <Euro className="h-5 w-5 text-muted-foreground" />
-                            <input
-                              type="number"
-                              value={price}
-                              onChange={(e) => setPrice(Math.max(5, parseFloat(e.target.value) || 5))}
-                              min={5}
-                              step={0.5}
-                              className="w-24 rounded-lg border bg-background px-3 py-2 text-right focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                            />
-                            <span className="text-sm text-muted-foreground">EUR (minimum €5)</span>
-                          </div>
-                          
-                          {/* Revenue split info - shown only when setting price */}
-                          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-500/50 dark:bg-emerald-900/30">
-                            <p className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
-                              💰 You earn 70% of each sale (€{(price * 0.7).toFixed(2)}).
-                              <span className="font-normal text-emerald-700 dark:text-emerald-300"> Platform fee: 30% (€{(price * 0.3).toFixed(2)}).</span>
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
               </div>
 

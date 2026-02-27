@@ -83,7 +83,7 @@ export default function TermsPage() {
                 <ul className="mt-3 list-inside list-disc space-y-1">
                   <li>The contract for purchasing a prompt is <strong>between Buyer and Seller</strong></li>
                   <li>LynxPrompt is not a party to individual purchase transactions</li>
-                  <li>LynxPrompt facilitates the transaction, handles payments, and takes a platform commission</li>
+                  <li>LynxPrompt facilitates the transaction and provides the platform infrastructure</li>
                 </ul>
                 <p className="mt-3">
                   For subscription services, the contract is directly between you and GeiserCloud.
@@ -102,17 +102,9 @@ export default function TermsPage() {
                 </ul>
               </section>
 
-              {/* 3.2 Marketplace Payments */}
+              {/* 3.2 Teams SSO */}
               <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">3.2 Marketplace Payments</h2>
-                <p>
-                  Payments on LynxPrompt are limited to marketplace blueprint purchases. When a buyer purchases a blueprint, the revenue is split between the Seller (70%) and LynxPrompt (30%). All transactions are processed by Stripe.
-                </p>
-              </section>
-
-              {/* 3.3 Teams SSO */}
-              <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">3.3 Enterprise SSO</h2>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">3.2 Enterprise SSO</h2>
                 <p>
                   Administrators may configure Single Sign-On (SSO) authentication when enabled:
                 </p>
@@ -126,7 +118,7 @@ export default function TermsPage() {
 
               {/* 3.4 Team-Shared Blueprints */}
               <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">3.4 Team-Shared Blueprints</h2>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">3.3 Team-Shared Blueprints</h2>
                 <p>
                   Teams members can share blueprints within their team:
                 </p>
@@ -199,56 +191,25 @@ export default function TermsPage() {
                 </p>
               </section>
 
-              {/* 8. Payments & Revenue Share */}
+              {/* 8. Buyer-Seller Disputes */}
               <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">8. Payments & Revenue Share</h2>
-                <p>
-                  All payments are processed by Stripe. By making a purchase, you agree to Stripe&apos;s terms of service.
-                </p>
-
-                <h3 className="mt-4 font-medium text-foreground">Revenue Split</h3>
-                <p className="mt-2">
-                  Sellers receive <strong>70%</strong> of each sale. LynxPrompt retains <strong>30%</strong> to cover platform costs, payment processing, and maintenance.
-                </p>
-              </section>
-
-              {/* 9. Refunds & Right of Withdrawal */}
-              <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">9. Refunds & Right of Withdrawal</h2>
-                <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-4">
-                  <p className="font-medium">EU Consumer Notice</p>
-                  <p className="mt-2 text-sm">
-                    Under the EU Consumer Rights Directive, you normally have a 14-day right to withdraw from digital content purchases. However, by purchasing and accessing digital content on LynxPrompt, you <strong>expressly consent to immediate delivery</strong> and <strong>acknowledge that you lose your right of withdrawal</strong> once access/download begins.
-                  </p>
-                </div>
-
-                <p className="mt-4"><strong>Refund Policy:</strong></p>
-                <ul className="mt-2 list-inside list-disc space-y-1">
-                  <li><strong>No refunds</strong> after content has been accessed or downloaded</li>
-                  <li><strong>Refunds may be considered</strong> for: non-delivery, broken/inaccessible content, or material misrepresentation</li>
-                  <li><strong>No refunds</strong> for: change of mind after access, failure to read descriptions, or subjective quality complaints</li>
-                </ul>
-              </section>
-
-              {/* 10. Buyer-Seller Disputes */}
-              <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">10. Buyer-Seller Disputes</h2>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">8. Buyer-Seller Disputes</h2>
                 <p>
                   Disputes regarding content quality, intellectual property, or licensing are primarily between Buyer and Seller. LynxPrompt may assist in resolution and may take platform actions (content removal, account suspension) at its discretion, but is not obligated to mediate or resolve disputes.
                 </p>
               </section>
 
-              {/* 11. Content Moderation & Takedown */}
+              {/* 9. Content Moderation & Takedown */}
               <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">11. Content Moderation & Takedown</h2>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">9. Content Moderation & Takedown</h2>
                 <p>
                   We reserve the right to remove, restrict, or modify any content at any time if we believe, in our sole discretion, that it violates these Terms, our Acceptable Use policy, applicable law, or creates risk for the platform or its users.
                 </p>
               </section>
 
-              {/* 12. AI & Prompt Disclaimer */}
+              {/* 10. AI & Prompt Disclaimer */}
               <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">12. AI & Prompt Disclaimer</h2>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">10. AI & Prompt Disclaimer</h2>
                 <div className="rounded-lg border p-4">
                   <p>
                     <strong className="text-foreground">Important:</strong> Prompts and configuration files may produce unexpected, insecure, or harmful outputs depending on how they are used with AI tools. You are <strong>solely responsible</strong> for reviewing, testing, and using any prompt or configuration.
@@ -259,9 +220,9 @@ export default function TermsPage() {
                 </div>
               </section>
 
-              {/* 13. Acceptable Use */}
+              {/* 11. Acceptable Use */}
               <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">13. Acceptable Use</h2>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">11. Acceptable Use</h2>
                 <p>You agree not to:</p>
                 <ul className="mt-3 list-inside list-disc space-y-1">
                   <li>Use the service for any illegal purpose</li>
@@ -276,9 +237,9 @@ export default function TermsPage() {
                 </ul>
               </section>
 
-              {/* 14. Intellectual Property */}
+              {/* 12. Intellectual Property */}
               <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">14. Intellectual Property</h2>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">12. Intellectual Property</h2>
                 <p>
                   <strong>Your Content:</strong> You retain ownership of prompts and content you create. By uploading content to LynxPrompt, you grant us a non-exclusive license to host, display, and distribute your content through our service.
                 </p>
@@ -287,9 +248,9 @@ export default function TermsPage() {
                 </p>
               </section>
 
-              {/* 15. Limitation of Liability */}
+              {/* 13. Limitation of Liability */}
               <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">15. Limitation of Liability</h2>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">13. Limitation of Liability</h2>
                 <p>
                   LynxPrompt is provided &quot;as is&quot; without warranties of any kind. We are not liable for any indirect, incidental, or consequential damages arising from your use of the service.
                 </p>
@@ -307,17 +268,17 @@ export default function TermsPage() {
                 </div>
               </section>
 
-              {/* 16. Indemnification */}
+              {/* 14. Indemnification */}
               <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">16. Indemnification</h2>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">14. Indemnification</h2>
                 <p>
                   You agree to indemnify and hold harmless GeiserCloud and LynxPrompt from any claims, damages, or expenses arising from your use of the service, your content, or your violation of these terms.
                 </p>
               </section>
 
-              {/* 17. Suspension & Termination */}
+              {/* 15. Suspension & Termination */}
               <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">17. Suspension & Termination</h2>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">15. Suspension & Termination</h2>
                 <p>
                   <strong>By Us:</strong> We may suspend or terminate your account at any time if we reasonably believe you have violated these Terms. We may suspend accounts during investigations. Upon termination, your right to use the service ceases immediately.
                 </p>
@@ -329,25 +290,25 @@ export default function TermsPage() {
                 </p>
               </section>
 
-              {/* 18. Service Modifications */}
+              {/* 16. Service Modifications */}
               <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">18. Service Modifications</h2>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">16. Service Modifications</h2>
                 <p>
                   We may modify, suspend, or discontinue any part of the service at any time, with or without notice. We are not liable to you or any third party for any modification, suspension, or discontinuation of the service.
                 </p>
               </section>
 
-              {/* 19. Self-Hosted Instances */}
+              {/* 17. Self-Hosted Instances */}
               <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">19. Self-Hosted Instances</h2>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">17. Self-Hosted Instances</h2>
                 <p>
                   Self-hosted LynxPrompt instances are independently operated. These Terms apply only to <a href="https://lynxprompt.com" className="text-primary hover:underline">lynxprompt.com</a>. Self-hosted instance operators may establish their own terms of service.
                 </p>
               </section>
 
-              {/* 20. Governing Law & Jurisdiction */}
+              {/* 18. Governing Law & Jurisdiction */}
               <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">20. Governing Law & Jurisdiction</h2>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">18. Governing Law & Jurisdiction</h2>
                 <p>
                   These Terms are governed by the <strong>laws of Spain</strong>. The courts of <strong>Spain</strong> shall have jurisdiction over any disputes, unless mandatory law provides otherwise.
                 </p>
@@ -356,17 +317,17 @@ export default function TermsPage() {
                 </p>
               </section>
 
-              {/* 21. Changes to Terms */}
+              {/* 19. Changes to Terms */}
               <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">21. Changes to Terms</h2>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">19. Changes to Terms</h2>
                 <p>
                   We may update these terms from time to time. We will notify you of significant changes by posting a notice on our website or sending you an email. Continued use of the service after changes constitutes acceptance of the new terms.
                 </p>
               </section>
 
-              {/* 22. General Provisions */}
+              {/* 20. General Provisions */}
               <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">22. General Provisions</h2>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">20. General Provisions</h2>
                 <p>
                   <strong>Severability:</strong> If any provision of these Terms is found unenforceable, the remaining provisions will continue in effect.
                 </p>
@@ -384,9 +345,9 @@ export default function TermsPage() {
                 </p>
               </section>
 
-              {/* 23. Contact */}
+              {/* 21. Contact */}
               <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">23. Contact</h2>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">21. Contact</h2>
                 <p>
                   For questions about these terms, contact us at <a href="mailto:support@lynxprompt.com" className="text-primary hover:underline">support@lynxprompt.com</a>.
                 </p>

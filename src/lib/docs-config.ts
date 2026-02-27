@@ -116,16 +116,6 @@ export const docsConfig: DocsSection[] = [
         href: "/docs/marketplace",
         description: "How the marketplace works",
       },
-      {
-        title: "Pricing",
-        href: "/docs/marketplace/pricing",
-        description: "Free features and marketplace commission",
-      },
-      {
-        title: "Selling Blueprints",
-        href: "/docs/marketplace/selling",
-        description: "Set prices and earn from your work",
-      },
     ],
   },
   {
@@ -268,11 +258,6 @@ export const docsConfig: DocsSection[] = [
         title: "General Questions",
         href: "/docs/faq",
         description: "Common questions about LynxPrompt",
-      },
-      {
-        title: "Marketplace Payments",
-        href: "/docs/faq/billing",
-        description: "Buying and selling blueprint questions",
       },
       {
         title: "Troubleshooting",

@@ -13,12 +13,10 @@ import {
   Upload,
   Download,
   Heart,
-  TrendingUp,
   Clock,
   Eye,
   Plus,
   Activity,
-  ShoppingBag,
   X,
   Loader2,
   FolderCog,
@@ -98,20 +96,6 @@ interface WizardDraft {
   updatedAt: string;
 }
 
-interface PurchasedBlueprint {
-  id: string;
-  name: string;
-  description: string | null;
-  downloads: number;
-  favorites: number;
-  tier: string;
-  price: number;
-  author: string;
-  purchasedAt: string;
-  purchasedVersion?: number;
-  currentVersion?: number;
-}
-
 interface HierarchicalBlueprint {
   id: string;
   name: string;
@@ -146,28 +130,13 @@ interface TeamBlueprint {
   author: string;
 }
 
-interface TeamPurchase {
-  id: string;
-  name: string;
-  description: string | null;
-  downloads: number;
-  favorites: number;
-  tier: string;
-  price: number;
-  author: string;
-  purchasedAt: string;
-  purchasedBy: string;
-}
-
 interface DashboardData {
   stats: DashboardStats;
   myTemplates: MyTemplate[];
   recentActivity: RecentActivity[];
   favoriteTemplates: FavoriteTemplate[];
-  purchasedBlueprints: PurchasedBlueprint[];
   hierarchicalBlueprints: HierarchyGroup[];
   teamBlueprints: TeamBlueprint[];
-  teamPurchases: TeamPurchase[];
 }
 
 interface BillingStatus {
@@ -450,7 +419,7 @@ export default function DashboardPage() {
     },
     {
       title: "Share Blueprint",
-      description: "Upload and monetize your prompts",
+      description: "Upload and share your prompts",
       icon: Upload,
       href: "/blueprints/create",
     },
@@ -746,15 +715,14 @@ export default function DashboardPage() {
                         <div key={i} className="h-20 animate-pulse rounded-lg bg-muted" />
                       ))}
                     </div>
-                  ) : (!dashboardData?.teamBlueprints || dashboardData.teamBlueprints.length === 0) && 
-                       (!dashboardData?.teamPurchases || dashboardData.teamPurchases.length === 0) ? (
+                  ) : (!dashboardData?.teamBlueprints || dashboardData.teamBlueprints.length === 0) ? (
                     <div className="rounded-lg border border-teal-500/20 bg-gradient-to-r from-teal-500/5 to-background p-8 text-center">
                       <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-teal-500/10">
                         <Users className="h-6 w-6 text-teal-500" />
                       </div>
                       <h3 className="font-semibold">No team blueprints yet</h3>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        Share blueprints with your team by selecting &quot;Team&quot; visibility when creating, or purchase blueprints to share with everyone.
+                        Share blueprints with your team by selecting &quot;Team&quot; visibility when creating.
                       </p>
                       <Button asChild className="mt-4" size="sm" variant="outline">
                         <Link href="/blueprints/create">
@@ -800,39 +768,6 @@ export default function DashboardPage() {
                         </div>
                       ))}
 
-                      {/* Team-purchased blueprints */}
-                      {dashboardData?.teamPurchases?.map((purchase) => (
-                        <div
-                          key={purchase.id}
-                          className="flex items-center justify-between rounded-lg border border-purple-500/20 bg-gradient-to-r from-purple-500/5 to-background p-4 transition-colors hover:border-purple-500/40"
-                        >
-                          <div className="flex items-center gap-4">
-                            <div className="rounded-lg bg-purple-500/10 p-2">
-                              <ShoppingBag className="h-5 w-5 text-purple-500" />
-                            </div>
-                            <div>
-                              <h4 className="font-medium">{purchase.name}</h4>
-                              <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                                <span className="flex items-center gap-1">
-                                  by {purchase.author}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <Download className="h-3 w-3" />
-                                  {purchase.downloads}
-                                </span>
-                                <span className="rounded-full bg-purple-500/10 px-2 py-0.5 text-xs text-purple-600 dark:text-purple-400">
-                                  Team Purchase
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          <Button variant="ghost" size="icon" asChild title="View">
-                            <Link href={`/blueprints/${purchase.id}`}>
-                              <Eye className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                        </div>
-                      ))}
                     </div>
                   )}
                 </div>
@@ -1385,66 +1320,6 @@ export default function DashboardPage() {
                 )}
               </div>
 
-              {/* Purchased Blueprints */}
-              {dashboardData?.purchasedBlueprints && dashboardData.purchasedBlueprints.length > 0 && (
-                <div>
-                  <div className="mb-4 flex items-center justify-between">
-                    <h2 className="text-lg font-semibold">Purchased Blueprints</h2>
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link href="/blueprints">
-                        Browse More
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </div>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {dashboardData.purchasedBlueprints.map((blueprint) => {
-                      const hasUpdate = blueprint.currentVersion && blueprint.purchasedVersion && 
-                                        blueprint.currentVersion > blueprint.purchasedVersion;
-                      return (
-                        <Link
-                          key={blueprint.id}
-                          href={`/blueprints/${blueprint.id}`}
-                          className={`group rounded-lg border bg-card p-4 transition-colors hover:border-primary ${
-                            hasUpdate ? "border-blue-500/50" : ""
-                          }`}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2">
-                                <h4 className="truncate font-medium group-hover:text-primary">
-                                  {blueprint.name}
-                                </h4>
-                                {hasUpdate && (
-                                  <span className="shrink-0 rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-600 dark:text-blue-400">
-                                    Update v{blueprint.currentVersion}
-                                  </span>
-                                )}
-                              </div>
-                              <p className="mt-0.5 text-xs text-muted-foreground">
-                                by {blueprint.author}
-                              </p>
-                            </div>
-                            <span className="ml-2 rounded bg-gradient-to-r from-purple-500/10 to-pink-500/10 px-1.5 py-0.5 text-xs font-medium text-purple-600 dark:text-purple-400">
-                              €{(blueprint.price / 100).toFixed(2)}
-                            </span>
-                          </div>
-                          <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <ShoppingBag className="h-3 w-3" />
-                              v{blueprint.purchasedVersion || 1}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Download className="h-3 w-3" />
-                              {blueprint.downloads}
-                            </span>
-                          </div>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Right Column: Activity Feed + Getting Started */}
@@ -1647,32 +1522,6 @@ export default function DashboardPage() {
                         ))}
                     </div>
                   )}
-                </div>
-              </div>
-
-              {/* Earn Money CTA */}
-              <div className="rounded-lg border bg-gradient-to-br from-green-500/10 to-emerald-500/10 p-6">
-                <div className="flex items-start gap-3">
-                  <div className="rounded-lg bg-green-500/10 p-2">
-                    <TrendingUp className="h-5 w-5 text-green-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">Turn prompts into income</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Have a great AI config? Share it and earn <strong>70% of each sale</strong>.
-                      Even wizard-generated configs can be shared!
-                    </p>
-                    <Button
-                      asChild
-                      className="mt-4 bg-green-600 hover:bg-green-700"
-                      size="sm"
-                    >
-                      <Link href="/blueprints/create">
-                        <Upload className="mr-2 h-4 w-4" />
-                        Share & Earn
-                      </Link>
-                    </Button>
-                  </div>
                 </div>
               </div>
 

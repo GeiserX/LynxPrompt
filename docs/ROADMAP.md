@@ -8,37 +8,27 @@ This document tracks planned features, improvements, and business decisions for 
 
 ### Vision
 
-LynxPrompt v2.0 pivots from a SaaS product to a **self-hostable platform** that companies can deploy on their own premises. The core product becomes open and deployable, with monetization shifting to marketplace commission and optional services.
+LynxPrompt v2.0 pivots from a SaaS product to a **self-hostable platform** that companies can deploy on their own premises. The core product becomes open and deployable.
 
 Companies deploy their own instance to manage AI IDE configurations (AGENTS.md, .cursor/rules/, etc.) internally. All features are available to all users — no tier gating.
 
 ### Key Decisions (Confirmed)
 
-#### 1. Remove Pricing & Teams Subscription Tier
-- Delete the `/pricing` page entirely
-- Remove `SubscriptionPlan` enum and all tier-gating logic
+#### 1. Remove Tiers & Feature Gating
 - All features (AI, SSO, wizard, API) available to everyone
 - Keep `Team` model for organizational grouping (useful for companies)
-- Remove `TeamBillingRecord`, Stripe subscription fields from Team
 - Remove all "Upgrade to Teams" CTAs from web UI, CLI, and docs
 
-#### 2. Stripe: Optional with Platform Commission
-- `ENABLE_STRIPE=false` by default — when disabled, all blueprints are free
-- When enabled, **the default Stripe account is LynxPrompt's (hardcoded)**
-- Any deployment that enables paid marketplace blueprints routes payments through LynxPrompt's Stripe account — LynxPrompt earns the 30% platform commission
-- Companies that want their own Stripe account must provide their own keys explicitly
-- This is the monetization model for the open-source platform: free to deploy, LynxPrompt earns from marketplace transactions across all federated instances
-
-#### 3. Remove Error Tracking Dependencies
+#### 2. Remove Error Tracking Dependencies
 - Remove all GlitchTip-specific code, hardcoded DSNs, and Sentry packages
 - Delete GlitchTip infrastructure (containers, Caddy entry, DNS record, gitea repo)
 
-#### 4. Remove ClickHouse (Analytics)
+#### 3. Remove ClickHouse (Analytics)
 - Remove all ClickHouse code (analytics lib, API routes, env vars, docker-compose service)
 - ClickHouse was used for trending templates, search stats, wizard funnel
 - Keep ClickHouse as a wizard database option (it's a valid DB users might configure)
 
-#### 5. Feature Toggles via Environment Variables
+#### 4. Feature Toggles via Environment Variables
 All features configurable via env vars for maximum deployment flexibility:
 
 **Auth:**
@@ -59,9 +49,6 @@ All features configurable via env vars for maximum deployment flexibility:
 - `ENABLE_BLOG=false` — blog nav item and routes
 - `ENABLE_SUPPORT_FORUM=false` — support forum nav item and routes
 
-**Marketplace:**
-- `ENABLE_STRIPE=false` — paid blueprints and Stripe checkout
-
 **Analytics:**
 - `UMAMI_SCRIPT_URL` — configurable Umami script URL
 - `NEXT_PUBLIC_UMAMI_WEBSITE_ID` — Umami website ID (already exists)
@@ -71,27 +58,27 @@ All features configurable via env vars for maximum deployment flexibility:
 - `APP_URL=http://localhost:3000` — base URL
 - `APP_LOGO_URL` — custom logo URL
 
-#### 6. Database Consolidation
+#### 5. Database Consolidation
 - **Default**: single PostgreSQL database (all 4 Prisma schemas share one DB)
 - **Advanced**: users can split into separate databases via different `DATABASE_URL_*` vars
 - Remove Percona pg_tde from development docker-compose — use standard `postgres:18-alpine` everywhere
 - Keep Percona pg_tde only in production/dev-server docker-compose (gitea) where it's already deployed
 - New `docker-compose.selfhost.yml`: 1 Postgres + 1 LynxPrompt container
 
-#### 7. Dynamic CSP Headers
+#### 6. Dynamic CSP Headers
 - Build Content-Security-Policy in `proxy.ts` based on enabled services
 - Only include Umami, Turnstile domains when those services are configured
 - Cleaner security headers for minimal deployments
 
-#### 8. Hardcoded URL Audit
+#### 7. Hardcoded URL Audit
 - Replace all `lynxprompt.com` hardcoded references with `APP_URL` env var
 - Affects: email templates, fallback URLs, image references, API fallbacks, structured data
 
-#### 9. Health Check Enhancement
+#### 8. Health Check Enhancement
 - `/api/health` checks actual DB connectivity, not just returns 200
 - Critical for container orchestration and monitoring
 
-#### 10. Auto-Migration on Startup
+#### 9. Auto-Migration on Startup
 - `entrypoint.sh` runs `prisma migrate deploy` for all schemas on container start
 - Idempotent — safe for every restart
 - Companies don't need to run migrations manually
@@ -117,28 +104,21 @@ A decentralized blueprint sharing network across LynxPrompt instances.
 - Rate limiting and API key exchange for security
 - Instance verification (domain ownership check)
 
-**Stripe Integration with Federation:**
-- When a user purchases a paid blueprint from a remote federated instance, the payment routes through the origin instance's Stripe (which defaults to LynxPrompt's account)
-- This means LynxPrompt earns commission on all marketplace transactions across the entire federation
-
 **Testing Plan:**
 - Use prod (lynxprompt.com) and dev (dev.lynxprompt.com) as the first two federated instances
 - Dev instance should show prod blueprints with "from lynxprompt.com" label
-- Validate lazy loading, search across instances, and cross-instance purchases
+- Validate lazy loading and search across instances
 
 **Implementation Phases:**
 1. Define federation API schema and protocol
 2. Build the central registry mechanism
 3. Implement federation client (fetching remote blueprints)
 4. UI for federated blueprints (origin badges, lazy loading)
-5. Cross-instance purchasing via Stripe
-6. Admin controls (allowlist/blocklist federated instances)
+5. Admin controls (allowlist/blocklist federated instances)
 
 ### Documentation Changes for v2.0
 
-- Delete: pricing page, pricing docs, billing FAQ
 - Rewrite: AI features docs (remove "Teams-only" language)
-- Rewrite: marketplace selling docs (Stripe optional)
 - Add: self-hosting guide with env var reference
 - Add: `docker-compose.selfhost.yml` quick start
 - Rewrite: README.md (self-hostable platform positioning)
@@ -161,58 +141,6 @@ A decentralized blueprint sharing network across LynxPrompt instances.
 
 ---
 
-## 🏢 Business & Legal Foundation
-
-### Entity & Operator
-
-- **Trade Name**: GeiserCloud
-- **Operator**: Sergio Fernández Rubio (individual)
-- **Location**: Calle Tierno Galván 25, 30203 Cartagena, Murcia, Spain
-- **Status**: Planning to register as autónomo
-- **Contact**: privacy@lynxprompt.com
-
-### Marketplace Model
-
-LynxPrompt operates as a **hybrid platform**:
-
-1. **Platform/Intermediary**: Buyers purchase from Sellers, LynxPrompt facilitates
-2. **Max Subscriber Discount**: Max subscribers get 10% off all paid blueprints
-
-#### Key Legal Structure
-
-- Contract for individual purchases: **Between Buyer and Seller**
-- LynxPrompt provides the platform, handles payments, takes commission
-- Sellers are responsible for their own income taxes
-- LynxPrompt handles VAT on platform fees (when registered as autónomo)
-
-### Payout Rules for Sellers
-
-| Setting            | Value                                      |
-| ------------------ | ------------------------------------------ |
-| Minimum payout     | €5                                         |
-| Payout method      | PayPal                                     |
-| Payout frequency   | Monthly (or on-demand when min reached)    |
-| Chargeback hold    | Funds held until chargeback window expires |
-| Revenue split      | 70% seller / 30% platform                  |
-
-### Refund Policy (EU Compliant)
-
-Per EU Consumer Rights Directive, digital content can waive 14-day withdrawal IF:
-
-- [x] Consumer gives **explicit consent** to immediate delivery
-- [x] Consumer **acknowledges** loss of withdrawal right
-
-**Implementation required:**
-- [ ] Checkout checkbox: "I consent to immediate access and acknowledge I lose my right of withdrawal"
-- [ ] Store consent with: user ID, timestamp, Terms version hash
-
-**Refund policy:**
-- No refunds after download/access (withdrawal waived)
-- Refunds considered for: non-delivery, broken access, material misrepresentation
-- No refunds for: changed mind after access, didn't read description
-
----
-
 ## 📜 Legal Compliance
 
 ### Privacy Policy ✅ COMPLETED
@@ -220,12 +148,12 @@ Per EU Consumer Rights Directive, digital content can waive 14-day withdrawal IF
 - [x] GDPR Article 6 legal basis (Contract + Legitimate Interest)
 - [x] Physical address disclosure
 - [x] "No DPO appointed" statement
-- [x] Third-party processors detailed (GitHub, Google, Stripe, Umami, Anthropic, ~~GlitchTip~~ removed in v2.0)
+- [x] Third-party processors detailed (GitHub, Google, Umami, Anthropic, ~~GlitchTip~~ removed in v2.0)
 - [x] Umami: self-hosted in EU, cookieless, legitimate interest basis
 - [x] International transfers + SCCs
 - [x] No automated decision-making statement
 - [x] US residents section ("we don't sell data")
-- [x] Service emails defined (login links, receipts, security notices)
+- [x] Service emails defined (login links, security notices)
 - [x] Data retention policy
 - [x] AEPD complaint rights
 
@@ -254,13 +182,6 @@ Per EU Consumer Rights Directive, digital content can waive 14-day withdrawal IF
 - [x] **AI/prompt disclaimer**: "Prompts may produce unexpected outputs, use at own risk"
 - [x] **Buyer-Seller disputes**: Primarily between parties, platform may assist
 
-#### Payment & Payout Clauses
-
-- [x] Refund criteria and timeframe
-- [x] Payout schedule: monthly, min €5, PayPal
-- [x] Chargeback holds
-- [x] Seller tax responsibility
-
 #### Standard Clauses
 
 - [x] Eligibility/age (18+ or legal capacity)
@@ -276,8 +197,7 @@ Per EU Consumer Rights Directive, digital content can waive 14-day withdrawal IF
 #### Product/UI Changes for Legal (Pending Implementation)
 
 - [ ] Signup: "I agree to Terms + Privacy" checkbox (OAuth providers handle this implicitly via their ToS)
-- [x] Checkout: EU digital content waiver checkbox
-- [ ] Log: user ID, timestamp, Terms version hash for consent (currently stores consent in purchase record)
+- [ ] Log: user ID, timestamp, Terms version hash for consent
 
 ---
 
@@ -306,7 +226,6 @@ Per EU Consumer Rights Directive, digital content can waive 14-day withdrawal IF
 - [x] **Copy individual files to clipboard** in wizard preview
 - [x] **Preview generated content before download**
 - [x] **Template sorting** - Sort by popularity (default), recent, downloads, favorites
-- [x] **Pricing page UI** - Tier comparison (Free/Pro/Max)
 - [x] **Favorite templates** - Heart button + favorites shown in dashboard
 - [x] **Privacy Policy page** - GDPR compliant, comprehensive
 - [x] **Terms of Service page** - Full marketplace version with EU compliance
@@ -314,18 +233,13 @@ Per EU Consumer Rights Directive, digital content can waive 14-day withdrawal IF
 - [x] **Docs/Help page** - Getting started, FAQ
 - [x] **Favicon** - Custom lynx logo in all sizes
 - [x] **Gravatar integration** - Fallback avatar for magic link users (no local storage)
-- [x] **Unified Settings page** - Stripe-like sidebar with Profile/Accounts/Security/Billing tabs
-- [x] **Stripe billing integration** - Checkout, webhooks, customer portal ready
+- [x] **Unified Settings page** - Sidebar with Profile/Accounts/Security tabs
 - [x] **Renamed Templates to Agent Blueprints** - Matches AGENTS.md branding
 - [x] **Blueprints page improvements** - Working search, expandable platform filters, session-aware CTAs
-- [x] **Smart pricing page CTAs** - Logged-in users go to billing/dashboard instead of signin
 - [x] **Dashboard "New Configuration (Wizard)"** - Clearer button label
 - [x] **Template creation UX improvements**:
   - Better error visibility with icons and clear contrast
   - Template variable `[[VARIABLE_NAME]]` detection with visual feedback
-  - Revenue split display with better contrast (€ amount shown)
-  - Paid blueprints restricted to PRO/MAX users (checkbox disabled for FREE)
-  - Descriptive API errors ("Only PRO or MAX subscribers can create paid blueprints")
   - "View Template" link fixed (user- → usr_)
 - [x] **Public User Profiles**:
   - Clickable author names on blueprints page → `/users/[id]`
@@ -337,7 +251,6 @@ Per EU Consumer Rights Directive, digital content can waive 14-day withdrawal IF
   - API token management in settings
   - Token permissions (read, write, admin)
   - Token expiration support
-  - Subscription-gated access (Pro/Max/Teams)
   - Full CRUD operations for blueprints
 - [x] **Blueprint Versioning**:
   - Version history with changelogs
@@ -467,8 +380,6 @@ All wizard steps (Basic, Intermediate, Advanced) are accessible to everyone.
 - [ ] Download history
 - [x] Favorite templates (displayed in dashboard)
 - [ ] Usage analytics per user
-- [ ] Author earnings dashboard
-- [ ] Payout requests and history
 - [x] **My Templates section** - list of user's shared templates with stats
 
 #### Security Enhancements
@@ -477,25 +388,13 @@ All wizard steps (Basic, Intermediate, Advanced) are accessible to everyone.
 - [ ] Device/location tracking for 2FA decisions
 - [ ] Session management (view and revoke active sessions)
 
-### Template Sharing & Selling
-
-#### Who Can Share Templates
-
-- Free users: Can share free templates only
-- Pro/Max users: Can share both free and paid templates
+### Template Sharing
 
 #### Template Upload Options
 
 1. **Direct Upload**: Write/paste prompt content, add title, tags, description
 2. **From Wizard**: Save wizard-generated config as a shareable template
 3. **Import**: Upload existing config files to create template
-
-#### Pricing Options for Authors
-
-- Free template (no cost to download)
-- Paid template (min €5, author sets price)
-- "Included in Max" option (earns from subscription pool)
-- "Purchase only" option (not included in Max pool)
 
 ### Naming Convention
 
@@ -578,7 +477,7 @@ When downloading, user sees:
 - [x] Platform filters with expand/collapse and search
 - [x] Category filtering in sidebar
 - [x] Pagination with infinite scroll
-- [ ] Advanced search with filters (price range, author)
+- [ ] Advanced search with filters (author, platform)
 - [ ] "Blueprints like this" recommendations
 - [ ] Trending blueprints section
 
@@ -587,164 +486,6 @@ When downloading, user sees:
 - [ ] Track template downloads/usage ~~(ClickHouse)~~ (alternative TBD post-v2.0)
 - [ ] Show trending templates
 - [ ] Usage statistics for template authors
-- [ ] Revenue reports for paid templates
-
----
-
-## 💰 Monetization Strategy
-
-### ~~Subscription Tiers~~ — REMOVED in v2.0
-
-> **v2.0 Change:** All subscription tiers (Free/Pro/Max/Teams) have been removed. All features are available to all users. The monetization model is now marketplace commission (see v2.0 section above).
-
-Previously:
-
-| Tier | Status |
-|------|--------|
-| Free | Now the only tier — all features included |
-| Pro | Removed |
-| Max | Removed |
-| Teams | Removed (Team org model kept for grouping, billing removed) |
-
-### ~~Teams Tier~~ — REMOVED in v2.0
-
-> Team management (members, invitations, SSO) is kept as an organizational feature but is no longer a paid tier. SSO is promoted to a first-class feature available to all instances via `ENABLE_SSO` env var.
-
-### Template Marketplace Pricing
-
-#### Individual Template Purchases
-
-- **Minimum price**: €5 (configurable by author, minimum €5)
-- **Default suggested price**: €5
-- **Author sets their own price** above minimum
-
-#### Revenue Split
-
-| Recipient                 | Standard | With Max Discount |
-| ------------------------- | -------- |
-| **Template Author**       | 70%      |
-| **Platform (LynxPrompt)** | 30%      |
-
-### Revenue Split Model
-
-All blueprint purchases follow a simple 70/30 split:
-- Authors receive 70% of the sale price
-- Platform retains 30% as a fee
-- No discounts - everyone pays the same price
-
-#### Example
-
-```
-Blueprint Price: €10
-Author receives: €7.00
-Platform receives: €3.00
-```
-
-### Payment Processing
-
-**Primary**: Stripe (cards + subscriptions)
-- Best developer experience, excellent recurring billing
-- EU-friendly with SEPA support
-- Good webhook system for subscription lifecycle
-- Customer portal for self-service billing management
-
-**Payouts to Authors**: PayPal (min €5, monthly or on-demand)
-- Wide acceptance among creators
-- Alternative: Stripe Connect (future consideration for direct bank transfers)
-
-### Currency Strategy
-
-**Base Currency**: EUR (Euros)
-
-**Why EUR, not multi-currency:**
-
-1. **Legal/Tax simplicity**: Spain-based autónomo — EUR makes VAT, invoicing, and accounting straightforward
-2. **Stripe handles conversion**: Users see their local currency at checkout (USD, GBP, etc.) — Stripe converts automatically
-3. **Single source of truth**: One price list, no exchange rate maintenance, no arbitrage issues
-4. **Stable global currency**: EUR is widely recognized; many SaaS (Notion, Linear) price in single currency
-
-**Current behavior:**
-- Pricing page shows EUR (€5, €20)
-- Stripe Checkout displays converted amount in user's card currency before payment
-- User's card is charged in their local currency (e.g., USD for US users)
-
-**Planned enhancement (UX improvement, not critical — far future):**
-- [ ] **Approximate local prices on pricing page**: Detect user's locale via browser
-  - Show: "€20/month (~$22 USD)" for US visitors
-  - Sets expectations before checkout without committing to a second price point
-
-**Implementation approach (Option A - static rates + browser locale):**
-```typescript
-// lib/currency.ts
-const EUR_RATES: Record<string, { rate: number; symbol: string }> = {
-  USD: { rate: 1.10, symbol: '$' },
-  GBP: { rate: 0.85, symbol: '£' },
-  CAD: { rate: 1.50, symbol: 'CA$' },
-  AUD: { rate: 1.65, symbol: 'A$' },
-};
-
-const LOCALE_TO_CURRENCY: Record<string, string> = {
-  'en-US': 'USD', 'en-GB': 'GBP', 'en-CA': 'CAD', 'en-AU': 'AUD',
-};
-
-export function getApproxPrice(eurAmount: number): string | null {
-  const currency = LOCALE_TO_CURRENCY[navigator.language];
-  if (!currency) return null;
-  const { rate, symbol } = EUR_RATES[currency];
-  return `~${symbol}${Math.round(eurAmount * rate)}`;
-}
-```
-- No API calls, no costs, privacy-friendly
-- Update rates manually once a month (approximations don't need precision)
-
-**Not planned (avoided complexity):**
-- ❌ Dual USD/EUR pricing (requires two Stripe products, rate sync, potential confusion)
-- ❌ Dynamic pricing based on location (legal/tax complexity, user trust issues)
-- ❌ Multiple currency products in Stripe (maintenance burden for small team)
-
----
-
-## 🛒 Implementation Roadmap for Monetization
-
-### Phase 1: Foundation ✅ COMPLETED
-
-- [x] Create Pricing page UI with tier comparison
-- [x] Implement subscription database schema (plans, subscriptions, invoices)
-- [x] Integrate Stripe for card payments and subscriptions
-- [x] Stripe checkout flow with customer creation
-- [x] Stripe webhook handlers for subscription lifecycle
-- [x] Stripe customer portal integration
-- [x] Billing settings page with plan display and upgrade options
-- [x] Admin/Superadmin get MAX tier automatically (no payment required)
-- [x] Wizard tier gating (Basic/Intermediate/Advanced steps)
-- [x] Add subscription status to user session (read from DB, display in UI)
-- [x] Create Stripe products/prices in dashboard and configure env vars
-- [x] **Checkout consent checkbox** (EU digital content waiver)
-
-### Phase 2: Template Marketplace ✅ COMPLETED
-
-- [x] Allow authors to set template prices (min €5)
-- [x] Individual template purchase flow (Stripe Checkout)
-- [x] Revenue tracking per template (authorShare, totalRevenue)
-- [x] Author earnings dashboard (Settings → Seller Payouts)
-- [x] **Template upload flow** (direct upload, from wizard)
-
-### Phase 3: Max Subscription Pool
-
-- [x] Implement download tracking for paid templates
-- [x] ~~Max subscriber 10% discount~~ (removed January 2026)
-- [ ] Author earnings dashboard
-- [ ] Author payout notifications
-
-### Phase 4: Payouts ✅ PARTIAL
-
-- [x] Author payout request system (min €10)
-- [x] PayPal email configuration in settings
-- [x] Payout history and status tracking
-- [x] Earnings dashboard (total, available, pending)
-- [ ] **PayPal Payouts API integration** (currently manual processing)
-- [ ] Chargeback hold period before funds available
-- [ ] Automated payout processing
 
 ---
 
@@ -800,22 +541,12 @@ PUT    /api/templates/:id          - Update template (owner only)
 DELETE /api/templates/:id          - Delete template (owner only)
 GET    /api/templates/:id/download - Download template
 POST   /api/templates/:id/favorite - Toggle favorite (auth required)
-POST   /api/templates/:id/purchase - Purchase paid template
-
 GET    /api/user/preferences       - Get user preferences
 PUT    /api/user/preferences       - Update preferences
 GET    /api/user/templates         - Get user's templates
-GET    /api/user/purchases         - Get purchased templates
-GET    /api/user/earnings          - Get author earnings
-POST   /api/user/payout            - Request payout (min €5)
 GET    /api/user/linked-accounts   - Get linked auth providers
 POST   /api/user/link-account      - Link a new auth provider
 DELETE /api/user/unlink-account    - Unlink an auth provider
-
-GET    /api/billing/subscription   - Get current subscription
-POST   /api/billing/subscribe      - Start subscription
-POST   /api/billing/cancel         - Cancel subscription
-GET    /api/billing/invoices       - Get invoices
 
 POST   /api/generate               - Generate config files from wizard data
 ```
@@ -827,7 +558,6 @@ POST   /api/generate               - Generate config files from wizard data
 - [ ] Bulk approve/reject actions
 - [ ] Email verification requirement for paid submissions
 - [ ] Content policy enforcement
-- [ ] Revenue and payout management
 
 ### Abuse Prevention
 
@@ -836,8 +566,6 @@ POST   /api/generate               - Generate config files from wizard data
 - [ ] Content filtering (spam patterns, profanity, suspicious URLs)
 - [ ] Report button for users to flag bad templates
 - [ ] CAPTCHA on submission form
-- [ ] Fraud detection for payments
-- [ ] Chargeback handling
 
 ---
 
@@ -849,7 +577,6 @@ POST   /api/generate               - Generate config files from wizard data
 - [x] Status page (Uptime Kuma) at status.lynxprompt.com
 - [ ] CDN for static assets
 - [ ] Database backups automation
-- [x] Payment webhook handlers (Stripe)
 
 ### Current Infrastructure
 
@@ -893,7 +620,7 @@ POST   /api/generate               - Generate config files from wizard data
 
 ### Beta Launch Strategy
 
-- [ ] **Reddit beta testers campaign**: 100 free 1-year subscriptions for first 100 users
+- [ ] **Reddit beta testers campaign**: 100 free accounts for first 100 users
   - In exchange for: populating database, feedback, spreading the word
   - Goal: Beta testers, platform refinement, initial content
 
@@ -910,27 +637,6 @@ POST   /api/generate               - Generate config files from wizard data
 - [x] **IDE compatibility section**: Add to main page AND docs - visual stripe of all supported IDEs with logos
 - [ ] **Explainer video**: Create a ~1 minute video explaining the concept of LynxPrompt and how it works
 
-### Stripe Production Release
-
-To go live with Stripe payments:
-
-1. **Complete Stripe account verification**:
-   - Verify identity (ID upload)
-   - Verify business (if applicable)
-   - Add bank account for payouts
-
-2. **Switch API keys**:
-   - Replace `sk_test_xxx` with `sk_live_xxx` in production
-   - Replace `whsec_test_xxx` with production webhook secret
-   - Update price IDs to production price IDs
-
-3. **Configure webhook endpoint**:
-   - In Stripe Dashboard → Webhooks → Add endpoint
-   - URL: `https://api.lynxprompt.com/api/billing/webhook`
-   - Events: `checkout.session.completed`, `customer.subscription.*`, `invoice.*`
-
-4. **Test with real card** (small amounts) before announcing
-
 ---
 
 ## 📝 UX Improvements
@@ -945,15 +651,10 @@ To go live with Stripe payments:
 
 ### Dashboard
 
-- [x] **Share prompt suggestion**: Suggest users share their prompts to earn money
+- [x] **Share prompt suggestion**: Suggest users share their prompts
   - Include prompts created with wizard
-  - "Turn your prompts into passive income" CTA
 
 ### Blueprint Upload
-
-- [x] **Revenue split visibility**: Show 70% author / 30% platform ONLY when user selects "Set Price" option
-  - Don't show in pricing page or elsewhere
-  - Show inline when configuring paid template
 
 - [x] **Sensitive data detection**: Warn users before upload if passwords/API keys detected
   - Scan for: passwords, API keys, tokens, secrets, private keys
@@ -1576,24 +1277,18 @@ This enables:
 - **Blueprint upload timestamp display**: Show when a blueprint was uploaded on the public blueprint page (e.g., `/blueprints/usr_xxx`). Display date and time for users to see how recent the content is.
 - VS Code extension for templates
 - GitHub App for automatic config updates
-- Template marketplace revenue sharing analytics
 - Webhook integrations (notify when template is downloaded)
 - Template collections/bundles
 - "Compare templates" feature side-by-side
-- Affiliate program for promoters
-- Gift subscriptions
 - DMCA/copyright complaints process
-- Bank transfer payouts (via Stripe Connect)
 
 ### Low Priority / Long-term
 - **Local app integration**: IDE receives configs directly from web (Electron/Tauri)
 - Multi-language support (i18n) - only when user base justifies
-- **Cryptocurrency payments (Bitcoin, Ethereum, USDC) via Coinbase Commerce**
 - Custom integrations (Slack, Teams notifications)
 - ~~White-label solutions for enterprise~~ → **Partially addressed in v2.0** (custom branding via `APP_NAME`, `APP_LOGO_URL` env vars)
 
 ### Completed Ideas ✅
-- ~~Annual subscription discount~~ → 10% discount (~1.2 months free)
 - ~~Use gravatar for emails~~ → Implemented
 - ~~Team/organization features~~ → Teams tier launched
 - ~~Private templates for teams~~ → Team visibility option

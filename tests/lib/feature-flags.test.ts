@@ -19,7 +19,6 @@ describe("feature-flags", () => {
       expect(flags.ENABLE_AI).toBe(false);
       expect(flags.ENABLE_BLOG).toBe(false);
       expect(flags.ENABLE_SUPPORT_FORUM).toBe(false);
-      expect(flags.ENABLE_STRIPE).toBe(false);
       expect(flags.ENABLE_FEDERATION).toBe(true);
     });
 
@@ -30,9 +29,9 @@ describe("feature-flags", () => {
     });
 
     it("should read '1' as true", async () => {
-      vi.stubEnv("ENABLE_STRIPE", "1");
+      vi.stubEnv("ENABLE_FEDERATION", "1");
       const flags = await import("@/lib/feature-flags");
-      expect(flags.ENABLE_STRIPE).toBe(true);
+      expect(flags.ENABLE_FEDERATION).toBe(true);
     });
 
     it("should read 'false' from env var", async () => {
@@ -101,7 +100,6 @@ describe("feature-flags", () => {
       expect(flags).toHaveProperty("enableAI");
       expect(flags).toHaveProperty("enableBlog");
       expect(flags).toHaveProperty("enableSupportForum");
-      expect(flags).toHaveProperty("enableStripe");
       expect(flags).toHaveProperty("enableFederation");
       expect(flags).toHaveProperty("federationRegistryUrl");
       expect(flags).toHaveProperty("appName");

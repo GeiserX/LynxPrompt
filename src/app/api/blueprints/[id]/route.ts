@@ -4,8 +4,6 @@ import { authOptions } from "@/lib/auth";
 import { getTemplateById, incrementTemplateUsage } from "@/lib/data/templates";
 import { prismaUsers } from "@/lib/db-users";
 import { detectSensitiveData } from "@/lib/sensitive-data";
-import { ENABLE_STRIPE } from "@/lib/feature-flags";
-
 
 // GET /api/blueprints/[id] - Get blueprint details
 export async function GET(
@@ -48,96 +46,14 @@ export async function GET(
 
     const templateWithShowcase = { ...template, showcaseUrl, currentVersion, publishedVersion };
 
-    // Check if this is a paid template
-    const isPaid = templateWithShowcase.price && templateWithShowcase.price > 0;
-    let hasPurchased = false;
     let isOwner = false;
 
     const session = await getServerSession(authOptions);
 
     if (session?.user?.id) {
-      // Check if user is the owner of this blueprint
       if (templateWithShowcase.authorId === session.user.id) {
         isOwner = true;
-        hasPurchased = true; // Owners always have access
       }
-
-      // Check user's subscription plan and team membership
-      const user = await prismaUsers.user.findUnique({
-        where: { id: session.user.id },
-        select: { subscriptionPlan: true, role: true },
-      });
-
-      // Get user's team membership
-      const teamMembership = await prismaUsers.teamMember.findFirst({
-        where: { userId: session.user.id },
-        select: { teamId: true },
-      });
-      const userTeamId = teamMembership?.teamId;
-
-      // Check purchase only if not owner and blueprint is paid
-      if (isPaid && !isOwner) {
-        // Extract real template ID (remove bp_ prefix)
-        const realTemplateId = id.startsWith("bp_") ? id.replace("bp_", "") : id;
-
-        // Check individual purchase
-        const individualPurchase = await prismaUsers.blueprintPurchase.findUnique({
-          where: {
-            userId_templateId: {
-              userId: session.user.id,
-              templateId: realTemplateId,
-            },
-          },
-        });
-
-        if (individualPurchase) {
-          hasPurchased = true;
-        }
-        // Check team purchase
-        else if (userTeamId) {
-          const teamPurchase = await prismaUsers.blueprintPurchase.findFirst({
-            where: {
-              teamId: userTeamId,
-              templateId: realTemplateId,
-            },
-          });
-          if (teamPurchase) {
-            hasPurchased = true;
-          }
-        }
-      }
-    }
-
-    // If not purchased AND not owner, hide the content
-    if (isPaid && !hasPurchased && !isOwner) {
-      // Extract variables from content so users can see what's customizable
-      const variableRegex = /\[\[([A-Z_][A-Z0-9_]*)(?:\|([^\]]*))?\]\]/g;
-      const variables: Array<{ name: string; defaultVal?: string }> = [];
-      const seen = new Set<string>();
-      let match;
-      const content = templateWithShowcase.content || "";
-      while ((match = variableRegex.exec(content)) !== null) {
-        if (!seen.has(match[1])) {
-          seen.add(match[1]);
-          variables.push({ name: match[1], defaultVal: match[2] || undefined });
-        }
-      }
-
-      return NextResponse.json({
-        ...templateWithShowcase,
-        content: null, // Hide content
-        isPaid: true,
-        hasPurchased: false,
-        isOwner: false,
-        // Show truncated preview (first 500 chars)
-        preview:
-          templateWithShowcase.content?.substring(0, 500) +
-          (templateWithShowcase.content && templateWithShowcase.content.length > 500
-            ? "\n\n... [Purchase to view full content]"
-            : ""),
-        // Show variables even for unpurchased templates
-        variables: variables.length > 0 ? variables : undefined,
-      });
     }
 
     // Increment usage count (only for views, not just listing)
@@ -145,8 +61,6 @@ export async function GET(
 
     return NextResponse.json({
       ...templateWithShowcase,
-      isPaid: isPaid || false,
-      hasPurchased: hasPurchased || !isPaid,
       isOwner,
     });
   } catch (error) {
@@ -249,8 +163,6 @@ export async function PUT(
       category,
       tags, 
       isPublic, 
-      price, 
-      currency,
       showcaseUrl,
       sensitiveDataAcknowledged = false, // User acknowledged sensitive data warning
       publishNewVersion = false, // If true, create a new version
@@ -335,44 +247,6 @@ export async function PUT(
       } else {
         updateData.showcaseUrl = null;
       }
-    }
-
-    if (price !== undefined) {
-      // Check if user can set a price
-      const user = await prismaUsers.user.findUnique({
-        where: { id: session.user.id },
-        select: { subscriptionPlan: true, role: true },
-      });
-
-      // All users can now update their blueprints
-      // Teams users and admins get extra features
-      const isTeamsUser = 
-        user?.subscriptionPlan === "TEAMS" ||
-        user?.role === "ADMIN" ||
-        user?.role === "SUPERADMIN";
-
-      if (price !== null && price > 0) {
-        if (!ENABLE_STRIPE) {
-          return NextResponse.json(
-            { error: "Paid blueprints require ENABLE_STRIPE to be configured" },
-            { status: 400 }
-          );
-        }
-        const priceNum = parseInt(String(price), 10);
-        if (isNaN(priceNum) || priceNum < 500) {
-          return NextResponse.json(
-            { error: "Minimum price is €5.00 (500 cents)" },
-            { status: 400 }
-          );
-        }
-        updateData.price = priceNum;
-      } else {
-        updateData.price = null;
-      }
-    }
-
-    if (currency !== undefined) {
-      updateData.currency = currency || "EUR";
     }
 
     // Check for sensitive data in public blueprints
@@ -504,21 +378,6 @@ export async function DELETE(
     if (existingBlueprint.userId !== session.user.id) {
       return NextResponse.json(
         { error: "You can only delete your own blueprints" },
-        { status: 403 }
-      );
-    }
-
-    // Check if blueprint has been purchased by another user
-    const purchaseCount = await prismaUsers.blueprintPurchase.count({
-      where: {
-        templateId: realId,
-        userId: { not: session.user.id }, // Exclude owner's own purchase if any
-      },
-    });
-
-    if (purchaseCount > 0) {
-      return NextResponse.json(
-        { error: "Cannot delete this blueprint as it has been purchased by other users" },
         { status: 403 }
       );
     }
