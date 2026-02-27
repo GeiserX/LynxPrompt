@@ -269,17 +269,13 @@ export async function PUT(
       }
       updateData.content = content.trim();
 
-      // Recalculate tier
-      const effectiveLines = content.split("\n").filter((line: string) => {
-        const trimmed = line.trim();
-        if (!trimmed) return false;
-        if (trimmed.startsWith("#") || trimmed.startsWith("//")) return false;
-        return true;
-      }).length;
+      // Recalculate tier based on word count
+      const wordCount = content.split(/\s+/).filter(Boolean).length;
 
-      if (effectiveLines > 100) updateData.tier = "ADVANCED";
-      else if (effectiveLines > 30) updateData.tier = "INTERMEDIATE";
-      else updateData.tier = "SIMPLE";
+      if (wordCount > 2500) updateData.tier = "SUPERLONG";
+      else if (wordCount > 800) updateData.tier = "LONG";
+      else if (wordCount > 200) updateData.tier = "INTERMEDIATE";
+      else updateData.tier = "SHORT";
 
       // Update checksum
       updateData.contentChecksum = computeChecksum(content.trim());

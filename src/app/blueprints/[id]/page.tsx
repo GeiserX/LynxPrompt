@@ -42,15 +42,17 @@ const platformInfo: Record<string, { name: string; file: string }> = {
 };
 
 const tierColors: Record<string, string> = {
-  SIMPLE: "bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-sm dark:from-green-600 dark:to-emerald-600",
+  SHORT: "bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-sm dark:from-green-600 dark:to-emerald-600",
   INTERMEDIATE: "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-sm dark:from-blue-600 dark:to-indigo-600",
-  ADVANCED: "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-sm dark:from-purple-600 dark:to-pink-600",
+  LONG: "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-sm dark:from-purple-600 dark:to-pink-600",
+  SUPERLONG: "bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-sm dark:from-red-600 dark:to-orange-600",
 };
 
 const tierLabels: Record<string, string> = {
-  SIMPLE: "Simple",
+  SHORT: "Short",
   INTERMEDIATE: "Intermediate",
-  ADVANCED: "Advanced",
+  LONG: "Long",
+  SUPERLONG: "Super Long",
 };
 
 interface TemplateData {

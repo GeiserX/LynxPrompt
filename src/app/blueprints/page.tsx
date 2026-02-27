@@ -37,10 +37,11 @@ const CATEGORIES = [
 
 // Tier options for filtering
 const TIERS = [
-  { id: "all", label: "All Tiers" },
-  { id: "SIMPLE", label: "Simple", description: "Quick configs" },
-  { id: "INTERMEDIATE", label: "Intermediate", description: "Standard setups" },
-  { id: "ADVANCED", label: "Advanced", description: "Comprehensive configs" },
+  { id: "all", label: "All Lengths" },
+  { id: "SHORT", label: "Short", description: "Under 200 words" },
+  { id: "INTERMEDIATE", label: "Intermediate", description: "200–800 words" },
+  { id: "LONG", label: "Long", description: "800–2,500 words" },
+  { id: "SUPERLONG", label: "Super Long", description: "2,500+ words" },
 ];
 
 const SORT_OPTIONS = [
@@ -306,15 +307,17 @@ function BlueprintsContent() {
   }, [hasMore, loading, isLoadingMore, handleLoadMore]);
 
   const tierColors: Record<string, string> = {
-    SIMPLE: "bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-sm dark:from-green-600 dark:to-emerald-600",
+    SHORT: "bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-sm dark:from-green-600 dark:to-emerald-600",
     INTERMEDIATE: "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-sm dark:from-blue-600 dark:to-indigo-600",
-    ADVANCED: "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-sm dark:from-purple-600 dark:to-pink-600",
+    LONG: "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-sm dark:from-purple-600 dark:to-pink-600",
+    SUPERLONG: "bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-sm dark:from-red-600 dark:to-orange-600",
   };
 
   const tierLabels: Record<string, string> = {
-    SIMPLE: "Simple",
+    SHORT: "Short",
     INTERMEDIATE: "Intermediate",
-    ADVANCED: "Advanced",
+    LONG: "Long",
+    SUPERLONG: "Super Long",
   };
 
   // Tags to display
@@ -426,7 +429,7 @@ function BlueprintsContent() {
 
               {/* Tier Filter */}
               <div>
-                <h3 className="mb-3 font-semibold">Complexity</h3>
+                <h3 className="mb-3 font-semibold">Length</h3>
                 <nav className="space-y-1">
                   {TIERS.map((tier) => (
                     <button
@@ -536,7 +539,7 @@ function BlueprintsContent() {
 
               {/* Tier Filter */}
               <div>
-                <h3 className="mb-3 font-semibold">Complexity</h3>
+                <h3 className="mb-3 font-semibold">Length</h3>
                 <nav className="space-y-1">
                   {TIERS.map((tier) => (
                     <button

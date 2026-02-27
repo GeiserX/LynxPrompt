@@ -79,9 +79,9 @@ export default function BrowsingBlueprintsPage() {
             </p>
           </div>
           <div className="rounded-lg border bg-card p-4">
-            <h3 className="font-medium">Category Filters</h3>
+            <h3 className="font-medium">Length Filters</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Filter by complexity: Simple, Intermediate, Advanced
+              Filter by length: Short, Intermediate, Long, Super Long
             </p>
           </div>
           <div className="rounded-lg border bg-card p-4">
