@@ -348,7 +348,7 @@ export default function TeamManagementPage() {
               <div>
                 <h1 className="text-2xl font-bold">{team?.name}</h1>
                 <p className="text-muted-foreground">
-                  {team?._count?.members || team?.members?.length || 0} members • {team?.maxSeats} max seats
+                  {team?._count?.members || team?.members?.length || 0} members
                 </p>
                 {logoError && (
                   <p className="text-sm text-red-500">{logoError}</p>
@@ -529,17 +529,33 @@ export default function TeamManagementPage() {
 
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Max Seats</span>
-                    <span className="font-medium">{team?.maxSeats}</span>
-                  </div>
-                  <div className="flex justify-between">
                     <span className="text-muted-foreground">Current Members</span>
                     <span className="font-medium">{team?.members?.length || 0}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Available Seats</span>
+                    <span className="text-muted-foreground">Active This Cycle</span>
+                    <span className="font-medium text-green-500">
+                      {team?.members?.filter(m => m.isActiveThisCycle).length || 0}
+                    </span>
+                  </div>
+                  {userRole === "ADMIN" && (team?.invitations?.filter(i => i.status === "PENDING")?.length || 0) > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Pending Invites</span>
+                      <span className="font-medium text-amber-500">
+                        {team?.invitations?.filter(i => i.status === "PENDING")?.length || 0}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Admins</span>
                     <span className="font-medium">
-                      {Math.max(0, (team?.maxSeats || 0) - (team?.members?.length || 0) - (team?.invitations?.filter(i => i.status === "PENDING")?.length || 0))}
+                      {team?.members?.filter(m => m.role === "ADMIN").length || 0}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Created</span>
+                    <span className="font-medium">
+                      {team?.createdAt ? new Date(team.createdAt).toLocaleDateString() : "—"}
                     </span>
                   </div>
                 </div>
