@@ -967,18 +967,16 @@ function UserGrowthChart({ data }: { data: UserGrowthData[] }) {
     <div className="h-48">
       <div className="flex h-full items-end gap-[1px]">
         {filteredData.map((day, i) => {
-          const height = (day.total / maxValue) * 100;
+          const pct = Math.max((day.total / maxValue) * 100, 2);
           const date = new Date(day.date);
           return (
             <div
               key={day.date}
               className="group relative flex-1"
+              style={{ height: `${pct}%` }}
               title={`${day.date}: ${day.total} total users`}
             >
-              <div
-                className="w-full rounded-t-sm bg-purple-500 transition-all group-hover:bg-purple-400"
-                style={{ height: `${Math.max(height, 2)}%` }}
-              />
+              <div className="h-full w-full rounded-t-sm bg-purple-500 transition-colors group-hover:bg-purple-400" />
               {(i === 0 ||
                 i === Math.floor(filteredData.length / 2) ||
                 i === filteredData.length - 1) && (
@@ -1028,18 +1026,16 @@ function DownloadsChart({ data }: { data: DownloadGrowthData[] }) {
     <div className="h-48">
       <div className="flex h-full items-end gap-[1px]">
         {filteredData.map((day, i) => {
-          const height = (day.total / maxValue) * 100;
+          const pct = Math.max((day.total / maxValue) * 100, 2);
           const date = new Date(day.date);
           return (
             <div
               key={day.date}
               className="group relative flex-1"
+              style={{ height: `${pct}%` }}
               title={`${day.date}: ${day.total} cumulative downloads`}
             >
-              <div
-                className="w-full rounded-t-sm bg-blue-500 transition-all group-hover:bg-blue-400"
-                style={{ height: `${Math.max(height, 2)}%` }}
-              />
+              <div className="h-full w-full rounded-t-sm bg-blue-500 transition-colors group-hover:bg-blue-400" />
               {(i === 0 ||
                 i === Math.floor(filteredData.length / 2) ||
                 i === filteredData.length - 1) && (
