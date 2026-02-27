@@ -37,63 +37,56 @@ export async function GET(req: NextRequest) {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const excludeTestUsers = {
-      NOT: {
-        OR: [
-          { email: { startsWith: "dev-test-" } },
-          { email: "dev@lynxprompt.com" },
-        ],
-      },
-    };
-
-    const excludeTestUserRelation = {
-      user: {
-        NOT: {
-          OR: [
-            { email: { startsWith: "dev-test-" } },
-            { email: "dev@lynxprompt.com" },
-          ],
-        },
-      },
-    };
-
     // ===== USER STATS =====
 
-    const totalUsers = await prismaUsers.user.count({
-      where: excludeTestUsers,
-    });
+    const totalUsers = await prismaUsers.user.count();
 
     const activeUsers7d = await prismaUsers.user.count({
-      where: { ...excludeTestUsers, lastLoginAt: { gte: sevenDaysAgo } },
+      where: { lastLoginAt: { gte: sevenDaysAgo } },
     });
 
     const activeUsers30d = await prismaUsers.user.count({
-      where: { ...excludeTestUsers, lastLoginAt: { gte: thirtyDaysAgo } },
+      where: { lastLoginAt: { gte: thirtyDaysAgo } },
     });
+
+    // Fallback: if lastLoginAt is not tracked, count users with recent sessions
+    let effectiveActive30d = activeUsers30d;
+    if (activeUsers30d === 0 && totalUsers > 0) {
+      try {
+        const recentSessionUsers = await prismaUsers.session.groupBy({
+          by: ["userId"],
+          where: { expires: { gte: thirtyDaysAgo } },
+        });
+        effectiveActive30d = recentSessionUsers.length;
+      } catch {
+        // Session query may fail
+      }
+    }
 
     const onboardedUsers = await prismaUsers.user.count({
-      where: { ...excludeTestUsers, profileCompleted: true },
+      where: { profileCompleted: true },
     });
 
-    const allUsers = await prismaUsers.user.findMany({
-      where: {
-        createdAt: { gte: startDate },
-        ...excludeTestUsers,
-      },
-      select: { id: true, createdAt: true },
+    // User growth: query ALL users to build cumulative chart across the period
+    const allUsersForChart = await prismaUsers.user.findMany({
+      select: { createdAt: true },
       orderBy: { createdAt: "asc" },
     });
 
+    // Count users created before the period starts (baseline)
+    let baseline = 0;
     const userTimeSeries: Record<string, number> = {};
     for (let i = daysBack; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
       userTimeSeries[date.toISOString().split("T")[0]] = 0;
     }
-    allUsers.forEach((user) => {
+    allUsersForChart.forEach((user) => {
       const dateStr = user.createdAt.toISOString().split("T")[0];
       if (userTimeSeries[dateStr] !== undefined) {
         userTimeSeries[dateStr]++;
+      } else if (user.createdAt < startDate) {
+        baseline++;
       }
     });
 
@@ -101,34 +94,33 @@ export async function GET(req: NextRequest) {
       ([date, count]) => ({ date, count })
     );
 
-    const newUsersThisPeriod = allUsers.length;
+    const newUsersThisPeriod = Object.values(userTimeSeries).reduce(
+      (a, b) => a + b,
+      0
+    );
 
     const usersByRole = await prismaUsers.user.groupBy({
       by: ["role"],
-      where: excludeTestUsers,
       _count: { id: true },
     });
 
     // Auth provider breakdown
     const authProviders = await prismaUsers.account.groupBy({
       by: ["provider"],
-      where: excludeTestUserRelation,
       _count: { id: true },
     });
 
     // Passkey adoption
     let passkeysUsers = 0;
     try {
-      passkeysUsers = await prismaUsers.authenticator.groupBy({
-        by: ["userId"],
-        where: excludeTestUserRelation,
-      }).then((r) => r.length);
+      passkeysUsers = await prismaUsers.authenticator
+        .groupBy({ by: ["userId"] })
+        .then((r) => r.length);
     } catch {
       // Authenticator model may not be populated
     }
 
     const usersList = await prismaUsers.user.findMany({
-      where: excludeTestUsers,
       orderBy: { createdAt: "desc" },
       take: 100,
       select: {
@@ -146,35 +138,29 @@ export async function GET(req: NextRequest) {
 
     // ===== BLUEPRINT STATS =====
 
-    const totalBlueprints = await prismaUsers.userTemplate.count({
-      where: excludeTestUserRelation,
-    });
+    const totalBlueprints = await prismaUsers.userTemplate.count();
 
     const blueprintsByVisibility = await prismaUsers.userTemplate.groupBy({
       by: ["visibility"],
-      where: excludeTestUserRelation,
+      _count: { id: true },
+    });
+
+    const blueprintsByType = await prismaUsers.userTemplate.groupBy({
+      by: ["type"],
       _count: { id: true },
     });
 
     const blueprintsCreatedThisPeriod = await prismaUsers.userTemplate.count({
-      where: {
-        createdAt: { gte: startDate },
-        ...excludeTestUserRelation,
-      },
+      where: { createdAt: { gte: startDate } },
     });
 
-    const totalFavorites = await prismaUsers.templateFavorite.count({
-      where: excludeTestUserRelation,
-    });
+    const totalFavorites = await prismaUsers.templateFavorite.count();
 
-    const totalHierarchies = await prismaUsers.hierarchy.count({
-      where: excludeTestUserRelation,
-    });
+    const totalHierarchies = await prismaUsers.hierarchy.count();
 
     const systemTemplates = await prismaApp.systemTemplate.count();
 
     const topBlueprints = await prismaUsers.userTemplate.findMany({
-      where: excludeTestUserRelation,
       take: 10,
       orderBy: { downloads: "desc" },
       select: {
@@ -186,24 +172,12 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    // Downloads over time
+    // Total downloads all-time (for KPI card)
+    const totalDownloadsAllTime = await prismaUsers.templateDownload.count();
+
+    // Downloads over time (within period)
     const downloads = await prismaUsers.templateDownload.findMany({
-      where: {
-        createdAt: { gte: startDate },
-        OR: [
-          { userId: null },
-          {
-            user: {
-              NOT: {
-                OR: [
-                  { email: { startsWith: "dev-test-" } },
-                  { email: "dev@lynxprompt.com" },
-                ],
-              },
-            },
-          },
-        ],
-      },
+      where: { createdAt: { gte: startDate } },
       select: { createdAt: true, platform: true, templateType: true },
     });
 
@@ -242,11 +216,9 @@ export async function GET(req: NextRequest) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const prismaAny = prismaUsers as any;
       if (prismaAny.wizardDraft) {
-        wizardDrafts = await prismaAny.wizardDraft.count({
-          where: excludeTestUserRelation,
-        });
+        wizardDrafts = await prismaAny.wizardDraft.count();
         recentDrafts = await prismaAny.wizardDraft.count({
-          where: { updatedAt: { gte: startDate }, ...excludeTestUserRelation },
+          where: { updatedAt: { gte: startDate } },
         });
       }
     } catch {
@@ -254,18 +226,14 @@ export async function GET(req: NextRequest) {
     }
 
     const activeApiTokens = await prismaUsers.apiToken.count({
-      where: {
-        revokedAt: null,
-        expiresAt: { gt: now },
-        ...excludeTestUserRelation,
-      },
+      where: { revokedAt: null, expiresAt: { gt: now } },
     });
+
+    const totalApiTokens = await prismaUsers.apiToken.count();
 
     let totalProjects = 0;
     try {
-      totalProjects = await prismaUsers.project.count({
-        where: excludeTestUserRelation,
-      });
+      totalProjects = await prismaUsers.project.count();
     } catch {
       // Project model may not exist
     }
@@ -273,14 +241,11 @@ export async function GET(req: NextRequest) {
     let totalCliSessions = 0;
     let activeCliSessions = 0;
     try {
-      totalCliSessions = await prismaUsers.cliSession.count({
-        where: excludeTestUserRelation,
-      });
+      totalCliSessions = await prismaUsers.cliSession.count();
       activeCliSessions = await prismaUsers.cliSession.count({
         where: {
           status: "AUTHENTICATED" as never,
           expiresAt: { gt: now },
-          ...excludeTestUserRelation,
         },
       });
     } catch {
@@ -348,12 +313,13 @@ export async function GET(req: NextRequest) {
       users: {
         total: totalUsers,
         active7d: activeUsers7d,
-        active30d: activeUsers30d,
+        active30d: effectiveActive30d,
         onboarded: onboardedUsers,
         byRole: Object.fromEntries(
           usersByRole.map((r) => [r.role, r._count.id])
         ),
         newThisPeriod: newUsersThisPeriod,
+        growthBaseline: baseline,
         growthData: userGrowthData,
         authProviders: Object.fromEntries(
           authProviders.map((p) => [p.provider, p._count.id])
@@ -375,11 +341,15 @@ export async function GET(req: NextRequest) {
         byVisibility: Object.fromEntries(
           blueprintsByVisibility.map((v) => [v.visibility, v._count.id])
         ),
+        byType: Object.fromEntries(
+          blueprintsByType.map((t) => [t.type, t._count.id])
+        ),
         createdThisPeriod: blueprintsCreatedThisPeriod,
         totalFavorites,
         totalHierarchies,
         systemTemplates,
-        avgPerUser: totalUsers > 0 ? +(totalBlueprints / totalUsers).toFixed(1) : 0,
+        avgPerUser:
+          totalUsers > 0 ? +(totalBlueprints / totalUsers).toFixed(1) : 0,
         topDownloaded: topBlueprints.map((b) => ({
           id: b.id,
           name: b.name,
@@ -390,6 +360,7 @@ export async function GET(req: NextRequest) {
         downloadGrowthData,
         platformDistribution: platformData,
         totalDownloadsThisPeriod: downloads.length,
+        totalDownloadsAllTime,
       },
       support: supportStats,
       blog: blogStats,
@@ -397,6 +368,7 @@ export async function GET(req: NextRequest) {
         wizardDrafts,
         recentDrafts,
         activeApiTokens,
+        totalApiTokens,
         totalProjects,
         totalCliSessions,
         activeCliSessions,
