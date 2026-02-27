@@ -122,10 +122,10 @@ export default function AboutPage() {
               configurations spread organically.
             </p>
             <p>
-              The wizard is still here for when you need to bootstrap a new
-              project from scratch. But the real power is in having your entire
-              AI configuration library a sync away—persistent, versioned, and
-              always ready.
+              The wizard generates tailored configurations for any
+              project—whether you&apos;re bootstrapping a new repo or leveling up an
+              existing one. And once your blueprints are ready, sync them
+              anywhere—persistent, versioned, and always ready.
             </p>
           </div>
         </div>
