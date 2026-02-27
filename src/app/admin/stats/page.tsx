@@ -28,6 +28,7 @@ import {
   Heart,
   Layers,
   Star,
+  Code,
 } from "lucide-react";
 
 interface UserGrowthData {
@@ -83,6 +84,7 @@ interface StatsData {
     onboarded: number;
     byRole: Record<string, number>;
     newThisPeriod: number;
+    growthBaseline: number;
     growthData: UserGrowthData[];
     authProviders: Record<string, number>;
     passkeysUsers: number;
@@ -91,6 +93,7 @@ interface StatsData {
   blueprints: {
     total: number;
     byVisibility: Record<string, number>;
+    byType: Record<string, number>;
     createdThisPeriod: number;
     totalFavorites: number;
     totalHierarchies: number;
@@ -100,6 +103,7 @@ interface StatsData {
     downloadGrowthData: DownloadGrowthData[];
     platformDistribution: PlatformData[];
     totalDownloadsThisPeriod: number;
+    totalDownloadsAllTime: number;
   };
   support: {
     totalPosts: number;
@@ -116,6 +120,7 @@ interface StatsData {
     wizardDrafts: number;
     recentDrafts: number;
     activeApiTokens: number;
+    totalApiTokens: number;
     totalProjects: number;
     totalCliSessions: number;
     activeCliSessions: number;
@@ -128,6 +133,18 @@ const TIME_RANGES = [
   { label: "90d", value: 90 },
   { label: "1y", value: 365 },
 ];
+
+const TYPE_LABELS: Record<string, string> = {
+  AGENTS_MD: "AGENTS.md",
+  CURSOR_RULES: "Cursor Rules",
+  CLAUDE_MD: "CLAUDE.md",
+  COPILOT_INSTRUCTIONS: "Copilot",
+  WINDSURF_RULES: "Windsurf",
+  CLINERULES: "Cline",
+  CODEX_MD: "CODEX.md",
+  AMP_INSTRUCTIONS: "Amp",
+  CUSTOM: "Custom",
+};
 
 export default function AdminStatsPage() {
   const { data: session, status } = useSession();
@@ -270,7 +287,11 @@ export default function AdminStatsPage() {
           <KPICard
             title="Active Users"
             value={data.users.active30d.toLocaleString()}
-            subtitle={`${retentionRate}% retention (30d) · ${data.users.active7d} last 7d`}
+            subtitle={
+              data.users.active30d > 0
+                ? `${retentionRate}% retention (30d) · ${data.users.active7d} last 7d`
+                : `${data.users.active7d} last 7d`
+            }
             icon={Activity}
             color="green"
           />
@@ -283,8 +304,8 @@ export default function AdminStatsPage() {
           />
           <KPICard
             title="Downloads"
-            value={data.blueprints.totalDownloadsThisPeriod.toLocaleString()}
-            subtitle={`Last ${timeRange} days`}
+            value={data.blueprints.totalDownloadsAllTime.toLocaleString()}
+            subtitle={`${data.blueprints.totalDownloadsThisPeriod} in last ${timeRange}d`}
             icon={Download}
             color="orange"
           />
@@ -346,7 +367,7 @@ export default function AdminStatsPage() {
                       <td className="py-2 pr-4 text-muted-foreground">
                         {user.lastLoginAt
                           ? new Date(user.lastLoginAt).toLocaleDateString()
-                          : "Never"}
+                          : "—"}
                       </td>
                       <td className="py-2 text-muted-foreground">
                         {new Date(user.createdAt).toLocaleDateString()}
@@ -365,18 +386,26 @@ export default function AdminStatsPage() {
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h3 className="font-semibold">User Growth</h3>
-                <p className="text-sm text-muted-foreground">New signups over time</p>
+                <p className="text-sm text-muted-foreground">
+                  Cumulative users over time
+                </p>
               </div>
               <TrendingUp className="h-5 w-5 text-muted-foreground" />
             </div>
-            <UserGrowthChart data={data.users.growthData} />
+            <UserGrowthChart
+              data={data.users.growthData}
+              baseline={data.users.growthBaseline}
+            />
           </div>
 
           <div className="rounded-xl border bg-card p-6">
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h3 className="font-semibold">Downloads Over Time</h3>
-                <p className="text-sm text-muted-foreground">Blueprint downloads</p>
+                <p className="text-sm text-muted-foreground">
+                  Blueprint downloads ({data.blueprints.totalDownloadsThisPeriod}{" "}
+                  this period)
+                </p>
               </div>
               <Download className="h-5 w-5 text-muted-foreground" />
             </div>
@@ -412,7 +441,9 @@ export default function AdminStatsPage() {
                   Auth Providers
                 </p>
                 {Object.keys(data.users.authProviders).length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No OAuth accounts linked</p>
+                  <p className="text-sm text-muted-foreground">
+                    No OAuth accounts linked
+                  </p>
                 ) : (
                   <div className="space-y-2">
                     {Object.entries(data.users.authProviders)
@@ -462,12 +493,18 @@ export default function AdminStatsPage() {
               </div>
               <div className="border-t pt-4">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">System Templates</span>
-                  <span className="font-medium">{data.blueprints.systemTemplates}</span>
+                  <span className="text-muted-foreground">
+                    System Templates
+                  </span>
+                  <span className="font-medium">
+                    {data.blueprints.systemTemplates}
+                  </span>
                 </div>
                 <div className="mt-2 flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Avg per user</span>
-                  <span className="font-medium">{data.blueprints.avgPerUser}</span>
+                  <span className="font-medium">
+                    {data.blueprints.avgPerUser}
+                  </span>
                 </div>
                 <div className="mt-2 flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Favorites</span>
@@ -496,52 +533,67 @@ export default function AdminStatsPage() {
           </div>
         </div>
 
-        {/* Top Blueprints + Engagement/Roles/Support */}
+        {/* Top Blueprints + Blueprint Types | Engagement/Roles/Support */}
         <div className="grid gap-6 lg:grid-cols-2">
-          {/* Top Blueprints */}
-          <div className="rounded-xl border bg-card p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-semibold">Top Blueprints</h3>
-              <Crown className="h-5 w-5 text-amber-500" />
-            </div>
-            {data.blueprints.topDownloaded.length === 0 ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                No blueprints yet
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {data.blueprints.topDownloaded.slice(0, 5).map((bp, i) => (
-                  <div
-                    key={bp.id}
-                    className="flex items-center gap-3 rounded-lg bg-muted/50 p-3"
-                  >
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                      {i + 1}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{bp.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        by {bp.author}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3 text-right">
-                      <div>
-                        <p className="text-sm font-medium">
-                          {bp.downloads.toLocaleString()}
-                        </p>
-                        <p className="text-xs text-muted-foreground">downloads</p>
-                      </div>
-                      {bp.favorites > 0 && (
-                        <div className="flex items-center gap-0.5 text-xs text-red-400">
-                          <Star className="h-3 w-3" />
-                          {bp.favorites}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
+          <div className="space-y-6">
+            {/* Top Blueprints */}
+            <div className="rounded-xl border bg-card p-6">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="font-semibold">Top Blueprints</h3>
+                <Crown className="h-5 w-5 text-amber-500" />
               </div>
-            )}
+              {data.blueprints.topDownloaded.length === 0 ? (
+                <p className="py-8 text-center text-sm text-muted-foreground">
+                  No blueprints yet
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {data.blueprints.topDownloaded.slice(0, 5).map((bp, i) => (
+                    <div
+                      key={bp.id}
+                      className="flex items-center gap-3 rounded-lg bg-muted/50 p-3"
+                    >
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                        {i + 1}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">
+                          {bp.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          by {bp.author}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3 text-right">
+                        <div>
+                          <p className="text-sm font-medium">
+                            {bp.downloads.toLocaleString()}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            downloads
+                          </p>
+                        </div>
+                        {bp.favorites > 0 && (
+                          <div className="flex items-center gap-0.5 text-xs text-red-400">
+                            <Star className="h-3 w-3" />
+                            {bp.favorites}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Blueprint Types */}
+            <div className="rounded-xl border bg-card p-6">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="font-semibold">Blueprint Types</h3>
+                <Code className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <TypeDistribution data={data.blueprints.byType} />
+            </div>
           </div>
 
           {/* Right column: Engagement + Roles + Support/Blog */}
@@ -563,7 +615,7 @@ export default function AdminStatsPage() {
                   icon={<Key className="h-4 w-4 text-amber-500" />}
                   value={data.engagement.activeApiTokens}
                   label="API Tokens"
-                  sub="active"
+                  sub={`${data.engagement.totalApiTokens} total`}
                 />
                 <EngagementStat
                   icon={<Terminal className="h-4 w-4 text-green-500" />}
@@ -648,8 +700,12 @@ export default function AdminStatsPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4 text-center">
                   <div>
-                    <p className="text-2xl font-bold">{data.blog.totalPosts}</p>
-                    <p className="text-xs text-muted-foreground">Total Posts</p>
+                    <p className="text-2xl font-bold">
+                      {data.blog.totalPosts}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Total Posts
+                    </p>
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-green-500">
@@ -741,7 +797,9 @@ function StatRow({
       <div className="flex items-center gap-2">
         <span className="font-medium">{value}</span>
         {detail && (
-          <span className={`text-xs ${detailColor || "text-muted-foreground"}`}>
+          <span
+            className={`text-xs ${detailColor || "text-muted-foreground"}`}
+          >
             {detail}
           </span>
         )}
@@ -830,10 +888,69 @@ function EngagementStat({
   );
 }
 
-function UserGrowthChart({ data }: { data: UserGrowthData[] }) {
+function TypeDistribution({ data }: { data: Record<string, number> }) {
+  const entries = Object.entries(data).sort(([, a], [, b]) => b - a);
+  const total = entries.reduce((sum, [, count]) => sum + count, 0);
+
+  if (entries.length === 0) {
+    return (
+      <div className="flex h-24 items-center justify-center text-sm text-muted-foreground">
+        No blueprint data
+      </div>
+    );
+  }
+
+  const colors = [
+    "#8b5cf6",
+    "#3b82f6",
+    "#06b6d4",
+    "#22c55e",
+    "#f97316",
+    "#ec4899",
+    "#eab308",
+    "#64748b",
+  ];
+
+  return (
+    <div className="space-y-2.5">
+      {entries.map(([type, count], i) => {
+        const pct = total > 0 ? (count / total) * 100 : 0;
+        return (
+          <div key={type}>
+            <div className="mb-1 flex justify-between text-xs">
+              <span className="text-muted-foreground">
+                {TYPE_LABELS[type] || type}
+              </span>
+              <span className="font-medium">
+                {count} ({pct.toFixed(0)}%)
+              </span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full transition-all"
+                style={{
+                  width: `${Math.max(pct, 2)}%`,
+                  backgroundColor: colors[i % colors.length],
+                }}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function UserGrowthChart({
+  data,
+  baseline,
+}: {
+  data: UserGrowthData[];
+  baseline: number;
+}) {
   const cumulativeData = data.reduce<{ date: string; count: number }[]>(
     (acc, day) => {
-      const prev = acc[acc.length - 1]?.count || 0;
+      const prev = acc[acc.length - 1]?.count || baseline;
       acc.push({ date: day.date, count: prev + day.count });
       return acc;
     },
@@ -848,7 +965,7 @@ function UserGrowthChart({ data }: { data: UserGrowthData[] }) {
   if (!hasData) {
     return (
       <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">
-        No user signups in this period
+        No user data available
       </div>
     );
   }
@@ -864,7 +981,7 @@ function UserGrowthChart({ data }: { data: UserGrowthData[] }) {
             <div
               key={day.date}
               className="group relative flex-1"
-              title={`${day.date}: ${day.count} cumulative`}
+              title={`${day.date}: ${day.count} total users`}
             >
               <div
                 className="w-full rounded-t-sm bg-purple-500 transition-all group-hover:bg-purple-400"
@@ -965,7 +1082,9 @@ function PlatformChart({ data }: { data: PlatformData[] }) {
         return (
           <div key={platform.platform}>
             <div className="mb-1 flex justify-between text-sm">
-              <span className="text-muted-foreground">{platform.platform}</span>
+              <span className="text-muted-foreground">
+                {platform.platform}
+              </span>
               <span className="font-medium">
                 {percentage}% ({platform.count})
               </span>
