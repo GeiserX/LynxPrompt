@@ -60,8 +60,8 @@ jobs:
             echo "ℹ️ No app changes"
           fi
           
-          # Check for CLI changes
-          if git diff --name-only $CLI_BASE HEAD 2>/dev/null | grep -q "^cli/"; then
+          # Check for CLI changes (cli/ and packages/shared/ both affect the CLI)
+          if git diff --name-only $CLI_BASE HEAD 2>/dev/null | grep -qE "^(cli/|packages/shared/)"; then
             echo "cli=true" >> $GITHUB_OUTPUT
             echo "✅ CLI changes detected"
           else
