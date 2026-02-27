@@ -754,13 +754,13 @@ function generateFileContent(options: GenerateOptions, platform: string): string
       sections.push(`# Using curl with environment variable (token stored in $${tokenEnvVar}):`);
       sections.push("");
       sections.push("# Push local changes to cloud:");
-      sections.push(`curl -X PUT "https://lynxprompt.com/api/v1/blueprints/${bpId}" \\`);
+      sections.push(`curl -X PUT "https://api.lynxprompt.com/api/v1/blueprints/${bpId}" \\`);
       sections.push(`  -H "Authorization: Bearer $${tokenEnvVar}" \\`);
       sections.push('  -H "Content-Type: application/json" \\');
       sections.push(`  -d "{\\"content\\": \\"$(cat ${fileName} | jq -Rs .)\\"}"`);
       sections.push("");
       sections.push("# Pull cloud changes to local:");
-      sections.push(`curl -s "https://lynxprompt.com/api/v1/blueprints/${bpId}" \\`);
+      sections.push(`curl -s "https://api.lynxprompt.com/api/v1/blueprints/${bpId}" \\`);
       sections.push(`  -H "Authorization: Bearer $${tokenEnvVar}" | jq -r '.content' > ${fileName}`);
       sections.push("");
       sections.push(`# Set your token: export ${tokenEnvVar}="your_token_here"`);

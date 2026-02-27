@@ -561,6 +561,68 @@ lynxp login`}</code>
         </p>
       </section>
 
+      {/* Reverse Proxy & WAF */}
+      <section className="space-y-4" id="reverse-proxy">
+        <div className="flex items-center gap-3">
+          <Shield className="h-6 w-6 text-orange-500" />
+          <h2 className="text-2xl font-bold">Reverse Proxy & WAF</h2>
+        </div>
+        <p className="text-muted-foreground">
+          LynxPrompt works behind any reverse proxy (Nginx, Caddy, Traefik).
+          However, if you use <strong>Cloudflare</strong> as a reverse proxy,
+          there is an important caveat for the API.
+        </p>
+        <div className="rounded-lg border border-orange-500/30 bg-orange-500/5 p-4 space-y-3">
+          <h3 className="font-semibold text-orange-600 dark:text-orange-400">
+            Cloudflare WAF & Blueprint Content
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Cloudflare&apos;s platform-level security layer inspects request
+            bodies and blocks patterns that resemble OS command injection (e.g.{" "}
+            <code className="rounded bg-muted px-1 py-0.5 text-xs">ssh user@host</code>,{" "}
+            <code className="rounded bg-muted px-1 py-0.5 text-xs">/etc/passwd</code>).
+            Since blueprints often contain infrastructure code, shell commands,
+            and server configurations, these legitimate API calls can trigger
+            HTTP 403 errors.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            This protection is applied at Cloudflare&apos;s edge before
+            configurable WAF rulesets run, and <strong>cannot be disabled</strong>{" "}
+            via WAF exceptions or skip rules on any plan.
+          </p>
+          <p className="text-sm font-medium">Recommended workaround:</p>
+          <p className="text-sm text-muted-foreground">
+            Create a separate DNS record for API traffic that bypasses
+            Cloudflare&apos;s proxy (DNS-only / grey cloud):
+          </p>
+          <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-sm">
+            <code>{`# Cloudflare DNS records:
+#
+# lynxprompt.yourcompany.com  →  A  your-ip  (Proxied, orange cloud)
+# api.lynxprompt.yourcompany.com  →  A  your-ip  (DNS only, grey cloud)
+#
+# Then configure your reverse proxy to serve both domains,
+# pointing to the same LynxPrompt backend.
+#
+# The CLI defaults to https://api.lynxprompt.com for the
+# public instance. For self-hosted, point the CLI:
+lynxp config set-url https://api.lynxprompt.yourcompany.com`}</code>
+          </pre>
+          <p className="text-sm text-muted-foreground">
+            The main domain keeps Cloudflare&apos;s CDN, DDoS protection, and
+            caching for the web UI. The API subdomain routes directly to your
+            origin, where your reverse proxy handles TLS and rate limiting.
+          </p>
+        </div>
+        <div className="rounded-lg border bg-card p-4">
+          <p className="text-sm text-muted-foreground">
+            <strong>Not using Cloudflare?</strong> No action needed. Reverse
+            proxies like Nginx, Caddy, and Traefik do not inspect request
+            bodies by default and work out of the box.
+          </p>
+        </div>
+      </section>
+
       {/* Federation */}
       <section className="space-y-4" id="federation">
         <div className="flex items-center gap-3">
