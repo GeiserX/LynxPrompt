@@ -67,37 +67,40 @@ export async function GET(req: NextRequest) {
       where: { profileCompleted: true },
     });
 
-    // User growth: query ALL users to build cumulative chart across the period
+    // User growth: all-time cumulative chart from first user to now
     const allUsersForChart = await prismaUsers.user.findMany({
       select: { createdAt: true },
       orderBy: { createdAt: "asc" },
     });
 
-    // Count users created before the period starts (baseline)
-    let baseline = 0;
     const userTimeSeries: Record<string, number> = {};
-    for (let i = daysBack; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      userTimeSeries[date.toISOString().split("T")[0]] = 0;
-    }
-    allUsersForChart.forEach((user) => {
-      const dateStr = user.createdAt.toISOString().split("T")[0];
-      if (userTimeSeries[dateStr] !== undefined) {
-        userTimeSeries[dateStr]++;
-      } else if (user.createdAt < startDate) {
-        baseline++;
+    if (allUsersForChart.length > 0) {
+      const earliest = allUsersForChart[0].createdAt;
+      const chartStart = new Date(earliest);
+      chartStart.setHours(0, 0, 0, 0);
+      const diffDays = Math.ceil(
+        (now.getTime() - chartStart.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      for (let i = diffDays; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        userTimeSeries[date.toISOString().split("T")[0]] = 0;
       }
-    });
+      allUsersForChart.forEach((user) => {
+        const dateStr = user.createdAt.toISOString().split("T")[0];
+        if (userTimeSeries[dateStr] !== undefined) {
+          userTimeSeries[dateStr]++;
+        }
+      });
+    }
 
     const userGrowthData = Object.entries(userTimeSeries).map(
       ([date, count]) => ({ date, count })
     );
 
-    const newUsersThisPeriod = Object.values(userTimeSeries).reduce(
-      (a, b) => a + b,
-      0
-    );
+    const newUsersThisPeriod = allUsersForChart.filter(
+      (u) => u.createdAt >= startDate
+    ).length;
 
     const usersByRole = await prismaUsers.user.groupBy({
       by: ["role"],
@@ -175,31 +178,43 @@ export async function GET(req: NextRequest) {
     // Total downloads all-time (for KPI card)
     const totalDownloadsAllTime = await prismaUsers.templateDownload.count();
 
-    // Downloads over time (within period)
-    const downloads = await prismaUsers.templateDownload.findMany({
-      where: { createdAt: { gte: startDate } },
+    // Downloads: all-time for chart, period-filtered for KPI
+    const allDownloads = await prismaUsers.templateDownload.findMany({
       select: { createdAt: true, platform: true, templateType: true },
+      orderBy: { createdAt: "asc" },
     });
 
+    const downloadsInPeriod = allDownloads.filter(
+      (d) => d.createdAt >= startDate
+    );
+
     const downloadsTimeSeries: Record<string, number> = {};
-    for (let i = daysBack; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      downloadsTimeSeries[date.toISOString().split("T")[0]] = 0;
-    }
-    downloads.forEach((d) => {
-      const dateStr = d.createdAt.toISOString().split("T")[0];
-      if (downloadsTimeSeries[dateStr] !== undefined) {
-        downloadsTimeSeries[dateStr]++;
+    if (allDownloads.length > 0) {
+      const earliest = allDownloads[0].createdAt;
+      const chartStart = new Date(earliest);
+      chartStart.setHours(0, 0, 0, 0);
+      const diffDays = Math.ceil(
+        (now.getTime() - chartStart.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      for (let i = diffDays; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        downloadsTimeSeries[date.toISOString().split("T")[0]] = 0;
       }
-    });
+      allDownloads.forEach((d) => {
+        const dateStr = d.createdAt.toISOString().split("T")[0];
+        if (downloadsTimeSeries[dateStr] !== undefined) {
+          downloadsTimeSeries[dateStr]++;
+        }
+      });
+    }
 
     const downloadGrowthData = Object.entries(downloadsTimeSeries).map(
       ([date, count]) => ({ date, downloads: count })
     );
 
     const platformCounts: Record<string, number> = {};
-    downloads.forEach((d) => {
+    allDownloads.forEach((d) => {
       if (d.platform) {
         platformCounts[d.platform] = (platformCounts[d.platform] || 0) + 1;
       }
@@ -262,7 +277,7 @@ export async function GET(req: NextRequest) {
           where: { status: { in: ["OPEN", "IN_PROGRESS"] as never } },
         });
         const resolvedPosts = await prismaSupport.supportPost.count({
-          where: { status: "COMPLETED" as never },
+          where: { status: "COMPLETED" as never } },
         });
         const postsThisPeriod = await prismaSupport.supportPost.count({
           where: { createdAt: { gte: startDate } },
@@ -290,7 +305,7 @@ export async function GET(req: NextRequest) {
       try {
         const totalPosts = await prismaBlog.blogPost.count();
         const publishedPosts = await prismaBlog.blogPost.count({
-          where: { status: "PUBLISHED" as never },
+          where: { status: "PUBLISHED" as never } },
         });
         blogStats = { totalPosts, publishedPosts };
       } catch {
@@ -319,7 +334,6 @@ export async function GET(req: NextRequest) {
           usersByRole.map((r) => [r.role, r._count.id])
         ),
         newThisPeriod: newUsersThisPeriod,
-        growthBaseline: baseline,
         growthData: userGrowthData,
         authProviders: Object.fromEntries(
           authProviders.map((p) => [p.provider, p._count.id])
@@ -359,7 +373,7 @@ export async function GET(req: NextRequest) {
         })),
         downloadGrowthData,
         platformDistribution: platformData,
-        totalDownloadsThisPeriod: downloads.length,
+        totalDownloadsThisPeriod: downloadsInPeriod.length,
         totalDownloadsAllTime,
       },
       support: supportStats,

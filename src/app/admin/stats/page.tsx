@@ -84,7 +84,6 @@ interface StatsData {
     onboarded: number;
     byRole: Record<string, number>;
     newThisPeriod: number;
-    growthBaseline: number;
     growthData: UserGrowthData[];
     authProviders: Record<string, number>;
     passkeysUsers: number;
@@ -392,10 +391,7 @@ export default function AdminStatsPage() {
               </div>
               <TrendingUp className="h-5 w-5 text-muted-foreground" />
             </div>
-            <UserGrowthChart
-              data={data.users.growthData}
-              baseline={data.users.growthBaseline}
-            />
+            <UserGrowthChart data={data.users.growthData} />
           </div>
 
           <div className="rounded-xl border bg-card p-6">
@@ -403,8 +399,8 @@ export default function AdminStatsPage() {
               <div>
                 <h3 className="font-semibold">Downloads Over Time</h3>
                 <p className="text-sm text-muted-foreground">
-                  Blueprint downloads ({data.blueprints.totalDownloadsThisPeriod}{" "}
-                  this period)
+                  Cumulative all-time ({data.blueprints.totalDownloadsAllTime}{" "}
+                  total)
                 </p>
               </div>
               <Download className="h-5 w-5 text-muted-foreground" />
@@ -941,28 +937,18 @@ function TypeDistribution({ data }: { data: Record<string, number> }) {
   );
 }
 
-function UserGrowthChart({
-  data,
-  baseline,
-}: {
-  data: UserGrowthData[];
-  baseline: number;
-}) {
-  const cumulativeData = data.reduce<{ date: string; count: number }[]>(
+function UserGrowthChart({ data }: { data: UserGrowthData[] }) {
+  // Build cumulative series from daily counts
+  const cumulativeData = data.reduce<{ date: string; total: number }[]>(
     (acc, day) => {
-      const prev = acc[acc.length - 1]?.count || baseline;
-      acc.push({ date: day.date, count: prev + day.count });
+      const prev = acc.length > 0 ? acc[acc.length - 1].total : 0;
+      acc.push({ date: day.date, total: prev + day.count });
       return acc;
     },
     []
   );
 
-  const maxValue = Math.max(...cumulativeData.map((d) => d.count), 1);
-  const step = Math.ceil(data.length / 30);
-  const filteredData = cumulativeData.filter((_, i) => i % step === 0);
-  const hasData = cumulativeData.some((d) => d.count > 0);
-
-  if (!hasData) {
+  if (cumulativeData.length === 0 || cumulativeData[cumulativeData.length - 1].total === 0) {
     return (
       <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">
         No user data available
@@ -970,22 +956,28 @@ function UserGrowthChart({
     );
   }
 
+  const maxValue = Math.max(...cumulativeData.map((d) => d.total));
+  const step = Math.max(1, Math.ceil(cumulativeData.length / 60));
+  const filteredData = cumulativeData.filter((_, i) => i % step === 0);
+  if (filteredData[filteredData.length - 1]?.date !== cumulativeData[cumulativeData.length - 1]?.date) {
+    filteredData.push(cumulativeData[cumulativeData.length - 1]);
+  }
+
   return (
     <div className="h-48">
-      <div className="flex h-full items-end gap-[2px]">
+      <div className="flex h-full items-end gap-[1px]">
         {filteredData.map((day, i) => {
-          const height = (day.count / maxValue) * 100;
-          const minHeight = day.count > 0 ? Math.max(height, 4) : 0;
+          const height = (day.total / maxValue) * 100;
           const date = new Date(day.date);
           return (
             <div
               key={day.date}
               className="group relative flex-1"
-              title={`${day.date}: ${day.count} total users`}
+              title={`${day.date}: ${day.total} total users`}
             >
               <div
                 className="w-full rounded-t-sm bg-purple-500 transition-all group-hover:bg-purple-400"
-                style={{ height: `${minHeight}%` }}
+                style={{ height: `${Math.max(height, 2)}%` }}
               />
               {(i === 0 ||
                 i === Math.floor(filteredData.length / 2) ||
@@ -1007,35 +999,46 @@ function UserGrowthChart({
 }
 
 function DownloadsChart({ data }: { data: DownloadGrowthData[] }) {
-  const maxDownloads = Math.max(...data.map((d) => d.downloads), 1);
-  const step = Math.ceil(data.length / 30);
-  const filteredData = data.filter((_, i) => i % step === 0);
-  const totalDownloads = data.reduce((sum, d) => sum + d.downloads, 0);
+  // Build cumulative series
+  const cumulativeData = data.reduce<{ date: string; total: number }[]>(
+    (acc, day) => {
+      const prev = acc.length > 0 ? acc[acc.length - 1].total : 0;
+      acc.push({ date: day.date, total: prev + day.downloads });
+      return acc;
+    },
+    []
+  );
 
-  if (totalDownloads === 0) {
+  if (cumulativeData.length === 0 || cumulativeData[cumulativeData.length - 1].total === 0) {
     return (
       <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">
-        No downloads in this period
+        No download data yet
       </div>
     );
   }
 
+  const maxValue = Math.max(...cumulativeData.map((d) => d.total));
+  const step = Math.max(1, Math.ceil(cumulativeData.length / 60));
+  const filteredData = cumulativeData.filter((_, i) => i % step === 0);
+  if (filteredData[filteredData.length - 1]?.date !== cumulativeData[cumulativeData.length - 1]?.date) {
+    filteredData.push(cumulativeData[cumulativeData.length - 1]);
+  }
+
   return (
     <div className="h-48">
-      <div className="flex h-full items-end gap-[2px]">
+      <div className="flex h-full items-end gap-[1px]">
         {filteredData.map((day, i) => {
-          const height = (day.downloads / maxDownloads) * 100;
-          const minHeight = day.downloads > 0 ? Math.max(height, 4) : 0;
+          const height = (day.total / maxValue) * 100;
           const date = new Date(day.date);
           return (
             <div
               key={day.date}
               className="group relative flex-1"
-              title={`${day.date}: ${day.downloads} downloads`}
+              title={`${day.date}: ${day.total} cumulative downloads`}
             >
               <div
                 className="w-full rounded-t-sm bg-blue-500 transition-all group-hover:bg-blue-400"
-                style={{ height: `${minHeight}%` }}
+                style={{ height: `${Math.max(height, 2)}%` }}
               />
               {(i === 0 ||
                 i === Math.floor(filteredData.length / 2) ||
