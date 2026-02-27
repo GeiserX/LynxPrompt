@@ -1,6 +1,8 @@
-<a href="https://lynxprompt.com">
-  <img src="https://socialify.git.ci/GeiserX/LynxPrompt/image?custom_description=Self-hostable%20platform%20for%20managing%20AI%20IDE%20configurations%20%E2%80%94%20AGENTS.md%2C%20.cursor%2Frules%2F%2C%20CLAUDE.md%20and%2030%2B%20formats&description=1&font=Inter&forks=1&issues=1&language=1&logo=https%3A%2F%2Fraw.githubusercontent.com%2FGeiserX%2FLynxPrompt%2Fmain%2Fpublic%2Flogos%2Fbrand%2Flynxp.png&name=1&owner=1&pattern=Circuit%20Board&pulls=1&stargazers=1&theme=Auto" alt="LynxPrompt" width="100%" />
-</a>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/GeiserX/LynxPrompt/main/public/logo.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/GeiserX/LynxPrompt/main/public/logo.png">
+  <img alt="LynxPrompt" src="https://raw.githubusercontent.com/GeiserX/LynxPrompt/main/public/logo.png" width="150">
+</picture>
 
 # LynxPrompt
 
