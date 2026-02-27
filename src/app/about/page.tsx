@@ -10,6 +10,7 @@ import {
   Globe,
   ArrowRight,
   Server,
+  Zap,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";

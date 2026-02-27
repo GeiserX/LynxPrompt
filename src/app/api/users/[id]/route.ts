@@ -55,8 +55,6 @@ export async function GET(
             tags: true,
             downloads: true,
             favorites: true,
-            price: true,
-            currency: true,
             createdAt: true,
           },
           orderBy: {
@@ -120,8 +118,6 @@ export async function GET(
         tags: t.tags,
         downloads: t.downloads,
         favorites: t.favorites,
-        price: t.price,
-        currency: t.currency,
         createdAt: t.createdAt,
       })),
       templateCount: user.templates.length,

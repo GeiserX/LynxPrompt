@@ -709,46 +709,19 @@ function BlueprintsContent() {
               </div>
             ) : (
               <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                {blueprints.map((blueprint) => {
-                  const isPaid = blueprint.price && blueprint.price > 0;
-                  const displayPrice = isPaid 
-                      ? `€${(blueprint.price! / 100).toFixed(2)}` 
-                      : null;
-                  // Note: hasDiscount removed since Teams discount only applies after purchase
-                  
-                  return (
+                {blueprints.map((blueprint) => (
                     <div
                       key={blueprint.id}
-                      className={`group flex flex-col rounded-xl border transition-shadow hover:shadow-lg ${
-                        isPaid 
-                          ? "border-purple-200/50 bg-gradient-to-br from-purple-50/30 to-pink-50/20 dark:border-purple-800/30 dark:from-purple-950/10 dark:to-pink-950/5" 
-                          : "bg-card"
-                      }`}
+                      className="group flex flex-col rounded-xl border bg-card transition-shadow hover:shadow-lg"
                     >
                       <div className="flex-1 p-5">
-                        {/* Header: Name + Price */}
                         <div className="flex items-start justify-between gap-3">
-                          {/* Name is clickable only if accessible (free, owned, or purchased) */}
-                          {!isPaid || blueprint.isOwner || blueprint.hasPurchased ? (
-                            <Link 
-                              href={`/blueprints/${blueprint.id}`}
-                              className="font-semibold leading-tight group-hover:text-primary hover:underline"
-                            >
-                              {blueprint.name}
-                            </Link>
-                          ) : (
-                            <h3 className="font-semibold leading-tight">
-                              {blueprint.name}
-                            </h3>
-                          )}
-                          {/* Price badge */}
-                          <div className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${
-                            isPaid 
-                              ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white" 
-                              : "bg-gradient-to-r from-emerald-500 to-teal-500 text-white dark:from-emerald-600 dark:to-teal-600"
-                          }`}>
-                            {isPaid ? displayPrice : "Free"}
-                          </div>
+                          <Link 
+                            href={`/blueprints/${blueprint.id}`}
+                            className="font-semibold leading-tight group-hover:text-primary hover:underline"
+                          >
+                            {blueprint.name}
+                          </Link>
                         </div>
                         
                         {/* Author + Badges row */}
@@ -835,21 +808,17 @@ function BlueprintsContent() {
                           </button>
                         </div>
                         <Button 
-                          variant={isPaid ? "default" : "ghost"} 
+                          variant="ghost" 
                           size="sm" 
                           asChild
-                          className={isPaid ? "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600" : ""}
                         >
                           <Link href={`/blueprints/${blueprint.id}`}>
-                            {isPaid && !blueprint.isOwner && !blueprint.hasPurchased 
-                              ? "Purchase" 
-                              : "View Blueprint"}
+                            View Blueprint
                           </Link>
                         </Button>
                       </div>
                     </div>
-                  );
-                })}
+                ))}
               </div>
             )}
 
