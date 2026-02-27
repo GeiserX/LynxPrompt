@@ -183,7 +183,7 @@ export default function AccountSetupPage() {
           <div className="rounded-lg border bg-card p-4">
             <h3 className="font-medium">Marketplace</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Manage your Stripe payouts for marketplace sales
+              Manage marketplace sales and earnings
             </p>
           </div>
           <div className="rounded-lg border bg-card p-4">

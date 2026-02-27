@@ -105,12 +105,6 @@ REST API for programmatic access.
 - GET /api/v1/blueprints - List public blueprints
 - GET /api/v1/blueprints/{id} - Get specific blueprint
 - Authentication via Bearer token (generate at /settings?tab=api-tokens)
-
-### Seller Payouts
-Earn money from AI expertise.
-- PayPal Integration: Configure PayPal for receiving payouts
-- Earnings Dashboard: Track sales and earnings
-- Payout Requests: Request payouts (monthly, min €5)
 `);
 
   // CLI

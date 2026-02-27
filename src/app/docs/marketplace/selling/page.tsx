@@ -54,7 +54,7 @@ export default function SellingBlueprintsPage() {
               <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500/10">
                 <Check className="h-4 w-4 text-green-500" />
               </div>
-              <span>PayPal account configured for payouts</span>
+              <span>Account in good standing</span>
             </li>
           </ul>
         </div>
