@@ -710,6 +710,7 @@ export default function AdminStatsPage() {
             )}
           </div>
         </div>
+        </div>
       </main>
 
       <Footer />
