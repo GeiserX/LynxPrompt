@@ -5,10 +5,8 @@ import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Logo } from "@/components/logo";
 import { Footer } from "@/components/footer";
-import { UserMenu } from "@/components/user-menu";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { PageHeader } from "@/components/page-header";
 import {
   Users,
   Settings,
@@ -17,7 +15,6 @@ import {
   UserPlus,
   Trash2,
   Loader2,
-  ArrowLeft,
   Building2,
   Copy,
   Check,
@@ -267,15 +264,7 @@ export default function TeamManagementPage() {
   if (error) {
     return (
       <div className="flex min-h-screen flex-col">
-        <header className="border-b">
-          <div className="container mx-auto flex h-16 items-center justify-between px-4">
-            <Logo />
-            <div className="flex items-center gap-4">
-              <ThemeToggle />
-              <UserMenu />
-            </div>
-          </div>
-        </header>
+        <PageHeader currentPage={`teams/${slug}`} breadcrumbLabel="Team" />
         <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8">
           <p className="text-lg text-muted-foreground">{error}</p>
           <Button asChild>
@@ -289,27 +278,10 @@ export default function TeamManagementPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-background to-muted/20">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <Logo />
-          <div className="flex items-center gap-4">
-            <ThemeToggle />
-            <UserMenu />
-          </div>
-        </div>
-      </header>
+      <PageHeader currentPage={`teams/${slug}`} breadcrumbLabel={team?.name || "Team"} />
 
       <main className="flex-1 py-8">
         <div className="container mx-auto max-w-5xl px-4">
-          {/* Back link */}
-          <Link
-            href="/dashboard"
-            className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
-          </Link>
 
           {/* Team Header */}
           <div className="mb-8 flex items-start justify-between">
