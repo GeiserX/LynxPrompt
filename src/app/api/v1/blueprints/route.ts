@@ -105,8 +105,6 @@ export async function GET(request: NextRequest) {
         visibility: true,
         downloads: true,
         favorites: true,
-        price: true,
-        currency: true,
         createdAt: true,
         updatedAt: true,
         // Hierarchy fields
@@ -129,8 +127,6 @@ export async function GET(request: NextRequest) {
       visibility: bp.visibility,
       downloads: bp.downloads,
       favorites: bp.favorites,
-      price: bp.price,
-      currency: bp.currency,
       created_at: bp.createdAt.toISOString(),
       updated_at: bp.updatedAt.toISOString(),
       // Hierarchy fields

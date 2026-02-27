@@ -14,7 +14,6 @@ import {
   ArrowLeft,
   Lock,
   FileText,
-  Euro,
   Github,
   Twitter,
   Linkedin,
@@ -37,8 +36,6 @@ interface Template {
   tags: string[];
   downloads: number;
   favorites: number;
-  price: number | null;
-  currency: string;
   createdAt: string;
 }
 
@@ -426,20 +423,10 @@ export default function UserProfilePage() {
                     href={`/blueprints/${template.id}`}
                     className="group rounded-lg border bg-card p-4 transition-all hover:border-primary/50 hover:shadow-md"
                   >
-                    <div className="flex items-start justify-between">
+                    <div>
                       <h3 className="font-semibold group-hover:text-primary">
                         {template.name}
                       </h3>
-                      {template.price && template.price > 0 ? (
-                        <span className="flex items-center gap-1 rounded-full bg-pink-500/10 px-2 py-0.5 text-xs font-medium text-pink-700 dark:text-pink-300">
-                          <Euro className="h-3 w-3" />
-                          {(template.price / 100).toFixed(2)}
-                        </span>
-                      ) : (
-                        <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-700 dark:text-green-300">
-                          Free
-                        </span>
-                      )}
                     </div>
                     
                     {template.description && (

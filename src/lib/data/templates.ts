@@ -32,9 +32,6 @@ export interface TemplateData {
   sensitiveFields?: Record<string, SensitiveField>;
   category?: string;
   difficulty?: string;
-  // Pricing
-  price?: number | null; // Price in cents, null/0 = free
-  currency?: string;
   // Visibility
   isPublic?: boolean;
   // Blueprint type (for command detection)
@@ -632,32 +629,6 @@ export async function getTemplateById(
         if (template.visibility === "TEAM" && template.teamId && userTeamId === template.teamId) {
           hasAccess = true;
         }
-        // Check for team purchase (blueprint purchased for the team)
-        else if (userTeamId) {
-          const teamPurchase = await prismaUsers.blueprintPurchase.findFirst({
-            where: {
-              teamId: userTeamId,
-              templateId: realId,
-            },
-          });
-          if (teamPurchase) {
-            hasAccess = true;
-          }
-        }
-        // Check individual purchase
-        if (!hasAccess && template.price && template.price > 0) {
-          const purchase = await prismaUsers.blueprintPurchase.findUnique({
-            where: {
-              userId_templateId: {
-                userId: userId,
-                templateId: realId,
-              },
-            },
-          });
-          if (purchase) {
-            hasAccess = true;
-          }
-        }
       }
     }
 
@@ -695,8 +666,6 @@ export async function getTemplateById(
         >) || {},
       category: template.category || undefined,
       difficulty: template.difficulty || undefined,
-      price: template.price,
-      currency: template.currency || "EUR",
       isPublic: template.isPublic,
       type: template.type,
     };
