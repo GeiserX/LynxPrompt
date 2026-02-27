@@ -245,7 +245,7 @@ ${chalk.cyan("CI/CD:")}
 ${chalk.cyan("Configuration:")}
   ${chalk.white("$ lynxp config")}                 ${chalk.gray("Show current settings")}
   ${chalk.white("$ lynxp config set-url <url>")}   ${chalk.gray("Point CLI to a self-hosted instance")}
-  ${chalk.white("$ lynxp config reset-url")}       ${chalk.gray("Reset to https://lynxprompt.com")}
+  ${chalk.white("$ lynxp config reset-url")}       ${chalk.gray("Reset to https://api.lynxprompt.com")}
   ${chalk.white("$ lynxp config path")}            ${chalk.gray("Show config file location")}
 
 ${chalk.gray("Docs: https://lynxprompt.com/docs/cli")}

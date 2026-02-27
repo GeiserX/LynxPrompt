@@ -19,7 +19,7 @@ const config = new Conf<ConfigSchema>({
     },
     apiUrl: {
       type: "string",
-      default: "https://lynxprompt.com",
+      default: "https://api.lynxprompt.com",
     },
     user: {
       type: "object",
@@ -32,7 +32,7 @@ const config = new Conf<ConfigSchema>({
     },
   },
   defaults: {
-    apiUrl: "https://lynxprompt.com",
+    apiUrl: "https://api.lynxprompt.com",
   },
 });
 
