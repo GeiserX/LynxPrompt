@@ -253,17 +253,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Determine tier based on content lines
-    const effectiveLines = content.split("\n").filter((line: string) => {
-      const trimmed = line.trim();
-      if (!trimmed) return false;
-      if (trimmed.startsWith("#") || trimmed.startsWith("//")) return false;
-      return true;
-    }).length;
+    // Determine tier based on word count
+    const wordCount = content.split(/\s+/).filter(Boolean).length;
 
-    let tier: "SIMPLE" | "INTERMEDIATE" | "ADVANCED" = "SIMPLE";
-    if (effectiveLines > 100) tier = "ADVANCED";
-    else if (effectiveLines > 30) tier = "INTERMEDIATE";
+    let tier: "SHORT" | "INTERMEDIATE" | "LONG" | "SUPERLONG" = "SHORT";
+    if (wordCount > 2500) tier = "SUPERLONG";
+    else if (wordCount > 800) tier = "LONG";
+    else if (wordCount > 200) tier = "INTERMEDIATE";
 
     // Validate hierarchy_id if provided - must be owned by the same user
     let validatedHierarchyId: string | null = null;

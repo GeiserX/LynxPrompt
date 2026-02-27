@@ -25,7 +25,7 @@ export interface TemplateData {
   isOfficial: boolean;
   createdAt?: Date;
   // New fields for v0.3.0
-  tier?: "SIMPLE" | "INTERMEDIATE" | "ADVANCED";
+  tier?: "SHORT" | "INTERMEDIATE" | "LONG" | "SUPERLONG";
   targetPlatform?: string;
   compatibleWith?: string[];
   variables?: Record<string, string>;
@@ -80,7 +80,7 @@ const MOCK_TEMPLATES: TemplateData[] = [
     tags: ["typescript", "nextjs", "fullstack", "react", "prisma"],
     platforms: ["cursor", "claude", "copilot", "windsurf"],
     isOfficial: true,
-    tier: "ADVANCED",
+    tier: "LONG",
     targetPlatform: "cursor",
     compatibleWith: ["claude_code", "windsurf", "github_copilot"],
     variables: { APP_NAME: "", AUTHOR_NAME: "" },
@@ -161,7 +161,7 @@ You are an expert in Go, microservices architecture, Docker, and Kubernetes.
     tags: ["go", "microservices", "devops", "docker", "kubernetes"],
     platforms: ["cursor", "copilot", "windsurf"],
     isOfficial: false,
-    tier: "ADVANCED",
+    tier: "LONG",
     targetPlatform: "cursor",
     compatibleWith: ["claude_code", "github_copilot"],
     variables: { APP_NAME: "" },
@@ -195,7 +195,7 @@ You are an expert in Go, microservices architecture, Docker, and Kubernetes.
     tags: ["simple", "beginner", "minimal"],
     platforms: ["cursor", "claude", "copilot", "windsurf"],
     isOfficial: true,
-    tier: "SIMPLE",
+    tier: "SHORT",
     targetPlatform: "cursor",
     compatibleWith: ["claude_code", "windsurf", "github_copilot"],
     variables: { APP_NAME: "", PROJECT_DESCRIPTION: "" },

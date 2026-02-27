@@ -58,9 +58,10 @@ function printBlueprint(bp: Blueprint): void {
   }[bp.visibility] || "📄";
 
   const tierBadge = {
-    SIMPLE: chalk.gray("[Basic]"),
-    INTERMEDIATE: chalk.blue("[Standard]"),
-    ADVANCED: chalk.cyan("[Advanced]"),
+    SHORT: chalk.gray("[Short]"),
+    INTERMEDIATE: chalk.blue("[Intermediate]"),
+    LONG: chalk.cyan("[Long]"),
+    SUPERLONG: chalk.magenta("[Super Long]"),
   }[bp.tier] || "";
 
   console.log(`  ${visibilityIcon} ${chalk.bold(bp.name)} ${tierBadge}`);

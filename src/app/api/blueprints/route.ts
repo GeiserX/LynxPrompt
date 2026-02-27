@@ -53,29 +53,15 @@ const BLUEPRINT_TYPES = [
 type BlueprintType = (typeof BLUEPRINT_TYPES)[number];
 
 /**
- * Determine tier based on EFFECTIVE line count
- * - Ignores empty lines
- * - Ignores lines that are only whitespace
- * - Ignores lines that are only comments (# or //)
+ * Determine tier based on total word count (all content including comments/headers).
  */
-function determineTier(content: string): "SIMPLE" | "INTERMEDIATE" | "ADVANCED" {
-  const lines = content.split("\n");
-  let effectiveLines = 0;
+function determineTier(content: string): "SHORT" | "INTERMEDIATE" | "LONG" | "SUPERLONG" {
+  const wordCount = content.split(/\s+/).filter(Boolean).length;
   
-  for (const line of lines) {
-    const trimmed = line.trim();
-    // Skip empty lines
-    if (!trimmed) continue;
-    // Skip comment-only lines
-    if (trimmed.startsWith("#") || trimmed.startsWith("//")) continue;
-    // Skip markdown headers that are empty (like "##" with nothing after)
-    if (/^#{1,6}\s*$/.test(trimmed)) continue;
-    effectiveLines++;
-  }
-  
-  if (effectiveLines <= 30) return "SIMPLE";
-  if (effectiveLines <= 100) return "INTERMEDIATE";
-  return "ADVANCED";
+  if (wordCount <= 200) return "SHORT";
+  if (wordCount <= 800) return "INTERMEDIATE";
+  if (wordCount <= 2500) return "LONG";
+  return "SUPERLONG";
 }
 
 // GET: List blueprints with search, sort, and pagination
