@@ -18,7 +18,7 @@ if [ "$ENV" = "dev" ]; then
   export LYNXPROMPT_API_URL="https://dev.lynxprompt.com"
   echo "🧪 Running authenticated tests against DEV environment"
 else
-  export LYNXPROMPT_API_URL="https://lynxprompt.com"
+  export LYNXPROMPT_API_URL="https://api.lynxprompt.com"
   echo "🧪 Running authenticated tests against PROD environment"
 fi
 

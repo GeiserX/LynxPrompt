@@ -754,12 +754,12 @@ export function getApproxPrice(eurAmount: number): string | null {
 
 The public API is available for Pro, Max, and Teams subscribers. Generate API tokens at `/settings?tab=api-tokens`.
 
-**Base URL**: `https://lynxprompt.com/api/v1`
+**Base URL**: `https://api.lynxprompt.com/api/v1`
 
 **Authentication**: Bearer token in `Authorization` header
 
 ```bash
-curl -H "Authorization: Bearer lp_xxxxx" https://lynxprompt.com/api/v1/blueprints
+curl -H "Authorization: Bearer lp_xxxxx" https://api.lynxprompt.com/api/v1/blueprints
 ```
 
 #### Blueprints API
@@ -926,7 +926,7 @@ To go live with Stripe payments:
 
 3. **Configure webhook endpoint**:
    - In Stripe Dashboard → Webhooks → Add endpoint
-   - URL: `https://lynxprompt.com/api/billing/webhook`
+   - URL: `https://api.lynxprompt.com/api/billing/webhook`
    - Events: `checkout.session.completed`, `customer.subscription.*`, `invoice.*`
 
 4. **Test with real card** (small amounts) before announcing
