@@ -326,7 +326,9 @@ export default function AdminStatsPage() {
                           <div className="flex items-center gap-1.5">
                             <p className="font-medium">{user.name}</p>
                             {user.profileCompleted && (
-                              <UserCheck className="h-3 w-3 text-green-500" title="Onboarding completed" />
+                              <span title="Onboarding completed">
+                                <UserCheck className="h-3 w-3 text-green-500" />
+                              </span>
                             )}
                           </div>
                           <p className="flex items-center gap-1 text-xs text-muted-foreground">
