@@ -853,7 +853,7 @@ async function aiAssist(instruction: string, existingContent?: string): Promise<
   } catch (error) {
     if (error instanceof ApiRequestError) {
       if (error.statusCode === 403) {
-        spinner.fail("AI editing requires Teams subscription");
+        spinner.fail("AI editing is not available for your account");
       } else if (error.statusCode === 429) {
         spinner.fail("Rate limit reached. Please wait a moment.");
       } else {

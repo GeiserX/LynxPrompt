@@ -108,7 +108,7 @@ export const docsConfig: DocsSection[] = [
   {
     title: "Marketplace",
     href: "/docs/marketplace",
-    description: "Buy, sell, and earn from premium blueprints.",
+    description: "Discover and share community blueprints.",
     icon: "Store",
     items: [
       {

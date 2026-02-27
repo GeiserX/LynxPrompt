@@ -8,7 +8,7 @@ import { Footer } from "@/components/footer";
 export const metadata: Metadata = {
   title: "Terms of Service",
   description:
-    "LynxPrompt Terms of Service. Read our terms and conditions for using the platform, marketplace, and subscriptions.",
+    "LynxPrompt Terms of Service. Read our terms and conditions for using the platform, marketplace, and services.",
   openGraph: {
     title: "Terms of Service - LynxPrompt",
     description: "LynxPrompt Terms of Service and conditions of use.",
@@ -65,12 +65,12 @@ export default function TermsPage() {
               <section>
                 <h2 className="mb-3 text-lg font-semibold text-foreground">2. Description of Service</h2>
                 <p>
-                  LynxPrompt is a platform that allows users to create, share, buy, and sell AI IDE configuration files (&quot;prompts&quot; or &quot;blueprints&quot;). The service includes:
+                  LynxPrompt is a platform that allows users to create, share, and discover AI IDE configuration files (&quot;prompts&quot; or &quot;blueprints&quot;). The service includes:
                 </p>
                 <ul className="mt-3 list-inside list-disc space-y-1">
                   <li>A wizard to generate configuration files</li>
-                  <li>A marketplace for buying and selling prompts/blueprints</li>
-                  <li>Subscription plans offering access to premium features and content</li>
+                  <li>A marketplace for sharing and discovering prompts/blueprints</li>
+                  <li>Team functionality for collaborative use</li>
                 </ul>
               </section>
 
@@ -78,15 +78,7 @@ export default function TermsPage() {
               <section>
                 <h2 className="mb-3 text-lg font-semibold text-foreground">3. Marketplace Structure</h2>
                 <p>
-                  LynxPrompt operates as a <strong>platform/intermediary</strong>. Unless stated otherwise at checkout:
-                </p>
-                <ul className="mt-3 list-inside list-disc space-y-1">
-                  <li>The contract for purchasing a prompt is <strong>between Buyer and Seller</strong></li>
-                  <li>LynxPrompt is not a party to individual purchase transactions</li>
-                  <li>LynxPrompt facilitates the transaction and provides the platform infrastructure</li>
-                </ul>
-                <p className="mt-3">
-                  For subscription services, the contract is directly between you and GeiserCloud.
+                  LynxPrompt operates as a platform. Blueprints shared on the marketplace are available for download under the license terms specified by their creator.
                 </p>
               </section>
 
@@ -152,50 +144,46 @@ export default function TermsPage() {
                 </ul>
               </section>
 
-              {/* 6. License for Purchased Content */}
+              {/* 6. License for Downloaded Content */}
               <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">6. License for Purchased Content</h2>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">6. License for Downloaded Content</h2>
                 <p>
-                  Upon purchasing a prompt or blueprint, the Seller grants you a:
+                  Upon downloading a prompt or blueprint, the creator grants you a:
                 </p>
                 <ul className="mt-3 list-inside list-disc space-y-1">
                   <li><strong>Non-exclusive</strong> license</li>
                   <li><strong>Non-transferable</strong> license</li>
                   <li>For <strong>internal personal or business use</strong></li>
                 </ul>
-                <p className="mt-3">You may modify purchased prompts for your own use.</p>
+                <p className="mt-3">You may modify downloaded prompts for your own use.</p>
                 <p className="mt-3"><strong>You may NOT:</strong></p>
                 <ul className="mt-2 list-inside list-disc space-y-1">
-                  <li>Resell, sublicense, or redistribute purchased prompts</li>
-                  <li>Publish purchased prompts publicly</li>
-                  <li>Share access credentials to circumvent purchase requirements</li>
+                  <li>Resell, sublicense, or redistribute downloaded prompts</li>
+                  <li>Publish downloaded prompts publicly without the creator&apos;s permission</li>
                 </ul>
                 <p className="mt-3 text-sm text-muted-foreground">
-                  Team members purchasing blueprints receive the same license terms as other purchases.
+                  Team members downloading blueprints receive the same license terms.
                 </p>
               </section>
 
-              {/* 7. Seller Obligations & Warranties */}
+              {/* 7. Content Creator Obligations & Warranties */}
               <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">7. Seller Obligations & Warranties</h2>
-                <p>By listing content for sale, Sellers represent and warrant:</p>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">7. Content Creator Obligations & Warranties</h2>
+                <p>By sharing content on the marketplace, creators represent and warrant:</p>
                 <ul className="mt-3 list-inside list-disc space-y-1">
-                  <li>You have all necessary rights to publish and sell the content</li>
+                  <li>You have all necessary rights to publish and share the content</li>
                   <li>The content does not infringe any intellectual property or privacy rights</li>
                   <li>The content does not contain malware, backdoors, or malicious code</li>
                   <li>The content complies with all applicable laws and our Acceptable Use policy</li>
                   <li>Descriptions are accurate and not misleading</li>
                 </ul>
-                <p className="mt-3">
-                  Sellers are solely responsible for their own income taxes on earnings from the platform.
-                </p>
               </section>
 
-              {/* 8. Buyer-Seller Disputes */}
+              {/* 8. Content Disputes */}
               <section>
-                <h2 className="mb-3 text-lg font-semibold text-foreground">8. Buyer-Seller Disputes</h2>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">8. Content Disputes</h2>
                 <p>
-                  Disputes regarding content quality, intellectual property, or licensing are primarily between Buyer and Seller. LynxPrompt may assist in resolution and may take platform actions (content removal, account suspension) at its discretion, but is not obligated to mediate or resolve disputes.
+                  Disputes regarding content quality, intellectual property, or licensing are primarily between users. LynxPrompt may assist in resolution and may take platform actions (content removal, account suspension) at its discretion, but is not obligated to mediate or resolve disputes.
                 </p>
               </section>
 
@@ -233,7 +221,7 @@ export default function TermsPage() {
                   <li>Scrape or collect data without permission</li>
                   <li>Use the service to spam or send unsolicited messages</li>
                   <li>Impersonate others or misrepresent your affiliation</li>
-                  <li>Circumvent payment requirements or access controls</li>
+                  <li>Circumvent access controls</li>
                 </ul>
               </section>
 

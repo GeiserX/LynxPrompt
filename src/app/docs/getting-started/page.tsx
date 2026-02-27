@@ -90,7 +90,7 @@ export default function GettingStartedPage() {
             <UserPlus className="mb-2 h-5 w-5 text-primary" />
             <h3 className="font-medium">Marketplace</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Share your configs or sell premium blueprints on the optional
+              Share your configs and discover community blueprints on the
               marketplace
             </p>
           </div>
