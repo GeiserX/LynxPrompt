@@ -229,6 +229,7 @@ export default function DashboardPage() {
   const [hierarchyFormData, setHierarchyFormData] = useState({ name: "", description: "", repositoryRoot: "" });
   const [isCreatingHierarchy, setIsCreatingHierarchy] = useState(false);
   const [isDeletingHierarchy, setIsDeletingHierarchy] = useState(false);
+  const [deleteHierarchyBlueprints, setDeleteHierarchyBlueprints] = useState(false);
   const [hierarchyError, setHierarchyError] = useState<string | null>(null);
   const [availableBlueprints, setAvailableBlueprints] = useState<MyTemplate[]>([]);
   const [selectedBlueprintToAdd, setSelectedBlueprintToAdd] = useState<string>("");
@@ -575,8 +576,8 @@ export default function DashboardPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <h2 className="text-lg font-semibold">{billingStatus.team.name}</h2>
-                        <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-800 dark:bg-teal-900/30 dark:text-teal-300">
-                          Teams Plan
+                        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                          Team
                         </span>
                         {billingStatus.team.role === "ADMIN" && (
                           <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
@@ -1986,13 +1987,29 @@ export default function DashboardPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-md rounded-lg bg-background p-6 shadow-xl">
             <h2 className="text-lg font-semibold mb-2">Delete Hierarchy</h2>
-            <p className="text-muted-foreground mb-4">
-              Are you sure you want to delete <strong>{showDeleteHierarchy.name}</strong>? 
-              This will unlink {showDeleteHierarchy.blueprints.length} blueprint{showDeleteHierarchy.blueprints.length !== 1 ? "s" : ""} from this hierarchy.
-              The blueprints themselves will not be deleted.
+            <p className="text-muted-foreground mb-2">
+              Are you sure you want to delete <strong>{showDeleteHierarchy.name}</strong>?
             </p>
+            {showDeleteHierarchy.blueprints.length > 0 && (
+              <>
+                <p className="text-sm text-muted-foreground mb-3">
+                  {deleteHierarchyBlueprints
+                    ? <><strong className="text-destructive">{showDeleteHierarchy.blueprints.length}</strong> blueprint{showDeleteHierarchy.blueprints.length !== 1 ? "s" : ""} will be <strong className="text-destructive">permanently deleted</strong>.</>
+                    : <>{showDeleteHierarchy.blueprints.length} blueprint{showDeleteHierarchy.blueprints.length !== 1 ? "s" : ""} will be unlinked but <strong>not deleted</strong>.</>}
+                </p>
+                <label className="mb-4 flex cursor-pointer items-center gap-2 rounded-md border border-destructive/30 bg-destructive/5 p-3">
+                  <input
+                    type="checkbox"
+                    checked={deleteHierarchyBlueprints}
+                    onChange={(e) => setDeleteHierarchyBlueprints(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                  <span className="text-sm">Also delete all blueprints in this hierarchy</span>
+                </label>
+              </>
+            )}
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowDeleteHierarchy(null)} disabled={isDeletingHierarchy}>
+              <Button variant="outline" onClick={() => { setShowDeleteHierarchy(null); setDeleteHierarchyBlueprints(false); }} disabled={isDeletingHierarchy}>
                 Cancel
               </Button>
               <Button
@@ -2001,14 +2018,16 @@ export default function DashboardPage() {
                 onClick={async () => {
                   setIsDeletingHierarchy(true);
                   try {
-                    const res = await fetch(`/api/hierarchies/${showDeleteHierarchy.id}`, {
-                      method: "DELETE",
-                    });
+                    const url = deleteHierarchyBlueprints
+                      ? `/api/hierarchies/${showDeleteHierarchy.id}?deleteBlueprints=true`
+                      : `/api/hierarchies/${showDeleteHierarchy.id}`;
+                    const res = await fetch(url, { method: "DELETE" });
                     if (!res.ok) {
                       const data = await res.json();
                       throw new Error(data.error || "Failed to delete hierarchy");
                     }
                     setShowDeleteHierarchy(null);
+                    setDeleteHierarchyBlueprints(false);
                     fetchDashboardData();
                   } catch (err) {
                     setHierarchyError(err instanceof Error ? err.message : "Failed to delete hierarchy");
@@ -2023,7 +2042,7 @@ export default function DashboardPage() {
                     Deleting...
                   </>
                 ) : (
-                  "Delete"
+                  deleteHierarchyBlueprints ? "Delete All" : "Delete"
                 )}
               </Button>
             </div>
