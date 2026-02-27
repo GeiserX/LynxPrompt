@@ -576,7 +576,7 @@ export default function DashboardPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <h2 className="text-lg font-semibold">{billingStatus.team.name}</h2>
-                        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                        <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-800 dark:bg-teal-900/30 dark:text-teal-300">
                           Team
                         </span>
                         {billingStatus.team.role === "ADMIN" && (
@@ -2052,4 +2052,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
