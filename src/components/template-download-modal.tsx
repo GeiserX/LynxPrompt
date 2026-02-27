@@ -117,6 +117,7 @@ export function TemplateDownloadModal({
   const [selectedPlatform, setSelectedPlatform] = useState(getInitialPlatform());
   const [platformSearch, setPlatformSearch] = useState("");
   const [showAllPlatforms, setShowAllPlatforms] = useState(false);
+  const [commandExportTarget, setCommandExportTarget] = useState<string>("cursor");
 
   // Filter and limit platforms based on search and showAll
   const filteredPlatforms = useMemo(() => {
@@ -298,9 +299,6 @@ export function TemplateDownloadModal({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // State for command export target
-  const [commandExportTarget, setCommandExportTarget] = useState<string>("cursor");
-  
   const handleDownload = async () => {
     let filename: string;
     
