@@ -170,7 +170,8 @@ export async function PATCH(
 
 /**
  * DELETE /api/hierarchies/[id]
- * Delete a hierarchy (unlinks blueprints but doesn't delete them)
+ * Delete a hierarchy. By default unlinks blueprints; with ?deleteBlueprints=true
+ * it cascade-deletes all blueprints in the hierarchy.
  */
 export async function DELETE(
   request: NextRequest,
@@ -185,8 +186,9 @@ export async function DELETE(
 
     const { id } = await params;
     const hierarchyId = fromHierarchyId(id);
+    const deleteBlueprints =
+      request.nextUrl.searchParams.get("deleteBlueprints") === "true";
 
-    // Check ownership
     const hierarchy = await prismaUsers.hierarchy.findUnique({
       where: { id: hierarchyId },
       select: { userId: true, name: true, _count: { select: { blueprints: true } } },
@@ -200,20 +202,46 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Unlink all blueprints first (set hierarchyId to null)
+    const blueprintCount = hierarchy._count.blueprints;
+
+    if (deleteBlueprints) {
+      const blueprintIds = await prismaUsers.userTemplate.findMany({
+        where: { hierarchyId },
+        select: { id: true },
+      });
+      const ids = blueprintIds.map((b) => b.id);
+
+      if (ids.length > 0) {
+        await prismaUsers.$transaction([
+          prismaUsers.templateDownload.deleteMany({ where: { templateId: { in: ids } } }),
+          prismaUsers.templateFavorite.deleteMany({ where: { templateId: { in: ids } } }),
+          prismaUsers.blueprintPurchase.deleteMany({ where: { templateId: { in: ids } } }),
+          prismaUsers.userTemplateVersion.deleteMany({ where: { templateId: { in: ids } } }),
+          prismaUsers.userTemplate.deleteMany({ where: { id: { in: ids } } }),
+          prismaUsers.hierarchy.delete({ where: { id: hierarchyId } }),
+        ]);
+      } else {
+        await prismaUsers.hierarchy.delete({ where: { id: hierarchyId } });
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `Hierarchy "${hierarchy.name}" and ${blueprintCount} blueprint(s) deleted.`,
+      });
+    }
+
     await prismaUsers.userTemplate.updateMany({
       where: { hierarchyId },
       data: { hierarchyId: null, parentId: null },
     });
 
-    // Delete hierarchy
     await prismaUsers.hierarchy.delete({
       where: { id: hierarchyId },
     });
 
     return NextResponse.json({
       success: true,
-      message: `Hierarchy "${hierarchy.name}" deleted. ${hierarchy._count.blueprints} blueprint(s) unlinked.`,
+      message: `Hierarchy "${hierarchy.name}" deleted. ${blueprintCount} blueprint(s) unlinked.`,
     });
   } catch (error) {
     console.error("DELETE /api/hierarchies/[id] error:", error);
