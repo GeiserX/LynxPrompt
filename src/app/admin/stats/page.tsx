@@ -3,14 +3,12 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import {
   Users,
   TrendingUp,
   Package,
   MessageSquare,
   Download,
-  ArrowLeft,
   Loader2,
   Crown,
   Key,
@@ -30,6 +28,8 @@ import {
   Star,
   Code,
 } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
+import { Footer } from "@/components/footer";
 
 interface UserGrowthData {
   date: string;
@@ -181,12 +181,12 @@ export default function AdminStatsPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto max-w-7xl px-4 py-8">
-          <div className="flex h-96 items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        </div>
+      <div className="flex min-h-screen flex-col">
+        <PageHeader currentPage="admin/stats" breadcrumbLabel="Stats" />
+        <main className="flex flex-1 items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </main>
+        <Footer />
       </div>
     );
   }
@@ -197,8 +197,9 @@ export default function AdminStatsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto max-w-7xl px-4 py-8">
+      <div className="flex min-h-screen flex-col">
+        <PageHeader currentPage="admin/stats" breadcrumbLabel="Stats" />
+        <main className="flex flex-1 items-center justify-center px-4">
           <div className="rounded-lg border border-destructive bg-destructive/10 p-6 text-center">
             <p className="text-destructive">{error}</p>
             <button
@@ -208,7 +209,8 @@ export default function AdminStatsPage() {
               Retry
             </button>
           </div>
-        </div>
+        </main>
+        <Footer />
       </div>
     );
   }
@@ -229,18 +231,13 @@ export default function AdminStatsPage() {
       : "0";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-purple-950/10">
-      <div className="container mx-auto max-w-7xl px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <Link
-            href="/dashboard"
-            className="mb-4 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
-          </Link>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex min-h-screen flex-col bg-gradient-to-br from-background via-background to-purple-950/10">
+      <PageHeader currentPage="admin/stats" breadcrumbLabel="Stats" />
+
+      <main className="flex-1 py-8">
+        <div className="container mx-auto max-w-7xl px-4">
+          {/* Page Title + Time Range */}
+          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-3xl font-bold tracking-tight">
                 <span className="bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
@@ -267,7 +264,6 @@ export default function AdminStatsPage() {
               ))}
             </div>
           </div>
-        </div>
 
         {/* KPI Cards */}
         <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -714,7 +710,9 @@ export default function AdminStatsPage() {
             )}
           </div>
         </div>
-      </div>
+      </main>
+
+      <Footer />
     </div>
   );
 }
