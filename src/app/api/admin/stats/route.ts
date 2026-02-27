@@ -8,7 +8,6 @@ import { prismaBlog } from "@/lib/db-blog";
 import {
   ENABLE_SUPPORT_FORUM,
   ENABLE_BLOG,
-  ENABLE_STRIPE,
   ENABLE_AI,
 } from "@/lib/feature-flags";
 
@@ -49,6 +48,7 @@ export async function GET(req: NextRequest) {
       where: { lastLoginAt: { gte: thirtyDaysAgo } },
     });
 
+    // Fallback: if lastLoginAt is not tracked, count users with recent sessions
     let effectiveActive30d = activeUsers30d;
     if (activeUsers30d === 0 && totalUsers > 0) {
       try {
@@ -66,6 +66,7 @@ export async function GET(req: NextRequest) {
       where: { profileCompleted: true },
     });
 
+    // User growth: all-time cumulative chart from first user to now
     const allUsersForChart = await prismaUsers.user.findMany({
       select: { createdAt: true },
       orderBy: { createdAt: "asc" },
@@ -105,11 +106,13 @@ export async function GET(req: NextRequest) {
       _count: { id: true },
     });
 
+    // Auth provider breakdown
     const authProviders = await prismaUsers.account.groupBy({
       by: ["provider"],
       _count: { id: true },
     });
 
+    // Passkey adoption
     let passkeysUsers = 0;
     try {
       passkeysUsers = await prismaUsers.authenticator
@@ -171,8 +174,10 @@ export async function GET(req: NextRequest) {
       },
     });
 
+    // Total downloads all-time (for KPI card)
     const totalDownloadsAllTime = await prismaUsers.templateDownload.count();
 
+    // Downloads: all-time for chart, period-filtered for KPI
     const allDownloads = await prismaUsers.templateDownload.findMany({
       select: { createdAt: true, platform: true, templateType: true },
       orderBy: { createdAt: "asc" },
@@ -316,7 +321,6 @@ export async function GET(req: NextRequest) {
       featureFlags: {
         supportEnabled: ENABLE_SUPPORT_FORUM,
         blogEnabled: ENABLE_BLOG,
-        stripeEnabled: ENABLE_STRIPE,
         aiEnabled: ENABLE_AI,
       },
       users: {

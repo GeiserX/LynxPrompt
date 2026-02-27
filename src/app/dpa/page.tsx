@@ -208,8 +208,6 @@ export default function DPAPage() {
                     <ul className="mt-1 list-inside list-disc space-y-1 text-sm">
                       <li>Account creation and authentication</li>
                       <li>Storing and managing user-created blueprints</li>
-                      <li>Processing marketplace transactions</li>
-                      <li>Subscription management and billing</li>
                       <li>Customer support and service communications</li>
                     </ul>
                   </div>
@@ -224,7 +222,6 @@ export default function DPAPage() {
                       <li>OAuth provider identifiers (GitHub ID, Google ID)</li>
                       <li>User-generated content (blueprints, configurations)</li>
                       <li>Usage data (pages visited, features used)</li>
-                      <li>Payment information (processed by Stripe)</li>
                       <li>Team membership data (for team members)</li>
                     </ul>
                   </div>
@@ -359,11 +356,6 @@ export default function DPAPage() {
                         <td className="py-2 pr-4">Google</td>
                         <td className="py-2 pr-4">OAuth authentication</td>
                         <td className="py-2">USA/EU (SCCs)</td>
-                      </tr>
-                      <tr>
-                        <td className="py-2 pr-4">Stripe</td>
-                        <td className="py-2 pr-4">Payment processing</td>
-                        <td className="py-2">USA/EU (SCCs, PCI-DSS)</td>
                       </tr>
                       <tr>
                         <td className="py-2 pr-4">Anthropic</td>

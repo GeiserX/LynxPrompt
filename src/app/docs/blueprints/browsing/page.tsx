@@ -69,7 +69,7 @@ export default function BrowsingBlueprintsPage() {
           <h2 className="text-2xl font-bold">Filtering Results</h2>
         </div>
         <p className="text-muted-foreground">
-          Use filters to narrow down results by platform, category, and pricing.
+          Use filters to narrow down results by platform and category.
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-lg border bg-card p-4">
@@ -82,12 +82,6 @@ export default function BrowsingBlueprintsPage() {
             <h3 className="font-medium">Category Filters</h3>
             <p className="mt-1 text-sm text-muted-foreground">
               Filter by complexity: Simple, Intermediate, Advanced
-            </p>
-          </div>
-          <div className="rounded-lg border bg-card p-4">
-            <h3 className="font-medium">Pricing Filters</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Show free only, paid only, or all blueprints
             </p>
           </div>
           <div className="rounded-lg border bg-card p-4">

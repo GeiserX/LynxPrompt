@@ -87,8 +87,7 @@ function handleApiError(error: unknown): void {
     if (error.statusCode === 401) {
       console.error(chalk.red("Your session has expired. Please run 'lynxprompt login' again."));
     } else if (error.statusCode === 403) {
-      console.error(chalk.red("API access error. Please check your subscription."));
-      console.error(chalk.gray("Visit https://lynxprompt.com/pricing for plan details."));
+      console.error(chalk.red("API access error. Please check your account."));
     } else {
       console.error(chalk.red(`Error: ${error.message}`));
     }

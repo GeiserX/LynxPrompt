@@ -247,27 +247,6 @@ APP_URL=https://lynxprompt.yourcompany.com`}</code>
           </table>
         </div>
 
-        {/* Marketplace */}
-        <h3 className="text-lg font-semibold mt-6">Marketplace</h3>
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr className="border-b">
-                <th className="py-2 pr-4 text-left font-medium">Variable</th>
-                <th className="px-4 py-2 text-left font-medium">Default</th>
-                <th className="px-4 py-2 text-left font-medium">Description</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              <tr>
-                <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">ENABLE_STRIPE</code></td>
-                <td className="px-4 py-2 text-muted-foreground">false</td>
-                <td className="px-4 py-2">Enable paid blueprint purchases (requires Stripe keys)</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
         {/* Federation */}
         <h3 className="text-lg font-semibold mt-6">Federation</h3>
         <div className="overflow-x-auto">
@@ -287,8 +266,8 @@ APP_URL=https://lynxprompt.yourcompany.com`}</code>
               </tr>
               <tr>
                 <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">FEDERATION_REGISTRY_URL</code></td>
-                <td className="px-4 py-2 text-muted-foreground">—</td>
-                <td className="px-4 py-2">URL of the federation registry to connect to (provided by the network operator)</td>
+                <td className="px-4 py-2 text-muted-foreground">https://lynxprompt.com</td>
+                <td className="px-4 py-2">Optional. URL of the federation registry. Only set this if you run your own registry; omit to use the default public network</td>
               </tr>
             </tbody>
           </table>
@@ -635,16 +614,22 @@ lynxp config set-url https://api.lynxprompt.yourcompany.com`}</code>
           blueprints published on other instances.
         </p>
         <div className="rounded-xl border bg-card p-6 space-y-3">
-          <div className="flex items-start gap-4">
+            <div className="flex items-start gap-4">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
               1
             </div>
             <div className="min-w-0 flex-1">
               <h3 className="font-semibold">Enable federation</h3>
               <pre className="mt-2 overflow-x-auto rounded-lg bg-muted p-3 text-sm">
-                <code>{`ENABLE_FEDERATION=true
-FEDERATION_REGISTRY_URL=https://registry.lynxprompt.com`}</code>
+                <code>{`ENABLE_FEDERATION=true`}</code>
               </pre>
+              <p className="mt-2 text-sm text-muted-foreground">
+                This is all you need to join the default public network
+                at <code className="rounded bg-muted px-1 py-0.5 text-xs">https://lynxprompt.com</code>.
+                Only set{" "}
+                <code className="rounded bg-muted px-1 py-0.5 text-xs">FEDERATION_REGISTRY_URL</code>{" "}
+                if you are running your own federation registry.
+              </p>
             </div>
           </div>
           <div className="flex items-start gap-4">
@@ -750,18 +735,6 @@ healthcheck:
               <p className="font-medium">API Reference</p>
               <p className="text-sm text-muted-foreground">
                 Integrate programmatically
-              </p>
-            </div>
-          </Link>
-          <Link
-            href="/docs/marketplace/pricing"
-            className="flex items-center gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-muted"
-          >
-            <Database className="h-5 w-5 text-primary" />
-            <div>
-              <p className="font-medium">Pricing</p>
-              <p className="text-sm text-muted-foreground">
-                Marketplace payment details
               </p>
             </div>
           </Link>

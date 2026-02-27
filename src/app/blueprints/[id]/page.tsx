@@ -15,8 +15,6 @@ import {
   Check,
   Eye,
   ExternalLink,
-  Lock,
-  ShoppingCart,
   Pencil,
   Files,
   Loader2,
@@ -28,7 +26,6 @@ import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Footer } from "@/components/footer";
-import { useFeatureFlags } from "@/components/providers/feature-flags-provider";
 
 
 // Platform info
@@ -80,10 +77,6 @@ interface TemplateData {
   >;
   category?: string;
   difficulty?: string;
-  price?: number | null;
-  currency?: string;
-  isPaid?: boolean;
-  hasPurchased?: boolean;
   isOwner?: boolean;
   showcaseUrl?: string | null;
   currentVersion?: number;
@@ -126,7 +119,6 @@ export default function BlueprintDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { data: session } = useSession();
-  const { enableStripe } = useFeatureFlags();
   const [blueprint, setBlueprint] = useState<TemplateData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
@@ -201,7 +193,6 @@ export default function BlueprintDetailPage() {
     }
   };
 
-  const [purchasing, setPurchasing] = useState(false);
   const [cloning, setCloning] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -339,7 +330,7 @@ export default function BlueprintDetailPage() {
 
   const handleCopy = async () => {
     const contentToCopy = selectedVersionContent || blueprint?.content;
-    if (contentToCopy && blueprint?.hasPurchased !== false) {
+    if (contentToCopy) {
       await navigator.clipboard.writeText(contentToCopy);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -379,42 +370,6 @@ export default function BlueprintDetailPage() {
       document.body.removeChild(textArea);
       setShareSuccess(true);
       setTimeout(() => setShareSuccess(false), 2000);
-    }
-  };
-
-  const handlePurchase = async () => {
-    if (!session?.user) {
-      router.push(`/auth/signin?callbackUrl=/blueprints/${params.id}`);
-      return;
-    }
-
-    setPurchasing(true);
-    try {
-      // Extract real blueprint ID (remove bp_ or legacy usr_ prefix)
-      const realBlueprintId = (params.id as string).replace(/^(bp_|usr_)/, "");
-
-      const res = await fetch("/api/blueprints/purchase", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ templateId: realBlueprintId }),
-      });
-
-      const data = await res.json();
-
-      if (data.url) {
-        // Redirect to Stripe Checkout
-        window.location.href = data.url;
-      } else if (data.alreadyOwned) {
-        // Already purchased - refresh to show content
-        window.location.reload();
-      } else {
-        alert(data.error || "Failed to start purchase");
-      }
-    } catch (error) {
-      console.error("Purchase error:", error);
-      alert("Failed to start purchase. Please try again.");
-    } finally {
-      setPurchasing(false);
     }
   };
 
@@ -501,14 +456,6 @@ export default function BlueprintDetailPage() {
                         ⚡ {getCommandDisplayName(blueprint.type)} Command
                       </span>
                     )}
-                    {/* Price badge */}
-                    {blueprint.isPaid && (
-                      <span className="rounded-full bg-gradient-to-r from-purple-500 to-pink-500 px-3 py-1 text-sm font-semibold text-white">
-                        {(
-                          `€${((blueprint.price || 0) / 100).toFixed(2)}`
-                        )}
-                      </span>
-                    )}
                   </div>
                   <p className="mt-2 text-muted-foreground">
                     by{" "}
@@ -529,37 +476,7 @@ export default function BlueprintDetailPage() {
                     )}
                   </p>
                 </div>
-                {/* Action buttons - different for paid/unpurchased */}
-                {blueprint.isPaid && !blueprint.hasPurchased ? (
-                  enableStripe ? (
-                    <div className="flex flex-col items-end gap-2">
-                      <Button
-                        size="lg"
-                        onClick={handlePurchase}
-                        disabled={purchasing}
-                        className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                      >
-                        {purchasing ? (
-                          <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                        ) : (
-                          <ShoppingCart className="mr-2 h-5 w-5" />
-                        )}
-                        {purchasing ? "Processing..." : `Purchase for €${((blueprint.price || 0) / 100).toFixed(2)}`}
-                      </Button>
-                      {blueprint.currentVersion && blueprint.currentVersion > 0 && (
-                        <span className="text-xs text-muted-foreground">
-                          Purchasing version {blueprint.publishedVersion || blueprint.currentVersion}
-                        </span>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-500/50 dark:bg-amber-900/30 dark:text-amber-200">
-                      <Lock className="mr-1 inline h-4 w-4" />
-                      This is a paid blueprint. Payments are not enabled on this instance.
-                    </div>
-                  )
-                ) : (
-                  <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2">
                     {blueprint.isOwner && !selectedVersion ? (
                       <>
                         <Button variant="outline" size="sm" asChild>
@@ -610,7 +527,6 @@ export default function BlueprintDetailPage() {
                       Download
                     </Button>
                   </div>
-                )}
               </div>
 
               <p className="mt-4 text-lg">{blueprint.description}</p>
@@ -786,15 +702,10 @@ export default function BlueprintDetailPage() {
             <div className="mb-8">
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="font-semibold">
-                  {blueprint.isPaid && !blueprint.hasPurchased ? "Content Preview" : selectedVersionContent ? `Version ${selectedVersion} Content` : "Blueprint Preview"}
+                  {selectedVersionContent ? `Version ${selectedVersion} Content` : "Blueprint Preview"}
                 </h2>
                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                  {blueprint.isPaid && !blueprint.hasPurchased ? (
-                    <>
-                      <Lock className="h-3 w-3" />
-                      Purchase to unlock full content
-                    </>
-                  ) : selectedVersionContent ? (
+                  {selectedVersionContent ? (
                     <>
                       <Eye className="h-3 w-3" />
                       Read-only (historical version)
@@ -807,78 +718,13 @@ export default function BlueprintDetailPage() {
                   )}
                 </span>
               </div>
-              {blueprint.isPaid && !blueprint.hasPurchased ? (
-                <>
-                  <div className="relative rounded-xl border bg-muted/50 p-6">
-                    {/* Blurred preview */}
-                    <pre className="max-h-64 overflow-hidden whitespace-pre-wrap text-sm opacity-50 blur-sm">
-                      <code>{blueprint.preview}</code>
-                    </pre>
-                    {/* Overlay */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center rounded-xl bg-gradient-to-t from-background via-background/80 to-transparent">
-                      <Lock className="mb-3 h-8 w-8 text-muted-foreground" />
-                      {enableStripe ? (
-                        <>
-                          <p className="mb-4 text-center text-muted-foreground">
-                            Full content is locked. Purchase to access.
-                          </p>
-                          <Button
-                            onClick={handlePurchase}
-                            disabled={purchasing}
-                            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                          >
-                            {purchasing ? (
-                              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                            ) : (
-                              <ShoppingCart className="mr-2 h-4 w-4" />
-                            )}
-                            {purchasing ? "Processing..." : `Purchase for €${((blueprint.price || 0) / 100).toFixed(2)}`}
-                          </Button>
-                        </>
-                      ) : (
-                        <p className="text-center text-muted-foreground">
-                          This is a paid blueprint. Payments are not enabled on this instance.
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  {/* Show customizable variables even for locked templates */}
-                  {Array.isArray(blueprint.variables) && blueprint.variables.length > 0 && (
-                    <div className="mt-4 rounded-xl border border-purple-500/20 bg-purple-500/5 p-4">
-                      <h4 className="mb-2 text-sm font-medium text-purple-400">
-                        Customizable Variables ({blueprint.variables.length})
-                      </h4>
-                      <p className="mb-3 text-xs text-muted-foreground">
-                        This template includes variables you can customize after purchase:
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {blueprint.variables.map((v) => (
-                          <span
-                            key={v.name}
-                            className="inline-flex items-center rounded-md border border-purple-500/30 bg-purple-500/10 px-2 py-1 text-xs font-mono"
-                            title={v.defaultVal ? `Default: ${v.defaultVal}` : undefined}
-                          >
-                            {v.name}
-                            {v.defaultVal && (
-                              <span className="ml-1 text-muted-foreground">= {v.defaultVal}</span>
-                            )}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="rounded-xl border bg-muted/50 p-6">
-                  <pre className="max-h-96 overflow-auto whitespace-pre-wrap text-sm">
-                    <code>{selectedVersionContent || blueprint.content}</code>
-                  </pre>
-                </div>
-              )}
+              <div className="rounded-xl border bg-muted/50 p-6">
+                <pre className="max-h-96 overflow-auto whitespace-pre-wrap text-sm">
+                  <code>{selectedVersionContent || blueprint.content}</code>
+                </pre>
+              </div>
             </div>
 
-            {/* Actions - only show full actions if purchased or free */}
-            {(!blueprint.isPaid || blueprint.hasPurchased) && (
             <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border bg-card p-6">
               <div className="flex items-center gap-4">
                 <Button
@@ -918,7 +764,6 @@ export default function BlueprintDetailPage() {
                 <ExternalLink className="h-4 w-4" />
               </Link>
             </div>
-            )}
           </div>
         </div>
       </main>

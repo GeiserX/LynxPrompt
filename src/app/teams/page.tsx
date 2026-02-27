@@ -75,13 +75,7 @@ export default function TeamsPage() {
   const [teamName, setTeamName] = useState("");
   const [teamSlug, setTeamSlug] = useState("");
   const [seats, setSeats] = useState(3); // Minimum 3 seats
-  const [billingInterval, setBillingInterval] = useState<"monthly" | "annual">("monthly");
   const [error, setError] = useState<string | null>(null);
-
-  // Calculate price based on seats and interval
-  const pricePerSeat = billingInterval === "annual" ? 9 : 10; // 10% off for annual
-  const totalPrice = seats * pricePerSeat;
-  const billingPeriod = billingInterval === "annual" ? "/year" : "/month";
 
   const handleCreateTeam = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,7 +86,7 @@ export default function TeamsPage() {
       const response = await fetch("/api/teams", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: teamName, slug: teamSlug, interval: billingInterval, seats }),
+        body: JSON.stringify({ name: teamName, slug: teamSlug, seats }),
       });
 
       const data = await response.json();
@@ -102,12 +96,7 @@ export default function TeamsPage() {
         return;
       }
 
-      // Redirect to Stripe checkout
-      if (data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
-      } else {
-        setError("Failed to create checkout session");
-      }
+      window.location.href = "/dashboard";
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -313,35 +302,6 @@ export default function TeamsPage() {
                   </p>
                 </div>
 
-                {/* Billing Interval Toggle */}
-                <div>
-                  <label className="mb-2 block text-sm font-medium">Billing Period</label>
-                  <div className="flex rounded-lg border p-1">
-                    <button
-                      type="button"
-                      onClick={() => setBillingInterval("monthly")}
-                      className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                        billingInterval === "monthly"
-                          ? "bg-gradient-to-r from-teal-500 to-cyan-500 text-white"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      Monthly
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setBillingInterval("annual")}
-                      className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                        billingInterval === "annual"
-                          ? "bg-gradient-to-r from-teal-500 to-cyan-500 text-white"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      Annual <span className="ml-1 text-xs opacity-80">(save 10%)</span>
-                    </button>
-                  </div>
-                </div>
-
                 {/* Seats Selector */}
                 <div>
                   <label htmlFor="seats" className="mb-2 block text-sm font-medium">
@@ -377,23 +337,6 @@ export default function TeamsPage() {
                   </p>
                 </div>
 
-                {/* Price Summary */}
-                <div className="rounded-lg border bg-gradient-to-r from-teal-500/5 to-cyan-500/5 p-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">
-                      {seats} seats × €{pricePerSeat}{billingPeriod.replace("/", "/")}
-                    </span>
-                    <span className="text-2xl font-bold text-teal-600 dark:text-teal-400">
-                      €{totalPrice}{billingPeriod}
-                    </span>
-                  </div>
-                  {billingInterval === "annual" && (
-                    <p className="mt-1 text-xs text-teal-600 dark:text-teal-400">
-                      You save €{seats * 3 * 12}/year with annual billing!
-                    </p>
-                  )}
-                </div>
-
                 {error && (
                   <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
                     {error}
@@ -412,7 +355,7 @@ export default function TeamsPage() {
                     </>
                   ) : (
                     <>
-                      Create Team & Pay €{totalPrice}
+                      Create Team
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </>
                   )}

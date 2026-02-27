@@ -14,7 +14,6 @@ import {
   CheckCircle2,
   Info,
   AlertTriangle,
-  Euro,
   Trash2,
   ExternalLink,
   Sparkles,
@@ -58,7 +57,7 @@ const CATEGORIES = [
 
 export default function EditBlueprintPage() {
   const { status } = useSession();
-  const { enableAI, enableStripe } = useFeatureFlags();
+  const { enableAI } = useFeatureFlags();
   const router = useRouter();
   const params = useParams();
   const blueprintId = params.id as string;
@@ -72,8 +71,6 @@ export default function EditBlueprintPage() {
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [isPublic, setIsPublic] = useState(false);
-  const [isPaid, setIsPaid] = useState(false);
-  const [price, setPrice] = useState<number>(5);
   const [showcaseUrl, setShowcaseUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -118,8 +115,6 @@ export default function EditBlueprintPage() {
         setCategory(data.category || "other");
         setTags(data.tags || []);
         setIsPublic(data.isPublic !== false);
-        setIsPaid(data.price && data.price > 0);
-        setPrice(data.price ? Math.round(data.price / 100) : 5);
         setShowcaseUrl(data.showcaseUrl || "");
         setCurrentVersion(data.currentVersion || 1);
       } catch {
@@ -157,8 +152,6 @@ export default function EditBlueprintPage() {
       setLoadingPlan(false);
     }
   }, [status]);
-
-  const canCreatePaidBlueprints = enableStripe;
 
   // Detect sensitive data in content
   const sensitiveMatches = useMemo<SensitiveMatch[]>(() => {
@@ -218,8 +211,6 @@ export default function EditBlueprintPage() {
           category,
           tags,
           isPublic,
-          price: isPaid && canCreatePaidBlueprints ? price * 100 : null,
-          currency: "EUR",
           showcaseUrl: showcaseUrl.trim() || null,
           sensitiveDataAcknowledged: acknowledgedSensitiveData,
           publishNewVersion: contentHasChanged, // Auto-version on every content change
@@ -613,7 +604,7 @@ export default function EditBlueprintPage() {
                     />
                     <p className="mt-1 text-xs text-muted-foreground">
                       Link to a live demo, GitHub repo, or website that showcases what this blueprint can build. 
-                      Especially recommended for paid blueprints to help buyers see the value.
+                      Helps users understand the context for this blueprint.
                     </p>
                   </div>
 
@@ -788,58 +779,6 @@ export default function EditBlueprintPage() {
                     </div>
                   </div>
 
-                  {/* Pricing - only show if public */}
-                  {isPublic && (
-                    <div className="rounded-lg border bg-muted/30 p-4">
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="checkbox"
-                          id="isPaid"
-                          checked={isPaid}
-                          onChange={(e) => setIsPaid(e.target.checked)}
-                          disabled={!canCreatePaidBlueprints}
-                          className={`h-4 w-4 rounded border-gray-300 ${!canCreatePaidBlueprints ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        />
-                        <label 
-                          htmlFor="isPaid" 
-                          className={`text-sm font-medium ${!canCreatePaidBlueprints ? 'opacity-50' : ''}`}
-                        >
-                          <Euro className="mr-1 inline h-4 w-4" />
-                          Set a price for this blueprint
-                        </label>
-                        {!canCreatePaidBlueprints && (
-                          <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
-                            Payments not configured
-                          </span>
-                        )}
-                      </div>
-
-                      {isPaid && canCreatePaidBlueprints && (
-                        <div className="mt-4 space-y-3">
-                          <div className="flex items-center gap-3">
-                            <Euro className="h-5 w-5 text-muted-foreground" />
-                            <input
-                              type="number"
-                              value={price}
-                              onChange={(e) => setPrice(Math.max(5, parseFloat(e.target.value) || 5))}
-                              min={5}
-                              step={0.5}
-                              className="w-24 rounded-lg border bg-background px-3 py-2 text-right focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                            />
-                            <span className="text-sm text-muted-foreground">EUR (minimum €5)</span>
-                          </div>
-                          
-                          {/* Revenue split info - shown only when setting price */}
-                          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-500/50 dark:bg-emerald-900/30">
-                            <p className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
-                              💰 You earn 70% of each sale (€{(price * 0.7).toFixed(2)}).
-                              <span className="font-normal text-emerald-700 dark:text-emerald-300"> Platform fee: 30% (€{(price * 0.3).toFixed(2)}).</span>
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
               </div>
 

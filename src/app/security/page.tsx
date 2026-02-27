@@ -275,26 +275,6 @@ export default function SecurityPage() {
                 </div>
               </section>
 
-              {/* Payment Security */}
-              <section>
-                <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold text-foreground">
-                  <Database className="h-5 w-5" />
-                  Payment Security
-                </h2>
-                <div className="rounded-lg border p-4">
-                  <h3 className="font-medium text-foreground">
-                    Stripe Payment Processing
-                  </h3>
-                  <p className="mt-1 text-sm">
-                    All payment processing is handled by Stripe, a PCI-DSS Level
-                    1 certified payment processor—the highest level of
-                    certification in the payment industry. We never see, store,
-                    or have access to your full credit card numbers. Payment
-                    data goes directly to Stripe&apos;s secure servers.
-                  </p>
-                </div>
-              </section>
-
               {/* Privacy-First Infrastructure */}
               <section>
                 <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold text-foreground">

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { HelpCircle, CreditCard, AlertTriangle } from "lucide-react";
+import { HelpCircle, AlertTriangle } from "lucide-react";
 
 export default function FAQOverviewPage() {
   return (
@@ -15,7 +15,7 @@ export default function FAQOverviewPage() {
           </h1>
         </div>
         <p className="max-w-2xl text-lg text-muted-foreground">
-          Find answers to common questions about LynxPrompt, billing, and
+          Find answers to common questions about LynxPrompt and
           troubleshooting.
         </p>
       </div>
@@ -24,18 +24,6 @@ export default function FAQOverviewPage() {
       <div className="rounded-xl border bg-card p-6">
         <h2 className="mb-4 font-semibold">FAQ Categories</h2>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Link
-            href="/docs/faq/billing"
-            className="flex items-center gap-3 rounded-lg border bg-background p-4 transition-colors hover:bg-muted"
-          >
-            <CreditCard className="h-5 w-5 text-primary" />
-            <div>
-              <p className="font-medium">Marketplace Payments</p>
-              <p className="text-sm text-muted-foreground">
-                Buying, selling, refunds
-              </p>
-            </div>
-          </Link>
           <Link
             href="/docs/faq/troubleshooting"
             className="flex items-center gap-3 rounded-lg border bg-background p-4 transition-colors hover:bg-muted"
@@ -60,8 +48,7 @@ export default function FAQOverviewPage() {
             <p className="mt-2 text-muted-foreground">
               Yes! LynxPrompt is free and open-source (GPL v3). All features —
               the wizard, blueprints, AI editing, teams, API, and CLI — are
-              available at no cost. The only payments are optional marketplace
-              purchases when a blueprint creator sets a price.
+              available at no cost.
             </p>
           </div>
 
@@ -136,8 +123,7 @@ export default function FAQOverviewPage() {
             <h3 className="font-semibold">Is my data safe?</h3>
             <p className="mt-2 text-muted-foreground">
               Yes. All data is stored in the EU with GDPR compliance. We use
-              secure authentication, don&apos;t store passwords, and payments
-              are handled by Stripe. See our{" "}
+              secure authentication and don&apos;t store passwords. See our{" "}
               <Link href="/privacy" className="text-primary hover:underline">
                 Privacy Policy
               </Link>{" "}
@@ -157,25 +143,6 @@ export default function FAQOverviewPage() {
               Blueprints are pre-made AI IDE configuration files created by the
               community. They contain rules and guidelines that tell AI coding
               assistants how to help you code according to your preferences.
-            </p>
-          </div>
-
-          <div className="rounded-lg border bg-card p-4">
-            <h3 className="font-semibold">
-              What&apos;s the difference between free and paid blueprints?
-            </h3>
-            <p className="mt-2 text-muted-foreground">
-              Free blueprints are available to everyone. Paid blueprints are
-              configurations created by community members who set their own
-              prices. Authors receive 70% of each sale.
-            </p>
-          </div>
-
-          <div className="rounded-lg border bg-card p-4">
-            <h3 className="font-semibold">Can I sell my own blueprints?</h3>
-            <p className="mt-2 text-muted-foreground">
-              Yes! All users can sell blueprints. You keep 70% of each
-              sale. The minimum price is €5.
             </p>
           </div>
 

@@ -122,7 +122,7 @@ export async function POST(
     // Check access
     const blueprint = await prismaUsers.userTemplate.findUnique({
       where: { id: realId },
-      select: { userId: true, isPublic: true, price: true, teamId: true },
+      select: { userId: true, isPublic: true, teamId: true },
     });
 
     if (!blueprint) {
@@ -135,29 +135,7 @@ export async function POST(
     const session = await getServerSession(authOptions);
     const isOwner = session?.user?.id === blueprint.userId;
 
-    // Check if user has purchased (for paid blueprints)
-    let hasPurchased = false;
-    if (session?.user?.id && blueprint.price && !isOwner) {
-      const purchase = await prismaUsers.blueprintPurchase.findFirst({
-        where: {
-          OR: [
-            { userId: session.user.id, templateId: realId },
-            ...(blueprint.teamId ? [{ teamId: blueprint.teamId, templateId: realId }] : []),
-          ],
-        },
-      });
-      hasPurchased = !!purchase;
-    }
-
-    // Access control
-    if (!isOwner && blueprint.price && !hasPurchased) {
-      return NextResponse.json(
-        { error: "Purchase required to view version content" },
-        { status: 403 }
-      );
-    }
-
-    if (!isOwner && !blueprint.isPublic && !hasPurchased) {
+    if (!isOwner && !blueprint.isPublic) {
       return NextResponse.json(
         { error: "Access denied" },
         { status: 403 }

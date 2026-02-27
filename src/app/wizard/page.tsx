@@ -1518,7 +1518,9 @@ function WizardPageContent() {
       deploymentMethod: config.deploymentMethod,
       importantFiles: config.importantFiles,
       importantFilesOther: config.importantFilesOther,
-      enableAutoUpdate: config.enableAutoUpdate,
+      enableAutoUpdate: config.enableAutoUpdate || config.enableApiSync,
+      preferCliSync: config.preferCliSync,
+      tokenEnvVar: config.tokenEnvVar,
       includePersonalData: config.includePersonalData,
       
       // Platform & output

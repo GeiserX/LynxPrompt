@@ -7,7 +7,6 @@ import {
   Target,
   Users,
   Shield,
-  Zap,
   Globe,
   ArrowRight,
   Server,
@@ -205,15 +204,6 @@ export default function AboutPage() {
                 Sign in with GitHub, Google, magic links, or passkeys. We never
                 store your passwords—authentication is handled by trusted
                 providers.
-              </p>
-            </div>
-
-            <div className="rounded-lg border bg-card p-6">
-              <Zap className="h-8 w-8 text-yellow-600" />
-              <h3 className="mt-3 font-semibold">Payment Security</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                All payments are processed by Stripe. We never see or store your
-                credit card details—Stripe handles everything securely.
               </p>
             </div>
 

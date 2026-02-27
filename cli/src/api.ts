@@ -17,8 +17,6 @@ export interface Blueprint {
   visibility: "PRIVATE" | "TEAM" | "PUBLIC";
   downloads: number;
   favorites: number;
-  price: number | null;
-  currency: string | null;
   created_at: string;
   updated_at: string;
   content?: string;
@@ -111,9 +109,6 @@ export interface SearchResult {
   category: string;
   isOfficial: boolean;
   aiAssisted: boolean;
-  price: number | null;
-  discountedPrice: number | null;
-  currency: string;
 }
 
 export interface SearchResponse {
