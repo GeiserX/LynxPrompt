@@ -52,11 +52,11 @@ export async function configCommand(
   }
 
   if (action === "reset-url") {
-    setApiUrl("https://lynxprompt.com");
+    setApiUrl("https://api.lynxprompt.com");
     console.log(
       chalk.green("✓") +
         " API URL reset to " +
-        chalk.cyan("https://lynxprompt.com"),
+        chalk.cyan("https://api.lynxprompt.com"),
     );
     return;
   }
