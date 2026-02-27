@@ -7,32 +7,32 @@ import Link from "next/link";
 import {
   Users,
   TrendingUp,
-  CreditCard,
   Package,
-  Building2,
   MessageSquare,
   Download,
   ArrowLeft,
   Loader2,
-  DollarSign,
-  Eye,
-  EyeOff,
   Crown,
-  Sparkles,
-  Zap,
   Key,
   FileText,
-  ChevronDown,
   ChevronUp,
   Mail,
+  Activity,
+  Shield,
+  FolderTree,
+  Terminal,
+  Fingerprint,
+  UserCheck,
+  BookOpen,
+  Globe,
+  Heart,
+  Layers,
+  Star,
 } from "lucide-react";
 
-// Types for the stats data
 interface UserGrowthData {
   date: string;
-  FREE: number;
-  TEAMS: number;
-  total: number;
+  count: number;
 }
 
 interface DownloadGrowthData {
@@ -50,7 +50,6 @@ interface TopBlueprint {
   name: string;
   downloads: number;
   favorites: number;
-  price: number | null;
   author: string;
 }
 
@@ -58,9 +57,10 @@ interface UserInfo {
   id: string;
   name: string;
   email: string;
-  plan: string;
   role: string;
   createdAt: string;
+  lastLoginAt: string | null;
+  profileCompleted: boolean;
   blueprintsCount: number;
 }
 
@@ -70,77 +70,64 @@ interface StatsData {
     startDate: string;
     endDate: string;
   };
+  featureFlags: {
+    supportEnabled: boolean;
+    blogEnabled: boolean;
+    stripeEnabled: boolean;
+    aiEnabled: boolean;
+  };
   users: {
     total: number;
-    byPlan: Record<string, number>;
+    active7d: number;
+    active30d: number;
+    onboarded: number;
     byRole: Record<string, number>;
     newThisPeriod: number;
     growthData: UserGrowthData[];
+    authProviders: Record<string, number>;
+    passkeysUsers: number;
     list: UserInfo[];
-  };
-  revenue: {
-    estimatedMRR: number;
-    estimatedMRRFormatted: string;
-    activeFree: number;
-    activeTeamSeats: number;
-    purchasesThisPeriod: {
-      count: number;
-      totalAmount: number;
-      platformFees: number;
-    };
   };
   blueprints: {
     total: number;
-    public: number;
-    paid: number;
+    byVisibility: Record<string, number>;
+    createdThisPeriod: number;
+    totalFavorites: number;
+    totalHierarchies: number;
     systemTemplates: number;
+    avgPerUser: number;
     topDownloaded: TopBlueprint[];
     downloadGrowthData: DownloadGrowthData[];
     platformDistribution: PlatformData[];
     totalDownloadsThisPeriod: number;
-  };
-  teams: {
-    total: number;
-    members: number;
-    pendingInvitations: number;
   };
   support: {
     totalPosts: number;
     openPosts: number;
     resolvedPosts: number;
     postsThisPeriod: number;
-  };
-  payouts: {
-    totalPaid: number;
-    totalCount: number;
-    pending: {
-      amount: number;
-      count: number;
-    };
-  };
+    totalComments: number;
+  } | null;
+  blog: {
+    totalPosts: number;
+    publishedPosts: number;
+  } | null;
   engagement: {
     wizardDrafts: number;
     recentDrafts: number;
     activeApiTokens: number;
+    totalProjects: number;
+    totalCliSessions: number;
+    activeCliSessions: number;
   };
 }
 
 const TIME_RANGES = [
-  { label: "7 days", value: 7 },
-  { label: "30 days", value: 30 },
-  { label: "90 days", value: 90 },
-  { label: "1 year", value: 365 },
+  { label: "7d", value: 7 },
+  { label: "30d", value: 30 },
+  { label: "90d", value: 90 },
+  { label: "1y", value: 365 },
 ];
-
-const PLAN_COLORS = {
-  FREE: "#64748b", // slate (Users)
-  TEAMS: "#06b6d4", // cyan
-};
-
-const PLAN_LABELS = {
-  FREE: "Users",
-  TEAMS: "Teams",
-};
 
 export default function AdminStatsPage() {
   const { data: session, status } = useSession();
@@ -148,20 +135,14 @@ export default function AdminStatsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState(30);
-  const [visiblePlans, setVisiblePlans] = useState<Record<string, boolean>>({
-    FREE: true,
-    TEAMS: true,
-  });
   const [showUsersList, setShowUsersList] = useState(false);
 
-  // Check for superadmin access
   useEffect(() => {
     if (status === "authenticated" && session?.user?.role !== "SUPERADMIN") {
       redirect("/dashboard");
     }
   }, [status, session]);
 
-  // Fetch stats data
   useEffect(() => {
     if (status === "authenticated" && session?.user?.role === "SUPERADMIN") {
       fetchStats();
@@ -173,20 +154,13 @@ export default function AdminStatsPage() {
     setError(null);
     try {
       const res = await fetch(`/api/admin/stats?days=${timeRange}`);
-      if (!res.ok) {
-        throw new Error("Failed to fetch stats");
-      }
-      const statsData = await res.json();
-      setData(statsData);
+      if (!res.ok) throw new Error("Failed to fetch stats");
+      setData(await res.json());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setLoading(false);
     }
-  };
-
-  const togglePlan = (plan: string) => {
-    setVisiblePlans((prev) => ({ ...prev, [plan]: !prev[plan] }));
   };
 
   if (status === "loading" || loading) {
@@ -202,7 +176,7 @@ export default function AdminStatsPage() {
   }
 
   if (status === "unauthenticated" || session?.user?.role !== "SUPERADMIN") {
-    return null; // Will redirect
+    return null;
   }
 
   if (error) {
@@ -225,6 +199,19 @@ export default function AdminStatsPage() {
 
   if (!data) return null;
 
+  const retentionRate =
+    data.users.total > 0
+      ? ((data.users.active30d / data.users.total) * 100).toFixed(0)
+      : "0";
+  const onboardingRate =
+    data.users.total > 0
+      ? ((data.users.onboarded / data.users.total) * 100).toFixed(0)
+      : "0";
+  const passkeysRate =
+    data.users.total > 0
+      ? ((data.users.passkeysUsers / data.users.total) * 100).toFixed(0)
+      : "0";
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-purple-950/10">
       <div className="container mx-auto max-w-7xl px-4 py-8">
@@ -241,15 +228,13 @@ export default function AdminStatsPage() {
             <div>
               <h1 className="text-3xl font-bold tracking-tight">
                 <span className="bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
-                  Business Intelligence
+                  Instance Analytics
                 </span>
               </h1>
               <p className="mt-1 text-muted-foreground">
-                Platform stats and analytics for superadmins
+                Usage stats and insights for your instance
               </p>
             </div>
-
-            {/* Time range selector */}
             <div className="flex gap-1 rounded-lg border bg-card p-1">
               {TIME_RANGES.map((range) => (
                 <button
@@ -277,22 +262,22 @@ export default function AdminStatsPage() {
             <KPICard
               title="Total Users"
               value={data.users.total.toLocaleString()}
-              subtitle={`+${data.users.newThisPeriod} this period • Click to ${showUsersList ? "hide" : "view"}`}
+              subtitle={`+${data.users.newThisPeriod} new this period`}
               icon={Users}
               color="purple"
             />
           </button>
           <KPICard
-            title="Estimated MRR"
-            value={data.revenue.estimatedMRRFormatted}
-            subtitle={`${data.revenue.activeTeamSeats} active team members`}
-            icon={DollarSign}
+            title="Active Users"
+            value={data.users.active30d.toLocaleString()}
+            subtitle={`${retentionRate}% retention (30d) · ${data.users.active7d} last 7d`}
+            icon={Activity}
             color="green"
           />
           <KPICard
             title="Blueprints"
             value={data.blueprints.total.toLocaleString()}
-            subtitle={`${data.blueprints.public} public, ${data.blueprints.paid} paid`}
+            subtitle={`${data.blueprints.byVisibility["PUBLIC"] || 0} public · +${data.blueprints.createdThisPeriod} this period`}
             icon={Package}
             color="blue"
           />
@@ -327,9 +312,9 @@ export default function AdminStatsPage() {
                 <thead className="sticky top-0 bg-card text-left text-xs text-muted-foreground">
                   <tr className="border-b">
                     <th className="pb-2 pr-4">User</th>
-                    <th className="pb-2 pr-4">Plan</th>
                     <th className="pb-2 pr-4">Role</th>
                     <th className="pb-2 pr-4">Blueprints</th>
+                    <th className="pb-2 pr-4">Last Active</th>
                     <th className="pb-2">Joined</th>
                   </tr>
                 </thead>
@@ -338,7 +323,12 @@ export default function AdminStatsPage() {
                     <tr key={user.id} className="hover:bg-muted/50">
                       <td className="py-2 pr-4">
                         <div>
-                          <p className="font-medium">{user.name}</p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="font-medium">{user.name}</p>
+                            {user.profileCompleted && (
+                              <UserCheck className="h-3 w-3 text-green-500" title="Onboarding completed" />
+                            )}
+                          </div>
                           <p className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Mail className="h-3 w-3" />
                             {user.email}
@@ -346,31 +336,15 @@ export default function AdminStatsPage() {
                         </div>
                       </td>
                       <td className="py-2 pr-4">
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                            user.plan === "TEAMS"
-                              ? "bg-cyan-500/20 text-cyan-500"
-                              : "bg-gray-500/20 text-gray-500"
-                          }`}
-                        >
-                          {user.plan === "TEAMS" ? "Teams" : "Free"}
-                        </span>
-                      </td>
-                      <td className="py-2 pr-4">
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                            user.role === "SUPERADMIN"
-                              ? "bg-purple-500/20 text-purple-500"
-                              : user.role === "ADMIN"
-                                ? "bg-blue-500/20 text-blue-500"
-                                : "bg-muted text-muted-foreground"
-                          }`}
-                        >
-                          {user.role}
-                        </span>
+                        <RoleBadge role={user.role} />
                       </td>
                       <td className="py-2 pr-4 text-center">
                         {user.blueprintsCount}
+                      </td>
+                      <td className="py-2 pr-4 text-muted-foreground">
+                        {user.lastLoginAt
+                          ? new Date(user.lastLoginAt).toLocaleDateString()
+                          : "Never"}
                       </td>
                       <td className="py-2 text-muted-foreground">
                         {new Date(user.createdAt).toLocaleDateString()}
@@ -383,67 +357,24 @@ export default function AdminStatsPage() {
           </div>
         )}
 
-        {/* Main Charts Section */}
+        {/* Main Charts */}
         <div className="mb-8 grid gap-6 lg:grid-cols-2">
-          {/* User Growth Chart */}
           <div className="rounded-xl border bg-card p-6">
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <h3 className="font-semibold">User Growth by Plan</h3>
-                <p className="text-sm text-muted-foreground">
-                  New signups over time
-                </p>
+                <h3 className="font-semibold">User Growth</h3>
+                <p className="text-sm text-muted-foreground">New signups over time</p>
               </div>
               <TrendingUp className="h-5 w-5 text-muted-foreground" />
             </div>
-
-            {/* Plan toggles */}
-            <div className="mb-4 flex flex-wrap gap-2">
-              {(Object.keys(PLAN_COLORS) as Array<keyof typeof PLAN_COLORS>).map((plan) => (
-                <button
-                  key={plan}
-                  onClick={() => togglePlan(plan)}
-                  className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-all ${
-                    visiblePlans[plan]
-                      ? "bg-opacity-100"
-                      : "bg-opacity-20 opacity-50"
-                  }`}
-                  style={{
-                    backgroundColor: visiblePlans[plan]
-                      ? `${PLAN_COLORS[plan]}20`
-                      : "transparent",
-                    borderWidth: 1,
-                    borderColor: PLAN_COLORS[plan],
-                    color: PLAN_COLORS[plan],
-                  }}
-                >
-                  {visiblePlans[plan] ? (
-                    <Eye className="h-3 w-3" />
-                  ) : (
-                    <EyeOff className="h-3 w-3" />
-                  )}
-                  {PLAN_LABELS[plan]}
-                  <span className="ml-1 rounded bg-black/10 px-1.5 py-0.5 dark:bg-white/10">
-                    {data.users.byPlan[plan] || 0}
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            <UserGrowthChart
-              data={data.users.growthData}
-              visiblePlans={visiblePlans}
-            />
+            <UserGrowthChart data={data.users.growthData} />
           </div>
 
-          {/* Downloads Chart */}
           <div className="rounded-xl border bg-card p-6">
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h3 className="font-semibold">Downloads Over Time</h3>
-                <p className="text-sm text-muted-foreground">
-                  Blueprint downloads
-                </p>
+                <p className="text-sm text-muted-foreground">Blueprint downloads</p>
               </div>
               <Download className="h-5 w-5 text-muted-foreground" />
             </div>
@@ -451,121 +382,119 @@ export default function AdminStatsPage() {
           </div>
         </div>
 
-        {/* Secondary Stats */}
+        {/* User Activity + Content Overview + Platform */}
         <div className="mb-8 grid gap-6 lg:grid-cols-3">
-          {/* Revenue Breakdown */}
+          {/* User Activity */}
           <div className="rounded-xl border bg-card p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-semibold">Revenue Breakdown</h3>
-              <CreditCard className="h-5 w-5 text-muted-foreground" />
+            <div className="mb-5 flex items-center justify-between">
+              <h3 className="font-semibold">User Activity</h3>
+              <Shield className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <div className="space-y-5">
+              <StatRow
+                icon={<UserCheck className="h-4 w-4 text-green-500" />}
+                label="Onboarding completed"
+                value={`${data.users.onboarded}`}
+                detail={`${onboardingRate}%`}
+                detailColor="text-green-500"
+              />
+              <StatRow
+                icon={<Fingerprint className="h-4 w-4 text-purple-500" />}
+                label="Passkey users"
+                value={`${data.users.passkeysUsers}`}
+                detail={`${passkeysRate}%`}
+                detailColor="text-purple-500"
+              />
+              <div className="border-t pt-4">
+                <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Auth Providers
+                </p>
+                {Object.keys(data.users.authProviders).length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No OAuth accounts linked</p>
+                ) : (
+                  <div className="space-y-2">
+                    {Object.entries(data.users.authProviders)
+                      .sort(([, a], [, b]) => b - a)
+                      .map(([provider, count]) => (
+                        <AuthProviderBar
+                          key={provider}
+                          provider={provider}
+                          count={count}
+                          total={data.users.total}
+                        />
+                      ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Content Overview */}
+          <div className="rounded-xl border bg-card p-6">
+            <div className="mb-5 flex items-center justify-between">
+              <h3 className="font-semibold">Content Overview</h3>
+              <Layers className="h-5 w-5 text-muted-foreground" />
             </div>
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="rounded-full bg-gray-500/20 p-1.5">
-                    <Users className="h-3.5 w-3.5 text-gray-500" />
-                  </div>
-                  <span className="text-sm">Users (Free)</span>
-                </div>
-                <div className="text-right">
-                  <span className="font-medium">{data.revenue.activeFree}</span>
-                  <span className="ml-1 text-xs text-muted-foreground">
-                    × €0
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="rounded-full bg-cyan-500/20 p-1.5">
-                    <Building2 className="h-3.5 w-3.5 text-cyan-500" />
-                  </div>
-                  <span className="text-sm">Team Seats</span>
-                </div>
-                <div className="text-right">
-                  <span className="font-medium">
-                    {data.revenue.activeTeamSeats}
-                  </span>
-                  <span className="ml-1 text-xs text-muted-foreground">
-                    × €10
-                  </span>
-                </div>
+              <div className="grid grid-cols-2 gap-3">
+                <MiniStat
+                  label="Public"
+                  value={data.blueprints.byVisibility["PUBLIC"] || 0}
+                  icon={<Globe className="h-3.5 w-3.5 text-blue-500" />}
+                />
+                <MiniStat
+                  label="Private"
+                  value={data.blueprints.byVisibility["PRIVATE"] || 0}
+                  icon={<Shield className="h-3.5 w-3.5 text-gray-500" />}
+                />
+                <MiniStat
+                  label="Unlisted"
+                  value={data.blueprints.byVisibility["UNLISTED"] || 0}
+                  icon={<Package className="h-3.5 w-3.5 text-amber-500" />}
+                />
+                <MiniStat
+                  label="Hierarchies"
+                  value={data.blueprints.totalHierarchies}
+                  icon={<FolderTree className="h-3.5 w-3.5 text-teal-500" />}
+                />
               </div>
               <div className="border-t pt-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Blueprint Sales</span>
-                  <span className="font-medium">
-                    €{(data.revenue.purchasesThisPeriod.totalAmount / 100).toFixed(2)}
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">System Templates</span>
+                  <span className="font-medium">{data.blueprints.systemTemplates}</span>
+                </div>
+                <div className="mt-2 flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Avg per user</span>
+                  <span className="font-medium">{data.blueprints.avgPerUser}</span>
+                </div>
+                <div className="mt-2 flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Favorites</span>
+                  <span className="flex items-center gap-1 font-medium">
+                    <Heart className="h-3 w-3 text-red-400" />
+                    {data.blueprints.totalFavorites}
                   </span>
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {data.revenue.purchasesThisPeriod.count} purchases (€
-                  {(data.revenue.purchasesThisPeriod.platformFees / 100).toFixed(2)}{" "}
-                  platform fees)
-                </p>
+                <div className="mt-2 flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">New this period</span>
+                  <span className="font-medium text-green-500">
+                    +{data.blueprints.createdThisPeriod}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Platform Distribution */}
           <div className="rounded-xl border bg-card p-6">
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-5 flex items-center justify-between">
               <h3 className="font-semibold">Platform Distribution</h3>
               <Package className="h-5 w-5 text-muted-foreground" />
             </div>
             <PlatformChart data={data.blueprints.platformDistribution} />
           </div>
-
-          {/* Teams & Support */}
-          <div className="space-y-6">
-            {/* Teams */}
-            <div className="rounded-xl border bg-card p-6">
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="font-semibold">Teams</h3>
-                <Building2 className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <p className="text-2xl font-bold">{data.teams.total}</p>
-                  <p className="text-xs text-muted-foreground">Teams</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{data.teams.members}</p>
-                  <p className="text-xs text-muted-foreground">Members</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">
-                    {data.teams.pendingInvitations}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Pending</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Support */}
-            <div className="rounded-xl border bg-card p-6">
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="font-semibold">Support</h3>
-                <MessageSquare className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-2xl font-bold text-yellow-500">
-                    {data.support.openPosts}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Open</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-green-500">
-                    {data.support.resolvedPosts}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Resolved</p>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* Top Blueprints & More Stats */}
+        {/* Top Blueprints + Engagement/Roles/Support */}
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Top Blueprints */}
           <div className="rounded-xl border bg-card p-6">
@@ -573,35 +502,47 @@ export default function AdminStatsPage() {
               <h3 className="font-semibold">Top Blueprints</h3>
               <Crown className="h-5 w-5 text-amber-500" />
             </div>
-            <div className="space-y-3">
-              {data.blueprints.topDownloaded.slice(0, 5).map((blueprint, i) => (
-                <div
-                  key={blueprint.id}
-                  className="flex items-center gap-3 rounded-lg bg-muted/50 p-3"
-                >
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                    {i + 1}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">
-                      {blueprint.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      by {blueprint.author}
-                    </p>
+            {data.blueprints.topDownloaded.length === 0 ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                No blueprints yet
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {data.blueprints.topDownloaded.slice(0, 5).map((bp, i) => (
+                  <div
+                    key={bp.id}
+                    className="flex items-center gap-3 rounded-lg bg-muted/50 p-3"
+                  >
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                      {i + 1}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{bp.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        by {bp.author}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3 text-right">
+                      <div>
+                        <p className="text-sm font-medium">
+                          {bp.downloads.toLocaleString()}
+                        </p>
+                        <p className="text-xs text-muted-foreground">downloads</p>
+                      </div>
+                      {bp.favorites > 0 && (
+                        <div className="flex items-center gap-0.5 text-xs text-red-400">
+                          <Star className="h-3 w-3" />
+                          {bp.favorites}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium">
-                      {blueprint.downloads.toLocaleString()}
-                    </p>
-                    <p className="text-xs text-muted-foreground">downloads</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Engagement & Payouts */}
+          {/* Right column: Engagement + Roles + Support/Blog */}
           <div className="space-y-6">
             {/* Engagement */}
             <div className="rounded-xl border bg-card p-6">
@@ -609,54 +550,30 @@ export default function AdminStatsPage() {
                 <h3 className="font-semibold">Engagement</h3>
                 <FileText className="h-5 w-5 text-muted-foreground" />
               </div>
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <p className="text-2xl font-bold">
-                    {data.engagement.wizardDrafts}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Wizard Drafts</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">
-                    {data.engagement.recentDrafts}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Recent</p>
-                </div>
-                <div className="flex flex-col items-center">
-                  <div className="flex items-center gap-1">
-                    <Key className="h-4 w-4 text-muted-foreground" />
-                    <p className="text-2xl font-bold">
-                      {data.engagement.activeApiTokens}
-                    </p>
-                  </div>
-                  <p className="text-xs text-muted-foreground">API Tokens</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Payouts */}
-            <div className="rounded-xl border bg-card p-6">
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="font-semibold">Creator Payouts</h3>
-                <DollarSign className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <p className="text-2xl font-bold text-green-500">
-                    €{(data.payouts.totalPaid / 100).toFixed(2)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Total Paid ({data.payouts.totalCount} payouts)
-                  </p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-yellow-500">
-                    €{(data.payouts.pending.amount / 100).toFixed(2)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Pending ({data.payouts.pending.count} requests)
-                  </p>
-                </div>
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                <EngagementStat
+                  icon={<FileText className="h-4 w-4 text-blue-500" />}
+                  value={data.engagement.wizardDrafts}
+                  label="Wizard Drafts"
+                  sub={`${data.engagement.recentDrafts} recent`}
+                />
+                <EngagementStat
+                  icon={<Key className="h-4 w-4 text-amber-500" />}
+                  value={data.engagement.activeApiTokens}
+                  label="API Tokens"
+                  sub="active"
+                />
+                <EngagementStat
+                  icon={<Terminal className="h-4 w-4 text-green-500" />}
+                  value={data.engagement.totalCliSessions}
+                  label="CLI Sessions"
+                  sub={`${data.engagement.activeCliSessions} active`}
+                />
+                <EngagementStat
+                  icon={<FolderTree className="h-4 w-4 text-purple-500" />}
+                  value={data.engagement.totalProjects}
+                  label="Projects"
+                />
               </div>
             </div>
 
@@ -684,6 +601,63 @@ export default function AdminStatsPage() {
                 ))}
               </div>
             </div>
+
+            {/* Support - conditional */}
+            {data.featureFlags.supportEnabled && data.support && (
+              <div className="rounded-xl border bg-card p-6">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="font-semibold">Support Forum</h3>
+                  <MessageSquare className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <p className="text-2xl font-bold text-yellow-500">
+                      {data.support.openPosts}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Open</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-green-500">
+                      {data.support.resolvedPosts}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Resolved</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">
+                      {data.support.totalComments}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Comments</p>
+                  </div>
+                </div>
+                {data.support.postsThisPeriod > 0 && (
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    +{data.support.postsThisPeriod} posts this period
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Blog - conditional */}
+            {data.featureFlags.blogEnabled && data.blog && (
+              <div className="rounded-xl border bg-card p-6">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="font-semibold">Blog</h3>
+                  <BookOpen className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-center">
+                  <div>
+                    <p className="text-2xl font-bold">{data.blog.totalPosts}</p>
+                    <p className="text-xs text-muted-foreground">Total Posts</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-green-500">
+                      {data.blog.publishedPosts}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Published</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -691,7 +665,6 @@ export default function AdminStatsPage() {
   );
 }
 
-// KPI Card Component
 function KPICard({
   title,
   value,
@@ -730,51 +703,145 @@ function KPICard({
   );
 }
 
-// User Growth Chart Component
-function UserGrowthChart({
-  data,
-  visiblePlans,
+function RoleBadge({ role }: { role: string }) {
+  const cls =
+    role === "SUPERADMIN"
+      ? "bg-purple-500/20 text-purple-500"
+      : role === "ADMIN"
+        ? "bg-blue-500/20 text-blue-500"
+        : "bg-muted text-muted-foreground";
+  return (
+    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>
+      {role}
+    </span>
+  );
+}
+
+function StatRow({
+  icon,
+  label,
+  value,
+  detail,
+  detailColor,
 }: {
-  data: UserGrowthData[];
-  visiblePlans: Record<string, boolean>;
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  detail?: string;
+  detailColor?: string;
 }) {
-  // Calculate cumulative totals for each plan
-  const cumulativeData = data.reduce<UserGrowthData[]>((acc, day) => {
-    const prev = acc[acc.length - 1] || {
-      FREE: 0,
-      TEAMS: 0,
-      total: 0,
-    };
-    acc.push({
-      date: day.date,
-      FREE: prev.FREE + day.FREE,
-      TEAMS: prev.TEAMS + day.TEAMS,
-      total: prev.total + day.total,
-    });
-    return acc;
-  }, []);
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        {icon}
+        <span className="text-sm">{label}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="font-medium">{value}</span>
+        {detail && (
+          <span className={`text-xs ${detailColor || "text-muted-foreground"}`}>
+            {detail}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
 
-  // Find max value for scaling
-  const visibleKeys = Object.entries(visiblePlans)
-    .filter(([, visible]) => visible)
-    .map(([key]) => key);
+function AuthProviderBar({
+  provider,
+  count,
+  total,
+}: {
+  provider: string;
+  count: number;
+  total: number;
+}) {
+  const pct = total > 0 ? (count / total) * 100 : 0;
+  const providerColors: Record<string, string> = {
+    google: "#4285F4",
+    github: "#8b5cf6",
+    email: "#64748b",
+    credentials: "#64748b",
+  };
+  const color = providerColors[provider.toLowerCase()] || "#8b5cf6";
+  const label = provider.charAt(0).toUpperCase() + provider.slice(1);
 
-  const maxValue = Math.max(
-    ...cumulativeData.map((d) =>
-      visibleKeys.reduce(
-        (sum, key) => sum + (d[key as keyof UserGrowthData] as number),
-        0
-      )
-    ),
-    1
+  return (
+    <div>
+      <div className="mb-1 flex justify-between text-xs">
+        <span className="text-muted-foreground">{label}</span>
+        <span className="font-medium">
+          {count} ({pct.toFixed(0)}%)
+        </span>
+      </div>
+      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+        <div
+          className="h-full rounded-full transition-all"
+          style={{ width: `${Math.max(pct, 2)}%`, backgroundColor: color }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function MiniStat({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: number;
+  icon: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-lg bg-muted/50 p-3">
+      <div className="flex items-center gap-1.5">
+        {icon}
+        <span className="text-xs text-muted-foreground">{label}</span>
+      </div>
+      <p className="mt-1 text-xl font-bold">{value}</p>
+    </div>
+  );
+}
+
+function EngagementStat({
+  icon,
+  value,
+  label,
+  sub,
+}: {
+  icon: React.ReactNode;
+  value: number;
+  label: string;
+  sub?: string;
+}) {
+  return (
+    <div className="rounded-lg bg-muted/40 p-3 text-center">
+      <div className="mb-1 flex justify-center">{icon}</div>
+      <p className="text-xl font-bold">{value}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
+      {sub && (
+        <p className="mt-0.5 text-[10px] text-muted-foreground/70">{sub}</p>
+      )}
+    </div>
+  );
+}
+
+function UserGrowthChart({ data }: { data: UserGrowthData[] }) {
+  const cumulativeData = data.reduce<{ date: string; count: number }[]>(
+    (acc, day) => {
+      const prev = acc[acc.length - 1]?.count || 0;
+      acc.push({ date: day.date, count: prev + day.count });
+      return acc;
+    },
+    []
   );
 
-  // Show fewer data points for better readability
+  const maxValue = Math.max(...cumulativeData.map((d) => d.count), 1);
   const step = Math.ceil(data.length / 30);
   const filteredData = cumulativeData.filter((_, i) => i % step === 0);
-
-  // Check if there's any data
-  const hasData = cumulativeData.some(d => d.total > 0);
+  const hasData = cumulativeData.some((d) => d.count > 0);
 
   if (!hasData) {
     return (
@@ -788,38 +855,19 @@ function UserGrowthChart({
     <div className="h-48">
       <div className="flex h-full items-end gap-[2px]">
         {filteredData.map((day, i) => {
+          const height = (day.count / maxValue) * 100;
+          const minHeight = day.count > 0 ? Math.max(height, 4) : 0;
           const date = new Date(day.date);
-
-          // Calculate stacked bar heights
-          const plans = ["FREE", "TEAMS"] as const;
-
           return (
             <div
               key={day.date}
               className="group relative flex-1"
-              title={`${day.date}: FREE ${day.FREE}, TEAMS ${day.TEAMS}`}
+              title={`${day.date}: ${day.count} cumulative`}
             >
-              <div className="flex h-full flex-col-reverse gap-[1px]">
-                {plans.map((plan) => {
-                  if (!visiblePlans[plan]) return null;
-                  const value = day[plan];
-                  const height = (value / maxValue) * 100;
-                  // Ensure minimum visible height when value > 0
-                  const minHeight = value > 0 ? Math.max(height, 4) : 0;
-                  return (
-                    <div
-                      key={plan}
-                      className="w-full rounded-[2px] transition-all group-hover:opacity-80"
-                      style={{
-                        height: `${minHeight}%`,
-                        backgroundColor: PLAN_COLORS[plan],
-                      }}
-                    />
-                  );
-                })}
-              </div>
-
-              {/* Show date label for first, middle, last */}
+              <div
+                className="w-full rounded-t-sm bg-purple-500 transition-all group-hover:bg-purple-400"
+                style={{ height: `${minHeight}%` }}
+              />
               {(i === 0 ||
                 i === Math.floor(filteredData.length / 2) ||
                 i === filteredData.length - 1) && (
@@ -839,7 +887,6 @@ function UserGrowthChart({
   );
 }
 
-// Downloads Chart Component
 function DownloadsChart({ data }: { data: DownloadGrowthData[] }) {
   const maxDownloads = Math.max(...data.map((d) => d.downloads), 1);
   const step = Math.ceil(data.length / 30);
@@ -859,10 +906,8 @@ function DownloadsChart({ data }: { data: DownloadGrowthData[] }) {
       <div className="flex h-full items-end gap-[2px]">
         {filteredData.map((day, i) => {
           const height = (day.downloads / maxDownloads) * 100;
-          // Ensure minimum visible height when value > 0
           const minHeight = day.downloads > 0 ? Math.max(height, 4) : 0;
           const date = new Date(day.date);
-
           return (
             <div
               key={day.date}
@@ -873,7 +918,6 @@ function DownloadsChart({ data }: { data: DownloadGrowthData[] }) {
                 className="w-full rounded-t-sm bg-blue-500 transition-all group-hover:bg-blue-400"
                 style={{ height: `${minHeight}%` }}
               />
-
               {(i === 0 ||
                 i === Math.floor(filteredData.length / 2) ||
                 i === filteredData.length - 1) && (
@@ -893,7 +937,6 @@ function DownloadsChart({ data }: { data: DownloadGrowthData[] }) {
   );
 }
 
-// Platform Distribution Chart Component
 function PlatformChart({ data }: { data: PlatformData[] }) {
   if (data.length === 0) {
     return (
@@ -940,11 +983,3 @@ function PlatformChart({ data }: { data: PlatformData[] }) {
     </div>
   );
 }
-
-
-
-
-
-
-
-
