@@ -133,7 +133,7 @@ async function main() {
       description:
         "Complete setup for Next.js 15, TypeScript, Prisma ORM, and modern web development",
       type: TemplateType.CURSORRULES,
-      tier: TemplateTier.ADVANCED,
+      tier: TemplateTier.LONG,
       targetPlatform: "cursor",
       compatibleWith: ["claude_code", "windsurf", "github_copilot"],
       content: `# {{APP_NAME}} Project Rules
@@ -230,7 +230,7 @@ You are an expert in Python, pandas, NumPy, scikit-learn, and data science workf
       name: "Simple Project Setup",
       description: "Minimal configuration for beginners",
       type: TemplateType.CURSORRULES,
-      tier: TemplateTier.SIMPLE,
+      tier: TemplateTier.SHORT,
       targetPlatform: "cursor",
       compatibleWith: ["claude_code", "windsurf", "github_copilot"],
       content: `# {{APP_NAME}}

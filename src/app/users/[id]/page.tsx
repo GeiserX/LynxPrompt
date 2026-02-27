@@ -62,9 +62,10 @@ interface UserProfile {
 }
 
 const tierStyles: Record<string, string> = {
-  SIMPLE: "border-green-500/50 bg-green-500/10 text-green-700 dark:text-green-300",
+  SHORT: "border-green-500/50 bg-green-500/10 text-green-700 dark:text-green-300",
   INTERMEDIATE: "border-blue-500/50 bg-blue-500/10 text-blue-700 dark:text-blue-300",
-  ADVANCED: "border-purple-500/50 bg-purple-500/10 text-purple-700 dark:text-purple-300",
+  LONG: "border-purple-500/50 bg-purple-500/10 text-purple-700 dark:text-purple-300",
+  SUPERLONG: "border-red-500/50 bg-red-500/10 text-red-700 dark:text-red-300",
 };
 
 // Command type detection

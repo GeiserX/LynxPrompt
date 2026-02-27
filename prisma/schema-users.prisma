@@ -559,9 +559,10 @@ enum CliSessionStatus {
 }
 
 enum TemplateTier {
-  SIMPLE
+  SHORT
   INTERMEDIATE
-  ADVANCED
+  LONG
+  SUPERLONG
 }
 
 enum TemplateType {

@@ -110,16 +110,16 @@ export default function BlueprintsOverviewPage() {
       <section className="space-y-4">
         <h2 className="text-2xl font-bold">Blueprint Categories</h2>
         <p className="text-muted-foreground">
-          Blueprints are automatically categorized based on their complexity,
-          calculated using internal metrics:
+          Blueprints are automatically categorized based on their length,
+          calculated by word count:
         </p>
         <div className="space-y-3">
           <div className="flex items-center gap-4 rounded-lg border bg-card p-4">
             <span className="rounded-md bg-gradient-to-r from-emerald-500 to-green-500 px-3 py-1 text-sm font-bold text-white shadow-sm">
-              Simple
+              Short
             </span>
             <div>
-              <p className="font-medium">Basic Configurations</p>
+              <p className="font-medium">Up to 200 words</p>
               <p className="text-sm text-muted-foreground">
                 Quick setups for simple projects
               </p>
@@ -130,20 +130,31 @@ export default function BlueprintsOverviewPage() {
               Intermediate
             </span>
             <div>
-              <p className="font-medium">Standard Project Setups</p>
+              <p className="font-medium">201–800 words</p>
               <p className="text-sm text-muted-foreground">
-                Comprehensive rules for most projects
+                Standard rules for most projects
               </p>
             </div>
           </div>
           <div className="flex items-center gap-4 rounded-lg border bg-card p-4">
             <span className="rounded-md bg-gradient-to-r from-purple-500 to-pink-500 px-3 py-1 text-sm font-bold text-white shadow-sm">
-              Advanced
+              Long
             </span>
             <div>
-              <p className="font-medium">Comprehensive Configurations</p>
+              <p className="font-medium">801–2,500 words</p>
               <p className="text-sm text-muted-foreground">
-                Detailed rules for complex projects
+                Comprehensive configurations for complex projects
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 rounded-lg border bg-card p-4">
+            <span className="rounded-md bg-gradient-to-r from-red-500 to-orange-500 px-3 py-1 text-sm font-bold text-white shadow-sm">
+              Super Long
+            </span>
+            <div>
+              <p className="font-medium">2,501+ words</p>
+              <p className="text-sm text-muted-foreground">
+                Exhaustive rule sets covering every aspect of a project
               </p>
             </div>
           </div>
