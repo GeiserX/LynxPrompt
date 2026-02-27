@@ -514,8 +514,8 @@ export default function PrivacyPage() {
                   We retain your personal data for as long as your account is
                   active. If you request account deletion, we will erase your
                   personal data within one month, except where we are legally
-                  required to retain certain records (e.g., payment records for
-                  tax purposes, which may be retained for up to 7 years).
+                  required to retain certain records (e.g., account records for
+                  legal purposes, which may be retained for up to 7 years).
                 </p>
               </section>
 

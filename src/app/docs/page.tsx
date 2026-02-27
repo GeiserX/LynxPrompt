@@ -47,7 +47,7 @@ export default function DocsIndexPage() {
           </h1>
         </div>
         <p className="max-w-2xl text-lg text-muted-foreground">
-          Learn how to use LynxPrompt to create, share, and monetize your AI IDE
+          Learn how to use LynxPrompt to create, share, and sync your AI IDE
           configurations. Everything you need to get started and become a power
           user.
         </p>

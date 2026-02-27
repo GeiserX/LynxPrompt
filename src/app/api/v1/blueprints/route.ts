@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
     // Check subscription
     if (!canUseApi(tokenData.user.subscriptionPlan)) {
       return NextResponse.json(
-        { error: "API access requires Pro, Max, or Teams subscription" },
+        { error: "API access is not available for your account" },
         { status: 403 }
       );
     }
@@ -194,7 +194,7 @@ export async function POST(request: NextRequest) {
     // Check subscription
     if (!canUseApi(tokenData.user.subscriptionPlan)) {
       return NextResponse.json(
-        { error: "API access requires Pro, Max, or Teams subscription" },
+        { error: "API access is not available for your account" },
         { status: 403 }
       );
     }

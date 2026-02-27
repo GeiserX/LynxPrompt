@@ -73,10 +73,7 @@ interface Blueprint {
   category?: string;
   isOfficial?: boolean;
   aiAssisted?: boolean;
-  price?: number | null;
-  currency?: string;
   isOwner?: boolean;
-  hasPurchased?: boolean;
 }
 
 // Command type detection

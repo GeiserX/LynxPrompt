@@ -168,7 +168,7 @@ A decentralized blueprint sharing network across LynxPrompt instances.
 
 #### High Priority (Legal Risk)
 
-- [x] **Marketplace role clarification**: Buyer-Seller contract, LynxPrompt as intermediary
+- [x] **Marketplace role clarification**: Content sharing platform, LynxPrompt as intermediary
 - [x] **EU digital content withdrawal**: Explicit consent + acknowledgment clause
 - [x] **Liability limitation carve-outs**: Fraud, wilful misconduct, gross negligence
 - [x] **Governing law fix**: "Laws of Spain" (not "EU"), courts of Cartagena
@@ -176,11 +176,11 @@ A decentralized blueprint sharing network across LynxPrompt instances.
 
 #### Marketplace Clauses
 
-- [x] **Buyer license grant**: Non-exclusive, non-transferable, internal use only
-- [x] **Seller warranties**: Own rights, no infringement, no malware, complies with AUP
+- [x] **Download license grant**: Non-exclusive, non-transferable, internal use only
+- [x] **Creator obligations**: Own rights, no infringement, no malware, complies with AUP
 - [x] **Content takedown**: Platform discretion to remove content
 - [x] **AI/prompt disclaimer**: "Prompts may produce unexpected outputs, use at own risk"
-- [x] **Buyer-Seller disputes**: Primarily between parties, platform may assist
+- [x] **Content disputes**: Primarily between parties, platform may assist
 
 #### Standard Clauses
 

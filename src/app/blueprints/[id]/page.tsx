@@ -770,7 +770,7 @@ export default function BlueprintDetailPage() {
 
       <Footer />
 
-      {/* Download Modal - only if content is available (purchased or free) */}
+      {/* Download Modal - only if content is available */}
       {blueprint && (blueprint.content || selectedVersionContent) && (
         <TemplateDownloadModal
           isOpen={showDownloadModal}

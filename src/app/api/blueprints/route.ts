@@ -392,7 +392,7 @@ export async function POST(request: NextRequest) {
     if (existingBlueprintCount >= maxBlueprints) {
       return NextResponse.json(
         { 
-          error: `You have reached the maximum number of blueprints for your plan (${maxBlueprints.toLocaleString()}). Upgrade your subscription to create more blueprints.`,
+          error: `You have reached the maximum number of blueprints for your plan (${maxBlueprints.toLocaleString()}). Contact the administrator for a higher limit.`,
           limit: maxBlueprints,
           current: existingBlueprintCount,
         },

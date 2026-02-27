@@ -89,7 +89,7 @@ export async function GET(
       return NextResponse.json({ error: "Team not found" }, { status: 404 });
     }
 
-    // Calculate active users in current billing cycle
+    // Calculate active users in current period
     const activeMembers = team.members.filter((m) => m.isActiveThisCycle).length;
 
     // Get user's role in this team
