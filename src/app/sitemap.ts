@@ -191,12 +191,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     },
     {
-      url: `${baseUrl}/docs/marketplace/payouts`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.6,
-    },
-    {
       url: `${baseUrl}/docs/ai-features`,
       lastModified: new Date(),
       changeFrequency: "monthly",
