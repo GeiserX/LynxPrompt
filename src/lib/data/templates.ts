@@ -584,7 +584,7 @@ export async function getTemplateById(
     // Handle both bp_ (current) and usr_ (legacy) prefixes
     const realId = id.replace(/^(bp_|usr_)/, "");
 
-    // Get session to check if user owns this template or has purchased it
+    // Get session to check if user owns this template
     const session = await import("next-auth").then(({ getServerSession }) =>
       import("@/lib/auth").then(({ authOptions }) =>
         getServerSession(authOptions)
@@ -593,7 +593,7 @@ export async function getTemplateById(
 
     const userId = session?.user?.id;
 
-    // Allow access if template is public OR if user owns it OR if user has purchased it OR team access
+    // Allow access if template is public OR if user owns it OR team access
     const template = await prismaUsers.userTemplate.findFirst({
       where: {
         id: realId,

@@ -179,18 +179,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/docs/marketplace/pricing`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.6,
-    },
-    {
-      url: `${baseUrl}/docs/marketplace/selling`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.6,
-    },
-    {
       url: `${baseUrl}/docs/ai-features`,
       lastModified: new Date(),
       changeFrequency: "monthly",
@@ -237,12 +225,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/docs/faq/billing`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.6,
     },
     {
       url: `${baseUrl}/docs/faq/troubleshooting`,

@@ -111,12 +111,12 @@ export async function POST(request: Request) {
       requestsThisMinute = 1;
     }
 
-    // Check usage reset (aligned with billing period)
+    // Check usage reset (aligned with monthly period)
     let tokensUsed = user.aiTokensUsedThisPeriod;
     const resetAt = user.aiUsageResetAt;
     
     if (resetAt && now > resetAt) {
-      // Reset usage at billing period end
+      // Reset usage at period end
       tokensUsed = 0;
     }
 
@@ -124,7 +124,7 @@ export async function POST(request: Request) {
     if (tokensUsed >= MAX_COST_UNITS_PER_PERIOD) {
       return NextResponse.json(
         {
-          error: "You've reached your AI usage limit for this billing period. It will reset at your next billing cycle.",
+          error: "You've reached your AI usage limit for this period. It will reset at the start of next month.",
         },
         { status: 429 }
       );

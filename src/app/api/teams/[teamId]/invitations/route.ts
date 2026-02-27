@@ -139,7 +139,7 @@ export async function POST(
     const availableSeats = paidSeats - usedSeats;
 
     if (emails.length > availableSeats) {
-      // Return a specific code so frontend knows to prompt for payment
+      // Return a specific code so frontend knows seats are full
       return NextResponse.json(
         {
           error: "Additional seats required",

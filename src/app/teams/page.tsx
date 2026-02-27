@@ -43,7 +43,7 @@ const TEAMS_FEATURES = [
     icon: Building,
     title: "Centralized Management",
     description:
-      "One admin dashboard to manage all team members, roles, and billing. Invite users with magic links.",
+      "One admin dashboard to manage all team members, roles, and settings. Invite users with magic links.",
   },
   {
     icon: KeyRound,
@@ -59,13 +59,9 @@ const TEAMS_FEATURES = [
   },
 ];
 
-const PRICING_DETAILS = [
-  { label: "Price per seat", value: "€10/month or €108/year (10% off)" },
+const TEAM_DETAILS = [
   { label: "Minimum seats", value: "3" },
   { label: "Maximum seats", value: "Unlimited" },
-  { label: "Billing cycle", value: "Monthly or Annual" },
-  { label: "Active user billing", value: "Yes — only pay for logins" },
-  { label: "Pro-rated additions", value: "Yes — pay for remaining days" },
 ];
 
 export default function TeamsPage() {
@@ -138,7 +134,7 @@ export default function TeamsPage() {
             </h1>
             <p className="mt-4 text-lg text-muted-foreground">
               Centralized management, team-shared blueprints, enterprise SSO, and
-              billing that only charges for active users. Starting at €90/month for 3 seats.
+              role-based access for your entire organization.
             </p>
             <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               {status === "authenticated" ? (
@@ -199,22 +195,21 @@ export default function TeamsPage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl">
             <h2 className="mb-8 text-center text-2xl font-bold">
-              Simple, Predictable Pricing
+              Team Plan Details
             </h2>
 
             <div className="rounded-xl border bg-card overflow-hidden">
               <div className="bg-gradient-to-r from-teal-500 to-cyan-500 p-6 text-white">
                 <div className="flex items-end gap-2">
-                  <span className="text-5xl font-bold">€10</span>
-                  <span className="mb-1 text-lg opacity-80">/seat/month</span>
+                  <span className="text-5xl font-bold">Free</span>
                 </div>
                 <p className="mt-2 opacity-90">
-                  Only pay for users who actually log in
+                  Manage team members and shared blueprints
                 </p>
               </div>
 
               <div className="divide-y">
-                {PRICING_DETAILS.map((item) => (
+                {TEAM_DETAILS.map((item) => (
                   <div
                     key={item.label}
                     className="flex items-center justify-between p-4"
@@ -257,7 +252,7 @@ export default function TeamsPage() {
                 Create Your Team
               </h2>
               <p className="mb-8 text-center text-muted-foreground">
-                Configure your team and proceed to payment.
+                Configure your team to get started.
               </p>
 
               <form onSubmit={handleCreateTeam} className="space-y-5">
@@ -333,7 +328,7 @@ export default function TeamsPage() {
                     </button>
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">
-                    Minimum 3 seats. You can add more anytime (prorated).
+                    Minimum 3 seats. You can add more anytime.
                   </p>
                 </div>
 
@@ -406,25 +401,24 @@ export default function TeamsPage() {
             <div className="space-y-4">
               <details className="group rounded-lg border bg-card">
                 <summary className="flex cursor-pointer items-center justify-between p-4 font-medium">
-                  How does active user billing work?
+                  How does the seat limit work?
                   <span className="transition-transform group-open:rotate-180">↓</span>
                 </summary>
                 <p className="border-t px-4 py-3 text-sm text-muted-foreground">
-                  You&apos;re only charged for team members who logged in during the billing period.
-                  If you have 10 seats but only 5 people logged in, you pay for 5 (or the 3-seat minimum).
-                  Unused seats generate credits for your next billing cycle.
+                  Only team members who log in during a period count as active seats.
+                  If you have 10 seats but only 5 people log in, only 5 count toward your seat limit
+                  (with a minimum of 3 active seats).
                 </p>
               </details>
 
               <details className="group rounded-lg border bg-card">
                 <summary className="flex cursor-pointer items-center justify-between p-4 font-medium">
-                  Can I add seats mid-cycle?
+                  Can I add seats anytime?
                   <span className="transition-transform group-open:rotate-180">↓</span>
                 </summary>
                 <p className="border-t px-4 py-3 text-sm text-muted-foreground">
-                  Yes! When you add seats mid-cycle, you pay a pro-rated amount for the remaining
-                  days in your billing period. For example, if you add 2 seats with 15 days left,
-                  you pay (€10 ÷ 30 days) × 15 days × 2 seats = €10.
+                  Yes! You can increase your team&apos;s seat count at any time from the team
+                  settings dashboard. New seats are available immediately.
                 </p>
               </details>
 
@@ -434,9 +428,8 @@ export default function TeamsPage() {
                   <span className="transition-transform group-open:rotate-180">↓</span>
                 </summary>
                 <p className="border-t px-4 py-3 text-sm text-muted-foreground">
-                  When a member is removed, their personal subscription reverts to Free.
-                  Team-shared blueprints remain with the team. If you reduce your seat count,
-                  you&apos;ll receive credits on your next bill.
+                  When a member is removed, their account reverts to individual access.
+                  Team-shared blueprints remain with the team.
                 </p>
               </details>
 

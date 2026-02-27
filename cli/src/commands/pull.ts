@@ -473,7 +473,7 @@ function handleApiError(error: unknown): void {
       );
       console.error(
         chalk.gray(
-          "  This might be a private resource or require a higher subscription tier."
+          "  This might be a private resource or you may not have access."
         )
       );
     } else if (error.statusCode === 404) {

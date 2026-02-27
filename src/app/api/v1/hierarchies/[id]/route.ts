@@ -47,7 +47,7 @@ export async function GET(
     // Check subscription
     if (!canUseApi(tokenData.user.subscriptionPlan)) {
       return NextResponse.json(
-        { error: "API access requires a subscription" },
+        { error: "API access is not available for your account" },
         { status: 403 }
       );
     }
@@ -227,7 +227,7 @@ export async function PATCH(
     // Check subscription
     if (!canUseApi(tokenData.user.subscriptionPlan)) {
       return NextResponse.json(
-        { error: "API access requires a subscription" },
+        { error: "API access is not available for your account" },
         { status: 403 }
       );
     }
@@ -357,7 +357,7 @@ export async function DELETE(
     // Check subscription
     if (!canUseApi(tokenData.user.subscriptionPlan)) {
       return NextResponse.json(
-        { error: "API access requires a subscription" },
+        { error: "API access is not available for your account" },
         { status: 403 }
       );
     }

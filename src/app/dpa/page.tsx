@@ -180,7 +180,7 @@ export default function DPAPage() {
                     </h3>
                     <p className="mt-1 text-sm">
                       The provision of the LynxPrompt platform for creating,
-                      storing, sharing, and purchasing AI IDE configuration
+                      storing, sharing, and downloading AI IDE configuration
                       files and prompts.
                     </p>
                   </div>
@@ -231,10 +231,9 @@ export default function DPAPage() {
                     </h3>
                     <ul className="mt-1 list-inside list-disc space-y-1 text-sm">
                       <li>Users who create LynxPrompt accounts</li>
-                      <li>Team members (for Teams subscriptions)</li>
+                      <li>Team members (for Teams features)</li>
                       <li>
-                        Marketplace buyers and sellers (if applicable to your
-                        use)
+                        Marketplace users sharing or downloading blueprints
                       </li>
                     </ul>
                   </div>
