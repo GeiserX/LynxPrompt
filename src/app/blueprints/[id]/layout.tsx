@@ -25,7 +25,6 @@ export async function generateMetadata({
     description: string | null;
     tags: string[];
     category: string | null;
-    price: number | null;
     downloads: number;
     favorites: number;
   } | null = null;
@@ -41,7 +40,6 @@ export async function generateMetadata({
           description: true,
           tags: true,
           category: true,
-          price: true,
           downloads: true,
           favorites: true,
           userId: true,
@@ -73,7 +71,7 @@ export async function generateMetadata({
       });
 
       if (systemTemplate) {
-        blueprint = { ...systemTemplate, price: null };
+        blueprint = systemTemplate;
         authorName = "LynxPrompt";
       }
     }
@@ -92,13 +90,8 @@ export async function generateMetadata({
     blueprint.description ||
     `AI configuration blueprint for ${blueprint.category || "developers"}. ${blueprint.downloads} downloads.`;
 
-  const priceText =
-    blueprint.price && blueprint.price > 0
-      ? ` - €${(blueprint.price / 100).toFixed(2)}`
-      : " - Free";
-
   return {
-    title: `${blueprint.name}${priceText}`,
+    title: blueprint.name,
     description,
     keywords: blueprint.tags.length > 0 ? blueprint.tags : undefined,
     authors: authorName ? [{ name: authorName }] : undefined,
@@ -131,7 +124,6 @@ async function getBlueprintJsonLd(id: string) {
   let blueprint: {
     name: string;
     description: string | null;
-    price: number | null;
     downloads: number;
     favorites: number;
     category: string | null;
@@ -146,7 +138,6 @@ async function getBlueprintJsonLd(id: string) {
         select: {
           name: true,
           description: true,
-          price: true,
           downloads: true,
           favorites: true,
           category: true,
@@ -177,7 +168,7 @@ async function getBlueprintJsonLd(id: string) {
       });
 
       if (systemTemplate) {
-        blueprint = { ...systemTemplate, price: null };
+        blueprint = systemTemplate;
         authorName = "LynxPrompt";
       }
     }
@@ -203,7 +194,7 @@ async function getBlueprintJsonLd(id: string) {
     },
     offers: {
       "@type": "Offer",
-      price: blueprint.price ? (blueprint.price / 100).toFixed(2) : "0",
+      price: "0",
       priceCurrency: "EUR",
       availability: "https://schema.org/InStock",
       url: `${APP_URL}/blueprints/${id}`,
