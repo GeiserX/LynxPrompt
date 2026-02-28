@@ -12,16 +12,17 @@ if (-not $node) {
     throw "Node.js is required but not installed. Please install Node.js first: choco install nodejs"
 }
 
-# Install via npm globally with specific version
-# Note: npm writes informational messages (notices, funding) to stderr, which would
-# cause PowerShell to throw with ErrorActionPreference=Stop. We capture all output
-# and check the exit code manually instead.
+# npm.ps1 (Node's PowerShell wrapper) propagates stderr as terminating errors
+# under ErrorActionPreference=Stop, even with 2>&1. Lower it for the npm call
+# and check the exit code manually.
 Write-Host "Installing $packageName@$version via npm..."
 
+$prevEAP = $ErrorActionPreference
+$ErrorActionPreference = 'Continue'
 $npmOutput = & npm install -g "lynxprompt@$version" 2>&1
 $npmExitCode = $LASTEXITCODE
+$ErrorActionPreference = $prevEAP
 
-# Output the npm messages for visibility
 $npmOutput | ForEach-Object { Write-Host $_ }
 
 if ($npmExitCode -ne 0) {
