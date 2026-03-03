@@ -148,7 +148,7 @@ export function Footer() {
                 </svg>
               </a>
               <a
-                href="https://discord.gg/WDfjrhVm"
+                href="https://discord.gg/zxrYwHgtPX"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground transition-colors hover:text-foreground"

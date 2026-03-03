@@ -178,7 +178,7 @@ export default function FAQOverviewPage() {
           <li>
             <strong>Discord:</strong>{" "}
             <a
-              href="https://discord.gg/WDfjrhVm"
+              href="https://discord.gg/zxrYwHgtPX"
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:underline"
