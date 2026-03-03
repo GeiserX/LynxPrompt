@@ -11,6 +11,7 @@
 # 3. Push to main — the action will find all AI config files and sync them.
 #
 # That's it. No other configuration needed.
+# Monorepos are supported — all paths use ** to match any depth.
 
 name: Sync AI configs to LynxPrompt
 
@@ -19,46 +20,46 @@ on:
     branches: [main, master]
     paths:
       # Popular
-      - 'AGENTS.md'
-      - 'CLAUDE.md'
-      - '.cursor/rules/**'
-      - '.github/copilot-instructions.md'
-      - '.windsurfrules'
+      - '**/AGENTS.md'
+      - '**/CLAUDE.md'
+      - '**/.cursor/rules/**'
+      - '**/.github/copilot-instructions.md'
+      - '**/.windsurfrules'
       # IDEs
-      - 'GEMINI.md'
-      - '.zed/instructions.md'
-      - '.void/config.json'
-      - '.trae/rules/**'
-      - '.idx/**'
+      - '**/GEMINI.md'
+      - '**/.zed/instructions.md'
+      - '**/.void/config.json'
+      - '**/.trae/rules/**'
+      - '**/.idx/**'
       # Editor extensions
-      - '.clinerules'
-      - '.roo/rules/**'
-      - '.continue/config.json'
-      - '.cody/config.json'
-      - '.tabnine.yaml'
-      - '.supermaven/config.json'
-      - '.codegpt/config.json'
-      - '.amazonq/rules/**'
-      - '.augment/rules/**'
-      - '.kilocode/rules/**'
-      - '.junie/guidelines.md'
-      - '.kiro/steering/**'
+      - '**/.clinerules'
+      - '**/.roo/rules/**'
+      - '**/.continue/config.json'
+      - '**/.cody/config.json'
+      - '**/.tabnine.yaml'
+      - '**/.supermaven/config.json'
+      - '**/.codegpt/config.json'
+      - '**/.amazonq/rules/**'
+      - '**/.augment/rules/**'
+      - '**/.kilocode/rules/**'
+      - '**/.junie/guidelines.md'
+      - '**/.kiro/steering/**'
       # CLI tools
-      - 'AIDER.md'
-      - '.goosehints'
-      - 'WARP.md'
-      - 'opencode.json'
+      - '**/AIDER.md'
+      - '**/.goosehints'
+      - '**/WARP.md'
+      - '**/opencode.json'
       # Other
-      - '.openhands/microagents/repo.md'
-      - 'CRUSH.md'
-      - 'firebender.json'
+      - '**/.openhands/microagents/repo.md'
+      - '**/CRUSH.md'
+      - '**/firebender.json'
       # Slash commands
-      - '.cursor/commands/**'
-      - '.claude/commands/**'
-      - '.windsurf/workflows/**'
-      - '.copilot/prompts/**'
-      - '.continue/prompts/**'
-      - '.opencode/commands/**'
+      - '**/.cursor/commands/**'
+      - '**/.claude/commands/**'
+      - '**/.windsurf/workflows/**'
+      - '**/.copilot/prompts/**'
+      - '**/.continue/prompts/**'
+      - '**/.opencode/commands/**'
 
   # Allow manual trigger from GitHub UI
   workflow_dispatch:
@@ -67,8 +68,6 @@ jobs:
   sync:
     name: Sync to LynxPrompt
     runs-on: ubuntu-latest
-    # Only run if the LYNXPROMPT_TOKEN secret exists
-    if: ${{ vars.LYNXPROMPT_ENABLED != 'false' }}
 
     permissions:
       contents: read
