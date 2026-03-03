@@ -11,7 +11,29 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { teamSlug, callbackUrl } = await request.json();
+    const { teamSlug, callbackUrl: rawCallbackUrl } = await request.json();
+
+    // Validate callbackUrl: only allow relative paths or same-origin URLs
+    let callbackUrl = "/dashboard";
+    if (rawCallbackUrl && typeof rawCallbackUrl === "string") {
+      const trimmed = rawCallbackUrl.trim();
+      if (trimmed.startsWith("/") && !trimmed.startsWith("//")) {
+        // Relative path - allowed
+        callbackUrl = trimmed;
+      } else {
+        try {
+          const appUrl = process.env.NEXTAUTH_URL || process.env.APP_URL || "https://lynxprompt.com";
+          const parsed = new URL(trimmed);
+          const origin = new URL(appUrl);
+          if (parsed.origin === origin.origin) {
+            callbackUrl = parsed.pathname + parsed.search + parsed.hash;
+          }
+          // Otherwise, keep default /dashboard
+        } catch {
+          // Invalid URL, keep default /dashboard
+        }
+      }
+    }
 
     if (!teamSlug) {
       return NextResponse.json(

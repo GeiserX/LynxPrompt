@@ -54,68 +54,67 @@ export async function POST(
   const templateId = rawId.replace(/^(sys_|bp_)/, "");
 
   try {
-    // Check if already favorited
-    const existingFavorite = await prismaUsers.templateFavorite.findUnique({
-      where: {
-        userId_templateId_templateType: {
-          userId: session.user.id,
-          templateId,
-          templateType,
+    // Use a transaction to prevent race conditions between check+create/delete and counter update
+    const result = await prismaUsers.$transaction(async (tx) => {
+      // Check if already favorited
+      const existingFavorite = await tx.templateFavorite.findUnique({
+        where: {
+          userId_templateId_templateType: {
+            userId: session.user.id,
+            templateId,
+            templateType,
+          },
         },
-      },
+      });
+
+      if (existingFavorite) {
+        // Remove favorite
+        await tx.templateFavorite.delete({
+          where: { id: existingFavorite.id },
+        });
+
+        // Decrement favorites count on template
+        if (templateType === "system") {
+          await prismaApp.systemTemplate.update({
+            where: { id: templateId },
+            data: { favorites: { decrement: 1 } },
+          });
+        } else {
+          await tx.userTemplate.update({
+            where: { id: templateId },
+            data: { favorites: { decrement: 1 } },
+          });
+        }
+
+        return { favorited: false, message: "Removed from favorites" };
+      } else {
+        // Add favorite
+        await tx.templateFavorite.create({
+          data: {
+            userId: session.user.id,
+            templateId,
+            templateType,
+          },
+        });
+
+        // Increment favorites count on template
+        if (templateType === "system") {
+          await prismaApp.systemTemplate.update({
+            where: { id: templateId },
+            data: { favorites: { increment: 1 } },
+          });
+        } else {
+          await tx.userTemplate.update({
+            where: { id: templateId },
+            data: { favorites: { increment: 1 } },
+          });
+        }
+
+        return { favorited: true, message: "Added to favorites" };
+      }
     });
 
-    if (existingFavorite) {
-      // Remove favorite
-      await prismaUsers.templateFavorite.delete({
-        where: { id: existingFavorite.id },
-      });
-
-      // Decrement favorites count on template
-      if (templateType === "system") {
-        await prismaApp.systemTemplate.update({
-          where: { id: templateId },
-          data: { favorites: { decrement: 1 } },
-        });
-      } else {
-        await prismaUsers.userTemplate.update({
-          where: { id: templateId },
-          data: { favorites: { decrement: 1 } },
-        });
-      }
-
-      return NextResponse.json({
-        favorited: false,
-        message: "Removed from favorites",
-      });
-    } else {
-      // Add favorite
-      await prismaUsers.templateFavorite.create({
-        data: {
-          userId: session.user.id,
-          templateId,
-          templateType,
-        },
-      });
-
-      // Increment favorites count on template
-      if (templateType === "system") {
-        await prismaApp.systemTemplate.update({
-          where: { id: templateId },
-          data: { favorites: { increment: 1 } },
-        });
-      } else {
-        await prismaUsers.userTemplate.update({
-          where: { id: templateId },
-          data: { favorites: { increment: 1 } },
-        });
-      }
-
-      return NextResponse.json({
-        favorited: true,
-        message: "Added to favorites",
-      });
-    }
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Error toggling favorite:", error);
     return NextResponse.json(

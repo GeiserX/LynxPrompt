@@ -1,15 +1,45 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prismaUsers } from "@/lib/db-users";
 import { randomBytes } from "crypto";
+
+// Rate limiting: max 5 init calls per IP per 5 minutes
+const initRateLimitStore = new Map<string, { count: number; resetTime: number }>();
+const INIT_RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
+const INIT_RATE_LIMIT_MAX = 5;
+
+function isInitRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const record = initRateLimitStore.get(ip);
+
+  if (!record || now > record.resetTime) {
+    initRateLimitStore.set(ip, { count: 1, resetTime: now + INIT_RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+
+  record.count++;
+  return record.count > INIT_RATE_LIMIT_MAX;
+}
 
 /**
  * POST /api/auth/cli/init
  * Initialize a CLI authentication session
- * 
+ *
  * Returns a session ID and auth URL for the user to complete authentication
  */
-export async function POST(): Promise<Response> {
+export async function POST(request: NextRequest): Promise<Response> {
   try {
+    const clientIP =
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
+
+    if (isInitRateLimited(clientIP)) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded. Max 5 init calls per 5 minutes." },
+        { status: 429 }
+      );
+    }
+
     // Generate a unique session ID
     const sessionId = randomBytes(32).toString("hex");
     
