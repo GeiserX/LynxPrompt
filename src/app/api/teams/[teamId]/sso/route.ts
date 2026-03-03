@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { encryptSSOConfig, decryptSSOConfig } from "@/lib/sso-encryption";
 import { z } from "zod";
+import { Prisma } from "@/generated/prisma-users/client";
 
 // Base SSO config schema
 const baseSSOSchema = z.object({
@@ -172,7 +173,7 @@ export async function POST(
     const { provider, enabled, allowedDomains, ...providerConfig } = validation.data;
 
     // Encrypt sensitive fields before storing in database
-    const encryptedConfig = encryptSSOConfig(providerConfig);
+    const encryptedConfig = encryptSSOConfig(providerConfig) as Prisma.InputJsonValue;
 
     // Upsert the SSO config
     const ssoConfig = await prismaUsers.teamSSOConfig.upsert({

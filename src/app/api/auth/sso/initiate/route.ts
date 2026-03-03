@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prismaUsers } from "@/lib/db-users";
 import { ENABLE_SSO } from "@/lib/feature-flags";
+import { decryptSSOConfig } from "@/lib/sso-encryption";
 
 /**
  * POST /api/auth/sso/initiate - Initiate SSO authentication
@@ -72,7 +73,7 @@ export async function POST(request: NextRequest) {
     }
 
     const ssoConfig = team.ssoConfig;
-    const config = ssoConfig.config as Record<string, unknown>;
+    const config = decryptSSOConfig(ssoConfig.config as Record<string, unknown>);
 
     // Handle based on SSO provider
     switch (ssoConfig.provider) {
