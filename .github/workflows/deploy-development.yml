@@ -49,10 +49,9 @@ jobs:
           cd /tmp
           rm -rf geiserback-deploy
           GIT_CRED_HELPER='!f() { echo "username=${{ secrets.GITEA_USERNAME }}"; echo "password=${{ secrets.GITEA_TOKEN }}"; }; f'
-          git -c credential.helper="$GIT_CRED_HELPER" -c http.sslVerify=false clone https://192.168.10.100:3010/giteaer/geiserback.git geiserback-deploy
+          git -c credential.helper="$GIT_CRED_HELPER" clone http://192.168.10.100:3010/giteaer/geiserback.git geiserback-deploy
           cd geiserback-deploy
           git config credential.helper "$GIT_CRED_HELPER"
-          git config http.sslVerify false
 
           # Update image tag
           sed -i 's|image: drumsergio/lynxprompt:.*|image: drumsergio/lynxprompt:${{ steps.version.outputs.version }}|' lynxprompt-dev/docker-compose.yml
