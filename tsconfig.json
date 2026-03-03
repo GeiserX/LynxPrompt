@@ -42,6 +42,8 @@
     "prisma/seed-*.ts",
     "prisma/prisma.config-*.ts",
     "prisma/migrations/**/*.ts",
-    "cli"
+    "cli",
+    "action",
+    "vscode"
   ]
 }
