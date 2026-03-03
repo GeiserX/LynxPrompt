@@ -9,6 +9,10 @@ vi.mock("@/lib/db-app", () => ({
   },
 }));
 
+vi.mock("@/lib/network-security", () => ({
+  validateDomainNotPrivate: vi.fn().mockResolvedValue(undefined),
+}));
+
 describe("POST /api/v1/federation/register", () => {
   beforeEach(() => {
     vi.resetModules();

@@ -8,9 +8,11 @@ export function isPrivateIP(ip: string): boolean {
   // IPv6 checks
   if (ip.includes(":")) {
     const normalized = ip.toLowerCase();
-    if (normalized === "::1") return true; // loopback
+    if (normalized === "::1" || normalized === "::") return true; // loopback / unspecified
     if (normalized.startsWith("fc") || normalized.startsWith("fd")) return true; // fc00::/7 (unique local)
-    if (normalized.startsWith("fe80")) return true; // fe80::/10 (link-local)
+    if (normalized.startsWith("fe8") || normalized.startsWith("fe9") ||
+        normalized.startsWith("fea") || normalized.startsWith("feb")) return true; // fe80::/10 (link-local)
+    if (normalized.startsWith("ff")) return true; // ff00::/8 (multicast)
     // IPv4-mapped IPv6 (e.g. ::ffff:10.0.0.1)
     const v4Match = normalized.match(/::ffff:(\d+\.\d+\.\d+\.\d+)$/);
     if (v4Match) return isPrivateIPv4(v4Match[1]);
@@ -40,6 +42,12 @@ function isPrivateIPv4(ip: string): boolean {
   if (a === 172 && b >= 16 && b <= 31) return true;
   // 192.168.0.0/16
   if (a === 192 && b === 168) return true;
+  // 100.64.0.0/10 (CGNAT / Tailscale range)
+  if (a === 100 && b >= 64 && b <= 127) return true;
+  // 224.0.0.0/4 (multicast)
+  if (a >= 224 && a <= 239) return true;
+  // 240.0.0.0/4 (reserved)
+  if (a >= 240) return true;
 
   return false;
 }
