@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     const res = await fetch(
       `https://${sanitizedDomain}/.well-known/lynxprompt.json`,
-      { signal: controller.signal, headers: { Accept: "application/json" } },
+      { signal: controller.signal, redirect: "manual", headers: { Accept: "application/json" } },
     );
     clearTimeout(timeout);
 
