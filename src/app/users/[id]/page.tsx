@@ -21,6 +21,7 @@ import {
   Youtube,
   ExternalLink,
 } from "lucide-react";
+import { isSafeUrl } from "@/lib/url-safety";
 import { Logo } from "@/components/logo";
 import { Footer } from "@/components/footer";
 import { UserMenu } from "@/components/user-menu";
@@ -312,7 +313,7 @@ export default function UserProfilePage() {
                   )}
                   {profile.socialLinkedin && (
                     <a
-                      href={profile.socialLinkedin.startsWith("http") ? profile.socialLinkedin : `https://linkedin.com/in/${profile.socialLinkedin}`}
+                      href={profile.socialLinkedin.startsWith("http") && isSafeUrl(profile.socialLinkedin) ? profile.socialLinkedin : `https://linkedin.com/in/${profile.socialLinkedin}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-1.5 rounded-full border bg-card px-3 py-1.5 text-sm transition-colors hover:border-primary hover:text-primary"
@@ -334,7 +335,7 @@ export default function UserProfilePage() {
                       @{profile.socialBluesky}
                     </a>
                   )}
-                  {profile.socialYoutube && (
+                  {profile.socialYoutube && isSafeUrl(profile.socialYoutube) && (
                     <a
                       href={profile.socialYoutube}
                       target="_blank"
@@ -345,7 +346,7 @@ export default function UserProfilePage() {
                       YouTube
                     </a>
                   )}
-                  {profile.socialWebsite && (
+                  {profile.socialWebsite && isSafeUrl(profile.socialWebsite) && (
                     <a
                       href={profile.socialWebsite}
                       target="_blank"

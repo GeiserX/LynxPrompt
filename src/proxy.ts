@@ -38,6 +38,9 @@ const authPaths = ["/api/auth/signin", "/api/auth/callback", "/api/auth/signout"
 const sessionPath = "/api/auth/session";
 
 function getClientIP(request: NextRequest): string {
+  // Prefer CF-Connecting-IP (Cloudflare) as it cannot be spoofed behind Cloudflare
+  const cfIP = request.headers.get("cf-connecting-ip");
+  if (cfIP) return cfIP;
   const forwarded = request.headers.get("x-forwarded-for");
   const realIP = request.headers.get("x-real-ip");
   return forwarded?.split(",")[0]?.trim() || realIP || "unknown";
@@ -68,7 +71,7 @@ function getCSP(): string {
 }
 
 function buildCSP(): string {
-  const scriptSrc = ["'self'", "'unsafe-inline'", "'unsafe-eval'"];
+  const scriptSrc = ["'self'", "'unsafe-inline'"];
   const connectSrc = ["'self'"];
   const frameSrc = ["'self'"];
 
@@ -114,9 +117,6 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
 
   // Prevent MIME type sniffing
   response.headers.set("X-Content-Type-Options", "nosniff");
-
-  // Enable XSS filter
-  response.headers.set("X-XSS-Protection", "1; mode=block");
 
   // Referrer policy
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");

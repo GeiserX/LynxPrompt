@@ -14,14 +14,15 @@ BACKUP_DIR="/mnt/user/appdata/lynxprompt/migration-backup-$(date +%Y%m%d-%H%M%S)
 APP_DUMP="$BACKUP_DIR/lynxprompt_app.sql"
 USERS_DUMP="$BACKUP_DIR/lynxprompt_users.sql"
 
-# Database credentials (from docker-compose.yml)
+# Database credentials - loaded from environment variables
+# Set these before running: export APP_PASS=... USERS_PASS=...
 APP_DB="lynxprompt_app"
 APP_USER="lynxprompt_app"
-APP_PASS="c9abb3ce5e3551838bea656a21ea3639069f83369cfdd4b0"
+APP_PASS="${APP_PASS:?ERROR: APP_PASS environment variable must be set}"
 
 USERS_DB="lynxprompt_users"
 USERS_USER="lynxprompt_users"
-USERS_PASS="e4c89479eb27aa8bdc631532b3a261f05f16f8709436747c"
+USERS_PASS="${USERS_PASS:?ERROR: USERS_PASS environment variable must be set}"
 
 echo "Step 1: Creating backup directory..."
 mkdir -p "$BACKUP_DIR"

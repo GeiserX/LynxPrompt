@@ -6,7 +6,7 @@
 #   ADMIN_EMAIL      — your email (auto-promoted to superadmin)
 #
 # Optional:
-#   DB_PASSWORD      — database password (default: changeme)
+#   DB_PASSWORD      — database password (required, no default)
 #   APP_URL          — your domain (default: http://localhost:3000)
 
 services:
@@ -18,7 +18,7 @@ services:
     environment:
       POSTGRES_DB: lynxprompt
       POSTGRES_USER: lynxprompt
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set - generate with: openssl rand -hex 24}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U lynxprompt -d lynxprompt"]
       interval: 5s
@@ -37,10 +37,10 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      DATABASE_URL_APP: postgresql://lynxprompt:${DB_PASSWORD:-changeme}@postgres:5432/lynxprompt?schema=public
-      DATABASE_URL_USERS: postgresql://lynxprompt:${DB_PASSWORD:-changeme}@postgres:5432/lynxprompt?schema=public
-      DATABASE_URL_BLOG: postgresql://lynxprompt:${DB_PASSWORD:-changeme}@postgres:5432/lynxprompt?schema=public
-      DATABASE_URL_SUPPORT: postgresql://lynxprompt:${DB_PASSWORD:-changeme}@postgres:5432/lynxprompt?schema=public
+      DATABASE_URL_APP: postgresql://lynxprompt:${DB_PASSWORD:?DB_PASSWORD must be set - generate with: openssl rand -hex 24}@postgres:5432/lynxprompt?schema=public
+      DATABASE_URL_USERS: postgresql://lynxprompt:${DB_PASSWORD:?DB_PASSWORD must be set - generate with: openssl rand -hex 24}@postgres:5432/lynxprompt?schema=public
+      DATABASE_URL_BLOG: postgresql://lynxprompt:${DB_PASSWORD:?DB_PASSWORD must be set - generate with: openssl rand -hex 24}@postgres:5432/lynxprompt?schema=public
+      DATABASE_URL_SUPPORT: postgresql://lynxprompt:${DB_PASSWORD:?DB_PASSWORD must be set - generate with: openssl rand -hex 24}@postgres:5432/lynxprompt?schema=public
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
       NEXTAUTH_URL: ${APP_URL:-http://localhost:3000}
       APP_URL: ${APP_URL:-http://localhost:3000}

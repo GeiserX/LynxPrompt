@@ -22,6 +22,7 @@ import {
   History,
   ChevronDown,
 } from "lucide-react";
+import { isSafeUrl } from "@/lib/url-safety";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -553,7 +554,7 @@ export default function BlueprintDetailPage() {
                     {blueprint.difficulty} level
                   </span>
                 )}
-                {blueprint.showcaseUrl && (
+                {blueprint.showcaseUrl && isSafeUrl(blueprint.showcaseUrl) && (
                   <a
                     href={blueprint.showcaseUrl}
                     target="_blank"

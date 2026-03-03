@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
+import { encryptSSOConfig, decryptSSOConfig } from "@/lib/sso-encryption";
 import { z } from "zod";
 
 // Base SSO config schema
@@ -101,8 +102,9 @@ export async function GET(
       });
     }
 
-    // Don't expose secrets in the response
-    const config = ssoConfig.config as Record<string, unknown>;
+    // Decrypt secrets before masking for response
+    const rawConfig = ssoConfig.config as Record<string, unknown>;
+    const config = decryptSSOConfig(rawConfig);
     const safeConfig = { ...config };
 
     // Mask sensitive fields
@@ -111,6 +113,9 @@ export async function GET(
     }
     if ("bindPassword" in safeConfig) {
       safeConfig.bindPassword = "••••••••";
+    }
+    if ("certificate" in safeConfig) {
+      safeConfig.certificate = "••••••••";
     }
 
     return NextResponse.json({
@@ -166,6 +171,9 @@ export async function POST(
 
     const { provider, enabled, allowedDomains, ...providerConfig } = validation.data;
 
+    // Encrypt sensitive fields before storing in database
+    const encryptedConfig = encryptSSOConfig(providerConfig);
+
     // Upsert the SSO config
     const ssoConfig = await prismaUsers.teamSSOConfig.upsert({
       where: { teamId },
@@ -174,13 +182,13 @@ export async function POST(
         provider,
         enabled,
         allowedDomains: allowedDomains || [],
-        config: providerConfig,
+        config: encryptedConfig,
       },
       update: {
         provider,
         enabled,
         allowedDomains: allowedDomains || [],
-        config: providerConfig,
+        config: encryptedConfig,
       },
     });
 
