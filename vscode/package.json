@@ -1,0 +1,256 @@
+{
+  "name": "lynxprompt",
+  "displayName": "LynxPrompt",
+  "description": "Manage AI IDE configuration files (AGENTS.md, CLAUDE.md, .cursor/rules/, copilot-instructions.md, .windsurfrules) across 30+ AI coding tools with LynxPrompt.",
+  "version": "0.1.0",
+  "publisher": "lynxprompt",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GeiserX/LynxPrompt",
+    "directory": "vscode"
+  },
+  "homepage": "https://lynxprompt.com",
+  "bugs": {
+    "url": "https://github.com/GeiserX/LynxPrompt/issues"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Snippets",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "ai",
+    "claude",
+    "cursor",
+    "copilot",
+    "windsurf",
+    "agents",
+    "prompt",
+    "configuration",
+    "ide"
+  ],
+  "activationEvents": [
+    "workspaceContains:**/CLAUDE.md",
+    "workspaceContains:**/AGENTS.md",
+    "workspaceContains:**/.cursor/rules",
+    "workspaceContains:**/copilot-instructions.md",
+    "workspaceContains:**/.windsurfrules",
+    "workspaceContains:**/.github/copilot-instructions.md"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "lynxprompt",
+          "title": "LynxPrompt",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "lynxprompt": [
+        {
+          "id": "lynxprompt.blueprints",
+          "name": "My Blueprints"
+        },
+        {
+          "id": "lynxprompt.localFiles",
+          "name": "Local Config Files"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "lynxprompt.blueprints",
+        "contents": "Sign in to LynxPrompt to view your blueprints.\n[Sign In](command:lynxprompt.signIn)",
+        "when": "!lynxprompt.authenticated"
+      }
+    ],
+    "commands": [
+      {
+        "command": "lynxprompt.signIn",
+        "title": "LynxPrompt: Sign In",
+        "icon": "$(sign-in)"
+      },
+      {
+        "command": "lynxprompt.signOut",
+        "title": "LynxPrompt: Sign Out",
+        "icon": "$(sign-out)"
+      },
+      {
+        "command": "lynxprompt.refreshBlueprints",
+        "title": "LynxPrompt: Refresh Blueprints",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "lynxprompt.refreshLocalFiles",
+        "title": "LynxPrompt: Refresh Local Files",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "lynxprompt.pullBlueprint",
+        "title": "LynxPrompt: Pull Blueprint to Workspace",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "lynxprompt.pushConfig",
+        "title": "LynxPrompt: Push to LynxPrompt",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "lynxprompt.diffBlueprint",
+        "title": "LynxPrompt: Compare with Cloud",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "lynxprompt.generateConfig",
+        "title": "LynxPrompt: Generate Config",
+        "icon": "$(wand)"
+      },
+      {
+        "command": "lynxprompt.convertFormat",
+        "title": "LynxPrompt: Convert Format"
+      },
+      {
+        "command": "lynxprompt.openBlueprint",
+        "title": "LynxPrompt: Open Blueprint in Browser",
+        "icon": "$(link-external)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "lynxprompt.refreshBlueprints",
+          "when": "view == lynxprompt.blueprints && lynxprompt.authenticated",
+          "group": "navigation"
+        },
+        {
+          "command": "lynxprompt.refreshLocalFiles",
+          "when": "view == lynxprompt.localFiles",
+          "group": "navigation"
+        },
+        {
+          "command": "lynxprompt.signIn",
+          "when": "view == lynxprompt.blueprints && !lynxprompt.authenticated",
+          "group": "navigation"
+        },
+        {
+          "command": "lynxprompt.signOut",
+          "when": "view == lynxprompt.blueprints && lynxprompt.authenticated",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "lynxprompt.pullBlueprint",
+          "when": "view == lynxprompt.blueprints && viewItem == blueprint",
+          "group": "inline"
+        },
+        {
+          "command": "lynxprompt.diffBlueprint",
+          "when": "view == lynxprompt.blueprints && viewItem == blueprint",
+          "group": "1_actions@1"
+        },
+        {
+          "command": "lynxprompt.openBlueprint",
+          "when": "view == lynxprompt.blueprints && viewItem == blueprint",
+          "group": "1_actions@2"
+        },
+        {
+          "command": "lynxprompt.pushConfig",
+          "when": "view == lynxprompt.localFiles && viewItem == localConfig",
+          "group": "inline"
+        },
+        {
+          "command": "lynxprompt.diffBlueprint",
+          "when": "view == lynxprompt.localFiles && viewItem == localConfigLinked",
+          "group": "1_actions@1"
+        },
+        {
+          "command": "lynxprompt.pushConfig",
+          "when": "view == lynxprompt.localFiles && viewItem == localConfigLinked",
+          "group": "inline"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "lynxprompt.pushConfig",
+          "when": "lynxprompt.authenticated && resourceFilename =~ /^(CLAUDE\\.md|AGENTS\\.md|\\.windsurfrules|copilot-instructions\\.md)$/",
+          "group": "lynxprompt@1"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "lynxprompt.signIn",
+          "when": "!lynxprompt.authenticated"
+        },
+        {
+          "command": "lynxprompt.signOut",
+          "when": "lynxprompt.authenticated"
+        },
+        {
+          "command": "lynxprompt.pullBlueprint",
+          "when": "lynxprompt.authenticated"
+        },
+        {
+          "command": "lynxprompt.pushConfig",
+          "when": "lynxprompt.authenticated"
+        },
+        {
+          "command": "lynxprompt.diffBlueprint",
+          "when": "lynxprompt.authenticated"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "LynxPrompt",
+      "properties": {
+        "lynxprompt.apiUrl": {
+          "type": "string",
+          "default": "https://lynxprompt.com",
+          "description": "Base URL for the LynxPrompt API. Change this if you are self-hosting LynxPrompt.",
+          "format": "uri"
+        },
+        "lynxprompt.autoDetectConfigFiles": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically detect AI configuration files in the workspace."
+        },
+        "lynxprompt.watchFileChanges": {
+          "type": "boolean",
+          "default": true,
+          "description": "Watch for changes to linked AI configuration files and notify when local diverges from cloud."
+        },
+        "lynxprompt.showStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show LynxPrompt connection status in the status bar."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "node esbuild.js --production",
+    "watch": "node esbuild.js --watch",
+    "lint": "eslint src/ --ext .ts",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "@vscode/vsce": "^3.0.0",
+    "esbuild": "^0.20.0",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3"
+  }
+}
