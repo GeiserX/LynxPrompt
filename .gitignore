@@ -86,3 +86,6 @@ docker-compose.override.yml
 
 # Private configuration (contains secrets)
 AGENTS.md.old
+
+# Blog drafts (local only)
+blog-drafts/
