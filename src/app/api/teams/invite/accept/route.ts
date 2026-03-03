@@ -72,9 +72,13 @@ export async function POST(request: NextRequest) {
 
     // Check if email matches
     if (invitation.email.toLowerCase() !== session.user.email.toLowerCase()) {
+      const emailParts = invitation.email.split("@");
+      const maskedInviteEmail = emailParts.length === 2
+        ? `${emailParts[0].charAt(0)}***@${emailParts[1]}`
+        : "***";
       return NextResponse.json(
         {
-          error: `This invitation was sent to ${invitation.email}. You are signed in as ${session.user.email}.`,
+          error: `This invitation was sent to ${maskedInviteEmail}. You are signed in as ${session.user.email}.`,
         },
         { status: 403 }
       );

@@ -77,7 +77,8 @@ function buildCSP(): string {
 
   // Umami analytics
   const umamiUrl = process.env.UMAMI_SCRIPT_URL || "";
-  const umamiOrigin = umamiUrl ? new URL(umamiUrl).origin : "";
+  let umamiOrigin = "";
+  try { if (umamiUrl) umamiOrigin = new URL(umamiUrl).origin; } catch { /* ignore malformed URL */ }
   if (umamiOrigin) {
     scriptSrc.push(umamiOrigin);
     connectSrc.push(umamiOrigin);

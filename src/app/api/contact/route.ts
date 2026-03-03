@@ -15,6 +15,14 @@ const contactRateLimit = new Map<string, { count: number; resetTime: number }>()
 const CONTACT_RATE_WINDOW = 60 * 60 * 1000; // 1 hour
 const CONTACT_RATE_MAX = 5;
 
+// Periodic cleanup of expired rate limit entries to prevent memory leak
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, record] of contactRateLimit) {
+    if (now > record.resetTime) contactRateLimit.delete(ip);
+  }
+}, CONTACT_RATE_WINDOW).unref();
+
 export async function POST(request: NextRequest) {
   try {
     // Rate limit by IP
@@ -47,12 +55,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name: rawName, email: rawEmail, subject: rawSubject, message } = result.data;
+    const { name: rawName, email: rawEmail, subject: rawSubject, message: rawMessage } = result.data;
 
     // SECURITY: HTML-escape all user input before embedding in HTML email
     const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     const name = escapeHtml(rawName);
     const email = escapeHtml(rawEmail);
+    const messageSafe = escapeHtml(rawMessage);
     const subject = escapeHtml(rawSubject);
 
     // Check SMTP configuration
@@ -81,7 +90,7 @@ export async function POST(request: NextRequest) {
       to: CONTACT_EMAIL || `info@${new URL(APP_URL).hostname}`,
       replyTo: rawEmail,
       subject: `[${APP_NAME} Contact] ${rawSubject}`,
-      text: `Name: ${rawName}\nEmail: ${rawEmail}\n\nMessage:\n${message}`,
+      text: `Name: ${rawName}\nEmail: ${rawEmail}\n\nMessage:\n${rawMessage}`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -121,7 +130,7 @@ export async function POST(request: NextRequest) {
                   <div>
                     <p style="margin: 0 0 8px 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8;">Message</p>
                     <div style="background-color: rgba(255,255,255,0.05); border-radius: 8px; padding: 16px;">
-                      <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #e2e8f0; white-space: pre-wrap;">${message.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+                      <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #e2e8f0; white-space: pre-wrap;">${messageSafe}</p>
                     </div>
                   </div>
                 </div>

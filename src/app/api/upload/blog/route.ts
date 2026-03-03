@@ -5,6 +5,7 @@ import { isAdminRole, UserRole } from "@/lib/subscription";
 import { writeFile, mkdir } from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
+import { validateMagicBytes } from "@/lib/file-validation";
 
 // Upload directory - mounted volume in production, local in dev
 const UPLOAD_DIR = process.env.UPLOAD_DIR || "/data/uploads/blog";
@@ -67,13 +68,21 @@ export async function POST(request: NextRequest) {
       await mkdir(UPLOAD_DIR, { recursive: true });
     }
 
+    // Validate magic bytes match declared MIME type
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    if (!validateMagicBytes(buffer, file.type)) {
+      return NextResponse.json(
+        { error: "File content does not match declared type" },
+        { status: 400 }
+      );
+    }
+
     // Generate unique filename and save
     const filename = generateFilename(file.name);
     const filepath = path.join(UPLOAD_DIR, filename);
 
-    // Convert file to buffer and save
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    // Save file (buffer already created during magic bytes validation)
     await writeFile(filepath, buffer);
 
     // Return the URL path (will be served by /api/uploads/blog/[filename])

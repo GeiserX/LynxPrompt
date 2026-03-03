@@ -7,6 +7,14 @@ const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 const RATE_LIMIT_MAX = 10;
 
+// Periodic cleanup of expired entries to prevent memory leak
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, record] of rateLimitStore) {
+    if (now > record.resetTime) rateLimitStore.delete(ip);
+  }
+}, RATE_LIMIT_WINDOW_MS).unref();
+
 function isRateLimited(ip: string): boolean {
   const now = Date.now();
   const record = rateLimitStore.get(ip);
@@ -86,7 +94,7 @@ export async function POST(request: NextRequest) {
 
     const res = await fetch(
       `https://${sanitizedDomain}/.well-known/lynxprompt.json`,
-      { signal: controller.signal, headers: { Accept: "application/json" } },
+      { signal: controller.signal, redirect: "manual", headers: { Accept: "application/json" } },
     );
     clearTimeout(timeout);
 
