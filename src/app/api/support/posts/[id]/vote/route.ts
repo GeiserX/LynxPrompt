@@ -24,46 +24,51 @@ export async function POST(
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    // Check if user already voted
-    const existingVote = await prismaSupport.supportVote.findUnique({
-      where: {
-        postId_userId: {
-          postId: id,
-          userId: session.user.id,
+    // Use a transaction to prevent race conditions between check+create/delete and counter update
+    const result = await prismaSupport.$transaction(async (tx) => {
+      // Check if user already voted
+      const existingVote = await tx.supportVote.findUnique({
+        where: {
+          postId_userId: {
+            postId: id,
+            userId: session.user.id,
+          },
         },
-      },
+      });
+
+      if (existingVote) {
+        // Remove vote (toggle)
+        await tx.supportVote.delete({
+          where: { id: existingVote.id },
+        });
+
+        // Decrement vote count
+        const updated = await tx.supportPost.update({
+          where: { id },
+          data: { voteCount: { decrement: 1 } },
+        });
+
+        return { voted: false, voteCount: updated.voteCount };
+      } else {
+        // Add vote
+        await tx.supportVote.create({
+          data: {
+            postId: id,
+            userId: session.user.id,
+          },
+        });
+
+        // Increment vote count
+        const updated = await tx.supportPost.update({
+          where: { id },
+          data: { voteCount: { increment: 1 } },
+        });
+
+        return { voted: true, voteCount: updated.voteCount };
+      }
     });
 
-    if (existingVote) {
-      // Remove vote (toggle)
-      await prismaSupport.supportVote.delete({
-        where: { id: existingVote.id },
-      });
-
-      // Decrement vote count
-      await prismaSupport.supportPost.update({
-        where: { id },
-        data: { voteCount: { decrement: 1 } },
-      });
-
-      return NextResponse.json({ voted: false, voteCount: post.voteCount - 1 });
-    } else {
-      // Add vote
-      await prismaSupport.supportVote.create({
-        data: {
-          postId: id,
-          userId: session.user.id,
-        },
-      });
-
-      // Increment vote count
-      await prismaSupport.supportPost.update({
-        where: { id },
-        data: { voteCount: { increment: 1 } },
-      });
-
-      return NextResponse.json({ voted: true, voteCount: post.voteCount + 1 });
-    }
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Error voting:", error);
     return NextResponse.json(

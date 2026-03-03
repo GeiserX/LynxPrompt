@@ -13,7 +13,6 @@ const MIME_TYPES: Record<string, string> = {
   ".png": "image/png",
   ".gif": "image/gif",
   ".webp": "image/webp",
-  ".svg": "image/svg+xml",
 };
 
 export async function GET(
@@ -50,12 +49,16 @@ export async function GET(
     const ext = path.extname(filename).toLowerCase();
     const contentType = MIME_TYPES[ext] || "application/octet-stream";
 
+    // Sanitize filename for Content-Disposition header
+    const safeFilename = path.basename(filename).replace(/[^a-zA-Z0-9._-]/g, "_");
+
     // Return file with appropriate headers
     return new NextResponse(buffer, {
       status: 200,
       headers: {
         "Content-Type": contentType,
         "Content-Length": buffer.length.toString(),
+        "Content-Disposition": `inline; filename="${safeFilename}"`,
         "Cache-Control": "public, max-age=31536000, immutable", // Cache for 1 year (filename includes timestamp)
       },
     });

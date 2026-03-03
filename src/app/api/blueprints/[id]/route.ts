@@ -319,9 +319,8 @@ export async function PUT(
     });
   } catch (error) {
     console.error("Error updating blueprint:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: `Failed to update blueprint: ${errorMessage}` },
+      { error: "Failed to update blueprint. Please try again." },
       { status: 500 }
     );
   }
@@ -385,9 +384,8 @@ export async function DELETE(
     });
   } catch (error) {
     console.error("Error deleting blueprint:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: `Failed to delete blueprint: ${errorMessage}` },
+      { error: "Failed to delete blueprint. Please try again." },
       { status: 500 }
     );
   }

@@ -75,7 +75,7 @@ export async function GET(
           where: { status: "PENDING" },
           orderBy: { createdAt: "desc" },
         },
-        ssoConfig: true,
+        ssoConfig: { select: { enabled: true, provider: true } },
         _count: {
           select: {
             members: true,

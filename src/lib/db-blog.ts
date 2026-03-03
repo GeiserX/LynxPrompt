@@ -9,10 +9,16 @@ const globalForPrisma = globalThis as unknown as {
   poolBlog: pg.Pool | undefined;
 };
 
+const connectionString = process.env.DATABASE_URL_BLOG;
+const isLocalhost = connectionString && /localhost|127\.0\.0\.1|::1/.test(connectionString);
+
 const pool =
   globalForPrisma.poolBlog ??
   new Pool({
-    connectionString: process.env.DATABASE_URL_BLOG,
+    connectionString,
+    ...(process.env.NODE_ENV === "production" && !isLocalhost
+      ? { ssl: { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== "false" } }
+      : {}),
   });
 
 if (process.env.NODE_ENV !== "production") {
