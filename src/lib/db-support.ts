@@ -10,13 +10,13 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 const connectionString = process.env.DATABASE_URL_SUPPORT;
-const isLocalhost = connectionString && /localhost|127\.0\.0\.1|::1/.test(connectionString);
+const enableSsl = process.env.DB_SSL === "true";
 
 const pool =
   globalForPrisma.poolSupport ??
   new Pool({
     connectionString,
-    ...(process.env.NODE_ENV === "production" && !isLocalhost
+    ...(enableSsl
       ? { ssl: { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== "false" } }
       : {}),
   });
