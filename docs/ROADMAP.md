@@ -1275,7 +1275,7 @@ This enables:
 
 ### Medium Priority
 - **Blueprint upload timestamp display**: Show when a blueprint was uploaded on the public blueprint page (e.g., `/blueprints/usr_xxx`). Display date and time for users to see how recent the content is.
-- VS Code extension for templates
+- **VS Code extension** (`vscode/`): Code is ready, needs publishing to VS Code Marketplace. Requires Azure DevOps organization with a PAT for `vsce publish`. Tracked at: https://marketplace.visualstudio.com (publisher: `lynxprompt`).
 - GitHub App for automatic config updates
 - Webhook integrations (notify when template is downloaded)
 - Template collections/bundles
