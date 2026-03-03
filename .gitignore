@@ -21,6 +21,8 @@ build/
 
 # Production
 dist/
+# GitHub Action needs its compiled bundle committed
+!action/dist/
 
 # Misc
 .DS_Store

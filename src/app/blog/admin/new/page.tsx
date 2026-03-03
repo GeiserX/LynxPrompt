@@ -157,7 +157,11 @@ export default function NewBlogPostPage() {
       }
     } catch (error) {
       console.error("Failed to save post:", error);
-      toast.error("Failed to save post");
+      toast.error(
+        error instanceof TypeError
+          ? "Network error — could not reach the server"
+          : "Failed to save post"
+      );
     } finally {
       setSaving(false);
     }

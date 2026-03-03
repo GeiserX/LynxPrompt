@@ -1,0 +1,41 @@
+name: 'LynxPrompt Sync'
+description: 'Sync AI IDE configuration files (CLAUDE.md, AGENTS.md, Cursor rules, etc.) to your LynxPrompt instance'
+author: 'GeiserX'
+
+branding:
+  icon: 'upload-cloud'
+  color: 'purple'
+
+inputs:
+  token:
+    description: 'LynxPrompt API token (lp_xxx format)'
+    required: true
+  api-url:
+    description: 'LynxPrompt instance URL'
+    required: false
+    default: 'https://lynxprompt.com'
+  visibility:
+    description: 'Blueprint visibility: PRIVATE, TEAM, or PUBLIC'
+    required: false
+    default: 'PRIVATE'
+  files:
+    description: 'Additional glob patterns for config files (comma-separated). Built-in patterns are always included.'
+    required: false
+  dry-run:
+    description: 'Show what would be synced without actually syncing'
+    required: false
+    default: 'false'
+
+outputs:
+  synced:
+    description: 'Number of files synced'
+  created:
+    description: 'Number of new blueprints created'
+  updated:
+    description: 'Number of existing blueprints updated'
+  unchanged:
+    description: 'Number of blueprints that were already up to date'
+
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
