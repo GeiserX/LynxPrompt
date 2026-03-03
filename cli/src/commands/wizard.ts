@@ -170,33 +170,26 @@ interface WizardOptions {
   _draftAnswers?: Record<string, unknown>;
 }
 
-// User tier levels - simplified to just Users and Teams
-type UserTier = "users" | "teams";
-
-// Step tier requirements (matching web wizard exactly)
-type StepTier = "basic" | "intermediate" | "advanced";
-
 interface WizardStep {
   id: string;
   title: string;
   icon: string;
-  tier: StepTier;
 }
 
-// All 11 wizard steps matching the web UI exactly
+// All 12 wizard steps — available to all users
 const WIZARD_STEPS: WizardStep[] = [
-  { id: "format", title: "Output Format", icon: "📤", tier: "basic" },
-  { id: "project", title: "Project Basics", icon: "✨", tier: "basic" },
-  { id: "tech", title: "Tech Stack", icon: "💻", tier: "basic" },
-  { id: "repo", title: "Repository Setup", icon: "🔀", tier: "basic" },
-  { id: "security", title: "Security", icon: "🔐", tier: "basic" },  // NEW: Security step (FREE)
-  { id: "commands", title: "Commands", icon: "📋", tier: "intermediate" },
-  { id: "code_style", title: "Code Style", icon: "🪄", tier: "intermediate" },
-  { id: "ai", title: "AI Behavior", icon: "🧠", tier: "basic" },
-  { id: "boundaries", title: "Boundaries", icon: "🛡️", tier: "advanced" },
-  { id: "testing", title: "Testing Strategy", icon: "🧪", tier: "advanced" },
-  { id: "static", title: "Static Files", icon: "📄", tier: "advanced" },
-  { id: "extra", title: "Final Details", icon: "💬", tier: "basic" },
+  { id: "format", title: "Output Format", icon: "📤" },
+  { id: "project", title: "Project Basics", icon: "✨" },
+  { id: "tech", title: "Tech Stack", icon: "💻" },
+  { id: "repo", title: "Repository Setup", icon: "🔀" },
+  { id: "security", title: "Security", icon: "🔐" },
+  { id: "commands", title: "Commands", icon: "📋" },
+  { id: "code_style", title: "Code Style", icon: "🪄" },
+  { id: "ai", title: "AI Behavior", icon: "🧠" },
+  { id: "boundaries", title: "Boundaries", icon: "🛡️" },
+  { id: "testing", title: "Testing Strategy", icon: "🧪" },
+  { id: "static", title: "Static Files", icon: "📄" },
+  { id: "extra", title: "Final Details", icon: "💬" },
 ];
 
 /**
@@ -811,12 +804,6 @@ const ARCHITECTURE_PATTERNS = [
   { id: "other", label: "Other" },
 ];
 
-// All users can access all wizard steps
-function canAccessTier(_userTier: UserTier, _requiredTier: StepTier): boolean {
-  // All users get full wizard access - only AI features are restricted to Teams
-  return true;
-}
-
 // Helper to sort choices with selected items first
 interface Choice {
   title: string;
@@ -831,11 +818,6 @@ function sortSelectedFirst<T extends Choice>(choices: T[]): T[] {
     if (!a.selected && b.selected) return 1;
     return 0;
   });
-}
-
-// Check if user can access AI features (Teams only)
-function canAccessAI(userTier: UserTier): boolean {
-  return userTier === "teams";
 }
 
 // AI assistant for text fields
@@ -866,17 +848,6 @@ async function aiAssist(instruction: string, existingContent?: string): Promise<
   }
 }
 
-// Tier badges removed - all wizard steps are now available to all users
-function getTierBadge(_tier: StepTier): { label: string; color: typeof chalk.cyan } | null {
-  // No badges needed - all users have full wizard access
-  return null;
-}
-
-// Get available steps for user tier
-function getAvailableSteps(userTier: UserTier): WizardStep[] {
-  return WIZARD_STEPS.filter(step => canAccessTier(userTier, step.tier));
-}
-
 // Box drawing helper
 function printBox(lines: string[], color: typeof chalk.cyan = chalk.gray): void {
   const maxLen = Math.max(...lines.map(l => l.replace(/\x1b\[[0-9;]*m/g, "").length));
@@ -892,11 +863,10 @@ function printBox(lines: string[], color: typeof chalk.cyan = chalk.gray): void 
   console.log(color(bottom));
 }
 
-// Step indicator with tier info and highlighted current step
-function showStep(current: number, step: WizardStep, userTier: UserTier): void {
-  const availableSteps = getAvailableSteps(userTier);
-  const total = availableSteps.length;
-  
+// Step indicator with progress bar and highlighted current step
+function showStep(current: number, step: WizardStep): void {
+  const total = WIZARD_STEPS.length;
+
   // Build progress bar with current step highlighted
   let progressBar = "";
   for (let i = 1; i <= total; i++) {
@@ -908,45 +878,22 @@ function showStep(current: number, step: WizardStep, userTier: UserTier): void {
       progressBar += chalk.gray("○"); // Upcoming
     }
   }
-  
-  const badge = getTierBadge(step.tier);
-  
+
   console.log();
   console.log(chalk.gray("  ═".repeat(30)));
-  let stepLine = `  ${progressBar}  ${chalk.cyan.bold(`Step ${current}/${total}`)}: ${step.icon} ${chalk.bold(step.title)}`;
-  if (badge) {
-    stepLine += " " + badge.color(`[${badge.label}]`);
-  }
-  console.log(stepLine);
+  console.log(`  ${progressBar}  ${chalk.cyan.bold(`Step ${current}/${total}`)}: ${step.icon} ${chalk.bold(step.title)}`);
   console.log(chalk.gray("  ═".repeat(30)));
   console.log();
 }
 
-// Show wizard steps overview with tier indicators
-function showWizardOverview(userTier: UserTier): void {
+// Show wizard steps overview
+function showWizardOverview(): void {
   console.log(chalk.bold("  📋 Wizard Steps Overview:"));
   console.log();
-  
-  let stepNum = 1;
-  for (const step of WIZARD_STEPS) {
-    const canAccess = canAccessTier(userTier, step.tier);
-    const badge = getTierBadge(step.tier);
-    
-    if (canAccess) {
-      let line = chalk.green(`    ${stepNum.toString().padStart(2)}. ✓ ${step.icon} ${step.title}`);
-      if (badge) {
-        line += " " + badge.color(`[${badge.label}]`);
-      }
-      console.log(line);
-      stepNum++;
-    } else {
-      // Show locked steps with visual distinction
-      let line = chalk.gray(`     ─  🔒 ${step.icon} ${step.title}`);
-      if (badge) {
-        line += " " + badge.color.dim(`[${badge.label}]`);
-      }
-      console.log(line);
-    }
+
+  for (let i = 0; i < WIZARD_STEPS.length; i++) {
+    const step = WIZARD_STEPS[i];
+    console.log(chalk.green(`    ${(i + 1).toString().padStart(2)}. ✓ ${step.icon} ${step.title}`));
   }
   console.log();
 }
@@ -1138,12 +1085,10 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
     console.log();
   }
 
-  // Check authentication and determine tier
+  // Check authentication
   const authenticated = isAuthenticated();
   const user = getUser();
-  const userPlanRaw = user?.plan?.toLowerCase() || "free";
-  const userTier: UserTier = userPlanRaw === "teams" ? "teams" : "users";
-  
+
   if (!authenticated) {
     console.log(chalk.gray(`  👤 Running as guest. ${chalk.cyan("lynxp login")} for cloud sync & sharing.`));
     console.log();
@@ -1153,21 +1098,12 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
   }
 
   // Show wizard steps overview
-  showWizardOverview(userTier);
+  showWizardOverview();
   
   // Show draft save hint
   console.log(chalk.gray(`  💾 Tip: Type 'save:draftname' anytime to save progress locally`));
   console.log();
   
-  // Count accessible steps
-  const accessibleSteps = getAvailableSteps(userTier);
-  const lockedSteps = WIZARD_STEPS.length - accessibleSteps.length;
-  
-  if (lockedSteps > 0) {
-    console.log(chalk.gray(`  ${lockedSteps} step${lockedSteps > 1 ? 's' : ''} locked.`));
-    console.log();
-  }
-
   // Try to detect from current directory first
   let detected = await detectProject(process.cwd());
   
@@ -1330,9 +1266,39 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
       commands: detected?.commands || {},
       useGitWorktrees: true, // Default to true for parallel AI sessions
     };
+
+    // Show auto-detected configuration summary (verbose -y mode)
+    console.log();
+    console.log(chalk.bold("  📊 Using auto-detected defaults:"));
+    console.log();
+    console.log(chalk.green("    ✓ ") + chalk.white("Name        ") + chalk.cyan(config.name));
+    if (config.description) {
+      console.log(chalk.green("    ✓ ") + chalk.white("Description ") + chalk.gray(config.description.length > 60 ? config.description.substring(0, 57) + "..." : config.description));
+    }
+    console.log(chalk.green("    ✓ ") + chalk.white("Stack       ") + chalk.cyan(config.stack.length > 0 ? config.stack.join(", ") : "none detected"));
+    console.log(chalk.green("    ✓ ") + chalk.white("Platforms   ") + chalk.cyan(config.platforms.join(", ")));
+    console.log(chalk.green("    ✓ ") + chalk.white("Persona     ") + chalk.cyan(config.persona));
+    console.log(chalk.green("    ✓ ") + chalk.white("Boundaries  ") + chalk.cyan(config.boundaries));
+    const cmdEntries = Object.entries(config.commands || {});
+    if (cmdEntries.length > 0) {
+      console.log(chalk.green("    ✓ ") + chalk.white("Commands    ") + chalk.cyan(cmdEntries.map(([k, v]) => `${k}=${v}`).join(", ")));
+    }
+    if (detected?.license) {
+      console.log(chalk.green("    ✓ ") + chalk.white("License     ") + chalk.cyan(detected.license.toUpperCase()));
+    }
+    if (detected?.repoHost) {
+      console.log(chalk.green("    ✓ ") + chalk.white("Repository  ") + chalk.cyan(detected.repoHost));
+    }
+    if (detected?.cicd) {
+      console.log(chalk.green("    ✓ ") + chalk.white("CI/CD       ") + chalk.cyan(detected.cicd.replace("_", " ")));
+    }
+    if (detected?.hasDocker) {
+      console.log(chalk.green("    ✓ ") + chalk.white("Docker      ") + chalk.cyan("yes"));
+    }
+    console.log();
   } else {
     // Interactive mode
-    config = await runInteractiveWizard(options, detected, userTier);
+    config = await runInteractiveWizard(options, detected);
   }
 
   // Generate and write files
@@ -1598,13 +1564,12 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
 
 async function runInteractiveWizard(
   options: WizardOptions,
-  detected: Awaited<ReturnType<typeof detectProject>> | null,
-  userTier: UserTier
+  detected: Awaited<ReturnType<typeof detectProject>> | null
 ): Promise<GenerateOptions> {
   // Load answers from draft if resuming
   const answers: Record<string, unknown> = options._draftAnswers ? { ...options._draftAnswers } : {};
   const resumeFromStep = options._resumeFromStep || 0;
-  const availableSteps = getAvailableSteps(userTier);
+  const availableSteps = WIZARD_STEPS;
   let currentStepNum = 0;
 
   // Initialize global state for draft saving on exit
@@ -1653,11 +1618,11 @@ async function runInteractiveWizard(
     platforms = answers.platforms as string[];
     console.log(chalk.gray(`  Step 1 (Output Format): Using saved platforms: ${platforms.join(", ")}`));
   } else if (options.format) {
-    showStep(currentStepNum, formatStep, userTier);
+    showStep(currentStepNum, formatStep);
     platforms = options.format.split(",").map(f => f.trim());
     console.log(chalk.gray(`  Using format from flag: ${platforms.join(", ")}`));
   } else {
-    showStep(currentStepNum, formatStep, userTier);
+    showStep(currentStepNum, formatStep);
     // Multi-select by default - user can select one or more platforms
     console.log(chalk.gray("  Select the AI editors you want to generate config for:"));
     console.log(chalk.gray("  (AGENTS.md is recommended - works with most AI tools)"));
@@ -1674,7 +1639,7 @@ async function runInteractiveWizard(
           : `${p.icon} ${p.name}`,
         value: p.id,
         description: chalk.gray(p.note),
-        selected: p.id === "agents", // Pre-select AGENTS.md
+        selected: p.id === "universal", // Pre-select Universal (AGENTS.md)
       })),
       hint: chalk.gray("type to filter • space select • enter confirm"),
       min: 1,
@@ -1690,7 +1655,7 @@ async function runInteractiveWizard(
   // STEP 2: Project Basics (basic - all users)
   // ═══════════════════════════════════════════════════════════════
   const projectStep = getCurrentStep("project")!;
-  showStep(currentStepNum, projectStep, userTier);
+  showStep(currentStepNum, projectStep);
 
   const nameResponse = await prompts({
     type: "text",
@@ -1807,7 +1772,7 @@ async function runInteractiveWizard(
   // STEP 3: Tech Stack (basic - all users)
   // ═══════════════════════════════════════════════════════════════
   const techStep = getCurrentStep("tech")!;
-  showStep(currentStepNum, techStep, userTier);
+  showStep(currentStepNum, techStep);
 
   // Let AI decide option - default to Yes
   const letAiResponse = await prompts({
@@ -1976,7 +1941,7 @@ async function runInteractiveWizard(
   // STEP 4: Repository Setup (basic - all users)
   // ═══════════════════════════════════════════════════════════════
   const repoStep = getCurrentStep("repo")!;
-  showStep(currentStepNum, repoStep, userTier);
+  showStep(currentStepNum, repoStep);
 
   // Show detected repository info
   if (detected?.repoHost || detected?.license || detected?.cicd) {
@@ -2349,7 +2314,7 @@ async function runInteractiveWizard(
   // STEP 5: Security (basic - FREE tier for all users)
   // ═══════════════════════════════════════════════════════════════
   const securityStep = getCurrentStep("security")!;
-  showStep(currentStepNum, securityStep, userTier);
+  showStep(currentStepNum, securityStep);
 
   // 1. Authentication Providers (login methods)
   console.log();
@@ -2644,9 +2609,9 @@ async function runInteractiveWizard(
   // STEP 6: Commands (intermediate)
   // (was STEP 5 before Security step added)
   // ═══════════════════════════════════════════════════════════════
-  if (canAccessTier(userTier, "intermediate")) {
+  {
     const commandsStep = getCurrentStep("commands")!;
-    showStep(currentStepNum, commandsStep, userTier);
+    showStep(currentStepNum, commandsStep);
 
     console.log(chalk.gray("  Select commands for your project. Detected commands are pre-selected."));
     console.log();
@@ -2812,16 +2777,14 @@ async function runInteractiveWizard(
     if (customCmdResponse.custom) {
       (answers.commands as Record<string, unknown>).custom = customCmdResponse.custom;
     }
-  } else {
-    answers.commands = detected?.commands || {};
   }
 
   // ═══════════════════════════════════════════════════════════════
   // STEP 7: Code Style (intermediate)
   // ═══════════════════════════════════════════════════════════════
-  if (canAccessTier(userTier, "intermediate")) {
+  {
     const styleStep = getCurrentStep("code_style")!;
-    showStep(currentStepNum, styleStep, userTier);
+    showStep(currentStepNum, styleStep);
 
     const namingResponse = await prompts({
       type: "select",
@@ -3028,7 +2991,7 @@ async function runInteractiveWizard(
   // STEP 8: AI Behavior (basic - all users)
   // ═══════════════════════════════════════════════════════════════
   const aiStep = getCurrentStep("ai")!;
-  showStep(currentStepNum, aiStep, userTier);
+  showStep(currentStepNum, aiStep);
   
   const aiBehaviorResponse = await prompts({
     type: "autocompleteMultiselect",
@@ -3381,9 +3344,9 @@ async function runInteractiveWizard(
   // ═══════════════════════════════════════════════════════════════
   // STEP 9: Boundaries (advanced)
   // ═══════════════════════════════════════════════════════════════
-  if (canAccessTier(userTier, "advanced")) {
+  {
     const boundariesStep = getCurrentStep("boundaries")!;
-    showStep(currentStepNum, boundariesStep, userTier);
+    showStep(currentStepNum, boundariesStep);
 
     console.log(chalk.gray("  Define what AI should never do, ask first, or always do."));
     console.log(chalk.gray("  Each option can only be in one category. Select 'Other' to add custom."));
@@ -3510,16 +3473,14 @@ async function runInteractiveWizard(
     if (neverList.length > 0) {
       console.log(chalk.red(`    ✗ Never: ${neverList.join(", ")}`));
     }
-  } else {
-    answers.boundaries = options.boundaries || "standard";
   }
 
   // ═══════════════════════════════════════════════════════════════
   // STEP 10: Testing Strategy (advanced)
   // ═══════════════════════════════════════════════════════════════
-  if (canAccessTier(userTier, "advanced")) {
+  {
     const testingStep = getCurrentStep("testing")!;
-    showStep(currentStepNum, testingStep, userTier);
+    showStep(currentStepNum, testingStep);
 
     const testLevelsResponse = await prompts({
       type: "autocompleteMultiselect",
@@ -3622,9 +3583,9 @@ async function runInteractiveWizard(
   // ═══════════════════════════════════════════════════════════════
   // STEP 11: Static Files (advanced)
   // ═══════════════════════════════════════════════════════════════
-  if (canAccessTier(userTier, "advanced")) {
+  {
     const staticStep = getCurrentStep("static")!;
-    showStep(currentStepNum, staticStep, userTier);
+    showStep(currentStepNum, staticStep);
 
     // If repo was detected, default to skipping this step
     let skipStaticFiles = false;
@@ -3720,7 +3681,7 @@ async function runInteractiveWizard(
       console.log();
       console.log(chalk.cyan("  📝 Customize file contents:"));
       console.log(chalk.gray("  For each file, choose to use existing content, write new, or use defaults."));
-      if (canAccessAI(userTier)) {
+      if (true) {
         console.log(chalk.magenta(`  ✨ Tip: Type 'ai:' followed by your request to use AI assistance`));
       }
       console.log();
@@ -3778,7 +3739,7 @@ async function runInteractiveWizard(
 
           if (actionResponse.action === "new") {
             console.log();
-            if (canAccessAI(userTier)) {
+            if (true) {
               const aiPromptResponse = await prompts({
                 type: "text",
                 name: "input",
@@ -3831,14 +3792,14 @@ async function runInteractiveWizard(
   // STEP 12: Final Details / Extra (basic - all users)
   // ═══════════════════════════════════════════════════════════════
   const extraStep = getCurrentStep("extra")!;
-  showStep(currentStepNum, extraStep, userTier);
+  showStep(currentStepNum, extraStep);
 
   // AI persona is handled from profile settings, not asked here
   // (Users can set their persona in the web UI under AI Configuration)
   answers.persona = "";
 
   // Anything else - with AI assist option for Teams users
-  const hasAIAccess = canAccessAI(userTier);
+  const hasAIAccess = true;
   
   if (hasAIAccess) {
     console.log();
