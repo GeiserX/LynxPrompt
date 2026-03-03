@@ -31,20 +31,47 @@ const SOURCE_FILES: Record<string, string> = {
   ".aider.conf.yml": "aider",
 };
 
-// Target format to output filename
+// Target format to output filename (30+ platforms)
 const TARGET_FILES: Record<string, string> = {
+  // Popular platforms
+  universal: "AGENTS.md",
   agents: "AGENTS.md",
-  claude: "CLAUDE.md",
   cursor: ".cursor/rules/project.mdc",
   cursor_legacy: ".cursorrules",
+  claude: "CLAUDE.md",
   copilot: ".github/copilot-instructions.md",
   windsurf: ".windsurfrules",
+  // AI-powered IDEs
+  antigravity: "GEMINI.md",
+  zed: ".zed/instructions.md",
+  void: ".void/config.json",
+  trae: ".trae/rules/project.mdc",
+  firebase: ".idx/rules/project.mdc",
+  // Editor extensions
   cline: ".clinerules",
+  roocode: ".roo/rules/project.mdc",
+  continue: ".continue/config.json",
+  cody: ".cody/config.json",
+  tabnine: ".tabnine.yaml",
+  supermaven: ".supermaven/config.json",
+  codegpt: ".codegpt/config.json",
+  amazonq: ".amazonq/rules/project.md",
+  augment: ".augment/rules/project.mdc",
+  kilocode: ".kilocode/rules/project.mdc",
+  junie: ".junie/guidelines.md",
+  kiro: ".kiro/steering/project.mdc",
+  // CLI tools
   aider: ".aider.conf.yml",
+  goose: ".goosehints",
+  warp: "WARP.md",
+  "gemini-cli": "GEMINI.md",
+  opencode: "opencode.json",
   codex: "codex.md",
-  supermaven: "supermaven.md",
-  goose: ".goose/rules.txt",
-  // Command targets - all plain markdown, no conversion needed
+  // Other emerging tools
+  openhands: ".openhands/microagents/repo.md",
+  crush: "CRUSH.md",
+  firebender: "firebender.json",
+  // Command targets
   "cursor-command": ".cursor/commands/command.md",
   "claude-command": ".claude/commands/command.md",
   "windsurf-workflow": ".windsurf/workflows/workflow.md",
@@ -55,18 +82,39 @@ const TARGET_FILES: Record<string, string> = {
 
 // Platform display names
 const PLATFORM_NAMES: Record<string, string> = {
+  universal: "AGENTS.md (Universal)",
   agents: "AGENTS.md (Universal)",
-  claude: "CLAUDE.md",
   cursor: "Cursor Rules (.mdc)",
   cursor_legacy: "Cursor Rules (legacy)",
+  claude: "CLAUDE.md",
   copilot: "GitHub Copilot",
-  windsurf: "Windsurf Rules",
-  cline: "Cline Rules",
-  aider: "Aider Config",
-  codex: "Codex",
+  windsurf: "Windsurf",
+  antigravity: "Antigravity (Gemini IDE)",
+  zed: "Zed",
+  void: "Void",
+  trae: "Trae AI",
+  firebase: "Firebase Studio",
+  cline: "Cline",
+  roocode: "Roo Code",
+  continue: "Continue",
+  cody: "Sourcegraph Cody",
+  tabnine: "Tabnine",
   supermaven: "Supermaven",
-  goose: "Goose Rules",
-  // Commands
+  codegpt: "CodeGPT",
+  amazonq: "Amazon Q",
+  augment: "Augment Code",
+  kilocode: "Kilo Code",
+  junie: "Junie",
+  kiro: "Kiro",
+  aider: "Aider",
+  goose: "Goose",
+  warp: "Warp AI",
+  "gemini-cli": "Gemini CLI",
+  opencode: "OpenCode",
+  codex: "Codex",
+  openhands: "OpenHands",
+  crush: "Crush",
+  firebender: "Firebender",
   "cursor-command": "Cursor Command",
   "claude-command": "Claude Code Command",
   "windsurf-workflow": "Windsurf Workflow",
@@ -192,6 +240,22 @@ ${rawContent.replace(/^#\s+.*$/m, "# AI Assistant Configuration")}
         .replace(/\*\*/g, "")
         .trim();
 
+    case "trae":
+    case "roocode":
+    case "augment":
+    case "kilocode":
+    case "kiro":
+    case "firebase":
+      // MDC format (same as cursor)
+      return `---
+description: "AI coding rules"
+globs: ["**/*"]
+alwaysApply: true
+---
+
+${rawContent.replace(/^#\s+.*$/m, "# AI Assistant Configuration")}
+`;
+
     case "aider":
       // YAML format (simplified)
       return `# Aider configuration
@@ -210,17 +274,40 @@ ${rawContent
   .join("\n")}
 `;
 
-    case "copilot":
-      // GitHub Copilot markdown format
-      return `# GitHub Copilot Instructions
-
-${rawContent}
+    case "tabnine":
+      // Tabnine YAML format
+      return `# Tabnine configuration
+# Converted from AI IDE configuration
+instructions: |
+${rawContent.split("\n").map(line => `  ${line}`).join("\n")}
 `;
 
+    case "void":
+    case "continue":
+    case "cody":
+    case "codegpt":
+    case "supermaven":
+    case "opencode":
+    case "firebender":
+      // JSON config format
+      return JSON.stringify({ instructions: rawContent }, null, 2) + "\n";
+
+    case "copilot":
+      // GitHub Copilot markdown format
+      return `# GitHub Copilot Instructions\n\n${rawContent}\n`;
+
     case "agents":
+    case "universal":
     case "claude":
     case "codex":
-    case "supermaven":
+    case "antigravity":
+    case "gemini-cli":
+    case "zed":
+    case "amazonq":
+    case "junie":
+    case "warp":
+    case "openhands":
+    case "crush":
     default:
       // Standard markdown format
       return rawContent;
@@ -278,8 +365,9 @@ export async function convertCommand(
     sourcePlatform = detected.platform;
   }
 
-  // Validate target format
-  const normalizedTarget = target.toLowerCase().replace("-", "_");
+  // Validate target format — try exact match, then underscore variant
+  const targetLower = target.toLowerCase();
+  const normalizedTarget = TARGET_FILES[targetLower] ? targetLower : targetLower.replace(/-/g, "_");
   if (!TARGET_FILES[normalizedTarget]) {
     console.log(chalk.red(`  ✗ Unknown target format: ${target}`));
     console.log();
