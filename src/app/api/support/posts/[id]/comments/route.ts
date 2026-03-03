@@ -49,9 +49,16 @@ export async function POST(
     const body = await request.json();
     const { content, parentId, isOfficial } = body;
 
-    if (!content) {
+    if (!content || typeof content !== "string") {
       return NextResponse.json(
         { error: "Content is required" },
+        { status: 400 }
+      );
+    }
+
+    if (content.length > 10_000) {
+      return NextResponse.json(
+        { error: "Comment must be 10,000 characters or less" },
         { status: 400 }
       );
     }

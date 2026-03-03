@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prismaUsers } from "@/lib/db-users";
 import { ENABLE_SSO } from "@/lib/feature-flags";
 import { decryptSSOConfig } from "@/lib/sso-encryption";
+import { createHmac } from "crypto";
 
 /**
  * POST /api/auth/sso/initiate - Initiate SSO authentication
@@ -96,43 +97,55 @@ export async function POST(request: NextRequest) {
       }
 
       case "OIDC": {
-        // TODO: Implement OIDC flow
-        // 1. Build authorization URL with:
-        //    - client_id
-        //    - redirect_uri (our callback)
-        //    - response_type=code
-        //    - scope=openid profile email
-        //    - state (CSRF protection)
-        //    - nonce
-        // 2. Store state in session/cookie for verification
-        // 3. Return redirectUrl to authorization endpoint
-
         const issuer = config.issuer as string;
         const clientId = config.clientId as string;
         const authUrl = (config.authorizationUrl as string) || `${issuer}/authorize`;
         const scopes = (config.scopes as string[]) || ["openid", "profile", "email"];
-        
-        // Generate state for CSRF protection
+
+        // Generate state and nonce for CSRF protection
         const state = crypto.randomUUID();
         const nonce = crypto.randomUUID();
-        
-        // Store state for verification (in production, use secure session storage)
-        // For now, we'll include it in the callback URL for demo purposes
-        const ourCallbackUrl = `${process.env.NEXTAUTH_URL || process.env.APP_URL || 'https://lynxprompt.com'}/api/auth/sso/callback/oidc`;
-        
+
+        const baseUrl = process.env.NEXTAUTH_URL || process.env.APP_URL || "https://lynxprompt.com";
+        const ourCallbackUrl = `${baseUrl}/api/auth/sso/callback/oidc`;
+
+        // Embed teamSlug and callbackUrl in state (signed via cookie)
+        const statePayload = `${state}:${teamSlug}:${encodeURIComponent(callbackUrl || "/dashboard")}`;
+
         const params = new URLSearchParams({
           client_id: clientId,
           redirect_uri: ourCallbackUrl,
           response_type: "code",
           scope: scopes.join(" "),
-          state: `${state}:${teamSlug}:${encodeURIComponent(callbackUrl || '/dashboard')}`,
+          state: statePayload,
           nonce: nonce,
         });
 
-        return NextResponse.json({
+        // Sign the state with NEXTAUTH_SECRET and store in httpOnly cookie
+        const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
+        if (!secret) {
+          return NextResponse.json(
+            { error: "Server misconfiguration: auth secret not set" },
+            { status: 500 }
+          );
+        }
+        const stateHash = createHmac("sha256", secret).update(statePayload).digest("hex");
+
+        const response = NextResponse.json({
           redirectUrl: `${authUrl}?${params.toString()}`,
           provider: "OIDC",
         });
+
+        // Set signed state cookie (expires in 10 minutes)
+        response.cookies.set("sso_state", stateHash, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "lax",
+          path: "/api/auth/sso/callback",
+          maxAge: 600,
+        });
+
+        return response;
       }
 
       case "LDAP": {
