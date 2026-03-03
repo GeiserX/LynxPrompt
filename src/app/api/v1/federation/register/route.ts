@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
     wellKnown = await res.json();
   } catch (err) {
     return NextResponse.json(
-      { error: `Cannot reach ${sanitizedDomain}/.well-known/lynxprompt.json: ${err instanceof Error ? err.message : "unknown error"}` },
+      { error: "Cannot reach instance .well-known endpoint" },
       { status: 422 },
     );
   }

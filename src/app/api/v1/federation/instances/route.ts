@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { envBool, APP_NAME, APP_URL } from "@/lib/feature-flags";
+import { ENABLE_FEDERATION, APP_NAME, APP_URL } from "@/lib/feature-flags";
 import { isSelfRegistry } from "@/lib/federation";
 import { prismaApp } from "@/lib/db-app";
 import { prismaUsers } from "@/lib/db-users";
 import packageJson from "../../../../../../package.json";
 
 export async function GET(request: NextRequest) {
-  if (!envBool("ENABLE_FEDERATION", true)) {
+  if (!ENABLE_FEDERATION) {
     return NextResponse.json({ error: "Federation disabled" }, { status: 404 });
   }
 
