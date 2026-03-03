@@ -7,6 +7,37 @@ import { PrismaClient } from "../src/generated/prisma-users/client";
 
 const prisma = new PrismaClient();
 
+// Production safety guard
+const PRODUCTION_HOSTNAME_PATTERNS = [
+  /\.rds\.amazonaws\.com/,
+  /\.azure\.com/,
+  /\.gcp\.com/,
+  /\.neon\.tech/,
+  /\.supabase\.co/,
+  /prod/i,
+  /production/i,
+];
+
+function looksLikeProduction(url: string): boolean {
+  return PRODUCTION_HOSTNAME_PATTERNS.some((pattern) => pattern.test(url));
+}
+
+const dbUrl = process.env.DATABASE_URL_USERS || "";
+if (
+  process.env.NODE_ENV === "production" &&
+  looksLikeProduction(dbUrl) &&
+  !process.argv.includes("--force")
+) {
+  console.error(
+    "ERROR: Refusing to run seed script against a production database.\n" +
+    `  DATABASE_URL_USERS appears to point to a production host.\n` +
+    `  NODE_ENV is set to "production".\n\n` +
+    "  If you really want to proceed, re-run with the --force flag:\n" +
+    "    npx tsx prisma/seed-superadmin.ts <email> --force"
+  );
+  process.exit(1);
+}
+
 async function main() {
   const email = process.argv[2] || process.env.SUPERADMIN_EMAIL;
 

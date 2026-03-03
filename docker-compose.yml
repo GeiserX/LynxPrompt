@@ -201,7 +201,7 @@ services:
       DATABASE_URL_SUPPORT: postgresql://lynxprompt_support:${POSTGRES_SUPPORT_PASSWORD:-dev_support_password_change_me}@postgres-support:5432/lynxprompt_support?schema=public
       # NextAuth
       NEXTAUTH_URL: http://localhost:3000
-      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-dev-secret-change-in-production}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?NEXTAUTH_SECRET must be set}
       # OAuth (configure in .env)
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}

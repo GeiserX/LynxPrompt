@@ -54,8 +54,8 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Passkey check error:", error);
-    // On error, allow access to avoid locking users out
-    return NextResponse.json({ required: false, verified: true });
+    // SECURITY: Fail closed - do not bypass 2FA on error
+    return NextResponse.json({ required: true, verified: false, error: true });
   }
 }
 

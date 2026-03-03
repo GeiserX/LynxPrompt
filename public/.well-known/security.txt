@@ -1,0 +1,4 @@
+Contact: mailto:security@lynxprompt.com
+Preferred-Languages: en, es
+Canonical: https://lynxprompt.com/.well-known/security.txt
+Policy: https://github.com/GeiserX/LynxPrompt/blob/main/SECURITY.md

@@ -63,7 +63,6 @@
     "@simplewebauthn/browser": "^13.2.2",
     "@simplewebauthn/server": "^13.2.3",
     "@tanstack/react-query": "^5.90.21",
-    "@types/pg": "^8.18.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "jszip": "^3.10.1",
@@ -110,6 +109,7 @@
     "tailwindcss": "^4.1.18",
     "tsx": "^4.19.2",
     "typescript": "^5.9.3",
+    "@types/pg": "^8.18.0",
     "vitest": "^2.1.9"
   },
   "lint-staged": {

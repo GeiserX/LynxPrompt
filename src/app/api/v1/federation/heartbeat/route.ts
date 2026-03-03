@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ENABLE_FEDERATION } from "@/lib/feature-flags";
 import { prismaApp } from "@/lib/db-app";
+import { validateDomainNotPrivate } from "@/lib/network-security";
 
 interface WellKnownResponse {
   domain?: string;
@@ -39,6 +40,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { error: "Instance not registered. Use /api/v1/federation/register first." },
       { status: 404 },
+    );
+  }
+
+  // SSRF protection: ensure the domain does not resolve to a private/internal IP
+  try {
+    await validateDomainNotPrivate(sanitizedDomain);
+  } catch {
+    return NextResponse.json(
+      { error: "Domain resolves to a private/reserved IP address" },
+      { status: 400 },
     );
   }
 

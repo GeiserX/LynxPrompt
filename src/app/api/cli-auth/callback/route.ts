@@ -66,8 +66,8 @@ export async function POST(request: NextRequest): Promise<Response> {
     // Generate a new API token for the CLI
     const { rawToken, tokenHash, lastFourChars } = generateToken();
     
-    // Token expires in 1 year for CLI convenience
-    const tokenExpiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+    // Token expires in 90 days for CLI
+    const tokenExpiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
 
     // Create the API token
     const apiToken = await prismaUsers.apiToken.create({

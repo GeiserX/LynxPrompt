@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
 
   // Temporarily ignore TypeScript errors during build (stale .next types issue)
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
 
   // Enable standalone output for Docker production builds

@@ -45,9 +45,8 @@ jobs:
       - name: Type check
         run: npm run typecheck
 
-      # TODO: Fix ESLint 9 flat config compatibility with Next.js 16
-      # - name: Lint
-      #   run: npm run lint
+      - name: Lint
+        run: npm run lint
 
   test:
     name: Test

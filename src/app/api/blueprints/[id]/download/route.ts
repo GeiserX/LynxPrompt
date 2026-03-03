@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { prismaApp } from "@/lib/db-app";
+import { createHash } from "crypto";
 
 // POST /api/blueprints/[id]/download - Record a blueprint download
 export async function POST(
@@ -14,10 +15,46 @@ export async function POST(
 
   try {
     const body = await request.json().catch(() => ({}));
-    const platform = body.platform || null;
+
+    // Validate platform against allowlist and max length
+    const ALLOWED_PLATFORMS = [
+      "web", "cli", "vscode", "cursor", "windsurf", "claude_code",
+      "github_copilot", "copilot", "claude", "continue", "opencode",
+      "jetbrains", "neovim", "vim", "emacs", "sublime", "atom",
+    ];
+    let platform: string | null = null;
+    if (body.platform && typeof body.platform === "string") {
+      const normalized = body.platform.trim().toLowerCase().slice(0, 50);
+      if (ALLOWED_PLATFORMS.includes(normalized)) {
+        platform = normalized;
+      }
+    }
 
     // Determine template type from ID prefix
     const templateType = id.startsWith("sys_") ? "system" : "user";
+
+    // Deduplicate: check for recent download from same IP + template in the last hour
+    const clientIP = request.headers.get("cf-connecting-ip") ||
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
+    const ipHash = createHash("sha256").update(clientIP).digest("hex").substring(0, 16);
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+    const recentDownload = await prismaUsers.templateDownload.findFirst({
+      where: {
+        templateId: id,
+        templateType,
+        ipHash,
+        createdAt: { gte: oneHourAgo },
+      },
+      select: { id: true },
+    });
+
+    if (recentDownload) {
+      // Already counted within the last hour - skip recording
+      return NextResponse.json({ success: true });
+    }
 
     // Record the download (can be anonymous)
     await prismaUsers.templateDownload.create({
@@ -26,6 +63,7 @@ export async function POST(
         templateId: id,
         templateType,
         platform,
+        ipHash,
       },
     });
 

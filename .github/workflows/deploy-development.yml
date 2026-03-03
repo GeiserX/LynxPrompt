@@ -48,12 +48,14 @@ jobs:
           # Update geiserback docker-compose and redeploy via Portainer
           cd /tmp
           rm -rf geiserback-deploy
-          git clone http://${{ secrets.GITEA_USERNAME }}:${{ secrets.GITEA_TOKEN }}@192.168.10.100:3010/giteaer/geiserback.git geiserback-deploy
+          GIT_CRED_HELPER='!f() { echo "username=${{ secrets.GITEA_USERNAME }}"; echo "password=${{ secrets.GITEA_TOKEN }}"; }; f'
+          git -c credential.helper="$GIT_CRED_HELPER" clone https://192.168.10.100:3010/giteaer/geiserback.git geiserback-deploy
           cd geiserback-deploy
-          
+          git config credential.helper "$GIT_CRED_HELPER"
+
           # Update image tag
           sed -i 's|image: drumsergio/lynxprompt:.*|image: drumsergio/lynxprompt:${{ steps.version.outputs.version }}|' lynxprompt-dev/docker-compose.yml
-          
+
           # Commit and push
           git config user.email "github-actions@lynxprompt.com"
           git config user.name "GitHub Actions"

@@ -207,12 +207,18 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Mask the email: show first char + "***" + "@" + domain
+    const emailParts = invitation.email.split("@");
+    const maskedEmail = emailParts.length === 2
+      ? `${emailParts[0].charAt(0)}***@${emailParts[1]}`
+      : "***";
+
     return NextResponse.json({
       valid: true,
       teamName: invitation.team.name,
       teamSlug: invitation.team.slug,
       memberCount: invitation.team._count.members,
-      invitedEmail: invitation.email,
+      invitedEmail: maskedEmail,
       role: invitation.role,
       expiresAt: invitation.expiresAt,
     });
