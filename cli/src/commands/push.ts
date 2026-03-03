@@ -146,6 +146,48 @@ async function ensureHierarchy(_cwd: string, repositoryRoot: string, name: strin
 /**
  * Create a stable repository root identifier from a path
  */
+/**
+ * Search user's existing blueprints for one matching the same repository_path and hierarchy
+ * Used to deduplicate: if .lynxprompt/ tracking is deleted, we can still find the existing blueprint
+ */
+async function findExistingBlueprintOnServer(
+  repositoryPath: string | null,
+  hierarchyId: string | null
+): Promise<{ id: string; name: string } | null> {
+  if (!repositoryPath) return null;
+
+  try {
+    // Fetch user's blueprints (paginate to cover all)
+    let offset = 0;
+    const limit = 50;
+
+    while (true) {
+      const response = await api.listBlueprints({ limit, offset });
+
+      for (const bp of response.blueprints) {
+        // Match by repository_path, and if we have a hierarchy, also match hierarchy_id
+        if (bp.repository_path === repositoryPath) {
+          if (hierarchyId) {
+            if (bp.hierarchy_id === hierarchyId) {
+              return { id: bp.id, name: bp.name };
+            }
+          } else {
+            // No hierarchy context — match on repository_path alone
+            return { id: bp.id, name: bp.name };
+          }
+        }
+      }
+
+      if (!response.has_more) break;
+      offset += limit;
+    }
+  } catch {
+    // If listing fails, fall through to create new
+  }
+
+  return null;
+}
+
 function createRepositoryRoot(rootPath: string): string {
   // Try to get git remote URL first
   try {
@@ -399,6 +441,31 @@ async function createOrLinkBlueprint(
     hierarchyId = await ensureHierarchy(cwd, hierarchyInfo.repositoryRoot, path.basename(cwd));
   }
   
+  // Dedup check: look for an existing blueprint on the server with the same repository_path
+  const existingBlueprint = await findExistingBlueprintOnServer(
+    hierarchyInfo.repositoryPath,
+    hierarchyId
+  );
+
+  if (existingBlueprint) {
+    console.log(chalk.yellow(`\n⚠ Found existing blueprint "${existingBlueprint.name}" (${existingBlueprint.id}) with the same path.`));
+    console.log(chalk.gray("   Updating existing blueprint instead of creating a duplicate."));
+
+    // Re-link locally and update the existing blueprint
+    await trackBlueprint(cwd, {
+      id: existingBlueprint.id,
+      name: existingBlueprint.name,
+      file,
+      content,
+      source: "private",
+      hierarchyId: hierarchyId || undefined,
+      repositoryPath: hierarchyInfo.repositoryPath || undefined,
+    });
+
+    await updateBlueprint(cwd, file, existingBlueprint.id, content, options);
+    return;
+  }
+
   const spinner = ora("Creating blueprint...").start();
 
   try {
