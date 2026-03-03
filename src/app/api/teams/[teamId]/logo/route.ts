@@ -154,6 +154,11 @@ export async function DELETE(
 
     const { teamId } = await params;
 
+    // SECURITY: Validate teamId to prevent path traversal
+    if (teamId.includes("..") || teamId.includes("/") || teamId.includes("\\")) {
+      return NextResponse.json({ error: "Invalid team ID" }, { status: 400 });
+    }
+
     // Check if user is team admin
     if (!(await isTeamAdmin(session.user.id, teamId))) {
       return NextResponse.json(
