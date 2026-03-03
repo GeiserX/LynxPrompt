@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { prismaUsers } from "@/lib/db-users";
 import { APP_NAME, APP_URL } from "@/lib/feature-flags";
+import { isSafeUrl } from "@/lib/url-safety";
 
 export async function generateMetadata({
   params,
@@ -127,7 +128,7 @@ async function getUserJsonLd(id: string) {
           : `https://linkedin.com/in/${user.socialLinkedin}`
       );
     }
-    if (user.socialWebsite) sameAs.push(user.socialWebsite);
+    if (user.socialWebsite && isSafeUrl(user.socialWebsite)) sameAs.push(user.socialWebsite);
 
     return {
       "@context": "https://schema.org",
