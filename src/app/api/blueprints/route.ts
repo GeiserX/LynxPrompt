@@ -534,10 +534,8 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error creating blueprint:", error);
-    // Return more descriptive error for debugging
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: `Failed to create blueprint: ${errorMessage}` },
+      { error: "Failed to create blueprint. Please try again." },
       { status: 500 }
     );
   }

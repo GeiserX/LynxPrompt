@@ -132,7 +132,13 @@ function markdownToHtml(markdown: string): string {
     /\[([^\]]+)\]\(([^)]+)\)/g,
     (_match, text, url) => {
       if (isSafeUrl(url)) {
-        return `<a href="${url}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+        // HTML-encode the URL to prevent attribute injection
+        const safeUrl = url
+          .replace(/&/g, "&amp;")
+          .replace(/"/g, "&quot;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+        return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${text}</a>`;
       }
       // For unsafe URLs, render as plain text
       return text;
@@ -258,7 +264,7 @@ export default async function BlogPostPage({ params }: PageProps) {
       {/* JSON-LD Structured Data */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
       />
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">

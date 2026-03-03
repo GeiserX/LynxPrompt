@@ -674,11 +674,13 @@ model TemplateDownload {
   templateId   String
   templateType String   // "system" or "user"
   platform     String?  // which IDE they downloaded for (cursor, claude, etc.)
+  ipHash       String?  // hashed IP for download deduplication (not PII)
   createdAt    DateTime @default(now())
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([templateId, templateType])
+  @@index([templateId, ipHash, createdAt]) // dedup lookups
   @@index([userId])
   @@index([createdAt])
 }

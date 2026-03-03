@@ -5,6 +5,7 @@ import { prismaUsers } from "@/lib/db-users";
 import { writeFile, mkdir, unlink } from "fs/promises";
 import { existsSync, readdirSync } from "fs";
 import path from "path";
+import { validateMagicBytes } from "@/lib/file-validation";
 
 // Base upload directory - mounted volume in production, local in dev
 const UPLOAD_BASE_DIR = process.env.UPLOAD_DIR?.replace("/blog", "") || "/data/uploads";
@@ -37,6 +38,11 @@ export async function POST(request: NextRequest) {
 
     const userId = session.user.id;
 
+    // SECURITY: Validate userId to prevent path traversal
+    if (userId.includes("..") || userId.includes("/") || userId.includes("\\")) {
+      return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
+    }
+
     // Parse multipart form data
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
@@ -57,6 +63,16 @@ export async function POST(request: NextRequest) {
     if (file.size > MAX_SIZE) {
       return NextResponse.json(
         { error: "File too large. Maximum size is 2MB" },
+        { status: 400 }
+      );
+    }
+
+    // Validate magic bytes match declared MIME type
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    if (!validateMagicBytes(buffer, file.type)) {
+      return NextResponse.json(
+        { error: "File content does not match declared type" },
         { status: 400 }
       );
     }
@@ -85,9 +101,7 @@ export async function POST(request: NextRequest) {
     const filename = generateFilename(file.name);
     const filepath = path.join(userUploadDir, filename);
 
-    // Convert file to buffer and save
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    // Save file (buffer already created during magic bytes validation)
     await writeFile(filepath, buffer);
 
     // Generate the URL path (will be served by /api/user/profile/avatar/[filename])
