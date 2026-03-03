@@ -3,6 +3,30 @@ import { ENABLE_FEDERATION } from "@/lib/feature-flags";
 import { prismaApp } from "@/lib/db-app";
 import { validateDomainNotPrivate } from "@/lib/network-security";
 
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const RATE_LIMIT_MAX = 30; // 30 heartbeats per hour per IP
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, record] of rateLimitStore) {
+    if (now > record.resetTime) rateLimitStore.delete(ip);
+  }
+}, RATE_LIMIT_WINDOW_MS).unref();
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const record = rateLimitStore.get(ip);
+
+  if (!record || now > record.resetTime) {
+    rateLimitStore.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+
+  record.count++;
+  return record.count > RATE_LIMIT_MAX;
+}
+
 interface WellKnownResponse {
   domain?: string;
   version?: string;
@@ -13,6 +37,19 @@ interface WellKnownResponse {
 export async function POST(request: NextRequest) {
   if (!ENABLE_FEDERATION) {
     return NextResponse.json({ error: "Federation disabled" }, { status: 404 });
+  }
+
+  const clientIP =
+    request.headers.get("cf-connecting-ip") ||
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip") ||
+    "unknown";
+
+  if (isRateLimited(clientIP)) {
+    return NextResponse.json(
+      { error: "Rate limit exceeded. Max 30 heartbeats per hour." },
+      { status: 429 },
+    );
   }
 
   let body: { domain?: string };
@@ -74,7 +111,7 @@ export async function POST(request: NextRequest) {
     wellKnown = await res.json();
   } catch (err) {
     return NextResponse.json(
-      { error: `Cannot reach instance: ${err instanceof Error ? err.message : "unknown error"}` },
+      { error: "Cannot reach instance" },
       { status: 422 },
     );
   }
