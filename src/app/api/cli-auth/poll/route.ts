@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prismaUsers } from "@/lib/db-users";
+import { createDecipheriv } from "crypto";
 
 // Rate limiting: max 30 poll calls per IP per minute
 const pollRateLimitStore = new Map<string, { count: number; resetTime: number }>();
@@ -104,10 +105,26 @@ export async function GET(request: NextRequest): Promise<Response> {
     }
 
     if (session.status === "COMPLETED" && session.user && session.token) {
-      // Return the token and user info (token is only returned once via poll)
+      // Decrypt the token using the sessionId as key material
+      let rawToken: string;
+      try {
+        const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET || "";
+        const keyMaterial = `${sessionId}:${secret}`;
+        const key = Buffer.from(keyMaterial).subarray(0, 32).toString("hex").padEnd(64, "0");
+        const keyBuf = Buffer.from(key.slice(0, 64), "hex");
+        const [ivB64, dataB64, tagB64] = session.token.split(":");
+        const iv = Buffer.from(ivB64, "base64");
+        const tag = Buffer.from(tagB64, "base64");
+        const decipher = createDecipheriv("aes-256-gcm", keyBuf, iv);
+        decipher.setAuthTag(tag);
+        rawToken = decipher.update(dataB64, "base64", "utf8") + decipher.final("utf8");
+      } catch {
+        return NextResponse.json({ error: "Token decryption failed" }, { status: 500 });
+      }
+
       const response = {
         status: "completed",
-        token: session.token,
+        token: rawToken,
         user: {
           id: session.user.id,
           email: session.user.email,

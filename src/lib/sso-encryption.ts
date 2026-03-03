@@ -14,14 +14,13 @@ interface EncryptedValue {
   tag: string;
 }
 
-function getEncryptionKey(): Buffer | null {
+function getEncryptionKey(): Buffer {
   const keyHex = process.env.SSO_ENCRYPTION_KEY;
   if (!keyHex) {
-    console.warn(
-      "[SSO] SSO_ENCRYPTION_KEY is not set. SSO secrets will be stored in plaintext. " +
-        "Set a 64-character hex string (32 bytes) to enable encryption."
+    throw new Error(
+      "SSO_ENCRYPTION_KEY is not set. Cannot store or read SSO secrets without encryption. " +
+        "Set a 64-character hex string (32 bytes) in your environment."
     );
-    return null;
   }
 
   if (keyHex.length !== 64) {
@@ -77,15 +76,12 @@ function isEncryptedValue(value: unknown): value is EncryptedValue {
 
 /**
  * Encrypts sensitive fields (clientSecret, bindPassword) within an SSO config object.
- * If SSO_ENCRYPTION_KEY is not set, returns the config unchanged (backward compatible).
+ * Throws if SSO_ENCRYPTION_KEY is not set — SSO secrets must always be encrypted at rest.
  */
 export function encryptSSOConfig(
   config: Record<string, unknown>
 ): Record<string, unknown> {
   const key = getEncryptionKey();
-  if (!key) {
-    return config;
-  }
 
   const result = { ...config };
   for (const field of SENSITIVE_FIELDS) {
@@ -98,20 +94,21 @@ export function encryptSSOConfig(
 
 /**
  * Decrypts sensitive fields (clientSecret, bindPassword) within an SSO config object.
- * If SSO_ENCRYPTION_KEY is not set, or fields are not encrypted, returns them as-is.
+ * Throws if SSO_ENCRYPTION_KEY is not set — encrypted secrets cannot be read without the key.
+ * Fields that are not encrypted (legacy plaintext) are returned as-is with a warning.
  */
 export function decryptSSOConfig(
   config: Record<string, unknown>
 ): Record<string, unknown> {
   const key = getEncryptionKey();
-  if (!key) {
-    return config;
-  }
 
   const result = { ...config };
   for (const field of SENSITIVE_FIELDS) {
     if (field in result && isEncryptedValue(result[field])) {
       result[field] = decryptValue(result[field] as EncryptedValue, key);
+    } else if (field in result && typeof result[field] === "string") {
+      // Legacy plaintext value — log warning but don't block reads
+      console.warn(`[SSO] Field "${field}" is stored in plaintext. Re-save SSO config to encrypt it.`);
     }
   }
   return result;

@@ -173,7 +173,15 @@ export async function POST(
     const { provider, enabled, allowedDomains, ...providerConfig } = validation.data;
 
     // Encrypt sensitive fields before storing in database
-    const encryptedConfig = encryptSSOConfig(providerConfig) as Prisma.InputJsonValue;
+    let encryptedConfig: Prisma.InputJsonValue;
+    try {
+      encryptedConfig = encryptSSOConfig(providerConfig) as Prisma.InputJsonValue;
+    } catch {
+      return NextResponse.json(
+        { error: "SSO encryption is not configured. Set SSO_ENCRYPTION_KEY in your environment." },
+        { status: 500 }
+      );
+    }
 
     // Upsert the SSO config
     const ssoConfig = await prismaUsers.teamSSOConfig.upsert({

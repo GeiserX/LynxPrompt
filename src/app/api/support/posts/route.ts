@@ -24,8 +24,8 @@ export async function GET(request: NextRequest) {
     const tagSlug = searchParams.get("tag");
     const sortBy = searchParams.get("sort") || "votes"; // votes, newest, oldest
     const status = searchParams.get("status");
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "20");
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1") || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20") || 20));
 
     // Build where clause
     const where: Record<string, unknown> = {};
@@ -177,6 +177,20 @@ export async function POST(request: NextRequest) {
     if (!title || !content || !categorySlug) {
       return NextResponse.json(
         { error: "Title, content, and category are required" },
+        { status: 400 }
+      );
+    }
+
+    if (typeof title !== "string" || title.length > 200) {
+      return NextResponse.json(
+        { error: "Title must be 200 characters or less" },
+        { status: 400 }
+      );
+    }
+
+    if (typeof content !== "string" || content.length > 20_000) {
+      return NextResponse.json(
+        { error: "Content must be 20,000 characters or less" },
         { status: 400 }
       );
     }
