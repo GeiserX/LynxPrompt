@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ENABLE_FEDERATION } from "@/lib/feature-flags";
 import { prismaApp } from "@/lib/db-app";
+import { validateDomainNotPrivate } from "@/lib/network-security";
 
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
@@ -33,6 +34,7 @@ export async function POST(request: NextRequest) {
   }
 
   const clientIP =
+    request.headers.get("cf-connecting-ip") ||
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     request.headers.get("x-real-ip") ||
     "unknown";
@@ -63,6 +65,16 @@ export async function POST(request: NextRequest) {
   if (!/^[a-z0-9]([a-z0-9.-]*[a-z0-9])?(\.[a-z]{2,})+$/.test(sanitizedDomain)) {
     return NextResponse.json(
       { error: "Invalid domain format" },
+      { status: 400 },
+    );
+  }
+
+  // SSRF protection: ensure the domain does not resolve to a private/internal IP
+  try {
+    await validateDomainNotPrivate(sanitizedDomain);
+  } catch {
+    return NextResponse.json(
+      { error: "Domain resolves to a private/reserved IP address" },
       { status: 400 },
     );
   }

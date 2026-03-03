@@ -45,11 +45,15 @@ export async function GET(
     const ext = path.extname(sanitizedFilename).toLowerCase();
     const contentType = MIME_TYPES[ext] || "application/octet-stream";
 
+    // Sanitize filename for Content-Disposition header
+    const safeFilename = sanitizedFilename.replace(/[^a-zA-Z0-9._-]/g, "_");
+
     // Return file with appropriate headers
     return new NextResponse(fileBuffer, {
       headers: {
         "Content-Type": contentType,
         "Content-Length": stats.size.toString(),
+        "Content-Disposition": `inline; filename="${safeFilename}"`,
         "Cache-Control": "public, max-age=31536000, immutable", // Cache for 1 year
         "Last-Modified": stats.mtime.toUTCString(),
       },

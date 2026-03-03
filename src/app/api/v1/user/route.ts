@@ -102,9 +102,8 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("API v1 GET /user error:", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "Internal server error", details: message },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

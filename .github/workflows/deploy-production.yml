@@ -51,12 +51,14 @@ jobs:
           # Clone/pull watchtower repo and update version
           cd /tmp
           rm -rf watchtower-deploy
-          git clone http://${{ secrets.GITEA_USERNAME }}:${{ secrets.GITEA_TOKEN }}@192.168.10.100:3010/giteaer/watchtower.git watchtower-deploy
+          GIT_CRED_HELPER='!f() { echo "username=${{ secrets.GITEA_USERNAME }}"; echo "password=${{ secrets.GITEA_TOKEN }}"; }; f'
+          git -c credential.helper="$GIT_CRED_HELPER" clone https://192.168.10.100:3010/giteaer/watchtower.git watchtower-deploy
           cd watchtower-deploy
-          
+          git config credential.helper "$GIT_CRED_HELPER"
+
           # Update image tag in docker-compose
           sed -i 's|image: drumsergio/lynxprompt:.*|image: drumsergio/lynxprompt:${{ steps.version.outputs.version }}|' lynxprompt/docker-compose.yml
-          
+
           # Commit and push
           git config user.email "github-actions@lynxprompt.com"
           git config user.name "GitHub Actions"

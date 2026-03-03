@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createTransport } from "nodemailer";
 import { z } from "zod";
 import { APP_NAME, APP_URL, CONTACT_EMAIL } from "@/lib/feature-flags";
@@ -10,8 +10,32 @@ const contactSchema = z.object({
   message: z.string().min(10, "Message must be at least 10 characters").max(5000),
 });
 
-export async function POST(request: Request) {
+// Per-IP rate limiting for contact form (5 submissions per hour)
+const contactRateLimit = new Map<string, { count: number; resetTime: number }>();
+const CONTACT_RATE_WINDOW = 60 * 60 * 1000; // 1 hour
+const CONTACT_RATE_MAX = 5;
+
+export async function POST(request: NextRequest) {
   try {
+    // Rate limit by IP
+    const clientIP = request.headers.get("cf-connecting-ip") ||
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
+    const now = Date.now();
+    const record = contactRateLimit.get(clientIP);
+    if (record && now <= record.resetTime) {
+      if (record.count >= CONTACT_RATE_MAX) {
+        return NextResponse.json(
+          { error: "Too many submissions. Please try again later." },
+          { status: 429 }
+        );
+      }
+      record.count++;
+    } else {
+      contactRateLimit.set(clientIP, { count: 1, resetTime: now + CONTACT_RATE_WINDOW });
+    }
+
     const body = await request.json();
     
     // Validate input
@@ -23,7 +47,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const { name, email, subject, message } = result.data;
+    const { name: rawName, email: rawEmail, subject: rawSubject, message } = result.data;
+
+    // SECURITY: HTML-escape all user input before embedding in HTML email
+    const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const name = escapeHtml(rawName);
+    const email = escapeHtml(rawEmail);
+    const subject = escapeHtml(rawSubject);
 
     // Check SMTP configuration
     if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
@@ -49,9 +79,9 @@ export async function POST(request: Request) {
     await transporter.sendMail({
       from: process.env.SMTP_FROM || `noreply@${new URL(APP_URL).hostname}`,
       to: CONTACT_EMAIL || `info@${new URL(APP_URL).hostname}`,
-      replyTo: email,
-      subject: `[${APP_NAME} Contact] ${subject}`,
-      text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
+      replyTo: rawEmail,
+      subject: `[${APP_NAME} Contact] ${rawSubject}`,
+      text: `Name: ${rawName}\nEmail: ${rawEmail}\n\nMessage:\n${message}`,
       html: `
         <!DOCTYPE html>
         <html>

@@ -42,6 +42,15 @@ export async function POST(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Authors can only set OPEN or CLOSED; admin-only statuses are restricted
+    const AUTHOR_ALLOWED_STATUSES = ["OPEN", "CLOSED"];
+    if (!isAdmin && !AUTHOR_ALLOWED_STATUSES.includes(status)) {
+      return NextResponse.json(
+        { error: "Authors can only set status to: " + AUTHOR_ALLOWED_STATUSES.join(", ") },
+        { status: 403 }
+      );
+    }
+
     // Update status
     const updatedPost = await prismaSupport.supportPost.update({
       where: { id },

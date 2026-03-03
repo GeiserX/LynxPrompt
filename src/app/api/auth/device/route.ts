@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { fingerprint, sessionToken } = body;
+    const { fingerprint } = body;
 
     if (!fingerprint) {
       return NextResponse.json(
@@ -65,9 +65,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // SECURITY: Read session token from cookies, not from request body
+    const sessionToken = request.cookies.get(
+      process.env.NODE_ENV === "production"
+        ? "__Secure-next-auth.session-token"
+        : "next-auth.session-token"
+    )?.value;
+
     const userAgent = request.headers.get("user-agent") || "";
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
-               request.headers.get("x-real-ip") || 
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               request.headers.get("x-real-ip") ||
                "unknown";
 
     const deviceHash = generateDeviceHash(userAgent, fingerprint);
@@ -176,7 +183,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { fingerprint, sessionToken, trustDevice } = body;
+    const { fingerprint, trustDevice } = body;
 
     if (!fingerprint) {
       return NextResponse.json(
@@ -185,9 +192,16 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    // SECURITY: Read session token from cookies, not from request body
+    const sessionToken = request.cookies.get(
+      process.env.NODE_ENV === "production"
+        ? "__Secure-next-auth.session-token"
+        : "next-auth.session-token"
+    )?.value;
+
     const userAgent = request.headers.get("user-agent") || "";
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
-               request.headers.get("x-real-ip") || 
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               request.headers.get("x-real-ip") ||
                "unknown";
 
     const deviceHash = generateDeviceHash(userAgent, fingerprint);

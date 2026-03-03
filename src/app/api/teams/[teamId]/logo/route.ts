@@ -5,12 +5,13 @@ import { prismaUsers } from "@/lib/db-users";
 import { writeFile, mkdir, unlink } from "fs/promises";
 import { existsSync, readdirSync } from "fs";
 import path from "path";
+import { validateMagicBytes } from "@/lib/file-validation";
 
 // Base upload directory - mounted volume in production, local in dev
 const UPLOAD_BASE_DIR = process.env.UPLOAD_DIR?.replace("/blog", "") || "/data/uploads";
 
 // Allowed image types
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"];
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB for team logos
 
 // Get team's upload directory
@@ -47,6 +48,11 @@ export async function POST(
 
     const { teamId } = await params;
 
+    // SECURITY: Validate teamId to prevent path traversal
+    if (teamId.includes("..") || teamId.includes("/") || teamId.includes("\\")) {
+      return NextResponse.json({ error: "Invalid team ID" }, { status: 400 });
+    }
+
     // Check if user is team admin
     if (!(await isTeamAdmin(session.user.id, teamId))) {
       return NextResponse.json(
@@ -66,7 +72,7 @@ export async function POST(
     // Validate file type
     if (!ALLOWED_TYPES.includes(file.type)) {
       return NextResponse.json(
-        { error: "Invalid file type. Allowed: JPEG, PNG, GIF, WebP, SVG" },
+        { error: "Invalid file type. Allowed: JPEG, PNG, GIF, WebP" },
         { status: 400 }
       );
     }
@@ -75,6 +81,16 @@ export async function POST(
     if (file.size > MAX_SIZE) {
       return NextResponse.json(
         { error: "File too large. Maximum size is 5MB" },
+        { status: 400 }
+      );
+    }
+
+    // Validate magic bytes match declared MIME type
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    if (!validateMagicBytes(buffer, file.type)) {
+      return NextResponse.json(
+        { error: "File content does not match declared type" },
         { status: 400 }
       );
     }
@@ -103,9 +119,7 @@ export async function POST(
     const filename = generateFilename(file.name);
     const filepath = path.join(teamUploadDir, filename);
 
-    // Convert file to buffer and save
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    // Save file (buffer already created during magic bytes validation)
     await writeFile(filepath, buffer);
 
     // Generate the URL path

@@ -90,6 +90,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Enforce value size limit (10KB)
+    const MAX_VALUE_LENGTH = 10240;
+    const stringifiedValue = typeof value === "string" ? value : JSON.stringify(value);
+    if (stringifiedValue.length > MAX_VALUE_LENGTH) {
+      return NextResponse.json(
+        { error: `Value too large. Maximum size is ${MAX_VALUE_LENGTH} characters.` },
+        { status: 400 }
+      );
+    }
+
     // Upsert the preference
     const preference = await prismaUsers.preference.upsert({
       where: {

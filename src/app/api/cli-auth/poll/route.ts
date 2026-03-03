@@ -1,10 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prismaUsers } from "@/lib/db-users";
 
+// Rate limiting: max 30 poll calls per IP per minute
+const pollRateLimitStore = new Map<string, { count: number; resetTime: number }>();
+const POLL_RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const POLL_RATE_LIMIT_MAX = 30;
+
+function isPollRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const record = pollRateLimitStore.get(ip);
+
+  if (!record || now > record.resetTime) {
+    pollRateLimitStore.set(ip, { count: 1, resetTime: now + POLL_RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+
+  record.count++;
+  return record.count > POLL_RATE_LIMIT_MAX;
+}
+
 /**
  * GET /api/auth/cli/poll?session=<session_id>
  * Poll for CLI authentication completion
- * 
+ *
  * Returns the status of the session:
  * - pending: User hasn't completed authentication yet
  * - completed: Authentication complete, returns token and user info
@@ -12,6 +30,21 @@ import { prismaUsers } from "@/lib/db-users";
  */
 export async function GET(request: NextRequest): Promise<Response> {
   try {
+    const clientIP =
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
+
+    if (isPollRateLimited(clientIP)) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded. Max 30 poll calls per minute." },
+        { status: 429 }
+      );
+    }
+
+    // Clean up expired sessions (limit to 10 to avoid slow queries)
+    prismaUsers.$executeRaw`DELETE FROM "CliSession" WHERE id IN (SELECT id FROM "CliSession" WHERE "expiresAt" < NOW() LIMIT 10)`.catch(() => {});
+
     const { searchParams } = new URL(request.url);
     const sessionId = searchParams.get("session");
 
@@ -83,25 +116,8 @@ export async function GET(request: NextRequest): Promise<Response> {
         },
       };
 
-      // Clear the token from the session after returning it (security)
-      await prismaUsers.cliSession.update({
-        where: { id: session.id },
-        data: { 
-          token: null,
-          // Keep session for a bit longer for debugging, then delete
-        },
-      });
-
-      // Schedule deletion of the session
-      setTimeout(async () => {
-        try {
-          await prismaUsers.cliSession.delete({
-            where: { id: session.id },
-          });
-        } catch {
-          // Ignore deletion errors
-        }
-      }, 60000); // Delete after 1 minute
+      // Clean up session immediately after returning token
+      prismaUsers.cliSession.delete({ where: { id: session.id } }).catch(() => {});
 
       return NextResponse.json(response);
     }
