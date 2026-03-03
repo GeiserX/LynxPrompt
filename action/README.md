@@ -5,30 +5,38 @@ Automatically syncs AI IDE configuration files from your repository to your [Lyn
 ## Quick Start
 
 1. Go to [lynxprompt.com/settings?tab=api-tokens](https://lynxprompt.com/settings?tab=api-tokens) and create an API token
-2. Add it as a repository secret named `LYNXPROMPT_TOKEN`
-3. Create `.github/workflows/lynxprompt-sync.yml`:
+2. Add it as a repository secret named `LYNXPROMPT_TOKEN` (Settings > Secrets and variables > Actions)
+3. Copy the [ready-to-use workflow](examples/sync-workflow.yml) to your repo:
+
+```bash
+mkdir -p .github/workflows
+curl -sL https://raw.githubusercontent.com/GeiserX/LynxPrompt/main/action/examples/sync-workflow.yml \
+  -o .github/workflows/lynxprompt-sync.yml
+```
+
+Or create `.github/workflows/lynxprompt-sync.yml` manually with the minimal config:
 
 ```yaml
 name: Sync AI configs to LynxPrompt
 on:
   push:
-    branches: [main]
-    paths:
-      - 'AGENTS.md'
-      - 'CLAUDE.md'
-      - '.cursor/rules/**'
-      - '.github/copilot-instructions.md'
-      - '.windsurfrules'
+    branches: [main, master]
+    paths: ['AGENTS.md', 'CLAUDE.md', '.cursor/rules/**', '.github/copilot-instructions.md', '.windsurfrules']
+  workflow_dispatch:
 
 jobs:
   sync:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: GeiserX/LynxPrompt/action@main
         with:
           token: ${{ secrets.LYNXPROMPT_TOKEN }}
 ```
+
+> The full [examples/sync-workflow.yml](examples/sync-workflow.yml) includes path triggers for all 30+ supported file types, `workflow_dispatch` for manual runs, and commented options for self-hosted instances.
 
 ## Inputs
 
