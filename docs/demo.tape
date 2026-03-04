@@ -1,5 +1,5 @@
 # LynxPrompt CLI Demo — Full Workflow
-# analyze → wizard → check → push → edit → diff → push v2 → search → pull
+# analyze → wizard (interactive) → check → push → edit → diff → push v2 → search → pull
 
 Output "demo.gif"
 
@@ -8,8 +8,8 @@ Require lynxp
 Set Shell "zsh"
 Set FontSize 20
 Set FontFamily "Menlo"
-Set Width 1100
-Set Height 750
+Set Width 1250
+Set Height 850
 Set Theme "Dracula"
 Set WindowBar Colorful
 Set WindowBarSize 40
@@ -48,14 +48,207 @@ Sleep 900ms
 Enter
 Sleep 5s
 
-# --- 2. Generate configs (shows auto-detected defaults) ---
-Type "# Generate AI IDE configs from detected stack"
+# --- 2. Interactive Wizard — show all the questions ---
+Type "# Interactive wizard with 12 configuration steps"
 Sleep 700ms
 Enter
 Sleep 200ms
-Type "lynxp wizard -f agents,cursor,copilot -y"
+Type "lynxp wizard -f agents,cursor,copilot"
 Sleep 900ms
 Enter
+Sleep 2s
+
+# First few questions — slow, so users can see them
+Enter
+Sleep 600ms
+Enter
+Sleep 600ms
+Enter
+Sleep 600ms
+Enter
+Sleep 600ms
+Enter
+Sleep 600ms
+Enter
+Sleep 600ms
+Enter
+Sleep 600ms
+Enter
+Sleep 600ms
+Enter
+Sleep 600ms
+Enter
+Sleep 600ms
+
+# Speed up — rapid Enter to show the breadth of options
+Enter
+Sleep 300ms
+Enter
+Sleep 300ms
+Enter
+Sleep 300ms
+Enter
+Sleep 300ms
+Enter
+Sleep 300ms
+Enter
+Sleep 300ms
+Enter
+Sleep 300ms
+Enter
+Sleep 300ms
+Enter
+Sleep 300ms
+Enter
+Sleep 300ms
+Enter
+Sleep 300ms
+Enter
+Sleep 300ms
+Enter
+Sleep 300ms
+Enter
+Sleep 300ms
+Enter
+Sleep 300ms
+Enter
+Sleep 300ms
+Enter
+Sleep 300ms
+Enter
+Sleep 300ms
+Enter
+Sleep 300ms
+Enter
+Sleep 300ms
+
+# Even faster — blast through remaining steps
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+
+# Final batch — make sure wizard completes
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+Enter
+Sleep 200ms
+
+# Extra batch — safety margin
+Enter
+Sleep 150ms
+Enter
+Sleep 150ms
+Enter
+Sleep 150ms
+Enter
+Sleep 150ms
+Enter
+Sleep 150ms
+Enter
+Sleep 150ms
+Enter
+Sleep 150ms
+Enter
+Sleep 150ms
+Enter
+Sleep 150ms
+Enter
+Sleep 150ms
+Enter
+Sleep 150ms
+Enter
+Sleep 150ms
+Enter
+Sleep 150ms
+Enter
+Sleep 150ms
+Enter
+Sleep 150ms
+Enter
+Sleep 150ms
+Enter
+Sleep 150ms
+Enter
+Sleep 150ms
+Enter
+Sleep 150ms
+Enter
+Sleep 150ms
+
+# Wait for wizard to finish generating
 Sleep 8s
 
 # --- 3. Validate config ---
