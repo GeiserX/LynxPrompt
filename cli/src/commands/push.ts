@@ -448,8 +448,8 @@ async function createOrLinkBlueprint(
   );
 
   if (existingBlueprint) {
-    console.log(chalk.yellow(`\n⚠ Found existing blueprint "${existingBlueprint.name}" (${existingBlueprint.id}) with the same path.`));
-    console.log(chalk.gray("   Updating existing blueprint instead of creating a duplicate."));
+    console.log(chalk.cyan(`\nℹ Linked to existing blueprint "${existingBlueprint.name}" (${existingBlueprint.id}).`));
+    console.log(chalk.gray("   Pushing as an update."));
 
     // Re-link locally and update the existing blueprint
     await trackBlueprint(cwd, {
