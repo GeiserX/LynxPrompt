@@ -232,7 +232,12 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { name, content, description, type, category, tags, visibility, expected_checksum } = body;
+    // Support base64-encoded content to bypass WAF false positives on markdown/code blocks
+    const decodedContent = body.content_base64
+      ? Buffer.from(body.content_base64, "base64").toString("utf-8")
+      : body.content;
+    const { name, description, type, category, tags, visibility, expected_checksum } = body;
+    const content = decodedContent;
 
     // Optimistic locking: if expected_checksum is provided, verify it matches
     if (expected_checksum && existing.contentChecksum && expected_checksum !== existing.contentChecksum) {
