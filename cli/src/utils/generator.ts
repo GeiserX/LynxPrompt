@@ -720,7 +720,7 @@ function generateFileContent(options: GenerateOptions, platform: string): string
     sections.push("## Before Starting Any Coding Task");
     sections.push("");
     sections.push("1. Check existing worktrees with `git worktree list` and create a new one for this task if needed");
-    sections.push("2. Use the naming convention: `git worktree add -b ai/[task-description] ../[repo-name]-ai-[task-description]`");
+    sections.push("2. Use the naming convention: `git worktree add -b ai/<task> .worktrees/<task>`");
     sections.push("3. Navigate to the worktree directory before making any changes");
     sections.push("4. Commit changes when the task is finished. Merge to main, and clean the worktree.");
     sections.push("");

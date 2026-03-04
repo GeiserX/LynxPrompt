@@ -228,9 +228,11 @@ class ApiClient {
     parent_id?: string | null;
     repository_path?: string | null;
   }): Promise<{ blueprint: Blueprint }> {
+    // Base64-encode content to bypass WAF false positives on markdown/code blocks
+    const payload = { ...data, content: undefined, content_base64: Buffer.from(data.content).toString("base64") };
     return this.request<{ blueprint: Blueprint }>("/api/v1/blueprints", {
       method: "POST",
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
   }
 
@@ -246,9 +248,13 @@ class ApiClient {
     }
   ): Promise<{ blueprint: Blueprint }> {
     const apiId = id.startsWith("bp_") ? id : `bp_${id}`;
+    // Base64-encode content to bypass WAF false positives on markdown/code blocks
+    const payload = data.content
+      ? { ...data, content: undefined, content_base64: Buffer.from(data.content).toString("base64") }
+      : data;
     return this.request<{ blueprint: Blueprint }>(`/api/v1/blueprints/${apiId}`, {
       method: "PUT",
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
   }
 
