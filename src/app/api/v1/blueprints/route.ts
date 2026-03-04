@@ -208,9 +208,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    // Support base64-encoded content to bypass WAF false positives on markdown/code blocks
+    const decodedContent = body.content_base64
+      ? Buffer.from(body.content_base64, "base64").toString("utf-8")
+      : body.content;
     const {
       name,
-      content,
       description,
       type = "AGENTS_MD",
       category = "other",
@@ -221,6 +224,7 @@ export async function POST(request: NextRequest) {
       parent_id = null,
       repository_path = null,
     } = body;
+    const content = decodedContent;
 
     // Validate required fields
     if (!name || typeof name !== "string" || name.trim().length < 3) {
