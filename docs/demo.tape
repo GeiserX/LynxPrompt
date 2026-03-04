@@ -1,15 +1,14 @@
 # LynxPrompt CLI Demo — Full Workflow
-# analyze → wizard (interactive) → check → push → edit → diff → push v2 → search → pull
 
 Output "demo.gif"
 
 Require lynxp
 
 Set Shell "zsh"
-Set FontSize 20
+Set FontSize 17
 Set FontFamily "Menlo"
-Set Width 1250
-Set Height 850
+Set Width 1400
+Set Height 900
 Set Theme "Dracula"
 Set WindowBar Colorful
 Set WindowBarSize 40
@@ -29,7 +28,7 @@ Sleep 300ms
 Type "cd ~/repos/personal/Telegram-Archive"
 Enter
 Sleep 300ms
-Type "rm -rf .cursor/ .github/ CLAUDE.md .lynxprompt/ src/web/AGENTS.md 2>/dev/null; git checkout -- AGENTS.md 2>/dev/null"
+Type "rm -rf .cursor/ .github/ CLAUDE.md .lynxprompt/ src/web/AGENTS.md AGENTS.md 2>/dev/null"
 Enter
 Sleep 500ms
 Type "clear"
@@ -37,28 +36,18 @@ Enter
 Sleep 500ms
 Show
 
-# --- 1. Analyze a remote GitHub repo ---
+# --- 1. Interactive Wizard — show all questions ---
 Sleep 300ms
-Type "# Analyze any GitHub repo without cloning"
-Sleep 700ms
+Type@30ms "echo '>> Interactive wizard with 12 configuration steps'"
+Sleep 500ms
 Enter
-Sleep 200ms
-Type "lynxp analyze -r https://github.com/GeiserX/Telegram-Archive"
-Sleep 900ms
-Enter
-Sleep 5s
-
-# --- 2. Interactive Wizard — show all the questions ---
-Type "# Interactive wizard with 12 configuration steps"
-Sleep 700ms
-Enter
-Sleep 200ms
+Sleep 400ms
 Type "lynxp wizard -f agents,cursor,copilot"
 Sleep 900ms
 Enter
 Sleep 2s
 
-# First few questions — slow, so users can see them
+# First questions — slow pace so viewers can read
 Enter
 Sleep 600ms
 Enter
@@ -80,91 +69,71 @@ Sleep 600ms
 Enter
 Sleep 600ms
 
-# Speed up — rapid Enter to show the breadth of options
+# Medium pace — still visible
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
-Enter
-Sleep 300ms
-Enter
-Sleep 300ms
-Enter
-Sleep 300ms
-Enter
-Sleep 300ms
-Enter
-Sleep 300ms
-Enter
-Sleep 300ms
-Enter
-Sleep 300ms
-Enter
-Sleep 300ms
-Enter
-Sleep 300ms
-Enter
-Sleep 300ms
+Sleep 400ms
 
-# Even faster — blast through remaining steps
+# Faster — breeze through remaining steps
 Enter
-Sleep 200ms
+Sleep 250ms
 Enter
-Sleep 200ms
+Sleep 250ms
 Enter
-Sleep 200ms
+Sleep 250ms
 Enter
-Sleep 200ms
+Sleep 250ms
 Enter
-Sleep 200ms
+Sleep 250ms
 Enter
-Sleep 200ms
+Sleep 250ms
 Enter
-Sleep 200ms
+Sleep 250ms
 Enter
-Sleep 200ms
+Sleep 250ms
 Enter
-Sleep 200ms
+Sleep 250ms
 Enter
-Sleep 200ms
+Sleep 250ms
 Enter
-Sleep 200ms
+Sleep 250ms
 Enter
-Sleep 200ms
+Sleep 250ms
 Enter
-Sleep 200ms
+Sleep 250ms
 Enter
-Sleep 200ms
+Sleep 250ms
 Enter
-Sleep 200ms
+Sleep 250ms
 Enter
-Sleep 200ms
+Sleep 250ms
 Enter
-Sleep 200ms
+Sleep 250ms
 Enter
-Sleep 200ms
+Sleep 250ms
 Enter
-Sleep 200ms
+Sleep 250ms
 Enter
-Sleep 200ms
+Sleep 250ms
 
-# Final batch — make sure wizard completes
+# Fast — blast through the rest
 Enter
 Sleep 200ms
 Enter
@@ -206,109 +175,119 @@ Sleep 200ms
 Enter
 Sleep 200ms
 
-# Extra batch — safety margin
+# Final batch
 Enter
-Sleep 150ms
+Sleep 200ms
 Enter
-Sleep 150ms
+Sleep 200ms
 Enter
-Sleep 150ms
+Sleep 200ms
 Enter
-Sleep 150ms
+Sleep 200ms
 Enter
-Sleep 150ms
+Sleep 200ms
 Enter
-Sleep 150ms
+Sleep 200ms
 Enter
-Sleep 150ms
+Sleep 200ms
 Enter
-Sleep 150ms
+Sleep 200ms
 Enter
-Sleep 150ms
+Sleep 200ms
 Enter
-Sleep 150ms
+Sleep 200ms
 Enter
-Sleep 150ms
+Sleep 200ms
 Enter
-Sleep 150ms
+Sleep 200ms
 Enter
-Sleep 150ms
+Sleep 200ms
 Enter
-Sleep 150ms
+Sleep 200ms
 Enter
-Sleep 150ms
+Sleep 200ms
 Enter
-Sleep 150ms
+Sleep 200ms
 Enter
-Sleep 150ms
+Sleep 200ms
 Enter
-Sleep 150ms
+Sleep 200ms
 Enter
-Sleep 150ms
+Sleep 200ms
 Enter
-Sleep 150ms
+Sleep 200ms
 
-# Wait for wizard to finish generating
+# Wait for generation to complete
 Sleep 8s
 
-# --- 3. Validate config ---
-Type "# Validate your config (CI-ready)"
-Sleep 700ms
+# --- 2. Validate config ---
+Type@30ms "echo '>> Validate config (CI-ready)'"
+Sleep 500ms
 Enter
-Sleep 200ms
+Sleep 300ms
 Type "lynxp check"
 Sleep 800ms
 Enter
 Sleep 3s
 
-# --- 4. Push to cloud ---
-Type "# Push to LynxPrompt Cloud"
-Sleep 700ms
+# --- 3. Push to cloud ---
+Type@30ms "echo '>> Push to LynxPrompt Cloud'"
+Sleep 500ms
 Enter
-Sleep 200ms
+Sleep 300ms
 Type "lynxp push AGENTS.md -y"
 Sleep 800ms
 Enter
 Sleep 5s
 
-# --- 5. Edit + Diff ---
-Type "# Edit locally, then view the diff"
-Sleep 700ms
+# --- 4. Search marketplace ---
+Type@30ms "echo '>> Discover community blueprints'"
+Sleep 500ms
 Enter
-Sleep 200ms
-Type@30ms "echo 'Always use Python type hints for public APIs.' >> AGENTS.md && lynxp diff"
-Sleep 900ms
-Enter
-Sleep 5s
-
-# --- 6. Push update ---
-Type "# Push the update"
-Sleep 700ms
-Enter
-Sleep 200ms
-Type "lynxp push -y"
-Sleep 800ms
-Enter
-Sleep 4s
-
-# --- 7. Search marketplace ---
-Type "# Discover community blueprints"
-Sleep 700ms
-Enter
-Sleep 200ms
+Sleep 300ms
 Type "lynxp search go --limit 3"
 Sleep 800ms
 Enter
 Sleep 4s
 
-# --- 8. Preview a community blueprint ---
-Type "# Preview before downloading"
-Sleep 700ms
+# --- 5. Preview a community blueprint ---
+Type@30ms "echo '>> Preview before downloading'"
+Sleep 500ms
 Enter
-Sleep 200ms
+Sleep 300ms
 Type "lynxp pull bp_cmjnbxw7o000501l1vdetgrua --preview"
 Sleep 900ms
 Enter
-Sleep 6s
+Sleep 5s
+
+# --- 6. Edit locally + show diff ---
+Type@30ms "echo '>> Edit locally, then view the diff'"
+Sleep 500ms
+Enter
+Sleep 300ms
+Type@30ms "echo 'Always use Python type hints for public APIs.' >> AGENTS.md && lynxp diff"
+Sleep 900ms
+Enter
+Sleep 5s
+
+# --- 7. Push the update ---
+Type@30ms "echo '>> Push the update (v2)'"
+Sleep 500ms
+Enter
+Sleep 300ms
+Type "lynxp push -y"
+Sleep 800ms
+Enter
+Sleep 4s
+
+# --- 8. Analyze remote repo ---
+Type@30ms "echo '>> Analyze any GitHub repo without cloning'"
+Sleep 500ms
+Enter
+Sleep 300ms
+Type "lynxp analyze -r https://github.com/GeiserX/Telegram-Archive"
+Sleep 900ms
+Enter
+Sleep 5s
 
 Sleep 2s
