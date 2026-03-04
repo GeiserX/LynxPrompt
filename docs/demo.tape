@@ -36,9 +36,9 @@ Enter
 Sleep 500ms
 Show
 
-# --- 1. Interactive Wizard — show all questions ---
+# --- 1. Interactive Wizard — 12 configuration steps ---
 Sleep 300ms
-Type@30ms "echo '>> Interactive wizard with 12 configuration steps'"
+Type@30ms "echo '>> Interactive wizard — 12 configuration steps'"
 Sleep 500ms
 Enter
 Sleep 400ms
@@ -47,178 +47,205 @@ Sleep 900ms
 Enter
 Sleep 2s
 
-# First questions — slow pace so viewers can read
+# Slow pace — viewers read the first questions (15 Enters @ 700ms)
 Enter
-Sleep 600ms
+Sleep 700ms
 Enter
-Sleep 600ms
+Sleep 700ms
 Enter
-Sleep 600ms
+Sleep 700ms
 Enter
-Sleep 600ms
+Sleep 700ms
 Enter
-Sleep 600ms
+Sleep 700ms
 Enter
-Sleep 600ms
+Sleep 700ms
 Enter
-Sleep 600ms
+Sleep 700ms
 Enter
-Sleep 600ms
+Sleep 700ms
 Enter
-Sleep 600ms
+Sleep 700ms
 Enter
-Sleep 600ms
+Sleep 700ms
+Enter
+Sleep 700ms
+Enter
+Sleep 700ms
+Enter
+Sleep 700ms
+Enter
+Sleep 700ms
+Enter
+Sleep 700ms
 
-# Medium pace — still visible
+# Medium pace (20 Enters @ 500ms)
 Enter
-Sleep 400ms
+Sleep 500ms
 Enter
-Sleep 400ms
+Sleep 500ms
 Enter
-Sleep 400ms
+Sleep 500ms
 Enter
-Sleep 400ms
+Sleep 500ms
 Enter
-Sleep 400ms
+Sleep 500ms
 Enter
-Sleep 400ms
+Sleep 500ms
 Enter
-Sleep 400ms
+Sleep 500ms
 Enter
-Sleep 400ms
+Sleep 500ms
 Enter
-Sleep 400ms
+Sleep 500ms
 Enter
-Sleep 400ms
+Sleep 500ms
+Enter
+Sleep 500ms
+Enter
+Sleep 500ms
+Enter
+Sleep 500ms
+Enter
+Sleep 500ms
+Enter
+Sleep 500ms
+Enter
+Sleep 500ms
+Enter
+Sleep 500ms
+Enter
+Sleep 500ms
+Enter
+Sleep 500ms
+Enter
+Sleep 500ms
 
-# Faster — breeze through remaining steps
+# Faster pace (25 Enters @ 350ms)
 Enter
-Sleep 250ms
+Sleep 350ms
 Enter
-Sleep 250ms
+Sleep 350ms
 Enter
-Sleep 250ms
+Sleep 350ms
 Enter
-Sleep 250ms
+Sleep 350ms
 Enter
-Sleep 250ms
+Sleep 350ms
 Enter
-Sleep 250ms
+Sleep 350ms
 Enter
-Sleep 250ms
+Sleep 350ms
 Enter
-Sleep 250ms
+Sleep 350ms
 Enter
-Sleep 250ms
+Sleep 350ms
 Enter
-Sleep 250ms
+Sleep 350ms
 Enter
-Sleep 250ms
+Sleep 350ms
 Enter
-Sleep 250ms
+Sleep 350ms
 Enter
-Sleep 250ms
+Sleep 350ms
 Enter
-Sleep 250ms
+Sleep 350ms
 Enter
-Sleep 250ms
+Sleep 350ms
 Enter
-Sleep 250ms
+Sleep 350ms
 Enter
-Sleep 250ms
+Sleep 350ms
 Enter
-Sleep 250ms
+Sleep 350ms
 Enter
-Sleep 250ms
+Sleep 350ms
 Enter
-Sleep 250ms
+Sleep 350ms
+Enter
+Sleep 350ms
+Enter
+Sleep 350ms
+Enter
+Sleep 350ms
+Enter
+Sleep 350ms
+Enter
+Sleep 350ms
 
-# Fast — blast through the rest
+# Fast pace (30 Enters @ 300ms)
 Enter
-Sleep 200ms
+Sleep 300ms
 Enter
-Sleep 200ms
+Sleep 300ms
 Enter
-Sleep 200ms
+Sleep 300ms
 Enter
-Sleep 200ms
+Sleep 300ms
 Enter
-Sleep 200ms
+Sleep 300ms
 Enter
-Sleep 200ms
+Sleep 300ms
 Enter
-Sleep 200ms
+Sleep 300ms
 Enter
-Sleep 200ms
+Sleep 300ms
 Enter
-Sleep 200ms
+Sleep 300ms
 Enter
-Sleep 200ms
+Sleep 300ms
 Enter
-Sleep 200ms
+Sleep 300ms
 Enter
-Sleep 200ms
+Sleep 300ms
 Enter
-Sleep 200ms
+Sleep 300ms
 Enter
-Sleep 200ms
+Sleep 300ms
 Enter
-Sleep 200ms
+Sleep 300ms
 Enter
-Sleep 200ms
+Sleep 300ms
 Enter
-Sleep 200ms
+Sleep 300ms
 Enter
-Sleep 200ms
+Sleep 300ms
 Enter
-Sleep 200ms
+Sleep 300ms
 Enter
-Sleep 200ms
+Sleep 300ms
+Enter
+Sleep 300ms
+Enter
+Sleep 300ms
+Enter
+Sleep 300ms
+Enter
+Sleep 300ms
+Enter
+Sleep 300ms
+Enter
+Sleep 300ms
+Enter
+Sleep 300ms
+Enter
+Sleep 300ms
+Enter
+Sleep 300ms
+Enter
+Sleep 300ms
 
-# Final batch
-Enter
-Sleep 200ms
-Enter
-Sleep 200ms
-Enter
-Sleep 200ms
-Enter
-Sleep 200ms
-Enter
-Sleep 200ms
-Enter
-Sleep 200ms
-Enter
-Sleep 200ms
-Enter
-Sleep 200ms
-Enter
-Sleep 200ms
-Enter
-Sleep 200ms
-Enter
-Sleep 200ms
-Enter
-Sleep 200ms
-Enter
-Sleep 200ms
-Enter
-Sleep 200ms
-Enter
-Sleep 200ms
-Enter
-Sleep 200ms
-Enter
-Sleep 200ms
-Enter
-Sleep 200ms
-Enter
-Sleep 200ms
-Enter
-Sleep 200ms
+# Wait for generation to complete (viewer sees the result)
+Sleep 10s
 
-# Wait for generation to complete
-Sleep 8s
+# Flush any leftover input and clear screen
+Hide
+Ctrl+C
+Sleep 500ms
+Type "clear"
+Enter
+Sleep 500ms
+Show
 
 # --- 2. Validate config ---
 Type@30ms "echo '>> Validate config (CI-ready)'"
