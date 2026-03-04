@@ -22,6 +22,9 @@ Hide
 Type "setopt INTERACTIVE_COMMENTS"
 Enter
 Sleep 200ms
+Type "unset LYNXPROMPT_API_URL"
+Enter
+Sleep 200ms
 Type "export PS1='$ '"
 Enter
 Sleep 300ms
@@ -223,7 +226,7 @@ Enter
 Sleep 400ms
 
 # Wait for generation to complete
-Sleep 8s
+Sleep 5s
 
 # --- 2. Validate config ---
 Type@30ms "echo '>> Validate config (CI-ready)'"
