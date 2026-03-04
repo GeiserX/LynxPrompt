@@ -121,11 +121,7 @@ Sleep 500ms
 Enter
 Sleep 500ms
 
-# Faster pace (25 Enters @ 350ms)
-Enter
-Sleep 350ms
-Enter
-Sleep 350ms
+# Faster pace (23 Enters @ 350ms)
 Enter
 Sleep 350ms
 Enter
@@ -173,17 +169,7 @@ Sleep 350ms
 Enter
 Sleep 350ms
 
-# Fast pace (30 Enters @ 300ms)
-Enter
-Sleep 300ms
-Enter
-Sleep 300ms
-Enter
-Sleep 300ms
-Enter
-Sleep 300ms
-Enter
-Sleep 300ms
+# Fast pace (25 Enters @ 300ms)
 Enter
 Sleep 300ms
 Enter
