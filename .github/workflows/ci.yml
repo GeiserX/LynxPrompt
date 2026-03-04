@@ -176,7 +176,7 @@ jobs:
 
       - name: Login page returns 200
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 https://dev.lynxprompt.com/login) || exit 0
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 https://dev.lynxprompt.com/auth/signin) || exit 0
           if [ "$STATUS" != "200" ]; then
             echo "❌ Login page returned $STATUS"
             exit 1
