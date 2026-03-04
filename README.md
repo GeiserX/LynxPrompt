@@ -14,6 +14,10 @@
 [![GitHub Stars](https://img.shields.io/github/stars/GeiserX/LynxPrompt?style=flat-square&logo=github)](https://github.com/GeiserX/LynxPrompt)
 [![Docker Pulls](https://img.shields.io/docker/pulls/drumsergio/lynxprompt?style=flat-square&logo=docker&label=Docker%20Pulls)](https://hub.docker.com/r/drumsergio/lynxprompt)
 
+<p align="center">
+  <img src="docs/demo.gif" alt="LynxPrompt CLI Demo" width="900">
+</p>
+
 ---
 
 ## What is LynxPrompt?
