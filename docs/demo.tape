@@ -121,117 +121,109 @@ Sleep 500ms
 Enter
 Sleep 500ms
 
-# Faster pace (23 Enters @ 350ms)
+# Faster pace (23 Enters @ 400ms)
 Enter
-Sleep 350ms
+Sleep 400ms
 Enter
-Sleep 350ms
+Sleep 400ms
 Enter
-Sleep 350ms
+Sleep 400ms
 Enter
-Sleep 350ms
+Sleep 400ms
 Enter
-Sleep 350ms
+Sleep 400ms
 Enter
-Sleep 350ms
+Sleep 400ms
 Enter
-Sleep 350ms
+Sleep 400ms
 Enter
-Sleep 350ms
+Sleep 400ms
 Enter
-Sleep 350ms
+Sleep 400ms
 Enter
-Sleep 350ms
+Sleep 400ms
 Enter
-Sleep 350ms
+Sleep 400ms
 Enter
-Sleep 350ms
+Sleep 400ms
 Enter
-Sleep 350ms
+Sleep 400ms
 Enter
-Sleep 350ms
+Sleep 400ms
 Enter
-Sleep 350ms
+Sleep 400ms
 Enter
-Sleep 350ms
+Sleep 400ms
 Enter
-Sleep 350ms
+Sleep 400ms
 Enter
-Sleep 350ms
+Sleep 400ms
 Enter
-Sleep 350ms
+Sleep 400ms
 Enter
-Sleep 350ms
+Sleep 400ms
 Enter
-Sleep 350ms
+Sleep 400ms
 Enter
-Sleep 350ms
+Sleep 400ms
 Enter
-Sleep 350ms
+Sleep 400ms
 
-# Fast pace (25 Enters @ 300ms)
+# Fast pace (25 Enters @ 400ms)
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
 Enter
-Sleep 300ms
+Sleep 400ms
+Type "n"
 Enter
-Sleep 300ms
+Sleep 400ms
 
-# Wait for generation to complete (viewer sees the result)
-Sleep 10s
-
-# Flush any leftover input and clear screen
-Hide
-Ctrl+C
-Sleep 500ms
-Type "clear"
-Enter
-Sleep 500ms
-Show
+# Wait for generation to complete
+Sleep 8s
 
 # --- 2. Validate config ---
 Type@30ms "echo '>> Validate config (CI-ready)'"
