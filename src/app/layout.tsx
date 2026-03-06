@@ -20,7 +20,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export function generateMetadata(): Metadata {
-  const appUrl = APP_URL;
+  const appUrl = process.env.APP_URL || process.env.NEXTAUTH_URL || "http://localhost:3000";
   return {
     metadataBase: new URL(appUrl),
     title: {
