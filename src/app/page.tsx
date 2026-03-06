@@ -17,58 +17,58 @@ import { Footer } from "@/components/footer";
 import { CLISection } from "@/components/cli-section";
 import { APP_NAME, APP_URL, APP_LOGO_URL, CONTACT_EMAIL } from "@/lib/feature-flags";
 
-const organizationJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  name: APP_NAME,
-  url: APP_URL,
-  logo: APP_LOGO_URL || `${APP_URL}/lynxprompt.png`,
-  description:
-    "AI IDE configuration generator and marketplace. Create universal instructions for Cursor, Claude Code, Copilot, Antigravity, and more.",
-  foundingDate: "2024",
-  ...(CONTACT_EMAIL ? {
-    contactPoint: {
-      "@type": "ContactPoint",
-      email: CONTACT_EMAIL,
-      contactType: "customer support",
-    },
-  } : {}),
-};
-
-const softwareJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  name: APP_NAME,
-  applicationCategory: "DeveloperApplication",
-  operatingSystem: "Web",
-  description:
-    "Transform your development setup into a mouse-click experience. Generate .cursorrules, CLAUDE.md, GEMINI.md, copilot-instructions.md, and more.",
-  url: APP_URL,
-  featureList: [
-    "IDE-agnostic AI configuration",
-    "Wizard-based setup",
-    "Blueprint marketplace",
-  ],
-  screenshot: `${APP_URL}/og-image.png`,
-};
-
-const websiteJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  name: APP_NAME,
-  url: APP_URL,
-  description: "AI IDE Configuration Generator & Marketplace",
-  potentialAction: {
-    "@type": "SearchAction",
-    target: {
-      "@type": "EntryPoint",
-      urlTemplate: `${APP_URL}/blueprints?search={search_term_string}`,
-    },
-    "query-input": "required name=search_term_string",
-  },
-};
-
 export default function HomePage() {
+  const organizationJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: APP_NAME,
+    url: APP_URL,
+    logo: APP_LOGO_URL || `${APP_URL}/lynxprompt.png`,
+    description:
+      "AI IDE configuration generator and marketplace. Create universal instructions for Cursor, Claude Code, Copilot, Antigravity, and more.",
+    foundingDate: "2024",
+    ...(CONTACT_EMAIL ? {
+      contactPoint: {
+        "@type": "ContactPoint",
+        email: CONTACT_EMAIL,
+        contactType: "customer support",
+      },
+    } : {}),
+  };
+
+  const softwareJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: APP_NAME,
+    applicationCategory: "DeveloperApplication",
+    operatingSystem: "Web",
+    description:
+      "Transform your development setup into a mouse-click experience. Generate .cursorrules, CLAUDE.md, GEMINI.md, copilot-instructions.md, and more.",
+    url: APP_URL,
+    featureList: [
+      "IDE-agnostic AI configuration",
+      "Wizard-based setup",
+      "Blueprint marketplace",
+    ],
+    screenshot: `${APP_URL}/og-image.png`,
+  };
+
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: APP_NAME,
+    url: APP_URL,
+    description: "AI IDE Configuration Generator & Marketplace",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${APP_URL}/blueprints?search={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
+  };
+
   return (
     <div className="flex min-h-screen flex-col">
       {/* JSON-LD Structured Data for SEO */}
