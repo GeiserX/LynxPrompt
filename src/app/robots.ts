@@ -1,8 +1,9 @@
 import { MetadataRoute } from "next";
-import { APP_URL } from "@/lib/feature-flags";
+
+export const dynamic = "force-dynamic";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = APP_URL;
+  const baseUrl = process.env.APP_URL || process.env.NEXTAUTH_URL || "http://localhost:3000";
 
   return {
     rules: [
