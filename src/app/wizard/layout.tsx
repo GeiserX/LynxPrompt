@@ -1,34 +1,36 @@
 import type { Metadata } from "next";
 import { APP_NAME, APP_URL } from "@/lib/feature-flags";
 
-export const metadata: Metadata = {
-  title: "Wizard - AI IDE Configuration Generator",
-  description:
-    "Create AI IDE configurations in minutes with our step-by-step wizard. Generate .cursorrules, CLAUDE.md, copilot-instructions.md, and more for your projects.",
-  keywords: [
-    "AI IDE wizard",
-    "cursorrules generator",
-    "CLAUDE.md generator",
-    "copilot instructions",
-    "windsurf rules",
-    "AGENTS.md",
-    "configuration wizard",
-  ],
-  openGraph: {
-    title: `Configuration Wizard - ${APP_NAME}`,
+export function generateMetadata(): Metadata {
+  return {
+    title: "Wizard - AI IDE Configuration Generator",
     description:
-      "Create AI IDE configurations in minutes. Generate .cursorrules, CLAUDE.md, and more.",
-    type: "website",
-  },
-  twitter: {
-    card: "summary",
-    title: `Configuration Wizard - ${APP_NAME}`,
-    description: "Create AI IDE configurations in minutes.",
-  },
-  alternates: {
-    canonical: `${APP_URL}/wizard`,
-  },
-};
+      "Create AI IDE configurations in minutes with our step-by-step wizard. Generate .cursorrules, CLAUDE.md, copilot-instructions.md, and more for your projects.",
+    keywords: [
+      "AI IDE wizard",
+      "cursorrules generator",
+      "CLAUDE.md generator",
+      "copilot instructions",
+      "windsurf rules",
+      "AGENTS.md",
+      "configuration wizard",
+    ],
+    openGraph: {
+      title: `Configuration Wizard - ${APP_NAME}`,
+      description:
+        "Create AI IDE configurations in minutes. Generate .cursorrules, CLAUDE.md, and more.",
+      type: "website",
+    },
+    twitter: {
+      card: "summary",
+      title: `Configuration Wizard - ${APP_NAME}`,
+      description: "Create AI IDE configurations in minutes.",
+    },
+    alternates: {
+      canonical: `${APP_URL}/wizard`,
+    },
+  };
+}
 
 export default function WizardLayout({
   children,
