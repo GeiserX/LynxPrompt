@@ -1,11 +1,11 @@
 import { MetadataRoute } from "next";
 import { prismaUsers } from "@/lib/db-users";
 import { prismaBlog } from "@/lib/db-blog";
-import { APP_URL } from "@/lib/feature-flags";
 
-const baseUrl = APP_URL;
+export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const baseUrl = process.env.APP_URL || process.env.NEXTAUTH_URL || "http://localhost:3000";
   // Static pages with their priorities and change frequencies
   const staticPages: MetadataRoute.Sitemap = [
     {
