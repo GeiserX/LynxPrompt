@@ -15,6 +15,8 @@ import {
 import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
 
+export const dynamic = "force-dynamic";
+
 export function generateMetadata(): Metadata {
   return {
     title: "About",
