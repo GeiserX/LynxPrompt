@@ -5,23 +5,25 @@ import { APP_URL } from "@/lib/feature-flags";
 import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
 
-export const metadata: Metadata = {
-  title: "Terms of Service",
-  description:
-    "LynxPrompt Terms of Service. Read our terms and conditions for using the platform, marketplace, and services.",
-  openGraph: {
-    title: "Terms of Service - LynxPrompt",
-    description: "LynxPrompt Terms of Service and conditions of use.",
-    type: "website",
-  },
-  alternates: {
-    canonical: `${APP_URL}/terms`,
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-};
+export function generateMetadata(): Metadata {
+  return {
+    title: "Terms of Service",
+    description:
+      "LynxPrompt Terms of Service. Read our terms and conditions for using the platform, marketplace, and services.",
+    openGraph: {
+      title: "Terms of Service - LynxPrompt",
+      description: "LynxPrompt Terms of Service and conditions of use.",
+      type: "website",
+    },
+    alternates: {
+      canonical: `${APP_URL}/terms`,
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
+  };
+}
 
 export default function TermsPage() {
   return (

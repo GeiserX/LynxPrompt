@@ -19,39 +19,41 @@ import {
 import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
 
-export const metadata: Metadata = {
-  title: "Security",
-  description:
-    "LynxPrompt Security practices. Learn how we protect your data with EU hosting, encryption, secure authentication, blueprint secret detection, federation security, and open-source transparency.",
-  keywords: [
-    "security",
-    "data protection",
-    "encryption",
-    "encryption at rest",
-    "TLS",
-    "GDPR",
-    "EU hosting",
-    "LynxPrompt security",
-    "blueprint security",
-    "secret detection",
-    "federation",
-    "open source",
-    "self-hosted",
-  ],
-  openGraph: {
-    title: "Security - LynxPrompt",
+export function generateMetadata(): Metadata {
+  return {
+    title: "Security",
     description:
-      "How LynxPrompt protects your data with enterprise-grade security.",
-    type: "website",
-  },
-  alternates: {
-    canonical: `${APP_URL}/security`,
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-};
+      "LynxPrompt Security practices. Learn how we protect your data with EU hosting, encryption, secure authentication, blueprint secret detection, federation security, and open-source transparency.",
+    keywords: [
+      "security",
+      "data protection",
+      "encryption",
+      "encryption at rest",
+      "TLS",
+      "GDPR",
+      "EU hosting",
+      "LynxPrompt security",
+      "blueprint security",
+      "secret detection",
+      "federation",
+      "open source",
+      "self-hosted",
+    ],
+    openGraph: {
+      title: "Security - LynxPrompt",
+      description:
+        "How LynxPrompt protects your data with enterprise-grade security.",
+      type: "website",
+    },
+    alternates: {
+      canonical: `${APP_URL}/security`,
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
+  };
+}
 
 export default function SecurityPage() {
   return (
