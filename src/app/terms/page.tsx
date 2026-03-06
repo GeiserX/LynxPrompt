@@ -5,6 +5,8 @@ import { APP_URL } from "@/lib/feature-flags";
 import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
 
+export const dynamic = "force-dynamic";
+
 export function generateMetadata(): Metadata {
   return {
     title: "Terms of Service",
