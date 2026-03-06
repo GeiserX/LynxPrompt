@@ -5,30 +5,32 @@ import { APP_URL } from "@/lib/feature-flags";
 import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
 
-export const metadata: Metadata = {
-  title: "Data Processing Agreement",
-  description:
-    "LynxPrompt Data Processing Agreement (DPA) for GDPR compliance. Standard contractual terms for business customers processing personal data.",
-  keywords: [
-    "DPA",
-    "data processing agreement",
-    "GDPR",
-    "data protection",
-    "LynxPrompt DPA",
-  ],
-  openGraph: {
-    title: "Data Processing Agreement - LynxPrompt",
-    description: "GDPR-compliant Data Processing Agreement for LynxPrompt.",
-    type: "website",
-  },
-  alternates: {
-    canonical: `${APP_URL}/dpa`,
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-};
+export function generateMetadata(): Metadata {
+  return {
+    title: "Data Processing Agreement",
+    description:
+      "LynxPrompt Data Processing Agreement (DPA) for GDPR compliance. Standard contractual terms for business customers processing personal data.",
+    keywords: [
+      "DPA",
+      "data processing agreement",
+      "GDPR",
+      "data protection",
+      "LynxPrompt DPA",
+    ],
+    openGraph: {
+      title: "Data Processing Agreement - LynxPrompt",
+      description: "GDPR-compliant Data Processing Agreement for LynxPrompt.",
+      type: "website",
+    },
+    alternates: {
+      canonical: `${APP_URL}/dpa`,
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
+  };
+}
 
 export default function DPAPage() {
   return (

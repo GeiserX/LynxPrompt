@@ -19,100 +19,103 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(APP_URL),
-  title: {
-    default: `${APP_NAME} - AI IDE Configuration Generator`,
-    template: `%s | ${APP_NAME}`,
-  },
-  description:
-    "Open-source platform to generate, store, and sync AI IDE configurations. Create .cursorrules, CLAUDE.md, AGENTS.md and more — self-hostable and federated.",
-  keywords: [
-    "AI IDE",
-    "Cursor",
-    "Claude",
-    "Copilot",
-    "Windsurf",
-    "configuration",
-    "prompt",
-    "developer tools",
-    "AI coding",
-    "IDE rules",
-    "AGENTS.md",
-    "cursorrules",
-    "open-source",
-    "self-hosted",
-    "blueprint",
-  ],
-  authors: [{ name: "GeiserCloud", url: "https://geiser.cloud" }],
-  creator: "GeiserCloud",
-  publisher: APP_NAME,
-  icons: {
-    icon: [
-      { url: "/favicon.ico", sizes: "any" },
-      { url: "/favicon.svg", type: "image/svg+xml" },
-      { url: "/favicon-16.png", sizes: "16x16", type: "image/png" },
-      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
-      { url: "/favicon-48.png", sizes: "48x48", type: "image/png" },
-      { url: "/favicon-96.png", sizes: "96x96", type: "image/png" },
-    ],
-    apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
-    ],
-  },
-  manifest: "/site.webmanifest",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: APP_NAME,
-  },
-  openGraph: {
-    title: `${APP_NAME} — AI Rule/Configuration Files Hub`,
+export function generateMetadata(): Metadata {
+  const appUrl = APP_URL;
+  return {
+    metadataBase: new URL(appUrl),
+    title: {
+      default: `${APP_NAME} - AI IDE Configuration Generator`,
+      template: `%s | ${APP_NAME}`,
+    },
     description:
-      "AI IDE/Tools rule config generator via WebUI or CLI. Generate, browse, store & share AGENTS.md, CLAUDE.md, and more.",
-    type: "website",
-    siteName: APP_NAME,
-    locale: "en_US",
-    url: APP_URL,
-    images: [
-      {
-        url: "/og-image.png",
-        width: 1280,
-        height: 640,
-        alt: `${APP_NAME} - AI IDE/Tools rule config generator`,
-      },
+      "Open-source platform to generate, store, and sync AI IDE configurations. Create .cursorrules, CLAUDE.md, AGENTS.md and more — self-hostable and federated.",
+    keywords: [
+      "AI IDE",
+      "Cursor",
+      "Claude",
+      "Copilot",
+      "Windsurf",
+      "configuration",
+      "prompt",
+      "developer tools",
+      "AI coding",
+      "IDE rules",
+      "AGENTS.md",
+      "cursorrules",
+      "open-source",
+      "self-hosted",
+      "blueprint",
     ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: `${APP_NAME} — AI Rule/Configuration Files Hub`,
-    description:
-      "AI IDE/Tools rule config generator via WebUI or CLI. Generate, browse, store & share AGENTS.md, CLAUDE.md, and more.",
-    images: ["/og-image.png"],
-    creator: "@geaboron",
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
+    authors: [{ name: "GeiserCloud", url: "https://geiser.cloud" }],
+    creator: "GeiserCloud",
+    publisher: APP_NAME,
+    icons: {
+      icon: [
+        { url: "/favicon.ico", sizes: "any" },
+        { url: "/favicon.svg", type: "image/svg+xml" },
+        { url: "/favicon-16.png", sizes: "16x16", type: "image/png" },
+        { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+        { url: "/favicon-48.png", sizes: "48x48", type: "image/png" },
+        { url: "/favicon-96.png", sizes: "96x96", type: "image/png" },
+      ],
+      apple: [
+        { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      ],
+    },
+    manifest: "/site.webmanifest",
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "default",
+      title: APP_NAME,
+    },
+    openGraph: {
+      title: `${APP_NAME} — AI Rule/Configuration Files Hub`,
+      description:
+        "AI IDE/Tools rule config generator via WebUI or CLI. Generate, browse, store & share AGENTS.md, CLAUDE.md, and more.",
+      type: "website",
+      siteName: APP_NAME,
+      locale: "en_US",
+      url: appUrl,
+      images: [
+        {
+          url: "/og-image.png",
+          width: 1280,
+          height: 640,
+          alt: `${APP_NAME} - AI IDE/Tools rule config generator`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${APP_NAME} — AI Rule/Configuration Files Hub`,
+      description:
+        "AI IDE/Tools rule config generator via WebUI or CLI. Generate, browse, store & share AGENTS.md, CLAUDE.md, and more.",
+      images: ["/og-image.png"],
+      creator: "@geaboron",
+    },
+    robots: {
       index: true,
       follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-video-preview": -1,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+      },
     },
-  },
-  alternates: {
-    canonical: APP_URL,
-    types: {
-      "application/rss+xml": "/api/blog/rss",
+    alternates: {
+      canonical: appUrl,
+      types: {
+        "application/rss+xml": "/api/blog/rss",
+      },
     },
-  },
-  verification: {
-    // Add verification codes when available
-    // google: "your-google-verification-code",
-  },
-};
+    verification: {
+      // Add verification codes when available
+      // google: "your-google-verification-code",
+    },
+  };
+}
 
 export default function RootLayout({
   children,

@@ -15,37 +15,39 @@ import {
 import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
 
-export const metadata: Metadata = {
-  title: "About",
-  description:
-    "LynxPrompt: Store, manage, and sync your AI IDE blueprints across all your projects. Open-source, self-hostable, and built for multi-repo workflows.",
-  keywords: [
-    "LynxPrompt",
-    "about LynxPrompt",
-    "GeiserCloud",
-    "AI IDE configuration",
-    "blueprint storage",
-    "developer tools",
-    "self-hosted",
-    "open-source",
-  ],
-  openGraph: {
-    title: "About LynxPrompt",
+export function generateMetadata(): Metadata {
+  return {
+    title: "About",
     description:
-      "Store, manage, and sync your AI IDE blueprints across all your projects. Open-source and self-hostable.",
-    type: "website",
-    images: [{ url: "/og-image.png", alt: "LynxPrompt" }],
-  },
-  twitter: {
-    card: "summary",
-    title: "About LynxPrompt",
-    description:
-      "Store and sync AI IDE blueprints across projects. Open-source, self-hostable, federated.",
-  },
-  alternates: {
-    canonical: `${APP_URL}/about`,
-  },
-};
+      "LynxPrompt: Store, manage, and sync your AI IDE blueprints across all your projects. Open-source, self-hostable, and built for multi-repo workflows.",
+    keywords: [
+      "LynxPrompt",
+      "about LynxPrompt",
+      "GeiserCloud",
+      "AI IDE configuration",
+      "blueprint storage",
+      "developer tools",
+      "self-hosted",
+      "open-source",
+    ],
+    openGraph: {
+      title: "About LynxPrompt",
+      description:
+        "Store, manage, and sync your AI IDE blueprints across all your projects. Open-source and self-hostable.",
+      type: "website",
+      images: [{ url: "/og-image.png", alt: "LynxPrompt" }],
+    },
+    twitter: {
+      card: "summary",
+      title: "About LynxPrompt",
+      description:
+        "Store and sync AI IDE blueprints across projects. Open-source, self-hostable, federated.",
+    },
+    alternates: {
+      canonical: `${APP_URL}/about`,
+    },
+  };
+}
 
 export default function AboutPage() {
   return (
