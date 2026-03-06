@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { APP_NAME, APP_URL } from "@/lib/feature-flags";
 
+export const dynamic = "force-dynamic";
+
 export function generateMetadata(): Metadata {
   return {
     title: "Wizard - AI IDE Configuration Generator",
