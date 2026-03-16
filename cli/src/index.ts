@@ -139,6 +139,7 @@ program
 program
   .command("push [file]")
   .description("Push local file to LynxPrompt cloud as a blueprint")
+  .option("-a, --all", "Scan recursively and push ALL AI config files (40+ types)")
   .option("-n, --name <name>", "Blueprint name")
   .option("-d, --description <desc>", "Blueprint description")
   .option("-v, --visibility <vis>", "Visibility: PRIVATE, TEAM, or PUBLIC", "PRIVATE")
@@ -231,6 +232,7 @@ ${chalk.cyan("Marketplace:")}
   ${chalk.white("$ lynxp pull bp_abc123")}        ${chalk.gray("Download and track a blueprint")}
   ${chalk.white("$ lynxp pull ha_xyz789")}        ${chalk.gray("Download entire hierarchy")}
   ${chalk.white("$ lynxp push")}                  ${chalk.gray("Push local file to cloud")}
+  ${chalk.white("$ lynxp push --all")}             ${chalk.gray("Push ALL config files recursively")}
   ${chalk.white("$ lynxp hierarchies")}           ${chalk.gray("List your hierarchies")}
   ${chalk.white("$ lynxp link --list")}           ${chalk.gray("Show tracked blueprints")}
 
