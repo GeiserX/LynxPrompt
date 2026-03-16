@@ -12,7 +12,6 @@ import {
   updateChecksum,
   loadBlueprints,
 } from "../utils/blueprint-tracker.js";
-import { inferCommandTypeFromPath } from "../utils/detect.js";
 
 interface PushOptions {
   name?: string;
@@ -21,6 +20,7 @@ interface PushOptions {
   tags?: string;
   yes?: boolean;
   force?: boolean;
+  all?: boolean;
 }
 
 interface HierarchyInfo {
@@ -34,28 +34,106 @@ interface DiscoveredFile {
   path: string;       // Relative path from cwd
   absolutePath: string;
   isRoot: boolean;    // Is this the root AGENTS.md?
+  type?: string;      // Blueprint type (set by scanForAllConfigFiles)
+  label?: string;     // Human-readable label
 }
 
 /**
- * Scan for AGENTS.md files in current directory and subdirectories
+ * Directories to always exclude from scanning.
+ * Mirrors action/src/detector.ts EXCLUDED_DIRS.
+ */
+const EXCLUDED_DIRS = new Set([
+  "node_modules", ".git", "dist", "build", ".next", "__pycache__",
+  "venv", ".venv", "target", "vendor", "out", ".output", ".nuxt",
+  "coverage", ".cache", "tmp", ".lynxprompt",
+]);
+
+/**
+ * Config file pattern rules — mirrors action/src/mapper.ts PATTERN_RULES.
+ * Ordered from most specific to least specific.
+ */
+interface ConfigPattern {
+  match: (relativePath: string) => boolean;
+  type: string;
+  label: string;
+}
+
+function normPath(p: string): string {
+  return p.replace(/\\/g, "/").toLowerCase();
+}
+
+const CONFIG_PATTERNS: ConfigPattern[] = [
+  // Commands (most specific paths first)
+  { match: (p) => normPath(p).includes(".cursor/commands/") && p.endsWith(".md"), type: "CURSOR_COMMAND", label: "Cursor Command" },
+  { match: (p) => normPath(p).includes(".claude/commands/") && p.endsWith(".md"), type: "CLAUDE_COMMAND", label: "Claude Command" },
+  { match: (p) => normPath(p).includes(".windsurf/workflows/") && p.endsWith(".md"), type: "WINDSURF_WORKFLOW", label: "Windsurf Workflow" },
+  { match: (p) => normPath(p).includes(".copilot/prompts/") && p.endsWith(".md"), type: "COPILOT_PROMPT", label: "Copilot Prompt" },
+  { match: (p) => normPath(p).includes(".continue/prompts/") && p.endsWith(".md"), type: "CONTINUE_PROMPT", label: "Continue Prompt" },
+  { match: (p) => normPath(p).includes(".opencode/commands/") && p.endsWith(".md"), type: "OPENCODE_COMMAND", label: "OpenCode Command" },
+
+  // Directory-based rules
+  { match: (p) => normPath(p).includes(".cursor/rules/") && p.endsWith(".mdc"), type: "CURSOR_RULES", label: "Cursor Rules" },
+  { match: (p) => normPath(p).includes(".trae/rules/") && p.endsWith(".mdc"), type: "TRAE_RULES", label: "Trae Rules" },
+  { match: (p) => normPath(p).includes(".idx/") && p.endsWith(".mdc"), type: "FIREBASE_RULES", label: "Firebase Rules" },
+  { match: (p) => normPath(p).includes(".roo/rules/") && p.endsWith(".mdc"), type: "ROO_RULES", label: "Roo Rules" },
+  { match: (p) => normPath(p).includes(".amazonq/rules/") && p.endsWith(".mdc"), type: "AMAZONQ_RULES", label: "Amazon Q Rules" },
+  { match: (p) => normPath(p).includes(".augment/rules/") && p.endsWith(".mdc"), type: "AUGMENT_RULES", label: "Augment Rules" },
+  { match: (p) => normPath(p).includes(".kilocode/rules/") && p.endsWith(".mdc"), type: "KILOCODE_RULES", label: "Kilo Code Rules" },
+  { match: (p) => normPath(p).includes(".kiro/steering/") && p.endsWith(".mdc"), type: "KIRO_STEERING", label: "Kiro Steering" },
+
+  // Path-based configs
+  { match: (p) => normPath(p).includes(".github/copilot-instructions.md"), type: "COPILOT_INSTRUCTIONS", label: "Copilot Instructions" },
+  { match: (p) => normPath(p).includes(".zed/instructions.md"), type: "ZED_INSTRUCTIONS", label: "Zed Instructions" },
+  { match: (p) => normPath(p).includes(".openhands/microagents/repo.md"), type: "OPENHANDS_CONFIG", label: "OpenHands Config" },
+  { match: (p) => normPath(p).includes(".junie/guidelines.md"), type: "JUNIE_GUIDELINES", label: "Junie Guidelines" },
+  { match: (p) => normPath(p).includes(".void/config.json"), type: "VOID_CONFIG", label: "Void Config" },
+  { match: (p) => normPath(p).includes(".continue/config.json"), type: "CONTINUE_CONFIG", label: "Continue Config" },
+  { match: (p) => normPath(p).includes(".cody/config.json"), type: "CODY_CONFIG", label: "Cody Config" },
+  { match: (p) => normPath(p).includes(".supermaven/config.json"), type: "SUPERMAVEN_CONFIG", label: "Supermaven Config" },
+  { match: (p) => normPath(p).includes(".codegpt/config.json"), type: "CODEGPT_CONFIG", label: "CodeGPT Config" },
+
+  // Basename rules
+  { match: (p) => path.basename(p) === "AGENTS.md", type: "AGENTS_MD", label: "AGENTS.md" },
+  { match: (p) => path.basename(p) === "CLAUDE.md", type: "CLAUDE_MD", label: "CLAUDE.md" },
+  { match: (p) => path.basename(p) === "AIDER.md", type: "AIDER_MD", label: "AIDER.md" },
+  { match: (p) => path.basename(p) === "GEMINI.md", type: "GEMINI_MD", label: "GEMINI.md" },
+  { match: (p) => path.basename(p) === "WARP.md", type: "WARP_MD", label: "WARP.md" },
+  { match: (p) => path.basename(p) === "CRUSH.md", type: "CRUSH_MD", label: "CRUSH.md" },
+  { match: (p) => path.basename(p) === ".windsurfrules", type: "WINDSURF_RULES", label: "Windsurf Rules" },
+  { match: (p) => path.basename(p) === ".clinerules", type: "CLINE_RULES", label: "Cline Rules" },
+  { match: (p) => path.basename(p) === ".goosehints", type: "GOOSE_HINTS", label: "Goose Hints" },
+  { match: (p) => path.basename(p) === ".tabnine.yaml", type: "TABNINE_CONFIG", label: "Tabnine Config" },
+  { match: (p) => path.basename(p) === "opencode.json", type: "OPENCODE_CONFIG", label: "OpenCode Config" },
+  { match: (p) => path.basename(p) === "firebender.json", type: "FIREBENDER_CONFIG", label: "Firebender Config" },
+];
+
+/**
+ * Match a relative path against all known config file patterns.
+ * Returns type + label if it matches, null otherwise.
+ */
+function matchConfigFile(relativePath: string): { type: string; label: string } | null {
+  for (const pattern of CONFIG_PATTERNS) {
+    if (pattern.match(relativePath)) {
+      return { type: pattern.type, label: pattern.label };
+    }
+  }
+  return null;
+}
+
+/**
+ * Scan for AGENTS.md files only (used when pushing a single AGENTS.md).
  */
 function scanForAgentFiles(cwd: string, maxDepth: number = 5): DiscoveredFile[] {
   const results: DiscoveredFile[] = [];
-  
+
   function scan(dir: string, depth: number) {
     if (depth > maxDepth) return;
-    
     try {
       const entries = fs.readdirSync(dir, { withFileTypes: true });
-      
       for (const entry of entries) {
         const fullPath = path.join(dir, entry.name);
-        
-        // Skip common non-project directories
         if (entry.isDirectory()) {
-          if (["node_modules", ".git", "dist", "build", ".next", "__pycache__", "venv", ".venv"].includes(entry.name)) {
-            continue;
-          }
+          if (EXCLUDED_DIRS.has(entry.name)) continue;
           scan(fullPath, depth + 1);
         } else if (entry.name === "AGENTS.md") {
           const relativePath = path.relative(cwd, fullPath);
@@ -63,6 +141,8 @@ function scanForAgentFiles(cwd: string, maxDepth: number = 5): DiscoveredFile[] 
             path: relativePath,
             absolutePath: fullPath,
             isRoot: relativePath === "AGENTS.md",
+            type: "AGENTS_MD",
+            label: "AGENTS.md",
           });
         }
       }
@@ -70,16 +150,65 @@ function scanForAgentFiles(cwd: string, maxDepth: number = 5): DiscoveredFile[] 
       // Ignore directories we can't read
     }
   }
-  
+
   scan(cwd, 0);
-  
-  // Sort: root first, then alphabetically by path
   results.sort((a, b) => {
     if (a.isRoot && !b.isRoot) return -1;
     if (!a.isRoot && b.isRoot) return 1;
     return a.path.localeCompare(b.path);
   });
-  
+  return results;
+}
+
+/**
+ * Scan for ALL AI config files recursively (--all mode).
+ * Mirrors the GitHub Action's detector.ts patterns.
+ */
+function scanForAllConfigFiles(cwd: string, maxDepth: number = 5): DiscoveredFile[] {
+  const results: DiscoveredFile[] = [];
+  const MAX_FILE_SIZE = 1024 * 1024; // 1MB
+
+  function scan(dir: string, depth: number) {
+    if (depth > maxDepth) return;
+    try {
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          if (EXCLUDED_DIRS.has(entry.name)) continue;
+          scan(fullPath, depth + 1);
+        } else {
+          const relativePath = path.relative(cwd, fullPath);
+          const configMatch = matchConfigFile(relativePath);
+          if (configMatch) {
+            // Skip files that are too large or empty
+            try {
+              const stat = fs.statSync(fullPath);
+              if (stat.size === 0 || stat.size > MAX_FILE_SIZE) continue;
+            } catch {
+              continue;
+            }
+            results.push({
+              path: relativePath,
+              absolutePath: fullPath,
+              isRoot: relativePath === "AGENTS.md",
+              type: configMatch.type,
+              label: configMatch.label,
+            });
+          }
+        }
+      }
+    } catch {
+      // Ignore directories we can't read
+    }
+  }
+
+  scan(cwd, 0);
+  results.sort((a, b) => {
+    if (a.isRoot && !b.isRoot) return -1;
+    if (!a.isRoot && b.isRoot) return 1;
+    return a.path.localeCompare(b.path);
+  });
   return results;
 }
 
@@ -221,6 +350,48 @@ export async function pushCommand(
     process.exit(1);
   }
 
+  // --all mode: scan for ALL config files recursively
+  if (options.all) {
+    const discoveredFiles = scanForAllConfigFiles(cwd);
+    if (discoveredFiles.length === 0) {
+      console.log(chalk.yellow("No AI configuration files found."));
+      console.log(chalk.gray("Run from a directory containing AGENTS.md, CLAUDE.md, .cursor/rules/, etc."));
+      process.exit(1);
+    }
+
+    // Group by type for display
+    console.log(chalk.cyan(`\n📁 Found ${discoveredFiles.length} AI config files:\n`));
+    const byType = new Map<string, DiscoveredFile[]>();
+    for (const f of discoveredFiles) {
+      const key = f.label || "Unknown";
+      if (!byType.has(key)) byType.set(key, []);
+      byType.get(key)!.push(f);
+    }
+    for (const [label, files] of byType) {
+      console.log(chalk.white(`  ${label} (${files.length}):`));
+      for (const f of files) {
+        console.log(chalk.gray(`    ${f.path}`));
+      }
+    }
+    console.log();
+
+    if (!options.yes) {
+      const { confirm } = await prompts({
+        type: "confirm",
+        name: "confirm",
+        message: `Push all ${discoveredFiles.length} files as a hierarchy?`,
+        initial: true,
+      });
+      if (!confirm) {
+        console.log(chalk.yellow("Push cancelled."));
+        return;
+      }
+    }
+
+    await pushHierarchy(cwd, discoveredFiles, options);
+    return;
+  }
+
   // Find the file to push
   const file = fileArg || findDefaultFile();
   if (!file) {
@@ -228,6 +399,7 @@ export async function pushCommand(
     console.log(
       chalk.gray("Specify a file or run in a directory with AGENTS.md, CLAUDE.md, etc.")
     );
+    console.log(chalk.gray("Or use 'lynxp push --all' to scan recursively for all config files."));
     process.exit(1);
   }
 
@@ -522,7 +694,9 @@ async function createOrLinkBlueprint(
 }
 
 /**
- * Push multiple AGENTS.md files as a hierarchy
+ * Push multiple files as a hierarchy.
+ * Handles both AGENTS.md-only and --all (mixed types) modes.
+ * Deduplicates: updates tracked/existing blueprints, creates new ones.
  */
 async function pushHierarchy(
   cwd: string,
@@ -532,7 +706,7 @@ async function pushHierarchy(
   // Get hierarchy name
   let hierarchyName = options.name || path.basename(cwd);
   let visibility = options.visibility || "PRIVATE";
-  
+
   if (!options.yes) {
     const responses = await prompts([
       {
@@ -554,24 +728,24 @@ async function pushHierarchy(
         initial: 0,
       },
     ]);
-    
+
     if (!responses.name) {
       console.log(chalk.yellow("Push cancelled."));
       return;
     }
-    
+
     hierarchyName = responses.name;
     visibility = responses.visibility || visibility;
   }
-  
+
   console.log();
-  console.log(chalk.cyan(`📁 Creating hierarchy "${hierarchyName}" with ${files.length} files...`));
+  console.log(chalk.cyan(`📁 Syncing hierarchy "${hierarchyName}" with ${files.length} files...`));
   console.log();
-  
+
   // Create repository root identifier
   const repositoryRoot = createRepositoryRoot(cwd);
-  
-  // Create hierarchy first
+
+  // Create or get existing hierarchy
   let hierarchyId: string;
   try {
     const hierarchyResponse = await api.createHierarchy({
@@ -579,51 +753,88 @@ async function pushHierarchy(
       repository_root: repositoryRoot,
     });
     hierarchyId = hierarchyResponse.hierarchy.id;
-    console.log(chalk.green(`✓ Created hierarchy: ${hierarchyId}`));
+    console.log(chalk.green(`✓ Hierarchy: ${hierarchyId}`));
   } catch (error) {
     console.log(chalk.red("Failed to create hierarchy"));
     handleError(error);
     return;
   }
-  
-  // Upload each file
+
+  // Process each file
   let rootBlueprintId: string | null = null;
-  let successCount = 0;
+  let createCount = 0;
+  let updateCount = 0;
   let failCount = 0;
-  
+
   for (const file of files) {
-    const spinner = ora(`Uploading ${file.path}...`).start();
-    
+    const spinner = ora(`Processing ${file.path}...`).start();
+
     try {
       const content = fs.readFileSync(file.absolutePath, "utf-8");
-      
-      // Generate name from path
-      let blueprintName: string;
-      if (file.isRoot) {
-        blueprintName = hierarchyName;
-      } else {
-        // Use folder name or derive from path
-        const dirname = path.dirname(file.path);
-        blueprintName = dirname.replace(/[/\\]/g, " / ");
+
+      // 1. Check if already tracked locally → update
+      const tracked = await findBlueprintByFile(cwd, file.path);
+      if (tracked) {
+        const updateData: { content: string; expected_checksum?: string } = { content };
+        if (tracked.checksum && !options.force) {
+          updateData.expected_checksum = tracked.checksum;
+        }
+        await api.updateBlueprint(tracked.id, updateData);
+        await updateChecksum(cwd, file.path, content);
+
+        if (file.isRoot) rootBlueprintId = tracked.id;
+        spinner.succeed(`${file.path} → updated (${tracked.id})`);
+        updateCount++;
+        continue;
       }
-      
+
+      // 2. Check if exists on server with same repository_path → re-link & update
+      const existing = await findExistingBlueprintOnServer(file.path, hierarchyId);
+      if (existing) {
+        await api.updateBlueprint(existing.id, { content });
+        await trackBlueprint(cwd, {
+          id: existing.id,
+          name: existing.name,
+          file: file.path,
+          content,
+          source: "private",
+          hierarchyId,
+          hierarchyName,
+          repositoryPath: file.path,
+        });
+
+        if (file.isRoot) rootBlueprintId = existing.id;
+        spinner.succeed(`${file.path} → linked & updated (${existing.id})`);
+        updateCount++;
+        continue;
+      }
+
+      // 3. Create new blueprint
+      const blueprintName = file.isRoot
+        ? hierarchyName
+        : path.basename(file.path) === "AGENTS.md"
+          ? path.dirname(file.path).replace(/[/\\]/g, " / ")
+          : file.path.replace(/\\/g, "/");
+
+      // Only AGENTS.md children get parent_id
+      const parentId = (!file.isRoot && file.type === "AGENTS_MD" && rootBlueprintId)
+        ? rootBlueprintId
+        : null;
+
       const result = await api.createBlueprint({
         name: blueprintName,
         description: "",
         content,
         visibility: visibility as "PRIVATE" | "TEAM" | "PUBLIC",
         tags: [],
+        type: file.type || inferBlueprintType(file.path),
         hierarchy_id: hierarchyId,
-        parent_id: file.isRoot ? null : rootBlueprintId,
+        parent_id: parentId,
         repository_path: file.path,
       });
-      
-      // Track root blueprint ID for linking children
-      if (file.isRoot) {
-        rootBlueprintId = result.blueprint.id;
-      }
-      
-      // Track locally
+
+      if (file.isRoot) rootBlueprintId = result.blueprint.id;
+
       await trackBlueprint(cwd, {
         id: result.blueprint.id,
         name: blueprintName,
@@ -634,9 +845,9 @@ async function pushHierarchy(
         hierarchyName,
         repositoryPath: file.path,
       });
-      
-      spinner.succeed(`${file.path} → ${result.blueprint.id}`);
-      successCount++;
+
+      spinner.succeed(`${file.path} → created (${result.blueprint.id})`);
+      createCount++;
     } catch (error) {
       spinner.fail(`${file.path} failed`);
       if (error instanceof ApiRequestError) {
@@ -645,17 +856,20 @@ async function pushHierarchy(
       failCount++;
     }
   }
-  
+
   console.log();
-  console.log(chalk.green(`✅ Hierarchy created successfully!`));
+  console.log(chalk.green(`✅ Hierarchy sync complete!`));
   console.log(chalk.gray(`   Hierarchy: ${hierarchyId}`));
   console.log(chalk.gray(`   Name: ${hierarchyName}`));
-  console.log(chalk.gray(`   Blueprints: ${successCount} uploaded${failCount > 0 ? `, ${failCount} failed` : ""}`));
+  const parts = [];
+  if (createCount > 0) parts.push(`${createCount} created`);
+  if (updateCount > 0) parts.push(`${updateCount} updated`);
+  if (failCount > 0) parts.push(`${failCount} failed`);
+  console.log(chalk.gray(`   Results: ${parts.join(", ")}`));
   console.log();
   console.log(chalk.cyan("Tips:"));
   console.log(chalk.gray(`  • Run 'lynxp status' to see all tracked blueprints`));
-  console.log(chalk.gray(`  • Run 'lynxp pull ${hierarchyId}' to download the entire hierarchy`));
-  console.log(chalk.gray(`  • Run 'lynxp push' in any subfolder to update individual blueprints`));
+  console.log(chalk.gray(`  • Run 'lynxp push --all' again to sync changes`));
   console.log();
 }
 
@@ -681,31 +895,15 @@ function findDefaultFile(): string | null {
 }
 
 /**
- * Infer blueprint type from file path
- * Returns the appropriate TemplateType for the file
+ * Infer blueprint type from file path.
+ * Uses CONFIG_PATTERNS for known types, falls back to heuristics.
  */
 function inferBlueprintType(filePath: string): string {
-  const normalizedPath = filePath.replace(/\\/g, "/");
-  
-  // Check if it's a command file first
-  const commandInfo = inferCommandTypeFromPath(filePath);
-  if (commandInfo) {
-    return commandInfo.templateType;
-  }
-  
-  // Infer from file path for rules/config files
-  if (normalizedPath.includes(".cursor/rules/")) return "CURSOR_RULES";
-  if (normalizedPath.endsWith("CLAUDE.md")) return "CLAUDE_MD";
-  if (normalizedPath.endsWith(".windsurfrules")) return "WINDSURF_RULES";
-  if (normalizedPath.endsWith(".clinerules")) return "CLINE_RULES";
-  if (normalizedPath.includes(".github/copilot-instructions.md")) return "COPILOT_INSTRUCTIONS";
-  if (normalizedPath.endsWith("GEMINI.md")) return "GEMINI_MD";
-  if (normalizedPath.endsWith("AIDER.md")) return "AGENTS_MD";
-  if (normalizedPath.endsWith("AGENTS.md")) return "AGENTS_MD";
-  
-  // Default to AGENTS_MD for markdown files
-  if (normalizedPath.endsWith(".md")) return "AGENTS_MD";
-  
+  const configMatch = matchConfigFile(filePath);
+  if (configMatch) return configMatch.type;
+
+  // Fallback for explicit single-file push of unknown files
+  if (filePath.endsWith(".md") || filePath.endsWith(".mdc")) return "AGENTS_MD";
   return "CUSTOM";
 }
 
