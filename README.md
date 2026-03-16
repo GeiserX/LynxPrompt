@@ -1,18 +1,28 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/GeiserX/LynxPrompt/main/public/logo.png">
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/GeiserX/LynxPrompt/main/public/logo.png">
-  <img alt="LynxPrompt" src="https://raw.githubusercontent.com/GeiserX/LynxPrompt/main/public/logo.png" width="150">
-</picture>
+<p align="center">
+  <img src="docs/images/banner.svg" alt="LynxPrompt banner" width="900"/>
+</p>
 
-# LynxPrompt
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/GeiserX/LynxPrompt/main/public/logo.png">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/GeiserX/LynxPrompt/main/public/logo.png">
+    <img alt="LynxPrompt" src="https://raw.githubusercontent.com/GeiserX/LynxPrompt/main/public/logo.png" width="150">
+  </picture>
+</p>
 
-> **Self-hostable AI config management for teams and individuals**
+<h1 align="center">LynxPrompt</h1>
 
-[![Website](https://img.shields.io/badge/🌐_Website-lynxprompt.com-6366f1?style=flat-square)](https://lynxprompt.com)
-[![npm](https://img.shields.io/npm/v/lynxprompt?style=flat-square&logo=npm&label=CLI)](https://www.npmjs.com/package/lynxprompt)
-[![License](https://img.shields.io/badge/📜_License-GPL--3.0-blue?style=flat-square)](LICENSE)
-[![GitHub Stars](https://img.shields.io/github/stars/GeiserX/LynxPrompt?style=flat-square&logo=github)](https://github.com/GeiserX/LynxPrompt)
-[![Docker Pulls](https://img.shields.io/docker/pulls/drumsergio/lynxprompt?style=flat-square&logo=docker&label=Docker%20Pulls)](https://hub.docker.com/r/drumsergio/lynxprompt)
+<p align="center">
+  <strong>Self-hostable AI config management for teams and individuals</strong>
+</p>
+
+<p align="center">
+  <a href="https://lynxprompt.com"><img src="https://img.shields.io/badge/🌐_Website-lynxprompt.com-6366f1?style=flat-square" alt="Website"></a>
+  <a href="https://www.npmjs.com/package/lynxprompt"><img src="https://img.shields.io/npm/v/lynxprompt?style=flat-square&logo=npm&label=CLI" alt="npm"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/📜_License-GPL--3.0-blue?style=flat-square" alt="License"></a>
+  <a href="https://github.com/GeiserX/LynxPrompt"><img src="https://img.shields.io/github/stars/GeiserX/LynxPrompt?style=flat-square&logo=github" alt="GitHub Stars"></a>
+  <a href="https://hub.docker.com/r/drumsergio/lynxprompt"><img src="https://img.shields.io/docker/pulls/drumsergio/lynxprompt?style=flat-square&logo=docker&label=Docker%20Pulls" alt="Docker Pulls"></a>
+</p>
 
 <p align="center">
   <img src="docs/demo.gif" alt="LynxPrompt CLI Demo" width="900">
