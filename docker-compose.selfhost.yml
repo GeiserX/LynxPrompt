@@ -37,10 +37,23 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      DATABASE_URL_APP: postgresql://lynxprompt:${DB_PASSWORD:?DB_PASSWORD must be set - generate with: openssl rand -hex 24}@postgres:5432/lynxprompt?schema=public
-      DATABASE_URL_USERS: postgresql://lynxprompt:${DB_PASSWORD:?DB_PASSWORD must be set - generate with: openssl rand -hex 24}@postgres:5432/lynxprompt?schema=public
-      DATABASE_URL_BLOG: postgresql://lynxprompt:${DB_PASSWORD:?DB_PASSWORD must be set - generate with: openssl rand -hex 24}@postgres:5432/lynxprompt?schema=public
-      DATABASE_URL_SUPPORT: postgresql://lynxprompt:${DB_PASSWORD:?DB_PASSWORD must be set - generate with: openssl rand -hex 24}@postgres:5432/lynxprompt?schema=public
+      # Single DB — password defined once, shared with Postgres container
+      DB_APP_HOST: postgres
+      DB_APP_USER: lynxprompt
+      DB_APP_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set - generate with: openssl rand -hex 24}
+      DB_APP_NAME: lynxprompt
+      DB_USERS_HOST: postgres
+      DB_USERS_USER: lynxprompt
+      DB_USERS_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set - generate with: openssl rand -hex 24}
+      DB_USERS_NAME: lynxprompt
+      DB_BLOG_HOST: postgres
+      DB_BLOG_USER: lynxprompt
+      DB_BLOG_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set - generate with: openssl rand -hex 24}
+      DB_BLOG_NAME: lynxprompt
+      DB_SUPPORT_HOST: postgres
+      DB_SUPPORT_USER: lynxprompt
+      DB_SUPPORT_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set - generate with: openssl rand -hex 24}
+      DB_SUPPORT_NAME: lynxprompt
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?NEXTAUTH_SECRET must be set - generate with: openssl rand -base64 32}
       NEXTAUTH_URL: ${APP_URL:-http://localhost:3000}
       APP_URL: ${APP_URL:-http://localhost:3000}

@@ -194,11 +194,23 @@ services:
     volumes:
       - uploads_data:/data/uploads
     environment:
-      # Databases
-      DATABASE_URL_APP: postgresql://lynxprompt_app:${POSTGRES_APP_PASSWORD:-dev_app_password_change_me}@postgres-app:5432/lynxprompt_app?schema=public
-      DATABASE_URL_USERS: postgresql://lynxprompt_users:${POSTGRES_USERS_PASSWORD:-dev_users_password_change_me}@postgres-users:5432/lynxprompt_users?schema=public
-      DATABASE_URL_BLOG: postgresql://lynxprompt_blog:${POSTGRES_BLOG_PASSWORD:-dev_blog_password_change_me}@postgres-blog:5432/lynxprompt_blog?schema=public
-      DATABASE_URL_SUPPORT: postgresql://lynxprompt_support:${POSTGRES_SUPPORT_PASSWORD:-dev_support_password_change_me}@postgres-support:5432/lynxprompt_support?schema=public
+      # Databases — password defined once per DB, shared with Postgres containers
+      DB_APP_HOST: postgres-app
+      DB_APP_USER: lynxprompt_app
+      DB_APP_PASSWORD: ${POSTGRES_APP_PASSWORD:-dev_app_password_change_me}
+      DB_APP_NAME: lynxprompt_app
+      DB_USERS_HOST: postgres-users
+      DB_USERS_USER: lynxprompt_users
+      DB_USERS_PASSWORD: ${POSTGRES_USERS_PASSWORD:-dev_users_password_change_me}
+      DB_USERS_NAME: lynxprompt_users
+      DB_BLOG_HOST: postgres-blog
+      DB_BLOG_USER: lynxprompt_blog
+      DB_BLOG_PASSWORD: ${POSTGRES_BLOG_PASSWORD:-dev_blog_password_change_me}
+      DB_BLOG_NAME: lynxprompt_blog
+      DB_SUPPORT_HOST: postgres-support
+      DB_SUPPORT_USER: lynxprompt_support
+      DB_SUPPORT_PASSWORD: ${POSTGRES_SUPPORT_PASSWORD:-dev_support_password_change_me}
+      DB_SUPPORT_NAME: lynxprompt_support
       # NextAuth
       NEXTAUTH_URL: http://localhost:3000
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?NEXTAUTH_SECRET must be set}
