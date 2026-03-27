@@ -73,7 +73,7 @@ WORKDIR /prisma-deps
 
 COPY --from=builder /app/package.json ./
 RUN --mount=type=cache,target=/root/.npm \
-    npm install --no-save prisma tsx esbuild get-tsconfig resolve-pkg-maps 2>/dev/null
+    npm install --no-save --legacy-peer-deps prisma tsx esbuild get-tsconfig resolve-pkg-maps 2>/dev/null
 
 # -----------------------------------------------------------------------------
 # Production stage - minimal runtime image
