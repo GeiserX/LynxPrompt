@@ -33,5 +33,9 @@
     "@types/node": "^20.17.0",
     "@vercel/ncc": "^0.38.3",
     "typescript": "^5.7.0"
+  },
+  "overrides": {
+    "undici": "^7.0.0",
+    "brace-expansion": "^5.0.5"
   }
 }
