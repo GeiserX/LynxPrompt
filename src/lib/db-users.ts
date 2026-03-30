@@ -25,7 +25,6 @@ if (process.env.NODE_ENV !== "production") {
   globalForPrisma.poolUsers = pool;
 }
 
-// @ts-expect-error — @prisma/adapter-pg bundles @types/pg@8.11 internally, mismatches root @types/pg@8.20+
 const adapter = new PrismaPg(pool);
 
 export const prismaUsers =
