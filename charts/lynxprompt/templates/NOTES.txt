@@ -1,0 +1,34 @@
+LynxPrompt has been deployed successfully!
+
+1. To access LynxPrompt, follow these instructions:
+
+{{- if .Values.ingress.enabled }}
+   LynxPrompt is accessible at:
+
+   {{- range .Values.ingress.hosts }}
+     http{{ if $.Values.ingress.tls }}s{{ end }}://{{ .host }}{{ (index .paths 0).path }}
+   {{- end }}
+{{- else }}
+   NOTE: The ingress is disabled. Use port-forwarding to access the UI.
+
+   Run the following command to forward the port:
+
+     kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "lynxprompt.fullname" . }} 3000:{{ .Values.service.port }}
+
+   Then access LynxPrompt at: http://127.0.0.1:3000/
+{{- end }}
+
+2. Ensure that the PostgreSQL database is running and accessible. If you enabled the bundled PostgreSQL chart, it should be running within your cluster.
+
+3. The superadmin account will be created on first login using the email configured in auth.superadminEmail.
+{{- if .Values.auth.existingSecret }}
+   The chart is using the existing Secret {{ .Values.auth.existingSecret }} for NEXTAUTH and database credentials.
+{{- else }}
+   The chart is managing the application Secret {{ include "lynxprompt.secretName" . }}.
+{{- end }}
+
+4. Health endpoint:
+
+   curl http://127.0.0.1:3000/api/health
+
+5. For further configuration, modify the `values.yaml` as needed and upgrade the release.
