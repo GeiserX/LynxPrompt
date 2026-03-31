@@ -1,0 +1,142 @@
+image:
+  repository: drumsergio/lynxprompt
+  pullPolicy: IfNotPresent
+  tag: "2.0.75"
+
+replicaCount: 1
+
+service:
+  type: ClusterIP
+  port: 3000
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: lynxprompt.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+
+auth:
+  nextauthSecret: ""  # Generate with: openssl rand -base64 32
+  superadminEmail: ""
+
+app:
+  url: "http://localhost:3000"
+  name: "LynxPrompt"
+  enableUserRegistration: "true"
+  enableEmailAuth: "true"
+  enablePasskeys: "true"
+  enableGithubOauth: "false"
+  enableGoogleOauth: "false"
+  enableAi: "false"
+  enableBlog: "false"
+  enableSupportForum: "false"
+
+oauth:
+  github:
+    clientId: ""
+    clientSecret: ""
+  google:
+    clientId: ""
+    clientSecret: ""
+
+smtp:
+  host: ""
+  port: "587"
+  user: ""
+  password: ""
+  from: "noreply@localhost"
+  fromName: "LynxPrompt"
+
+ai:
+  anthropicApiKey: ""
+  model: "claude-3-5-haiku-latest"
+
+postgresql:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "17-alpine"
+  auth:
+    username: lynxprompt
+    password: changeme
+    database: lynxprompt
+  persistence:
+    enabled: true
+    size: 8Gi
+    storageClass: ""
+
+# Used when postgresql.enabled is false (bring your own PostgreSQL)
+externalDatabase:
+  host: ""
+  port: 5432
+  user: ""
+  password: ""
+  database: ""
+
+persistence:
+  uploads:
+    enabled: true
+    size: 5Gi
+    accessModes:
+      - ReadWriteOnce
+    # storageClass: ""
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 256Mi
+  limits:
+    memory: 2Gi
+
+livenessProbe:
+  enabled: true
+  httpGet:
+    path: /
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  enabled: true
+  httpGet:
+    path: /
+    port: http
+  initialDelaySeconds: 15
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+podSecurityContext:
+  fsGroup: 1001
+  runAsNonRoot: true
+  runAsUser: 1001
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: false
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+  # maxUnavailable: 1
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

@@ -1,0 +1,179 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "lynxprompt.fullname" . }}
+  labels:
+    {{- include "lynxprompt.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "lynxprompt.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "lynxprompt.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "lynxprompt.serviceAccountName" . }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          env:
+            # --- App settings ---
+            - name: APP_URL
+              value: {{ .Values.app.url | quote }}
+            - name: NEXTAUTH_URL
+              value: {{ .Values.app.url | quote }}
+            - name: APP_NAME
+              value: {{ .Values.app.name | quote }}
+            - name: NEXTAUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lynxprompt.fullname" . }}
+                  key: nextauth-secret
+            - name: SUPERADMIN_EMAIL
+              value: {{ .Values.auth.superadminEmail | quote }}
+            # --- Feature flags ---
+            - name: ENABLE_USER_REGISTRATION
+              value: {{ .Values.app.enableUserRegistration | quote }}
+            - name: ENABLE_EMAIL_AUTH
+              value: {{ .Values.app.enableEmailAuth | quote }}
+            - name: ENABLE_PASSKEYS
+              value: {{ .Values.app.enablePasskeys | quote }}
+            - name: ENABLE_GITHUB_OAUTH
+              value: {{ .Values.app.enableGithubOauth | quote }}
+            - name: ENABLE_GOOGLE_OAUTH
+              value: {{ .Values.app.enableGoogleOauth | quote }}
+            - name: ENABLE_AI
+              value: {{ .Values.app.enableAi | quote }}
+            - name: ENABLE_BLOG
+              value: {{ .Values.app.enableBlog | quote }}
+            - name: ENABLE_SUPPORT_FORUM
+              value: {{ .Values.app.enableSupportForum | quote }}
+            # --- Database: all 4 logical DBs point to the same PostgreSQL instance ---
+            {{- $dbHost := include "lynxprompt.postgresql.host" . }}
+            {{- $dbPort := include "lynxprompt.postgresql.port" . }}
+            {{- $dbUser := include "lynxprompt.postgresql.user" . }}
+            {{- $dbName := include "lynxprompt.postgresql.database" . }}
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lynxprompt.fullname" . }}
+                  key: db-password
+            {{- range (list "APP" "USERS" "BLOG" "SUPPORT") }}
+            - name: DB_{{ . }}_HOST
+              value: {{ $dbHost | quote }}
+            - name: DB_{{ . }}_PORT
+              value: {{ $dbPort | quote }}
+            - name: DB_{{ . }}_USER
+              value: {{ $dbUser | quote }}
+            - name: DB_{{ . }}_PASSWORD
+              value: "$(DB_PASSWORD)"
+            - name: DB_{{ . }}_NAME
+              value: {{ $dbName | quote }}
+            {{- end }}
+            # --- OAuth (optional) ---
+            {{- if .Values.oauth.github.clientId }}
+            - name: GITHUB_CLIENT_ID
+              value: {{ .Values.oauth.github.clientId | quote }}
+            - name: GITHUB_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lynxprompt.fullname" . }}
+                  key: github-client-secret
+            {{- end }}
+            {{- if .Values.oauth.google.clientId }}
+            - name: GOOGLE_CLIENT_ID
+              value: {{ .Values.oauth.google.clientId | quote }}
+            - name: GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lynxprompt.fullname" . }}
+                  key: google-client-secret
+            {{- end }}
+            # --- SMTP (optional) ---
+            {{- if .Values.smtp.host }}
+            - name: SMTP_HOST
+              value: {{ .Values.smtp.host | quote }}
+            - name: SMTP_PORT
+              value: {{ .Values.smtp.port | quote }}
+            - name: SMTP_USER
+              value: {{ .Values.smtp.user | quote }}
+            - name: SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lynxprompt.fullname" . }}
+                  key: smtp-password
+            - name: SMTP_FROM
+              value: {{ .Values.smtp.from | quote }}
+            - name: SMTP_FROM_NAME
+              value: {{ .Values.smtp.fromName | quote }}
+            {{- end }}
+            # --- AI (optional) ---
+            {{- if .Values.ai.anthropicApiKey }}
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lynxprompt.fullname" . }}
+                  key: anthropic-api-key
+            - name: AI_MODEL
+              value: {{ .Values.ai.model | quote }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          {{- if .Values.livenessProbe.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.livenessProbe.httpGet.path }}
+              port: {{ .Values.livenessProbe.httpGet.port }}
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+          {{- end }}
+          {{- if .Values.readinessProbe.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.readinessProbe.httpGet.path }}
+              port: {{ .Values.readinessProbe.httpGet.port }}
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+          {{- end }}
+          {{- if .Values.persistence.uploads.enabled }}
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/public/uploads
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- if .Values.persistence.uploads.enabled }}
+      volumes:
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: {{ include "lynxprompt.fullname" . }}-uploads
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

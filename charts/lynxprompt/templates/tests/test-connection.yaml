@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "lynxprompt.fullname" . }}-test-connection"
+  labels:
+    {{- include "lynxprompt.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  containers:
+    - name: wget
+      image: busybox:latest
+      command: ['wget']
+      args: ['--spider', '--quiet', 'http://{{ include "lynxprompt.fullname" . }}:{{ .Values.service.port }}']
+  restartPolicy: Never
