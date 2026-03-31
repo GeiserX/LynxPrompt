@@ -715,7 +715,7 @@ export default function DashboardPage() {
                       </span>
                     </div>
                     <Button variant="ghost" size="sm" asChild>
-                      <Link href="/blueprints/create">
+                      <Link href={`/blueprints/create?teamId=${teamData.id}`}>
                         <Plus className="mr-2 h-4 w-4" />
                         Share with Team
                       </Link>
