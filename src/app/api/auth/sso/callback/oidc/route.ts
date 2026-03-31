@@ -194,9 +194,10 @@ export async function GET(request: NextRequest) {
           new URL("/auth/signin?error=SSOSeatLimitReached", request.url)
         );
       }
-      // Prisma P2034 = serialization failure — retry
+      // P2034 = serialization failure, P2002 = unique constraint (concurrent insert)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if ((err as any)?.code === "P2034" && attempt < MAX_RETRIES - 1) {
+      const code = (err as any)?.code;
+      if ((code === "P2034" || code === "P2002") && attempt < MAX_RETRIES - 1) {
         continue;
       }
       throw err;

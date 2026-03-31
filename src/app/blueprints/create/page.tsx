@@ -262,10 +262,13 @@ export default function ShareBlueprintPage() {
 
   const hasSensitiveData = sensitiveMatches.length > 0 && !sensitiveWarningDismissed;
 
-  // Redirect to sign in if not authenticated
+  // Redirect to sign in if not authenticated, preserving query string
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/auth/signin?callbackUrl=/blueprints/create");
+      const callbackUrl = typeof window !== "undefined"
+        ? window.location.pathname + window.location.search
+        : "/blueprints/create";
+      router.push(`/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`);
     }
   }, [status, router]);
 
