@@ -149,11 +149,11 @@ export async function GET(request: NextRequest) {
 
   // Atomically find-or-create user and enforce seat limit in a serializable transaction
   // to prevent concurrent SSO logins from exceeding maxSeats
-  let user: { id: string; email: string | null; name: string | null } | null = null;
   let seatLimitReached = false;
+  let user: { id: string; email: string | null; name: string | null };
 
   try {
-    user = await prismaUsers.$transaction(async (tx) => {
+    user = await prismaUsers.$transaction(async (tx: typeof prismaUsers) => {
       let u = await tx.user.findUnique({ where: { email } });
       const existingMembership = u
         ? await tx.teamMember.findUnique({

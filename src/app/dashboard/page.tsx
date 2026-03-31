@@ -130,6 +130,15 @@ interface TeamBlueprint {
   author: string;
 }
 
+interface DashboardTeamData {
+  id: string;
+  name: string;
+  slug: string;
+  role: string;
+  memberCount: number;
+  blueprints: TeamBlueprint[];
+}
+
 interface DashboardData {
   stats: DashboardStats;
   myTemplates: MyTemplate[];
@@ -137,6 +146,15 @@ interface DashboardData {
   favoriteTemplates: FavoriteTemplate[];
   hierarchicalBlueprints: HierarchyGroup[];
   teamBlueprints: TeamBlueprint[];
+  teams?: DashboardTeamData[];
+}
+
+interface TeamInfo {
+  id: string;
+  name: string;
+  slug: string;
+  logo?: string | null;
+  role: string;
 }
 
 interface BillingStatus {
@@ -145,13 +163,8 @@ interface BillingStatus {
   isAdmin?: boolean;
   isTeamsUser?: boolean;
   hasActiveSubscription?: boolean;
-  team?: {
-    id: string;
-    name: string;
-    slug: string;
-    logo: string | null;
-    role: string;
-  } | null;
+  team?: TeamInfo | null;
+  teams?: TeamInfo[];
 }
 
 export default function DashboardPage() {
@@ -524,16 +537,16 @@ export default function DashboardPage() {
             </Button>
           </div>
 
-          {/* Teams Banner - Only for Teams users */}
-          {billingStatus?.isTeamsUser && billingStatus?.team && (
-            <div className="mb-8 overflow-hidden rounded-xl border border-teal-500/20 bg-gradient-to-r from-teal-500/10 via-cyan-500/5 to-background">
+          {/* Teams Banner - Show all teams the user belongs to */}
+          {billingStatus?.isTeamsUser && (billingStatus.teams || (billingStatus.team ? [billingStatus.team] : [])).map((t) => (
+            <div key={t.id} className="mb-8 overflow-hidden rounded-xl border border-teal-500/20 bg-gradient-to-r from-teal-500/10 via-cyan-500/5 to-background">
               <div className="p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-4">
-                    {billingStatus.team.logo ? (
+                    {t.logo ? (
                       <img
-                        src={billingStatus.team.logo}
-                        alt={billingStatus.team.name}
+                        src={t.logo}
+                        alt={t.name}
                         className="h-12 w-12 rounded-lg object-contain bg-muted shadow-lg"
                         style={{ maxWidth: "48px", maxHeight: "48px" }}
                       />
@@ -544,11 +557,11 @@ export default function DashboardPage() {
                     )}
                     <div>
                       <div className="flex items-center gap-2">
-                        <h2 className="text-lg font-semibold">{billingStatus.team.name}</h2>
+                        <h2 className="text-lg font-semibold">{t.name}</h2>
                         <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-800 dark:bg-teal-900/30 dark:text-teal-300">
                           Team
                         </span>
-                        {billingStatus.team.role === "ADMIN" && (
+                        {t.role === "ADMIN" && (
                           <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
                             <Crown className="h-3 w-3" />
                             Admin
@@ -556,22 +569,22 @@ export default function DashboardPage() {
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        {billingStatus.team.role === "ADMIN" 
-                          ? "Manage your team members, billing, and shared blueprints" 
+                        {t.role === "ADMIN"
+                          ? "Manage your team members, billing, and shared blueprints"
                           : "Access shared team blueprints and collaboration features"}
                       </p>
                     </div>
                   </div>
                   <Button asChild variant="outline" className="border-teal-500/30 hover:bg-teal-500/10">
-                    <Link href={`/teams/${billingStatus.team.slug}`}>
+                    <Link href={`/teams/${t.slug}`}>
                       <Users className="mr-2 h-4 w-4 text-teal-500" />
-                      {billingStatus.team.role === "ADMIN" ? "Manage Team" : "View Team"}
+                      {t.role === "ADMIN" ? "Manage Team" : "View Team"}
                     </Link>
                   </Button>
                 </div>
               </div>
             </div>
-          )}
+          ))}
 
           <div className="grid gap-8 lg:grid-cols-3">
             {/* Left Column: Quick Actions + My Templates */}
@@ -691,14 +704,14 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              {/* Team Blueprints - Only for TEAMS users */}
-              {billingStatus?.isTeamsUser && billingStatus?.team && (
-                <div className="mb-8">
+              {/* Team Blueprints - Show per-team sections for all teams */}
+              {billingStatus?.isTeamsUser && (dashboardData?.teams || (billingStatus?.team ? [{ ...billingStatus.team, blueprints: dashboardData?.teamBlueprints || [] }] : [])).map((teamData) => (
+                <div key={teamData.id} className="mb-8">
                   <div className="mb-4 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <h2 className="text-lg font-semibold">Team Blueprints</h2>
                       <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-800 dark:bg-teal-900/30 dark:text-teal-300">
-                        {billingStatus.team.name}
+                        {teamData.name}
                       </span>
                     </div>
                     <Button variant="ghost" size="sm" asChild>
@@ -715,7 +728,7 @@ export default function DashboardPage() {
                         <div key={i} className="h-20 animate-pulse rounded-lg bg-muted" />
                       ))}
                     </div>
-                  ) : (!dashboardData?.teamBlueprints || dashboardData.teamBlueprints.length === 0) ? (
+                  ) : (!teamData.blueprints || teamData.blueprints.length === 0) ? (
                     <div className="rounded-lg border border-teal-500/20 bg-gradient-to-r from-teal-500/5 to-background p-8 text-center">
                       <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-teal-500/10">
                         <Users className="h-6 w-6 text-teal-500" />
@@ -734,7 +747,7 @@ export default function DashboardPage() {
                   ) : (
                     <div className="space-y-3">
                       {/* Team-shared blueprints (created by team members) */}
-                      {dashboardData?.teamBlueprints?.map((blueprint) => (
+                      {teamData.blueprints.map((blueprint) => (
                         <div
                           key={blueprint.id}
                           className="flex items-center justify-between rounded-lg border border-teal-500/20 bg-gradient-to-r from-teal-500/5 to-background p-4 transition-colors hover:border-teal-500/40"
@@ -771,7 +784,7 @@ export default function DashboardPage() {
                     </div>
                   )}
                 </div>
-              )}
+              ))}
 
               {/* Hierarchical AGENTS.md (Monorepo support) */}
               <div className="mb-8">
