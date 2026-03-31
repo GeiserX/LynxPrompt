@@ -8,7 +8,7 @@ import { prismaApp } from "@/lib/db-app";
  * Get team membership for a user
  */
 async function getUserTeamInfo(userId: string) {
-  const membership = await prismaUsers.teamMember.findFirst({
+  const memberships = await prismaUsers.teamMember.findMany({
     where: { userId },
     include: {
       team: {
@@ -24,16 +24,27 @@ async function getUserTeamInfo(userId: string) {
       },
     },
   });
-  
-  if (!membership) return null;
-  
+
+  if (memberships.length === 0) return null;
+
+  // Return first team for backward compat, but expose all
+  const first = memberships[0];
   return {
-    teamId: membership.team.id,
-    teamName: membership.team.name,
-    teamSlug: membership.team.slug,
-    role: membership.role,
-    memberCount: membership.team._count.members,
-    memberIds: membership.team.members.map(m => m.userId),
+    teamId: first.team.id,
+    teamName: first.team.name,
+    teamSlug: first.team.slug,
+    role: first.role,
+    memberCount: first.team._count.members,
+    memberIds: first.team.members.map(m => m.userId),
+    // All teams (aggregated member IDs across all teams)
+    allTeams: memberships.map(m => ({
+      teamId: m.team.id,
+      teamName: m.team.name,
+      teamSlug: m.team.slug,
+      role: m.role,
+      memberCount: m.team._count.members,
+      memberIds: m.team.members.map(member => member.userId),
+    })),
   };
 }
 

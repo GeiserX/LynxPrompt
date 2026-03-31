@@ -13,10 +13,11 @@ function SSOCompleteContent() {
   useEffect(() => {
     const userId = searchParams.get("userId");
     const email = searchParams.get("email");
+    const teamId = searchParams.get("teamId");
     const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
     const sig = searchParams.get("sig");
 
-    if (!userId || !email || !sig) {
+    if (!userId || !email || !teamId || !sig) {
       setError("Invalid SSO completion parameters.");
       return;
     }
@@ -25,6 +26,7 @@ function SSOCompleteContent() {
     signIn("sso", {
       userId,
       email,
+      teamId,
       sig,
       callbackUrl,
       redirect: true,

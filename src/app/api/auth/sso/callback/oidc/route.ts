@@ -147,9 +147,27 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Find or create user, then add to team
+  // Check if user already exists and is already a team member
   let user = await prismaUsers.user.findUnique({ where: { email } });
+  let existingMembership = user
+    ? await prismaUsers.teamMember.findUnique({
+        where: { teamId_userId: { teamId: team.id, userId: user.id } },
+      })
+    : null;
 
+  // If user is not already a member, enforce seat limit BEFORE creating anything
+  if (!existingMembership) {
+    const currentMembers = await prismaUsers.teamMember.count({
+      where: { teamId: team.id },
+    });
+    if (currentMembers >= team.maxSeats) {
+      return NextResponse.redirect(
+        new URL("/auth/signin?error=SSOSeatLimitReached", request.url)
+      );
+    }
+  }
+
+  // Safe to create user now — seat limit already verified
   if (!user) {
     user = await prismaUsers.user.create({
       data: {
@@ -159,22 +177,8 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  // Ensure user is a member of the team
-  const existingMembership = await prismaUsers.teamMember.findUnique({
-    where: { teamId_userId: { teamId: team.id, userId: user.id } },
-  });
-
+  // Create membership if needed
   if (!existingMembership) {
-    // Enforce seat limit before adding member
-    const currentMembers = await prismaUsers.teamMember.count({
-      where: { teamId: team.id },
-    });
-    if (currentMembers >= team.maxSeats) {
-      return NextResponse.redirect(
-        new URL("/auth/signin?error=SSOSeatLimitReached", request.url)
-      );
-    }
-
     await prismaUsers.teamMember.create({
       data: {
         teamId: team.id,
