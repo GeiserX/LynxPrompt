@@ -616,17 +616,13 @@ export async function getTemplateById(
       if (template.userId === userId) {
         hasAccess = true;
       }
-      // Check team-based access
-      else {
-        // Get user's team membership
-        const teamMembership = await prismaUsers.teamMember.findFirst({
-          where: { userId },
+      // Check team-based access across all memberships
+      else if (template.visibility === "TEAM" && template.teamId) {
+        const membership = await prismaUsers.teamMember.findUnique({
+          where: { teamId_userId: { teamId: template.teamId, userId } },
           select: { teamId: true },
         });
-        const userTeamId = teamMembership?.teamId;
-
-        // Check if this is a TEAM visibility blueprint in user's team
-        if (template.visibility === "TEAM" && template.teamId && userTeamId === template.teamId) {
+        if (membership) {
           hasAccess = true;
         }
       }

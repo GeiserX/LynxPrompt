@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
   // Find team and SSO config
   const team = await prismaUsers.team.findUnique({
     where: { slug: teamSlug },
-    include: { ssoConfig: true },
+    select: { id: true, slug: true, maxSeats: true, ssoConfig: true },
   });
 
   if (!team?.ssoConfig || !team.ssoConfig.enabled || team.ssoConfig.provider !== "OIDC") {
@@ -165,6 +165,16 @@ export async function GET(request: NextRequest) {
   });
 
   if (!existingMembership) {
+    // Enforce seat limit before adding member
+    const currentMembers = await prismaUsers.teamMember.count({
+      where: { teamId: team.id },
+    });
+    if (currentMembers >= team.maxSeats) {
+      return NextResponse.redirect(
+        new URL("/auth/signin?error=SSOSeatLimitReached", request.url)
+      );
+    }
+
     await prismaUsers.teamMember.create({
       data: {
         teamId: team.id,

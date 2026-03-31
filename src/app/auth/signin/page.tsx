@@ -46,11 +46,12 @@ function SignInContent() {
     message?: string;
   } | null>(null);
 
-  // Handle CLI authentication callback when user is already authenticated
+  // CLI auth requires explicit user consent — no auto-submit
+  const [cliAuthConsented, setCliAuthConsented] = useState(false);
+
   useEffect(() => {
-    if (cliSession && status === "authenticated" && session?.user && !cliAuthComplete && !cliAuthError && !cliAuthProcessing) {
+    if (cliSession && cliAuthConsented && status === "authenticated" && session?.user && !cliAuthComplete && !cliAuthError && !cliAuthProcessing) {
       setCliAuthProcessing(true);
-      // Complete CLI authentication
       fetch("/api/cli-auth/callback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -73,7 +74,37 @@ function SignInContent() {
           setCliAuthProcessing(false);
         });
     }
-  }, [cliSession, status, session, cliAuthComplete, cliAuthError, cliAuthProcessing]);
+  }, [cliSession, cliAuthConsented, status, session, cliAuthComplete, cliAuthError, cliAuthProcessing]);
+
+  // Show CLI consent screen — user must explicitly authorize
+  if (cliSession && status === "authenticated" && session?.user && !cliAuthConsented && !cliAuthComplete && !cliAuthError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-600/10 to-pink-600/10 p-8">
+        <div className="w-full max-w-sm text-center">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
+            <Terminal className="h-10 w-10 text-primary" />
+          </div>
+          <h2 className="mt-6 text-2xl font-bold">Authorize CLI Access</h2>
+          <p className="mt-2 text-muted-foreground">
+            A CLI session is requesting access to your account
+            {session.user.email ? ` (${session.user.email})` : ""}.
+          </p>
+          <p className="mt-4 text-sm text-muted-foreground">
+            This will create an API token for the LynxPrompt CLI. Only proceed if you initiated this from your terminal.
+          </p>
+          <div className="mt-8 flex flex-col gap-3">
+            <Button onClick={() => setCliAuthConsented(true)}>
+              <Terminal className="mr-2 h-4 w-4" />
+              Authorize CLI
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/dashboard">Cancel</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Show loading state while checking CLI session or processing auth
   if (cliSession && (status === "loading" || cliAuthProcessing)) {
