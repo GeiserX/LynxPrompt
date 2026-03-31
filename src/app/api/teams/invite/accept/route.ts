@@ -104,7 +104,8 @@ export async function POST(request: NextRequest) {
     // Atomically check seats + create membership in a serializable transaction
     let seatLimitReached = false;
     try {
-      await prismaUsers.$transaction(async (tx: typeof prismaUsers) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await prismaUsers.$transaction(async (tx: any) => {
         const currentMembers = await tx.teamMember.count({
           where: { teamId: invitation.teamId },
         });

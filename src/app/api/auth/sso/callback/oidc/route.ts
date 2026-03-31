@@ -153,7 +153,8 @@ export async function GET(request: NextRequest) {
   let user: { id: string; email: string | null; name: string | null };
 
   try {
-    user = await prismaUsers.$transaction(async (tx: typeof prismaUsers) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    user = await prismaUsers.$transaction(async (tx: any) => {
       let u = await tx.user.findUnique({ where: { email } });
       const existingMembership = u
         ? await tx.teamMember.findUnique({
