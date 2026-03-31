@@ -1,3 +1,6 @@
+{{- if and (gt (int .Values.replicaCount) 1) .Values.persistence.uploads.enabled (not .Values.persistence.uploads.existingClaim) (has "ReadWriteOnce" .Values.persistence.uploads.accessModes) }}
+{{- fail "replicaCount > 1 with a ReadWriteOnce uploads PVC will cause pending pods. Set persistence.uploads.accessModes to [ReadWriteMany] or provide an existingClaim with RWX support." }}
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
