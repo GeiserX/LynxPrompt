@@ -30,9 +30,11 @@ export async function POST(
       }
     }
 
-    // Determine template type from ID prefix and strip bp_ for DB queries
+    // Determine template type from ID prefix and strip prefix for DB queries
     const templateType = rawId.startsWith("sys_") ? "system" : "user";
-    const dbId = rawId.startsWith("bp_") ? rawId.slice(3) : rawId;
+    const dbId = rawId.startsWith("bp_") ? rawId.slice(3)
+      : rawId.startsWith("sys_") ? rawId.slice(4)
+      : rawId;
 
     // Deduplicate: check for recent download from same IP + template in the last hour
     const clientIP = request.headers.get("cf-connecting-ip") ||
@@ -68,10 +70,10 @@ export async function POST(
       },
     });
 
-    // Increment downloads count on template — use dbId (without bp_ prefix)
+    // Increment downloads count on template — use dbId (without prefix)
     if (templateType === "system") {
       await prismaApp.systemTemplate.update({
-        where: { id: rawId },
+        where: { id: dbId },
         data: { downloads: { increment: 1 } },
       });
     } else {
@@ -96,7 +98,9 @@ export async function GET(
 ) {
   const { id: rawId } = await params;
   const templateType = rawId.startsWith("sys_") ? "system" : "user";
-  const dbId = rawId.startsWith("bp_") ? rawId.slice(3) : rawId;
+  const dbId = rawId.startsWith("bp_") ? rawId.slice(3)
+    : rawId.startsWith("sys_") ? rawId.slice(4)
+    : rawId;
 
   try {
     // For user blueprints, verify the requester owns it or it's public

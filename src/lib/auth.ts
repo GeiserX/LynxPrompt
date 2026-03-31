@@ -298,7 +298,7 @@ function buildProviders(): Provider[] {
     );
   }
 
-  // SSO credentials provider - validates HMAC-signed params from OIDC callback
+  // SSO credentials provider - validates HMAC-signed one-time nonce from OIDC callback
   if (ENABLE_SSO) {
     providers.push(
       CredentialsProvider({
@@ -308,22 +308,43 @@ function buildProviders(): Provider[] {
           userId: { type: "text" },
           email: { type: "text" },
           teamId: { type: "text" },
+          nonce: { type: "text" },
           sig: { type: "text" },
         },
         async authorize(credentials) {
-          if (!credentials?.userId || !credentials?.email || !credentials?.teamId || !credentials?.sig) {
+          if (
+            !credentials?.userId || !credentials?.email ||
+            !credentials?.teamId || !credentials?.nonce || !credentials?.sig
+          ) {
             return null;
           }
 
           const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
           if (!secret) return null;
 
-          // Verify HMAC signature matches what the OIDC callback generated
-          const signData = `${credentials.userId}:${credentials.email}:${credentials.teamId}`;
+          // Verify HMAC signature (includes nonce to bind it)
+          const signData = `${credentials.userId}:${credentials.email}:${credentials.teamId}:${credentials.nonce}`;
           const expected = createHmac("sha256", secret).update(signData).digest("hex");
 
           if (credentials.sig !== expected) {
             return null;
+          }
+
+          // Consume one-time nonce — delete it and verify it existed + hasn't expired
+          try {
+            const token = await prismaUsers.verificationToken.delete({
+              where: {
+                identifier_token: {
+                  identifier: `sso:${credentials.userId}`,
+                  token: credentials.nonce,
+                },
+              },
+            });
+            if (token.expires < new Date()) {
+              return null; // Nonce expired
+            }
+          } catch {
+            return null; // Nonce not found (already consumed or never existed)
           }
 
           // Look up the user - they must already exist (created by OIDC callback)

@@ -134,7 +134,7 @@ export default function TeamManagementPage() {
       }
 
       // Fetch invitations (admin only)
-      if (billingData.team.role === "ADMIN") {
+      if (matchedTeam.role === "ADMIN") {
         const invitesRes = await fetch(`/api/teams/${teamId}/invitations`);
         if (invitesRes.ok) {
           const invitesData = await invitesRes.json();

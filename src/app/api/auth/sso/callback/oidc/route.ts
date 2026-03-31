@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createHmac } from "crypto";
+import { createHmac, randomUUID } from "crypto";
 import { prismaUsers } from "@/lib/db-users";
 import { ENABLE_SSO } from "@/lib/feature-flags";
 import { decryptSSOConfig } from "@/lib/sso-encryption";
@@ -194,15 +194,28 @@ export async function GET(request: NextRequest) {
     data: { lastSyncAt: new Date() },
   });
 
+  // Generate a one-time nonce for the SSO completion handoff
+  const nonce = randomUUID();
+  const expires = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+  await prismaUsers.verificationToken.create({
+    data: {
+      identifier: `sso:${user.id}`,
+      token: nonce,
+      expires,
+    },
+  });
+
   // Redirect to the SSO sign-in completion page
   // This page triggers NextAuth signIn() with the SSO credentials
   const completeUrl = new URL("/auth/sso-complete", baseUrl);
   completeUrl.searchParams.set("userId", user.id);
   completeUrl.searchParams.set("email", email);
   completeUrl.searchParams.set("teamId", team.id);
+  completeUrl.searchParams.set("nonce", nonce);
   completeUrl.searchParams.set("callbackUrl", callbackUrl);
-  // Sign the params to prevent tampering
-  const signData = `${user.id}:${email}:${team.id}`;
+  // Sign all params including nonce to prevent tampering
+  const signData = `${user.id}:${email}:${team.id}:${nonce}`;
   const signature = createHmac("sha256", secret).update(signData).digest("hex");
   completeUrl.searchParams.set("sig", signature);
 
