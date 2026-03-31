@@ -1,0 +1,6 @@
+owner: GeiserX
+git-repo-url: https://github.com/GeiserX/LynxPrompt
+charts-repo-url: https://geiserx.github.io/LynxPrompt
+packages-with-index: false
+index-path: index.yaml
+release-name-template: "{{ .Name }}-{{ .Version }}"
