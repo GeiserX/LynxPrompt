@@ -39,7 +39,16 @@ spec:
             - /bin/sh
             - -ec
           args:
-            - until nc -z {{ include "lynxprompt.postgresql.host" . | quote }} {{ include "lynxprompt.postgresql.port" . | quote }}; do echo "waiting for database"; sleep 2; done
+            - >-
+              deadline=$(( $(date +%s) + {{ .Values.waitForDatabase.timeoutSeconds }} ));
+              until nc -z {{ include "lynxprompt.postgresql.host" . | quote }} {{ include "lynxprompt.postgresql.port" . | quote }}; do
+                if [ "$(date +%s)" -ge "$deadline" ]; then
+                  echo "database did not become ready within {{ .Values.waitForDatabase.timeoutSeconds }} seconds";
+                  exit 1;
+                fi;
+                echo "waiting for database";
+                sleep 2;
+              done
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

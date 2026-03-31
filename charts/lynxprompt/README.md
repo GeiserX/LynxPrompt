@@ -69,6 +69,7 @@ helm upgrade --install lynxprompt ./charts/lynxprompt -f my-values.yaml
 
 - `auth.existingSecret`: reuse credentials from an External Secret or Sealed Secret
 - `waitForDatabase.enabled`: block app startup until PostgreSQL accepts TCP connections
+- `waitForDatabase.timeoutSeconds`: fail startup if the database never becomes reachable instead of looping forever
 - `externalDatabase.*`: required when you disable the bundled PostgreSQL
 - `persistence.uploads.existingClaim`: reuse an uploads PVC instead of creating one
 - `app.enableFederation` and `app.federationRegistryUrl`: configure instance federation

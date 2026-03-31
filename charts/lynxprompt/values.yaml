@@ -119,6 +119,7 @@ externalDatabase:
 waitForDatabase:
   enabled: true
   image: busybox:1.36.1
+  timeoutSeconds: 300
 
 persistence:
   uploads:

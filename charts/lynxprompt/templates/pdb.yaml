@@ -5,6 +5,7 @@ metadata:
   name: {{ include "lynxprompt.fullname" . }}
   labels:
     {{- include "lynxprompt.labels" . | nindent 4 }}
+    app.kubernetes.io/component: web
 spec:
   {{- if .Values.podDisruptionBudget.minAvailable }}
   minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
