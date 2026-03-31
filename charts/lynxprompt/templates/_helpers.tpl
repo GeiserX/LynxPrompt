@@ -71,7 +71,7 @@ Return the PostgreSQL host.
 {{- if .Values.postgresql.enabled -}}
 {{- include "lynxprompt.fullname" . }}-postgresql
 {{- else -}}
-{{- .Values.externalDatabase.host -}}
+{{- required "Set externalDatabase.host when postgresql.enabled=false" .Values.externalDatabase.host -}}
 {{- end -}}
 {{- end -}}
 
@@ -93,7 +93,7 @@ Return the PostgreSQL user.
 {{- if .Values.postgresql.enabled -}}
 {{- .Values.postgresql.auth.username -}}
 {{- else -}}
-{{- .Values.externalDatabase.user -}}
+{{- required "Set externalDatabase.user when postgresql.enabled=false" .Values.externalDatabase.user -}}
 {{- end -}}
 {{- end -}}
 
@@ -104,7 +104,7 @@ Return the PostgreSQL database name.
 {{- if .Values.postgresql.enabled -}}
 {{- .Values.postgresql.auth.database -}}
 {{- else -}}
-{{- .Values.externalDatabase.database -}}
+{{- required "Set externalDatabase.database when postgresql.enabled=false" .Values.externalDatabase.database -}}
 {{- end -}}
 {{- end -}}
 

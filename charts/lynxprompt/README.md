@@ -17,6 +17,8 @@ This chart deploys the LynxPrompt web application and an optional bundled Postgr
   - uploads default to a `ReadWriteOnce` PVC
   - concurrent pod starts all run `db push`
 - If you want multiple replicas, use shared/object storage for uploads and move schema management outside normal pod startup.
+- If `postgresql.enabled=false`, set the external database coordinates in `externalDatabase.*` and provide `db-password` via `auth.existingSecret` or `externalDatabase.password`.
+- The chart uses Helm `lookup` to preserve generated secrets on upgrade. For GitOps or `helm template` workflows, prefer `auth.existingSecret` so renders stay deterministic.
 
 ## Secrets
 
@@ -67,6 +69,7 @@ helm upgrade --install lynxprompt ./charts/lynxprompt -f my-values.yaml
 
 - `auth.existingSecret`: reuse credentials from an External Secret or Sealed Secret
 - `waitForDatabase.enabled`: block app startup until PostgreSQL accepts TCP connections
+- `externalDatabase.*`: required when you disable the bundled PostgreSQL
 - `persistence.uploads.existingClaim`: reuse an uploads PVC instead of creating one
 - `app.enableFederation` and `app.federationRegistryUrl`: configure instance federation
 - `extraEnv` / `extraEnvFrom`: inject less common runtime options without forking templates
