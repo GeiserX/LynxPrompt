@@ -21,5 +21,14 @@ LynxPrompt has been deployed successfully!
 2. Ensure that the PostgreSQL database is running and accessible. If you enabled the bundled PostgreSQL chart, it should be running within your cluster.
 
 3. The superadmin account will be created on first login using the email configured in auth.superadminEmail.
+{{- if .Values.auth.existingSecret }}
+   The chart is using the existing Secret {{ .Values.auth.existingSecret }} for NEXTAUTH and database credentials.
+{{- else }}
+   The chart is managing the application Secret {{ include "lynxprompt.secretName" . }}.
+{{- end }}
 
-4. For further configuration, modify the `values.yaml` as needed and upgrade the release.
+4. Health endpoint:
+
+   curl http://127.0.0.1:3000/api/health
+
+5. For further configuration, modify the `values.yaml` as needed and upgrade the release.

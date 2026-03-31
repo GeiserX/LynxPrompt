@@ -4,27 +4,61 @@ metadata:
   name: {{ include "lynxprompt.fullname" . }}
   labels:
     {{- include "lynxprompt.labels" . | nindent 4 }}
+    app.kubernetes.io/component: web
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "lynxprompt.selectorLabels" . | nindent 6 }}
+      {{- include "lynxprompt.webSelectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "lynxprompt.selectorLabels" . | nindent 8 }}
+        {{- include "lynxprompt.webSelectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- with .Values.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "lynxprompt.serviceAccountName" . }}
+      {{- if .Values.waitForDatabase.enabled }}
+      initContainers:
+        - name: wait-for-database
+          image: {{ .Values.waitForDatabase.image | quote }}
+          command:
+            - /bin/sh
+            - -ec
+          args:
+            - until nc -z {{ include "lynxprompt.postgresql.host" . | quote }} {{ include "lynxprompt.postgresql.port" . | quote }}; do echo "waiting for database"; sleep 2; done
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65534
+      {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           {{- with .Values.securityContext }}
           securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.extraEnvFrom }}
+          envFrom:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           env:
@@ -35,10 +69,18 @@ spec:
               value: {{ .Values.app.url | quote }}
             - name: APP_NAME
               value: {{ .Values.app.name | quote }}
+            - name: APP_LOGO_URL
+              value: {{ .Values.app.logoUrl | quote }}
+            - name: CONTACT_EMAIL
+              value: {{ .Values.app.contactEmail | quote }}
+            - name: STATUS_PAGE_URL
+              value: {{ .Values.app.statusPageUrl | quote }}
+            - name: PLATFORM_OWNER_EMAIL
+              value: {{ .Values.app.platformOwnerEmail | quote }}
             - name: NEXTAUTH_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "lynxprompt.fullname" . }}
+                  name: {{ include "lynxprompt.secretName" . }}
                   key: nextauth-secret
             - name: SUPERADMIN_EMAIL
               value: {{ .Values.auth.superadminEmail | quote }}
@@ -53,12 +95,20 @@ spec:
               value: {{ .Values.app.enableGithubOauth | quote }}
             - name: ENABLE_GOOGLE_OAUTH
               value: {{ .Values.app.enableGoogleOauth | quote }}
+            - name: ENABLE_TURNSTILE
+              value: {{ .Values.app.enableTurnstile | quote }}
+            - name: ENABLE_SSO
+              value: {{ .Values.app.enableSso | quote }}
             - name: ENABLE_AI
               value: {{ .Values.app.enableAi | quote }}
             - name: ENABLE_BLOG
               value: {{ .Values.app.enableBlog | quote }}
             - name: ENABLE_SUPPORT_FORUM
               value: {{ .Values.app.enableSupportForum | quote }}
+            - name: ENABLE_FEDERATION
+              value: {{ .Values.app.enableFederation | quote }}
+            - name: FEDERATION_REGISTRY_URL
+              value: {{ .Values.app.federationRegistryUrl | quote }}
             # --- Database: all 4 logical DBs point to the same PostgreSQL instance ---
             {{- $dbHost := include "lynxprompt.postgresql.host" . }}
             {{- $dbPort := include "lynxprompt.postgresql.port" . }}
@@ -67,8 +117,12 @@ spec:
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "lynxprompt.fullname" . }}
+                  name: {{ include "lynxprompt.secretName" . }}
                   key: db-password
+            - name: DB_SSL
+              value: {{ ternary "true" "false" .Values.externalDatabase.ssl.enabled | quote }}
+            - name: DB_SSL_REJECT_UNAUTHORIZED
+              value: {{ ternary "true" "false" .Values.externalDatabase.ssl.rejectUnauthorized | quote }}
             {{- range (list "APP" "USERS" "BLOG" "SUPPORT") }}
             - name: DB_{{ . }}_HOST
               value: {{ $dbHost | quote }}
@@ -88,7 +142,7 @@ spec:
             - name: GITHUB_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "lynxprompt.fullname" . }}
+                  name: {{ include "lynxprompt.secretName" . }}
                   key: github-client-secret
             {{- end }}
             {{- if .Values.oauth.google.clientId }}
@@ -97,8 +151,19 @@ spec:
             - name: GOOGLE_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "lynxprompt.fullname" . }}
+                  name: {{ include "lynxprompt.secretName" . }}
                   key: google-client-secret
+            {{- end }}
+            {{- if .Values.turnstile.siteKey }}
+            - name: NEXT_PUBLIC_TURNSTILE_SITE_KEY
+              value: {{ .Values.turnstile.siteKey | quote }}
+            {{- end }}
+            {{- if .Values.turnstile.secretKey }}
+            - name: TURNSTILE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lynxprompt.secretName" . }}
+                  key: turnstile-secret-key
             {{- end }}
             # --- SMTP (optional) ---
             {{- if .Values.smtp.host }}
@@ -111,27 +176,47 @@ spec:
             - name: SMTP_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "lynxprompt.fullname" . }}
+                  name: {{ include "lynxprompt.secretName" . }}
                   key: smtp-password
             - name: SMTP_FROM
               value: {{ .Values.smtp.from | quote }}
             - name: SMTP_FROM_NAME
               value: {{ .Values.smtp.fromName | quote }}
             {{- end }}
+            {{- if .Values.analytics.umamiScriptUrl }}
+            - name: UMAMI_SCRIPT_URL
+              value: {{ .Values.analytics.umamiScriptUrl | quote }}
+            {{- end }}
+            {{- if .Values.analytics.websiteId }}
+            - name: NEXT_PUBLIC_UMAMI_WEBSITE_ID
+              value: {{ .Values.analytics.websiteId | quote }}
+            {{- end }}
             # --- AI (optional) ---
             {{- if .Values.ai.anthropicApiKey }}
             - name: ANTHROPIC_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "lynxprompt.fullname" . }}
+                  name: {{ include "lynxprompt.secretName" . }}
                   key: anthropic-api-key
             - name: AI_MODEL
               value: {{ .Values.ai.model | quote }}
+            {{- end }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
             {{- end }}
           ports:
             - name: http
               containerPort: 3000
               protocol: TCP
+          {{- if .Values.startupProbe.enabled }}
+          startupProbe:
+            httpGet:
+              path: {{ .Values.startupProbe.httpGet.path }}
+              port: {{ .Values.startupProbe.httpGet.port }}
+            periodSeconds: {{ .Values.startupProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.startupProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.startupProbe.failureThreshold }}
+          {{- end }}
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             httpGet:
@@ -156,14 +241,25 @@ spec:
           volumeMounts:
             - name: uploads
               mountPath: /app/public/uploads
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- else if .Values.extraVolumeMounts }}
+          volumeMounts:
+            {{- toYaml .Values.extraVolumeMounts | nindent 12 }}
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-      {{- if .Values.persistence.uploads.enabled }}
+      {{- if or .Values.persistence.uploads.enabled .Values.extraVolumes }}
       volumes:
+        {{- if .Values.persistence.uploads.enabled }}
         - name: uploads
           persistentVolumeClaim:
-            claimName: {{ include "lynxprompt.fullname" . }}-uploads
+            claimName: {{ default (printf "%s-uploads" (include "lynxprompt.fullname" .)) .Values.persistence.uploads.existingClaim }}
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:

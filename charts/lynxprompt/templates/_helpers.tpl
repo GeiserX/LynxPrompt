@@ -49,6 +49,22 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
+Selector labels for the web deployment.
+*/}}
+{{- define "lynxprompt.webSelectorLabels" -}}
+{{ include "lynxprompt.selectorLabels" . }}
+app.kubernetes.io/component: web
+{{- end }}
+
+{{/*
+Selector labels for PostgreSQL.
+*/}}
+{{- define "lynxprompt.postgresqlSelectorLabels" -}}
+{{ include "lynxprompt.selectorLabels" . }}
+app.kubernetes.io/component: postgresql
+{{- end }}
+
+{{/*
 Return the PostgreSQL host.
 */}}
 {{- define "lynxprompt.postgresql.host" -}}
@@ -101,4 +117,15 @@ Create the name of the service account to use
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
+{{- end }}
+
+{{/*
+Secret name for application credentials.
+*/}}
+{{- define "lynxprompt.secretName" -}}
+{{- if .Values.auth.existingSecret -}}
+{{- .Values.auth.existingSecret -}}
+{{- else -}}
+{{- include "lynxprompt.fullname" . -}}
+{{- end -}}
 {{- end }}
