@@ -147,45 +147,49 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Check if user already exists and is already a team member
-  let user = await prismaUsers.user.findUnique({ where: { email } });
-  let existingMembership = user
-    ? await prismaUsers.teamMember.findUnique({
-        where: { teamId_userId: { teamId: team.id, userId: user.id } },
-      })
-    : null;
+  // Atomically find-or-create user and enforce seat limit in a serializable transaction
+  // to prevent concurrent SSO logins from exceeding maxSeats
+  let user: { id: string; email: string | null; name: string | null } | null = null;
+  let seatLimitReached = false;
 
-  // If user is not already a member, enforce seat limit BEFORE creating anything
-  if (!existingMembership) {
-    const currentMembers = await prismaUsers.teamMember.count({
-      where: { teamId: team.id },
-    });
-    if (currentMembers >= team.maxSeats) {
+  try {
+    user = await prismaUsers.$transaction(async (tx) => {
+      let u = await tx.user.findUnique({ where: { email } });
+      const existingMembership = u
+        ? await tx.teamMember.findUnique({
+            where: { teamId_userId: { teamId: team.id, userId: u.id } },
+          })
+        : null;
+
+      if (!existingMembership) {
+        const currentMembers = await tx.teamMember.count({
+          where: { teamId: team.id },
+        });
+        if (currentMembers >= team.maxSeats) {
+          seatLimitReached = true;
+          throw new Error("SEAT_LIMIT_REACHED");
+        }
+      }
+
+      if (!u) {
+        u = await tx.user.create({ data: { email, name } });
+      }
+
+      if (!existingMembership) {
+        await tx.teamMember.create({
+          data: { teamId: team.id, userId: u.id, role: "MEMBER" },
+        });
+      }
+
+      return u;
+    }, { isolationLevel: "Serializable" });
+  } catch (err) {
+    if (seatLimitReached) {
       return NextResponse.redirect(
         new URL("/auth/signin?error=SSOSeatLimitReached", request.url)
       );
     }
-  }
-
-  // Safe to create user now — seat limit already verified
-  if (!user) {
-    user = await prismaUsers.user.create({
-      data: {
-        email,
-        name,
-      },
-    });
-  }
-
-  // Create membership if needed
-  if (!existingMembership) {
-    await prismaUsers.teamMember.create({
-      data: {
-        teamId: team.id,
-        userId: user.id,
-        role: "MEMBER",
-      },
-    });
+    throw err;
   }
 
   // Update last SSO sync
