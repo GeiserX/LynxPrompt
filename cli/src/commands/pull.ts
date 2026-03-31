@@ -4,7 +4,7 @@ import prompts from "prompts";
 import { api, ApiRequestError, Blueprint } from "../api.js";
 import { isAuthenticated } from "../config.js";
 import { writeFile, mkdir, readFile } from "fs/promises";
-import { join, dirname, resolve, relative } from "path";
+import { dirname, resolve, relative } from "path";
 import { existsSync } from "fs";
 import {
   trackBlueprint,
