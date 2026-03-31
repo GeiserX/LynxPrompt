@@ -111,6 +111,15 @@ export async function POST(request: NextRequest) {
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await prismaUsers.$transaction(async (tx: any) => {
+          // Re-check membership inside transaction (handles parallel submissions)
+          const alreadyMember = await tx.teamMember.findUnique({
+            where: { teamId_userId: { teamId: invitation.teamId, userId: session.user.id } },
+          });
+          if (alreadyMember) {
+            accepted = true; // Treat as idempotent success
+            return;
+          }
+
           const currentMembers = await tx.teamMember.count({
             where: { teamId: invitation.teamId },
           });
