@@ -1,4 +1,7 @@
 {{- if .Values.postgresql.enabled }}
+{{- if not .Values.postgresql.persistence.enabled }}
+{{- fail "postgresql.persistence.enabled=false will use ephemeral container storage — all data is lost on pod restart. Set postgresql.persistence.enabled=true or use externalDatabase." }}
+{{- end }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
