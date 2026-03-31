@@ -101,44 +101,47 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check seat availability
-    const currentMembers = invitation.team._count.members;
-    if (currentMembers >= invitation.team.maxSeats) {
-      return NextResponse.json(
-        { error: "This team has reached its maximum seat limit. Contact the team admin." },
-        { status: 400 }
-      );
-    }
+    // Atomically check seats + create membership in a serializable transaction
+    let seatLimitReached = false;
+    try {
+      await prismaUsers.$transaction(async (tx: typeof prismaUsers) => {
+        const currentMembers = await tx.teamMember.count({
+          where: { teamId: invitation.teamId },
+        });
+        if (currentMembers >= invitation.team.maxSeats) {
+          seatLimitReached = true;
+          throw new Error("SEAT_LIMIT_REACHED");
+        }
 
-    // Accept the invitation: create membership and update invitation
-    await prismaUsers.$transaction([
-      // Create team membership
-      prismaUsers.teamMember.create({
-        data: {
-          teamId: invitation.teamId,
-          userId: session.user.id,
-          role: invitation.role,
-          isActiveThisCycle: true,
-          lastActiveAt: new Date(),
-        },
-      }),
-      // Mark invitation as accepted
-      prismaUsers.teamInvitation.update({
-        where: { id: invitation.id },
-        data: {
-          status: "ACCEPTED",
-          acceptedAt: new Date(),
-        },
-      }),
-      // Update user's subscription plan to TEAMS
-      prismaUsers.user.update({
-        where: { id: session.user.id },
-        data: {
-          subscriptionPlan: "TEAMS",
-          lastLoginAt: new Date(),
-        },
-      }),
-    ]);
+        await tx.teamMember.create({
+          data: {
+            teamId: invitation.teamId,
+            userId: session.user.id,
+            role: invitation.role,
+            isActiveThisCycle: true,
+            lastActiveAt: new Date(),
+          },
+        });
+
+        await tx.teamInvitation.update({
+          where: { id: invitation.id },
+          data: { status: "ACCEPTED", acceptedAt: new Date() },
+        });
+
+        await tx.user.update({
+          where: { id: session.user.id },
+          data: { subscriptionPlan: "TEAMS", lastLoginAt: new Date() },
+        });
+      }, { isolationLevel: "Serializable" });
+    } catch (err) {
+      if (seatLimitReached) {
+        return NextResponse.json(
+          { error: "This team has reached its maximum seat limit. Contact the team admin." },
+          { status: 400 }
+        );
+      }
+      throw err;
+    }
 
     return NextResponse.json({
       message: `Welcome to ${invitation.team.name}!`,
