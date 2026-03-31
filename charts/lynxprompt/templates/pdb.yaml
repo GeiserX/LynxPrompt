@@ -14,5 +14,5 @@ spec:
   {{- end }}
   selector:
     matchLabels:
-      {{- include "lynxprompt.selectorLabels" . | nindent 6 }}
+      {{- include "lynxprompt.webSelectorLabels" . | nindent 6 }}
 {{- end }}

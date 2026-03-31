@@ -9,9 +9,21 @@ metadata:
     "helm.sh/hook-weight": "-5"
     "helm.sh/hook-delete-policy": hook-succeeded
 spec:
+  automountServiceAccountToken: false
   containers:
     - name: wget
-      image: busybox:latest
-      command: ['wget']
-      args: ['--spider', '--quiet', 'http://{{ include "lynxprompt.fullname" . }}:{{ .Values.service.port }}']
+      image: busybox:1.36.1
+      command:
+        - /bin/sh
+        - -ec
+      args:
+        - wget --spider --quiet "http://{{ include "lynxprompt.fullname" . }}:{{ .Values.service.port }}/api/health"
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+        runAsUser: 65534
   restartPolicy: Never

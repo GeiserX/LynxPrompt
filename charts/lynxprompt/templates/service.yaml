@@ -4,6 +4,10 @@ metadata:
   name: {{ include "lynxprompt.fullname" . }}
   labels:
     {{- include "lynxprompt.labels" . | nindent 4 }}
+  {{- with .Values.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   type: {{ .Values.service.type }}
   ports:
@@ -12,4 +16,4 @@ spec:
       protocol: TCP
       name: http
   selector:
-    {{- include "lynxprompt.selectorLabels" . | nindent 4 }}
+    {{- include "lynxprompt.webSelectorLabels" . | nindent 4 }}
