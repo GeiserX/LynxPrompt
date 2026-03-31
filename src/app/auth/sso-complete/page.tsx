@@ -14,10 +14,11 @@ function SSOCompleteContent() {
     const userId = searchParams.get("userId");
     const email = searchParams.get("email");
     const teamId = searchParams.get("teamId");
+    const nonce = searchParams.get("nonce");
     const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
     const sig = searchParams.get("sig");
 
-    if (!userId || !email || !teamId || !sig) {
+    if (!userId || !email || !teamId || !nonce || !sig) {
       setError("Invalid SSO completion parameters.");
       return;
     }
@@ -27,6 +28,7 @@ function SSOCompleteContent() {
       userId,
       email,
       teamId,
+      nonce,
       sig,
       callbackUrl,
       redirect: true,

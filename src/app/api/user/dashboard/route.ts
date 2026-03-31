@@ -203,38 +203,46 @@ export async function GET() {
     // Team-specific data (if user is in a team)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let teamBlueprints: any[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let allTeamsBlueprints: Record<string, any[]> = {};
     if (teamInfo) {
-      // Get team-shared blueprints (created by team members and marked as TEAM visibility)
-      teamBlueprints = await prismaUsers.userTemplate.findMany({
-        where: {
-          userId: { in: teamInfo.memberIds },
-          visibility: "TEAM",
-          teamId: teamInfo.teamId,
-        },
-        orderBy: { createdAt: "desc" },
-        take: 6,
-        select: {
-          id: true,
-          name: true,
-          type: true,
-          downloads: true,
-          favorites: true,
-          isPublic: true,
-          createdAt: true,
-          user: {
-            select: { name: true, displayName: true },
+      // Fetch blueprints for ALL teams the user belongs to
+      const teamsToQuery = teamInfo.allTeams || [teamInfo];
+      for (const t of teamsToQuery) {
+        const bps = await prismaUsers.userTemplate.findMany({
+          where: {
+            userId: { in: t.memberIds },
+            visibility: "TEAM",
+            teamId: t.teamId,
           },
-        },
-      }).then(templates => templates.map(template => ({
-        id: `bp_${template.id}`,
-        name: template.name,
-        type: template.type,
-        downloads: template.downloads,
-        favorites: template.favorites,
-        isPublic: template.isPublic,
-        createdAt: template.createdAt,
-        author: template.user?.displayName || template.user?.name || "Team member",
-      })));
+          orderBy: { createdAt: "desc" },
+          take: 6,
+          select: {
+            id: true,
+            name: true,
+            type: true,
+            downloads: true,
+            favorites: true,
+            isPublic: true,
+            createdAt: true,
+            user: {
+              select: { name: true, displayName: true },
+            },
+          },
+        }).then(templates => templates.map(template => ({
+          id: `bp_${template.id}`,
+          name: template.name,
+          type: template.type,
+          downloads: template.downloads,
+          favorites: template.favorites,
+          isPublic: template.isPublic,
+          createdAt: template.createdAt,
+          author: template.user?.displayName || template.user?.name || "Team member",
+        })));
+        allTeamsBlueprints[t.teamId] = bps;
+      }
+      // Backward compat: teamBlueprints = first team's blueprints
+      teamBlueprints = allTeamsBlueprints[teamInfo.teamId] || [];
     }
 
     // Enrich activity with template names
@@ -348,6 +356,14 @@ export async function GET() {
         role: teamInfo.role,
         memberCount: teamInfo.memberCount,
       } : null,
+      teams: teamInfo?.allTeams?.map(t => ({
+        id: t.teamId,
+        name: t.teamName,
+        slug: t.teamSlug,
+        role: t.role,
+        memberCount: t.memberCount,
+        blueprints: allTeamsBlueprints[t.teamId] || [],
+      })) || [],
       teamBlueprints: teamInfo ? teamBlueprints : [],
     });
   } catch (error) {
