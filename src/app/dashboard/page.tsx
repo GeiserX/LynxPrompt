@@ -738,7 +738,7 @@ export default function DashboardPage() {
                         Share blueprints with your team by selecting &quot;Team&quot; visibility when creating.
                       </p>
                       <Button asChild className="mt-4" size="sm" variant="outline">
-                        <Link href="/blueprints/create">
+                        <Link href={`/blueprints/create?teamId=${teamData.id}`}>
                           <Upload className="mr-2 h-4 w-4" />
                           Share with Team
                         </Link>
