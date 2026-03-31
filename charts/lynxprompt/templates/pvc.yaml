@@ -1,0 +1,17 @@
+{{- if .Values.persistence.uploads.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "lynxprompt.fullname" . }}-uploads
+  labels:
+    {{- include "lynxprompt.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    {{- toYaml .Values.persistence.uploads.accessModes | nindent 4 }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.uploads.size }}
+  {{- if .Values.persistence.uploads.storageClass }}
+  storageClassName: {{ .Values.persistence.uploads.storageClass }}
+  {{- end }}
+{{- end }}
