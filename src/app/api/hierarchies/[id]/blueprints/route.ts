@@ -128,7 +128,7 @@ export async function POST(
       where: { id: bpId },
       data: {
         hierarchyId,
-        repositoryPath: repositoryPath.trim(),
+        repositoryPath: repositoryPath.trim().replace(/\.\.[/\\]/g, "").replace(/^[/\\]/, ""),
         parentId: parentBpId,
       },
       select: {

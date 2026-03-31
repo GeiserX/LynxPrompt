@@ -501,7 +501,7 @@ export async function POST(request: NextRequest) {
         // Hierarchy fields
         hierarchyId: hierarchyId?.trim() || null,
         parentId: validatedParentId,
-        repositoryPath: repositoryPath?.trim() || null,
+        repositoryPath: repositoryPath?.trim().replace(/\.\.[/\\]/g, "").replace(/^[/\\]/, "") || null,
       },
     });
 

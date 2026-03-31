@@ -101,20 +101,22 @@ export default function TeamManagementPage() {
       const billingRes = await fetch("/api/billing/status");
       const billingData = await billingRes.json();
 
-      if (!billingData.isTeamsUser || !billingData.team) {
+      const teams = billingData.teams || (billingData.team ? [billingData.team] : []);
+      if (!billingData.isTeamsUser || teams.length === 0) {
         setError("You are not part of any team");
         setLoading(false);
         return;
       }
 
-      if (billingData.team.slug !== slug) {
+      const matchedTeam = teams.find((t: { slug: string }) => t.slug === slug);
+      if (!matchedTeam) {
         setError("Team not found");
         setLoading(false);
         return;
       }
 
-      const teamId = billingData.team.id;
-      setUserRole(billingData.team.role);
+      const teamId = matchedTeam.id;
+      setUserRole(matchedTeam.role);
 
       // Fetch full team details
       const teamRes = await fetch(`/api/teams/${teamId}`);
