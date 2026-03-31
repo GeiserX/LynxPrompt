@@ -365,6 +365,10 @@
         },
         "image": {
           "type": "string"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "minimum": 1
         }
       }
     },

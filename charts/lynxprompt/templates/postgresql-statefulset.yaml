@@ -61,7 +61,7 @@ spec:
               command:
                 - sh
                 - -c
-                - pg_isready -U {{ .Values.postgresql.auth.username }} -d {{ .Values.postgresql.auth.database }}
+                - pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
@@ -71,7 +71,7 @@ spec:
               command:
                 - sh
                 - -c
-                - pg_isready -U {{ .Values.postgresql.auth.username }} -d {{ .Values.postgresql.auth.database }}
+                - pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
             initialDelaySeconds: 5
             periodSeconds: 10
             timeoutSeconds: 5
