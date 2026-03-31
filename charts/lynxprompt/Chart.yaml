@@ -1,0 +1,24 @@
+apiVersion: v2
+name: lynxprompt
+description: A Helm chart for LynxPrompt - Self-hosted AI IDE configuration hub
+type: application
+kubeVersion: ">=1.21.0-0"
+version: 0.1.0
+appVersion: "2.0.75"
+keywords:
+  - lynxprompt
+  - ai
+  - ide
+  - configuration
+  - cursor
+  - claude
+  - copilot
+  - self-hosted
+home: https://lynxprompt.com
+sources:
+  - https://github.com/GeiserX/LynxPrompt
+maintainers:
+  - name: Sergio Fernandez
+    email: acsdesk@protonmail.com
+annotations:
+  category: AI
