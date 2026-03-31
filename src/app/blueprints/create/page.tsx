@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -100,6 +100,8 @@ export default function ShareBlueprintPage() {
   const { status } = useSession();
   const { enableAI } = useFeatureFlags();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const preselectedTeamId = searchParams.get("teamId");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState("");
@@ -174,7 +176,15 @@ export default function ShareBlueprintPage() {
           if (teams.length > 0) {
             setAllTeams(teams);
             setTeamInfo(teams[0]); // backward compat
-            setSelectedTeamId(teams[0].id);
+            // Preselect team from URL param, or fall back to first team
+            const targetTeam = preselectedTeamId
+              ? teams.find((t: { id: string }) => t.id === preselectedTeamId) || teams[0]
+              : teams[0];
+            setSelectedTeamId(targetTeam.id);
+            // Auto-set visibility to TEAM if linked from a team context
+            if (preselectedTeamId && teams.some((t: { id: string }) => t.id === preselectedTeamId)) {
+              setVisibility("TEAM");
+            }
           }
         }
       } catch {

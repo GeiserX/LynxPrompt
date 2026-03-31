@@ -148,49 +148,66 @@ export async function GET(request: NextRequest) {
   }
 
   // Atomically find-or-create user and enforce seat limit in a serializable transaction
-  // to prevent concurrent SSO logins from exceeding maxSeats
-  let seatLimitReached = false;
-  let user: { id: string; email: string | null; name: string | null };
+  // to prevent concurrent SSO logins from exceeding maxSeats.
+  // Retry up to 3 times on serialization conflicts (Prisma P2034).
+  const MAX_RETRIES = 3;
+  let user: { id: string; email: string | null; name: string | null } | undefined;
 
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    user = await prismaUsers.$transaction(async (tx: any) => {
-      let u = await tx.user.findUnique({ where: { email } });
-      const existingMembership = u
-        ? await tx.teamMember.findUnique({
-            where: { teamId_userId: { teamId: team.id, userId: u.id } },
-          })
-        : null;
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    let seatLimitReached = false;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      user = await prismaUsers.$transaction(async (tx: any) => {
+        let u = await tx.user.findUnique({ where: { email } });
+        const existingMembership = u
+          ? await tx.teamMember.findUnique({
+              where: { teamId_userId: { teamId: team.id, userId: u.id } },
+            })
+          : null;
 
-      if (!existingMembership) {
-        const currentMembers = await tx.teamMember.count({
-          where: { teamId: team.id },
-        });
-        if (currentMembers >= team.maxSeats) {
-          seatLimitReached = true;
-          throw new Error("SEAT_LIMIT_REACHED");
+        if (!existingMembership) {
+          const currentMembers = await tx.teamMember.count({
+            where: { teamId: team.id },
+          });
+          if (currentMembers >= team.maxSeats) {
+            seatLimitReached = true;
+            throw new Error("SEAT_LIMIT_REACHED");
+          }
         }
-      }
 
-      if (!u) {
-        u = await tx.user.create({ data: { email, name } });
-      }
+        if (!u) {
+          u = await tx.user.create({ data: { email, name } });
+        }
 
-      if (!existingMembership) {
-        await tx.teamMember.create({
-          data: { teamId: team.id, userId: u.id, role: "MEMBER" },
-        });
-      }
+        if (!existingMembership) {
+          await tx.teamMember.create({
+            data: { teamId: team.id, userId: u.id, role: "MEMBER" },
+          });
+        }
 
-      return u;
-    }, { isolationLevel: "Serializable" });
-  } catch (err) {
-    if (seatLimitReached) {
-      return NextResponse.redirect(
-        new URL("/auth/signin?error=SSOSeatLimitReached", request.url)
-      );
+        return u;
+      }, { isolationLevel: "Serializable" });
+      break; // Success — exit retry loop
+    } catch (err) {
+      if (seatLimitReached) {
+        return NextResponse.redirect(
+          new URL("/auth/signin?error=SSOSeatLimitReached", request.url)
+        );
+      }
+      // Prisma P2034 = serialization failure — retry
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((err as any)?.code === "P2034" && attempt < MAX_RETRIES - 1) {
+        continue;
+      }
+      throw err;
     }
-    throw err;
+  }
+
+  // If we get here without user, all retries failed with serialization conflicts
+  if (!user) {
+    return NextResponse.redirect(
+      new URL("/auth/signin?error=SSOTemporaryError", request.url)
+    );
   }
 
   // Update last SSO sync

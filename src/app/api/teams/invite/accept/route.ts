@@ -101,47 +101,67 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Atomically check seats + create membership in a serializable transaction
-    let seatLimitReached = false;
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await prismaUsers.$transaction(async (tx: any) => {
-        const currentMembers = await tx.teamMember.count({
-          where: { teamId: invitation.teamId },
-        });
-        if (currentMembers >= invitation.team.maxSeats) {
-          seatLimitReached = true;
-          throw new Error("SEAT_LIMIT_REACHED");
+    // Atomically check seats + create membership in a serializable transaction.
+    // Retry up to 3 times on serialization conflicts (Prisma P2034).
+    const MAX_RETRIES = 3;
+    let accepted = false;
+
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      let seatLimitReached = false;
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await prismaUsers.$transaction(async (tx: any) => {
+          const currentMembers = await tx.teamMember.count({
+            where: { teamId: invitation.teamId },
+          });
+          if (currentMembers >= invitation.team.maxSeats) {
+            seatLimitReached = true;
+            throw new Error("SEAT_LIMIT_REACHED");
+          }
+
+          await tx.teamMember.create({
+            data: {
+              teamId: invitation.teamId,
+              userId: session.user.id,
+              role: invitation.role,
+              isActiveThisCycle: true,
+              lastActiveAt: new Date(),
+            },
+          });
+
+          await tx.teamInvitation.update({
+            where: { id: invitation.id },
+            data: { status: "ACCEPTED", acceptedAt: new Date() },
+          });
+
+          await tx.user.update({
+            where: { id: session.user.id },
+            data: { subscriptionPlan: "TEAMS", lastLoginAt: new Date() },
+          });
+        }, { isolationLevel: "Serializable" });
+        accepted = true;
+        break; // Success — exit retry loop
+      } catch (err) {
+        if (seatLimitReached) {
+          return NextResponse.json(
+            { error: "This team has reached its maximum seat limit. Contact the team admin." },
+            { status: 400 }
+          );
         }
-
-        await tx.teamMember.create({
-          data: {
-            teamId: invitation.teamId,
-            userId: session.user.id,
-            role: invitation.role,
-            isActiveThisCycle: true,
-            lastActiveAt: new Date(),
-          },
-        });
-
-        await tx.teamInvitation.update({
-          where: { id: invitation.id },
-          data: { status: "ACCEPTED", acceptedAt: new Date() },
-        });
-
-        await tx.user.update({
-          where: { id: session.user.id },
-          data: { subscriptionPlan: "TEAMS", lastLoginAt: new Date() },
-        });
-      }, { isolationLevel: "Serializable" });
-    } catch (err) {
-      if (seatLimitReached) {
-        return NextResponse.json(
-          { error: "This team has reached its maximum seat limit. Contact the team admin." },
-          { status: 400 }
-        );
+        // Prisma P2034 = serialization failure — retry
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if ((err as any)?.code === "P2034" && attempt < MAX_RETRIES - 1) {
+          continue;
+        }
+        throw err;
       }
-      throw err;
+    }
+
+    if (!accepted) {
+      return NextResponse.json(
+        { error: "Failed to accept invitation due to a conflict. Please try again." },
+        { status: 409 }
+      );
     }
 
     return NextResponse.json({
