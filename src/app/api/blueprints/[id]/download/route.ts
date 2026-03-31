@@ -97,6 +97,34 @@ export async function GET(
   const templateType = id.startsWith("sys_") ? "system" : "user";
 
   try {
+    // For user blueprints, verify the requester owns it or it's public
+    if (templateType === "user") {
+      const template = await prismaUsers.userTemplate.findUnique({
+        where: { id },
+        select: { visibility: true, userId: true, teamId: true },
+      });
+      if (!template) {
+        return NextResponse.json({ total: 0, byPlatform: {} });
+      }
+      if (template.visibility !== "PUBLIC") {
+        const session = await getServerSession(authOptions);
+        if (!session?.user?.id) {
+          return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+        const isOwner = template.userId === session.user.id;
+        let isTeamMember = false;
+        if (template.teamId) {
+          const membership = await prismaUsers.teamMember.findUnique({
+            where: { teamId_userId: { teamId: template.teamId, userId: session.user.id } },
+          });
+          isTeamMember = !!membership;
+        }
+        if (!isOwner && !isTeamMember) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+      }
+    }
+
     // Get total downloads
     const downloadCount = await prismaUsers.templateDownload.count({
       where: {

@@ -317,7 +317,7 @@ export async function POST(request: NextRequest) {
         // Hierarchy fields
         hierarchyId: validatedHierarchyId,
         parentId: validatedParentId,
-        repositoryPath: repository_path?.trim() || null,
+        repositoryPath: repository_path?.trim().replace(/\.\.[/\\]/g, "").replace(/^[/\\]/, "") || null,
         contentChecksum,
       },
       select: {

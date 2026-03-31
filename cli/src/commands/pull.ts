@@ -4,7 +4,7 @@ import prompts from "prompts";
 import { api, ApiRequestError, Blueprint } from "../api.js";
 import { isAuthenticated } from "../config.js";
 import { writeFile, mkdir, readFile } from "fs/promises";
-import { join, dirname } from "path";
+import { join, dirname, resolve, relative } from "path";
 import { existsSync } from "fs";
 import {
   trackBlueprint,
@@ -17,6 +17,19 @@ interface PullOptions {
   yes?: boolean;
   preview?: boolean;
   track?: boolean; // Track the blueprint for future syncs (default: true)
+}
+
+/**
+ * Resolve a path under a root directory, rejecting traversal attempts.
+ * Throws if the resolved path escapes the root.
+ */
+function safePath(root: string, untrusted: string): string {
+  const resolved = resolve(root, untrusted);
+  const rel = relative(root, resolved);
+  if (rel.startsWith("..") || resolve(root, rel) !== resolved) {
+    throw new Error(`Path traversal blocked: ${untrusted}`);
+  }
+  return resolved;
 }
 
 // Mapping of blueprint types to filenames
@@ -135,7 +148,14 @@ async function pullHierarchy(
     for (const bp of blueprints) {
       // Determine output path - use repository_path if available
       const filename = bp.repository_path || TYPE_TO_FILENAME[bp.type] || "ai-config.md";
-      const outputPath = join(options.output, filename);
+      let outputPath: string;
+      try {
+        outputPath = safePath(resolve(options.output), filename);
+      } catch {
+        console.log(chalk.red(`  ✗ Skipped (invalid path): ${filename}`));
+        skipped++;
+        continue;
+      }
 
       // Check if file exists
       if (existsSync(outputPath) && !options.yes) {
@@ -290,7 +310,13 @@ async function pullBlueprint(
 
     // Determine output filename - use repository_path if available for hierarchy blueprints
     const filename = blueprint.repository_path || TYPE_TO_FILENAME[blueprint.type] || "ai-config.md";
-    const outputPath = join(options.output, filename);
+    let outputPath: string;
+    try {
+      outputPath = safePath(resolve(options.output), filename);
+    } catch {
+      console.error(chalk.red(`✗ Invalid file path: ${filename}`));
+      process.exit(1);
+    }
 
     // Check if file exists and show diff preview
     let localContent: string | null = null;

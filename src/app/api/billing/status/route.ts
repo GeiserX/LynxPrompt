@@ -40,20 +40,22 @@ export async function GET() {
       );
     }
 
-    const teamMembership = user.teamMemberships[0];
     const isAdmin = user.role === "ADMIN" || user.role === "SUPERADMIN";
+    const teams = user.teamMemberships.map((m) => ({
+      id: m.team.id,
+      name: m.team.name,
+      slug: m.team.slug,
+      logo: m.team.logo,
+      role: m.role,
+    }));
 
     return NextResponse.json({
       plan: "free",
       isAdmin,
-      isTeamsUser: !!teamMembership,
-      team: teamMembership ? {
-        id: teamMembership.team.id,
-        name: teamMembership.team.name,
-        slug: teamMembership.team.slug,
-        logo: teamMembership.team.logo,
-        role: teamMembership.role,
-      } : null,
+      isTeamsUser: teams.length > 0,
+      // Keep backward-compat: "team" returns first membership
+      team: teams[0] ?? null,
+      teams,
     });
   } catch (error) {
     console.error("Error fetching subscription status:", error);
