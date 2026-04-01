@@ -19,9 +19,11 @@
 <p align="center">
   <a href="https://lynxprompt.com"><img src="https://img.shields.io/badge/🌐_Website-lynxprompt.com-6366f1?style=flat-square" alt="Website"></a>
   <a href="https://www.npmjs.com/package/lynxprompt"><img src="https://img.shields.io/npm/v/lynxprompt?style=flat-square&logo=npm&label=CLI" alt="npm"></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=LynxPrompt.lynxprompt"><img src="https://img.shields.io/visual-studio-marketplace/v/LynxPrompt.lynxprompt?style=flat-square&logo=visualstudiocode&label=VS%20Code%20Extension" alt="VS Code Extension"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/📜_License-GPL--3.0-blue?style=flat-square" alt="License"></a>
   <a href="https://github.com/GeiserX/LynxPrompt"><img src="https://img.shields.io/github/stars/GeiserX/LynxPrompt?style=flat-square&logo=github" alt="GitHub Stars"></a>
   <a href="https://hub.docker.com/r/drumsergio/lynxprompt"><img src="https://img.shields.io/docker/pulls/drumsergio/lynxprompt?style=flat-square&logo=docker&label=Docker%20Pulls" alt="Docker Pulls"></a>
+  <a href="https://artifacthub.io/packages/helm/lynxprompt/lynxprompt"><img src="https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/lynxprompt&style=flat-square" alt="ArtifactHub"></a>
 </p>
 
 <p align="center">
@@ -101,6 +103,15 @@ docker compose -f docker-compose.selfhost.yml up -d
 
 That's it. LynxPrompt is running with PostgreSQL, automatic migrations, and email authentication enabled by default.
 
+### Helm Chart (Kubernetes)
+
+A Helm chart is also available for Kubernetes deployments. See the [chart documentation](charts/lynxprompt/README.md) for the full values reference.
+
+```bash
+helm repo add lynxprompt https://geiserx.github.io/LynxPrompt
+helm install lynxprompt lynxprompt/lynxprompt
+```
+
 ---
 
 ## Configuration
@@ -164,6 +175,26 @@ lynxp config
 The API URL is stored in the CLI config file (see `lynxp config path`). The `LYNXPROMPT_API_URL` environment variable takes precedence if set.
 
 Also available via Homebrew (`brew install GeiserX/lynxprompt/lynxprompt`) and Chocolatey (`choco install lynxprompt`).
+
+---
+
+## VS Code Extension
+
+Prefer managing configs without leaving the editor? LynxPrompt also has an official VS Code extension.
+
+<p>
+  <a href="https://marketplace.visualstudio.com/items?itemName=LynxPrompt.lynxprompt"><img src="https://img.shields.io/visual-studio-marketplace/v/LynxPrompt.lynxprompt?style=flat-square&logo=visualstudiocode&label=Marketplace" alt="Marketplace"></a>
+  <a href="https://github.com/GeiserX/lynxprompt-vscode"><img src="https://img.shields.io/badge/Source-lynxprompt--vscode-3178C6?style=flat-square&logo=github&logoColor=white" alt="lynxprompt-vscode source"></a>
+</p>
+
+From inside VS Code you can:
+
+- Browse your cloud blueprints and local AI config files in a dedicated sidebar
+- Pull `AGENTS.md`, `CLAUDE.md`, `.cursor/rules/`, and more into the correct workspace paths
+- Diff local files against their cloud versions with the built-in editor
+- Push updates back to LynxPrompt without leaving VS Code
+
+Install it from the Marketplace or run `ext install LynxPrompt.lynxprompt`.
 
 ---
 
