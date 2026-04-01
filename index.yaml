@@ -1,3 +1,4 @@
+# ArtifactHub tracked
 apiVersion: v1
 entries:
   lynxprompt:
@@ -58,3 +59,4 @@ entries:
     - https://github.com/GeiserX/LynxPrompt/releases/download/lynxprompt-0.1.0/lynxprompt-0.1.0.tgz
     version: 0.1.0
 generated: "2026-04-01T10:27:32.365643341Z"
+
