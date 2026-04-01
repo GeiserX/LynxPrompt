@@ -7,8 +7,6 @@ entries:
     appVersion: 2.0.75
     created: "2026-04-01T10:27:32.365634344Z"
     description: A Helm chart for LynxPrompt - Self-hosted AI IDE configuration hub
-    annotations:
-      artifacthub.io/signKey: ""
     digest: f97129c86585c0fbc1a2baa6a6737bd8539ca7034810cfe48c644c3755fd5687
     home: https://lynxprompt.com
     keywords:
@@ -37,8 +35,6 @@ entries:
     appVersion: 2.0.76
     created: "2026-03-31T22:54:06.71830648Z"
     description: A Helm chart for LynxPrompt - Self-hosted AI IDE configuration hub
-    annotations:
-      artifacthub.io/signKey: ""
     digest: b582ad46fba1996443e7b0bbd1075b71124d48674834a6f9a183011febf0f00a
     home: https://lynxprompt.com
     keywords:
