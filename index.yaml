@@ -1,12 +1,12 @@
-# ArtifactHub tracked
 apiVersion: v1
 entries:
   lynxprompt:
   - annotations:
+      artifacthub.io/signKey: ''
       category: AI
     apiVersion: v2
     appVersion: 2.0.75
-    created: "2026-04-01T10:27:32.365634344Z"
+    created: '2026-04-01T10:27:32.365634344Z'
     description: A Helm chart for LynxPrompt - Self-hosted AI IDE configuration hub
     digest: f97129c86585c0fbc1a2baa6a6737bd8539ca7034810cfe48c644c3755fd5687
     home: https://lynxprompt.com
@@ -31,10 +31,11 @@ entries:
     - https://github.com/GeiserX/LynxPrompt/releases/download/lynxprompt-0.1.1/lynxprompt-0.1.1.tgz
     version: 0.1.1
   - annotations:
+      artifacthub.io/signKey: ''
       category: AI
     apiVersion: v2
     appVersion: 2.0.76
-    created: "2026-03-31T22:54:06.71830648Z"
+    created: '2026-03-31T22:54:06.71830648Z'
     description: A Helm chart for LynxPrompt - Self-hosted AI IDE configuration hub
     digest: b582ad46fba1996443e7b0bbd1075b71124d48674834a6f9a183011febf0f00a
     home: https://lynxprompt.com
@@ -58,5 +59,4 @@ entries:
     urls:
     - https://github.com/GeiserX/LynxPrompt/releases/download/lynxprompt-0.1.0/lynxprompt-0.1.0.tgz
     version: 0.1.0
-generated: "2026-04-01T10:27:32.365643341Z"
-
+generated: '2026-04-01T20:17:15Z'
