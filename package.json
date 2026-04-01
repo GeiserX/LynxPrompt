@@ -39,7 +39,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.80.0",
+    "@anthropic-ai/sdk": "^0.81.0",
     "@auth/prisma-adapter": "^2.11.1",
     "@hookform/resolvers": "^3.9.1",
     "@marsidev/react-turnstile": "^1.5.0",
@@ -93,7 +93,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.3.4",
-    "@vitest/coverage-v8": "^2.1.9",
+    "@vitest/coverage-v8": "^4.1.2",
     "autoprefixer": "^10.4.27",
     "eslint": "^9.39.4",
     "eslint-config-next": "^16.2.1",
@@ -110,7 +110,7 @@
     "tsx": "^4.19.2",
     "typescript": "^5.9.3",
     "@types/pg": "^8.20.0",
-    "vitest": "^2.1.9"
+    "vitest": "^4.1.2"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
