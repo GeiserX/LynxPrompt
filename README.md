@@ -238,6 +238,15 @@ Full documentation is available at [lynxprompt.com/docs](https://lynxprompt.com/
 
 ---
 
+## Ecosystem
+
+| Project | Type | Description |
+|---------|------|-------------|
+| [lynxprompt-mcp](https://github.com/GeiserX/lynxprompt-mcp) | MCP Server | Browse and manage blueprints from AI assistants via the Model Context Protocol |
+| [lynxprompt-vscode](https://github.com/GeiserX/lynxprompt-vscode) | VS Code Extension | Pull, diff, and push AI config files without leaving the editor |
+| [homebrew-lynxprompt](https://github.com/GeiserX/homebrew-lynxprompt) | Homebrew Tap | Install the LynxPrompt CLI on macOS/Linux via `brew install GeiserX/lynxprompt/lynxprompt` |
+| [n8n-nodes-lynxprompt](https://github.com/GeiserX/n8n-nodes-lynxprompt) | n8n Community Node | Automate blueprint workflows in n8n |
+
 ## License
 
 This project is licensed under the [GNU General Public License v3.0](LICENSE).
