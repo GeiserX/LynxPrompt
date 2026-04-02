@@ -101,44 +101,78 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check seat availability
-    const currentMembers = invitation.team._count.members;
-    if (currentMembers >= invitation.team.maxSeats) {
-      return NextResponse.json(
-        { error: "This team has reached its maximum seat limit. Contact the team admin." },
-        { status: 400 }
-      );
+    // Atomically check seats + create membership in a serializable transaction.
+    // Retry up to 3 times on serialization conflicts (Prisma P2034).
+    const MAX_RETRIES = 3;
+    let accepted = false;
+
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      let seatLimitReached = false;
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await prismaUsers.$transaction(async (tx: any) => {
+          // Re-check membership inside transaction (handles parallel submissions)
+          const alreadyMember = await tx.teamMember.findUnique({
+            where: { teamId_userId: { teamId: invitation.teamId, userId: session.user.id } },
+          });
+          if (alreadyMember) {
+            accepted = true; // Treat as idempotent success
+            return;
+          }
+
+          const currentMembers = await tx.teamMember.count({
+            where: { teamId: invitation.teamId },
+          });
+          if (currentMembers >= invitation.team.maxSeats) {
+            seatLimitReached = true;
+            throw new Error("SEAT_LIMIT_REACHED");
+          }
+
+          await tx.teamMember.create({
+            data: {
+              teamId: invitation.teamId,
+              userId: session.user.id,
+              role: invitation.role,
+              isActiveThisCycle: true,
+              lastActiveAt: new Date(),
+            },
+          });
+
+          await tx.teamInvitation.update({
+            where: { id: invitation.id },
+            data: { status: "ACCEPTED", acceptedAt: new Date() },
+          });
+
+          await tx.user.update({
+            where: { id: session.user.id },
+            data: { subscriptionPlan: "TEAMS", lastLoginAt: new Date() },
+          });
+        }, { isolationLevel: "Serializable" });
+        accepted = true;
+        break; // Success — exit retry loop
+      } catch (err) {
+        if (seatLimitReached) {
+          return NextResponse.json(
+            { error: "This team has reached its maximum seat limit. Contact the team admin." },
+            { status: 400 }
+          );
+        }
+        // P2034 = serialization failure, P2002 = unique constraint (concurrent insert)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const code = (err as any)?.code;
+        if ((code === "P2034" || code === "P2002") && attempt < MAX_RETRIES - 1) {
+          continue;
+        }
+        throw err;
+      }
     }
 
-    // Accept the invitation: create membership and update invitation
-    await prismaUsers.$transaction([
-      // Create team membership
-      prismaUsers.teamMember.create({
-        data: {
-          teamId: invitation.teamId,
-          userId: session.user.id,
-          role: invitation.role,
-          isActiveThisCycle: true,
-          lastActiveAt: new Date(),
-        },
-      }),
-      // Mark invitation as accepted
-      prismaUsers.teamInvitation.update({
-        where: { id: invitation.id },
-        data: {
-          status: "ACCEPTED",
-          acceptedAt: new Date(),
-        },
-      }),
-      // Update user's subscription plan to TEAMS
-      prismaUsers.user.update({
-        where: { id: session.user.id },
-        data: {
-          subscriptionPlan: "TEAMS",
-          lastLoginAt: new Date(),
-        },
-      }),
-    ]);
+    if (!accepted) {
+      return NextResponse.json(
+        { error: "Failed to accept invitation due to a conflict. Please try again." },
+        { status: 409 }
+      );
+    }
 
     return NextResponse.json({
       message: `Welcome to ${invitation.team.name}!`,

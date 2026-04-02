@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createHmac } from "crypto";
+import { createHmac, randomUUID } from "crypto";
 import { prismaUsers } from "@/lib/db-users";
 import { ENABLE_SSO } from "@/lib/feature-flags";
 import { decryptSSOConfig } from "@/lib/sso-encryption";
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
   // Find team and SSO config
   const team = await prismaUsers.team.findUnique({
     where: { slug: teamSlug },
-    include: { ssoConfig: true },
+    select: { id: true, slug: true, maxSeats: true, ssoConfig: true },
   });
 
   if (!team?.ssoConfig || !team.ssoConfig.enabled || team.ssoConfig.provider !== "OIDC") {
@@ -147,31 +147,68 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Find or create user, then add to team
-  let user = await prismaUsers.user.findUnique({ where: { email } });
+  // Atomically find-or-create user and enforce seat limit in a serializable transaction
+  // to prevent concurrent SSO logins from exceeding maxSeats.
+  // Retry up to 3 times on serialization conflicts (Prisma P2034).
+  const MAX_RETRIES = 3;
+  let user: { id: string; email: string | null; name: string | null } | undefined;
 
-  if (!user) {
-    user = await prismaUsers.user.create({
-      data: {
-        email,
-        name,
-      },
-    });
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    let seatLimitReached = false;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      user = await prismaUsers.$transaction(async (tx: any) => {
+        let u = await tx.user.findUnique({ where: { email } });
+        const existingMembership = u
+          ? await tx.teamMember.findUnique({
+              where: { teamId_userId: { teamId: team.id, userId: u.id } },
+            })
+          : null;
+
+        if (!existingMembership) {
+          const currentMembers = await tx.teamMember.count({
+            where: { teamId: team.id },
+          });
+          if (currentMembers >= team.maxSeats) {
+            seatLimitReached = true;
+            throw new Error("SEAT_LIMIT_REACHED");
+          }
+        }
+
+        if (!u) {
+          u = await tx.user.create({ data: { email, name } });
+        }
+
+        if (!existingMembership) {
+          await tx.teamMember.create({
+            data: { teamId: team.id, userId: u.id, role: "MEMBER" },
+          });
+        }
+
+        return u;
+      }, { isolationLevel: "Serializable" });
+      break; // Success — exit retry loop
+    } catch (err) {
+      if (seatLimitReached) {
+        return NextResponse.redirect(
+          new URL("/auth/signin?error=SSOSeatLimitReached", request.url)
+        );
+      }
+      // P2034 = serialization failure, P2002 = unique constraint (concurrent insert)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const code = (err as any)?.code;
+      if ((code === "P2034" || code === "P2002") && attempt < MAX_RETRIES - 1) {
+        continue;
+      }
+      throw err;
+    }
   }
 
-  // Ensure user is a member of the team
-  const existingMembership = await prismaUsers.teamMember.findUnique({
-    where: { teamId_userId: { teamId: team.id, userId: user.id } },
-  });
-
-  if (!existingMembership) {
-    await prismaUsers.teamMember.create({
-      data: {
-        teamId: team.id,
-        userId: user.id,
-        role: "MEMBER",
-      },
-    });
+  // If we get here without user, all retries failed with serialization conflicts
+  if (!user) {
+    return NextResponse.redirect(
+      new URL("/auth/signin?error=SSOTemporaryError", request.url)
+    );
   }
 
   // Update last SSO sync
@@ -180,15 +217,28 @@ export async function GET(request: NextRequest) {
     data: { lastSyncAt: new Date() },
   });
 
+  // Generate a one-time nonce for the SSO completion handoff
+  const nonce = randomUUID();
+  const expires = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+  await prismaUsers.verificationToken.create({
+    data: {
+      identifier: `sso:${user.id}`,
+      token: nonce,
+      expires,
+    },
+  });
+
   // Redirect to the SSO sign-in completion page
   // This page triggers NextAuth signIn() with the SSO credentials
   const completeUrl = new URL("/auth/sso-complete", baseUrl);
   completeUrl.searchParams.set("userId", user.id);
   completeUrl.searchParams.set("email", email);
   completeUrl.searchParams.set("teamId", team.id);
+  completeUrl.searchParams.set("nonce", nonce);
   completeUrl.searchParams.set("callbackUrl", callbackUrl);
-  // Sign the params to prevent tampering
-  const signData = `${user.id}:${email}:${team.id}`;
+  // Sign all params including nonce to prevent tampering
+  const signData = `${user.id}:${email}:${team.id}:${nonce}`;
   const signature = createHmac("sha256", secret).update(signData).digest("hex");
   completeUrl.searchParams.set("sig", signature);
 

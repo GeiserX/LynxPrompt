@@ -11,7 +11,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
-  const { id } = await params;
+  const { id: rawId } = await params;
 
   try {
     const body = await request.json().catch(() => ({}));
@@ -30,8 +30,11 @@ export async function POST(
       }
     }
 
-    // Determine template type from ID prefix
-    const templateType = id.startsWith("sys_") ? "system" : "user";
+    // Determine template type from ID prefix and strip prefix for DB queries
+    const templateType = rawId.startsWith("sys_") ? "system" : "user";
+    const dbId = rawId.startsWith("bp_") ? rawId.slice(3)
+      : rawId.startsWith("sys_") ? rawId.slice(4)
+      : rawId;
 
     // Deduplicate: check for recent download from same IP + template in the last hour
     const clientIP = request.headers.get("cf-connecting-ip") ||
@@ -43,7 +46,7 @@ export async function POST(
 
     const recentDownload = await prismaUsers.templateDownload.findFirst({
       where: {
-        templateId: id,
+        templateId: rawId,
         templateType,
         ipHash,
         createdAt: { gte: oneHourAgo },
@@ -60,22 +63,22 @@ export async function POST(
     await prismaUsers.templateDownload.create({
       data: {
         userId: session?.user?.id || null,
-        templateId: id,
+        templateId: rawId,
         templateType,
         platform,
         ipHash,
       },
     });
 
-    // Increment downloads count on template
+    // Increment downloads count on template — use dbId (without prefix)
     if (templateType === "system") {
       await prismaApp.systemTemplate.update({
-        where: { id },
+        where: { id: dbId },
         data: { downloads: { increment: 1 } },
       });
     } else {
       await prismaUsers.userTemplate.update({
-        where: { id },
+        where: { id: dbId },
         data: { downloads: { increment: 1 } },
       });
     }
@@ -93,14 +96,45 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  const templateType = id.startsWith("sys_") ? "system" : "user";
+  const { id: rawId } = await params;
+  const templateType = rawId.startsWith("sys_") ? "system" : "user";
+  const dbId = rawId.startsWith("bp_") ? rawId.slice(3)
+    : rawId.startsWith("sys_") ? rawId.slice(4)
+    : rawId;
 
   try {
-    // Get total downloads
+    // For user blueprints, verify the requester owns it or it's public
+    if (templateType === "user") {
+      const template = await prismaUsers.userTemplate.findUnique({
+        where: { id: dbId },
+        select: { visibility: true, userId: true, teamId: true },
+      });
+      if (!template) {
+        return NextResponse.json({ total: 0, byPlatform: {} });
+      }
+      if (template.visibility !== "PUBLIC") {
+        const session = await getServerSession(authOptions);
+        if (!session?.user?.id) {
+          return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+        const isOwner = template.userId === session.user.id;
+        let isTeamMember = false;
+        if (template.teamId) {
+          const membership = await prismaUsers.teamMember.findUnique({
+            where: { teamId_userId: { teamId: template.teamId, userId: session.user.id } },
+          });
+          isTeamMember = !!membership;
+        }
+        if (!isOwner && !isTeamMember) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+      }
+    }
+
+    // Get total downloads — templateDownload stores the raw ID (with bp_ prefix)
     const downloadCount = await prismaUsers.templateDownload.count({
       where: {
-        templateId: id,
+        templateId: rawId,
         templateType,
       },
     });
@@ -109,7 +143,7 @@ export async function GET(
     const platformStats = await prismaUsers.templateDownload.groupBy({
       by: ["platform"],
       where: {
-        templateId: id,
+        templateId: rawId,
         templateType,
       },
       _count: true,

@@ -8,7 +8,7 @@ import { prismaApp } from "@/lib/db-app";
  * Get team membership for a user
  */
 async function getUserTeamInfo(userId: string) {
-  const membership = await prismaUsers.teamMember.findFirst({
+  const memberships = await prismaUsers.teamMember.findMany({
     where: { userId },
     include: {
       team: {
@@ -24,16 +24,27 @@ async function getUserTeamInfo(userId: string) {
       },
     },
   });
-  
-  if (!membership) return null;
-  
+
+  if (memberships.length === 0) return null;
+
+  // Return first team for backward compat, but expose all
+  const first = memberships[0];
   return {
-    teamId: membership.team.id,
-    teamName: membership.team.name,
-    teamSlug: membership.team.slug,
-    role: membership.role,
-    memberCount: membership.team._count.members,
-    memberIds: membership.team.members.map(m => m.userId),
+    teamId: first.team.id,
+    teamName: first.team.name,
+    teamSlug: first.team.slug,
+    role: first.role,
+    memberCount: first.team._count.members,
+    memberIds: first.team.members.map(m => m.userId),
+    // All teams (aggregated member IDs across all teams)
+    allTeams: memberships.map(m => ({
+      teamId: m.team.id,
+      teamName: m.team.name,
+      teamSlug: m.team.slug,
+      role: m.role,
+      memberCount: m.team._count.members,
+      memberIds: m.team.members.map(member => member.userId),
+    })),
   };
 }
 
@@ -192,38 +203,46 @@ export async function GET() {
     // Team-specific data (if user is in a team)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let teamBlueprints: any[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let allTeamsBlueprints: Record<string, any[]> = {};
     if (teamInfo) {
-      // Get team-shared blueprints (created by team members and marked as TEAM visibility)
-      teamBlueprints = await prismaUsers.userTemplate.findMany({
-        where: {
-          userId: { in: teamInfo.memberIds },
-          visibility: "TEAM",
-          teamId: teamInfo.teamId,
-        },
-        orderBy: { createdAt: "desc" },
-        take: 6,
-        select: {
-          id: true,
-          name: true,
-          type: true,
-          downloads: true,
-          favorites: true,
-          isPublic: true,
-          createdAt: true,
-          user: {
-            select: { name: true, displayName: true },
+      // Fetch blueprints for ALL teams the user belongs to
+      const teamsToQuery = teamInfo.allTeams || [teamInfo];
+      for (const t of teamsToQuery) {
+        const bps = await prismaUsers.userTemplate.findMany({
+          where: {
+            userId: { in: t.memberIds },
+            visibility: "TEAM",
+            teamId: t.teamId,
           },
-        },
-      }).then(templates => templates.map(template => ({
-        id: `bp_${template.id}`,
-        name: template.name,
-        type: template.type,
-        downloads: template.downloads,
-        favorites: template.favorites,
-        isPublic: template.isPublic,
-        createdAt: template.createdAt,
-        author: template.user?.displayName || template.user?.name || "Team member",
-      })));
+          orderBy: { createdAt: "desc" },
+          take: 6,
+          select: {
+            id: true,
+            name: true,
+            type: true,
+            downloads: true,
+            favorites: true,
+            isPublic: true,
+            createdAt: true,
+            user: {
+              select: { name: true, displayName: true },
+            },
+          },
+        }).then(templates => templates.map(template => ({
+          id: `bp_${template.id}`,
+          name: template.name,
+          type: template.type,
+          downloads: template.downloads,
+          favorites: template.favorites,
+          isPublic: template.isPublic,
+          createdAt: template.createdAt,
+          author: template.user?.displayName || template.user?.name || "Team member",
+        })));
+        allTeamsBlueprints[t.teamId] = bps;
+      }
+      // Backward compat: teamBlueprints = first team's blueprints
+      teamBlueprints = allTeamsBlueprints[teamInfo.teamId] || [];
     }
 
     // Enrich activity with template names
@@ -337,6 +356,14 @@ export async function GET() {
         role: teamInfo.role,
         memberCount: teamInfo.memberCount,
       } : null,
+      teams: teamInfo?.allTeams?.map(t => ({
+        id: t.teamId,
+        name: t.teamName,
+        slug: t.teamSlug,
+        role: t.role,
+        memberCount: t.memberCount,
+        blueprints: allTeamsBlueprints[t.teamId] || [],
+      })) || [],
       teamBlueprints: teamInfo ? teamBlueprints : [],
     });
   } catch (error) {

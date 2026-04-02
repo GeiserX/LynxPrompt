@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -100,6 +100,8 @@ export default function ShareBlueprintPage() {
   const { status } = useSession();
   const { enableAI } = useFeatureFlags();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const preselectedTeamId = searchParams.get("teamId");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState("");
@@ -111,6 +113,8 @@ export default function ShareBlueprintPage() {
   const [visibility, setVisibility] = useState<"PRIVATE" | "TEAM" | "PUBLIC">("PRIVATE");
   const [aiAssisted, setAiAssisted] = useState(false);
   const [teamInfo, setTeamInfo] = useState<{ id: string; name: string; slug: string } | null>(null);
+  const [allTeams, setAllTeams] = useState<{ id: string; name: string; slug: string }[]>([]);
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   
   // Computed isPublic for backwards compatibility
   const isPublic = visibility === "PUBLIC";
@@ -163,19 +167,24 @@ export default function ShareBlueprintPage() {
   useEffect(() => {
     const fetchPlanAndTeam = async () => {
       try {
-        // Fetch billing status
+        // Fetch billing status (includes team memberships)
         const billingRes = await fetch("/api/billing/status");
         if (billingRes.ok) {
           const data = await billingRes.json();
           setUserPlan(data.plan || "FREE");
-        }
-        
-        // Fetch team info (if user is in a team)
-        const dashboardRes = await fetch("/api/user/dashboard");
-        if (dashboardRes.ok) {
-          const data = await dashboardRes.json();
-          if (data.team) {
-            setTeamInfo(data.team);
+          const teams = data.teams || (data.team ? [data.team] : []);
+          if (teams.length > 0) {
+            setAllTeams(teams);
+            setTeamInfo(teams[0]); // backward compat
+            // Preselect team from URL param, or fall back to first team
+            const targetTeam = preselectedTeamId
+              ? teams.find((t: { id: string }) => t.id === preselectedTeamId) || teams[0]
+              : teams[0];
+            setSelectedTeamId(targetTeam.id);
+            // Auto-set visibility to TEAM if linked from a team context
+            if (preselectedTeamId && teams.some((t: { id: string }) => t.id === preselectedTeamId)) {
+              setVisibility("TEAM");
+            }
           }
         }
       } catch {
@@ -253,10 +262,13 @@ export default function ShareBlueprintPage() {
 
   const hasSensitiveData = sensitiveMatches.length > 0 && !sensitiveWarningDismissed;
 
-  // Redirect to sign in if not authenticated
+  // Redirect to sign in if not authenticated, preserving query string
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/auth/signin?callbackUrl=/blueprints/create");
+      const callbackUrl = typeof window !== "undefined"
+        ? window.location.pathname + window.location.search
+        : "/blueprints/create";
+      router.push(`/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`);
     }
   }, [status, router]);
 
@@ -340,7 +352,7 @@ export default function ShareBlueprintPage() {
           tags,
           isPublic, // For backwards compatibility
           visibility, // New visibility field (PRIVATE, TEAM, PUBLIC)
-          teamId: visibility === "TEAM" ? teamInfo?.id : null, // Set teamId if sharing with team
+          teamId: visibility === "TEAM" ? selectedTeamId : null, // Set teamId if sharing with team
           aiAssisted: isPublic ? aiAssisted : false, // Only relevant if sharing publicly
           showcaseUrl: showcaseUrl.trim() || null,
           turnstileToken: requiresTurnstile ? turnstileToken : undefined,
@@ -1015,21 +1027,34 @@ export default function ShareBlueprintPage() {
                           </label>
                           
                           {/* Team option - only show if user is in a team */}
-                          {teamInfo && (
-                            <label className="flex items-center gap-3 cursor-pointer">
-                              <input
-                                type="radio"
-                                name="visibility"
-                                value="TEAM"
-                                checked={visibility === "TEAM"}
-                                onChange={() => setVisibility("TEAM")}
-                                className="h-4 w-4 border-amber-300 dark:border-amber-400 text-teal-600"
-                              />
-                              <span className="text-sm text-amber-900 dark:text-amber-100">
-                                <Users className="mr-1 inline h-4 w-4" />
-                                Team — Share with {teamInfo.name}
-                              </span>
-                            </label>
+                          {allTeams.length > 0 && (
+                            <div>
+                              <label className="flex items-center gap-3 cursor-pointer">
+                                <input
+                                  type="radio"
+                                  name="visibility"
+                                  value="TEAM"
+                                  checked={visibility === "TEAM"}
+                                  onChange={() => setVisibility("TEAM")}
+                                  className="h-4 w-4 border-amber-300 dark:border-amber-400 text-teal-600"
+                                />
+                                <span className="text-sm text-amber-900 dark:text-amber-100">
+                                  <Users className="mr-1 inline h-4 w-4" />
+                                  Team — Share with {allTeams.length === 1 ? allTeams[0].name : "a team"}
+                                </span>
+                              </label>
+                              {visibility === "TEAM" && allTeams.length > 1 && (
+                                <select
+                                  value={selectedTeamId || ""}
+                                  onChange={(e) => setSelectedTeamId(e.target.value)}
+                                  className="mt-2 ml-7 rounded-md border border-amber-300 dark:border-amber-500 bg-white dark:bg-amber-900/30 px-3 py-1.5 text-sm text-amber-900 dark:text-amber-100"
+                                >
+                                  {allTeams.map((t) => (
+                                    <option key={t.id} value={t.id}>{t.name}</option>
+                                  ))}
+                                </select>
+                              )}
+                            </div>
                           )}
                           
                           {/* Public option */}
