@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createHash } from "crypto";
+import { posix as posixPath } from "path";
 import { prismaUsers } from "@/lib/db-users";
 import { APP_URL } from "@/lib/feature-flags";
 import {
@@ -17,6 +18,14 @@ import {
  */
 function computeChecksum(content: string): string {
   return createHash("sha256").update(content).digest("hex").slice(0, 16);
+}
+
+function sanitizeRepositoryPath(input: string | null | undefined): string | null {
+  if (!input?.trim()) return null;
+  // Normalize to posix, strip leading slashes, reject traversal
+  const normalized = posixPath.normalize(input.trim()).replace(/^[/\\]+/, "");
+  if (normalized.startsWith("..") || normalized.includes("/..")) return null;
+  return normalized || null;
 }
 
 /**
@@ -317,7 +326,7 @@ export async function POST(request: NextRequest) {
         // Hierarchy fields
         hierarchyId: validatedHierarchyId,
         parentId: validatedParentId,
-        repositoryPath: repository_path?.trim().replace(/\.\.[/\\]/g, "").replace(/^[/\\]/, "") || null,
+        repositoryPath: sanitizeRepositoryPath(repository_path) || null,
         contentChecksum,
       },
       select: {

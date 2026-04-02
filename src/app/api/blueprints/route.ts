@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { posix as posixPath } from "path";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
@@ -55,6 +56,13 @@ type BlueprintType = (typeof BLUEPRINT_TYPES)[number];
 /**
  * Determine tier based on total word count (all content including comments/headers).
  */
+function sanitizeRepositoryPath(input: string | null | undefined): string | null {
+  if (!input?.trim()) return null;
+  const normalized = posixPath.normalize(input.trim()).replace(/^[/\\]+/, "");
+  if (normalized.startsWith("..") || normalized.includes("/..")) return null;
+  return normalized || null;
+}
+
 function determineTier(content: string): "SHORT" | "INTERMEDIATE" | "LONG" | "SUPERLONG" {
   const wordCount = content.split(/\s+/).filter(Boolean).length;
   
@@ -501,7 +509,7 @@ export async function POST(request: NextRequest) {
         // Hierarchy fields
         hierarchyId: hierarchyId?.trim() || null,
         parentId: validatedParentId,
-        repositoryPath: repositoryPath?.trim().replace(/\.\.[/\\]/g, "").replace(/^[/\\]/, "") || null,
+        repositoryPath: sanitizeRepositoryPath(repositoryPath) || null,
       },
     });
 

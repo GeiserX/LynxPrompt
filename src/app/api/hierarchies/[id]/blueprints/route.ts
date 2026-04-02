@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { posix as posixPath } from "path";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
@@ -8,6 +9,13 @@ import { prismaUsers } from "@/lib/db-users";
  */
 function fromHierarchyId(id: string): string {
   return id.startsWith("ha_") ? id.slice(3) : id;
+}
+
+function sanitizeRepositoryPath(input: string | null | undefined): string | null {
+  if (!input?.trim()) return null;
+  const normalized = posixPath.normalize(input.trim()).replace(/^[/\\]+/, "");
+  if (normalized.startsWith("..") || normalized.includes("/..")) return null;
+  return normalized || null;
 }
 
 /**
@@ -128,7 +136,7 @@ export async function POST(
       where: { id: bpId },
       data: {
         hierarchyId,
-        repositoryPath: repositoryPath.trim().replace(/\.\.[/\\]/g, "").replace(/^[/\\]/, ""),
+        repositoryPath: sanitizeRepositoryPath(repositoryPath) ?? "",
         parentId: parentBpId,
       },
       select: {
