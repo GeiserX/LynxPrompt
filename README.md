@@ -19,6 +19,7 @@
 <p align="center">
   <a href="https://lynxprompt.com"><img src="https://img.shields.io/badge/🌐_Website-lynxprompt.com-6366f1?style=flat-square" alt="Website"></a>
   <a href="https://www.npmjs.com/package/lynxprompt"><img src="https://img.shields.io/npm/v/lynxprompt?style=flat-square&logo=npm&label=CLI" alt="npm"></a>
+  <a href="https://community.chocolatey.org/packages/lynxprompt"><img src="https://img.shields.io/chocolatey/v/lynxprompt?style=flat-square&logo=chocolatey&label=Chocolatey" alt="Chocolatey"></a>
   <a href="https://marketplace.visualstudio.com/items?itemName=LynxPrompt.lynxprompt"><img src="https://img.shields.io/visual-studio-marketplace/v/LynxPrompt.lynxprompt?style=flat-square&logo=visualstudiocode&label=VS%20Code%20Extension" alt="VS Code Extension"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/📜_License-GPL--3.0-blue?style=flat-square" alt="License"></a>
   <a href="https://github.com/GeiserX/LynxPrompt"><img src="https://img.shields.io/github/stars/GeiserX/LynxPrompt?style=flat-square&logo=github" alt="GitHub Stars"></a>
