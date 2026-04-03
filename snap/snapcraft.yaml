@@ -1,0 +1,68 @@
+name: lynxprompt
+version: '2.1.1'
+summary: CLI for generating and managing AI IDE configuration files
+description: |
+  LynxPrompt CLI lets you generate, sync, and manage AI coding tool
+  configurations from your terminal. Supports AGENTS.md, CLAUDE.md,
+  .cursor/rules/, .github/copilot-instructions.md, .windsurfrules,
+  and 30+ AI tools.
+
+  Features:
+    - Interactive wizard for generating AI config files
+    - Pull and push blueprints from/to LynxPrompt cloud
+    - Validate configs in CI/CD pipelines
+    - Search public blueprints in the marketplace
+    - Track and diff config changes against cloud versions
+
+  Available as both `lynxprompt` and the short alias `lynxp`.
+
+  Full documentation: https://lynxprompt.com/docs/cli
+grade: stable
+confinement: strict
+base: core22
+license: GPL-3.0
+website: https://lynxprompt.com
+source-code: https://github.com/GeiserX/LynxPrompt
+issues: https://github.com/GeiserX/LynxPrompt/issues
+
+architectures:
+  - build-on: [amd64]
+  - build-on: [arm64]
+
+apps:
+  lynxprompt:
+    command: bin/node $SNAP/lib/node_modules/lynxprompt/dist/index.js
+    plugs:
+      - network
+      - home
+  lynxp:
+    command: bin/node $SNAP/lib/node_modules/lynxprompt/dist/index.js
+    plugs:
+      - network
+      - home
+
+parts:
+  node:
+    plugin: nil
+    build-packages:
+      - curl
+      - xz-utils
+    override-build: |
+      VERSION="22.16.0"
+      DEB_ARCH=$(dpkg --print-architecture)
+      case "$DEB_ARCH" in
+        amd64) ARCH="x64" ;;
+        arm64) ARCH="arm64" ;;
+        *) ARCH="$DEB_ARCH" ;;
+      esac
+      curl -sL "https://nodejs.org/dist/v${VERSION}/node-v${VERSION}-linux-${ARCH}.tar.xz" | tar xJ --strip-components=1 -C "$CRAFT_PART_INSTALL"
+    prime:
+      - bin/node
+
+  lynxprompt:
+    plugin: nil
+    after: [node]
+    override-build: |
+      "$CRAFT_STAGE/bin/node" "$CRAFT_STAGE/bin/npm" install -g --prefix="$CRAFT_PART_INSTALL" lynxprompt@2.1.1
+    prime:
+      - lib/node_modules/lynxprompt/**
