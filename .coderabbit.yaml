@@ -22,6 +22,38 @@ reviews:
     - "!**/.next/**"
     - "!**/package-lock.json"
     - "!**/pnpm-lock.yaml"
+    - "!src/generated/**"
+    - "!prisma/migrations/**"
+    - "!prisma/migrations-app/**"
+    - "!prisma/migrations-users/**"
+  path_instructions:
+    - path: "src/app/api/**"
+      instructions: |
+        Focus on authentication and authorization checks.
+        Verify input validation and sanitization on all user-supplied data.
+        Check for proper error handling — never leak internal details.
+        Ensure rate limiting or abuse prevention where appropriate.
+    - path: "src/app/**/page.tsx"
+      instructions: |
+        Verify Server Components don't import client-only hooks (useState, useEffect).
+        Check that metadata exports are present for SEO.
+    - path: "prisma/*.prisma"
+      instructions: |
+        Check for proper indexes on frequently queried fields.
+        Verify cascade delete behavior is intentional.
+    - path: "charts/**"
+      instructions: |
+        Validate that all values referenced in templates have defaults in values.yaml.
+        Check resource limits and requests are templated, not hardcoded.
+        Ensure sensitive values use Kubernetes Secrets, not ConfigMaps.
+    - path: "Dockerfile*"
+      instructions: |
+        Verify multi-stage builds are used. Check for non-root USER.
+        Ensure base image tags are pinned, not :latest.
+    - path: "cli/src/**"
+      instructions: |
+        Ensure CLI handles errors gracefully with user-friendly messages.
+        Check that API tokens are never logged or printed.
   tools:
     gitleaks:
       enabled: true
@@ -36,6 +68,8 @@ reviews:
     eslint:
       enabled: true
     shellcheck:
+      enabled: true
+    prismaLint:
       enabled: true
 
 chat:
