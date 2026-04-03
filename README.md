@@ -25,6 +25,7 @@
   <a href="https://github.com/GeiserX/LynxPrompt"><img src="https://img.shields.io/github/stars/GeiserX/LynxPrompt?style=flat-square&logo=github" alt="GitHub Stars"></a>
   <a href="https://hub.docker.com/r/drumsergio/lynxprompt"><img src="https://img.shields.io/docker/pulls/drumsergio/lynxprompt?style=flat-square&logo=docker&label=Docker%20Pulls" alt="Docker Pulls"></a>
   <a href="https://artifacthub.io/packages/helm/lynxprompt/lynxprompt"><img src="https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/lynxprompt&style=flat-square" alt="ArtifactHub"></a>
+  <a href="https://github.com/GeiserX/lynxprompt-action"><img src="https://img.shields.io/badge/GitHub_Action-v1-2088FF?style=flat-square&logo=githubactions&logoColor=white" alt="GitHub Action"></a>
 </p>
 
 <p align="center">
