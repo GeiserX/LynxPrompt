@@ -67,7 +67,7 @@ jobs:
           cd /tmp && rm -rf geiserback-deploy
           
           # Trigger Portainer redeploy
-          curl -X PUT \
+          curl -sk -X PUT \
             "${{ secrets.PORTAINER_URL_DEV }}/api/stacks/${{ secrets.PORTAINER_STACK_ID_DEV }}/git/redeploy?endpointId=${{ secrets.PORTAINER_ENDPOINT_ID_DEV }}" \
             -H "X-API-Key: ${{ secrets.PORTAINER_API_KEY_DEV }}" \
             -H "Content-Type: application/json" \

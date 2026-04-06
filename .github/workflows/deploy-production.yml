@@ -72,7 +72,7 @@ jobs:
 
       - name: Trigger Portainer deployment
         run: |
-          curl -X PUT \
+          curl -sk -X PUT \
             "${{ secrets.PORTAINER_URL }}/api/stacks/${{ secrets.PORTAINER_STACK_ID }}/git/redeploy?endpointId=${{ secrets.PORTAINER_ENDPOINT_ID }}" \
             -H "X-API-Key: ${{ secrets.PORTAINER_API_KEY }}" \
             -H "Content-Type: application/json" \
