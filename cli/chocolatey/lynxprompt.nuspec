@@ -19,7 +19,7 @@
     <releaseNotes>Major update: Full CLI wizard with all steps, 30+ AI editor platforms support, enhanced code generation with testing strategy, boundaries customization, static file generation, and Teams AI features.</releaseNotes>
     <tags>ai ide cursor copilot claude windsurf antigravity gemini cli developer-tools</tags>
     <dependencies>
-      <dependency id="nodejs" version="[18.0,)" />
+      <dependency id="nodejs-lts" version="[18.0,)" />
     </dependencies>
   </metadata>
   <files>
