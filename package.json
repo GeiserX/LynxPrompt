@@ -128,6 +128,6 @@
     "seed": "tsx prisma/seed.ts"
   },
   "overrides": {
-    "nodemailer": "$nodemailer"
+    "nodemailer": "^8.0.4"
   }
 }
