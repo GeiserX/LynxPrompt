@@ -27,8 +27,10 @@ COPY package.json package-lock.json* ./
 
 # Install dependencies using npm ci (faster for CI/Docker)
 # Uses BuildKit cache mount for npm cache (~30-50% faster on rebuilds)
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci --legacy-peer-deps
+# Cache keyed by TARGETPLATFORM to avoid ETXTBSY on QEMU cross-compilation
+ARG TARGETPLATFORM
+RUN --mount=type=cache,target=/root/.npm,id=npm-${TARGETPLATFORM} \
+    npm ci
 
 # -----------------------------------------------------------------------------
 # Builder stage - build the application
@@ -72,8 +74,9 @@ FROM base AS prisma-deps
 WORKDIR /prisma-deps
 
 COPY --from=builder /app/package.json ./
-RUN --mount=type=cache,target=/root/.npm \
-    npm install --no-save --legacy-peer-deps prisma tsx esbuild get-tsconfig resolve-pkg-maps
+ARG TARGETPLATFORM
+RUN --mount=type=cache,target=/root/.npm,id=npm-prisma-${TARGETPLATFORM} \
+    npm install --no-save prisma tsx esbuild get-tsconfig resolve-pkg-maps
 
 # -----------------------------------------------------------------------------
 # Production stage - minimal runtime image
