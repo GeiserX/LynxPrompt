@@ -27,7 +27,7 @@
   <a href="https://artifacthub.io/packages/helm/lynxprompt/lynxprompt"><img src="https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/lynxprompt&style=flat-square" alt="ArtifactHub"></a>
   <a href="https://github.com/GeiserX/lynxprompt-action"><img src="https://img.shields.io/badge/GitHub_Action-v1-2088FF?style=flat-square&logo=githubactions&logoColor=white" alt="GitHub Action"></a>
   <a href="https://aur.archlinux.org/packages/lynxprompt"><img src="https://img.shields.io/aur/version/lynxprompt?style=flat-square&logo=archlinux&label=AUR" alt="AUR"></a>
-  <a href="https://snapcraft.io/lynxprompt"><img src="https://img.shields.io/snapcraft/v/lynxprompt/stable?style=flat-square&logo=snapcraft&label=Snap" alt="Snap"></a>
+  <a href="https://snapcraft.io/lynxprompt"><img src="https://snapcraft.io/lynxprompt/badge.svg" alt="Snap"></a>
 </p>
 
 <p align="center">
