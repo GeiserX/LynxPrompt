@@ -1,0 +1,7 @@
+repositoryID: 8a944271-0feb-468b-9dbf-27b65d959660
+owners:
+  - name: Sergio Fernandez
+    email: acsdesk@protonmail.com
+ignore:
+  - name: lynxprompt
+    version: "0.1.0"
