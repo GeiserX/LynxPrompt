@@ -10,7 +10,7 @@
 # -----------------------------------------------------------------------------
 # Base stage - shared dependencies
 # -----------------------------------------------------------------------------
-FROM node:20-alpine AS base
+FROM node:22-alpine AS base
 
 # Install dependencies for Prisma and other native modules
 RUN apk add --no-cache libc6-compat openssl
@@ -25,12 +25,11 @@ FROM base AS deps
 # Copy package files
 COPY package.json package-lock.json* ./
 
-# Install dependencies using npm ci (faster for CI/Docker)
-# Uses BuildKit cache mount for npm cache (~30-50% faster on rebuilds)
+# npm install (not ci) tolerates lockfiles across npm versions (local npm 11 vs Docker npm 10)
 # Cache keyed by TARGETPLATFORM to avoid ETXTBSY on QEMU cross-compilation
 ARG TARGETPLATFORM
 RUN --mount=type=cache,target=/root/.npm,id=npm-${TARGETPLATFORM} \
-    npm ci
+    npm install
 
 # -----------------------------------------------------------------------------
 # Builder stage - build the application
