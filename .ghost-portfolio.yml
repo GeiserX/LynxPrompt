@@ -1,0 +1,9 @@
+description: "Self-hosted & federated platform for AI IDE/Tools Rules and Commands via WebUI & CLI — Generate, browse, store, share AGENTS.md, CLAUDE.md, and more."
+personalNote: "A platform I built for the growing AI-assisted development community. Think of it as a hub for sharing and discovering AI IDE configuration files — the rules that make tools like Claude Code, Cursor, and Windsurf work better."
+keyFeatures:
+  - "Web UI for browsing and managing prompt rules"
+  - "CLI tool for fetching rules directly into your project"
+  - "Federation support between instances"
+  - "Self-hostable with Docker"
+  - "CLI installable via Homebrew"
+techStack: "TypeScript, Node.js, Docker"
