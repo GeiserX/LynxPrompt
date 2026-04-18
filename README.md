@@ -20,7 +20,7 @@
   <a href="https://lynxprompt.com"><img src="https://img.shields.io/badge/🌐_Website-lynxprompt.com-6366f1?style=flat-square" alt="Website"></a>
   <a href="https://www.npmjs.com/package/lynxprompt"><img src="https://img.shields.io/npm/v/lynxprompt?style=flat-square&logo=npm&label=CLI" alt="npm"></a>
   <a href="https://community.chocolatey.org/packages/lynxprompt"><img src="https://img.shields.io/chocolatey/v/lynxprompt?style=flat-square&logo=chocolatey&label=Chocolatey" alt="Chocolatey"></a>
-  <a href="https://marketplace.visualstudio.com/items?itemName=LynxPrompt.lynxprompt"><img src="https://img.shields.io/visual-studio-marketplace/v/LynxPrompt.lynxprompt?style=flat-square&logo=visualstudiocode&label=VS%20Code%20Extension" alt="VS Code Extension"></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=LynxPrompt.lynxprompt"><img src="https://img.shields.io/badge/VS_Code-Extension-007ACC?style=flat-square&logo=visualstudiocode&logoColor=white" alt="VS Code Extension"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/📜_License-GPL--3.0-blue?style=flat-square" alt="License"></a>
   <a href="https://github.com/GeiserX/LynxPrompt"><img src="https://img.shields.io/github/stars/GeiserX/LynxPrompt?style=flat-square&logo=github" alt="GitHub Stars"></a>
   <a href="https://hub.docker.com/r/drumsergio/lynxprompt"><img src="https://img.shields.io/docker/pulls/drumsergio/lynxprompt?style=flat-square&logo=docker&label=Docker%20Pulls" alt="Docker Pulls"></a>
@@ -188,7 +188,7 @@ Also available via Homebrew (`brew install GeiserX/lynxprompt/lynxprompt`) and C
 Prefer managing configs without leaving the editor? LynxPrompt also has an official VS Code extension.
 
 <p>
-  <a href="https://marketplace.visualstudio.com/items?itemName=LynxPrompt.lynxprompt"><img src="https://img.shields.io/visual-studio-marketplace/v/LynxPrompt.lynxprompt?style=flat-square&logo=visualstudiocode&label=Marketplace" alt="Marketplace"></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=LynxPrompt.lynxprompt"><img src="https://img.shields.io/badge/VS_Code-Marketplace-007ACC?style=flat-square&logo=visualstudiocode&logoColor=white" alt="Marketplace"></a>
   <a href="https://github.com/GeiserX/lynxprompt-vscode"><img src="https://img.shields.io/badge/Source-lynxprompt--vscode-3178C6?style=flat-square&logo=github&logoColor=white" alt="lynxprompt-vscode source"></a>
 </p>
 
