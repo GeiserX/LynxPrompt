@@ -498,8 +498,9 @@ docker buildx build --platform linux/amd64 \
 ```
 
 **Build optimizations included:**
-- `npm ci` for deterministic installs
-- BuildKit cache mounts for npm and Next.js
+- `npm install` (not `npm ci`) — local npm 11 and Docker npm 10 produce incompatible lockfiles; `npm install` tolerates both
+- BuildKit cache mounts keyed by `TARGETPLATFORM` (avoids ETXTBSY on QEMU arm64 cross-compilation)
+- Base image: `node:22-alpine` (Node 20 EOL, and `@prisma/streams-local` requires Node >= 22)
 - Parallel Prisma client generation
 - `optimizePackageImports` for faster builds
 
@@ -584,6 +585,19 @@ npm run test:coverage # With coverage
 3. **Container name conflicts**: Remove old containers before recreating
 4. **Sentry config files at root**: Required by `@sentry/nextjs` - cannot be moved
 5. **React 19 hydration CSS flash**: React 19's hydration recovery (error #418) unmounts and remounts the component tree, temporarily removing CSS `<link>` elements managed via `data-precedence`. A MutationObserver script in `src/app/layout.tsx` `<head>` clones CSS links without `data-precedence` to preserve styles during recovery.
+6. **shields.io retired `visual-studio-marketplace` badge** — use static `img.shields.io/badge/` badges for VS Code marketplace links instead
+7. **Chocolatey `nodejs` vs `nodejs-lts`** — the `nodejs` package (latest, currently v25) hangs in Chocolatey test VMs; always use `nodejs-lts` (stable v22.x) as a dependency in `.nuspec` files
+8. **Portainer TLS certs** — Tailscale-issued Let's Encrypt certs expire every 90 days. Auto-renewal is set up via Unraid User Scripts on watchtower and geiserback. GHA deploy workflows use Tailscale MagicDNS hostnames (not IPs) for proper TLS validation
+
+## Satellite Repos — Known Workarounds
+
+| Repo | Issue | Workaround |
+|------|-------|------------|
+| `lynxprompt-vscode` | Dependabot bumps `@types/vscode` without bumping `engines.vscode` → `vsce` rejects | Publish workflow auto-syncs `engines.vscode` from `@types/vscode` before packaging |
+| `lynxprompt-vscode` | `vsce` rejects SVGs in README | Use PNG images only in README (SVG ok elsewhere) |
+| `lynxprompt-vscode` | Publish workflow version commit must push to main | Branch protection PR requirement removed; workflow commits with `[skip ci]` |
+| `lynxprompt-action` | `@actions/glob` 0.6.x ESM-only exports breaks `@vercel/ncc` CJS bundling | Pinned to 0.5.1; Dependabot ignores it. Unpin when ncc adds ESM exports support |
+| Helm chart | ArtifactHub `artifacthub-repo.yml` must be on `gh-pages` branch | The copy in chart source (`charts/lynxprompt/`) is NOT read by ArtifactHub; edit `gh-pages` directly for ignore rules and metadata |
 
 ---
 
@@ -613,4 +627,4 @@ Before completing a task, verify:
 
 ---
 
-*Last updated: February 2026*
+*Last updated: April 2026*
