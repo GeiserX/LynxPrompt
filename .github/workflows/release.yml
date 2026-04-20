@@ -3,6 +3,10 @@ name: Release
 on:
   push:
     branches: [main]
+    paths:
+      - 'package.json'
+      - 'cli/package.json'
+      - '.github/workflows/release.yml'
   workflow_dispatch:
     inputs:
       type:
@@ -14,6 +18,10 @@ on:
           - 'app-only'
           - 'cli-only'
         default: 'auto'
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -434,7 +442,3 @@ jobs:
           else
             echo "⏭️ CLI release skipped (no changes or tag exists)" >> $GITHUB_STEP_SUMMARY
           fi
-
-
-
-
