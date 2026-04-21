@@ -24,6 +24,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Ensure jq is available
+        run: |
+          if ! command -v jq &>/dev/null; then
+            sudo apt-get update -qq && sudo apt-get install -y -qq jq
+          fi
+
       - name: Generate version
         id: version
         run: |
