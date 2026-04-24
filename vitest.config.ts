@@ -12,12 +12,20 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
+      include: [
+        "src/lib/**/*.ts",
+      ],
       exclude: [
         "node_modules/",
         "tests/",
         "**/*.d.ts",
         "**/*.config.*",
         "**/types/**",
+        "packages/**",
+        "src/lib/db-app.ts",
+        "src/lib/db-blog.ts",
+        "src/lib/db-support.ts",
+        "src/lib/db-users.ts",
       ],
     },
   },
