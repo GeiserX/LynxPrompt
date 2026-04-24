@@ -6,7 +6,7 @@ describe("detectGitHubRepo", () => {
 
   beforeEach(() => {
     fetchSpy = vi.fn();
-    global.fetch = fetchSpy;
+    global.fetch = fetchSpy as unknown as typeof fetch;
   });
 
   afterEach(() => {
@@ -164,7 +164,7 @@ describe("detectGitLabRepo", () => {
 
   beforeEach(() => {
     fetchSpy = vi.fn();
-    global.fetch = fetchSpy;
+    global.fetch = fetchSpy as unknown as typeof fetch;
   });
 
   afterEach(() => {

@@ -5,7 +5,7 @@ let fetchSpy: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   fetchSpy = vi.fn();
-  global.fetch = fetchSpy;
+  global.fetch = fetchSpy as unknown as typeof fetch;
 });
 
 afterEach(() => {
