@@ -8,9 +8,11 @@ on:
       - 'packages/**'
       - 'prisma/**'
       - 'public/**'
+      - 'tests/**'
       - 'package.json'
       - 'package-lock.json'
       - 'tsconfig.json'
+      - 'vitest.config.*'
       - 'next.config.*'
       - '.github/workflows/ci.yml'
   pull_request:
@@ -20,9 +22,11 @@ on:
       - 'packages/**'
       - 'prisma/**'
       - 'public/**'
+      - 'tests/**'
       - 'package.json'
       - 'package-lock.json'
       - 'tsconfig.json'
+      - 'vitest.config.*'
       - 'next.config.*'
       - '.github/workflows/ci.yml'
 
