@@ -8,21 +8,17 @@ codecov:
 coverage:
   precision: 2
   round: down
-  range: "60...90"
+  range: "70...100"
 
   status:
     project:
       default:
-        target: auto
+        target: 90%
         threshold: 2%
-        # Don't fail CI on coverage decrease
-        informational: true
     patch:
       default:
-        target: 70%
+        target: 90%
         threshold: 5%
-        # New code should have reasonable coverage
-        informational: false
 
 comment:
   layout: "reach,diff,flags,files"
@@ -38,7 +34,7 @@ ignore:
   - "dist/**"
   - ".next/**"
   - "coverage/**"
-  
+
   # Test files (don't count tests in coverage)
   - "**/*.test.ts"
   - "**/*.test.tsx"
@@ -47,7 +43,7 @@ ignore:
   - "tests/**"
   - "**/vitest.config.ts"
   - "**/vitest-setup.ts"
-  
+
   # Configuration files
   - "*.config.ts"
   - "*.config.js"
@@ -55,11 +51,11 @@ ignore:
   - "eslint.config.mjs"
   - "postcss.config.mjs"
   - "next.config.ts"
-  
+
   # Generated code
   - "src/generated/**"
   - "prisma/**"
-  
+
   # Tooling
   - "tooling/**"
   - "scripts/**"
@@ -70,16 +66,3 @@ flags:
     paths:
       - src/
     carryforward: true
-
-
-
-
-
-
-
-
-
-
-
-
-
