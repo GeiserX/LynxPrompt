@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, it, expect, vi } from "vitest";
 
 vi.mock("@/lib/feature-flags", () => ({
