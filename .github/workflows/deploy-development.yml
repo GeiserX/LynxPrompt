@@ -55,9 +55,8 @@ jobs:
             -t drumsergio/lynxprompt:dev-latest \
             --push .
 
-      - name: Trigger Portainer deployment
+      - name: Update geiserback docker-compose
         run: |
-          # Update geiserback docker-compose and redeploy via Portainer
           cd /tmp
           rm -rf geiserback-deploy
           GIT_CRED_HELPER='!f() { echo "username=${{ secrets.GITEA_USERNAME }}"; echo "password=${{ secrets.GITEA_TOKEN }}"; }; f'
@@ -68,26 +67,14 @@ jobs:
           # Update image tag
           sed -i 's|image: drumsergio/lynxprompt:.*|image: drumsergio/lynxprompt:${{ steps.version.outputs.version }}|' lynxprompt-dev/docker-compose.yml
 
-          # Commit and push
+          # Commit and push (triggers webhook auto-deploy)
           git config user.email "github-actions@lynxprompt.com"
           git config user.name "GitHub Actions"
           git add -A
           git commit -m "deploy: update lynxprompt-dev to ${{ steps.version.outputs.version }}" || echo "No changes"
           git push origin main
-          
+
           cd /tmp && rm -rf geiserback-deploy
-          
-          # Trigger Portainer redeploy
-          curl -sf -X PUT \
-            "${{ secrets.PORTAINER_URL_DEV }}/api/stacks/${{ secrets.PORTAINER_STACK_ID_DEV }}/git/redeploy?endpointId=${{ secrets.PORTAINER_ENDPOINT_ID_DEV }}" \
-            -H "X-API-Key: ${{ secrets.PORTAINER_API_KEY_DEV }}" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "PullImage": true,
-              "RepositoryAuthentication": true,
-              "RepositoryUsername": "${{ secrets.GITEA_USERNAME }}",
-              "RepositoryPassword": "${{ secrets.GITEA_TOKEN }}"
-            }'
 
       - name: Health check
         run: |
