@@ -74,6 +74,21 @@ const nextConfig: NextConfig = {
   // Security: Disable x-powered-by header
   poweredByHeader: false,
 
+  async redirects() {
+    return [
+      { source: "/templates", destination: "/blueprints", permanent: true },
+      { source: "/pricing", destination: "/", permanent: true },
+      { source: "/changelog", destination: "/blog", permanent: true },
+      { source: "/marketplace", destination: "/blueprints", permanent: true },
+      { source: "/login", destination: "/auth/signin", permanent: true },
+      { source: "/register", destination: "/auth/signin", permanent: true },
+      { source: "/docs/platforms/aider", destination: "/docs/platforms", permanent: true },
+      { source: "/docs/platforms/continue", destination: "/docs/platforms", permanent: true },
+      { source: "/docs/integrations", destination: "/docs", permanent: true },
+      { source: "/docs/teams", destination: "/docs", permanent: true },
+    ];
+  },
+
   // Security: Additional headers (backup for middleware)
   async headers() {
     return [
