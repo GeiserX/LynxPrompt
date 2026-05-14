@@ -30,7 +30,7 @@ jobs:
   # Basic tests without authentication
   public-tests:
     name: Public CLI Tests
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -94,7 +94,7 @@ jobs:
   # Uses built-from-source CLI to test current code against dev server
   authenticated-tests:
     name: Authenticated CLI Tests
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
     needs: [build-test]  # Ensure build passes first
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     env:
@@ -215,7 +215,7 @@ jobs:
   # Build from source test
   build-test:
     name: Build CLI from Source
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
