@@ -44,7 +44,7 @@ env:
 jobs:
   lint:
     name: Lint & Type Check
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -76,7 +76,7 @@ jobs:
 
   test:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -109,7 +109,7 @@ jobs:
 
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -146,7 +146,7 @@ jobs:
 
   integration-smoke:
     name: Integration Smoke Tests
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
     needs: [build]
     if: github.event_name == 'push'
     continue-on-error: true
@@ -187,7 +187,7 @@ jobs:
 
   summary:
     name: CI Summary
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
     needs: [lint, test, build]
     if: always()
     steps:
