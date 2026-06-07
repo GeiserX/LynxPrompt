@@ -44,7 +44,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -181,7 +181,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -272,7 +272,7 @@ jobs:
           cat changelog.md
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: app-v${{ needs.prepare.outputs.app_version }}
           name: "LynxPrompt v${{ needs.prepare.outputs.app_version }}"
@@ -291,13 +291,13 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '22'
 
@@ -398,7 +398,7 @@ jobs:
           cat changelog.md
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: cli-v${{ needs.prepare.outputs.cli_version }}
           name: "LynxPrompt CLI v${{ needs.prepare.outputs.cli_version }}"
@@ -408,7 +408,7 @@ jobs:
           generate_release_notes: false
 
       - name: Trigger CLI publish workflow
-        uses: peter-evans/repository-dispatch@v3
+        uses: peter-evans/repository-dispatch@v4
         with:
           event-type: cli-release
           client-payload: '{"version": "${{ needs.prepare.outputs.cli_version }}"}'
