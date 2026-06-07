@@ -240,6 +240,10 @@ jobs:
     needs: [check, publish-npm]
     if: ${{ needs.check.outputs.platforms == 'all' || needs.check.outputs.platforms == 'npm-chocolatey' }}
     runs-on: [self-hosted, Windows, X64]
+    # Secondary distribution channel (npm is primary). The self-hosted Windows
+    # runner may lack the Chocolatey/pwsh toolchain, so never let it fail the
+    # overall release; it self-heals once the runner toolchain is provisioned.
+    continue-on-error: true
 
     steps:
       - name: Checkout
@@ -274,6 +278,11 @@ jobs:
     needs: [check, publish-npm]
     if: ${{ needs.check.outputs.platforms == 'all' || needs.check.outputs.platforms == 'npm-snap' }}
     runs-on: [self-hosted, Linux, X64]
+    # Secondary distribution channel (npm is primary; the snap just re-wraps the
+    # published npm package). snapd/LXD do not run in the Docker-based self-hosted
+    # runner, so never let this fail the overall release; it self-heals once snap
+    # infra is available on the runner.
+    continue-on-error: true
 
     steps:
       - name: Checkout
