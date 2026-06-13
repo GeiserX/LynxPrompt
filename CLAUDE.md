@@ -189,9 +189,11 @@ ssh root@watchtower.mango-alpha.ts.net "docker exec caddy caddy fmt --overwrite 
 
 Never manually run `docker compose up` or `docker restart` - Portainer loses track of stack state.
 
-### Always Test on `develop` Branch First
+### Branching: `develop` for features, `main` for deps/security
 
-**NEVER commit directly to `main` (production)**. All changes must go through the `develop` branch first:
+**Never push directly to `main`.** Always open a PR, wait for CI, and merge only with the owner's approval.
+
+**Feature / app / behavior changes** go through `develop` first:
 
 1. Work on `develop` branch
 2. Test changes on dev environment (dev.lynxprompt.com)
@@ -206,6 +208,8 @@ git checkout develop
 git checkout main
 git merge develop
 ```
+
+**Dependency and security updates target `main` directly via PR.** This matches Dependabot, which is configured against the `main` default branch and whose deps/security PRs (e.g. #88–#97) merge straight to `main`. `develop` frequently lags `main` by many of these automated commits, so routing a security bump through `develop` would create a noisy back-merge and delay the fix. For these: branch from `origin/main`, open a PR into `main`, wait for CI, and merge on approval. Merging `package.json` / `cli/package.json` changes auto-triggers `release.yml` (patch bump + tags) — never bump versions or create tags by hand.
 
 ## 🎯 Project Overview
 
