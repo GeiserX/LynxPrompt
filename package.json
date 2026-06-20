@@ -70,7 +70,7 @@
     "next": "^16.2.9",
     "next-auth": "^4.24.14",
     "next-themes": "^0.4.4",
-    "nodemailer": "^8.0.5",
+    "nodemailer": "^9.0.1",
     "pg": "^8.21.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
@@ -128,7 +128,7 @@
     "seed": "tsx prisma/seed.ts"
   },
   "overrides": {
-    "nodemailer": "^8.0.5",
+    "nodemailer": "^9.0.1",
     "uuid": "^11.1.1",
     "postcss": "$postcss",
     "@hono/node-server": "^1.19.13"
