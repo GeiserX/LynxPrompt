@@ -80,12 +80,25 @@ jobs:
       - name: Get versions
         id: versions
         run: |
-          APP_VERSION=$(node -p "require('./package.json').version")
-          CLI_VERSION=$(node -p "require('./cli/package.json').version")
+          # Base version is the higher of package.json and the latest release tag.
+          # The version bump is intentionally NOT pushed back to main (the branch
+          # ruleset only allows changes via PR), so package.json can lag the tags.
+          # Deriving from the latest tag keeps releases monotonic instead of
+          # freezing at package.json's value.
+          APP_PKG=$(node -p "require('./package.json').version")
+          CLI_PKG=$(node -p "require('./cli/package.json').version")
+
+          APP_TAG_VER=$(git tag -l "app-v*" --sort=-version:refname | head -n1 | sed 's/^app-v//')
+          CLI_TAG_VER=$(git tag -l "cli-v*" --sort=-version:refname | head -n1 | sed 's/^cli-v//')
+
+          higher() { printf '%s\n%s\n' "$1" "$2" | sort -V | tail -n1; }
+          APP_VERSION=$(higher "$APP_PKG" "${APP_TAG_VER:-0.0.0}")
+          CLI_VERSION=$(higher "$CLI_PKG" "${CLI_TAG_VER:-0.0.0}")
+
           echo "app=$APP_VERSION" >> $GITHUB_OUTPUT
           echo "cli=$CLI_VERSION" >> $GITHUB_OUTPUT
-          echo "📦 App version: $APP_VERSION"
-          echo "📦 CLI version: $CLI_VERSION"
+          echo "📦 App version: $APP_VERSION (package.json $APP_PKG, latest tag ${APP_TAG_VER:-none})"
+          echo "📦 CLI version: $CLI_VERSION (package.json $CLI_PKG, latest tag ${CLI_TAG_VER:-none})"
 
       - name: Check if tags already exist and auto-bump if needed
         id: tags_exist
@@ -194,20 +207,16 @@ jobs:
       - name: Bump version in package.json if needed
         if: ${{ needs.prepare.outputs.app_bumped == 'true' }}
         run: |
+          # Bump and commit locally only so the tag below captures the correct
+          # version. The commit is intentionally NOT pushed to main: the branch
+          # ruleset requires a PR, so a direct push is rejected. prepare derives
+          # the next version from the latest tag, so leaving package.json behind
+          # is harmless.
           npm version ${{ needs.prepare.outputs.app_version }} --no-git-tag-version
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add package.json
           git commit -m "chore: bump app version to ${{ needs.prepare.outputs.app_version }} [skip ci]"
-          # Retry push with rebase on conflict
-          for i in 1 2 3; do
-            git push origin main && break
-            echo "Push failed, retrying with rebase..."
-            git stash
-            git pull origin main --rebase
-            git stash pop || true
-            sleep 2
-          done
 
       - name: Create tag
         run: |
@@ -309,6 +318,11 @@ jobs:
       - name: Bump CLI version in package.json if needed
         if: ${{ needs.prepare.outputs.cli_bumped == 'true' }}
         run: |
+          # Bump and commit locally only so the tag below captures the correct
+          # version. The commit is intentionally NOT pushed to main: the branch
+          # ruleset requires a PR, so a direct push is rejected. prepare derives
+          # the next version from the latest tag, so leaving cli/package.json
+          # behind is harmless.
           cd cli
           npm version ${{ needs.prepare.outputs.cli_version }} --no-git-tag-version
           cd ..
@@ -316,15 +330,6 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add cli/package.json
           git commit -m "chore(cli): bump version to ${{ needs.prepare.outputs.cli_version }} [skip ci]"
-          # Retry push with rebase on conflict
-          for i in 1 2 3; do
-            git push origin main && break
-            echo "Push failed, retrying with rebase..."
-            git stash
-            git pull origin main --rebase
-            git stash pop || true
-            sleep 2
-          done
 
       - name: Create tag
         run: |
