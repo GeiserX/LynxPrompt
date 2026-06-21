@@ -26,6 +26,7 @@ There are **two separate workflows** that work together:
    - Detects changes in app vs CLI since last release
    - Creates git tags (`app-vX.Y.Z` for web, `cli-vX.Y.Z` for CLI)
    - Creates GitHub Releases with changelogs
+   - **Tag-only — does NOT push the version bump back to `main`.** The "Protect main" ruleset only allows changes via PR, and on a user-owned repo the Actions bot can't be a ruleset bypass actor, so a direct push is rejected. The next version is derived from `max(package.json, latest matching tag)`, so it stays monotonic even though `package.json` on `main` lags the tags. **Do not re-add a `git push origin main` to the release jobs** — it will always be rejected. `publish-cli.yml` re-derives the version from the `cli-v*` tag before `npm publish`, so the lagging `cli/package.json` doesn't affect published artifacts.
 
 2. **`publish-cli.yml`** - Triggered by GitHub Release events OR manual dispatch:
    - Publishes CLI to npm
