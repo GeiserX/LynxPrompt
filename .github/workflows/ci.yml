@@ -45,6 +45,10 @@ jobs:
   lint:
     name: Lint & Type Check
     runs-on: [self-hosted, Linux, X64]
+    # Do not run untrusted fork PR code on the self-hosted runner.
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -77,6 +81,10 @@ jobs:
   test:
     name: Test
     runs-on: [self-hosted, Linux, X64]
+    # Do not run untrusted fork PR code on the self-hosted runner.
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -110,6 +118,10 @@ jobs:
   build:
     name: Build
     runs-on: [self-hosted, Linux, X64]
+    # Do not run untrusted fork PR code on the self-hosted runner.
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
