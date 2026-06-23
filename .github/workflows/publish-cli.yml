@@ -35,7 +35,7 @@ jobs:
   # Check if this is a CLI release
   # ===========================================
   check:
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ubuntu-latest
     outputs:
       should_publish: ${{ steps.check.outputs.should_publish }}
       version: ${{ steps.version.outputs.version }}
@@ -93,7 +93,7 @@ jobs:
   publish-npm:
     needs: check
     if: ${{ needs.check.outputs.should_publish == 'true' }}
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: cli
@@ -160,7 +160,7 @@ jobs:
   publish-binaries:
     needs: [check, publish-npm]
     if: ${{ needs.check.outputs.should_publish == 'true' }}
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: cli
@@ -277,7 +277,7 @@ jobs:
   publish-snap:
     needs: [check, publish-npm]
     if: ${{ needs.check.outputs.platforms == 'all' || needs.check.outputs.platforms == 'npm-snap' }}
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ubuntu-latest
     # Secondary distribution channel (npm is primary; the snap just re-wraps the
     # published npm package). snapd/LXD do not run in the Docker-based self-hosted
     # runner, so never let this fail the overall release; it self-heals once snap
@@ -319,7 +319,7 @@ jobs:
   update-homebrew:
     needs: [check, publish-npm]
     if: ${{ needs.check.outputs.platforms == 'all' }}
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Homebrew tap
@@ -373,7 +373,7 @@ jobs:
   summary:
     needs: [check, publish-npm, publish-binaries, publish-chocolatey, publish-snap, update-homebrew]
     if: always() && needs.check.outputs.should_publish == 'true'
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ubuntu-latest
 
     steps:
       - name: Summary

@@ -15,7 +15,7 @@ concurrency:
 jobs:
   deploy:
     name: Deploy to Development
-    runs-on: [self-hosted, linux, x64]
+    runs-on: ubuntu-latest
     environment:
       name: development
       url: https://dev.lynxprompt.com

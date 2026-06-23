@@ -31,7 +31,7 @@ jobs:
   # Detect changes and prepare release
   # ===========================================
   prepare:
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ubuntu-latest
     outputs:
       app_changed: ${{ steps.changes.outputs.app }}
       cli_changed: ${{ steps.changes.outputs.cli }}
@@ -190,7 +190,7 @@ jobs:
   release-app:
     needs: prepare
     if: ${{ needs.prepare.outputs.should_release_app == 'true' }}
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
@@ -301,7 +301,7 @@ jobs:
   release-cli:
     needs: prepare
     if: ${{ needs.prepare.outputs.should_release_cli == 'true' }}
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
@@ -429,7 +429,7 @@ jobs:
   summary:
     needs: [prepare, release-app, release-cli]
     if: always()
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ubuntu-latest
 
     steps:
       - name: Summary
