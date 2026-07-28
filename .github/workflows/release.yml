@@ -22,6 +22,7 @@ on:
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
+  queue: max
 
 permissions:
   contents: write
@@ -294,6 +295,12 @@ jobs:
           draft: false
           prerelease: false
           generate_release_notes: false
+
+      - name: Trigger production image publish
+        uses: peter-evans/repository-dispatch@v4
+        with:
+          event-type: app-release
+          client-payload: '{"version": "${{ needs.prepare.outputs.app_version }}"}'
 
   # ===========================================
   # Release CLI
