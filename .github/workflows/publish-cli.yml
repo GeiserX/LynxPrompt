@@ -239,7 +239,7 @@ jobs:
   publish-chocolatey:
     needs: [check, publish-npm]
     if: ${{ needs.check.outputs.platforms == 'all' || needs.check.outputs.platforms == 'npm-chocolatey' }}
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: windows-latest
     # Secondary distribution channel (npm is primary). The self-hosted Windows
     # runner may lack the Chocolatey/pwsh toolchain, so never let it fail the
     # overall release; it self-heals once the runner toolchain is provisioned.
