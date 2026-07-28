@@ -1,6 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
+import packageJson from "../../package.json";
 
 const mockQueryRaw = vi.fn();
+const testRevision = "a".repeat(40);
+
+vi.stubEnv("APP_REVISION", testRevision);
 
 vi.mock("@/lib/db-users", () => ({
   prismaUsers: {
@@ -9,6 +13,10 @@ vi.mock("@/lib/db-users", () => ({
 }));
 
 describe("GET /api/health", () => {
+  afterAll(() => {
+    vi.unstubAllEnvs();
+  });
+
   beforeEach(() => {
     mockQueryRaw.mockReset();
   });
@@ -21,7 +29,12 @@ describe("GET /api/health", () => {
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body).toEqual({ status: "ok", db: "connected" });
+    expect(body).toEqual({
+      status: "ok",
+      db: "connected",
+      version: packageJson.version,
+      revision: testRevision,
+    });
   });
 
   it("should return 503 when DB connection fails", async () => {
@@ -32,7 +45,12 @@ describe("GET /api/health", () => {
     const body = await response.json();
 
     expect(response.status).toBe(503);
-    expect(body).toEqual({ status: "error", db: "disconnected" });
+    expect(body).toEqual({
+      status: "error",
+      db: "disconnected",
+      version: packageJson.version,
+      revision: testRevision,
+    });
   });
 
   it("should call prismaUsers.$queryRaw", async () => {

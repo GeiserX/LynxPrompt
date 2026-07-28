@@ -1,102 +1,103 @@
-name: Deploy to Production
+name: Verify Production Deployment
 
 on:
-  push:
-    branches: [main]
+  repository_dispatch:
+    types: [app-image-published]
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Released app version expected in production'
+        required: true
+        type: string
+      revision:
+        description: 'Full release commit SHA expected in production'
+        required: true
+        type: string
+      digest:
+        description: 'Expected image digest (optional for manual verification)'
+        required: false
+        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: deploy-production
-  cancel-in-progress: false
+  group: verify-production
+  cancel-in-progress: true
 
 jobs:
-  deploy:
-    name: Deploy to Production
+  verify:
+    name: Verify Production Convergence
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     environment:
       name: production
       url: https://lynxprompt.com
+    env:
+      EXPECTED_VERSION: ${{ github.event.client_payload.version || inputs.version }}
+      EXPECTED_REVISION: ${{ github.event.client_payload.revision || inputs.revision }}
+      EXPECTED_DIGEST: ${{ github.event.client_payload.digest || inputs.digest }}
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '22'
-
-      - name: Generate version
-        id: version
+      - name: Validate expected release
         run: |
-          # Use package.json version + short commit SHA for uniqueness
-          BASE_VERSION=$(node -p "require('./package.json').version")
-          SHORT_SHA=$(git rev-parse --short HEAD)
-          VERSION="${BASE_VERSION}-${SHORT_SHA}"
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "✅ Deploying version $VERSION"
+          if [[ ! "$EXPECTED_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid release version: $EXPECTED_VERSION"
+            exit 1
+          fi
+          if [[ ! "$EXPECTED_REVISION" =~ ^[a-f0-9]{40}$ ]]; then
+            echo "Invalid release revision"
+            exit 1
+          fi
+          if [[ -n "$EXPECTED_DIGEST" && ! "$EXPECTED_DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]; then
+            echo "Invalid image digest"
+            exit 1
+          fi
 
-      - name: Log into Docker Hub
-        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-
-      - name: Build and push Docker image
+      - name: Wait for private GitOps convergence
         run: |
-          docker buildx build --platform linux/amd64 \
-            --build-arg NEXT_PUBLIC_UMAMI_WEBSITE_ID=${{ secrets.NEXT_PUBLIC_UMAMI_WEBSITE_ID }} \
-            --build-arg NEXT_PUBLIC_TURNSTILE_SITE_KEY=${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }} \
-            --build-arg APP_URL=https://lynxprompt.com \
-            -t drumsergio/lynxprompt:${{ steps.version.outputs.version }} \
-            --push .
-          echo "✅ Built and pushed drumsergio/lynxprompt:${{ steps.version.outputs.version }}"
+          # SECURITY-REVIEW: Parse the public health response strictly with jq.
+          for i in {1..120}; do
+            RESPONSE=$(curl --fail --silent --show-error \
+              --connect-timeout 5 --max-time 10 \
+              https://lynxprompt.com/api/health 2>/dev/null || true)
+            ACTUAL_VERSION=$(jq -r '.version // empty' <<< "$RESPONSE" 2>/dev/null || true)
+            ACTUAL_REVISION=$(jq -r '.revision // empty' <<< "$RESPONSE" 2>/dev/null || true)
+            STATUS=$(jq -r '.status // empty' <<< "$RESPONSE" 2>/dev/null || true)
+            DB=$(jq -r '.db // empty' <<< "$RESPONSE" 2>/dev/null || true)
 
-      - name: Update watchtower docker-compose with new version
-        run: |
-          # Clone/pull watchtower repo and update version
-          cd /tmp
-          rm -rf watchtower-deploy
-          GIT_CRED_HELPER='!f() { echo "username=${{ secrets.GITEA_USERNAME }}"; echo "password=${{ secrets.GITEA_TOKEN }}"; }; f'
-          git -c credential.helper="$GIT_CRED_HELPER" clone http://192.168.10.100:3010/giteaer/watchtower.git watchtower-deploy
-          cd watchtower-deploy
-          git config credential.helper "$GIT_CRED_HELPER"
-
-          # Update image tag in docker-compose
-          sed -i 's|image: drumsergio/lynxprompt:.*|image: drumsergio/lynxprompt:${{ steps.version.outputs.version }}|' lynxprompt/docker-compose.yml
-
-          # Commit and push
-          git config user.email "github-actions@lynxprompt.com"
-          git config user.name "GitHub Actions"
-          git add -A
-          git commit -m "deploy: update LynxPrompt to v${{ steps.version.outputs.version }}" || echo "No changes to commit"
-          git push origin main
-          
-          # Cleanup
-          cd /tmp && rm -rf watchtower-deploy
-
-      - name: Wait for webhook deployment
-        run: sleep 30
-
-      - name: Health check
-        run: |
-          for i in {1..10}; do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://lynxprompt.com/api/health || echo "000")
-            if [ "$STATUS" = "200" ]; then
-              echo "✅ Deployment successful - site is healthy"
+            if [[ "$STATUS" == "ok" &&
+                  "$DB" == "connected" &&
+                  "$ACTUAL_VERSION" == "$EXPECTED_VERSION" &&
+                  "$ACTUAL_REVISION" == "$EXPECTED_REVISION" ]]; then
+              echo "Production converged on LynxPrompt $EXPECTED_VERSION"
               exit 0
             fi
-            echo "Waiting for site to be healthy... (attempt $i/10, status: $STATUS)"
+
+            echo "Waiting for $EXPECTED_VERSION@$EXPECTED_REVISION (attempt $i/120, running ${ACTUAL_VERSION:-unknown}@${ACTUAL_REVISION:-unknown})"
             sleep 10
           done
-          echo "❌ Health check failed after 10 attempts"
+
+          echo "Production did not converge on $EXPECTED_VERSION within 20 minutes"
           exit 1
 
       - name: Purge Cloudflare cache
-        if: success()
         run: |
-          curl -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/purge_cache" \
+          curl --fail-with-body --retry 3 --request POST \
+            "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/purge_cache" \
             -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
             -H "Content-Type: application/json" \
             -d '{"purge_everything":true}'
-          echo "✅ Cloudflare cache purged"
+
+      - name: Record deployment provenance
+        run: |
+          {
+            echo "## Production deployment verified"
+            echo ""
+            echo "- Version: \`$EXPECTED_VERSION\`"
+            echo "- Source revision: \`$EXPECTED_REVISION\`"
+            if [[ -n "$EXPECTED_DIGEST" ]]; then
+              echo "- Image digest: \`$EXPECTED_DIGEST\`"
+            fi
+            echo "- Health: https://lynxprompt.com/api/health"
+          } >> "$GITHUB_STEP_SUMMARY"
