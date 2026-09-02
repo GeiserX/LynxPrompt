@@ -132,6 +132,7 @@
     "uuid": "^11.1.1",
     "postcss": "$postcss",
     "sharp": "^0.35.0",
-    "@hono/node-server": "^1.19.13"
+    "@hono/node-server": "^1.19.13",
+    "mysql2": "^3.24.3"
   }
 }
