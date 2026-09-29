@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/images/banner.svg" alt="LynxPrompt banner" width="900"/>
+  <img src="https://raw.githubusercontent.com/GeiserX/LynxPrompt/main/docs/images/banner.svg" alt="LynxPrompt banner" width="900"/>
 </p>
 
 <p align="center">
