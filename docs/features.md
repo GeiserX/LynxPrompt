@@ -13,7 +13,7 @@ LynxPrompt is **free and open-source**. Self-host it for personal use, or deploy
 
 ## Universal AI Config Hub
 
-Supports **30+ AI coding assistants** — Cursor, Claude Code, GitHub Copilot, Windsurf, Zed, Aider, Gemini CLI, Cline, Roo Code, Amazon Q, JetBrains Junie, and many more. Write once, export to any format.
+Supports **29 AI coding assistants** — Cursor, Claude Code, GitHub Copilot, Windsurf, Zed, Aider, Gemini CLI, Cline, Roo Code, Amazon Q, JetBrains Junie, and many more. Write once, export to any format.
 
 ## Blueprint Marketplace
 

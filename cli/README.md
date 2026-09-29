@@ -3,7 +3,7 @@
 Generate AI IDE configuration files from your terminal.
 
 <p align="center">
-  <img src="../docs/demo.gif" alt="LynxPrompt CLI Demo" width="900">
+  <img src="https://raw.githubusercontent.com/GeiserX/LynxPrompt/main/docs/images/demo.gif" alt="LynxPrompt CLI Demo" width="900">
 </p>
 
 ## Installation

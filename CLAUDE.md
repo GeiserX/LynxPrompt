@@ -616,7 +616,7 @@ npm run test:coverage # With coverage
 | `prisma/schema-*.prisma` | Database schemas |
 | `src/app/layout.tsx` | Root layout (CSS preservation script) |
 | `docs/ROADMAP.md` | Feature roadmap |
-| `docs/SECURITY.md` | Security documentation |
+| `docs/how-it-works.md` | Security model (was `docs/SECURITY.md`) |
 
 ---
 

@@ -1,4 +1,4 @@
-# Architecture and development
+# Development
 
 ## Architecture
 
@@ -21,4 +21,4 @@ npm install --legacy-peer-deps
 npm run dev
 ```
 
-See [CONTRIBUTING.md](../CONTRIBUTING.md) for contribution guidelines.
+See [CONTRIBUTING.md](https://github.com/GeiserX/LynxPrompt/blob/main/CONTRIBUTING.md) for contribution guidelines.
