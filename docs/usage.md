@@ -1,4 +1,4 @@
-# CLI
+# Usage
 
 The CLI tool mirrors the web platform and works against any LynxPrompt instance. By default it connects to `lynxprompt.com`, but you can point it to any self-hosted deployment.
 

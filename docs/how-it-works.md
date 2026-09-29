@@ -1,4 +1,6 @@
-# LynxPrompt Security Documentation
+# How it works
+
+This page describes the security model: what LynxPrompt does to protect accounts, data and the API. The stack and the code layout are in [Development](development.md).
 
 ## Security Measures Implemented
 

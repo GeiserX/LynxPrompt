@@ -3,10 +3,10 @@
 #
 # Required env vars (set in .env or environment):
 #   NEXTAUTH_SECRET  — generate with: openssl rand -base64 32
-#   ADMIN_EMAIL      — your email (auto-promoted to superadmin)
+#   DB_PASSWORD      — database password, generate with: openssl rand -hex 24
 #
 # Optional:
-#   DB_PASSWORD      — database password (required, no default)
+#   ADMIN_EMAIL      — your email (auto-promoted to superadmin)
 #   APP_URL          — your domain (default: http://localhost:3000)
 
 services:
@@ -14,11 +14,13 @@ services:
     image: postgres:18-alpine
     restart: unless-stopped
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      # Postgres 18+ keeps its data in a versioned subdirectory and refuses a
+      # mount at /var/lib/postgresql/data, so the volume goes one level up.
+      - pgdata:/var/lib/postgresql
     environment:
       POSTGRES_DB: lynxprompt
       POSTGRES_USER: lynxprompt
-      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set - generate with: openssl rand -hex 24}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set, generate one with openssl rand -hex 24}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U lynxprompt -d lynxprompt"]
       interval: 5s
@@ -26,10 +28,12 @@ services:
       retries: 5
 
   lynxprompt:
-    # Use the latest release tag from Docker Hub
-    # The CI pushes tags like: 2.0.0-<short_sha>
-    # Find available tags at: https://hub.docker.com/r/drumsergio/lynxprompt/tags
-    image: drumsergio/lynxprompt:2.0.0
+    # A published release tag (tests/workflows/selfhost-compose.test.ts checks
+    # it exists on Docker Hub). Newer releases: https://hub.docker.com/r/drumsergio/lynxprompt/tags
+    image: drumsergio/lynxprompt:2.1.30
+    # The image is built for amd64 only; this lets ARM hosts (Apple Silicon,
+    # Raspberry Pi) run it under emulation instead of failing at pull.
+    platform: linux/amd64
     restart: unless-stopped
     ports:
       - "${PORT:-3000}:3000"
@@ -40,21 +44,21 @@ services:
       # Single DB — password defined once, shared with Postgres container
       DB_APP_HOST: postgres
       DB_APP_USER: lynxprompt
-      DB_APP_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set - generate with: openssl rand -hex 24}
+      DB_APP_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set, generate one with openssl rand -hex 24}
       DB_APP_NAME: lynxprompt
       DB_USERS_HOST: postgres
       DB_USERS_USER: lynxprompt
-      DB_USERS_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set - generate with: openssl rand -hex 24}
+      DB_USERS_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set, generate one with openssl rand -hex 24}
       DB_USERS_NAME: lynxprompt
       DB_BLOG_HOST: postgres
       DB_BLOG_USER: lynxprompt
-      DB_BLOG_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set - generate with: openssl rand -hex 24}
+      DB_BLOG_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set, generate one with openssl rand -hex 24}
       DB_BLOG_NAME: lynxprompt
       DB_SUPPORT_HOST: postgres
       DB_SUPPORT_USER: lynxprompt
-      DB_SUPPORT_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set - generate with: openssl rand -hex 24}
+      DB_SUPPORT_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set, generate one with openssl rand -hex 24}
       DB_SUPPORT_NAME: lynxprompt
-      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?NEXTAUTH_SECRET must be set - generate with: openssl rand -base64 32}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?NEXTAUTH_SECRET must be set, generate one with openssl rand -base64 32}
       NEXTAUTH_URL: ${APP_URL:-http://localhost:3000}
       APP_URL: ${APP_URL:-http://localhost:3000}
       SUPERADMIN_EMAIL: ${ADMIN_EMAIL:-}
