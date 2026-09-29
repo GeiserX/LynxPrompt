@@ -534,11 +534,12 @@ export default function SecurityPage() {
                     </h3>
                     <p className="mt-1 text-sm">
                       LynxPrompt is open-source software released under the GNU
-                      Affero General Public License v3. This ensures that the
-                      source code remains freely available and that any
-                      derivative work, including a modified copy run as a hosted
-                      service, must also be open-source, fostering transparency
-                      and trust.
+                      Affero General Public License v3. The source code stays
+                      freely available. Anyone who distributes a modified
+                      version must share its source under the same license, and
+                      anyone who runs a modified version as a network service
+                      must offer its source to the users of that service. That
+                      keeps LynxPrompt transparent and auditable.
                     </p>
                   </div>
                   <div className="rounded-lg border p-4">
