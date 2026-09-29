@@ -94,6 +94,10 @@ jobs:
     needs: check
     if: ${{ needs.check.outputs.should_publish == 'true' }}
     runs-on: ubuntu-latest
+    # npm trusted publishing: GitHub's OIDC token proves who publishes, so no NPM_TOKEN to expire.
+    permissions:
+      contents: read
+      id-token: write
     defaults:
       run:
         working-directory: cli
@@ -143,9 +147,10 @@ jobs:
 
       - name: Publish to npm
         if: ${{ steps.npm_check.outputs.exists != 'true' }}
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          # Trusted publishing needs npm 11.5.1 or newer; Node 22 ships npm 10.
+          npm install -g npm@^11.5.1
+          npm publish --access public
 
       - name: Get tarball SHA256
         id: sha
