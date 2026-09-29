@@ -178,4 +178,4 @@ The action matches local files to remote blueprints by **name + type**. The blue
 
 ## License
 
-This action is part of [LynxPrompt](https://github.com/GeiserX/LynxPrompt) and is covered by its [GPL-3.0 license](https://github.com/GeiserX/LynxPrompt/blob/main/LICENSE).
+This action is part of [LynxPrompt](https://github.com/GeiserX/LynxPrompt) and is covered by its [AGPL-3.0-or-later license](https://github.com/GeiserX/LynxPrompt/blob/main/LICENSE).
