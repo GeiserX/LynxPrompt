@@ -64,7 +64,7 @@ export default function GettingStartedPage() {
       <section className="space-y-4">
         <h2 className="text-2xl font-bold">What is LynxPrompt?</h2>
         <p className="text-muted-foreground">
-          LynxPrompt is a free, open-source (GPL v3) platform that generates AI
+          LynxPrompt is a free, open-source (AGPL v3) platform that generates AI
           coding agent configuration files through an intuitive wizard interface.
           It&apos;s also a place to store, organize, and share AI prompts and
           templates (called &quot;Blueprints&quot;). You can self-host it, join a

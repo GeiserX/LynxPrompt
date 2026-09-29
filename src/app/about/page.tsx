@@ -119,7 +119,7 @@ export default function AboutPage() {
             </p>
             <p>
               But a tool is only as useful as its community. LynxPrompt is fully{" "}
-              <strong>open-source under GPL v3</strong>—anyone can self-host
+              <strong>open-source under AGPL v3</strong>—anyone can self-host
               their own instance. And through{" "}
               <strong>federation</strong>, instances can discover and share
               blueprints across a decentralized network, so the best
@@ -242,7 +242,7 @@ export default function AboutPage() {
               </a>
               , built with a passion for self-hosting, automation, and developer
               tools that just work. Licensed under{" "}
-              <strong>GPL v3</strong>—free to use, modify, and self-host.
+              <strong>AGPL v3</strong>—free to use, modify, and self-host.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-4">
               <Button asChild>

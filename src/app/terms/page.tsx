@@ -236,7 +236,7 @@ export default function TermsPage() {
                   <strong>Your Content:</strong> You retain ownership of prompts and content you create. By uploading content to LynxPrompt, you grant us a non-exclusive license to host, display, and distribute your content through our service.
                 </p>
                 <p className="mt-3">
-                  <strong>Our Content:</strong> The LynxPrompt platform, including its design, code, and branding, is owned by GeiserCloud. LynxPrompt is open-source software licensed under the GNU General Public License v3.0 (GPL-3.0). The source code is available at <a href="https://github.com/GeiserX/LynxPrompt" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">github.com/GeiserX/LynxPrompt</a>.
+                  <strong>Our Content:</strong> The LynxPrompt platform, including its design, code, and branding, is owned by GeiserCloud. LynxPrompt is open-source software licensed under the GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later). The source code is available at <a href="https://github.com/GeiserX/LynxPrompt" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">github.com/GeiserX/LynxPrompt</a>.
                 </p>
               </section>
 

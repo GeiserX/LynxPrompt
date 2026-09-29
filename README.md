@@ -21,7 +21,7 @@
   <a href="https://www.npmjs.com/package/lynxprompt"><img src="https://img.shields.io/npm/v/lynxprompt?style=flat-square&logo=npm&label=CLI" alt="npm"></a>
   <a href="https://community.chocolatey.org/packages/lynxprompt"><img src="https://img.shields.io/chocolatey/v/lynxprompt?style=flat-square&logo=chocolatey&label=Chocolatey" alt="Chocolatey"></a>
   <a href="https://marketplace.visualstudio.com/items?itemName=LynxPrompt.lynxprompt"><img src="https://img.shields.io/badge/VS_Code-Extension-007ACC?style=flat-square&logo=visualstudiocode&logoColor=white" alt="VS Code Extension"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/📜_License-GPL--3.0-blue?style=flat-square" alt="License"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/📜_License-AGPL--3.0-blue?style=flat-square" alt="License"></a>
   <a href="https://github.com/GeiserX/LynxPrompt"><img src="https://img.shields.io/github/stars/GeiserX/LynxPrompt?style=flat-square&logo=github" alt="GitHub Stars"></a>
   <a href="https://hub.docker.com/r/drumsergio/lynxprompt"><img src="https://img.shields.io/docker/pulls/drumsergio/lynxprompt?style=flat-square&logo=docker&label=Docker%20Pulls" alt="Docker Pulls"></a>
   <a href="https://artifacthub.io/packages/helm/lynxprompt/lynxprompt"><img src="https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/lynxprompt&style=flat-square" alt="ArtifactHub"></a>
@@ -254,6 +254,6 @@ Full documentation is available at [lynxprompt.com/docs](https://lynxprompt.com/
 
 ## License
 
-This project is licensed under the [GNU General Public License v3.0](LICENSE).
+This project is licensed under the [GNU Affero General Public License v3.0 or later](LICENSE) (AGPL-3.0-or-later).
 
 **Author:** Sergio Fernández Rubio ([GeiserX](https://github.com/GeiserX))
