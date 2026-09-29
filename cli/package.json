@@ -23,8 +23,8 @@
   ],
   "type": "module",
   "bin": {
-    "lynxprompt": "./dist/index.js",
-    "lynxp": "./dist/index.js"
+    "lynxprompt": "dist/index.js",
+    "lynxp": "dist/index.js"
   },
   "main": "./dist/index.js",
   "files": [
