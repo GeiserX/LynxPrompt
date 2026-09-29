@@ -150,7 +150,7 @@ jobs:
         run: |
           # Trusted publishing needs npm 11.5.1 or newer; Node 22 ships npm 10.
           npm install -g npm@^11.5.1
-          npm publish --access public
+          npm publish --access public --loglevel verbose
 
       - name: Get tarball SHA256
         id: sha
