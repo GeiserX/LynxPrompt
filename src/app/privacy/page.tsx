@@ -67,7 +67,7 @@ export default function PrivacyPage() {
                   and other applicable privacy laws.
                 </p>
                 <p className="mt-3">
-                  LynxPrompt is open-source software licensed under GPL v3. This
+                  LynxPrompt is open-source software licensed under AGPL v3. This
                   privacy policy governs data processing on lynxprompt.com.
                   Self-hosted LynxPrompt instances are independently operated.
                   This privacy policy applies only to the official instance at
