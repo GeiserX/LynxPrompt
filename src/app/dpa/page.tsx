@@ -70,7 +70,7 @@ export default function DPAPage() {
                 &quot;Controller&quot;) and GeiserCloud, operating LynxPrompt
                 (&quot;Processor&quot;), for the provision of services. By using
                 LynxPrompt, you automatically accept this DPA. LynxPrompt is
-                open-source software licensed under GPL v3, but this DPA governs
+                open-source software licensed under AGPL v3, but this DPA governs
                 data processing specifically on the official instance at
                 lynxprompt.com. Business customers may request a signed copy by
                 emailing{" "}
