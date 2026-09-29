@@ -38,7 +38,8 @@ describe("self-host compose file", () => {
     const tag = image![1];
     const res = await fetch(
       `https://hub.docker.com/v2/repositories/drumsergio/lynxprompt/tags/${tag}`,
+      { signal: AbortSignal.timeout(15_000) },
     );
     expect(res.status, `drumsergio/lynxprompt:${tag} is not on Docker Hub`).toBe(200);
-  });
+  }, 20_000);
 });

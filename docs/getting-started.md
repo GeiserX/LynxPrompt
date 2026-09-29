@@ -3,13 +3,14 @@
 ## Docker Compose
 
 ```bash
-# 1. Create a .env file
+# 1. Create a .env file only you can read
 cat > .env <<EOF
 NEXTAUTH_SECRET=$(openssl rand -base64 32)
 DB_PASSWORD=$(openssl rand -hex 24)
 ADMIN_EMAIL=your@email.com
 APP_URL=http://localhost:3000
 EOF
+chmod 600 .env
 
 # 2. Download the self-host compose file and start LynxPrompt
 curl -O https://raw.githubusercontent.com/GeiserX/LynxPrompt/main/docker-compose.selfhost.yml

@@ -31,7 +31,7 @@ LynxPrompt is a self-hostable platform for managing AI IDE configuration files: 
 
 ```bash
 curl -O https://raw.githubusercontent.com/GeiserX/LynxPrompt/main/docker-compose.selfhost.yml
-printf 'NEXTAUTH_SECRET=%s\nDB_PASSWORD=%s\nADMIN_EMAIL=your@email.com\n' "$(openssl rand -base64 32)" "$(openssl rand -hex 24)" > .env
+(umask 077; printf 'NEXTAUTH_SECRET=%s\nDB_PASSWORD=%s\nADMIN_EMAIL=your@email.com\n' "$(openssl rand -base64 32)" "$(openssl rand -hex 24)" > .env)
 docker compose -f docker-compose.selfhost.yml up -d   # then open http://localhost:3000
 ```
 
