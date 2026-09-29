@@ -46,7 +46,7 @@ export default function FAQOverviewPage() {
           <div className="rounded-lg border bg-card p-4">
             <h3 className="font-semibold">Is LynxPrompt free to use?</h3>
             <p className="mt-2 text-muted-foreground">
-              Yes! LynxPrompt is free and open-source (GPL v3). All features —
+              Yes! LynxPrompt is free and open-source (AGPL v3). All features —
               the wizard, blueprints, AI editing, teams, API, and CLI — are
               available at no cost.
             </p>
