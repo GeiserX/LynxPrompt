@@ -20,7 +20,7 @@ description: |
 grade: stable
 confinement: strict
 base: core22
-license: GPL-3.0
+license: AGPL-3.0-or-later
 website: https://lynxprompt.com
 source-code: https://github.com/GeiserX/LynxPrompt
 issues: https://github.com/GeiserX/LynxPrompt/issues
