@@ -123,4 +123,4 @@ Be respectful and inclusive. We follow the [Contributor Covenant](https://www.co
 
 ## 📄 License
 
-By contributing, you agree that your contributions will be licensed under the GPL-3.0 License.
+By contributing, you agree that your contributions will be licensed under the GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later).
