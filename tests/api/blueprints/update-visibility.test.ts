@@ -84,7 +84,18 @@ describe("PUT /api/blueprints/[id] visibility", () => {
 
     expect(response.status).toBe(200);
     expect(written().isPublic).toBe(false);
-    expect(written().visibility).toBeUndefined();
+    expect(written().visibility).toBe("TEAM");
+  });
+
+  // Two overlapping saves: this one read the row as PRIVATE before another
+  // request published it. Writing only isPublic would leave visibility PUBLIC.
+  it("writes visibility with every unpublish, whatever the row said when read", async () => {
+    existing({ visibility: "PRIVATE", isPublic: false, teamId: null });
+    const response = await update({ isPublic: false });
+
+    expect(response.status).toBe(200);
+    expect(written().isPublic).toBe(false);
+    expect(written().visibility).toBe("PRIVATE");
   });
 
   it("leaves visibility alone when isPublic is not sent", async () => {

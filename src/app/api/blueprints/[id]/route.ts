@@ -134,7 +134,6 @@ export async function PUT(
         currentVersion: true,
         content: true,
         isPublic: true,
-        visibility: true,
         teamId: true,
       },
     });
@@ -225,14 +224,15 @@ export async function PUT(
 
     if (isPublic !== undefined) {
       updateData.isPublic = Boolean(isPublic);
-      // Keep visibility in step with the public flag. Publishing keeps teamId,
-      // so unpublishing a team blueprint returns it to its team, not to PRIVATE.
-      // Unchecking "public" on a TEAM or PRIVATE blueprint leaves it where it is.
-      if (updateData.isPublic) {
-        updateData.visibility = "PUBLIC";
-      } else if (existingBlueprint.visibility === "PUBLIC") {
-        updateData.visibility = existingBlueprint.teamId ? "TEAM" : "PRIVATE";
-      }
+      // Write visibility together with the public flag so the two always
+      // match, even when two saves overlap. Publishing keeps teamId, and this
+      // route never changes it, so an unpublished blueprint with a team goes
+      // back to TEAM and one without goes to PRIVATE.
+      updateData.visibility = updateData.isPublic
+        ? "PUBLIC"
+        : existingBlueprint.teamId
+          ? "TEAM"
+          : "PRIVATE";
     }
 
     if (showcaseUrl !== undefined) {
