@@ -1,6 +1,6 @@
 site_name: LynxPrompt
 site_url: https://geiserx.github.io/LynxPrompt/
-site_description: "Self-hostable platform for managing AI IDE configuration files: AGENTS.md, .cursor/rules, CLAUDE.md, slash commands and 30+ other formats."
+site_description: "Self-hosted web app that turns one set of AI coding rules into AGENTS.md, CLAUDE.md, .cursor/rules and 30 rule-file formats, with a wizard, shared blueprints, a CLI and a VS Code extension."
 repo_url: https://github.com/GeiserX/LynxPrompt
 repo_name: GeiserX/LynxPrompt
 edit_uri: edit/main/docs/
@@ -12,9 +12,8 @@ strict: true
 theme:
   name: material
   language: en  # es for a Spanish repo: it changes the UI strings, not the content.
-  # Uncomment when the repo has them. Both live under docs/images/.
-  # logo: images/logo.svg
-  # favicon: images/icon.svg
+  logo: images/logo.svg
+  favicon: images/icon.svg
   # Dark first: the first palette entry is the default, and the banners are dark.
   palette:
     - scheme: slate
@@ -114,6 +113,16 @@ extra:
       link: https://github.com/GeiserX/LynxPrompt
     - icon: fontawesome/brands/docker
       link: https://hub.docker.com/r/drumsergio/lynxprompt
+    - icon: fontawesome/brands/npm
+      link: https://www.npmjs.com/package/lynxprompt
+    - icon: simple/artifacthub
+      link: https://artifacthub.io/packages/helm/lynxprompt/lynxprompt
+    - icon: material/microsoft-visual-studio-code
+      link: https://marketplace.visualstudio.com/items?itemName=LynxPrompt.lynxprompt
+    - icon: simple/chocolatey
+      link: https://community.chocolatey.org/packages/lynxprompt
+    - icon: material/web
+      link: https://lynxprompt.com
 
 extra_css:
   - stylesheets/theme.css
@@ -131,11 +140,15 @@ exclude_docs: |
   notes/
   requirements-docs.txt
 
+# Three tabs, each a section. The nav title equals the page's H1.
 nav:
   - Home: index.md
-  - Getting started: getting-started.md
-  - Configuration: configuration.md
-  - Usage: usage.md
-  - Features: features.md
-  - How it works: how-it-works.md
-  - Development: development.md
+  - Get started:
+      - Getting started: getting-started.md
+      - Usage: usage.md
+  - Reference:
+      - Configuration: configuration.md
+      - Features: features.md
+      - How it works: how-it-works.md
+      - Troubleshooting: troubleshooting.md
+      - Development: development.md

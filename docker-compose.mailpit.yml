@@ -1,0 +1,18 @@
+# Try-out only: a local mailbox that catches the sign-in mail.
+#   docker compose -f docker-compose.selfhost.yml -f docker-compose.mailpit.yml up -d
+# then read the link at http://localhost:8025. Never use this in production:
+# anyone who can open that port can sign in as anyone.
+services:
+  mailpit:
+    image: axllent/mailpit:v1.31.3
+    restart: unless-stopped
+    ports:
+      - "${MAILPIT_PORT:-8025}:8025"
+
+  lynxprompt:
+    environment:
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      # Mailpit offers no login, so the app sends without one; SMTP_USER and
+      # SMTP_PASSWORD stay empty.
+      SMTP_FROM: noreply@localhost

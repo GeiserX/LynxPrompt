@@ -22,3 +22,16 @@ npm run dev
 ```
 
 See [CONTRIBUTING.md](https://github.com/GeiserX/LynxPrompt/blob/main/CONTRIBUTING.md) for contribution guidelines.
+
+## Docs
+
+The site is MkDocs Material, built strictly:
+
+```bash
+pip install -r docs/requirements-docs.txt
+mkdocs build --strict     # any broken link or unreachable page fails it
+mkdocs serve
+```
+
+`docs.yml` builds every pull request and deploys `main` into the `gh-pages` branch next to the Helm
+repository's `index.yaml`, which it never touches.

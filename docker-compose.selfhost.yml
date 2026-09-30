@@ -8,6 +8,8 @@
 # Optional:
 #   ADMIN_EMAIL      — your email (auto-promoted to superadmin)
 #   APP_URL          — your domain (default: http://localhost:3000)
+#   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM: the mail server for
+#   sign-in links
 
 services:
   postgres:
@@ -41,7 +43,11 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      # Single DB — password defined once, shared with Postgres container
+      # One PostgreSQL server, one database per Prisma schema: prisma db push
+      # drops the tables it does not know, so two schemas in one database would
+      # delete each other's tables at every start. The entrypoint's db push
+      # creates the three databases after lynxprompt on the first start. The
+      # password is defined once and shared with the Postgres container.
       DB_APP_HOST: postgres
       DB_APP_USER: lynxprompt
       DB_APP_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set, generate one with openssl rand -hex 24}
@@ -49,19 +55,27 @@ services:
       DB_USERS_HOST: postgres
       DB_USERS_USER: lynxprompt
       DB_USERS_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set, generate one with openssl rand -hex 24}
-      DB_USERS_NAME: lynxprompt
+      DB_USERS_NAME: lynxprompt_users
       DB_BLOG_HOST: postgres
       DB_BLOG_USER: lynxprompt
       DB_BLOG_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set, generate one with openssl rand -hex 24}
-      DB_BLOG_NAME: lynxprompt
+      DB_BLOG_NAME: lynxprompt_blog
       DB_SUPPORT_HOST: postgres
       DB_SUPPORT_USER: lynxprompt
       DB_SUPPORT_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set, generate one with openssl rand -hex 24}
-      DB_SUPPORT_NAME: lynxprompt
+      DB_SUPPORT_NAME: lynxprompt_support
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?NEXTAUTH_SECRET must be set, generate one with openssl rand -base64 32}
       NEXTAUTH_URL: ${APP_URL:-http://localhost:3000}
       APP_URL: ${APP_URL:-http://localhost:3000}
       SUPERADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      # Sign-in mail. The default login is a link sent by mail, so a real
+      # deployment sets these in .env. To try it out without a mail server,
+      # add -f docker-compose.mailpit.yml to the docker compose line.
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
       NODE_ENV: production
 
 volumes:
