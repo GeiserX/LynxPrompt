@@ -284,8 +284,8 @@ export async function POST(request: NextRequest) {
       type, 
       category = "other",
       tags, 
-      isPublic = true,
-      visibility = "PRIVATE", // PRIVATE, TEAM, or PUBLIC
+      isPublic, // DEPRECATED: only read when visibility is absent
+      visibility, // PRIVATE, TEAM, or PUBLIC
       teamId = null, // If visibility is TEAM, this should be set
       aiAssisted = false,
       showcaseUrl,
@@ -297,9 +297,14 @@ export async function POST(request: NextRequest) {
       repositoryPath = null, // Relative path within repo (e.g., "packages/core/AGENTS.md")
     } = body;
     
-    // Validate visibility
+    // Validate visibility. A caller that still sends only the deprecated
+    // isPublic flag publishes with it; anything else unrecognised is private.
     const validVisibilities = ["PRIVATE", "TEAM", "PUBLIC"];
-    const normalizedVisibility = validVisibilities.includes(visibility) ? visibility : "PRIVATE";
+    const normalizedVisibility = validVisibilities.includes(visibility)
+      ? visibility
+      : isPublic === true
+        ? "PUBLIC"
+        : "PRIVATE";
     
     // If visibility is TEAM, verify user belongs to the team
     if (normalizedVisibility === "TEAM" && teamId) {
@@ -316,8 +321,8 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // For backwards compatibility: derive isPublic from visibility
-    const effectiveIsPublic = normalizedVisibility === "PUBLIC" || isPublic;
+    // isPublic mirrors visibility and never disagrees with it
+    const effectiveIsPublic = normalizedVisibility === "PUBLIC";
 
     // Fetch user plan to check if turnstile verification is needed
     const user = await prismaUsers.user.findUnique({
