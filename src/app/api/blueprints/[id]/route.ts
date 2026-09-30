@@ -129,7 +129,13 @@ export async function PUT(
     // Check if user owns this blueprint
     const existingBlueprint = await prismaUsers.userTemplate.findUnique({
       where: { id: realId },
-      select: { userId: true, currentVersion: true, content: true, isPublic: true },
+      select: {
+        userId: true,
+        currentVersion: true,
+        content: true,
+        isPublic: true,
+        teamId: true,
+      },
     });
 
     if (!existingBlueprint) {
@@ -218,6 +224,15 @@ export async function PUT(
 
     if (isPublic !== undefined) {
       updateData.isPublic = Boolean(isPublic);
+      // Write visibility together with the public flag so the two always
+      // match, even when two saves overlap. Publishing keeps teamId, and this
+      // route never changes it, so an unpublished blueprint with a team goes
+      // back to TEAM and one without goes to PRIVATE.
+      updateData.visibility = updateData.isPublic
+        ? "PUBLIC"
+        : existingBlueprint.teamId
+          ? "TEAM"
+          : "PRIVATE";
     }
 
     if (showcaseUrl !== undefined) {
