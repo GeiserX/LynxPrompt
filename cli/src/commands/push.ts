@@ -40,7 +40,6 @@ interface DiscoveredFile {
 
 /**
  * Directories to always exclude from scanning.
- * Mirrors action/src/detector.ts EXCLUDED_DIRS.
  */
 const EXCLUDED_DIRS = new Set([
   "node_modules", ".git", "dist", "build", ".next", "__pycache__",
@@ -49,7 +48,7 @@ const EXCLUDED_DIRS = new Set([
 ]);
 
 /**
- * Config file pattern rules — mirrors action/src/mapper.ts PATTERN_RULES.
+ * Config file pattern rules.
  * Ordered from most specific to least specific.
  */
 interface ConfigPattern {
