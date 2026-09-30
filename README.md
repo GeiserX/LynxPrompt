@@ -39,12 +39,14 @@ For the CLI: `npm install -g lynxprompt`, then `lynxp login` and `lynxp wizard`.
 
 ## Documentation
 
-- [Getting started](https://github.com/GeiserX/LynxPrompt/blob/main/docs/getting-started.md): Docker Compose, Helm chart, install channels
-- [Configuration](https://github.com/GeiserX/LynxPrompt/blob/main/docs/configuration.md): every environment variable
-- [Usage](https://github.com/GeiserX/LynxPrompt/blob/main/docs/usage.md): the CLI and VS Code extension, self-hosted instances, Homebrew, Chocolatey
-- [Features](https://github.com/GeiserX/LynxPrompt/blob/main/docs/features.md): the platform in more detail
-- [How it works](https://github.com/GeiserX/LynxPrompt/blob/main/docs/how-it-works.md): the security model
-- [Development](https://github.com/GeiserX/LynxPrompt/blob/main/docs/development.md): architecture, stack, local setup, contributing
+The documentation lives at **[geiserx.github.io/LynxPrompt](https://geiserx.github.io/LynxPrompt/)**.
+
+- [Getting started](https://geiserx.github.io/LynxPrompt/getting-started/): Docker Compose, Helm chart, install channels
+- [Configuration](https://geiserx.github.io/LynxPrompt/configuration/): every environment variable
+- [Usage](https://geiserx.github.io/LynxPrompt/usage/): the CLI and VS Code extension, self-hosted instances, Homebrew, Chocolatey
+- [Features](https://geiserx.github.io/LynxPrompt/features/): the platform in more detail
+- [How it works](https://geiserx.github.io/LynxPrompt/how-it-works/): the security model
+- [Development](https://geiserx.github.io/LynxPrompt/development/): architecture, stack, local setup, contributing
 - Product docs for the hosted instance at [lynxprompt.com/docs](https://lynxprompt.com/docs): [Getting Started](https://lynxprompt.com/docs/getting-started), [Configuration Wizard](https://lynxprompt.com/docs/wizard), [Blueprints & Commands](https://lynxprompt.com/docs/blueprints), [CLI Reference](https://lynxprompt.com/docs/cli), [API Reference](https://lynxprompt.com/docs/api), [Self-Hosting Guide](https://lynxprompt.com/docs/self-hosting)
 
 ## Related projects
