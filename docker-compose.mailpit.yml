@@ -17,6 +17,6 @@ services:
       SMTP_HOST: mailpit
       SMTP_PORT: "1025"
       # The app always logs in to SMTP; Mailpit accepts any login.
-      SMTP_USER: mailpit
-      SMTP_PASSWORD: mailpit
+      SMTP_USER: ${MAILPIT_SMTP_USER:-mailpit}
+      SMTP_PASSWORD: ${MAILPIT_SMTP_PASSWORD:-mailpit}
       SMTP_FROM: noreply@localhost
