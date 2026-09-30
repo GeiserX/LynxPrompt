@@ -1,6 +1,6 @@
 # Features
 
-LynxPrompt is a **self-hostable platform** for managing AI IDE configuration files — `AGENTS.md`, `.cursor/rules/`, `CLAUDE.md`, slash commands, and 30+ other formats. Deploy it on your own infrastructure and give your team a central hub to create, share, and standardize AI coding assistant configurations across every project.
+LynxPrompt is a **self-hostable platform** for managing AI IDE configuration files, `AGENTS.md`, `.cursor/rules/`, `CLAUDE.md` and 30 rule-file formats in all, plus slash commands for six of them. Deploy it on your own infrastructure and give your team a central hub to create, share, and standardize AI coding assistant configurations across every project.
 
 Instead of manually writing configuration files for every project and every AI tool, use LynxPrompt to:
 
@@ -13,7 +13,7 @@ LynxPrompt is **free and open-source**. Self-host it for personal use, or deploy
 
 ## Universal AI Config Hub
 
-Supports **29 AI coding assistants** — Cursor, Claude Code, GitHub Copilot, Windsurf, Zed, Aider, Gemini CLI, Cline, Roo Code, Amazon Q, JetBrains Junie, and many more. Write once, export to any format.
+Rules for **30 tools**: Cursor, Claude Code, GitHub Copilot, Windsurf, Zed, Aider, Gemini CLI, Cline, Roo Code, Amazon Q, JetBrains Junie, and many more. Write once, export to any format. Slash commands for Cursor, Claude Code, Windsurf, Copilot, Continue and OpenCode. The CLI also writes MCP configuration for VS Code, Cursor, Windsurf and a project root.
 
 ## Blueprint Marketplace
 
@@ -43,3 +43,5 @@ Programmatic access for automation and CI/CD integration. Generate API tokens, f
 ## Self-Hostable with Docker Compose
 
 Single `docker compose up` to run the entire stack. PostgreSQL included. Auto-runs database migrations on startup. Toggle every feature via environment variables.
+
+The product manual at [lynxprompt.com/docs](https://lynxprompt.com/docs) describes each feature from the user's side.

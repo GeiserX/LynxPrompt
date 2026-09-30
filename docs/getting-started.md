@@ -1,50 +1,93 @@
 # Getting started
 
+LynxPrompt runs as one container next to PostgreSQL. You need Docker with Compose v2 (or Kubernetes for the
+Helm chart) and, for a real deployment, an SMTP server: the default way to sign in is a link sent by mail.
+The image is built for linux/amd64; Apple Silicon and Raspberry Pi hosts run it under emulation, which the
+compose file turns on with `platform: linux/amd64`.
+
 ## Docker Compose
 
 ```bash
-# 1. Create a .env file only you can read
-cat > .env <<EOF
-NEXTAUTH_SECRET=$(openssl rand -base64 32)
-DB_PASSWORD=$(openssl rand -hex 24)
-ADMIN_EMAIL=your@email.com
-APP_URL=http://localhost:3000
-EOF
-chmod 600 .env
-
-# 2. Download the self-host compose file and start LynxPrompt
-curl -O https://raw.githubusercontent.com/GeiserX/LynxPrompt/main/docker-compose.selfhost.yml
-docker compose -f docker-compose.selfhost.yml up -d
-
-# 3. Open http://localhost:3000
+curl -O https://raw.githubusercontent.com/GeiserX/LynxPrompt/main/docker-compose.selfhost.yml -O https://raw.githubusercontent.com/GeiserX/LynxPrompt/main/docker-compose.mailpit.yml
+(umask 077; printf 'NEXTAUTH_SECRET=%s\nDB_PASSWORD=%s\nADMIN_EMAIL=you@example.com\n' "$(openssl rand -base64 32)" "$(openssl rand -hex 24)" > .env)
+docker compose -f docker-compose.selfhost.yml -f docker-compose.mailpit.yml up -d
 ```
 
-That's it. LynxPrompt is running with PostgreSQL, automatic migrations, and email authentication enabled by default.
+What the three lines do:
+
+1. Download the compose file and, for a try-out, the Mailpit file. Mailpit is a local mailbox that catches
+   the sign-in mail so you can read the link at http://localhost:8025 without an SMTP server.
+2. Write a `.env` only you can read: the session secret, the database password and your own address in
+   `ADMIN_EMAIL`. That address becomes the superadmin the first time it signs in.
+3. Start PostgreSQL and the app. The first start pulls the image and runs the migrations; `docker compose -f
+   docker-compose.selfhost.yml -f docker-compose.mailpit.yml logs -f lynxprompt` shows `Database sync
+   complete.` and then the Next.js ready line.
+
+The app listens on http://localhost:3000. `PORT=8080` in `.env` moves it, and `APP_URL` must then be the URL
+the browser uses (`http://localhost:8080`, or your domain behind a reverse proxy), because the sign-in link is
+built from it.
+
+## First sign-in
+
+Open http://localhost:3000/auth/signin and enter the `ADMIN_EMAIL` address. LynxPrompt mails a link that is
+valid for 24 hours. With the Mailpit file, open http://localhost:8025 and click the link there; the dashboard
+opens, with Quick Actions, your blueprints, drafts and teams. That account is promoted to superadmin at that
+sign-in (the promotion happens whenever the signed-in address equals `SUPERADMIN_EMAIL`, which the compose
+file sets from `ADMIN_EMAIL`).
+
+![The dashboard after the first sign-in: the team, Quick Actions, Saved Drafts and Team Blueprints](images/screenshots/dashboard.png)
+
+For a real deployment, put your mail server in `.env` and leave the Mailpit file out of the `docker compose`
+line:
+
+```bash
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=lynxprompt
+SMTP_PASSWORD=...
+SMTP_FROM=lynxprompt@example.com
+```
+
+Never expose Mailpit: anyone who can open its port can sign in as anyone. The other ways to sign in (passkeys,
+GitHub or Google OAuth, SSO) are switched on in [Configuration](configuration.md#sign-in); passkeys need an
+account that already exists, so the first sign-in is always the mail link or OAuth.
+
+## Upgrading
+
+Change the image tag in `docker-compose.selfhost.yml` to the newer release from
+[Docker Hub](https://hub.docker.com/r/drumsergio/lynxprompt/tags) and run the same `docker compose ... up -d`.
+Migrations run at start. Back up the four databases first (`docker compose ... exec postgres pg_dumpall -U
+lynxprompt > backup.sql`).
 
 ## Helm chart (Kubernetes)
-
-A Helm chart is also available for Kubernetes deployments. See the [chart documentation](https://github.com/GeiserX/LynxPrompt/blob/main/charts/lynxprompt/README.md) for the full values reference.
 
 ```bash
 helm repo add lynxprompt https://geiserx.github.io/LynxPrompt
 helm install lynxprompt lynxprompt/lynxprompt
 ```
 
+The chart bundles PostgreSQL by default, or points at an external one with `externalDatabase.*`. Its values
+are documented in the [chart README](https://github.com/GeiserX/LynxPrompt/blob/main/charts/lynxprompt/README.md)
+and listed in [values.yaml](https://github.com/GeiserX/LynxPrompt/blob/main/charts/lynxprompt/values.yaml).
+The chart is also on [ArtifactHub](https://artifacthub.io/packages/helm/lynxprompt/lynxprompt).
+
 ## Install channels
 
-LynxPrompt and its tools are published here:
+| What | Channel | Command or link |
+|---|---|---|
+| Web app | Docker Hub | `drumsergio/lynxprompt` ([tags](https://hub.docker.com/r/drumsergio/lynxprompt/tags)) |
+| Web app | Helm | `helm repo add lynxprompt https://geiserx.github.io/LynxPrompt` |
+| Web app | Hosted instance | [lynxprompt.com](https://lynxprompt.com), no install |
+| CLI `lynxp` | npm | `npm install -g lynxprompt` |
+| CLI `lynxp` | Homebrew (macOS, Linux) | `brew install GeiserX/lynxprompt/lynxprompt` |
+| CLI `lynxp` | Chocolatey (Windows) | `choco install lynxprompt` |
+| CLI `lynxp` | AUR (Arch) | [`lynxprompt`](https://aur.archlinux.org/packages/lynxprompt) |
+| CLI `lynxp` | Snap | `snap install lynxprompt` (the snap is 2.1.1 from April 2026, behind the other channels) |
+| CLI `lynxp` | Binaries | attached to each [release](https://github.com/GeiserX/LynxPrompt/releases) |
+| VS Code | Marketplace | [`LynxPrompt.lynxprompt`](https://marketplace.visualstudio.com/items?itemName=LynxPrompt.lynxprompt), or `ext install LynxPrompt.lynxprompt` |
+| CI | GitHub Action | [lynxprompt-action](https://github.com/GeiserX/lynxprompt-action) |
+| AI assistants | MCP server | [lynxprompt-mcp](https://github.com/GeiserX/lynxprompt-mcp) |
 
-<p align="center">
-  <a href="https://lynxprompt.com"><img src="https://img.shields.io/badge/🌐_Website-lynxprompt.com-6366f1?style=flat-square" alt="Website"></a>
-  <a href="https://www.npmjs.com/package/lynxprompt"><img src="https://img.shields.io/npm/v/lynxprompt?style=flat-square&logo=npm&label=CLI" alt="npm"></a>
-  <a href="https://community.chocolatey.org/packages/lynxprompt"><img src="https://img.shields.io/chocolatey/v/lynxprompt?style=flat-square&logo=chocolatey&label=Chocolatey" alt="Chocolatey"></a>
-  <a href="https://marketplace.visualstudio.com/items?itemName=LynxPrompt.lynxprompt"><img src="https://img.shields.io/badge/VS_Code-Extension-007ACC?style=flat-square&logo=visualstudiocode&logoColor=white" alt="VS Code Extension"></a>
-  <a href="https://github.com/GeiserX/LynxPrompt/blob/main/LICENSE"><img src="https://img.shields.io/github/license/GeiserX/LynxPrompt?style=flat-square" alt="License"></a>
-  <a href="https://github.com/GeiserX/LynxPrompt"><img src="https://img.shields.io/github/stars/GeiserX/LynxPrompt?style=flat-square&logo=github" alt="GitHub Stars"></a>
-  <a href="https://hub.docker.com/r/drumsergio/lynxprompt"><img src="https://img.shields.io/docker/pulls/drumsergio/lynxprompt?style=flat-square&logo=docker&label=Docker%20Pulls" alt="Docker Pulls"></a>
-  <a href="https://artifacthub.io/packages/helm/lynxprompt/lynxprompt"><img src="https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/lynxprompt&style=flat-square" alt="ArtifactHub"></a>
-  <a href="https://github.com/GeiserX/lynxprompt-action"><img src="https://img.shields.io/badge/GitHub_Action-v1-2088FF?style=flat-square&logo=githubactions&logoColor=white" alt="GitHub Action"></a>
-  <a href="https://aur.archlinux.org/packages/lynxprompt"><img src="https://img.shields.io/aur/version/lynxprompt?style=flat-square&logo=archlinux&label=AUR" alt="AUR"></a>
-  <a href="https://snapcraft.io/lynxprompt"><img src="https://snapcraft.io/lynxprompt/badge.svg" alt="Snap"></a>
-  <a href="https://codecov.io/gh/GeiserX/LynxPrompt"><img src="https://codecov.io/gh/GeiserX/LynxPrompt/graph/badge.svg" alt="codecov"></a>
-</p>
+After installing the CLI: `lynxp config set-url https://lynxprompt.example.com` for your own instance (the
+default, which `lynxp config show` prints, is the hosted instance's API at `https://api.lynxprompt.com`), then
+`lynxp login`. See [Usage](usage.md#the-cli).
