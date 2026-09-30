@@ -1,6 +1,7 @@
 ---
 hide:
   - navigation
+  - toc
 ---
 
 # LynxPrompt { .lp-visually-hidden }
