@@ -43,7 +43,6 @@
     "prisma/prisma.config-*.ts",
     "prisma/migrations/**/*.ts",
     "cli",
-    "action",
     "vscode"
   ]
 }
