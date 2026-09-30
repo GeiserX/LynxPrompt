@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Self-hostable platform for managing AI IDE configuration files: AGENTS.md, .cursor/rules, CLAUDE.md, slash commands and 30+ other formats.">
+        <meta name="description" content="Self-hosted web app that turns one set of AI coding rules into AGENTS.md, CLAUDE.md, .cursor/rules and 30 rule-file formats, with a wizard, shared blueprints, a CLI and a VS Code extension.">
       
       
       
@@ -16,13 +16,13 @@
         <link rel="prev" href="../features/">
       
       
-        <link rel="next" href="../development/">
+        <link rel="next" href="../troubleshooting/">
       
       
         
       
       
-      <link rel="icon" href="../assets/images/favicon.png">
+      <link rel="icon" href="../images/icon.svg">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
@@ -96,8 +96,7 @@
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href=".." title="LynxPrompt" class="md-header__button md-logo" aria-label="LynxPrompt" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <img src="../images/logo.svg" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -245,74 +244,18 @@
   
   
   
-    <li class="md-tabs__item">
-      <a href="../getting-started/" class="md-tabs__link">
-        
-  
-  
     
-  
-  Getting started
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="../configuration/" class="md-tabs__link">
-        
-  
-  
     
+      <li class="md-tabs__item">
+        <a href="../getting-started/" class="md-tabs__link">
+          
   
-  Configuration
+  
+  Get started
 
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="../usage/" class="md-tabs__link">
-        
-  
-  
+        </a>
+      </li>
     
-  
-  Usage
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="../features/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Features
-
-      </a>
-    </li>
   
 
       
@@ -323,36 +266,18 @@
     
   
   
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="./" class="md-tabs__link">
-        
-  
-  
     
-  
-  How it works
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="../development/" class="md-tabs__link">
-        
-  
-  
     
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../configuration/" class="md-tabs__link">
+          
   
-  Development
+  
+  Reference
 
-      </a>
-    </li>
+        </a>
+      </li>
+    
   
 
       
@@ -380,8 +305,7 @@
   <label class="md-nav__title" for="__drawer">
     <a href=".." title="LynxPrompt" class="md-nav__button md-logo" aria-label="LynxPrompt" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <img src="../images/logo.svg" alt="logo">
 
     </a>
     LynxPrompt
@@ -434,6 +358,60 @@
   
   
   
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Get started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="../getting-started/" class="md-nav__link">
         
@@ -454,36 +432,10 @@
     </li>
   
 
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../configuration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Configuration
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
+              
+            
+              
+                
   
   
   
@@ -508,9 +460,102 @@
     </li>
   
 
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
     
       
       
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
   
   
   
@@ -535,9 +580,10 @@
     </li>
   
 
-    
-      
-      
+              
+            
+              
+                
   
   
     
@@ -603,336 +649,79 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#security-measures-implemented" class="md-nav__link">
+  <a href="#components" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Security Measures Implemented
+        Components
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Security Measures Implemented">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-authentication-authorization" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Authentication &amp; Authorization
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="1. Authentication &amp; Authorization">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#nextauthjs-configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        NextAuth.js Configuration
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#oauth-providers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        OAuth Providers
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#passkeys-webauthn" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Passkeys (WebAuthn)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-api-security" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. API Security
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="2. API Security">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#rate-limiting" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Rate Limiting
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#input-validation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Input Validation
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-http-security-headers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. HTTP Security Headers
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-infrastructure-security" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Infrastructure Security
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="4. Infrastructure Security">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#docker" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Docker
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#database" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Database
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-secrets-management" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Secrets Management
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#security-recommendations" class="md-nav__link">
+  <a href="#sign-in" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Security Recommendations
+        Sign-in
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Security Recommendations">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#immediate-should-do" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Immediate (Should Do)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#medium-term" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Medium-Term
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#long-term" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Long-Term
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#known-vulnerabilities" class="md-nav__link">
+  <a href="#what-the-cli-and-the-extension-talk-to" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Known Vulnerabilities
+        What the CLI and the extension talk to
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Known Vulnerabilities">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#dependencies-as-of-build" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Dependencies (as of build)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mitigated-issues" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Mitigated Issues
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#incident-response" class="md-nav__link">
+  <a href="#blueprints-variables-and-hierarchies" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Incident Response
+        Blueprints, variables and hierarchies
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Incident Response">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#if-a-breach-is-suspected" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        If a breach is suspected:
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#contact" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Contact
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#compliance-considerations" class="md-nav__link">
+  <a href="#federation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Compliance Considerations
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Compliance Considerations">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#gdpr" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GDPR
+        Federation
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#data-retention" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#security-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Data Retention
+        Security model
       
     </span>
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
+      
+        <li class="md-nav__item">
+  <a href="#where-the-data-is" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where the data is
+      
+    </span>
+  </a>
   
 </li>
       
@@ -943,9 +732,38 @@
     </li>
   
 
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
     
-      
-      
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
   
   
   
@@ -967,6 +785,14 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -998,336 +824,79 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#security-measures-implemented" class="md-nav__link">
+  <a href="#components" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Security Measures Implemented
+        Components
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Security Measures Implemented">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-authentication-authorization" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Authentication &amp; Authorization
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="1. Authentication &amp; Authorization">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#nextauthjs-configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        NextAuth.js Configuration
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#oauth-providers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        OAuth Providers
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#passkeys-webauthn" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Passkeys (WebAuthn)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-api-security" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. API Security
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="2. API Security">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#rate-limiting" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Rate Limiting
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#input-validation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Input Validation
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-http-security-headers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. HTTP Security Headers
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-infrastructure-security" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Infrastructure Security
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="4. Infrastructure Security">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#docker" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Docker
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#database" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Database
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-secrets-management" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Secrets Management
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#security-recommendations" class="md-nav__link">
+  <a href="#sign-in" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Security Recommendations
+        Sign-in
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Security Recommendations">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#immediate-should-do" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Immediate (Should Do)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#medium-term" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Medium-Term
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#long-term" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Long-Term
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#known-vulnerabilities" class="md-nav__link">
+  <a href="#what-the-cli-and-the-extension-talk-to" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Known Vulnerabilities
+        What the CLI and the extension talk to
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Known Vulnerabilities">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#dependencies-as-of-build" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Dependencies (as of build)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mitigated-issues" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Mitigated Issues
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#incident-response" class="md-nav__link">
+  <a href="#blueprints-variables-and-hierarchies" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Incident Response
+        Blueprints, variables and hierarchies
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Incident Response">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#if-a-breach-is-suspected" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        If a breach is suspected:
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#contact" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Contact
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#compliance-considerations" class="md-nav__link">
+  <a href="#federation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Compliance Considerations
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Compliance Considerations">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#gdpr" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GDPR
+        Federation
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#data-retention" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#security-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Data Retention
+        Security model
       
     </span>
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
+      
+        <li class="md-nav__item">
+  <a href="#where-the-data-is" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where the data is
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1357,178 +926,65 @@
 
 
 <h1 id="how-it-works">How it works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h1>
-<p>This page describes the security model: what LynxPrompt does to protect accounts, data and the API. The stack and the code layout are in <a href="../development/">Development</a>.</p>
-<h2 id="security-measures-implemented">Security Measures Implemented<a class="headerlink" href="#security-measures-implemented" title="Permanent link">&para;</a></h2>
-<h3 id="1-authentication-authorization">1. Authentication &amp; Authorization<a class="headerlink" href="#1-authentication-authorization" title="Permanent link">&para;</a></h3>
-<h4 id="nextauthjs-configuration">NextAuth.js Configuration<a class="headerlink" href="#nextauthjs-configuration" title="Permanent link">&para;</a></h4>
+<h2 id="components">Components<a class="headerlink" href="#components" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Session Strategy</strong>: Database sessions with secure cookie settings</li>
-<li><strong>Secure Cookies</strong>: <code>__Secure-</code> prefix in production, HttpOnly, SameSite=Lax</li>
-<li><strong>Session Lifetime</strong>: 30-day max age with 24-hour refresh interval</li>
-<li><strong>Role-Based Access</strong>: USER, ADMIN, SUPERADMIN roles</li>
+<li><strong>The app</strong>: one Next.js 16 process (App Router) that serves the pages and the API on port 3000, running as
+  user id 1001 in the <code>drumsergio/lynxprompt</code> image (linux/amd64).</li>
+<li><strong>PostgreSQL</strong> with four Prisma schemas: app (platforms, languages, frameworks, wizard steps, system templates,
+  federated instances), users (accounts, sessions, passkeys, teams, blueprints, drafts, hierarchies, API tokens),
+  blog and support (the two optional modules). Each schema has its own database, because <code>prisma db push</code>
+  drops the tables it does not know; the self-host compose file keeps the four databases on one PostgreSQL
+  server.</li>
+<li><strong>Migrations</strong> run at every start: the entrypoint builds the four connection strings from the <code>DB_*</code>
+  variables, runs <code>prisma db push</code> for each schema, and refuses to start if one fails.</li>
+<li><strong>Mail</strong>: the sign-in link is sent through your SMTP server with nodemailer. Nothing else is mailed unless
+  the contact form is on.</li>
 </ul>
-<h4 id="oauth-providers">OAuth Providers<a class="headerlink" href="#oauth-providers" title="Permanent link">&para;</a></h4>
+<pre class="mermaid"><code>flowchart LR
+    BR[Browser] &lt;--&gt; WEB[Next.js pages and API]
+    CLI[lynxp CLI, VS Code extension,&lt;br/&gt;GitHub Action, MCP server] &lt;--&gt;|Bearer API token| WEB
+    WEB --&gt; DB[(PostgreSQL: app, users,&lt;br/&gt;blog, support)]
+    WEB --&gt; SMTP[SMTP server]
+    WEB -.-&gt; EXT[GitHub or Google OAuth, SSO,&lt;br/&gt;Anthropic API, Stripe: optional]
+    WEB &lt;-.-&gt;|public blueprints| FED[Other LynxPrompt instances]</code></pre>
+<h2 id="sign-in">Sign-in<a class="headerlink" href="#sign-in" title="Permanent link">&para;</a></h2>
+<p>NextAuth with database sessions (30 days, refreshed daily). The providers are built from the feature flags:
+the mail link (<code>ENABLE_EMAIL_AUTH</code>, on by default, needs <code>SMTP_*</code>), passkeys (<code>ENABLE_PASSKEYS</code>, for existing
+accounts), GitHub and Google OAuth, and SAML, OIDC or LDAP SSO per team. When an account whose address equals
+<code>SUPERADMIN_EMAIL</code> signs in, it is promoted to superadmin. Roles are USER, ADMIN and SUPERADMIN. With
+<code>ENABLE_USER_REGISTRATION=false</code>, an address without an account is refused with <code>RegistrationDisabled</code>.</p>
+<h2 id="what-the-cli-and-the-extension-talk-to">What the CLI and the extension talk to<a class="headerlink" href="#what-the-cli-and-the-extension-talk-to" title="Permanent link">&para;</a></h2>
+<p><code>lynxp login</code> opens the configured instance in the browser (<code>lynxp config set-url</code>, or <code>LYNXPROMPT_API_URL</code>)
+and stores an API token. Every call after that is <code>Authorization: Bearer &lt;token&gt;</code> against <code>/api/v1/</code>. Tokens
+are created in Settings, carry a role (<code>BLUEPRINTS_FULL</code>, <code>BLUEPRINTS_READONLY</code>, <code>PROFILE_FULL</code> and others)
+and an expiry, and the API answers <code>401</code> with the settings URL when one expires. The VS Code extension, the
+GitHub Action and the MCP server use the same API with the same tokens.</p>
+<h2 id="blueprints-variables-and-hierarchies">Blueprints, variables and hierarchies<a class="headerlink" href="#blueprints-variables-and-hierarchies" title="Permanent link">&para;</a></h2>
+<p>A blueprint is text plus a name, a description, a type, a category, tags and a visibility (private, team,
+public). <code>[[VARIABLE|default]]</code> placeholders are filled at download time. A hierarchy links several
+<code>AGENTS.md</code> blueprints to paths of one repository, for monorepos; the API exposes it at <code>/api/v1/hierarchies</code>
+and the CLI as <code>lynxp hierarchies</code>.</p>
+<h2 id="federation">Federation<a class="headerlink" href="#federation" title="Permanent link">&para;</a></h2>
+<p>Federation is on by default (<code>ENABLE_FEDERATION</code>). At start, and every six hours after, the instance posts its
+domain (the host of <code>APP_URL</code>) to the registry (<code>FEDERATION_REGISTRY_URL</code>, lynxprompt.com by default) and serves
+<code>/.well-known/lynxprompt.json</code> with its name, version, API URL and number of public blueprints. Instances in
+the network share their public blueprints. Private and team blueprints never leave the instance.
+<code>ENABLE_FEDERATION=false</code> turns all of it off.</p>
+<h2 id="security-model">Security model<a class="headerlink" href="#security-model" title="Permanent link">&para;</a></h2>
 <ul>
-<li>GitHub OAuth with proper callback validation</li>
-<li>Google OAuth (optional)</li>
-<li>Magic Link email authentication</li>
+<li>Secrets come from environment variables; nothing is read from files in the image.</li>
+<li>Sessions use secure, HttpOnly cookies with the <code>__Secure-</code> prefix in production.</li>
+<li>The app rate-limits by client address in memory, per instance: 5000 requests per minute in general and
+  300 per minute on the sign-in endpoints, answering <code>429</code> with <code>Retry-After</code>.</li>
+<li>Every response carries <code>X-Frame-Options: DENY</code>, <code>X-Content-Type-Options: nosniff</code>, a <code>Referrer-Policy</code>, a
+  <code>Permissions-Policy</code>, a <code>Content-Security-Policy</code> and, in production, HSTS.</li>
+<li>The container runs as a non-root user; the compose file publishes only the app port, never PostgreSQL.</li>
+<li>Reporting: <a href="https://github.com/GeiserX/LynxPrompt/blob/main/SECURITY.md">SECURITY.md</a>.</li>
 </ul>
-<h4 id="passkeys-webauthn">Passkeys (WebAuthn)<a class="headerlink" href="#passkeys-webauthn" title="Permanent link">&para;</a></h4>
-<ul>
-<li>FIDO2/WebAuthn support for passwordless authentication</li>
-<li>Challenge-based authentication to prevent replay attacks</li>
-<li>Credential storage with counter tracking</li>
-</ul>
-<h3 id="2-api-security">2. API Security<a class="headerlink" href="#2-api-security" title="Permanent link">&para;</a></h3>
-<h4 id="rate-limiting">Rate Limiting<a class="headerlink" href="#rate-limiting" title="Permanent link">&para;</a></h4>
-<ul>
-<li>General requests: 100/minute per IP</li>
-<li>Auth endpoints: 10/minute per IP</li>
-<li>429 responses with Retry-After headers</li>
-</ul>
-<h4 id="input-validation">Input Validation<a class="headerlink" href="#input-validation" title="Permanent link">&para;</a></h4>
-<ul>
-<li>Prisma ORM prevents SQL injection</li>
-<li>Type validation via TypeScript</li>
-<li>API routes validate required parameters</li>
-</ul>
-<h3 id="3-http-security-headers">3. HTTP Security Headers<a class="headerlink" href="#3-http-security-headers" title="Permanent link">&para;</a></h3>
-<p>All responses include:</p>
-<ul>
-<li><code>X-Frame-Options: DENY</code> - Prevents clickjacking</li>
-<li><code>X-Content-Type-Options: nosniff</code> - Prevents MIME sniffing</li>
-<li><code>X-XSS-Protection: 1; mode=block</code> - XSS filter</li>
-<li><code>Referrer-Policy: strict-origin-when-cross-origin</code></li>
-<li><code>Permissions-Policy</code> - Disables camera, microphone, geolocation, payment</li>
-<li><code>Content-Security-Policy</code> - Restricts resource loading</li>
-<li><code>Strict-Transport-Security</code> - HSTS in production</li>
-</ul>
-<h3 id="4-infrastructure-security">4. Infrastructure Security<a class="headerlink" href="#4-infrastructure-security" title="Permanent link">&para;</a></h3>
-<h4 id="docker">Docker<a class="headerlink" href="#docker" title="Permanent link">&para;</a></h4>
-<ul>
-<li>Non-root user (<code>nextjs</code>, UID 1001)</li>
-<li>Multi-stage builds (minimal production image)</li>
-<li>No exposed database ports in production</li>
-<li>Isolated Docker networks per stack</li>
-</ul>
-<h4 id="database">Database<a class="headerlink" href="#database" title="Permanent link">&para;</a></h4>
-<ul>
-<li>Dual database architecture (app data vs user data)</li>
-<li>Strong randomly-generated passwords (48 hex characters)</li>
-<li>Connection strings not exposed externally</li>
-<li>PostgreSQL 17 with healthchecks</li>
-</ul>
-<h3 id="5-secrets-management">5. Secrets Management<a class="headerlink" href="#5-secrets-management" title="Permanent link">&para;</a></h3>
-<ul>
-<li>All secrets in environment variables (not in code)</li>
-<li>Production secrets in docker-compose only (not in .env files in git)</li>
-<li>NEXTAUTH_SECRET: 256-bit random</li>
-<li>Database passwords: 192-bit random</li>
-</ul>
-<hr />
-<h2 id="security-recommendations">Security Recommendations<a class="headerlink" href="#security-recommendations" title="Permanent link">&para;</a></h2>
-<h3 id="immediate-should-do">Immediate (Should Do)<a class="headerlink" href="#immediate-should-do" title="Permanent link">&para;</a></h3>
-<ol>
-<li><strong>Set up WAF (Web Application Firewall)</strong></li>
-<li>Cloudflare Pro or similar</li>
-<li>Block common attack patterns</li>
-<li>
-<p>Bot protection</p>
-</li>
-<li>
-<p><strong>Enable Fail2ban or similar</strong></p>
-</li>
-<li>Monitor for brute force attempts</li>
-<li>
-<p>Auto-ban suspicious IPs</p>
-</li>
-<li>
-<p><strong>Database Backups</strong></p>
-</li>
-<li>Automated daily backups of <code>postgres-users</code></li>
-<li>Off-site storage (S3, Backblaze B2)</li>
-<li>Test restore procedure</li>
-</ol>
-<h3 id="medium-term">Medium-Term<a class="headerlink" href="#medium-term" title="Permanent link">&para;</a></h3>
-<ol>
-<li><strong>Implement CAPTCHA</strong></li>
-<li>On sign-up/sign-in pages</li>
-<li>
-<p>reCAPTCHA v3 or hCaptcha</p>
-</li>
-<li>
-<p><strong>Add Audit Logging</strong></p>
-</li>
-<li>Log authentication attempts</li>
-<li>Log admin actions</li>
-<li>
-<p>Log API abuse</p>
-</li>
-<li>
-<p><strong>Set up Monitoring</strong></p>
-</li>
-<li>Uptime monitoring (Uptime Kuma)</li>
-<li>Performance monitoring</li>
-</ol>
-<h3 id="long-term">Long-Term<a class="headerlink" href="#long-term" title="Permanent link">&para;</a></h3>
-<ol>
-<li><strong>SOC 2 Compliance</strong></li>
-<li>If handling enterprise customers</li>
-<li>
-<p>Security policies documentation</p>
-</li>
-<li>
-<p><strong>Penetration Testing</strong></p>
-</li>
-<li>Annual third-party security audit</li>
-<li>
-<p>Bug bounty program</p>
-</li>
-<li>
-<p><strong>Security.txt</strong></p>
-</li>
-<li>Add <code>/.well-known/security.txt</code></li>
-<li>Vulnerability disclosure policy</li>
-</ol>
-<hr />
-<h2 id="known-vulnerabilities">Known Vulnerabilities<a class="headerlink" href="#known-vulnerabilities" title="Permanent link">&para;</a></h2>
-<h3 id="dependencies-as-of-build">Dependencies (as of build)<a class="headerlink" href="#dependencies-as-of-build" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Run <code>npm audit</code> regularly</li>
-<li>Auto-update via Dependabot/Renovate</li>
-</ul>
-<h3 id="mitigated-issues">Mitigated Issues<a class="headerlink" href="#mitigated-issues" title="Permanent link">&para;</a></h3>
-<ul>
-<li>CVE-2024-XXXXX (Next.js middleware bypass) - Fixed via update to 15.5.9+</li>
-</ul>
-<hr />
-<h2 id="incident-response">Incident Response<a class="headerlink" href="#incident-response" title="Permanent link">&para;</a></h2>
-<h3 id="if-a-breach-is-suspected">If a breach is suspected:<a class="headerlink" href="#if-a-breach-is-suspected" title="Permanent link">&para;</a></h3>
-<ol>
-<li>Rotate all secrets immediately</li>
-<li>Invalidate all sessions (truncate sessions table)</li>
-<li>Review audit logs</li>
-<li>Notify affected users if PII exposed</li>
-<li>Document timeline and actions</li>
-</ol>
-<h3 id="contact">Contact<a class="headerlink" href="#contact" title="Permanent link">&para;</a></h3>
-<p>Security issues: security@lynxprompt.com (configure when available)</p>
-<hr />
-<h2 id="compliance-considerations">Compliance Considerations<a class="headerlink" href="#compliance-considerations" title="Permanent link">&para;</a></h2>
-<h3 id="gdpr">GDPR<a class="headerlink" href="#gdpr" title="Permanent link">&para;</a></h3>
-<ul>
-<li>User data in dedicated database (easy to export/delete)</li>
-<li>No tracking without consent</li>
-<li>Privacy policy needed</li>
-</ul>
-<h3 id="data-retention">Data Retention<a class="headerlink" href="#data-retention" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Sessions: Auto-expire after 30 days</li>
-<li>User data: Retained until account deletion</li>
-<li>Logs: Configure retention policy</li>
-</ul>
-<hr />
-<p>Last updated: 2025-12-21</p>
+<h2 id="where-the-data-is">Where the data is<a class="headerlink" href="#where-the-data-is" title="Permanent link">&para;</a></h2>
+<p>Everything is in PostgreSQL, in the <code>pgdata</code> volume of the compose file. A backup is <code>pg_dumpall</code> of that
+server; a restore is <code>psql</code> into an empty one before the first start. Uploaded files (blog and profile
+images) live in the app container's uploads path; the Helm chart gives them a volume.</p>
 
 
 
@@ -1594,6 +1050,61 @@
     
     <a href="https://hub.docker.com/r/drumsergio/lynxprompt" target="_blank" rel="noopener" title="hub.docker.com" class="md-social__link">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M349.9 236.3h-66.1v-59.4h66.1zm0-204.3h-66.1v60.7h66.1zm78.2 144.8H362v59.4h66.1zm-156.3-72.1h-66.1v60.1h66.1zm78.1 0h-66.1v60.1h66.1zm276.8 100c-14.4-9.7-47.6-13.2-73.1-8.4-3.3-24-16.7-44.9-41.1-63.7l-14-9.3-9.3 14c-18.4 27.8-23.4 73.6-3.7 103.8-8.7 4.7-25.8 11.1-48.4 10.7H2.4c-8.7 50.8 5.8 116.8 44 162.1 37.1 43.9 92.7 66.2 165.4 66.2 157.4 0 273.9-72.5 328.4-204.2 21.4.4 67.6.1 91.3-45.2 1.5-2.5 6.6-13.2 8.5-17.1zm-511.1-27.9h-66v59.4h66.1v-59.4zm78.1 0h-66.1v59.4h66.1zm78.1 0h-66.1v59.4h66.1zm-78.1-72.1h-66.1v60.1h66.1z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://www.npmjs.com/package/lynxprompt" target="_blank" rel="noopener" title="www.npmjs.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M288 288h-32v-64h32zm288-128v192H288v32H160v-32H0V160zm-416 32H32v128h64v-96h32v96h32zm160 0H192v160h64v-32h64zm224 0H352v128h64v-96h32v96h32v-96h32v96h32z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://artifacthub.io/packages/helm/lynxprompt/lynxprompt" target="_blank" rel="noopener" title="artifacthub.io" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 24a3.43 3.43 0 0 1-1.78-.5l-7.51-4.292A3.4 3.4 0 0 1 1.07 16.3V7.73c0-1.253.636-2.37 1.76-3.01L10.25.479a3.43 3.43 0 0 1 3.496.001l7.42 4.238a3.4 3.4 0 0 1 1.762 3.01v8.582c0 .967-.443 2.164-1.637 2.898l-7.51 4.292c-.564.344-1.199.5-1.782.5zm-.5-21.347-7.545 4.31c-.2.156-.379.368-.379.767l.001 8.67a.96.96 0 0 0 .373.635l7.56 4.316c.266.172.664.21.985 0l7.518-4.296a.92.92 0 0 0 .41-.654V7.73a.92.92 0 0 0-.377-.766L12.5 2.652a.91.91 0 0 0-1 .001"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://marketplace.visualstudio.com/items?itemName=LynxPrompt.lynxprompt" target="_blank" rel="noopener" title="marketplace.visualstudio.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 16.47V7.39l-6 4.54M2.22 9.19a.86.86 0 0 1-.02-1.15l1.2-1.11c.2-.18.69-.26 1.05 0l3.42 2.61 7.93-7.25c.32-.32.87-.45 1.5-.12l4 1.91c.36.21.7.54.7 1.15v13.5c0 .4-.29.83-.6 1l-4.4 2.1c-.32.13-.92.01-1.13-.2l-8.02-7.3-3.4 2.6c-.38.26-.85.19-1.05 0l-1.2-1.1c-.32-.33-.28-.87.05-1.2l3-2.7"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://community.chocolatey.org/packages/lynxprompt" target="_blank" rel="noopener" title="community.chocolatey.org" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m0 1.249 1.439 3.18L0 6.926l1.439 2.5L0 11.923l1.439 2.424L0 16.845l1.439 2.5L0 22.75l2.8-.91c6.3.01 12.696.006 18.096 0l3.104.91-2.044-3.635 1.136-1.892-2.196-2.272-.004-.017V2.005c-6.551-.001-12.243 0-18.091 0zm19.688 1.968v7.03l-.23-.898-1.438-4.39-3.56.605-1.89-2.343zm-11.695.004h4.563L9.539 4.428zm2.86 3.68a3.9 3.9 0 0 1 1.64.254c1.968.757 1.286 2.8.15 4.012-.378.378-1.21.227-.605-.908.228-.454.454-1.363-.227-1.59-1.515-.53-3.255.682-3.634 2.271-.378 1.363.606 2.801 2.347 2.423 1.439-.303 2.802-1.288 3.332-1.742.53-.455.907.38.301 1.288-.68.908-1.74 1.968-2.65 2.574-3.558 2.423-6.662-.758-5.375-4.392.677-1.845 2.454-4.041 4.72-4.19zm6.527 2.031a.66.66 0 0 1 .454.182c.324.326.204.972-.268 1.445-.473.474-1.121.593-1.446.268-.325-.326-.205-.972.267-1.445.292-.292.666-.461.993-.45m-.42 3.233a.66.66 0 0 1 .454.182c.325.325.206.973-.268 1.446-.473.473-1.12.592-1.445.268-.324-.326-.205-.972.268-1.445.291-.292.664-.462.99-.451Z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://lynxprompt.com" target="_blank" rel="noopener" title="lynxprompt.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2s.06-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.92 7.92 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8 8 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.7 15.7 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2"/></svg>
     </a>
   
 </div>

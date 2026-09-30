@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Self-hostable platform for managing AI IDE configuration files: AGENTS.md, .cursor/rules, CLAUDE.md, slash commands and 30+ other formats.">
+        <meta name="description" content="Self-hosted web app that turns one set of AI coding rules into AGENTS.md, CLAUDE.md, .cursor/rules and 30 rule-file formats, with a wizard, shared blueprints, a CLI and a VS Code extension.">
       
       
       
@@ -20,7 +20,7 @@
         
       
       
-      <link rel="icon" href="assets/images/favicon.png">
+      <link rel="icon" href="images/icon.svg">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
@@ -94,8 +94,7 @@
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="." title="LynxPrompt" class="md-header__button md-logo" aria-label="LynxPrompt" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <img src="images/logo.svg" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -245,17 +244,18 @@
   
   
   
-    <li class="md-tabs__item">
-      <a href="getting-started/" class="md-tabs__link">
-        
-  
-  
     
+    
+      <li class="md-tabs__item">
+        <a href="getting-started/" class="md-tabs__link">
+          
   
-  Getting started
+  
+  Get started
 
-      </a>
-    </li>
+        </a>
+      </li>
+    
   
 
       
@@ -264,93 +264,18 @@
   
   
   
-    <li class="md-tabs__item">
-      <a href="configuration/" class="md-tabs__link">
-        
-  
-  
     
-  
-  Configuration
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="usage/" class="md-tabs__link">
-        
-  
-  
     
+      <li class="md-tabs__item">
+        <a href="configuration/" class="md-tabs__link">
+          
   
-  Usage
+  
+  Reference
 
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="features/" class="md-tabs__link">
-        
-  
-  
+        </a>
+      </li>
     
-  
-  Features
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="how-it-works/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  How it works
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="development/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Development
-
-      </a>
-    </li>
   
 
       
@@ -365,7 +290,9 @@
           
             
               
-              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" hidden>
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
                     
@@ -378,8 +305,7 @@
   <label class="md-nav__title" for="__drawer">
     <a href="." title="LynxPrompt" class="md-nav__button md-logo" aria-label="LynxPrompt" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <img src="images/logo.svg" alt="logo">
 
     </a>
     LynxPrompt
@@ -466,10 +392,76 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pages" class="md-nav__link">
+  <a href="#the-web-app" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pages
+        The web app
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-it-does" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it does
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it runs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-it-does-not-do" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it does not do
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#privacy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Privacy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-help" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting help
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#license" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        License
       
     </span>
   </a>
@@ -486,6 +478,60 @@
     
       
       
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Get started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
   
   
   
@@ -510,36 +556,10 @@
     </li>
   
 
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="configuration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Configuration
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
+              
+            
+              
+                
   
   
   
@@ -564,9 +584,99 @@
     </li>
   
 
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
     
       
       
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
   
   
   
@@ -591,9 +701,10 @@
     </li>
   
 
-    
-      
-      
+              
+            
+              
+                
   
   
   
@@ -618,9 +729,38 @@
     </li>
   
 
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
     
-      
-      
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
   
   
   
@@ -645,6 +785,14 @@
     </li>
   
 
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
     
   </ul>
 </nav>
@@ -653,6 +801,8 @@
               </div>
             
             
+              
+                
               
               <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
                 <div class="md-sidebar__scrollwrap">
@@ -673,10 +823,76 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pages" class="md-nav__link">
+  <a href="#the-web-app" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pages
+        The web app
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-it-does" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it does
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it runs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-it-does-not-do" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it does not do
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#privacy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Privacy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-help" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting help
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#license" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        License
       
     </span>
   </a>
@@ -697,6 +913,8 @@
               <article class="md-content__inner md-typeset">
                 
                   
+  
+
 
 
   
@@ -708,18 +926,122 @@
   
 
 
-<h1 id="lynxprompt">LynxPrompt<a class="headerlink" href="#lynxprompt" title="Permanent link">&para;</a></h1>
-<p>LynxPrompt is a self-hostable platform for managing AI IDE configuration files: <code>AGENTS.md</code>, <code>.cursor/rules/</code>, <code>CLAUDE.md</code>, slash commands, and 30+ other formats. Run it on your own infrastructure and your team gets one place to create, share and standardize AI coding assistant configs across every project. A hosted instance runs at <a href="https://lynxprompt.com">lynxprompt.com</a>.</p>
-<h2 id="pages">Pages<a class="headerlink" href="#pages" title="Permanent link">&para;</a></h2>
+<h1 class="lp-visually-hidden" id="lynxprompt">LynxPrompt<a class="headerlink" href="#lynxprompt" title="Permanent link">&para;</a></h1>
+<p align="center">
+  <img src="images/banner.svg" alt="LynxPrompt" width="100%">
+</p>
+
+<p align="center">
+  <a href="https://hub.docker.com/r/drumsergio/lynxprompt/tags"><img alt="Release" src="https://img.shields.io/docker/v/drumsergio/lynxprompt?sort=semver&style=flat-square&logo=docker&label=release"></a>
+  <a href="https://hub.docker.com/r/drumsergio/lynxprompt"><img alt="Docker pulls" src="https://img.shields.io/docker/pulls/drumsergio/lynxprompt?style=flat-square&logo=docker"></a>
+  <a href="https://github.com/GeiserX/LynxPrompt/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/GeiserX/LynxPrompt?style=flat-square&logo=github"></a>
+  <a href="https://github.com/GeiserX/LynxPrompt/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/GeiserX/LynxPrompt?style=flat-square"></a>
+</p>
+
+<hr />
+<p><strong>LynxPrompt</strong> is a self-hosted web app that turns one set of AI coding rules into the file each tool reads: <code>AGENTS.md</code>, <code>CLAUDE.md</code>, <code>.cursor/rules/</code>, Copilot instructions, 30 rule-file formats in all, plus slash commands for six of them. A wizard writes the rules from your stack, blueprints let a team share them with variables, and the <a href="usage/">CLI and the VS Code extension</a> put the files into every repository.</p>
+<p>This site is about running your own instance: <a href="getting-started/">start with Docker Compose</a>, then the settings, the CLI and how it is built. The product manual (the wizard step by step, blueprints, the CLI and API reference) is a separate site at <a href="https://lynxprompt.com/docs">lynxprompt.com/docs</a>, and <a href="https://lynxprompt.com">lynxprompt.com</a> is a hosted instance you can try without installing anything.</p>
+<div class="grid cards">
 <ul>
-<li><a href="getting-started/">Getting started</a>: Docker Compose, the Helm chart, and the other install channels.</li>
-<li><a href="configuration/">Configuration</a>: every environment variable, with its default.</li>
-<li><a href="usage/">Usage</a>: the CLI and the VS Code extension, against lynxprompt.com or your own instance.</li>
-<li><a href="features/">Features</a>: the platform in more detail.</li>
-<li><a href="how-it-works/">How it works</a>: the security model, what protects accounts, data and the API.</li>
-<li><a href="development/">Development</a>: architecture, stack, local setup and contributing.</li>
+<li>
+<p><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21.81 10.25c-.06-.04-.56-.43-1.64-.43-.28 0-.56.03-.84.08-.21-1.4-1.38-2.11-1.43-2.14l-.29-.17-.18.27c-.24.36-.43.77-.51 1.19-.2.8-.08 1.56.33 2.21-.49.28-1.29.35-1.46.35H2.62c-.34 0-.62.28-.62.63 0 1.15.18 2.3.58 3.38.45 1.19 1.13 2.07 2 2.61.98.6 2.59.94 4.42.94.79 0 1.61-.07 2.42-.22 1.12-.2 2.2-.59 3.19-1.16A8.3 8.3 0 0 0 16.78 16c1.05-1.17 1.67-2.5 2.12-3.65h.19c1.14 0 1.85-.46 2.24-.85.26-.24.45-.53.59-.87l.08-.24zm-17.96.99h1.76c.08 0 .16-.07.16-.16V9.5c0-.08-.07-.16-.16-.16H3.85c-.09 0-.16.07-.16.16v1.58c.01.09.07.16.16.16m2.43 0h1.76c.08 0 .16-.07.16-.16V9.5c0-.08-.07-.16-.16-.16H6.28c-.09 0-.16.07-.16.16v1.58c.01.09.07.16.16.16m2.47 0h1.75c.1 0 .17-.07.17-.16V9.5c0-.08-.06-.16-.17-.16H8.75c-.08 0-.15.07-.15.16v1.58c0 .09.06.16.15.16m2.44 0h1.77c.08 0 .15-.07.15-.16V9.5c0-.08-.06-.16-.15-.16h-1.77c-.08 0-.15.07-.15.16v1.58c0 .09.07.16.15.16M6.28 9h1.76c.08 0 .16-.09.16-.18V7.25c0-.09-.07-.16-.16-.16H6.28c-.09 0-.16.06-.16.16v1.57c.01.09.07.18.16.18m2.47 0h1.75c.1 0 .17-.09.17-.18V7.25c0-.09-.06-.16-.17-.16H8.75c-.08 0-.15.06-.15.16v1.57c0 .09.06.18.15.18m2.44 0h1.77c.08 0 .15-.09.15-.18V7.25c0-.09-.07-.16-.15-.16h-1.77c-.08 0-.15.06-.15.16v1.57c0 .09.07.18.15.18m0-2.28h1.77c.08 0 .15-.07.15-.16V5c0-.1-.07-.17-.15-.17h-1.77c-.08 0-.15.06-.15.17v1.56c0 .08.07.16.15.16m2.46 4.52h1.76c.09 0 .16-.07.16-.16V9.5c0-.08-.07-.16-.16-.16h-1.76c-.08 0-.15.07-.15.16v1.58c0 .09.07.16.15.16"/></svg></span> <strong><a href="getting-started/">Run with Docker</a></strong></p>
+<hr />
+<p>Three commands start the app and PostgreSQL, and the Mailpit link signs you in. A Helm chart covers Kubernetes.</p>
+</li>
+<li>
+<p><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 3H5c-1.11 0-2 .89-2 2v4h2V5h14v14H5v-4H3v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2m-8.92 12.58L11.5 17l5-5-5-5-1.42 1.41L12.67 11H3v2h9.67z"/></svg></span> <strong><a href="getting-started/#first-sign-in">Your first sign-in</a></strong></p>
+<hr />
+<p>How the magic link works, how to read it without a mail server, and what the dashboard looks like when it worked.</p>
+</li>
+<li>
+<p><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 19V7H4v12zm0-16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm-7 14v-2h5v2zm-3.42-4L5.57 9H8.4l3.3 3.3c.39.39.39 1.03 0 1.42L8.42 17H5.59z"/></svg></span> <strong><a href="usage/">The CLI and the VS Code extension</a></strong></p>
+<hr />
+<p><code>lynxp wizard</code>, <code>pull</code>, <code>push</code> and <code>diff</code> against your instance, and the same from inside VS Code.</p>
+</li>
+<li>
+<p><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 5h14v2H7zm0 8v-2h14v2zM4 4.5A1.5 1.5 0 0 1 5.5 6 1.5 1.5 0 0 1 4 7.5 1.5 1.5 0 0 1 2.5 6 1.5 1.5 0 0 1 4 4.5m0 6A1.5 1.5 0 0 1 5.5 12 1.5 1.5 0 0 1 4 13.5 1.5 1.5 0 0 1 2.5 12 1.5 1.5 0 0 1 4 10.5M7 19v-2h14v2zm-3-2.5A1.5 1.5 0 0 1 5.5 18 1.5 1.5 0 0 1 4 19.5 1.5 1.5 0 0 1 2.5 18 1.5 1.5 0 0 1 4 16.5"/></svg></span> <strong><a href="configuration/">Environment variables</a></strong></p>
+<hr />
+<p>Every setting with its default, and the <a href="configuration/#sign-in">five you need for sign-in</a>.</p>
+</li>
 </ul>
-<p>The product docs for the hosted instance are a separate site at <a href="https://lynxprompt.com/docs">lynxprompt.com/docs</a>.</p>
+</div>
+<h2 id="the-web-app">The web app<a class="headerlink" href="#the-web-app" title="Permanent link">&para;</a></h2>
+<p>The wizard asks about the project, the stack, the commands, the code style and the boundaries, then writes the files for the tools you pick. <a href="usage/#the-web-app">Usage</a> walks through the wizard, the blueprint pages, the dashboard and teams.</p>
+<p><img alt="The wizard on its last step, with the generated rules and the formats to export" src="images/screenshots/wizard.png" /></p>
+<div class="lp-phone-gallery">
+<figure>
+<p><img alt="The wizard's tech stack step on a phone" src="images/screenshots/wizard-mobile.png" /></p>
+<figcaption>The wizard</figcaption>
+</figure>
+<figure>
+<p><img alt="The public blueprint list on a phone" src="images/screenshots/blueprints-mobile.png" /></p>
+<figcaption>Blueprints</figcaption>
+</figure>
+<figure>
+<p><img alt="One blueprint on a phone, with its description, tags and download button" src="images/screenshots/blueprint-mobile.png" /></p>
+<figcaption>One blueprint</figcaption>
+</figure>
+</div>
+<h2 id="what-it-does">What it does<a class="headerlink" href="#what-it-does" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Exports one set of rules as the rule file of 30 tools: <code>AGENTS.md</code>, Cursor, Claude Code, Copilot, Windsurf, Zed, Aider, Gemini CLI, Cline, Roo Code, Amazon Q, JetBrains Junie and the rest of the list in <a href="features/">Features</a>, plus slash commands for Cursor, Claude Code, Windsurf, Copilot, Continue and OpenCode.</li>
+<li>Builds those rules in a 12-step wizard on the web, or with <code>lynxp wizard</code> in a terminal; <code>lynxp analyze</code> reads an existing repository first.</li>
+<li>Keeps blueprints with <code>[[VARIABLE|default]]</code> placeholders, so one blueprint fits many projects. Each blueprint is private, shared with a team, or public.</li>
+<li>Gives a team its own page and its own blueprints. Federation lets instances that join share their public blueprints with each other.</li>
+<li>Manages hierarchical <code>AGENTS.md</code> files for monorepos, from the dashboard, the CLI (<code>lynxp hierarchies</code>) and the API.</li>
+<li>Serves the same data to the <a href="usage/#the-cli">CLI</a>, the <a href="usage/#vs-code-extension">VS Code extension</a> and a REST API with per-token roles.</li>
+<li>Signs users in with a magic link, passkeys, GitHub or Google OAuth, or SAML, OIDC and LDAP SSO; each is one environment variable.</li>
+<li>Edits blueprints with Claude when you set your own Anthropic API key; off by default, and everything else works without it.</li>
+</ul>
+<h2 id="how-it-runs">How it runs<a class="headerlink" href="#how-it-runs" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>flowchart LR
+    BR[Browser]
+    CLI[lynxp CLI&lt;br/&gt;VS Code extension&lt;br/&gt;GitHub Action]
+    subgraph app [lynxprompt container, port 3000]
+        WEB[Next.js app and API]
+        MIG[prisma db push on start]
+    end
+    DB[(PostgreSQL&lt;br/&gt;app, users, blog, support schemas)]
+    SMTP[Your SMTP server&lt;br/&gt;sign-in mail]
+    OPT[Optional: GitHub or Google OAuth,&lt;br/&gt;SSO provider, Anthropic API, Stripe]
+    FED[Other instances&lt;br/&gt;public blueprints]
+
+    BR &lt;--&gt; WEB
+    CLI &lt;--&gt;|API token| WEB
+    WEB --&gt; DB
+    MIG --&gt; DB
+    WEB --&gt; SMTP
+    WEB -.-&gt; OPT
+    WEB &lt;-.-&gt; FED</code></pre>
+<ul>
+<li>The image is <code>drumsergio/lynxprompt</code>, built for linux/amd64, running as user id 1001. On an ARM host (Apple Silicon, Raspberry Pi) the compose file's <code>platform: linux/amd64</code> line runs it under emulation.</li>
+<li>Migrations run every time the container starts (<code>prisma db push</code> on the four schemas), so an upgrade is a tag change and <code>docker compose up -d</code>.</li>
+<li>The self-host compose file runs one PostgreSQL server with one database per schema (<code>lynxprompt</code>, <code>lynxprompt_users</code>, <code>lynxprompt_blog</code>, <code>lynxprompt_support</code>). See <a href="how-it-works/#components">Components</a>.</li>
+<li>The CLI and the extension talk to <code>/api/v1/</code> with an API token you create in Settings. See <a href="how-it-works/">How it works</a>.</li>
+</ul>
+<h2 id="what-it-does-not-do">What it does not do<a class="headerlink" href="#what-it-does-not-do" title="Permanent link">&para;</a></h2>
+<ul>
+<li>It does not send mail by itself. The default login is a magic link, so a real deployment needs the five <code>SMTP_*</code> variables; the <a href="getting-started/#first-sign-in">Mailpit file</a> is only for trying it out.</li>
+<li>It does not run your AI tools. It writes the files they read.</li>
+<li>It does not edit with AI unless you give it an Anthropic API key.</li>
+<li>It does not ship an ARM image; ARM hosts run the amd64 image under emulation, which is slower.</li>
+</ul>
+<h2 id="privacy">Privacy<a class="headerlink" href="#privacy" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Accounts, blueprints, drafts and teams live in your PostgreSQL. Back up the <code>pgdata</code> volume and you have everything.</li>
+<li>Every other outside service is off until you switch it on with an environment variable: SMTP for sign-in mail, GitHub and Google for OAuth, an SSO provider, Anthropic for AI editing, Stripe for paid marketplace listings, Cloudflare Turnstile, Umami analytics. See <a href="configuration/">Configuration</a>.</li>
+<li>Federation is on by default: at start and every six hours the instance sends its domain (the host of <code>APP_URL</code>) to the registry at lynxprompt.com, and <code>/.well-known/lynxprompt.json</code> answers with its name, version and number of public blueprints. Only blueprints marked public are shared. <code>ENABLE_FEDERATION=false</code> turns it off.</li>
+<li>The security policy is in <a href="https://github.com/GeiserX/LynxPrompt/blob/main/SECURITY.md">SECURITY.md</a>.</li>
+</ul>
+<h2 id="getting-help">Getting help<a class="headerlink" href="#getting-help" title="Permanent link">&para;</a></h2>
+<ul>
+<li>If something is broken, read <a href="troubleshooting/">Troubleshooting</a>, then open an issue with the details in <a href="troubleshooting/#reporting-a-bug">Reporting a bug</a>.</li>
+<li>To report a security problem, follow the <a href="https://github.com/GeiserX/LynxPrompt/blob/main/SECURITY.md">security policy</a> and do not open a public issue.</li>
+<li>The <a href="https://github.com/GeiserX/LynxPrompt/releases">releases page</a> lists what changed in each version.</li>
+<li>To send a fix or a feature, read <a href="development/">Development</a> and <a href="https://github.com/GeiserX/LynxPrompt/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>.</li>
+</ul>
+<h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
+<p>LynxPrompt is released under the <a href="https://github.com/GeiserX/LynxPrompt/blob/main/LICENSE">AGPL-3.0-or-later</a> license.</p>
 
 
 
@@ -727,8 +1049,13 @@
 
 
 
+  
+  
 
 
+
+
+  
 
 
 
@@ -785,6 +1112,61 @@
     
     <a href="https://hub.docker.com/r/drumsergio/lynxprompt" target="_blank" rel="noopener" title="hub.docker.com" class="md-social__link">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M349.9 236.3h-66.1v-59.4h66.1zm0-204.3h-66.1v60.7h66.1zm78.2 144.8H362v59.4h66.1zm-156.3-72.1h-66.1v60.1h66.1zm78.1 0h-66.1v60.1h66.1zm276.8 100c-14.4-9.7-47.6-13.2-73.1-8.4-3.3-24-16.7-44.9-41.1-63.7l-14-9.3-9.3 14c-18.4 27.8-23.4 73.6-3.7 103.8-8.7 4.7-25.8 11.1-48.4 10.7H2.4c-8.7 50.8 5.8 116.8 44 162.1 37.1 43.9 92.7 66.2 165.4 66.2 157.4 0 273.9-72.5 328.4-204.2 21.4.4 67.6.1 91.3-45.2 1.5-2.5 6.6-13.2 8.5-17.1zm-511.1-27.9h-66v59.4h66.1v-59.4zm78.1 0h-66.1v59.4h66.1zm78.1 0h-66.1v59.4h66.1zm-78.1-72.1h-66.1v60.1h66.1z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://www.npmjs.com/package/lynxprompt" target="_blank" rel="noopener" title="www.npmjs.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M288 288h-32v-64h32zm288-128v192H288v32H160v-32H0V160zm-416 32H32v128h64v-96h32v96h32zm160 0H192v160h64v-32h64zm224 0H352v128h64v-96h32v96h32v-96h32v96h32z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://artifacthub.io/packages/helm/lynxprompt/lynxprompt" target="_blank" rel="noopener" title="artifacthub.io" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 24a3.43 3.43 0 0 1-1.78-.5l-7.51-4.292A3.4 3.4 0 0 1 1.07 16.3V7.73c0-1.253.636-2.37 1.76-3.01L10.25.479a3.43 3.43 0 0 1 3.496.001l7.42 4.238a3.4 3.4 0 0 1 1.762 3.01v8.582c0 .967-.443 2.164-1.637 2.898l-7.51 4.292c-.564.344-1.199.5-1.782.5zm-.5-21.347-7.545 4.31c-.2.156-.379.368-.379.767l.001 8.67a.96.96 0 0 0 .373.635l7.56 4.316c.266.172.664.21.985 0l7.518-4.296a.92.92 0 0 0 .41-.654V7.73a.92.92 0 0 0-.377-.766L12.5 2.652a.91.91 0 0 0-1 .001"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://marketplace.visualstudio.com/items?itemName=LynxPrompt.lynxprompt" target="_blank" rel="noopener" title="marketplace.visualstudio.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 16.47V7.39l-6 4.54M2.22 9.19a.86.86 0 0 1-.02-1.15l1.2-1.11c.2-.18.69-.26 1.05 0l3.42 2.61 7.93-7.25c.32-.32.87-.45 1.5-.12l4 1.91c.36.21.7.54.7 1.15v13.5c0 .4-.29.83-.6 1l-4.4 2.1c-.32.13-.92.01-1.13-.2l-8.02-7.3-3.4 2.6c-.38.26-.85.19-1.05 0l-1.2-1.1c-.32-.33-.28-.87.05-1.2l3-2.7"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://community.chocolatey.org/packages/lynxprompt" target="_blank" rel="noopener" title="community.chocolatey.org" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m0 1.249 1.439 3.18L0 6.926l1.439 2.5L0 11.923l1.439 2.424L0 16.845l1.439 2.5L0 22.75l2.8-.91c6.3.01 12.696.006 18.096 0l3.104.91-2.044-3.635 1.136-1.892-2.196-2.272-.004-.017V2.005c-6.551-.001-12.243 0-18.091 0zm19.688 1.968v7.03l-.23-.898-1.438-4.39-3.56.605-1.89-2.343zm-11.695.004h4.563L9.539 4.428zm2.86 3.68a3.9 3.9 0 0 1 1.64.254c1.968.757 1.286 2.8.15 4.012-.378.378-1.21.227-.605-.908.228-.454.454-1.363-.227-1.59-1.515-.53-3.255.682-3.634 2.271-.378 1.363.606 2.801 2.347 2.423 1.439-.303 2.802-1.288 3.332-1.742.53-.455.907.38.301 1.288-.68.908-1.74 1.968-2.65 2.574-3.558 2.423-6.662-.758-5.375-4.392.677-1.845 2.454-4.041 4.72-4.19zm6.527 2.031a.66.66 0 0 1 .454.182c.324.326.204.972-.268 1.445-.473.474-1.121.593-1.446.268-.325-.326-.205-.972.267-1.445.292-.292.666-.461.993-.45m-.42 3.233a.66.66 0 0 1 .454.182c.325.325.206.973-.268 1.446-.473.473-1.12.592-1.445.268-.324-.326-.205-.972.268-1.445.291-.292.664-.462.99-.451Z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://lynxprompt.com" target="_blank" rel="noopener" title="lynxprompt.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2s.06-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.92 7.92 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8 8 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.7 15.7 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2"/></svg>
     </a>
   
 </div>
