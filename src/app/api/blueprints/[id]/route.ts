@@ -129,7 +129,14 @@ export async function PUT(
     // Check if user owns this blueprint
     const existingBlueprint = await prismaUsers.userTemplate.findUnique({
       where: { id: realId },
-      select: { userId: true, currentVersion: true, content: true, isPublic: true },
+      select: {
+        userId: true,
+        currentVersion: true,
+        content: true,
+        isPublic: true,
+        visibility: true,
+        teamId: true,
+      },
     });
 
     if (!existingBlueprint) {
@@ -218,6 +225,14 @@ export async function PUT(
 
     if (isPublic !== undefined) {
       updateData.isPublic = Boolean(isPublic);
+      // Keep visibility in step with the public flag. Publishing keeps teamId,
+      // so unpublishing a team blueprint returns it to its team, not to PRIVATE.
+      // Unchecking "public" on a TEAM or PRIVATE blueprint leaves it where it is.
+      if (updateData.isPublic) {
+        updateData.visibility = "PUBLIC";
+      } else if (existingBlueprint.visibility === "PUBLIC") {
+        updateData.visibility = existingBlueprint.teamId ? "TEAM" : "PRIVATE";
+      }
     }
 
     if (showcaseUrl !== undefined) {
