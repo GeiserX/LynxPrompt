@@ -583,7 +583,7 @@ POST   /api/generate               - Generate config files from wizard data
 - [x] PostgreSQL (4 databases: app, users, blog, support) — **v2.0: single DB default, multi-DB optional**
 - [x] ~~ClickHouse (self-hosted EU, analytics)~~ → **Removed in v2.0**
 - [x] Umami (self-hosted EU, cookieless analytics) — **v2.0: configurable via env var**
-- [x] Docker deployment with GitOps (Portainer)
+- [x] Docker deployment with GitOps
 - [x] Cloudflare DDoS protection and WAF
 - [x] TLS 1.3 encryption in transit
 - [x] Network isolation (databases not exposed to internet)

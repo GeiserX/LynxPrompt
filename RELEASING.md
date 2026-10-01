@@ -65,7 +65,7 @@ docker buildx build --platform linux/amd64 \
 Production runs the image pinned by tag and digest in the GitOps repo's `docker-compose.yml`, and a webhook redeploys the stack on every push to that repo.
 
 - **Automatic.** After a release, Renovate opens and automerges the pin bump once the image is a day old.
-- **Sooner.** Set the pin yourself to `lynxprompt:X.Y.Z@sha256:<digest>` (digest from `docker buildx imagetools inspect <image>:X.Y.Z --format '{{.Manifest.Digest}}'`), commit and push. Changing only the tag deploys nothing new, because Docker resolves the image by digest.
+- **Sooner.** Set the pin yourself to `drumsergio/lynxprompt:X.Y.Z@sha256:<digest>` (digest from `docker buildx imagetools inspect drumsergio/lynxprompt:X.Y.Z --format '{{.Manifest.Digest}}'`), commit and push. Changing only the tag deploys nothing new, because Docker resolves the image by digest.
 
 The "Verify Production Deployment" workflow then polls `/api/health` for the new version. It gives up after 20 minutes, so it fails whenever the deploy waits on Renovate's one-day delay. That means not deployed yet, not broken.
 
