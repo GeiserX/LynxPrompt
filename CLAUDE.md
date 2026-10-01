@@ -176,19 +176,19 @@ If CI/CD fails, investigate and fix before considering deployment complete.
 
 ### NEVER Restart Docker Containers
 
-**General rule**: Prefer `reload` commands over container restarts. Use Portainer GitOps to redeploy, not manual docker commands.
+**General rule**: Prefer `reload` commands over container restarts. Redeploy through GitOps, not manual docker commands.
 
 **Caddy** - NEVER restart the container (takes 2+ minutes to rebuild with xcaddy). Instead:
 ```bash
 ssh root@watchtower.mango-alpha.ts.net "docker exec caddy caddy fmt --overwrite /etc/caddy/Caddyfile && docker exec caddy caddy reload --config /etc/caddy/Caddyfile"
 ```
 
-**LynxPrompt** - Use Portainer GitOps to redeploy:
-1. Update docker-compose.yml in private gitea repo
-2. Push changes
-3. Trigger Portainer redeploy via API (or wait for auto-sync)
+**LynxPrompt** - Production deploys through GitOps:
+1. Production runs the image pinned by tag and digest in `lynxprompt/docker-compose.yml` of the private `giteaer/watchtower` Gitea repo.
+2. After each release, Renovate opens and automerges the pin bump once the image is a day old. To ship sooner, set the pin yourself to `drumsergio/lynxprompt:X.Y.Z@sha256:<digest>` (digest from `docker buildx imagetools inspect drumsergio/lynxprompt:X.Y.Z --format '{{.Manifest.Digest}}'`), commit and push. Changing only the tag deploys nothing new, because Docker resolves the image by digest.
+3. The push makes the deploy webhook on watchtower run the stack. Wait for its `=== Deploy Summary ===` line in `docker logs webhook`, then check `https://lynxprompt.com/api/health` reports the new version.
 
-Never manually run `docker compose up` or `docker restart` - Portainer loses track of stack state.
+Never manually run `docker compose up` or `docker restart` on the stack. A hand-run compose races the webhook, and the webhook's rollback then leaves the checkout and the containers out of step.
 
 ### Branching: `develop` for features, `main` for deps/security
 
@@ -244,7 +244,7 @@ git merge develop
 - Self-hosted solutions (Umami analytics)
 - Privacy-focused approaches (cookieless analytics, minimal data collection)
 - Semver versioning for Docker images (e.g., `2.0.22`, never `:latest`)
-- GitOps with Portainer for infrastructure management
+- GitOps for infrastructure (a Gitea repo per server, redeployed by a webhook on push)
 - Docker Hub for all images (custom images built by GHA, pushed to `drumsergio/*`)
 - Tailwind CSS for styling
 - TypeScript with strict types
@@ -252,7 +252,7 @@ git merge develop
 ### Things I Dislike ❌
 
 - **Restarting containers** when reload is possible (use `caddy reload`, not container restart)
-- **Manual docker commands** for deployments (use Portainer GitOps)
+- **Manual docker commands** for deployments (push to the GitOps repo instead)
 - Over-engineering or unnecessary abstractions
 - Adding features I didn't ask for
 - Verbose explanations when action is needed
@@ -297,7 +297,7 @@ git merge develop
 | Component | Details |
 |-----------|---------|
 | Docker | Multi-stage builds, images on Docker Hub (`drumsergio/lynxprompt`) |
-| Portainer | Container management with GitOps |
+| Gitea + deploy webhook | GitOps: a push to a server's repo redeploys the stacks it changed |
 | Tailscale | VPN for internal services (always use MagicDNS hostnames) |
 | Umami | Self-hosted analytics (EU, cookieless) |
 | Caddy | Reverse proxy (production + dev) |
@@ -592,7 +592,7 @@ npm run test:coverage # With coverage
 5. **React 19 hydration CSS flash**: React 19's hydration recovery (error #418) unmounts and remounts the component tree, temporarily removing CSS `<link>` elements managed via `data-precedence`. A MutationObserver script in `src/app/layout.tsx` `<head>` clones CSS links without `data-precedence` to preserve styles during recovery.
 6. **shields.io retired `visual-studio-marketplace` badge** — use static `img.shields.io/badge/` badges for VS Code marketplace links instead
 7. **Chocolatey `nodejs` vs `nodejs-lts`** — the `nodejs` package (latest, currently v25) hangs in Chocolatey test VMs; always use `nodejs-lts` (stable v22.x) as a dependency in `.nuspec` files
-8. **Portainer TLS certs** — Tailscale-issued Let's Encrypt certs expire every 90 days. Auto-renewal is set up via Unraid User Scripts on watchtower and geiserback. GHA deploy workflows use Tailscale MagicDNS hostnames (not IPs) for proper TLS validation
+8. **Tailscale TLS certs** — Tailscale-issued Let's Encrypt certs expire every 90 days. Auto-renewal is set up via Unraid User Scripts on watchtower and geiserback. GHA deploy workflows use Tailscale MagicDNS hostnames (not IPs) for proper TLS validation
 
 ## Satellite Repos — Known Workarounds
 

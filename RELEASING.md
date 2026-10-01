@@ -62,19 +62,12 @@ docker buildx build --platform linux/amd64 \
 
 ### 4. Deploy
 
-#### Option A: GitHub Actions (Recommended)
+Production runs the image pinned by tag and digest in the GitOps repo's `docker-compose.yml`, and a webhook redeploys the stack on every push to that repo.
 
-Use the "Deploy to Production" workflow:
-1. Go to Actions → Deploy to Production
-2. Click "Run workflow"
-3. Enter the version number
-4. Confirm deployment
+- **Automatic.** After a release, Renovate opens and automerges the pin bump once the image is a day old.
+- **Sooner.** Set the pin yourself to `drumsergio/lynxprompt:X.Y.Z@sha256:<digest>` (digest from `docker buildx imagetools inspect drumsergio/lynxprompt:X.Y.Z --format '{{.Manifest.Digest}}'`), commit and push. Changing only the tag deploys nothing new, because Docker resolves the image by digest.
 
-#### Option B: Manual Deployment
-
-1. Update `docker-compose.yml` in your GitOps repo
-2. Commit and push
-3. Trigger Portainer redeploy via API
+The "Verify Production Deployment" workflow then polls `/api/health` for the new version. It gives up after 20 minutes, so it fails whenever the deploy waits on Renovate's one-day delay. That means not deployed yet, not broken.
 
 ### 5. Post-Release
 
@@ -117,11 +110,8 @@ If a release has issues:
 # Change: image: registry/lynxprompt:X.Y.Z
 # To:     image: registry/lynxprompt:PREVIOUS_VERSION
 
-# Trigger redeploy
-curl -X PUT "$PORTAINER_URL/api/stacks/$STACK_ID/git/redeploy?endpointId=$ENDPOINT_ID" \
-  -H "X-API-Key: $API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"PullImage": true}'
+# Use the previous version's tag and digest, commit and push to the GitOps repo.
+# The webhook redeploys the stack; no API call is needed.
 ```
 
 ### Git Rollback
@@ -143,10 +133,6 @@ npm version patch
 | `DOCKER_REGISTRY` | Docker registry URL |
 | `DOCKER_USERNAME` | Registry username |
 | `DOCKER_PASSWORD` | Registry password |
-| `PORTAINER_URL` | Portainer API URL |
-| `PORTAINER_API_KEY` | Portainer API key |
-| `PORTAINER_STACK_ID` | Stack ID to deploy |
-| `PORTAINER_ENDPOINT_ID` | Endpoint ID |
 | `GITEA_USERNAME` | GitOps repo username |
 | `GITEA_TOKEN` | GitOps repo access token |
 | `CLOUDFLARE_ZONE_ID` | Cloudflare zone ID |
