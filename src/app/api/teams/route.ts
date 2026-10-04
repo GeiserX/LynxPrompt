@@ -3,9 +3,14 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { z } from "zod";
+import { looksLikeLink } from "@/lib/display-name";
 
 const createTeamSchema = z.object({
-  name: z.string().min(2).max(100),
+  name: z
+    .string()
+    .min(2)
+    .max(100)
+    .refine((v) => !looksLikeLink(v), "Team name cannot contain a link or web address"),
   slug: z.string().min(2).max(50).regex(/^[a-z0-9-]+$/, {
     message: "Slug must be lowercase alphanumeric with hyphens only",
   }),

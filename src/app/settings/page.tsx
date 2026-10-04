@@ -269,7 +269,10 @@ function SettingsContent() {
         }),
       });
 
-      if (!res.ok) throw new Error("Failed to save profile");
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || "Failed to save profile");
+      }
 
       const updatedProfile = await res.json();
       setProfile(updatedProfile);
@@ -748,6 +751,7 @@ function SettingsContent() {
                     type="text"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
+                    maxLength={100}
                     placeholder="Your name"
                     className="w-full rounded-lg border bg-background px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
                   />
