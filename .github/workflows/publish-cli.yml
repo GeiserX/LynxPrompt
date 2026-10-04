@@ -314,7 +314,7 @@ jobs:
           security list-keychains -d user -s "$keychain"
 
           # V8 needs to write executable memory, which the hardened runtime forbids
-          # unless these entitlements are granted (the same ones Node.js ships with).
+          # unless these entitlements are granted (Node.js's own macOS build has them too).
           cat > "$RUNNER_TEMP/entitlements.plist" << 'EOF'
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
