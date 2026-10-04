@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
+import { validateDisplayName } from "@/lib/display-name";
 
 // GET /api/user/profile - Fetch current user's profile
 export async function GET() {
@@ -131,10 +132,15 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Sanitize display name (prevent XSS)
-    const sanitizedDisplayName = displayName
-      ? String(displayName).trim().slice(0, 100).replace(/[<>]/g, "")
-      : undefined;
+    // An empty or missing display name leaves the stored one alone.
+    let sanitizedDisplayName: string | undefined;
+    if (displayName) {
+      const checked = validateDisplayName(displayName);
+      if (!checked.ok) {
+        return NextResponse.json({ error: checked.error }, { status: 400 });
+      }
+      sanitizedDisplayName = checked.value;
+    }
 
     // Determine if profile is now complete
     const profileCompleted = Boolean(

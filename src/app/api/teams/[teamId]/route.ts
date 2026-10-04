@@ -3,10 +3,16 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { z } from "zod";
+import { looksLikeLink } from "@/lib/display-name";
 
 // Validation schema for team update
 const updateTeamSchema = z.object({
-  name: z.string().min(2).max(100).optional(),
+  name: z
+    .string()
+    .min(2)
+    .max(100)
+    .refine((v) => !looksLikeLink(v), "Team name cannot contain a link or web address")
+    .optional(),
   maxSeats: z.number().min(3).optional(), // Minimum 3 seats
 });
 
