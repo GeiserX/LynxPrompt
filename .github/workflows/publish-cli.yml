@@ -212,16 +212,8 @@ jobs:
           tar -czvf "lynxprompt-${VERSION}-linux-arm64.tar.gz" lynxprompt
           rm lynxprompt
           
-          # macOS x64
-          mv lynxprompt-macos-x64 lynxprompt
-          tar -czvf "lynxprompt-${VERSION}-macos-x64.tar.gz" lynxprompt
-          rm lynxprompt
-          
-          # macOS arm64 (Apple Silicon)
-          mv lynxprompt-macos-arm64 lynxprompt
-          tar -czvf "lynxprompt-${VERSION}-macos-arm64.tar.gz" lynxprompt
-          rm lynxprompt
-          
+          # macOS binaries are built, signed and packaged by sign-macos
+
           # Windows x64
           mv lynxprompt-win-x64.exe lynxprompt.exe
           zip "lynxprompt-${VERSION}-win-x64.zip" lynxprompt.exe
@@ -237,6 +229,145 @@ jobs:
             cli/binaries/*.tar.gz
             cli/binaries/*.zip
           fail_on_unmatched_files: false
+
+  # ===========================================
+  # Sign and notarize the macOS binaries
+  # ===========================================
+  # Apple Silicon kills an unsigned binary on launch, so the macOS binaries are
+  # signed with the Developer ID certificate under the hardened runtime and
+  # notarized before they are packed and attached. A missing secret fails the
+  # job: a macOS binary must never ship unsigned without anyone noticing. Bare
+  # binaries cannot be stapled; Gatekeeper checks the ticket online.
+  sign-macos:
+    needs: [check, publish-npm]
+    if: ${{ needs.check.outputs.should_publish == 'true' }}
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: cli
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
+      - name: Build shared package
+        working-directory: .
+        run: npx --yes --package typescript tsc -p packages/shared/tsconfig.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Ensure version matches
+        run: |
+          CURRENT=$(node -p "require('./package.json').version")
+          TARGET="${{ needs.check.outputs.version }}"
+          if [[ "$CURRENT" != "$TARGET" ]]; then
+            npm version "$TARGET" --no-git-tag-version
+          fi
+
+      # pkg cannot load the ESM build or its dependencies' "#imports", so it gets
+      # one CommonJS bundle instead. It also compiles bytecode by running the
+      # target's own Node, which a host of the other architecture cannot do, and
+      # then packs the scripts empty; shipping plain sources avoids that.
+      - name: Build macOS binaries
+        run: |
+          npm run build
+          npx --no-install esbuild dist/index.js --bundle --platform=node --format=cjs --target=node22 \
+            --define:import.meta.url=__import_meta_url \
+            "--banner:js=const __import_meta_url = require('url').pathToFileURL(__filename).href;" \
+            --outfile=binaries/lynxprompt.cjs
+          npx pkg binaries/lynxprompt.cjs --no-bytecode --public-packages "*" --public \
+            --targets node22-macos-x64,node22-macos-arm64 --out-path binaries
+          # With a single platform, pkg names the outputs by arch only
+          for arch in x64 arm64; do mv "binaries/lynxprompt-$arch" "binaries/lynxprompt-macos-$arch"; done
+          ls -la binaries
+
+      - name: Sign and notarize
+        working-directory: cli/binaries
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          for v in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID; do
+            [ -n "${!v}" ] || { echo "::error::secret $v is not set; refusing to ship an unsigned macOS binary"; exit 1; }
+          done
+
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          keychain_pass="$(openssl rand -hex 16)"
+          security create-keychain -p "$keychain_pass" "$keychain"
+          security set-keychain-settings -lut 3600 "$keychain"
+          security unlock-keychain -p "$keychain_pass" "$keychain"
+          echo "$APPLE_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -k "$keychain" -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          rm "$RUNNER_TEMP/cert.p12"
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$keychain_pass" "$keychain" > /dev/null
+          security list-keychains -d user -s "$keychain"
+
+          # V8 needs to write executable memory, which the hardened runtime forbids
+          # unless these entitlements are granted (Node.js's own macOS build has them too).
+          cat > "$RUNNER_TEMP/entitlements.plist" << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>com.apple.security.cs.allow-jit</key>
+            <true/>
+            <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+            <true/>
+          </dict>
+          </plist>
+          EOF
+
+          # Rosetta runs the x64 binary for the launch check below.
+          sudo softwareupdate --install-rosetta --agree-to-license
+
+          for arch in x64 arm64; do
+            bin="lynxprompt-macos-$arch"
+            codesign --force --options runtime --timestamp --entitlements "$RUNNER_TEMP/entitlements.plist" \
+              --keychain "$keychain" --sign "$APPLE_SIGNING_IDENTITY" "$bin"
+            codesign --verify --strict --verbose=2 "$bin"
+
+            # pkg appends its payload to the Mach-O; prove the signed binary still runs.
+            if [ "$arch" = x64 ]; then run="arch -x86_64 ./$bin"; else run="./$bin"; fi
+            got=$($run --version)
+            [ "$got" = "${{ needs.check.outputs.version }}" ] || { echo "::error::$bin --version printed '$got'"; exit 1; }
+
+            ditto -c -k "$bin" "$RUNNER_TEMP/$bin.zip"
+            status=$(xcrun notarytool submit "$RUNNER_TEMP/$bin.zip" \
+              --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID" \
+              --wait --output-format json | tee /dev/stderr | jq -r .status)
+            [ "$status" = Accepted ] || { echo "::error::notarization of $bin returned $status"; exit 1; }
+          done
+
+          security delete-keychain "$keychain"
+
+      - name: Package macOS binaries
+        working-directory: cli/binaries
+        run: |
+          VERSION="${{ needs.check.outputs.version }}"
+          for arch in x64 arm64; do
+            mv "lynxprompt-macos-$arch" lynxprompt
+            tar -czvf "lynxprompt-${VERSION}-macos-$arch.tar.gz" lynxprompt
+            rm lynxprompt
+          done
+          ls -la
+
+      - name: Upload macOS binaries to GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: cli-v${{ needs.check.outputs.version }}
+          files: cli/binaries/*.tar.gz
+          fail_on_unmatched_files: true
 
   # ===========================================
   # Publish to Chocolatey (Windows)
@@ -376,7 +507,7 @@ jobs:
   # Summary
   # ===========================================
   summary:
-    needs: [check, publish-npm, publish-binaries, publish-chocolatey, publish-snap, update-homebrew]
+    needs: [check, publish-npm, publish-binaries, sign-macos, publish-chocolatey, publish-snap, update-homebrew]
     if: always() && needs.check.outputs.should_publish == 'true'
     runs-on: ubuntu-latest
 
@@ -391,6 +522,7 @@ jobs:
           echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| npm | ${{ needs.publish-npm.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Standalone Binaries | ${{ needs.publish-binaries.result == 'success' && '✅' || needs.publish-binaries.result == 'skipped' && '⏭️' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| macOS signing | ${{ needs.sign-macos.result == 'success' && '✅' || needs.sign-macos.result == 'skipped' && '⏭️' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Chocolatey | ${{ needs.publish-chocolatey.result == 'success' && '✅' || needs.publish-chocolatey.result == 'skipped' && '⏭️' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Snap | ${{ needs.publish-snap.result == 'success' && '✅' || needs.publish-snap.result == 'skipped' && '⏭️' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Homebrew | ${{ needs.update-homebrew.result == 'success' && '✅' || needs.update-homebrew.result == 'skipped' && '⏭️' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
