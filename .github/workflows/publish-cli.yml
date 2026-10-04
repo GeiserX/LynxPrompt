@@ -270,13 +270,18 @@ jobs:
             npm version "$TARGET" --no-git-tag-version
           fi
 
-      # pkg compiles bytecode by running the target's own Node, which a host of
-      # the other architecture cannot do, and then packs the scripts empty
-      # (the binary dies with UNEXPECTED-20). Shipping plain sources avoids that.
+      # pkg cannot load the ESM build or its dependencies' "#imports", so it gets
+      # one CommonJS bundle instead. It also compiles bytecode by running the
+      # target's own Node, which a host of the other architecture cannot do, and
+      # then packs the scripts empty; shipping plain sources avoids that.
       - name: Build macOS binaries
         run: |
           npm run build
-          npx pkg . --no-bytecode --public-packages "*" --public \
+          npx --no-install esbuild dist/index.js --bundle --platform=node --format=cjs --target=node22 \
+            --define:import.meta.url=__import_meta_url \
+            "--banner:js=const __import_meta_url = require('url').pathToFileURL(__filename).href;" \
+            --outfile=binaries/lynxprompt.cjs
+          npx pkg binaries/lynxprompt.cjs --no-bytecode --public-packages "*" --public \
             --targets node22-macos-x64,node22-macos-arm64 --out-path binaries
           # With a single platform, pkg names the outputs by arch only
           for arch in x64 arm64; do mv "binaries/lynxprompt-$arch" "binaries/lynxprompt-macos-$arch"; done
