@@ -17,10 +17,13 @@ const INVISIBLE =
 // example.co.uk. The host rule needs letters right after the dot, so
 // "Dr. Who" and "J.R.R. Tolkien" pass while "Dr.Who" and "john.doe" do not.
 const LINK_LIKE =
-  /(?:[a-z][a-z0-9+.-]*:\/\/|\bwww\.|[\p{L}\p{N}_-]+\.[a-z]{2,63}(?=$|[\s/?#:,;!)]))/iu;
+  /(?:[a-z][a-z0-9+.-]*:\/\/|\bwww\.|[\p{L}\p{N}_-]+\.\p{L}{2,63}(?=$|[^\p{L}\p{N}]))/iu;
+
+// Ideographic and fullwidth full stops map to "." in domain names.
+const DOT_VARIANTS = /[\u3002\uFF0E\uFF61]/g;
 
 export function looksLikeLink(value: string): boolean {
-  return LINK_LIKE.test(value);
+  return LINK_LIKE.test(value.replace(DOT_VARIANTS, "."));
 }
 
 export type DisplayNameResult =

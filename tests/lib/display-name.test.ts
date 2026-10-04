@@ -27,6 +27,12 @@ describe("validateDisplayName", () => {
     "john.doe",
     "ftp://files.example",
     "WWW.EXAMPLE.COM",
+    "example.com.",
+    "(example.com)",
+    "example.com's team",
+    "google\u3002com",
+    "google\uFF0Ecom",
+    "пример.рф",
   ])("rejects %s as a link", (name) => {
     expect(validateDisplayName(name)).toEqual({
       ok: false,
