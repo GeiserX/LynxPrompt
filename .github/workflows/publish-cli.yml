@@ -278,6 +278,8 @@ jobs:
           npm run build
           npx pkg . --no-bytecode --public-packages "*" --public \
             --targets node22-macos-x64,node22-macos-arm64 --out-path binaries
+          # With a single platform, pkg names the outputs by arch only
+          for arch in x64 arm64; do mv "binaries/lynxprompt-$arch" "binaries/lynxprompt-macos-$arch"; done
           ls -la binaries
 
       - name: Sign and notarize
