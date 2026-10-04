@@ -1,0 +1,56 @@
+name: sign-macos-test
+'on':
+  push:
+    branches:
+    - fix/cli-macos-signed-binaries
+permissions:
+  contents: read
+jobs:
+  sign-macos:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: cli
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v7
+    - name: Setup Node.js
+      uses: actions/setup-node@v7
+      with:
+        node-version: '22'
+    - name: Build shared package
+      working-directory: .
+      run: npx --yes --package typescript tsc -p packages/shared/tsconfig.json
+    - name: Install dependencies
+      run: npm ci
+    - name: Ensure version matches
+      run: "CURRENT=$(node -p \"require('./package.json').version\")\nTARGET=\"2.1.33\"\nif [[ \"$CURRENT\" != \"$TARGET\" ]]; then\n  npm version \"$TARGET\" --no-git-tag-version\n\
+        fi\n"
+    - name: Build macOS binaries
+      run: "npm run build\nnpx pkg . --no-bytecode --public-packages \"*\" --public \\\n  --targets node22-macos-x64,node22-macos-arm64 --out-path binaries\nls -la binaries\n"
+    - name: Sign and notarize
+      working-directory: cli/binaries
+      env:
+        APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+        APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+        APPLE_ID: ${{ secrets.APPLE_ID }}
+        APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+        APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      run: "set -euo pipefail\nfor v in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID; do\n  [ -n \"${!v}\" ] || { echo \"::error::secret $v is\
+        \ not set; refusing to ship an unsigned macOS binary\"; exit 1; }\ndone\n\nkeychain=\"$RUNNER_TEMP/signing.keychain-db\"\nkeychain_pass=\"$(openssl rand -hex 16)\"\nsecurity create-keychain -p \"\
+        $keychain_pass\" \"$keychain\"\nsecurity set-keychain-settings -lut 3600 \"$keychain\"\nsecurity unlock-keychain -p \"$keychain_pass\" \"$keychain\"\necho \"$APPLE_CERTIFICATE\" | base64 --decode\
+        \ > \"$RUNNER_TEMP/cert.p12\"\nsecurity import \"$RUNNER_TEMP/cert.p12\" -k \"$keychain\" -P \"$APPLE_CERTIFICATE_PASSWORD\" -T /usr/bin/codesign\nrm \"$RUNNER_TEMP/cert.p12\"\nsecurity set-key-partition-list\
+        \ -S apple-tool:,apple: -s -k \"$keychain_pass\" \"$keychain\" > /dev/null\nsecurity list-keychains -d user -s \"$keychain\"\n\n# V8 needs to write executable memory, which the hardened runtime\
+        \ forbids\n# unless these entitlements are granted (the same ones Node.js ships with).\ncat > \"$RUNNER_TEMP/entitlements.plist\" << 'EOF'\n<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE\
+        \ plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\n<dict>\n  <key>com.apple.security.cs.allow-jit</key>\n  <true/>\n  <key>com.apple.security.cs.allow-unsigned-executable-memory</key>\n\
+        \  <true/>\n</dict>\n</plist>\nEOF\n\n# Rosetta runs the x64 binary for the launch check below.\nsudo softwareupdate --install-rosetta --agree-to-license\n\nfor arch in x64 arm64; do\n  bin=\"lynxprompt-macos-$arch\"\
+        \n  codesign --force --options runtime --timestamp --entitlements \"$RUNNER_TEMP/entitlements.plist\" \\\n    --keychain \"$keychain\" --sign \"$APPLE_SIGNING_IDENTITY\" \"$bin\"\n  codesign --verify\
+        \ --strict --verbose=2 \"$bin\"\n\n  # pkg appends its payload to the Mach-O; prove the signed binary still runs.\n  if [ \"$arch\" = x64 ]; then run=\"arch -x86_64 ./$bin\"; else run=\"./$bin\"\
+        ; fi\n  got=$($run --version)\n  [ \"$got\" = \"2.1.33\" ] || { echo \"::error::$bin --version printed '$got'\"; exit 1; }\n\n  ditto -c -k \"$bin\" \"$RUNNER_TEMP/$bin.zip\"\
+        \n  status=$(xcrun notarytool submit \"$RUNNER_TEMP/$bin.zip\" \\\n    --apple-id \"$APPLE_ID\" --password \"$APPLE_PASSWORD\" --team-id \"$APPLE_TEAM_ID\" \\\n    --wait --output-format json |\
+        \ tee /dev/stderr | jq -r .status)\n  [ \"$status\" = Accepted ] || { echo \"::error::notarization of $bin returned $status\"; exit 1; }\ndone\n\nsecurity delete-keychain \"$keychain\"\n"
+    - name: Package macOS binaries
+      working-directory: cli/binaries
+      run: "VERSION=\"2.1.33\"\nfor arch in x64 arm64; do\n  mv \"lynxprompt-macos-$arch\" lynxprompt\n  tar -czvf \"lynxprompt-${VERSION}-macos-$arch.tar.gz\" lynxprompt\n \
+        \ rm lynxprompt\ndone\nls -la\n"
