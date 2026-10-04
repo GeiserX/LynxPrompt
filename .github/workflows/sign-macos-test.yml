@@ -27,7 +27,8 @@ jobs:
       run: "CURRENT=$(node -p \"require('./package.json').version\")\nTARGET=\"2.1.33\"\nif [[ \"$CURRENT\" != \"$TARGET\" ]]; then\n  npm version \"$TARGET\" --no-git-tag-version\n\
         fi\n"
     - name: Build macOS binaries
-      run: "npm run build\nnpx pkg . --no-bytecode --public-packages \"*\" --public \\\n  --targets node22-macos-x64,node22-macos-arm64 --out-path binaries\nls -la binaries\n"
+      run: "npm run build\nnpx pkg . --no-bytecode --public-packages \"*\" --public \\\n  --targets node22-macos-x64,node22-macos-arm64 --out-path binaries\n# With a single platform, pkg names the outputs\
+        \ by arch only\nfor arch in x64 arm64; do mv \"binaries/lynxprompt-$arch\" \"binaries/lynxprompt-macos-$arch\"; done\nls -la binaries\n"
     - name: Sign and notarize
       working-directory: cli/binaries
       env:
