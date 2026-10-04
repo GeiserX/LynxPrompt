@@ -11,7 +11,7 @@ export const DISPLAY_NAME_MAX_LENGTH = 100;
 // Control, zero-width and bidi characters: invisible, and they let two
 // different names render identically.
 const INVISIBLE =
-  /[\u0000-\u001F\u007F-\u009F​-‏ -‮⁠-⁤﻿]/g;
+  /[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028-\u202E\u2060-\u2064\uFEFF]/g;
 
 // A scheme (https://), a www. prefix, or a bare host such as example.com or
 // example.co.uk. The host rule needs letters right after the dot, so
