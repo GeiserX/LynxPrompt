@@ -62,8 +62,8 @@ jobs:
           
           # Only paths that change the image release the app, and only cli/ or
           # packages/shared/ release the CLI; the rule is in the script.
-          APP=$(git diff --name-only $APP_BASE HEAD 2>/dev/null | bash .github/scripts/release-changes.sh app)
-          CLI=$(git diff --name-only $CLI_BASE HEAD 2>/dev/null | bash .github/scripts/release-changes.sh cli)
+          APP=$(git diff --no-renames --name-only $APP_BASE HEAD 2>/dev/null | bash .github/scripts/release-changes.sh app)
+          CLI=$(git diff --no-renames --name-only $CLI_BASE HEAD 2>/dev/null | bash .github/scripts/release-changes.sh cli)
           echo "app=$APP" >> $GITHUB_OUTPUT
           echo "cli=$CLI" >> $GITHUB_OUTPUT
           echo "App changes: $APP, CLI changes: $CLI"
