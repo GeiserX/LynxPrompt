@@ -98,6 +98,39 @@ describe("release change detection", () => {
     expect(releasesAfter(touching("docs/ROADMAP.md", "README.md", "tests/lib/utils.test.ts", "charts/lynxprompt/values.yaml"))).toEqual({ app: false, cli: false });
   });
 
+  it("releases from a tag that sits on main itself", () => {
+    const decide = (change: (dir: string) => void) => {
+      const dir = mkdtempSync(join(tmpdir(), "release-changes-"));
+      repos.push(dir);
+      git(dir, "init", "-q", "-b", "main");
+      for (const path of ["src/app/page.tsx", "package.json"]) write(dir, path, "v1\n");
+      git(dir, "add", "-A");
+      git(dir, "commit", "-qm", "release");
+      git(dir, "tag", "app-v1.0.0");
+      change(dir);
+      git(dir, "add", "-A");
+      git(dir, "commit", "-qm", "change");
+      return execFileSync("bash", [script, "app", "app-v1.0.0"], { cwd: dir, encoding: "utf8" }).trim();
+    };
+    expect(decide(touching(".github/workflows/ci.yml"))).toBe("false");
+    expect(decide(touching("src/app/page.tsx"))).toBe("true");
+  });
+
+  it("fails instead of releasing when the tag shares no history with main", () => {
+    const dir = released();
+    git(dir, "checkout", "-q", "--orphan", "unrelated");
+    git(dir, "commit", "-q", "--allow-empty", "-m", "unrelated");
+    git(dir, "tag", "app-v9.9.9");
+    git(dir, "checkout", "-q", "main");
+    let stderr = "";
+    try {
+      execFileSync("bash", [script, "app", "app-v9.9.9"], { cwd: dir, encoding: "utf8", stdio: "pipe" });
+    } catch (error) {
+      stderr = String((error as { stderr?: string }).stderr);
+    }
+    expect(stderr).toContain("shares no history with HEAD");
+  });
+
   it("is what the release workflow uses", () => {
     const release = readFileSync(resolve(process.cwd(), ".github/workflows/release.yml"), "utf8");
     expect(release).toContain('.github/scripts/release-changes.sh app "$APP_BASE"');
