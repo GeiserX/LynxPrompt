@@ -16,7 +16,7 @@ Current version is tracked in `package.json`.
 
 ### What gets released
 
-On every push to `main` that changes `package.json`, `cli/package.json` or the release workflow, `release.yml` compares each product with its last tag (`app-v*`, `cli-v*`) and releases only the ones that changed. `.github/scripts/release-changes.sh` holds the rule:
+On every push to `main` that changes `package.json`, `cli/package.json` or the release workflow, `release.yml` releases only the products whose files changed on `main` since their last release. The tags (`app-v*`, `cli-v*`) sit on the release job's own version-bump commit, which never lands on `main`, so the comparison starts from the commit `main` shares with the tag. `.github/scripts/release-changes.sh` holds the rule:
 
 - **App:** something that ends up in the Docker image or changes how it is built: `Dockerfile`, `.dockerignore`, the root `package.json` and `package-lock.json`, `next.config.ts`, `tsconfig.json`, `postcss.config.mjs`, `entrypoint.sh`, `src/`, `public/`, `prisma/` or `packages/`.
 - **CLI:** `cli/` or `packages/shared/`.

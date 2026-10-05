@@ -16,7 +16,10 @@ case "$1" in
   *) echo "usage: $0 app|cli" >&2; exit 2 ;;
 esac
 set -euo pipefail
-since=$2
+# Release tags sit on the release job's own version-bump commit, which never
+# lands on main, so diff from the commit main shares with the tag. Diffing from
+# the tag itself always sees the bumped package.json and releases every time.
+since=$(git merge-base "$2" HEAD)
 # --no-renames: a file moved out of src/ still counts through its old path.
 files=$(git diff --no-renames --name-only "$since" HEAD)
 if grep -E "$pattern" <<< "$files" > /dev/null; then echo true; else echo false; fi
