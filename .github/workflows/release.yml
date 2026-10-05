@@ -60,6 +60,8 @@ jobs:
           APP_BASE=${LAST_APP_TAG:-$(git rev-parse HEAD~10)}
           CLI_BASE=${LAST_CLI_TAG:-$(git rev-parse HEAD~10)}
           
+          # Only paths that change the image release the app, and only cli/ or
+          # packages/shared/ release the CLI; the rule is in the script.
           APP=$(git diff --name-only $APP_BASE HEAD 2>/dev/null | bash .github/scripts/release-changes.sh app)
           CLI=$(git diff --name-only $CLI_BASE HEAD 2>/dev/null | bash .github/scripts/release-changes.sh cli)
           echo "app=$APP" >> $GITHUB_OUTPUT
