@@ -20,7 +20,8 @@ set -euo pipefail
 # Release tags sit on the release job's own version-bump commit, which never
 # lands on main, so diff from the commit main shares with the tag. Diffing from
 # the tag itself always sees the bumped package.json and releases every time.
-since=$(git merge-base "$2" HEAD)
+# A tag with no shared history fails the release instead of releasing anything.
+since=$(git merge-base "$2" HEAD) || { echo "::error::$2 shares no history with HEAD" >&2; exit 1; }
 # --no-renames: a file moved out of src/ still counts through its old path.
 files=$(git diff --no-renames --name-only "$since" HEAD)
 if grep -E "$pattern" <<< "$files" > /dev/null; then echo true; else echo false; fi

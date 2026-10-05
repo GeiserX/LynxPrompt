@@ -103,7 +103,7 @@ describe("release change detection", () => {
       const dir = mkdtempSync(join(tmpdir(), "release-changes-"));
       repos.push(dir);
       git(dir, "init", "-q", "-b", "main");
-      touching("src/app/page.tsx", "package.json")(dir);
+      for (const path of ["src/app/page.tsx", "package.json"]) write(dir, path, "v1\n");
       git(dir, "add", "-A");
       git(dir, "commit", "-qm", "release");
       git(dir, "tag", "app-v1.0.0");
