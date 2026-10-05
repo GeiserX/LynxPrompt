@@ -10,10 +10,11 @@
 # cli/, docs, tests and the Helm chart do not count; a change to docker-publish.yml
 # takes effect with the next app release.
 # CLI: cli/ and packages/shared/ (the CLI imports the shared wizard constants).
+[ $# -eq 2 ] || { echo "usage: $0 app|cli <base>" >&2; exit 2; }
 case "$1" in
   app) pattern='^(src/|public/|prisma/|packages/|Dockerfile$|\.dockerignore$|package\.json$|package-lock\.json$|next\.config\.ts$|tsconfig\.json$|postcss\.config\.mjs$|entrypoint\.sh$)' ;;
   cli) pattern='^(cli/|packages/shared/)' ;;
-  *) echo "usage: $0 app|cli" >&2; exit 2 ;;
+  *) echo "usage: $0 app|cli <base>" >&2; exit 2 ;;
 esac
 set -euo pipefail
 # Release tags sit on the release job's own version-bump commit, which never
