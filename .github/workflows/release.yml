@@ -60,23 +60,11 @@ jobs:
           APP_BASE=${LAST_APP_TAG:-$(git rev-parse HEAD~10)}
           CLI_BASE=${LAST_CLI_TAG:-$(git rev-parse HEAD~10)}
           
-          # Check for app changes (everything except cli/)
-          if git diff --name-only $APP_BASE HEAD 2>/dev/null | grep -v "^cli/" | grep -q .; then
-            echo "app=true" >> $GITHUB_OUTPUT
-            echo "✅ App changes detected"
-          else
-            echo "app=false" >> $GITHUB_OUTPUT
-            echo "ℹ️ No app changes"
-          fi
-          
-          # Check for CLI changes (cli/ and packages/shared/ both affect the CLI)
-          if git diff --name-only $CLI_BASE HEAD 2>/dev/null | grep -qE "^(cli/|packages/shared/)"; then
-            echo "cli=true" >> $GITHUB_OUTPUT
-            echo "✅ CLI changes detected"
-          else
-            echo "cli=false" >> $GITHUB_OUTPUT
-            echo "ℹ️ No CLI changes"
-          fi
+          APP=$(git diff --name-only $APP_BASE HEAD 2>/dev/null | bash .github/scripts/release-changes.sh app)
+          CLI=$(git diff --name-only $CLI_BASE HEAD 2>/dev/null | bash .github/scripts/release-changes.sh cli)
+          echo "app=$APP" >> $GITHUB_OUTPUT
+          echo "cli=$CLI" >> $GITHUB_OUTPUT
+          echo "App changes: $APP, CLI changes: $CLI"
 
       - name: Get versions
         id: versions
