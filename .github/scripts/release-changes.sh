@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Decides whether the web app or the CLI needs a release, from the changed paths
-# on stdin (one per line). Prints "true" or "false".
-#   git diff --name-only <last tag> HEAD | release-changes.sh app|cli
+# Decides whether the web app or the CLI needs a release since <base>, its last
+# release tag. Prints "true" or "false".
+#   release-changes.sh app|cli <base>
 #
 # App: only what ends up in the Docker image or changes how it is built: the
 # Dockerfile and .dockerignore, the root package.json and lockfile, the Next.js,
@@ -15,4 +15,8 @@ case "$1" in
   cli) pattern='^(cli/|packages/shared/)' ;;
   *) echo "usage: $0 app|cli" >&2; exit 2 ;;
 esac
-if grep -E "$pattern" > /dev/null; then echo true; else echo false; fi
+set -euo pipefail
+since=$2
+# --no-renames: a file moved out of src/ still counts through its old path.
+files=$(git diff --no-renames --name-only "$since" HEAD)
+if grep -E "$pattern" <<< "$files" > /dev/null; then echo true; else echo false; fi
