@@ -1,6 +1,6 @@
 {
   "name": "lynxprompt",
-  "version": "2.1.33",
+  "version": "2.1.34",
   "description": "CLI for LynxPrompt - Generate AI IDE configuration files",
   "author": "LynxPrompt Contributors",
   "license": "AGPL-3.0-or-later",
@@ -32,7 +32,9 @@
   ],
   "scripts": {
     "build": "tsup",
-    "build:binaries": "tsup && pkg .",
+    "build:bundle": "tsup && node scripts/bundle.mjs",
+    "pkg:bundle": "pkg binaries/lynxprompt.cjs --no-bytecode --public-packages \"*\" --public",
+    "build:binaries": "npm run build:bundle && npm run pkg:bundle -- --targets node22-linux-x64,node22-linux-arm64,node22-macos-x64,node22-macos-arm64,node22-win-x64 --out-path binaries",
     "dev": "tsup --watch",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
@@ -52,20 +54,9 @@
     "@types/node": "^22.10.2",
     "@types/prompts": "^2.4.9",
     "@yao-pkg/pkg": "^6.2.0",
+    "esbuild": "^0.28.1",
     "tsup": "^8.4.0",
     "typescript": "^5.9.3"
-  },
-  "pkg": {
-    "scripts": "dist/**/*.js",
-    "assets": [],
-    "targets": [
-      "node22-linux-x64",
-      "node22-linux-arm64",
-      "node22-macos-x64",
-      "node22-macos-arm64",
-      "node22-win-x64"
-    ],
-    "outputPath": "binaries"
   },
   "engines": {
     "node": ">=18.0.0"
