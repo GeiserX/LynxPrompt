@@ -15,24 +15,17 @@ on:
       - 'vitest.config.*'
       - 'next.config.*'
       - '.github/workflows/ci.yml'
+  # No path filter on pull requests: CI Summary is a required check, and a
+  # required check that never starts blocks the PR forever.
   pull_request:
     branches: [main, develop]
-    paths:
-      - 'src/**'
-      - 'packages/**'
-      - 'prisma/**'
-      - 'public/**'
-      - 'tests/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'tsconfig.json'
-      - 'vitest.config.*'
-      - 'next.config.*'
-      - '.github/workflows/ci.yml'
+  # release.yml runs lint, tests and build before it tags an app release.
+  workflow_call:
 
-# Cancel in-progress runs when a new commit is pushed
+# Cancel in-progress runs when a new commit is pushed. The workflow name keeps
+# the release workflow's call apart from the CI run of the same push.
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -144,45 +137,37 @@ jobs:
           NEXTAUTH_SECRET: "build-time-secret-not-used"
           NEXTAUTH_URL: "http://localhost:3000"
 
+  # Checks the dev deployment answers after a push. Retries ride out a short
+  # blip; a dev server that stays down turns the run red.
   integration-smoke:
     name: Integration Smoke Tests
     runs-on: ubuntu-latest
     needs: [build]
-    if: github.event_name == 'push'
-    continue-on-error: true
+    if: github.event_name == 'push' && github.workflow == 'CI'
+    env:
+      CURL: curl -sSf --retry 3 --retry-all-errors --retry-delay 10 --max-time 15
     steps:
       - name: Health endpoint
         run: |
-          RESPONSE=$(curl -sf --max-time 15 https://dev.lynxprompt.com/api/health 2>&1) || {
-            echo "⚠️ dev.lynxprompt.com unreachable - skipping smoke tests"
-            exit 0
-          }
+          RESPONSE=$($CURL https://dev.lynxprompt.com/api/health)
           echo "$RESPONSE"
           echo "$RESPONSE" | jq -e '.status == "ok" and .db == "connected"' > /dev/null
           echo "✅ Health endpoint OK"
 
       - name: Public config endpoint
         run: |
-          RESPONSE=$(curl -sf --max-time 15 https://dev.lynxprompt.com/api/config/public 2>&1) || exit 0
+          RESPONSE=$($CURL https://dev.lynxprompt.com/api/config/public)
           echo "$RESPONSE" | jq -e '.enableEmailAuth != null and .appName != null and .appUrl != null' > /dev/null
           echo "✅ Public config endpoint OK"
 
       - name: Homepage returns 200
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 https://dev.lynxprompt.com/) || exit 0
-          if [ "$STATUS" != "200" ]; then
-            echo "❌ Homepage returned $STATUS"
-            exit 1
-          fi
+          $CURL -o /dev/null https://dev.lynxprompt.com/
           echo "✅ Homepage returns 200"
 
       - name: Login page returns 200
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 https://dev.lynxprompt.com/auth/signin) || exit 0
-          if [ "$STATUS" != "200" ]; then
-            echo "❌ Login page returned $STATUS"
-            exit 1
-          fi
+          $CURL -o /dev/null https://dev.lynxprompt.com/auth/signin
           echo "✅ Login page returns 200"
 
   summary:
