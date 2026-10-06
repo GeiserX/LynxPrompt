@@ -13,6 +13,12 @@ echo ""
 # postgres-app and postgres-users data folders on the host.
 COMPOSE_DIR="${COMPOSE_DIR:?ERROR: COMPOSE_DIR must be set to the directory holding docker-compose.yml}"
 DATA_DIR="${DATA_DIR:?ERROR: DATA_DIR must be set to the directory holding postgres-app and postgres-users}"
+# The backup runs before the cd into COMPOSE_DIR and the cleanup after it, so a
+# relative DATA_DIR would point at two different places.
+case "$DATA_DIR" in
+  /*) ;;
+  *) echo "ERROR: DATA_DIR must be an absolute path" >&2; exit 1 ;;
+esac
 BACKUP_DIR="$DATA_DIR/migration-backup-$(date +%Y%m%d-%H%M%S)"
 APP_DUMP="$BACKUP_DIR/lynxprompt_app.sql"
 USERS_DUMP="$BACKUP_DIR/lynxprompt_users.sql"

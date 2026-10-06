@@ -28,7 +28,7 @@ describe("production deployment workflow contract", () => {
     const publish = readWorkflow("docker-publish.yml");
 
     // No private address or tailnet name of the deploy host in a public workflow.
-    expect(production).not.toMatch(/\b(?:10\.\d{1,3}|192\.168|172\.(?:1[6-9]|2\d|3[01]))\.\d{1,3}\.\d{1,3}\b/);
+    expect(production).not.toMatch(/\b(?:10\.\d{1,3}|192\.168|172\.(?:1[6-9]|2\d|3[01])|100\.(?:6[4-9]|[7-9]\d|1[01]\d|12[0-7]))\.\d{1,3}\.\d{1,3}\b/);
     expect(production).not.toMatch(/\.ts\.net\b/);
     expect(production).not.toContain("GITEA_TOKEN");
     expect(production).not.toMatch(/\bgit clone\b/);
