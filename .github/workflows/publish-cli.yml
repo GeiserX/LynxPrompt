@@ -162,13 +162,23 @@ jobs:
   # ===========================================
   # Build and upload standalone binaries
   # ===========================================
+  # Each runner builds, checks and packs the binary for its own platform, so a
+  # binary that does not start never reaches the release.
   publish-binaries:
     needs: [check, publish-npm]
     if: ${{ needs.check.outputs.should_publish == 'true' }}
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { runner: ubuntu-24.04, target: linux-x64, bin: lynxprompt }
+          - { runner: ubuntu-24.04-arm, target: linux-arm64, bin: lynxprompt }
+          - { runner: windows-latest, target: win-x64, bin: lynxprompt.exe }
+    runs-on: ${{ matrix.runner }}
     defaults:
       run:
         working-directory: cli
+        shell: bash
 
     steps:
       - name: Checkout
@@ -194,40 +204,34 @@ jobs:
             npm version "$TARGET" --no-git-tag-version
           fi
 
-      - name: Build standalone binaries
-        run: npm run build:binaries
-
-      - name: Package binaries
+      - name: Build standalone binary
         run: |
-          cd binaries
-          VERSION="${{ needs.check.outputs.version }}"
-          
-          # Linux x64
-          mv lynxprompt-linux-x64 lynxprompt
-          tar -czvf "lynxprompt-${VERSION}-linux-x64.tar.gz" lynxprompt
-          rm lynxprompt
-          
-          # Linux arm64
-          mv lynxprompt-linux-arm64 lynxprompt
-          tar -czvf "lynxprompt-${VERSION}-linux-arm64.tar.gz" lynxprompt
-          rm lynxprompt
-          
-          # macOS binaries are built, signed and packaged by sign-macos
+          npm run build:bundle
+          npm run pkg:bundle -- --targets node22-${{ matrix.target }} --output binaries/${{ matrix.bin }}
 
-          # Windows x64
-          mv lynxprompt-win-x64.exe lynxprompt.exe
-          zip "lynxprompt-${VERSION}-win-x64.zip" lynxprompt.exe
-          rm lynxprompt.exe
-          
+      - name: Check the binary starts
+        run: |
+          got=$(./binaries/${{ matrix.bin }} --version)
+          [ "$got" = "${{ needs.check.outputs.version }}" ] || { echo "::error::${{ matrix.target }} --version printed '$got'"; exit 1; }
+
+      - name: Package binary
+        working-directory: cli/binaries
+        run: |
+          VERSION="${{ needs.check.outputs.version }}"
+          if [[ "${{ matrix.target }}" == win-* ]]; then
+            7z a -tzip "lynxprompt-${VERSION}-${{ matrix.target }}.zip" "${{ matrix.bin }}"
+          else
+            tar -czvf "lynxprompt-${VERSION}-${{ matrix.target }}.tar.gz" "${{ matrix.bin }}"
+          fi
           ls -la
 
-      - name: Upload binaries to GitHub Release
+      - name: Upload binary to GitHub Release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: cli-v${{ needs.check.outputs.version }}
           files: |
-            cli/binaries/*.tar.gz
-            cli/binaries/*.zip
+            cli/binaries/lynxprompt-*.tar.gz
+            cli/binaries/lynxprompt-*.zip
           fail_on_unmatched_files: false
 
   # ===========================================
@@ -270,21 +274,12 @@ jobs:
             npm version "$TARGET" --no-git-tag-version
           fi
 
-      # pkg cannot load the ESM build or its dependencies' "#imports", so it gets
-      # one CommonJS bundle instead. It also compiles bytecode by running the
-      # target's own Node, which a host of the other architecture cannot do, and
-      # then packs the scripts empty; shipping plain sources avoids that.
       - name: Build macOS binaries
         run: |
-          npm run build
-          npx --no-install esbuild dist/index.js --bundle --platform=node --format=cjs --target=node22 \
-            --define:import.meta.url=__import_meta_url \
-            "--banner:js=const __import_meta_url = require('url').pathToFileURL(__filename).href;" \
-            --outfile=binaries/lynxprompt.cjs
-          npx pkg binaries/lynxprompt.cjs --no-bytecode --public-packages "*" --public \
-            --targets node22-macos-x64,node22-macos-arm64 --out-path binaries
-          # With a single platform, pkg names the outputs by arch only
-          for arch in x64 arm64; do mv "binaries/lynxprompt-$arch" "binaries/lynxprompt-macos-$arch"; done
+          npm run build:bundle
+          for arch in x64 arm64; do
+            npm run pkg:bundle -- --targets "node22-macos-$arch" --output "binaries/lynxprompt-macos-$arch"
+          done
           ls -la binaries
 
       - name: Sign and notarize

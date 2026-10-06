@@ -55,13 +55,13 @@ jobs:
             -t drumsergio/lynxprompt:dev-latest \
             --push .
 
-      - name: Update geiserback docker-compose
+      - name: Update the development stack in the GitOps repo
         run: |
           cd /tmp
-          rm -rf geiserback-deploy
+          rm -rf gitops-deploy
           GIT_CRED_HELPER='!f() { echo "username=${{ secrets.GITEA_USERNAME }}"; echo "password=${{ secrets.GITEA_TOKEN }}"; }; f'
-          git -c credential.helper="$GIT_CRED_HELPER" clone http://192.168.10.100:3010/giteaer/geiserback.git geiserback-deploy
-          cd geiserback-deploy
+          git -c credential.helper="$GIT_CRED_HELPER" clone "${{ vars.GITOPS_DEV_REPO_URL }}" gitops-deploy
+          cd gitops-deploy
           git config credential.helper "$GIT_CRED_HELPER"
 
           # Update image tag
@@ -74,7 +74,7 @@ jobs:
           git commit -m "deploy: update lynxprompt-dev to ${{ steps.version.outputs.version }}" || echo "No changes"
           git push origin main
 
-          cd /tmp && rm -rf geiserback-deploy
+          cd /tmp && rm -rf gitops-deploy
 
       - name: Health check
         run: |

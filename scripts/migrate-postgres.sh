@@ -1,6 +1,6 @@
 #!/bin/bash
 # PostgreSQL 17 to 18 Migration Script for LynxPrompt
-# Run this on watchtower server as root
+# Run this on the production host as root
 
 set -e  # Exit on any error
 

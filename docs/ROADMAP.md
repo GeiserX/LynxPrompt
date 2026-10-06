@@ -21,7 +21,7 @@ Companies deploy their own instance to manage AI IDE configurations (AGENTS.md, 
 
 #### 2. Remove Error Tracking Dependencies
 - Remove all GlitchTip-specific code, hardcoded DSNs, and Sentry packages
-- Delete GlitchTip infrastructure (containers, Caddy entry, DNS record, gitea repo)
+- Delete GlitchTip infrastructure (containers, Caddy entry, DNS record, GitOps stack)
 
 #### 3. Remove ClickHouse (Analytics)
 - Remove all ClickHouse code (analytics lib, API routes, env vars, docker-compose service)
@@ -62,7 +62,7 @@ All features configurable via env vars for maximum deployment flexibility:
 - **Default**: single PostgreSQL database (all 4 Prisma schemas share one DB)
 - **Advanced**: users can split into separate databases via different `DATABASE_URL_*` vars
 - Remove Percona pg_tde from development docker-compose — use standard `postgres:18-alpine` everywhere
-- Keep Percona pg_tde only in production/dev-server docker-compose (gitea) where it's already deployed
+- Keep Percona pg_tde only in production/dev-server docker-compose (private GitOps repo) where it's already deployed
 - New `docker-compose.selfhost.yml`: 1 Postgres + 1 LynxPrompt container
 
 #### 6. Dynamic CSP Headers
@@ -126,9 +126,9 @@ A decentralized blueprint sharing network across LynxPrompt instances.
 
 ### Infrastructure Changes for v2.0
 
-- Delete GlitchTip stack from watchtower (containers + gitea repo + Caddy entry + DNS)
-- Update prod docker-compose (gitea/watchtower/lynxprompt/) with all new feature flags enabled
-- Update dev docker-compose (gitea/geiserback/lynxprompt-dev/) with all new feature flags enabled
+- Delete GlitchTip stack from the production host (containers + GitOps stack + Caddy entry + DNS)
+- Update prod docker-compose (`lynxprompt/` in the private GitOps repo) with all new feature flags enabled
+- Update dev docker-compose (`lynxprompt-dev/` in the private GitOps repo) with all new feature flags enabled
 - Bump image tag to `drumsergio/lynxprompt:2.0.0`
 - Remove error tracking env vars from prod/dev docker-compose
 
@@ -594,7 +594,7 @@ POST   /api/generate               - Generate config files from wizard data
   - Encrypt sensitive columns (passkey credentials, OAuth tokens, etc.)
   - Implementation: Enable pgcrypto extension, encrypt/decrypt in Prisma queries
   - Priority: Medium (data is already protected by network isolation)
-- [ ] Filesystem-level encryption for database volumes (Unraid encrypted share)
+- [ ] Filesystem-level encryption for database volumes (encrypted share on the host)
 - [ ] Annual third-party penetration test
 - [ ] Bug bounty program (HackerOne or similar)
 
