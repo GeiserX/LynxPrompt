@@ -87,6 +87,9 @@ postgresql:
   auth:
     username: lynxprompt
     password: ""
+    # The app's database. The users, blog and support schemas get their own
+    # databases next to it (lynxprompt_users, lynxprompt_blog, lynxprompt_support),
+    # created on the first start.
     database: lynxprompt
   persistence:
     enabled: true
@@ -111,6 +114,9 @@ externalDatabase:
   port: 5432
   user: ""
   password: ""
+  # The app's database. The app also uses <database>_users, <database>_blog and
+  # <database>_support; it creates them on the first start if `user` may create
+  # databases, otherwise create all four beforehand.
   database: ""
   ssl:
     enabled: false

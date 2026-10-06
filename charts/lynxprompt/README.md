@@ -18,6 +18,7 @@ This chart deploys the LynxPrompt web application and an optional bundled Postgr
   - concurrent pod starts all run `db push`
 - If you want multiple replicas, use shared/object storage for uploads and move schema management outside normal pod startup.
 - If `postgresql.enabled=false`, set the external database coordinates in `externalDatabase.*` and provide `db-password` via `auth.existingSecret` or `externalDatabase.password`.
+- Each of the four schemas gets its own database on the one PostgreSQL server: the configured name for the app, plus `<name>_users`, `<name>_blog` and `<name>_support`. The first start creates the last three. On an external server whose user cannot create databases, create all four beforehand. Charts before 0.1.3 pointed all four at one database, where each start dropped the other schemas' tables.
 - The chart uses Helm `lookup` to preserve generated secrets on upgrade. For GitOps or `helm template` workflows, prefer `auth.existingSecret` so renders stay deterministic.
 
 ## Secrets

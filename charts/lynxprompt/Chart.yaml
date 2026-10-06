@@ -3,7 +3,7 @@ name: lynxprompt
 description: A Helm chart for LynxPrompt - Self-hosted AI IDE configuration hub
 type: application
 kubeVersion: ">=1.21.0-0"
-version: 0.1.2
+version: 0.1.3
 appVersion: "2.0.75"
 keywords:
   - lynxprompt
@@ -22,3 +22,6 @@ maintainers:
     email: acsdesk@protonmail.com
 annotations:
   category: AI
+  artifacthub.io/changes: |
+    - kind: fixed
+      description: Give each of the four schemas its own database; one shared database lost tables at every start
