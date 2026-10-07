@@ -176,10 +176,27 @@ jobs:
           fi
 
   # ===========================================
+  # Tests: nothing is tagged or published unless they pass
+  # ===========================================
+  ci:
+    name: CI
+    permissions:
+      contents: read
+    uses: ./.github/workflows/ci.yml
+
+  cli-tests:
+    name: CLI tests
+    permissions:
+      contents: read
+    uses: ./.github/workflows/cli-tests.yml
+    with:
+      release: true
+
+  # ===========================================
   # Release App (Web UI)
   # ===========================================
   release-app:
-    needs: prepare
+    needs: [prepare, ci]
     if: ${{ needs.prepare.outputs.should_release_app == 'true' }}
     runs-on: ubuntu-latest
 
@@ -296,7 +313,7 @@ jobs:
   # Release CLI
   # ===========================================
   release-cli:
-    needs: prepare
+    needs: [prepare, cli-tests]
     if: ${{ needs.prepare.outputs.should_release_cli == 'true' }}
     runs-on: ubuntu-latest
 

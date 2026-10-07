@@ -9,8 +9,17 @@ echo "Starting at $(date)"
 echo ""
 
 # Configuration
-COMPOSE_DIR="/data/compose/161"
-BACKUP_DIR="/mnt/user/appdata/lynxprompt/migration-backup-$(date +%Y%m%d-%H%M%S)"
+# Set these to the stack's compose directory and the directory that holds the
+# postgres-app and postgres-users data folders on the host.
+COMPOSE_DIR="${COMPOSE_DIR:?ERROR: COMPOSE_DIR must be set to the directory holding docker-compose.yml}"
+DATA_DIR="${DATA_DIR:?ERROR: DATA_DIR must be set to the directory holding postgres-app and postgres-users}"
+# The backup runs before the cd into COMPOSE_DIR and the cleanup after it, so a
+# relative DATA_DIR would point at two different places.
+case "$DATA_DIR" in
+  /*) ;;
+  *) echo "ERROR: DATA_DIR must be an absolute path" >&2; exit 1 ;;
+esac
+BACKUP_DIR="$DATA_DIR/migration-backup-$(date +%Y%m%d-%H%M%S)"
 APP_DUMP="$BACKUP_DIR/lynxprompt_app.sql"
 USERS_DUMP="$BACKUP_DIR/lynxprompt_users.sql"
 
@@ -43,16 +52,16 @@ echo "  - Dumping USERS database (SQL format for safety)..."
 docker exec lynxprompt-postgres-users pg_dump -U "$USERS_USER" -d "$USERS_DB" > "$USERS_DUMP"
 
 echo "Step 3: Backing up data directories..."
-cp -r /mnt/user/appdata/lynxprompt/postgres-app "$BACKUP_DIR/postgres-app-v17"
-cp -r /mnt/user/appdata/lynxprompt/postgres-users "$BACKUP_DIR/postgres-users-v17"
+cp -r "$DATA_DIR"/postgres-app "$BACKUP_DIR/postgres-app-v17"
+cp -r "$DATA_DIR"/postgres-users "$BACKUP_DIR/postgres-users-v17"
 
 echo "Step 4: Stopping containers..."
 cd "$COMPOSE_DIR"
 docker-compose stop postgres-app postgres-users
 
 echo "Step 5: Removing old data directories..."
-rm -rf /mnt/user/appdata/lynxprompt/postgres-app/*
-rm -rf /mnt/user/appdata/lynxprompt/postgres-users/*
+rm -rf "$DATA_DIR"/postgres-app/*
+rm -rf "$DATA_DIR"/postgres-users/*
 
 echo "Step 6: Starting PostgreSQL 18 containers (will initialize fresh)..."
 docker-compose up -d postgres-app postgres-users

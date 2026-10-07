@@ -7,11 +7,17 @@ on:
       - 'cli/**'
       - 'packages/shared/**'
       - '.github/workflows/cli-tests.yml'
+  # No path filter on pull requests: the build and public tests are required
+  # checks, and a required check that never starts blocks the PR forever.
   pull_request:
     branches: [main, develop]
-    paths:
-      - 'cli/**'
-      - 'packages/shared/**'
+  # release.yml runs the build and the public tests before it tags a CLI release.
+  workflow_call:
+    inputs:
+      release:
+        description: 'Called by the release workflow: skip the tests against the dev server'
+        type: boolean
+        default: false
   workflow_dispatch:
     inputs:
       environment:
@@ -40,8 +46,16 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Install CLI globally from npm
-        run: npm install -g lynxprompt
+      # Test this commit's CLI, not the version already on npm.
+      - name: Build shared package
+        run: npx --yes --package typescript tsc -p packages/shared/tsconfig.json
+
+      - name: Build CLI from source
+        working-directory: cli
+        run: |
+          npm ci
+          npm run build
+          npm link
 
       - name: Verify CLI installation
         run: |
@@ -83,17 +97,19 @@ jobs:
           lynxp status
           echo "✓ Status works"
 
+      # A release checks the CLI against production, the server it ships for.
       - name: Test search (public)
         env:
-          LYNXPROMPT_API_URL: ${{ inputs.environment == 'prod' && 'https://lynxprompt.com' || 'https://dev.lynxprompt.com' }}
+          LYNXPROMPT_API_URL: ${{ (inputs.environment == 'prod' || inputs.release) && 'https://lynxprompt.com' || 'https://dev.lynxprompt.com' }}
         run: |
-          lynxp search "nextjs" --limit 3 || true
+          lynxp search "nextjs" --limit 3
           echo "✓ Search works"
 
   # Authenticated tests (only on main/develop, not PRs from forks)
   # Uses built-from-source CLI to test current code against dev server
   authenticated-tests:
     name: Authenticated CLI Tests
+    if: ${{ !inputs.release }}
     runs-on: ubuntu-latest
     needs: [build-test]  # Ensure build passes first
     env:
@@ -162,7 +178,7 @@ jobs:
       - name: Test list blueprints
         if: env.LYNXPROMPT_TOKEN != ''
         run: |
-          lynxp list || true
+          lynxp list
           echo "✓ List works"
 
       - name: Create test directory

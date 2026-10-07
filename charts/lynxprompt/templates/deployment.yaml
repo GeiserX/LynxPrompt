@@ -121,11 +121,16 @@ spec:
               value: {{ .Values.app.enableFederation | quote }}
             - name: FEDERATION_REGISTRY_URL
               value: {{ .Values.app.federationRegistryUrl | quote }}
-            # --- Database: all 4 logical DBs point to the same PostgreSQL instance ---
+            # --- Database: one PostgreSQL server, one database per Prisma schema ---
+            # prisma db push drops the tables it does not know, so two schemas in
+            # one database delete each other's tables at every start. The app's
+            # database takes the configured name; the other three add a suffix and
+            # the first start creates them, as in docker-compose.selfhost.yml.
             {{- $dbHost := include "lynxprompt.postgresql.host" . }}
             {{- $dbPort := include "lynxprompt.postgresql.port" . }}
             {{- $dbUser := include "lynxprompt.postgresql.user" . }}
             {{- $dbName := include "lynxprompt.postgresql.database" . }}
+            {{- $dbNames := dict "APP" $dbName "USERS" (printf "%s_users" $dbName) "BLOG" (printf "%s_blog" $dbName) "SUPPORT" (printf "%s_support" $dbName) }}
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -145,7 +150,7 @@ spec:
             - name: DB_{{ . }}_PASSWORD
               value: "$(DB_PASSWORD)"
             - name: DB_{{ . }}_NAME
-              value: {{ $dbName | quote }}
+              value: {{ index $dbNames . | quote }}
             {{- end }}
             # --- OAuth (optional) ---
             {{- if .Values.oauth.github.clientId }}

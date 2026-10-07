@@ -20,7 +20,7 @@ describe("isPrivateIP", () => {
 
   it("returns true for 192.168.x.x (RFC 1918)", () => {
     expect(isPrivateIP("192.168.0.1")).toBe(true);
-    expect(isPrivateIP("192.168.10.100")).toBe(true);
+    expect(isPrivateIP("192.168.1.100")).toBe(true);
   });
 
   it("returns true for 127.x.x.x (loopback)", () => {
