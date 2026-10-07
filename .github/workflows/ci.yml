@@ -143,13 +143,13 @@ jobs:
     name: Integration Smoke Tests
     runs-on: ubuntu-latest
     needs: [build]
-    if: (github.event_name == 'push' || github.event_name == 'pull_request') && github.workflow == 'CI'  # PLANTED
+    if: github.event_name == 'push' && github.workflow == 'CI'
     env:
       CURL: curl -sSf --retry 3 --retry-all-errors --retry-delay 10 --max-time 15
     steps:
       - name: Health endpoint
         run: |
-          RESPONSE=$($CURL https://dev.lynxprompt.com/api/planted-404)  # PLANTED
+          RESPONSE=$($CURL https://dev.lynxprompt.com/api/health)
           echo "$RESPONSE"
           echo "$RESPONSE" | jq -e '.status == "ok" and .db == "connected"' > /dev/null
           echo "✅ Health endpoint OK"

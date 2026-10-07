@@ -100,7 +100,7 @@ jobs:
       # A release checks the CLI against production, the server it ships for.
       - name: Test search (public)
         env:
-          LYNXPROMPT_API_URL: https://planted-failure.invalid  # PLANTED, reverted next commit
+          LYNXPROMPT_API_URL: ${{ (inputs.environment == 'prod' || inputs.release) && 'https://lynxprompt.com' || 'https://dev.lynxprompt.com' }}
         run: |
           lynxp search "nextjs" --limit 3
           echo "✓ Search works"
