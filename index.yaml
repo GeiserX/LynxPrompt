@@ -2,6 +2,37 @@ apiVersion: v1
 entries:
   lynxprompt:
   - annotations:
+      artifacthub.io/changes: |
+        - kind: fixed
+          description: Give each of the four schemas its own database; one shared database lost tables at every start
+      category: AI
+    apiVersion: v2
+    appVersion: 2.0.75
+    created: "2026-10-07T00:46:04.404012613Z"
+    description: A Helm chart for LynxPrompt - Self-hosted AI IDE configuration hub
+    digest: 06caffe48834d39cdec9e1ac6da3945ba33af242cbf063496b866ad3bcb2e56e
+    home: https://lynxprompt.com
+    keywords:
+    - lynxprompt
+    - ai
+    - ide
+    - configuration
+    - cursor
+    - claude
+    - copilot
+    - self-hosted
+    kubeVersion: '>=1.21.0-0'
+    maintainers:
+    - email: acsdesk@protonmail.com
+      name: Sergio Fernandez
+    name: lynxprompt
+    sources:
+    - https://github.com/GeiserX/LynxPrompt
+    type: application
+    urls:
+    - https://github.com/GeiserX/LynxPrompt/releases/download/lynxprompt-0.1.3/lynxprompt-0.1.3.tgz
+    version: 0.1.3
+  - annotations:
       category: AI
     apiVersion: v2
     appVersion: 2.0.75
@@ -58,4 +89,4 @@ entries:
     urls:
     - https://github.com/GeiserX/LynxPrompt/releases/download/lynxprompt-0.1.1/lynxprompt-0.1.1.tgz
     version: 0.1.1
-generated: "2026-04-08T10:34:17.782014092Z"
+generated: "2026-10-07T00:46:04.40402385Z"
