@@ -162,12 +162,14 @@ jobs:
 
       - name: Homepage returns 200
         run: |
-          $CURL -o /dev/null https://dev.lynxprompt.com/
+          STATUS=$($CURL -o /dev/null -w '%{http_code}' https://dev.lynxprompt.com/)
+          [ "$STATUS" = 200 ] || { echo "❌ Homepage returned $STATUS"; exit 1; }
           echo "✅ Homepage returns 200"
 
       - name: Login page returns 200
         run: |
-          $CURL -o /dev/null https://dev.lynxprompt.com/auth/signin
+          STATUS=$($CURL -o /dev/null -w '%{http_code}' https://dev.lynxprompt.com/auth/signin)
+          [ "$STATUS" = 200 ] || { echo "❌ Login page returned $STATUS"; exit 1; }
           echo "✅ Login page returns 200"
 
   summary:
