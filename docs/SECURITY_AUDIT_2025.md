@@ -49,7 +49,7 @@ This security audit identified **1 critical vulnerability** and **3 medium-prior
 
 **Current CSP**:
 ```
-script-src 'self' 'unsafe-inline' 'unsafe-eval' https://umami.geiser.cloud https://challenges.cloudflare.com
+script-src 'self' 'unsafe-inline' 'unsafe-eval' https://<analytics host on the deploy host> https://challenges.cloudflare.com
 ```
 
 **Impact**: Reduces effectiveness of CSP in preventing XSS attacks. However, Next.js requires `'unsafe-inline'` for inline scripts, and `'unsafe-eval'` may be needed for certain features.
