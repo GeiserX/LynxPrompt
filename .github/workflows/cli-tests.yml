@@ -261,3 +261,21 @@ jobs:
           node dist/index.js --version
           node dist/index.js --help
           echo "✓ Built CLI works"
+
+      - name: Test convert writes valid Aider YAML
+        working-directory: cli
+        run: |
+          dir=$(mktemp -d)
+          printf '# Project\n\nBuild with C:\\tools\\make.exe\nSay "hi" and end with a backslash \\\n' > "$dir/AGENTS.md"
+          (cd "$dir" && node "$GITHUB_WORKSPACE/cli/dist/index.js" convert AGENTS.md aider)
+          node --input-type=module -e '
+            import { readFileSync } from "node:fs";
+            import { parse } from "yaml";
+            const got = parse(readFileSync(process.argv[1], "utf8")).conventions;
+            const want = ["Build with C:\\tools\\make.exe", "Say \"hi\" and end with a backslash \\"];
+            if (JSON.stringify(got) !== JSON.stringify(want)) {
+              console.error("conventions:", JSON.stringify(got));
+              process.exit(1);
+            }
+          ' "$dir/.aider.conf.yml"
+          echo "✓ Aider conventions keep backslashes and quotes"
