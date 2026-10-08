@@ -10,6 +10,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - **Helm chart 0.1.3**: each of the four Prisma schemas gets its own database (`<name>`, `<name>_users`, `<name>_blog`, `<name>_support`). Earlier charts pointed all four at one database, so every start dropped the other schemas' tables and sign-in failed.
 
+## [2.1.38] - 2026-10-09
+
+App 2.1.38 and CLI 2.1.35.
+
+### Security
+- **Repository detection no longer reaches internal hosts**: the wizard's "detect from repository" endpoint matched hosts as substrings of the whole URL, so a URL such as `https://10.0.0.5:8443/gitlab.com/x` was treated as GitLab and the server called the internal address. Hosts are now compared on the parsed hostname, web detection only queries gitlab.com, GitHub owner and repository names are validated and URL-encoded, and the GitHub URL pattern is anchored so long input cannot make it slow. The CLI classifies hosts by hostname the same way.
+- **Federation heartbeat calls the registered domain**: the heartbeat built its outgoing request from the domain in the request body. It now uses the domain stored on the registered instance.
+- **Read-only CI token**: the CLI tests and Docker Hub description workflows now run with `contents: read`.
+
+### Fixed
+- **CLI `convert` to Aider**: backslashes are escaped, so a rule holding a Windows path or ending in a backslash no longer produces a `.aider.conf.yml` that fails to parse.
+
 ## [2.0.0] - February 2026
 
 ### BREAKING CHANGES

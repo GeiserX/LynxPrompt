@@ -173,7 +173,7 @@ export function parseGitHubUrl(url: string): { owner: string; repo: string } | n
  * Parse GitLab repo URL to project path (handles groups/subgroups)
  */
 export function parseGitLabUrl(url: string): { path: string; host: string } | null {
-  // Support gitlab.com and self-hosted GitLab instances
+  // Parses any GitLab-looking URL; detectGitLabRepo only queries gitlab.com
   const patterns = [
     /^https?:\/\/([^/]+)\/(.+?)(?:\.git)?$/,
     /^git@([^:]+):(.+?)(?:\.git)?$/,
