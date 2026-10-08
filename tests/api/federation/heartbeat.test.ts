@@ -123,4 +123,38 @@ describe("POST /api/v1/federation/heartbeat", () => {
       }),
     );
   });
+  it("calls the registered domain, not the string sent in the request", async () => {
+    vi.stubEnv("ENABLE_FEDERATION", "true");
+    // The lookup matched a registered, verified instance; the request text
+    // itself must never become the host the server calls.
+    mockFindUnique.mockResolvedValueOnce({
+      domain: "registered.example.com",
+      verified: true,
+      version: "2.0.0",
+      publicBlueprintCount: 5,
+    });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({ domain: "registered.example.com", federation: true }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    mockUpdate.mockResolvedValueOnce({});
+
+    const { POST } = await import(
+      "@/app/api/v1/federation/heartbeat/route"
+    );
+    const request = new NextRequest("https://lynxprompt.com/api/v1/federation/heartbeat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ domain: "10.0.0.5:8443/x?" }),
+    });
+    const response = await POST(request);
+
+    expect(response.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://registered.example.com/.well-known/lynxprompt.json",
+    );
+  });
 });
