@@ -99,20 +99,55 @@ interface GitLabRepoInfo {
   default_branch: string;
 }
 
+// Only gitlab.com is queried: a user-chosen host would let anyone make the
+// server call internal addresses (SSRF).
+const GITLAB_HOST = "gitlab.com";
+const GITLAB_API = `https://${GITLAB_HOST}/api/v4`;
+
+// GitHub owner and repository names: letters, digits, "-", "_" and ".", never "." or "..".
+const GITHUB_NAME = /^(?!\.\.?$)[A-Za-z0-9_.-]+$/;
+
+/**
+ * Split a repository URL into its lower-cased hostname and its path.
+ * Accepts https://host/..., ssh://git@host/..., git@host:owner/repo and host/owner/repo.
+ * Returns an empty hostname when the input has none.
+ */
+function splitRepoUrl(url: string): { hostname: string; path: string } {
+  const trimmed = url.trim();
+  const scp = trimmed.match(/^[^@\s/]+@([^:\s/]+):/);
+  if (scp) {
+    return { hostname: scp[1].toLowerCase(), path: trimmed.slice(scp[0].length) };
+  }
+  try {
+    const withScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+    const parsed = new URL(withScheme);
+    return { hostname: parsed.hostname.toLowerCase(), path: parsed.pathname };
+  } catch {
+    return { hostname: "", path: "" };
+  }
+}
+
+/** True when hostname is domain itself or one of its subdomains. */
+function isHostOrSubdomain(hostname: string, domain: string): boolean {
+  return hostname === domain || hostname.endsWith(`.${domain}`);
+}
+
 /**
  * Detect repo host from URL
  */
 export function detectRepoHost(url: string): string {
-  const lower = url.toLowerCase();
-  if (lower.includes("github.com") || lower.includes("github:")) return "github";
-  if (lower.includes("gitlab.com") || lower.includes("gitlab:")) return "gitlab";
-  if (lower.includes("bitbucket.org") || lower.includes("bitbucket:")) return "bitbucket";
-  if (lower.includes("gitea.") || lower.includes("gitea:")) return "gitea";
-  if (lower.includes("forgejo.")) return "forgejo";
-  if (lower.includes("codeberg.org")) return "codeberg";
-  if (lower.includes("sr.ht") || lower.includes("sourcehut")) return "sourcehut";
-  if (lower.includes("azure.com") || lower.includes("visualstudio.com") || lower.includes("dev.azure")) return "azure_devops";
-  if (lower.includes("gogs.")) return "gogs";
+  const lower = url.trim().toLowerCase();
+  const { hostname } = splitRepoUrl(lower);
+  const on = (domain: string) => isHostOrSubdomain(hostname, domain);
+  if (on("github.com") || lower.startsWith("github:")) return "github";
+  if (on("gitlab.com") || lower.startsWith("gitlab:")) return "gitlab";
+  if (on("bitbucket.org") || lower.startsWith("bitbucket:")) return "bitbucket";
+  if (hostname.startsWith("gitea.") || hostname.includes(".gitea.") || lower.startsWith("gitea:")) return "gitea";
+  if (hostname.startsWith("forgejo.") || hostname.includes(".forgejo.")) return "forgejo";
+  if (on("codeberg.org")) return "codeberg";
+  if (on("sr.ht") || lower.includes("sourcehut")) return "sourcehut";
+  if (on("azure.com") || on("visualstudio.com")) return "azure_devops";
+  if (hostname.startsWith("gogs.") || hostname.includes(".gogs.")) return "gogs";
   return "other";
 }
 
@@ -120,19 +155,18 @@ export function detectRepoHost(url: string): string {
  * Parse GitHub repo URL to owner/repo
  */
 export function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
-  // Support various GitHub URL formats
-  const patterns = [
-    /github\.com[/:]([^/]+)\/([^/.]+)/,
-    /^([^/]+)\/([^/]+)$/,
-  ];
+  // Support github.com URLs (https, ssh, scp-like) and the owner/repo shorthand.
+  // Both patterns are anchored so a long input cannot make the match quadratic.
+  const { hostname, path } = splitRepoUrl(url);
+  const match =
+    (isHostOrSubdomain(hostname, "github.com") ? path.match(/^\/?([^/]+)\/([^/.]+)/) : null) ??
+    url.match(/^([^/]+)\/([^/]+)$/);
+  if (!match) return null;
 
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match) {
-      return { owner: match[1], repo: match[2].replace(/\.git$/, "") };
-    }
-  }
-  return null;
+  const owner = match[1];
+  const repo = match[2].replace(/\.git$/, "");
+  if (!GITHUB_NAME.test(owner) || !GITHUB_NAME.test(repo)) return null;
+  return { owner, repo };
 }
 
 /**
@@ -163,7 +197,6 @@ export function parseGitLabUrl(url: string): { path: string; host: string } | nu
  * Fetch file content from GitLab
  */
 async function fetchGitLabFile(
-  host: string,
   projectPath: string,
   filePath: string
 ): Promise<string | null> {
@@ -171,7 +204,7 @@ async function fetchGitLabFile(
     const encodedPath = encodeURIComponent(projectPath);
     const encodedFile = encodeURIComponent(filePath);
     const response = await fetch(
-      `https://${host}/api/v4/projects/${encodedPath}/repository/files/${encodedFile}/raw?ref=HEAD`,
+      `${GITLAB_API}/projects/${encodedPath}/repository/files/${encodedFile}/raw?ref=HEAD`,
       {
         headers: {
           "User-Agent": "LynxPrompt-Wizard",
@@ -190,15 +223,14 @@ async function fetchGitLabFile(
  * List files in GitLab repo
  */
 async function listGitLabFiles(
-  host: string,
   projectPath: string,
   path = ""
 ): Promise<GitLabFile[]> {
   try {
     const encodedPath = encodeURIComponent(projectPath);
     const url = path
-      ? `https://${host}/api/v4/projects/${encodedPath}/repository/tree?path=${encodeURIComponent(path)}&per_page=100`
-      : `https://${host}/api/v4/projects/${encodedPath}/repository/tree?per_page=100`;
+      ? `${GITLAB_API}/projects/${encodedPath}/repository/tree?path=${encodeURIComponent(path)}&per_page=100`
+      : `${GITLAB_API}/projects/${encodedPath}/repository/tree?per_page=100`;
     
     const response = await fetch(url, {
       headers: {
@@ -217,13 +249,12 @@ async function listGitLabFiles(
  * Get GitLab repo info
  */
 async function getGitLabRepoInfo(
-  host: string,
   projectPath: string
 ): Promise<GitLabRepoInfo | null> {
   try {
     const encodedPath = encodeURIComponent(projectPath);
     const response = await fetch(
-      `https://${host}/api/v4/projects/${encodedPath}`,
+      `${GITLAB_API}/projects/${encodedPath}`,
       {
         headers: {
           "User-Agent": "LynxPrompt-Wizard",
@@ -248,7 +279,7 @@ async function fetchGitHubFile(
 ): Promise<string | null> {
   try {
     const response = await fetch(
-      `https://raw.githubusercontent.com/${owner}/${repo}/HEAD/${path}`,
+      `https://raw.githubusercontent.com/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/HEAD/${path}`,
       { next: { revalidate: 60 } }
     );
     if (!response.ok) return null;
@@ -268,7 +299,7 @@ async function listGitHubFiles(
 ): Promise<GitHubFile[]> {
   try {
     const response = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
+      `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${path}`,
       {
         headers: {
           Accept: "application/vnd.github.v3+json",
@@ -293,7 +324,7 @@ async function getGitHubRepoInfo(
 ): Promise<GitHubRepoInfo | null> {
   try {
     const response = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}`,
+      `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`,
       {
         headers: {
           Accept: "application/vnd.github.v3+json",
@@ -628,9 +659,12 @@ export async function detectGitLabRepo(repoUrl: string): Promise<DetectedRepo | 
   }
 
   const { path: projectPath, host } = parsed;
+  if (host.toLowerCase() !== GITLAB_HOST) {
+    return null;
+  }
 
   // Get repo info
-  const repoInfo = await getGitLabRepoInfo(host, projectPath);
+  const repoInfo = await getGitLabRepoInfo(projectPath);
   if (!repoInfo) {
     return null;
   }
@@ -664,7 +698,7 @@ export async function detectGitLabRepo(repoUrl: string): Promise<DetectedRepo | 
   };
 
   // List root files
-  const rootFiles = await listGitLabFiles(host, projectPath);
+  const rootFiles = await listGitLabFiles(projectPath);
   const fileNames = new Set(rootFiles.map((f) => f.name.toLowerCase()));
 
   // Check for existing static files
@@ -700,7 +734,7 @@ export async function detectGitLabRepo(repoUrl: string): Promise<DetectedRepo | 
         : null;
     
     if (dockerComposeFile) {
-      const dockerCompose = await fetchGitLabFile(host, projectPath, dockerComposeFile);
+      const dockerCompose = await fetchGitLabFile(projectPath, dockerComposeFile);
       if (dockerCompose) {
         if (dockerCompose.includes("registry.gitlab.com")) detected.containerRegistry = "gitlab_registry";
         else if (dockerCompose.includes("ghcr.io")) detected.containerRegistry = "ghcr";
@@ -718,7 +752,7 @@ export async function detectGitLabRepo(repoUrl: string): Promise<DetectedRepo | 
 
   // Detect from package.json (Node.js)
   if (fileNames.has("package.json")) {
-    const packageContent = await fetchGitLabFile(host, projectPath, "package.json");
+    const packageContent = await fetchGitLabFile(projectPath, "package.json");
     if (packageContent) {
       try {
         const pkg = JSON.parse(packageContent);
@@ -786,7 +820,7 @@ export async function detectGitLabRepo(repoUrl: string): Promise<DetectedRepo | 
 
   // Detect from pyproject.toml (Python)
   if (fileNames.has("pyproject.toml")) {
-    const content = await fetchGitLabFile(host, projectPath, "pyproject.toml");
+    const content = await fetchGitLabFile(projectPath, "pyproject.toml");
     if (content) {
       const lowerContent = content.toLowerCase();
       detected.stack.push("python");
@@ -835,7 +869,7 @@ export async function detectGitLabRepo(repoUrl: string): Promise<DetectedRepo | 
 
   // Try to get better license detection from LICENSE file
   if (!detected.license && detected.existingFiles.includes("LICENSE")) {
-    const licenseContent = await fetchGitLabFile(host, projectPath, "LICENSE");
+    const licenseContent = await fetchGitLabFile(projectPath, "LICENSE");
     if (licenseContent) {
       detected.license = detectLicense(licenseContent);
     }

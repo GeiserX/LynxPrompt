@@ -719,15 +719,16 @@ export async function detectProject(cwd: string): Promise<DetectedProject | null
         const repoUrl = urlMatch[1].trim();
         detected.repoUrl = repoUrl;
         
-        if (repoUrl.includes("github.com")) {
+        const remoteHost = repoUrlHostname(repoUrl);
+        if (isHostOrSubdomain(remoteHost, "github.com")) {
           detected.repoHost = "github";
-        } else if (repoUrl.includes("gitlab.com") || repoUrl.includes("gitlab")) {
+        } else if (remoteHost.includes("gitlab")) {
           detected.repoHost = "gitlab";
-        } else if (repoUrl.includes("bitbucket")) {
+        } else if (remoteHost.includes("bitbucket")) {
           detected.repoHost = "bitbucket";
-        } else if (repoUrl.includes("gitea") || repoUrl.includes("codeberg")) {
+        } else if (remoteHost.includes("gitea") || remoteHost.includes("codeberg")) {
           detected.repoHost = "gitea";
-        } else if (repoUrl.includes("azure")) {
+        } else if (remoteHost.includes("azure")) {
           detected.repoHost = "azure";
         }
       }
@@ -814,15 +815,40 @@ async function fileExists(path: string): Promise<boolean> {
 }
 
 /**
+ * Lower-cased hostname of a repository URL, or "" when it has none.
+ * Accepts https://host/..., ssh://git@host/..., git@host:owner/repo and host/owner/repo.
+ * Hosts are compared on the parsed hostname, never on a substring of the whole URL,
+ * so "https://evil.example/github.com/x" is not taken for GitHub.
+ */
+function repoUrlHostname(url: string): string {
+  const trimmed = url.trim();
+  const scp = trimmed.match(/^[^@\s/]+@([^:\s/]+):/);
+  if (scp) return scp[1].toLowerCase();
+  try {
+    const withScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+    return new URL(withScheme).hostname.toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
+/** True when hostname is domain itself or one of its subdomains. */
+function isHostOrSubdomain(hostname: string, domain: string): boolean {
+  return hostname === domain || hostname.endsWith(`.${domain}`);
+}
+
+/**
  * Detect repo host from URL
  */
 export function detectRepoHost(url: string): string {
-  const lower = url.toLowerCase();
-  if (lower.includes("github.com") || lower.includes("github:")) return "github";
-  if (lower.includes("gitlab.com") || lower.includes("gitlab")) return "gitlab";
-  if (lower.includes("bitbucket.org") || lower.includes("bitbucket:")) return "bitbucket";
-  if (lower.includes("gitea.") || lower.includes("gitea:") || lower.includes("codeberg.org")) return "gitea";
-  if (lower.includes("azure.com") || lower.includes("visualstudio.com") || lower.includes("dev.azure")) return "azure";
+  const lower = url.trim().toLowerCase();
+  const hostname = repoUrlHostname(lower);
+  const on = (domain: string) => isHostOrSubdomain(hostname, domain);
+  if (on("github.com") || lower.startsWith("github:")) return "github";
+  if (hostname.includes("gitlab") || lower.startsWith("gitlab:")) return "gitlab";
+  if (on("bitbucket.org") || lower.startsWith("bitbucket:")) return "bitbucket";
+  if (hostname.startsWith("gitea.") || hostname.includes(".gitea.") || lower.startsWith("gitea:") || on("codeberg.org")) return "gitea";
+  if (on("azure.com") || on("visualstudio.com")) return "azure";
   return "other";
 }
 
