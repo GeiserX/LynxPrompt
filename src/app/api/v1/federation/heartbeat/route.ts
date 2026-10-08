@@ -80,9 +80,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Call the domain that passed registration, never the string from this request.
+  const instanceDomain = existing.domain;
+
   // SSRF protection: ensure the domain does not resolve to a private/internal IP
   try {
-    await validateDomainNotPrivate(sanitizedDomain);
+    await validateDomainNotPrivate(instanceDomain);
   } catch {
     return NextResponse.json(
       { error: "Domain resolves to a private/reserved IP address" },
@@ -96,7 +99,7 @@ export async function POST(request: NextRequest) {
     const timeout = setTimeout(() => controller.abort(), 10_000);
 
     const res = await fetch(
-      `https://${sanitizedDomain}/.well-known/lynxprompt.json`,
+      `https://${instanceDomain}/.well-known/lynxprompt.json`,
       { signal: controller.signal, redirect: "manual", headers: { Accept: "application/json" } },
     );
     clearTimeout(timeout);
@@ -116,7 +119,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (!wellKnown.federation || wellKnown.domain?.toLowerCase() !== sanitizedDomain) {
+  if (!wellKnown.federation || wellKnown.domain?.toLowerCase() !== instanceDomain) {
     return NextResponse.json(
       { error: "Invalid .well-known response or domain mismatch" },
       { status: 422 },
@@ -124,7 +127,7 @@ export async function POST(request: NextRequest) {
   }
 
   await prismaApp.federatedInstance.update({
-    where: { domain: sanitizedDomain },
+    where: { domain: instanceDomain },
     data: {
       lastSeenAt: new Date(),
       version: wellKnown.version ?? existing.version,
