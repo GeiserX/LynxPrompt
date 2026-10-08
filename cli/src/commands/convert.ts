@@ -269,7 +269,7 @@ conventions:
 ${rawContent
   .split("\n")
   .filter(line => line.trim() && !line.startsWith("#"))
-  .map(line => `  - "${line.replace(/"/g, '\\"').trim()}"`)
+  .map(line => `  - "${line.trim().replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`)
   .slice(0, 20)
   .join("\n")}
 `;
