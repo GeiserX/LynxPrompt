@@ -72,7 +72,7 @@ describe("detectGitHubRepo", () => {
         });
       }
       // package.json content
-      if (url.includes("raw.githubusercontent.com") && url.includes("package.json")) {
+      if (new URL(url).hostname === "raw.githubusercontent.com" && url.includes("package.json")) {
         return Promise.resolve({
           ok: true,
           text: () => Promise.resolve(JSON.stringify({
