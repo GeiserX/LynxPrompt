@@ -32,6 +32,10 @@ on:
 env:
   NODE_VERSION: '22'
 
+# The jobs only check out code, build and run the CLI.
+permissions:
+  contents: read
+
 jobs:
   # Basic tests without authentication
   public-tests:

@@ -6,6 +6,10 @@ on:
     paths: [README.md]
   workflow_dispatch:
 
+# Docker Hub is reached with its own token; GitHub only needs to serve the README.
+permissions:
+  contents: read
+
 jobs:
   update-description:
     runs-on: ubuntu-latest
