@@ -10,6 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - **Helm chart 0.1.3**: each of the four Prisma schemas gets its own database (`<name>`, `<name>_users`, `<name>_blog`, `<name>_support`). Earlier charts pointed all four at one database, so every start dropped the other schemas' tables and sign-in failed.
 
+## [2.1.40] - 2026-10-10
+
+### Fixed
+- **Sign-in over plain http**: the image always named its auth cookies `__Secure-`/`__Host-` and marked them Secure, which browsers refuse on an `http://` address, `localhost` included. On an instance opened over http the sign-in page said the mail was on its way, but no mail was sent and nobody could sign in. Cookie names and the Secure flag now follow whether `NEXTAUTH_URL` (or `APP_URL`) starts with `https://`; an https instance keeps the same cookies, so nobody is signed out.
+- **`SUPERADMIN_EMAIL` on the first sign-in**: the promotion ran before the account existed, so the address only became superadmin on its second sign-in. The new account is now created as superadmin.
+- **Uploads**: the image now creates `/data/uploads` owned by the app user (uid 1001). Before, avatar, team logo and blog image uploads failed with a permission error, and a named volume mounted there started out owned by root.
+
 ## [2.1.38] - 2026-10-09
 
 App 2.1.38 and CLI 2.1.35.

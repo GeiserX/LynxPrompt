@@ -7,6 +7,7 @@ import {
   generateRegistrationOptions,
   type AuthenticatorTransportFuture,
 } from "@simplewebauthn/server";
+import { secureCookiesEnabled } from "@/lib/auth-cookies";
 
 export async function POST() {
   if (!ENABLE_PASSKEYS) {
@@ -54,7 +55,7 @@ export async function POST() {
     const response = NextResponse.json(options);
     response.cookies.set("passkey-challenge", options.challenge, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: secureCookiesEnabled(),
       sameSite: "strict",
       maxAge: 60 * 5, // 5 minutes
     });
