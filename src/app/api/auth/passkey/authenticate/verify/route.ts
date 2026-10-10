@@ -4,6 +4,7 @@ import { authOptions, webAuthnConfig } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { ENABLE_PASSKEYS } from "@/lib/feature-flags";
 import { verifyAuthenticationResponse } from "@simplewebauthn/server";
+import { sessionCookieName } from "@/lib/auth-cookies";
 
 export async function POST(request: NextRequest) {
   if (!ENABLE_PASSKEYS) {
@@ -74,11 +75,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Get current session token from cookies to find the session record
-    const sessionToken = request.cookies.get(
-      process.env.NODE_ENV === "production"
-        ? "__Secure-next-auth.session-token"
-        : "next-auth.session-token"
-    )?.value;
+    const sessionToken = request.cookies.get(sessionCookieName())?.value;
 
     if (sessionToken) {
       // Mark session as passkey-verified

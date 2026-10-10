@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
+import { sessionCookieName } from "@/lib/auth-cookies";
 
 /**
  * Check if the current session requires passkey verification.
@@ -26,11 +27,7 @@ export async function GET(request: NextRequest) {
     }
 
     // User has passkeys - check if this session is verified
-    const sessionToken = request.cookies.get(
-      process.env.NODE_ENV === "production"
-        ? "__Secure-next-auth.session-token"
-        : "next-auth.session-token"
-    )?.value;
+    const sessionToken = request.cookies.get(sessionCookieName())?.value;
 
     if (!sessionToken) {
       // No session token found - shouldn't happen but handle gracefully

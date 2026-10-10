@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { createHash } from "crypto";
+import { sessionCookieName } from "@/lib/auth-cookies";
 
 // Helper to generate device hash
 function generateDeviceHash(userAgent: string, fingerprint: string): string {
@@ -66,11 +67,7 @@ export async function POST(request: NextRequest) {
     }
 
     // SECURITY: Read session token from cookies, not from request body
-    const sessionToken = request.cookies.get(
-      process.env.NODE_ENV === "production"
-        ? "__Secure-next-auth.session-token"
-        : "next-auth.session-token"
-    )?.value;
+    const sessionToken = request.cookies.get(sessionCookieName())?.value;
 
     const userAgent = request.headers.get("user-agent") || "";
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
@@ -193,11 +190,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // SECURITY: Read session token from cookies, not from request body
-    const sessionToken = request.cookies.get(
-      process.env.NODE_ENV === "production"
-        ? "__Secure-next-auth.session-token"
-        : "next-auth.session-token"
-    )?.value;
+    const sessionToken = request.cookies.get(sessionCookieName())?.value;
 
     const userAgent = request.headers.get("user-agent") || "";
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||

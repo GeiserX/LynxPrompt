@@ -394,3 +394,47 @@ describe("authOptions.events.linkAccount - edge cases", () => {
     expect(mockAccountUpdate).not.toHaveBeenCalled();
   });
 });
+
+describe("authOptions.events.createUser - superadmin on first sign-in", () => {
+  // signIn runs before the adapter creates a new user, so its promotion
+  // matched nobody and SUPERADMIN_EMAIL only took effect on the second sign-in.
+  const createUser = authOptions.events!.createUser!;
+  const originalEnv = process.env.SUPERADMIN_EMAIL;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUpdate.mockResolvedValue({});
+    delete process.env.SUPERADMIN_EMAIL;
+  });
+
+  afterEach(() => {
+    if (originalEnv !== undefined) {
+      process.env.SUPERADMIN_EMAIL = originalEnv;
+    } else {
+      delete process.env.SUPERADMIN_EMAIL;
+    }
+  });
+
+  it("creates the SUPERADMIN_EMAIL user as superadmin", async () => {
+    process.env.SUPERADMIN_EMAIL = "admin@test.com";
+    await (createUser as Function)({ user: { id: "new-admin", email: "admin@test.com" } });
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "new-admin" },
+        data: expect.objectContaining({ role: "SUPERADMIN" }),
+      })
+    );
+  });
+
+  it("leaves the role of any other new user alone", async () => {
+    process.env.SUPERADMIN_EMAIL = "admin@test.com";
+    await (createUser as Function)({ user: { id: "new-user", email: "someone@test.com" } });
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
+    expect(mockUpdate.mock.calls[0][0].data).not.toHaveProperty("role");
+  });
+
+  it("promotes nobody when SUPERADMIN_EMAIL is unset", async () => {
+    await (createUser as Function)({ user: { id: "new-user", email: "admin@test.com" } });
+    expect(mockUpdate.mock.calls[0][0].data).not.toHaveProperty("role");
+  });
+});

@@ -124,6 +124,10 @@ COPY --from=builder /app/node_modules/split2 ./node_modules/split2
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
 
+# Avatars, team logos and blog images are written under /data/uploads. Create it
+# for the app user, so a fresh named volume mounted there starts writable.
+RUN mkdir -p /data/uploads/blog && chown -R nextjs:nodejs /data
+
 # Copy standalone build
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static

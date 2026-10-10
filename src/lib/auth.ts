@@ -25,6 +25,7 @@ import {
 } from "@simplewebauthn/server";
 import { createTransport } from "nodemailer";
 import { createHash, createHmac } from "crypto";
+import { secureCookiesEnabled } from "@/lib/auth-cookies";
 
 // Generate Gravatar URL from email
 function getGravatarUrl(email: string): string {
@@ -371,6 +372,8 @@ function buildProviders(): Provider[] {
   return providers;
 }
 
+const secure = secureCookiesEnabled();
+
 export const authOptions: NextAuthOptions = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   adapter: PrismaAdapter(prismaUsers as any) as NextAuthOptions["adapter"],
@@ -618,6 +621,10 @@ export const authOptions: NextAuthOptions = {
       const now = new Date();
       const termsVersion = "2025-12";
       const privacyVersion = "2025-12";
+      // The signIn callback runs before the adapter creates a new user, so its
+      // promotion finds nobody on the first sign-in; promote here instead.
+      const superadminEmail = process.env.SUPERADMIN_EMAIL;
+      const isSuperadmin = !!superadminEmail && user.email === superadminEmail;
       
       try {
         await prismaUsers.user.update({
@@ -627,6 +634,7 @@ export const authOptions: NextAuthOptions = {
             termsVersion: termsVersion,
             privacyAcceptedAt: now,
             privacyVersion: privacyVersion,
+            ...(isSuperadmin && { role: "SUPERADMIN" as const }),
           },
         });
         
@@ -677,58 +685,58 @@ export const authOptions: NextAuthOptions = {
   },
   // Disable debug in production
   debug: process.env.NODE_ENV === "development",
-  // Security: Use secure cookies in production
+  // Secure cookie names and flags follow the https:// of NEXTAUTH_URL (see auth-cookies.ts)
   // Configure all auth cookies for better OAuth reliability
   cookies: {
     sessionToken: {
       name:
-        process.env.NODE_ENV === "production"
+        secure
           ? "__Secure-next-auth.session-token"
           : "next-auth.session-token",
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: process.env.NODE_ENV === "production",
+        secure,
       },
     },
     // CSRF token - used for state verification during OAuth callbacks
     csrfToken: {
       name:
-        process.env.NODE_ENV === "production"
+        secure
           ? "__Host-next-auth.csrf-token"
           : "next-auth.csrf-token",
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: process.env.NODE_ENV === "production",
+        secure,
       },
     },
     // Callback URL - stores intended redirect after OAuth
     callbackUrl: {
       name:
-        process.env.NODE_ENV === "production"
+        secure
           ? "__Secure-next-auth.callback-url"
           : "next-auth.callback-url",
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: process.env.NODE_ENV === "production",
+        secure,
       },
     },
     // State - OAuth state parameter stored in cookie
     state: {
       name:
-        process.env.NODE_ENV === "production"
+        secure
           ? "__Secure-next-auth.state"
           : "next-auth.state",
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: process.env.NODE_ENV === "production",
+        secure,
         // State cookies need to persist through OAuth redirect
         maxAge: 60 * 15, // 15 minutes - reasonable time for OAuth flow
       },
@@ -736,14 +744,14 @@ export const authOptions: NextAuthOptions = {
     // PKCE code verifier for additional security
     pkceCodeVerifier: {
       name:
-        process.env.NODE_ENV === "production"
+        secure
           ? "__Secure-next-auth.pkce.code_verifier"
           : "next-auth.pkce.code_verifier",
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: process.env.NODE_ENV === "production",
+        secure,
         maxAge: 60 * 15, // 15 minutes
       },
     },
