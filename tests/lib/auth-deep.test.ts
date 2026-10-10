@@ -399,14 +399,20 @@ describe("authOptions.events.createUser - superadmin on first sign-in", () => {
   // signIn runs before the adapter creates a new user, so its promotion
   // matched nobody and SUPERADMIN_EMAIL only took effect on the second sign-in.
   const createUser = authOptions.events!.createUser!;
+  const originalEnv = process.env.SUPERADMIN_EMAIL;
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockUpdate.mockResolvedValue({});
+    delete process.env.SUPERADMIN_EMAIL;
   });
 
   afterEach(() => {
-    delete process.env.SUPERADMIN_EMAIL;
+    if (originalEnv !== undefined) {
+      process.env.SUPERADMIN_EMAIL = originalEnv;
+    } else {
+      delete process.env.SUPERADMIN_EMAIL;
+    }
   });
 
   it("creates the SUPERADMIN_EMAIL user as superadmin", async () => {
