@@ -3,6 +3,39 @@ entries:
   lynxprompt:
   - annotations:
       artifacthub.io/changes: |
+        - kind: changed
+          description: Run app 2.1.40, which signs in over plain http, makes SUPERADMIN_EMAIL superadmin on the first sign-in and creates /data/uploads
+        - kind: fixed
+          description: Mount the uploads volume at /data/uploads, where the app writes; it was mounted at /app/public/uploads, which the app never uses
+      category: AI
+    apiVersion: v2
+    appVersion: 2.1.40
+    created: "2026-10-10T21:13:39.22259453Z"
+    description: A Helm chart for LynxPrompt - Self-hosted AI IDE configuration hub
+    digest: 3704f5a0142a37699d8f3fffbbeb240685c3ad16d28f57722fab8e2afa74e17d
+    home: https://lynxprompt.com
+    keywords:
+    - lynxprompt
+    - ai
+    - ide
+    - configuration
+    - cursor
+    - claude
+    - copilot
+    - self-hosted
+    kubeVersion: '>=1.21.0-0'
+    maintainers:
+    - email: acsdesk@protonmail.com
+      name: Sergio Fernandez
+    name: lynxprompt
+    sources:
+    - https://github.com/GeiserX/LynxPrompt
+    type: application
+    urls:
+    - https://github.com/GeiserX/LynxPrompt/releases/download/lynxprompt-0.1.4/lynxprompt-0.1.4.tgz
+    version: 0.1.4
+  - annotations:
+      artifacthub.io/changes: |
         - kind: fixed
           description: Give each of the four schemas its own database; one shared database lost tables at every start
       category: AI
@@ -89,4 +122,4 @@ entries:
     urls:
     - https://github.com/GeiserX/LynxPrompt/releases/download/lynxprompt-0.1.1/lynxprompt-0.1.1.tgz
     version: 0.1.1
-generated: "2026-10-07T00:46:04.40402385Z"
+generated: "2026-10-10T21:13:39.222609288Z"
