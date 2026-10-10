@@ -18,3 +18,17 @@ describe("Dockerfile uploads directory", () => {
     expect(user).toBeGreaterThan(create);
   });
 });
+
+describe("Helm chart uploads volume", () => {
+  // The chart mounted its uploads PVC at /app/public/uploads, a path the app
+  // never writes, so uploads never reached the volume.
+  it("mounts the uploads volume where the app writes", () => {
+    const deployment = readFileSync(
+      resolve(process.cwd(), "charts/lynxprompt/templates/deployment.yaml"),
+      "utf8",
+    );
+    const mount = deployment.match(/- name: uploads\s*\n\s*mountPath:\s*(\S+)/);
+    expect(mount, "no uploads volumeMount").not.toBeNull();
+    expect(mount![1]).toBe("/data/uploads");
+  });
+});

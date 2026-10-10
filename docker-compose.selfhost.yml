@@ -32,7 +32,7 @@ services:
   lynxprompt:
     # A published release tag (tests/workflows/selfhost-compose.test.ts checks
     # it exists on Docker Hub). Newer releases: https://hub.docker.com/r/drumsergio/lynxprompt/tags
-    image: drumsergio/lynxprompt:2.1.30
+    image: drumsergio/lynxprompt:2.1.40
     # The image is built for amd64 only; this lets ARM hosts (Apple Silicon,
     # Raspberry Pi) run it under emulation instead of failing at pull.
     platform: linux/amd64

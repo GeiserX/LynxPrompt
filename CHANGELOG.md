@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **Helm chart 0.1.4**: runs app 2.1.40, and mounts the uploads volume at `/data/uploads`, where the app writes. Earlier charts mounted it at `/app/public/uploads`, so uploads never reached the volume.
+- **`docker-compose.selfhost.yml`** pins app 2.1.40, so the Mailpit try-out on `http://localhost:3000` can sign in.
 - **Helm chart 0.1.3**: each of the four Prisma schemas gets its own database (`<name>`, `<name>_users`, `<name>_blog`, `<name>_support`). Earlier charts pointed all four at one database, so every start dropped the other schemas' tables and sign-in failed.
 
 ## [2.1.40] - 2026-10-10

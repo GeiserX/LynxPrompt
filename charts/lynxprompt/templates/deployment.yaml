@@ -257,7 +257,7 @@ spec:
           {{- if .Values.persistence.uploads.enabled }}
           volumeMounts:
             - name: uploads
-              mountPath: /app/public/uploads
+              mountPath: /data/uploads
             {{- with .Values.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
