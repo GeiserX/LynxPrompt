@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **The image no longer trusts the compromised eMudhra intermediates**: the image upgrades Alpine's CA bundle to 20261020-r0 and runs Node with `--use-openssl-ca`, because Node's built-in roots still accept certificates issued through the eight eMudhra intermediates whose keys leaked. Outgoing HTTPS and SMTP (GitHub, Google sign-in, Turnstile, mail) now verify against the patched system bundle.
+
 ### Fixed
 - **Helm chart 0.1.4**: runs app 2.1.40, and mounts the uploads volume at `/data/uploads`, where the app writes. Earlier charts mounted it at `/app/public/uploads`, so uploads never reached the volume.
 - **`docker-compose.selfhost.yml`** pins app 2.1.40, so the Mailpit try-out on `http://localhost:3000` can sign in.
