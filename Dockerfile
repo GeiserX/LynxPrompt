@@ -12,8 +12,10 @@
 # -----------------------------------------------------------------------------
 FROM node:26-alpine AS base
 
-# Install dependencies for Prisma and other native modules
-RUN apk add --no-cache libc6-compat openssl
+# Install dependencies for Prisma and other native modules. The base image's CA
+# bundle predates the eMudhra distrust (2026-10-20), so upgrade it.
+RUN apk upgrade --no-cache ca-certificates-bundle \
+ && apk add --no-cache libc6-compat openssl
 
 WORKDIR /app
 
@@ -88,6 +90,9 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+# Trust the system CA bundle instead of Node's built-in roots, which still trust
+# the compromised eMudhra intermediates.
+ENV NODE_OPTIONS=--use-openssl-ca
 ARG APP_REVISION
 ENV APP_REVISION=${APP_REVISION}
 
