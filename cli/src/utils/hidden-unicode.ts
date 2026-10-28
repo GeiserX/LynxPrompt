@@ -13,6 +13,11 @@
  *   and Indic words, right-to-left text);
  * - the tag sequence of the England, Scotland and Wales flags (the only
  *   subdivision flags in the recommended emoji set).
+ *
+ * A lone direction mark (LRM, RLM, ALM) next to plain text is kept apart as a
+ * warning: mixed right-to-left and English text uses them on purpose, and a
+ * mark only changes how neutral characters around it are ordered. A mark that
+ * sits in a run of other hidden characters is still an error.
  */
 
 export interface HiddenChar {
@@ -50,6 +55,8 @@ const NAMES: Record<number, string> = {
 
 // Allowed between two visible non-ASCII characters
 const CONTEXTUAL = new Set([0x061c, 0x200c, 0x200d, 0x200e, 0x200f]);
+// Only a warning when alone next to plain text
+const DIRECTION_MARKS = new Set([0x061c, 0x200e, 0x200f]);
 
 const BLACK_FLAG = 0x1f3f4;
 const CANCEL_TAG = 0xe007f;
@@ -85,9 +92,10 @@ function flagTagRunLength(cps: number[], i: number): number {
 const isVisibleNonAscii = (cp: number | undefined) =>
   cp !== undefined && cp > 0x7f && !isHidden(cp);
 
-export function findHiddenUnicode(content: string): HiddenChar[] {
+function scan(content: string): { hidden: HiddenChar[]; marks: HiddenChar[] } {
   const cps = Array.from(content, (c) => c.codePointAt(0) as number);
-  const found: HiddenChar[] = [];
+  const hidden: HiddenChar[] = [];
+  const marks: HiddenChar[] = [];
   let line = 1;
   let column = 0;
 
@@ -110,23 +118,46 @@ export function findHiddenUnicode(content: string): HiddenChar[] {
       continue;
     }
 
-    found.push({
+    const found = {
       line,
       column,
       codePoint: `U+${cp.toString(16).toUpperCase().padStart(4, "0")}`,
       name: nameOf(cp),
-    });
+    };
+    // A leading byte order mark does not make a run
+    const hiddenAt = (j: number) => j > 0 && j < cps.length && isHidden(cps[j]);
+    const alone = !hiddenAt(i - 1) && !hiddenAt(i + 1);
+    (DIRECTION_MARKS.has(cp) && alone ? marks : hidden).push(found);
   }
-  return found;
+  return { hidden, marks };
 }
 
-/** One check message for a file, naming where the first few characters are */
-export function describeHiddenUnicode(filename: string, found: HiddenChar[], shown = 5): string {
+/** Hidden characters that can carry instructions: each one is a check error */
+export function findHiddenUnicode(content: string): HiddenChar[] {
+  return scan(content).hidden;
+}
+
+/** Lone direction marks next to plain text: each one is a check warning */
+export function findDirectionMarks(content: string): HiddenChar[] {
+  return scan(content).marks;
+}
+
+function positions(found: HiddenChar[], shown: number): string {
   const where = found
     .slice(0, shown)
     .map((h) => `line ${h.line} col ${h.column} ${h.codePoint} ${h.name}`)
     .join("; ");
-  const more = found.length > shown ? `; and ${found.length - shown} more` : "";
+  return found.length > shown ? `${where}; and ${found.length - shown} more` : where;
+}
+
+/** One check message for a file, naming where the first few characters are */
+export function describeHiddenUnicode(filename: string, found: HiddenChar[], shown = 5): string {
   const n = found.length;
-  return `${filename}: ${n} hidden Unicode character${n === 1 ? "" : "s"} that can carry instructions a reviewer cannot see (${where}${more})`;
+  return `${filename}: ${n} hidden Unicode character${n === 1 ? "" : "s"} that can carry instructions a reviewer cannot see (${positions(found, shown)})`;
+}
+
+/** One warning for a file's lone direction marks */
+export function describeDirectionMarks(filename: string, found: HiddenChar[], shown = 5): string {
+  const n = found.length;
+  return `${filename}: ${n} invisible direction mark${n === 1 ? "" : "s"} next to plain text, usual in right-to-left text; remove ${n === 1 ? "it" : "them"} if you did not add ${n === 1 ? "it" : "them"} (${positions(found, shown)})`;
 }

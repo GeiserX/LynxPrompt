@@ -89,6 +89,16 @@ describe("lynxp check hidden Unicode", () => {
     expect(errors.some((e) => e.startsWith(".clinerules/notes.txt: 1 hidden"))).toBe(true);
   });
 
+  it("passes --ci with a warning on a direction mark next to English text", async () => {
+    write("AGENTS.md", `${RULES}Name: \u05e9\u05dc\u05d5\u05dd\u200f (shalom)\n`);
+    await checkCommand({ json: true, ci: true });
+    const result = parsed();
+    expect(result.valid).toBe(true);
+    expect(result.errors).toEqual([]);
+    expect(result.warnings).toEqual([expect.stringContaining("AGENTS.md: 1 invisible direction mark")]);
+    expect(process.exitCode).toBeUndefined();
+  });
+
   it("passes --ci on emoji joiners and a leading BOM", async () => {
     write("AGENTS.md", `\ufeff${RULES}Team: 👨\u200d👩\u200d👧\n`);
     await expect(checkCommand({ ci: true })).rejects.toThrow("exit 0");

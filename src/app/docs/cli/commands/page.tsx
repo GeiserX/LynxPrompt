@@ -547,7 +547,7 @@ $ lynxp check --ci
             <li>• Empty or minimal content</li>
             <li>• Placeholder text (TODO, FIXME, etc.)</li>
             <li>• Potential secrets or API keys</li>
-            <li>• Hidden Unicode (zero-width, bidi and tag characters) that can carry instructions a reviewer cannot see</li>
+            <li>• Hidden Unicode (zero-width, bidi and tag characters) that can carry instructions a reviewer cannot see. A lone direction mark next to plain text, common in right-to-left text, is only a warning</li>
             <li>• YAML frontmatter syntax (for .mdc files)</li>
             <li>• LynxPrompt config file validity</li>
           </ul>
