@@ -115,4 +115,15 @@ describe("Docker publish workflow", () => {
     expect(steps).toContain("--certificate-oidc-issuer https://token.actions.githubusercontent.com");
     expect(steps).toContain("IMAGE: ${{ env.DOCKER_IMAGE }}@${{ steps.verify.outputs.digest }}");
   });
+
+  // Docker Hub shows a new signature a few seconds after the push; one verify
+  // straight after signing failed the 2.1.47 publish with "no signatures found".
+  it("retries the signature verify instead of failing on the first miss", () => {
+    const steps = job(publish, "publish");
+    const sign = steps.indexOf('cosign sign --yes "$IMAGE"');
+    const loop = steps.indexOf("for attempt in");
+    expect(loop).toBeGreaterThan(sign);
+    expect(steps.indexOf('if cosign verify "$IMAGE"')).toBeGreaterThan(loop);
+    expect(steps).toMatch(/sleep \d+/);
+  });
 });
