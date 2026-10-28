@@ -654,6 +654,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#agent-skills-and-subagents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Agent Skills and Subagents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#configurable-authentication" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -857,6 +868,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#agent-skills-and-subagents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Agent Skills and Subagents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#configurable-authentication" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -941,6 +963,8 @@
 <p>Internal marketplace for sharing AI configurations and slash commands within your organization. Browse, search, favorite, and reuse blueprints across teams. Search and downloads cover the blueprints of your own instance; the opt-in federation lists instances in a shared directory but does not bring other instances' blueprints into your marketplace.</p>
 <h2 id="interactive-wizard">Interactive Wizard<a class="headerlink" href="#interactive-wizard" title="Permanent link">&para;</a></h2>
 <p>Step-by-step config generator available on both web and CLI. Auto-detects your tech stack, frameworks, and repo structure from GitHub/GitLab URLs. Supports template variables, monorepo hierarchies, and draft auto-saving.</p>
+<h2 id="agent-skills-and-subagents">Agent Skills and Subagents<a class="headerlink" href="#agent-skills-and-subagents" title="Permanent link">&para;</a></h2>
+<p>Store an Agent Skill (<code>SKILL.md</code>) or a subagent once and write it where every agent reads it. A skill goes to <code>.agents/skills/&lt;name&gt;/</code> (Codex, Cursor, Copilot, Gemini CLI, Antigravity, Zed, Junie and most others) and <code>.claude/skills/&lt;name&gt;/</code> (Claude Code), plus Kiro and Firebender when picked. A subagent goes to <code>.claude/agents/</code> and <code>.agents/agents/</code>, plus <code>.github/agents/&lt;name&gt;.agent.md</code> for Copilot and <code>.codex/agents/&lt;name&gt;.toml</code> for Codex when picked. The web download and <code>lynxp pull</code> write the same copies, and <code>lynxp push</code> keeps them in step.</p>
 <h2 id="configurable-authentication">Configurable Authentication<a class="headerlink" href="#configurable-authentication" title="Permanent link">&para;</a></h2>
 <p>Flexible auth to fit your environment:</p>
 <ul>
