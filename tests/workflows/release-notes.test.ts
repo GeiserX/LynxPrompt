@@ -60,20 +60,12 @@ describe("release notes from CHANGELOG.md", () => {
     expect(section("9.9.9", changelog)).toMatchObject({ status: 1, out: "" });
   });
 
-  it("reads the repository CHANGELOG", () => {
-    const run = section("2.1.45");
+  it("reads the repository CHANGELOG: 3.0.0 carries the upgrade guide for everything since 2.1.44", () => {
+    const run = section("3.0.0");
     expect(run.status).toBe(0);
-    expect(run.out).toContain("### Upgrade notes");
+    expect(run.out).toContain("### Upgrade guide");
+    expect(run.out).toMatch(/Back up/);
     expect(run.out).not.toContain("## [2.1.40]");
-  });
-
-  it("has notes with upgrade notes for every release since migrations replaced db push", () => {
-    for (const version of ["2.1.47", "2.1.48", "2.1.49"]) {
-      const run = section(version);
-      expect(run.status, version).toBe(0);
-      expect(run.out, version).toContain("### Upgrade notes");
-      expect(run.out, version).toMatch(/Back up/);
-    }
   });
 
   it("the release uses it and falls back to the commit list", () => {

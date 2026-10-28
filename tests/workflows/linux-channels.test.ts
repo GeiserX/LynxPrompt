@@ -169,4 +169,13 @@ describe("no :latest image", () => {
     const offenders = paths.filter((path) => /drumsergio\/lynxprompt:latest\b/.test(readFileSync(path, "utf8")));
     expect(offenders).toEqual([]);
   });
+
+  it("waits for npm to serve the version before building the snap", () => {
+    // 2.1.42's snap ran one minute after the npm publish and failed with ETARGET.
+    const wait = snap.indexOf("- name: Wait until npm serves this version");
+    expect(wait, "no wait step").toBeGreaterThan(-1);
+    expect(wait).toBeGreaterThan(snap.indexOf("- name: Set the version"));
+    expect(wait).toBeLessThan(snap.indexOf("- name: Build the snap"));
+    expect(snap).toMatch(/npm view "lynxprompt@\$want" version/);
+  });
 });

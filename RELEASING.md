@@ -10,7 +10,7 @@ LynxPrompt uses [Semantic Versioning](https://semver.org/):
 - **MINOR** (0.x.0): New features, backward compatible
 - **PATCH** (0.0.x): Bug fixes, security patches
 
-The app and the CLI share one version and ship together: one tag `vX.Y.Z`, one GitHub release "LynxPrompt vX.Y.Z" (marked Latest), the image `drumsergio/lynxprompt:X.Y.Z` and `lynxprompt@X.Y.Z` on npm. Before 2.2.0, the first joined version, the two had their own versions and `app-v*` / `cli-v*` tags and releases; those stay as they are.
+The app and the CLI share one version and ship together: one tag `vX.Y.Z`, one GitHub release "LynxPrompt vX.Y.Z" (marked Latest), the image `drumsergio/lynxprompt:X.Y.Z` and `lynxprompt@X.Y.Z` on npm. Before 3.0.0, the first joined version, the two had their own versions and `app-v*` / `cli-v*` tags and releases; those stay as they are.
 
 `.github/scripts/release-version.sh` picks the version: the highest of the root `package.json`, `cli/package.json` and the last release (the highest `v*`, `app-v*` or `cli-v*` tag) plus one patch. The release bumps both `package.json` files only in its own tagged commit, so on `main` they lag behind the tags; raise them in a pull request only to pick a minor or major version.
 
@@ -18,14 +18,9 @@ The app and the CLI share one version and ship together: one tag `vX.Y.Z`, one G
 
 ### What gets released
 
-Every push to `main` runs `release.yml`. It runs the CI suite and the CLI build and public tests (this is `main`'s CI), and releases when something that ships changed on `main` since the last release. `.github/scripts/release-changes.sh all` holds the rule:
+Every push to `main` runs `release.yml`, which runs the CI suite and the CLI build and public tests (this is `main`'s CI). A push never releases. Releases are manual: when `main` holds what you want to ship, run the Release workflow by hand (see below). Every release ships the app and the CLI together.
 
-- **App:** something that ends up in the Docker image or changes how it is built: `Dockerfile`, `.dockerignore`, the root `package.json` and `package-lock.json`, `next.config.ts`, `tsconfig.json`, `postcss.config.mjs`, `entrypoint.sh`, `src/`, `public/`, `prisma/` or `packages/`.
-- **CLI:** `cli/` or `packages/shared/`.
-
-Either one releases both. Workflows, docs, tests and the Helm chart release nothing on their own. The tags sit on the release job's own version-bump commit, which never lands on `main`, so the comparison starts from the commit `main` shares with the tag.
-
-One release runs at a time and none is cancelled. While one runs, GitHub keeps one pending run and a newer push replaces it, so a burst of merges ends in one more release that carries all of them.
+One release runs at a time and none is cancelled.
 
 ### 1. Write the notes, then merge
 
@@ -33,10 +28,10 @@ One release runs at a time and none is cancelled. While one runs, GitHub keeps o
 
 Write the `## [X.Y.Z] - YYYY-MM-DD` section of `CHANGELOG.md` for the version the release will get, with an "Upgrade notes" part when operators must act. The release publishes it as its notes; without one they list the commits since the last release. Merge the pull request once CI is green.
 
-For a minor or major version, raise both `package.json` files in the same pull request (`npm version minor --no-git-tag-version`, also in `cli/`), or run the workflow by hand:
+Then release by hand. `bump` is `patch` by default; use `minor` or `major` for a bigger step (or raise both `package.json` files in a pull request):
 
 ```bash
-gh workflow run release.yml -R GeiserX/LynxPrompt -f bump=minor
+gh workflow run release.yml -R GeiserX/LynxPrompt -f bump=patch
 gh workflow run release.yml -R GeiserX/LynxPrompt --ref <branch> -f dry_run=true   # computes and tests everything, publishes nothing
 ```
 
@@ -70,7 +65,7 @@ The "Verify Production Deployment" workflow then polls `/api/health` for the new
 
 ## Hotfix Process
 
-A hotfix is a normal pull request into `main` with the fix. Merging it releases the next patch version.
+A hotfix is a normal pull request into `main` with the fix. Merge it, then run the Release workflow by hand.
 
 ## Rollback Process
 

@@ -5,131 +5,111 @@ All notable changes to LynxPrompt will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-From 2.2.0 the web app and the CLI share one version and one release: the `vX.Y.Z` tag, the Docker image `drumsergio/lynxprompt:X.Y.Z` and `lynxprompt@X.Y.Z` on npm. Each `## [X.Y.Z]` section below covers both and becomes that release's notes. Before 2.2.0 the app and the CLI had their own version lines (`app-v*` and `cli-v*` tags).
+From 3.0.0 the web app and the CLI share one version and one release: the `vX.Y.Z` tag, the Docker image `drumsergio/lynxprompt:X.Y.Z` and `lynxprompt@X.Y.Z` on npm. Each `## [X.Y.Z]` section below covers both and becomes that release's notes. Before 3.0.0 the app and the CLI had their own version lines (`app-v*` and `cli-v*` tags).
 
-## [Unreleased]
+## [3.0.0] - 2026-10-28
 
-### Fixed
-- **Private blueprints lose their old team link**: before 2.1.47, making a blueprint private through the v1 API kept its team id. The read rule already ignored it; a data-only migration now clears it, so no private blueprint names a team.
-- **Privacy policy**: it now says accounts are deleted from Settings at once, lists what deletion removes and what stays without your identity, and names Gravatar, which receives an MD5 hash of the email of an account with no profile picture. The security page no longer says deletion requests take 30 days.
+3.0.0 is the first release where the web app and the CLI share one version: the tag `v3.0.0`, the image `drumsergio/lynxprompt:3.0.0`, `lynxprompt@3.0.0` on npm, and the Homebrew, Chocolatey, Snap and AUR packages. It collects the changes released step by step on 2026-10-28 as app 2.1.45 to 2.1.50 and CLI 2.1.38 to 2.1.42, most of them fixes from a full audit of the code, plus what followed. Those releases stay published.
 
-## [2.1.49] - 2026-10-28
+### Upgrade guide
 
-App 2.1.49 and CLI 2.1.41.
+This guide is for an instance or a CLI on app 2.1.44 or CLI 2.1.37 or earlier. Act in this order.
 
-### Upgrade notes
-- **Back up the users database first.** Two migrations run on start. One adds the `AGENT_SKILL` and `MCP_CONFIG` blueprint types. The other recounts blueprint download and favorite counts from the rows that record them, and deletes favorite rows whose type is neither `system` nor `user`. Counts inflated by page views before 2.1.45 go down, and the old numbers cannot be restored without a backup.
-- **The blog and the support forum databases are only migrated while their feature is on.** With `ENABLE_BLOG` or `ENABLE_SUPPORT_FORUM` off (the default), the image no longer creates or migrates that database, and `/api/blog`, `/api/blog/[slug]` and `/api/upload/blog` answer 404. A database left from earlier releases keeps its rows; turning the flag on migrates it from where it stopped. A default self-host now runs on two databases.
-- **Passkey users must prove the passkey before any write.** A session that signed in with a magic link or OAuth but has not passed the passkey step gets 403 with `passkeyRequired: true` on every write. Reads still work. Accounts without passkeys see no change.
+If you already run app 2.1.45 to 2.1.50, the guide still applies from your version on. Migrations that already ran are skipped.
+
+**1. Back up every database before you start the new image.**
+- The image now applies reviewed migrations with `prisma migrate deploy` instead of `prisma db push`. On the first start, a database an earlier release built with `db push` is brought to the current schema once from the frozen `0_init` baseline, without `--accept-data-loss`, and recorded as migrated. If that step would lose data, startup stops and nothing is changed.
+- Migrations drop `User.subscriptionPlan`, the `SubscriptionPlan` enum, and `userPlan` on support posts and comments. Their values were only FREE or TEAMS and nothing read them, but the drop cannot be undone without a backup.
+- A migration recounts blueprint download and favorite counts from the rows that record them, and deletes favorite rows whose type is neither `system` nor `user`. Counts inflated by page views before 2.1.45 go down, and the old numbers cannot be restored without a backup.
+- Other migrations add the `AGENT_SKILL` and `MCP_CONFIG` blueprint types and clear the team id of private blueprints (see Fixed).
+
+**2. Set the required configuration.**
+- **SSO needs a verified domain.** A team's IdP now signs in only addresses on a domain the team verified with a TXT record at `_lynxprompt-sso.<domain>`. Existing SSO configurations stop signing anyone in until an admin adds the record and presses Verify.
+- **`SSO_ENCRYPTION_KEY`** (64 hex characters) is required to save an SSO configuration. `SSO_ALLOW_PRIVATE_IDP=true` lets an IdP live on a private address or plain http, for trusted instances only.
+- **`TRUSTED_PROXY`** says which client address to use for rate limits: the number of reverse proxies in front of the app (default 1), or `cloudflare` to read `CF-Connecting-IP`. Use `cloudflare` only when the app cannot be reached except through Cloudflare.
+- **`NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `NEXT_PUBLIC_UMAMI_WEBSITE_ID`** are read at runtime, not baked into the image. Set them in the container's environment.
+- **`AI_MODEL` must name a model in the price table** (`src/lib/ai-pricing.ts`). The default is now `claude-haiku-5-5`, since the old default is retired. With a model that has no price row, the AI route answers 503 ("AI service not configured") and logs which model is missing, without calling the model or touching the budget.
+- **Federation is off by default.** A new or upgraded instance no longer registers with the public registry or serves the federation endpoints unless `ENABLE_FEDERATION=true`. Set it to stay listed. With it on, an `APP_URL` the registry cannot reach (http, localhost, an IP address or a port) is skipped with a warning.
+- **The blog and the support forum are off by default, and their databases are only migrated while their feature is on.** With `ENABLE_BLOG` or `ENABLE_SUPPORT_FORUM` off, the image does not create or migrate that database, `/api/blog`, `/api/blog/[slug]` and `/api/upload/blog` answer 404, and the support API answers 404. A database left from earlier releases keeps its rows; turning the flag on migrates it from where it stopped. A default self-host runs on two databases.
+- **Content Security Policy**: `script-src` no longer allows `'unsafe-inline'`; the app sends a fresh nonce per request. A reverse proxy that sets its own `Content-Security-Policy` must let the app's header through, or its policy blocks the app's scripts.
+- **`docker-compose.selfhost.yml` now loads `.env` into the app**, so settings such as `ENABLE_AI=true` or `ENABLE_SSO=true` written there reach it. Before, they were silently dropped. The explicit environment block still wins, and the app is pinned to `PORT=3000` and `HOSTNAME=0.0.0.0`, so `PORT` in `.env` only moves the published host port. `SMTP_FROM_NAME` and `PLATFORM_OWNER_EMAIL` did nothing and are gone from the chart, the compose files and env.example; values files that still set `smtp.fromName` or `app.platformOwnerEmail` render without them.
+- **Helm**: chart 0.1.3 and later give each of the four Prisma schemas its own database (`<name>`, `<name>_users`, `<name>_blog`, `<name>_support`); earlier charts pointed all four at one, so every start dropped the other schemas' tables and sign-in failed. Chart 0.1.4 and later mount the uploads volume at `/data/uploads`, where the app writes; earlier charts mounted `/app/public/uploads`, so uploads never reached the volume.
+
+**3. Behaviour users will notice.**
+- **Passkey users must prove the passkey before private reads and any write.** A session that signed in with a magic link or OAuth but has not passed the passkey step gets 403 with `passkeyRequired: true` on every write and on private reads (private blueprints, API tokens, team SSO settings, drafts, profile). Public pages show what a signed-out visitor sees. In the browser, a refused write sends the user to the passkey step and back to the same page; the wizard keeps its unsaved answers. The private team page, admin and blog admin sit behind the passkey guard. Accounts without passkeys see no change.
+- **Passkey "trust this device"** no longer skips the passkey prompt.
+- **SSO accepts OpenID Connect only.** A SAML or LDAP configuration saved earlier never signed anyone in; it is now refused at sign-in with a 400, and the settings endpoint no longer returns its fields. Replace it with OpenID Connect.
+- **`/api/v1/user` and the CLI login poll no longer return `plan`.**
 - **Magic links are limited to three per address every 10 minutes.** The fourth request is refused, and the sign-in page says to wait.
 - **MCP configs are checked for secrets at every visibility.** A team or private push of an MCP config holding a key asks for confirmation, like a public one. `--allow-sensitive` pushes it anyway; under `-y` it is refused.
-- **`lynxp check --ci` fails on hidden Unicode** in rule files (zero-width characters, bidi controls, tag characters). A pipeline that passed before can fail until the characters are removed.
+
+**4. Update the CLI** with `npm i -g lynxprompt`, `brew upgrade GeiserX/lynxprompt/lynxprompt`, `snap refresh lynxprompt` or your AUR helper. The Snap and AUR packages were stuck at 2.1.1 and now follow every release.
+- **File paths follow the web download.** `lynxp` writes Zed rules to `.rules`, Firebase Studio to `.idx/airules.md`, Roo Code and Kilo Code to `.md` files, Aider to `CONVENTIONS.md`, OpenCode to `AGENTS.md`, Firebender to `.firebender/rules/project.mdc` and Copilot prompts to `.github/prompts/*.prompt.md`. `lynxp push` still recognises the old paths; pull again to get the files where the tools read them.
+- **`lynxp wizard` writes the same content as the web wizard**, because both now use one shared generator. Expect different sections and wording in regenerated files. Continue, Cody, Tabnine, Supermaven, CodeGPT and Void get real configs instead of skeletons (Continue now gets `systemMessage`, which it reads, instead of `customInstructions`). The user's email is no longer written into rules files, and the signed-in profile is used only when the user chose to include it.
 - **`lynxp wizard` writes CLAUDE.md and GEMINI.md as `@AGENTS.md`** when it also writes AGENTS.md, so the rules live in one file. `--no-pointers` keeps full copies.
+- **Logins are kept per instance.** Switching servers with `set-url` keeps the other logins, `lynxp logout` revokes only the current server's token, and `config reset-url` goes back to `https://lynxprompt.com`. Downgrading to an older CLI asks for a new login.
+- **`lynxp check --ci` fails on hidden Unicode** in rule files (zero-width characters, bidi overrides and isolates, tag characters, variation selectors). A lone direction mark (LRM, RLM, ALM) next to text, usual in right-to-left files, is only a warning; marks inside a run of other hidden characters are errors. A pipeline that passed before can fail until the characters are removed.
+- **`lynxp convert` writes the same file as the web download** for every Markdown tool. JSON and YAML configs are refused as a source or a target; `lynxp wizard` generates those.
+- **A file tracked by an older CLI can get one conflict on its first push**, from the checksum fix. `lynxp pull` or `--force` clears it.
+- **Logins from lynxp before 2.1.37 are refused from 2027-01-01.** Those CLIs log in without a code challenge. Until then the login works and the response carries a `deprecation` field; from that date it answers 400 with "This version of lynxp is too old to log in. Update lynxp ...".
 
 ### Added
+- **One version and one release for the app and the CLI**: one tag `vX.Y.Z`, one GitHub release marked Latest with this file's section as notes and install lines for every channel, and one dispatch that publishes the image and every CLI channel. A manual release run takes a `patch`, `minor` or `major` bump and a `dry_run`. Merges close together collapse into at most two releases, and publishes run one at a time in order.
 - **Account deletion in Settings** (Security, Delete account). It removes the account and what it owns, anonymizes the user's forum posts and blog posts, and refuses while the user is the only admin of a team with other members.
 - **Agent Skills and MCP configs** as blueprint types. `lynxp push` and `pull` know the skills folders and MCP config files of the main tools, and `lynxp convert .mcp.json vscode-mcp` (or `cursor-mcp`, `claude-mcp`, `kiro-mcp`) rewrites the servers for another tool.
 - **One download for several tools**: the wizard's "Several Tools (.zip)" button puts each file at its real path.
 - **Devin**: rules go to `.devin/rules/project.md` with `trigger: always_on`.
 - **Deleting an old blueprint version**, so a secret removed in a later edit can leave the history. Owners only; the current version stays.
-- **`lynxp pull` of a hierarchy in one request**, and several ids in one command (`lynxp pull bp_a bp_b ha_c`).
-- **`--json`** on `lynxp check`, `list`, `search` and `whoami`.
-- **ETag and 304** on `GET /api/v1/blueprints/[id]`, so a client can skip downloading an unchanged blueprint.
-
-### Security
-- **Passkey second factor on API writes**: it was enforced only by a page guard and four routes, so a magic link or OAuth login alone could change blueprints, teams and settings through the API.
-- **Magic-link flooding**: anyone could make the sign-in form send unlimited links to one address while Turnstile was off.
-
-## [2.1.48] - 2026-10-28
-
-App 2.1.48 and CLI 2.1.40.
-
-### Upgrade notes
-- **Back up the users and support databases first.** Migrations drop `User.subscriptionPlan`, the `SubscriptionPlan` enum, and `userPlan` on support posts and comments. Their values were only FREE or TEAMS and nothing read them, but the drop cannot be undone without a backup. An instance still on a database built by `db push` is baselined from the frozen `0_init` schema first, then migrated.
-- **Federation is off by default.** A new or upgraded instance no longer registers with the public registry or serves the federation endpoints unless `ENABLE_FEDERATION=true`. Set it to stay listed. With it on, an `APP_URL` the registry cannot reach (http, localhost, an IP address or a port) is skipped with a warning.
-- **SSO accepts OpenID Connect only.** A SAML or LDAP configuration saved earlier never signed anyone in; it is now refused at sign-in with a 400, and the settings endpoint no longer returns its fields. Replace it with OpenID Connect.
-- **`/api/v1/user` and the CLI login poll no longer return `plan`.**
-
-### Added
 - **`lynxp sync`** keeps tracked files current in one command: it pulls cloud changes, pushes local ones, and writes `<file>.remote` on a conflict without touching either side. `--dry-run` previews.
 - **`lynxp pull --vars VAR=value,...`** fills blueprint variables the way the web download does, and `sync`, `diff` and `push` keep using the values.
+- **`lynxp pull` of a hierarchy in one request**, and several ids in one command (`lynxp pull bp_a bp_b ha_c`).
+- **`--json`** on `lynxp check`, `list`, `search` and `whoami`.
+- **`lynxp config set-url` and `reset-url` check the saved login** on the new instance (10 second timeout) and say whether it works, was refused, or could not be checked. With no saved login they make no request.
+- **ETag and 304** on `GET /api/v1/blueprints/[id]`, so a client can skip downloading an unchanged blueprint.
+- **arm64 image**: the image is built natively for linux/amd64 and linux/arm64, with an SBOM, build provenance and a cosign signature.
+- **Snap and AUR packages are built on every release** again (Snap on amd64 and arm64), installed and checked with `lynxprompt --version` before upload. The AUR PKGBUILD now lives in the repo under AGPL-3.0-or-later. The snap keeps its config in its own data directory, so a machine that exports `XDG_CONFIG_HOME` no longer makes it fail with EACCES.
 
 ### Changed
-- **`lynxp convert` writes the same file as the web download** for every Markdown tool. JSON and YAML configs are refused as a source or a target; `lynxp wizard` generates those.
 - **Team pages** show each member's last-seen date and how many seats are taken, and no longer promise paid-plan features.
+- **Generated files, web and CLI**: languages, frameworks and databases are written by name (TypeScript, Next.js, PostgreSQL) instead of their ids, and answer ids a label table does not list get the wizard's own label. Zed, Warp, Junie, OpenHands and Crush files carry the tool's name instead of "Claude Code Instructions", and Cline and Goose files are no longer titled "Windsurf AI Rules". A developer background without a skill level is written.
+- **The Cloud Sync header** has one implementation, the web wizard's. It names the file in `lynxp link/push/pull/diff`, points at the CLI's server when that is not lynxprompt.com, and is written whenever a blueprint id is passed.
+- **The self-host compose file and the Helm chart (0.1.6)** run app 2.1.50; the pins pull request that follows each release moves them to the new version.
+- **Docs**: `docs/configuration.md` and the self-hosting page list every variable the server reads, including `SSO_ENCRYPTION_KEY`, `TRUSTED_PROXY`, `UPLOAD_DIR`, `DB_SSL` and the Turnstile and Umami keys.
 
 ### Removed
 - **SAML and LDAP** from the team SSO settings. Neither ever had a sign-in flow.
 - **Billing plan leftovers**: the plan no longer travels through sessions, tokens, the wizard or the support forum, and the "Free" badge is gone.
+- **The CLI's own rules generator** (about 1,200 lines), replaced by the shared one. Its generic per-language style tips and "Generated by ... CLI" footer are gone.
 - **Dead generator code and CLI docs** for `lynxp agents` and `lynxp import --link`, which do not exist.
-
-### Fixed
-- **Image signing**: the publish job retries the signature check, which failed when the registry listed the signature a few seconds late.
-
-## [2.1.47] - 2026-10-28
-
-App 2.1.47 and CLI 2.1.39.
-
-### Upgrade notes
-- **Back up before upgrading.** The image now applies reviewed migrations with `prisma migrate deploy` instead of `prisma db push`. On the first start, a database an earlier release built with `db push` is brought to the current schema once, without `--accept-data-loss`, and recorded as migrated. If that step would lose data, startup stops and nothing is changed.
-- **Content Security Policy**: `script-src` no longer allows `'unsafe-inline'`; the app sends a fresh nonce per request. A reverse proxy that sets its own `Content-Security-Policy` must let the app's header through, or its policy blocks the app's scripts.
-- **CLI file paths follow the web download.** `lynxp` now writes Zed rules to `.rules`, Firebase Studio to `.idx/airules.md`, Roo Code and Kilo Code to `.md` files, Aider to `CONVENTIONS.md`, OpenCode to `AGENTS.md`, Firebender to `.firebender/rules/project.mdc` and Copilot prompts to `.github/prompts/*.prompt.md`. `lynxp push` still recognises the old paths; pull again to get the files where the tools read them.
-- **CLI logins are kept per instance.** Switching servers with `set-url` keeps the other logins, `lynxp logout` revokes only the current server's token, and `config reset-url` goes back to `https://lynxprompt.com`. Downgrading to an older CLI asks for a new login.
-
-### Added
-- **arm64 image**: the image is built natively for linux/amd64 and linux/arm64, with an SBOM, build provenance and a cosign signature.
-
-### Security
-- **Injected scripts**: removing `'unsafe-inline'` from `script-src` stops injected inline scripts and `javascript:` URLs from running.
-- **Private blueprints**: a blueprint switched from team to private through the API stayed readable by its old team through download, stats and version history. One read rule now covers every route, and a private blueprint is never shared.
-
-### Fixed
-- **Blueprint types**: the web and the v1 API store the same type for the names older CLIs and web clients send, and the web editor checks the line cap.
-- **Release gating**: the CLI release waits for the full CI, the app release waits for an image build on both platforms, and the app release notes come from this file.
-- **`docker-compose.selfhost.yml`** runs app 2.1.46.
-
-## [2.1.46] - 2026-10-28
-
-### Fixed
-- **Support forum categories on a fresh install**: 2.1.45 seeds the default categories on every start, but the image lacked `@prisma/adapter-pg`, which the seed imports, so the seed failed and a new instance's forum could not take posts. The image now installs it.
-
-## [2.1.45] - 2026-10-28
-
-App 2.1.45 and CLI 2.1.38. This release fixes the findings of a full audit of the code.
-
-### Upgrade notes
-- **SSO needs a verified domain.** A team's IdP now signs in only addresses on a domain the team verified with a TXT record at `_lynxprompt-sso.<domain>`. Existing SSO configurations stop signing anyone in until an admin adds the record and presses Verify. SAML and LDAP answer with a clear "not supported yet" error; only OpenID Connect works.
-- **`SSO_ENCRYPTION_KEY`** (64 hex characters) is required to save an SSO configuration. `SSO_ALLOW_PRIVATE_IDP=true` lets an IdP live on a private address or plain http, for trusted instances only.
-- **`TRUSTED_PROXY`** says which client address to use for rate limits: the number of reverse proxies in front of the app (default 1), or `cloudflare` to read `CF-Connecting-IP`, which is safe only when the app cannot be reached except through Cloudflare.
-- **`NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `NEXT_PUBLIC_UMAMI_WEBSITE_ID`** are read at runtime, not baked into the image. Set them in the container's environment.
-- **The AI editor defaults to `claude-haiku-5-5`**, since the old default model is retired. `AI_MODEL` still overrides it.
-- **Passkey "trust this device"** no longer skips the passkey prompt.
 
 ### Security
 - **SSO account takeover**: a team's IdP could sign in as any existing account by asserting its email. Sign-in now needs a verified domain, `javascript:` and other non-http URLs are refused in the SSO settings, and the server no longer calls IdP token or userinfo URLs on private addresses.
-- **Passkey second factor**: the server now enforces the passkey check before minting API tokens and managing passkeys, instead of trusting the browser.
+- **Passkey second factor**: it was enforced only by a page guard and a few routes, so a magic link or OAuth login alone could read private data and change blueprints, teams and settings through the API. The server now enforces it on private reads, on every write, before minting API tokens and before managing passkeys.
 - **API token scopes**: read-only tokens can no longer write blueprints or use the AI editor.
 - **CLI login**: the CLI proves it started the login with a PKCE-style verifier, so someone who sees the login URL cannot collect the token. Tokens are stored with mode 0600 and bound to the server they were issued for, and `lynxp logout` revokes them.
-- **Rate limits and captcha**: forged `X-Forwarded-For` headers no longer give a fresh rate-limit bucket, the magic-link form checks Turnstile, and a slow regular expression in the sensitive-data check is gone.
-- **Blueprint routes**: hierarchy and parent ids must belong to the caller, private blueprints are no longer counted or listed through download and v1 routes, and bad paging values no longer cause 500s.
-- **Support forum and privacy**: the support API answers 404 when `ENABLE_SUPPORT_FORUM` is off, and stored IP hashes are an HMAC keyed with `NEXTAUTH_SECRET` instead of a plain sha256 anyone can reverse.
-- **The image no longer trusts the compromised eMudhra intermediates**: the image upgrades Alpine's CA bundle to 20261020-r0 and runs Node with `--use-openssl-ca`, because Node's built-in roots still accept certificates issued through the eight eMudhra intermediates whose keys leaked. Outgoing HTTPS and SMTP (GitHub, Google sign-in, Turnstile, mail) now verify against the patched system bundle.
+- **Rate limits and captcha**: forged `X-Forwarded-For` headers no longer give a fresh rate-limit bucket, the magic-link form checks Turnstile, the magic-link limit stops anyone flooding one address with links while Turnstile is off, and a slow regular expression in the sensitive-data check is gone.
+- **Injected scripts**: removing `'unsafe-inline'` from `script-src` stops injected inline scripts and `javascript:` URLs from running.
+- **Blueprint routes**: hierarchy and parent ids must belong to the caller, private blueprints are no longer counted or listed through download and v1 routes, and bad paging values no longer cause 500s. A blueprint switched from team to private through the API stayed readable by its old team through download, stats and version history; one read rule now covers every route, and a private blueprint is never shared.
+- **Support forum and privacy**: stored IP hashes are an HMAC keyed with `NEXTAUTH_SECRET` instead of a plain sha256 anyone can reverse.
+- **The image no longer trusts the compromised eMudhra intermediates**: it upgrades Alpine's CA bundle to 20261020-r0 and runs Node with `--use-openssl-ca`, because Node's built-in roots still accept certificates issued through the eight eMudhra intermediates whose keys leaked. Outgoing HTTPS and SMTP (GitHub, Google sign-in, Turnstile, mail) verify against the patched system bundle.
 
 ### Fixed
-- **AI editor**: the usage budget resets every month instead of stopping after the first 30 days, parallel requests cannot overspend it, and the editor is reachable from the blueprint pages.
-- **Teams**: invitations are emailed to the invitee, admins can manage members and seats, and an invited address can sign in when registration is off.
-- **Wizard**: every answer reaches the generated file, drafts save from the last step too, and the Cloud Sync header points at the file the CLI writes.
-- **Generated files**: downloads use the file name and format each AI tool reads (for example `.rules` for Zed and `.github/prompts/*.prompt.md` for Copilot prompts).
-- **Blueprint edits and CLI sync**: editing a blueprint on the web keeps its type, every write stores the content checksum, and `lynxp push` no longer reports a conflict, or overwrites edits, because of a checksum mismatch. After upgrading, a file tracked by an older CLI can get one conflict on its first push; `lynxp pull` or `--force` clears it.
+- **AI editor**: the budget counted every call at old Haiku rates, about 2.5 times the real spend of the default model, so users hit their limit at roughly 40% of it. Each model is now priced from one table; the cap is unchanged. The budget resets every month instead of stopping after the first 30 days, parallel requests cannot overspend it, and the editor is reachable from the blueprint pages.
+- **Final newlines survive push and pull**: the v1 routes trimmed content before storing it, so every pulled file lost its final newline. They store it as sent; a push that differs only in leading or trailing whitespace updates the row without a new version. `lynxp pull` and `sync` end files with exactly one newline, and `lynxp diff` no longer shows a final newline as an added line. A file at the line limit that ends with a newline is accepted.
+- **Valid YAML from the CLI**: a project name with quotes or colons made `lynxp wizard` write `.mdc` and `.tabnine.yaml` files the tools could not parse, so they ignored the rules.
+- **Private blueprints lose their old team link**: before 2.1.47, making a blueprint private through the v1 API kept its team id. The read rule already ignored it; a data-only migration now clears it.
+- **Blueprint types**: the web and the v1 API store the same type for the names older CLIs and web clients send, editing a blueprint on the web keeps its type, and the web editor checks the line cap.
+- **Blueprint edits and CLI sync**: every write stores the content checksum, and `lynxp push` no longer reports a conflict, or overwrites edits, because of a checksum mismatch.
 - **`lynxp pull` and `push` through the v1 API** follow the same read, visibility and sensitive-data rules as the web.
 - **CLI behaviour**: `convert`, `push` and `pull` handle Trae, Amazon Q, Augment, Kiro and legacy `.cursorrules` files, and terminal output escapes control characters from the server.
+- **Teams**: invitations are emailed to the invitee, admins can manage members and seats, and an invited address can sign in when registration is off.
+- **Wizard**: every answer reaches the generated file, drafts save from the last step too, and downloads use the file name and format each AI tool reads.
+- **Support forum categories on a fresh install**: the default categories are seeded on every start. In 2.1.45 the seed failed because the image lacked `@prisma/adapter-pg`, so a new instance's forum could not take posts.
 - **Last login**: accounts record `lastLoginAt` on every sign-in.
 - **Health check**: `/api/health` checks both databases and returns 503 when one is down; `/api/health/live` answers without touching a database.
+- **Privacy policy**: it says accounts are deleted from Settings at once, lists what deletion removes and what stays without your identity, and names Gravatar, which receives an MD5 hash of the email of an account with no profile picture. The security page no longer says deletion requests take 30 days.
 - **Homebrew**: the formula's sha256 is the hash of the real npm tarball (2.1.36 shipped the hash of npm's 404 page), and the CLI is built from its release tag.
-- **Self-hosting docs and compose file**: the documented variables match what the code reads, and every database gets its own URL.
-- **Helm chart 0.1.5** runs app 2.1.45.
-- **Helm chart 0.1.4**: mounts the uploads volume at `/data/uploads`, where the app writes. Earlier charts mounted it at `/app/public/uploads`, so uploads never reached the volume.
-- **Helm chart 0.1.3**: each of the four Prisma schemas gets its own database (`<name>`, `<name>_users`, `<name>_blog`, `<name>_support`). Earlier charts pointed all four at one database, so every start dropped the other schemas' tables and sign-in failed.
+- **Release pipeline**: a release waits for the full CI and an image build on both platforms, image signing retries its check when the registry lists the signature late, the snap build waits until npm serves the new version, and the self-host pins pull request approves its own held CI runs. Each push to main runs the CI suite once, and pull requests start fewer jobs.
 
 ## [2.1.40] - 2026-10-10
 

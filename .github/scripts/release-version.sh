@@ -3,16 +3,16 @@
 # GITHUB_OUTPUT lines:
 #   version=X.Y.Z
 #   last=<tag>        (empty when nothing was ever released)
-#   release-version.sh patch|minor
+#   release-version.sh patch|minor|major
 #
 # The app and the CLI share one version and one v<version> tag. The last release
 # is the highest tag of every family: v* and the app-v*/cli-v* tags of the
 # releases before the two were joined. The next version is the highest of the
-# root package.json, cli/package.json and the last release bumped by <patch|minor>.
+# root package.json, cli/package.json and the last release bumped by <patch|minor|major>.
 # package.json on main lags the tags (the release bumps it only in its own tagged
 # commit), so a pull request that raises it above the last release picks the
 # version, and otherwise the bump does. Either way it is higher than every tag.
-[ $# -eq 1 ] && [[ $1 == patch || $1 == minor ]] || { echo "usage: $0 patch|minor" >&2; exit 2; }
+[ $# -eq 1 ] && [[ $1 == patch || $1 == minor || $1 == major ]] || { echo "usage: $0 patch|minor|major" >&2; exit 2; }
 set -euo pipefail
 semver='^[0-9]+\.[0-9]+\.[0-9]+$'
 
@@ -34,6 +34,7 @@ IFS=. read -r major minor patch <<< "$last_version"
 case $1 in
   patch) bumped="$major.$minor.$((patch + 1))" ;;
   minor) bumped="$major.$((minor + 1)).0" ;;
+  major) bumped="$((major + 1)).0.0" ;;
 esac
 
 echo "version=$(printf '%s\n' "$root" "$cli" "$bumped" | sort -V | tail -n1)"

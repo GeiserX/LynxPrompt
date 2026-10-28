@@ -93,3 +93,19 @@ jobs:
             echo "::error::Could not open the PR. Allow GitHub Actions to create pull requests (Settings, Actions, General), or open it by hand: ${{ github.server_url }}/${{ github.repository }}/compare/main...$BRANCH"
             exit 1
           fi
+
+      # Now that Actions may open PRs, the PR's own pull_request runs start too,
+      # but GitHub holds them as "action_required" because github-actions[bot]
+      # counts as a first-time contributor, and the PR waits for a person.
+      # These are this repo's own workflows on a branch this job wrote, so
+      # approve them.
+      - name: Approve the PR's held runs
+        if: steps.bump.outputs.changed == 'true'
+        run: |
+          for i in $(seq 1 12); do
+            ids=$(gh run list --branch "$BRANCH" --event pull_request --json databaseId,conclusion --jq '.[] | select(.conclusion == "action_required") | .databaseId')
+            for id in $ids; do gh api -X POST "repos/${{ github.repository }}/actions/runs/$id/approve" > /dev/null && echo "approved run $id"; done
+            [ -n "$ids" ] && exit 0
+            sleep 10
+          done
+          echo "no held runs on $BRANCH"

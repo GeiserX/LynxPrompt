@@ -49,10 +49,11 @@ afterEach(() => {
 });
 
 describe("release version", () => {
-  it("starts the joined line at 2.2.0, above app 2.1.50 and CLI 2.1.42", () => {
-    const dir = repo({ app: "2.2.0", cli: "2.2.0", tags: joined });
-    expect(next(dir)).toEqual({ status: 0, version: "2.2.0", last: "app-v2.1.50" });
-    expect(next(dir, "minor")).toEqual({ status: 0, version: "2.2.0", last: "app-v2.1.50" });
+  it("starts the joined line at 3.0.0, above app 2.1.50 and CLI 2.1.42", () => {
+    const dir = repo({ app: "3.0.0", cli: "3.0.0", tags: joined });
+    expect(next(dir)).toEqual({ status: 0, version: "3.0.0", last: "app-v2.1.50" });
+    expect(next(dir, "minor")).toEqual({ status: 0, version: "3.0.0", last: "app-v2.1.50" });
+    expect(next(dir, "major")).toEqual({ status: 0, version: "3.0.0", last: "app-v2.1.50" });
   });
 
   it("bumps the highest tag of any family when package.json lags", () => {
@@ -67,9 +68,10 @@ describe("release version", () => {
   });
 
   it("continues from v* after the first joined release", () => {
-    const dir = repo({ app: "2.2.0", cli: "2.2.0", tags: [...joined, "v2.2.0"] });
-    expect(next(dir)).toEqual({ status: 0, version: "2.2.1", last: "v2.2.0" });
-    expect(next(dir, "minor")).toMatchObject({ version: "2.3.0" });
+    const dir = repo({ app: "3.0.0", cli: "3.0.0", tags: [...joined, "v3.0.0"] });
+    expect(next(dir)).toEqual({ status: 0, version: "3.0.1", last: "v3.0.0" });
+    expect(next(dir, "minor")).toMatchObject({ version: "3.1.0" });
+    expect(next(dir, "major")).toMatchObject({ version: "4.0.0" });
   });
 
   it("compares versions as numbers, not as text", () => {
@@ -92,7 +94,7 @@ describe("release version", () => {
   });
 
   it("refuses a bump it does not know and a version that is not X.Y.Z", () => {
-    expect(next(repo({ app: "1.0.0", cli: "1.0.0", tags: [] }), "major").status).toBe(2);
+    expect(next(repo({ app: "1.0.0", cli: "1.0.0", tags: [] }), "huge").status).toBe(2);
     expect(next(repo({ app: "1.0.0-beta", cli: "1.0.0", tags: [] })).status).toBe(1);
   });
 
@@ -127,10 +129,10 @@ describe("one release workflow", () => {
     expect(concurrency).not.toMatch(/queue:/);
   });
 
-  it("takes the version from the script and a bump of patch or minor", () => {
+  it("takes the version from the script and a bump of patch, minor or major", () => {
     expect(job(release, "prepare")).toContain("bash .github/scripts/release-version.sh \"${{ inputs.bump || 'patch' }}\"");
     const dispatch = release.match(/\n  workflow_dispatch:\n((?: {4}.*\n)*)/)![1];
-    expect(dispatch).toMatch(/bump:[\s\S]*- patch\n\s+- minor\n/);
+    expect(dispatch).toMatch(/bump:[\s\S]*- patch\n\s+- minor\n\s+- major\n/);
     expect(dispatch).toMatch(/dry_run:\n\s+description: .*\n\s+required: true\n\s+type: boolean\n\s+default: false/);
   });
 

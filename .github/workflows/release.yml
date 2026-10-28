@@ -4,9 +4,9 @@ name: Release
 # GitHub release, from which the Docker image, npm, the binaries, Homebrew,
 # Chocolatey, the Snap Store and the AUR are published.
 #
-# Every push to main runs the tests here (this is main's CI) and releases when
-# something that ships changed since the last release. A manual run always
-# releases; dry_run does every step except the tag, the release and the publishes.
+# Every push to main runs the tests here (this is main's CI) and never releases.
+# Releases are manual: run this workflow by hand (bump patch, minor or major);
+# dry_run does every step except the tag, the release and the publishes.
 on:
   push:
     branches: [main]
@@ -25,6 +25,7 @@ on:
         options:
           - patch
           - minor
+          - major
         default: patch
       dry_run:
         description: 'Compute and test everything, but create no tag, release or package'
@@ -72,11 +73,11 @@ jobs:
             echo "::error::a real release runs only from main; use dry_run on $GITHUB_REF"
             exit 1
           fi
-          if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch || -z "$LAST" ]]; then
+          # Releases are manual: a push to main only runs the tests.
+          if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
             RELEASE=true
           else
-            # Shipped paths of the app and the CLI; the rule is in the script.
-            RELEASE=$(bash .github/scripts/release-changes.sh all "$LAST")
+            RELEASE=false
           fi
           echo "release=$RELEASE" >> "$GITHUB_OUTPUT"
           echo "dry_run=$DRY_RUN" >> "$GITHUB_OUTPUT"
