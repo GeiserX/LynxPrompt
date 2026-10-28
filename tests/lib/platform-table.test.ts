@@ -165,7 +165,7 @@ describe("every blueprint type of the database has a home", () => {
     "DOCKERFILE", "DOCKER_COMPOSE", "GITHUB_ACTIONS", "GITLAB_CI", "EDITORCONFIG", "PRETTIER",
     "ESLINT", "PRE_COMMIT", "CUSTOM",
     // Skill folders and MCP configs: not one platform's file (see blueprint-files tests)
-    "AGENT_SKILL", "MCP_CONFIG",
+    "AGENT_SKILL", "MCP_CONFIG", "AGENT_DEFINITION",
   ]);
 
   it("parses the enum", () => {

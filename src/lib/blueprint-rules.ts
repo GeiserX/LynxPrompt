@@ -6,7 +6,7 @@ import { prismaUsers } from "@/lib/db-users";
 import { TemplateType } from "@/generated/prisma-users/enums";
 import { detectSensitiveData, type SensitiveMatch } from "@/lib/sensitive-data";
 import { checkBlueprintLineCount } from "@/lib/subscription";
-import { MCP_BLUEPRINT_TYPE } from "@/lib/platforms";
+import { MCP_BLUEPRINT_TYPE, SKILL_BLUEPRINT_TYPE, checkSkillContent } from "@/lib/platforms";
 
 export type TeamResolution =
   | { ok: true; teamId: string }
@@ -160,4 +160,17 @@ export function checkBlueprintContent(
   }
 
   return { ok: true };
+}
+
+/**
+ * Why a skill cannot be stored, or null: an Agent Skill's frontmatter name
+ * must follow the Agent Skills format (and match its folder when the path is
+ * known), or Copilot, Junie and Cline refuse to load it. Other types pass.
+ */
+export function skillContentError(
+  type: string | null | undefined,
+  content: string,
+  repositoryPath?: string | null
+): string | null {
+  return type === SKILL_BLUEPRINT_TYPE ? checkSkillContent(content, repositoryPath) : null;
 }

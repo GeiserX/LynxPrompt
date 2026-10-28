@@ -399,3 +399,29 @@ describe("PUT /api/v1/blueprints/[id]", () => {
     expect(db.userTemplate.update.mock.calls[0][0].data.type).toBe("CUSTOM");
   });
 });
+
+describe("v1 skill names", () => {
+  it("refuses a skill whose name is not its folder", async () => {
+    const res = await create({
+      type: "AGENT_SKILL",
+      content: "---\nname: release-notes\ndescription: x\n---\nRead the changelog.",
+      repository_path: ".claude/skills/notes/SKILL.md",
+    });
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toMatch(/folder name "notes"/);
+    expect(db.userTemplate.create).not.toHaveBeenCalled();
+  });
+
+  it("refuses an update that breaks the name of a stored skill", async () => {
+    db.userTemplate.findUnique.mockResolvedValue(row({ userId: "user_1", type: "AGENT_SKILL" }));
+    const res = await update({ content: "---\nname: -bad\ndescription: x\n---\nRead the changelog." });
+    expect(res.status).toBe(400);
+    expect(db.userTemplate.update).not.toHaveBeenCalled();
+  });
+
+  it("stores a subagent type", async () => {
+    const res = await create({ type: "AGENT_DEFINITION", content: "---\nname: reviewer\ndescription: x\n---\nReview it." });
+    expect(res.status).toBe(201);
+    expect(created().type).toBe("AGENT_DEFINITION");
+  });
+});

@@ -155,3 +155,23 @@ describe("DELETE /api/blueprints/[id]", () => {
     expect(mockTransaction).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("PUT /api/blueprints/[id] skill name", () => {
+  it("refuses a skill name that breaks the Agent Skills format", async () => {
+    const response = await update({ type: "AGENT_SKILL", content: "---\nname: pdf--tools\ndescription: x\n---\nUse pdftk." });
+    expect(response.status).toBe(400);
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it("refuses turning stored content with a bad name into a skill", async () => {
+    mockFindUnique.mockResolvedValue({
+      userId: "user_1",
+      currentVersion: 1,
+      content: "---\nname: Not Valid\n---\nUse pdftk.",
+      isPublic: false,
+      teamId: null,
+    });
+    const response = await update({ type: "AGENT_SKILL" });
+    expect(response.status).toBe(400);
+  });
+});

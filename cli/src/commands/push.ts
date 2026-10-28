@@ -16,7 +16,7 @@ import {
   type TrackedBlueprint,
 } from "../utils/blueprint-tracker.js";
 import { withSensitiveDataAck, type SensitiveMatchInfo } from "../utils/sensitive-ack.js";
-import { matchConfigFile } from "../utils/blueprint-files.js";
+import { matchConfigFile, assetKey, keepOneCopy, writeAssetCopies } from "../utils/blueprint-files.js";
 
 interface PushOptions {
   name?: string;
@@ -292,7 +292,8 @@ export async function pushCommand(
 
   // --all mode: scan for ALL config files recursively
   if (options.all) {
-    const discoveredFiles = scanForAllConfigFiles(cwd);
+    const tracked = new Set((await loadBlueprints(cwd)).blueprints.map((b) => toTrackedPath(cwd, b.file)));
+    const { kept: discoveredFiles, dropped } = keepOneCopy(scanForAllConfigFiles(cwd), (p) => tracked.has(p));
     if (discoveredFiles.length === 0) {
       console.log(chalk.yellow("No AI configuration files found."));
       console.log(chalk.gray("Run from a directory containing AGENTS.md, CLAUDE.md, .cursor/rules/, etc."));
@@ -312,6 +313,9 @@ export async function pushCommand(
       for (const f of files) {
         console.log(chalk.gray(`    ${f.path}`));
       }
+    }
+    for (const f of dropped) {
+      console.log(chalk.gray(`  ${f.path}: copy of a skill or subagent listed above, kept in step with it`));
     }
     console.log();
 
@@ -363,10 +367,30 @@ export async function pushCommand(
     // Update existing blueprint
     await updateBlueprint(cwd, file, linked.id, content, options, linked.checksum);
   } else {
+    const sibling = await trackedCopyOf(cwd, file);
+    if (sibling) {
+      console.log(chalk.yellow(`⚠ Not pushed: ${file} is a copy of ${sibling}, which is linked to a blueprint.`));
+      console.log(chalk.gray(`   Edit and push ${sibling}; its copies are refreshed on push.`));
+      process.exit(1);
+    }
     // Create new blueprint or link to existing. A file named on the command line is
     // pushed alone; only a bare 'lynxp push' offers to push every AGENTS.md as a hierarchy.
     await createOrLinkBlueprint(cwd, file, filename, content, options, fileArg !== undefined);
   }
+}
+
+/** The tracked file another copy of the same skill or subagent is, or null. */
+async function trackedCopyOf(cwd: string, file: string): Promise<string | null> {
+  const key = assetKey(toTrackedPath(cwd, path.resolve(file)));
+  if (!key) return null;
+  const match = (await loadBlueprints(cwd)).blueprints.find((b) => assetKey(toTrackedPath(cwd, b.file)) === key);
+  return match ? toTrackedPath(cwd, match.file) : null;
+}
+
+/** After a push, refresh the copies of a skill or subagent already in the project. */
+async function refreshCopies(cwd: string, file: string, content: string): Promise<void> {
+  const written = await writeAssetCopies(cwd, toTrackedPath(cwd, path.resolve(file)), content, { onlyExisting: true });
+  for (const copy of written) console.log(chalk.gray(`   ↳ refreshed ${copy}`));
 }
 
 /**
@@ -419,6 +443,7 @@ async function updateBlueprint(
 
     // Update local tracking with new checksum
     await updateChecksum(cwd, file, content);
+    await refreshCopies(cwd, file, content);
 
     console.log();
     console.log(chalk.green(`✅ Successfully updated ${chalk.bold(result.blueprint.name)}`));
@@ -644,6 +669,8 @@ async function createOrLinkBlueprint(
       repositoryPath: hierarchyInfo.repositoryPath || undefined,
     });
 
+    await refreshCopies(cwd, file, content);
+
     console.log();
     const typeDesc = isCommandFile ? `${commandNames[inferredType]} Command` : "Blueprint";
     console.log(chalk.green(`✅ Created ${typeDesc} ${chalk.bold(result.blueprint.name)}`));
@@ -778,6 +805,7 @@ async function pushHierarchy(
           confirmSensitive(options, spinner)
         );
         await updateChecksum(cwd, file.path, content);
+        await refreshCopies(cwd, file.path, content);
 
         if (file.isRoot) rootBlueprintId = tracked.id;
         spinner.succeed(`${file.path} → updated (${tracked.id})`);
@@ -806,6 +834,7 @@ async function pushHierarchy(
           hierarchyName,
           repositoryPath: file.path,
         });
+        await refreshCopies(cwd, file.path, content);
 
         if (file.isRoot) rootBlueprintId = existing.id;
         spinner.succeed(`${file.path} → linked & updated (${existing.id})`);
@@ -854,6 +883,7 @@ async function pushHierarchy(
         hierarchyName,
         repositoryPath: file.path,
       });
+      await refreshCopies(cwd, file.path, content);
 
       spinner.succeed(`${file.path} → created (${result.blueprint.id})`);
       createCount++;

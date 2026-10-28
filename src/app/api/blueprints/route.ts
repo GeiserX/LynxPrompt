@@ -3,7 +3,7 @@ import { posix as posixPath } from "path";
 import { prismaUsers } from "@/lib/db-users";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { detectSensitiveData, type SensitiveMatch } from "@/lib/sensitive-data";
-import { normalizeBlueprintType } from "@/lib/blueprint-rules";
+import { normalizeBlueprintType, skillContentError } from "@/lib/blueprint-rules";
 import { contentChecksum } from "@/lib/content-checksum";
 import { parsePage } from "@/lib/pagination";
 import { checkBlueprintLineCount, BLUEPRINT_LIMITS } from "@/lib/subscription";
@@ -320,6 +320,10 @@ export async function POST(request: NextRequest) {
 
     // Validate type - accept exact type or normalize from old formats
     const normalizedType = normalizeBlueprintType(type);
+    const skillError = skillContentError(normalizedType, content, repositoryPath);
+    if (skillError) {
+      return NextResponse.json({ error: skillError }, { status: 400 });
+    }
 
     // Validate category
     const validCategories = ["web", "fullstack", "devops", "mobile", "saas", "data", "api", "other"];

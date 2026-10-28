@@ -36,6 +36,18 @@ const BLUEPRINTS: Record<string, { name: string; type: string; repository_path: 
   bp_root: { name: "root", type: "AGENTS_MD", repository_path: "AGENTS.md", content: "# Root rules" },
   bp_api: { name: "api", type: "AGENTS_MD", repository_path: "packages/api/AGENTS.md", content: "# API rules" },
   bp_claude: { name: "claude", type: "CLAUDE_MD", repository_path: null, content: "# Claude rules" },
+  bp_skill: {
+    name: "Release notes",
+    type: "AGENT_SKILL",
+    repository_path: null,
+    content: "---\nname: release-notes\ndescription: Write release notes\nmodel: opus\n---\nRead the changelog.\n",
+  },
+  bp_agent: {
+    name: "Reviewer",
+    type: "AGENT_DEFINITION",
+    repository_path: null,
+    content: "---\nname: reviewer\ndescription: Reviews diffs\n---\nReview the diff.\n",
+  },
 };
 
 let dir: string;
@@ -123,5 +135,32 @@ describe("lynxp pull with several ids", () => {
     expect(read("AGENTS.md")).toBe("# Root rules\n");
     expect(read("packages/api/AGENTS.md")).toBe("# API rules\n");
     expect((await loadBlueprints(dir)).blueprints.map((b) => b.id).sort()).toEqual(["bp_api", "bp_claude", "bp_root"]);
+  });
+});
+
+describe("lynxp pull of a skill or subagent", () => {
+  it("writes the skill for Claude Code and for every agent reading .agents/skills, and tracks the full copy", async () => {
+    await pullCommand("bp_skill", { output: dir, yes: true });
+
+    expect(read(".claude/skills/release-notes/SKILL.md")).toBe(BLUEPRINTS.bp_skill.content);
+    expect(read(".agents/skills/release-notes/SKILL.md")).toBe(
+      "---\nname: release-notes\ndescription: Write release notes\n---\nRead the changelog.\n"
+    );
+    expect(fs.existsSync(path.join(dir, ".kiro/skills"))).toBe(false);
+    expect((await loadBlueprints(dir)).blueprints.map((b) => b.file)).toEqual([".claude/skills/release-notes/SKILL.md"]);
+  });
+
+  it("adds the Codex and Copilot copies of a subagent when the project uses them", async () => {
+    fs.mkdirSync(path.join(dir, ".codex"));
+    fs.mkdirSync(path.join(dir, ".github/agents"), { recursive: true });
+
+    await pullCommand("bp_agent", { output: dir, yes: true });
+
+    expect(read(".claude/agents/reviewer.md")).toBe(BLUEPRINTS.bp_agent.content);
+    expect(read(".agents/agents/reviewer.md")).toBe(BLUEPRINTS.bp_agent.content);
+    expect(read(".github/agents/reviewer.agent.md")).toBe(BLUEPRINTS.bp_agent.content);
+    expect(read(".codex/agents/reviewer.toml")).toBe(
+      "name = \"reviewer\"\ndescription = \"Reviews diffs\"\ndeveloper_instructions = '''\nReview the diff.\n'''\n"
+    );
   });
 });

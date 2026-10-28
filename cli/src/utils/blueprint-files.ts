@@ -3,6 +3,8 @@
  */
 
 import path from "path";
+import { existsSync } from "fs";
+import { mkdir, readFile, writeFile } from "fs/promises";
 import {
   PLATFORMS,
   COMMANDS,
@@ -10,7 +12,13 @@ import {
   getCommandTemplateType,
   SKILL_BLUEPRINT_TYPE,
   SKILL_DIRECTORIES,
-  skillFolder,
+  SKILL_TARGETS,
+  SUBAGENT_BLUEPRINT_TYPE,
+  SUBAGENT_DIRECTORIES,
+  SUBAGENT_TARGETS,
+  skillFiles,
+  subagentFiles,
+  agentAssetFiles,
   MCP_BLUEPRINT_TYPE,
   MCP_CONFIGS,
 } from "../../../packages/shared/src/platforms.js";
@@ -35,7 +43,9 @@ export function blueprintFilename(bp: {
   content?: string;
 }): string {
   if (bp.repository_path) return bp.repository_path;
-  if (bp.type === SKILL_BLUEPRINT_TYPE) return `${SKILL_DIRECTORIES[0]}/${skillFolder(bp)}/SKILL.md`;
+  // A skill or subagent is tracked in the copy that holds it as stored
+  const copies = agentAssetFiles({ ...bp, content: bp.content ?? "" });
+  if (copies.length > 0) return (copies.find((f) => f.full) ?? copies[0]).path;
   if (bp.type === MCP_BLUEPRINT_TYPE) return MCP_CONFIGS[0].file;
   const platform = platformForBlueprintType(bp.type);
   if (platform && PLATFORM_FILES[platform]) return PLATFORM_FILES[platform];
@@ -87,12 +97,6 @@ const atPath = (relativePath: string, file: string) => {
   const p = normPath(relativePath);
   return p === file || p.endsWith(`/${file}`);
 };
-/** <dir>/<skill name>/SKILL.md, with <dir> at the root or in a subfolder. */
-const inSkillFolder = (relativePath: string, dir: string) => {
-  const parts = normPath(relativePath).split("/");
-  const n = parts.length;
-  return n >= 4 && parts[n - 1] === "skill.md" && parts.slice(n - 4, n - 2).join("/") === dir;
-};
 const inFolder = (relativePath: string, folder: string) => {
   const p = normPath(relativePath);
   return p.startsWith(folder) || p.includes(`/${folder}`);
@@ -103,12 +107,9 @@ const inFolder = (relativePath: string, folder: string) => {
  * shared platform table plus the paths older CLI versions wrote.
  */
 const CONFIG_PATTERNS: ConfigPattern[] = [
-  // Agent Skills: <tool>/skills/<skill name>/SKILL.md
-  ...SKILL_DIRECTORIES.map((dir) => ({
-    match: (p: string) => inSkillFolder(p, dir),
-    type: SKILL_BLUEPRINT_TYPE,
-    label: "Agent Skill",
-  })),
+  // Agent Skills (<tool>/skills/<skill name>/SKILL.md) and subagents (<tool>/agents/<name>.md)
+  { match: (p) => assetLocation(p)?.kind === "skill", type: SKILL_BLUEPRINT_TYPE, label: "Agent Skill" },
+  { match: (p) => assetLocation(p)?.kind === "agent", type: SUBAGENT_BLUEPRINT_TYPE, label: "Subagent" },
   // MCP server configs
   ...MCP_CONFIGS.map((c) => ({
     match: (p: string) => atPath(p, c.file),
@@ -163,4 +164,147 @@ export function matchConfigFile(relativePath: string): { type: string; label: st
  */
 export function withFinalNewline(content: string): string {
   return content.endsWith("\n") ? content : `${content}\n`;
+}
+
+// ========================================
+// SKILL AND SUBAGENT COPIES
+// ========================================
+
+interface AssetLocation {
+  kind: "skill" | "agent";
+  /** Folder the tool folder sits in ("" at the project root, "apps/web/" in a subfolder) */
+  base: string;
+  directory: string;
+  /** Skill folder or subagent file name, without extension */
+  name: string;
+}
+
+/** Where `dir` ends `parent` ("/"-separated, lower case), or -1. */
+function dirEnd(parent: string, dir: string): number {
+  if (parent === dir) return 0;
+  return parent.endsWith(`/${dir}`) ? parent.length - dir.length : -1;
+}
+
+/**
+ * The skill or subagent a path holds: <base><tool skills dir>/<name>/SKILL.md
+ * or <base><tool agents dir>/<name><ext>. Null for any other file.
+ */
+export function assetLocation(relativePath: string): AssetLocation | null {
+  const original = relativePath.replace(/\\/g, "/");
+  const p = original.toLowerCase();
+  const slash = p.lastIndexOf("/");
+  if (slash < 0) return null;
+  const parent = p.slice(0, slash);
+  const file = p.slice(slash + 1);
+
+  if (file === "skill.md") {
+    const folderSlash = parent.lastIndexOf("/");
+    if (folderSlash < 0) return null;
+    const toolDir = parent.slice(0, folderSlash);
+    for (const dir of SKILL_DIRECTORIES) {
+      const at = dirEnd(toolDir, dir);
+      if (at >= 0) {
+        return { kind: "skill", base: original.slice(0, at), directory: dir, name: original.slice(folderSlash + 1, slash) };
+      }
+    }
+    return null;
+  }
+
+  for (const { directory, extensions } of SUBAGENT_DIRECTORIES) {
+    const at = dirEnd(parent, directory);
+    if (at < 0) continue;
+    const ext = extensions.find((e) => file.endsWith(e) && file.length > e.length);
+    if (!ext) continue;
+    return { kind: "agent", base: original.slice(0, at), directory, name: original.slice(slash + 1, original.length - ext.length) };
+  }
+  return null;
+}
+
+/** Copies of one skill or subagent share this key: kind, base folder and name. */
+export function assetKey(relativePath: string): string | null {
+  const loc = assetLocation(relativePath);
+  return loc ? `${loc.kind}:${loc.base.toLowerCase()}${loc.name.toLowerCase()}` : null;
+}
+
+/** Tools picked besides the default copies: Kiro, Firebender, Copilot or Codex, when the project uses them. */
+export function projectAssetTools(root: string): string[] {
+  return [...SKILL_TARGETS, ...SUBAGENT_TARGETS]
+    .filter((t) => !t.default && t.detect.some((d) => existsSync(path.join(root, d))))
+    .map((t) => t.id);
+}
+
+/**
+ * The other copies of the skill or subagent at `relativePath` (paths relative
+ * to the same root): `.agents/skills` + `.claude/skills` for a skill,
+ * `.claude/agents` + `.agents/agents` for a subagent, plus the picked tools.
+ * Only a Markdown subagent has copies: a Codex TOML or Kiro JSON file stays alone.
+ */
+export function assetCopies(relativePath: string, content: string, tools: string[] = []): { path: string; content: string }[] {
+  const loc = assetLocation(relativePath);
+  if (!loc) return [];
+  if (loc.kind === "agent" && !relativePath.toLowerCase().endsWith(".md")) return [];
+  const files =
+    loc.kind === "skill" ? skillFiles({ content }, tools, loc.name) : subagentFiles({ content }, tools, loc.name);
+  const self = normPath(relativePath);
+  return files
+    .map((f) => ({ path: `${loc.base}${f.path}`, content: f.content }))
+    .filter((f) => normPath(f.path) !== self);
+}
+
+/**
+ * Write the copies of a skill or subagent next to the file at `relativePath`
+ * under `root`, so every tool sees the same definition. `onlyExisting`
+ * refreshes the copies already there (push, sync) instead of adding new ones
+ * (pull). Returns the paths written.
+ */
+export async function writeAssetCopies(
+  root: string,
+  relativePath: string,
+  content: string,
+  { onlyExisting = false, tools = projectAssetTools(root) }: { onlyExisting?: boolean; tools?: string[] } = {}
+): Promise<string[]> {
+  const written: string[] = [];
+  for (const copy of assetCopies(relativePath, content, tools)) {
+    let target: string;
+    try {
+      target = safePath(root, copy.path);
+    } catch {
+      continue;
+    }
+    const text = withFinalNewline(copy.content);
+    if (existsSync(target)) {
+      if ((await readFile(target, "utf-8")) === text) continue;
+    } else if (onlyExisting) {
+      continue;
+    }
+    await mkdir(path.dirname(target), { recursive: true });
+    await writeFile(target, text, "utf-8");
+    written.push(copy.path);
+  }
+  return written;
+}
+
+/**
+ * One file per skill or subagent: copies of the same one (same name, any tool
+ * folder) are pushed once. The tracked copy wins, else the full one
+ * (`.claude/...`), else the first found. Other files pass through.
+ */
+export function keepOneCopy<T extends { path: string }>(
+  files: T[],
+  isTracked: (relativePath: string) => boolean
+): { kept: T[]; dropped: T[] } {
+  const full = new Set([...SKILL_TARGETS, ...SUBAGENT_TARGETS].filter((t) => t.format === "full").map((t) => t.directory));
+  const rank = (f: T) => (isTracked(f.path) ? 0 : full.has(assetLocation(f.path)!.directory) ? 1 : 2);
+  const best = new Map<string, T>();
+  for (const f of files) {
+    const key = assetKey(f.path);
+    if (!key) continue;
+    const current = best.get(key);
+    if (!current || rank(f) < rank(current)) best.set(key, f);
+  }
+  const kept = files.filter((f) => {
+    const key = assetKey(f.path);
+    return !key || best.get(key) === f;
+  });
+  return { kept, dropped: files.filter((f) => !kept.includes(f)) };
 }

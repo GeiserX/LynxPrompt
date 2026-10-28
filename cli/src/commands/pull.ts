@@ -13,7 +13,7 @@ import {
   toTrackedPath,
   type BlueprintSource,
 } from "../utils/blueprint-tracker.js";
-import { blueprintFilename, safePath, withFinalNewline } from "../utils/blueprint-files.js";
+import { blueprintFilename, safePath, withFinalNewline, writeAssetCopies } from "../utils/blueprint-files.js";
 import { parseVariablesString } from "../utils/generator.js";
 import { fillBlueprintVariables } from "../utils/variables.js";
 
@@ -41,6 +41,17 @@ function contentToWrite(content: string, options: PullOptions, label: string): s
 // Values to remember for sync, only when they changed what was written
 function pulledVariables(options: PullOptions, written: string, content: string): Record<string, string> | undefined {
   return options.vars === undefined || written === content ? undefined : parseVariablesString(options.vars);
+}
+
+/**
+ * A skill or subagent also goes to the other tools' folders (.agents and
+ * .claude, plus Kiro, Firebender, Copilot or Codex when the project uses them).
+ * The copies are not tracked: push and sync keep them in step with this file.
+ */
+async function writeCopies(options: PullOptions, filename: string, written: string, indent: string): Promise<void> {
+  for (const copy of await writeAssetCopies(resolve(options.output), filename, written)) {
+    console.log(chalk.gray(`${indent}↳ ${safeText(copy)}`));
+  }
 }
 
 // Determine blueprint source from visibility
@@ -196,6 +207,7 @@ async function pullHierarchy(
       // Write the file
       const written = contentToWrite(blueprint.content, options, filename);
       await writeFile(outputPath, withFinalNewline(written), "utf-8");
+      await writeCopies(options, filename, written, "    ");
 
       // Track the blueprint with hierarchy info
       if (options.track !== false) {
@@ -431,6 +443,7 @@ async function pullBlueprint(
     // Write the file
     const written = contentToWrite(blueprint.content, options, filename);
     await writeFile(outputPath, withFinalNewline(written), "utf-8");
+    await writeCopies(options, filename, written, "   ");
 
     // Track the blueprint (default behavior unless --no-track)
     if (options.track !== false) {

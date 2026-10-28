@@ -657,42 +657,9 @@ export const COMMANDS: CommandDefinition[] = [
 // AGENT SKILLS AND MCP SERVERS
 // ========================================
 
-/** Blueprint type of an Agent Skill: the SKILL.md of one skill folder. */
-export const SKILL_BLUEPRINT_TYPE = "AGENT_SKILL";
-
-/**
- * Folders tools read Agent Skills from, one folder per skill holding a
- * SKILL.md: Claude Code, Codex, GitHub Copilot, Cursor, Gemini CLI, OpenCode.
- * A skill pulled without a stored path goes in the first one.
- */
-export const SKILL_DIRECTORIES = [
-  ".claude/skills",
-  ".agents/skills",
-  ".github/skills",
-  ".cursor/skills",
-  ".gemini/skills",
-  ".opencode/skills",
-];
-
-/**
- * Folder a skill goes in under a skills directory: the "name" in its SKILL.md
- * frontmatter (the Agent Skills format wants the two to match), else the
- * blueprint name, slugified. The web download and `lynxp pull` both use it.
- */
-export function skillFolder(bp: { name?: string; content?: string }): string {
-  // Plain line scanning, no backtracking regex: the content is untrusted
-  const lines = (bp.content ?? "").split("\n").map((l) => l.trimEnd());
-  const end = lines[0] === "---" ? lines.indexOf("---", 1) : -1;
-  const nameLine = end > 0 ? lines.slice(1, end).find((l) => l.startsWith("name:")) : undefined;
-  const name = nameLine?.slice("name:".length).trim().replace(/^["']|["']$/g, "");
-  const slug = (name || bp.name || "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .split("-")
-    .filter(Boolean)
-    .join("-");
-  return slug || "skill";
-}
+// Skills and subagents live in agent-assets.ts; re-exported so imports of
+// this table keep working
+export * from "./agent-assets";
 
 /** Blueprint type of an MCP server config. */
 export const MCP_BLUEPRINT_TYPE = "MCP_CONFIG";

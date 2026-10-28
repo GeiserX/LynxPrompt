@@ -101,6 +101,7 @@ enum TemplateType {
   // Agent Skills and MCP servers, one definition for every tool
   AGENT_SKILL       // Agent Skill (<tool>/skills/<name>/SKILL.md)
   MCP_CONFIG        // MCP servers (.mcp.json, .cursor/mcp.json, .vscode/mcp.json)
+  AGENT_DEFINITION  // Subagent (.claude/agents/<name>.md, .agents/agents/<name>.md)
   GITIGNORE
   README
   CONTRIBUTING
