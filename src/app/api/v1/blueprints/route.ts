@@ -113,7 +113,8 @@ export async function GET(request: NextRequest) {
         hierarchyId: true,
         parentId: true,
         repositoryPath: true,
-        contentChecksum: true,
+        // Read for the checksum only; the list does not return content.
+        content: true,
       },
     });
 
@@ -135,7 +136,7 @@ export async function GET(request: NextRequest) {
       hierarchy_id: bp.hierarchyId ? toHierarchyApiId(bp.hierarchyId) : null,
       parent_id: bp.parentId ? toBlueprintApiId(bp.parentId) : null,
       repository_path: bp.repositoryPath,
-      content_checksum: bp.contentChecksum,
+      content_checksum: contentChecksum(bp.content),
     }));
 
     return NextResponse.json({

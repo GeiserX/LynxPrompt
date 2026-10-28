@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prismaUsers } from "@/lib/db-users";
+import { contentChecksum } from "@/lib/content-checksum";
 import { APP_URL } from "@/lib/feature-flags";
 import {
   validateApiToken,
@@ -77,7 +78,8 @@ export async function GET(
             tier: true,
             repositoryPath: true,
             parentId: true,
-            contentChecksum: true,
+            // Read for the checksum only; the response does not return content.
+            content: true,
             visibility: true,
             downloads: true,
             favorites: true,
@@ -144,7 +146,7 @@ export async function GET(
       tier: bp.tier,
       repository_path: bp.repositoryPath,
       parent_id: bp.parentId ? toBlueprintApiId(bp.parentId) : null,
-      content_checksum: bp.contentChecksum,
+      content_checksum: contentChecksum(bp.content),
       visibility: bp.visibility,
       downloads: bp.downloads,
       favorites: bp.favorites,
@@ -171,7 +173,7 @@ export async function GET(
         tier: bp.tier,
         repository_path: bp.repositoryPath,
         parent_id: bp.parentId ? toBlueprintApiId(bp.parentId) : null,
-        content_checksum: bp.contentChecksum,
+        content_checksum: contentChecksum(bp.content),
         visibility: bp.visibility,
         downloads: bp.downloads,
         favorites: bp.favorites,

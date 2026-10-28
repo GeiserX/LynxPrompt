@@ -89,7 +89,6 @@ export async function GET(
         hierarchyId: true,
         parentId: true,
         repositoryPath: true,
-        contentChecksum: true,
       },
     });
 
@@ -130,7 +129,7 @@ export async function GET(
         hierarchy_id: blueprint.hierarchyId ? toHierarchyApiId(blueprint.hierarchyId) : null,
         parent_id: blueprint.parentId ? toBlueprintApiId(blueprint.parentId) : null,
         repository_path: blueprint.repositoryPath,
-        content_checksum: blueprint.contentChecksum,
+        content_checksum: contentChecksum(blueprint.content),
       },
     });
   } catch (error) {
@@ -335,7 +334,6 @@ export async function PUT(
         hierarchyId: true,
         parentId: true,
         repositoryPath: true,
-        contentChecksum: true,
       },
     });
 
@@ -356,7 +354,7 @@ export async function PUT(
         hierarchy_id: blueprint.hierarchyId ? toHierarchyApiId(blueprint.hierarchyId) : null,
         parent_id: blueprint.parentId ? toBlueprintApiId(blueprint.parentId) : null,
         repository_path: blueprint.repositoryPath,
-        content_checksum: blueprint.contentChecksum,
+        content_checksum: contentChecksum(blueprint.content),
       },
     });
   } catch (error) {
@@ -442,8 +440,12 @@ export async function DELETE(
 
     // Favorites and downloads point at the blueprint by a plain id with no
     // foreign key, so remove them with it. Versions cascade in the schema.
+    // Download rows keep the id as the client sent it (bp_ prefix), favorites
+    // keep the bare id; match both forms for downloads.
     await prismaUsers.$transaction([
-      prismaUsers.templateDownload.deleteMany({ where: { templateId: blueprintId, templateType: "user" } }),
+      prismaUsers.templateDownload.deleteMany({
+        where: { templateId: { in: [blueprintId, toBlueprintApiId(blueprintId)] }, templateType: "user" },
+      }),
       prismaUsers.templateFavorite.deleteMany({ where: { templateId: blueprintId, templateType: "user" } }),
       prismaUsers.userTemplate.delete({ where: { id: blueprintId } }),
     ]);

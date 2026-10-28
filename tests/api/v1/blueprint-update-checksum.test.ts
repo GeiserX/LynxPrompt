@@ -2,8 +2,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 import { contentChecksum } from "@/lib/content-checksum";
 import { calculateChecksum } from "../../../cli/src/utils/blueprint-tracker";
+import { templateRows } from "../blueprints/template-rows";
 
 const mockFindUnique = vi.fn();
+const mockFindMany = vi.fn();
+const mockCount = vi.fn();
 const mockUpdate = vi.fn();
 const mockDelete = vi.fn();
 const mockDownloadDeleteMany = vi.fn();
@@ -22,11 +25,18 @@ vi.mock("@/lib/api-tokens", () => ({
   toBlueprintApiId: (id: string) => `bp_${id}`,
   fromBlueprintApiId: (id: string) => id.replace(/^bp_/, ""),
   toHierarchyApiId: (id: string) => `ha_${id}`,
+  fromHierarchyApiId: (id: string) => id.replace(/^ha_/, ""),
 }));
 
 vi.mock("@/lib/db-users", () => ({
   prismaUsers: {
-    userTemplate: { findUnique: mockFindUnique, update: mockUpdate, delete: mockDelete },
+    userTemplate: {
+      findUnique: mockFindUnique,
+      findMany: mockFindMany,
+      count: mockCount,
+      update: mockUpdate,
+      delete: mockDelete,
+    },
     templateDownload: { deleteMany: mockDownloadDeleteMany },
     templateFavorite: { deleteMany: mockFavoriteDeleteMany },
     $transaction: mockTransaction,
@@ -107,8 +117,69 @@ describe("PUT /api/v1/blueprints/[id] optimistic lock", () => {
   });
 });
 
+describe("GET /api/v1 content_checksum", () => {
+  // A row whose column went stale before every write route kept it: the CLI
+  // pushed an older copy, then the content was edited in the web.
+  const staleRow = {
+    id: "tpl_1",
+    userId: "user_1",
+    name: "x",
+    description: null,
+    content: serverContent,
+    contentChecksum: calculateChecksum("# AGENTS.md\n\nOlder local copy.\n"),
+    type: "AGENTS_MD",
+    tier: "SHORT",
+    category: "other",
+    tags: [],
+    visibility: "PRIVATE",
+    downloads: 0,
+    favorites: 0,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    hierarchyId: null,
+    parentId: null,
+    repositoryPath: null,
+  };
+  const auth = { headers: { authorization: "Bearer lp_test" } };
+
+  it("returns the checksum a push of the pulled content is checked against", async () => {
+    mockFindUnique.mockResolvedValue(staleRow);
+    const { GET } = await import("@/app/api/v1/blueprints/[id]/route");
+    const response = await GET(new NextRequest("https://lynxprompt.com/api/v1/blueprints/bp_tpl_1", auth), params);
+    const { blueprint } = await response.json();
+    expect(blueprint.content_checksum).toBe(contentChecksum(serverContent));
+
+    const pushed = await push({
+      content: `${blueprint.content}\n\nOne more rule.\n`,
+      expected_checksum: blueprint.content_checksum,
+    });
+    expect(pushed.status).toBe(200);
+  });
+
+  it("lists the checksum of the stored content", async () => {
+    mockCount.mockResolvedValue(1);
+    mockFindMany.mockResolvedValue([staleRow]);
+    const { GET } = await import("@/app/api/v1/blueprints/route");
+    const response = await GET(new NextRequest("https://lynxprompt.com/api/v1/blueprints", auth));
+    const body = await response.json();
+    expect(body.blueprints[0].content_checksum).toBe(contentChecksum(serverContent));
+    expect(body.blueprints[0].content).toBeUndefined();
+  });
+});
+
 describe("DELETE /api/v1/blueprints/[id]", () => {
   it("removes the blueprint's favorites and downloads with it", async () => {
+    const downloads = templateRows([
+      { templateId: "bp_tpl_1", templateType: "user" },
+      { templateId: "bp_tpl_2", templateType: "user" },
+    ]);
+    const favorites = templateRows([
+      { templateId: "tpl_1", templateType: "user" },
+      { templateId: "tpl_2", templateType: "user" },
+    ]);
+    mockDownloadDeleteMany.mockImplementation(downloads.deleteMany);
+    mockFavoriteDeleteMany.mockImplementation(favorites.deleteMany);
+    mockTransaction.mockImplementation((ops: Promise<unknown>[]) => Promise.all(ops));
     mockFindUnique.mockResolvedValue({ userId: "user_1", name: "x" });
     const { DELETE } = await import("@/app/api/v1/blueprints/[id]/route");
     const response = await DELETE(
@@ -120,9 +191,8 @@ describe("DELETE /api/v1/blueprints/[id]", () => {
     );
 
     expect(response.status).toBe(200);
-    const where = { where: { templateId: "tpl_1", templateType: "user" } };
-    expect(mockDownloadDeleteMany).toHaveBeenCalledWith(where);
-    expect(mockFavoriteDeleteMany).toHaveBeenCalledWith(where);
+    expect(downloads.rows).toEqual([{ templateId: "bp_tpl_2", templateType: "user" }]);
+    expect(favorites.rows).toEqual([{ templateId: "tpl_2", templateType: "user" }]);
     expect(mockDelete).toHaveBeenCalledWith({ where: { id: "tpl_1" } });
   });
 });
