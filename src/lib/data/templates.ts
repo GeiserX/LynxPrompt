@@ -1,5 +1,6 @@
 import { prismaApp } from "@/lib/db-app";
 import { prismaUsers } from "@/lib/db-users";
+import { canReadBlueprint } from "@/lib/blueprint-access";
 
 // =============================================================================
 // Template Types
@@ -608,27 +609,8 @@ export async function getTemplateById(
 
     if (!template) return null;
 
-    // Check if user has access
-    let hasAccess = template.isPublic; // Public templates always accessible
-
-    if (userId) {
-      // User owns the template
-      if (template.userId === userId) {
-        hasAccess = true;
-      }
-      // Check team-based access across all memberships
-      else if (template.visibility === "TEAM" && template.teamId) {
-        const membership = await prismaUsers.teamMember.findUnique({
-          where: { teamId_userId: { teamId: template.teamId, userId } },
-          select: { teamId: true },
-        });
-        if (membership) {
-          hasAccess = true;
-        }
-      }
-    }
-
-    if (!hasAccess) {
+    // Same read rule as every other blueprint route: public, owner or team
+    if (!(await canReadBlueprint(template, userId))) {
       return null; // No access
     }
 

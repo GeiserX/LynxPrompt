@@ -1,6 +1,11 @@
 import { prismaApp } from "@/lib/db-app";
 import { prismaUsers } from "@/lib/db-users";
 
+/**
+ * Who may read a user blueprint. The web routes, getTemplateById and the v1
+ * API (used by the CLI) all call these, so the rule lives in one place.
+ */
+
 /** The fields of a UserTemplate that decide who may read it. */
 export const BLUEPRINT_ACCESS_SELECT = {
   userId: true,
@@ -12,18 +17,23 @@ export const BLUEPRINT_ACCESS_SELECT = {
 export interface BlueprintAccessFields {
   userId: string;
   isPublic: boolean;
-  visibility?: string | null;
+  visibility: string;
   teamId: string | null;
 }
 
-/** True when the user owns the blueprint or belongs to the team it is shared with. */
+/**
+ * True when the user owns the blueprint, or belongs to the team it is shared
+ * with. A PRIVATE blueprint is never shared, even when it still carries the
+ * team id from a time it was TEAM. A published team blueprint (PUBLIC with a
+ * team id) still counts as the team's.
+ */
 export async function isOwnerOrTeamMember(
   blueprint: BlueprintAccessFields,
   userId: string | null | undefined
 ): Promise<boolean> {
   if (!userId) return false;
   if (blueprint.userId === userId) return true;
-  if (!blueprint.teamId) return false;
+  if (!blueprint.teamId || blueprint.visibility === "PRIVATE") return false;
   const membership = await prismaUsers.teamMember.findUnique({
     where: { teamId_userId: { teamId: blueprint.teamId, userId } },
     select: { id: true },
@@ -31,12 +41,15 @@ export async function isOwnerOrTeamMember(
   return !!membership;
 }
 
-/** True when the blueprint is public, or the user owns it or is on its team. */
+/**
+ * True when the blueprint is public, or the user owns it or is on its team.
+ * isPublic is the flag the public listings filter on, so it decides here too.
+ */
 export async function canReadBlueprint(
   blueprint: BlueprintAccessFields,
   userId: string | null | undefined
 ): Promise<boolean> {
-  if (blueprint.isPublic || blueprint.visibility === "PUBLIC") return true;
+  if (blueprint.isPublic) return true;
   return isOwnerOrTeamMember(blueprint, userId);
 }
 

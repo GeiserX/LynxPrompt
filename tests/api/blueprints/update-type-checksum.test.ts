@@ -79,6 +79,11 @@ describe("PUT /api/blueprints/[id] type", () => {
     expect(written().type).toBe("CURSOR_RULES");
   });
 
+  it("maps a type name older CLI releases send, same as the v1 API", async () => {
+    await update({ type: "GOOSE_HINTS" });
+    expect(written().type).toBe("GOOSEHINTS");
+  });
+
   it("turns an unknown type into CUSTOM", async () => {
     await update({ type: "not-a-type" });
     expect(written().type).toBe("CUSTOM");
@@ -91,6 +96,12 @@ describe("PUT /api/blueprints/[id] checksum", () => {
     await update({ content });
     expect(written().content).toBe(content.trim());
     expect(written().contentChecksum).toBe(contentChecksum(content));
+  });
+
+  it("refuses content past the line cap that create enforces", async () => {
+    const response = await update({ content: `# AGENTS.md\n${"x\n".repeat(10001)}` });
+    expect(response.status).toBe(400);
+    expect(mockUpdate).not.toHaveBeenCalled();
   });
 
   it("leaves the checksum alone when content is not sent", async () => {

@@ -10,8 +10,11 @@ const mockFavoriteFindUnique = vi.fn();
 const mockFavoriteCreate = vi.fn();
 const mockFavoriteDelete = vi.fn();
 const mockVersionFindUnique = vi.fn();
+const mockVersionFindMany = vi.fn();
 const mockDownloadFindFirst = vi.fn();
 const mockDownloadCreate = vi.fn();
+const mockDownloadCount = vi.fn();
+const mockDownloadGroupBy = vi.fn();
 const mockSystemFindUnique = vi.fn();
 
 vi.mock("next-auth", () => ({ getServerSession: () => mockSession() }));
@@ -26,8 +29,13 @@ vi.mock("@/lib/db-users", () => {
       create: mockFavoriteCreate,
       delete: mockFavoriteDelete,
     },
-    userTemplateVersion: { findUnique: mockVersionFindUnique },
-    templateDownload: { findFirst: mockDownloadFindFirst, create: mockDownloadCreate },
+    userTemplateVersion: { findUnique: mockVersionFindUnique, findMany: mockVersionFindMany },
+    templateDownload: {
+      findFirst: mockDownloadFindFirst,
+      create: mockDownloadCreate,
+      count: mockDownloadCount,
+      groupBy: mockDownloadGroupBy,
+    },
     $transaction: async (fn: (tx: unknown) => unknown) => fn(client),
   };
   return { prismaUsers: client };
@@ -43,6 +51,9 @@ const privateTeamBlueprint = {
   visibility: "TEAM",
   teamId: "team_1",
 };
+
+// Made private again through the CLI: visibility is PRIVATE, the team id stayed
+const privateWithOldTeam = { ...privateTeamBlueprint, visibility: "PRIVATE" };
 
 function json(url: string, body: unknown) {
   return new NextRequest(url, {
@@ -162,6 +173,37 @@ describe("POST /api/blueprints/[id]/versions", () => {
   });
 });
 
+describe("GET /api/blueprints/[id]/versions", () => {
+  async function listVersions() {
+    const { GET } = await import("@/app/api/blueprints/[id]/versions/route");
+    return GET(new NextRequest("https://lynxprompt.com/api/blueprints/bp_tpl_1/versions"), {
+      params: Promise.resolve({ id: "bp_tpl_1" }),
+    });
+  }
+
+  it("lists every version for a member of the blueprint's team", async () => {
+    mockTemplateFindUnique.mockResolvedValue({ ...privateTeamBlueprint, currentVersion: 2, publishedVersion: null });
+    mockTeamMemberFindUnique.mockResolvedValue({ id: "m_1" });
+    mockVersionFindMany.mockResolvedValue([]);
+
+    const response = await listVersions();
+
+    expect(response.status).toBe(200);
+    expect(mockVersionFindMany.mock.calls[0][0].where).toEqual({ templateId: "tpl_1" });
+  });
+
+  it("refuses the old team of a blueprint that went private", async () => {
+    mockTemplateFindUnique.mockResolvedValue({ ...privateWithOldTeam, currentVersion: 2, publishedVersion: null });
+    mockTeamMemberFindUnique.mockResolvedValue({ id: "m_1" });
+    mockTeamMemberFindFirst.mockResolvedValue({ id: "m_1" });
+
+    const response = await listVersions();
+
+    expect(response.status).toBe(403);
+    expect(mockVersionFindMany).not.toHaveBeenCalled();
+  });
+});
+
 describe("POST /api/blueprints/[id]/download", () => {
   async function download(id: string, platform: string) {
     const { POST } = await import("@/app/api/blueprints/[id]/download/route");
@@ -169,6 +211,16 @@ describe("POST /api/blueprints/[id]/download", () => {
       params: Promise.resolve({ id }),
     });
   }
+
+  it("refuses the old team of a blueprint that went private", async () => {
+    mockTemplateFindUnique.mockResolvedValue(privateWithOldTeam);
+    mockTeamMemberFindUnique.mockResolvedValue({ id: "m_1" });
+
+    const response = await download("bp_tpl_1", "cursor");
+
+    expect(response.status).toBe(404);
+    expect(mockDownloadCreate).not.toHaveBeenCalled();
+  });
 
   it("records nothing for a blueprint that does not exist", async () => {
     mockTemplateFindUnique.mockResolvedValue(null);
@@ -205,5 +257,36 @@ describe("POST /api/blueprints/[id]/download", () => {
     await download("bp_tpl_1", "notepad");
 
     expect(mockDownloadCreate.mock.calls[0][0].data.platform).toBeNull();
+  });
+});
+
+describe("GET /api/blueprints/[id]/download stats", () => {
+  async function stats() {
+    const { GET } = await import("@/app/api/blueprints/[id]/download/route");
+    return GET(new NextRequest("https://lynxprompt.com/api/blueprints/bp_tpl_1/download"), {
+      params: Promise.resolve({ id: "bp_tpl_1" }),
+    });
+  }
+
+  it("shows a team member the stats of their team's blueprint", async () => {
+    mockTemplateFindUnique.mockResolvedValue(privateTeamBlueprint);
+    mockTeamMemberFindUnique.mockResolvedValue({ id: "m_1" });
+    mockDownloadCount.mockResolvedValue(3);
+    mockDownloadGroupBy.mockResolvedValue([{ platform: "cursor", _count: 3 }]);
+
+    const response = await stats();
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ total: 3, byPlatform: { cursor: 3 } });
+  });
+
+  it("refuses the old team of a blueprint that went private", async () => {
+    mockTemplateFindUnique.mockResolvedValue(privateWithOldTeam);
+    mockTeamMemberFindUnique.mockResolvedValue({ id: "m_1" });
+
+    const response = await stats();
+
+    expect(response.status).toBe(403);
+    expect(mockDownloadCount).not.toHaveBeenCalled();
   });
 });

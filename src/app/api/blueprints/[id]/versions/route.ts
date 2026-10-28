@@ -45,24 +45,15 @@ export async function GET(
     const session = await getServerSession(authOptions);
     const isOwner = session?.user?.id === blueprint.userId;
 
-    // Check team access
-    let hasTeamAccess = false;
-    if (session?.user?.id && blueprint.teamId) {
-      const membership = await prismaUsers.teamMember.findFirst({
-        where: {
-          teamId: blueprint.teamId,
-          userId: session.user.id,
-        },
-      });
-      hasTeamAccess = !!membership;
-    }
+    // The owner and the blueprint's team see every version
+    const hasFullAccess = await isOwnerOrTeamMember(blueprint, session?.user?.id);
 
     // For non-owners, only show published versions of public blueprints
     const whereClause: { templateId: string; isPublished?: boolean } = {
       templateId: realId,
     };
 
-    if (!isOwner && !hasTeamAccess) {
+    if (!hasFullAccess) {
       if (!blueprint.isPublic) {
         return NextResponse.json(
           { error: "Access denied" },

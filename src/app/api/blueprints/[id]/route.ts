@@ -4,9 +4,10 @@ import { authOptions } from "@/lib/auth";
 import { getTemplateById } from "@/lib/data/templates";
 import { prismaUsers } from "@/lib/db-users";
 import { detectSensitiveData } from "@/lib/sensitive-data";
-import { normalizeBlueprintType } from "@/lib/blueprint-types";
+import { normalizeBlueprintType } from "@/lib/blueprint-rules";
 import { contentChecksum } from "@/lib/content-checksum";
 import { sanitizeRepositoryPath } from "@/lib/repository-path";
+import { checkBlueprintLineCount } from "@/lib/subscription";
 
 // GET /api/blueprints/[id] - Get blueprint details
 export async function GET(
@@ -122,6 +123,7 @@ export async function PUT(
         currentVersion: true,
         content: true,
         isPublic: true,
+        visibility: true,
         teamId: true,
       },
     });
@@ -180,6 +182,16 @@ export async function PUT(
           { status: 400 }
         );
       }
+      // Same line cap as create, so an edit cannot grow past it
+      const lineCheck = checkBlueprintLineCount(content);
+      if (!lineCheck.valid) {
+        return NextResponse.json(
+          {
+            error: `Blueprint exceeds maximum line limit. Your blueprint has ${lineCheck.lineCount.toLocaleString()} lines, but the maximum is ${lineCheck.maxLines.toLocaleString()} lines.`,
+          },
+          { status: 400 }
+        );
+      }
       updateData.content = content.trim();
       updateData.contentChecksum = contentChecksum(content);
       // Re-calculate tier when content changes
@@ -212,14 +224,23 @@ export async function PUT(
     if (isPublic !== undefined) {
       updateData.isPublic = Boolean(isPublic);
       // Write visibility together with the public flag so the two always
-      // match, even when two saves overlap. Publishing keeps teamId, and this
-      // route never changes it, so an unpublished blueprint with a team goes
-      // back to TEAM and one without goes to PRIVATE.
+      // match, even when two saves overlap. Publishing keeps teamId, so an
+      // unpublished blueprint with a team goes back to TEAM and one without
+      // goes to PRIVATE. A save that leaves it unpublished keeps TEAM or
+      // PRIVATE as stored.
       updateData.visibility = updateData.isPublic
         ? "PUBLIC"
-        : existingBlueprint.teamId
-          ? "TEAM"
-          : "PRIVATE";
+        : existingBlueprint.visibility !== "PUBLIC"
+          ? existingBlueprint.visibility
+          : existingBlueprint.teamId
+            ? "TEAM"
+            : "PRIVATE";
+      // A PRIVATE blueprint keeps no team, as in the v1 PUT. Older rows made
+      // private through the API may still carry one; drop it so a later
+      // publish and unpublish cannot hand the blueprint back to that team.
+      if (existingBlueprint.visibility === "PRIVATE" && existingBlueprint.teamId) {
+        updateData.teamId = null;
+      }
     }
 
     if (showcaseUrl !== undefined) {

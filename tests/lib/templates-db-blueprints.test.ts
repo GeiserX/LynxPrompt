@@ -230,6 +230,31 @@ describe("getTemplateById - database mode bp_/usr_ templates", () => {
     expect(template).toBeNull();
   });
 
+  it("denies a template that went private to its old team", async () => {
+    mockGetServerSession.mockResolvedValue({ user: { id: "team-member-1" } });
+    mockUserTemplateFindFirst.mockResolvedValue({
+      id: "was-team",
+      name: "Was Team",
+      description: "",
+      content: "content",
+      type: "AGENTS_MD",
+      downloads: 0,
+      favorites: 0,
+      tags: [],
+      tier: "SHORT",
+      createdAt: new Date(),
+      userId: "other-user",
+      user: { name: "Team Lead", id: "other-user" },
+      isPublic: false,
+      visibility: "PRIVATE",
+      teamId: "team-abc",
+    });
+    mockTeamMemberFindUnique.mockResolvedValue({ teamId: "team-abc" });
+
+    const template = await getTemplateById("bp_was-team");
+    expect(template).toBeNull();
+  });
+
   it("denies access for private template when not owner", async () => {
     mockGetServerSession.mockResolvedValue({
       user: { id: "not-owner" },

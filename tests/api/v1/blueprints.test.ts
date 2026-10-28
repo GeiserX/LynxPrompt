@@ -144,6 +144,13 @@ describe("GET /api/v1/blueprints/[id] access", () => {
     const res = await getOne();
     expect(res.status).toBe(403);
   });
+
+  it("refuses a blueprint that went private to its old team", async () => {
+    db.userTemplate.findUnique.mockResolvedValue(row({ visibility: "PRIVATE", teamId: "team_1" }));
+    db.teamMember.findUnique.mockResolvedValue({ teamId: "team_1" });
+    const res = await getOne();
+    expect(res.status).toBe(403);
+  });
 });
 
 describe("POST /api/v1/blueprints team visibility", () => {
@@ -213,6 +220,9 @@ describe("POST /api/v1/blueprints write checks", () => {
     db.userTemplate.create.mockClear();
     await create({ type: "kiro_steering" });
     expect(created().type).toBe("KIRO_STEERING");
+    db.userTemplate.create.mockClear();
+    await create({ type: "cursor" });
+    expect(created().type).toBe("CURSOR_RULES");
   });
 
   it("writes the initial version", async () => {
@@ -269,6 +279,26 @@ describe("PUT /api/v1/blueprints/[id]", () => {
     const res = await update({ visibility: "TEAM" });
     expect(res.status).toBe(200);
     expect(db.userTemplate.update.mock.calls[0][0].data.teamId).toBe("team_1");
+  });
+
+  it("drops the team when a TEAM blueprint is made private", async () => {
+    db.userTemplate.findUnique.mockResolvedValue(
+      row({ userId: "user_1", visibility: "TEAM", teamId: "team_1" })
+    );
+    const res = await update({ visibility: "PRIVATE" });
+    expect(res.status).toBe(200);
+    const data = db.userTemplate.update.mock.calls[0][0].data;
+    expect(data.visibility).toBe("PRIVATE");
+    expect(data.teamId).toBeNull();
+  });
+
+  it("keeps the team when a TEAM blueprint is published", async () => {
+    db.userTemplate.findUnique.mockResolvedValue(
+      row({ userId: "user_1", visibility: "TEAM", teamId: "team_1" })
+    );
+    const res = await update({ visibility: "PUBLIC" });
+    expect(res.status).toBe(200);
+    expect(db.userTemplate.update.mock.calls[0][0].data).not.toHaveProperty("teamId");
   });
 
   it("stores a known type instead of failing on an unknown one", async () => {
