@@ -6,42 +6,6 @@ vi.mock("@/lib/feature-flags", () => ({
   APP_URL: "https://lynxprompt.com",
 }));
 
-vi.mock("@/lib/platforms", () => ({
-  PLATFORM_FILES: {
-    cursor: ".cursor/rules/",
-    claude: "CLAUDE.md",
-    copilot: ".github/copilot-instructions.md",
-    windsurf: ".windsurfrules",
-    universal: "AGENTS.md",
-    antigravity: "GEMINI.md",
-    aider: "AIDER.md",
-    continue: ".continue/config.json",
-    cody: ".cody/config.json",
-    tabnine: ".tabnine.yaml",
-    supermaven: ".supermaven/config.json",
-    codegpt: ".codegpt/config.json",
-    void: ".void/config.json",
-    zed: ".zed/instructions.md",
-    cline: ".clinerules",
-    goose: ".goosehints",
-    amazonq: ".amazonq/rules/",
-    roocode: ".roo/rules/",
-    warp: "WARP.md",
-    "gemini-cli": "GEMINI.md",
-    trae: ".trae/rules/",
-    firebase: ".idx/",
-    augment: ".augment/rules/",
-    kilocode: ".kilocode/rules/",
-    junie: ".junie/guidelines.md",
-    kiro: ".kiro/steering/",
-    openhands: ".openhands/microagents/repo.md",
-    crush: "CRUSH.md",
-    opencode: "opencode.json",
-    firebender: "firebender.json",
-  },
-  getPlatform: (id: string) => ({ id, name: id, file: `.${id}` }),
-}));
-
 import {
   generateAllFiles,
   generateConfigFiles,

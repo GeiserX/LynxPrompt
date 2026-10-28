@@ -72,10 +72,10 @@ src/
 ├── lib/              # Shared code
 │   ├── db-*.ts       # One Prisma client per database
 │   ├── platforms.ts  # Every supported AI platform
-│   └── file-generator.ts # Generates the config files
+│   └── file-generator.ts # Wizard downloads (content from packages/shared)
 └── types/            # TypeScript types
 cli/                  # The lynxprompt CLI (npm package)
-packages/shared/      # Code shared by the app and the CLI
+packages/shared/      # Code shared by the app and the CLI (platform table, rules generator)
 prisma/               # The four schemas: app, users, blog, support
 tests/                # Vitest tests for the app
 ```
@@ -89,7 +89,7 @@ tests/                # Vitest tests for the app
 ## 📝 Adding New AI Platforms
 
 1. Add the platform to the `PLATFORMS` array in `src/lib/platforms.ts` (web wizard) and to `ALL_PLATFORMS` in `cli/src/commands/wizard.ts` (CLI wizard); the CLI keeps its own copy, so update both
-2. Add its generation logic in `src/lib/file-generator.ts` (and `cli/src/utils/generator.ts` for the CLI output)
+2. Add its generation logic in `packages/shared/src/generator.ts` (and `cli/src/utils/generator.ts` for the CLI output)
 3. Update documentation
 
 ## 📝 Adding New Templates
