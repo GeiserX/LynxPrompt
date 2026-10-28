@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import Script from "next/script";
+import { headers } from "next/headers";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { FeatureFlagsProvider } from "@/components/providers/feature-flags-provider";
@@ -122,11 +123,13 @@ export function generateMetadata(): Metadata {
   };
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Per-request CSP nonce set by src/proxy.ts; every inline script needs it.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -135,6 +138,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://avatars.githubusercontent.com" />
         <link rel="dns-prefetch" href="https://lh3.googleusercontent.com" />
         <script
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: [
               "(function(){",
@@ -155,6 +159,7 @@ export default function RootLayout({
             data-website-id={runtimeEnv("NEXT_PUBLIC_UMAMI_WEBSITE_ID")}
             data-do-not-track="false"
             strategy="afterInteractive"
+            nonce={nonce}
           />
         )}
       </head>
@@ -168,6 +173,7 @@ export default function RootLayout({
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange
+            nonce={nonce}
           >
             <FeatureFlagsProvider initialFlags={getPublicFlags()}>
               {children}
