@@ -1,12 +1,13 @@
 name: Docker Publish
 
 on:
+  # Started by release.yml once the v<version> tag and release exist.
   repository_dispatch:
-    types: [app-release]
+    types: [release-published]
   workflow_dispatch:
     inputs:
       version:
-        description: 'Released app version to publish (for example, 2.1.13)'
+        description: 'Released version to publish (for example, 2.2.0)'
         required: true
         type: string
 
@@ -40,7 +41,7 @@ jobs:
             exit 1
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "ref=refs/tags/app-v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "ref=refs/tags/v$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Checkout repository
         uses: actions/checkout@v7

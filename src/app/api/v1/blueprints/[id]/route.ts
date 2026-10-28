@@ -306,7 +306,8 @@ export async function PUT(
           { status: 400 }
         );
       }
-      updateData.content = content.trim();
+      // Stored as sent, so a pulled file keeps its final newline
+      updateData.content = content;
 
       // Recalculate tier based on word count
       const wordCount = content.split(/\s+/).filter(Boolean).length;
@@ -381,9 +382,12 @@ export async function PUT(
       }
     }
 
-    // Every content change gets a version, so CLI edits can be reverted
+    // Every content change gets a version, so CLI edits can be reverted.
+    // Whitespace at the ends is not a change: rows stored trimmed get their
+    // final newline back on the next push without a new version.
     const contentChanged =
-      typeof updateData.content === "string" && updateData.content !== existing.content;
+      typeof updateData.content === "string" &&
+      updateData.content.trim() !== existing.content.trim();
     const newVersion = existing.currentVersion + 1;
     if (contentChanged) {
       updateData.currentVersion = newVersion;

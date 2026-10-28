@@ -10,53 +10,54 @@ LynxPrompt uses [Semantic Versioning](https://semver.org/):
 - **MINOR** (0.x.0): New features, backward compatible
 - **PATCH** (0.0.x): Bug fixes, security patches
 
-The released version is the highest `app-v*` (app) or `cli-v*` (CLI) tag. `package.json` on `main` can lag behind it, because the release job bumps the version only in its own tagged commit; the next release starts from whichever is higher.
+The app and the CLI share one version and ship together: one tag `vX.Y.Z`, one GitHub release "LynxPrompt vX.Y.Z" (marked Latest), the image `drumsergio/lynxprompt:X.Y.Z` and `lynxprompt@X.Y.Z` on npm. Before 2.2.0, the first joined version, the two had their own versions and `app-v*` / `cli-v*` tags and releases; those stay as they are.
+
+`.github/scripts/release-version.sh` picks the version: the highest of the root `package.json`, `cli/package.json` and the last release (the highest `v*`, `app-v*` or `cli-v*` tag) plus one patch. The release bumps both `package.json` files only in its own tagged commit, so on `main` they lag behind the tags; raise them in a pull request only to pick a minor or major version.
 
 ## Release Process
 
 ### What gets released
 
-On every push to `main` that changes `package.json`, `cli/package.json` or the release workflow, `release.yml` releases only the products whose files changed on `main` since their last release. The tags (`app-v*`, `cli-v*`) sit on the release job's own version-bump commit, which never lands on `main`, so the comparison starts from the commit `main` shares with the tag. `.github/scripts/release-changes.sh` holds the rule:
+Every push to `main` runs `release.yml`. It runs the CI suite and the CLI build and public tests (this is `main`'s CI), and releases when something that ships changed on `main` since the last release. `.github/scripts/release-changes.sh all` holds the rule:
 
 - **App:** something that ends up in the Docker image or changes how it is built: `Dockerfile`, `.dockerignore`, the root `package.json` and `package-lock.json`, `next.config.ts`, `tsconfig.json`, `postcss.config.mjs`, `entrypoint.sh`, `src/`, `public/`, `prisma/` or `packages/`.
 - **CLI:** `cli/` or `packages/shared/`.
 
-Workflows, docs, tests and the Helm chart release nothing on their own, so a CI-only change does not publish a new image or leave production behind a new tag.
+Either one releases both. Workflows, docs, tests and the Helm chart release nothing on their own. The tags sit on the release job's own version-bump commit, which never lands on `main`, so the comparison starts from the commit `main` shares with the tag.
 
-### 1. Bump the version in a pull request
+One release runs at a time and none is cancelled. While one runs, GitHub keeps one pending run and a newer push replaces it, so a burst of merges ends in one more release that carries all of them.
 
-`release.yml` creates the tags, the GitHub Releases and the images. Never run `npm version` with a tag, never
-create a tag by hand and never build or push the image yourself.
+### 1. Write the notes, then merge
+
+`release.yml` creates the tag, the GitHub release and every package. Never create a tag by hand, never run `npm publish`, and never build or push the image yourself.
+
+Write the `## [X.Y.Z] - YYYY-MM-DD` section of `CHANGELOG.md` for the version the release will get, with an "Upgrade notes" part when operators must act. The release publishes it as its notes; without one they list the commits since the last release. Merge the pull request once CI is green.
+
+For a minor or major version, raise both `package.json` files in the same pull request (`npm version minor --no-git-tag-version`, also in `cli/`), or run the workflow by hand:
 
 ```bash
-git checkout -b release/x.y.z origin/main
-npm version patch --no-git-tag-version              # app: package.json and package-lock.json
-(cd cli && npm version patch --no-git-tag-version)   # CLI, only when cli/ changed
-git commit -m "chore(release): x.y.z" package.json package-lock.json cli/package.json
-git push -u origin release/x.y.z
+gh workflow run release.yml -R GeiserX/LynxPrompt -f bump=minor
+gh workflow run release.yml -R GeiserX/LynxPrompt --ref <branch> -f dry_run=true   # computes and tests everything, publishes nothing
 ```
 
-Open the pull request into `main` and merge it once CI is green.
+A manual run always releases. A real release runs only from `main`; on any other branch only `dry_run` is allowed.
 
-### 2. What the merge triggers
+### 2. What the release triggers
 
-1. `release.yml` runs CI and the CLI tests, then for each product with changes since its last tag creates
-   `app-vX.Y.Z` / `cli-vX.Y.Z` and the GitHub Release with a changelog from the commits.
-2. The app release dispatches `docker-publish.yml`, which builds `drumsergio/lynxprompt:X.Y.Z` and pushes it to
-   Docker Hub.
-3. The CLI release triggers `publish-cli.yml`: npm, the standalone binaries, Homebrew, Chocolatey, the Snap Store
-   (`snap.yml`) and the AUR (`aur.yml`). The Snap and AUR jobs build, install and run the package first, and fail
-   the run when their secret is missing or rejected.
+1. `release.yml` tags `vX.Y.Z`, creates the release and dispatches `release-published`.
+2. `docker-publish.yml` builds `drumsergio/lynxprompt:X.Y.Z` from the tag for amd64 and arm64, signs it with cosign and pushes it to Docker Hub. It then starts the production check and `selfhost-pins.yml`, which opens the PR that moves the self-host compose file and the Helm chart to the new image.
+3. `publish-cli.yml` publishes npm, the standalone binaries (attached to the same release), Homebrew, Chocolatey, the Snap Store (`snap.yml`) and the AUR (`aur.yml`). The Snap and AUR jobs build, install and run the package first, and fail the run when their secret is missing or rejected.
 
 ### 3. Check it
 
 ```bash
 gh run list -R GeiserX/LynxPrompt -w "Release" --limit 3
 gh release list -R GeiserX/LynxPrompt --limit 5
-gh run list -R GeiserX/LynxPrompt -w "Publish CLI" --limit 3   # if the CLI was released
+gh run list -R GeiserX/LynxPrompt -w "Docker Publish" --limit 3
+gh run list -R GeiserX/LynxPrompt -w "Publish CLI" --limit 3
 ```
 
-If `publish-cli.yml` did not start, run it by hand: `gh workflow run "Publish CLI" -R GeiserX/LynxPrompt -f platforms=all`.
+To publish a released version again: `gh workflow run "Docker Publish" -R GeiserX/LynxPrompt -f version=X.Y.Z`, or `gh workflow run "Publish CLI" -R GeiserX/LynxPrompt -f version=X.Y.Z -f platforms=all`.
 
 ### 4. Deploy
 
@@ -69,7 +70,7 @@ The "Verify Production Deployment" workflow then polls `/api/health` for the new
 
 ## Hotfix Process
 
-A hotfix is a normal pull request into `main` with the fix and the patch bump from step 1. Merging it releases.
+A hotfix is a normal pull request into `main` with the fix. Merging it releases the next patch version.
 
 ## Rollback Process
 
@@ -88,7 +89,7 @@ If a release has issues:
 
 ### Git Rollback
 
-Revert the faulty commit in a pull request that also bumps the patch version (step 1), and merge it.
+Revert the faulty commit in a pull request and merge it; the release that follows is the next patch version.
 
 ## Environment Configuration
 

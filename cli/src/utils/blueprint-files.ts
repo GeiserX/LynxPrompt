@@ -155,3 +155,12 @@ export function matchConfigFile(relativePath: string): { type: string; label: st
   }
   return null;
 }
+
+/**
+ * Text to write for a blueprint's content: ends with exactly one newline.
+ * Older rows were stored trimmed, so without this a pulled file has no final
+ * newline and git reports "No newline at end of file".
+ */
+export function withFinalNewline(content: string): string {
+  return content.endsWith("\n") ? content : `${content}\n`;
+}

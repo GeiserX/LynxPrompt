@@ -6,13 +6,19 @@
 import chalk from "chalk";
 import { safeText } from "./terminal.js";
 
+// A final newline ends the last line; it is not an empty line after it. The
+// cloud may hold a file's content without it, and the two must compare equal.
+function lines(text: string): string[] {
+  return text.replace(/\r?\n$/, "").split("\n");
+}
+
 /**
  * Simple line-by-line diff implementation
  * Returns added (+), removed (-), and unchanged lines
  */
 export function computeDiff(oldText: string, newText: string): Array<{ type: "add" | "remove" | "same"; line: string }> {
-  const oldLines = oldText.split("\n");
-  const newLines = newText.split("\n");
+  const oldLines = lines(oldText);
+  const newLines = lines(newText);
   const result: Array<{ type: "add" | "remove" | "same"; line: string }> = [];
 
   // Simple LCS-based diff

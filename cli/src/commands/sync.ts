@@ -31,6 +31,7 @@ import {
   type TrackedBlueprint,
 } from "../utils/blueprint-tracker.js";
 import { fillBlueprintVariables } from "../utils/variables.js";
+import { withFinalNewline } from "../utils/blueprint-files.js";
 
 interface SyncOptions {
   dryRun?: boolean;
@@ -132,7 +133,7 @@ async function syncOne(cwd: string, tracked: TrackedBlueprint, options: SyncOpti
 
   if (!localChanged) {
     if (!dry) {
-      await writeFile(filePath, rendered, "utf-8");
+      await writeFile(filePath, withFinalNewline(rendered), "utf-8");
       await record(cwd, tracked, remote, rendered);
     }
     console.log(chalk.cyan(`↓ ${file}: ${dry ? "would update from the cloud" : "updated from the cloud"}`));
@@ -174,7 +175,7 @@ async function syncOne(cwd: string, tracked: TrackedBlueprint, options: SyncOpti
   // merge is checked against the version the user actually merged.
   if (!dry) {
     await mkdir(dirname(remoteFile), { recursive: true });
-    await writeFile(remoteFile, rendered, "utf-8");
+    await writeFile(remoteFile, withFinalNewline(rendered), "utf-8");
     await record(cwd, tracked, remote, rendered);
   }
   console.log(chalk.red(`✗ ${file}: changed both locally and in the cloud`));

@@ -76,10 +76,11 @@ describe("release notes from CHANGELOG.md", () => {
     }
   });
 
-  it("the app release uses it and falls back to the commit list", () => {
+  it("the release uses it and falls back to the commit list", () => {
     const release = readFileSync(resolve(process.cwd(), ".github/workflows/release.yml"), "utf8");
-    const app = release.slice(release.indexOf("\n  release-app:\n"), release.indexOf("\n  release-cli:\n"));
-    expect(app).toContain('bash .github/scripts/changelog-section.sh "${{ needs.prepare.outputs.app_version }}" > notes.md');
-    expect(app.indexOf("changelog-section.sh")).toBeLessThan(app.indexOf('--grep="^feat"'));
+    const job = release.slice(release.indexOf("\n  release:\n"));
+    expect(job).toContain('bash .github/scripts/changelog-section.sh "$VERSION" > notes.md');
+    expect(job.indexOf("changelog-section.sh")).toBeLessThan(job.indexOf('--pretty=format:"- %s"'));
+    expect(job).toContain("body_path: release-notes.md");
   });
 });

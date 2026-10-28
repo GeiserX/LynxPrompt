@@ -29,6 +29,13 @@ describe("checkBlueprintLineCount", () => {
     expect(result.valid).toBe(true);
   });
 
+  it("does not count a final newline as another line", () => {
+    const file = `${Array(BLUEPRINT_LIMITS.MAX_LINES).fill("line").join("\n")}\n`;
+    expect(checkBlueprintLineCount(file)).toMatchObject({ valid: true, lineCount: BLUEPRINT_LIMITS.MAX_LINES });
+    expect(checkBlueprintLineCount("a\r\nb\r\n").lineCount).toBe(2);
+    expect(checkBlueprintLineCount("a\n\n").lineCount).toBe(2);
+  });
+
   it("counts empty string as one line", () => {
     const result = checkBlueprintLineCount("");
     expect(result.lineCount).toBe(1);

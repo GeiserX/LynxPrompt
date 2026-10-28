@@ -1,8 +1,10 @@
 name: CI
 
 on:
+  # On main, release.yml runs this workflow on every push before it releases, so
+  # a push trigger here would run the same suite twice on the same commit.
   push:
-    branches: [main, develop]
+    branches: [develop]
     paths:
       - 'src/**'
       - 'packages/**'
@@ -19,7 +21,8 @@ on:
   # required check that never starts blocks the PR forever.
   pull_request:
     branches: [main, develop]
-  # release.yml runs lint, tests and build before it tags an app release.
+  # release.yml runs typecheck, tests and build on every push to main, before
+  # it tags a release.
   workflow_call:
   # selfhost-pins.yml dispatches CI on the pin bump branch it pushes, because a
   # push or PR made with GITHUB_TOKEN starts no workflow on its own.

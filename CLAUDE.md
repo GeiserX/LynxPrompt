@@ -20,18 +20,17 @@
 
 ### Understanding the Release Pipeline
 
-There are **two separate workflows** that work together:
+The app and the CLI ship as **one release with one version**: tag `vX.Y.Z`, GitHub release "LynxPrompt vX.Y.Z" (marked Latest), image `drumsergio/lynxprompt:X.Y.Z`, npm `lynxprompt@X.Y.Z`, and Homebrew, Chocolatey, Snap and AUR at the same version. The old `app-v*` / `cli-v*` tags (up to 2.1.x) stay untouched; 2.2.0 is the first joined version.
 
-1. **`release.yml`** - Triggered by a push to `main` that changes `package.json`, `cli/package.json`, their lockfiles or the workflow itself, or by a manual dispatch:
-   - Detects changes in app vs CLI since last release (`.github/scripts/release-changes.sh` holds the rule)
-   - Creates git tags (`app-vX.Y.Z` for web, `cli-vX.Y.Z` for CLI)
-   - Creates GitHub Releases. The app release notes are the `## [X.Y.Z]` section of `CHANGELOG.md`; without one they fall back to a list of commit subjects
-   - **Tag-only — does NOT push the version bump back to `main`.** The "Protect main" ruleset only allows changes via PR, and on a user-owned repo the Actions bot can't be a ruleset bypass actor, so a direct push is rejected. The next version is derived from `max(package.json, latest matching tag)`, so it stays monotonic even though `package.json` on `main` lags the tags. **Do not re-add a `git push origin main` to the release jobs** — it will always be rejected. `publish-cli.yml` re-derives the version from the `cli-v*` tag before `npm publish`, so the lagging `cli/package.json` doesn't affect published artifacts.
+1. **`release.yml`** runs on every push to `main` (docs, the chart and root Markdown files excepted) and by manual dispatch:
+   - Runs CI and the CLI build and public tests: it is `main`'s CI, so `ci.yml` and `cli-tests.yml` run on pull requests and `develop` only
+   - Releases when something that ships changed since the last release (`.github/scripts/release-changes.sh all`, the union of the app and CLI paths). A manual run always releases; `dry_run=true` does everything except the tag, the release and the publishes
+   - Picks the version with `.github/scripts/release-version.sh`: the highest of the root `package.json`, `cli/package.json` and the last release (highest `v*`, `app-v*` or `cli-v*` tag) bumped by `patch`, or by `minor` on a manual run with `bump=minor`
+   - Release notes are the `## [X.Y.Z]` section of `CHANGELOG.md`; without one, the commit subjects since the last release
+   - One release at a time, none cancelled; a newer push replaces the one pending run, so a burst of merges releases once
+   - **Tag-only — does NOT push the version bump back to `main`.** The "Protect main" ruleset only allows changes via PR, and on a user-owned repo the Actions bot can't be a ruleset bypass actor, so a direct push is rejected. Both `package.json` files are set to the version only in the tagged commit, so on `main` they lag the tags; the next version still comes out higher than every tag. **Do not re-add a `git push origin main` to the release job** — it will always be rejected. Keep the root and `cli/package.json` versions equal (a test checks it).
 
-2. **`publish-cli.yml`** - Triggered by GitHub Release events OR manual dispatch:
-   - Publishes CLI to npm
-   - Builds standalone binaries
-   - Updates Homebrew, Chocolatey, Snap packages
+2. **`docker-publish.yml`** and **`publish-cli.yml`** start on the `release-published` dispatch from `release.yml` (or by hand with a version). Both build the `vX.Y.Z` tag, never `main`. The image publish then starts the production check (`deploy-production.yml`) and the self-host pins PR (`selfhost-pins.yml`); the CLI publish attaches the binaries to the same release.
 
 ### Step-by-Step Release Process
 
@@ -42,70 +41,65 @@ There are **two separate workflows** that work together:
 #    under a "## [X.Y.Z] - YYYY-MM-DD" heading, with an "Upgrade notes" part
 #    when operators must act. release.yml publishes it as the release notes.
 
-# 2. Bump the version in a pull request into main (ONLY bump what changed)
-git checkout -b release/x.y.z origin/main
-npm version patch --no-git-tag-version              # app: package.json and package-lock.json
-(cd cli && npm version patch --no-git-tag-version)   # CLI, only when cli/ changed
-git commit -m "chore(release): x.y.z" package.json package-lock.json cli/package.json
-git push -u origin release/x.y.z
-# Open the PR into main and merge it once CI is green.
-# Without a bump, run the workflow by hand instead; it releases the next patch:
-unset GITHUB_TOKEN && gh workflow run Release -R GeiserX/LynxPrompt -f type=auto
+# 2. Merge the PR once CI is green. If it changed anything that ships, the push
+#    releases the next patch version. For a minor version, either raise both
+#    package.json files in the PR, or dispatch:
+unset GITHUB_TOKEN && gh workflow run release.yml -R GeiserX/LynxPrompt -f bump=minor
+# Check what a release would do without releasing (any branch):
+unset GITHUB_TOKEN && gh workflow run release.yml -R GeiserX/LynxPrompt --ref <branch> -f dry_run=true
 
-# 3. Verify release workflow succeeded
+# 3. Verify the release and the publishes
 unset GITHUB_TOKEN && gh run list -R GeiserX/LynxPrompt -w "Release" --limit 3
-
-# 4. If CLI was released, verify npm publish workflow triggered
+unset GITHUB_TOKEN && gh run list -R GeiserX/LynxPrompt -w "Docker Publish" --limit 3
 unset GITHUB_TOKEN && gh run list -R GeiserX/LynxPrompt -w "Publish CLI" --limit 3
 
-# 5. If publish-cli didn't auto-trigger, manually trigger it:
-unset GITHUB_TOKEN && gh workflow run "Publish CLI" -R GeiserX/LynxPrompt -f platforms=all
+# 4. If a publish did not start, run it by hand for the released version:
+unset GITHUB_TOKEN && gh workflow run "Publish CLI" -R GeiserX/LynxPrompt -f version=X.Y.Z -f platforms=all
+unset GITHUB_TOKEN && gh workflow run "Docker Publish" -R GeiserX/LynxPrompt -f version=X.Y.Z
 
-# 6. Verify npm package was published
+# 5. Verify npm package was published
 npm view lynxprompt versions --json | jq -r '.[-3:]'
 ```
-
-Use `minor` or `major` instead of `patch` for new features or breaking changes. If the tag for the version in `package.json` already exists, `release.yml` releases the next patch version instead.
 
 ### ⚠️ CRITICAL RULES - NEVER BREAK THESE
 
 | ❌ NEVER DO THIS | ✅ DO THIS INSTEAD |
 |------------------|-------------------|
-| `git tag v0.24.0` | Let release.yml create tags |
-| `git tag cli-v0.8.0` | Let release.yml create tags |
+| `git tag v2.2.0` | Let release.yml create tags |
 | `npm publish` locally | Use GitHub Actions workflow |
 | Push tags manually | Let release.yml push tags |
-| Use tag format `v*` | Workflow uses `app-v*` and `cli-v*` |
+| Create `app-v*` or `cli-v*` tags | One `vX.Y.Z` tag for both, made by release.yml |
+| Set different versions in `package.json` and `cli/package.json` | Keep them equal |
 
 ### Troubleshooting Release Issues
 
-**Problem: Release workflow skips CLI/App release**
-- Cause: No changes detected since last release tag
-- Fix: Only files that end up in the image release the app (`Dockerfile`, `entrypoint.sh`, root `package.json`/lockfile, `next.config.ts`, `src/`, `public/`, `prisma/`, `packages/` and a few configs), and only `cli/` or `packages/shared/` release the CLI. Workflows, docs, tests and the Helm chart release nothing
+**Problem: The push did not release**
+- Cause: Nothing that ships changed since the last release tag
+- Fix: Only files that end up in the image (`Dockerfile`, `entrypoint.sh`, root `package.json`/lockfile, `next.config.ts`, `src/`, `public/`, `prisma/`, `packages/` and a few configs) or in the CLI (`cli/`, `packages/shared/`) release. Workflows, docs, tests and the Helm chart release nothing. Dispatch `release.yml` to release anyway
 
 **Problem: Tag already exists error**
 - Cause: Someone manually created a tag
 - Fix: Delete the manual tag from remote AND local:
   ```bash
-  git push origin --delete cli-v0.8.0
-  git tag -d cli-v0.8.0
+  git push origin --delete v2.2.0
+  git tag -d v2.2.0
   ```
 
 **Problem: npm publish didn't happen**
-- Cause: publish-cli.yml didn't trigger automatically
-- Fix: Manually trigger the workflow:
+- Cause: publish-cli.yml didn't start or failed
+- Fix: Run it by hand for the released version:
   ```bash
-  unset GITHUB_TOKEN && gh workflow run "Publish CLI" -R GeiserX/LynxPrompt -f platforms=all
+  unset GITHUB_TOKEN && gh workflow run "Publish CLI" -R GeiserX/LynxPrompt -f version=X.Y.Z -f platforms=all
   ```
 
 **Problem: npm says version already exists**
 - Cause: Version was already published (maybe partial failure)
-- Fix: Bump to next patch version and release again
+- Fix: the npm job skips a version that is already there; dispatch `release.yml` for the next patch if a fix is needed
 
 ### Verifying a Successful Release
 
 ```bash
-# 1. Check GitHub Releases exist
+# 1. Check the GitHub release exists and is Latest
 unset GITHUB_TOKEN && gh release list -R GeiserX/LynxPrompt --limit 5
 
 # 2. Check npm has the new version
@@ -113,8 +107,7 @@ npm view lynxprompt version
 
 # 3. Check git tags exist
 git fetch --tags
-git tag -l "cli-v*" | tail -5
-git tag -l "app-v*" | tail -5
+git tag -l "v*" --sort=-version:refname | head -5
 ```
 
 ---
@@ -198,7 +191,7 @@ git checkout main
 git merge develop
 ```
 
-**Dependency and security updates target `main` directly via PR.** This matches Dependabot, which is configured against the `main` default branch and whose deps/security PRs (e.g. #88–#97) merge straight to `main`. `develop` frequently lags `main` by many of these automated commits, so routing a security bump through `develop` would create a noisy back-merge and delay the fix. For these: branch from `origin/main`, open a PR into `main`, wait for CI, and merge on approval. Merging `package.json` / `cli/package.json` changes triggers `release.yml`, so a dependency PR leaves the versions alone; never create tags by hand.
+**Dependency and security updates target `main` directly via PR.** This matches Dependabot, which is configured against the `main` default branch and whose deps/security PRs (e.g. #88–#97) merge straight to `main`. `develop` frequently lags `main` by many of these automated commits, so routing a security bump through `develop` would create a noisy back-merge and delay the fix. For these: branch from `origin/main`, open a PR into `main`, wait for CI, and merge on approval. Merging a change to `package.json`, a lockfile or anything else that ships releases the next patch version on its own, so a dependency PR leaves the versions alone; never create tags by hand.
 
 ## 🎯 Project Overview
 
