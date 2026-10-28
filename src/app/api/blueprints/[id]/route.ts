@@ -300,17 +300,11 @@ export async function PUT(
       }
     }
 
-    // Update the blueprint
-    const updatedBlueprint = await prismaUsers.userTemplate.update({
-      where: { id: realId },
-      data: updateData,
-    });
-
-    // Create new version record if content changed and publishNewVersion is true
+    // Create the new version record in the same write as the blueprint update,
+    // so currentVersion never points at a version row that does not exist
     if (shouldCreateVersion) {
-      await prismaUsers.userTemplateVersion.create({
-        data: {
-          templateId: realId,
+      updateData.versions = {
+        create: {
           version: newVersion,
           content: content.trim(),
           variables: undefined,
@@ -318,8 +312,14 @@ export async function PUT(
           isPublished: Boolean(updateData.isPublic ?? existingBlueprint.isPublic),
           createdBy: session.user.id,
         },
-      });
+      };
     }
+
+    // Update the blueprint
+    const updatedBlueprint = await prismaUsers.userTemplate.update({
+      where: { id: realId },
+      data: updateData,
+    });
 
     return NextResponse.json({
       success: true,

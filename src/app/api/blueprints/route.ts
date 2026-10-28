@@ -515,7 +515,7 @@ export async function POST(request: NextRequest) {
       validatedHierarchyId = hierarchy.id;
     }
 
-    // Create the blueprint with version 1
+    // Create the blueprint and its version 1 in one write
     const blueprint = await prismaUsers.userTemplate.create({
       data: {
         userId: session.user.id,
@@ -539,19 +539,16 @@ export async function POST(request: NextRequest) {
         hierarchyId: validatedHierarchyId,
         parentId: validatedParentId,
         repositoryPath: sanitizeRepositoryPath(repositoryPath) || null,
-      },
-    });
-
-    // Create the initial version record
-    await prismaUsers.userTemplateVersion.create({
-      data: {
-        templateId: blueprint.id,
-        version: 1,
-        content: content.trim(),
-        variables: undefined,
-        changelog: "Initial version",
-        isPublished: effectiveIsPublic,
-        createdBy: session.user.id,
+        versions: {
+          create: {
+            version: 1,
+            content: content.trim(),
+            variables: undefined,
+            changelog: "Initial version",
+            isPublished: effectiveIsPublic,
+            createdBy: session.user.id,
+          },
+        },
       },
     });
 
