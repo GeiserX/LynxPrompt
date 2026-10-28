@@ -931,7 +931,10 @@ unset; "compose" means the self-host compose file sets it for you.</p>
 <p>The entrypoint builds one connection string per schema (app, users, blog, support) from these, unless the
 full <code>DATABASE_URL_APP</code>, <code>DATABASE_URL_USERS</code>, <code>DATABASE_URL_BLOG</code> or <code>DATABASE_URL_SUPPORT</code> is set. The self-host
 compose file uses one PostgreSQL server and one database per schema: <code>lynxprompt</code>, <code>lynxprompt_users</code>,
-<code>lynxprompt_blog</code> and <code>lynxprompt_support</code> (the first start creates the last three). Never point two schemas
+<code>lynxprompt_blog</code> and <code>lynxprompt_support</code>. The first start creates <code>lynxprompt_users</code>. The blog and support
+databases are only created and migrated while <code>ENABLE_BLOG</code> or <code>ENABLE_SUPPORT_FORUM</code> is on, so an instance
+without those features runs on two databases. Turning a feature off leaves its database as it is, and turning
+it back on migrates it from where it stopped. Never point two schemas
 at the same database: <code>prisma db push</code> drops the tables it does not know, so each start would delete the other
 schema's tables.</p>
 <table>
@@ -1113,12 +1116,12 @@ schema's tables.</p>
 <tr>
 <td><code>ENABLE_BLOG</code></td>
 <td><code>false</code></td>
-<td>The blog module (uses the blog schema).</td>
+<td>The blog module. Its database is migrated only while this is on.</td>
 </tr>
 <tr>
 <td><code>ENABLE_SUPPORT_FORUM</code></td>
 <td><code>false</code></td>
-<td>The support forum module (uses the support schema).</td>
+<td>The support forum module. Its database is migrated only while this is on.</td>
 </tr>
 <tr>
 <td><code>UMAMI_SCRIPT_URL</code></td>
