@@ -1142,8 +1142,8 @@ schema's tables.</p>
 </tr>
 <tr>
 <td><code>ENABLE_FEDERATION</code></td>
-<td><code>true</code></td>
-<td>Registers the instance's domain with the federation registry at start and every six hours, and serves <code>/.well-known/lynxprompt.json</code>. <code>false</code> keeps the instance to itself.</td>
+<td><code>false</code></td>
+<td><code>true</code> registers the instance's domain with the federation registry at start and every six hours, and serves <code>/.well-known/lynxprompt.json</code>. Needs an <code>APP_URL</code> on https with a public domain name. Off, the instance makes no call to the registry.</td>
 </tr>
 <tr>
 <td><code>FEDERATION_REGISTRY_URL</code></td>

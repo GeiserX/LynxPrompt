@@ -971,11 +971,15 @@ public). <code>[[VARIABLE|default]]</code> placeholders are filled at download t
 <code>AGENTS.md</code> blueprints to paths of one repository, for monorepos; the API exposes it at <code>/api/v1/hierarchies</code>
 and the CLI as <code>lynxp hierarchies</code>.</p>
 <h2 id="federation">Federation<a class="headerlink" href="#federation" title="Permanent link">&para;</a></h2>
-<p>Federation is on by default (<code>ENABLE_FEDERATION</code>). At start, and every six hours after, the instance posts its
-domain (the host of <code>APP_URL</code>) to the registry (<code>FEDERATION_REGISTRY_URL</code>, lynxprompt.com by default) and serves
-<code>/.well-known/lynxprompt.json</code> with its name, version, API URL and number of public blueprints. Instances in
-the network share their public blueprints. Private and team blueprints never leave the instance.
-<code>ENABLE_FEDERATION=false</code> turns all of it off.</p>
+<p>Federation is off by default, and an instance makes no call to the registry until <code>ENABLE_FEDERATION=true</code>.
+Then, at start and every six hours after, it posts its domain (the host of <code>APP_URL</code>) to the registry
+(<code>FEDERATION_REGISTRY_URL</code>, lynxprompt.com by default) and serves <code>/.well-known/lynxprompt.json</code> with its name,
+version, API URL and number of public blueprints. An <code>APP_URL</code> that is not https on a public domain name (such
+as <code>http://localhost:3000</code>) is skipped with a warning, since the registry could not reach it. The registry lists
+the instances on <code>/federation</code>, and each instance lists the name, description, tags and author of its public
+blueprints at <code>/api/v1/federation/blueprints</code>; no instance pulls another's blueprints into its own marketplace.
+Private and team blueprints never leave the instance. These public reads carry a five-minute public
+<code>Cache-Control</code>, so a CDN in front of the instance can serve them.</p>
 <h2 id="security-model">Security model<a class="headerlink" href="#security-model" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Secrets come from environment variables; nothing is read from files in the image.</li>
