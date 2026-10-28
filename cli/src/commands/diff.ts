@@ -79,10 +79,12 @@ export async function diffCommand(fileOrId?: string, options: DiffOptions = {}):
     return;
   }
 
-  // Show diff for all tracked files
+  // Show diff for all tracked files. Every file is compared with the cloud copy:
+  // an unchanged local file can still be behind a newer cloud version.
   let hasChanges = false;
+  let failed = false;
   
-  for (const { blueprint, localModified, fileExists } of trackedFiles) {
+  for (const { blueprint, fileExists } of trackedFiles) {
     if (!fileExists) {
       console.log(chalk.red(`✗ ${blueprint.file} - file not found`));
       continue;
@@ -91,16 +93,20 @@ export async function diffCommand(fileOrId?: string, options: DiffOptions = {}):
     console.log(chalk.cyan(`📄 ${blueprint.file}`));
     console.log(chalk.gray(`   Linked to: ${blueprint.name} (${blueprint.id})`));
     
-    if (localModified) {
+    const result = await diffFileWithBlueprint(cwd, blueprint.file, blueprint.id, true);
+    if (result === "changed") {
       hasChanges = true;
-      await diffFileWithBlueprint(cwd, blueprint.file, blueprint.id, true);
-    } else {
+    } else if (result === "same") {
       console.log(chalk.green("   ✓ In sync with cloud"));
+    } else {
+      failed = true;
     }
     console.log();
   }
   
-  if (!hasChanges) {
+  if (failed) {
+    console.log(chalk.yellow("⚠ Some files could not be compared with the cloud (see above)."));
+  } else if (!hasChanges) {
     console.log(chalk.green("✓ All tracked files are in sync with their cloud blueprints!"));
   } else {
     console.log(chalk.gray("To push local changes: lynxp push"));
@@ -112,12 +118,17 @@ export async function diffCommand(fileOrId?: string, options: DiffOptions = {}):
 /**
  * Compare a specific file with its linked blueprint
  */
-async function diffFileWithBlueprint(cwd: string, file: string, blueprintId: string, compact: boolean = false): Promise<void> {
+async function diffFileWithBlueprint(
+  cwd: string,
+  file: string,
+  blueprintId: string,
+  compact: boolean = false
+): Promise<"same" | "changed" | "error"> {
   const filePath = join(cwd, file);
   
   if (!existsSync(filePath)) {
     console.log(chalk.red(`✗ File not found: ${file}`));
-    return;
+    return "error";
   }
 
   const spinner = compact ? null : ora("Fetching blueprint...").start();
@@ -128,7 +139,7 @@ async function diffFileWithBlueprint(cwd: string, file: string, blueprintId: str
 
     if (!blueprint || !blueprint.content) {
       console.log(chalk.red(`✗ Blueprint has no content`));
-      return;
+      return "error";
     }
 
     const localContent = await readFile(filePath, "utf-8");
@@ -139,14 +150,15 @@ async function diffFileWithBlueprint(cwd: string, file: string, blueprintId: str
       if (!compact) {
         console.log(chalk.green("✓ Files are identical!"));
       }
-    } else {
-      if (!compact) {
-        console.log(chalk.gray("Changes (cloud → local):"));
-        console.log();
-      }
-      console.log(formatDiff(diff));
-      console.log(chalk.gray(`   ${chalk.green(`+${stats.added}`)} ${chalk.red(`-${stats.removed}`)} lines`));
+      return "same";
     }
+    if (!compact) {
+      console.log(chalk.gray("Changes (cloud → local):"));
+      console.log();
+    }
+    console.log(formatDiff(diff));
+    console.log(chalk.gray(`   ${chalk.green(`+${stats.added}`)} ${chalk.red(`-${stats.removed}`)} lines`));
+    return "changed";
 
   } catch (error) {
     spinner?.stop();
@@ -155,6 +167,7 @@ async function diffFileWithBlueprint(cwd: string, file: string, blueprintId: str
     } else {
       console.log(chalk.red("✗ Failed to compare"));
     }
+    return "error";
   }
 }
 
@@ -264,7 +277,7 @@ async function diffLocal(cwd: string): Promise<void> {
   
   if (!existsSync(rulesDir)) {
     console.log(chalk.yellow("⚠ No .lynxprompt/rules/ directory found."));
-    console.log(chalk.gray("Run 'lynxp init' to set up the advanced workflow, or 'lynxp wizard' for simple file generation."));
+    console.log(chalk.gray("Run 'lynxp wizard' to generate configuration files."));
     return;
   }
 
@@ -337,7 +350,7 @@ async function diffLocal(cwd: string): Promise<void> {
     console.log(chalk.green("✓ All exported files are in sync with .lynxprompt/rules/"));
   } else {
     console.log();
-    console.log(chalk.gray("Run 'lynxp sync' to update exported files from .lynxprompt/rules/"));
+    console.log(chalk.gray("Update the exported files from .lynxprompt/rules/ to bring them back in sync."));
   }
   console.log();
 }

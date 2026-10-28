@@ -5,13 +5,15 @@ import { api, ApiRequestError, Blueprint } from "../api.js";
 import { safeText } from "../utils/terminal.js";
 import { isAuthenticated } from "../config.js";
 import { writeFile, mkdir, readFile } from "fs/promises";
-import { dirname, resolve, relative } from "path";
+import { dirname, resolve } from "path";
 import { existsSync } from "fs";
 import {
   trackBlueprint,
   findBlueprintByFile,
+  toTrackedPath,
   type BlueprintSource,
 } from "../utils/blueprint-tracker.js";
+import { blueprintFilename, safePath } from "../utils/blueprint-files.js";
 
 interface PullOptions {
   output: string;
@@ -19,30 +21,6 @@ interface PullOptions {
   preview?: boolean;
   track?: boolean; // Track the blueprint for future syncs (default: true)
 }
-
-/**
- * Resolve a path under a root directory, rejecting traversal attempts.
- * Throws if the resolved path escapes the root.
- */
-function safePath(root: string, untrusted: string): string {
-  const resolved = resolve(root, untrusted);
-  const rel = relative(root, resolved);
-  if (rel.startsWith("..") || resolve(root, rel) !== resolved) {
-    throw new Error(`Path traversal blocked: ${untrusted}`);
-  }
-  return resolved;
-}
-
-// Mapping of blueprint types to filenames
-const TYPE_TO_FILENAME: Record<string, string> = {
-  AGENTS_MD: "AGENTS.md",
-  CURSOR_RULES: ".cursor/rules/project.mdc",
-  COPILOT_INSTRUCTIONS: ".github/copilot-instructions.md",
-  WINDSURF_RULES: ".windsurfrules",
-  ZED_INSTRUCTIONS: ".zed/instructions.md",
-  CLAUDE_MD: "CLAUDE.md",
-  GENERIC: "ai-config.md",
-};
 
 // Determine blueprint source from visibility
 function getSourceFromVisibility(visibility: Blueprint["visibility"]): BlueprintSource {
@@ -116,7 +94,7 @@ async function pullHierarchy(
       
       for (const bp of blueprints) {
         const indent = bp.parent_id ? "  ↳ " : "  ";
-        const path = bp.repository_path || TYPE_TO_FILENAME[bp.type] || "unknown";
+        const path = blueprintFilename(bp);
         console.log(chalk.gray(`${indent}${safeText(path)}`));
         console.log(chalk.gray(`${indent}  └─ ${safeText(bp.name)} (${safeText(bp.id)})`));
       }
@@ -148,7 +126,7 @@ async function pullHierarchy(
 
     for (const bp of blueprints) {
       // Determine output path - use repository_path if available
-      const filename = bp.repository_path || TYPE_TO_FILENAME[bp.type] || "ai-config.md";
+      const filename = blueprintFilename(bp);
       let outputPath: string;
       try {
         outputPath = safePath(resolve(options.output), filename);
@@ -197,7 +175,8 @@ async function pullHierarchy(
         await trackBlueprint(cwd, {
           id: blueprint.id,
           name: blueprint.name,
-          file: filename,
+          // The path actually written (under -o), so status, diff and push find it
+          file: toTrackedPath(cwd, outputPath),
           content: blueprint.content,
           source,
           hierarchyId: id,
@@ -218,7 +197,7 @@ async function pullHierarchy(
     console.log();
     console.log(chalk.gray("Tips:"));
     console.log(chalk.gray(`  • Run 'lynxp status' to see tracked blueprints`));
-    console.log(chalk.gray(`  • Run 'lynxp sync' to push local changes`));
+    console.log(chalk.gray(`  • Run 'lynxp push --all' to push local changes`));
     console.log(chalk.gray(`  • Run 'lynxp pull ${id}' again to refresh all files`));
     console.log();
   } catch (error) {
@@ -310,7 +289,7 @@ async function pullBlueprint(
     }
 
     // Determine output filename - use repository_path if available for hierarchy blueprints
-    const filename = blueprint.repository_path || TYPE_TO_FILENAME[blueprint.type] || "ai-config.md";
+    const filename = blueprintFilename(blueprint);
     let outputPath: string;
     try {
       outputPath = safePath(resolve(options.output), filename);
@@ -329,8 +308,11 @@ async function pullBlueprint(
       }
     }
 
+    // Tracked by the path actually written (under -o), relative to the project root
+    const trackedFile = toTrackedPath(cwd, outputPath);
+
     // Check if this file is already tracked
-    const existingTracked = await findBlueprintByFile(cwd, filename);
+    const existingTracked = await findBlueprintByFile(cwd, trackedFile);
     if (existingTracked && existingTracked.id !== id) {
       console.log(chalk.yellow(`⚠ This file is already linked to a different blueprint: ${existingTracked.id}`));
       if (!options.yes) {
@@ -424,7 +406,7 @@ async function pullBlueprint(
       await trackBlueprint(cwd, {
         id: blueprint.id,
         name: blueprint.name,
-        file: filename,
+        file: trackedFile,
         content: blueprint.content,
         source,
         hierarchyId: blueprint.hierarchy_id || undefined,
@@ -443,7 +425,7 @@ async function pullBlueprint(
       if (isMarketplace) {
         console.log(chalk.gray(`   Updates: Run 'lynxp pull ${id}' to sync updates`));
       } else {
-        console.log(chalk.gray(`   Sync: Run 'lynxp push ${filename}' to push changes`));
+        console.log(chalk.gray(`   Sync: Run 'lynxp push ${trackedFile}' to push changes`));
       }
     }
     console.log();
@@ -460,7 +442,7 @@ async function pullBlueprint(
     console.log(chalk.gray(`  • Run 'lynxp status' to see tracked blueprints`));
     console.log(chalk.gray(`  • Run 'lynxp diff ${id}' to see changes between local and remote`));
     if (isMarketplace) {
-      console.log(chalk.gray(`  • Run 'lynxp unlink ${filename}' to disconnect and make editable`));
+      console.log(chalk.gray(`  • Run 'lynxp unlink ${trackedFile}' to disconnect and make editable`));
     }
     console.log();
   } catch (error) {

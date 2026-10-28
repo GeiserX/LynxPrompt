@@ -12,7 +12,7 @@
  */
 
 import { readFile, writeFile, mkdir, access } from "fs/promises";
-import { join, dirname } from "path";
+import { join, dirname, isAbsolute, relative, sep } from "path";
 import { createHash } from "crypto";
 import * as yaml from "yaml";
 
@@ -49,6 +49,22 @@ const BLUEPRINTS_FILE = ".lynxprompt/blueprints.yml";
  */
 export function calculateChecksum(content: string): string {
   return createHash("sha256").update(content).digest("hex").substring(0, 16);
+}
+
+/**
+ * Tracked files are stored as POSIX paths relative to the project root, so
+ * "./AGENTS.md", "AGENTS.md", "sub\\AGENTS.md" (Windows) and an absolute path
+ * all name the same entry.
+ */
+export function toTrackedPath(cwd: string, file: string): string {
+  let p = isAbsolute(file) ? relative(cwd, file) : file;
+  p = p.split(sep).join("/").replace(/\\/g, "/");
+  while (p.startsWith("./")) p = p.slice(2);
+  return p;
+}
+
+function sameFile(cwd: string, a: string, b: string): boolean {
+  return toTrackedPath(cwd, a) === toTrackedPath(cwd, b);
 }
 
 /**
@@ -103,8 +119,10 @@ export async function trackBlueprint(
 ): Promise<void> {
   const config = await loadBlueprints(cwd);
   
+  const file = toTrackedPath(cwd, blueprint.file);
+
   // Remove existing entry for same file if exists
-  config.blueprints = config.blueprints.filter(b => b.file !== blueprint.file);
+  config.blueprints = config.blueprints.filter(b => !sameFile(cwd, b.file, file));
   
   // Determine editability based on source
   const editable = blueprint.source !== "marketplace";
@@ -113,7 +131,7 @@ export async function trackBlueprint(
   config.blueprints.push({
     id: blueprint.id,
     source: blueprint.source,
-    file: blueprint.file,
+    file,
     name: blueprint.name,
     pulledAt: new Date().toISOString(),
     checksum: calculateChecksum(blueprint.content),
@@ -133,7 +151,7 @@ export async function trackBlueprint(
  */
 export async function findBlueprintByFile(cwd: string, file: string): Promise<TrackedBlueprint | null> {
   const config = await loadBlueprints(cwd);
-  return config.blueprints.find(b => b.file === file) || null;
+  return config.blueprints.find(b => sameFile(cwd, b.file, file)) || null;
 }
 
 /**
@@ -163,7 +181,7 @@ export async function hasLocalChanges(cwd: string, tracked: TrackedBlueprint): P
  */
 export async function updateChecksum(cwd: string, file: string, content: string): Promise<void> {
   const config = await loadBlueprints(cwd);
-  const blueprint = config.blueprints.find(b => b.file === file);
+  const blueprint = config.blueprints.find(b => sameFile(cwd, b.file, file));
   
   if (blueprint) {
     blueprint.checksum = calculateChecksum(content);
@@ -178,7 +196,7 @@ export async function updateChecksum(cwd: string, file: string, content: string)
 export async function untrackBlueprint(cwd: string, file: string): Promise<boolean> {
   const config = await loadBlueprints(cwd);
   const initialCount = config.blueprints.length;
-  config.blueprints = config.blueprints.filter(b => b.file !== file);
+  config.blueprints = config.blueprints.filter(b => !sameFile(cwd, b.file, file));
   
   if (config.blueprints.length < initialCount) {
     await saveBlueprints(cwd, config);
@@ -188,24 +206,28 @@ export async function untrackBlueprint(cwd: string, file: string): Promise<boole
 }
 
 /**
- * Link an existing local file to a cloud blueprint
+ * Link an existing local file to a cloud blueprint.
+ * The stored checksum is the cloud content's, so status and diff show the local
+ * file as changed when it differs from the cloud, and push sends the checksum the
+ * server holds. Without remote content the local file is used.
  */
 export async function linkBlueprint(
   cwd: string,
   file: string,
   blueprintId: string,
   blueprintName: string,
-  source: BlueprintSource
+  source: BlueprintSource,
+  remoteContent?: string
 ): Promise<void> {
   try {
     const filePath = join(cwd, file);
-    const content = await readFile(filePath, "utf-8");
+    const localContent = await readFile(filePath, "utf-8");
     
     await trackBlueprint(cwd, {
       id: blueprintId,
       name: blueprintName,
       file,
-      content,
+      content: remoteContent ?? localContent,
       source,
     });
   } catch (error) {

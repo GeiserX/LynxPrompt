@@ -177,7 +177,7 @@ export async function linkCommand(
       // Fetch user's blueprints
       const spinner = ora("Fetching your blueprints...").start();
       try {
-        const { blueprints } = await api.listBlueprints();
+        const blueprints = await api.listAllBlueprints();
         spinner.stop();
 
         if (!blueprints || blueprints.length === 0) {
@@ -311,7 +311,8 @@ export async function linkCommand(
     }
 
     // Link the file
-    await linkBlueprint(cwd, file, blueprint.id, blueprint.name, source);
+    // Track the cloud checksum so a later diff or status shows how the local file differs
+    await linkBlueprint(cwd, file, blueprint.id, blueprint.name, source, blueprint.content);
 
     console.log();
     console.log(chalk.green(`✅ Linked: ${file} → ${blueprint.id}`));
