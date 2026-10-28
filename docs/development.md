@@ -26,6 +26,17 @@ npm run db:push
 npm run dev
 ```
 
+A schema change needs a migration, because the image applies migrations, not the schema. Write it from the
+difference to the schema on `main`, which needs no database (here for the users schema):
+
+```bash
+git show origin/main:prisma/schema-users.prisma > /tmp/old.prisma
+dir=prisma/migrations-users/$(date -u +%Y%m%d%H%M%S)_add_something
+mkdir -p "$dir"
+npx prisma migrate diff --config=prisma/prisma.config-users.ts \
+  --from-schema /tmp/old.prisma --to-schema prisma/schema-users.prisma --script -o "$dir/migration.sql"
+```
+
 `docker compose up -d` with the root `docker-compose.yml` starts the full stack, app included, on port 3000;
 its databases publish no port, so `npm run dev` cannot reach them. Use it to run the image, not to develop.
 

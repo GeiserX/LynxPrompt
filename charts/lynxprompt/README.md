@@ -12,12 +12,12 @@ This chart deploys the LynxPrompt web application and an optional bundled Postgr
 
 ## Important Operational Notes
 
-- The container entrypoint runs `prisma db push` for all four LynxPrompt databases on startup.
+- The container entrypoint runs `prisma migrate deploy` for all four LynxPrompt databases on startup. A database an earlier release built with `prisma db push` is brought up to date by one last `db push`, which refuses any change that would lose data, and then has its migrations recorded as applied.
 - The Deployment uses the `Recreate` strategy by default, so an upgrade stops the old pod before the new one starts. A rolling update would leave the new pod Pending on the `ReadWriteOnce` uploads volume when it lands on another node. Set `strategy.type: RollingUpdate` only with a `ReadWriteMany` volume.
 - The liveness probe uses `/api/health/live`, which does not touch the database. Readiness and startup use `/api/health`, which checks the app and users databases.
 - The default chart uses `replicaCount: 1` because:
   - uploads default to a `ReadWriteOnce` PVC
-  - concurrent pod starts all run `db push`
+  - concurrent pod starts all run the migrations
 - If you want multiple replicas, use shared/object storage for uploads and move schema management outside normal pod startup.
 - If `postgresql.enabled=false`, set the external database coordinates in `externalDatabase.*` and provide `db-password` via `auth.existingSecret` or `externalDatabase.password`.
 - Each of the four schemas gets its own database on the one PostgreSQL server: the configured name for the app, plus `<name>_users`, `<name>_blog` and `<name>_support`. The first start creates the last three. On an external server whose user cannot create databases, create all four beforehand. Charts before 0.1.3 pointed all four at one database, where each start dropped the other schemas' tables.
