@@ -74,30 +74,12 @@ else
   fail "Wizard failed to generate Cursor config"
 fi
 
-# Test 5: Init
-info "Test 5: Init command"
-rm -rf .lynxprompt
-lynxp init --yes > /dev/null
-if [ -f ".lynxprompt/conf.yml" ]; then
-  pass "Init created .lynxprompt/"
-else
-  fail "Init failed"
-fi
-
-# Test 6: Agents
-info "Test 6: Agents list"
-lynxp agents list > /dev/null && pass "Agents list works" || fail "Agents list failed"
-
-# Test 7: Sync
-info "Test 7: Sync dry-run"
-lynxp sync --dry-run > /dev/null && pass "Sync dry-run works" || fail "Sync failed"
-
-# Test 8: Check
-info "Test 8: Check validation"
+# Test 5: Check
+info "Test 5: Check validation"
 lynxp check > /dev/null && pass "Check passed" || fail "Check failed"
 
-# Test 9: Check CI mode (exit code)
-info "Test 9: Check CI mode"
+# Test 6: Check CI mode (exit code)
+info "Test 6: Check CI mode"
 lynxp check --ci > /dev/null 2>&1
 if [ $? -eq 0 ]; then
   pass "Check CI mode returns exit 0"
@@ -105,12 +87,12 @@ else
   fail "Check CI mode failed"
 fi
 
-# Test 10: Status
-info "Test 10: Status command"
+# Test 7: Status
+info "Test 7: Status command"
 lynxp status > /dev/null && pass "Status works" || fail "Status failed"
 
-# Test 11: Search (public, no auth needed)
-info "Test 11: Search public blueprints"
+# Test 8: Search (public, no auth needed)
+info "Test 8: Search public blueprints"
 SEARCH_RESULT=$(lynxp search "nextjs" --limit 1 2>&1)
 if echo "$SEARCH_RESULT" | grep -q "Search Results\|No blueprints"; then
   pass "Search works"
@@ -118,8 +100,8 @@ else
   fail "Search failed: $SEARCH_RESULT"
 fi
 
-# Test 12: Pull preview (public, no auth needed)
-info "Test 12: Pull preview (public blueprint)"
+# Test 9: Pull preview (public, no auth needed)
+info "Test 9: Pull preview (public blueprint)"
 # Try to find a public blueprint from search
 PUBLIC_ID=$(echo "$SEARCH_RESULT" | grep -o 'bp_[a-z0-9]*' | head -1 || echo "")
 if [ -n "$PUBLIC_ID" ]; then

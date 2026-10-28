@@ -24,6 +24,7 @@ vi.mock("../../cli/src/utils/blueprint-tracker.js", () => ({
   trackBlueprint: vi.fn(async () => {}),
   updateChecksum: vi.fn(async () => {}),
   loadBlueprints: vi.fn(async () => ({ version: "1", blueprints: [] })),
+  toTrackedPath: (_cwd: string, file: string) => file,
 }));
 
 vi.mock("ora", () => ({
@@ -62,7 +63,12 @@ const REFUSAL = {
 type Call = { method: string; url: string; body: Record<string, unknown> | null };
 
 function json(status: number, body: unknown) {
-  return { ok: status < 400, status, json: async () => body } as Response;
+  return {
+    ok: status < 400,
+    status,
+    json: async () => body,
+    text: async () => JSON.stringify(body),
+  } as Response;
 }
 
 let calls: Call[];

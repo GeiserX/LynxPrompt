@@ -66,6 +66,10 @@ jobs:
           lynxp --version
           lynxp --help
 
+      # Flags, exit codes and tracked paths, against a local mock of the API
+      - name: Test CLI behaviour regressions
+        run: bash cli/test/regression.sh lynxp
+
       - name: Create test directory
         run: mkdir -p /tmp/lynxp-test && cd /tmp/lynxp-test
 
