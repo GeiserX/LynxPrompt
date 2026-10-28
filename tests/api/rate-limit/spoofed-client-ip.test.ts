@@ -28,10 +28,13 @@ function registerRequest(headers: Record<string, string>) {
   });
 }
 
+// A current CLI's init: with a code_challenge, so the 2027 cutoff for
+// challenge-less logins never changes what this test sees.
 function initRequest(headers: Record<string, string>) {
   return new NextRequest("https://lynxprompt.com/api/cli-auth/init", {
     method: "POST",
-    headers,
+    headers: { "Content-Type": "application/json", ...headers },
+    body: JSON.stringify({ code_challenge: "a".repeat(43) }),
   });
 }
 

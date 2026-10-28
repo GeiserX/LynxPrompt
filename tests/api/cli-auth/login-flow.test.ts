@@ -105,7 +105,9 @@ describe("CLI login flow", () => {
   });
 
   it("does not hand the token to a poller that only knows the session ID", async () => {
-    const { session_id } = await (await init({ code_challenge: challenge })).json();
+    const started = await (await init({ code_challenge: challenge })).json();
+    expect(started.deprecation).toBeUndefined();
+    const { session_id } = started;
     expect((await approve(session_id)).status).toBe(200);
 
     const noVerifier = await poll(session_id);
@@ -133,13 +135,41 @@ describe("CLI login flow", () => {
     expect(rows).toHaveLength(0);
   });
 
-  it("still serves older CLIs that send no challenge", async () => {
-    const { session_id } = await (await init()).json();
-    expect(rows[0].codeChallenge).toBeNull();
-    await approve(session_id);
-    const res = await poll(session_id);
-    expect(res.status).toBe(200);
-    expect((await res.json()).token).toMatch(/^lp_/);
+  it("still serves older CLIs that send no challenge, and tells them when that ends", async () => {
+    vi.useFakeTimers({ now: new Date("2026-12-31T23:59:59Z"), toFake: ["Date"] });
+    try {
+      const body = await (await init()).json();
+      expect(body.deprecation.sunset).toBe("2027-01-01T00:00:00.000Z");
+      expect(body.deprecation.message).toContain("stop working on 2027-01-01");
+      expect(body.deprecation.message).toContain("Update lynxp");
+      expect(rows[0].codeChallenge).toBeNull();
+      await approve(body.session_id);
+      const res = await poll(body.session_id);
+      expect(res.status).toBe(200);
+      expect((await res.json()).token).toMatch(/^lp_/);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("refuses a login without a challenge from 2027-01-01, with an update message", async () => {
+    vi.useFakeTimers({ now: new Date("2027-01-01T00:00:00Z"), toFake: ["Date"] });
+    try {
+      const res = await init();
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      // lynxp 2.1.1 prints `message || error` from a failed request
+      expect(body.message).toContain("Update lynxp");
+      expect(body.error).toBe(body.message);
+      expect(rows).toHaveLength(0);
+
+      // A current CLI still logs in after the cutoff
+      const ok = await (await init({ code_challenge: challenge })).json();
+      expect(ok.session_id).toBeTruthy();
+      expect(ok.deprecation).toBeUndefined();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("stores the token so the session ID alone cannot decrypt it", async () => {
