@@ -189,7 +189,7 @@ async function main() {
       tags: ["nextjs", "typescript", "react", "prisma", "fullstack"],
       category: "web",
       difficulty: "intermediate",
-      usageCount: 1567,
+      downloads: 1567,
     },
     {
       name: "Python Data Science",
@@ -228,7 +228,7 @@ You are an expert in Python, pandas, NumPy, scikit-learn, and data science workf
       tags: ["python", "data-science", "pandas", "ml", "jupyter"],
       category: "data-science",
       difficulty: "intermediate",
-      usageCount: 856,
+      downloads: 856,
     },
     {
       name: "Simple Project Setup",
@@ -262,7 +262,7 @@ You are an expert in Python, pandas, NumPy, scikit-learn, and data science workf
       tags: ["simple", "beginner", "minimal"],
       category: "general",
       difficulty: "beginner",
-      usageCount: 892,
+      downloads: 892,
     },
   ];
 
