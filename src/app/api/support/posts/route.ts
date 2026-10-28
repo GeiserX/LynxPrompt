@@ -5,6 +5,9 @@ import { authOptions } from "@/lib/auth";
 import { prismaSupport } from "@/lib/db-support";
 import { prismaUsers } from "@/lib/db-users";
 
+// PostStatus values in prisma/schema-support.prisma
+const POST_STATUSES = ["OPEN", "IN_PROGRESS", "COMPLETED", "CLOSED", "DUPLICATE"];
+
 // Generate Gravatar URL from email
 function getGravatarUrl(email: string, size: number = 96): string {
   const hash = createHash("md5")
@@ -50,6 +53,12 @@ export async function GET(request: NextRequest) {
     }
 
     if (status) {
+      if (!POST_STATUSES.includes(status)) {
+        return NextResponse.json(
+          { error: `status must be one of: ${POST_STATUSES.join(", ")}` },
+          { status: 400 }
+        );
+      }
       where.status = status;
     }
 

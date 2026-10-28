@@ -122,8 +122,9 @@ export default function FAQOverviewPage() {
           <div className="rounded-lg border bg-card p-4">
             <h3 className="font-semibold">Is my data safe?</h3>
             <p className="mt-2 text-muted-foreground">
-              Yes. All data is stored in the EU with GDPR compliance. We use
-              secure authentication and don&apos;t store passwords. See our{" "}
+              On lynxprompt.com, data is stored in the EU with GDPR compliance.
+              A self-hosted instance keeps everything in its own database. Neither
+              stores passwords: sign-in is by mail link, passkey, OAuth or SSO. See our{" "}
               <Link href="/privacy" className="text-primary hover:underline">
                 Privacy Policy
               </Link>{" "}

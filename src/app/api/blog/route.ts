@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prismaBlog } from "@/lib/db-blog";
 import { prismaUsers } from "@/lib/db-users";
 import { isAdminRole, UserRole } from "@/lib/subscription";
+import { parsePage } from "@/lib/pagination";
 
 // Generate Gravatar URL from email (server-side)
 function getGravatarUrl(email: string, size: number = 96): string {
@@ -27,9 +28,7 @@ function generateSlug(title: string): string {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1", 10);
-    const limit = parseInt(searchParams.get("limit") || "10", 10);
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = parsePage(searchParams, 10);
     const includeUnpublished = searchParams.get("admin") === "true";
 
     // Check if user is admin (for viewing drafts)

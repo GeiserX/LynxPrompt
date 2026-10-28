@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import ora from "ora";
+import ora, { type Ora } from "ora";
 import fs from "fs";
 import path from "path";
 import { createHash } from "crypto";
@@ -12,6 +12,7 @@ import {
   updateChecksum,
   loadBlueprints,
 } from "../utils/blueprint-tracker.js";
+import { withSensitiveDataAck, type SensitiveMatchInfo } from "../utils/sensitive-ack.js";
 
 interface PushOptions {
   name?: string;
@@ -21,6 +22,7 @@ interface PushOptions {
   yes?: boolean;
   force?: boolean;
   all?: boolean;
+  allowSensitive?: boolean;
 }
 
 interface HierarchyInfo {
@@ -53,6 +55,7 @@ const EXCLUDED_DIRS = new Set([
  */
 interface ConfigPattern {
   match: (relativePath: string) => boolean;
+  // Must be a TemplateType value from prisma/schema-users.prisma; tools without one use CUSTOM
   type: string;
   label: string;
 }
@@ -73,7 +76,7 @@ const CONFIG_PATTERNS: ConfigPattern[] = [
   // Directory-based rules
   { match: (p) => normPath(p).includes(".cursor/rules/") && p.endsWith(".mdc"), type: "CURSOR_RULES", label: "Cursor Rules" },
   { match: (p) => normPath(p).includes(".trae/rules/") && p.endsWith(".mdc"), type: "TRAE_RULES", label: "Trae Rules" },
-  { match: (p) => normPath(p).includes(".idx/") && p.endsWith(".mdc"), type: "FIREBASE_RULES", label: "Firebase Rules" },
+  { match: (p) => normPath(p).includes(".idx/") && p.endsWith(".mdc"), type: "IDX_CONFIG", label: "Firebase Rules" },
   { match: (p) => normPath(p).includes(".roo/rules/") && p.endsWith(".mdc"), type: "ROO_RULES", label: "Roo Rules" },
   { match: (p) => normPath(p).includes(".amazonq/rules/") && p.endsWith(".mdc"), type: "AMAZONQ_RULES", label: "Amazon Q Rules" },
   { match: (p) => normPath(p).includes(".augment/rules/") && p.endsWith(".mdc"), type: "AUGMENT_RULES", label: "Augment Rules" },
@@ -83,13 +86,13 @@ const CONFIG_PATTERNS: ConfigPattern[] = [
   // Path-based configs
   { match: (p) => normPath(p).includes(".github/copilot-instructions.md"), type: "COPILOT_INSTRUCTIONS", label: "Copilot Instructions" },
   { match: (p) => normPath(p).includes(".zed/instructions.md"), type: "ZED_INSTRUCTIONS", label: "Zed Instructions" },
-  { match: (p) => normPath(p).includes(".openhands/microagents/repo.md"), type: "OPENHANDS_CONFIG", label: "OpenHands Config" },
+  { match: (p) => normPath(p).includes(".openhands/microagents/repo.md"), type: "OPENHANDS_MD", label: "OpenHands Config" },
   { match: (p) => normPath(p).includes(".junie/guidelines.md"), type: "JUNIE_GUIDELINES", label: "Junie Guidelines" },
   { match: (p) => normPath(p).includes(".void/config.json"), type: "VOID_CONFIG", label: "Void Config" },
   { match: (p) => normPath(p).includes(".continue/config.json"), type: "CONTINUE_CONFIG", label: "Continue Config" },
   { match: (p) => normPath(p).includes(".cody/config.json"), type: "CODY_CONFIG", label: "Cody Config" },
-  { match: (p) => normPath(p).includes(".supermaven/config.json"), type: "SUPERMAVEN_CONFIG", label: "Supermaven Config" },
-  { match: (p) => normPath(p).includes(".codegpt/config.json"), type: "CODEGPT_CONFIG", label: "CodeGPT Config" },
+  { match: (p) => normPath(p).includes(".supermaven/config.json"), type: "CUSTOM", label: "Supermaven Config" },
+  { match: (p) => normPath(p).includes(".codegpt/config.json"), type: "CUSTOM", label: "CodeGPT Config" },
 
   // Basename rules
   { match: (p) => path.basename(p) === "AGENTS.md", type: "AGENTS_MD", label: "AGENTS.md" },
@@ -97,13 +100,13 @@ const CONFIG_PATTERNS: ConfigPattern[] = [
   { match: (p) => path.basename(p) === "AIDER.md", type: "AIDER_MD", label: "AIDER.md" },
   { match: (p) => path.basename(p) === "GEMINI.md", type: "GEMINI_MD", label: "GEMINI.md" },
   { match: (p) => path.basename(p) === "WARP.md", type: "WARP_MD", label: "WARP.md" },
-  { match: (p) => path.basename(p) === "CRUSH.md", type: "CRUSH_MD", label: "CRUSH.md" },
+  { match: (p) => path.basename(p) === "CRUSH.md", type: "CUSTOM", label: "CRUSH.md" },
   { match: (p) => path.basename(p) === ".windsurfrules", type: "WINDSURF_RULES", label: "Windsurf Rules" },
   { match: (p) => path.basename(p) === ".clinerules", type: "CLINE_RULES", label: "Cline Rules" },
-  { match: (p) => path.basename(p) === ".goosehints", type: "GOOSE_HINTS", label: "Goose Hints" },
+  { match: (p) => path.basename(p) === ".goosehints", type: "GOOSEHINTS", label: "Goose Hints" },
   { match: (p) => path.basename(p) === ".tabnine.yaml", type: "TABNINE_CONFIG", label: "Tabnine Config" },
-  { match: (p) => path.basename(p) === "opencode.json", type: "OPENCODE_CONFIG", label: "OpenCode Config" },
-  { match: (p) => path.basename(p) === "firebender.json", type: "FIREBENDER_CONFIG", label: "Firebender Config" },
+  { match: (p) => path.basename(p) === "opencode.json", type: "OPENCODE_JSON", label: "OpenCode Config" },
+  { match: (p) => path.basename(p) === "firebender.json", type: "CUSTOM", label: "Firebender Config" },
 ];
 
 /**
@@ -443,7 +446,14 @@ async function updateBlueprint(
       updateData.expected_checksum = expectedChecksum;
     }
 
-    const result = await api.updateBlueprint(blueprintId, updateData);
+    const result = await withSensitiveDataAck(
+      (acknowledged) =>
+        api.updateBlueprint(
+          blueprintId,
+          acknowledged ? { ...updateData, sensitive_data_acknowledged: true } : updateData
+        ),
+      confirmSensitive(options, spinner)
+    );
     spinner.succeed("Blueprint updated!");
 
     // Update local tracking with new checksum
@@ -640,7 +650,7 @@ async function createOrLinkBlueprint(
   const spinner = ora("Creating blueprint...").start();
 
   try {
-    const result = await api.createBlueprint({
+    const createData = {
       name,
       description: description || "",
       content,
@@ -651,7 +661,12 @@ async function createOrLinkBlueprint(
       hierarchy_id: hierarchyId,
       parent_id: hierarchyInfo.parentId,
       repository_path: hierarchyInfo.repositoryPath,
-    });
+    };
+    const result = await withSensitiveDataAck(
+      (acknowledged) =>
+        api.createBlueprint(acknowledged ? { ...createData, sensitive_data_acknowledged: true } : createData),
+      confirmSensitive(options, spinner)
+    );
 
     spinner.succeed("Blueprint created!");
 
@@ -778,7 +793,14 @@ async function pushHierarchy(
         if (tracked.checksum && !options.force) {
           updateData.expected_checksum = tracked.checksum;
         }
-        await api.updateBlueprint(tracked.id, updateData);
+        await withSensitiveDataAck(
+          (acknowledged) =>
+            api.updateBlueprint(
+              tracked.id,
+              acknowledged ? { ...updateData, sensitive_data_acknowledged: true } : updateData
+            ),
+          confirmSensitive(options, spinner)
+        );
         await updateChecksum(cwd, file.path, content);
 
         if (file.isRoot) rootBlueprintId = tracked.id;
@@ -790,7 +812,14 @@ async function pushHierarchy(
       // 2. Check if exists on server with same repository_path → re-link & update
       const existing = await findExistingBlueprintOnServer(file.path, hierarchyId);
       if (existing) {
-        await api.updateBlueprint(existing.id, { content });
+        await withSensitiveDataAck(
+          (acknowledged) =>
+            api.updateBlueprint(
+              existing.id,
+              acknowledged ? { content, sensitive_data_acknowledged: true } : { content }
+            ),
+          confirmSensitive(options, spinner)
+        );
         await trackBlueprint(cwd, {
           id: existing.id,
           name: existing.name,
@@ -820,7 +849,7 @@ async function pushHierarchy(
         ? rootBlueprintId
         : null;
 
-      const result = await api.createBlueprint({
+      const createData = {
         name: blueprintName,
         description: "",
         content,
@@ -830,7 +859,12 @@ async function pushHierarchy(
         hierarchy_id: hierarchyId,
         parent_id: parentId,
         repository_path: file.path,
-      });
+      };
+      const result = await withSensitiveDataAck(
+        (acknowledged) =>
+          api.createBlueprint(acknowledged ? { ...createData, sensitive_data_acknowledged: true } : createData),
+        confirmSensitive(options, spinner)
+      );
 
       if (file.isRoot) rootBlueprintId = result.blueprint.id;
 
@@ -904,6 +938,44 @@ function inferBlueprintType(filePath: string): string {
   // Fallback for explicit single-file push of unknown files
   if (filePath.endsWith(".md") || filePath.endsWith(".mdc")) return "AGENTS_MD";
   return "CUSTOM";
+}
+
+/**
+ * Ask whether to publish PUBLIC content the server flagged as possible
+ * secrets. --allow-sensitive says yes up front; with -y or no terminal the
+ * answer is no, so a script never publishes a secret by accident.
+ */
+function confirmSensitive(options: PushOptions, spinner?: Ora) {
+  return async (matches: SensitiveMatchInfo[]): Promise<boolean> => {
+    spinner?.stop();
+    console.log(chalk.yellow("\n⚠ This blueprint is public and may contain secrets:"));
+    for (const m of matches) {
+      console.log(chalk.gray(`   line ${m.line}: ${m.type}${m.snippet ? ` (${m.snippet})` : ""}`));
+    }
+
+    let publish = false;
+    if (options.allowSensitive) {
+      console.log(chalk.gray("   Publishing anyway (--allow-sensitive)."));
+      publish = true;
+    } else if (!options.yes && process.stdin.isTTY) {
+      const answer = await prompts({
+        type: "confirm",
+        name: "publish",
+        message: "Publish it anyway?",
+        initial: false,
+      });
+      publish = answer.publish === true;
+    }
+
+    if (publish) {
+      spinner?.start();
+    } else {
+      console.log(
+        chalk.gray("   Remove them, keep the blueprint private, or run again with --allow-sensitive to publish anyway.")
+      );
+    }
+    return publish;
+  };
 }
 
 function handleError(error: unknown): void {

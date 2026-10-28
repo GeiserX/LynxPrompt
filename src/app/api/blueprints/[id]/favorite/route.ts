@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { prismaApp } from "@/lib/db-app";
+import { canReadTemplate } from "@/lib/blueprint-access";
 
 // GET /api/blueprints/[id]/favorite - Check if user has favorited this blueprint
 export async function GET(
@@ -54,6 +55,9 @@ export async function POST(
   const templateId = rawId.replace(/^(sys_|bp_)/, "");
 
   try {
+    // Unfavoriting always works; adding needs a template the caller can read
+    const readable = await canReadTemplate(templateType, templateId, session.user.id);
+
     // Use a transaction to prevent race conditions between check+create/delete and counter update
     const result = await prismaUsers.$transaction(async (tx) => {
       // Check if already favorited
@@ -88,6 +92,8 @@ export async function POST(
 
         return { favorited: false, message: "Removed from favorites" };
       } else {
+        if (!readable) return null;
+
         // Add favorite
         await tx.templateFavorite.create({
           data: {
@@ -113,6 +119,10 @@ export async function POST(
         return { favorited: true, message: "Added to favorites" };
       }
     });
+
+    if (!result) {
+      return NextResponse.json({ error: "Blueprint not found" }, { status: 404 });
+    }
 
     return NextResponse.json(result);
   } catch (error) {

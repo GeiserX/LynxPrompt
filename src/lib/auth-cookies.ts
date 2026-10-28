@@ -15,3 +15,6 @@ export function sessionCookieName(): string {
     ? "__Secure-next-auth.session-token"
     : "next-auth.session-token";
 }
+
+// Database sessions last 30 days; next-auth and the SSO callback both use it.
+export const SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;

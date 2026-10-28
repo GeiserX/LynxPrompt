@@ -1,3 +1,4 @@
+import { getApiUrl } from "../config.js";
 export interface GenerateOptions {
   name: string;
   description: string;
@@ -741,9 +742,9 @@ function generateFileContent(options: GenerateOptions, platform: string): string
       // CLI method (recommended - no token in file)
       sections.push("");
       sections.push("# Using LynxPrompt CLI (recommended):");
-      sections.push("lynxp push    # Upload local changes to cloud");
-      sections.push("lynxp pull    # Download cloud changes to local");
-      sections.push("lynxp diff    # Compare local vs cloud versions");
+      sections.push(`lynxp push    # Upload local changes to cloud`);
+      sections.push(`lynxp pull ${bpId}    # Download cloud changes to local`);
+      sections.push(`lynxp diff    # Compare local vs cloud versions`);
       sections.push("");
       sections.push("# Install CLI: npm install -g lynxprompt");
       sections.push("# Login: lynxp login");
@@ -753,22 +754,20 @@ function generateFileContent(options: GenerateOptions, platform: string): string
       sections.push("");
       sections.push(`# Using curl with environment variable (token stored in $${tokenEnvVar}):`);
       sections.push("");
+      const apiUrl = getApiUrl().replace(/\/+$/, "");
+      const url = `${apiUrl}/api/v1/blueprints/${bpId}`;
       sections.push("# Push local changes to cloud:");
-      sections.push(`curl -X PUT "https://api.lynxprompt.com/api/v1/blueprints/${bpId}" \\`);
-      sections.push(`  -H "Authorization: Bearer $${tokenEnvVar}" \\`);
-      sections.push('  -H "Content-Type: application/json" \\');
-      sections.push(`  -d "{\\"content\\": \\"$(cat ${fileName} | jq -Rs .)\\"}"`);
+      sections.push(`jq -Rs '{content: .}' ${fileName} | curl -sf -X PUT "${url}" -H "Authorization: Bearer $${tokenEnvVar}" -H "Content-Type: application/json" --data-binary @-`);
       sections.push("");
       sections.push("# Pull cloud changes to local:");
-      sections.push(`curl -s "https://api.lynxprompt.com/api/v1/blueprints/${bpId}" \\`);
-      sections.push(`  -H "Authorization: Bearer $${tokenEnvVar}" | jq -r '.content' > ${fileName}`);
+      sections.push(`curl -sf "${url}" -H "Authorization: Bearer $${tokenEnvVar}" | jq -er '.blueprint.content' > ${fileName}.new && mv ${fileName}.new ${fileName}`);
       sections.push("");
       sections.push(`# Set your token: export ${tokenEnvVar}="your_token_here"`);
-      sections.push("# Generate token at: https://lynxprompt.com/settings");
+      sections.push(`# Generate token at: ${apiUrl}/settings`);
     }
     
     sections.push("");
-    sections.push("Docs: https://lynxprompt.com/docs/api");
+    sections.push(`Docs: ${getApiUrl().replace(/\/+$/, "")}/docs/api`);
     sections.push("-->");
     sections.push("");
   }

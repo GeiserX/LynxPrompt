@@ -460,7 +460,7 @@ export async function detectGitHubRepo(repoUrl: string): Promise<DetectedRepo | 
   if (fileNames.has(".gitlab-ci.yml")) detected.cicd = "gitlab_ci";
   if (fileNames.has("jenkinsfile")) detected.cicd = "jenkins";
   if (fileNames.has(".travis.yml")) detected.cicd = "travis";
-  if (fileNames.has("azure-pipelines.yml")) detected.cicd = "azure_devops";
+  if (fileNames.has("azure-pipelines.yml")) detected.cicd = "azure_pipelines";
 
   // Detect from package.json (Node.js)
   if (fileNames.has("package.json")) {

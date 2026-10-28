@@ -273,7 +273,8 @@ describe("detectGitHubRepo - CI/CD", () => {
     fetchSpy.mockResolvedValueOnce(fileList([{ name: "azure-pipelines.yml" }]));
 
     const r = await detectGitHubRepo("https://github.com/o/az-proj");
-    expect(r!.cicd).toBe("azure_devops");
+    // The wizard's CI/CD option id; "azure_devops" is the repo host id
+    expect(r!.cicd).toBe("azure_pipelines");
   });
 
   it("detects GitLab CI in GitHub repo", async () => {
