@@ -56,15 +56,14 @@ function isRateLimited(key: string, maxRequests: number): boolean {
   return false;
 }
 
-// Content Security Policy - built dynamically based on enabled services
-let cachedCSP: string | null = null;
-function getCSP(): string {
-  if (!cachedCSP) cachedCSP = buildCSP();
-  return cachedCSP;
-}
-
-function buildCSP(): string {
-  const scriptSrc = ["'self'", "'unsafe-inline'"];
+// Content Security Policy - built per request around a fresh nonce.
+// script-src carries no 'unsafe-inline': an inline script runs only when it
+// carries this request's nonce, which Next.js reads from the request's CSP
+// header and puts on its own scripts. That also stops javascript: URLs.
+export function buildCSP(nonce: string): string {
+  const scriptSrc = ["'self'", `'nonce-${nonce}'`];
+  // React's dev build uses eval for stack traces; never in production.
+  if (process.env.NODE_ENV === "development") scriptSrc.push("'unsafe-eval'");
   const connectSrc = ["'self'"];
   const frameSrc = ["'self'"];
 
@@ -93,6 +92,7 @@ function buildCSP(): string {
   return [
     "default-src 'self'",
     `script-src ${scriptSrc.join(" ")}`,
+    // Inline style attributes (React style={{}}, Radix, Sonner) cannot carry a nonce.
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: https://avatars.githubusercontent.com https://lh3.googleusercontent.com https://*.gravatar.com https://gravatar.com",
     "font-src 'self' data:",
@@ -105,7 +105,7 @@ function buildCSP(): string {
 }
 
 // Security headers
-function addSecurityHeaders(response: NextResponse): NextResponse {
+function addSecurityHeaders(response: NextResponse, csp: string): NextResponse {
   // Prevent clickjacking
   response.headers.set("X-Frame-Options", "DENY");
 
@@ -122,7 +122,7 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
   );
 
   // Content Security Policy
-  response.headers.set("Content-Security-Policy", getCSP());
+  response.headers.set("Content-Security-Policy", csp);
 
   // HSTS (only in production with HTTPS)
   if (process.env.NODE_ENV === "production") {
@@ -225,9 +225,16 @@ export function proxy(request: NextRequest) {
     }
   }
 
-  // Add security headers to response
-  const response = NextResponse.next();
-  return addSecurityHeaders(response);
+  // The nonce goes to the render on the request headers: Next.js takes it from
+  // the CSP header for its own scripts, and the root layout reads x-nonce.
+  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+  const csp = buildCSP(nonce);
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("Content-Security-Policy", csp);
+
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  return addSecurityHeaders(response, csp);
 }
 
 export const config = {
