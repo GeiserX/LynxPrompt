@@ -51,6 +51,14 @@ schema's tables.
 | `ENABLE_USER_REGISTRATION` | `true` | `false` lets only existing accounts sign in (new ones get `RegistrationDisabled`). |
 | `ENABLE_TURNSTILE` | `false` | Cloudflare Turnstile on the sign-in forms. |
 
+## Client address
+
+Rate limits and download counts key on the client's address, so the app needs to know which header your proxy writes.
+
+| Variable | Default | What it does |
+|---|---|---|
+| `TRUSTED_PROXY` | `1` | How many reverse proxies sit in front of the app. The app reads the X-Forwarded-For entry that many places from the right, the one your outermost proxy wrote; anything to its left came from the client. `cloudflare` reads CF-Connecting-IP instead; set it only when the app cannot be reached except through Cloudflare. With no proxy at all, a client can choose its own X-Forwarded-For, so put the app behind one. |
+
 ## Features
 
 | Variable | Default | What it does |

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createTransport } from "nodemailer";
 import { z } from "zod";
 import { APP_NAME, APP_URL, CONTACT_EMAIL } from "@/lib/feature-flags";
+import { getClientIP } from "@/lib/client-ip";
 
 const contactSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
@@ -26,10 +27,7 @@ setInterval(() => {
 export async function POST(request: NextRequest) {
   try {
     // Rate limit by IP
-    const clientIP = request.headers.get("cf-connecting-ip") ||
-      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-      request.headers.get("x-real-ip") ||
-      "unknown";
+    const clientIP = getClientIP(request);
     const now = Date.now();
     const record = contactRateLimit.get(clientIP);
     if (record && now <= record.resetTime) {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ENABLE_FEDERATION } from "@/lib/feature-flags";
 import { prismaApp } from "@/lib/db-app";
 import { validateDomainNotPrivate } from "@/lib/network-security";
+import { getClientIP } from "@/lib/client-ip";
 
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
@@ -46,11 +47,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Federation disabled" }, { status: 404 });
   }
 
-  const clientIP =
-    request.headers.get("cf-connecting-ip") ||
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    request.headers.get("x-real-ip") ||
-    "unknown";
+  const clientIP = getClientIP(request);
 
   if (isRateLimited(clientIP)) {
     return NextResponse.json(

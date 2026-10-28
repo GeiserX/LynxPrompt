@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { prismaApp } from "@/lib/db-app";
 import { createHash } from "crypto";
+import { getClientIP } from "@/lib/client-ip";
 
 // POST /api/blueprints/[id]/download - Record a blueprint download
 export async function POST(
@@ -37,10 +38,7 @@ export async function POST(
       : rawId;
 
     // Deduplicate: check for recent download from same IP + template in the last hour
-    const clientIP = request.headers.get("cf-connecting-ip") ||
-      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-      request.headers.get("x-real-ip") ||
-      "unknown";
+    const clientIP = getClientIP(request);
     const ipHash = createHash("sha256").update(clientIP).digest("hex").substring(0, 16);
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
