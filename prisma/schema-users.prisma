@@ -253,8 +253,13 @@ model TeamSSOConfig {
   // For LDAP: { host, port, baseDn, bindDn, bindPassword, userFilter, etc. }
   config    Json
   
-  // Optional: restrict to specific email domains
-  allowedDomains String[] // e.g., ["acme.com", "acme.co.uk"]
+  // Email domains the team claims for SSO, e.g. ["acme.com", "acme.co.uk"]
+  allowedDomains String[]
+  // The subset of allowedDomains whose ownership the team proved with a DNS TXT
+  // record. SSO only signs in addresses on a verified domain.
+  verifiedDomains String[] @default([])
+  // Value the team publishes at _lynxprompt-sso.<domain> to prove ownership
+  domainVerificationToken String?
   
   // Metadata
   createdAt DateTime @default(now())
