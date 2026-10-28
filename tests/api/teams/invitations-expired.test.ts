@@ -34,6 +34,7 @@ vi.mock("@/lib/db-users", () => ({
     },
     teamInvitation: {
       count: vi.fn(async ({ where }) => invitations.filter((i) => matches(i, where)).length),
+      updateMany: vi.fn(async () => ({ count: 0 })),
       findMany: vi.fn(async ({ where }) => invitations.filter((i) => matches(i, where))),
       create: mockCreate,
     },

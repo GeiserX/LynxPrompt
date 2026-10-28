@@ -37,6 +37,7 @@ vi.mock("@/lib/db-users", () => ({
       update: mockUpdate,
       delete: mockDelete,
     },
+    userTemplateVersion: { create: vi.fn(async () => ({})) },
     templateDownload: { deleteMany: mockDownloadDeleteMany },
     templateFavorite: { deleteMany: mockFavoriteDeleteMany },
     $transaction: mockTransaction,
