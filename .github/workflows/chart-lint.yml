@@ -1,0 +1,36 @@
+name: Chart Lint
+
+# ct lint (helm lint, Chart.yaml schema, yamllint) on every change to the chart,
+# so a broken chart is caught in the PR instead of after chart-releaser ships it.
+on:
+  pull_request:
+    paths:
+      - 'charts/**'
+      - '.github/ct.yaml'
+      - '.github/workflows/chart-lint.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'charts/**'
+      - '.github/ct.yaml'
+      - '.github/workflows/chart-lint.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up chart-testing
+        uses: helm/chart-testing-action@v2.9.0
+
+      - name: Lint the chart
+        run: ct lint --config .github/ct.yaml --all

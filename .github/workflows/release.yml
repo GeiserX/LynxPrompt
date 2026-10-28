@@ -194,11 +194,45 @@ jobs:
     with:
       release: true
 
+  # Builds the image for both platforms from the commit about to be tagged, so
+  # a Dockerfile that no longer builds stops the release before the tag exists
+  # instead of leaving a tag with no image. Reads the cache docker-publish.yml
+  # writes, and pushes nothing.
+  docker-smoke:
+    name: Docker build (${{ matrix.arch }})
+    needs: prepare
+    if: ${{ needs.prepare.outputs.should_release_app == 'true' }}
+    strategy:
+      matrix:
+        include:
+          - { platform: linux/amd64, arch: amd64, runner: ubuntu-latest }
+          - { platform: linux/arm64, arch: arm64, runner: ubuntu-24.04-arm }
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build the image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: ${{ matrix.platform }}
+          push: false
+          build-args: |
+            APP_URL=https://lynxprompt.com
+          cache-from: type=gha,scope=${{ matrix.arch }}
+
   # ===========================================
   # Release App (Web UI)
   # ===========================================
   release-app:
-    needs: [prepare, ci]
+    needs: [prepare, ci, docker-smoke]
     if: ${{ needs.prepare.outputs.should_release_app == 'true' }}
     runs-on: ubuntu-latest
 
@@ -258,7 +292,23 @@ jobs:
           fi
           
           echo "📝 Generating changelog from $PREV_TAG to $CURRENT_TAG"
-          
+
+          # The CHANGELOG.md section of this version, when it has one.
+          if bash .github/scripts/changelog-section.sh "${{ needs.prepare.outputs.app_version }}" > notes.md; then
+            {
+              echo "## What's Changed"
+              echo ""
+              cat notes.md
+              echo ""
+              echo "---"
+              echo ""
+              echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$PREV_TAG...$CURRENT_TAG"
+            } > changelog.md
+            cat changelog.md
+            exit 0
+          fi
+          echo "CHANGELOG.md has no section for this version; listing the commits instead"
+
           # Generate changelog
           {
             echo "## What's Changed"
@@ -315,7 +365,7 @@ jobs:
   # Release CLI
   # ===========================================
   release-cli:
-    needs: [prepare, cli-tests]
+    needs: [prepare, ci, cli-tests]
     if: ${{ needs.prepare.outputs.should_release_cli == 'true' }}
     runs-on: ubuntu-latest
 
