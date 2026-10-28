@@ -55,7 +55,6 @@ export const UMAMI_SCRIPT_URL = process.env.UMAMI_SCRIPT_URL || "";
 // Contact / Status
 export const CONTACT_EMAIL = process.env.CONTACT_EMAIL || "";
 export const STATUS_PAGE_URL = process.env.STATUS_PAGE_URL || "";
-export const PLATFORM_OWNER_EMAIL = process.env.PLATFORM_OWNER_EMAIL || "";
 
 /**
  * Public feature flags exposed to the client via /api/config/public.

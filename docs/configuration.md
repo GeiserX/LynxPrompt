@@ -37,6 +37,11 @@ schema's tables.
 | `DB_<NAME>_SCHEMA` | `public` | Schema |
 | `DATABASE_URL_<NAME>` | built from the above | Full connection string; wins when set |
 
+| Variable | Default | What it does |
+|---|---|---|
+| `DB_SSL` | `false` | `true` makes the app's own connections to PostgreSQL use TLS. The migrations at start connect with the connection string as written. |
+| `DB_SSL_REJECT_UNAUTHORIZED` | `true` | With `DB_SSL=true`, `false` accepts a server certificate that does not verify, such as a self-signed one. |
+
 ## Sign-in
 
 | Variable | Default | What it does |
@@ -53,7 +58,9 @@ schema's tables.
 | `SSO_ENCRYPTION_KEY` | empty | 64 hex characters (32 bytes, `openssl rand -hex 32`). Encrypts the SSO client secrets at rest; without it a team cannot save an SSO configuration. Keep it: changing it makes the stored secrets unreadable. |
 | `SSO_ALLOW_PRIVATE_IDP` | `false` | `true` lets a team's IdP live on a private or loopback address and use plain `http://`. Leave it off on an instance strangers can sign up to: the server calls the IdP's URLs itself. |
 | `ENABLE_USER_REGISTRATION` | `true` | `false` lets only existing accounts and addresses with a pending team invitation sign in (others get `RegistrationDisabled`). |
-| `ENABLE_TURNSTILE` | `false` | Cloudflare Turnstile on the sign-in forms. |
+| `ENABLE_TURNSTILE` | `false` | Cloudflare Turnstile on the sign-in forms. Needs both keys below. |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | empty | Turnstile site key, read when the container starts. |
+| `TURNSTILE_SECRET_KEY` | empty | Turnstile secret key. With `ENABLE_TURNSTILE=true` and no secret, the server skips the check. |
 
 ## Client address
 
@@ -74,7 +81,8 @@ Rate limits and download counts key on the client's address, so the app needs to
 | `ANTHROPIC_API_KEY` | empty | Your Anthropic key; only read when `ENABLE_AI=true`. |
 | `ENABLE_BLOG` | `false` | The blog module. Its database is migrated only while this is on. |
 | `ENABLE_SUPPORT_FORUM` | `false` | The support forum module. Its database is migrated only while this is on. |
-| `UMAMI_SCRIPT_URL` | empty | Umami analytics script. |
+| `UMAMI_SCRIPT_URL` | empty | Umami analytics script. Loaded only when `NEXT_PUBLIC_UMAMI_WEBSITE_ID` is set too. |
+| `NEXT_PUBLIC_UMAMI_WEBSITE_ID` | empty | Umami website id. |
 | `CONTACT_EMAIL` | `info@<host of APP_URL>` | Where the contact form sends. The form needs `SMTP_HOST`, `SMTP_USER` and `SMTP_PASSWORD`, so it does not work against a mail server without a login. |
 | `STATUS_PAGE_URL` | empty | Status page link in the footer. |
 | `UPLOAD_DIR` | `/data/uploads/blog` | Where blog images go; avatars and team logos go one level up. The self-host compose file mounts the `uploads` volume at `/data/uploads`. |
