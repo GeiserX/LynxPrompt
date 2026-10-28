@@ -149,6 +149,9 @@ function BlueprintsContent() {
 
   // Fetch blueprints
   useEffect(() => {
+    // A response that arrives after the filters or page moved on belongs to
+    // the old query; drop it instead of letting it overwrite the new results.
+    let stale = false;
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -163,8 +166,10 @@ function BlueprintsContent() {
         params.set("limit", "12");
 
         const res = await fetch(`/api/blueprints?${params.toString()}`);
+        if (stale) return;
         if (res.ok) {
           const data: ApiResponse = await res.json();
+          if (stale) return;
           if (page === 1) {
             setBlueprints(data.templates || []);
           } else {
@@ -177,11 +182,14 @@ function BlueprintsContent() {
       } catch (error) {
         console.error("Failed to fetch blueprints:", error);
       } finally {
-        setLoading(false);
+        if (!stale) setLoading(false);
       }
     };
 
     fetchData();
+    return () => {
+      stale = true;
+    };
   }, [sortParam, debouncedSearch, selectedCategory, selectedTier, selectedType, selectedTags, page]);
 
   // Fetch user's favorites when logged in
@@ -257,6 +265,10 @@ function BlueprintsContent() {
     if (newSort || sortParam) params.set("sort", newSort || sortParam);
     if (newSearch !== undefined ? newSearch : searchQuery)
       params.set("q", newSearch !== undefined ? newSearch : searchQuery);
+    // Keep the active filters, which the page reads back from the URL on load
+    if (selectedCategory !== "all") params.set("category", selectedCategory);
+    if (selectedTier !== "all") params.set("tier", selectedTier);
+    if (selectedType !== "all") params.set("type", selectedType);
     router.push(`/blueprints?${params.toString()}`);
   };
 
