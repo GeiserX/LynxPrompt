@@ -119,6 +119,16 @@ describe("CLI release pipeline", () => {
     for (const name of ["publish-binaries", "sign-macos"]) expect(job(publish, name)).toContain("tag_name: v${{ needs.check.outputs.version }}");
     expect(job(publish, "verify")).toContain('gh release view "v$VERSION"');
   });
+
+  // Every merge that ships now releases, so two publishes can overlap. Run them
+  // one at a time and never drop one, or an older version can land last.
+  it("publishes run one at a time, in order, none cancelled", () => {
+    const block = read("publish-cli.yml").match(/\nconcurrency:\n((?: {2}.*\n)*)/)?.[1];
+    expect(block, "publish-cli.yml has no workflow-level concurrency").toBeDefined();
+    expect(block).toMatch(/^ {2}group: publish-cli$/m);
+    expect(block).toMatch(/^ {2}cancel-in-progress: false$/m);
+    expect(block).toMatch(/^ {2}queue: max$/m);
+  });
 });
 
 // The Homebrew push ran with continue-on-error and snap ended in `|| true`, so
