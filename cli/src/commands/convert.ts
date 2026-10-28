@@ -8,8 +8,9 @@
 
 import chalk from "chalk";
 import { readFile, writeFile, access } from "fs/promises";
-import { join, basename } from "path";
+import { join, basename, resolve, dirname } from "path";
 import ora from "ora";
+import { parseMarkdownConfig, generateTargetContent, isCommandTarget } from "../utils/convert-format.js";
 
 interface ConvertOptions {
   output?: string;
@@ -45,7 +46,7 @@ const TARGET_FILES: Record<string, string> = {
   antigravity: "GEMINI.md",
   zed: ".zed/instructions.md",
   void: ".void/config.json",
-  trae: ".trae/rules/project.mdc",
+  trae: ".trae/rules/project_rules.md",
   firebase: ".idx/rules/project.mdc",
   // Editor extensions
   cline: ".clinerules",
@@ -56,10 +57,10 @@ const TARGET_FILES: Record<string, string> = {
   supermaven: ".supermaven/config.json",
   codegpt: ".codegpt/config.json",
   amazonq: ".amazonq/rules/project.md",
-  augment: ".augment/rules/project.mdc",
+  augment: ".augment/rules/project.md",
   kilocode: ".kilocode/rules/project.mdc",
   junie: ".junie/guidelines.md",
-  kiro: ".kiro/steering/project.mdc",
+  kiro: ".kiro/steering/project.md",
   // CLI tools
   aider: ".aider.conf.yml",
   goose: ".goosehints",
@@ -133,8 +134,6 @@ const COMMAND_DIRS: Record<string, string> = {
   ".opencode/commands": "opencode-command",
 };
 
-// Check if a target is a command type
-const isCommandTarget = (target: string) => target.includes("-command") || target.includes("-prompt") || target.includes("-workflow");
 
 async function detectSourceFile(cwd: string): Promise<{ path: string; platform: string } | null> {
   // Try to find a source file in common locations
@@ -177,148 +176,16 @@ function detectCommandPlatform(sourcePath: string): string | null {
   return null;
 }
 
-function parseMarkdownConfig(content: string): Record<string, string> {
-  const config: Record<string, string> = {};
-  
-  // Extract sections from markdown
-  const sections = content.split(/^##\s+/m);
-  
-  for (const section of sections) {
-    const lines = section.trim().split("\n");
-    if (lines.length === 0) continue;
-    
-    const title = lines[0].toLowerCase().trim();
-    const body = lines.slice(1).join("\n").trim();
-    
-    config[title] = body;
-  }
-  
-  // Try to extract key info
-  config._raw = content;
-  
-  return config;
-}
-
-function generateTargetContent(config: Record<string, string>, targetPlatform: string): string {
-  const rawContent = config._raw || "";
-  
-  // Commands are all plain markdown - no conversion needed between command types
-  // They just go in different directories
-  if (isCommandTarget(targetPlatform)) {
-    return rawContent;
-  }
-  
-  // For simple conversions, adapt the content format
-  switch (targetPlatform) {
-    case "cursor":
-      // MDC format with frontmatter
-      return `---
-description: "AI coding rules"
-globs: ["**/*"]
-alwaysApply: true
----
-
-${rawContent.replace(/^#\s+.*$/m, "# AI Assistant Configuration")}
-`;
-
-    case "cursor_legacy":
-      // Plain text format
-      return rawContent
-        .replace(/^#\s+/gm, "")
-        .replace(/^##\s+/gm, "\n")
-        .replace(/^###\s+/gm, "")
-        .trim();
-
-    case "windsurf":
-    case "cline":
-    case "goose":
-      // Plain text format
-      return rawContent
-        .replace(/^#\s+/gm, "=== ")
-        .replace(/^##\s+/gm, "--- ")
-        .replace(/^###\s+/gm, "")
-        .replace(/\*\*/g, "")
-        .trim();
-
-    case "trae":
-    case "roocode":
-    case "augment":
-    case "kilocode":
-    case "kiro":
-    case "firebase":
-      // MDC format (same as cursor)
-      return `---
-description: "AI coding rules"
-globs: ["**/*"]
-alwaysApply: true
----
-
-${rawContent.replace(/^#\s+.*$/m, "# AI Assistant Configuration")}
-`;
-
-    case "aider":
-      // YAML format (simplified)
-      return `# Aider configuration
-# Converted from AI IDE configuration
-
-lint-cmd: []
-auto-test: false
-read: []
-# AI rules converted below as conventions
-conventions:
-${rawContent
-  .split("\n")
-  .filter(line => line.trim() && !line.startsWith("#"))
-  .map(line => `  - "${line.trim().replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`)
-  .slice(0, 20)
-  .join("\n")}
-`;
-
-    case "tabnine":
-      // Tabnine YAML format
-      return `# Tabnine configuration
-# Converted from AI IDE configuration
-instructions: |
-${rawContent.split("\n").map(line => `  ${line}`).join("\n")}
-`;
-
-    case "void":
-    case "continue":
-    case "cody":
-    case "codegpt":
-    case "supermaven":
-    case "opencode":
-    case "firebender":
-      // JSON config format
-      return JSON.stringify({ instructions: rawContent }, null, 2) + "\n";
-
-    case "copilot":
-      // GitHub Copilot markdown format
-      return `# GitHub Copilot Instructions\n\n${rawContent}\n`;
-
-    case "agents":
-    case "universal":
-    case "claude":
-    case "codex":
-    case "antigravity":
-    case "gemini-cli":
-    case "zed":
-    case "amazonq":
-    case "junie":
-    case "warp":
-    case "openhands":
-    case "crush":
-    default:
-      // Standard markdown format
-      return rawContent;
-  }
-}
-
+/**
+ * Usage: convert <target> (source auto-detected) or convert <source> <target>.
+ * Commander gives the first argument first, so a lone argument is the target.
+ */
 export async function convertCommand(
-  source: string | undefined,
-  target: string,
+  first: string,
+  second: string | undefined,
   options: ConvertOptions
 ): Promise<void> {
+  const [source, target] = second === undefined ? [undefined, first] : [first, second];
   console.log();
   console.log(chalk.cyan.bold("  🔄 LynxPrompt Convert"));
   console.log(chalk.gray("     Convert AI IDE configuration between formats"));
@@ -331,7 +198,7 @@ export async function convertCommand(
   let sourcePlatform: string;
   
   if (source) {
-    sourcePath = join(cwd, source);
+    sourcePath = resolve(cwd, source);
     // Check if it's a command file first
     const cmdPlatform = detectCommandPlatform(source);
     if (cmdPlatform) {
@@ -409,7 +276,7 @@ export async function convertCommand(
     outputFilename = `${targetDir}/${originalFilename}`;
   }
   
-  const outputPath = join(cwd, outputFilename);
+  const outputPath = resolve(cwd, outputFilename);
 
   // Check if output exists
   try {
@@ -427,7 +294,7 @@ export async function convertCommand(
   try {
     // Create directory if needed
     const { mkdir } = await import("fs/promises");
-    const outputDir = join(cwd, outputFilename.split("/").slice(0, -1).join("/"));
+    const outputDir = dirname(outputPath);
     if (outputDir !== cwd) {
       await mkdir(outputDir, { recursive: true });
     }
