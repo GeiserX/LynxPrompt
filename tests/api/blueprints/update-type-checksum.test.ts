@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { contentChecksum } from "@/lib/content-checksum";
+import { templateRows } from "./template-rows";
 
 const mockFindUnique = vi.fn();
 const mockUpdate = vi.fn();
@@ -113,6 +114,18 @@ describe("GET /api/blueprints/[id]", () => {
 
 describe("DELETE /api/blueprints/[id]", () => {
   it("removes the blueprint's favorites and downloads with it", async () => {
+    const downloads = templateRows([
+      { templateId: "bp_tpl_1", templateType: "user" },
+      { templateId: "bp_tpl_2", templateType: "user" },
+    ]);
+    const favorites = templateRows([
+      { templateId: "tpl_1", templateType: "user" },
+      { templateId: "tpl_2", templateType: "user" },
+    ]);
+    mockDownloadDeleteMany.mockImplementation(downloads.deleteMany);
+    mockFavoriteDeleteMany.mockImplementation(favorites.deleteMany);
+    mockTransaction.mockImplementation((ops: Promise<unknown>[]) => Promise.all(ops));
+
     const { DELETE } = await import("@/app/api/blueprints/[id]/route");
     const response = await DELETE(
       new Request("https://lynxprompt.com/api/blueprints/bp_tpl_1", { method: "DELETE" }),
@@ -120,9 +133,8 @@ describe("DELETE /api/blueprints/[id]", () => {
     );
 
     expect(response.status).toBe(200);
-    const where = { where: { templateId: "tpl_1", templateType: "user" } };
-    expect(mockDownloadDeleteMany).toHaveBeenCalledWith(where);
-    expect(mockFavoriteDeleteMany).toHaveBeenCalledWith(where);
+    expect(downloads.rows).toEqual([{ templateId: "bp_tpl_2", templateType: "user" }]);
+    expect(favorites.rows).toEqual([{ templateId: "tpl_2", templateType: "user" }]);
     expect(mockDelete).toHaveBeenCalledWith({ where: { id: "tpl_1" } });
     expect(mockTransaction).toHaveBeenCalledTimes(1);
   });
