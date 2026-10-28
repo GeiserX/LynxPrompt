@@ -146,11 +146,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Limit number of active tokens per user (prevent abuse)
+    // Limit number of active tokens per user (prevent abuse).
+    // Expired tokens no longer work, so they do not take a slot.
     const activeTokenCount = await prismaUsers.apiToken.count({
       where: {
         userId: session.user.id,
         revokedAt: null,
+        expiresAt: { gt: new Date() },
       },
     });
 

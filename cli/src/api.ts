@@ -163,16 +163,38 @@ class ApiClient {
   }
 
   // Auth endpoints
-  async initCliSession(): Promise<CliSessionResponse> {
+  // codeChallenge is the SHA-256 of a verifier that never leaves this process;
+  // polling sends the verifier, so the session ID in the sign-in URL is not
+  // enough to collect the token.
+  async initCliSession(codeChallenge: string): Promise<CliSessionResponse> {
     return this.request<CliSessionResponse>("/api/cli-auth/init", {
       method: "POST",
+      body: JSON.stringify({ code_challenge: codeChallenge }),
     });
   }
 
-  async pollCliSession(sessionId: string): Promise<CliPollResponse> {
+  async pollCliSession(sessionId: string, verifier: string): Promise<CliPollResponse> {
     return this.request<CliPollResponse>(
-      `/api/cli-auth/poll?session=${sessionId}`
+      `/api/cli-auth/poll?session=${encodeURIComponent(sessionId)}`,
+      { headers: { "X-CLI-Verifier": verifier } }
     );
+  }
+
+  /**
+   * Revoke a stored token on the server that issued it. Best effort: logout
+   * clears the local copy whatever this returns.
+   */
+  async revokeToken(apiUrl: string, token: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${apiUrl}/api/cli-auth/revoke`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        signal: AbortSignal.timeout(10_000),
+      });
+      return response.ok;
+    } catch {
+      return false;
+    }
   }
 
   // User endpoints
