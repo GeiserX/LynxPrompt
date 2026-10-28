@@ -21,6 +21,9 @@ on:
     branches: [main, develop]
   # release.yml runs lint, tests and build before it tags an app release.
   workflow_call:
+  # selfhost-pins.yml dispatches CI on the pin bump branch it pushes, because a
+  # push or PR made with GITHUB_TOKEN starts no workflow on its own.
+  workflow_dispatch:
 
 # Cancel in-progress runs when a new commit is pushed. The workflow name keeps
 # the release workflow's call apart from the CI run of the same push.

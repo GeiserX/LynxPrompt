@@ -1,0 +1,95 @@
+name: Self-host Pins
+
+# Once a release image is on Docker Hub, open a PR that moves the self-host
+# compose file and the Helm chart to it. Without this the pins stayed releases
+# behind, and a new self-hosted install started on an old version. The bump is
+# a PR because the main ruleset takes changes only through PRs.
+on:
+  repository_dispatch:
+    types: [app-image-published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Published app version to pin (for example, 2.1.47)'
+        required: true
+        type: string
+
+concurrency:
+  group: selfhost-pins
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  # To dispatch the required checks on the bump branch.
+  actions: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      VERSION: ${{ github.event.client_payload.version || inputs.version }}
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Validate version
+        run: |
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::invalid version '$VERSION'"; exit 1; }
+          echo "BRANCH=chore/selfhost-pins-$VERSION" >> "$GITHUB_ENV"
+
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # tests/workflows/selfhost-compose.test.ts fails a compose pin that is not
+      # on Docker Hub, so never pin a tag before it is there.
+      - name: Check the image is published
+        run: curl -fsS -o /dev/null --retry 5 --retry-all-errors "https://hub.docker.com/v2/repositories/drumsergio/lynxprompt/tags/$VERSION"
+
+      - name: Move the pins
+        id: bump
+        run: |
+          node .github/scripts/bump-selfhost-pins.mjs "$VERSION"
+          if git diff --quiet; then
+            echo "The compose file and the chart already run $VERSION or newer"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Push the branch
+        if: steps.bump.outputs.changed == 'true'
+        run: |
+          if git ls-remote --exit-code --heads origin "$BRANCH" > /dev/null; then
+            echo "$BRANCH already exists, reusing it"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git switch -c "$BRANCH"
+          git add docker-compose.selfhost.yml charts/lynxprompt/Chart.yaml charts/lynxprompt/values.yaml
+          git commit -m "chore(selfhost): run app $VERSION in the self-host compose file and the Helm chart"
+          git push origin "$BRANCH"
+
+      # A push or PR made with GITHUB_TOKEN starts no workflow, so the required
+      # checks are dispatched on the branch. Their check runs land on its head
+      # commit, which is what the PR's required checks read.
+      - name: Run the required checks on the branch
+        if: steps.bump.outputs.changed == 'true'
+        run: |
+          gh workflow run ci.yml --ref "$BRANCH"
+          gh workflow run cli-tests.yml --ref "$BRANCH" -f environment=dev
+          gh workflow run docs.yml --ref "$BRANCH"
+
+      - name: Open the pull request
+        if: steps.bump.outputs.changed == 'true'
+        run: |
+          if [ -n "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[].number')" ]; then
+            echo "A PR for $BRANCH is already open"
+            exit 0
+          fi
+          body="App $VERSION is on Docker Hub. This moves the self-host compose file and, if it was behind, the Helm chart to it, so a new self-hosted install starts on the current release."
+          if ! gh pr create --base main --head "$BRANCH" --title "chore(selfhost): run app $VERSION in the self-host compose file and the Helm chart" --body "$body"; then
+            echo "::error::Could not open the PR. Allow GitHub Actions to create pull requests (Settings, Actions, General), or open it by hand: ${{ github.server_url }}/${{ github.repository }}/compare/main...$BRANCH"
+            exit 1
+          fi
