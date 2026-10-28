@@ -7,7 +7,6 @@ const h = vi.hoisted(() => ({
     authenticator: { count: vi.fn(), findFirst: vi.fn(), delete: vi.fn() },
     session: { findUnique: vi.fn(), updateMany: vi.fn() },
     user: { findUnique: vi.fn() },
-    knownDevice: { findUnique: vi.fn(), update: vi.fn() },
     apiToken: { count: vi.fn(), create: vi.fn() },
     cliSession: { findUnique: vi.fn(), update: vi.fn() },
   },
@@ -58,25 +57,6 @@ beforeEach(() => {
   h.db.apiToken.count.mockResolvedValue(0);
   h.db.apiToken.create.mockResolvedValue({
     id: "tok_1", name: "ci", role: "BLUEPRINTS_FULL", expiresAt: new Date(), createdAt: new Date(),
-  });
-});
-
-describe("PUT /api/auth/device", () => {
-  it("is gone: only the WebAuthn verify step may vouch for a session or a device", async () => {
-    const route = await import("@/app/api/auth/device/route");
-    expect("PUT" in route).toBe(false);
-  });
-});
-
-describe("POST /api/auth/device", () => {
-  it("a known device fingerprint does not stand in for the passkey", async () => {
-    userWithPasskey(false);
-    h.db.knownDevice.findUnique.mockResolvedValue({ id: "dev_1" });
-    const { POST } = await import("@/app/api/auth/device/route");
-    const res = await POST(req("/api/auth/device", "POST", { fingerprint: "fp" }));
-
-    expect(setsVerified()).toBe(false);
-    expect((await res.json()).requiresPasskey).toBe(true);
   });
 });
 
