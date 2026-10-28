@@ -45,10 +45,16 @@ export interface BlueprintsConfig {
 const BLUEPRINTS_FILE = ".lynxprompt/blueprints.yml";
 
 /**
- * Calculate SHA-256 checksum of content
+ * Calculate the checksum of blueprint content.
+ *
+ * Must match the server's contentChecksum (src/lib/content-checksum.ts): the
+ * server stores content trimmed, so line endings and leading or trailing
+ * whitespace are normalised before hashing. Otherwise a file ending in a
+ * newline gets a 409 conflict on every second push.
  */
 export function calculateChecksum(content: string): string {
-  return createHash("sha256").update(content).digest("hex").substring(0, 16);
+  const normalized = content.replace(/\r\n?/g, "\n").trim();
+  return createHash("sha256").update(normalized).digest("hex").substring(0, 16);
 }
 
 /**

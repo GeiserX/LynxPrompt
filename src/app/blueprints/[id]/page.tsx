@@ -307,7 +307,7 @@ export default function BlueprintDetailPage() {
           name: `${blueprint.name} (Copy)`,
           description: blueprint.description || "",
           content: blueprint.content,
-          type: "CUSTOM",
+          type: blueprint.type || "CUSTOM",
           category: blueprint.category || "other",
           tags: blueprint.tags || [],
           isPublic: false, // Start as private

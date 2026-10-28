@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createHash } from "crypto";
 import { posix as posixPath } from "path";
 import { prismaUsers } from "@/lib/db-users";
+import { contentChecksum } from "@/lib/content-checksum";
 import { APP_URL } from "@/lib/feature-flags";
 import {
   validateApiToken,
@@ -12,13 +12,6 @@ import {
   toHierarchyApiId,
   fromHierarchyApiId,
 } from "@/lib/api-tokens";
-
-/**
- * Compute SHA-256 checksum of content for optimistic locking
- */
-function computeChecksum(content: string): string {
-  return createHash("sha256").update(content).digest("hex").slice(0, 16);
-}
 
 function sanitizeRepositoryPath(input: string | null | undefined): string | null {
   if (!input?.trim()) return null;
@@ -307,8 +300,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Compute content checksum for optimistic locking
-    const contentChecksum = computeChecksum(content.trim());
 
     // Create blueprint
     const blueprint = await prismaUsers.userTemplate.create({
@@ -327,7 +318,7 @@ export async function POST(request: NextRequest) {
         hierarchyId: validatedHierarchyId,
         parentId: validatedParentId,
         repositoryPath: sanitizeRepositoryPath(repository_path) || null,
-        contentChecksum,
+        contentChecksum: contentChecksum(content),
       },
       select: {
         id: true,

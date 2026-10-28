@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createHash } from "crypto";
 import { prismaUsers } from "@/lib/db-users";
+import { contentChecksum } from "@/lib/content-checksum";
 import { APP_URL } from "@/lib/feature-flags";
 import {
   validateApiToken,
@@ -11,13 +11,6 @@ import {
   fromBlueprintApiId,
   toHierarchyApiId,
 } from "@/lib/api-tokens";
-
-/**
- * Compute SHA-256 checksum of content for optimistic locking
- */
-function computeChecksum(content: string): string {
-  return createHash("sha256").update(content).digest("hex").slice(0, 16);
-}
 
 /**
  * GET /api/v1/blueprints/[id]
@@ -214,7 +207,7 @@ export async function PUT(
     // Check ownership first and get current checksum for optimistic locking
     const existing = await prismaUsers.userTemplate.findUnique({
       where: { id: blueprintId },
-      select: { userId: true, contentChecksum: true },
+      select: { userId: true, content: true },
     });
 
     if (!existing) {
@@ -239,13 +232,17 @@ export async function PUT(
     const { name, description, type, category, tags, visibility, expected_checksum } = body;
     const content = decodedContent;
 
-    // Optimistic locking: if expected_checksum is provided, verify it matches
-    if (expected_checksum && existing.contentChecksum && expected_checksum !== existing.contentChecksum) {
+    // Optimistic locking: if expected_checksum is provided, verify it matches.
+    // Compare against the checksum of the content as stored now, not the
+    // contentChecksum column: rows written before every route kept that
+    // column up to date can hold a stale value or none at all.
+    const currentChecksum = contentChecksum(existing.content);
+    if (expected_checksum && expected_checksum !== currentChecksum) {
       return NextResponse.json(
         {
           error: "Conflict - blueprint has been modified",
           message: "The blueprint has been modified since you last pulled it. Pull the latest version and try again, or use force=true to overwrite.",
-          current_checksum: existing.contentChecksum,
+          current_checksum: currentChecksum,
           expected_checksum: expected_checksum,
         },
         { status: 409 }
@@ -283,7 +280,7 @@ export async function PUT(
       else updateData.tier = "SHORT";
 
       // Update checksum
-      updateData.contentChecksum = computeChecksum(content.trim());
+      updateData.contentChecksum = contentChecksum(content);
     }
 
     if (description !== undefined) {
@@ -443,10 +440,13 @@ export async function DELETE(
       );
     }
 
-    // Delete blueprint
-    await prismaUsers.userTemplate.delete({
-      where: { id: blueprintId },
-    });
+    // Favorites and downloads point at the blueprint by a plain id with no
+    // foreign key, so remove them with it. Versions cascade in the schema.
+    await prismaUsers.$transaction([
+      prismaUsers.templateDownload.deleteMany({ where: { templateId: blueprintId, templateType: "user" } }),
+      prismaUsers.templateFavorite.deleteMany({ where: { templateId: blueprintId, templateType: "user" } }),
+      prismaUsers.userTemplate.delete({ where: { id: blueprintId } }),
+    ]);
 
     return NextResponse.json({
       success: true,

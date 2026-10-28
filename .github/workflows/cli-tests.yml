@@ -220,8 +220,10 @@ jobs:
           echo "## Updated" >> ci-test.md
           echo "Updated at $(date -u)" >> ci-test.md
           
-          # Use --force since local file was modified (optimistic locking)
-          lynxp push ci-test.md --yes --force
+          # No --force: a second push of a tracked file must pass the
+          # optimistic lock, since the file ends in a newline and the
+          # server stores it trimmed.
+          lynxp push ci-test.md --yes
           echo "✓ Push update works"
 
       - name: Test status with linked blueprint

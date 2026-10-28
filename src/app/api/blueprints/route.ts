@@ -5,6 +5,8 @@ import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { detectSensitiveData, type SensitiveMatch } from "@/lib/sensitive-data";
+import { normalizeBlueprintType } from "@/lib/blueprint-types";
+import { contentChecksum } from "@/lib/content-checksum";
 import { 
   getEffectiveTier, 
   getMaxBlueprintCount, 
@@ -12,46 +14,6 @@ import {
   BLUEPRINT_LIMITS,
   type SubscriptionTier 
 } from "@/lib/subscription";
-
-
-// Blueprint type options (including command types)
-const BLUEPRINT_TYPES = [
-  "AGENTS_MD",
-  "CLAUDE_MD",
-  "COPILOT_INSTRUCTIONS",
-  "WINDSURF_RULES",
-  "CLINE_RULES",
-  "CODEX_MD",
-  "CURSOR_RULES",
-  "CURSORRULES", // Legacy - backwards compat
-  "CURSOR_MDC",
-  "GEMINI_MD",
-  "ZED_INSTRUCTIONS",
-  "VOID_CONFIG",
-  "TRAE_RULES",
-  "IDX_CONFIG",
-  "ROO_RULES",
-  "CONTINUE_CONFIG",
-  "CODY_CONFIG",
-  "TABNINE_CONFIG",
-  "AMAZONQ_RULES",
-  "AUGMENT_RULES",
-  "KILOCODE_RULES",
-  "JUNIE_GUIDELINES",
-  "KIRO_STEERING",
-  "AIDER_MD",
-  "GOOSEHINTS",
-  // Command types
-  "CURSOR_COMMAND",
-  "CLAUDE_COMMAND",
-  "WINDSURF_WORKFLOW",
-  "COPILOT_PROMPT",
-  "CONTINUE_PROMPT",
-  "OPENCODE_COMMAND",
-  "CUSTOM",
-] as const;
-
-type BlueprintType = (typeof BLUEPRINT_TYPES)[number];
 
 /**
  * Determine tier based on total word count (all content including comments/headers).
@@ -400,25 +362,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate type - accept exact type or normalize from old formats
-    let normalizedType: BlueprintType = "CUSTOM";
-    const upperType = (type || "").toUpperCase().replace(/-/g, "_");
-    
-    // First check for exact match (including command types)
-    if (BLUEPRINT_TYPES.includes(upperType as BlueprintType)) {
-      normalizedType = upperType as BlueprintType;
-    }
-    // Then try partial matching for backwards compatibility
-    else if (upperType.includes("CURSOR_COMMAND")) normalizedType = "CURSOR_COMMAND";
-    else if (upperType.includes("CLAUDE_COMMAND")) normalizedType = "CLAUDE_COMMAND";
-    else if (upperType.includes("WINDSURF_WORKFLOW")) normalizedType = "WINDSURF_WORKFLOW";
-    else if (upperType.includes("COPILOT_PROMPT")) normalizedType = "COPILOT_PROMPT";
-    else if (upperType.includes("CONTINUE_PROMPT")) normalizedType = "CONTINUE_PROMPT";
-    else if (upperType.includes("OPENCODE_COMMAND")) normalizedType = "OPENCODE_COMMAND";
-    else if (upperType.includes("CURSOR")) normalizedType = "CURSOR_RULES";
-    else if (upperType.includes("CLAUDE")) normalizedType = "CLAUDE_MD";
-    else if (upperType.includes("COPILOT")) normalizedType = "COPILOT_INSTRUCTIONS";
-    else if (upperType.includes("WINDSURF")) normalizedType = "WINDSURF_RULES";
-    else if (upperType.includes("AGENT")) normalizedType = "AGENTS_MD";
+    const normalizedType = normalizeBlueprintType(type);
 
     // Validate category
     const validCategories = ["web", "fullstack", "devops", "mobile", "saas", "data", "api", "other"];
@@ -515,6 +459,7 @@ export async function POST(request: NextRequest) {
         hierarchyId: hierarchyId?.trim() || null,
         parentId: validatedParentId,
         repositoryPath: sanitizeRepositoryPath(repositoryPath) || null,
+        contentChecksum: contentChecksum(content),
       },
     });
 
