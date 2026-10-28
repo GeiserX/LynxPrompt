@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { getTemplateById, incrementTemplateUsage } from "@/lib/data/templates";
 import { prismaUsers } from "@/lib/db-users";
 import { detectSensitiveData } from "@/lib/sensitive-data";
+import { sanitizeRepositoryPath } from "@/lib/repository-path";
 
 // GET /api/blueprints/[id] - Get blueprint details
 export async function GET(
@@ -162,6 +163,7 @@ export async function PUT(
       tags, 
       isPublic, 
       showcaseUrl,
+      repositoryPath, // Where `lynxp pull` writes the file; the wizard sends it on overwrite
       sensitiveDataAcknowledged = false, // User acknowledged sensitive data warning
       publishNewVersion = false, // If true, create a new version
       changelog, // Optional changelog for new version
@@ -205,6 +207,10 @@ export async function PUT(
       else if (upperType.includes("WINDSURF")) normalizedType = "WINDSURF_RULES";
       else if (upperType.includes("AGENT")) normalizedType = "AGENTS_MD";
       updateData.type = normalizedType;
+    }
+
+    if (repositoryPath !== undefined) {
+      updateData.repositoryPath = sanitizeRepositoryPath(repositoryPath);
     }
 
     if (category !== undefined) {
