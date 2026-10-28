@@ -33,6 +33,7 @@ function SignInContent() {
   const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileReset, setTurnstileReset] = useState(0);
   const [turnstileError, setTurnstileError] = useState<string | null>(null);
   const [magicLinkError, setMagicLinkError] = useState<string | null>(null);
   const [showSSO, setShowSSO] = useState(false);
@@ -190,28 +191,19 @@ function SignInContent() {
     setIsLoading(true);
     setLoadingProvider("email");
 
+    // A Turnstile token is single-use: the server checks it while sending the
+    // link, so any attempt that does not end in a sent link needs a new one.
+    const resetTurnstile = () => {
+      setTurnstileToken(null);
+      setTurnstileReset((n) => n + 1);
+    };
+
     try {
-      // Verify turnstile token first
-      if (turnstileEnabled && turnstileToken) {
-        const verifyRes = await fetch("/api/auth/verify-turnstile", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token: turnstileToken }),
-        });
-
-        if (!verifyRes.ok) {
-          setTurnstileError("Security verification failed. Please try again.");
-          setIsLoading(false);
-          setLoadingProvider(null);
-          setTurnstileToken(null);
-          return;
-        }
-      }
-
       const result = await signIn("email", {
         email,
         callbackUrl,
         redirect: false,
+        ...(turnstileEnabled && turnstileToken ? { turnstileToken } : {}),
       });
 
       // Debug: Log the signIn result
@@ -219,16 +211,22 @@ function SignInContent() {
 
       if (result?.ok) {
         setEmailSent(true);
+      } else if (result?.error === "TurnstileFailed") {
+        resetTurnstile();
+        setTurnstileError("Security verification failed. Please try again.");
       } else if (result?.error) {
+        resetTurnstile();
         // Show user-friendly error message
         console.error("Magic link signIn error:", result.error);
         setMagicLinkError("Could not send magic link. Please try again later or use another sign-in method.");
       } else {
         // Unknown error - signIn returned but neither ok nor error
+        resetTurnstile();
         console.error("Magic link signIn failed with no error message. Result:", result);
         setMagicLinkError("Something went wrong. Please try again.");
       }
     } catch (error) {
+      resetTurnstile();
       console.error("Magic link error:", error);
       setMagicLinkError("Could not send magic link. Please try again later.");
     } finally {
@@ -543,6 +541,7 @@ function SignInContent() {
                   {turnstileEnabled && (
                     <div className="mt-4">
                       <Turnstile
+                        resetSignal={turnstileReset}
                         onSuccess={(token) => {
                           setTurnstileToken(token);
                           setTurnstileError(null);
