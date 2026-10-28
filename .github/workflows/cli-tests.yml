@@ -42,6 +42,7 @@ jobs:
     name: Public CLI Tests
     runs-on: ubuntu-latest
     needs: [build-test]
+    if: ${{ needs.build-test.outputs.cli == 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -122,7 +123,7 @@ jobs:
   # Uses built-from-source CLI to test current code against dev server
   authenticated-tests:
     name: Authenticated CLI Tests
-    if: ${{ !inputs.release }}
+    if: ${{ !inputs.release && needs.build-test.outputs.cli == 'true' }}
     runs-on: ubuntu-latest
     needs: [build-test]  # Uses the CLI that job built
     env:
@@ -250,9 +251,34 @@ jobs:
   build-test:
     name: Build CLI from Source
     runs-on: ubuntu-latest
+    outputs:
+      cli: ${{ steps.changes.outputs.cli }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          # The pull request's merge commit and the base it merges into.
+          fetch-depth: 2
+
+      # The CLI is built from cli/ and packages/shared/ only, so a pull request
+      # that changes neither cannot change what the test jobs check. They are
+      # skipped there; jobs wait far longer for a runner than these run. This
+      # job stays, because it is the required check. Every other event tests.
+      - name: Did the CLI change?
+        id: changes
+        run: |
+          if [ "${{ github.event_name }}" != pull_request ]; then
+            echo "cli=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Fails the job, rather than skipping the tests, if the diff cannot be read.
+          files=$(git diff --name-only HEAD^1 HEAD)
+          if grep -qE '^(cli/|packages/shared/|\.github/workflows/cli-tests\.yml$)' <<< "$files"; then
+            echo "cli=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "cli=false" >> "$GITHUB_OUTPUT"
+            echo "No change to the CLI: the public and authenticated tests are skipped"
+          fi
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
