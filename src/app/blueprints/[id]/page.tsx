@@ -122,6 +122,7 @@ export default function BlueprintDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { data: session } = useSession();
+  const signedInUserId = session?.user?.id;
   const [blueprint, setBlueprint] = useState<TemplateData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
@@ -153,7 +154,7 @@ export default function BlueprintDetailPage() {
   // Check if user has favorited this blueprint
   useEffect(() => {
     const checkFavorite = async () => {
-      if (!session?.user || !params.id) return;
+      if (!signedInUserId || !params.id) return;
       try {
         const res = await fetch(`/api/blueprints/${params.id}/favorite`);
         if (res.ok) {
@@ -165,7 +166,8 @@ export default function BlueprintDetailPage() {
       }
     };
     checkFavorite();
-  }, [params.id, session]);
+    // Keyed on the user id: a session refetch (window focus) returns a new object
+  }, [params.id, signedInUserId]);
 
   const handleToggleFavorite = async () => {
     if (!session?.user) {

@@ -137,8 +137,15 @@ export function TemplateDownloadModal({
   const hasMorePlatforms = !platformSearch && filteredPlatforms.length > DEFAULT_PLATFORM_COUNT;
 
   // Fetch user's saved variable preferences
+  const signedInUserId = session?.user?.id;
+  const sessionAuthorName = session?.user
+    ? session.user.displayName || session.user.name || ""
+    : null;
+
+  // Keyed on the user id: next-auth hands out a new session object on every
+  // refetch (window focus), which reset the values the user had typed.
   const fetchUserVariables = useCallback(async () => {
-    if (!session?.user) return;
+    if (!signedInUserId) return;
     try {
       const res = await fetch("/api/user/variables");
       if (res.ok) {
@@ -148,7 +155,7 @@ export function TemplateDownloadModal({
     } catch {
       // Non-fatal - just won't have saved preferences
     }
-  }, [session?.user]);
+  }, [signedInUserId]);
 
   // Save a variable to user preferences
   const saveVariable = async (varName: string, value: string) => {
@@ -233,8 +240,8 @@ export function TemplateDownloadModal({
 
     // Auto-fill author-related fields from session if user is logged in
     // Only if not already filled by user saved vars or creator defaults
-    if (session?.user) {
-      const authorName = session.user.displayName || session.user.name || "";
+    if (sessionAuthorName !== null) {
+      const authorName = sessionAuthorName;
 
       // Common author field names that templates might use
       const authorFields = [
@@ -249,7 +256,7 @@ export function TemplateDownloadModal({
     }
 
     setValues(initialValues);
-  }, [template.content, template.variables, userSavedVars, session]);
+  }, [template.content, template.variables, userSavedVars, sessionAuthorName]);
 
   if (!isOpen) return null;
 

@@ -25,6 +25,8 @@ export function PasskeyGuard({ children }: PasskeyGuardProps) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
+  // A session refetch (window focus) hands out a new object; check once per user
+  const userId = session?.user?.id;
   const [checking, setChecking] = useState(true);
   const [verified, setVerified] = useState(false);
 
@@ -70,7 +72,7 @@ export function PasskeyGuard({ children }: PasskeyGuardProps) {
     }
 
     checkPasskeyStatus();
-  }, [status, session, pathname, router]);
+  }, [status, userId, pathname, router]);
 
   // Show loading while checking
   if (checking || status === "loading") {
