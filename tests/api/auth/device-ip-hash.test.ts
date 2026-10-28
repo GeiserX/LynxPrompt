@@ -3,7 +3,6 @@ import { NextRequest } from "next/server";
 import { createHash, createHmac } from "crypto";
 
 const mockSessionUpdateMany = vi.fn();
-const mockKnownDeviceUpsert = vi.fn();
 
 vi.mock("next-auth", () => ({
   getServerSession: vi.fn().mockResolvedValue({ user: { id: "user_1" } }),
@@ -17,26 +16,30 @@ vi.mock("@/lib/auth-cookies", () => ({
 
 vi.mock("@/lib/db-users", () => ({
   prismaUsers: {
-    session: { updateMany: mockSessionUpdateMany },
-    // No passkeys, so the passkey gate lets the session trust the device.
-    authenticator: { count: vi.fn(() => Promise.resolve(0)) },
-    knownDevice: { upsert: mockKnownDeviceUpsert },
+    session: {
+      updateMany: mockSessionUpdateMany,
+      findUnique: vi.fn(() => Promise.resolve({ userId: "user_1", passkeyVerified: false })),
+    },
+    // The user has a passkey, so the route records the device on the session.
+    authenticator: { count: vi.fn(() => Promise.resolve(1)) },
+    user: { findUnique: vi.fn(() => Promise.resolve({ authenticators: [{ id: "a1" }] })) },
+    knownDevice: { findUnique: vi.fn(() => Promise.resolve(null)) },
   },
 }));
 
 const IP = "203.0.113.7";
 
-async function trustDevice() {
-  const { PUT } = await import("@/app/api/auth/device/route");
-  return PUT(
+async function checkDevice() {
+  const { POST } = await import("@/app/api/auth/device/route");
+  return POST(
     new NextRequest("https://lynxprompt.com/api/auth/device", {
-      method: "PUT",
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
         "x-forwarded-for": IP,
         cookie: "next-auth.session-token=tok_1",
       },
-      body: JSON.stringify({ fingerprint: "fp", trustDevice: true }),
+      body: JSON.stringify({ fingerprint: "fp" }),
     })
   );
 }
@@ -46,7 +49,6 @@ describe("device route IP hash", () => {
 
   beforeEach(() => {
     mockSessionUpdateMany.mockReset().mockResolvedValue({ count: 1 });
-    mockKnownDeviceUpsert.mockReset().mockResolvedValue({});
     process.env.NEXTAUTH_SECRET = "test-secret";
   });
 
@@ -56,7 +58,7 @@ describe("device route IP hash", () => {
   });
 
   it("stores a hash keyed with the server secret, not a plain sha256 of the IP", async () => {
-    const res = await trustDevice();
+    const res = await checkDevice();
     expect(res.status).toBe(200);
 
     const stored = mockSessionUpdateMany.mock.calls[0][0].data.ipHash;
@@ -65,6 +67,5 @@ describe("device route IP hash", () => {
 
     expect(stored).not.toBe(plain);
     expect(stored).toBe(keyed);
-    expect(mockKnownDeviceUpsert.mock.calls[0][0].create.ipHash).toBe(keyed);
   });
 });

@@ -95,7 +95,6 @@ process.env.ENABLE_BLOG = "true";
 
 const WRITES: [string, string][] = [
   ["ai/edit-blueprint", "POST"],
-  ["auth/device", "PUT"],
   ["auth/passkey/list", "DELETE"],
   ["auth/passkey/register/options", "POST"],
   ["auth/passkey/register/verify", "POST"],

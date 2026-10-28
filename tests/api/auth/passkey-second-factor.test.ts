@@ -7,7 +7,7 @@ const h = vi.hoisted(() => ({
     authenticator: { count: vi.fn(), findFirst: vi.fn(), delete: vi.fn() },
     session: { findUnique: vi.fn(), updateMany: vi.fn() },
     user: { findUnique: vi.fn() },
-    knownDevice: { findUnique: vi.fn(), update: vi.fn(), upsert: vi.fn() },
+    knownDevice: { findUnique: vi.fn(), update: vi.fn() },
     apiToken: { count: vi.fn(), create: vi.fn() },
     cliSession: { findUnique: vi.fn(), update: vi.fn() },
   },
@@ -62,24 +62,9 @@ beforeEach(() => {
 });
 
 describe("PUT /api/auth/device", () => {
-  it("does not mark an unverified session as passkey-verified or trust the device", async () => {
-    userWithPasskey(false);
-    const { PUT } = await import("@/app/api/auth/device/route");
-    const res = await PUT(req("/api/auth/device", "PUT", { fingerprint: "fp", trustDevice: true }));
-
-    expect(res.status).toBe(403);
-    expect(setsVerified()).toBe(false);
-    expect(h.db.knownDevice.upsert).not.toHaveBeenCalled();
-  });
-
-  it("lets an already verified session trust the device, without touching the flag", async () => {
-    userWithPasskey(true);
-    const { PUT } = await import("@/app/api/auth/device/route");
-    const res = await PUT(req("/api/auth/device", "PUT", { fingerprint: "fp", trustDevice: true }));
-
-    expect(res.status).toBe(200);
-    expect(h.db.knownDevice.upsert).toHaveBeenCalled();
-    expect(setsVerified()).toBe(false);
+  it("is gone: only the WebAuthn verify step may vouch for a session or a device", async () => {
+    const route = await import("@/app/api/auth/device/route");
+    expect("PUT" in route).toBe(false);
   });
 });
 
