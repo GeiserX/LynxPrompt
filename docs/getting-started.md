@@ -81,8 +81,8 @@ The chart is also on [ArtifactHub](https://artifacthub.io/packages/helm/lynxprom
 | CLI `lynxp` | npm | `npm install -g lynxprompt` |
 | CLI `lynxp` | Homebrew (macOS, Linux) | `brew install GeiserX/lynxprompt/lynxprompt` |
 | CLI `lynxp` | Chocolatey (Windows) | `choco install lynxprompt` |
-| CLI `lynxp` | AUR (Arch) | [`lynxprompt`](https://aur.archlinux.org/packages/lynxprompt) |
-| CLI `lynxp` | Snap | `snap install lynxprompt` (the snap is 2.1.1 from April 2026, behind the other channels) |
+| CLI `lynxp` | AUR (Arch) | [`lynxprompt`](https://aur.archlinux.org/packages/lynxprompt) (still 2.1.1 for now; npm and Homebrew carry the current version) |
+| CLI `lynxp` | Snap | `snap install lynxprompt` |
 | CLI `lynxp` | Binaries | attached to each [release](https://github.com/GeiserX/LynxPrompt/releases) |
 | VS Code | Marketplace | [`LynxPrompt.lynxprompt`](https://marketplace.visualstudio.com/items?itemName=LynxPrompt.lynxprompt), or `ext install LynxPrompt.lynxprompt` |
 | CI | GitHub Action | [lynxprompt-action](https://github.com/GeiserX/lynxprompt-action) |

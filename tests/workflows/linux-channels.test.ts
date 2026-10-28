@@ -36,6 +36,12 @@ describe("Snap channel", () => {
     expect(yaml).toContain(`lynxprompt@${version}`);
   });
 
+  // The runner exports XDG_CONFIG_HOME=~/.config, which strict confinement denies:
+  // the first built snap died with EACCES before printing its version.
+  it("keeps the CLI config inside the snap's own data directory", () => {
+    expect(read("snap/snapcraft.yaml")).toMatch(/^environment:\n {2}XDG_CONFIG_HOME: \$SNAP_USER_DATA\/\.config$/m);
+  });
+
   it("builds both architectures and runs the snap before it uploads", () => {
     expect(snap).toContain("arch: amd64");
     expect(snap).toContain("arch: arm64");

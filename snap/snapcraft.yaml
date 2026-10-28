@@ -29,6 +29,12 @@ architectures:
   - build-on: [amd64]
   - build-on: [arm64]
 
+# The CLI keeps its config under XDG_CONFIG_HOME. Confinement denies the user's
+# ~/.config, so a user who exports XDG_CONFIG_HOME got EACCES on every command;
+# keep the config in the snap's own data directory instead.
+environment:
+  XDG_CONFIG_HOME: $SNAP_USER_DATA/.config
+
 apps:
   lynxprompt:
     command: bin/node $SNAP/lib/node_modules/lynxprompt/dist/index.js
