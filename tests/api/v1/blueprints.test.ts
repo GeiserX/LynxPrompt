@@ -153,6 +153,41 @@ describe("GET /api/v1/blueprints/[id] access", () => {
   });
 });
 
+describe("GET /api/v1/blueprints/[id] repository_path", () => {
+  const PATH = "clients/acme-secret/AGENTS.md";
+  const pathOf = async () => (await (await getOne()).json()).blueprint.repository_path;
+
+  it("is hidden from a user who does not own the public blueprint", async () => {
+    db.userTemplate.findUnique.mockResolvedValue(row({ visibility: "PUBLIC", isPublic: true, repositoryPath: PATH }));
+    expect(await pathOf()).toBeNull();
+  });
+
+  it("is given in full to the owner", async () => {
+    db.userTemplate.findUnique.mockResolvedValue(
+      row({ userId: "user_1", visibility: "PUBLIC", isPublic: true, repositoryPath: PATH })
+    );
+    expect(await pathOf()).toBe(PATH);
+  });
+
+  it("is given in full to a member of the blueprint's team", async () => {
+    db.userTemplate.findUnique.mockResolvedValue(row({ visibility: "TEAM", teamId: "team_1", repositoryPath: PATH }));
+    db.teamMember.findUnique.mockResolvedValue({ id: "tm_1" });
+    expect(await pathOf()).toBe(PATH);
+  });
+
+  it("keeps only the tool's file of a subagent, so lynxp pull writes the right format", async () => {
+    db.userTemplate.findUnique.mockResolvedValue(
+      row({
+        type: "AGENT_DEFINITION",
+        visibility: "PUBLIC",
+        isPublic: true,
+        repositoryPath: "clients/acme-secret/.codex/agents/reviewer.toml",
+      })
+    );
+    expect(await pathOf()).toBe(".codex/agents/reviewer.toml");
+  });
+});
+
 describe("POST /api/v1/blueprints team visibility", () => {
   it("stores the user's team on a TEAM blueprint", async () => {
     db.teamMember.findMany.mockResolvedValue([{ teamId: "team_1" }]);
