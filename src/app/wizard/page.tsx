@@ -64,7 +64,7 @@ import {
   type WizardConfig,
   type WizardStepId,
 } from "@/lib/wizard-state";
-import { addApiSyncHeader, blueprintTypeForPlatform, toBlueprintApiId } from "@/lib/wizard-sync";
+import { addApiSyncHeader, syncBlueprintPayload, syncFilePath, toBlueprintApiId } from "@/lib/wizard-sync";
 // NOTE: Wizard constants are defined inline in this file. 
 // The shared package (packages/shared) contains the canonical list.
 // TODO: Migrate to importing from @/lib/wizard-options once inline constants are removed.
@@ -1335,18 +1335,10 @@ function WizardPageContent() {
       
       // If API sync is enabled, save/update the blueprint first (with variables intact)
       let blueprintId: string | null = null;
+      const syncPath = syncFilePath(config.platform, files[0]?.fileName || "AGENTS.md");
       if (config.enableApiSync && files.length > 0) {
         try {
-          const blueprintData = {
-            name: config.projectName || "My AI Config",
-            description: config.projectDescription || "Generated with the LynxPrompt wizard",
-            content: originalContent, // Keep [[VAR|default]] syntax for blueprints
-            type: blueprintTypeForPlatform(config.platform),
-            // Where the file lives, so `lynxp pull` writes it back to the same path
-            repositoryPath: files[0].fileName,
-            category: "other",
-            visibility: "PRIVATE",
-          };
+          const blueprintData = syncBlueprintPayload(config, { fileName: files[0].fileName, content: originalContent });
 
           let res: Response;
           if (overwriteBlueprintId) {
@@ -1392,7 +1384,7 @@ function WizardPageContent() {
       if (config.enableApiSync && blueprintId) {
         finalContent = addApiSyncHeader(finalContent, {
           blueprintId,
-          fileName: files[0]?.fileName || "AGENTS.md",
+          fileName: syncPath,
           appUrl,
           preferCliSync: config.preferCliSync,
           tokenEnvVar: config.tokenEnvVar,

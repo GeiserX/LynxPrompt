@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { addApiSyncHeader, blueprintTypeForPlatform, toBlueprintApiId } from "@/lib/wizard-sync";
+import { addApiSyncHeader, blueprintTypeForPlatform, syncBlueprintPayload, syncFilePath, toBlueprintApiId } from "@/lib/wizard-sync";
+import { generateAllFiles } from "@/lib/file-generator";
+import { buildGeneratorConfig, createDefaultWizardConfig } from "@/lib/wizard-state";
+import { PLATFORMS } from "@/lib/platforms";
 
 const base = {
   blueprintId: "abc123",
@@ -76,5 +79,32 @@ describe("toBlueprintApiId", () => {
   it("adds the bp_ prefix once", () => {
     expect(toBlueprintApiId("abc")).toBe("bp_abc");
     expect(toBlueprintApiId("bp_abc")).toBe("bp_abc");
+  });
+});
+
+describe("sync file path", () => {
+  const user = { displayName: "Dev", name: "Dev", persona: "fullstack", skillLevel: "intermediate", tier: "free" };
+
+  it("a Cursor download is synced as a file inside .cursor/rules/, not as the folder", () => {
+    const config = { ...createDefaultWizardConfig(), projectName: "acme", platform: "cursor" };
+    const [file] = generateAllFiles(buildGeneratorConfig(config), user);
+    const payload = syncBlueprintPayload(config, file);
+    expect(payload.type).toBe("CURSOR_RULES");
+    expect(payload.repositoryPath).toBe(".cursor/rules/project.mdc");
+
+    const out = addApiSyncHeader(file.content, { ...base, fileName: payload.repositoryPath });
+    expect(out).toContain("lynxp link .cursor/rules/project.mdc bp_abc123");
+    expect(out).toContain("lynxp push .cursor/rules/project.mdc");
+    const curl = addApiSyncHeader(file.content, { ...base, preferCliSync: false, fileName: payload.repositoryPath });
+    expect(curl).toContain("> .cursor/rules/project.mdc.new && mv .cursor/rules/project.mdc.new .cursor/rules/project.mdc");
+  });
+
+  it("every platform listed by a folder syncs to a file in that folder", () => {
+    for (const platform of PLATFORMS) {
+      const path = syncFilePath(platform.id, platform.file);
+      expect(path.endsWith("/"), platform.id).toBe(false);
+      if (platform.file.endsWith("/")) expect(path.startsWith(platform.file), platform.id).toBe(true);
+      else expect(path, platform.id).toBe(platform.file);
+    }
   });
 });
