@@ -8,6 +8,7 @@ import { join, dirname, relative } from "path";
 import { detectProject, detectFromRemoteUrl, isGitUrl } from "../utils/detect.js";
 import { generateConfig, GenerateOptions, parseVariablesString, PLATFORM_FILES } from "../utils/generator.js";
 import { trackBlueprint } from "../utils/blueprint-tracker.js";
+import { buildPromptOverrides } from "../utils/prompt-overrides.js";
 import { isAuthenticated, getUser } from "../config.js";
 import { api, ApiRequestError } from "../api.js";
 import {
@@ -953,24 +954,6 @@ export function parsePlatformList(value: string): string[] {
     process.exit(1);
   }
   return platforms;
-}
-
-/**
- * Answers the wizard should not ask again: saved draft answers, then explicit flags.
- * prompts skips any question whose name has an override.
- */
-export function buildPromptOverrides(
-  draftAnswers: Record<string, unknown> | undefined,
-  options: Pick<WizardOptions, "license" | "ciCd" | "projectType">
-): Record<string, unknown> {
-  const overrides: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(draftAnswers || {})) {
-    if (value !== undefined && value !== null) overrides[key] = value;
-  }
-  if (options.license) overrides.license = options.license;
-  if (options.ciCd) overrides.cicd = options.ciCd.split(",").map(c => c.trim()).filter(Boolean);
-  if (options.projectType) overrides.projectType = options.projectType;
-  return overrides;
 }
 
 // Ctrl+C saves a draft, but only while the wizard runs (not for every lynxp command)
