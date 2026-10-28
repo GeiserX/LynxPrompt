@@ -103,7 +103,6 @@ jobs:
         working-directory: cli
     outputs:
       version: ${{ needs.check.outputs.version }}
-      tarball_sha256: ${{ steps.sha.outputs.sha256 }}
 
     steps:
       - name: Checkout
@@ -151,13 +150,6 @@ jobs:
           # Trusted publishing needs npm 11.5.1 or newer; Node 22 ships npm 10.
           npm install -g npm@^11.5.1
           npm publish --access public --loglevel verbose
-
-      - name: Get tarball SHA256
-        id: sha
-        run: |
-          sleep 10
-          SHA=$(curl -sL "https://registry.npmjs.org/lynxprompt/-/lynxprompt-${{ needs.check.outputs.version }}.tgz" | sha256sum | cut -d' ' -f1)
-          echo "sha256=$SHA" >> $GITHUB_OUTPUT
 
   # ===========================================
   # Build and upload standalone binaries
@@ -453,6 +445,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/scripts
+
+      # The registry can answer 404 for a few seconds after npm publish; the
+      # script waits for the real tarball and fails rather than hash anything else.
+      - name: Get tarball SHA256
+        id: sha
+        run: |
+          SHA=$(bash .github/scripts/npm-tarball-sha256.sh lynxprompt "${{ needs.check.outputs.version }}")
+          echo "sha256=$SHA" >> $GITHUB_OUTPUT
+
       - name: Checkout Homebrew tap
         uses: actions/checkout@v7
         with:
@@ -472,7 +477,7 @@ jobs:
             desc "CLI for LynxPrompt - Generate AI IDE configuration files"
             homepage "https://lynxprompt.com"
             url "https://registry.npmjs.org/lynxprompt/-/lynxprompt-${{ needs.check.outputs.version }}.tgz"
-            sha256 "${{ needs.publish-npm.outputs.tarball_sha256 }}"
+            sha256 "${{ steps.sha.outputs.sha256 }}"
             license "SEE LICENSE IN LICENSE"
 
             depends_on "node@22"
