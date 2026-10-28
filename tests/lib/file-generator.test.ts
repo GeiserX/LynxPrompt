@@ -6,42 +6,9 @@ vi.mock("@/lib/feature-flags", () => ({
   APP_URL: "https://lynxprompt.com",
 }));
 
-// Mock platforms (imported by file-generator)
-vi.mock("@/lib/platforms", () => ({
-  PLATFORM_FILES: {
-    cursor: ".cursor/rules/",
-    claude: "CLAUDE.md",
-    copilot: ".github/copilot-instructions.md",
-    windsurf: ".windsurfrules",
-    universal: "AGENTS.md",
-    antigravity: "GEMINI.md",
-    aider: "AIDER.md",
-    continue: ".continue/config.json",
-    cody: ".cody/config.json",
-    tabnine: ".tabnine.yaml",
-    supermaven: ".supermaven/config.json",
-    codegpt: ".codegpt/config.json",
-    void: ".void/config.json",
-    zed: ".zed/instructions.md",
-    cline: ".clinerules",
-    goose: ".goosehints",
-    amazonq: ".amazonq/rules/",
-    roocode: ".roo/rules/",
-    warp: "WARP.md",
-    "gemini-cli": "GEMINI.md",
-    trae: ".trae/rules/",
-    firebase: ".idx/",
-    augment: ".augment/rules/",
-    kilocode: ".kilocode/rules/",
-    junie: ".junie/guidelines.md",
-    kiro: ".kiro/steering/",
-    openhands: ".openhands/microagents/repo.md",
-    crush: "CRUSH.md",
-    opencode: "opencode.json",
-    firebender: "firebender.json",
-  },
-  getPlatform: (id: string) => ({ id, name: id, file: `.${id}` }),
-}));
+// The generator reads the real platform table (packages/shared), so the
+// expected file names come from it too.
+import { PLATFORM_FILES } from "@/lib/platforms";
 
 import {
   detectVariables,
@@ -392,7 +359,7 @@ describe("generateAllFiles", () => {
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe(".cursor/rules/");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["cursor"]);
     expect(files[0].platform).toBe("cursor");
     expect(files[0].content).toContain("TestProject");
   });
@@ -403,7 +370,7 @@ describe("generateAllFiles", () => {
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe("CLAUDE.md");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["claude"]);
     expect(files[0].content).toContain("TestProject");
   });
 
@@ -413,7 +380,7 @@ describe("generateAllFiles", () => {
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe(".github/copilot-instructions.md");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["copilot"]);
   });
 
   it("generates windsurf rules file", () => {
@@ -422,7 +389,7 @@ describe("generateAllFiles", () => {
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe(".windsurfrules");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["windsurf"]);
   });
 
   it("generates universal AGENTS.md file", () => {
@@ -431,7 +398,7 @@ describe("generateAllFiles", () => {
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe("AGENTS.md");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["universal"]);
   });
 
   it("generates antigravity/gemini file", () => {
@@ -440,7 +407,7 @@ describe("generateAllFiles", () => {
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe("GEMINI.md");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["antigravity"]);
   });
 
   it("generates aider file", () => {
@@ -449,7 +416,7 @@ describe("generateAllFiles", () => {
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe("AIDER.md");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["aider"]);
   });
 
   it("generates continue config", () => {
@@ -458,7 +425,7 @@ describe("generateAllFiles", () => {
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe(".continue/config.json");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["continue"]);
   });
 
   it("generates cody config", () => {
@@ -467,7 +434,7 @@ describe("generateAllFiles", () => {
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe(".cody/config.json");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["cody"]);
   });
 
   it("generates tabnine config", () => {
@@ -476,7 +443,7 @@ describe("generateAllFiles", () => {
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe(".tabnine.yaml");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["tabnine"]);
   });
 
   it("generates supermaven config", () => {
@@ -485,7 +452,7 @@ describe("generateAllFiles", () => {
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe(".supermaven/config.json");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["supermaven"]);
   });
 
   it("generates codegpt config", () => {
@@ -494,7 +461,7 @@ describe("generateAllFiles", () => {
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe(".codegpt/config.json");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["codegpt"]);
   });
 
   it("generates void config", () => {
@@ -503,7 +470,7 @@ describe("generateAllFiles", () => {
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe(".void/config.json");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["void"]);
   });
 
   it("defaults to cursor when no platform specified", () => {
@@ -511,7 +478,7 @@ describe("generateAllFiles", () => {
     delete (config as Record<string, unknown>).platform;
     const files = generateAllFiles(config, baseUser);
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe(".cursor/rules/");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["cursor"]);
   });
 
   it("returns empty array for unknown platform", () => {
@@ -639,7 +606,7 @@ describe("generateAllFiles", () => {
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe(".zed/instructions.md");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["zed"]);
   });
 
   it("generates cline file (text format)", () => {
@@ -648,7 +615,7 @@ describe("generateAllFiles", () => {
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe(".clinerules");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["cline"]);
   });
 
   it("generates goose file", () => {
@@ -657,7 +624,7 @@ describe("generateAllFiles", () => {
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe(".goosehints");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["goose"]);
   });
 
   it("generates amazonq file", () => {
@@ -666,7 +633,7 @@ describe("generateAllFiles", () => {
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe(".amazonq/rules/");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["amazonq"]);
   });
 
   it("generates roocode file", () => {
@@ -675,7 +642,7 @@ describe("generateAllFiles", () => {
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe(".roo/rules/");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["roocode"]);
   });
 
   it("generates warp file", () => {
@@ -684,7 +651,7 @@ describe("generateAllFiles", () => {
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe("WARP.md");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["warp"]);
   });
 
   it("generates gemini-cli file", () => {
@@ -693,7 +660,7 @@ describe("generateAllFiles", () => {
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe("GEMINI.md");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["gemini-cli"]);
   });
 
   it("generates trae file", () => {
@@ -702,7 +669,7 @@ describe("generateAllFiles", () => {
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe(".trae/rules/");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["trae"]);
   });
 
   it("generates firebase file", () => {
@@ -711,7 +678,7 @@ describe("generateAllFiles", () => {
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe(".idx/");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["firebase"]);
   });
 
   it("generates augment file", () => {
@@ -720,7 +687,7 @@ describe("generateAllFiles", () => {
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe(".augment/rules/");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["augment"]);
   });
 
   it("generates kilocode file", () => {
@@ -729,7 +696,7 @@ describe("generateAllFiles", () => {
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe(".kilocode/rules/");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["kilocode"]);
   });
 
   it("generates junie file", () => {
@@ -738,7 +705,7 @@ describe("generateAllFiles", () => {
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe(".junie/guidelines.md");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["junie"]);
   });
 
   it("generates kiro file", () => {
@@ -747,7 +714,7 @@ describe("generateAllFiles", () => {
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe(".kiro/steering/");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["kiro"]);
   });
 
   it("generates openhands file", () => {
@@ -756,7 +723,7 @@ describe("generateAllFiles", () => {
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe(".openhands/microagents/repo.md");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["openhands"]);
   });
 
   it("generates crush file", () => {
@@ -765,7 +732,7 @@ describe("generateAllFiles", () => {
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe("CRUSH.md");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["crush"]);
   });
 
   it("generates opencode file", () => {
@@ -774,7 +741,7 @@ describe("generateAllFiles", () => {
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe("opencode.json");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["opencode"]);
   });
 
   it("generates firebender file", () => {
@@ -783,7 +750,7 @@ describe("generateAllFiles", () => {
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe("firebender.json");
+    expect(files[0].fileName).toBe(PLATFORM_FILES["firebender"]);
   });
 
   it("includes devOS information", () => {

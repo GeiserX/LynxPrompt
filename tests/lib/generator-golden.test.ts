@@ -42,12 +42,93 @@ const cliOptions: GenerateOptions = {
   importantFiles: ["readme"],
 };
 
+// Every answer the web wizard can give, so a change to any section shows up.
+const fullWebConfig = {
+  ...webConfig,
+  projectType: "work",
+  architecturePattern: "hexagonal",
+  devOS: ["macos", "windows"],
+  letAiDecide: true,
+  repoHost: "github",
+  repoUrl: "https://github.com/acme/demo",
+  exampleRepoUrl: "https://github.com/acme/example",
+  documentationUrl: "https://docs.acme.test",
+  licenseNotes: "Docs are CC-BY.",
+  conventionalCommits: true,
+  semver: true,
+  versionTagFormat: "v_prefix",
+  changelogTool: "changesets",
+  branchStrategy: "github_flow",
+  defaultBranch: "develop",
+  commitSigning: true,
+  useGitWorktrees: true,
+  deploymentTarget: ["vercel", "kubernetes"],
+  buildContainer: true,
+  containerRegistry: "ghcr",
+  dockerImageNames: "acme/demo, acme/demo-worker",
+  funding: true,
+  fundingYml: "github: [acme]",
+  aiBehaviorRules: ["always_debug_after_build", "verify_work", "self_improving"],
+  planModeFrequency: "complex_tasks",
+  explanationVerbosity: "concise",
+  accessibilityFocus: true,
+  performanceFocus: true,
+  attemptWorkarounds: false,
+  mcpServers: "github, postgres",
+  serverAccess: true,
+  sshKeyPath: "~/.ssh/deploy",
+  manualDeployment: true,
+  deploymentMethod: "docker_compose",
+  importantFiles: ["readme", "architecture_md"],
+  importantFilesOther: "docs/adr",
+  enableAutoUpdate: true,
+  packageManager: "pnpm",
+  jsRuntime: "node",
+  monorepoTool: "turborepo",
+  orm: "prisma",
+  commands: {
+    build: "npm run build", test: "npm test", lint: "npm run lint", dev: "npm run dev",
+    typecheck: "npm run typecheck", format: "npm run format", preCommit: "npx lint-staged", clean: "rm -rf dist",
+    additional: ["npm run db:migrate"],
+  },
+  boundaries: { always: ["Run tests"], ask: ["Add dependencies"], never: ["Push to main"] },
+  codeStyle: {
+    naming: "PascalCase", errorHandling: "result_types", loggingConventions: "structured",
+    maxFileLength: 400, importOrder: "grouped", commentLanguage: "english", docStyle: "tsdoc", notes: "Prefer pure functions.",
+  },
+  testingStrategy: {
+    levels: ["unit", "e2e", "smoke"], frameworks: ["vitest", "playwright"], coverage: 90, notes: "Mock the network.",
+    tddPreference: true, snapshotTesting: true, mockStrategy: "comprehensive",
+  },
+  staticFiles: {
+    editorconfig: true, contributing: true, contributingCustom: "# Contributing\nOpen an issue first.",
+    codeOfConduct: true, security: true, roadmap: true, gitignoreMode: "generate", dockerignoreMode: "generate",
+  },
+  security: {
+    authProviders: ["github", "google"], secretsManagement: ["env_vars", "vault"], securityTooling: ["dependabot", "codeql"],
+    authPatterns: ["oauth2", "jwt"], dataHandling: ["encryption_at_rest"], compliance: ["gdpr"], analytics: ["plausible"],
+    additionalNotes: "Rotate keys yearly.",
+  },
+};
+const fullUser = { name: "Tester", displayName: "Test Author", persona: "backend_developer", skillLevel: "expert" };
+
+// One platform per generator function.
+const GENERATOR_PLATFORMS = [
+  "universal", "cursor", "claude", "copilot", "windsurf", "antigravity", "aider",
+  "continue", "cody", "tabnine", "supermaven", "codegpt", "void",
+];
+
 // The CLI only knows the rules platforms; command platforms are web-only here.
 const RULE_PLATFORM_IDS = PLATFORMS.filter((p) => !p.isCommand).map((p) => p.id);
 
 describe("web generator golden output", () => {
   it.each(RULE_PLATFORM_IDS)("%s", (platform) => {
     const files = generateAllFiles({ ...webConfig, platform } as never, user);
+    expect(files.map((f) => ({ fileName: f.fileName, content: f.content }))).toMatchSnapshot();
+  });
+
+  it.each(GENERATOR_PLATFORMS)("%s with every answer", (platform) => {
+    const files = generateAllFiles({ ...fullWebConfig, platform } as never, fullUser);
     expect(files.map((f) => ({ fileName: f.fileName, content: f.content }))).toMatchSnapshot();
   });
 

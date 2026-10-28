@@ -1,6 +1,6 @@
 /**
  * Lines for wizard answers that the Markdown and MDC generators in
- * file-generator.ts share: AGENTS.md (and the files built from it) and the
+ * generator.ts share: AGENTS.md (and the files built from it) and the
  * Cursor rules (and the files built from those). Each helper returns Markdown
  * bullet lines, or an empty list when the user gave no answer.
  */

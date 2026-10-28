@@ -6,15 +6,6 @@ vi.mock("@/lib/feature-flags", () => ({
   APP_URL: "https://lynxprompt.com",
 }));
 
-vi.mock("@/lib/platforms", () => ({
-  PLATFORM_FILES: {
-    cursor: ".cursor/rules/",
-    universal: "AGENTS.md",
-    void: ".void/config.json",
-  },
-  getPlatform: (id: string) => ({ id, name: id, file: `.${id}` }),
-}));
-
 import { generateAllFiles } from "@/lib/file-generator";
 
 const baseUser = {
