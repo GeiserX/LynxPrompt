@@ -1,142 +1,102 @@
 /**
  * Content conversion between AI config formats for 'lynxp convert'.
  * Kept free of CLI dependencies so it can be unit tested.
+ *
+ * Rules files are re-targeted with the same function the web download uses
+ * (packages/shared/src/rules-format.ts): the content is kept as written and
+ * only the frontmatter changes. JSON and YAML configs are not rules files, so
+ * they are neither a source nor a target (the web download refuses them too).
  */
+
+import { access } from "fs/promises";
+import { join } from "path";
+import { PLATFORMS, getPlatform } from "../../../packages/shared/src/platforms.js";
+import { adaptRulesContent } from "../../../packages/shared/src/rules-format.js";
 
 /** Check if a target is a command type */
 export const isCommandTarget = (target: string) => target.includes("-command") || target.includes("-prompt") || target.includes("-workflow");
 
-/** Split a leading YAML frontmatter block (--- ... ---) from the body. */
-function splitFrontmatter(content: string): { frontmatter: string | null; body: string } {
-  const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/);
-  if (!match) return { frontmatter: null, body: content };
-  return { frontmatter: match[1], body: content.slice(match[0].length).replace(/^\s*\n/, "") };
+/** Description written into the frontmatter of Cursor, Firebender and Augment rules */
+const RULES_DESCRIPTION = "AI rules for this project";
+
+/** A platform whose file is a JSON or YAML config rather than a rules file */
+export function isStructuredPlatform(platform: string): boolean {
+  const format = getPlatform(platform)?.format;
+  return format === "json" || format === "yaml";
 }
 
-export function parseMarkdownConfig(content: string): Record<string, string> {
-  const config: Record<string, string> = {};
-  
-  // Extract sections from markdown
-  const sections = content.split(/^##\s+/m);
-  
-  for (const section of sections) {
-    const lines = section.trim().split("\n");
-    if (lines.length === 0) continue;
-    
-    const title = lines[0].toLowerCase().trim();
-    const body = lines.slice(1).join("\n").trim();
-    
-    config[title] = body;
-  }
-  
-  // Keep the whole file. The source frontmatter is split off so a target never gets
-  // two frontmatter blocks; a Cursor-style one is reused for .mdc targets.
-  config._raw = content;
-  const { frontmatter, body } = splitFrontmatter(content);
-  config._body = body;
-  if (frontmatter !== null) config._frontmatter = frontmatter;
-  
-  return config;
+/**
+ * The platform a rules file belongs to, from its path: a tool's rules folder
+ * (any file in .cursor/rules/ is Cursor's) or a tool's own file. Any other
+ * .mdc file is a Cursor rule, so its own frontmatter (globs, alwaysApply)
+ * survives a move to Cursor or Firebender. Returns undefined for a file no
+ * platform claims.
+ */
+export function platformForPath(filePath: string): string | undefined {
+  const normalized = filePath.replace(/\\/g, "/").toLowerCase();
+  const rules = PLATFORMS.filter((p) => !p.isCommand);
+  const inFolder = rules.find((p) => p.rulesDirectory && `/${normalized}`.includes(`/${p.rulesDirectory.toLowerCase()}`));
+  if (inFolder) return inFolder.id;
+  const file = rules.find((p) => {
+    const own = p.file.toLowerCase();
+    return normalized === own || normalized.endsWith(`/${own}`);
+  });
+  if (file) return file.id;
+  return normalized.endsWith(".mdc") ? "cursor" : undefined;
 }
 
-const DEFAULT_MDC_FRONTMATTER = `description: "AI coding rules"
-globs: ["**/*"]
-alwaysApply: true`;
+/** Convert a rules or command file written for one platform to another one. */
+export function convertContent(content: string, sourcePlatform: string, targetPlatform: string): string {
+  // Commands are all plain markdown; they only go in different directories
+  if (isCommandTarget(targetPlatform)) return content;
+  return adaptRulesContent(content, sourcePlatform, targetPlatform, RULES_DESCRIPTION);
+}
 
-export function generateTargetContent(config: Record<string, string>, targetPlatform: string): string {
-  const rawContent = config._body ?? config._raw ?? "";
-  const sourceFrontmatter = config._frontmatter;
-  const mdcFrontmatter = sourceFrontmatter && /^(alwaysApply|globs)\s*:/m.test(sourceFrontmatter)
-    ? sourceFrontmatter
-    : DEFAULT_MDC_FRONTMATTER;
-  
-  // Commands are all plain markdown - no conversion needed between command types
-  // They just go in different directories
-  if (isCommandTarget(targetPlatform)) {
-    return config._raw || "";
+/** Supported source file patterns and their platforms */
+export const SOURCE_FILES: Record<string, string> = {
+  "agents.md": "agents",
+  "claude.md": "claude",
+  ".cursorrules": "cursor_legacy",
+  ".cursor/rules/project.mdc": "cursor",
+  "cursor.rules/project.mdc": "cursor",
+  "project.mdc": "cursor",
+  ".github/copilot-instructions.md": "copilot",
+  "copilot-instructions.md": "copilot",
+  ".windsurfrules": "windsurf",
+  ".clinerules": "cline",
+  // Real case: auto-detect looks the name up as is, and Linux disks are case-sensitive
+  "CONVENTIONS.md": "aider",
+};
+
+/** The platform of a known source filename, whatever its case */
+export const sourceFilePlatform = (name: string) =>
+  Object.entries(SOURCE_FILES).find(([file]) => file.toLowerCase() === name.toLowerCase())?.[1];
+
+/** Find a source file in the folder: the known names, then the uppercase AGENTS.md and CLAUDE.md */
+export async function detectSourceFile(cwd: string): Promise<{ path: string; platform: string } | null> {
+  // Try to find a source file in common locations
+  for (const [pattern, platform] of Object.entries(SOURCE_FILES)) {
+    try {
+      const fullPath = join(cwd, pattern);
+      await access(fullPath);
+      return { path: fullPath, platform };
+    } catch {
+      // File doesn't exist, try next
+    }
   }
   
-  // For simple conversions, adapt the content format
-  switch (targetPlatform) {
-    case "cursor":
-    case "firebender":
-      // MDC format (the "mdc" platforms of packages/shared/src/platforms.ts) with frontmatter; the body (and its title) is kept as written
-      return `---
-${mdcFrontmatter}
----
-
-${rawContent}`;
-
-    case "kiro":
-      // Kiro steering: Markdown with an inclusion frontmatter
-      return `---
-inclusion: always
----
-
-${rawContent}`;
-
-    case "augment":
-      // Augment rules: Markdown with a type frontmatter
-      return `---
-type: always_apply
----
-
-${rawContent}`;
-
-    case "cursor_legacy":
-      // Plain text format
-      return rawContent
-        .replace(/^#\s+/gm, "")
-        .replace(/^##\s+/gm, "\n")
-        .replace(/^###\s+/gm, "")
-        .trim();
-
-    case "windsurf":
-    case "cline":
-    case "goose":
-    case "trae":
-      // These read Markdown as is
-      return rawContent;
-
-    case "tabnine":
-      // Tabnine YAML format
-      return `# Tabnine configuration
-# Converted from AI IDE configuration
-instructions: |
-${rawContent.split("\n").map(line => `  ${line}`).join("\n")}
-`;
-
-    case "void":
-    case "continue":
-    case "cody":
-    case "codegpt":
-    case "supermaven":
-      // JSON config format
-      return JSON.stringify({ instructions: rawContent }, null, 2) + "\n";
-
-    case "copilot":
-      // GitHub Copilot markdown format
-      return `# GitHub Copilot Instructions\n\n${rawContent}\n`;
-
-    case "agents":
-    case "universal":
-    case "claude":
-    case "codex":
-    case "antigravity":
-    case "gemini-cli":
-    case "zed":
-    case "amazonq":
-    case "junie":
-    case "warp":
-    case "openhands":
-    case "crush":
-    case "aider":
-    case "opencode":
-    case "firebase":
-    case "roocode":
-    case "kilocode":
-    default:
-      // Standard markdown format
-      return rawContent;
+  // Try uppercase variants
+  const uppercaseVariants = ["AGENTS.md", "CLAUDE.md"];
+  for (const variant of uppercaseVariants) {
+    try {
+      const fullPath = join(cwd, variant);
+      await access(fullPath);
+      const platform = variant.toLowerCase().replace(".md", "");
+      return { path: fullPath, platform };
+    } catch {
+      // File doesn't exist
+    }
   }
+  
+  return null;
 }

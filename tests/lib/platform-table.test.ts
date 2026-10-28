@@ -19,7 +19,8 @@ import {
 import { generateAllFiles } from "@/lib/file-generator";
 import { generateConfig, type GenerateOptions } from "../../cli/src/utils/generator";
 import { blueprintFilename, matchConfigFile } from "../../cli/src/utils/blueprint-files";
-import { parseMarkdownConfig, generateTargetContent } from "../../cli/src/utils/convert-format";
+import { convertContent, isStructuredPlatform } from "../../cli/src/utils/convert-format";
+import { adaptRulesContent } from "@/lib/file-generator";
 
 const RULE_PLATFORMS = PLATFORMS.filter((p) => !p.isCommand);
 
@@ -86,13 +87,30 @@ describe("web download and lynxp wizard write the same file", () => {
 });
 
 describe("lynxp convert follows the same formats", () => {
-  const source = parseMarkdownConfig("# Rules\n\n- Use pnpm\n");
+  const source = "# Rules\n\n- Use pnpm\n";
+  const cursorSource = "---\ndescription: \"x\"\nglobs: src/**\nalwaysApply: true\n---\n\n# Rules\n";
 
   it.each(RULE_PLATFORMS.map((p) => p.id))("%s", (id) => {
-    const out = generateTargetContent(source, id);
+    if (getFormat(id) === "json" || getFormat(id) === "yaml") {
+      // Not a rules file: convert refuses it, as the web download does
+      expect(isStructuredPlatform(id)).toBe(true);
+      return;
+    }
+    expect(isStructuredPlatform(id)).toBe(false);
+    const out = convertContent(source, "universal", id);
     expect(hasFrontmatter(out)).toBe(hasFrontmatter(web(id).content));
-    expect(isJson(out)).toBe(getFormat(id) === "json");
   });
+
+  // The web download modal re-targets a blueprint with adaptRulesContent; the
+  // CLI must write the same file for the same source
+  it.each(RULE_PLATFORMS.filter((p) => p.format !== "json" && p.format !== "yaml").map((p) => p.id))(
+    "%s matches the web download",
+    (id) => {
+      for (const [from, content] of [["universal", source], ["cursor", cursorSource]]) {
+        expect(convertContent(content, from, id)).toBe(adaptRulesContent(content, from, id, "AI rules for this project"));
+      }
+    }
+  );
 
   function getFormat(id: string) {
     return PLATFORMS.find((p) => p.id === id)?.format;

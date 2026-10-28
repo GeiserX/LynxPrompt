@@ -307,6 +307,10 @@ $ lynxp analyze --json | jq '.detected.stack'`}</code>
         <p className="text-muted-foreground">
           Convert AI configuration files between formats. Useful for migrating 
           between editors or generating multiple formats from a single source.
+          The rules are copied as written; only the frontmatter a tool needs
+          (Cursor, Kiro, Augment) is added or removed, the same as the web
+          download. Tools that read a JSON or YAML config instead of a rules
+          file get theirs from <code>lynxp wizard</code>.
         </p>
 
         <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
