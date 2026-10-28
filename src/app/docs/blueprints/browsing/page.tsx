@@ -75,7 +75,7 @@ export default function BrowsingBlueprintsPage() {
           <div className="rounded-lg border bg-card p-4">
             <h3 className="font-medium">Platform Filters</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Filter by AI platform: Cursor, Claude, Copilot, Windsurf, AGENTS.md
+              Filter by AI platform: Cursor, Claude, Copilot, Devin Desktop, AGENTS.md
             </p>
           </div>
           <div className="rounded-lg border bg-card p-4">
