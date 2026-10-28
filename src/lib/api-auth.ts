@@ -3,12 +3,15 @@
  * Supports both browser sessions (via NextAuth) and CLI/API tokens (Bearer)
  *
  * Routes call requireSession (browser only) or requireUser (browser or token).
- * Both answer 401 without a login, and 403 when a session that still owes its
- * passkey check tries to write, so a magic link or OAuth login alone cannot
- * change anything for a user who turned passkeys on.
+ * Both answer 401 without a login, and 403 when the session still owes its
+ * passkey check, so a magic link or OAuth login alone can neither read nor
+ * change anything private for a user who turned passkeys on. Reads that also
+ * serve signed-out visitors call getVerifiedSession, which treats such a
+ * session as signed out.
  */
 
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { getServerSession, type Session } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { sessionCookieName } from "@/lib/auth-cookies";
@@ -108,11 +111,9 @@ export interface SessionAuth {
 }
 
 export interface RequireOptions {
-  /** Let an unverified session write: only for the steps of signing in */
+  /** Let an unverified session through: only for the steps of signing in */
   allowUnverified?: boolean;
 }
-
-const READ_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
 function sessionTokenOf(request: Request): string | undefined {
   const name = sessionCookieName();
@@ -125,7 +126,8 @@ function sessionTokenOf(request: Request): string | undefined {
 
 /**
  * Whether the session passed its passkey check, or the 403 to send when it
- * has not and the request writes. Errors propagate so routes fail closed.
+ * has not. Reads are refused too: private data needs the passkey as much as
+ * a change does. Errors propagate so routes fail closed.
  */
 async function passkeyGate(
   request: Request,
@@ -134,13 +136,31 @@ async function passkeyGate(
 ): Promise<boolean | NextResponse> {
   const status = await getPasskeyStatus(userId, sessionTokenOf(request));
   const verified = !status.required || status.verified;
-  if (!verified && !options.allowUnverified && !READ_METHODS.has(request.method)) {
+  if (!verified && !options.allowUnverified) {
     return NextResponse.json(
       { error: "Passkey verification required", passkeyRequired: true },
       { status: 403 }
     );
   }
   return verified;
+}
+
+/**
+ * The session for a read that signed-out visitors may also make (a public
+ * blueprint, the blog, the forum). A session that still owes its passkey gets
+ * null, so it sees what a signed-out visitor sees and nothing private.
+ * Pass the request in route handlers; server components read the cookie from
+ * next/headers. Errors propagate so the read fails closed.
+ */
+export async function getVerifiedSession(request?: Request): Promise<Session | null> {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return null;
+
+  const token = request
+    ? sessionTokenOf(request)
+    : (await cookies()).get(sessionCookieName())?.value;
+  const status = await getPasskeyStatus(session.user.id, token);
+  return !status.required || status.verified ? session : null;
 }
 
 function unauthorized(): NextResponse {

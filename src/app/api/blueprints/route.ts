@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { posix as posixPath } from "path";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { detectSensitiveData, type SensitiveMatch } from "@/lib/sensitive-data";
@@ -9,7 +7,7 @@ import { normalizeBlueprintType } from "@/lib/blueprint-rules";
 import { contentChecksum } from "@/lib/content-checksum";
 import { parsePage } from "@/lib/pagination";
 import { checkBlueprintLineCount, BLUEPRINT_LIMITS } from "@/lib/subscription";
-import { requireSession } from "@/lib/api-auth";
+import { getVerifiedSession, requireSession } from "@/lib/api-auth";
 
 /**
  * Determine tier based on total word count (all content including comments/headers).
@@ -40,7 +38,7 @@ export async function GET(request: NextRequest) {
     const nameToCheck = searchParams.get("name");
     
     if (checkOwned && nameToCheck) {
-      const session = await getServerSession(authOptions);
+      const session = await getVerifiedSession(request);
       if (!session?.user?.id) {
         return NextResponse.json({ existingId: null });
       }
@@ -177,7 +175,7 @@ export async function GET(request: NextRequest) {
       .map(([tag]) => tag);
 
     let userId: string | null = null;
-    const session = await getServerSession(authOptions);
+    const session = await getVerifiedSession(request);
     if (session?.user?.id) {
       userId = session.user.id;
     }

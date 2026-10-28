@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { getTemplateById } from "@/lib/data/templates";
 import { prismaUsers } from "@/lib/db-users";
 import { detectSensitiveData } from "@/lib/sensitive-data";
@@ -8,7 +6,7 @@ import { normalizeBlueprintType } from "@/lib/blueprint-rules";
 import { contentChecksum } from "@/lib/content-checksum";
 import { sanitizeRepositoryPath } from "@/lib/repository-path";
 import { checkBlueprintLineCount } from "@/lib/subscription";
-import { requireSession } from "@/lib/api-auth";
+import { getVerifiedSession, requireSession } from "@/lib/api-auth";
 
 // GET /api/blueprints/[id] - Get blueprint details
 export async function GET(
@@ -53,7 +51,7 @@ export async function GET(
 
     let isOwner = false;
 
-    const session = await getServerSession(authOptions);
+    const session = await getVerifiedSession(request);
 
     if (session?.user?.id) {
       if (templateWithShowcase.authorId === session.user.id) {
