@@ -1002,8 +1002,9 @@ See <a href="../getting-started/#first-sign-in">First sign-in</a>.</p>
 <p>The link is built from <code>APP_URL</code>. Set it to the URL the browser uses (<code>https://lynxprompt.example.com</code>, or
 <code>http://localhost:8080</code> when <code>PORT=8080</code>) and restart.</p>
 <h2 id="registration-is-disabled-on-sign-in">"Registration is disabled" on sign-in<a class="headerlink" href="#registration-is-disabled-on-sign-in" title="Permanent link">&para;</a></h2>
-<p><code>ENABLE_USER_REGISTRATION=false</code> and the address has no account yet. Create the account with registration on,
-or invite the user to a team first.</p>
+<p><code>ENABLE_USER_REGISTRATION=false</code> and the address has no account yet. Invite the address to a team first: a
+pending, unexpired team invitation lets that address create its account and accept. Or create the account
+with registration on.</p>
 <h2 id="my-account-is-not-the-superadmin">My account is not the superadmin<a class="headerlink" href="#my-account-is-not-the-superadmin" title="Permanent link">&para;</a></h2>
 <p>The promotion happens at sign-in when the address equals <code>SUPERADMIN_EMAIL</code> exactly (the compose file copies
 <code>ADMIN_EMAIL</code> into it). Check the value with <code>docker compose ... exec lynxprompt printenv SUPERADMIN_EMAIL</code>,

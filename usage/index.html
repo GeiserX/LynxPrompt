@@ -877,8 +877,8 @@
 <ul>
 <li><strong>Dashboard</strong> (<code>/dashboard</code>): Quick Actions, My Blueprints, Team Blueprints, Saved Drafts and the
   hierarchical <code>AGENTS.md</code> sets for monorepos.</li>
-<li><strong>Teams</strong> (<code>/teams</code>): create a team with a name and a slug, invite members (the invite is a link you copy
-  from the team page; no mail is sent), and share blueprints with the team only. Team blueprints show on the
+<li><strong>Teams</strong> (<code>/teams</code>): create a team with a name and a slug, invite members (the invite is mailed when
+  <code>SMTP_*</code> is set, and the team page always has a link to copy), and share blueprints with the team only. Team blueprints show on the
   dashboard.</li>
 </ul>
 <p><img alt="A team page with two members and the invite form" src="../images/screenshots/teams.png" /></p>
