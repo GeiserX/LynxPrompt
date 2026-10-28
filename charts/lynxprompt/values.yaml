@@ -56,7 +56,7 @@ app:
   enableAi: "false"
   enableBlog: "false"
   enableSupportForum: "false"
-  enableFederation: "true"
+  enableFederation: "false"
   federationRegistryUrl: "https://lynxprompt.com"
 
 oauth:

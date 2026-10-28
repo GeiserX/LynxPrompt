@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ENABLE_FEDERATION } from "@/lib/feature-flags";
 import { prismaUsers } from "@/lib/db-users";
 import { parseLimit, parseOffset } from "@/lib/pagination";
+import { FEDERATION_CACHE_HEADERS } from "@/lib/federation";
 
 export async function GET(request: NextRequest) {
   if (!ENABLE_FEDERATION) {
@@ -52,5 +53,8 @@ export async function GET(request: NextRequest) {
     updatedAt: b.updatedAt,
   }));
 
-  return NextResponse.json({ blueprints: formatted, total, limit, offset });
+  return NextResponse.json(
+    { blueprints: formatted, total, limit, offset },
+    { headers: FEDERATION_CACHE_HEADERS },
+  );
 }

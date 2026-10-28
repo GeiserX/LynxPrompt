@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ENABLE_FEDERATION, APP_NAME, APP_URL } from "@/lib/feature-flags";
-import { isSelfRegistry } from "@/lib/federation";
+import { FEDERATION_CACHE_HEADERS, isSelfRegistry } from "@/lib/federation";
 import { prismaApp } from "@/lib/db-app";
 import { prismaUsers } from "@/lib/db-users";
 import packageJson from "../../../../../../package.json";
@@ -55,8 +55,11 @@ export async function GET(request: NextRequest) {
       registeredAt: new Date("2025-12-01"),
     };
 
-    return NextResponse.json({ instances: [selfInstance, ...instances] });
+    return NextResponse.json(
+      { instances: [selfInstance, ...instances] },
+      { headers: FEDERATION_CACHE_HEADERS },
+    );
   }
 
-  return NextResponse.json({ instances });
+  return NextResponse.json({ instances }, { headers: FEDERATION_CACHE_HEADERS });
 }

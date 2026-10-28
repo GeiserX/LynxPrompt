@@ -34,6 +34,16 @@ describe("GET /.well-known/lynxprompt.json", () => {
     expect(body.publicBlueprints).toBe(42);
     expect(body.version).toBeDefined();
     expect(body.api).toBe("https://test.example.com/api/v1");
+    expect(response.headers.get("Cache-Control")).toMatch(/^public, max-age=\d+/);
+  });
+
+  it("is not served on an instance that never set ENABLE_FEDERATION", async () => {
+    const { GET } = await import(
+      "@/app/.well-known/lynxprompt.json/route"
+    );
+    const response = await GET();
+
+    expect(response.status).toBe(404);
   });
 
   it("should return 404 when federation is disabled", async () => {

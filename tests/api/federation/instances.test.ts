@@ -42,6 +42,7 @@ describe("GET /api/v1/federation/instances", () => {
     expect(body.instances).toHaveLength(1);
     expect(body.instances[0].domain).toBe("test.example.com");
     expect(body.instances[0].name).toBe("Test");
+    expect(response.headers.get("Cache-Control")).toMatch(/^public, max-age=\d+/);
   });
 
   it("should return 404 when federation is disabled", async () => {

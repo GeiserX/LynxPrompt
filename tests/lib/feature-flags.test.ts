@@ -19,7 +19,7 @@ describe("feature-flags", () => {
       expect(flags.ENABLE_AI).toBe(false);
       expect(flags.ENABLE_BLOG).toBe(false);
       expect(flags.ENABLE_SUPPORT_FORUM).toBe(false);
-      expect(flags.ENABLE_FEDERATION).toBe(true);
+      expect(flags.ENABLE_FEDERATION).toBe(false);
     });
 
     it("should read 'true' from env var", async () => {
