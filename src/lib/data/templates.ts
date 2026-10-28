@@ -37,6 +37,9 @@ export interface TemplateData {
   isPublic?: boolean;
   // Blueprint type (for command detection)
   type?: string;
+  // The file the blueprint came from (CLI push): which tool's format it is in,
+  // and where a Codex TOML or Kiro JSON subagent downloads to
+  repositoryPath?: string;
 }
 
 export interface CategoryData {
@@ -645,6 +648,7 @@ export async function getTemplateById(
       difficulty: template.difficulty || undefined,
       isPublic: template.isPublic,
       type: template.type,
+      repositoryPath: template.repositoryPath || undefined,
     };
   }
 

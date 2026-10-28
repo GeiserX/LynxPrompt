@@ -4,46 +4,17 @@
  */
 
 import { toBlueprintApiId } from "../../packages/shared/src/sync-header";
+import { getPlatform, resolvePlatformId } from "../../packages/shared/src/platforms";
 
 // The sync header lives in packages/shared, which the CLI uses too.
 export { toBlueprintApiId, addApiSyncHeader, type ApiSyncHeaderOptions } from "../../packages/shared/src/sync-header";
 
-// Wizard platform id -> blueprint type. Platforms without a type of their own
-// are saved as CUSTOM; the stored repository path still says which file it is.
-const PLATFORM_BLUEPRINT_TYPES: Record<string, string> = {
-  universal: "AGENTS_MD",
-  cursor: "CURSOR_RULES",
-  claude: "CLAUDE_MD",
-  copilot: "COPILOT_INSTRUCTIONS",
-  windsurf: "WINDSURF_RULES",
-  antigravity: "GEMINI_MD",
-  "gemini-cli": "GEMINI_MD",
-  zed: "ZED_INSTRUCTIONS",
-  void: "VOID_CONFIG",
-  trae: "TRAE_RULES",
-  firebase: "IDX_CONFIG",
-  cline: "CLINE_RULES",
-  roocode: "ROO_RULES",
-  continue: "CONTINUE_CONFIG",
-  cody: "CODY_CONFIG",
-  tabnine: "TABNINE_CONFIG",
-  amazonq: "AMAZONQ_RULES",
-  augment: "AUGMENT_RULES",
-  kilocode: "KILOCODE_RULES",
-  junie: "JUNIE_GUIDELINES",
-  kiro: "KIRO_STEERING",
-  aider: "AIDER_MD",
-  goose: "GOOSEHINTS",
-  "cursor-command": "CURSOR_COMMAND",
-  "claude-command": "CLAUDE_COMMAND",
-  "windsurf-workflow": "WINDSURF_WORKFLOW",
-  "copilot-prompt": "COPILOT_PROMPT",
-  "continue-prompt": "CONTINUE_PROMPT",
-  "opencode-command": "OPENCODE_COMMAND",
-};
-
+// Wizard platform id -> blueprint type: the platform table's, AGENTS_MD for a
+// tool whose file is AGENTS.md, else CUSTOM (the stored repository path still
+// says which file it is).
 export function blueprintTypeForPlatform(platform: string | undefined): string {
-  return PLATFORM_BLUEPRINT_TYPES[platform || "universal"] ?? "CUSTOM";
+  const p = getPlatform(resolvePlatformId(platform || "universal"));
+  return p?.blueprintType ?? (p?.file === "AGENTS.md" ? "AGENTS_MD" : "CUSTOM");
 }
 
 // Platforms whose wizard output is named after a folder (".cursor/rules/").
@@ -78,7 +49,10 @@ export function syncBlueprintPayload(
     name: config.projectName || "My AI Config",
     description: config.projectDescription || "Generated with the LynxPrompt wizard",
     content: file.content, // Keep [[VAR|default]] syntax for blueprints
-    type: blueprintTypeForPlatform(config.platform),
+    // Aider's own file is its config; the rules it syncs are in AGENTS.md
+    type: file.fileName === "AGENTS.md" && getPlatform(resolvePlatformId(config.platform || "universal"))?.file !== "AGENTS.md"
+      ? "AGENTS_MD"
+      : blueprintTypeForPlatform(config.platform),
     // Where the file lives, so `lynxp pull` writes it back to the same path
     repositoryPath: syncFilePath(config.platform, file.fileName),
     category: "other",

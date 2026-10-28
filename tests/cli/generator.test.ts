@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
-import { generateConfig, type GenerateOptions } from "../../cli/src/utils/generator";
+import { generateConfig, pickSyncFile, type GenerateOptions } from "../../cli/src/utils/generator";
 
 const base: GenerateOptions = {
   name: "demo",
@@ -76,8 +76,8 @@ describe("cli generator output", () => {
     expect(out).not.toContain("Never commit directly");
   });
 
-  it("gives Windsurf, Cline and Goose the full Markdown rule set", () => {
-    for (const platform of ["windsurf", "cline", "goose"]) {
+  it("gives Devin Desktop, Cline and Tabnine the full Markdown rule set", () => {
+    for (const platform of ["windsurf", "cline", "tabnine"]) {
       const out = render({ aiBehavior: ["verify_work"], testLevels: ["unit"] }, platform);
       expect(out).toContain("## Boundaries & Permissions");
       expect(out).toContain("## Code Style & Conventions");
@@ -86,7 +86,7 @@ describe("cli generator output", () => {
     }
   });
 
-  it("writes Kiro, Augment and Trae files where those tools read them", () => {
+  it("writes Kiro, Augment and Trae files where those tools read them, applied always", () => {
     const kiro = generateConfig({ ...base, platforms: ["kiro"] });
     expect(Object.keys(kiro)).toEqual([".kiro/steering/project.md"]);
     expect(kiro[".kiro/steering/project.md"]).toMatch(/^---\ninclusion: always\n---/);
@@ -97,7 +97,7 @@ describe("cli generator output", () => {
 
     const trae = generateConfig({ ...base, platforms: ["trae"] });
     expect(Object.keys(trae)).toEqual([".trae/rules/project_rules.md"]);
-    expect(trae[".trae/rules/project_rules.md"]).not.toContain("alwaysApply");
+    expect(trae[".trae/rules/project_rules.md"]).toMatch(/^---\nalwaysApply: true\n---/);
   });
 
   it("does not pin a model in the Aider config", () => {
@@ -209,17 +209,52 @@ describe("cli wizard Cloud Sync save", () => {
 describe("pointer files", () => {
   const generate = (platforms: string[], pointerFiles?: boolean) => generateConfig({ ...base, platforms, pointerFiles });
 
-  it("makes CLAUDE.md and GEMINI.md import AGENTS.md when it is generated with them", () => {
+  it("makes CLAUDE.md and GEMINI.md import AGENTS.md, and leaves out tools that read it", () => {
     const files = generate(["agents", "claude", "gemini-cli", "cursor"], true);
+    expect(Object.keys(files)).toEqual(["AGENTS.md", "CLAUDE.md", "GEMINI.md"]);
     expect(files["CLAUDE.md"]).toBe("@AGENTS.md\n");
     expect(files["GEMINI.md"]).toBe("@AGENTS.md\n");
     expect(files["AGENTS.md"]).toContain("## ");
-    expect(files[".cursor/rules/project.mdc"]).toContain("## ");
   });
 
-  it("writes full copies without the option, without AGENTS.md, or when Antigravity also reads GEMINI.md", () => {
+  it("adds AGENTS.md when CLAUDE.md is picked alone, so it can import it", () => {
+    const files = generate(["claude"], true);
+    expect(Object.keys(files)).toEqual(["AGENTS.md", "CLAUDE.md"]);
+    expect(files["CLAUDE.md"]).toBe("@AGENTS.md\n");
+  });
+
+  it("writes every tool's own full file without the option", () => {
     expect(generate(["agents", "claude"])["CLAUDE.md"]).toContain("## ");
-    expect(generate(["claude", "cursor"], true)["CLAUDE.md"]).toContain("## ");
-    expect(generate(["agents", "gemini-cli", "antigravity"], true)["GEMINI.md"]).toContain("## ");
+    const files = generate(["claude", "cursor"]);
+    expect(Object.keys(files)).toEqual(["CLAUDE.md", ".cursor/rules/project.mdc"]);
+    expect(files["CLAUDE.md"]).toContain("## ");
+  });
+
+  it("generates a retired platform name as the platform that covers it", () => {
+    expect(Object.keys(generate(["devin"]))).toEqual([".devin/rules/project.md"]);
+  });
+});
+
+describe("Cloud Sync file", () => {
+  // As `lynxp wizard` builds it with Cloud Sync: no pointers, the blueprint id in the header
+  const synced = (platforms: string[]) =>
+    generateConfig({ ...base, platforms, extraNotes: "Keep functions small", enableAutoUpdate: true, blueprintId: "bp_42" });
+
+  it("syncs Aider's AGENTS.md rules, never its config that may hold API keys", () => {
+    const files = synced(["aider"]);
+    const [name, content] = pickSyncFile(files, "aider")!;
+    expect(name).toBe("AGENTS.md");
+    expect(content).toContain("Keep functions small");
+    expect(content).toContain("bp_42");
+    expect(files[".aider.conf.yml"]).toMatch(/^read: \[AGENTS\.md\]$/m);
+    expect(files[".aider.conf.yml"]).not.toContain("bp_42");
+    // No platform chosen: the first rules file, not the config
+    expect(pickSyncFile(files)?.[0]).toBe("AGENTS.md");
+  });
+
+  it("syncs the chosen platform's own file when it is a rules file", () => {
+    const files = synced(["aider", "claude"]);
+    expect(pickSyncFile(files, "claude")?.[0]).toBe("CLAUDE.md");
+    expect(pickSyncFile(files, "aider")?.[0]).toBe("AGENTS.md");
   });
 });

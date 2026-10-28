@@ -21,6 +21,7 @@ import { existsSync } from "fs";
 import { dirname, join } from "path";
 import { api, ApiRequestError } from "../api.js";
 import { isAuthenticated } from "../config.js";
+import { isAgentsMdPointer } from "../../../packages/shared/src/platforms.js";
 import {
   calculateChecksum,
   conflictFilePath,
@@ -31,7 +32,7 @@ import {
   type TrackedBlueprint,
 } from "../utils/blueprint-tracker.js";
 import { fillBlueprintVariables } from "../utils/variables.js";
-import { withFinalNewline } from "../utils/blueprint-files.js";
+import { blueprintContentOf, fileTextFor, withFinalNewline, writeAssetCopies } from "../utils/blueprint-files.js";
 
 interface SyncOptions {
   dryRun?: boolean;
@@ -118,13 +119,25 @@ async function syncOne(cwd: string, tracked: TrackedBlueprint, options: SyncOpti
     return "error";
   }
 
-  const local = await readFile(filePath, "utf-8");
+  // Of a settings file only its MCP servers are the blueprint
+  const localFile = await readFile(filePath, "utf-8");
+  const local = blueprintContentOf(file, localFile) ?? "";
   // What the file should hold for the current cloud content
   const rendered = tracked.variables ? fillBlueprintVariables(remote, tracked.variables).content : remote;
+  // The file for it, and what reading that file back gives: an MCP file holds
+  // the cloud servers in its own tool's format and layout, not the cloud text
+  let fileText: string | null = null;
+  let mergeError: unknown;
+  try {
+    fileText = fileTextFor(file, localFile, rendered);
+  } catch (error) {
+    mergeError = error;
+  }
+  const wanted = (fileText !== null && blueprintContentOf(file, fileText)) || rendered;
   const localChanged = calculateChecksum(local) !== (tracked.localChecksum ?? tracked.checksum);
   const remoteChanged = calculateChecksum(remote) !== tracked.checksum;
 
-  if (calculateChecksum(local) === calculateChecksum(rendered)) {
+  if (calculateChecksum(local) === calculateChecksum(wanted)) {
     // Nothing to move; both sides may have made the same edit
     if (!dry && (localChanged || remoteChanged)) await record(cwd, tracked, remote, local);
     console.log(chalk.green(`✓ ${file}: in sync`));
@@ -132,9 +145,14 @@ async function syncOne(cwd: string, tracked: TrackedBlueprint, options: SyncOpti
   }
 
   if (!localChanged) {
+    if (fileText === null) {
+      console.log(chalk.red(`✗ ${file}: the cloud content cannot be written to it: ${errorText(mergeError)}`));
+      return "error";
+    }
     if (!dry) {
-      await writeFile(filePath, withFinalNewline(rendered), "utf-8");
-      await record(cwd, tracked, remote, rendered);
+      await writeFile(filePath, withFinalNewline(fileText), "utf-8");
+      await record(cwd, tracked, remote, wanted);
+      await writeAssetCopies(cwd, file, fileText, { onlyExisting: true });
     }
     console.log(chalk.cyan(`↓ ${file}: ${dry ? "would update from the cloud" : "updated from the cloud"}`));
     return "pulled";
@@ -146,8 +164,11 @@ async function syncOne(cwd: string, tracked: TrackedBlueprint, options: SyncOpti
       : !tracked.editable
         ? "marketplace blueprints are read-only"
         : null;
-    if (reason) {
-      console.log(chalk.yellow(`● ${file}: local changes kept, not pushed (${reason})`));
+    const pointerReason = isAgentsMdPointer(local)
+      ? "it only imports AGENTS.md (@AGENTS.md); push AGENTS.md instead"
+      : null;
+    if (reason || pointerReason) {
+      console.log(chalk.yellow(`● ${file}: local changes kept, not pushed (${reason ?? pointerReason})`));
       return "kept";
     }
     if (dry) {
@@ -157,6 +178,7 @@ async function syncOne(cwd: string, tracked: TrackedBlueprint, options: SyncOpti
     try {
       await api.updateBlueprint(tracked.id, { content: local, expected_checksum: tracked.checksum });
       await updateChecksum(cwd, file, local);
+      await writeAssetCopies(cwd, file, local, { onlyExisting: true });
       console.log(chalk.cyan(`↑ ${file}: pushed local changes`));
       return "pushed";
     } catch (error) {
@@ -176,7 +198,7 @@ async function syncOne(cwd: string, tracked: TrackedBlueprint, options: SyncOpti
   if (!dry) {
     await mkdir(dirname(remoteFile), { recursive: true });
     await writeFile(remoteFile, withFinalNewline(rendered), "utf-8");
-    await record(cwd, tracked, remote, rendered);
+    await record(cwd, tracked, remote, wanted);
   }
   console.log(chalk.red(`✗ ${file}: changed both locally and in the cloud`));
   console.log(
@@ -190,7 +212,10 @@ async function syncOne(cwd: string, tracked: TrackedBlueprint, options: SyncOpti
   return "conflict";
 }
 
-/** Store the cloud content as the new base for this file. */
+/**
+ * Store the cloud content as the new base for this file, and what the file
+ * holds for it when that differs (filled variables, an MCP file's own format).
+ */
 async function record(cwd: string, t: TrackedBlueprint, remote: string, written: string): Promise<void> {
   await trackBlueprint(cwd, {
     id: t.id,
@@ -203,7 +228,7 @@ async function record(cwd: string, t: TrackedBlueprint, remote: string, written:
     hierarchyName: t.hierarchyName,
     repositoryPath: t.repositoryPath,
     variables: t.variables,
-    localContent: t.variables ? written : undefined,
+    localContent: written,
   });
 }
 

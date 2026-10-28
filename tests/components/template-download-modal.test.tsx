@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
+import JSZip from "jszip";
 
 // A session the test controls. next-auth keeps the same object between renders
 // and hands out a new one (same user) when it refetches the session.
@@ -38,6 +39,22 @@ let names: string[] = [];
 async function lastDownload(): Promise<Download> {
   await waitFor(() => expect(names.length).toBeGreaterThan(0));
   return { name: names[names.length - 1], content: await blobText(blobs[blobs.length - 1]) };
+}
+
+async function lastZip(): Promise<Record<string, string>> {
+  await waitFor(() => expect(names.length).toBeGreaterThan(0));
+  const blob = blobs[blobs.length - 1];
+  const buffer = await new Promise<ArrayBuffer>((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as ArrayBuffer);
+    reader.readAsArrayBuffer(blob);
+  });
+  const zip = await JSZip.loadAsync(buffer);
+  const files: Record<string, string> = {};
+  for (const [name, entry] of Object.entries(zip.files)) {
+    if (!entry.dir) files[name] = await entry.async("string");
+  }
+  return files;
 }
 
 function platformButton(name: string) {
@@ -128,9 +145,11 @@ describe("TemplateDownloadModal: the file matches the chosen platform", () => {
     const showAll = screen.queryByRole("button", { name: /Show all/ });
     if (showAll) fireEvent.click(showAll);
     expect(platformButton("Sourcegraph Cody")).toBeNull();
-    expect(platformButton("Tabnine")).toBeNull();
+    expect(platformButton("Aider")).toBeNull();
     expect(platformButton("Cursor Command")).toBeNull();
     expect(platformButton("Kiro")).not.toBeNull();
+    // Tabnine reads Markdown guidelines now, so the rules can go there
+    expect(platformButton("Tabnine")).not.toBeNull();
   });
 });
 
@@ -207,26 +226,115 @@ describe("TemplateDownloadModal: Agent Skills and MCP servers", () => {
     });
   });
 
-  it("downloads a skill as its SKILL.md, unchanged, with no rule platforms offered", async () => {
-    const skill = "---\nname: release-notes\ndescription: Write release notes\n---\n\nRead the changelog.\n";
+  it("downloads only the MCP key for a settings file, with a note to merge it", async () => {
     render(
-      <TemplateDownloadModal isOpen onClose={() => {}} template={{ name: "Release Notes", content: skill, targetPlatform: "AGENT_SKILL" }} />
+      <TemplateDownloadModal isOpen onClose={() => {}} template={{ name: "Team MCP", content: mcp, targetPlatform: "MCP_CONFIG" }} />
     );
-    expect(platformButton("Cursor")).toBeNull();
-    fireEvent.click(screen.getByText(".agents/skills/"));
-    expect(screen.getByText(".agents/skills/release-notes/SKILL.md")).toBeTruthy();
+    expect(screen.queryByTestId("mcp-merge-note")).toBeNull();
+    fireEvent.click(platformButton("Gemini CLI")!);
+    expect(screen.getByTestId("mcp-merge-note").textContent).toContain('only the "mcpServers" key');
     fireEvent.click(screen.getByRole("button", { name: /Download/ }));
     const { name, content } = await lastDownload();
-    expect(name).toBe("SKILL.md");
-    expect(content).toBe(skill);
+    expect(name).toBe("settings.json");
+    expect(JSON.parse(content)).toEqual({
+      mcpServers: {
+        github: { command: "npx", args: ["-y", "github-mcp"] },
+        docs: { httpUrl: "https://docs.example/mcp" },
+      },
+    });
   });
 
-  it("names the skill folder after the frontmatter name, as lynxp pull does", () => {
-    const skill = "---\nname: release-notes\ndescription: Write release notes\n---\n\nRead the changelog.\n";
+  it("downloads Codex's MCP servers as TOML tables", async () => {
+    render(
+      <TemplateDownloadModal isOpen onClose={() => {}} template={{ name: "Team MCP", content: mcp, targetPlatform: "MCP_CONFIG" }} />
+    );
+    fireEvent.click(platformButton("OpenAI Codex")!);
+    expect(screen.getByTestId("mcp-merge-note").textContent).toContain("[mcp_servers] tables");
+    fireEvent.click(screen.getByRole("button", { name: /Download/ }));
+    const { name, content } = await lastDownload();
+    expect(name).toBe("config.toml");
+    expect(content).toContain('[mcp_servers.github]\ncommand = "npx"');
+    expect(content).toContain('[mcp_servers.docs]\nurl = "https://docs.example/mcp"');
+  });
+
+  it("reads a Gemini blueprint's bare url as SSE, as Gemini CLI does", async () => {
+    const gemini = JSON.stringify({ mcpServers: { docs: { url: "https://docs.example/sse" } } });
+    const template = { name: "Gemini MCP", content: gemini, targetPlatform: "MCP_CONFIG", repositoryPath: ".gemini/settings.json" };
+    const { unmount } = render(<TemplateDownloadModal isOpen onClose={() => {}} template={template} />);
+    fireEvent.click(platformButton("Gemini CLI")!);
+    fireEvent.click(screen.getByRole("button", { name: /Download/ }));
+    expect(JSON.parse((await lastDownload()).content)).toEqual({ mcpServers: { docs: { url: "https://docs.example/sse" } } });
+    unmount();
+    blobs = [];
+    names = [];
+
+    render(<TemplateDownloadModal isOpen onClose={() => {}} template={template} />);
+    fireEvent.click(platformButton("Claude Code")!);
+    fireEvent.click(screen.getByRole("button", { name: /Download/ }));
+    expect(JSON.parse((await lastDownload()).content)).toEqual({
+      mcpServers: { docs: { type: "sse", url: "https://docs.example/sse" } },
+    });
+  });
+
+  it("downloads a skill as a .zip with the .agents/skills and .claude/skills copies, with no rule platforms offered", async () => {
+    const skill = "---\nname: release-notes\ndescription: Write release notes\nmodel: opus\n---\n\nRead the changelog.\n";
     render(
       <TemplateDownloadModal isOpen onClose={() => {}} template={{ name: "Team Release Helper", content: skill, targetPlatform: "AGENT_SKILL" }} />
     );
+    expect(platformButton("Cursor")).toBeNull();
+    expect(screen.getByText(".agents/skills/release-notes/SKILL.md")).toBeTruthy();
     expect(screen.getByText(".claude/skills/release-notes/SKILL.md")).toBeTruthy();
-    expect(screen.queryByText(".claude/skills/team-release-helper/SKILL.md")).toBeNull();
+    expect(screen.queryByText(".kiro/skills/release-notes/SKILL.md")).toBeNull();
+    fireEvent.click(screen.getByLabelText("Kiro"));
+    expect(screen.getByText(".kiro/skills/release-notes/SKILL.md")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /Download/ }));
+    const files = await lastZip();
+    expect(names[names.length - 1]).toBe("release-notes-skill.zip");
+    expect(Object.keys(files).sort()).toEqual([
+      ".agents/skills/release-notes/SKILL.md",
+      ".claude/skills/release-notes/SKILL.md",
+      ".kiro/skills/release-notes/SKILL.md",
+    ]);
+    expect(files[".claude/skills/release-notes/SKILL.md"]).toBe(skill);
+    expect(files[".agents/skills/release-notes/SKILL.md"]).toBe(
+      "---\nname: release-notes\ndescription: Write release notes\n---\n\nRead the changelog.\n"
+    );
+  });
+
+  it("downloads a subagent for Claude Code and .agents/agents, and as Codex TOML when picked", async () => {
+    const agent = "---\nname: reviewer\ndescription: Reviews diffs\ntools: Read\n---\nReview the diff.\n";
+    render(
+      <TemplateDownloadModal isOpen onClose={() => {}} template={{ name: "Reviewer", content: agent, targetPlatform: "AGENT_DEFINITION" }} />
+    );
+    expect(platformButton("Cursor")).toBeNull();
+    fireEvent.click(screen.getByLabelText("OpenAI Codex"));
+    fireEvent.click(screen.getByRole("button", { name: /Download/ }));
+    const files = await lastZip();
+    expect(names[names.length - 1]).toBe("reviewer-subagent.zip");
+    expect(files[".claude/agents/reviewer.md"]).toBe(agent);
+    expect(files[".agents/agents/reviewer.md"]).toBe("---\nname: reviewer\ndescription: Reviews diffs\n---\nReview the diff.\n");
+    expect(files[".codex/agents/reviewer.toml"]).toBe(
+      "name = \"reviewer\"\ndescription = \"Reviews diffs\"\ndeveloper_instructions = '''\nReview the diff.\n'''\n"
+    );
+    expect(files[".github/agents/reviewer.agent.md"]).toBeUndefined();
+  });
+
+  it("downloads a subagent stored as Codex TOML alone, at its own path", async () => {
+    const toml = "name = \"reviewer\"\ndescription = \"Reviews diffs\"\ndeveloper_instructions = \"Review the diff.\"\n";
+    render(
+      <TemplateDownloadModal
+        isOpen
+        onClose={() => {}}
+        template={{
+          name: "Reviewer",
+          content: toml,
+          targetPlatform: "AGENT_DEFINITION",
+          repositoryPath: ".codex/agents/reviewer.toml",
+        }}
+      />
+    );
+    expect(screen.queryByLabelText("OpenAI Codex")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Download/ }));
+    expect(await lastZip()).toEqual({ ".codex/agents/reviewer.toml": toml });
   });
 });

@@ -62,8 +62,9 @@ export default function CLIPlatformsPage() {
       <div className="rounded-xl border bg-muted/30 p-6">
         <h3 className="font-semibold">Using CLI Tools with LynxPrompt</h3>
         <p className="mt-2 text-sm text-muted-foreground">
-          CLI tools like Aider and Goose look for configuration files in your project root.
-          Run them from your project directory after generating configs with LynxPrompt:
+          Goose, Warp, OpenCode and Crush read AGENTS.md from your project root. Aider reads
+          the files its <code>.aider.conf.yml</code> lists, and LynxPrompt writes one that
+          lists AGENTS.md. Run them from your project directory after generating configs:
         </p>
         <pre className="mt-3 rounded-lg bg-muted p-3 text-xs">
           <code>{`# Generate configs

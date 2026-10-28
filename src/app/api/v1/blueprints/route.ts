@@ -15,6 +15,7 @@ import {
 import {
   checkBlueprintContent,
   normalizeBlueprintType,
+  skillContentError,
   resolveBlueprintTeamId,
 } from "@/lib/blueprint-rules";
 import { BLUEPRINT_LIMITS } from "@/lib/subscription";
@@ -260,6 +261,11 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: team.error }, { status: team.status });
       }
       teamId = team.teamId;
+    }
+
+    const skillError = skillContentError(normalizeBlueprintType(type), content, repository_path);
+    if (skillError) {
+      return NextResponse.json({ error: skillError }, { status: 400 });
     }
 
     const contentCheck = checkBlueprintContent(content, {

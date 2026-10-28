@@ -90,6 +90,7 @@ import * as one from "@/app/api/v1/blueprints/[id]/route";
 // Non-literal paths so the root tsc does not type-check cli/ (see pull.test.ts)
 const PUSH = "../../cli/src/commands/push";
 const PULL = "../../cli/src/commands/pull";
+const TRACKER = "../../cli/src/utils/blueprint-tracker";
 let pushCommand: (file: string | undefined, options: Record<string, unknown>) => Promise<void>;
 let pullCommand: (ids: string | string[], options: Record<string, unknown>) => Promise<void>;
 beforeAll(async () => {
@@ -229,5 +230,92 @@ describe("lynxp push then lynxp pull against this commit's server", () => {
     await expect(pushFile(`${RULES}\nLocal edit.\n`)).rejects.toThrow("exit 1");
     expect(only().content).toContain("Edited in the web editor.");
     expect(only().content).not.toContain("Local edit.");
+  });
+});
+
+describe("skills and subagents through push and pull", () => {
+  const SKILL = "---\nname: release-notes\ndescription: Write release notes\nmodel: opus\n---\nRead the changelog.\n";
+  const write = (rel: string, content: string) => {
+    fs.mkdirSync(path.dirname(path.join(cwd, rel)), { recursive: true });
+    fs.writeFileSync(path.join(cwd, rel), content);
+  };
+  const read = (dir: string, rel: string) => fs.readFileSync(path.join(dir, rel), "utf-8");
+
+  it("refreshes the .agents/skills copy on push and refuses to push that copy as a second skill", async () => {
+    write(".claude/skills/release-notes/SKILL.md", SKILL);
+    write(".agents/skills/release-notes/SKILL.md", "stale copy\n");
+
+    await pushCommand(path.join(cwd, ".claude/skills/release-notes/SKILL.md"), { yes: true, name: "Release notes" });
+    expect(only().type).toBe("AGENT_SKILL");
+    expect(read(home, ".agents/skills/release-notes/SKILL.md")).toBe(
+      "---\nname: release-notes\ndescription: Write release notes\n---\nRead the changelog.\n"
+    );
+
+    await expect(pushCommand(path.join(cwd, ".agents/skills/release-notes/SKILL.md"), { yes: true })).rejects.toThrow("exit 1");
+    expect(db.rows.size).toBe(1);
+  });
+
+  it("still pushes a skill in another tool's folder, which push never refreshes", async () => {
+    write(".claude/skills/release-notes/SKILL.md", SKILL);
+    write(".github/skills/release-notes/SKILL.md", "---\nname: release-notes\ndescription: Copilot only\n---\nOther steps.\n");
+
+    await pushCommand(path.join(cwd, ".claude/skills/release-notes/SKILL.md"), { yes: true, name: "Release notes" });
+    await pushCommand(path.join(cwd, ".github/skills/release-notes/SKILL.md"), { yes: true, name: "Copilot notes" });
+    expect(db.rows.size).toBe(2);
+  });
+
+  it("refuses a skill whose name breaks the Agent Skills format", async () => {
+    write(".claude/skills/release-notes/SKILL.md", SKILL.replace("name: release-notes", "name: Release_Notes"));
+    await expect(
+      pushCommand(path.join(cwd, ".claude/skills/release-notes/SKILL.md"), { yes: true, name: "Release notes" })
+    ).rejects.toThrow("exit 1");
+    expect(db.rows.size).toBe(0);
+  });
+
+  it("pulls a pushed subagent with its .agents/agents copy on another machine", async () => {
+    const agent = "---\nname: reviewer\ndescription: Reviews diffs\ntools: Read\n---\nReview the diff.\n";
+    write(".claude/agents/reviewer.md", agent);
+    await pushCommand(path.join(cwd, ".claude/agents/reviewer.md"), { yes: true, name: "Reviewer" });
+    expect(only().type).toBe("AGENT_DEFINITION");
+
+    cwd = clone;
+    await pullCommand(`bp_${only().id}`, { output: clone, yes: true });
+    expect(read(clone, ".claude/agents/reviewer.md")).toBe(agent);
+    expect(read(clone, ".agents/agents/reviewer.md")).toBe("---\nname: reviewer\ndescription: Reviews diffs\n---\nReview the diff.\n");
+  });
+});
+
+describe("an MCP config inside a settings file", () => {
+  const servers = { mcpServers: { github: { command: "npx", args: ["-y", "github-mcp"] } } };
+  const settings = (dir: string) => path.join(dir, ".gemini", "settings.json");
+  const writeSettings = (dir: string, value: unknown) => {
+    fs.mkdirSync(path.dirname(settings(dir)), { recursive: true });
+    fs.writeFileSync(settings(dir), JSON.stringify(value, null, 2));
+  };
+
+  it("pushes only the servers and pulls them into the other machine's settings", async () => {
+    writeSettings(home, { theme: "Dracula", ...servers });
+    await pushCommand(settings(home), { yes: true, name: "Team MCP", visibility: "PRIVATE" });
+    const row = only();
+    expect(row.type).toBe("MCP_CONFIG");
+    expect(JSON.parse(row.content)).toEqual(servers);
+    expect(row.content).not.toContain("Dracula");
+
+    // The other machine has its own settings: they stay
+    writeSettings(clone, { theme: "Light" });
+    cwd = clone;
+    await pullCommand(`bp_${row.id}`, { output: clone, yes: true });
+    expect(JSON.parse(fs.readFileSync(settings(clone), "utf-8"))).toEqual({ theme: "Light", ...servers });
+
+    // A change to another setting is not a change to the blueprint
+    const { findBlueprintByFile, hasLocalChanges } = await import(/* @vite-ignore */ TRACKER);
+    writeSettings(clone, { theme: "Solarized", ...servers });
+    expect(await hasLocalChanges(clone, await findBlueprintByFile(clone, ".gemini/settings.json"))).toBe(false);
+
+    // A change to the servers pushes back, still without the other settings
+    const edited = { mcpServers: { ...servers.mcpServers, docs: { httpUrl: "https://docs.example/mcp" } } };
+    writeSettings(clone, { theme: "Solarized", ...edited });
+    await pushCommand(settings(clone), { yes: true });
+    expect(JSON.parse(only().content)).toEqual(edited);
   });
 });

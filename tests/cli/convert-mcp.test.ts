@@ -68,4 +68,52 @@ describe("lynxp convert with MCP configs", () => {
     await expect(convertCommand(".mcp.json", "cursor", {})).rejects.toThrow("exit 1");
     expect(fs.existsSync(path.join(dir, ".cursor/rules/project.mdc"))).toBe(false);
   });
+
+  it("writes the servers into Gemini CLI's settings and keeps its other settings", async () => {
+    write(".mcp.json", JSON.stringify({ mcpServers: { ...servers, docs: { type: "http", url: "https://docs.example/mcp" } } }));
+    write(".gemini/settings.json", JSON.stringify({ theme: "Dracula", general: { vimMode: true } }, null, 2));
+
+    await convertCommand(".mcp.json", "gemini-mcp", {});
+    expect(JSON.parse(read(".gemini/settings.json"))).toEqual({
+      theme: "Dracula",
+      general: { vimMode: true },
+      mcpServers: { ...servers, docs: { httpUrl: "https://docs.example/mcp" } },
+    });
+
+    // Servers are there now: replacing them needs --force, and keeps the rest
+    write(".mcp.json", JSON.stringify({ mcpServers: { other: { command: "x" } } }));
+    await expect(convertCommand(".mcp.json", "gemini-mcp", {})).rejects.toThrow("exit 1");
+    await convertCommand(".mcp.json", "gemini-mcp", { force: true });
+    expect(JSON.parse(read(".gemini/settings.json"))).toEqual({
+      theme: "Dracula",
+      general: { vimMode: true },
+      mcpServers: { other: { command: "x" } },
+    });
+  });
+
+  it("adds Codex tables to an existing config.toml and reads Codex back", async () => {
+    write(".mcp.json", JSON.stringify({ mcpServers: servers }));
+    write(".codex/config.toml", 'model = "o3"\n\n[tui]\nnotifications = true\n');
+
+    await convertCommand("codex-mcp", undefined, {});
+    const toml = read(".codex/config.toml");
+    expect(toml).toBe('model = "o3"\n\n[tui]\nnotifications = true\n\n[mcp_servers.github]\ncommand = "npx"\nargs = ["-y", "github-mcp"]\n');
+
+    fs.rmSync(path.join(dir, ".mcp.json"));
+    await convertCommand(".codex/config.toml", "cursor-mcp", {});
+    expect(JSON.parse(read(".cursor/mcp.json"))).toEqual({ mcpServers: servers });
+  });
+
+  it("skips a settings file without MCP servers when looking for a source", async () => {
+    // Gemini comes before Codex in the table, but has no servers
+    write(".gemini/settings.json", JSON.stringify({ theme: "Dracula" }));
+    write(".codex/config.toml", '[mcp_servers.github]\ncommand = "npx"\nargs = ["-y", "github-mcp"]\n');
+    await convertCommand("cursor-mcp", undefined, {});
+    expect(JSON.parse(read(".cursor/mcp.json"))).toEqual({ mcpServers: servers });
+
+    fs.rmSync(path.join(dir, ".codex"), { recursive: true });
+    fs.rmSync(path.join(dir, ".cursor"), { recursive: true });
+    await expect(convertCommand("cursor-mcp", undefined, {})).rejects.toThrow("exit 1");
+    expect(fs.existsSync(path.join(dir, ".cursor/mcp.json"))).toBe(false);
+  });
 });

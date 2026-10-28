@@ -15,9 +15,9 @@ describe("lynxp convert source auto-detect", () => {
 
   // The exact path is checked: on a case-insensitive disk (macOS) a lowercase
   // lookup finds the file under the wrong name, on Linux it finds nothing
-  it("finds Aider's CONVENTIONS.md under its real name", async () => {
+  it("finds Aider's CONVENTIONS.md under its real name, as plain Markdown rules", async () => {
     await writeFile(join(dir, "CONVENTIONS.md"), "# Conventions\n");
-    expect(await detectSourceFile(dir)).toEqual({ path: join(dir, "CONVENTIONS.md"), platform: "aider" });
+    expect(await detectSourceFile(dir)).toEqual({ path: join(dir, "CONVENTIONS.md"), platform: "universal" });
   });
 
   it("finds CLAUDE.md", async () => {

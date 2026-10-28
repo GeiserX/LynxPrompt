@@ -15,6 +15,7 @@ import { readFile, readdir, stat } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
 import * as yaml from "yaml";
+import { isAgentsMdPointer, ruleFileLocations } from "../../../packages/shared/src/platforms.js";
 import {
   findHiddenUnicode,
   findDirectionMarks,
@@ -34,41 +35,19 @@ interface ValidationResult {
   files: string[];
 }
 
-// Known AI config files (Markdown rule files the wizard can generate)
-const CONFIG_FILES = [
-  { path: "AGENTS.md", name: "AGENTS.md" },
-  { path: "CLAUDE.md", name: "CLAUDE.md" },
-  { path: "GEMINI.md", name: "Gemini" },
-  { path: "WARP.md", name: "Warp" },
-  { path: "CRUSH.md", name: "Crush" },
-  { path: ".github/copilot-instructions.md", name: "GitHub Copilot" },
-  { path: ".windsurfrules", name: "Windsurf" },
-  { path: ".clinerules", name: "Cline" }, // may also be a directory of rule files
-  { path: ".goosehints", name: "Goose" },
-  { path: ".rules", name: "Zed" },
+// Rules files and folders of every tool in the shared platform table, plus
+// paths older CLI versions wrote. .lynxprompt/ itself is not one: it holds
+// tracking metadata (blueprints.yml, drafts), and counting that made a repo
+// with no rules pass.
+const LOCATIONS = [
+  ...ruleFileLocations(),
   { path: ".zed/instructions.md", name: "Zed" },
   { path: "CONVENTIONS.md", name: "Aider" },
-  { path: ".idx/airules.md", name: "Firebase Studio" },
-  { path: ".junie/guidelines.md", name: "Junie" },
-  { path: ".openhands/microagents/repo.md", name: "OpenHands" },
+  { path: ".idx/rules/", name: "Firebase Studio" },
+  { path: ".lynxprompt/rules/", name: "LynxPrompt" },
 ];
-
-// Directories of rule files. .lynxprompt/ itself is not one: it holds tracking
-// metadata (blueprints.yml, drafts), and counting that made a repo with no rules pass.
-const CONFIG_DIRS = [
-  { path: ".cursor/rules", name: "Cursor" },
-  { path: ".clinerules", name: "Cline" },
-  { path: ".windsurf/rules", name: "Windsurf" },
-  { path: ".kiro/steering", name: "Kiro" },
-  { path: ".trae/rules", name: "Trae" },
-  { path: ".augment/rules", name: "Augment" },
-  { path: ".roo/rules", name: "Roo Code" },
-  { path: ".devin/rules", name: "Devin" },
-  { path: ".kilocode/rules", name: "Kilo Code" },
-  { path: ".amazonq/rules", name: "Amazon Q" },
-  { path: ".idx/rules", name: "Firebase Studio" },
-  { path: ".lynxprompt/rules", name: "LynxPrompt" },
-];
+const CONFIG_FILES = LOCATIONS.filter((l) => !l.path.endsWith("/"));
+const CONFIG_DIRS = LOCATIONS.filter((l) => l.path.endsWith("/")).map((l) => ({ ...l, path: l.path.slice(0, -1) }));
 
 /**
  * Validate markdown content for common issues
@@ -82,6 +61,9 @@ function validateMarkdown(content: string, filename: string): { errors: string[]
     errors.push(`${filename}: File is empty`);
     return { errors, warnings };
   }
+
+  // CLAUDE.md or GEMINI.md that imports AGENTS.md: the rules are checked there
+  if (isAgentsMdPointer(content)) return { errors, warnings };
 
   // Check for minimum content
   if (content.trim().length < 50) {

@@ -308,15 +308,15 @@ jobs:
           node dist/index.js --help
           echo "✓ Built CLI works"
 
-      - name: Test convert writes Aider conventions as Markdown
+      - name: Test convert keeps Markdown rules unchanged
         working-directory: cli
         run: |
           dir=$(mktemp -d)
           printf '# Project\n\nBuild with C:\\tools\\make.exe\nSay "hi" and end with a backslash \\\n' > "$dir/AGENTS.md"
-          (cd "$dir" && node "$GITHUB_WORKSPACE/cli/dist/index.js" convert AGENTS.md aider)
-          # Aider reads CONVENTIONS.md; the text must come through unchanged
-          diff "$dir/AGENTS.md" "$dir/CONVENTIONS.md"
-          echo "✓ Aider conventions keep backslashes and quotes"
+          (cd "$dir" && node "$GITHUB_WORKSPACE/cli/dist/index.js" convert AGENTS.md crush)
+          # CRUSH.md is plain Markdown; the text must come through unchanged
+          diff "$dir/AGENTS.md" "$dir/CRUSH.md"
+          echo "✓ Converted rules keep backslashes and quotes"
 
       - name: Upload the built CLI
         uses: actions/upload-artifact@v7

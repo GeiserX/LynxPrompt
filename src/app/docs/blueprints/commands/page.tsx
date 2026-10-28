@@ -3,7 +3,7 @@ import { Zap, Terminal, FileCode, Download, ArrowRight, Sparkles } from "lucide-
 
 export const metadata = {
   title: "Commands & Workflows",
-  description: "Learn about AI IDE slash commands and workflows. Upload, share, and convert commands between Cursor, Claude Code, Windsurf, Copilot, Continue, and OpenCode.",
+  description: "Learn about AI IDE slash commands and workflows. Upload, share, and convert commands between Cursor, Claude Code, Devin Desktop, Copilot, OpenCode, Gemini CLI, Kiro, Cline and more.",
 };
 
 export default function CommandsDocsPage() {
@@ -62,7 +62,9 @@ export default function CommandsDocsPage() {
         <h2 className="text-2xl font-bold">Supported Platforms</h2>
         <p className="text-muted-foreground">
           LynxPrompt supports commands across multiple AI IDEs. Each platform uses a different 
-          directory structure:
+          directory structure. Gemini CLI commands are TOML files; LynxPrompt converts the
+          Markdown prompt for you. Devin Desktop still reads <code>.windsurf/workflows/</code>,
+          and <code>lynxp push</code> picks those up too:
         </p>
         
         <div className="overflow-x-auto">
@@ -86,8 +88,8 @@ export default function CommandsDocsPage() {
                 <td className="py-3 text-muted-foreground">/command-name</td>
               </tr>
               <tr>
-                <td className="py-3 pr-4 font-medium">Windsurf</td>
-                <td className="py-3 pr-4"><code className="rounded bg-muted px-1.5 py-0.5">.windsurf/workflows/*.md</code></td>
+                <td className="py-3 pr-4 font-medium">Devin Desktop (formerly Windsurf)</td>
+                <td className="py-3 pr-4"><code className="rounded bg-muted px-1.5 py-0.5">.devin/workflows/*.md</code></td>
                 <td className="py-3 text-muted-foreground">/workflow-name</td>
               </tr>
               <tr>
@@ -96,14 +98,74 @@ export default function CommandsDocsPage() {
                 <td className="py-3 text-muted-foreground">/prompt-name</td>
               </tr>
               <tr>
-                <td className="py-3 pr-4 font-medium">Continue.dev</td>
-                <td className="py-3 pr-4"><code className="rounded bg-muted px-1.5 py-0.5">.continue/prompts/*.md</code></td>
-                <td className="py-3 text-muted-foreground">/prompt-name</td>
-              </tr>
-              <tr>
                 <td className="py-3 pr-4 font-medium">OpenCode</td>
                 <td className="py-3 pr-4"><code className="rounded bg-muted px-1.5 py-0.5">.opencode/commands/*.md</code></td>
                 <td className="py-3 text-muted-foreground">/command-name</td>
+              </tr>
+              <tr>
+                <td className="py-3 pr-4 font-medium">Gemini CLI</td>
+                <td className="py-3 pr-4"><code className="rounded bg-muted px-1.5 py-0.5">.gemini/commands/*.toml</code></td>
+                <td className="py-3 text-muted-foreground">/command-name</td>
+              </tr>
+              <tr>
+                <td className="py-3 pr-4 font-medium">Kiro</td>
+                <td className="py-3 pr-4"><code className="rounded bg-muted px-1.5 py-0.5">.kiro/prompts/*.md</code></td>
+                <td className="py-3 text-muted-foreground">/prompt-name</td>
+              </tr>
+              <tr>
+                <td className="py-3 pr-4 font-medium">Junie</td>
+                <td className="py-3 pr-4"><code className="rounded bg-muted px-1.5 py-0.5">.junie/commands/*.md</code></td>
+                <td className="py-3 text-muted-foreground">/command-name</td>
+              </tr>
+              <tr>
+                <td className="py-3 pr-4 font-medium">Augment Code</td>
+                <td className="py-3 pr-4"><code className="rounded bg-muted px-1.5 py-0.5">.augment/commands/*.md</code></td>
+                <td className="py-3 text-muted-foreground">/command-name</td>
+              </tr>
+              <tr>
+                <td className="py-3 pr-4 font-medium">Trae</td>
+                <td className="py-3 pr-4"><code className="rounded bg-muted px-1.5 py-0.5">.trae/commands/*.md</code></td>
+                <td className="py-3 text-muted-foreground">/command-name</td>
+              </tr>
+              <tr>
+                <td className="py-3 pr-4 font-medium">Kilo Code</td>
+                <td className="py-3 pr-4"><code className="rounded bg-muted px-1.5 py-0.5">.kilo/commands/*.md</code></td>
+                <td className="py-3 text-muted-foreground">/command-name</td>
+              </tr>
+              <tr>
+                <td className="py-3 pr-4 font-medium">Cline</td>
+                <td className="py-3 pr-4"><code className="rounded bg-muted px-1.5 py-0.5">.clinerules/workflows/*.md</code></td>
+                <td className="py-3 text-muted-foreground">/workflow-name.md</td>
+              </tr>
+              <tr>
+                <td className="py-3 pr-4 font-medium">Roo Code / Zoo Code</td>
+                <td className="py-3 pr-4"><code className="rounded bg-muted px-1.5 py-0.5">.roo/commands/*.md</code></td>
+                <td className="py-3 text-muted-foreground">/command-name</td>
+              </tr>
+              <tr>
+                <td className="py-3 pr-4 font-medium">Crush</td>
+                <td className="py-3 pr-4"><code className="rounded bg-muted px-1.5 py-0.5">.crush/commands/*.md</code></td>
+                <td className="py-3 text-muted-foreground">/command-name</td>
+              </tr>
+              <tr>
+                <td className="py-3 pr-4 font-medium">Firebender</td>
+                <td className="py-3 pr-4"><code className="rounded bg-muted px-1.5 py-0.5">.firebender/commands/*.mdc</code></td>
+                <td className="py-3 text-muted-foreground">/command-name</td>
+              </tr>
+              <tr>
+                <td className="py-3 pr-4 font-medium">Factory Droid</td>
+                <td className="py-3 pr-4"><code className="rounded bg-muted px-1.5 py-0.5">.factory/commands/*.md</code></td>
+                <td className="py-3 text-muted-foreground">/command-name</td>
+              </tr>
+              <tr>
+                <td className="py-3 pr-4 font-medium">Qwen Code</td>
+                <td className="py-3 pr-4"><code className="rounded bg-muted px-1.5 py-0.5">.qwen/commands/*.md</code></td>
+                <td className="py-3 text-muted-foreground">/command-name</td>
+              </tr>
+              <tr>
+                <td className="py-3 pr-4 font-medium">Pi</td>
+                <td className="py-3 pr-4"><code className="rounded bg-muted px-1.5 py-0.5">.pi/prompts/*.md</code></td>
+                <td className="py-3 text-muted-foreground">/prompt-name</td>
               </tr>
             </tbody>
           </table>
@@ -218,7 +280,7 @@ Provide a markdown report with:
             <div>
               <p className="font-medium">Export to any supported platform</p>
               <p className="text-sm text-muted-foreground">
-                Download a Cursor command as a Claude command, Windsurf workflow, or any other format.
+                Download a Cursor command as a Claude command, a Devin Desktop workflow, a Gemini CLI TOML command, or any other format.
               </p>
             </div>
           </div>

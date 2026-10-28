@@ -320,9 +320,10 @@ Rotate keys yearly.
 
 exports[`cli generator golden output > aider 1`] = `
 {
-  "CONVENTIONS.md": "# Demo - Aider Conventions
-
-> Load these conventions in Aider with \`aider --read CONVENTIONS.md\`, or add \`read: CONVENTIONS.md\` to \`.aider.conf.yml\`.
+  ".aider.conf.yml": "# Aider loads these files as read-only context. AGENTS.md holds the project rules.
+read: [AGENTS.md]
+",
+  "AGENTS.md": "# Demo - AI Agent Instructions
 
 ## Project Overview
 
@@ -492,7 +493,7 @@ Always follow these guidelines when working on this project:
 
 exports[`cli generator golden output > antigravity 1`] = `
 {
-  "GEMINI.md": "# Demo - Gemini Instructions
+  "AGENTS.md": "# Demo - AI Agent Instructions
 
 ## Project Overview
 
@@ -835,7 +836,7 @@ Before making changes, read these files to understand the project:
 
 exports[`cli generator golden output > cline 1`] = `
 {
-  ".clinerules": "# Demo - AI Rules
+  ".clinerules/project.md": "# Demo - AI Rules
 
 ## Project Overview
 
@@ -927,264 +928,79 @@ Always follow these guidelines when working on this project:
 }
 `;
 
-exports[`cli generator golden output > codegpt 1`] = `
+exports[`cli generator golden output > codex 1`] = `
 {
-  ".codegpt/config.json": "{
-  "$schema": "https://codegpt.co/config-schema.json",
-  "version": "1.0",
-  "project": {
-    "name": "Demo",
-    "description": "A demo project"
-  },
-  "assistant": {
-    "systemPrompt": "# Demo - AI Assistant Instructions\\n\\n## Project Overview\\n**Description**: A demo project\\n\\n## Technology Stack\\n**Languages**: TypeScript\\n**Frameworks**: Next.js\\n\\n## Boundaries & Permissions\\n**✅ ALWAYS DO**:\\n- Read any file in the project\\n- Modify files in src/ or lib/\\n- Run build, test, and lint commands\\n- Create test files\\n- Fix linting errors automatically\\n**❓ ASK FIRST**:\\n- Add new dependencies to package.json\\n- Modify configuration files at root level\\n- Create new modules or directories\\n- Refactor code structure significantly\\n**🚫 NEVER DO**:\\n- Modify .env files or secrets\\n- Delete critical files without backup\\n- Force push to git\\n- Expose sensitive information in logs\\n\\n## Project Commands\\n- **Build**: \`npm run build\`\\n- **Test**: \`npm test\`\\n\\n## Project Context\\n- This is an open source project; community contributions are welcome.\\n- Follow existing conventions strictly and consider backward compatibility.\\n- Document everything so contributors can follow along.\\n- Be thorough but pragmatic.\\n\\n## Best Practices\\n- Follow existing patterns in the codebase\\n- Write clean, readable, maintainable code\\n- Handle errors appropriately\\n- Consider security implications\\n\\n## Important Files\\nRead these files for context:\\n- README.md",
-    "codeStyle": "language_default",
-    "errorHandling": "try_catch"
-  },
-  "techStack": {
-    "languages": [
-      "TypeScript"
-    ],
-    "frameworks": [
-      "Next.js"
-    ],
-    "databases": []
-  },
-  "commands": {
-    "build": "npm run build",
-    "test": "npm test",
-    "lint": "",
-    "dev": ""
-  },
-  "testing": {
-    "levels": [],
-    "frameworks": [],
-    "coverage": 80
-  },
-  "preferences": {
-    "conventionalCommits": false,
-    "semver": false,
-    "dependabot": false
-  },
-  "importantFiles": [
-    "README.md"
-  ]
-}",
-}
-`;
+  "AGENTS.md": "# Demo - AI Agent Instructions
 
-exports[`cli generator golden output > cody 1`] = `
-{
-  ".cody/config.json": "{
-  "$schema": "https://sourcegraph.com/docs/cody/config-schema",
-  "chat": {
-    "preInstruction": "# Demo - Cody Instructions\\n\\n## Project Overview\\n**Description**: A demo project\\n\\n## Technology Stack\\n**Languages**: TypeScript\\n**Frameworks**: Next.js\\n\\n## Boundaries\\n✅ ALWAYS: Read any file in the project, Modify files in src/ or lib/, Run build, test, and lint commands, Create test files, Fix linting errors automatically\\n❓ ASK FIRST: Add new dependencies to package.json, Modify configuration files at root level, Create new modules or directories, Refactor code structure significantly\\n🚫 NEVER: Modify .env files or secrets, Delete critical files without backup, Force push to git, Expose sensitive information in logs\\n\\n## Commands\\n- Build: \`npm run build\`\\n- Test: \`npm test\`\\n\\n## Project Context\\n- This is an open source project; community contributions are welcome.\\n- Follow existing conventions strictly and consider backward compatibility.\\n- Document everything so contributors can follow along.\\n- Be thorough but pragmatic.\\n\\n## Best Practices\\n- Follow existing codebase patterns\\n- Write clean, maintainable code\\n- Handle errors appropriately\\n- Consider security implications\\n"
-  },
-  "autocomplete": {
-    "enabled": true,
-    "advanced": {
-      "provider": "default"
-    }
-  },
-  "codeActions": {
-    "enabled": true
-  },
-  "commands": {
-    "explain": "Explain this code thoroughly",
-    "test": "Generate tests using project conventions",
-    "fix": "Fix this code following project conventions",
-    "doc": "Add comprehensive documentation",
-    "smell": "Identify code smells and suggest improvements"
-  },
-  "contextFilters": {
-    "include": [
-      {
-        "pattern": "**/README.md"
-      }
-    ]
-  }
-}",
-}
-`;
+## Project Overview
 
-exports[`cli generator golden output > continue 1`] = `
-{
-  ".continue/config.json": "{
-  "models": [],
-  "customCommands": [
-    {
-      "name": "build",
-      "description": "Build the project",
-      "prompt": "Run the build command: \`npm run build\`"
-    },
-    {
-      "name": "test",
-      "description": "Run tests",
-      "prompt": "Run the test command: \`npm test\`"
-    },
-    {
-      "name": "explain",
-      "description": "Explain the selected code",
-      "prompt": "Explain this code in detail, including what it does, how it works, and any important patterns or concepts."
-    },
-    {
-      "name": "refactor",
-      "description": "Refactor the selected code",
-      "prompt": "Refactor this code to improve its quality while maintaining functionality. Follow the project's code style conventions."
-    },
-    {
-      "name": "review",
-      "description": "Review code for issues",
-      "prompt": "Review this code for potential bugs, security issues, performance problems, and style violations. Suggest improvements."
-    }
-  ],
-  "systemMessage": "# Demo - AI Assistant Instructions\\n\\n## Project Overview\\n**Description**: A demo project\\n\\n## Technology Stack\\n**Languages**: TypeScript\\n**Frameworks**: Next.js\\n\\n## Boundaries & Permissions\\n**✅ ALWAYS DO**:\\n- Read any file in the project\\n- Modify files in src/ or lib/\\n- Run build, test, and lint commands\\n- Create test files\\n- Fix linting errors automatically\\n**❓ ASK FIRST**:\\n- Add new dependencies to package.json\\n- Modify configuration files at root level\\n- Create new modules or directories\\n- Refactor code structure significantly\\n**🚫 NEVER DO**:\\n- Modify .env files or secrets\\n- Delete critical files without backup\\n- Force push to git\\n- Expose sensitive information in logs\\n\\n## Project Context\\n- This is an open source project; community contributions are welcome.\\n- Follow existing conventions strictly and consider backward compatibility.\\n- Document everything so contributors can follow along.\\n- Be thorough but pragmatic.\\n\\n## Best Practices\\n- Follow existing patterns in the codebase\\n- Write clean, readable, maintainable code\\n- Handle errors properly\\n- Review code for security vulnerabilities\\n",
-  "contextProviders": [
-    {
-      "name": "code",
-      "params": {}
-    },
-    {
-      "name": "docs",
-      "params": {}
-    },
-    {
-      "name": "diff",
-      "params": {}
-    },
-    {
-      "name": "terminal",
-      "params": {}
-    },
-    {
-      "name": "problems",
-      "params": {}
-    },
-    {
-      "name": "folder",
-      "params": {}
-    },
-    {
-      "name": "codebase",
-      "params": {}
-    }
-  ],
-  "slashCommands": [
-    {
-      "name": "edit",
-      "description": "Edit selected code"
-    },
-    {
-      "name": "comment",
-      "description": "Add comments to code"
-    },
-    {
-      "name": "share",
-      "description": "Export conversation"
-    },
-    {
-      "name": "cmd",
-      "description": "Generate terminal command"
-    }
-  ],
-  "tabAutocompleteOptions": {
-    "useCopyBuffer": true,
-    "maxPromptTokens": 1024
-  }
-}",
-}
-`;
+**Description**: A demo project
 
-exports[`cli generator golden output > continue with every answer 1`] = `
-{
-  ".continue/config.json": "{
-  "models": [],
-  "customCommands": [
-    {
-      "name": "build",
-      "description": "Build the project",
-      "prompt": "Run the build command: \`npm run build\`"
-    },
-    {
-      "name": "test",
-      "description": "Run tests",
-      "prompt": "Run the test command: \`npm test\`"
-    },
-    {
-      "name": "lint",
-      "description": "Lint the code",
-      "prompt": "Run the lint command: \`npm run lint\`"
-    },
-    {
-      "name": "explain",
-      "description": "Explain the selected code",
-      "prompt": "Explain this code in detail, including what it does, how it works, and any important patterns or concepts."
-    },
-    {
-      "name": "refactor",
-      "description": "Refactor the selected code",
-      "prompt": "Refactor this code to improve its quality while maintaining functionality. Follow the project's code style conventions."
-    },
-    {
-      "name": "review",
-      "description": "Review code for issues",
-      "prompt": "Review this code for potential bugs, security issues, performance problems, and style violations. Suggest improvements."
-    }
-  ],
-  "systemMessage": "# Demo - AI Assistant Instructions\\n\\n## Project Overview\\n**Description**: A demo project\\n**Architecture**: Modular Monolith\\n\\n## Technology Stack\\n**Languages**: TypeScript, Python\\n**Frameworks**: Next.js, Telethon\\n**Databases**: PostgreSQL\\n*Note: For unlisted technologies, suggest what's best suited based on codebase analysis.*\\n\\n## Communication Style\\n- Provide balanced explanations, not too verbose\\n- Focus on important decisions and trade-offs\\n\\n## Code Style & Conventions\\n- **Naming**: camelCase for variables/functions\\n- **Error Handling**: Result/Either types\\n- **Logging**: Structured Logging\\n- **Notes**: Prefer pure functions.\\n\\n## AI Behavior Guidelines\\n- Always run and test locally after making changes\\n- Always check documentation (via MCP or project docs) before assuming knowledge about APIs or libraries\\n\\n## Boundaries & Permissions\\n**✅ ALWAYS DO**:\\n- Read any file in the project\\n- Run lint and format commands\\n**❓ ASK FIRST**:\\n- Modify any source file\\n- Add new dependencies\\n- Create new files\\n- Run test commands\\n- Modify configuration files\\n**🚫 NEVER DO**:\\n- Delete any files\\n- Modify .env or secret files\\n- Push to git or make commits\\n- Access external APIs or services\\n\\n## Testing Requirements\\n**Levels**: Unit tests, smoke\\n**Frameworks**: vitest\\n**Coverage**: 85% minimum\\n\\n## Project Context\\n- **STRICT MODE**: This is a work project. Follow procedures exactly as documented.\\n- Do not deviate from established patterns or make assumptions.\\n- Always ask for clarification rather than guessing.\\n- Document all decisions and changes thoroughly.\\n\\n## Best Practices\\n- Follow existing patterns in the codebase\\n- Write clean, readable, maintainable code\\n- Handle errors properly\\n- Review code for security vulnerabilities\\n- Use conventional commits (feat:, fix:, docs:, chore:)\\n\\n## Custom Instructions\\nShip small.\\n",
-  "contextProviders": [
-    {
-      "name": "code",
-      "params": {}
-    },
-    {
-      "name": "docs",
-      "params": {}
-    },
-    {
-      "name": "diff",
-      "params": {}
-    },
-    {
-      "name": "terminal",
-      "params": {}
-    },
-    {
-      "name": "problems",
-      "params": {}
-    },
-    {
-      "name": "folder",
-      "params": {}
-    },
-    {
-      "name": "codebase",
-      "params": {}
-    }
-  ],
-  "slashCommands": [
-    {
-      "name": "edit",
-      "description": "Edit selected code"
-    },
-    {
-      "name": "comment",
-      "description": "Add comments to code"
-    },
-    {
-      "name": "share",
-      "description": "Export conversation"
-    },
-    {
-      "name": "cmd",
-      "description": "Generate terminal command"
-    }
-  ],
-  "tabAutocompleteOptions": {
-    "useCopyBuffer": true,
-    "maxPromptTokens": 1024
-  }
-}",
+
+## Technology Stack
+
+### Languages
+- TypeScript
+
+### Frameworks & Libraries
+- Next.js
+
+## Development Guidelines
+
+### Communication Style
+- Developer background: a senior full-stack developer capable of working across the entire application stack — adapt responses to this domain expertise
+
+### Important Files to Read First
+Before making changes, read these files to understand the project:
+- README.md
+
+### Project Context
+- This is an open source project; community contributions are welcome.
+- Follow existing conventions strictly and consider backward compatibility.
+- Document everything so contributors can follow along.
+- Be thorough but pragmatic.
+
+### Commands
+- Build: \`npm run build\`
+- Test: \`npm test\`
+
+### Boundaries & Permissions
+
+**✅ ALWAYS do (no need to ask)**:
+- Read any file in the project
+- Modify files in src/ or lib/
+- Run build, test, and lint commands
+- Create test files
+- Fix linting errors automatically
+
+**❓ ASK first before doing**:
+- Add new dependencies to package.json
+- Modify configuration files at root level
+- Create new modules or directories
+- Refactor code structure significantly
+
+**🚫 NEVER do (strictly prohibited)**:
+- Modify .env files or secrets
+- Delete critical files without backup
+- Force push to git
+- Expose sensitive information in logs
+
+### Git Workflow
+- Never commit directly to \`main\`; work on a branch and open a pull request
+
+## Best Practices
+
+- **Write clean code**: Prioritize readability and maintainability
+- **Handle errors properly**: Don't ignore errors, handle them appropriately
+- **Consider security**: Review code for potential security vulnerabilities
+
+## ⚠️ Security Notice
+
+> **Do not commit secrets to the repository or to the live app.**
+> Always use secure standards to transmit sensitive information.
+> Use environment variables, secret managers, or secure vaults for credentials.
+
+**🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.",
 }
 `;
 
@@ -1849,104 +1665,6 @@ Always follow these guidelines when working on this project:
 }
 `;
 
-exports[`cli generator golden output > devin 1`] = `
-{
-  ".devin/rules/project.md": "---
-trigger: always_on
----
-
-# Demo - AI Rules
-
-## Project Overview
-
-**Description**: A demo project
-
-
-## Technology Stack
-
-This project uses the following technologies. Please ensure all code follows the conventions and best practices for these:
-
-**Programming Languages**: TypeScript
-**Frameworks & Libraries**: Next.js
-
-## Code Style & Conventions
-
-Follow these coding style guidelines when writing or modifying code:
-
-### Developer Profile
-- **Developer Background**: a senior full-stack developer capable of working across the entire application stack — adapt responses to this domain expertise
-
-## Important Files to Read First
-
-Before making significant changes, read these files to understand the project context:
-
-- README.md - Project overview and setup instructions
-
-## Boundaries & Permissions
-
-These are explicit boundaries for AI actions on this project:
-
-### ✅ ALWAYS DO (no need to ask)
-- Read any file in the project
-- Modify files in src/ or lib/
-- Run build, test, and lint commands
-- Create test files
-- Fix linting errors automatically
-
-### ❓ ASK FIRST (get confirmation before doing)
-- Add new dependencies to package.json
-- Modify configuration files at root level
-- Create new modules or directories
-- Refactor code structure significantly
-
-### 🚫 NEVER DO (strictly prohibited)
-- Modify .env files or secrets
-- Delete critical files without backup
-- Force push to git
-- Expose sensitive information in logs
-
-## Project Commands
-
-Use these commands when working on this project:
-
-- **Build**: \`npm run build\`
-- **Test**: \`npm test\`
-
-## Project Type Context
-
-This is a **Open Source Project**. Keep these guidelines in mind:
-
-- This is an open source project; community contributions are welcome.
-- Follow existing conventions strictly and consider backward compatibility.
-- Document everything so contributors can follow along.
-- Be thorough but pragmatic.
-
-## Git Workflow
-
-- Never commit directly to \`main\`; work on a branch and open a pull request
-
-## Best Practices
-
-Always follow these guidelines when working on this project:
-
-- **Write clean code**: Prioritize readability and maintainability
-- **Handle errors properly**: Don't ignore errors, handle them appropriately
-- **Consider security**: Review code for potential security vulnerabilities
-
-## ⚠️ Security Notice
-
-> **Do not commit secrets to the repository or to the live app.**
-> Always use secure standards to transmit sensitive information.
-> Use environment variables, secret managers, or secure vaults for credentials.
-
-**🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.
-
----
-
-*Generated by [LynxPrompt](https://lynxprompt.com)*",
-}
-`;
-
 exports[`cli generator golden output > firebase 1`] = `
 {
   ".idx/airules.md": "# Demo - AI Rules
@@ -2218,7 +1936,7 @@ Before making changes, read these files to understand the project:
 
 exports[`cli generator golden output > goose 1`] = `
 {
-  ".goosehints": "# Demo - AI Rules
+  "AGENTS.md": "# Demo - AI Agent Instructions
 
 ## Project Overview
 
@@ -2227,70 +1945,56 @@ exports[`cli generator golden output > goose 1`] = `
 
 ## Technology Stack
 
-This project uses the following technologies. Please ensure all code follows the conventions and best practices for these:
+### Languages
+- TypeScript
 
-**Programming Languages**: TypeScript
-**Frameworks & Libraries**: Next.js
+### Frameworks & Libraries
+- Next.js
 
-## Code Style & Conventions
+## Development Guidelines
 
-Follow these coding style guidelines when writing or modifying code:
+### Communication Style
+- Developer background: a senior full-stack developer capable of working across the entire application stack — adapt responses to this domain expertise
 
-### Developer Profile
-- **Developer Background**: a senior full-stack developer capable of working across the entire application stack — adapt responses to this domain expertise
+### Important Files to Read First
+Before making changes, read these files to understand the project:
+- README.md
 
-## Important Files to Read First
+### Project Context
+- This is an open source project; community contributions are welcome.
+- Follow existing conventions strictly and consider backward compatibility.
+- Document everything so contributors can follow along.
+- Be thorough but pragmatic.
 
-Before making significant changes, read these files to understand the project context:
+### Commands
+- Build: \`npm run build\`
+- Test: \`npm test\`
 
-- README.md - Project overview and setup instructions
+### Boundaries & Permissions
 
-## Boundaries & Permissions
-
-These are explicit boundaries for AI actions on this project:
-
-### ✅ ALWAYS DO (no need to ask)
+**✅ ALWAYS do (no need to ask)**:
 - Read any file in the project
 - Modify files in src/ or lib/
 - Run build, test, and lint commands
 - Create test files
 - Fix linting errors automatically
 
-### ❓ ASK FIRST (get confirmation before doing)
+**❓ ASK first before doing**:
 - Add new dependencies to package.json
 - Modify configuration files at root level
 - Create new modules or directories
 - Refactor code structure significantly
 
-### 🚫 NEVER DO (strictly prohibited)
+**🚫 NEVER do (strictly prohibited)**:
 - Modify .env files or secrets
 - Delete critical files without backup
 - Force push to git
 - Expose sensitive information in logs
 
-## Project Commands
-
-Use these commands when working on this project:
-
-- **Build**: \`npm run build\`
-- **Test**: \`npm test\`
-
-## Project Type Context
-
-This is a **Open Source Project**. Keep these guidelines in mind:
-
-- This is an open source project; community contributions are welcome.
-- Follow existing conventions strictly and consider backward compatibility.
-- Document everything so contributors can follow along.
-- Be thorough but pragmatic.
-
-## Git Workflow
-
+### Git Workflow
 - Never commit directly to \`main\`; work on a branch and open a pull request
 
 ## Best Practices
-
-Always follow these guidelines when working on this project:
 
 - **Write clean code**: Prioritize readability and maintainability
 - **Handle errors properly**: Don't ignore errors, handle them appropriately
@@ -2302,17 +2006,13 @@ Always follow these guidelines when working on this project:
 > Always use secure standards to transmit sensitive information.
 > Use environment variables, secret managers, or secure vaults for credentials.
 
-**🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.
-
----
-
-*Generated by [LynxPrompt](https://lynxprompt.com)*",
+**🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.",
 }
 `;
 
 exports[`cli generator golden output > junie 1`] = `
 {
-  ".junie/guidelines.md": "# Demo - Junie Instructions
+  "AGENTS.md": "# Demo - AI Agent Instructions
 
 ## Project Overview
 
@@ -2388,7 +2088,7 @@ Before making changes, read these files to understand the project:
 
 exports[`cli generator golden output > kilocode 1`] = `
 {
-  ".kilocode/rules/project.md": "# Demo - AI Rules
+  "AGENTS.md": "# Demo - AI Agent Instructions
 
 ## Project Overview
 
@@ -2397,70 +2097,56 @@ exports[`cli generator golden output > kilocode 1`] = `
 
 ## Technology Stack
 
-This project uses the following technologies. Please ensure all code follows the conventions and best practices for these:
+### Languages
+- TypeScript
 
-**Programming Languages**: TypeScript
-**Frameworks & Libraries**: Next.js
+### Frameworks & Libraries
+- Next.js
 
-## Code Style & Conventions
+## Development Guidelines
 
-Follow these coding style guidelines when writing or modifying code:
+### Communication Style
+- Developer background: a senior full-stack developer capable of working across the entire application stack — adapt responses to this domain expertise
 
-### Developer Profile
-- **Developer Background**: a senior full-stack developer capable of working across the entire application stack — adapt responses to this domain expertise
+### Important Files to Read First
+Before making changes, read these files to understand the project:
+- README.md
 
-## Important Files to Read First
+### Project Context
+- This is an open source project; community contributions are welcome.
+- Follow existing conventions strictly and consider backward compatibility.
+- Document everything so contributors can follow along.
+- Be thorough but pragmatic.
 
-Before making significant changes, read these files to understand the project context:
+### Commands
+- Build: \`npm run build\`
+- Test: \`npm test\`
 
-- README.md - Project overview and setup instructions
+### Boundaries & Permissions
 
-## Boundaries & Permissions
-
-These are explicit boundaries for AI actions on this project:
-
-### ✅ ALWAYS DO (no need to ask)
+**✅ ALWAYS do (no need to ask)**:
 - Read any file in the project
 - Modify files in src/ or lib/
 - Run build, test, and lint commands
 - Create test files
 - Fix linting errors automatically
 
-### ❓ ASK FIRST (get confirmation before doing)
+**❓ ASK first before doing**:
 - Add new dependencies to package.json
 - Modify configuration files at root level
 - Create new modules or directories
 - Refactor code structure significantly
 
-### 🚫 NEVER DO (strictly prohibited)
+**🚫 NEVER do (strictly prohibited)**:
 - Modify .env files or secrets
 - Delete critical files without backup
 - Force push to git
 - Expose sensitive information in logs
 
-## Project Commands
-
-Use these commands when working on this project:
-
-- **Build**: \`npm run build\`
-- **Test**: \`npm test\`
-
-## Project Type Context
-
-This is a **Open Source Project**. Keep these guidelines in mind:
-
-- This is an open source project; community contributions are welcome.
-- Follow existing conventions strictly and consider backward compatibility.
-- Document everything so contributors can follow along.
-- Be thorough but pragmatic.
-
-## Git Workflow
-
+### Git Workflow
 - Never commit directly to \`main\`; work on a branch and open a pull request
 
 ## Best Practices
-
-Always follow these guidelines when working on this project:
 
 - **Write clean code**: Prioritize readability and maintainability
 - **Handle errors properly**: Don't ignore errors, handle them appropriately
@@ -2472,11 +2158,7 @@ Always follow these guidelines when working on this project:
 > Always use secure standards to transmit sensitive information.
 > Use environment variables, secret managers, or secure vaults for credentials.
 
-**🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.
-
----
-
-*Generated by [LynxPrompt](https://lynxprompt.com)*",
+**🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.",
 }
 `;
 
@@ -2656,7 +2338,7 @@ Before making changes, read these files to understand the project:
 
 exports[`cli generator golden output > openhands 1`] = `
 {
-  ".openhands/microagents/repo.md": "# Demo - OpenHands Instructions
+  "AGENTS.md": "# Demo - AI Agent Instructions
 
 ## Project Overview
 
@@ -2824,241 +2506,396 @@ Always follow these guidelines when working on this project:
 }
 `;
 
-exports[`cli generator golden output > supermaven 1`] = `
-{
-  ".supermaven/config.json": "{
-  "$schema": "https://supermaven.com/config-schema.json",
-  "project": "Demo",
-  "description": "A demo project",
-  "context": "# Demo\\n\\nA demo project\\n\\n## Technology Stack\\nLanguages: TypeScript\\nFrameworks: Next.js\\n\\n## Boundaries\\nALWAYS: Read any file in the project, Modify files in src/ or lib/, Run build, test, and lint commands, Create test files, Fix linting errors automatically\\nASK FIRST: Add new dependencies to package.json, Modify configuration files at root level, Create new modules or directories, Refactor code structure significantly\\nNEVER: Modify .env files or secrets, Delete critical files without backup, Force push to git, Expose sensitive information in logs\\n\\n## Commands\\nBuild: npm run build\\nTest: npm test\\n\\n## Project Context\\n- This is an open source project; community contributions are welcome.\\n- Follow existing conventions strictly and consider backward compatibility.\\n- Document everything so contributors can follow along.\\n- Be thorough but pragmatic.\\n\\n## Best Practices\\n- Follow existing codebase patterns\\n- Write clean, maintainable code\\n- Handle errors properly\\n- Consider security\\n",
-  "guidelines": [
-    "Always: Read any file in the project",
-    "Always: Modify files in src/ or lib/",
-    "Always: Run build, test, and lint commands",
-    "Always: Create test files",
-    "Always: Fix linting errors automatically",
-    "Never: Modify .env files or secrets",
-    "Never: Delete critical files without backup",
-    "Never: Force push to git",
-    "Never: Expose sensitive information in logs",
-    "Follow existing patterns in the codebase",
-    "Write clean, readable code",
-    "Handle errors appropriately"
-  ],
-  "codeStyle": {
-    "naming": "language_default",
-    "errorHandling": "try_catch",
-    "logging": "",
-    "notes": ""
-  },
-  "techStack": {
-    "languages": [
-      "TypeScript"
-    ],
-    "frameworks": [
-      "Next.js"
-    ],
-    "databases": []
-  },
-  "commands": {
-    "build": "npm run build",
-    "test": "npm test",
-    "lint": "",
-    "dev": ""
-  },
-  "testing": {
-    "levels": [],
-    "frameworks": [],
-    "coverage": 80
-  },
-  "importantFiles": [
-    "README.md"
-  ],
-  "preferences": {
-    "conventionalCommits": false,
-    "semver": false
-  }
-}",
-}
-`;
-
 exports[`cli generator golden output > tabnine 1`] = `
 {
-  ".tabnine.yaml": "# ═══════════════════════════════════════════════════════════════════════════
-# TabNine AI Code Completion Configuration
-# Generated by LynxPrompt - https://lynxprompt.com
-# ═══════════════════════════════════════════════════════════════════════════
-# Documentation: https://www.tabnine.com/
-# ═══════════════════════════════════════════════════════════════════════════
+  ".tabnine/guidelines/project.md": "# Demo - AI Rules
 
-version: 1
+## Project Overview
 
-# ─── Core Settings ─────────────────────────────────────────────────────────
-enable_telemetry: false
+**Description**: A demo project
 
-# ─── Language Preferences ─────────────────────────────────────────────────
-languages:
-  - typescript
 
-# ═══════════════════════════════════════════════════════════════════════════
-# PROJECT CONTEXT - TabNine uses these for better completions
-# ═══════════════════════════════════════════════════════════════════════════
-#
-# Project: Demo
-# Description: A demo project
-#
-#
-# ─── Technology Stack ──────────────────────────────────────────────────────
-#
-# Frameworks: Next.js
-#
-# ─── Code Style Conventions ───────────────────────────────────────────────
-#
-#
-# ─── Project Commands ─────────────────────────────────────────────────────
-#
-# Build: npm run build
-# Test: npm test
-#
-# ─── Boundaries & Permissions ─────────────────────────────────────────────
-#
-# ✅ ALWAYS DO: Read any file in the project, Modify files in src/ or lib/, Run build, test, and lint commands, Create test files, Fix linting errors automatically
-# ❓ ASK FIRST: Add new dependencies to package.json, Modify configuration files at root level, Create new modules or directories, Refactor code structure significantly
-# 🚫 NEVER DO: Modify .env files or secrets, Delete critical files without backup, Force push to git, Expose sensitive information in logs
-#
-# ─── Project Context ──────────────────────────────────────────────────────
-#
-# Type: Open Source Project
-# Guidelines:
-#   - This is an open source project; community contributions are welcome.
-#   - Follow existing conventions strictly and consider backward compatibility.
-#   - Document everything so contributors can follow along.
-#   - Be thorough but pragmatic.
-#
-# ─── Best Practices ───────────────────────────────────────────────────────
-#
-# - Follow existing patterns in the codebase
-# - Write clean, readable, maintainable code
-# - Handle errors appropriately
-# - Consider security implications
-#
-# ═══════════════════════════════════════════════════════════════════════════
+## Technology Stack
 
-# SECURITY: Do not commit secrets to the repository.
-# Use environment variables or secret managers for credentials.
-# When making changes involving auth, data handling, APIs, or dependencies,
-# proactively offer to perform a security audit of the affected code.",
+This project uses the following technologies. Please ensure all code follows the conventions and best practices for these:
+
+**Programming Languages**: TypeScript
+**Frameworks & Libraries**: Next.js
+
+## Code Style & Conventions
+
+Follow these coding style guidelines when writing or modifying code:
+
+### Developer Profile
+- **Developer Background**: a senior full-stack developer capable of working across the entire application stack — adapt responses to this domain expertise
+
+## Important Files to Read First
+
+Before making significant changes, read these files to understand the project context:
+
+- README.md - Project overview and setup instructions
+
+## Boundaries & Permissions
+
+These are explicit boundaries for AI actions on this project:
+
+### ✅ ALWAYS DO (no need to ask)
+- Read any file in the project
+- Modify files in src/ or lib/
+- Run build, test, and lint commands
+- Create test files
+- Fix linting errors automatically
+
+### ❓ ASK FIRST (get confirmation before doing)
+- Add new dependencies to package.json
+- Modify configuration files at root level
+- Create new modules or directories
+- Refactor code structure significantly
+
+### 🚫 NEVER DO (strictly prohibited)
+- Modify .env files or secrets
+- Delete critical files without backup
+- Force push to git
+- Expose sensitive information in logs
+
+## Project Commands
+
+Use these commands when working on this project:
+
+- **Build**: \`npm run build\`
+- **Test**: \`npm test\`
+
+## Project Type Context
+
+This is a **Open Source Project**. Keep these guidelines in mind:
+
+- This is an open source project; community contributions are welcome.
+- Follow existing conventions strictly and consider backward compatibility.
+- Document everything so contributors can follow along.
+- Be thorough but pragmatic.
+
+## Git Workflow
+
+- Never commit directly to \`main\`; work on a branch and open a pull request
+
+## Best Practices
+
+Always follow these guidelines when working on this project:
+
+- **Write clean code**: Prioritize readability and maintainability
+- **Handle errors properly**: Don't ignore errors, handle them appropriately
+- **Consider security**: Review code for potential security vulnerabilities
+
+## ⚠️ Security Notice
+
+> **Do not commit secrets to the repository or to the live app.**
+> Always use secure standards to transmit sensitive information.
+> Use environment variables, secret managers, or secure vaults for credentials.
+
+**🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.
+
+---
+
+*Generated by [LynxPrompt](https://lynxprompt.com)*",
 }
 `;
 
 exports[`cli generator golden output > tabnine with every answer 1`] = `
 {
-  ".tabnine.yaml": "# ═══════════════════════════════════════════════════════════════════════════
-# TabNine AI Code Completion Configuration
-# Generated by LynxPrompt - https://lynxprompt.com
-# ═══════════════════════════════════════════════════════════════════════════
-# Documentation: https://www.tabnine.com/
-# ═══════════════════════════════════════════════════════════════════════════
+  ".tabnine/guidelines/project.md": "# Demo - AI Rules
 
-version: 1
+## Before Starting Any Coding Task
 
-# ─── Core Settings ─────────────────────────────────────────────────────────
-enable_telemetry: false
+1. Check existing worktrees with \`git worktree list\` and create a new one for this task if needed
+2. Use the naming convention: \`git worktree add -b ai/[task-description] ../[repo-name]-ai-[task-description]\`
+3. Navigate to the worktree directory before making any changes
+4. Commit changes when the task is finished. Merge to main, and clean the worktree.
 
-# ─── Language Preferences ─────────────────────────────────────────────────
-languages:
-  - typescript
-  - python
+## Project Overview
 
-# ═══════════════════════════════════════════════════════════════════════════
-# PROJECT CONTEXT - TabNine uses these for better completions
-# ═══════════════════════════════════════════════════════════════════════════
-#
-# Project: Demo
-# Description: A demo project
-#
-# Architecture: Modular Monolith
-#
-# ─── Technology Stack ──────────────────────────────────────────────────────
-#
-# Frameworks: Next.js, Telethon
-# Databases: PostgreSQL
-#
-# ─── Code Style Conventions ───────────────────────────────────────────────
-#
-# Naming Convention: camelCase for variables/functions
-# Error Handling: Result/Either types
-# Logging: Structured Logging
-# Style Notes: Prefer pure functions.
-#
-# ─── Developer Profile ────────────────────────────────────────────────────
-#
-# Author: Ada
-# Skill Level: Intermediate
-# Developer Background: data engineer - adapt responses to this domain expertise
-#
-# ─── AI Behavior Guidelines ───────────────────────────────────────────────
-#
-# - Always run and test locally after making changes
-# - Always check documentation (via MCP or project docs) before assuming knowledge about APIs or libraries
-#
-# ─── Project Commands ─────────────────────────────────────────────────────
-#
-# Build: npm run build
-# Test: npm test
-# Lint: npm run lint
-#
-# ─── Boundaries & Permissions ─────────────────────────────────────────────
-#
-# ✅ ALWAYS DO: Read any file in the project, Run lint and format commands
-# ❓ ASK FIRST: Modify any source file, Add new dependencies, Create new files, Run test commands, Modify configuration files
-# 🚫 NEVER DO: Delete any files, Modify .env or secret files, Push to git or make commits, Access external APIs or services
-#
-# ─── Testing Requirements ─────────────────────────────────────────────────
-#
-# Testing Levels: unit, smoke
-# Frameworks: vitest
-# Coverage Target: 85%
-#
-# ─── CI/CD & Infrastructure ───────────────────────────────────────────────
-#
-# CI/CD: GitHub Actions, Forgejo Actions
-# Deploy: Fly.io, Docker
-#
-# ─── Project Context ──────────────────────────────────────────────────────
-#
-# Type: Work / Professional
-# Guidelines:
-#   - **STRICT MODE**: This is a work project. Follow procedures exactly as documented.
-#   - Do not deviate from established patterns or make assumptions.
-#   - Always ask for clarification rather than guessing.
-#   - Document all decisions and changes thoroughly.
-#
-# ─── Best Practices ───────────────────────────────────────────────────────
-#
-# - Follow existing patterns in the codebase
-# - Write clean, readable, maintainable code
-# - Handle errors appropriately
-# - Consider security implications
-# - Use conventional commits (feat:, fix:, docs:, chore:)
-# - Follow semantic versioning (MAJOR.MINOR.PATCH)
-#
-# ─── Custom Instructions ──────────────────────────────────────────────────
-#
-# Ship small.
-#
-# ═══════════════════════════════════════════════════════════════════════════
+**Description**: A demo project
 
-# SECURITY: Do not commit secrets to the repository.
-# Use environment variables or secret managers for credentials.
-# When making changes involving auth, data handling, APIs, or dependencies,
-# proactively offer to perform a security audit of the affected code.",
+**Architecture Pattern**: Modular Monolith - organized into modules but deployed as one unit
+**Visibility**: Private repository
+**Development OS**: Linux
+
+### Repository
+- **Platform**: GitHub
+
+### Development Environment
+- Use standard Unix/Linux commands (bash, zsh)
+
+### Reference Materials
+- **Example Repository**: https://github.com/acme/example
+  Use this as a reference for coding patterns, conventions, and architecture decisions.
+- **External Documentation**: https://docs.acme.test
+  Refer to this for additional project context, architecture decisions, and team guidelines.
+
+## Technology Stack
+
+This project uses the following technologies. Please ensure all code follows the conventions and best practices for these:
+
+**Programming Languages**: TypeScript, Python
+**Frameworks & Libraries**: Next.js, Telethon
+**Database**: PostgreSQL
+
+- **Package manager**: pnpm. Use it for every install and script.
+- **ORM / database toolkit**: prisma
+
+**AI Flexibility**: For technologies not listed above, you may suggest and use what's best suited for the project based on codebase analysis.
+
+## Code Style & Conventions
+
+Follow these coding style guidelines when writing or modifying code:
+
+### Developer Profile
+- **Author**: Ada
+- **Developer Background**: data engineer — adapt responses to this domain expertise
+- **Experience Level**: Intermediate
+
+### Communication Style
+- Provide balanced explanations, not too verbose
+- Focus on important decisions, trade-offs, and non-obvious choices
+
+### Naming Conventions
+**Style**: Use camelCase for variables and functions (e.g., myVariable, getUserName)
+
+### Error Handling
+**Approach**: Use Result/Either types to represent success or failure (no exceptions for control flow)
+
+### Logging Conventions
+**Guidelines**: Structured Logging
+
+### Formatting & Documentation
+- **File length**: keep files under 400 lines; split larger ones
+- **Imports**: group imports: external packages, then internal modules, then relative paths
+- **Comment language**: write code comments in english
+- **Documentation comments**: TSDoc
+
+### Additional Style Notes
+Prefer pure functions.
+
+## AI Behavior Guidelines
+
+When assisting with this project, follow these specific rules:
+
+- Always run and test locally after making changes
+- Always check documentation (via MCP or project docs) before assuming knowledge about APIs or libraries
+- **Plan first** when a change spans several files
+- **Explanations**: clear, with enough context to follow the reasoning
+- **Accessibility**: follow WCAG; use semantic markup, labels, keyboard access and enough contrast
+- When stuck, **attempt creative workarounds** before asking for help
+
+## MCP Servers
+
+The developer has these MCP (Model Context Protocol) servers available. Use them when relevant:
+
+- github
+
+## Infrastructure
+
+- **Server access**: via SSH. SSH key in default location (~/.ssh/)
+- **Deployment**: Portainer (GitOps stacks)
+
+## Important Files to Read First
+
+Before making significant changes, read these files to understand the project context:
+
+- README.md - Project overview and setup instructions
+- docs/adr
+
+## Boundaries & Permissions
+
+These are explicit boundaries for AI actions on this project:
+
+### ✅ ALWAYS DO (no need to ask)
+- Read any file in the project
+- Run lint and format commands
+
+### ❓ ASK FIRST (get confirmation before doing)
+- Modify any source file
+- Add new dependencies
+- Create new files
+- Run test commands
+- Modify configuration files
+
+### 🚫 NEVER DO (strictly prohibited)
+- Delete any files
+- Modify .env or secret files
+- Push to git or make commits
+- Access external APIs or services
+
+## Project Commands
+
+Use these commands when working on this project:
+
+- **Build**: \`npm run build\`
+- **Test**: \`npm test\`
+- **Lint**: \`npm run lint\`
+- **Type check**: \`npm run typecheck\`
+
+**Other useful commands**:
+- \`npm ci\`
+
+## Testing Requirements
+
+When writing or modifying code, ensure adequate test coverage:
+
+**Testing Levels**:
+- Unit tests - test individual functions/methods in isolation
+- Smoke Tests
+
+**Testing Frameworks**: vitest
+**Coverage Target**: 85% minimum
+
+- **Test-driven development**: write a failing test first, then the code that makes it pass
+- **Mocking**: mock only external dependencies
+
+**Additional testing notes**:
+Mock the network.
+
+## Project Type Context
+
+This is a **Work / Professional Project**. Keep these guidelines in mind:
+
+- **STRICT MODE**: This is a work project. Follow procedures exactly as documented.
+- Do not deviate from established patterns or make assumptions.
+- Always ask for clarification rather than guessing.
+- Document all decisions and changes thoroughly.
+
+## Custom Instructions
+
+The project owner has provided these additional instructions:
+
+Ship small.
+
+## CI/CD & Infrastructure
+
+**CI/CD Platform**: GitHub Actions, Forgejo Actions
+**Deployment Targets**: Fly.io, Docker
+**Container Builds**: This project builds Docker/OCI container images
+**Container Registry**: GitHub Container Registry (ghcr.io)
+- **Published images**:
+  - \`acme/demo\`
+
+## Git Workflow
+
+- **Branching**: trunk-based: very short-lived branches merged into the trunk often
+- **Default branch**: \`main\`
+- Direct commits to \`main\` are fine for small fixes (typos, docs); everything else goes through a branch
+- **Version tags**: \`v1.2.3\`
+- **Changelog**: managed by Release Please
+
+## Best Practices
+
+Always follow these guidelines when working on this project:
+
+- **Write clean code**: Prioritize readability and maintainability
+- **Handle errors properly**: Don't ignore errors, handle them appropriately
+- **Consider security**: Review code for potential security vulnerabilities
+- **Conventional commits**: Use conventional commit messages (feat:, fix:, docs:, chore:, refactor:, test:, style:)
+- **Semantic versioning**: Follow semver (MAJOR.MINOR.PATCH) for version numbers
+- **Dependency updates**: Keep dependencies updated (Dependabot) configured)
+
+
+## Self-Improving Configuration
+**IMPORTANT**: This configuration file is set to self-improve.
+
+As you work on this project, track the user's coding patterns, preferences, and decisions.
+Periodically update this file to reflect what you learn about how the user works:
+- Note preferred code styles and patterns that emerge
+- Record decisions about architecture or tooling
+- Add rules for common issues or mistakes to avoid
+- Refine instructions based on user corrections
+
+Keep this file updated so future sessions start with better context.
+
+## Repository Files to Generate
+
+When requested or when missing, create these files following these guidelines:
+
+- This repository uses the **Apache 2.0** license. If the \`LICENSE\` file doesn't exist yet, please create it with copyright holder: Ada.
+
+## Custom File Templates
+
+Create these files with the exact content provided below. These are user-specified templates:
+
+### .editorconfig
+\`\`\`
+# EditorConfig is awesome: https://EditorConfig.org
+
+root = true
+
+[*]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.md]
+trim_trailing_whitespace = false
+
+[Makefile]
+indent_style = tab
+\`\`\`
+
+### .github/FUNDING.yml
+\`\`\`
+# These are supported funding model platforms
+
+github: [] # Replace with your GitHub username
+patreon: # Replace with your Patreon username
+open_collective: # Replace with your Open Collective username
+ko_fi: # Replace with your Ko-fi username
+custom: [] # Add custom funding links
+\`\`\`
+
+## 🔐 Security Configuration
+
+### Secrets Management
+
+- Environment Variables
+- Pass
+
+### Security Tooling
+
+- Dependabot (dependency updates)
+
+### Auth Providers
+
+- GitHub
+
+### Compliance
+
+- GDPR
+
+### Additional Security Notes
+
+Rotate keys yearly.
+
+## ⚠️ Security Notice
+
+> **Do not commit secrets to the repository or to the live app.**
+> Always use secure standards to transmit sensitive information.
+> Use environment variables, secret managers, or secure vaults for credentials.
+
+**🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.
+
+---
+
+*Generated by [LynxPrompt](https://lynxprompt.com)*",
 }
 `;
 
 exports[`cli generator golden output > trae 1`] = `
 {
-  ".trae/rules/project_rules.md": "# Demo - AI Rules
+  ".trae/rules/project_rules.md": "---
+alwaysApply: true
+---
+
+# Demo - AI Rules
 
 ## Project Overview
 
@@ -3226,98 +3063,9 @@ Before making changes, read these files to understand the project:
 }
 `;
 
-exports[`cli generator golden output > void 1`] = `
-{
-  ".void/config.json": "{
-  "$schema": "https://voideditor.com/config-schema.json",
-  "version": 2,
-  "project": {
-    "name": "Demo",
-    "description": "A demo project",
-    "visibility": "private"
-  },
-  "rules": "# Demo - AI Rules\\n\\n## Project Overview\\n**Description**: A demo project\\n\\n## Technology Stack\\n\\n**Languages**: TypeScript\\n**Frameworks**: Next.js\\n\\n## Code Style & Conventions\\n\\n## Important Files\\n\\nRead these files to understand the project:\\n\\n- README.md\\n\\n## Boundaries & Permissions\\n\\n### ✅ ALWAYS DO\\n- Read any file in the project\\n- Modify files in src/ or lib/\\n- Run build, test, and lint commands\\n- Create test files\\n- Fix linting errors automatically\\n\\n### ❓ ASK FIRST\\n- Add new dependencies to package.json\\n- Modify configuration files at root level\\n- Create new modules or directories\\n- Refactor code structure significantly\\n\\n### 🚫 NEVER DO\\n- Modify .env files or secrets\\n- Delete critical files without backup\\n- Force push to git\\n- Expose sensitive information in logs\\n\\n## Project Commands\\n\\n- **Build**: \`npm run build\`\\n- **Test**: \`npm test\`\\n\\n## Project Context\\n\\n**Type**: Open Source Project\\n\\n- This is an open source project; community contributions are welcome.\\n- Follow existing conventions strictly and consider backward compatibility.\\n- Document everything so contributors can follow along.\\n- Be thorough but pragmatic.\\n\\n## Best Practices\\n\\n- **Write clean code**: Prioritize readability and maintainability\\n- **Handle errors**: Don't ignore errors, handle them appropriately\\n- **Security**: Review code for potential vulnerabilities\\n",
-  "behavior": [
-    "Always: Read any file in the project",
-    "Always: Modify files in src/ or lib/",
-    "Always: Run build, test, and lint commands",
-    "Always: Create test files",
-    "Always: Fix linting errors automatically",
-    "Never: Modify .env files or secrets",
-    "Never: Delete critical files without backup",
-    "Never: Force push to git",
-    "Never: Expose sensitive information in logs"
-  ],
-  "codeStyle": {
-    "naming": "language_default",
-    "errorHandling": "try_catch",
-    "logging": "",
-    "notes": ""
-  },
-  "techStack": {
-    "languages": [
-      "TypeScript"
-    ],
-    "frameworks": [
-      "Next.js"
-    ],
-    "databases": []
-  },
-  "commands": {
-    "build": "npm run build",
-    "test": "npm test",
-    "lint": "",
-    "dev": "",
-    "additional": []
-  },
-  "boundaries": {
-    "always": [
-      "Read any file in the project",
-      "Modify files in src/ or lib/",
-      "Run build, test, and lint commands",
-      "Create test files",
-      "Fix linting errors automatically"
-    ],
-    "ask": [
-      "Add new dependencies to package.json",
-      "Modify configuration files at root level",
-      "Create new modules or directories",
-      "Refactor code structure significantly"
-    ],
-    "never": [
-      "Modify .env files or secrets",
-      "Delete critical files without backup",
-      "Force push to git",
-      "Expose sensitive information in logs"
-    ]
-  },
-  "testing": {
-    "levels": [],
-    "frameworks": [],
-    "coverage": 80,
-    "notes": ""
-  },
-  "cicd": {
-    "platforms": [],
-    "deploymentTargets": [],
-    "containerRegistry": ""
-  },
-  "importantFiles": [
-    "README.md"
-  ],
-  "preferences": {
-    "conventionalCommits": false,
-    "semver": false,
-    "dependabot": false,
-    "autoUpdate": false
-  }
-}",
-}
-`;
-
 exports[`cli generator golden output > warp 1`] = `
 {
-  "WARP.md": "# Demo - Warp Instructions
+  "AGENTS.md": "# Demo - AI Agent Instructions
 
 ## Project Overview
 
@@ -3393,7 +3141,11 @@ Before making changes, read these files to understand the project:
 
 exports[`cli generator golden output > windsurf 1`] = `
 {
-  ".windsurfrules": "# Demo - Windsurf AI Rules
+  ".devin/rules/project.md": "---
+trigger: always_on
+---
+
+# Demo - AI Rules
 
 ## Project Overview
 
@@ -3470,6 +3222,299 @@ Always follow these guidelines when working on this project:
 - **Write clean code**: Prioritize readability and maintainability
 - **Handle errors properly**: Don't ignore errors, handle them appropriately
 - **Consider security**: Review code for potential security vulnerabilities
+
+## ⚠️ Security Notice
+
+> **Do not commit secrets to the repository or to the live app.**
+> Always use secure standards to transmit sensitive information.
+> Use environment variables, secret managers, or secure vaults for credentials.
+
+**🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.
+
+---
+
+*Generated by [LynxPrompt](https://lynxprompt.com)*",
+}
+`;
+
+exports[`cli generator golden output > windsurf with every answer 1`] = `
+{
+  ".devin/rules/project.md": "---
+trigger: always_on
+---
+
+# Demo - AI Rules
+
+## Before Starting Any Coding Task
+
+1. Check existing worktrees with \`git worktree list\` and create a new one for this task if needed
+2. Use the naming convention: \`git worktree add -b ai/[task-description] ../[repo-name]-ai-[task-description]\`
+3. Navigate to the worktree directory before making any changes
+4. Commit changes when the task is finished. Merge to main, and clean the worktree.
+
+## Project Overview
+
+**Description**: A demo project
+
+**Architecture Pattern**: Modular Monolith - organized into modules but deployed as one unit
+**Visibility**: Private repository
+**Development OS**: Linux
+
+### Repository
+- **Platform**: GitHub
+
+### Development Environment
+- Use standard Unix/Linux commands (bash, zsh)
+
+### Reference Materials
+- **Example Repository**: https://github.com/acme/example
+  Use this as a reference for coding patterns, conventions, and architecture decisions.
+- **External Documentation**: https://docs.acme.test
+  Refer to this for additional project context, architecture decisions, and team guidelines.
+
+## Technology Stack
+
+This project uses the following technologies. Please ensure all code follows the conventions and best practices for these:
+
+**Programming Languages**: TypeScript, Python
+**Frameworks & Libraries**: Next.js, Telethon
+**Database**: PostgreSQL
+
+- **Package manager**: pnpm. Use it for every install and script.
+- **ORM / database toolkit**: prisma
+
+**AI Flexibility**: For technologies not listed above, you may suggest and use what's best suited for the project based on codebase analysis.
+
+## Code Style & Conventions
+
+Follow these coding style guidelines when writing or modifying code:
+
+### Developer Profile
+- **Author**: Ada
+- **Developer Background**: data engineer — adapt responses to this domain expertise
+- **Experience Level**: Intermediate
+
+### Communication Style
+- Provide balanced explanations, not too verbose
+- Focus on important decisions, trade-offs, and non-obvious choices
+
+### Naming Conventions
+**Style**: Use camelCase for variables and functions (e.g., myVariable, getUserName)
+
+### Error Handling
+**Approach**: Use Result/Either types to represent success or failure (no exceptions for control flow)
+
+### Logging Conventions
+**Guidelines**: Structured Logging
+
+### Formatting & Documentation
+- **File length**: keep files under 400 lines; split larger ones
+- **Imports**: group imports: external packages, then internal modules, then relative paths
+- **Comment language**: write code comments in english
+- **Documentation comments**: TSDoc
+
+### Additional Style Notes
+Prefer pure functions.
+
+## AI Behavior Guidelines
+
+When assisting with this project, follow these specific rules:
+
+- Always run and test locally after making changes
+- Always check documentation (via MCP or project docs) before assuming knowledge about APIs or libraries
+- **Plan first** when a change spans several files
+- **Explanations**: clear, with enough context to follow the reasoning
+- **Accessibility**: follow WCAG; use semantic markup, labels, keyboard access and enough contrast
+- When stuck, **attempt creative workarounds** before asking for help
+
+## MCP Servers
+
+The developer has these MCP (Model Context Protocol) servers available. Use them when relevant:
+
+- github
+
+## Infrastructure
+
+- **Server access**: via SSH. SSH key in default location (~/.ssh/)
+- **Deployment**: Portainer (GitOps stacks)
+
+## Important Files to Read First
+
+Before making significant changes, read these files to understand the project context:
+
+- README.md - Project overview and setup instructions
+- docs/adr
+
+## Boundaries & Permissions
+
+These are explicit boundaries for AI actions on this project:
+
+### ✅ ALWAYS DO (no need to ask)
+- Read any file in the project
+- Run lint and format commands
+
+### ❓ ASK FIRST (get confirmation before doing)
+- Modify any source file
+- Add new dependencies
+- Create new files
+- Run test commands
+- Modify configuration files
+
+### 🚫 NEVER DO (strictly prohibited)
+- Delete any files
+- Modify .env or secret files
+- Push to git or make commits
+- Access external APIs or services
+
+## Project Commands
+
+Use these commands when working on this project:
+
+- **Build**: \`npm run build\`
+- **Test**: \`npm test\`
+- **Lint**: \`npm run lint\`
+- **Type check**: \`npm run typecheck\`
+
+**Other useful commands**:
+- \`npm ci\`
+
+## Testing Requirements
+
+When writing or modifying code, ensure adequate test coverage:
+
+**Testing Levels**:
+- Unit tests - test individual functions/methods in isolation
+- Smoke Tests
+
+**Testing Frameworks**: vitest
+**Coverage Target**: 85% minimum
+
+- **Test-driven development**: write a failing test first, then the code that makes it pass
+- **Mocking**: mock only external dependencies
+
+**Additional testing notes**:
+Mock the network.
+
+## Project Type Context
+
+This is a **Work / Professional Project**. Keep these guidelines in mind:
+
+- **STRICT MODE**: This is a work project. Follow procedures exactly as documented.
+- Do not deviate from established patterns or make assumptions.
+- Always ask for clarification rather than guessing.
+- Document all decisions and changes thoroughly.
+
+## Custom Instructions
+
+The project owner has provided these additional instructions:
+
+Ship small.
+
+## CI/CD & Infrastructure
+
+**CI/CD Platform**: GitHub Actions, Forgejo Actions
+**Deployment Targets**: Fly.io, Docker
+**Container Builds**: This project builds Docker/OCI container images
+**Container Registry**: GitHub Container Registry (ghcr.io)
+- **Published images**:
+  - \`acme/demo\`
+
+## Git Workflow
+
+- **Branching**: trunk-based: very short-lived branches merged into the trunk often
+- **Default branch**: \`main\`
+- Direct commits to \`main\` are fine for small fixes (typos, docs); everything else goes through a branch
+- **Version tags**: \`v1.2.3\`
+- **Changelog**: managed by Release Please
+
+## Best Practices
+
+Always follow these guidelines when working on this project:
+
+- **Write clean code**: Prioritize readability and maintainability
+- **Handle errors properly**: Don't ignore errors, handle them appropriately
+- **Consider security**: Review code for potential security vulnerabilities
+- **Conventional commits**: Use conventional commit messages (feat:, fix:, docs:, chore:, refactor:, test:, style:)
+- **Semantic versioning**: Follow semver (MAJOR.MINOR.PATCH) for version numbers
+- **Dependency updates**: Keep dependencies updated (Dependabot) configured)
+
+
+## Self-Improving Configuration
+**IMPORTANT**: This configuration file is set to self-improve.
+
+As you work on this project, track the user's coding patterns, preferences, and decisions.
+Periodically update this file to reflect what you learn about how the user works:
+- Note preferred code styles and patterns that emerge
+- Record decisions about architecture or tooling
+- Add rules for common issues or mistakes to avoid
+- Refine instructions based on user corrections
+
+Keep this file updated so future sessions start with better context.
+
+## Repository Files to Generate
+
+When requested or when missing, create these files following these guidelines:
+
+- This repository uses the **Apache 2.0** license. If the \`LICENSE\` file doesn't exist yet, please create it with copyright holder: Ada.
+
+## Custom File Templates
+
+Create these files with the exact content provided below. These are user-specified templates:
+
+### .editorconfig
+\`\`\`
+# EditorConfig is awesome: https://EditorConfig.org
+
+root = true
+
+[*]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.md]
+trim_trailing_whitespace = false
+
+[Makefile]
+indent_style = tab
+\`\`\`
+
+### .github/FUNDING.yml
+\`\`\`
+# These are supported funding model platforms
+
+github: [] # Replace with your GitHub username
+patreon: # Replace with your Patreon username
+open_collective: # Replace with your Open Collective username
+ko_fi: # Replace with your Ko-fi username
+custom: [] # Add custom funding links
+\`\`\`
+
+## 🔐 Security Configuration
+
+### Secrets Management
+
+- Environment Variables
+- Pass
+
+### Security Tooling
+
+- Dependabot (dependency updates)
+
+### Auth Providers
+
+- GitHub
+
+### Compliance
+
+- GDPR
+
+### Additional Security Notes
+
+Rotate keys yearly.
 
 ## ⚠️ Security Notice
 
@@ -3564,9 +3609,7 @@ Before making changes, read these files to understand the project:
 exports[`web generator golden output > aider 1`] = `
 [
   {
-    "content": "# Demo - Aider Conventions
-
-> Load these conventions in Aider with \`aider --read CONVENTIONS.md\`, or add \`read: CONVENTIONS.md\` to \`.aider.conf.yml\`.
+    "content": "# Demo - AI Agent Instructions
 
 ## Project Overview
 
@@ -3627,7 +3670,13 @@ When requested or when missing, create these files following these guidelines:
 > Use environment variables, secret managers, or secure vaults for credentials.
 
 **🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.",
-    "fileName": "CONVENTIONS.md",
+    "fileName": "AGENTS.md",
+  },
+  {
+    "content": "# Aider loads these files as read-only context. AGENTS.md holds the project rules.
+read: [AGENTS.md]
+",
+    "fileName": ".aider.conf.yml",
   },
 ]
 `;
@@ -3635,9 +3684,7 @@ When requested or when missing, create these files following these guidelines:
 exports[`web generator golden output > aider with every answer 1`] = `
 [
   {
-    "content": "# Demo - Aider Conventions
-
-> Load these conventions in Aider with \`aider --read CONVENTIONS.md\`, or add \`read: CONVENTIONS.md\` to \`.aider.conf.yml\`.
+    "content": "# Demo - AI Agent Instructions
 
 ## Before Starting Any Coding Task
 
@@ -3879,7 +3926,13 @@ Rotate keys yearly.
 > Use environment variables, secret managers, or secure vaults for credentials.
 
 **🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.",
-    "fileName": "CONVENTIONS.md",
+    "fileName": "AGENTS.md",
+  },
+  {
+    "content": "# Aider loads these files as read-only context. AGENTS.md holds the project rules.
+read: [AGENTS.md]
+",
+    "fileName": ".aider.conf.yml",
   },
 ]
 `;
@@ -3968,7 +4021,7 @@ When requested or when missing, create these files following these guidelines:
 exports[`web generator golden output > antigravity 1`] = `
 [
   {
-    "content": "# Demo - Gemini Instructions
+    "content": "# Demo - AI Agent Instructions
 
 ## Project Overview
 
@@ -4029,257 +4082,7 @@ When requested or when missing, create these files following these guidelines:
 > Use environment variables, secret managers, or secure vaults for credentials.
 
 **🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.",
-    "fileName": "GEMINI.md",
-  },
-]
-`;
-
-exports[`web generator golden output > antigravity with every answer 1`] = `
-[
-  {
-    "content": "# Demo - Gemini Instructions
-
-## Before Starting Any Coding Task
-
-1. Check existing worktrees with \`git worktree list\` and create a new one for this task if needed
-2. Use the naming convention: \`git worktree add -b ai/[task-description] ../[repo-name]-ai-[task-description]\`
-3. Navigate to the worktree directory before making any changes
-4. Commit changes when the task is finished. Merge to main, and clean the worktree.
-
-## Project Overview
-
-**Description**: A demo project
-
-**Architecture Pattern**: Hexagonal / Ports & Adapters - domain at center, adapters at edges
-**Visibility**: Public repository
-**Development OS**: macOS, Windows
-
-### Repository
-- **URL**: https://github.com/acme/demo
-- **Platform**: GitHub
-
-### Reference Materials
-- **Example Repository**: https://github.com/acme/example
-- **External Documentation**: https://docs.acme.test
-
-## Technology Stack
-
-### Languages
-- TypeScript
-- Python
-
-### Frameworks & Libraries
-- Next.js
-
-### Database
-- PostgreSQL
-
-### Tooling
-- **Package manager**: pnpm. Use it for every install and script.
-- **Runtime**: Node.js
-- **Monorepo tool**: Turborepo
-- **ORM / database toolkit**: prisma
-
-### AI Technology Selection
-For technologies beyond those listed, analyze the codebase and suggest appropriate solutions.
-
-## Development Guidelines
-
-### Communication Style
-- Be concise and direct
-- Developer background: backend developer — adapt responses to this domain expertise
-- Skill level: Expert
-
-### Workflow Rules
-- Always run and test locally after making changes
-- Always verify your work before returning: run tests, check builds, confirm changes work as expected
-- When you learn new project patterns or conventions, suggest updates to this configuration file
-- **Plan first** for complex, multi-step or risky changes
-- **Explanations**: concise, to the point
-- **Accessibility**: follow WCAG; use semantic markup, labels, keyboard access and enough contrast
-- **Performance**: keep an eye on load time, memory and needless work; measure before optimising
-- When stuck, **stop and ask** rather than attempting workarounds
-
-### MCP Servers
-
-The developer has these MCP (Model Context Protocol) servers available. Use them when relevant:
-
-- github
-- postgres
-
-### Infrastructure
-
-- **Server access**: via SSH. SSH key: \`~/.ssh/deploy\`
-- **Deployment**: Docker Compose (manual)
-
-### Important Files to Read First
-Before making changes, read these files to understand the project:
-- README.md
-- ARCHITECTURE.md
-- docs/adr
-
-### Project Context
-- **STRICT MODE**: This is a work project. Follow procedures exactly as documented.
-- Do not deviate from established patterns or make assumptions.
-- Always ask for clarification rather than guessing.
-- Document all decisions and changes thoroughly.
-
-### Commands
-- Build: \`npm run build\`
-- Test: \`npm test\`
-- Lint: \`npm run lint\`
-- Dev: \`npm run dev\`
-- **Type check**: \`npm run typecheck\`
-- **Format**: \`npm run format\`
-- **Pre-commit hooks**: \`npx lint-staged\`
-- **Clean**: \`rm -rf dist\`
-- \`npm run db:migrate\`
-
-### Code Style & Conventions
-- **Naming**: PascalCase for classes and types (e.g., MyClass, UserProfile)
-- **Error Handling**: Result / Either types (no exceptions for control flow)
-- **Logging**: Structured Logging
-- **File length**: keep files under 400 lines; split larger ones
-- **Imports**: group imports: external packages, then internal modules, then relative paths
-- **Comment language**: write code comments in english
-- **Documentation comments**: TSDoc
-- **Additional Notes**: Prefer pure functions.
-
-### Boundaries & Permissions
-
-**✅ ALWAYS do (no need to ask)**:
-- Run tests
-
-**❓ ASK first before doing**:
-- Add dependencies
-
-**🚫 NEVER do (strictly prohibited)**:
-- Push to main
-
-### Testing Requirements
-**Testing Levels**:
-- Unit tests (individual functions/methods)
-- End-to-end tests (complete user flows)
-- Smoke Tests
-**Frameworks**: vitest, playwright
-**Coverage Target**: 90% minimum
-**Notes**: Mock the network.
-- **Test-driven development**: write a failing test first, then the code that makes it pass
-- **Snapshot tests**: use snapshot tests for stable output such as rendered components
-- **Mocking**: mock collaborators so each unit is tested in isolation
-
-### CI/CD & Infrastructure
-- **CI/CD Platform**: GitHub Actions
-- **Deployment Targets**: Vercel, Kubernetes
-- **Container Builds**: Project builds Docker/OCI container images
-- **Container Registry**: GitHub Container Registry (ghcr.io)
-- **Published images**:
-  - \`acme/demo\`
-  - \`acme/demo-worker\`
-
-### Git Workflow
-- **Branching**: GitHub Flow: short-lived feature branches merged into the default branch through pull requests
-- **Default branch**: \`develop\`
-- Never commit directly to \`develop\`; work on a branch and open a pull request
-- Sign every commit (GPG or SSH)
-- **Version tags**: \`v1.2.3\`
-- **Changelog**: managed with Changesets
-
-## Best Practices
-
-- **Write clean code**: Prioritize readability and maintainability
-- **Handle errors properly**: Don't ignore errors, handle them appropriately
-- **Consider security**: Review code for potential security vulnerabilities
-- **Conventional commits**: Use conventional commit messages (feat:, fix:, docs:, chore:, refactor:, test:, style:)
-- **Semantic versioning**: Follow semver (MAJOR.MINOR.PATCH) for version numbers
-- **Dependency updates**: Keep dependencies updated (Dependabot) configured)
-
-## Custom Instructions
-
-The project owner has provided these additional instructions:
-
-Prefer small pull requests.
-
-## Self-Improving Configuration
-
-This file should evolve as we work together:
-1. Track coding patterns and preferences
-2. Note corrections made to suggestions
-3. Update periodically with learned preferences
-
-
-## Repository Files to Generate
-
-When requested or when missing, create these files following these guidelines:
-
-- **\`.editorconfig\`**: Generate with standard settings for consistent code formatting across editors (indent style, line endings, trim trailing whitespace).
-- **\`CODE_OF_CONDUCT.md\`**: Generate based on the Contributor Covenant or similar community standards document.
-- **\`SECURITY.md\`**: Generate with security policy, supported versions, and instructions for reporting vulnerabilities privately.
-- **\`.gitignore\`**: Generate for TypeScript, Python, Next.js. Include IDE files, build artifacts, dependencies, and environment files.
-- **\`.dockerignore\`**: Generate for TypeScript, Python, Next.js. Exclude .git, dependencies, .env files, build artifacts, and documentation to keep images small.
-- **\`ROADMAP.md\`**: Create and maintain with planned features, milestones, and future ideas. Organize by timeline (Q1, Q2, etc.) or priority. Keep updated as the project evolves.
-- This repository uses the **MIT** license. If the \`LICENSE\` file doesn't exist yet, please create it with copyright holder: Test Author. Additional licensing notes: Docs are CC-BY.
-
-## Custom File Templates
-
-Create these files with the exact content provided below. These are user-specified templates:
-
-### CONTRIBUTING.md
-\`\`\`markdown
-# Contributing
-Open an issue first.
-\`\`\`
-
-### .github/FUNDING.yml
-\`\`\`yaml
-github: [acme]
-\`\`\`
-
-## 🔐 Security Configuration
-
-### Auth Providers
-
-- GitHub
-- Google
-
-### Secrets Management
-
-- Environment Variables
-- HashiCorp Vault
-
-### Security Tooling
-
-- Dependabot
-- CodeQL
-
-### Authentication
-
-- OAuth 2.0
-- JWT
-
-### Data Handling
-
-- Encryption at Rest
-
-### Compliance
-
-- GDPR
-
-### Analytics & Telemetry
-
-- Plausible
-
-### Notes
-Rotate keys yearly.
-
-## ⚠️ Security Notice
-
-> **Do not commit secrets to the repository or to the live app.**
-> Always use secure standards to transmit sensitive information.
-> Use environment variables, secret managers, or secure vaults for credentials.
-
-**🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.",
-    "fileName": "GEMINI.md",
+    "fileName": "AGENTS.md",
   },
 ]
 `;
@@ -4857,375 +4660,76 @@ When requested or when missing, create these files following these guidelines:
 ---
 
 *Generated by [LynxPrompt](https://lynxprompt.com)*",
-    "fileName": ".clinerules",
+    "fileName": ".clinerules/project.md",
   },
 ]
 `;
 
-exports[`web generator golden output > codegpt 1`] = `
+exports[`web generator golden output > codex 1`] = `
 [
   {
-    "content": "{
-  "$schema": "https://codegpt.co/config-schema.json",
-  "version": "1.0",
-  "project": {
-    "name": "Demo",
-    "description": "A demo project"
-  },
-  "assistant": {
-    "systemPrompt": "# Demo - AI Assistant Instructions\\n\\n## Project Overview\\n**Description**: A demo project\\n\\n## Technology Stack\\n**Languages**: TypeScript, Python\\n**Frameworks**: Next.js\\n**Databases**: PostgreSQL\\n\\n## AI Guidelines\\n- Always run and test locally after making changes\\n\\n## Project Commands\\n- **Build**: \`npm run build\`\\n- **Test**: \`npm test\`\\n\\n## CI/CD & Infrastructure\\n**CI/CD**: GitHub Actions\\n\\n## Best Practices\\n- Follow existing patterns in the codebase\\n- Write clean, readable, maintainable code\\n- Handle errors appropriately\\n- Consider security implications\\n\\n## Custom Instructions\\nPrefer small pull requests.\\n",
-    "codeStyle": "language_default",
-    "errorHandling": "try_catch"
-  },
-  "techStack": {
-    "languages": [
-      "TypeScript",
-      "Python"
-    ],
-    "frameworks": [
-      "Next.js"
-    ],
-    "databases": [
-      "PostgreSQL"
-    ]
-  },
-  "commands": {
-    "build": "npm run build",
-    "test": "npm test",
-    "lint": "",
-    "dev": ""
-  },
-  "preferences": {
-    "conventionalCommits": false,
-    "semver": false,
-    "dependabot": false
-  }
-}",
-    "fileName": ".codegpt/config.json",
-  },
-]
-`;
+    "content": "# Demo - AI Agent Instructions
 
-exports[`web generator golden output > codegpt with every answer 1`] = `
-[
-  {
-    "content": "{
-  "$schema": "https://codegpt.co/config-schema.json",
-  "version": "1.0",
-  "project": {
-    "name": "Demo",
-    "description": "A demo project",
-    "repository": "https://github.com/acme/demo",
-    "architecture": "hexagonal"
-  },
-  "assistant": {
-    "systemPrompt": "# Demo - AI Assistant Instructions\\n\\n## Project Overview\\n**Description**: A demo project\\n**Architecture**: Hexagonal / Ports & Adapters\\n**Repository**: https://github.com/acme/demo\\n\\n## Technology Stack\\n**Languages**: TypeScript, Python\\n**Frameworks**: Next.js\\n**Databases**: PostgreSQL\\n*For unlisted technologies, suggest what's best based on codebase analysis.*\\n\\n## Communication Style\\n- Be concise and direct\\n- Assume expertise\\n\\n## Code Style & Conventions\\n- **Naming**: PascalCase for classes/types\\n- **Error Handling**: Result/Either types\\n- **Logging**: Structured Logging\\n- **Notes**: Prefer pure functions.\\n\\n## AI Guidelines\\n- Always run and test locally after making changes\\n- Always verify your work before returning: run tests, check builds, confirm changes work as expected\\n- When you learn new project patterns or conventions, suggest updates to this configuration file\\n\\n## Boundaries & Permissions\\n**✅ ALWAYS DO**:\\n- Run tests\\n**❓ ASK FIRST**:\\n- Add dependencies\\n**🚫 NEVER DO**:\\n- Push to main\\n\\n## Project Commands\\n- **Build**: \`npm run build\`\\n- **Test**: \`npm test\`\\n- **Lint**: \`npm run lint\`\\n- **Dev**: \`npm run dev\`\\n\\n## Testing Requirements\\n**Levels**: Unit tests, E2E tests, smoke\\n**Frameworks**: vitest, playwright\\n**Coverage**: 90%\\n\\n## CI/CD & Infrastructure\\n**CI/CD**: GitHub Actions\\n**Deploy**: Vercel, Kubernetes\\n\\n## Project Context\\n- **STRICT MODE**: This is a work project. Follow procedures exactly as documented.\\n- Do not deviate from established patterns or make assumptions.\\n- Always ask for clarification rather than guessing.\\n- Document all decisions and changes thoroughly.\\n\\n## Best Practices\\n- Follow existing patterns in the codebase\\n- Write clean, readable, maintainable code\\n- Handle errors appropriately\\n- Consider security implications\\n- Use conventional commits (feat:, fix:, docs:)\\n- Follow semantic versioning\\n\\n## Custom Instructions\\nPrefer small pull requests.\\n\\n## Important Files\\nRead these files for context:\\n- README.md\\n- architecture_md",
-    "codeStyle": "PascalCase",
-    "errorHandling": "result_types"
-  },
-  "techStack": {
-    "languages": [
-      "TypeScript",
-      "Python"
-    ],
-    "frameworks": [
-      "Next.js"
-    ],
-    "databases": [
-      "PostgreSQL"
-    ]
-  },
-  "commands": {
-    "build": "npm run build",
-    "test": "npm test",
-    "lint": "npm run lint",
-    "dev": "npm run dev"
-  },
-  "testing": {
-    "levels": [
-      "unit",
-      "e2e",
-      "smoke"
-    ],
-    "frameworks": [
-      "vitest",
-      "playwright"
-    ],
-    "coverage": 90
-  },
-  "preferences": {
-    "conventionalCommits": true,
-    "semver": true,
-    "dependabot": true
-  },
-  "importantFiles": [
-    "README.md",
-    "architecture_md"
-  ]
-}",
-    "fileName": ".codegpt/config.json",
-  },
-]
-`;
+## Project Overview
 
-exports[`web generator golden output > cody 1`] = `
-[
-  {
-    "content": "{
-  "$schema": "https://sourcegraph.com/docs/cody/config-schema",
-  "chat": {
-    "preInstruction": "# Demo - Cody Instructions\\n\\n## Project Overview\\n**Description**: A demo project\\n\\n## Technology Stack\\n**Languages**: TypeScript, Python\\n**Frameworks**: Next.js\\n**Databases**: PostgreSQL\\n\\n## AI Guidelines\\n- Always run and test locally after making changes\\n\\n## Commands\\n- Build: \`npm run build\`\\n- Test: \`npm test\`\\n\\n## Best Practices\\n- Follow existing codebase patterns\\n- Write clean, maintainable code\\n- Handle errors appropriately\\n- Consider security implications\\n\\n## Custom Instructions\\nPrefer small pull requests.\\n"
-  },
-  "autocomplete": {
-    "enabled": true,
-    "advanced": {
-      "provider": "default"
-    }
-  },
-  "codeActions": {
-    "enabled": true
-  },
-  "commands": {
-    "explain": "Explain this code thoroughly",
-    "test": "Generate tests using project conventions",
-    "fix": "Fix this code following project conventions",
-    "doc": "Add comprehensive documentation",
-    "smell": "Identify code smells and suggest improvements"
-  }
-}",
-    "fileName": ".cody/config.json",
-  },
-]
-`;
+**Description**: A demo project
 
-exports[`web generator golden output > cody with every answer 1`] = `
-[
-  {
-    "content": "{
-  "$schema": "https://sourcegraph.com/docs/cody/config-schema",
-  "chat": {
-    "preInstruction": "# Demo - Cody Instructions\\n\\n## Project Overview\\n**Description**: A demo project\\n**Architecture**: Hexagonal / Ports & Adapters\\n**Repository**: https://github.com/acme/demo\\n\\n## Technology Stack\\n**Languages**: TypeScript, Python\\n**Frameworks**: Next.js\\n**Databases**: PostgreSQL\\n*For unlisted technologies, suggest what's best based on codebase analysis.*\\n\\n## Communication Style\\n- Be concise and direct\\n- Assume expertise\\n\\n## Code Style & Conventions\\n- **Naming**: PascalCase\\n- **Error Handling**: Result types\\n- **Logging**: Structured Logging\\n- **Notes**: Prefer pure functions.\\n\\n## AI Guidelines\\n- Always run and test locally after making changes\\n- Always verify your work before returning: run tests, check builds, confirm changes work as expected\\n- When you learn new project patterns or conventions, suggest updates to this configuration file\\n\\n## Boundaries\\n✅ ALWAYS: Run tests\\n❓ ASK FIRST: Add dependencies\\n🚫 NEVER: Push to main\\n\\n## Commands\\n- Build: \`npm run build\`\\n- Test: \`npm test\`\\n- Lint: \`npm run lint\`\\n- Dev: \`npm run dev\`\\n\\n## Testing\\nRequired: unit, e2e, smoke tests\\nFrameworks: vitest, playwright\\nCoverage: 90%\\n\\n## Project Context\\n- **STRICT MODE**: This is a work project. Follow procedures exactly as documented.\\n- Do not deviate from established patterns or make assumptions.\\n- Always ask for clarification rather than guessing.\\n- Document all decisions and changes thoroughly.\\n\\n## Best Practices\\n- Follow existing codebase patterns\\n- Write clean, maintainable code\\n- Handle errors appropriately\\n- Consider security implications\\n- Use conventional commits\\n\\n## Custom Instructions\\nPrefer small pull requests.\\n"
-  },
-  "autocomplete": {
-    "enabled": true,
-    "advanced": {
-      "provider": "default"
-    }
-  },
-  "codeActions": {
-    "enabled": true
-  },
-  "commands": {
-    "explain": "Explain this code thoroughly",
-    "test": "Generate tests using project conventions with vitest",
-    "fix": "Fix this code following project conventions",
-    "doc": "Add comprehensive documentation",
-    "smell": "Identify code smells and suggest improvements"
-  },
-  "contextFilters": {
-    "include": [
-      {
-        "pattern": "**/README.md"
-      },
-      {
-        "pattern": "**/ARCHITECTURE.md"
-      }
-    ]
-  }
-}",
-    "fileName": ".cody/config.json",
-  },
-]
-`;
+**Visibility**: Public repository
 
-exports[`web generator golden output > continue 1`] = `
-[
-  {
-    "content": "{
-  "models": [],
-  "customCommands": [
-    {
-      "name": "build",
-      "description": "Build the project",
-      "prompt": "Run the build command: \`npm run build\`"
-    },
-    {
-      "name": "test",
-      "description": "Run tests",
-      "prompt": "Run the test command: \`npm test\`"
-    },
-    {
-      "name": "explain",
-      "description": "Explain the selected code",
-      "prompt": "Explain this code in detail, including what it does, how it works, and any important patterns or concepts."
-    },
-    {
-      "name": "refactor",
-      "description": "Refactor the selected code",
-      "prompt": "Refactor this code to improve its quality while maintaining functionality. Follow the project's code style conventions."
-    },
-    {
-      "name": "review",
-      "description": "Review code for issues",
-      "prompt": "Review this code for potential bugs, security issues, performance problems, and style violations. Suggest improvements."
-    }
-  ],
-  "systemMessage": "# Demo - AI Assistant Instructions\\n\\n## Project Overview\\n**Description**: A demo project\\n\\n## Technology Stack\\n**Languages**: TypeScript, Python\\n**Frameworks**: Next.js\\n**Databases**: PostgreSQL\\n\\n## AI Behavior Guidelines\\n- Always run and test locally after making changes\\n\\n## Best Practices\\n- Follow existing patterns in the codebase\\n- Write clean, readable, maintainable code\\n- Handle errors properly\\n- Review code for security vulnerabilities\\n\\n## Custom Instructions\\nPrefer small pull requests.\\n",
-  "contextProviders": [
-    {
-      "name": "code",
-      "params": {}
-    },
-    {
-      "name": "docs",
-      "params": {}
-    },
-    {
-      "name": "diff",
-      "params": {}
-    },
-    {
-      "name": "terminal",
-      "params": {}
-    },
-    {
-      "name": "problems",
-      "params": {}
-    },
-    {
-      "name": "folder",
-      "params": {}
-    },
-    {
-      "name": "codebase",
-      "params": {}
-    }
-  ],
-  "slashCommands": [
-    {
-      "name": "edit",
-      "description": "Edit selected code"
-    },
-    {
-      "name": "comment",
-      "description": "Add comments to code"
-    },
-    {
-      "name": "share",
-      "description": "Export conversation"
-    },
-    {
-      "name": "cmd",
-      "description": "Generate terminal command"
-    }
-  ],
-  "tabAutocompleteOptions": {
-    "useCopyBuffer": true,
-    "maxPromptTokens": 1024
-  }
-}",
-    "fileName": ".continue/config.json",
-  },
-]
-`;
+## Technology Stack
 
-exports[`web generator golden output > continue with every answer 1`] = `
-[
-  {
-    "content": "{
-  "models": [],
-  "customCommands": [
-    {
-      "name": "build",
-      "description": "Build the project",
-      "prompt": "Run the build command: \`npm run build\`"
-    },
-    {
-      "name": "test",
-      "description": "Run tests",
-      "prompt": "Run the test command: \`npm test\`"
-    },
-    {
-      "name": "lint",
-      "description": "Lint the code",
-      "prompt": "Run the lint command: \`npm run lint\`"
-    },
-    {
-      "name": "dev",
-      "description": "Start development server",
-      "prompt": "Run the dev command: \`npm run dev\`"
-    },
-    {
-      "name": "explain",
-      "description": "Explain the selected code",
-      "prompt": "Explain this code in detail, including what it does, how it works, and any important patterns or concepts."
-    },
-    {
-      "name": "refactor",
-      "description": "Refactor the selected code",
-      "prompt": "Refactor this code to improve its quality while maintaining functionality. Follow the project's code style conventions."
-    },
-    {
-      "name": "review",
-      "description": "Review code for issues",
-      "prompt": "Review this code for potential bugs, security issues, performance problems, and style violations. Suggest improvements."
-    }
-  ],
-  "systemMessage": "# Demo - AI Assistant Instructions\\n\\n## Project Overview\\n**Description**: A demo project\\n**Architecture**: Hexagonal / Ports & Adapters\\n\\n## Technology Stack\\n**Languages**: TypeScript, Python\\n**Frameworks**: Next.js\\n**Databases**: PostgreSQL\\n*Note: For unlisted technologies, suggest what's best suited based on codebase analysis.*\\n\\n## Communication Style\\n- Be concise and direct\\n- Assume expertise, minimal hand-holding needed\\n- Focus on implementation details\\n\\n## Code Style & Conventions\\n- **Naming**: PascalCase for classes/types\\n- **Error Handling**: Result/Either types\\n- **Logging**: Structured Logging\\n- **Notes**: Prefer pure functions.\\n\\n## AI Behavior Guidelines\\n- Always run and test locally after making changes\\n- Always verify your work before returning: run tests, check builds, confirm changes work as expected\\n- When you learn new project patterns or conventions, suggest updates to this configuration file\\n\\n## Boundaries & Permissions\\n**✅ ALWAYS DO**:\\n- Run tests\\n**❓ ASK FIRST**:\\n- Add dependencies\\n**🚫 NEVER DO**:\\n- Push to main\\n\\n## Testing Requirements\\n**Levels**: Unit tests, E2E tests, smoke\\n**Frameworks**: vitest, playwright\\n**Coverage**: 90% minimum\\n\\n## Project Context\\n- **STRICT MODE**: This is a work project. Follow procedures exactly as documented.\\n- Do not deviate from established patterns or make assumptions.\\n- Always ask for clarification rather than guessing.\\n- Document all decisions and changes thoroughly.\\n\\n## Best Practices\\n- Follow existing patterns in the codebase\\n- Write clean, readable, maintainable code\\n- Handle errors properly\\n- Review code for security vulnerabilities\\n- Use conventional commits (feat:, fix:, docs:, chore:)\\n\\n## Custom Instructions\\nPrefer small pull requests.\\n",
-  "contextProviders": [
-    {
-      "name": "code",
-      "params": {}
-    },
-    {
-      "name": "docs",
-      "params": {}
-    },
-    {
-      "name": "diff",
-      "params": {}
-    },
-    {
-      "name": "terminal",
-      "params": {}
-    },
-    {
-      "name": "problems",
-      "params": {}
-    },
-    {
-      "name": "folder",
-      "params": {}
-    },
-    {
-      "name": "codebase",
-      "params": {}
-    }
-  ],
-  "slashCommands": [
-    {
-      "name": "edit",
-      "description": "Edit selected code"
-    },
-    {
-      "name": "comment",
-      "description": "Add comments to code"
-    },
-    {
-      "name": "share",
-      "description": "Export conversation"
-    },
-    {
-      "name": "cmd",
-      "description": "Generate terminal command"
-    }
-  ],
-  "tabAutocompleteOptions": {
-    "useCopyBuffer": true,
-    "maxPromptTokens": 1024
-  }
-}",
-    "fileName": ".continue/config.json",
+### Languages
+- TypeScript
+- Python
+
+### Frameworks & Libraries
+- Next.js
+
+### Database
+- PostgreSQL
+
+## Development Guidelines
+
+### Workflow Rules
+- Always run and test locally after making changes
+
+### Commands
+- Build: \`npm run build\`
+- Test: \`npm test\`
+
+### CI/CD & Infrastructure
+- **CI/CD Platform**: GitHub Actions
+
+### Git Workflow
+- Never commit directly to \`main\`; work on a branch and open a pull request
+
+## Best Practices
+
+- **Write clean code**: Prioritize readability and maintainability
+- **Handle errors properly**: Don't ignore errors, handle them appropriately
+- **Consider security**: Review code for potential security vulnerabilities
+
+## Custom Instructions
+
+The project owner has provided these additional instructions:
+
+Prefer small pull requests.
+
+
+## Repository Files to Generate
+
+When requested or when missing, create these files following these guidelines:
+
+- This repository uses the **MIT** license. If the \`LICENSE\` file doesn't exist yet, please create it with copyright holder: Tester.
+
+## ⚠️ Security Notice
+
+> **Do not commit secrets to the repository or to the live app.**
+> Always use secure standards to transmit sensitive information.
+> Use environment variables, secret managers, or secure vaults for credentials.
+
+**🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.",
+    "fileName": "AGENTS.md",
   },
 ]
 `;
@@ -5605,6 +5109,256 @@ Prefer small pull requests.
 When requested or when missing, create these files following these guidelines:
 
 - This repository uses the **MIT** license. If the \`LICENSE\` file doesn't exist yet, please create it with copyright holder: Tester.
+
+## ⚠️ Security Notice
+
+> **Do not commit secrets to the repository or to the live app.**
+> Always use secure standards to transmit sensitive information.
+> Use environment variables, secret managers, or secure vaults for credentials.
+
+**🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.",
+    "fileName": "CRUSH.md",
+  },
+]
+`;
+
+exports[`web generator golden output > crush with every answer 1`] = `
+[
+  {
+    "content": "# Demo - Crush Instructions
+
+## Before Starting Any Coding Task
+
+1. Check existing worktrees with \`git worktree list\` and create a new one for this task if needed
+2. Use the naming convention: \`git worktree add -b ai/[task-description] ../[repo-name]-ai-[task-description]\`
+3. Navigate to the worktree directory before making any changes
+4. Commit changes when the task is finished. Merge to main, and clean the worktree.
+
+## Project Overview
+
+**Description**: A demo project
+
+**Architecture Pattern**: Hexagonal / Ports & Adapters - domain at center, adapters at edges
+**Visibility**: Public repository
+**Development OS**: macOS, Windows
+
+### Repository
+- **URL**: https://github.com/acme/demo
+- **Platform**: GitHub
+
+### Reference Materials
+- **Example Repository**: https://github.com/acme/example
+- **External Documentation**: https://docs.acme.test
+
+## Technology Stack
+
+### Languages
+- TypeScript
+- Python
+
+### Frameworks & Libraries
+- Next.js
+
+### Database
+- PostgreSQL
+
+### Tooling
+- **Package manager**: pnpm. Use it for every install and script.
+- **Runtime**: Node.js
+- **Monorepo tool**: Turborepo
+- **ORM / database toolkit**: prisma
+
+### AI Technology Selection
+For technologies beyond those listed, analyze the codebase and suggest appropriate solutions.
+
+## Development Guidelines
+
+### Communication Style
+- Be concise and direct
+- Developer background: backend developer — adapt responses to this domain expertise
+- Skill level: Expert
+
+### Workflow Rules
+- Always run and test locally after making changes
+- Always verify your work before returning: run tests, check builds, confirm changes work as expected
+- When you learn new project patterns or conventions, suggest updates to this configuration file
+- **Plan first** for complex, multi-step or risky changes
+- **Explanations**: concise, to the point
+- **Accessibility**: follow WCAG; use semantic markup, labels, keyboard access and enough contrast
+- **Performance**: keep an eye on load time, memory and needless work; measure before optimising
+- When stuck, **stop and ask** rather than attempting workarounds
+
+### MCP Servers
+
+The developer has these MCP (Model Context Protocol) servers available. Use them when relevant:
+
+- github
+- postgres
+
+### Infrastructure
+
+- **Server access**: via SSH. SSH key: \`~/.ssh/deploy\`
+- **Deployment**: Docker Compose (manual)
+
+### Important Files to Read First
+Before making changes, read these files to understand the project:
+- README.md
+- ARCHITECTURE.md
+- docs/adr
+
+### Project Context
+- **STRICT MODE**: This is a work project. Follow procedures exactly as documented.
+- Do not deviate from established patterns or make assumptions.
+- Always ask for clarification rather than guessing.
+- Document all decisions and changes thoroughly.
+
+### Commands
+- Build: \`npm run build\`
+- Test: \`npm test\`
+- Lint: \`npm run lint\`
+- Dev: \`npm run dev\`
+- **Type check**: \`npm run typecheck\`
+- **Format**: \`npm run format\`
+- **Pre-commit hooks**: \`npx lint-staged\`
+- **Clean**: \`rm -rf dist\`
+- \`npm run db:migrate\`
+
+### Code Style & Conventions
+- **Naming**: PascalCase for classes and types (e.g., MyClass, UserProfile)
+- **Error Handling**: Result / Either types (no exceptions for control flow)
+- **Logging**: Structured Logging
+- **File length**: keep files under 400 lines; split larger ones
+- **Imports**: group imports: external packages, then internal modules, then relative paths
+- **Comment language**: write code comments in english
+- **Documentation comments**: TSDoc
+- **Additional Notes**: Prefer pure functions.
+
+### Boundaries & Permissions
+
+**✅ ALWAYS do (no need to ask)**:
+- Run tests
+
+**❓ ASK first before doing**:
+- Add dependencies
+
+**🚫 NEVER do (strictly prohibited)**:
+- Push to main
+
+### Testing Requirements
+**Testing Levels**:
+- Unit tests (individual functions/methods)
+- End-to-end tests (complete user flows)
+- Smoke Tests
+**Frameworks**: vitest, playwright
+**Coverage Target**: 90% minimum
+**Notes**: Mock the network.
+- **Test-driven development**: write a failing test first, then the code that makes it pass
+- **Snapshot tests**: use snapshot tests for stable output such as rendered components
+- **Mocking**: mock collaborators so each unit is tested in isolation
+
+### CI/CD & Infrastructure
+- **CI/CD Platform**: GitHub Actions
+- **Deployment Targets**: Vercel, Kubernetes
+- **Container Builds**: Project builds Docker/OCI container images
+- **Container Registry**: GitHub Container Registry (ghcr.io)
+- **Published images**:
+  - \`acme/demo\`
+  - \`acme/demo-worker\`
+
+### Git Workflow
+- **Branching**: GitHub Flow: short-lived feature branches merged into the default branch through pull requests
+- **Default branch**: \`develop\`
+- Never commit directly to \`develop\`; work on a branch and open a pull request
+- Sign every commit (GPG or SSH)
+- **Version tags**: \`v1.2.3\`
+- **Changelog**: managed with Changesets
+
+## Best Practices
+
+- **Write clean code**: Prioritize readability and maintainability
+- **Handle errors properly**: Don't ignore errors, handle them appropriately
+- **Consider security**: Review code for potential security vulnerabilities
+- **Conventional commits**: Use conventional commit messages (feat:, fix:, docs:, chore:, refactor:, test:, style:)
+- **Semantic versioning**: Follow semver (MAJOR.MINOR.PATCH) for version numbers
+- **Dependency updates**: Keep dependencies updated (Dependabot) configured)
+
+## Custom Instructions
+
+The project owner has provided these additional instructions:
+
+Prefer small pull requests.
+
+## Self-Improving Configuration
+
+This file should evolve as we work together:
+1. Track coding patterns and preferences
+2. Note corrections made to suggestions
+3. Update periodically with learned preferences
+
+
+## Repository Files to Generate
+
+When requested or when missing, create these files following these guidelines:
+
+- **\`.editorconfig\`**: Generate with standard settings for consistent code formatting across editors (indent style, line endings, trim trailing whitespace).
+- **\`CODE_OF_CONDUCT.md\`**: Generate based on the Contributor Covenant or similar community standards document.
+- **\`SECURITY.md\`**: Generate with security policy, supported versions, and instructions for reporting vulnerabilities privately.
+- **\`.gitignore\`**: Generate for TypeScript, Python, Next.js. Include IDE files, build artifacts, dependencies, and environment files.
+- **\`.dockerignore\`**: Generate for TypeScript, Python, Next.js. Exclude .git, dependencies, .env files, build artifacts, and documentation to keep images small.
+- **\`ROADMAP.md\`**: Create and maintain with planned features, milestones, and future ideas. Organize by timeline (Q1, Q2, etc.) or priority. Keep updated as the project evolves.
+- This repository uses the **MIT** license. If the \`LICENSE\` file doesn't exist yet, please create it with copyright holder: Test Author. Additional licensing notes: Docs are CC-BY.
+
+## Custom File Templates
+
+Create these files with the exact content provided below. These are user-specified templates:
+
+### CONTRIBUTING.md
+\`\`\`markdown
+# Contributing
+Open an issue first.
+\`\`\`
+
+### .github/FUNDING.yml
+\`\`\`yaml
+github: [acme]
+\`\`\`
+
+## 🔐 Security Configuration
+
+### Auth Providers
+
+- GitHub
+- Google
+
+### Secrets Management
+
+- Environment Variables
+- HashiCorp Vault
+
+### Security Tooling
+
+- Dependabot
+- CodeQL
+
+### Authentication
+
+- OAuth 2.0
+- JWT
+
+### Data Handling
+
+- Encryption at Rest
+
+### Compliance
+
+- GDPR
+
+### Analytics & Telemetry
+
+- Plausible
+
+### Notes
+Rotate keys yearly.
 
 ## ⚠️ Security Notice
 
@@ -6137,91 +5891,6 @@ When requested or when missing, create these files following these guidelines:
 ]
 `;
 
-exports[`web generator golden output > devin 1`] = `
-[
-  {
-    "content": "---
-trigger: always_on
----
-
-# Demo - AI Rules
-
-## Project Overview
-
-**Description**: A demo project
-
-**Visibility**: Public repository
-
-## Technology Stack
-
-This project uses the following technologies. Please ensure all code follows the conventions and best practices for these:
-
-**Programming Languages**: TypeScript, Python
-**Frameworks & Libraries**: Next.js
-**Database**: PostgreSQL
-
-## Code Style & Conventions
-
-Follow these coding style guidelines when writing or modifying code:
-
-## AI Behavior Guidelines
-
-When assisting with this project, follow these specific rules:
-
-- Always run and test locally after making changes
-
-## Project Commands
-
-Use these commands when working on this project:
-
-- **Build**: \`npm run build\`
-- **Test**: \`npm test\`
-
-## Custom Instructions
-
-The project owner has provided these additional instructions:
-
-Prefer small pull requests.
-
-## CI/CD & Infrastructure
-
-**CI/CD Platform**: GitHub Actions
-
-## Git Workflow
-
-- Never commit directly to \`main\`; work on a branch and open a pull request
-
-## Best Practices
-
-Always follow these guidelines when working on this project:
-
-- **Write clean code**: Prioritize readability and maintainability
-- **Handle errors properly**: Don't ignore errors, handle them appropriately
-- **Consider security**: Review code for potential security vulnerabilities
-
-
-## Repository Files to Generate
-
-When requested or when missing, create these files following these guidelines:
-
-- This repository uses the **MIT** license. If the \`LICENSE\` file doesn't exist yet, please create it with copyright holder: Tester.
-
-## ⚠️ Security Notice
-
-> **Do not commit secrets to the repository or to the live app.**
-> Always use secure standards to transmit sensitive information.
-> Use environment variables, secret managers, or secure vaults for credentials.
-
-**🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.
-
----
-
-*Generated by [LynxPrompt](https://lynxprompt.com)*",
-    "fileName": ".devin/rules/project.md",
-  },
-]
-`;
-
 exports[`web generator golden output > firebase 1`] = `
 [
   {
@@ -6458,41 +6127,165 @@ When requested or when missing, create these files following these guidelines:
 ]
 `;
 
-exports[`web generator golden output > goose 1`] = `
+exports[`web generator golden output > gemini-cli with every answer 1`] = `
 [
   {
-    "content": "# Demo - AI Rules
+    "content": "# Demo - Gemini Instructions
+
+## Before Starting Any Coding Task
+
+1. Check existing worktrees with \`git worktree list\` and create a new one for this task if needed
+2. Use the naming convention: \`git worktree add -b ai/[task-description] ../[repo-name]-ai-[task-description]\`
+3. Navigate to the worktree directory before making any changes
+4. Commit changes when the task is finished. Merge to main, and clean the worktree.
 
 ## Project Overview
 
 **Description**: A demo project
 
+**Architecture Pattern**: Hexagonal / Ports & Adapters - domain at center, adapters at edges
 **Visibility**: Public repository
+**Development OS**: macOS, Windows
+
+### Repository
+- **URL**: https://github.com/acme/demo
+- **Platform**: GitHub
+
+### Reference Materials
+- **Example Repository**: https://github.com/acme/example
+- **External Documentation**: https://docs.acme.test
 
 ## Technology Stack
 
-This project uses the following technologies. Please ensure all code follows the conventions and best practices for these:
+### Languages
+- TypeScript
+- Python
 
-**Programming Languages**: TypeScript, Python
-**Frameworks & Libraries**: Next.js
-**Database**: PostgreSQL
+### Frameworks & Libraries
+- Next.js
 
-## Code Style & Conventions
+### Database
+- PostgreSQL
 
-Follow these coding style guidelines when writing or modifying code:
+### Tooling
+- **Package manager**: pnpm. Use it for every install and script.
+- **Runtime**: Node.js
+- **Monorepo tool**: Turborepo
+- **ORM / database toolkit**: prisma
 
-## AI Behavior Guidelines
+### AI Technology Selection
+For technologies beyond those listed, analyze the codebase and suggest appropriate solutions.
 
-When assisting with this project, follow these specific rules:
+## Development Guidelines
 
+### Communication Style
+- Be concise and direct
+- Developer background: backend developer — adapt responses to this domain expertise
+- Skill level: Expert
+
+### Workflow Rules
 - Always run and test locally after making changes
+- Always verify your work before returning: run tests, check builds, confirm changes work as expected
+- When you learn new project patterns or conventions, suggest updates to this configuration file
+- **Plan first** for complex, multi-step or risky changes
+- **Explanations**: concise, to the point
+- **Accessibility**: follow WCAG; use semantic markup, labels, keyboard access and enough contrast
+- **Performance**: keep an eye on load time, memory and needless work; measure before optimising
+- When stuck, **stop and ask** rather than attempting workarounds
 
-## Project Commands
+### MCP Servers
 
-Use these commands when working on this project:
+The developer has these MCP (Model Context Protocol) servers available. Use them when relevant:
 
-- **Build**: \`npm run build\`
-- **Test**: \`npm test\`
+- github
+- postgres
+
+### Infrastructure
+
+- **Server access**: via SSH. SSH key: \`~/.ssh/deploy\`
+- **Deployment**: Docker Compose (manual)
+
+### Important Files to Read First
+Before making changes, read these files to understand the project:
+- README.md
+- ARCHITECTURE.md
+- docs/adr
+
+### Project Context
+- **STRICT MODE**: This is a work project. Follow procedures exactly as documented.
+- Do not deviate from established patterns or make assumptions.
+- Always ask for clarification rather than guessing.
+- Document all decisions and changes thoroughly.
+
+### Commands
+- Build: \`npm run build\`
+- Test: \`npm test\`
+- Lint: \`npm run lint\`
+- Dev: \`npm run dev\`
+- **Type check**: \`npm run typecheck\`
+- **Format**: \`npm run format\`
+- **Pre-commit hooks**: \`npx lint-staged\`
+- **Clean**: \`rm -rf dist\`
+- \`npm run db:migrate\`
+
+### Code Style & Conventions
+- **Naming**: PascalCase for classes and types (e.g., MyClass, UserProfile)
+- **Error Handling**: Result / Either types (no exceptions for control flow)
+- **Logging**: Structured Logging
+- **File length**: keep files under 400 lines; split larger ones
+- **Imports**: group imports: external packages, then internal modules, then relative paths
+- **Comment language**: write code comments in english
+- **Documentation comments**: TSDoc
+- **Additional Notes**: Prefer pure functions.
+
+### Boundaries & Permissions
+
+**✅ ALWAYS do (no need to ask)**:
+- Run tests
+
+**❓ ASK first before doing**:
+- Add dependencies
+
+**🚫 NEVER do (strictly prohibited)**:
+- Push to main
+
+### Testing Requirements
+**Testing Levels**:
+- Unit tests (individual functions/methods)
+- End-to-end tests (complete user flows)
+- Smoke Tests
+**Frameworks**: vitest, playwright
+**Coverage Target**: 90% minimum
+**Notes**: Mock the network.
+- **Test-driven development**: write a failing test first, then the code that makes it pass
+- **Snapshot tests**: use snapshot tests for stable output such as rendered components
+- **Mocking**: mock collaborators so each unit is tested in isolation
+
+### CI/CD & Infrastructure
+- **CI/CD Platform**: GitHub Actions
+- **Deployment Targets**: Vercel, Kubernetes
+- **Container Builds**: Project builds Docker/OCI container images
+- **Container Registry**: GitHub Container Registry (ghcr.io)
+- **Published images**:
+  - \`acme/demo\`
+  - \`acme/demo-worker\`
+
+### Git Workflow
+- **Branching**: GitHub Flow: short-lived feature branches merged into the default branch through pull requests
+- **Default branch**: \`develop\`
+- Never commit directly to \`develop\`; work on a branch and open a pull request
+- Sign every commit (GPG or SSH)
+- **Version tags**: \`v1.2.3\`
+- **Changelog**: managed with Changesets
+
+## Best Practices
+
+- **Write clean code**: Prioritize readability and maintainability
+- **Handle errors properly**: Don't ignore errors, handle them appropriately
+- **Consider security**: Review code for potential security vulnerabilities
+- **Conventional commits**: Use conventional commit messages (feat:, fix:, docs:, chore:, refactor:, test:, style:)
+- **Semantic versioning**: Follow semver (MAJOR.MINOR.PATCH) for version numbers
+- **Dependency updates**: Keep dependencies updated (Dependabot) configured)
 
 ## Custom Instructions
 
@@ -6500,28 +6293,77 @@ The project owner has provided these additional instructions:
 
 Prefer small pull requests.
 
-## CI/CD & Infrastructure
+## Self-Improving Configuration
 
-**CI/CD Platform**: GitHub Actions
-
-## Git Workflow
-
-- Never commit directly to \`main\`; work on a branch and open a pull request
-
-## Best Practices
-
-Always follow these guidelines when working on this project:
-
-- **Write clean code**: Prioritize readability and maintainability
-- **Handle errors properly**: Don't ignore errors, handle them appropriately
-- **Consider security**: Review code for potential security vulnerabilities
+This file should evolve as we work together:
+1. Track coding patterns and preferences
+2. Note corrections made to suggestions
+3. Update periodically with learned preferences
 
 
 ## Repository Files to Generate
 
 When requested or when missing, create these files following these guidelines:
 
-- This repository uses the **MIT** license. If the \`LICENSE\` file doesn't exist yet, please create it with copyright holder: Tester.
+- **\`.editorconfig\`**: Generate with standard settings for consistent code formatting across editors (indent style, line endings, trim trailing whitespace).
+- **\`CODE_OF_CONDUCT.md\`**: Generate based on the Contributor Covenant or similar community standards document.
+- **\`SECURITY.md\`**: Generate with security policy, supported versions, and instructions for reporting vulnerabilities privately.
+- **\`.gitignore\`**: Generate for TypeScript, Python, Next.js. Include IDE files, build artifacts, dependencies, and environment files.
+- **\`.dockerignore\`**: Generate for TypeScript, Python, Next.js. Exclude .git, dependencies, .env files, build artifacts, and documentation to keep images small.
+- **\`ROADMAP.md\`**: Create and maintain with planned features, milestones, and future ideas. Organize by timeline (Q1, Q2, etc.) or priority. Keep updated as the project evolves.
+- This repository uses the **MIT** license. If the \`LICENSE\` file doesn't exist yet, please create it with copyright holder: Test Author. Additional licensing notes: Docs are CC-BY.
+
+## Custom File Templates
+
+Create these files with the exact content provided below. These are user-specified templates:
+
+### CONTRIBUTING.md
+\`\`\`markdown
+# Contributing
+Open an issue first.
+\`\`\`
+
+### .github/FUNDING.yml
+\`\`\`yaml
+github: [acme]
+\`\`\`
+
+## 🔐 Security Configuration
+
+### Auth Providers
+
+- GitHub
+- Google
+
+### Secrets Management
+
+- Environment Variables
+- HashiCorp Vault
+
+### Security Tooling
+
+- Dependabot
+- CodeQL
+
+### Authentication
+
+- OAuth 2.0
+- JWT
+
+### Data Handling
+
+- Encryption at Rest
+
+### Compliance
+
+- GDPR
+
+### Analytics & Telemetry
+
+- Plausible
+
+### Notes
+Rotate keys yearly.
 
 ## ⚠️ Security Notice
 
@@ -6529,20 +6371,16 @@ When requested or when missing, create these files following these guidelines:
 > Always use secure standards to transmit sensitive information.
 > Use environment variables, secret managers, or secure vaults for credentials.
 
-**🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.
-
----
-
-*Generated by [LynxPrompt](https://lynxprompt.com)*",
-    "fileName": ".goosehints",
+**🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.",
+    "fileName": "GEMINI.md",
   },
 ]
 `;
 
-exports[`web generator golden output > junie 1`] = `
+exports[`web generator golden output > goose 1`] = `
 [
   {
-    "content": "# Demo - Junie Instructions
+    "content": "# Demo - AI Agent Instructions
 
 ## Project Overview
 
@@ -6603,15 +6441,15 @@ When requested or when missing, create these files following these guidelines:
 > Use environment variables, secret managers, or secure vaults for credentials.
 
 **🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.",
-    "fileName": ".junie/guidelines.md",
+    "fileName": "AGENTS.md",
   },
 ]
 `;
 
-exports[`web generator golden output > kilocode 1`] = `
+exports[`web generator golden output > junie 1`] = `
 [
   {
-    "content": "# Demo - AI Rules
+    "content": "# Demo - AI Agent Instructions
 
 ## Project Overview
 
@@ -6621,50 +6459,42 @@ exports[`web generator golden output > kilocode 1`] = `
 
 ## Technology Stack
 
-This project uses the following technologies. Please ensure all code follows the conventions and best practices for these:
+### Languages
+- TypeScript
+- Python
 
-**Programming Languages**: TypeScript, Python
-**Frameworks & Libraries**: Next.js
-**Database**: PostgreSQL
+### Frameworks & Libraries
+- Next.js
 
-## Code Style & Conventions
+### Database
+- PostgreSQL
 
-Follow these coding style guidelines when writing or modifying code:
+## Development Guidelines
 
-## AI Behavior Guidelines
-
-When assisting with this project, follow these specific rules:
-
+### Workflow Rules
 - Always run and test locally after making changes
 
-## Project Commands
+### Commands
+- Build: \`npm run build\`
+- Test: \`npm test\`
 
-Use these commands when working on this project:
+### CI/CD & Infrastructure
+- **CI/CD Platform**: GitHub Actions
 
-- **Build**: \`npm run build\`
-- **Test**: \`npm test\`
+### Git Workflow
+- Never commit directly to \`main\`; work on a branch and open a pull request
+
+## Best Practices
+
+- **Write clean code**: Prioritize readability and maintainability
+- **Handle errors properly**: Don't ignore errors, handle them appropriately
+- **Consider security**: Review code for potential security vulnerabilities
 
 ## Custom Instructions
 
 The project owner has provided these additional instructions:
 
 Prefer small pull requests.
-
-## CI/CD & Infrastructure
-
-**CI/CD Platform**: GitHub Actions
-
-## Git Workflow
-
-- Never commit directly to \`main\`; work on a branch and open a pull request
-
-## Best Practices
-
-Always follow these guidelines when working on this project:
-
-- **Write clean code**: Prioritize readability and maintainability
-- **Handle errors properly**: Don't ignore errors, handle them appropriately
-- **Consider security**: Review code for potential security vulnerabilities
 
 
 ## Repository Files to Generate
@@ -6679,12 +6509,77 @@ When requested or when missing, create these files following these guidelines:
 > Always use secure standards to transmit sensitive information.
 > Use environment variables, secret managers, or secure vaults for credentials.
 
-**🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.
+**🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.",
+    "fileName": "AGENTS.md",
+  },
+]
+`;
 
----
+exports[`web generator golden output > kilocode 1`] = `
+[
+  {
+    "content": "# Demo - AI Agent Instructions
 
-*Generated by [LynxPrompt](https://lynxprompt.com)*",
-    "fileName": ".kilocode/rules/project.md",
+## Project Overview
+
+**Description**: A demo project
+
+**Visibility**: Public repository
+
+## Technology Stack
+
+### Languages
+- TypeScript
+- Python
+
+### Frameworks & Libraries
+- Next.js
+
+### Database
+- PostgreSQL
+
+## Development Guidelines
+
+### Workflow Rules
+- Always run and test locally after making changes
+
+### Commands
+- Build: \`npm run build\`
+- Test: \`npm test\`
+
+### CI/CD & Infrastructure
+- **CI/CD Platform**: GitHub Actions
+
+### Git Workflow
+- Never commit directly to \`main\`; work on a branch and open a pull request
+
+## Best Practices
+
+- **Write clean code**: Prioritize readability and maintainability
+- **Handle errors properly**: Don't ignore errors, handle them appropriately
+- **Consider security**: Review code for potential security vulnerabilities
+
+## Custom Instructions
+
+The project owner has provided these additional instructions:
+
+Prefer small pull requests.
+
+
+## Repository Files to Generate
+
+When requested or when missing, create these files following these guidelines:
+
+- This repository uses the **MIT** license. If the \`LICENSE\` file doesn't exist yet, please create it with copyright holder: Tester.
+
+## ⚠️ Security Notice
+
+> **Do not commit secrets to the repository or to the live app.**
+> Always use secure standards to transmit sensitive information.
+> Use environment variables, secret managers, or secure vaults for credentials.
+
+**🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.",
+    "fileName": "AGENTS.md",
   },
 ]
 `;
@@ -6846,7 +6741,7 @@ When requested or when missing, create these files following these guidelines:
 exports[`web generator golden output > openhands 1`] = `
 [
   {
-    "content": "# Demo - OpenHands Instructions
+    "content": "# Demo - AI Agent Instructions
 
 ## Project Overview
 
@@ -6907,7 +6802,7 @@ When requested or when missing, create these files following these guidelines:
 > Use environment variables, secret managers, or secure vaults for credentials.
 
 **🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.",
-    "fileName": ".openhands/microagents/repo.md",
+    "fileName": "AGENTS.md",
   },
 ]
 `;
@@ -6993,189 +6888,83 @@ When requested or when missing, create these files following these guidelines:
 ]
 `;
 
-exports[`web generator golden output > supermaven 1`] = `
-[
-  {
-    "content": "{
-  "$schema": "https://supermaven.com/config-schema.json",
-  "project": "Demo",
-  "description": "A demo project",
-  "context": "# Demo\\n\\nA demo project\\n\\n## Technology Stack\\nLanguages: TypeScript, Python\\nFrameworks: Next.js\\nDatabases: PostgreSQL\\n\\n## Guidelines\\n- Always run and test locally after making changes\\n\\n## Commands\\nBuild: npm run build\\nTest: npm test\\n\\n## Best Practices\\n- Follow existing codebase patterns\\n- Write clean, maintainable code\\n- Handle errors properly\\n- Consider security\\n\\n## Custom Instructions\\nPrefer small pull requests.",
-  "guidelines": [
-    "Always run and test locally after making changes",
-    "Follow existing patterns in the codebase",
-    "Write clean, readable code",
-    "Handle errors appropriately"
-  ],
-  "codeStyle": {
-    "naming": "language_default",
-    "errorHandling": "try_catch",
-    "logging": "",
-    "notes": ""
-  },
-  "techStack": {
-    "languages": [
-      "TypeScript",
-      "Python"
-    ],
-    "frameworks": [
-      "Next.js"
-    ],
-    "databases": [
-      "PostgreSQL"
-    ]
-  },
-  "commands": {
-    "build": "npm run build",
-    "test": "npm test",
-    "lint": "",
-    "dev": ""
-  },
-  "preferences": {
-    "conventionalCommits": false,
-    "semver": false
-  }
-}",
-    "fileName": ".supermaven/config.json",
-  },
-]
-`;
-
-exports[`web generator golden output > supermaven with every answer 1`] = `
-[
-  {
-    "content": "{
-  "$schema": "https://supermaven.com/config-schema.json",
-  "project": "Demo",
-  "description": "A demo project",
-  "context": "# Demo\\n\\nA demo project\\n\\nArchitecture: Hexagonal\\n\\n## Technology Stack\\nLanguages: TypeScript, Python\\nFrameworks: Next.js\\nDatabases: PostgreSQL\\n\\n## Code Style\\nNaming: PascalCase\\nError Handling: Result types\\nLogging: Structured Logging\\nNotes: Prefer pure functions.\\n\\n## Communication\\nStyle: Concise and direct\\n\\n## Guidelines\\n- Always run and test locally after making changes\\n- Always verify your work before returning: run tests, check builds, confirm changes work as expected\\n- When you learn new project patterns or conventions, suggest updates to this configuration file\\n\\n## Boundaries\\nALWAYS: Run tests\\nASK FIRST: Add dependencies\\nNEVER: Push to main\\n\\n## Commands\\nBuild: npm run build\\nTest: npm test\\nLint: npm run lint\\nDev: npm run dev\\n\\n## Testing\\nLevels: unit, e2e, smoke\\nFrameworks: vitest, playwright\\nCoverage: 90%\\n\\n## Project Context\\n- **STRICT MODE**: This is a work project. Follow procedures exactly as documented.\\n- Do not deviate from established patterns or make assumptions.\\n- Always ask for clarification rather than guessing.\\n- Document all decisions and changes thoroughly.\\n\\n## Best Practices\\n- Follow existing codebase patterns\\n- Write clean, maintainable code\\n- Handle errors properly\\n- Consider security\\n- Use conventional commits\\n\\n## Custom Instructions\\nPrefer small pull requests.",
-  "guidelines": [
-    "Always run and test locally after making changes",
-    "Always verify your work before returning: run tests, check builds, confirm changes work as expected",
-    "When you learn new project patterns or conventions, suggest updates to this configuration file",
-    "Always: Run tests",
-    "Never: Push to main",
-    "Follow existing patterns in the codebase",
-    "Write clean, readable code",
-    "Handle errors appropriately"
-  ],
-  "codeStyle": {
-    "naming": "PascalCase",
-    "errorHandling": "result_types",
-    "logging": "structured",
-    "notes": "Prefer pure functions."
-  },
-  "techStack": {
-    "languages": [
-      "TypeScript",
-      "Python"
-    ],
-    "frameworks": [
-      "Next.js"
-    ],
-    "databases": [
-      "PostgreSQL"
-    ]
-  },
-  "commands": {
-    "build": "npm run build",
-    "test": "npm test",
-    "lint": "npm run lint",
-    "dev": "npm run dev"
-  },
-  "testing": {
-    "levels": [
-      "unit",
-      "e2e",
-      "smoke"
-    ],
-    "frameworks": [
-      "vitest",
-      "playwright"
-    ],
-    "coverage": 90
-  },
-  "importantFiles": [
-    "README.md",
-    "architecture_md"
-  ],
-  "preferences": {
-    "conventionalCommits": true,
-    "semver": true
-  }
-}",
-    "fileName": ".supermaven/config.json",
-  },
-]
-`;
-
 exports[`web generator golden output > tabnine 1`] = `
 [
   {
-    "content": "# ═══════════════════════════════════════════════════════════════════════════
-# TabNine AI Code Completion Configuration
-# Generated by LynxPrompt - https://lynxprompt.com
-# ═══════════════════════════════════════════════════════════════════════════
-# Documentation: https://www.tabnine.com/
-# ═══════════════════════════════════════════════════════════════════════════
+    "content": "# Demo - AI Rules
 
-version: 1
+## Project Overview
 
-# ─── Core Settings ─────────────────────────────────────────────────────────
-enable_telemetry: false
+**Description**: A demo project
 
-# ─── Language Preferences ─────────────────────────────────────────────────
-languages:
-  - typescript
-  - python
+**Visibility**: Public repository
 
-# ═══════════════════════════════════════════════════════════════════════════
-# PROJECT CONTEXT - TabNine uses these for better completions
-# ═══════════════════════════════════════════════════════════════════════════
-#
-# Project: Demo
-# Description: A demo project
-#
-#
-# ─── Technology Stack ──────────────────────────────────────────────────────
-#
-# Frameworks: Next.js
-# Databases: PostgreSQL
-#
-# ─── Code Style Conventions ───────────────────────────────────────────────
-#
-#
-# ─── AI Behavior Guidelines ───────────────────────────────────────────────
-#
-# - Always run and test locally after making changes
-#
-# ─── Project Commands ─────────────────────────────────────────────────────
-#
-# Build: npm run build
-# Test: npm test
-#
-# ─── CI/CD & Infrastructure ───────────────────────────────────────────────
-#
-# CI/CD: GitHub Actions
-#
-# ─── Best Practices ───────────────────────────────────────────────────────
-#
-# - Follow existing patterns in the codebase
-# - Write clean, readable, maintainable code
-# - Handle errors appropriately
-# - Consider security implications
-#
-# ─── Custom Instructions ──────────────────────────────────────────────────
-#
-# Prefer small pull requests.
-#
-# ═══════════════════════════════════════════════════════════════════════════
+## Technology Stack
 
-# SECURITY: Do not commit secrets to the repository.
-# Use environment variables or secret managers for credentials.
-# When making changes involving auth, data handling, APIs, or dependencies,
-# proactively offer to perform a security audit of the affected code.",
-    "fileName": ".tabnine.yaml",
+This project uses the following technologies. Please ensure all code follows the conventions and best practices for these:
+
+**Programming Languages**: TypeScript, Python
+**Frameworks & Libraries**: Next.js
+**Database**: PostgreSQL
+
+## Code Style & Conventions
+
+Follow these coding style guidelines when writing or modifying code:
+
+## AI Behavior Guidelines
+
+When assisting with this project, follow these specific rules:
+
+- Always run and test locally after making changes
+
+## Project Commands
+
+Use these commands when working on this project:
+
+- **Build**: \`npm run build\`
+- **Test**: \`npm test\`
+
+## Custom Instructions
+
+The project owner has provided these additional instructions:
+
+Prefer small pull requests.
+
+## CI/CD & Infrastructure
+
+**CI/CD Platform**: GitHub Actions
+
+## Git Workflow
+
+- Never commit directly to \`main\`; work on a branch and open a pull request
+
+## Best Practices
+
+Always follow these guidelines when working on this project:
+
+- **Write clean code**: Prioritize readability and maintainability
+- **Handle errors properly**: Don't ignore errors, handle them appropriately
+- **Consider security**: Review code for potential security vulnerabilities
+
+
+## Repository Files to Generate
+
+When requested or when missing, create these files following these guidelines:
+
+- This repository uses the **MIT** license. If the \`LICENSE\` file doesn't exist yet, please create it with copyright holder: Tester.
+
+## ⚠️ Security Notice
+
+> **Do not commit secrets to the repository or to the live app.**
+> Always use secure standards to transmit sensitive information.
+> Use environment variables, secret managers, or secure vaults for credentials.
+
+**🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.
+
+---
+
+*Generated by [LynxPrompt](https://lynxprompt.com)*",
+    "fileName": ".tabnine/guidelines/project.md",
   },
 ]
 `;
@@ -7183,109 +6972,312 @@ languages:
 exports[`web generator golden output > tabnine with every answer 1`] = `
 [
   {
-    "content": "# ═══════════════════════════════════════════════════════════════════════════
-# TabNine AI Code Completion Configuration
-# Generated by LynxPrompt - https://lynxprompt.com
-# ═══════════════════════════════════════════════════════════════════════════
-# Documentation: https://www.tabnine.com/
-# ═══════════════════════════════════════════════════════════════════════════
+    "content": "# Demo - AI Rules
 
-version: 1
+## Before Starting Any Coding Task
 
-# ─── Core Settings ─────────────────────────────────────────────────────────
-enable_telemetry: false
+1. Check existing worktrees with \`git worktree list\` and create a new one for this task if needed
+2. Use the naming convention: \`git worktree add -b ai/[task-description] ../[repo-name]-ai-[task-description]\`
+3. Navigate to the worktree directory before making any changes
+4. Commit changes when the task is finished. Merge to main, and clean the worktree.
 
-# ─── Language Preferences ─────────────────────────────────────────────────
-languages:
-  - typescript
-  - python
+## Project Overview
 
-# ═══════════════════════════════════════════════════════════════════════════
-# PROJECT CONTEXT - TabNine uses these for better completions
-# ═══════════════════════════════════════════════════════════════════════════
-#
-# Project: Demo
-# Description: A demo project
-#
-# Architecture: Hexagonal
-#
-# ─── Technology Stack ──────────────────────────────────────────────────────
-#
-# Frameworks: Next.js
-# Databases: PostgreSQL
-#
-# ─── Code Style Conventions ───────────────────────────────────────────────
-#
-# Naming Convention: PascalCase for classes/types
-# Error Handling: Result/Either types
-# Logging: Structured Logging
-# Style Notes: Prefer pure functions.
-#
-# ─── Developer Profile ────────────────────────────────────────────────────
-#
-# Author: Test Author
-# Skill Level: Expert
-# Developer Background: backend developer - adapt responses to this domain expertise
-#
-# ─── AI Behavior Guidelines ───────────────────────────────────────────────
-#
-# - Always run and test locally after making changes
-# - Always verify your work before returning: run tests, check builds, confirm changes work as expected
-# - When you learn new project patterns or conventions, suggest updates to this configuration file
-#
-# ─── Project Commands ─────────────────────────────────────────────────────
-#
-# Build: npm run build
-# Test: npm test
-# Lint: npm run lint
-# Dev: npm run dev
-#
-# ─── Boundaries & Permissions ─────────────────────────────────────────────
-#
-# ✅ ALWAYS DO: Run tests
-# ❓ ASK FIRST: Add dependencies
-# 🚫 NEVER DO: Push to main
-#
-# ─── Testing Requirements ─────────────────────────────────────────────────
-#
-# Testing Levels: unit, e2e, smoke
-# Frameworks: vitest, playwright
-# Coverage Target: 90%
-#
-# ─── CI/CD & Infrastructure ───────────────────────────────────────────────
-#
-# CI/CD: GitHub Actions
-# Deploy: Vercel, K8s
-#
-# ─── Project Context ──────────────────────────────────────────────────────
-#
-# Type: Work / Professional
-# Guidelines:
-#   - **STRICT MODE**: This is a work project. Follow procedures exactly as documented.
-#   - Do not deviate from established patterns or make assumptions.
-#   - Always ask for clarification rather than guessing.
-#   - Document all decisions and changes thoroughly.
-#
-# ─── Best Practices ───────────────────────────────────────────────────────
-#
-# - Follow existing patterns in the codebase
-# - Write clean, readable, maintainable code
-# - Handle errors appropriately
-# - Consider security implications
-# - Use conventional commits (feat:, fix:, docs:, chore:)
-# - Follow semantic versioning (MAJOR.MINOR.PATCH)
-#
-# ─── Custom Instructions ──────────────────────────────────────────────────
-#
-# Prefer small pull requests.
-#
-# ═══════════════════════════════════════════════════════════════════════════
+**Description**: A demo project
 
-# SECURITY: Do not commit secrets to the repository.
-# Use environment variables or secret managers for credentials.
-# When making changes involving auth, data handling, APIs, or dependencies,
-# proactively offer to perform a security audit of the affected code.",
-    "fileName": ".tabnine.yaml",
+**Architecture Pattern**: Hexagonal / Ports & Adapters - domain at center, adapters at edges
+**Visibility**: Public repository
+**Development OS**: macOS, Windows
+
+### Repository
+- **URL**: https://github.com/acme/demo
+- **Platform**: GitHub
+
+### Development Environment
+- Use cross-platform commands that work on Windows, macOS, and Linux
+- Prefer npm scripts or Makefile targets over platform-specific commands
+
+### Reference Materials
+- **Example Repository**: https://github.com/acme/example
+  Use this as a reference for coding patterns, conventions, and architecture decisions.
+- **External Documentation**: https://docs.acme.test
+  Refer to this for additional project context, architecture decisions, and team guidelines.
+
+## Technology Stack
+
+This project uses the following technologies. Please ensure all code follows the conventions and best practices for these:
+
+**Programming Languages**: TypeScript, Python
+**Frameworks & Libraries**: Next.js
+**Database**: PostgreSQL
+
+- **Package manager**: pnpm. Use it for every install and script.
+- **Runtime**: Node.js
+- **Monorepo tool**: Turborepo
+- **ORM / database toolkit**: prisma
+
+**AI Flexibility**: For technologies not listed above, you may suggest and use what's best suited for the project based on codebase analysis.
+
+## Code Style & Conventions
+
+Follow these coding style guidelines when writing or modifying code:
+
+### Developer Profile
+- **Author**: Test Author
+- **Developer Background**: backend developer — adapt responses to this domain expertise
+- **Experience Level**: Expert
+
+### Communication Style
+- Be concise and direct in communications
+- Assume expertise - minimal hand-holding needed
+- Focus on implementation details, skip explanations of basics
+
+### Naming Conventions
+**Style**: Use PascalCase for classes and types (e.g., MyClass, UserProfile)
+
+### Error Handling
+**Approach**: Use Result/Either types to represent success or failure (no exceptions for control flow)
+
+### Logging Conventions
+**Guidelines**: Structured Logging
+
+### Formatting & Documentation
+- **File length**: keep files under 400 lines; split larger ones
+- **Imports**: group imports: external packages, then internal modules, then relative paths
+- **Comment language**: write code comments in english
+- **Documentation comments**: TSDoc
+
+### Additional Style Notes
+Prefer pure functions.
+
+## AI Behavior Guidelines
+
+When assisting with this project, follow these specific rules:
+
+- Always run and test locally after making changes
+- Always verify your work before returning: run tests, check builds, confirm changes work as expected
+- When you learn new project patterns or conventions, suggest updates to this configuration file
+- **Plan first** for complex, multi-step or risky changes
+- **Explanations**: concise, to the point
+- **Accessibility**: follow WCAG; use semantic markup, labels, keyboard access and enough contrast
+- **Performance**: keep an eye on load time, memory and needless work; measure before optimising
+- When stuck, **stop and ask** rather than attempting workarounds
+
+## MCP Servers
+
+The developer has these MCP (Model Context Protocol) servers available. Use them when relevant:
+
+- github
+- postgres
+
+## Infrastructure
+
+- **Server access**: via SSH. SSH key: \`~/.ssh/deploy\`
+- **Deployment**: Docker Compose (manual)
+
+## Important Files to Read First
+
+Before making significant changes, read these files to understand the project context:
+
+- README.md - Project overview and setup instructions
+- ARCHITECTURE.md - System architecture docs
+- docs/adr
+
+## Boundaries & Permissions
+
+These are explicit boundaries for AI actions on this project:
+
+### ✅ ALWAYS DO (no need to ask)
+- Run tests
+
+### ❓ ASK FIRST (get confirmation before doing)
+- Add dependencies
+
+### 🚫 NEVER DO (strictly prohibited)
+- Push to main
+
+## Project Commands
+
+Use these commands when working on this project:
+
+- **Build**: \`npm run build\`
+- **Test**: \`npm test\`
+- **Lint**: \`npm run lint\`
+- **Dev server**: \`npm run dev\`
+- **Type check**: \`npm run typecheck\`
+- **Format**: \`npm run format\`
+- **Pre-commit hooks**: \`npx lint-staged\`
+- **Clean**: \`rm -rf dist\`
+
+**Other useful commands**:
+- \`npm run db:migrate\`
+
+## Testing Requirements
+
+When writing or modifying code, ensure adequate test coverage:
+
+**Testing Levels**:
+- Unit tests - test individual functions/methods in isolation
+- End-to-end tests - test complete user flows
+- Smoke Tests
+
+**Testing Frameworks**: vitest, playwright
+**Coverage Target**: 90% minimum
+
+- **Test-driven development**: write a failing test first, then the code that makes it pass
+- **Snapshot tests**: use snapshot tests for stable output such as rendered components
+- **Mocking**: mock collaborators so each unit is tested in isolation
+
+**Additional testing notes**:
+Mock the network.
+
+## Project Type Context
+
+This is a **Work / Professional Project**. Keep these guidelines in mind:
+
+- **STRICT MODE**: This is a work project. Follow procedures exactly as documented.
+- Do not deviate from established patterns or make assumptions.
+- Always ask for clarification rather than guessing.
+- Document all decisions and changes thoroughly.
+
+## Custom Instructions
+
+The project owner has provided these additional instructions:
+
+Prefer small pull requests.
+
+## CI/CD & Infrastructure
+
+**CI/CD Platform**: GitHub Actions
+**Deployment Targets**: Vercel, Kubernetes
+**Container Builds**: This project builds Docker/OCI container images
+**Container Registry**: GitHub Container Registry (ghcr.io)
+- **Published images**:
+  - \`acme/demo\`
+  - \`acme/demo-worker\`
+
+## Git Workflow
+
+- **Branching**: GitHub Flow: short-lived feature branches merged into the default branch through pull requests
+- **Default branch**: \`develop\`
+- Never commit directly to \`develop\`; work on a branch and open a pull request
+- Sign every commit (GPG or SSH)
+- **Version tags**: \`v1.2.3\`
+- **Changelog**: managed with Changesets
+
+## Best Practices
+
+Always follow these guidelines when working on this project:
+
+- **Write clean code**: Prioritize readability and maintainability
+- **Handle errors properly**: Don't ignore errors, handle them appropriately
+- **Consider security**: Review code for potential security vulnerabilities
+- **Conventional commits**: Use conventional commit messages (feat:, fix:, docs:, chore:, refactor:, test:, style:)
+- **Semantic versioning**: Follow semver (MAJOR.MINOR.PATCH) for version numbers
+- **Dependency updates**: Keep dependencies updated (Dependabot) configured)
+
+## Repository Files to Generate/Maintain
+
+When requested, create or update these repository files:
+
+- **.editorconfig** - Editor configuration aligned with project style
+- **CONTRIBUTING.md** - Contribution guidelines for the project
+- **CODE_OF_CONDUCT.md** - Community code of conduct
+- **SECURITY.md** - Security policy and vulnerability reporting instructions
+- **ROADMAP.md** - Project roadmap with planned features and future ideas
+- **.gitignore** - Git ignore file for this project's tech stack
+- **.dockerignore** - Docker ignore file for container builds
+- **.github/FUNDING.yml** - GitHub funding/sponsors configuration
+
+## Self-Improving Configuration
+**IMPORTANT**: This configuration file is set to self-improve.
+
+As you work on this project, track the user's coding patterns, preferences, and decisions.
+Periodically update this file to reflect what you learn about how the user works:
+- Note preferred code styles and patterns that emerge
+- Record decisions about architecture or tooling
+- Add rules for common issues or mistakes to avoid
+- Refine instructions based on user corrections
+
+Keep this file updated so future sessions start with better context.
+
+## Repository Files to Generate
+
+When requested or when missing, create these files following these guidelines:
+
+- **\`.editorconfig\`**: Generate with standard settings for consistent code formatting across editors (indent style, line endings, trim trailing whitespace).
+- **\`CODE_OF_CONDUCT.md\`**: Generate based on the Contributor Covenant or similar community standards document.
+- **\`SECURITY.md\`**: Generate with security policy, supported versions, and instructions for reporting vulnerabilities privately.
+- **\`.gitignore\`**: Generate for TypeScript, Python, Next.js. Include IDE files, build artifacts, dependencies, and environment files.
+- **\`.dockerignore\`**: Generate for TypeScript, Python, Next.js. Exclude .git, dependencies, .env files, build artifacts, and documentation to keep images small.
+- **\`ROADMAP.md\`**: Create and maintain with planned features, milestones, and future ideas. Organize by timeline (Q1, Q2, etc.) or priority. Keep updated as the project evolves.
+- This repository uses the **MIT** license. If the \`LICENSE\` file doesn't exist yet, please create it with copyright holder: Test Author. Additional licensing notes: Docs are CC-BY.
+
+## Custom File Templates
+
+Create these files with the exact content provided below. These are user-specified templates:
+
+### CONTRIBUTING.md
+\`\`\`markdown
+# Contributing
+Open an issue first.
+\`\`\`
+
+### .github/FUNDING.yml
+\`\`\`yaml
+github: [acme]
+\`\`\`
+
+## 🔐 Security Configuration
+
+### Secrets Management
+
+- Environment Variables
+- HashiCorp Vault
+
+### Security Tooling
+
+- Dependabot (dependency updates)
+- CodeQL (GitHub)
+
+### Authentication
+
+- OAuth 2.0
+- JWT (JSON Web Tokens)
+
+### Data Handling & Compliance
+
+- Encryption at Rest
+
+### Auth Providers
+
+- GitHub
+- Google
+
+### Compliance
+
+- GDPR
+
+### Analytics & Telemetry
+
+- Plausible
+
+### Additional Security Notes
+
+Rotate keys yearly.
+
+## ⚠️ Security Notice
+
+> **Do not commit secrets to the repository or to the live app.**
+> Always use secure standards to transmit sensitive information.
+> Use environment variables, secret managers, or secure vaults for credentials.
+
+**🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.
+
+---
+
+*Generated by [LynxPrompt](https://lynxprompt.com)*",
+    "fileName": ".tabnine/guidelines/project.md",
   },
 ]
 `;
@@ -7293,7 +7285,11 @@ languages:
 exports[`web generator golden output > trae 1`] = `
 [
   {
-    "content": "# Demo - AI Rules
+    "content": "---
+alwaysApply: true
+---
+
+# Demo - AI Rules
 
 ## Project Overview
 
@@ -7690,168 +7686,10 @@ Rotate keys yearly.
 ]
 `;
 
-exports[`web generator golden output > void 1`] = `
-[
-  {
-    "content": "{
-  "$schema": "https://voideditor.com/config-schema.json",
-  "version": 2,
-  "project": {
-    "name": "Demo",
-    "description": "A demo project",
-    "visibility": "public"
-  },
-  "rules": "# Demo - AI Rules\\n\\n## Project Overview\\n**Description**: A demo project\\n**Visibility**: Public repository\\n\\n## Technology Stack\\n\\n**Languages**: TypeScript, Python\\n**Frameworks**: Next.js\\n**Databases**: PostgreSQL\\n\\n## Code Style & Conventions\\n\\n## AI Behavior Guidelines\\n\\n- Always run and test locally after making changes\\n\\n## Project Commands\\n\\n- **Build**: \`npm run build\`\\n- **Test**: \`npm test\`\\n\\n## CI/CD & Infrastructure\\n\\n**CI/CD**: GitHub Actions\\n\\n## Best Practices\\n\\n- **Write clean code**: Prioritize readability and maintainability\\n- **Handle errors**: Don't ignore errors, handle them appropriately\\n- **Security**: Review code for potential vulnerabilities\\n\\n## Custom Instructions\\n\\nPrefer small pull requests.\\n",
-  "behavior": [
-    "Always run and test locally after making changes"
-  ],
-  "codeStyle": {
-    "naming": "language_default",
-    "errorHandling": "try_catch",
-    "logging": "",
-    "notes": ""
-  },
-  "techStack": {
-    "languages": [
-      "TypeScript",
-      "Python"
-    ],
-    "frameworks": [
-      "Next.js"
-    ],
-    "databases": [
-      "PostgreSQL"
-    ]
-  },
-  "commands": {
-    "build": "npm run build",
-    "test": "npm test",
-    "lint": "",
-    "dev": "",
-    "additional": []
-  },
-  "cicd": {
-    "platforms": [
-      "github_actions"
-    ],
-    "deploymentTargets": [],
-    "containerRegistry": ""
-  },
-  "preferences": {
-    "conventionalCommits": false,
-    "semver": false,
-    "dependabot": false,
-    "autoUpdate": false
-  }
-}",
-    "fileName": ".void/config.json",
-  },
-]
-`;
-
-exports[`web generator golden output > void with every answer 1`] = `
-[
-  {
-    "content": "{
-  "$schema": "https://voideditor.com/config-schema.json",
-  "version": 2,
-  "project": {
-    "name": "Demo",
-    "description": "A demo project",
-    "repository": "https://github.com/acme/demo",
-    "architecture": "hexagonal",
-    "visibility": "public"
-  },
-  "rules": "# Demo - AI Rules\\n\\n## Project Overview\\n**Description**: A demo project\\n**Architecture**: Hexagonal / Ports & Adapters\\n**Visibility**: Public repository\\n**Development OS**: macOS, Windows\\n\\n### Repository\\n- **URL**: https://github.com/acme/demo\\n\\n### Reference Materials\\n- **Example Repository**: https://github.com/acme/example\\n- **External Documentation**: https://docs.acme.test\\n\\n## Technology Stack\\n\\n**Languages**: TypeScript, Python\\n**Frameworks**: Next.js\\n**Databases**: PostgreSQL\\n\\n*For technologies not listed, suggest appropriate solutions based on codebase analysis.*\\n\\n## Code Style & Conventions\\n\\n### Developer Profile\\n- **Author**: Test Author\\n- **Developer Background**: backend developer — adapt responses to this domain expertise\\n- **Experience**: Expert\\n\\n### Communication Style\\n- Be concise and direct\\n- Assume expertise, minimal hand-holding\\n- Focus on implementation details\\n\\n### Naming Conventions\\n**Style**: PascalCase for classes/types\\n\\n### Error Handling\\n**Approach**: Result/Either types (no exceptions for control flow)\\n\\n### Logging\\n**Guidelines**: Structured Logging\\n\\n### Additional Notes\\nPrefer pure functions.\\n\\n## AI Behavior Guidelines\\n\\n- Always run and test locally after making changes\\n- Always verify your work before returning: run tests, check builds, confirm changes work as expected\\n- When you learn new project patterns or conventions, suggest updates to this configuration file\\n\\n## Important Files\\n\\nRead these files to understand the project:\\n\\n- README.md\\n- ARCHITECTURE.md\\n- docs/adr\\n\\n## Boundaries & Permissions\\n\\n### ✅ ALWAYS DO\\n- Run tests\\n\\n### ❓ ASK FIRST\\n- Add dependencies\\n\\n### 🚫 NEVER DO\\n- Push to main\\n\\n## Project Commands\\n\\n- **Build**: \`npm run build\`\\n- **Test**: \`npm test\`\\n- **Lint**: \`npm run lint\`\\n- **Dev**: \`npm run dev\`\\n\\n**Additional commands**:\\n- \`npm run db:migrate\`\\n\\n## Testing Requirements\\n\\n**Testing Levels**:\\n- Unit tests\\n- E2E tests\\n- smoke\\n\\n**Frameworks**: vitest, playwright\\n**Coverage Target**: 90%\\n\\n**Notes**: Mock the network.\\n\\n## CI/CD & Infrastructure\\n\\n**CI/CD**: GitHub Actions\\n**Deployment**: Vercel, Kubernetes\\n**Container Registry**: GHCR\\n\\n## Project Context\\n\\n**Type**: Work / Professional\\n\\n- **STRICT MODE**: This is a work project. Follow procedures exactly as documented.\\n- Do not deviate from established patterns or make assumptions.\\n- Always ask for clarification rather than guessing.\\n- Document all decisions and changes thoroughly.\\n\\n## Best Practices\\n\\n- **Write clean code**: Prioritize readability and maintainability\\n- **Handle errors**: Don't ignore errors, handle them appropriately\\n- **Security**: Review code for potential vulnerabilities\\n- **Commits**: Use conventional commits (feat:, fix:, docs:, chore:)\\n- **Versioning**: Follow semantic versioning (MAJOR.MINOR.PATCH)\\n- **Dependencies**: Keep updated (Dependabot/Renovate configured)\\n\\n## Custom Instructions\\n\\nPrefer small pull requests.\\n\\n## Self-Improving Configuration\\n\\nThis configuration file is set to self-improve.\\nAs you work on this project, update this file to reflect:\\n- Preferred code styles and patterns\\n- Architecture decisions\\n- Rules for common issues to avoid\\n- Refined instructions based on user corrections\\n",
-  "behavior": [
-    "Always run and test locally after making changes",
-    "Always verify your work before returning: run tests, check builds, confirm changes work as expected",
-    "When you learn new project patterns or conventions, suggest updates to this configuration file",
-    "Always: Run tests",
-    "Never: Push to main"
-  ],
-  "codeStyle": {
-    "naming": "PascalCase",
-    "errorHandling": "result_types",
-    "logging": "structured",
-    "notes": "Prefer pure functions."
-  },
-  "techStack": {
-    "languages": [
-      "TypeScript",
-      "Python"
-    ],
-    "frameworks": [
-      "Next.js"
-    ],
-    "databases": [
-      "PostgreSQL"
-    ]
-  },
-  "commands": {
-    "build": "npm run build",
-    "test": "npm test",
-    "lint": "npm run lint",
-    "dev": "npm run dev",
-    "additional": [
-      "npm run db:migrate"
-    ]
-  },
-  "boundaries": {
-    "always": [
-      "Run tests"
-    ],
-    "ask": [
-      "Add dependencies"
-    ],
-    "never": [
-      "Push to main"
-    ]
-  },
-  "testing": {
-    "levels": [
-      "unit",
-      "e2e",
-      "smoke"
-    ],
-    "frameworks": [
-      "vitest",
-      "playwright"
-    ],
-    "coverage": 90,
-    "notes": "Mock the network."
-  },
-  "cicd": {
-    "platforms": [
-      "github_actions"
-    ],
-    "deploymentTargets": [
-      "vercel",
-      "kubernetes"
-    ],
-    "containerRegistry": "ghcr"
-  },
-  "importantFiles": [
-    "README.md",
-    "ARCHITECTURE.md",
-    "docs/adr"
-  ],
-  "preferences": {
-    "conventionalCommits": true,
-    "semver": true,
-    "dependabot": true,
-    "autoUpdate": true
-  }
-}",
-    "fileName": ".void/config.json",
-  },
-]
-`;
-
 exports[`web generator golden output > warp 1`] = `
 [
   {
-    "content": "# Demo - Warp Instructions
+    "content": "# Demo - AI Agent Instructions
 
 ## Project Overview
 
@@ -7912,7 +7750,7 @@ When requested or when missing, create these files following these guidelines:
 > Use environment variables, secret managers, or secure vaults for credentials.
 
 **🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.",
-    "fileName": "WARP.md",
+    "fileName": "AGENTS.md",
   },
 ]
 `;
@@ -7920,7 +7758,11 @@ When requested or when missing, create these files following these guidelines:
 exports[`web generator golden output > windsurf 1`] = `
 [
   {
-    "content": "# Demo - Windsurf AI Rules
+    "content": "---
+trigger: always_on
+---
+
+# Demo - AI Rules
 
 ## Project Overview
 
@@ -7993,7 +7835,7 @@ When requested or when missing, create these files following these guidelines:
 ---
 
 *Generated by [LynxPrompt](https://lynxprompt.com)*",
-    "fileName": ".windsurfrules",
+    "fileName": ".devin/rules/project.md",
   },
 ]
 `;
@@ -8001,7 +7843,11 @@ When requested or when missing, create these files following these guidelines:
 exports[`web generator golden output > windsurf with every answer 1`] = `
 [
   {
-    "content": "# Demo - Windsurf AI Rules
+    "content": "---
+trigger: always_on
+---
+
+# Demo - AI Rules
 
 ## Before Starting Any Coding Task
 
@@ -8306,7 +8152,7 @@ Rotate keys yearly.
 ---
 
 *Generated by [LynxPrompt](https://lynxprompt.com)*",
-    "fileName": ".windsurfrules",
+    "fileName": ".devin/rules/project.md",
   },
 ]
 `;
@@ -8367,6 +8213,256 @@ Prefer small pull requests.
 When requested or when missing, create these files following these guidelines:
 
 - This repository uses the **MIT** license. If the \`LICENSE\` file doesn't exist yet, please create it with copyright holder: Tester.
+
+## ⚠️ Security Notice
+
+> **Do not commit secrets to the repository or to the live app.**
+> Always use secure standards to transmit sensitive information.
+> Use environment variables, secret managers, or secure vaults for credentials.
+
+**🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.",
+    "fileName": ".rules",
+  },
+]
+`;
+
+exports[`web generator golden output > zed with every answer 1`] = `
+[
+  {
+    "content": "# Demo - Zed Instructions
+
+## Before Starting Any Coding Task
+
+1. Check existing worktrees with \`git worktree list\` and create a new one for this task if needed
+2. Use the naming convention: \`git worktree add -b ai/[task-description] ../[repo-name]-ai-[task-description]\`
+3. Navigate to the worktree directory before making any changes
+4. Commit changes when the task is finished. Merge to main, and clean the worktree.
+
+## Project Overview
+
+**Description**: A demo project
+
+**Architecture Pattern**: Hexagonal / Ports & Adapters - domain at center, adapters at edges
+**Visibility**: Public repository
+**Development OS**: macOS, Windows
+
+### Repository
+- **URL**: https://github.com/acme/demo
+- **Platform**: GitHub
+
+### Reference Materials
+- **Example Repository**: https://github.com/acme/example
+- **External Documentation**: https://docs.acme.test
+
+## Technology Stack
+
+### Languages
+- TypeScript
+- Python
+
+### Frameworks & Libraries
+- Next.js
+
+### Database
+- PostgreSQL
+
+### Tooling
+- **Package manager**: pnpm. Use it for every install and script.
+- **Runtime**: Node.js
+- **Monorepo tool**: Turborepo
+- **ORM / database toolkit**: prisma
+
+### AI Technology Selection
+For technologies beyond those listed, analyze the codebase and suggest appropriate solutions.
+
+## Development Guidelines
+
+### Communication Style
+- Be concise and direct
+- Developer background: backend developer — adapt responses to this domain expertise
+- Skill level: Expert
+
+### Workflow Rules
+- Always run and test locally after making changes
+- Always verify your work before returning: run tests, check builds, confirm changes work as expected
+- When you learn new project patterns or conventions, suggest updates to this configuration file
+- **Plan first** for complex, multi-step or risky changes
+- **Explanations**: concise, to the point
+- **Accessibility**: follow WCAG; use semantic markup, labels, keyboard access and enough contrast
+- **Performance**: keep an eye on load time, memory and needless work; measure before optimising
+- When stuck, **stop and ask** rather than attempting workarounds
+
+### MCP Servers
+
+The developer has these MCP (Model Context Protocol) servers available. Use them when relevant:
+
+- github
+- postgres
+
+### Infrastructure
+
+- **Server access**: via SSH. SSH key: \`~/.ssh/deploy\`
+- **Deployment**: Docker Compose (manual)
+
+### Important Files to Read First
+Before making changes, read these files to understand the project:
+- README.md
+- ARCHITECTURE.md
+- docs/adr
+
+### Project Context
+- **STRICT MODE**: This is a work project. Follow procedures exactly as documented.
+- Do not deviate from established patterns or make assumptions.
+- Always ask for clarification rather than guessing.
+- Document all decisions and changes thoroughly.
+
+### Commands
+- Build: \`npm run build\`
+- Test: \`npm test\`
+- Lint: \`npm run lint\`
+- Dev: \`npm run dev\`
+- **Type check**: \`npm run typecheck\`
+- **Format**: \`npm run format\`
+- **Pre-commit hooks**: \`npx lint-staged\`
+- **Clean**: \`rm -rf dist\`
+- \`npm run db:migrate\`
+
+### Code Style & Conventions
+- **Naming**: PascalCase for classes and types (e.g., MyClass, UserProfile)
+- **Error Handling**: Result / Either types (no exceptions for control flow)
+- **Logging**: Structured Logging
+- **File length**: keep files under 400 lines; split larger ones
+- **Imports**: group imports: external packages, then internal modules, then relative paths
+- **Comment language**: write code comments in english
+- **Documentation comments**: TSDoc
+- **Additional Notes**: Prefer pure functions.
+
+### Boundaries & Permissions
+
+**✅ ALWAYS do (no need to ask)**:
+- Run tests
+
+**❓ ASK first before doing**:
+- Add dependencies
+
+**🚫 NEVER do (strictly prohibited)**:
+- Push to main
+
+### Testing Requirements
+**Testing Levels**:
+- Unit tests (individual functions/methods)
+- End-to-end tests (complete user flows)
+- Smoke Tests
+**Frameworks**: vitest, playwright
+**Coverage Target**: 90% minimum
+**Notes**: Mock the network.
+- **Test-driven development**: write a failing test first, then the code that makes it pass
+- **Snapshot tests**: use snapshot tests for stable output such as rendered components
+- **Mocking**: mock collaborators so each unit is tested in isolation
+
+### CI/CD & Infrastructure
+- **CI/CD Platform**: GitHub Actions
+- **Deployment Targets**: Vercel, Kubernetes
+- **Container Builds**: Project builds Docker/OCI container images
+- **Container Registry**: GitHub Container Registry (ghcr.io)
+- **Published images**:
+  - \`acme/demo\`
+  - \`acme/demo-worker\`
+
+### Git Workflow
+- **Branching**: GitHub Flow: short-lived feature branches merged into the default branch through pull requests
+- **Default branch**: \`develop\`
+- Never commit directly to \`develop\`; work on a branch and open a pull request
+- Sign every commit (GPG or SSH)
+- **Version tags**: \`v1.2.3\`
+- **Changelog**: managed with Changesets
+
+## Best Practices
+
+- **Write clean code**: Prioritize readability and maintainability
+- **Handle errors properly**: Don't ignore errors, handle them appropriately
+- **Consider security**: Review code for potential security vulnerabilities
+- **Conventional commits**: Use conventional commit messages (feat:, fix:, docs:, chore:, refactor:, test:, style:)
+- **Semantic versioning**: Follow semver (MAJOR.MINOR.PATCH) for version numbers
+- **Dependency updates**: Keep dependencies updated (Dependabot) configured)
+
+## Custom Instructions
+
+The project owner has provided these additional instructions:
+
+Prefer small pull requests.
+
+## Self-Improving Configuration
+
+This file should evolve as we work together:
+1. Track coding patterns and preferences
+2. Note corrections made to suggestions
+3. Update periodically with learned preferences
+
+
+## Repository Files to Generate
+
+When requested or when missing, create these files following these guidelines:
+
+- **\`.editorconfig\`**: Generate with standard settings for consistent code formatting across editors (indent style, line endings, trim trailing whitespace).
+- **\`CODE_OF_CONDUCT.md\`**: Generate based on the Contributor Covenant or similar community standards document.
+- **\`SECURITY.md\`**: Generate with security policy, supported versions, and instructions for reporting vulnerabilities privately.
+- **\`.gitignore\`**: Generate for TypeScript, Python, Next.js. Include IDE files, build artifacts, dependencies, and environment files.
+- **\`.dockerignore\`**: Generate for TypeScript, Python, Next.js. Exclude .git, dependencies, .env files, build artifacts, and documentation to keep images small.
+- **\`ROADMAP.md\`**: Create and maintain with planned features, milestones, and future ideas. Organize by timeline (Q1, Q2, etc.) or priority. Keep updated as the project evolves.
+- This repository uses the **MIT** license. If the \`LICENSE\` file doesn't exist yet, please create it with copyright holder: Test Author. Additional licensing notes: Docs are CC-BY.
+
+## Custom File Templates
+
+Create these files with the exact content provided below. These are user-specified templates:
+
+### CONTRIBUTING.md
+\`\`\`markdown
+# Contributing
+Open an issue first.
+\`\`\`
+
+### .github/FUNDING.yml
+\`\`\`yaml
+github: [acme]
+\`\`\`
+
+## 🔐 Security Configuration
+
+### Auth Providers
+
+- GitHub
+- Google
+
+### Secrets Management
+
+- Environment Variables
+- HashiCorp Vault
+
+### Security Tooling
+
+- Dependabot
+- CodeQL
+
+### Authentication
+
+- OAuth 2.0
+- JWT
+
+### Data Handling
+
+- Encryption at Rest
+
+### Compliance
+
+- GDPR
+
+### Analytics & Telemetry
+
+- Plausible
+
+### Notes
+Rotate keys yearly.
 
 ## ⚠️ Security Notice
 

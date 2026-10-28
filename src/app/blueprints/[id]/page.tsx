@@ -84,6 +84,7 @@ interface TemplateData {
   showcaseUrl?: string | null;
   currentVersion?: number;
   publishedVersion?: number | null;
+  repositoryPath?: string;
 }
 
 // All command template types
@@ -824,6 +825,7 @@ export default function BlueprintDetailPage() {
             sensitiveFields: blueprint.sensitiveFields,
             targetPlatform: blueprint.targetPlatform || blueprint.type,
             compatibleWith: blueprint.compatibleWith,
+            repositoryPath: blueprint.repositoryPath,
           }}
           isOwner={blueprint.isOwner}
           onCloneToEdit={handleCloneToEdit}

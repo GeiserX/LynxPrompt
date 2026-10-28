@@ -2,7 +2,10 @@
  * Where a pulled blueprint is written on disk.
  */
 
+import fs from "fs";
 import path from "path";
+import { existsSync } from "fs";
+import { mkdir, readFile, writeFile } from "fs/promises";
 import {
   PLATFORMS,
   COMMANDS,
@@ -10,9 +13,19 @@ import {
   getCommandTemplateType,
   SKILL_BLUEPRINT_TYPE,
   SKILL_DIRECTORIES,
-  skillFolder,
+  SKILL_TARGETS,
+  SUBAGENT_BLUEPRINT_TYPE,
+  SUBAGENT_DIRECTORIES,
+  SUBAGENT_TARGETS,
+  skillFiles,
+  subagentFiles,
+  agentAssetFiles,
   MCP_BLUEPRINT_TYPE,
   MCP_CONFIGS,
+  extractMcpConfig,
+  mcpConfigForPath,
+  mergeMcpConfig,
+  type McpConfigTarget,
 } from "../../../packages/shared/src/platforms.js";
 import { PLATFORM_FILES } from "./generator.js";
 
@@ -35,7 +48,9 @@ export function blueprintFilename(bp: {
   content?: string;
 }): string {
   if (bp.repository_path) return bp.repository_path;
-  if (bp.type === SKILL_BLUEPRINT_TYPE) return `${SKILL_DIRECTORIES[0]}/${skillFolder(bp)}/SKILL.md`;
+  // A skill or subagent is tracked in the copy that holds it as stored
+  const copies = agentAssetFiles({ ...bp, content: bp.content ?? "" });
+  if (copies.length > 0) return (copies.find((f) => f.full) ?? copies[0]).path;
   if (bp.type === MCP_BLUEPRINT_TYPE) return MCP_CONFIGS[0].file;
   const platform = platformForBlueprintType(bp.type);
   if (platform && PLATFORM_FILES[platform]) return PLATFORM_FILES[platform];
@@ -65,6 +80,22 @@ export function safePath(root: string, untrusted: string, pathImpl: path.Platfor
   return resolved;
 }
 
+/**
+ * The path to write a rules file at under `root`. Cline reads a legacy
+ * .clinerules FILE or a .clinerules/ folder, and both cannot exist at once,
+ * so with the file present a .clinerules/ rule goes to .cline/rules/ instead.
+ */
+export function rulesWritePath(root: string, file: string): string {
+  const parts = file.replace(/\\/g, "/").split("/");
+  if (parts.length < 2 || parts[0] !== ".clinerules") return file;
+  try {
+    if (!fs.statSync(path.join(root, ".clinerules")).isFile()) return file;
+  } catch {
+    return file;
+  }
+  return [".cline", "rules", ...parts.slice(1)].join("/");
+}
+
 /** Repository paths are compared with "/" separators and in lower case. */
 function normPath(p: string): string {
   return p.replace(/\\/g, "/").toLowerCase();
@@ -81,36 +112,35 @@ interface ConfigPattern {
   label: string;
 }
 
-const RULE_PLATFORMS = PLATFORMS.filter((p) => !p.isCommand);
+// Rules files only: a JSON or YAML config (Aider's .aider.conf.yml) can hold
+// API keys, so a scan never picks it up
+const RULE_PLATFORMS = PLATFORMS.filter((p) => !p.isCommand && p.format !== "json" && p.format !== "yaml");
 const typeOf = (p: { blueprintType?: string }) => p.blueprintType ?? "CUSTOM";
 const atPath = (relativePath: string, file: string) => {
   const p = normPath(relativePath);
   return p === file || p.endsWith(`/${file}`);
 };
-/** <dir>/<skill name>/SKILL.md, with <dir> at the root or in a subfolder. */
-const inSkillFolder = (relativePath: string, dir: string) => {
-  const parts = normPath(relativePath).split("/");
-  const n = parts.length;
-  return n >= 4 && parts[n - 1] === "skill.md" && parts.slice(n - 4, n - 2).join("/") === dir;
-};
+/** A file at a fixed path (with a "/"), or with a fixed name wherever it sits. */
+const fileAt = (relativePath: string, file: string) =>
+  file.includes("/") ? atPath(relativePath, normPath(file)) : basename(relativePath) === file;
 const inFolder = (relativePath: string, folder: string) => {
   const p = normPath(relativePath);
   return p.startsWith(folder) || p.includes(`/${folder}`);
 };
+
+const LEGACY_WHOLE_FILES = new Set(["opencode.json", "firebender.json"]);
 
 /**
  * Config files `lynxp push` recognises, most specific first, built from the
  * shared platform table plus the paths older CLI versions wrote.
  */
 const CONFIG_PATTERNS: ConfigPattern[] = [
-  // Agent Skills: <tool>/skills/<skill name>/SKILL.md
-  ...SKILL_DIRECTORIES.map((dir) => ({
-    match: (p: string) => inSkillFolder(p, dir),
-    type: SKILL_BLUEPRINT_TYPE,
-    label: "Agent Skill",
-  })),
-  // MCP server configs
-  ...MCP_CONFIGS.map((c) => ({
+  // Agent Skills (<tool>/skills/<skill name>/SKILL.md) and subagents (<tool>/agents/<name>.md)
+  { match: (p) => assetLocation(p)?.kind === "skill", type: SKILL_BLUEPRINT_TYPE, label: "Agent Skill" },
+  { match: (p) => assetLocation(p)?.kind === "agent", type: SUBAGENT_BLUEPRINT_TYPE, label: "Subagent" },
+  // MCP server configs. opencode.json and firebender.json keep the types older
+  // CLI versions pushed them as (below), so they are pushed whole.
+  ...MCP_CONFIGS.filter((c) => !LEGACY_WHOLE_FILES.has(c.file)).map((c) => ({
     match: (p: string) => atPath(p, c.file),
     type: MCP_BLUEPRINT_TYPE,
     label: `MCP Servers (${c.name})`,
@@ -127,18 +157,31 @@ const CONFIG_PATTERNS: ConfigPattern[] = [
     type: typeOf(p),
     label: `${p.name} Rules`,
   })),
+  // Other files and folders the tool reads (before the fixed names, so
+  // .junie/AGENTS.md is Junie's, not the universal AGENTS.md)
+  ...RULE_PLATFORMS.flatMap((p) =>
+    (p.otherFiles ?? []).map((other) => ({
+      match: (rel: string) => (other.endsWith("/") ? inFolder(rel, other) && /\.mdc?$/.test(rel) : fileAt(rel, other)),
+      type: typeOf(p),
+      label: p.name,
+    }))
+  ),
   // A file at a fixed path or with a fixed name, wherever it sits
   ...RULE_PLATFORMS.map((p) => ({
-    match: (rel: string) => (p.file.includes("/") ? atPath(rel, p.file) : basename(rel) === p.file),
+    match: (rel: string) => fileAt(rel, p.file),
     type: typeOf(p),
     label: p.name,
   })),
   // Paths older CLI versions generated
   { match: (p) => inFolder(p, ".copilot/prompts/") && p.endsWith(".md"), type: "COPILOT_PROMPT", label: "Copilot Prompt" },
+  { match: (p) => inFolder(p, ".windsurf/workflows/") && p.endsWith(".md"), type: "WINDSURF_WORKFLOW", label: "Windsurf Workflow" },
+  { match: (p) => basename(p) === "CONVENTIONS.md", type: "AIDER_MD", label: "Aider Conventions" },
   { match: (p) => inFolder(p, ".idx/") && p.endsWith(".mdc"), type: "IDX_CONFIG", label: "Firebase Studio" },
   { match: (p) => atPath(p, ".zed/instructions.md"), type: "ZED_INSTRUCTIONS", label: "Zed" },
   { match: (p) => basename(p) === "AIDER.md", type: "AIDER_MD", label: "AIDER.md" },
   { match: (p) => basename(p) === ".cursorrules", type: "CURSORRULES", label: "Cursor Rules (legacy)" },
+  // Read by a tool the table does not generate for
+  { match: (p) => basename(p) === "QWEN.md", type: "CUSTOM", label: "Qwen Code" },
   { match: (p) => basename(p) === "opencode.json", type: "OPENCODE_JSON", label: "OpenCode Config" },
   { match: (p) => basename(p) === "firebender.json", type: "CUSTOM", label: "Firebender Config" },
 ];
@@ -163,4 +206,222 @@ export function matchConfigFile(relativePath: string): { type: string; label: st
  */
 export function withFinalNewline(content: string): string {
   return content.endsWith("\n") ? content : `${content}\n`;
+}
+
+// ========================================
+// SKILL AND SUBAGENT COPIES
+// ========================================
+
+interface AssetLocation {
+  kind: "skill" | "agent";
+  /** Folder the tool folder sits in ("" at the project root, "apps/web/" in a subfolder) */
+  base: string;
+  directory: string;
+  /** Skill folder or subagent file name, without extension */
+  name: string;
+}
+
+/** Where `dir` ends `parent` ("/"-separated, lower case), or -1. */
+function dirEnd(parent: string, dir: string): number {
+  if (parent === dir) return 0;
+  return parent.endsWith(`/${dir}`) ? parent.length - dir.length : -1;
+}
+
+/**
+ * The skill or subagent a path holds: <base><tool skills dir>/<name>/SKILL.md
+ * or <base><tool agents dir>/<name><ext>. Null for any other file.
+ */
+export function assetLocation(relativePath: string): AssetLocation | null {
+  const original = relativePath.replace(/\\/g, "/");
+  const p = original.toLowerCase();
+  const slash = p.lastIndexOf("/");
+  if (slash < 0) return null;
+  const parent = p.slice(0, slash);
+  const file = p.slice(slash + 1);
+
+  if (file === "skill.md") {
+    const folderSlash = parent.lastIndexOf("/");
+    if (folderSlash < 0) return null;
+    const toolDir = parent.slice(0, folderSlash);
+    for (const dir of SKILL_DIRECTORIES) {
+      const at = dirEnd(toolDir, dir);
+      if (at >= 0) {
+        return { kind: "skill", base: original.slice(0, at), directory: dir, name: original.slice(folderSlash + 1, slash) };
+      }
+    }
+    return null;
+  }
+
+  for (const { directory, extensions } of SUBAGENT_DIRECTORIES) {
+    const at = dirEnd(parent, directory);
+    if (at < 0) continue;
+    const ext = extensions.find((e) => file.endsWith(e) && file.length > e.length);
+    if (!ext) continue;
+    return { kind: "agent", base: original.slice(0, at), directory, name: original.slice(slash + 1, original.length - ext.length) };
+  }
+  return null;
+}
+
+/** Copies of one skill or subagent share this key: kind, base folder and name. */
+export function assetKey(relativePath: string): string | null {
+  const loc = assetLocation(relativePath);
+  return loc ? `${loc.kind}:${loc.base.toLowerCase()}${loc.name.toLowerCase()}` : null;
+}
+
+/** Tools picked besides the default copies: Kiro, Firebender, Copilot or Codex, when the project uses them. */
+export function projectAssetTools(root: string): string[] {
+  return [...SKILL_TARGETS, ...SUBAGENT_TARGETS]
+    .filter((t) => !t.default && t.detect.some((d) => existsSync(path.join(root, d))))
+    .map((t) => t.id);
+}
+
+/**
+ * The other copies of the skill or subagent at `relativePath` (paths relative
+ * to the same root): `.agents/skills` + `.claude/skills` for a skill,
+ * `.claude/agents` + `.agents/agents` for a subagent, plus the picked tools.
+ * Only a Markdown subagent has copies: a Codex TOML or Kiro JSON file stays alone.
+ */
+export function assetCopies(relativePath: string, content: string, tools: string[] = []): { path: string; content: string }[] {
+  const loc = assetLocation(relativePath);
+  if (!loc) return [];
+  if (loc.kind === "agent" && !relativePath.toLowerCase().endsWith(".md")) return [];
+  const files =
+    loc.kind === "skill" ? skillFiles({ content }, tools, loc.name) : subagentFiles({ content }, tools, loc.name);
+  const self = normPath(relativePath);
+  return files
+    .map((f) => ({ path: `${loc.base}${f.path}`, content: f.content }))
+    .filter((f) => normPath(f.path) !== self);
+}
+
+/**
+ * Write the copies of a skill or subagent next to the file at `relativePath`
+ * under `root`, so every tool sees the same definition. `onlyExisting`
+ * refreshes the copies already there (push, sync) instead of adding new ones
+ * (pull). With `overwrite: false` (pull without --yes) a copy that differs is
+ * replaced only when it is the copy of `previous`, the file's content before
+ * this pull; any other copy holds the user's own work and is kept.
+ */
+export async function writeAssetCopies(
+  root: string,
+  relativePath: string,
+  content: string,
+  {
+    onlyExisting = false,
+    tools = projectAssetTools(root),
+    overwrite = true,
+    previous,
+  }: { onlyExisting?: boolean; tools?: string[]; overwrite?: boolean; previous?: string } = {}
+): Promise<{ written: string[]; kept: string[] }> {
+  const written: string[] = [];
+  const kept: string[] = [];
+  const before = new Map(
+    previous === undefined
+      ? []
+      : assetCopies(relativePath, previous, tools).map((c) => [normPath(c.path), withFinalNewline(c.content)])
+  );
+  for (const copy of assetCopies(relativePath, content, tools)) {
+    let target: string;
+    try {
+      target = safePath(root, copy.path);
+    } catch {
+      continue;
+    }
+    const text = withFinalNewline(copy.content);
+    if (existsSync(target)) {
+      const current = await readFile(target, "utf-8");
+      if (current === text) continue;
+      if (!overwrite && before.get(normPath(copy.path)) !== current) {
+        kept.push(copy.path);
+        continue;
+      }
+    } else if (onlyExisting) {
+      continue;
+    }
+    await mkdir(path.dirname(target), { recursive: true });
+    await writeFile(target, text, "utf-8");
+    written.push(copy.path);
+  }
+  return { written, kept };
+}
+
+/** Every tool LynxPrompt can write a copy for: a copy on disk counts whichever tools are picked. */
+const ALL_ASSET_TOOLS = [...SKILL_TARGETS, ...SUBAGENT_TARGETS].map((t) => t.id);
+
+/**
+ * Whether `copyPath` is a file LynxPrompt writes as a copy of the skill or
+ * subagent at `ofPath`. A skill in another tool's folder (.github/skills,
+ * .cursor/skills...) is never a copy: LynxPrompt does not write there.
+ */
+export function isAssetCopyOf(copyPath: string, ofPath: string): boolean {
+  const target = normPath(copyPath);
+  return assetCopies(ofPath, "", ALL_ASSET_TOOLS).some((c) => normPath(c.path) === target);
+}
+
+/**
+ * One file per skill or subagent: copies of the same one are pushed once. The
+ * tracked copy wins, else the full one (`.claude/...`), else the first found;
+ * a file is dropped only when it is a copy LynxPrompt writes of the winner
+ * (push refreshes those). Tracked files and every other file pass through.
+ */
+export function keepOneCopy<T extends { path: string }>(
+  files: T[],
+  isTracked: (relativePath: string) => boolean
+): { kept: T[]; dropped: T[] } {
+  const full = new Set([...SKILL_TARGETS, ...SUBAGENT_TARGETS].filter((t) => t.format === "full").map((t) => t.directory));
+  const rank = (f: T) => (isTracked(f.path) ? 0 : full.has(assetLocation(f.path)!.directory) ? 1 : 2);
+  const best = new Map<string, T>();
+  for (const f of files) {
+    const key = assetKey(f.path);
+    if (!key) continue;
+    const current = best.get(key);
+    if (!current || rank(f) < rank(current)) best.set(key, f);
+  }
+  const kept = files.filter((f) => {
+    const key = assetKey(f.path);
+    const winner = key ? best.get(key) : undefined;
+    return !winner || winner === f || isTracked(f.path) || !isAssetCopyOf(f.path, winner.path);
+  });
+  return { kept, dropped: files.filter((f) => !kept.includes(f)) };
+}
+
+/**
+ * The MCP config a path is when only part of the file is the blueprint: a
+ * settings file (.gemini/settings.json, .zed/settings.json, kilo.jsonc...) or
+ * a TOML config (.codex/config.toml, .vibe/config.toml). Null for any other
+ * file, which is the blueprint whole.
+ */
+export function mcpPart(relativePath: string): McpConfigTarget | null {
+  if (matchConfigFile(relativePath)?.type !== MCP_BLUEPRINT_TYPE) return null;
+  const target = mcpConfigForPath(relativePath);
+  return target && target.kind !== "whole" ? target : null;
+}
+
+/**
+ * What a local file holds as blueprint content: the file itself, or only the
+ * MCP servers of a settings or TOML file (null when it has none). push, sync
+ * and diff read files through this, so another setting never reaches the cloud.
+ */
+export function blueprintContentOf(relativePath: string, fileText: string): string | null {
+  const target = mcpPart(relativePath);
+  return target ? extractMcpConfig(fileText, target.id) : fileText;
+}
+
+/**
+ * The text to write to a file for blueprint content. A rule or command file
+ * gets the content itself. An MCP file gets the content in its tool's format
+ * (a blueprint written for another tool, such as Codex TOML, is converted);
+ * a settings or TOML file keeps every other setting it holds. Throws when the
+ * content is not a readable MCP config and the file holds more than servers.
+ */
+export function fileTextFor(relativePath: string, existing: string | null, content: string): string {
+  if (matchConfigFile(relativePath)?.type !== MCP_BLUEPRINT_TYPE) return content;
+  const target = mcpConfigForPath(relativePath);
+  if (!target) return content;
+  if (target.kind !== "whole") return mergeMcpConfig(existing ?? "", content, target.id, target.file);
+  try {
+    return mergeMcpConfig("", content, target.id, target.file);
+  } catch {
+    // Not a readable MCP config: the file is the content, as before
+    return content;
+  }
 }

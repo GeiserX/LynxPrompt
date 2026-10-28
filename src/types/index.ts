@@ -24,9 +24,7 @@ export type AIPlatformId =
   | "cursor"
   | "claude_code"
   | "github_copilot"
-  | "windsurf"
-  | "continue"
-  | "cody";
+  | "windsurf";
 
 /**
  * Template types that can be generated

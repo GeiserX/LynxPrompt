@@ -27,6 +27,8 @@ import {
   replaceVariables,
   adaptRulesContent,
   downloadName,
+  zipFiles,
+  downloadBlob,
   type DuplicateVariableDefault,
 } from "@/lib/file-generator";
 import {
@@ -37,9 +39,14 @@ import {
   MCP_BLUEPRINT_TYPE,
   MCP_CONFIGS,
   SKILL_BLUEPRINT_TYPE,
-  SKILL_DIRECTORIES,
+  SKILL_TARGETS,
+  SUBAGENT_BLUEPRINT_TYPE,
+  SUBAGENT_TARGETS,
   skillFolder,
+  subagentName,
+  agentAssetFiles,
   convertMcpConfig,
+  commandContent,
 } from "@/lib/platforms";
 
 interface SensitiveField {
@@ -60,6 +67,8 @@ interface TemplateDownloadModalProps {
     sensitiveFields?: Record<string, SensitiveField>;
     targetPlatform?: string;
     compatibleWith?: string[];
+    /** The file the blueprint was pushed from (lynxp push): its tool's MCP format, or a subagent's own path */
+    repositoryPath?: string;
   };
   targetPlatform?: string; // Override the default platform
   /** Whether the viewer owns the blueprint (they can edit it in place) */
@@ -86,14 +95,16 @@ const LEGACY_TARGETS: Record<string, string> = {
   CUSTOM: "universal",
   claude_code: "claude",
   github_copilot: "copilot",
-  continue_dev: "continue",
+  continue_dev: "universal", // Continue is retired; it read AGENTS.md
 };
 
-// Command blueprint types, and where each tool keeps its commands.
-// All are plain Markdown, so converting one is only a rename.
-const COMMAND_TYPES = COMMANDS.map((c) => getCommandTemplateType(c.id));
+// Command blueprint types (and the retired Continue prompts), and where each
+// tool keeps its commands. Converting one is a rename, except for Gemini CLI,
+// which reads TOML (commandContent).
+const COMMAND_TYPES = [...COMMANDS.map((c) => getCommandTemplateType(c.id)), "CONTINUE_PROMPT"];
 const commandExportTargets = COMMANDS.map((c) => ({
   id: c.platformId,
+  commandId: c.id,
   name: c.name,
   directory: `${c.directory}/`,
   extension: c.extension,
@@ -104,10 +115,11 @@ const commandExportTargets = COMMANDS.map((c) => ({
 const DEFAULT_PLATFORM_COUNT = 6;
 
 // An MCP config rewritten for the target tool; content that is not a valid
-// config is offered as it is rather than failing the download
-function mcpContent(content: string, targetId: string): string {
+// config is offered as it is rather than failing the download. The source file
+// matters for a bare "url": Gemini CLI and Qwen Code mean SSE by it.
+function mcpContent(content: string, targetId: string, sourceFile?: string): string {
   try {
-    return convertMcpConfig(content, targetId);
+    return convertMcpConfig(content, targetId, sourceFile);
   } catch {
     return content;
   }
@@ -136,14 +148,17 @@ export function TemplateDownloadModal({
   
   // Check if template is a command
   const isCommand = COMMAND_TYPES.includes(template.targetPlatform || "");
-  // Agent Skills go in a tool's skills folder unchanged; MCP configs are
-  // rewritten for the chosen tool's file
+  // Skills and subagents download as a .zip with a copy for each tool's
+  // folder; MCP configs are rewritten for the chosen tool's file
   const isSkill = template.targetPlatform === SKILL_BLUEPRINT_TYPE;
+  const isSubagent = template.targetPlatform === SUBAGENT_BLUEPRINT_TYPE;
+  const isAsset = isSkill || isSubagent;
   const isMcp = template.targetPlatform === MCP_BLUEPRINT_TYPE;
-  const [skillDirectory, setSkillDirectory] = useState<string>(SKILL_DIRECTORIES[0]);
+  const assetTargets = isSkill ? SKILL_TARGETS : SUBAGENT_TARGETS;
+  // Tools that get a copy only when picked (Kiro, Firebender, Copilot, Codex)
+  const [assetTools, setAssetTools] = useState<string[]>([]);
   const [mcpTargetId, setMcpTargetId] = useState<string>(MCP_CONFIGS[0].id);
   const mcpTarget = MCP_CONFIGS.find((c) => c.id === mcpTargetId) ?? MCP_CONFIGS[0];
-  const skillDirName = skillFolder({ name: template.name, content: template.content });
 
   const getInitialPlatform = () => {
     const rawPlatform = targetPlatform || template.targetPlatform || "universal";
@@ -339,11 +354,33 @@ export function TemplateDownloadModal({
   // Priority: user-entered value > creator default > keep placeholder
   const filledContent = replaceVariables(template.content || "", values);
   // Shape it for the chosen platform: its frontmatter (Cursor, Kiro, Augment) or none
+  const commandId = commandExportTargets.find((t) => t.id === commandExportTarget)?.commandId ?? "";
   const processedContent = isMcp
-    ? mcpContent(filledContent, mcpTarget.id)
-    : isCommand || isStructured || isSkill
-      ? filledContent
-      : adaptRulesContent(filledContent, storedPlatform, selectedPlatform, template.name);
+    ? mcpContent(filledContent, mcpTarget.id, template.repositoryPath)
+    : isCommand
+      ? commandContent(filledContent, commandId)
+      : isStructured || isAsset
+        ? filledContent
+        : adaptRulesContent(filledContent, storedPlatform, selectedPlatform, template.name);
+
+  // A subagent pushed as a Codex TOML or Kiro JSON file is not Markdown: like
+  // `lynxp pull`, it goes back to its own path alone, with no copies
+  const nativeSubagentPath =
+    isSubagent && template.repositoryPath && !template.repositoryPath.toLowerCase().endsWith(".md")
+      ? template.repositoryPath
+      : null;
+  // Every copy of a skill or subagent, at its path in the project
+  const assetFiles = nativeSubagentPath
+    ? [{ path: nativeSubagentPath, content: filledContent }]
+    : isAsset
+      ? agentAssetFiles(
+          { type: template.targetPlatform!, name: template.name, content: filledContent, description: template.description },
+          assetTools
+        )
+      : [];
+  const assetName = isSkill
+    ? skillFolder({ name: template.name, content: template.content })
+    : subagentName({ name: template.name, content: template.content });
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(processedContent);
@@ -354,8 +391,8 @@ export function TemplateDownloadModal({
   const handleDownload = async () => {
     let filename: string;
     
-    if (isSkill) {
-      filename = "SKILL.md";
+    if (isAsset) {
+      filename = `${assetName}-${isSkill ? "skill" : "subagent"}.zip`;
     } else if (isMcp) {
       filename = downloadName(mcpTarget.file);
     } else if (isCommand) {
@@ -380,7 +417,9 @@ export function TemplateDownloadModal({
           body: JSON.stringify({
             platform: isSkill
               ? "skill"
-              : isMcp
+              : isSubagent
+                ? "subagent"
+                : isMcp
                 ? mcpTarget.id
                 : isCommand
                   ? `command-${commandExportTarget}`
@@ -391,6 +430,11 @@ export function TemplateDownloadModal({
         // Don't fail the download if tracking fails
         console.warn("Failed to track download");
       }
+    }
+
+    if (isAsset) {
+      downloadBlob(await zipFiles(assetFiles.map((f) => ({ fileName: f.path, content: f.content }))), filename);
+      return;
     }
 
     // Perform the actual download
@@ -469,7 +513,7 @@ export function TemplateDownloadModal({
                 </label>
               </div>
               
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid max-h-72 grid-cols-2 gap-3 overflow-y-auto">
                 {commandExportTargets.map((target) => (
                   <button
                     key={target.id}
@@ -498,49 +542,92 @@ export function TemplateDownloadModal({
             </div>
           )}
 
-          {/* Skills folder or MCP config file to export to */}
-          {(isSkill || isMcp) && (
+          {/* Skill or subagent: the folders it is written to, and the tools to add */}
+          {isAsset && (
             <div className="mb-6">
+              {!nativeSubagentPath && (
+              <>
               <label className="mb-3 block text-sm font-medium">
-                {isSkill ? "Which tool's skills folder?" : "Which tool's MCP config?"}
+                Also add a copy for
               </label>
-              <div className="grid grid-cols-2 gap-3">
-                {isSkill
-                  ? SKILL_DIRECTORIES.map((dir) => (
-                      <button
-                        key={dir}
-                        onClick={() => setSkillDirectory(dir)}
-                        className={`rounded-lg border p-3 text-left transition-colors ${
-                          skillDirectory === dir ? "border-primary bg-primary/10" : "hover:border-primary/50"
-                        }`}
-                      >
-                        <code className="text-xs">{dir}/</code>
-                      </button>
-                    ))
-                  : MCP_CONFIGS.map((c) => (
-                      <button
-                        key={c.id}
-                        onClick={() => setMcpTargetId(c.id)}
-                        className={`flex flex-col items-start gap-1 rounded-lg border p-3 text-left transition-colors ${
-                          mcpTargetId === c.id ? "border-primary bg-primary/10" : "hover:border-primary/50"
-                        }`}
-                      >
-                        <span className="font-medium">{c.name}</span>
-                        <code className="text-xs text-muted-foreground">{c.file}</code>
-                      </button>
-                    ))}
+              <div className="flex flex-wrap gap-3">
+                {assetTargets
+                  .filter((t) => !t.default)
+                  .map((t) => (
+                    <label key={t.id} className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={assetTools.includes(t.id)}
+                        onChange={(e) =>
+                          setAssetTools((prev) =>
+                            e.target.checked ? [...prev, t.id] : prev.filter((id) => id !== t.id)
+                          )
+                        }
+                      />
+                      {t.name}
+                    </label>
+                  ))}
               </div>
+              </>
+              )}
               <p className="mt-3 text-xs text-muted-foreground">
-                Save the downloaded file to:{" "}
-                <code className="rounded bg-primary/10 px-1">
-                  {isSkill ? `${skillDirectory}/${skillDirName}/SKILL.md` : mcpTarget.file}
-                </code>
+                The .zip unpacks into your project root as:
+              </p>
+              <ul className="mt-1 space-y-1 text-xs">
+                {assetFiles.map((f) => (
+                  <li key={f.path}>
+                    <code className="rounded bg-primary/10 px-1">{f.path}</code>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {nativeSubagentPath
+                  ? "This subagent is stored in its tool's own format, so it is not copied to the other agents' folders."
+                  : isSkill
+                  ? ".agents/skills is read by almost every agent; Claude Code reads only .claude/skills."
+                  : ".claude/agents is read by Claude Code, Cursor and Copilot in VS Code; .agents/agents by Antigravity, Goose, OpenHands and Kimi Code."}
               </p>
             </div>
           )}
 
+          {/* MCP config file to export to */}
+          {isMcp && (
+            <div className="mb-6">
+              <label className="mb-3 block text-sm font-medium">Which tool&apos;s MCP config?</label>
+              <div className="grid grid-cols-2 gap-3">
+                {MCP_CONFIGS.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => setMcpTargetId(c.id)}
+                    className={`flex flex-col items-start gap-1 rounded-lg border p-3 text-left transition-colors ${
+                      mcpTargetId === c.id ? "border-primary bg-primary/10" : "hover:border-primary/50"
+                    }`}
+                  >
+                    <span className="font-medium">{c.name}</span>
+                    <code className="text-xs text-muted-foreground">{c.file}</code>
+                  </button>
+                ))}
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Save the downloaded file to:{" "}
+                <code className="rounded bg-primary/10 px-1">{mcpTarget.file}</code>
+              </p>
+              {isMcp && mcpTarget.kind !== "whole" && (
+                <p className="mt-2 text-xs text-muted-foreground" data-testid="mcp-merge-note">
+                  {mcpTarget.kind === "toml"
+                    ? `This file holds other settings too. The download has only the [mcp_servers] tables: add them to your ${mcpTarget.file}.`
+                    : `This file holds other settings too. The download has only the "${mcpTarget.key}" key: merge it into your ${mcpTarget.file}.`}{" "}
+                  lynxp pull and lynxp convert do that for you and keep the other settings.
+                </p>
+              )}
+              {isMcp && mcpTarget.note && (
+                <p className="mt-2 text-xs text-muted-foreground">{mcpTarget.note}.</p>
+              )}
+            </div>
+          )}
+
           {/* Platform Selection with Search (for rule blueprints) */}
-          {!isCommand && !isSkill && !isMcp && (
+          {!isCommand && !isAsset && !isMcp && (
             <div className="mb-6">
               <label className="mb-2 block text-sm font-medium">
                 Which AI IDE are you using?

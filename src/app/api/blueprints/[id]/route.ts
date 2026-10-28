@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getTemplateById } from "@/lib/data/templates";
 import { prismaUsers } from "@/lib/db-users";
 import { detectSensitiveData } from "@/lib/sensitive-data";
-import { normalizeBlueprintType } from "@/lib/blueprint-rules";
+import { normalizeBlueprintType, skillContentError } from "@/lib/blueprint-rules";
 import { contentChecksum } from "@/lib/content-checksum";
 import { sanitizeRepositoryPath } from "@/lib/repository-path";
 import { checkBlueprintLineCount } from "@/lib/subscription";
@@ -194,6 +194,14 @@ export async function PUT(
 
     if (type !== undefined) {
       updateData.type = normalizeBlueprintType(type);
+      const skillError = skillContentError(
+        updateData.type as string,
+        typeof content === "string" ? content : existingBlueprint.content,
+        typeof repositoryPath === "string" ? repositoryPath : null
+      );
+      if (skillError) {
+        return NextResponse.json({ error: skillError }, { status: 400 });
+      }
     }
 
     if (repositoryPath !== undefined) {

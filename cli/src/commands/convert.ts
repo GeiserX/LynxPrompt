@@ -19,8 +19,24 @@ import {
   sourceFilePlatform,
 } from "../utils/convert-format.js";
 import { PLATFORM_FILES } from "../utils/generator.js";
-import { COMMANDS, MCP_CONFIGS, convertMcpConfig } from "../../../packages/shared/src/platforms.js";
-import { matchConfigFile } from "../utils/blueprint-files.js";
+import {
+  COMMANDS,
+  MCP_CONFIGS,
+  PLATFORMS,
+  convertMcpConfig,
+  extractMcpConfig,
+  mergeMcpConfig,
+  resolvePlatformId,
+  type McpConfigTarget,
+} from "../../../packages/shared/src/platforms.js";
+import {
+  SKILL_TARGETS,
+  SUBAGENT_TARGETS,
+  skillFiles,
+  subagentFiles,
+  type AgentAssetTarget,
+} from "../../../packages/shared/src/agent-assets.js";
+import { matchConfigFile, rulesWritePath, assetLocation, withFinalNewline } from "../utils/blueprint-files.js";
 
 interface ConvertOptions {
   output?: string;
@@ -28,58 +44,28 @@ interface ConvertOptions {
 }
 
 // Target format to output filename: every platform of the shared table (the
-// file the wizard and the web download write), plus the legacy .cursorrules,
-// Codex and one example file per command folder.
+// file the wizard and the web download write), plus the legacy .cursorrules
+// and one example file per command folder.
 const TARGET_FILES: Record<string, string> = {
   ...PLATFORM_FILES,
   cursor_legacy: ".cursorrules",
-  codex: "codex.md",
   ...Object.fromEntries(COMMANDS.map((c) => [c.id, `${c.directory}/command${c.extension}`])),
 };
 
-// Platform display names
+// Display names, from the same table
 const PLATFORM_NAMES: Record<string, string> = {
+  ...Object.fromEntries(PLATFORMS.map((p) => [p.id, p.name])),
+  ...Object.fromEntries(COMMANDS.map((c) => [c.id, c.name])),
   universal: "AGENTS.md (Universal)",
   agents: "AGENTS.md (Universal)",
-  cursor: "Cursor Rules (.mdc)",
   cursor_legacy: "Cursor Rules (legacy)",
-  claude: "CLAUDE.md",
-  copilot: "GitHub Copilot",
-  windsurf: "Windsurf",
-  antigravity: "Antigravity (Gemini IDE)",
-  zed: "Zed",
-  void: "Void",
-  trae: "Trae AI",
-  firebase: "Firebase Studio",
-  cline: "Cline",
-  roocode: "Roo Code",
-  continue: "Continue",
-  cody: "Sourcegraph Cody",
-  tabnine: "Tabnine",
-  supermaven: "Supermaven",
-  codegpt: "CodeGPT",
-  amazonq: "Amazon Q",
-  augment: "Augment Code",
-  kilocode: "Kilo Code",
-  junie: "Junie",
-  kiro: "Kiro",
-  aider: "Aider",
-  goose: "Goose",
-  warp: "Warp AI",
-  "gemini-cli": "Gemini CLI",
-  opencode: "OpenCode",
-  codex: "Codex",
-  openhands: "OpenHands",
-  crush: "Crush",
-  devin: "Devin",
-  firebender: "Firebender",
-  "cursor-command": "Cursor Command",
-  "claude-command": "Claude Code Command",
-  "windsurf-workflow": "Windsurf Workflow",
-  "copilot-prompt": "Copilot Prompt",
-  "continue-prompt": "Continue Prompt",
-  "opencode-command": "OpenCode Command",
 };
+
+// Skill and subagent targets: "<tool>-skill" and "<tool>-agent"
+const ASSET_TARGETS: { id: string; kind: "skill" | "agent"; target: AgentAssetTarget }[] = [
+  ...SKILL_TARGETS.map((t) => ({ id: `${t.id}-skill`, kind: "skill" as const, target: t })),
+  ...SUBAGENT_TARGETS.map((t) => ({ id: `${t.id}-agent`, kind: "agent" as const, target: t })),
+];
 
 // Command directory patterns for detection (.copilot/prompts is where older
 // versions put Copilot prompts)
@@ -117,6 +103,14 @@ export async function convertCommand(
   console.log();
 
   const cwd = process.cwd();
+
+  // Skills and subagents convert to another tool's folder, never to or from a rules file
+  const assetTarget = ASSET_TARGETS.find((t) => t.id === target.toLowerCase());
+  const assetSource = source !== undefined ? assetLocation(source) : null;
+  if (assetTarget || assetSource) {
+    await convertAsset(cwd, source, assetTarget, options);
+    return;
+  }
 
   // MCP server configs convert to each other, never to or from a rules file
   const mcpTarget = MCP_CONFIGS.find((c) => c.id === target.toLowerCase());
@@ -169,7 +163,8 @@ export async function convertCommand(
   }
 
   // Validate target format — try exact match, then underscore variant
-  const targetLower = target.toLowerCase();
+  // A retired name (devin, continue...) means the platform that covers it now
+  const targetLower = resolvePlatformId(target.toLowerCase());
   const normalizedTarget = TARGET_FILES[targetLower] ? targetLower : targetLower.replace(/-/g, "_");
   if (!TARGET_FILES[normalizedTarget]) {
     console.log(chalk.red(`  ✗ Unknown target format: ${target}`));
@@ -190,7 +185,9 @@ export async function convertCommand(
   const structured = [sourcePlatform, normalizedTarget].find(isStructuredPlatform);
   if (structured) {
     console.log(chalk.red(`  ✗ ${PLATFORM_NAMES[structured] || structured} uses a JSON/YAML config, not a rules file, so it cannot be converted`));
-    console.log(chalk.gray(`     Run 'lynxp wizard' and pick ${PLATFORM_NAMES[structured] || structured} to generate one`));
+    console.log(chalk.gray(structured === "aider"
+      ? "     Aider reads AGENTS.md when .aider.conf.yml lists it: run 'lynxp wizard -f aider' to add it"
+      : `     Run 'lynxp wizard' and pick ${PLATFORM_NAMES[structured] || structured} to generate one`));
     process.exit(1);
   }
 
@@ -215,12 +212,12 @@ export async function convertCommand(
   spinner.stop();
 
   // Determine output path
-  let outputFilename = options.output || TARGET_FILES[normalizedTarget];
+  let outputFilename = options.output || rulesWritePath(cwd, TARGET_FILES[normalizedTarget]);
   
   // For commands, keep the command's name but use the target's folder and extension
   const targetCommand = COMMANDS.find((c) => c.id === normalizedTarget);
   if (targetCommand && !options.output) {
-    const commandName = basename(sourcePath).replace(/(\.prompt)?\.md$/, "");
+    const commandName = basename(sourcePath).replace(/(\.prompt)?\.(md|mdc|toml)$/, "");
     outputFilename = `${targetCommand.directory}/${commandName}${targetCommand.extension}`;
   }
   
@@ -260,20 +257,31 @@ export async function convertCommand(
   }
 }
 
+/** The MCP part of a file, or null when it has none or cannot be read. */
+async function readMcpPart(path: string, target: McpConfigTarget): Promise<string | null> {
+  try {
+    return extractMcpConfig(await readFile(path, "utf-8"), target.id);
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Write the servers of one tool's MCP config in another tool's file. Without a
- * source, the first MCP config found in the project (other than the target) is used.
+ * source, the first MCP config found in the project (other than the target) is
+ * used. A settings or TOML target keeps its other settings; --force is needed
+ * only to replace servers (or a whole file) already there.
  */
 async function convertMcp(
   cwd: string,
   source: string | undefined,
-  target: (typeof MCP_CONFIGS)[number],
+  target: McpConfigTarget,
   options: ConvertOptions
 ): Promise<void> {
   let sourceFile = source;
   if (sourceFile === undefined) {
     for (const c of MCP_CONFIGS) {
-      if (c.id !== target.id && (await access(resolve(cwd, c.file)).then(() => true, () => false))) {
+      if (c.id !== target.id && (await readMcpPart(resolve(cwd, c.file), c)) !== null) {
         sourceFile = c.file;
         break;
       }
@@ -285,16 +293,73 @@ async function convertMcp(
     process.exit(1);
   }
 
-  let converted: string;
+  const outputFile = options.output || target.file;
+  const outputPath = resolve(cwd, outputFile);
+  const existing = await readFile(outputPath, "utf-8").catch(() => null);
+
+  let written: string;
   try {
-    converted = convertMcpConfig(await readFile(resolve(cwd, sourceFile), "utf-8"), target.id);
+    const converted = convertMcpConfig(await readFile(resolve(cwd, sourceFile), "utf-8"), target.id, sourceFile);
+    written = existing === null ? converted : mergeMcpConfig(existing, converted, target.id, target.file);
   } catch (error) {
     console.log(chalk.red(`  ✗ Could not convert ${sourceFile}: ${error instanceof Error ? error.message : "unreadable"}`));
     process.exit(1);
   }
 
-  const outputFile = options.output || target.file;
+  const replaces = existing !== null && (target.kind === "whole" || (await readMcpPart(outputPath, target)) !== null);
+  if (replaces && !options.force) {
+    console.log(chalk.yellow(`  ⚠️ ${target.kind === "whole" ? "File already exists" : "MCP servers already set in"}: ${outputFile}`));
+    console.log(chalk.gray("     Use --force to overwrite"));
+    process.exit(1);
+  }
+  const { mkdir } = await import("fs/promises");
+  await mkdir(dirname(outputPath), { recursive: true });
+  await writeFile(outputPath, written, "utf-8");
+  const kept = existing !== null && target.kind !== "whole" ? ", other settings kept" : "";
+  console.log(chalk.green(`  ✓ Converted ${sourceFile} to ${outputFile} (MCP servers for ${target.name}${kept})`));
+  console.log();
+}
+
+/**
+ * Write a skill or subagent in another tool's folder: a skill's SKILL.md with
+ * only the spec fields (all of them for .claude/skills), a subagent as
+ * Markdown or, for Codex, as TOML.
+ */
+async function convertAsset(
+  cwd: string,
+  source: string | undefined,
+  asset: (typeof ASSET_TARGETS)[number] | undefined,
+  options: ConvertOptions
+): Promise<void> {
+  const loc = source !== undefined ? assetLocation(source) : null;
+  const targets = ASSET_TARGETS.map((t) => t.id).join(", ");
+  if (!loc || !asset || loc.kind !== asset.kind) {
+    console.log(chalk.red("  ✗ A skill converts only to another skills folder, and a subagent to another agents folder."));
+    console.log(chalk.gray(`     Usage: lynxp convert <SKILL.md or agent file> <target>, target one of: ${targets}`));
+    process.exit(1);
+  }
+  if (loc.kind === "agent" && !source!.toLowerCase().endsWith(".md")) {
+    console.log(chalk.red("  ✗ Only a Markdown subagent can be converted"));
+    process.exit(1);
+  }
+
+  let content: string;
+  try {
+    content = await readFile(resolve(cwd, source!), "utf-8");
+  } catch {
+    console.log(chalk.red(`  ✗ Could not read source file: ${source}`));
+    process.exit(1);
+  }
+  const files =
+    loc.kind === "skill" ? skillFiles({ content }, [asset.target.id], loc.name) : subagentFiles({ content }, [asset.target.id], loc.name);
+  const file = files.find((f) => f.path.startsWith(`${asset.target.directory}/`))!;
+
+  const outputFile = options.output || `${loc.base}${file.path}`;
   const outputPath = resolve(cwd, outputFile);
+  if (outputPath === resolve(cwd, source!)) {
+    console.log(chalk.yellow(`  ⚠️ ${source} is already in ${asset.target.directory}`));
+    process.exit(1);
+  }
   const exists = await access(outputPath).then(() => true, () => false);
   if (exists && !options.force) {
     console.log(chalk.yellow(`  ⚠️ File already exists: ${outputFile}`));
@@ -303,7 +368,7 @@ async function convertMcp(
   }
   const { mkdir } = await import("fs/promises");
   await mkdir(dirname(outputPath), { recursive: true });
-  await writeFile(outputPath, converted, "utf-8");
-  console.log(chalk.green(`  ✓ Converted ${sourceFile} to ${outputFile} (MCP servers for ${target.name})`));
+  await writeFile(outputPath, withFinalNewline(file.content), "utf-8");
+  console.log(chalk.green(`  ✓ Converted ${source} to ${outputFile} (${asset.target.name})`));
   console.log();
 }

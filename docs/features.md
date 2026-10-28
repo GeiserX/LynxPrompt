@@ -13,7 +13,7 @@ LynxPrompt is **free and open-source**. Self-host it for personal use, or deploy
 
 ## Universal AI Config Hub
 
-Rules for **30 tools**: Cursor, Claude Code, GitHub Copilot, Windsurf, Zed, Aider, Gemini CLI, Cline, Roo Code, Amazon Q, JetBrains Junie, and many more. Write once, export to any format. Slash commands for Cursor, Claude Code, Windsurf, Copilot, Continue and OpenCode. The CLI wizard can list your MCP servers in the generated rules; it does not write MCP configuration files.
+Rules for **26 coding agents**: Codex, Cursor, Claude Code, GitHub Copilot, Devin Desktop (formerly Windsurf), Antigravity, Zed, Aider, Gemini CLI, Cline, Roo Code, Amazon Q, Junie, Kiro, Goose, Warp and more. Write the rules once: pick several tools and LynxPrompt keeps them in one `AGENTS.md`, which most of these agents read directly. Claude Code and Gemini CLI get a `CLAUDE.md` or `GEMINI.md` that imports it, Aider a `.aider.conf.yml` that loads it, and the tools that cannot reach it (Copilot, Trae, Tabnine, Firebase Studio) a full copy. Slash commands for Cursor, Claude Code, Devin Desktop, Copilot, OpenCode, Gemini CLI, Kiro, Junie, Augment, Trae, Kilo Code, Cline, Roo Code, Crush, Firebender, Factory, Qwen Code and Pi. MCP server configs are blueprints too: one config downloads or converts to the MCP file of 24 tools (`.mcp.json`, `.cursor/mcp.json`, `.vscode/mcp.json`, `.gemini/settings.json`, `.zed/settings.json`, `opencode.json`, `.codex/config.toml` and more), and the CLI writes into a settings file without touching its other settings. The CLI wizard can list your MCP servers in the generated rules; it does not write MCP configuration files.
 
 ## Blueprint Marketplace
 
@@ -22,6 +22,10 @@ Internal marketplace for sharing AI configurations and slash commands within you
 ## Interactive Wizard
 
 Step-by-step config generator available on both web and CLI. Auto-detects your tech stack, frameworks, and repo structure from GitHub/GitLab URLs. Supports template variables, monorepo hierarchies, and draft auto-saving.
+
+## Agent Skills and Subagents
+
+Store an Agent Skill (`SKILL.md`) or a subagent once and write it where every agent reads it. A skill goes to `.agents/skills/<name>/` (Codex, Cursor, Copilot, Gemini CLI, Antigravity, Zed, Junie and most others) and `.claude/skills/<name>/` (Claude Code), plus Kiro and Firebender when picked. A subagent goes to `.claude/agents/` and `.agents/agents/`, plus `.github/agents/<name>.agent.md` for Copilot and `.codex/agents/<name>.toml` for Codex when picked. The web download and `lynxp pull` write the same copies, and `lynxp push` keeps them in step.
 
 ## Configurable Authentication
 
