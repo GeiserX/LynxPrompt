@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from "vite
 import fs from "fs";
 import os from "os";
 import path from "path";
-import { calculateChecksum, loadBlueprints, trackBlueprint } from "../../cli/src/utils/blueprint-tracker";
+import { calculateChecksum, hasLocalChanges, loadBlueprints, trackBlueprint } from "../../cli/src/utils/blueprint-tracker";
 
 // `lynxp sync` compares three checksums per tracked file: the base stored at
 // the last pull or push, the local file and the cloud. These tests run the real
@@ -45,7 +45,7 @@ beforeAll(async () => {
 });
 
 let dir: string;
-let server: Record<string, { content: string; visibility: string }>;
+let server: Record<string, { content: string; visibility: string; type?: string; repository_path?: string }>;
 let puts: Array<{ id: string; body: Record<string, unknown> }>;
 let out: string[];
 
@@ -83,7 +83,10 @@ beforeEach(() => {
       if (!id || !bp) return respond(404, { error: "Not found" });
       if ((init.method || "GET") === "GET") {
         return respond(200, {
-          blueprint: { id, name: "Rules", type: "AGENTS_MD", tier: "SIMPLE", visibility: bp.visibility, content: bp.content },
+          blueprint: {
+            id, name: "Rules", type: bp.type ?? "AGENTS_MD", tier: "SIMPLE", visibility: bp.visibility,
+            content: bp.content, repository_path: bp.repository_path ?? null,
+          },
         });
       }
       const body = JSON.parse(String(init.body));
@@ -286,5 +289,70 @@ describe("lynxp pull --vars", () => {
 
     expect(read(file())).toBe(`${TEMPLATE}\n`);
     expect((await tracked()).variables).toBeUndefined();
+  });
+});
+
+describe("MCP servers in another tool's format", () => {
+  const settings = () => path.join(dir, ".gemini", "settings.json");
+  const pretty = (v: unknown) => JSON.stringify(v, null, 2);
+
+  it("syncs a cloud update into a settings file once, then reads as in sync", async () => {
+    // The file and its tracked base hold the old servers
+    const old = { mcpServers: { old: { command: "y" } } };
+    fs.mkdirSync(path.dirname(settings()), { recursive: true });
+    fs.writeFileSync(settings(), pretty({ theme: "x", ...old }));
+    await trackBlueprint(dir, { id: "bp_1", name: "MCP", file: ".gemini/settings.json", content: pretty(old), source: "private" });
+    // The cloud now holds new servers as compact JSON, as a web edit saves them
+    server.bp_1.content = '{"mcpServers":{"a":{"url":"https://s"}}}';
+
+    await syncCommand(undefined, {});
+    expect(JSON.parse(read(settings()))).toEqual({ theme: "x", mcpServers: { a: { url: "https://s" } } });
+    expect(await hasLocalChanges(dir, await tracked())).toBe(false);
+
+    out = [];
+    await syncCommand(undefined, {});
+    expect(out.join("\n")).toContain("in sync");
+    expect(puts).toHaveLength(0);
+    expect(server.bp_1.content).toBe('{"mcpServers":{"a":{"url":"https://s"}}}');
+  });
+
+  it("pulls a Codex TOML blueprint with no repository path as a valid .mcp.json", async () => {
+    server.bp_1 = {
+      content: '[mcp_servers.github]\ncommand = "npx"\nargs = ["-y", "github-mcp"]',
+      visibility: "PRIVATE",
+      type: "MCP_CONFIG",
+    };
+
+    await pullCommand("bp_1", { output: dir, yes: true });
+
+    const written = path.join(dir, ".mcp.json");
+    expect(JSON.parse(read(written))).toEqual({ mcpServers: { github: { command: "npx", args: ["-y", "github-mcp"] } } });
+    expect(await hasLocalChanges(dir, await tracked())).toBe(false);
+
+    await syncCommand(undefined, {});
+    expect(out.join("\n")).toContain("in sync");
+    expect(puts).toHaveLength(0);
+  });
+
+  it("pulls an OpenCode-shaped blueprint as a valid .mcp.json", async () => {
+    server.bp_1 = {
+      content: JSON.stringify({ mcp: { docs: { type: "local", command: ["npx", "docs-mcp"], environment: { K: "v" } } } }),
+      visibility: "PRIVATE",
+      type: "MCP_CONFIG",
+    };
+
+    await pullCommand("bp_1", { output: dir, yes: true });
+
+    expect(JSON.parse(read(path.join(dir, ".mcp.json")))).toEqual({
+      mcpServers: { docs: { command: "npx", args: ["docs-mcp"], env: { K: "v" } } },
+    });
+  });
+
+  it("writes content that is not an MCP config to .mcp.json as it is", async () => {
+    server.bp_1 = { content: "not a config", visibility: "PRIVATE", type: "MCP_CONFIG" };
+
+    await pullCommand("bp_1", { output: dir, yes: true });
+
+    expect(read(path.join(dir, ".mcp.json"))).toBe("not a config\n");
   });
 });

@@ -84,7 +84,7 @@ interface TemplateData {
   showcaseUrl?: string | null;
   currentVersion?: number;
   publishedVersion?: number | null;
-  repositoryPath?: string | null;
+  repositoryPath?: string;
 }
 
 // All command template types

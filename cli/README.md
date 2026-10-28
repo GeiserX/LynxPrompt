@@ -215,9 +215,8 @@ lynxp push -y --name "My Config"
 A skill's `SKILL.md` in any agent's skills folder (`.agents/skills/`, `.claude/skills/`,
 `.github/skills/`, `.cursor/skills/`, `.kiro/skills/` and the rest), a subagent in any
 agents folder (`.claude/agents/`, `.agents/agents/`, `.github/agents/*.agent.md`,
-`.codex/agents/*.toml`, `.cursor/agents/` and the rest) and an MCP config (`.mcp.json`,
-`.cursor/mcp.json`, `.vscode/mcp.json`, `.kiro/settings/mcp.json`) push and pull like any
-rules file, and keep their path.
+`.codex/agents/*.toml`, `.cursor/agents/` and the rest) and an MCP config (in any of the
+files below) push and pull like any rules file, and keep their path.
 
 `lynxp pull` also writes the copies every agent reads: a skill to `.agents/skills/<name>/`
 and `.claude/skills/<name>/`, a subagent to `.claude/agents/` and `.agents/agents/`. When the
@@ -232,10 +231,46 @@ Kiro JSON is pulled and downloaded only to its own path.
 
 A skill name is 1 to 64 lowercase letters, digits and hyphens, and equals its folder name.
 
+MCP configs are read from and written to each tool's own file:
+
+| Tool | File | Servers under |
+|------|------|---------------|
+| Claude Code (also Copilot CLI, VS Code) | `.mcp.json` | `mcpServers` |
+| Cursor | `.cursor/mcp.json` | `mcpServers` |
+| VS Code (Copilot) | `.vscode/mcp.json` | `servers` |
+| Kiro | `.kiro/settings/mcp.json` | `mcpServers` |
+| GitHub Copilot CLI | `.github/mcp.json` | `mcpServers` |
+| Google Antigravity | `.agents/mcp_config.json` | `mcpServers` (`serverUrl`) |
+| Devin | `.devin/mcp_config.json` | `mcpServers` |
+| JetBrains Junie | `.junie/mcp/mcp.json` | `mcpServers` |
+| Factory | `.factory/mcp.json` | `mcpServers` |
+| Trae | `.trae/mcp.json` | `mcpServers` |
+| Roo Code / Zoo Code | `.roo/mcp.json` | `mcpServers` |
+| Kimi Code | `.kimi-code/mcp.json` | `mcpServers` |
+| Pi | `.pi/mcp.json` | `mcpServers` |
+| Warp | `.warp/.mcp.json` | `mcpServers` |
+| Gemini CLI | `.gemini/settings.json` * | `mcpServers` (`httpUrl`) |
+| Qwen Code | `.qwen/settings.json` * | `mcpServers` (`httpUrl`) |
+| Augment Code | `.augment/settings.json` * | `mcpServers` |
+| Firebender | `firebender.json` * | `mcpServers` |
+| Zed | `.zed/settings.json` * | `context_servers` |
+| Amp | `.amp/settings.json` * | `amp.mcpServers` |
+| OpenCode | `opencode.json` * | `mcp` |
+| Kilo Code | `kilo.jsonc` * | `mcp` |
+| OpenAI Codex | `.codex/config.toml` * | `[mcp_servers.<name>]` |
+| Mistral Vibe | `.vibe/config.toml` * | `[[mcp_servers]]` |
+
+\* A settings file: `convert`, `pull` and `sync` change only its MCP servers
+and keep every other setting (and the comments of `kilo.jsonc`), and `push`
+sends only its MCP servers. `opencode.json` and `firebender.json` are still
+pushed whole, as before. Antigravity, Codex and Vibe take streamable HTTP
+only, so SSE servers are left out of their files.
+
 ```bash
 lynxp push .claude/skills/release-notes/SKILL.md
 lynxp push .claude/agents/reviewer.md
 lynxp push .mcp.json
+lynxp push .gemini/settings.json     # only its mcpServers
 
 # One copy for another tool
 lynxp convert .claude/agents/reviewer.md codex-agent      # .codex/agents/reviewer.toml
@@ -243,6 +278,7 @@ lynxp convert .agents/skills/release-notes/SKILL.md kiro-skill
 
 # The same MCP servers in another tool's file
 lynxp convert .mcp.json vscode-mcp    # .vscode/mcp.json, "servers" key
+lynxp convert .mcp.json codex-mcp     # [mcp_servers.*] in .codex/config.toml
 lynxp convert cursor-mcp              # from the first MCP config found
 ```
 

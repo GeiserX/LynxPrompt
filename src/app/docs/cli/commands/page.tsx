@@ -351,6 +351,34 @@ $ lynxp convert AGENTS.md copilot -o team-rules.md`}</code>
             </pre>
           </div>
         </div>
+
+        <div className="space-y-3">
+          <h3 className="font-semibold">MCP servers</h3>
+          <p className="text-muted-foreground">
+            An MCP config converts to any other tool&apos;s MCP config: the
+            target is the tool&apos;s id followed by <code>-mcp</code>
+            (an unknown target lists them all). Each
+            entry is rewritten in the target&apos;s shape: VS Code&apos;s
+            <code>servers</code>, Gemini CLI&apos;s <code>httpUrl</code>,
+            OpenCode&apos;s command array, Zed&apos;s
+            <code>context_servers</code>, Codex and Mistral Vibe TOML. When the
+            target is a settings file (<code>.gemini/settings.json</code>,
+            <code>.zed/settings.json</code>, <code>opencode.json</code>,
+            <code>.codex/config.toml</code>...), only its MCP servers change and
+            every other setting stays; <code>lynxp pull</code> and
+            <code>lynxp sync</code> do the same, and <code>lynxp push</code>
+            sends only the MCP servers of such a file.
+          </p>
+          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+            <pre className="text-sm text-zinc-100">
+              <code>{`# The project's .mcp.json servers for Gemini CLI, other settings kept
+$ lynxp convert .mcp.json gemini-mcp
+
+# From the first MCP config found, to Codex
+$ lynxp convert codex-mcp`}</code>
+            </pre>
+          </div>
+        </div>
       </section>
 
       {/* merge command */}

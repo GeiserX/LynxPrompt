@@ -35,7 +35,7 @@ import { useFeatureFlags } from "@/components/providers/feature-flags-provider";
 import { Turnstile } from "@/components/turnstile";
 import { detectSensitiveData, type SensitiveMatch } from "@/lib/sensitive-data";
 import { detectVariables, detectDuplicateVariableDefaults, type DuplicateVariableDefault } from "@/lib/file-generator";
-import { checkSkillContent } from "@/lib/platforms";
+import { MCP_CONFIGS, checkSkillContent } from "@/lib/platforms";
 
 // All supported IDE types - blueprints are interchangeable across all platforms
 const BLUEPRINT_TYPES = [
@@ -84,7 +84,7 @@ const COMMAND_TYPES = [
 const SKILL_MCP_TYPES = [
   { value: "AGENT_SKILL", label: "Agent Skill (<tool>/skills/<name>/SKILL.md)", icon: "🧩", isCommand: false },
   { value: "AGENT_DEFINITION", label: "Subagent (.claude/agents/<name>.md, .agents/agents/<name>.md)", icon: "🤖", isCommand: false },
-  { value: "MCP_CONFIG", label: "MCP Servers (.mcp.json, .cursor/mcp.json, .vscode/mcp.json)", icon: "🔌", isCommand: false },
+  { value: "MCP_CONFIG", label: "MCP Servers (.mcp.json and each tool's MCP file)", icon: "🔌", isCommand: false },
 ] as const;
 const isSkillOrMcpType = (type: string) => SKILL_MCP_TYPES.some((t) => t.value === type);
 
@@ -310,7 +310,7 @@ export default function ShareBlueprintPage() {
         setType("CODEX_MD");
       } else if (filename === "skill.md") {
         setType("AGENT_SKILL");
-      } else if (filename === "mcp.json" || filename === ".mcp.json") {
+      } else if (filename === "mcp.json" || filename === ".mcp.json" || filename === "mcp_config.json") {
         setType("MCP_CONFIG");
       }
     };
@@ -861,7 +861,7 @@ export default function ShareBlueprintPage() {
                           ? "Paste the SKILL.md of one skill, with its name and description frontmatter. The name is 1 to 64 lowercase letters, digits and hyphens, and is the folder name. The download and lynxp pull write it to .agents/skills/<name>/SKILL.md, which almost every agent reads, and to .claude/skills/<name>/SKILL.md for Claude Code; Kiro and Firebender get their own copy when you pick them."
                           : type === "AGENT_DEFINITION"
                           ? "Paste one subagent: a Markdown file with name and description frontmatter and the agent's instructions. The download and lynxp pull write it to .claude/agents/<name>.md (Claude Code, Cursor, Copilot in VS Code) and .agents/agents/<name>.md (Antigravity, Goose, OpenHands, Kimi Code), plus .github/agents/<name>.agent.md for Copilot and .codex/agents/<name>.toml for Codex when you pick them."
-                          : "Paste a JSON MCP config with an \"mcpServers\" (or VS Code \"servers\") object. lynxp pull writes .mcp.json, and lynxp convert rewrites it for Cursor, VS Code or Kiro. Keep keys out of it: use environment variables."}
+                          : `Paste an MCP config: JSON with an "mcpServers" object (or VS Code "servers", OpenCode "mcp", Zed "context_servers"), or Codex TOML. lynxp pull writes .mcp.json; the download and lynxp convert rewrite it for ${MCP_CONFIGS.length} tools, Gemini CLI, Zed, OpenCode and Codex included. Keep keys out of it: use environment variables.`}
                       </div>
                     )}
                     {/* Interoperability notice (for rule types) */}

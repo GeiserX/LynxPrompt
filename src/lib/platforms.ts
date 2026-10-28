@@ -38,10 +38,13 @@ export {
   agentAssetFiles,
   MCP_BLUEPRINT_TYPE,
   MCP_CONFIGS,
+  mcpConfigForPath,
   convertMcpConfig,
+  extractMcpConfig,
+  mergeMcpConfig,
   getCommandDirectories,
   COMMAND_COUNT,
   AGENTS_MD_POINTER,
   agentsMdPointerFiles,
 } from "../../packages/shared/src/platforms";
-export type { PlatformDefinition, CommandDefinition, AgentAssetFile, AgentAssetTarget } from "../../packages/shared/src/platforms";
+export type { PlatformDefinition, CommandDefinition, AgentAssetFile, AgentAssetTarget, McpConfigTarget } from "../../packages/shared/src/platforms";

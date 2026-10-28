@@ -16,7 +16,7 @@ import {
   type TrackedBlueprint,
 } from "../utils/blueprint-tracker.js";
 import { withSensitiveDataAck, type SensitiveMatchInfo } from "../utils/sensitive-ack.js";
-import { matchConfigFile, isAssetCopyOf, keepOneCopy, writeAssetCopies } from "../utils/blueprint-files.js";
+import { blueprintContentOf, matchConfigFile, isAssetCopyOf, keepOneCopy, writeAssetCopies } from "../utils/blueprint-files.js";
 import { inferCommandType, isAgentsMdPointer, ruleFileLocations } from "../../../packages/shared/src/platforms.js";
 
 interface PushOptions {
@@ -132,8 +132,11 @@ function scanForAllConfigFiles(cwd: string, maxDepth: number = 5): DiscoveredFil
             try {
               const stat = fs.statSync(fullPath);
               if (stat.size === 0 || stat.size > MAX_FILE_SIZE) continue;
+              const text = fs.readFileSync(fullPath, "utf-8");
               // A CLAUDE.md or GEMINI.md that only imports AGENTS.md has no rules of its own
-              if (isAgentsMdPointer(fs.readFileSync(fullPath, "utf-8"))) continue;
+              if (isAgentsMdPointer(text)) continue;
+              // A settings file without MCP servers has nothing to push
+              if (blueprintContentOf(relativePath, text) === null) continue;
             } catch {
               continue;
             }
@@ -355,7 +358,19 @@ export async function pushCommand(
     process.exit(1);
   }
 
-  const content = fs.readFileSync(file, "utf-8");
+  // Of a settings file (.gemini/settings.json, .codex/config.toml...) only the MCP servers
+  let part: string | null;
+  try {
+    part = blueprintContentOf(file, fs.readFileSync(file, "utf-8"));
+  } catch (error) {
+    console.log(chalk.red(`Could not read ${file}: ${error instanceof Error ? error.message : "unreadable"}`));
+    process.exit(1);
+  }
+  if (part === null) {
+    console.log(chalk.red(`No MCP servers in ${file}`));
+    process.exit(1);
+  }
+  const content = part;
   const filename = path.basename(file);
 
   if (isAgentsMdPointer(content) && !options.force) {
@@ -778,7 +793,11 @@ async function pushHierarchy(
     const spinner = ora(`Processing ${file.path}...`).start();
 
     try {
-      const content = fs.readFileSync(file.absolutePath, "utf-8");
+      const content = blueprintContentOf(file.path, fs.readFileSync(file.absolutePath, "utf-8"));
+      if (content === null) {
+        spinner.warn(`${file.path} → skipped: no MCP servers`);
+        continue;
+      }
 
       // 1. Check if already tracked locally → update
       const tracked = await findBlueprintByFile(cwd, file.path);

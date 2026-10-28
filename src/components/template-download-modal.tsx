@@ -67,8 +67,8 @@ interface TemplateDownloadModalProps {
     sensitiveFields?: Record<string, SensitiveField>;
     targetPlatform?: string;
     compatibleWith?: string[];
-    /** Where the file sits in its repository (set by lynxp push) */
-    repositoryPath?: string | null;
+    /** The file the blueprint was pushed from (lynxp push): its tool's MCP format, or a subagent's own path */
+    repositoryPath?: string;
   };
   targetPlatform?: string; // Override the default platform
   /** Whether the viewer owns the blueprint (they can edit it in place) */
@@ -115,10 +115,11 @@ const commandExportTargets = COMMANDS.map((c) => ({
 const DEFAULT_PLATFORM_COUNT = 6;
 
 // An MCP config rewritten for the target tool; content that is not a valid
-// config is offered as it is rather than failing the download
-function mcpContent(content: string, targetId: string): string {
+// config is offered as it is rather than failing the download. The source file
+// matters for a bare "url": Gemini CLI and Qwen Code mean SSE by it.
+function mcpContent(content: string, targetId: string, sourceFile?: string): string {
   try {
-    return convertMcpConfig(content, targetId);
+    return convertMcpConfig(content, targetId, sourceFile);
   } catch {
     return content;
   }
@@ -355,7 +356,7 @@ export function TemplateDownloadModal({
   // Shape it for the chosen platform: its frontmatter (Cursor, Kiro, Augment) or none
   const commandId = commandExportTargets.find((t) => t.id === commandExportTarget)?.commandId ?? "";
   const processedContent = isMcp
-    ? mcpContent(filledContent, mcpTarget.id)
+    ? mcpContent(filledContent, mcpTarget.id, template.repositoryPath)
     : isCommand
       ? commandContent(filledContent, commandId)
       : isStructured || isAsset
@@ -611,6 +612,17 @@ export function TemplateDownloadModal({
                 Save the downloaded file to:{" "}
                 <code className="rounded bg-primary/10 px-1">{mcpTarget.file}</code>
               </p>
+              {isMcp && mcpTarget.kind !== "whole" && (
+                <p className="mt-2 text-xs text-muted-foreground" data-testid="mcp-merge-note">
+                  {mcpTarget.kind === "toml"
+                    ? `This file holds other settings too. The download has only the [mcp_servers] tables: add them to your ${mcpTarget.file}.`
+                    : `This file holds other settings too. The download has only the "${mcpTarget.key}" key: merge it into your ${mcpTarget.file}.`}{" "}
+                  lynxp pull and lynxp convert do that for you and keep the other settings.
+                </p>
+              )}
+              {isMcp && mcpTarget.note && (
+                <p className="mt-2 text-xs text-muted-foreground">{mcpTarget.note}.</p>
+              )}
             </div>
           )}
 

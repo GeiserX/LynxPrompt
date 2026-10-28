@@ -19,7 +19,16 @@ import {
   sourceFilePlatform,
 } from "../utils/convert-format.js";
 import { PLATFORM_FILES } from "../utils/generator.js";
-import { COMMANDS, MCP_CONFIGS, PLATFORMS, convertMcpConfig, resolvePlatformId } from "../../../packages/shared/src/platforms.js";
+import {
+  COMMANDS,
+  MCP_CONFIGS,
+  PLATFORMS,
+  convertMcpConfig,
+  extractMcpConfig,
+  mergeMcpConfig,
+  resolvePlatformId,
+  type McpConfigTarget,
+} from "../../../packages/shared/src/platforms.js";
 import {
   SKILL_TARGETS,
   SUBAGENT_TARGETS,
@@ -248,20 +257,31 @@ export async function convertCommand(
   }
 }
 
+/** The MCP part of a file, or null when it has none or cannot be read. */
+async function readMcpPart(path: string, target: McpConfigTarget): Promise<string | null> {
+  try {
+    return extractMcpConfig(await readFile(path, "utf-8"), target.id);
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Write the servers of one tool's MCP config in another tool's file. Without a
- * source, the first MCP config found in the project (other than the target) is used.
+ * source, the first MCP config found in the project (other than the target) is
+ * used. A settings or TOML target keeps its other settings; --force is needed
+ * only to replace servers (or a whole file) already there.
  */
 async function convertMcp(
   cwd: string,
   source: string | undefined,
-  target: (typeof MCP_CONFIGS)[number],
+  target: McpConfigTarget,
   options: ConvertOptions
 ): Promise<void> {
   let sourceFile = source;
   if (sourceFile === undefined) {
     for (const c of MCP_CONFIGS) {
-      if (c.id !== target.id && (await access(resolve(cwd, c.file)).then(() => true, () => false))) {
+      if (c.id !== target.id && (await readMcpPart(resolve(cwd, c.file), c)) !== null) {
         sourceFile = c.file;
         break;
       }
@@ -273,26 +293,30 @@ async function convertMcp(
     process.exit(1);
   }
 
-  let converted: string;
+  const outputFile = options.output || target.file;
+  const outputPath = resolve(cwd, outputFile);
+  const existing = await readFile(outputPath, "utf-8").catch(() => null);
+
+  let written: string;
   try {
-    converted = convertMcpConfig(await readFile(resolve(cwd, sourceFile), "utf-8"), target.id);
+    const converted = convertMcpConfig(await readFile(resolve(cwd, sourceFile), "utf-8"), target.id, sourceFile);
+    written = existing === null ? converted : mergeMcpConfig(existing, converted, target.id, target.file);
   } catch (error) {
     console.log(chalk.red(`  ✗ Could not convert ${sourceFile}: ${error instanceof Error ? error.message : "unreadable"}`));
     process.exit(1);
   }
 
-  const outputFile = options.output || target.file;
-  const outputPath = resolve(cwd, outputFile);
-  const exists = await access(outputPath).then(() => true, () => false);
-  if (exists && !options.force) {
-    console.log(chalk.yellow(`  ⚠️ File already exists: ${outputFile}`));
+  const replaces = existing !== null && (target.kind === "whole" || (await readMcpPart(outputPath, target)) !== null);
+  if (replaces && !options.force) {
+    console.log(chalk.yellow(`  ⚠️ ${target.kind === "whole" ? "File already exists" : "MCP servers already set in"}: ${outputFile}`));
     console.log(chalk.gray("     Use --force to overwrite"));
     process.exit(1);
   }
   const { mkdir } = await import("fs/promises");
   await mkdir(dirname(outputPath), { recursive: true });
-  await writeFile(outputPath, converted, "utf-8");
-  console.log(chalk.green(`  ✓ Converted ${sourceFile} to ${outputFile} (MCP servers for ${target.name})`));
+  await writeFile(outputPath, written, "utf-8");
+  const kept = existing !== null && target.kind !== "whole" ? ", other settings kept" : "";
+  console.log(chalk.green(`  ✓ Converted ${sourceFile} to ${outputFile} (MCP servers for ${target.name}${kept})`));
   console.log();
 }
 

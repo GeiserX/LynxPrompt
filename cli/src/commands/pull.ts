@@ -13,7 +13,7 @@ import {
   toTrackedPath,
   type BlueprintSource,
 } from "../utils/blueprint-tracker.js";
-import { blueprintFilename, rulesWritePath, safePath, withFinalNewline, writeAssetCopies } from "../utils/blueprint-files.js";
+import { blueprintContentOf, blueprintFilename, fileTextFor, mcpPart, rulesWritePath, safePath, withFinalNewline, writeAssetCopies } from "../utils/blueprint-files.js";
 import { parseVariablesString } from "../utils/generator.js";
 import { fillBlueprintVariables } from "../utils/variables.js";
 
@@ -196,7 +196,9 @@ async function pullHierarchy(
         const { overwrite } = await prompts({
           type: "confirm",
           name: "overwrite",
-          message: `File exists: ${filename}. Overwrite?`,
+          message: mcpPart(filename)
+            ? `File exists: ${filename}. Replace its MCP servers (other settings kept)?`
+            : `File exists: ${filename}. Overwrite?`,
           initial: false,
         });
         if (!overwrite) {
@@ -220,11 +222,12 @@ async function pullHierarchy(
         await mkdir(dir, { recursive: true });
       }
 
-      // Write the file
+      // Write the file (a settings file keeps its other settings)
       const written = contentToWrite(blueprint.content, options, filename);
-      const previous = existsSync(outputPath) ? await readFile(outputPath, "utf-8") : null;
-      await writeFile(outputPath, withFinalNewline(written), "utf-8");
-      await writeCopies(options, filename, written, previous, "    ");
+      const existing = existsSync(outputPath) ? await readFile(outputPath, "utf-8") : null;
+      const fileText = fileTextFor(filename, existing, written);
+      await writeFile(outputPath, withFinalNewline(fileText), "utf-8");
+      await writeCopies(options, filename, written, existing, "    ");
 
       // Track the blueprint with hierarchy info
       if (options.track !== false) {
@@ -239,7 +242,7 @@ async function pullHierarchy(
           hierarchyId: id,
           hierarchyName: hierarchy.name,
           repositoryPath: bp.repository_path || undefined,
-          localContent: written,
+          localContent: blueprintContentOf(filename, fileText) ?? written,
           variables: pulledVariables(options, written, blueprint.content),
         });
       }
@@ -403,7 +406,12 @@ async function pullBlueprint(
         name: "action",
         message: "What would you like to do?",
         choices: [
-          { title: "Overwrite with remote version", value: "overwrite" },
+          {
+            title: mcpPart(filename)
+              ? "Replace its MCP servers with the remote ones (other settings kept)"
+              : "Overwrite with remote version",
+            value: "overwrite",
+          },
           { title: "Preview remote content first", value: "preview" },
           { title: "Cancel", value: "cancel" },
         ],
@@ -457,9 +465,10 @@ async function pullBlueprint(
       await mkdir(dir, { recursive: true });
     }
 
-    // Write the file
+    // Write the file (a settings file keeps its other settings)
     const written = contentToWrite(blueprint.content, options, filename);
-    await writeFile(outputPath, withFinalNewline(written), "utf-8");
+    const fileText = fileTextFor(filename, localContent, written);
+    await writeFile(outputPath, withFinalNewline(fileText), "utf-8");
     await writeCopies(options, filename, written, localContent, "   ");
 
     // Track the blueprint (default behavior unless --no-track)
@@ -472,7 +481,7 @@ async function pullBlueprint(
         source,
         hierarchyId: blueprint.hierarchy_id || undefined,
         repositoryPath: blueprint.repository_path || undefined,
-        localContent: written,
+        localContent: blueprintContentOf(filename, fileText) ?? written,
         variables: pulledVariables(options, written, blueprint.content),
       });
     }

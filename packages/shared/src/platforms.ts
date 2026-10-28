@@ -663,57 +663,23 @@ export function commandContent(content: string, toCommandId: string): string {
 }
 
 // ========================================
-// AGENT SKILLS AND MCP SERVERS
+// AGENT SKILLS (MCP SERVERS: mcp.ts)
 // ========================================
 
 // Skills and subagents live in agent-assets.ts; re-exported so imports of
 // this table keep working
 export * from "./agent-assets";
 
-/** Blueprint type of an MCP server config. */
-export const MCP_BLUEPRINT_TYPE = "MCP_CONFIG";
-
-/**
- * Project MCP server configs and the key each nests the servers under. The
- * server entries are the same everywhere; VS Code names the key "servers".
- * A config pulled without a stored path is written as the first one.
- */
-export const MCP_CONFIGS = [
-  { id: "claude-mcp", name: "Claude Code", file: ".mcp.json", key: "mcpServers" },
-  { id: "cursor-mcp", name: "Cursor", file: ".cursor/mcp.json", key: "mcpServers" },
-  { id: "vscode-mcp", name: "VS Code (Copilot)", file: ".vscode/mcp.json", key: "servers" },
-  { id: "kiro-mcp", name: "Kiro", file: ".kiro/settings/mcp.json", key: "mcpServers" },
-] as const;
-
-/**
- * Rewrite an MCP server config for another tool: the same servers under the
- * target's key. VS Code wants each server's transport in "type", so a server
- * without one gets "stdio" (it has a command) or "http" (it has a url).
- * Throws on a file that is not JSON or holds no server map.
- */
-export function convertMcpConfig(content: string, targetId: string): string {
-  const target = MCP_CONFIGS.find((c) => c.id === targetId);
-  if (!target) throw new Error(`Unknown MCP target: ${targetId}`);
-  const source = JSON.parse(content) as Record<string, unknown>;
-  const servers = (source.mcpServers ?? source.servers) as Record<string, Record<string, unknown>> | undefined;
-  if (!servers || typeof servers !== "object" || Array.isArray(servers)) {
-    throw new Error("No \"mcpServers\" or \"servers\" object in the MCP config");
-  }
-  const out: Record<string, unknown> = {};
-  if (target.key === "servers") {
-    out.servers = Object.fromEntries(
-      Object.entries(servers).map(([name, server]) => [
-        name,
-        server.type ? server : { type: server.url ? "http" : "stdio", ...server },
-      ])
-    );
-    // VS Code's prompted inputs (${input:...}) only mean something to VS Code
-    if (source.inputs) out.inputs = source.inputs;
-  } else {
-    out[target.key] = servers;
-  }
-  return `${JSON.stringify(out, null, 2)}\n`;
-}
+// MCP server configs live in mcp.ts; re-exported here for existing imports
+export {
+  MCP_BLUEPRINT_TYPE,
+  MCP_CONFIGS,
+  mcpConfigForPath,
+  convertMcpConfig,
+  extractMcpConfig,
+  mergeMcpConfig,
+} from "./mcp";
+export type { McpConfigTarget, McpShape } from "./mcp";
 
 // ========================================
 // HELPER FUNCTIONS
