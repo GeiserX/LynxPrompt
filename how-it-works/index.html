@@ -950,8 +950,8 @@
 <h2 id="sign-in">Sign-in<a class="headerlink" href="#sign-in" title="Permanent link">&para;</a></h2>
 <p>NextAuth with database sessions (30 days, refreshed daily). The providers are built from the feature flags:
 the mail link (<code>ENABLE_EMAIL_AUTH</code>, on by default, needs <code>SMTP_*</code>), passkeys (<code>ENABLE_PASSKEYS</code>, for existing
-accounts), GitHub and Google OAuth, and SAML, OIDC or LDAP SSO per team. When an account whose address equals
-<code>SUPERADMIN_EMAIL</code> signs in, it is promoted to superadmin. Roles are USER, ADMIN and SUPERADMIN. With
+accounts), GitHub and Google OAuth, and OIDC SSO per team, limited to the email domains the team verified in DNS.
+When an account whose address equals <code>SUPERADMIN_EMAIL</code> signs in by any method but SSO, it is promoted to superadmin. Roles are USER, ADMIN and SUPERADMIN. With
 <code>ENABLE_USER_REGISTRATION=false</code>, an address without an account is refused with <code>RegistrationDisabled</code>.</p>
 <h2 id="what-the-cli-and-the-extension-talk-to">What the CLI and the extension talk to<a class="headerlink" href="#what-the-cli-and-the-extension-talk-to" title="Permanent link">&para;</a></h2>
 <p><code>lynxp login</code> opens the configured instance in the browser (<code>lynxp config set-url</code>, or <code>LYNXPROMPT_API_URL</code>)
