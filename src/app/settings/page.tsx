@@ -45,6 +45,7 @@ import { getGravatarUrl } from "@/lib/utils";
 import { PERSONA_OPTIONS } from "@/components/dashboard/welcome-modal";
 import { useFeatureFlags } from "@/components/providers/feature-flags-provider";
 import { startRegistration } from "@simplewebauthn/browser";
+import { DeleteAccountSection } from "@/components/delete-account-section";
 
 const PERSONAS = [
   { value: "backend", label: "Backend Developer", icon: "🖥️" },
@@ -1333,6 +1334,8 @@ function SettingsContent() {
                     </div>
                   </div>
                 </div>
+
+                <DeleteAccountSection email={session?.user?.email} />
               </div>
             )}
 

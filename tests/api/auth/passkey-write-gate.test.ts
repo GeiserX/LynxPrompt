@@ -120,6 +120,7 @@ const WRITES: [string, string][] = [
   ["teams/invite/accept", "POST"],
   ["teams", "POST"],
   ["upload/blog", "POST"],
+  ["user", "DELETE"],
   ["user/accounts", "DELETE"],
   ["user/api-tokens/[id]", "DELETE"],
   ["user/api-tokens", "POST"],
