@@ -212,15 +212,7 @@ interface UserProfile {
   name?: string | null;
   persona?: string | null;
   skillLevel?: string | null;
-  tier?: string; // "free" | "pro" | "max"
-}
-
-// Tier access helper - checks if user tier can access a feature tier
-function canAccessFeature(userTier: string | undefined, featureTier: "basic" | "intermediate" | "advanced"): boolean {
-  const tierLevels: Record<string, number> = { free: 0, pro: 1, max: 2 };
-  const featureLevels: Record<string, number> = { basic: 0, intermediate: 1, advanced: 2 };
-  const userLevel = tierLevels[userTier || "free"] ?? 0;
-  return userLevel >= featureLevels[featureTier];
+  tier?: string; // legacy, ignored: every section is generated for everyone
 }
 
 // Platform file names - imported from central definition
@@ -788,7 +780,7 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     (config.boundaries.ask?.length ?? 0) > 0 ||
     (config.boundaries.never?.length ?? 0) > 0
   );
-  if (hasBoundaries && canAccessFeature(user.tier, "advanced")) {
+  if (hasBoundaries) {
     lines.push("## Boundaries & Permissions");
     lines.push("");
     lines.push("These are explicit boundaries for AI actions on this project:");
@@ -833,7 +825,7 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     config.commands.dev ||
     (config.commands.additional?.length ?? 0) > 0
   );
-  if (hasCommands && canAccessFeature(user.tier, "intermediate")) {
+  if (hasCommands) {
     lines.push("## Project Commands");
     lines.push("");
     lines.push("Use these commands when working on this project:");
@@ -858,7 +850,7 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     // Only include coverage if it's not the default 80
     (config.testingStrategy.coverage !== undefined && config.testingStrategy.coverage !== 80)
   );
-  if (hasTestingConfig && canAccessFeature(user.tier, "advanced")) {
+  if (hasTestingConfig) {
     lines.push("## Testing Requirements");
     lines.push("");
     lines.push("When writing or modifying code, ensure adequate test coverage:");
@@ -1013,7 +1005,7 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     (config.staticFiles.dockerignoreMode && config.staticFiles.dockerignoreMode !== "skip") ||
     config.funding
   );
-  if (hasStaticFiles && canAccessFeature(user.tier, "advanced")) {
+  if (hasStaticFiles) {
     lines.push("## Repository Files to Generate/Maintain");
     lines.push("");
     lines.push("When requested, create or update these repository files:");
@@ -1045,11 +1037,9 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
   }
 
   // Add embedded static files (all users)
-  if (canAccessFeature(user.tier, "advanced")) {
-    const staticFilesSection = generateEmbeddedStaticFiles(config, user, bp);
-    if (staticFilesSection) {
-      lines.push(staticFilesSection);
-    }
+  const staticFilesSection = generateEmbeddedStaticFiles(config, user, bp);
+  if (staticFilesSection) {
+    lines.push(staticFilesSection);
   }
 
   // Security Configuration - FREE tier feature
@@ -1474,7 +1464,7 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
   }
 
   // Commands (all users)
-  if (config.commands && canAccessFeature(user.tier, "intermediate") && (config.commands.build || config.commands.test || config.commands.lint || config.commands.dev || config.commands.additional?.length)) {
+  if (config.commands && (config.commands.build || config.commands.test || config.commands.lint || config.commands.dev || config.commands.additional?.length)) {
     lines.push("### Commands");
     if (config.commands.build) lines.push(`- Build: \`${bpVar(bp, "BUILD_COMMAND", config.commands.build)}\``);
     if (config.commands.test) lines.push(`- Test: \`${bpVar(bp, "TEST_COMMAND", config.commands.test)}\``);
@@ -1488,7 +1478,7 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
 
   // Code Style (all users)
   const hasCodeStyle = config.codeStyle?.naming || config.codeStyle?.errorHandling || config.codeStyle?.loggingConventions || config.codeStyle?.notes;
-  if (hasCodeStyle && canAccessFeature(user.tier, "intermediate")) {
+  if (hasCodeStyle) {
     lines.push("### Code Style & Conventions");
     if (config.codeStyle?.naming) {
       const namingDescriptions: Record<string, string> = {
@@ -1527,7 +1517,7 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
     (config.boundaries.ask?.length ?? 0) > 0 ||
     (config.boundaries.never?.length ?? 0) > 0
   );
-  if (hasBoundariesAgents && canAccessFeature(user.tier, "advanced")) {
+  if (hasBoundariesAgents) {
     lines.push("### Boundaries & Permissions");
     lines.push("");
     if (config.boundaries!.always?.length) {
@@ -1554,7 +1544,7 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
     config.testingStrategy.notes ||
     (config.testingStrategy.coverage !== undefined && config.testingStrategy.coverage !== 80)
   );
-  if (hasTestingAgents && canAccessFeature(user.tier, "advanced")) {
+  if (hasTestingAgents) {
     lines.push("### Testing Requirements");
     if (config.testingStrategy!.levels?.length) {
       const levelDescriptions: Record<string, string> = {
@@ -1676,11 +1666,9 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
   }
 
   // Add embedded static files (all users)
-  if (canAccessFeature(user.tier, "advanced")) {
-    const staticFilesSection = generateEmbeddedStaticFiles(config, user, bp);
-    if (staticFilesSection) {
-      lines.push(staticFilesSection);
-    }
+  const staticFilesSection = generateEmbeddedStaticFiles(config, user, bp);
+  if (staticFilesSection) {
+    lines.push(staticFilesSection);
   }
 
   // Security Configuration - FREE tier feature (for AGENTS.md)

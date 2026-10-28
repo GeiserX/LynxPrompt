@@ -1020,12 +1020,12 @@ describe("generateAllFiles - embedded static files", () => {
     expect(files[0].content).toContain(".dockerignore");
   });
 
-  it("does not include static files for free tier", () => {
+  it("includes static files for a free-tier user (the web wizard only sends free)", () => {
     const files = generateAllFiles(
       { ...baseConfig, platform: "cursor", staticFiles: { editorconfig: true, contributing: true } },
       baseUser
     );
-    expect(files[0].content).not.toContain("CONTRIBUTING.md");
+    expect(files[0].content).toContain("CONTRIBUTING.md");
   });
 });
 
