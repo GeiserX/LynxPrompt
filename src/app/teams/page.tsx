@@ -31,7 +31,7 @@ const TEAMS_FEATURES = [
     icon: Shield,
     title: "Enterprise SSO",
     description:
-      "Connect your identity provider (Okta, Azure AD, Google Workspace, LDAP) for seamless, secure authentication.",
+      "Connect your OpenID Connect identity provider (Okta, Entra ID, Google Workspace, Auth0) for seamless, secure authentication.",
   },
   {
     icon: CreditCard,
@@ -226,7 +226,7 @@ export default function TeamsPage() {
                   {[
                     "Everything in Free plan",
                     "Team-shared blueprints",
-                    "SAML/OIDC/LDAP SSO",
+                    "OpenID Connect SSO",
                     "Multiple team admins",
                     "Priority support",
                     "AI features",
@@ -439,8 +439,8 @@ export default function TeamsPage() {
                 </summary>
                 <p className="border-t px-4 py-3 text-sm text-muted-foreground">
                   Team admins can configure SSO from the team settings dashboard. We support
-                  SAML 2.0 (Okta, Azure AD, OneLogin), OpenID Connect (Google Workspace, Auth0),
-                  and LDAP/Active Directory. You can also restrict sign-ups to specific email domains.
+                  OpenID Connect (Okta, Entra ID, Google Workspace, Auth0). SSO signs in only
+                  addresses on email domains the team has verified with a DNS record.
                 </p>
               </details>
             </div>

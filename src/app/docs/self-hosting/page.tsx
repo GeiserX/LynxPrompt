@@ -208,7 +208,7 @@ export default function SelfHostingPage() {
               <tr>
                 <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">ENABLE_SSO</code></td>
                 <td className="px-4 py-2 text-muted-foreground">false</td>
-                <td className="px-4 py-2">Enterprise SSO (SAML, OIDC, LDAP)</td>
+                <td className="px-4 py-2">Enterprise SSO (OpenID Connect)</td>
               </tr>
               <tr>
                 <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">ENABLE_USER_REGISTRATION</code></td>

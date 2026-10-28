@@ -92,7 +92,7 @@ Collaborate on AI configurations within your organization.
 - Team Blueprints: Share blueprints only with team members (Private, Team, or Public visibility)
 - Centralized Management: Single dashboard for the entire team
 - AI Editing: AI-assisted blueprint creation and editing
-- SSO Support: SAML 2.0 (Okta, Azure AD), OpenID Connect (Google Workspace, Auth0)
+- SSO Support: OpenID Connect (Okta, Entra ID, Google Workspace, Auth0)
 
 ### Monorepo Support
 First-class support for monorepo architectures.
