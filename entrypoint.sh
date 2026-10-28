@@ -29,8 +29,9 @@ for db in APP USERS BLOG SUPPORT; do
     if [ -n "$host" ] && [ -n "$user" ] && [ -n "$pass" ] && [ -n "$name" ]; then
       # Percent-encode the credentials: a password with @, :, / or # would
       # otherwise end the userinfo early and point the URL at the wrong host.
-      user=$(node -e 'process.stdout.write(encodeURIComponent(process.argv[1]))' "$user")
-      pass=$(node -e 'process.stdout.write(encodeURIComponent(process.argv[1]))' "$pass")
+      # The -- stops node from reading a value that starts with - as an option.
+      user=$(node -e 'process.stdout.write(encodeURIComponent(process.argv[1]))' -- "$user")
+      pass=$(node -e 'process.stdout.write(encodeURIComponent(process.argv[1]))' -- "$pass")
       export "DATABASE_URL_${db}=postgresql://${user}:${pass}@${host}:${port}/${name}?schema=${schema}"
       echo "Constructed DATABASE_URL_${db} from components (host=${host})"
     fi

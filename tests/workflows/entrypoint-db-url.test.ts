@@ -56,4 +56,17 @@ describe("entrypoint DATABASE_URL construction", () => {
     });
     expect(url).toBe("postgresql://lynxprompt:0123abcd@postgres:5432/lynxprompt?schema=public");
   });
+
+  it("keeps a value that starts with a dash", () => {
+    // node -e reads a bare leading-dash argument as its own option.
+    for (const pass of ["-abc", "--version"]) {
+      const url = runEntrypoint({
+        DB_APP_HOST: "postgres",
+        DB_APP_USER: "-lynx",
+        DB_APP_PASSWORD: pass,
+        DB_APP_NAME: "lynxprompt",
+      });
+      expect(url).toBe(`postgresql://-lynx:${pass}@postgres:5432/lynxprompt?schema=public`);
+    }
+  });
 });
