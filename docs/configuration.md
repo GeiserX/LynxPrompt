@@ -47,7 +47,8 @@ schema's tables.
 | `ENABLE_PASSKEYS` | `true` | WebAuthn passkeys, for accounts that already exist. |
 | `ENABLE_GITHUB_OAUTH` | `false` | GitHub login. Needs `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`; callback `<APP_URL>/api/auth/callback/github`. |
 | `ENABLE_GOOGLE_OAUTH` | `false` | Google login. Needs `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`; callback `<APP_URL>/api/auth/callback/google`. |
-| `ENABLE_SSO` | `false` | SAML, OIDC and LDAP, configured per team in the UI. |
+| `ENABLE_SSO` | `false` | OpenID Connect sign-in, configured per team in the UI (SAML and LDAP are not supported yet). A team's IdP signs in only addresses on a domain the team verified with a TXT record at `_lynxprompt-sso.<domain>`. |
+| `SSO_ALLOW_PRIVATE_IDP` | `false` | `true` lets a team's IdP live on a private or loopback address and use plain `http://`. Leave it off on an instance strangers can sign up to: the server calls the IdP's URLs itself. |
 | `ENABLE_USER_REGISTRATION` | `true` | `false` lets only existing accounts sign in (new ones get `RegistrationDisabled`). |
 | `ENABLE_TURNSTILE` | `false` | Cloudflare Turnstile on the sign-in forms. |
 

@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
+import { isSafeUrl } from "@/lib/url-safety";
 import { 
   Building2, 
   Loader2, 
@@ -87,8 +88,8 @@ export default function SSOLoginPage({
         return;
       }
 
-      // Redirect to SSO provider
-      if (data.redirectUrl) {
+      // Redirect to SSO provider; never follow a javascript: or data: URL
+      if (data.redirectUrl && isSafeUrl(data.redirectUrl)) {
         window.location.href = data.redirectUrl;
       } else {
         setError("SSO provider did not return a redirect URL");

@@ -79,7 +79,7 @@ The wizard asks about the project, the stack, the commands, the code style and t
 - Gives a team its own page and its own blueprints. Federation lets instances that join share their public blueprints with each other.
 - Manages hierarchical `AGENTS.md` files for monorepos, from the dashboard, the CLI (`lynxp hierarchies`) and the API.
 - Serves the same data to the [CLI](usage.md#the-cli), the [VS Code extension](usage.md#vs-code-extension) and a REST API with per-token roles.
-- Signs users in with a magic link, passkeys, GitHub or Google OAuth, or SAML, OIDC and LDAP SSO; each is one environment variable.
+- Signs users in with a magic link, passkeys, GitHub or Google OAuth, or OIDC SSO; each is one environment variable.
 - Edits blueprints with Claude when you set your own Anthropic API key; off by default, and everything else works without it.
 
 ## How it runs

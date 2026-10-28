@@ -28,8 +28,8 @@ flowchart LR
 
 NextAuth with database sessions (30 days, refreshed daily). The providers are built from the feature flags:
 the mail link (`ENABLE_EMAIL_AUTH`, on by default, needs `SMTP_*`), passkeys (`ENABLE_PASSKEYS`, for existing
-accounts), GitHub and Google OAuth, and SAML, OIDC or LDAP SSO per team. When an account whose address equals
-`SUPERADMIN_EMAIL` signs in, it is promoted to superadmin. Roles are USER, ADMIN and SUPERADMIN. With
+accounts), GitHub and Google OAuth, and OIDC SSO per team, limited to the email domains the team verified in DNS.
+When an account whose address equals `SUPERADMIN_EMAIL` signs in by any method but SSO, it is promoted to superadmin. Roles are USER, ADMIN and SUPERADMIN. With
 `ENABLE_USER_REGISTRATION=false`, an address without an account is refused with `RegistrationDisabled`.
 
 ## What the CLI and the extension talk to
