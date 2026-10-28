@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createHash } from "crypto";
 import { posix as posixPath } from "path";
 import { prismaUsers } from "@/lib/db-users";
+import { parseLimit, parseOffset } from "@/lib/pagination";
 import { APP_URL } from "@/lib/feature-flags";
 import {
   validateApiToken,
@@ -81,9 +82,16 @@ export async function GET(request: NextRequest) {
 
     // Parse query params
     const { searchParams } = new URL(request.url);
-    const limit = Math.min(parseInt(searchParams.get("limit") || "50", 10), 100);
-    const offset = parseInt(searchParams.get("offset") || "0", 10);
-    const visibility = searchParams.get("visibility") || "all";
+    const limit = parseLimit(searchParams, 50);
+    const offset = parseOffset(searchParams);
+    const visibility = (searchParams.get("visibility") || "all").toLowerCase();
+
+    if (visibility !== "all" && !["private", "team", "public"].includes(visibility)) {
+      return NextResponse.json(
+        { error: "visibility must be one of: all, private, team, public" },
+        { status: 400 }
+      );
+    }
 
     // Build where clause
     const where: Record<string, unknown> = {

@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { detectSensitiveData, type SensitiveMatch } from "@/lib/sensitive-data";
+import { parsePage } from "@/lib/pagination";
 import { 
   getEffectiveTier, 
   getMaxBlueprintCount, 
@@ -104,9 +105,7 @@ export async function GET(request: NextRequest) {
     const tier = searchParams.get("tier");
     const typeFilter = searchParams.get("type"); // "configs" or "commands"
     const tagsParam = searchParams.get("tags");
-    const page = parseInt(searchParams.get("page") || "1", 10);
-    const limit = parseInt(searchParams.get("limit") || "12", 10);
-    const skip = (page - 1) * limit;
+    const { limit, skip } = parsePage(searchParams, 12);
 
     // Build sort order
     let orderBy: Record<string, "asc" | "desc"> = {};
