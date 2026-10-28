@@ -8,146 +8,16 @@
 
 import chalk from "chalk";
 import { readFile, writeFile, access } from "fs/promises";
-import { join, basename } from "path";
+import { basename, resolve } from "path";
 import ora from "ora";
 import prompts from "prompts";
+import { parseMarkdownSections, mergeSectionsByStrategy, type ConfigSection } from "../utils/markdown-sections.js";
 
 interface MergeOptions {
   output?: string;
   strategy?: "concat" | "sections" | "smart";
   force?: boolean;
   interactive?: boolean;
-}
-
-interface ConfigSection {
-  title: string;
-  content: string;
-  source: string;
-}
-
-function parseMarkdownSections(content: string, sourceName: string): ConfigSection[] {
-  const sections: ConfigSection[] = [];
-  const parts = content.split(/^(#{1,3})\s+(.+)$/m);
-  
-  let currentSection: ConfigSection | null = null;
-  
-  for (let i = 0; i < parts.length; i++) {
-    const part = parts[i];
-    
-    if (part.match(/^#{1,3}$/)) {
-      // This is a header marker, next part is title
-      if (currentSection) {
-        sections.push(currentSection);
-      }
-      const title = parts[i + 1] || "Untitled";
-      currentSection = {
-        title: title.trim(),
-        content: "",
-        source: sourceName,
-      };
-      i++; // Skip the title part
-    } else if (currentSection) {
-      currentSection.content += part;
-    } else if (part.trim()) {
-      // Content before first header
-      currentSection = {
-        title: "Introduction",
-        content: part,
-        source: sourceName,
-      };
-    }
-  }
-  
-  if (currentSection) {
-    sections.push(currentSection);
-  }
-  
-  return sections;
-}
-
-function mergeSectionsByStrategy(
-  allSections: ConfigSection[][],
-  strategy: "concat" | "sections" | "smart"
-): string {
-  switch (strategy) {
-    case "concat":
-      // Simple concatenation with separators
-      return allSections
-        .map((sections, i) => {
-          const sourceName = sections[0]?.source || `Source ${i + 1}`;
-          const content = sections.map(s => {
-            if (s.title !== "Introduction") {
-              return `## ${s.title}\n\n${s.content.trim()}`;
-            }
-            return s.content.trim();
-          }).join("\n\n");
-          
-          return `<!-- From: ${sourceName} -->\n${content}`;
-        })
-        .join("\n\n---\n\n");
-
-    case "sections":
-      // Group by section title
-      const sectionMap = new Map<string, ConfigSection[]>();
-      
-      for (const fileSections of allSections) {
-        for (const section of fileSections) {
-          const normalized = section.title.toLowerCase();
-          if (!sectionMap.has(normalized)) {
-            sectionMap.set(normalized, []);
-          }
-          sectionMap.get(normalized)!.push(section);
-        }
-      }
-      
-      const merged: string[] = [];
-      
-      for (const [, sections] of sectionMap) {
-        if (sections.length === 1) {
-          merged.push(`## ${sections[0].title}\n\n${sections[0].content.trim()}`);
-        } else {
-          // Multiple sources for same section - combine
-          const combinedContent = sections
-            .map(s => `<!-- From: ${s.source} -->\n${s.content.trim()}`)
-            .join("\n\n");
-          merged.push(`## ${sections[0].title}\n\n${combinedContent}`);
-        }
-      }
-      
-      return merged.join("\n\n");
-
-    case "smart":
-    default:
-      // Smart merge: dedupe similar content, prioritize by specificity
-      const seen = new Set<string>();
-      const result: string[] = [];
-      
-      // Sort sections: more specific first
-      const flatSections = allSections.flat().sort((a, b) => {
-        // Prioritize sections with more content
-        return b.content.length - a.content.length;
-      });
-      
-      for (const section of flatSections) {
-        // Simple deduplication by checking content similarity
-        const contentKey = section.content
-          .toLowerCase()
-          .replace(/\s+/g, " ")
-          .trim()
-          .slice(0, 200); // First 200 chars as key
-        
-        if (!seen.has(contentKey)) {
-          seen.add(contentKey);
-          if (section.title !== "Introduction") {
-            result.push(`## ${section.title}\n\n${section.content.trim()}`);
-          } else {
-            result.push(section.content.trim());
-          }
-        }
-      }
-      
-      return result.join("\n\n");
-  }
 }
 
 export async function mergeCommand(
@@ -185,7 +55,7 @@ export async function mergeCommand(
   const allSections: ConfigSection[][] = [];
   
   for (const file of files) {
-    const filePath = join(cwd, file);
+    const filePath = resolve(cwd, file);
     
     try {
       await access(filePath);
@@ -258,7 +128,7 @@ ${mergedContent}
 
   // Determine output path
   const outputFilename = options.output || "merged.md";
-  const outputPath = join(cwd, outputFilename);
+  const outputPath = resolve(cwd, outputFilename);
 
   // Check if output exists
   try {

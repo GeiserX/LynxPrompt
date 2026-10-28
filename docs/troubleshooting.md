@@ -15,8 +15,9 @@ The link is built from `APP_URL`. Set it to the URL the browser uses (`https://l
 
 ## "Registration is disabled" on sign-in
 
-`ENABLE_USER_REGISTRATION=false` and the address has no account yet. Create the account with registration on,
-or invite the user to a team first.
+`ENABLE_USER_REGISTRATION=false` and the address has no account yet. Invite the address to a team first: a
+pending, unexpired team invitation lets that address create its account and accept. Or create the account
+with registration on.
 
 ## My account is not the superadmin
 
