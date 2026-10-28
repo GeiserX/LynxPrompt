@@ -20,6 +20,17 @@ function job(workflow: string, name: string): string {
   return next === -1 ? rest : rest.slice(0, next + 1);
 }
 
+// The names of the steps that can read a secret. Every `${{ secrets.X }}` in the
+// workflow must sit inside one of the returned steps, never in job-level env.
+function stepsReading(workflow: string, secret: string): string[] {
+  const ref = `\${{ secrets.${secret} }}`;
+  const steps = workflow.split(/\n(?= {6}- name: )/).slice(1);
+  const names = steps.filter((step) => step.includes(ref)).map((step) => step.match(/- name: (.*)/)![1]);
+  const inSteps = steps.reduce((n, step) => n + step.split(ref).length - 1, 0);
+  expect(workflow.split(ref).length - 1, `${secret} is read outside a step`).toBe(inSteps);
+  return names;
+}
+
 describe("Snap channel", () => {
   it("has one snapcraft.yaml, the one the release builds", () => {
     expect(existsSync(resolve(root, "cli/snap"))).toBe(false);
@@ -78,9 +89,18 @@ describe("AUR channel", () => {
     expect(call).toContain("AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}");
   });
 
-  it("pins the AUR host key instead of trusting whatever answers", () => {
-    expect(aur).toContain("SHA256:RFzBCUItH9LZS0cKB5UE6ceAYhBD5C8GeOBip8Z11+4");
-    expect(aur).toContain("StrictHostKeyChecking=yes");
+  // In the container HOME is /github/home but ssh takes ~ from passwd (/root), so a
+  // key or known_hosts under ~/.ssh is never read and strict checking refuses the host.
+  it("pins the AUR host key in a file ssh actually reads", () => {
+    expect(aur).toContain(
+      "AUR_HOST_KEY: aur.archlinux.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEuBKrPzbawxA/k2g6NcyV5jmqwJ2s+zpgZGZ7tpLIcN",
+    );
+    expect(aur).toContain(`printf '%s\\n' "$AUR_HOST_KEY" > "$dir/known_hosts"`);
+    expect(aur).toContain(
+      'GIT_SSH_COMMAND="ssh -i $dir/key -o IdentitiesOnly=yes -o UserKnownHostsFile=$dir/known_hosts -o StrictHostKeyChecking=yes"',
+    );
+    expect(aur).not.toContain("~/.ssh");
+    expect(aur).not.toContain("ssh-keyscan");
   });
 });
 
@@ -88,9 +108,21 @@ describe("Snap and AUR fail loudly", () => {
   it("a missing secret stops the release with the way to create it", () => {
     expect(snap).toContain("::error::secret SNAPCRAFT_STORE_CREDENTIALS is not set; $renew");
     expect(snap).toContain("snapcraft export-login --snaps=lynxprompt");
-    expect(snap).toMatch(/- name: Check the Snap Store login\n\s+if: \$\{\{ inputs\.publish \|\|/);
+    expect(snap).toContain('if [ "$PUBLISH" != "true" ] && [ -z "$SNAPCRAFT_STORE_CREDENTIALS" ]; then');
+    expect(snap).toContain("PUBLISH: ${{ inputs.publish }}");
     expect(aur).toContain("::error::secret AUR_SSH_PRIVATE_KEY is not set;");
     expect(aur).toMatch(/- name: Check the AUR key\n\s+if: \$\{\{ inputs\.publish \}\}/);
+  });
+
+  // makepkg runs npm install scripts and the build runs the installed CLI; neither
+  // may see a publish secret.
+  it("only the check and the upload steps can read a publish secret", () => {
+    expect(stepsReading(aur, "AUR_SSH_PRIVATE_KEY")).toEqual(["Check the AUR key", "Push to the AUR"]);
+    expect(stepsReading(snap, "SNAPCRAFT_STORE_CREDENTIALS")).toEqual([
+      "Check the Snap Store login",
+      "Upload to the Snap Store",
+    ]);
+    for (const workflow of [aur, snap]) expect(workflow).not.toMatch(/^ {4}env:/m);
   });
 
   it("nothing swallows a failure", () => {

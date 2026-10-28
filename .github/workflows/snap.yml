@@ -37,8 +37,6 @@ jobs:
           - { runner: ubuntu-24.04, arch: amd64 }
           - { runner: ubuntu-24.04-arm, arch: arm64 }
     runs-on: ${{ matrix.runner }}
-    env:
-      SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
 
     steps:
       - name: Checkout
@@ -52,9 +50,17 @@ jobs:
       # A release fails here, before the build, when the store login is missing
       # or expired. Pull requests from this repository have the secret too, so
       # they catch an expired login before a release does; forks skip the check.
+      # The login is visible only to this step and the upload, never to the
+      # build or to the CLI the snap installs.
       - name: Check the Snap Store login
-        if: ${{ inputs.publish || env.SNAPCRAFT_STORE_CREDENTIALS != '' }}
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+          PUBLISH: ${{ inputs.publish }}
         run: |
+          if [ "$PUBLISH" != "true" ] && [ -z "$SNAPCRAFT_STORE_CREDENTIALS" ]; then
+            echo "no store login here (a fork); skipping the check"
+            exit 0
+          fi
           renew="create one with 'snapcraft export-login --snaps=lynxprompt --acls=package_access,package_push,package_update,package_release lynxprompt.login', then 'gh secret set SNAPCRAFT_STORE_CREDENTIALS -R ${{ github.repository }} < lynxprompt.login'"
           if [ -z "$SNAPCRAFT_STORE_CREDENTIALS" ]; then
             echo "::error::secret SNAPCRAFT_STORE_CREDENTIALS is not set; $renew"
@@ -92,4 +98,6 @@ jobs:
 
       - name: Upload to the Snap Store
         if: ${{ inputs.publish }}
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
         run: snapcraft upload --release=stable "${{ steps.snap.outputs.file }}"

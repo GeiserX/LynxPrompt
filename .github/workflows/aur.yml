@@ -32,13 +32,15 @@ jobs:
   aur:
     runs-on: ubuntu-latest
     container: archlinux:base-devel-20261025.0.616225
-    env:
-      AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
 
     steps:
       # A release fails here, before anything is built, when the AUR key is missing.
+      # The key is visible only to this step and the push, never to makepkg or
+      # the npm install scripts it runs.
       - name: Check the AUR key
         if: ${{ inputs.publish }}
+        env:
+          AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
         run: |
           if [ -z "$AUR_SSH_PRIVATE_KEY" ]; then
             echo "::error::secret AUR_SSH_PRIVATE_KEY is not set; create a key with 'ssh-keygen -t ed25519 -N \"\" -f aur_lynxprompt', add aur_lynxprompt.pub under My Account > SSH Public Key on aur.archlinux.org (the account that maintains lynxprompt), then 'gh secret set AUR_SSH_PRIVATE_KEY -R ${{ github.repository }} < aur_lynxprompt'"
@@ -81,16 +83,21 @@ jobs:
       - name: Push to the AUR
         if: ${{ inputs.publish }}
         working-directory: packaging/aur
+        env:
+          AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          # The AUR's published ed25519 host key
+          # (SHA256:RFzBCUItH9LZS0cKB5UE6ceAYhBD5C8GeOBip8Z11+4); ssh refuses any other.
+          AUR_HOST_KEY: aur.archlinux.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEuBKrPzbawxA/k2g6NcyV5jmqwJ2s+zpgZGZ7tpLIcN
         run: |
           set -euo pipefail
-          mkdir -p ~/.ssh
-          printf '%s\n' "$AUR_SSH_PRIVATE_KEY" > ~/.ssh/aur
-          chmod 600 ~/.ssh/aur
-          # The AUR's published host key fingerprint; refuse any other.
-          ssh-keyscan -t ed25519 aur.archlinux.org > ~/.ssh/known_hosts 2>/dev/null
-          ssh-keygen -lf ~/.ssh/known_hosts | grep -q 'SHA256:RFzBCUItH9LZS0cKB5UE6ceAYhBD5C8GeOBip8Z11+4' ||
-            { echo "::error::aur.archlinux.org answered with an unknown host key"; exit 1; }
-          export GIT_SSH_COMMAND="ssh -i ~/.ssh/aur -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
+          # Absolute paths: in the container HOME is /github/home, but ssh reads ~
+          # from the passwd entry (/root) and would never see a file written there.
+          dir="$RUNNER_TEMP/aur-ssh"
+          mkdir -p -m 700 "$dir"
+          printf '%s\n' "$AUR_SSH_PRIVATE_KEY" > "$dir/key"
+          chmod 600 "$dir/key"
+          printf '%s\n' "$AUR_HOST_KEY" > "$dir/known_hosts"
+          export GIT_SSH_COMMAND="ssh -i $dir/key -o IdentitiesOnly=yes -o UserKnownHostsFile=$dir/known_hosts -o StrictHostKeyChecking=yes"
           git clone ssh://aur@aur.archlinux.org/lynxprompt.git "$RUNNER_TEMP/aur"
           cp PKGBUILD .SRCINFO "$RUNNER_TEMP/aur/"
           cd "$RUNNER_TEMP/aur"
