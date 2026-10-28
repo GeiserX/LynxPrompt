@@ -1,0 +1,44 @@
+// FROZEN: the blog schema as 0_init (prisma/migrations-blog/0_init) creates it.
+// entrypoint.sh pushes this to a database an earlier release made with
+// prisma db push, records 0_init as applied, and lets migrate deploy apply the
+// rest. Never edit it; change prisma/schema-blog.prisma and add a migration.
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================================
+// BLOG POSTS - Admin-managed blog content
+// ============================================================================
+
+model BlogPost {
+  id          String     @id @default(cuid())
+  slug        String     @unique
+  title       String
+  excerpt     String?    @db.Text
+  content     String     @db.Text  // Markdown content
+  coverImage  String?    // URL to cover image (can be external URL or uploaded path)
+  coverImageCaption String?  // Caption/alt text for cover image
+  
+  // Author info stored directly (no foreign key to users DB)
+  authorId    String     // User ID from users database
+  authorName  String?    // Cached author name for display
+  
+  status      BlogStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  tags        String[]
+  
+  @@index([status])
+  @@index([publishedAt])
+  @@index([authorId])
+  @@index([slug])
+}
+
+enum BlogStatus {
+  DRAFT
+  PUBLISHED
+}
+

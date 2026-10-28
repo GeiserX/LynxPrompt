@@ -1,0 +1,233 @@
+// FROZEN: the app schema as 0_init (prisma/migrations-app/0_init) creates it.
+// entrypoint.sh pushes this to a database an earlier release made with
+// prisma db push, records 0_init as applied, and lets migrate deploy apply the
+// rest. Never edit it; change prisma/schema-app.prisma and add a migration.
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================================
+// SYSTEM TEMPLATES - Official templates (NOT user templates)
+// ============================================================================
+
+model SystemTemplate {
+  id          String       @id @default(cuid())
+  name        String
+  description String?
+  type        TemplateType
+  content     String       @db.Text   // ALWAYS stored with placeholders like {{AUTHOR_NAME}}
+  variables   Json?                    // Default values for variables (NOT personal data)
+  
+  // Statistics (denormalized, updated via API)
+  downloads    Int          @default(0)
+  favorites    Int          @default(0)
+  
+  tier             TemplateTier @default(INTERMEDIATE)
+  targetPlatform   String?
+  compatibleWith   String[]
+  tags             String[]
+  category         String?
+  difficulty       String?
+  
+  // Privacy: defines which fields contain personal data
+  // Format: { "AUTHOR_NAME": { "label": "Author Name", "private": true }, ... }
+  sensitiveFields  Json?
+  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([type])
+  @@index([tier])
+  @@index([targetPlatform])
+  @@index([category])
+  @@index([downloads])
+  @@index([favorites])
+}
+
+enum TemplateTier {
+  SHORT
+  INTERMEDIATE
+  LONG
+  SUPERLONG
+}
+
+enum TemplateType {
+  LICENSE
+  FUNDING
+  CURSORRULES       // Legacy - keep for backwards compat
+  CURSOR_RULES      // New standard (still deprecated in favor of AGENTS_MD)
+  CURSOR_MDC        // Cursor MDC format (.cursor/rules/)
+  CLAUDE_MD
+  COPILOT_INSTRUCTIONS
+  WINDSURF_RULES
+  GEMINI_MD         // Antigravity (Google's AI-powered IDE)
+  AGENTS_MD         // Universal AGENTS.md - Recommended
+  CLINE_RULES
+  CODEX_MD
+  // IDEs
+  ZED_INSTRUCTIONS  // Zed (.zed/instructions.md)
+  VOID_CONFIG       // Void IDE (.void/config.json)
+  TRAE_RULES        // Trae (.trae/rules/)
+  IDX_CONFIG        // Project IDX (.idx/)
+  // Editor Extensions
+  ROO_RULES         // Roo-Cline (.roo/rules/)
+  CONTINUE_CONFIG   // Continue (.continue/config.json)
+  CODY_CONFIG       // Sourcegraph Cody (.cody/config.json)
+  TABNINE_CONFIG    // Tabnine (.tabnine.yaml)
+  AMAZONQ_RULES     // Amazon Q (.amazonq/rules/)
+  AUGMENT_RULES     // Augment (.augment/rules/)
+  KILOCODE_RULES    // Kilocode (.kilocode/rules/)
+  JUNIE_GUIDELINES  // Junie (.junie/guidelines.md)
+  KIRO_STEERING     // Kiro (.kiro/steering/)
+  // CLI Tools
+  AIDER_MD          // Aider (AIDER.md)
+  GOOSEHINTS        // Goose (.goosehints)
+  WARP_MD           // Warp AI (WARP.md)
+  OPENCODE_JSON     // OpenCode (opencode.json)
+  // Other
+  OPENHANDS_MD      // OpenHands (.openhands/microagents/repo.md)
+  // AI Agent Commands - Slash commands for AI IDEs
+  CURSOR_COMMAND    // Cursor commands (.cursor/commands/*.md)
+  CLAUDE_COMMAND    // Claude Code commands (.claude/commands/*.md)
+  WINDSURF_WORKFLOW // Windsurf workflows (.windsurf/workflows/*.md)
+  COPILOT_PROMPT    // GitHub Copilot prompts (.copilot/prompts/*.md)
+  CONTINUE_PROMPT   // Continue.dev prompts (.continue/prompts/*.md)
+  OPENCODE_COMMAND  // OpenCode commands (.opencode/commands/*.md)
+  GITIGNORE
+  README
+  CONTRIBUTING
+  CODE_OF_CONDUCT
+  SECURITY
+  DOCKERFILE
+  DOCKER_COMPOSE
+  GITHUB_ACTIONS
+  GITLAB_CI
+  EDITORCONFIG
+  PRETTIER
+  ESLINT
+  PRE_COMMIT
+  CUSTOM
+}
+
+// ============================================================================
+// WIZARD CONFIGURATION - Dynamic wizard steps
+// ============================================================================
+
+model WizardStep {
+  id          String   @id @default(cuid())
+  order       Int      @unique
+  name        String
+  title       String
+  description String?
+  icon        String?
+  isRequired  Boolean  @default(true)
+  isActive    Boolean  @default(true)
+  conditions  Json?
+  config      Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+// ============================================================================
+// DECISION RULES - If-then logic for suggestions
+// ============================================================================
+
+model DecisionRule {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  priority    Int      @default(0)
+  isActive    Boolean  @default(true)
+  condition   Json
+  action      Json
+  category    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+  @@index([isActive])
+  @@index([priority])
+}
+
+// ============================================================================
+// AI IDE PLATFORMS - Supported platforms configuration
+// ============================================================================
+
+model AIPlatform {
+  id                String   @id @default(cuid())
+  name              String   @unique
+  displayName       String
+  description       String?
+  configFile        String
+  configPath        String   @default("")
+  website           String?
+  docsUrl           String?
+  icon              String?
+  isActive          Boolean  @default(true)
+  templateStructure Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+// ============================================================================
+// PROGRAMMING LANGUAGES & FRAMEWORKS
+// ============================================================================
+
+model Language {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  displayName String
+  icon        String?
+  category    String?
+  isPopular   Boolean     @default(false)
+  suggestions Json?
+  frameworks  Framework[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([isPopular])
+}
+
+model Framework {
+  id          String   @id @default(cuid())
+  name        String
+  displayName String
+  languageId  String
+  icon        String?
+  category    String?
+  isPopular   Boolean  @default(false)
+  suggestions Json?
+  language    Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([name, languageId])
+  @@index([languageId])
+  @@index([isPopular])
+}
+
+// ============================================================================
+// FEDERATION - Instance discovery network
+// ============================================================================
+
+model FederatedInstance {
+  id                   String   @id @default(cuid())
+  domain               String   @unique
+  name                 String
+  version              String
+  logoUrl              String   @default("")
+  publicBlueprintCount Int      @default(0)
+  verified             Boolean  @default(false)
+  lastSeenAt           DateTime @default(now())
+  registeredAt         DateTime @default(now())
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([verified])
+  @@index([lastSeenAt])
+}

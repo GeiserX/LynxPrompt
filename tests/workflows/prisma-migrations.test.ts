@@ -23,14 +23,14 @@ const frozen: Record<string, string> = {
   support: "b3edc78629d4a3d48c382afbed40b8c26c8f5147f7b0971475cc88d77dfca134",
 };
 
-function fromEmpty(schema: string): string {
+function fromEmpty(schema: string, file = `prisma/schema-${schema}.prisma`): string {
   const dir = mkdtempSync(join(tmpdir(), "lp-migrate-diff-"));
   const out = join(dir, "diff.sql");
   try {
     const result = spawnSync(
       prisma,
       ["migrate", "diff", "--config", `prisma/prisma.config-${schema}.ts`, "--from-empty",
-        "--to-schema", `prisma/schema-${schema}.prisma`, "--script", "-o", out],
+        "--to-schema", file, "--script", "-o", out],
       {
         cwd: process.cwd(),
         encoding: "utf8",
@@ -68,6 +68,14 @@ describe.each(schemas)("prisma/migrations-%s", (schema) => {
 
   it.runIf(migrations.length <= 1)("0_init creates the whole schema", () => {
     expect(readFileSync(join(dir, "0_init", "migration.sql"), "utf8")).toBe(fromEmpty(schema));
+  }, 90_000);
+
+  // entrypoint.sh pushes this copy to a db-push database before it records
+  // 0_init as applied, so it must describe exactly what 0_init creates.
+  it("prisma/baseline holds the schema 0_init creates", () => {
+    expect(readFileSync(join(dir, "0_init", "migration.sql"), "utf8")).toBe(
+      fromEmpty(schema, `prisma/baseline/schema-${schema}.prisma`),
+    );
   }, 90_000);
 });
 

@@ -11,8 +11,9 @@
   server.
 - **Migrations** run at every start: the entrypoint builds the four connection strings from the `DB_*`
   variables, runs `prisma migrate deploy` for each schema, and refuses to start if one fails. A database
-  that an earlier release built with `prisma db push` gets one last `db push`, which refuses any change that
-  would lose data, and then has its migrations recorded as applied.
+  that an earlier release built with `prisma db push` gets one last `db push` of the schema as the first
+  migration (`0_init`) created it, which refuses any change that would lose data. Only `0_init` is then
+  recorded as applied, so every later migration runs as written.
 - **Mail**: the sign-in link is sent through your SMTP server with nodemailer. Nothing else is mailed unless
   the contact form is on.
 
