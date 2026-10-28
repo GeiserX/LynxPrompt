@@ -64,8 +64,8 @@ export async function hierarchiesCommand(
     console.log();
     console.log(chalk.gray("Tips:"));
     console.log(chalk.gray(`  • Pull entire hierarchy: lynxp pull <hierarchy_id>`));
-    console.log(chalk.gray(`  • View hierarchy details: lynxp hierarchy <hierarchy_id>`));
-    console.log(chalk.gray(`  • Sync local changes: lynxp sync`));
+    console.log(chalk.gray(`  • Preview a hierarchy: lynxp pull <hierarchy_id> --preview`));
+    console.log(chalk.gray(`  • Push local changes: lynxp push --all`));
     console.log();
   } catch (error) {
     spinner.fail("Failed to fetch hierarchies");

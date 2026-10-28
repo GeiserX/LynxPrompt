@@ -1,17 +1,19 @@
 import chalk from "chalk";
-import ora from "ora";
+import ora, { type Ora } from "ora";
 import fs from "fs";
 import path from "path";
 import { createHash } from "crypto";
 import prompts from "prompts";
-import { api, ApiRequestError } from "../api.js";
-import { isAuthenticated } from "../config.js";
+import { api, ApiRequestError, type Blueprint } from "../api.js";
+import { isAuthenticated, getApiUrl } from "../config.js";
 import {
   findBlueprintByFile,
   trackBlueprint,
   updateChecksum,
   loadBlueprints,
+  toTrackedPath,
 } from "../utils/blueprint-tracker.js";
+import { withSensitiveDataAck, type SensitiveMatchInfo } from "../utils/sensitive-ack.js";
 
 interface PushOptions {
   name?: string;
@@ -21,6 +23,7 @@ interface PushOptions {
   yes?: boolean;
   force?: boolean;
   all?: boolean;
+  allowSensitive?: boolean;
 }
 
 interface HierarchyInfo {
@@ -45,7 +48,20 @@ const EXCLUDED_DIRS = new Set([
   "node_modules", ".git", "dist", "build", ".next", "__pycache__",
   "venv", ".venv", "target", "vendor", "out", ".output", ".nuxt",
   "coverage", ".cache", "tmp", ".lynxprompt",
+  ".worktrees", // git worktrees hold copies of the same config files
 ]);
+
+/** Repository paths sent to the server and tracked locally always use "/". */
+function toPosix(p: string): string {
+  return p.split(path.sep).join("/");
+}
+
+/** Web page of a blueprint on the server the CLI talks to (self-hosted or not). */
+function blueprintUrl(id: string): string {
+  return `${getApiUrl().replace(/\/+$/, "")}/templates/${id.replace("bp_", "")}`;
+}
+
+const VISIBILITIES = ["PRIVATE", "TEAM", "PUBLIC"];
 
 /**
  * Config file pattern rules.
@@ -53,6 +69,7 @@ const EXCLUDED_DIRS = new Set([
  */
 interface ConfigPattern {
   match: (relativePath: string) => boolean;
+  // Must be a TemplateType value from prisma/schema-users.prisma; tools without one use CUSTOM
   type: string;
   label: string;
 }
@@ -72,24 +89,24 @@ const CONFIG_PATTERNS: ConfigPattern[] = [
 
   // Directory-based rules
   { match: (p) => normPath(p).includes(".cursor/rules/") && p.endsWith(".mdc"), type: "CURSOR_RULES", label: "Cursor Rules" },
-  { match: (p) => normPath(p).includes(".trae/rules/") && p.endsWith(".mdc"), type: "TRAE_RULES", label: "Trae Rules" },
-  { match: (p) => normPath(p).includes(".idx/") && p.endsWith(".mdc"), type: "FIREBASE_RULES", label: "Firebase Rules" },
+  { match: (p) => normPath(p).includes(".trae/rules/") && /\.mdc?$/.test(p), type: "TRAE_RULES", label: "Trae Rules" },
+  { match: (p) => normPath(p).includes(".idx/") && p.endsWith(".mdc"), type: "IDX_CONFIG", label: "Firebase Rules" },
   { match: (p) => normPath(p).includes(".roo/rules/") && p.endsWith(".mdc"), type: "ROO_RULES", label: "Roo Rules" },
-  { match: (p) => normPath(p).includes(".amazonq/rules/") && p.endsWith(".mdc"), type: "AMAZONQ_RULES", label: "Amazon Q Rules" },
-  { match: (p) => normPath(p).includes(".augment/rules/") && p.endsWith(".mdc"), type: "AUGMENT_RULES", label: "Augment Rules" },
+  { match: (p) => normPath(p).includes(".amazonq/rules/") && /\.mdc?$/.test(p), type: "AMAZONQ_RULES", label: "Amazon Q Rules" },
+  { match: (p) => normPath(p).includes(".augment/rules/") && /\.mdc?$/.test(p), type: "AUGMENT_RULES", label: "Augment Rules" },
   { match: (p) => normPath(p).includes(".kilocode/rules/") && p.endsWith(".mdc"), type: "KILOCODE_RULES", label: "Kilo Code Rules" },
-  { match: (p) => normPath(p).includes(".kiro/steering/") && p.endsWith(".mdc"), type: "KIRO_STEERING", label: "Kiro Steering" },
+  { match: (p) => normPath(p).includes(".kiro/steering/") && /\.mdc?$/.test(p), type: "KIRO_STEERING", label: "Kiro Steering" },
 
   // Path-based configs
   { match: (p) => normPath(p).includes(".github/copilot-instructions.md"), type: "COPILOT_INSTRUCTIONS", label: "Copilot Instructions" },
   { match: (p) => normPath(p).includes(".zed/instructions.md"), type: "ZED_INSTRUCTIONS", label: "Zed Instructions" },
-  { match: (p) => normPath(p).includes(".openhands/microagents/repo.md"), type: "OPENHANDS_CONFIG", label: "OpenHands Config" },
+  { match: (p) => normPath(p).includes(".openhands/microagents/repo.md"), type: "OPENHANDS_MD", label: "OpenHands Config" },
   { match: (p) => normPath(p).includes(".junie/guidelines.md"), type: "JUNIE_GUIDELINES", label: "Junie Guidelines" },
   { match: (p) => normPath(p).includes(".void/config.json"), type: "VOID_CONFIG", label: "Void Config" },
   { match: (p) => normPath(p).includes(".continue/config.json"), type: "CONTINUE_CONFIG", label: "Continue Config" },
   { match: (p) => normPath(p).includes(".cody/config.json"), type: "CODY_CONFIG", label: "Cody Config" },
-  { match: (p) => normPath(p).includes(".supermaven/config.json"), type: "SUPERMAVEN_CONFIG", label: "Supermaven Config" },
-  { match: (p) => normPath(p).includes(".codegpt/config.json"), type: "CODEGPT_CONFIG", label: "CodeGPT Config" },
+  { match: (p) => normPath(p).includes(".supermaven/config.json"), type: "CUSTOM", label: "Supermaven Config" },
+  { match: (p) => normPath(p).includes(".codegpt/config.json"), type: "CUSTOM", label: "CodeGPT Config" },
 
   // Basename rules
   { match: (p) => path.basename(p) === "AGENTS.md", type: "AGENTS_MD", label: "AGENTS.md" },
@@ -97,13 +114,14 @@ const CONFIG_PATTERNS: ConfigPattern[] = [
   { match: (p) => path.basename(p) === "AIDER.md", type: "AIDER_MD", label: "AIDER.md" },
   { match: (p) => path.basename(p) === "GEMINI.md", type: "GEMINI_MD", label: "GEMINI.md" },
   { match: (p) => path.basename(p) === "WARP.md", type: "WARP_MD", label: "WARP.md" },
-  { match: (p) => path.basename(p) === "CRUSH.md", type: "CRUSH_MD", label: "CRUSH.md" },
+  { match: (p) => path.basename(p) === "CRUSH.md", type: "CUSTOM", label: "CRUSH.md" },
   { match: (p) => path.basename(p) === ".windsurfrules", type: "WINDSURF_RULES", label: "Windsurf Rules" },
+  { match: (p) => path.basename(p) === ".cursorrules", type: "CURSORRULES", label: "Cursor Rules (legacy)" },
   { match: (p) => path.basename(p) === ".clinerules", type: "CLINE_RULES", label: "Cline Rules" },
-  { match: (p) => path.basename(p) === ".goosehints", type: "GOOSE_HINTS", label: "Goose Hints" },
+  { match: (p) => path.basename(p) === ".goosehints", type: "GOOSEHINTS", label: "Goose Hints" },
   { match: (p) => path.basename(p) === ".tabnine.yaml", type: "TABNINE_CONFIG", label: "Tabnine Config" },
-  { match: (p) => path.basename(p) === "opencode.json", type: "OPENCODE_CONFIG", label: "OpenCode Config" },
-  { match: (p) => path.basename(p) === "firebender.json", type: "FIREBENDER_CONFIG", label: "Firebender Config" },
+  { match: (p) => path.basename(p) === "opencode.json", type: "OPENCODE_JSON", label: "OpenCode Config" },
+  { match: (p) => path.basename(p) === "firebender.json", type: "CUSTOM", label: "Firebender Config" },
 ];
 
 /**
@@ -135,7 +153,7 @@ function scanForAgentFiles(cwd: string, maxDepth: number = 5): DiscoveredFile[] 
           if (EXCLUDED_DIRS.has(entry.name)) continue;
           scan(fullPath, depth + 1);
         } else if (entry.name === "AGENTS.md") {
-          const relativePath = path.relative(cwd, fullPath);
+          const relativePath = toPosix(path.relative(cwd, fullPath));
           results.push({
             path: relativePath,
             absolutePath: fullPath,
@@ -177,7 +195,7 @@ function scanForAllConfigFiles(cwd: string, maxDepth: number = 5): DiscoveredFil
           if (EXCLUDED_DIRS.has(entry.name)) continue;
           scan(fullPath, depth + 1);
         } else {
-          const relativePath = path.relative(cwd, fullPath);
+          const relativePath = toPosix(path.relative(cwd, fullPath));
           const configMatch = matchConfigFile(relativePath);
           if (configMatch) {
             // Skip files that are too large or empty
@@ -229,14 +247,14 @@ async function detectHierarchyInfo(cwd: string, file: string): Promise<Hierarchy
     
     // Check if file is in a subdirectory (potential monorepo child)
     if (relativePath.includes(path.sep) && !relativePath.startsWith("..")) {
-      result.repositoryPath = relativePath;
+      result.repositoryPath = toPosix(relativePath);
       
       // Check if there's an AGENTS.md at the root that was already pushed
       const rootAgentsMd = path.join(cwd, "AGENTS.md");
       if (fs.existsSync(rootAgentsMd) && path.resolve(file) !== rootAgentsMd) {
         const blueprints = await loadBlueprints(cwd);
         const parentBlueprint = blueprints.blueprints.find(
-          b => b.file === "AGENTS.md"
+          b => toTrackedPath(cwd, b.file) === "AGENTS.md"
         );
         if (parentBlueprint) {
           result.parentId = parentBlueprint.id;
@@ -275,45 +293,31 @@ async function ensureHierarchy(_cwd: string, repositoryRoot: string, name: strin
  * Create a stable repository root identifier from a path
  */
 /**
- * Search user's existing blueprints for one matching the same repository_path and hierarchy
- * Used to deduplicate: if .lynxprompt/ tracking is deleted, we can still find the existing blueprint
+ * Search user's existing blueprints for one with the same repository_path in the same hierarchy.
+ * Used to deduplicate: if .lynxprompt/ tracking is deleted, we can still find the existing blueprint.
+ * Without a hierarchy there is no match: "AGENTS.md" alone would pick another repo's blueprint.
+ * Pass `known` to reuse one listing for many files.
  */
 async function findExistingBlueprintOnServer(
   repositoryPath: string | null,
-  hierarchyId: string | null
+  hierarchyId: string | null,
+  known?: Blueprint[]
 ): Promise<{ id: string; name: string } | null> {
-  if (!repositoryPath) return null;
+  if (!repositoryPath || !hierarchyId) return null;
 
-  try {
-    // Fetch user's blueprints (paginate to cover all)
-    let offset = 0;
-    const limit = 50;
-
-    while (true) {
-      const response = await api.listBlueprints({ limit, offset });
-
-      for (const bp of response.blueprints) {
-        // Match by repository_path, and if we have a hierarchy, also match hierarchy_id
-        if (bp.repository_path === repositoryPath) {
-          if (hierarchyId) {
-            if (bp.hierarchy_id === hierarchyId) {
-              return { id: bp.id, name: bp.name };
-            }
-          } else {
-            // No hierarchy context — match on repository_path alone
-            return { id: bp.id, name: bp.name };
-          }
-        }
-      }
-
-      if (!response.has_more) break;
-      offset += limit;
+  let blueprints = known;
+  if (!blueprints) {
+    try {
+      blueprints = await api.listAllBlueprints();
+    } catch {
+      return null; // If listing fails, fall through to create new
     }
-  } catch {
-    // If listing fails, fall through to create new
   }
 
-  return null;
+  const match = blueprints.find(
+    (bp) => bp.repository_path === repositoryPath && bp.hierarchy_id === hierarchyId
+  );
+  return match ? { id: match.id, name: match.name } : null;
 }
 
 function createRepositoryRoot(rootPath: string): string {
@@ -347,6 +351,14 @@ export async function pushCommand(
     console.log(chalk.yellow("You need to be logged in to push blueprints."));
     console.log(chalk.gray("Run 'lynxp login' to authenticate."));
     process.exit(1);
+  }
+
+  if (options.visibility) {
+    options.visibility = options.visibility.toUpperCase();
+    if (!VISIBILITIES.includes(options.visibility)) {
+      console.log(chalk.red(`Unknown visibility: ${options.visibility}. Use PRIVATE, TEAM or PUBLIC.`));
+      process.exit(1);
+    }
   }
 
   // --all mode: scan for ALL config files recursively
@@ -417,8 +429,9 @@ export async function pushCommand(
     // Update existing blueprint
     await updateBlueprint(cwd, file, linked.id, content, options, linked.checksum);
   } else {
-    // Create new blueprint or link to existing
-    await createOrLinkBlueprint(cwd, file, filename, content, options);
+    // Create new blueprint or link to existing. A file named on the command line is
+    // pushed alone; only a bare 'lynxp push' offers to push every AGENTS.md as a hierarchy.
+    await createOrLinkBlueprint(cwd, file, filename, content, options, fileArg !== undefined);
   }
 }
 
@@ -443,7 +456,14 @@ async function updateBlueprint(
       updateData.expected_checksum = expectedChecksum;
     }
 
-    const result = await api.updateBlueprint(blueprintId, updateData);
+    const result = await withSensitiveDataAck(
+      (acknowledged) =>
+        api.updateBlueprint(
+          blueprintId,
+          acknowledged ? { ...updateData, sensitive_data_acknowledged: true } : updateData
+        ),
+      confirmSensitive(options, spinner)
+    );
     spinner.succeed("Blueprint updated!");
 
     // Update local tracking with new checksum
@@ -455,7 +475,7 @@ async function updateBlueprint(
     if (result.blueprint.content_checksum) {
       console.log(chalk.gray(`   Checksum: ${result.blueprint.content_checksum}`));
     }
-    console.log(chalk.gray(`   View: https://lynxprompt.com/templates/${blueprintId.replace("bp_", "")}`));
+    console.log(chalk.gray(`   View: ${blueprintUrl(blueprintId)}`));
   } catch (error) {
     spinner.fail("Failed to update blueprint");
     
@@ -480,12 +500,13 @@ async function createOrLinkBlueprint(
   file: string,
   filename: string,
   content: string,
-  options: PushOptions
+  options: PushOptions,
+  explicitFile: boolean = false
 ): Promise<void> {
   // Check if pushing AGENTS.md and scan for more AGENTS.md files
   const isAgentsMd = filename === "AGENTS.md";
   
-  if (isAgentsMd) {
+  if (isAgentsMd && !explicitFile) {
     const discoveredFiles = scanForAgentFiles(cwd);
     
     // If we found multiple AGENTS.md files, offer to create hierarchy
@@ -570,7 +591,8 @@ async function createOrLinkBlueprint(
         initial: "",
       },
       {
-        type: "select",
+        // An explicit -v/--visibility is not asked again
+        type: options.visibility ? null : "select",
         name: "visibility",
         message: "Visibility:",
         choices: [
@@ -581,7 +603,7 @@ async function createOrLinkBlueprint(
         initial: 0,
       },
       {
-        type: "text",
+        type: options.tags ? null : "text",
         name: "tags",
         message: "Tags (comma-separated):",
         initial: "",
@@ -640,7 +662,7 @@ async function createOrLinkBlueprint(
   const spinner = ora("Creating blueprint...").start();
 
   try {
-    const result = await api.createBlueprint({
+    const createData = {
       name,
       description: description || "",
       content,
@@ -651,7 +673,12 @@ async function createOrLinkBlueprint(
       hierarchy_id: hierarchyId,
       parent_id: hierarchyInfo.parentId,
       repository_path: hierarchyInfo.repositoryPath,
-    });
+    };
+    const result = await withSensitiveDataAck(
+      (acknowledged) =>
+        api.createBlueprint(acknowledged ? { ...createData, sensitive_data_acknowledged: true } : createData),
+      confirmSensitive(options, spinner)
+    );
 
     spinner.succeed("Blueprint created!");
 
@@ -682,7 +709,7 @@ async function createOrLinkBlueprint(
       console.log(chalk.cyan(`   ↳ Linked to parent blueprint: ${hierarchyInfo.parentId}`));
     }
     if (visibility === "PUBLIC") {
-      console.log(chalk.gray(`   View: https://lynxprompt.com/templates/${result.blueprint.id.replace("bp_", "")}`));
+      console.log(chalk.gray(`   View: ${blueprintUrl(result.blueprint.id)}`));
     }
     console.log();
     console.log(chalk.cyan("The file is now linked. Future 'lynxp push' will update this blueprint."));
@@ -716,7 +743,7 @@ async function pushHierarchy(
         validate: (v) => v.length > 0 || "Name is required",
       },
       {
-        type: "select",
+        type: options.visibility ? null : "select",
         name: "visibility",
         message: "Visibility for all blueprints:",
         choices: [
@@ -759,6 +786,14 @@ async function pushHierarchy(
     return;
   }
 
+  // One listing of the user's blueprints serves every file's dedup check
+  let serverBlueprints: Blueprint[] = [];
+  try {
+    serverBlueprints = await api.listAllBlueprints();
+  } catch {
+    // If listing fails, files are created rather than re-linked
+  }
+
   // Process each file
   let rootBlueprintId: string | null = null;
   let createCount = 0;
@@ -778,7 +813,14 @@ async function pushHierarchy(
         if (tracked.checksum && !options.force) {
           updateData.expected_checksum = tracked.checksum;
         }
-        await api.updateBlueprint(tracked.id, updateData);
+        await withSensitiveDataAck(
+          (acknowledged) =>
+            api.updateBlueprint(
+              tracked.id,
+              acknowledged ? { ...updateData, sensitive_data_acknowledged: true } : updateData
+            ),
+          confirmSensitive(options, spinner)
+        );
         await updateChecksum(cwd, file.path, content);
 
         if (file.isRoot) rootBlueprintId = tracked.id;
@@ -788,9 +830,16 @@ async function pushHierarchy(
       }
 
       // 2. Check if exists on server with same repository_path → re-link & update
-      const existing = await findExistingBlueprintOnServer(file.path, hierarchyId);
+      const existing = await findExistingBlueprintOnServer(file.path, hierarchyId, serverBlueprints);
       if (existing) {
-        await api.updateBlueprint(existing.id, { content });
+        await withSensitiveDataAck(
+          (acknowledged) =>
+            api.updateBlueprint(
+              existing.id,
+              acknowledged ? { content, sensitive_data_acknowledged: true } : { content }
+            ),
+          confirmSensitive(options, spinner)
+        );
         await trackBlueprint(cwd, {
           id: existing.id,
           name: existing.name,
@@ -820,7 +869,7 @@ async function pushHierarchy(
         ? rootBlueprintId
         : null;
 
-      const result = await api.createBlueprint({
+      const createData = {
         name: blueprintName,
         description: "",
         content,
@@ -830,7 +879,12 @@ async function pushHierarchy(
         hierarchy_id: hierarchyId,
         parent_id: parentId,
         repository_path: file.path,
-      });
+      };
+      const result = await withSensitiveDataAck(
+        (acknowledged) =>
+          api.createBlueprint(acknowledged ? { ...createData, sensitive_data_acknowledged: true } : createData),
+        confirmSensitive(options, spinner)
+      );
 
       if (file.isRoot) rootBlueprintId = result.blueprint.id;
 
@@ -857,7 +911,13 @@ async function pushHierarchy(
   }
 
   console.log();
-  console.log(chalk.green(`✅ Hierarchy sync complete!`));
+  if (failCount > 0) {
+    // Non-zero exit so a CI job running 'lynxp push --all' does not pass on failed pushes
+    process.exitCode = 1;
+    console.log(chalk.yellow(`⚠ Hierarchy sync finished with ${failCount} failure(s)`));
+  } else {
+    console.log(chalk.green(`✅ Hierarchy sync complete!`));
+  }
   console.log(chalk.gray(`   Hierarchy: ${hierarchyId}`));
   console.log(chalk.gray(`   Name: ${hierarchyName}`));
   const parts = [];
@@ -904,6 +964,44 @@ function inferBlueprintType(filePath: string): string {
   // Fallback for explicit single-file push of unknown files
   if (filePath.endsWith(".md") || filePath.endsWith(".mdc")) return "AGENTS_MD";
   return "CUSTOM";
+}
+
+/**
+ * Ask whether to publish PUBLIC content the server flagged as possible
+ * secrets. --allow-sensitive says yes up front; with -y or no terminal the
+ * answer is no, so a script never publishes a secret by accident.
+ */
+function confirmSensitive(options: PushOptions, spinner?: Ora) {
+  return async (matches: SensitiveMatchInfo[]): Promise<boolean> => {
+    spinner?.stop();
+    console.log(chalk.yellow("\n⚠ This blueprint is public and may contain secrets:"));
+    for (const m of matches) {
+      console.log(chalk.gray(`   line ${m.line}: ${m.type}${m.snippet ? ` (${m.snippet})` : ""}`));
+    }
+
+    let publish = false;
+    if (options.allowSensitive) {
+      console.log(chalk.gray("   Publishing anyway (--allow-sensitive)."));
+      publish = true;
+    } else if (!options.yes && process.stdin.isTTY) {
+      const answer = await prompts({
+        type: "confirm",
+        name: "publish",
+        message: "Publish it anyway?",
+        initial: false,
+      });
+      publish = answer.publish === true;
+    }
+
+    if (publish) {
+      spinner?.start();
+    } else {
+      console.log(
+        chalk.gray("   Remove them, keep the blueprint private, or run again with --allow-sensitive to publish anyway.")
+      );
+    }
+    return publish;
+  };
 }
 
 function handleError(error: unknown): void {

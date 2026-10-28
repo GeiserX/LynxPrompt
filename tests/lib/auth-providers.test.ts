@@ -353,7 +353,9 @@ describe("buildProviders - SSO enabled", () => {
     vi.clearAllMocks();
   });
 
-  it("includes SSO provider when ENABLE_SSO is true", async () => {
+  // A credentials provider cannot open a database session, so SSO no longer
+  // goes through next-auth: the OIDC callback creates the session itself.
+  it("registers no sso credentials provider when ENABLE_SSO is true", async () => {
     vi.doMock("@/lib/feature-flags", () => ({
       ENABLE_GITHUB_OAUTH: false,
       ENABLE_GOOGLE_OAUTH: false,
@@ -369,32 +371,7 @@ describe("buildProviders - SSO enabled", () => {
 
     const { authOptions } = await import("@/lib/auth");
     const hasSso = authOptions.providers.some((p: { id?: string }) => p.id === "sso");
-    expect(hasSso).toBe(true);
-  });
-
-  it("SSO authorize returns null for missing credentials", async () => {
-    vi.doMock("@/lib/feature-flags", () => ({
-      ENABLE_GITHUB_OAUTH: false,
-      ENABLE_GOOGLE_OAUTH: false,
-      ENABLE_EMAIL_AUTH: false,
-      ENABLE_PASSKEYS: false,
-      ENABLE_USER_REGISTRATION: true,
-      ENABLE_SSO: true,
-      APP_NAME: "TestApp",
-      APP_URL: "https://test.example.com",
-      APP_LOGO_URL: "",
-    }));
-    setupBaseMocks();
-
-    const { authOptions } = await import("@/lib/auth");
-    const ssoProvider = authOptions.providers.find((p: { id?: string }) => p.id === "sso") as { authorize: Function };
-
-    const result = await ssoProvider.authorize(null);
-    expect(result).toBeNull();
-
-    // Missing userId
-    const result2 = await ssoProvider.authorize({ email: "a@b.com", nonce: "n", signature: "s", timestamp: "1" });
-    expect(result2).toBeNull();
+    expect(hasSso).toBe(false);
   });
 });
 
@@ -419,7 +396,7 @@ describe("buildProviders - all enabled", () => {
     setupBaseMocks();
 
     const { authOptions } = await import("@/lib/auth");
-    expect(authOptions.providers.length).toBeGreaterThanOrEqual(5);
+    expect(authOptions.providers.length).toBe(4);
   });
 });
 

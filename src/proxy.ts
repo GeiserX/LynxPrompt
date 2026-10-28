@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { getClientIP } from "@/lib/client-ip";
+import { runtimeEnv } from "@/lib/feature-flags";
 
 // Rate limiting store (in-memory, per-instance)
 // For production at scale, use Redis or similar
@@ -36,15 +38,6 @@ const protectedPaths = [
 const authPaths = ["/api/auth/signin", "/api/auth/callback", "/api/auth/signout", "/auth/signin"];
 // Session endpoint is called frequently - use general rate limit
 const sessionPath = "/api/auth/session";
-
-function getClientIP(request: NextRequest): string {
-  // Prefer CF-Connecting-IP (Cloudflare) as it cannot be spoofed behind Cloudflare
-  const cfIP = request.headers.get("cf-connecting-ip");
-  if (cfIP) return cfIP;
-  const forwarded = request.headers.get("x-forwarded-for");
-  const realIP = request.headers.get("x-real-ip");
-  return forwarded?.split(",")[0]?.trim() || realIP || "unknown";
-}
 
 function isRateLimited(key: string, maxRequests: number): boolean {
   const now = Date.now();
@@ -85,7 +78,7 @@ function buildCSP(): string {
   }
 
   // Cloudflare Turnstile
-  if (process.env.ENABLE_TURNSTILE === "true" || process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) {
+  if (process.env.ENABLE_TURNSTILE === "true" || runtimeEnv("NEXT_PUBLIC_TURNSTILE_SITE_KEY")) {
     scriptSrc.push("https://challenges.cloudflare.com");
     connectSrc.push("https://challenges.cloudflare.com");
     frameSrc.push("https://challenges.cloudflare.com");

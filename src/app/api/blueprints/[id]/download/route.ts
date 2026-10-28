@@ -4,6 +4,16 @@ import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { prismaApp } from "@/lib/db-app";
 import { hashIP } from "@/lib/ip-hash";
+import { getClientIP } from "@/lib/client-ip";
+import { canReadTemplate } from "@/lib/blueprint-access";
+import { COMMANDS, PLATFORMS } from "@/lib/platforms";
+
+// Every platform id from platforms.ts, plus "command-<platform>" for slash
+// command exports (what template-download-modal.tsx sends)
+const ALLOWED_PLATFORMS = new Set<string>([
+  ...PLATFORMS.map((p) => p.id),
+  ...COMMANDS.map((c) => `command-${c.platformId}`),
+]);
 
 // POST /api/blueprints/[id]/download - Record a blueprint download
 export async function POST(
@@ -16,16 +26,11 @@ export async function POST(
   try {
     const body = await request.json().catch(() => ({}));
 
-    // Validate platform against allowlist and max length
-    const ALLOWED_PLATFORMS = [
-      "web", "cli", "vscode", "cursor", "windsurf", "claude_code",
-      "github_copilot", "copilot", "claude", "continue", "opencode",
-      "jetbrains", "neovim", "vim", "emacs", "sublime", "atom",
-    ];
+    // Validate platform against the platform ids the download modal sends
     let platform: string | null = null;
     if (body.platform && typeof body.platform === "string") {
       const normalized = body.platform.trim().toLowerCase().slice(0, 50);
-      if (ALLOWED_PLATFORMS.includes(normalized)) {
+      if (ALLOWED_PLATFORMS.has(normalized)) {
         platform = normalized;
       }
     }
@@ -36,11 +41,13 @@ export async function POST(
       : rawId.startsWith("sys_") ? rawId.slice(4)
       : rawId;
 
+    // Only count downloads of a template that exists and the caller can read
+    if (!(await canReadTemplate(templateType, dbId, session?.user?.id))) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
     // Deduplicate: check for recent download from same IP + template in the last hour
-    const clientIP = request.headers.get("cf-connecting-ip") ||
-      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-      request.headers.get("x-real-ip") ||
-      "unknown";
+    const clientIP = getClientIP(request);
     const ipHash = hashIP(clientIP);
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 

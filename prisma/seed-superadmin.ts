@@ -4,8 +4,12 @@
  */
 
 import { PrismaClient } from "../src/generated/prisma-users/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import pg from "pg";
 
-const prisma = new PrismaClient();
+// Prisma 7 has no built-in connection: the client needs a driver adapter.
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL_USERS });
+const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 // Production safety guard
 const PRODUCTION_HOSTNAME_PATTERNS = [
@@ -85,5 +89,6 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
+    await pool.end();
   });
 

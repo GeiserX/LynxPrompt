@@ -17,129 +17,12 @@ import { join } from "path";
 import { existsSync } from "fs";
 import { isAuthenticated } from "../config.js";
 import { api, ApiRequestError } from "../api.js";
+import { safeText } from "../utils/terminal.js";
+import { computeDiff, formatDiff } from "../utils/line-diff.js";
 import { checkSyncStatus, findBlueprintByFile } from "../utils/blueprint-tracker.js";
 
 interface DiffOptions {
   local?: boolean;
-}
-
-/**
- * Simple line-by-line diff implementation
- * Returns added (+), removed (-), and unchanged lines
- */
-function computeDiff(oldText: string, newText: string): Array<{ type: "add" | "remove" | "same"; line: string }> {
-  const oldLines = oldText.split("\n");
-  const newLines = newText.split("\n");
-  const result: Array<{ type: "add" | "remove" | "same"; line: string }> = [];
-
-  // Simple LCS-based diff
-  const lcs = longestCommonSubsequence(oldLines, newLines);
-  
-  let oldIndex = 0;
-  let newIndex = 0;
-  let lcsIndex = 0;
-
-  while (oldIndex < oldLines.length || newIndex < newLines.length) {
-    if (lcsIndex < lcs.length && oldIndex < oldLines.length && oldLines[oldIndex] === lcs[lcsIndex]) {
-      if (newIndex < newLines.length && newLines[newIndex] === lcs[lcsIndex]) {
-        // Line is in both - unchanged
-        result.push({ type: "same", line: oldLines[oldIndex] });
-        oldIndex++;
-        newIndex++;
-        lcsIndex++;
-      } else {
-        // Line is in new but not in LCS position - added
-        result.push({ type: "add", line: newLines[newIndex] });
-        newIndex++;
-      }
-    } else if (oldIndex < oldLines.length && (lcsIndex >= lcs.length || oldLines[oldIndex] !== lcs[lcsIndex])) {
-      // Line is in old but not in LCS - removed
-      result.push({ type: "remove", line: oldLines[oldIndex] });
-      oldIndex++;
-    } else if (newIndex < newLines.length) {
-      // Line is in new but not in old - added
-      result.push({ type: "add", line: newLines[newIndex] });
-      newIndex++;
-    }
-  }
-
-  return result;
-}
-
-/**
- * Find the longest common subsequence of lines
- */
-function longestCommonSubsequence(a: string[], b: string[]): string[] {
-  const m = a.length;
-  const n = b.length;
-  const dp: number[][] = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
-
-  for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
-      if (a[i - 1] === b[j - 1]) {
-        dp[i][j] = dp[i - 1][j - 1] + 1;
-      } else {
-        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
-      }
-    }
-  }
-
-  // Backtrack to find the LCS
-  const lcs: string[] = [];
-  let i = m;
-  let j = n;
-  while (i > 0 && j > 0) {
-    if (a[i - 1] === b[j - 1]) {
-      lcs.unshift(a[i - 1]);
-      i--;
-      j--;
-    } else if (dp[i - 1][j] > dp[i][j - 1]) {
-      i--;
-    } else {
-      j--;
-    }
-  }
-
-  return lcs;
-}
-
-/**
- * Format diff output with colors
- */
-function formatDiff(diff: Array<{ type: "add" | "remove" | "same"; line: string }>, contextLines: number = 3): string {
-  const output: string[] = [];
-  let lastPrintedIndex = -1;
-  
-  // Find sections with changes
-  const changeIndices = diff.map((d, i) => d.type !== "same" ? i : -1).filter(i => i !== -1);
-  
-  if (changeIndices.length === 0) {
-    return chalk.gray("  (no changes)");
-  }
-
-  for (let i = 0; i < diff.length; i++) {
-    const item = diff[i];
-    const nearChange = changeIndices.some(ci => Math.abs(ci - i) <= contextLines);
-
-    if (nearChange) {
-      // Print separator if there's a gap
-      if (lastPrintedIndex !== -1 && i - lastPrintedIndex > 1) {
-        output.push(chalk.gray("  ..."));
-      }
-
-      // Format the line based on type
-      if (item.type === "add") {
-        output.push(chalk.green(`+ ${item.line}`));
-      } else if (item.type === "remove") {
-        output.push(chalk.red(`- ${item.line}`));
-      } else {
-        output.push(chalk.gray(`  ${item.line}`));
-      }
-      lastPrintedIndex = i;
-    }
-  }
-
-  return output.join("\n");
 }
 
 /**
@@ -196,10 +79,12 @@ export async function diffCommand(fileOrId?: string, options: DiffOptions = {}):
     return;
   }
 
-  // Show diff for all tracked files
+  // Show diff for all tracked files. Every file is compared with the cloud copy:
+  // an unchanged local file can still be behind a newer cloud version.
   let hasChanges = false;
+  let failed = false;
   
-  for (const { blueprint, localModified, fileExists } of trackedFiles) {
+  for (const { blueprint, fileExists } of trackedFiles) {
     if (!fileExists) {
       console.log(chalk.red(`✗ ${blueprint.file} - file not found`));
       continue;
@@ -208,16 +93,20 @@ export async function diffCommand(fileOrId?: string, options: DiffOptions = {}):
     console.log(chalk.cyan(`📄 ${blueprint.file}`));
     console.log(chalk.gray(`   Linked to: ${blueprint.name} (${blueprint.id})`));
     
-    if (localModified) {
+    const result = await diffFileWithBlueprint(cwd, blueprint.file, blueprint.id, true);
+    if (result === "changed") {
       hasChanges = true;
-      await diffFileWithBlueprint(cwd, blueprint.file, blueprint.id, true);
-    } else {
+    } else if (result === "same") {
       console.log(chalk.green("   ✓ In sync with cloud"));
+    } else {
+      failed = true;
     }
     console.log();
   }
   
-  if (!hasChanges) {
+  if (failed) {
+    console.log(chalk.yellow("⚠ Some files could not be compared with the cloud (see above)."));
+  } else if (!hasChanges) {
     console.log(chalk.green("✓ All tracked files are in sync with their cloud blueprints!"));
   } else {
     console.log(chalk.gray("To push local changes: lynxp push"));
@@ -229,12 +118,17 @@ export async function diffCommand(fileOrId?: string, options: DiffOptions = {}):
 /**
  * Compare a specific file with its linked blueprint
  */
-async function diffFileWithBlueprint(cwd: string, file: string, blueprintId: string, compact: boolean = false): Promise<void> {
+async function diffFileWithBlueprint(
+  cwd: string,
+  file: string,
+  blueprintId: string,
+  compact: boolean = false
+): Promise<"same" | "changed" | "error"> {
   const filePath = join(cwd, file);
   
   if (!existsSync(filePath)) {
     console.log(chalk.red(`✗ File not found: ${file}`));
-    return;
+    return "error";
   }
 
   const spinner = compact ? null : ora("Fetching blueprint...").start();
@@ -245,7 +139,7 @@ async function diffFileWithBlueprint(cwd: string, file: string, blueprintId: str
 
     if (!blueprint || !blueprint.content) {
       console.log(chalk.red(`✗ Blueprint has no content`));
-      return;
+      return "error";
     }
 
     const localContent = await readFile(filePath, "utf-8");
@@ -256,14 +150,15 @@ async function diffFileWithBlueprint(cwd: string, file: string, blueprintId: str
       if (!compact) {
         console.log(chalk.green("✓ Files are identical!"));
       }
-    } else {
-      if (!compact) {
-        console.log(chalk.gray("Changes (cloud → local):"));
-        console.log();
-      }
-      console.log(formatDiff(diff));
-      console.log(chalk.gray(`   ${chalk.green(`+${stats.added}`)} ${chalk.red(`-${stats.removed}`)} lines`));
+      return "same";
     }
+    if (!compact) {
+      console.log(chalk.gray("Changes (cloud → local):"));
+      console.log();
+    }
+    console.log(formatDiff(diff));
+    console.log(chalk.gray(`   ${chalk.green(`+${stats.added}`)} ${chalk.red(`-${stats.removed}`)} lines`));
+    return "changed";
 
   } catch (error) {
     spinner?.stop();
@@ -272,6 +167,7 @@ async function diffFileWithBlueprint(cwd: string, file: string, blueprintId: str
     } else {
       console.log(chalk.red("✗ Failed to compare"));
     }
+    return "error";
   }
 }
 
@@ -297,9 +193,9 @@ async function diffWithBlueprintId(cwd: string, blueprintId: string): Promise<vo
       return;
     }
 
-    console.log(chalk.green(`✓ Blueprint: ${blueprint.name || blueprintId}`));
+    console.log(chalk.green(`✓ Blueprint: ${safeText(blueprint.name || blueprintId)}`));
     if (blueprint.description) {
-      console.log(chalk.gray(`  ${blueprint.description}`));
+      console.log(chalk.gray(`  ${safeText(blueprint.description)}`));
     }
     console.log();
 
@@ -381,7 +277,7 @@ async function diffLocal(cwd: string): Promise<void> {
   
   if (!existsSync(rulesDir)) {
     console.log(chalk.yellow("⚠ No .lynxprompt/rules/ directory found."));
-    console.log(chalk.gray("Run 'lynxp init' to set up the advanced workflow, or 'lynxp wizard' for simple file generation."));
+    console.log(chalk.gray("Run 'lynxp wizard' to generate configuration files."));
     return;
   }
 
@@ -454,7 +350,7 @@ async function diffLocal(cwd: string): Promise<void> {
     console.log(chalk.green("✓ All exported files are in sync with .lynxprompt/rules/"));
   } else {
     console.log();
-    console.log(chalk.gray("Run 'lynxp sync' to update exported files from .lynxprompt/rules/"));
+    console.log(chalk.gray("Update the exported files from .lynxprompt/rules/ to bring them back in sync."));
   }
   console.log();
 }

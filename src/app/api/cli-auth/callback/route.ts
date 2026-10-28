@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
+import { requirePasskeyVerified } from "@/lib/passkey-session";
 import { generateToken } from "@/lib/api-tokens";
-import { createCipheriv, randomBytes } from "crypto";
+import { encryptCliToken } from "@/lib/cli-auth";
 
 /**
  * POST /api/auth/cli/callback
@@ -25,6 +26,9 @@ export async function POST(request: NextRequest): Promise<Response> {
         { status: 401 }
       );
     }
+
+    const passkeyBlock = await requirePasskeyVerified(request, session.user.id);
+    if (passkeyBlock) return passkeyBlock;
 
     const body = await request.json();
     const { session_id } = body;
@@ -82,18 +86,8 @@ export async function POST(request: NextRequest): Promise<Response> {
       },
     });
 
-    // Encrypt the raw token using a key derived from the sessionId
-    // Only the CLI (which knows the sessionId) can decrypt it
-    const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET || "";
-    const keyMaterial = `${session_id}:${secret}`;
-    const key = Buffer.from(keyMaterial).subarray(0, 32).toString("hex").padEnd(64, "0");
-    const keyBuf = Buffer.from(key.slice(0, 64), "hex");
-    const iv = randomBytes(12);
-    const cipher = createCipheriv("aes-256-gcm", keyBuf, iv);
-    let encrypted = cipher.update(rawToken, "utf8", "base64");
-    encrypted += cipher.final("base64");
-    const tag = cipher.getAuthTag().toString("base64");
-    const encryptedToken = `${iv.toString("base64")}:${encrypted}:${tag}`;
+    // Encrypted at rest with a key derived from the session ID and the server secret
+    const encryptedToken = encryptCliToken(rawToken, session_id);
 
     // Update the CLI session with the user and encrypted token
     await prismaUsers.cliSession.update({
@@ -101,7 +95,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       data: {
         userId: session.user.id,
         apiTokenId: apiToken.id,
-        token: encryptedToken, // Encrypted - only decryptable with sessionId
+        token: encryptedToken,
         status: "COMPLETED",
       },
     });

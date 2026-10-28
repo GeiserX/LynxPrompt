@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { authenticateRequest } from "@/lib/api-auth";
+import { authenticateRequest, canPerform } from "@/lib/api-auth";
 import { prismaUsers } from "@/lib/db-users";
 
 // Limits for one save. Values hold whole custom files (CONTRIBUTING, .gitignore).
@@ -77,6 +77,14 @@ export async function POST(req: Request) {
 
     if (!auth) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Wizard defaults feed blueprint generation: any write-scoped token may save them
+    if (!canPerform(auth, "profile:write", "blueprints:write")) {
+      return NextResponse.json(
+        { error: "This API token is read-only for this resource" },
+        { status: 403 }
+      );
     }
 
     const userId = auth.user.id;

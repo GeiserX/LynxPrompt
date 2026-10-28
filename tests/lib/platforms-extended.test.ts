@@ -158,7 +158,7 @@ describe("getPlatformDisplayName", () => {
 // ============================================================================
 describe("getPlatformFile", () => {
   it("returns file for known platform", () => {
-    expect(getPlatformFile("cursor")).toBe(".cursor/rules/");
+    expect(getPlatformFile("cursor")).toBe(".cursor/rules/project.mdc");
     expect(getPlatformFile("claude")).toBe("CLAUDE.md");
   });
 

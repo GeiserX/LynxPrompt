@@ -63,7 +63,9 @@ const SENSITIVE_PATTERNS = [
   { type: "Token", regex: /(?:access[_-]?token|auth[_-]?token|bearer|token\d*)\s*[:=]\s*["']?([a-zA-Z0-9_-]{8,})["']?/gi },
   { type: "GitHub Token", regex: /(?:ghp|gho|ghu|ghs|ghr)_[a-zA-Z0-9]{36,}/gi },
   { type: "Slack Token", regex: /xox[baprs]-[a-zA-Z0-9-]{10,}/gi },
-  { type: "Discord Token", regex: /[MN][A-Za-z\d]{23,}\.[\w-]{6}\.[\w-]{27}/gi },
+  // The lookbehind starts a match only where a run of token characters begins,
+  // so a long run is scanned once instead of once per offset.
+  { type: "Discord Token", regex: /(?<![A-Za-z\d])[MN][A-Za-z\d]{23,}\.[\w-]{6}\.[\w-]{27}/gi },
   { type: "NPM Token", regex: /npm_[a-zA-Z0-9]{36}/gi },
   { type: "PyPI Token", regex: /pypi-[a-zA-Z0-9]{40,}/gi },
   
@@ -87,9 +89,11 @@ const SENSITIVE_PATTERNS = [
   // ===================
   // DATABASE & CONNECTION STRINGS
   // ===================
-  { type: "Database URL", regex: /(?:postgres|mysql|mongodb|redis|mariadb|cockroachdb):\/\/[^\s]+:[^\s]+@/gi },
-  { type: "Connection String", regex: /(?:mongodb\+srv|amqp|amqps):\/\/[^\s]+:[^\s]+@/gi },
-  { type: "JDBC URL", regex: /jdbc:[a-z]+:\/\/[^\s]+:[^\s]+@/gi },
+  // User and password are length-bounded and the user part cannot hold ":",
+  // so a long line without "@" is rejected in linear time instead of minutes.
+  { type: "Database URL", regex: /(?:postgres|mysql|mongodb|redis|mariadb|cockroachdb):\/\/[^\s:@\/]{1,256}:[^\s@]{1,256}@/gi },
+  { type: "Connection String", regex: /(?:mongodb\+srv|amqp|amqps):\/\/[^\s:@\/]{1,256}:[^\s@]{1,256}@/gi },
+  { type: "JDBC URL", regex: /jdbc:[a-z]{1,32}:\/\/[^\s:@\/]{1,256}:[^\s@]{1,256}@/gi },
   
   // ===================
   // SSH & CRYPTOGRAPHIC KEYS
@@ -112,7 +116,8 @@ const SENSITIVE_PATTERNS = [
   // ===================
   // JWT & OAUTH
   // ===================
-  { type: "JWT Token", regex: /eyJ[a-zA-Z0-9_-]{10,}\.eyJ[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}/gi },
+  // Lookbehind for the same reason as the Discord pattern above.
+  { type: "JWT Token", regex: /(?<![a-zA-Z0-9_-])eyJ[a-zA-Z0-9_-]{10,}\.eyJ[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}/gi },
   { type: "OAuth Token", regex: /(?:oauth[_-]?token|refresh[_-]?token)\s*[:=]\s*["']?([a-zA-Z0-9_-]{20,})["']?/gi },
   
   // ===================

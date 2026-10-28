@@ -51,7 +51,7 @@ Set `PORT=<free port>` and `APP_URL=http://localhost:<free port>` in `.env`.
 
 ## `lynxp` talks to lynxprompt.com instead of my instance
 
-The CLI defaults to the hosted instance's API, `https://api.lynxprompt.com` (`lynxp config show` prints the
+The CLI defaults to the hosted instance, `https://lynxprompt.com` (`lynxp config show` prints the
 current value). Run `lynxp config set-url https://lynxprompt.example.com`, or set `LYNXPROMPT_API_URL`, which
 wins over the config file, then `lynxp login` again.
 

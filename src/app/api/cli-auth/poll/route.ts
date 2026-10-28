@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prismaUsers } from "@/lib/db-users";
-import { createDecipheriv } from "crypto";
+import { getClientIP } from "@/lib/client-ip";
+import { decryptCliToken, verifierMatches } from "@/lib/cli-auth";
 
 // Rate limiting: max 30 poll calls per IP per minute
 const pollRateLimitStore = new Map<string, { count: number; resetTime: number }>();
 const POLL_RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
 const POLL_RATE_LIMIT_MAX = 30;
+
+// Drop expired entries so the store does not keep every address ever seen
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, record] of pollRateLimitStore) {
+    if (now > record.resetTime) pollRateLimitStore.delete(ip);
+  }
+}, POLL_RATE_LIMIT_WINDOW_MS).unref();
 
 function isPollRateLimited(ip: string): boolean {
   const now = Date.now();
@@ -31,10 +40,7 @@ function isPollRateLimited(ip: string): boolean {
  */
 export async function GET(request: NextRequest): Promise<Response> {
   try {
-    const clientIP =
-      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-      request.headers.get("x-real-ip") ||
-      "unknown";
+    const clientIP = getClientIP(request);
 
     if (isPollRateLimited(clientIP)) {
       return NextResponse.json(
@@ -97,6 +103,18 @@ export async function GET(request: NextRequest): Promise<Response> {
       });
     }
 
+    // A session started with a code challenge only answers to the CLI that
+    // holds the verifier. Knowing the session ID alone is not enough.
+    if (
+      session.codeChallenge &&
+      !verifierMatches(request.headers.get("x-cli-verifier"), session.codeChallenge)
+    ) {
+      return NextResponse.json(
+        { error: "Missing or wrong verifier" },
+        { status: 403 }
+      );
+    }
+
     // Check session status
     if (session.status === "PENDING") {
       return NextResponse.json({
@@ -105,19 +123,9 @@ export async function GET(request: NextRequest): Promise<Response> {
     }
 
     if (session.status === "COMPLETED" && session.user && session.token) {
-      // Decrypt the token using the sessionId as key material
       let rawToken: string;
       try {
-        const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET || "";
-        const keyMaterial = `${sessionId}:${secret}`;
-        const key = Buffer.from(keyMaterial).subarray(0, 32).toString("hex").padEnd(64, "0");
-        const keyBuf = Buffer.from(key.slice(0, 64), "hex");
-        const [ivB64, dataB64, tagB64] = session.token.split(":");
-        const iv = Buffer.from(ivB64, "base64");
-        const tag = Buffer.from(tagB64, "base64");
-        const decipher = createDecipheriv("aes-256-gcm", keyBuf, iv);
-        decipher.setAuthTag(tag);
-        rawToken = decipher.update(dataB64, "base64", "utf8") + decipher.final("utf8");
+        rawToken = decryptCliToken(session.token, sessionId);
       } catch {
         return NextResponse.json({ error: "Token decryption failed" }, { status: 500 });
       }

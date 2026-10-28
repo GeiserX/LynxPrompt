@@ -5,6 +5,9 @@ import { prismaSupport } from "@/lib/db-support";
 import { supportForumDisabled } from "@/lib/support-guard";
 import { prismaUsers } from "@/lib/db-users";
 
+// PostStatus values in prisma/schema-support.prisma
+const POST_STATUSES = ["OPEN", "IN_PROGRESS", "COMPLETED", "CLOSED", "DUPLICATE"];
+
 // Public endpoint - no auth required for reading
 export async function GET(request: NextRequest) {
   const disabled = supportForumDisabled();
@@ -45,6 +48,12 @@ export async function GET(request: NextRequest) {
     }
 
     if (status) {
+      if (!POST_STATUSES.includes(status)) {
+        return NextResponse.json(
+          { error: `status must be one of: ${POST_STATUSES.join(", ")}` },
+          { status: 400 }
+        );
+      }
       where.status = status;
     }
 

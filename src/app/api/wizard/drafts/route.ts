@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
+import { WIZARD_LAST_STEP } from "@/lib/wizard-state";
 import packageJson from "../../../../../package.json";
 
 // Web app version - read from package.json (single source of truth)
@@ -77,8 +78,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // The wizard has 12 steps (0-11) and offers Save Draft on the last one too
-    if (typeof step !== "number" || !Number.isInteger(step) || step < 0 || step > 11) {
+    if (!Number.isInteger(step) || step < 0 || step > WIZARD_LAST_STEP) {
       return NextResponse.json(
         { error: "Invalid step number" },
         { status: 400 }

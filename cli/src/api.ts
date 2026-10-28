@@ -4,6 +4,9 @@ export interface ApiError {
   error: string;
   message?: string;
   expired_at?: string;
+  // Set on a 422 when PUBLIC content looks like it holds secrets
+  requires_acknowledgment?: boolean;
+  sensitive_data?: { type: string; line: number; snippet?: string }[];
 }
 
 export interface Blueprint {
@@ -145,7 +148,19 @@ class ApiClient {
       },
     });
 
-    const data = await response.json();
+    // A proxy or WAF can answer with an HTML page; report that as an API error
+    // with the status instead of crashing on JSON.parse
+    const text = await response.text();
+    let data: unknown;
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      throw new ApiRequestError(
+        `Unexpected response from server (HTTP ${response.status})`,
+        response.status,
+        { error: "invalid_response" }
+      );
+    }
 
     if (!response.ok) {
       const error = data as ApiError;
@@ -160,16 +175,38 @@ class ApiClient {
   }
 
   // Auth endpoints
-  async initCliSession(): Promise<CliSessionResponse> {
+  // codeChallenge is the SHA-256 of a verifier that never leaves this process;
+  // polling sends the verifier, so the session ID in the sign-in URL is not
+  // enough to collect the token.
+  async initCliSession(codeChallenge: string): Promise<CliSessionResponse> {
     return this.request<CliSessionResponse>("/api/cli-auth/init", {
       method: "POST",
+      body: JSON.stringify({ code_challenge: codeChallenge }),
     });
   }
 
-  async pollCliSession(sessionId: string): Promise<CliPollResponse> {
+  async pollCliSession(sessionId: string, verifier: string): Promise<CliPollResponse> {
     return this.request<CliPollResponse>(
-      `/api/cli-auth/poll?session=${sessionId}`
+      `/api/cli-auth/poll?session=${encodeURIComponent(sessionId)}`,
+      { headers: { "X-CLI-Verifier": verifier } }
     );
+  }
+
+  /**
+   * Revoke a stored token on the server that issued it. Best effort: logout
+   * clears the local copy whatever this returns.
+   */
+  async revokeToken(apiUrl: string, token: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${apiUrl}/api/cli-auth/revoke`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        signal: AbortSignal.timeout(10_000),
+      });
+      return response.ok;
+    } catch {
+      return false;
+    }
   }
 
   // User endpoints
@@ -192,6 +229,17 @@ class ApiClient {
     return this.request<BlueprintsResponse>(
       `/api/v1/blueprints${query ? `?${query}` : ""}`
     );
+  }
+
+  /** Every blueprint of the user, following has_more across pages. */
+  async listAllBlueprints(): Promise<Blueprint[]> {
+    const all: Blueprint[] = [];
+    const limit = 50;
+    for (let offset = 0; ; offset += limit) {
+      const page = await this.listBlueprints({ limit, offset });
+      all.push(...page.blueprints);
+      if (!page.has_more || page.blueprints.length === 0) return all;
+    }
   }
 
   async getBlueprint(id: string): Promise<{ blueprint: Blueprint }> {
@@ -227,6 +275,7 @@ class ApiClient {
     hierarchy_id?: string | null;
     parent_id?: string | null;
     repository_path?: string | null;
+    sensitive_data_acknowledged?: boolean; // Publish PUBLIC content the server flagged as possible secrets
   }): Promise<{ blueprint: Blueprint }> {
     // Base64-encode content to bypass WAF false positives on markdown/code blocks
     const payload = { ...data, content: undefined, content_base64: Buffer.from(data.content).toString("base64") };
@@ -245,6 +294,7 @@ class ApiClient {
       visibility?: "PRIVATE" | "TEAM" | "PUBLIC";
       tags?: string[];
       expected_checksum?: string; // For optimistic locking
+      sensitive_data_acknowledged?: boolean; // Publish PUBLIC content the server flagged as possible secrets
     }
   ): Promise<{ blueprint: Blueprint }> {
     const apiId = id.startsWith("bp_") ? id : `bp_${id}`;

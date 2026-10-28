@@ -13,7 +13,7 @@ LynxPrompt is **free and open-source**. Self-host it for personal use, or deploy
 
 ## Universal AI Config Hub
 
-Rules for **30 tools**: Cursor, Claude Code, GitHub Copilot, Windsurf, Zed, Aider, Gemini CLI, Cline, Roo Code, Amazon Q, JetBrains Junie, and many more. Write once, export to any format. Slash commands for Cursor, Claude Code, Windsurf, Copilot, Continue and OpenCode. The CLI also writes MCP configuration for VS Code, Cursor, Windsurf and a project root.
+Rules for **30 tools**: Cursor, Claude Code, GitHub Copilot, Windsurf, Zed, Aider, Gemini CLI, Cline, Roo Code, Amazon Q, JetBrains Junie, and many more. Write once, export to any format. Slash commands for Cursor, Claude Code, Windsurf, Copilot, Continue and OpenCode. The CLI wizard can list your MCP servers in the generated rules; it does not write MCP configuration files.
 
 ## Blueprint Marketplace
 
@@ -30,7 +30,7 @@ Flexible auth to fit your environment:
 - **OAuth** — GitHub, Google
 - **Email** — Passwordless magic link login
 - **Passkeys** — WebAuthn biometric/hardware key authentication
-- **SSO** — SAML, OIDC, and LDAP for enterprise identity providers
+- **SSO** — OpenID Connect for enterprise identity providers (SAML and LDAP are not supported yet)
 
 ## Optional AI-Powered Editing
 

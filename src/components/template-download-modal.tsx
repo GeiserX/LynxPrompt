@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,7 +21,14 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-import { parseVariablesWithDefaults, detectDuplicateVariableDefaults, type DuplicateVariableDefault } from "@/lib/file-generator";
+import {
+  parseVariablesWithDefaults,
+  detectDuplicateVariableDefaults,
+  replaceVariables,
+  adaptRulesContent,
+  downloadName,
+  type DuplicateVariableDefault,
+} from "@/lib/file-generator";
 import { PLATFORMS } from "@/lib/platforms";
 
 interface SensitiveField {
@@ -44,13 +51,23 @@ interface TemplateDownloadModalProps {
     compatibleWith?: string[];
   };
   targetPlatform?: string; // Override the default platform
+  /** Whether the viewer owns the blueprint (they can edit it in place) */
+  isOwner?: boolean;
+  /** Copy the blueprint into the viewer's account and open the copy for editing */
+  onCloneToEdit?: () => void;
 }
 
 // Build platformInfo from the central PLATFORMS definition
-const platformInfo: Record<string, { name: string; file: string; icon: string }> =
+const platformInfo: Record<string, { name: string; file: string; icon: string; format: string }> =
   Object.fromEntries(
-    PLATFORMS.map((p) => [p.id, { name: p.name, file: p.file, icon: p.icon }])
+    PLATFORMS.map((p) => [p.id, { name: p.name, file: p.file, icon: p.icon, format: p.format }])
   );
+
+// Blueprint content is stored as one text file. It can be re-targeted to any
+// Markdown rules platform (only the name and frontmatter change), but a JSON
+// or YAML config only makes sense for the platform it was written for.
+const MARKDOWN_FORMATS = new Set(["markdown", "text", "mdc"]);
+const MARKDOWN_TARGETS = PLATFORMS.filter((p) => !p.isCommand && MARKDOWN_FORMATS.has(p.format));
 
 // Default display count
 const DEFAULT_PLATFORM_COUNT = 6;
@@ -60,8 +77,15 @@ export function TemplateDownloadModal({
   onClose,
   template,
   targetPlatform,
+  isOwner,
+  onCloneToEdit,
 }: TemplateDownloadModalProps) {
   const { data: session } = useSession();
+  // Primitives, so a session refetch (new object, same user) re-runs nothing
+  const isLoggedIn = Boolean(session?.user);
+  const authorName = session?.user ? session.user.displayName || session.user.name || "" : "";
+  // Variables the user typed into; re-initialisation never overwrites these
+  const editedKeys = useRef<Set<string>>(new Set());
   const [values, setValues] = useState<Record<string, string>>({});
   const [userSavedVars, setUserSavedVars] = useState<Record<string, string>>({});
   const [creatorDefaults, setCreatorDefaults] = useState<Record<string, string>>({});
@@ -77,6 +101,29 @@ export function TemplateDownloadModal({
     "COPILOT_INSTRUCTIONS": "copilot",
     "WINDSURF_RULES": "windsurf",
     "GEMINI_MD": "antigravity",
+    "CURSOR_MDC": "cursor",
+    "CURSORRULES": "cursor",
+    "ZED_INSTRUCTIONS": "zed",
+    "VOID_CONFIG": "void",
+    "TRAE_RULES": "trae",
+    "IDX_CONFIG": "firebase",
+    "CLINE_RULES": "cline",
+    "ROO_RULES": "roocode",
+    "CONTINUE_CONFIG": "continue",
+    "CODY_CONFIG": "cody",
+    "TABNINE_CONFIG": "tabnine",
+    "AMAZONQ_RULES": "amazonq",
+    "AUGMENT_RULES": "augment",
+    "KILOCODE_RULES": "kilocode",
+    "JUNIE_GUIDELINES": "junie",
+    "KIRO_STEERING": "kiro",
+    "AIDER_MD": "aider",
+    "GOOSEHINTS": "goose",
+    "WARP_MD": "warp",
+    "OPENCODE_JSON": "opencode",
+    "OPENHANDS_MD": "openhands",
+    "CODEX_MD": "universal",
+    "CUSTOM": "universal",
     // Command types - map to their command platforms
     "CURSOR_COMMAND": "cursor-command",
     "CLAUDE_COMMAND": "claude-command",
@@ -101,20 +148,29 @@ export function TemplateDownloadModal({
   
   // Command export targets - all use plain markdown, conversion is just renaming
   const commandExportTargets = [
-    { id: "cursor", name: "Cursor", directory: ".cursor/commands/", icon: "⚡" },
-    { id: "claude", name: "Claude Code", directory: ".claude/commands/", icon: "🧠" },
-    { id: "windsurf", name: "Windsurf", directory: ".windsurf/workflows/", icon: "🏄" },
-    { id: "copilot", name: "Copilot", directory: ".copilot/prompts/", icon: "🐙" },
-    { id: "continue", name: "Continue", directory: ".continue/prompts/", icon: "➡️" },
-    { id: "opencode", name: "OpenCode", directory: ".opencode/commands/", icon: "🔓" },
+    { id: "cursor", name: "Cursor", directory: ".cursor/commands/", extension: ".md", icon: "⚡" },
+    { id: "claude", name: "Claude Code", directory: ".claude/commands/", extension: ".md", icon: "🧠" },
+    { id: "windsurf", name: "Windsurf", directory: ".windsurf/workflows/", extension: ".md", icon: "🏄" },
+    { id: "copilot", name: "Copilot", directory: ".github/prompts/", extension: ".prompt.md", icon: "🐙" },
+    { id: "continue", name: "Continue", directory: ".continue/prompts/", extension: ".md", icon: "➡️" },
+    { id: "opencode", name: "OpenCode", directory: ".opencode/commands/", extension: ".md", icon: "🔓" },
   ];
   
   const getInitialPlatform = () => {
     const rawPlatform = targetPlatform || template.targetPlatform || "universal";
-    return platformIdMap[rawPlatform] || rawPlatform;
+    const mapped = platformIdMap[rawPlatform] || rawPlatform;
+    return platformInfo[mapped] ? mapped : "universal";
   };
   
-  const [selectedPlatform, setSelectedPlatform] = useState(getInitialPlatform());
+  // The platform the blueprint was written for
+  const storedPlatform = getInitialPlatform();
+  const storedFormat = platformInfo[storedPlatform]?.format || "markdown";
+  const isStructured = !isCommand && !MARKDOWN_FORMATS.has(storedFormat);
+  const downloadTargets = isStructured
+    ? PLATFORMS.filter((p) => p.id === storedPlatform)
+    : MARKDOWN_TARGETS;
+
+  const [selectedPlatform, setSelectedPlatform] = useState(storedPlatform);
   const [platformSearch, setPlatformSearch] = useState("");
   const [showAllPlatforms, setShowAllPlatforms] = useState(false);
   const [commandExportTarget, setCommandExportTarget] = useState<string>("cursor");
@@ -122,13 +178,13 @@ export function TemplateDownloadModal({
   // Filter and limit platforms based on search and showAll
   const filteredPlatforms = useMemo(() => {
     const searchLower = platformSearch.toLowerCase();
-    return PLATFORMS.filter(
+    return downloadTargets.filter(
       (p) =>
         p.name.toLowerCase().includes(searchLower) ||
         p.id.toLowerCase().includes(searchLower) ||
         p.note.toLowerCase().includes(searchLower)
     );
-  }, [platformSearch]);
+  }, [platformSearch, downloadTargets]);
 
   const displayedPlatforms = showAllPlatforms || platformSearch
     ? filteredPlatforms
@@ -137,15 +193,8 @@ export function TemplateDownloadModal({
   const hasMorePlatforms = !platformSearch && filteredPlatforms.length > DEFAULT_PLATFORM_COUNT;
 
   // Fetch user's saved variable preferences
-  const signedInUserId = session?.user?.id;
-  const sessionAuthorName = session?.user
-    ? session.user.displayName || session.user.name || ""
-    : null;
-
-  // Keyed on the user id: next-auth hands out a new session object on every
-  // refetch (window focus), which reset the values the user had typed.
   const fetchUserVariables = useCallback(async () => {
-    if (!signedInUserId) return;
+    if (!isLoggedIn) return;
     try {
       const res = await fetch("/api/user/variables");
       if (res.ok) {
@@ -155,11 +204,11 @@ export function TemplateDownloadModal({
     } catch {
       // Non-fatal - just won't have saved preferences
     }
-  }, [signedInUserId]);
+  }, [isLoggedIn]);
 
   // Save a variable to user preferences
   const saveVariable = async (varName: string, value: string) => {
-    if (!session?.user || !value.trim()) return;
+    if (!isLoggedIn || !value.trim()) return;
     setSavingVar(varName);
     try {
       await fetch("/api/user/variables", {
@@ -185,6 +234,16 @@ export function TemplateDownloadModal({
     if (!template.content?.trim()) return [];
     return detectDuplicateVariableDefaults(template.content);
   }, [template.content]);
+
+  // A different template starts with a clean slate
+  useEffect(() => {
+    editedKeys.current = new Set();
+  }, [template.content]);
+
+  const updateValue = (key: string, value: string) => {
+    editedKeys.current.add(key);
+    setValues((v) => ({ ...v, [key]: value }));
+  };
 
   // Initialize values from: 1) User saved, 2) Creator defaults, 3) Template variables
   useEffect(() => {
@@ -240,9 +299,7 @@ export function TemplateDownloadModal({
 
     // Auto-fill author-related fields from session if user is logged in
     // Only if not already filled by user saved vars or creator defaults
-    if (sessionAuthorName !== null) {
-      const authorName = sessionAuthorName;
-
+    if (authorName) {
       // Common author field names that templates might use
       const authorFields = [
         "AUTHOR_NAME",
@@ -255,8 +312,16 @@ export function TemplateDownloadModal({
       }
     }
 
-    setValues(initialValues);
-  }, [template.content, template.variables, userSavedVars, sessionAuthorName]);
+    // Keep what the user already typed: saving a variable or a session refresh
+    // re-runs this effect, and must not wipe the other fields
+    setValues((prev) => {
+      const next = { ...initialValues };
+      for (const key of editedKeys.current) {
+        if (key in prev) next[key] = prev[key];
+      }
+      return next;
+    });
+  }, [template.content, template.variables, userSavedVars, authorName]);
 
   if (!isOpen) return null;
 
@@ -282,23 +347,13 @@ export function TemplateDownloadModal({
 
   // Process template content with variable substitution
   // Uses [[VARIABLE]] or [[VARIABLE|default]] syntax
-  const processedContent = (() => {
-    let content = template.content || "";
-    // Replace all variable patterns (with or without defaults)
-    const regex = /\[\[([A-Za-z_][A-Za-z0-9_]*)(?:\|([^\]]*))?\]\]/g;
-    return content.replace(regex, (match, varName, defaultVal) => {
-      const upperName = varName.toUpperCase();
-      const userValue = values[upperName];
-      // Priority: user-entered value > creator default > keep placeholder
-      if (userValue !== undefined && userValue !== "") {
-        return userValue;
-      }
-      if (defaultVal !== undefined) {
-        return defaultVal;
-      }
-      return `[[${upperName}]]`;
-    });
-  })();
+  // Priority: user-entered value > creator default > keep placeholder
+  const filledContent = replaceVariables(template.content || "", values);
+  // Shape it for the chosen platform: its frontmatter (Cursor, Kiro, Augment) or none
+  const processedContent =
+    isCommand || isStructured
+      ? filledContent
+      : adaptRulesContent(filledContent, storedPlatform, selectedPlatform, template.name);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(processedContent);
@@ -316,11 +371,9 @@ export function TemplateDownloadModal({
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-+|-+$/g, "");
       const target = commandExportTargets.find(t => t.id === commandExportTarget);
-      // Download with directory info in filename hint (browsers will strip the path)
-      filename = `${sanitizedName}.md`;
+      filename = `${sanitizedName}${target?.extension || ".md"}`;
     } else {
-      const platform = platformInfo[selectedPlatform];
-      filename = platform?.file || ".cursorrules";
+      filename = downloadName(platformInfo[selectedPlatform]?.file || "AGENTS.md");
     }
 
     // Track the download if template has an ID
@@ -343,7 +396,7 @@ export function TemplateDownloadModal({
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = filename.split("/").pop() || filename;
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -436,7 +489,8 @@ export function TemplateDownloadModal({
                 Save the downloaded file to:{" "}
                 <code className="rounded bg-violet-500/10 px-1 text-violet-600 dark:text-violet-400">
                   {commandExportTargets.find(t => t.id === commandExportTarget)?.directory}
-                  {template.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.md
+                  {template.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")}
+                  {commandExportTargets.find(t => t.id === commandExportTarget)?.extension || ".md"}
                 </code>
               </p>
             </div>
@@ -500,7 +554,7 @@ export function TemplateDownloadModal({
               <p className="mt-2 text-xs text-muted-foreground">
                 Will be saved as:{" "}
                 <code className="rounded bg-muted px-1">
-                  {platformInfo[selectedPlatform]?.file || ".cursorrules"}
+                  {platformInfo[selectedPlatform]?.file || "AGENTS.md"}
                 </code>
               </p>
             </div>
@@ -516,16 +570,28 @@ export function TemplateDownloadModal({
                     Customize for your project
                   </span>
                 </div>
-                {template.id && (
+                {template.id && isOwner ? (
                   <Link
                     href={`/blueprints/${template.id}/edit`}
                     onClick={onClose}
                     className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
                   >
                     <Pencil className="h-3 w-3" />
-                    Need different variables? Clone & Edit
+                    Need different variables? Edit blueprint
                   </Link>
-                )}
+                ) : template.id && onCloneToEdit ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      onCloneToEdit();
+                    }}
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    <Pencil className="h-3 w-3" />
+                    Need different variables? Clone & Edit
+                  </button>
+                ) : null}
               </div>
               <div className="space-y-4 max-h-64 overflow-y-auto pr-2">
                 {/* First show sensitive/required fields */}
@@ -541,7 +607,7 @@ export function TemplateDownloadModal({
                       type="text"
                       value={values[key] || ""}
                       onChange={(e) =>
-                        setValues((v) => ({ ...v, [key]: e.target.value }))
+                        updateValue(key, e.target.value)
                       }
                       placeholder={field.placeholder}
                       className="w-full rounded-lg border bg-background px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
@@ -579,12 +645,12 @@ export function TemplateDownloadModal({
                             type="text"
                             value={values[key] || ""}
                             onChange={(e) =>
-                              setValues((v) => ({ ...v, [key]: e.target.value }))
+                              updateValue(key, e.target.value)
                             }
                             placeholder={creatorDefault || `Enter ${label.toLowerCase()}`}
                             className="flex-1 rounded-lg border bg-background px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                           />
-                          {session?.user && values[key] && values[key] !== userSaved && (
+                          {isLoggedIn && values[key] && values[key] !== userSaved && (
                             <button
                               type="button"
                               onClick={() => saveVariable(key, values[key])}
