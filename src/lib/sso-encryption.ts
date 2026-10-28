@@ -5,7 +5,7 @@ const IV_LENGTH = 12; // 96 bits, recommended for GCM
 const AUTH_TAG_LENGTH = 16; // 128 bits
 
 // Sensitive fields that must be encrypted at rest
-const SENSITIVE_FIELDS = ["clientSecret", "bindPassword"];
+const SENSITIVE_FIELDS = ["clientSecret"];
 
 interface EncryptedValue {
   encrypted: true;
@@ -75,7 +75,7 @@ function isEncryptedValue(value: unknown): value is EncryptedValue {
 }
 
 /**
- * Encrypts sensitive fields (clientSecret, bindPassword) within an SSO config object.
+ * Encrypts sensitive fields (clientSecret) within an SSO config object.
  * Throws if SSO_ENCRYPTION_KEY is not set — SSO secrets must always be encrypted at rest.
  */
 export function encryptSSOConfig(
@@ -93,7 +93,7 @@ export function encryptSSOConfig(
 }
 
 /**
- * Decrypts sensitive fields (clientSecret, bindPassword) within an SSO config object.
+ * Decrypts sensitive fields (clientSecret) within an SSO config object.
  * Throws if SSO_ENCRYPTION_KEY is not set — encrypted secrets cannot be read without the key.
  * Fields that are not encrypted (legacy plaintext) are returned as-is with a warning.
  */

@@ -329,8 +329,8 @@ export default function PrivacyPage() {
                       team members
                     </p>
                     <p className="text-sm">
-                      <strong>Providers supported:</strong> SAML 2.0 (Okta, Azure AD,
-                      OneLogin), OpenID Connect, LDAP/Active Directory
+                      <strong>Providers supported:</strong> OpenID Connect (Okta, Entra ID,
+                      Google Workspace, Auth0)
                     </p>
                     <p className="text-sm">
                       <strong>Configuration:</strong> Your team administrator

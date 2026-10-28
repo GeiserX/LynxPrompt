@@ -8,15 +8,13 @@ import {
   Check,
   X,
   AlertCircle,
-  Key,
   Globe,
   Lock,
-  Server,
 } from "lucide-react";
 
 interface SSOConfig {
   configured: boolean;
-  provider?: "SAML" | "OIDC" | "LDAP";
+  provider?: string;
   enabled?: boolean;
   allowedDomains?: string[];
   verifiedDomains?: string[];
@@ -37,28 +35,12 @@ export function SSOConfigPanel({ teamId }: SSOConfigPanelProps) {
   const [success, setSuccess] = useState<string | null>(null);
   const [ssoConfig, setSsoConfig] = useState<SSOConfig | null>(null);
 
-  // Form state. Only OIDC has a working sign-in flow; SAML and LDAP are not
-  // offered until they do.
-  const [provider, setProvider] = useState<"SAML" | "OIDC" | "LDAP">("OIDC");
+  // Form state. OpenID Connect is the only provider.
   const [enabled, setEnabled] = useState(false);
   const [allowedDomains, setAllowedDomains] = useState("");
-
-  // SAML fields
-  const [entityId, setEntityId] = useState("");
-  const [ssoUrl, setSsoUrl] = useState("");
-  const [certificate, setCertificate] = useState("");
-
-  // OIDC fields
   const [issuer, setIssuer] = useState("");
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");
-
-  // LDAP fields
-  const [ldapHost, setLdapHost] = useState("");
-  const [ldapPort, setLdapPort] = useState(389);
-  const [baseDn, setBaseDn] = useState("");
-  const [bindDn, setBindDn] = useState("");
-  const [bindPassword, setBindPassword] = useState("");
 
   const [showForm, setShowForm] = useState(false);
   const [verifying, setVerifying] = useState<string | null>(null);
@@ -75,25 +57,13 @@ export function SSOConfigPanel({ teamId }: SSOConfigPanelProps) {
       if (res.ok) {
         setSsoConfig(data);
         if (data.configured) {
-          if (data.provider === "OIDC") setProvider("OIDC");
           setEnabled(data.enabled);
           setAllowedDomains((data.allowedDomains || []).join(", "));
           
-          // Pre-fill config fields based on provider
+          // The client secret comes back masked; never pre-fill it
           if (data.config) {
-            if (data.provider === "SAML") {
-              setEntityId(data.config.entityId as string || "");
-              setSsoUrl(data.config.ssoUrl as string || "");
-              // The certificate comes back masked; never pre-fill it
-            } else if (data.provider === "OIDC") {
-              setIssuer(data.config.issuer as string || "");
-              setClientId(data.config.clientId as string || "");
-            } else if (data.provider === "LDAP") {
-              setLdapHost(data.config.host as string || "");
-              setLdapPort(data.config.port as number || 389);
-              setBaseDn(data.config.baseDn as string || "");
-              setBindDn(data.config.bindDn as string || "");
-            }
+            setIssuer(data.config.issuer as string || "");
+            setClientId(data.config.clientId as string || "");
           }
         }
       }
@@ -110,36 +80,14 @@ export function SSOConfigPanel({ teamId }: SSOConfigPanelProps) {
     setSuccess(null);
 
     try {
-      let configData: Record<string, unknown> = {
-        provider,
+      const configData = {
+        provider: "OIDC",
         enabled,
         allowedDomains: allowedDomains.split(",").map(d => d.trim()).filter(Boolean),
+        issuer,
+        clientId,
+        clientSecret: clientSecret || undefined,
       };
-
-      if (provider === "SAML") {
-        configData = {
-          ...configData,
-          entityId,
-          ssoUrl,
-          certificate,
-        };
-      } else if (provider === "OIDC") {
-        configData = {
-          ...configData,
-          issuer,
-          clientId,
-          clientSecret: clientSecret || undefined,
-        };
-      } else if (provider === "LDAP") {
-        configData = {
-          ...configData,
-          host: ldapHost,
-          port: ldapPort,
-          baseDn,
-          bindDn,
-          bindPassword: bindPassword || undefined,
-        };
-      }
 
       const res = await fetch(`/api/teams/${teamId}/sso`, {
         method: "POST",
@@ -283,11 +231,11 @@ export function SSOConfigPanel({ teamId }: SSOConfigPanelProps) {
           <div className="rounded-lg border bg-muted/30 p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                {ssoConfig.provider === "SAML" && <Key className="h-5 w-5 text-blue-500" />}
-                {ssoConfig.provider === "OIDC" && <Globe className="h-5 w-5 text-green-500" />}
-                {ssoConfig.provider === "LDAP" && <Server className="h-5 w-5 text-purple-500" />}
+                <Globe className="h-5 w-5 text-green-500" />
                 <div>
-                  <p className="font-medium">{ssoConfig.provider} Authentication</p>
+                  <p className="font-medium">
+                    {ssoConfig.provider === "OIDC" ? "OpenID Connect" : ssoConfig.provider}
+                  </p>
                   <p className="text-sm text-muted-foreground">
                     {ssoConfig.enabled ? "Enabled" : "Disabled"}
                   </p>
@@ -308,8 +256,8 @@ export function SSOConfigPanel({ teamId }: SSOConfigPanelProps) {
 
             {ssoConfig.provider !== "OIDC" && (
               <p className="mt-3 border-t pt-3 text-sm text-muted-foreground">
-                {ssoConfig.provider} sign-in is not supported yet. Edit the configuration to use
-                OpenID Connect instead.
+                {ssoConfig.provider} sign-in is not supported and signs nobody in. Edit the
+                configuration to use OpenID Connect instead.
               </p>
             )}
 
@@ -393,7 +341,7 @@ export function SSOConfigPanel({ teamId }: SSOConfigPanelProps) {
           {!showForm && !ssoConfig?.configured && (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Configure OpenID Connect (OIDC) for your team. SAML and LDAP are not supported yet.
+                Configure OpenID Connect (OIDC) sign-in for your team.
               </p>
               <Button onClick={() => setShowForm(true)} className="w-full">
                 <Lock className="mr-2 h-4 w-4" />
@@ -404,163 +352,39 @@ export function SSOConfigPanel({ teamId }: SSOConfigPanelProps) {
 
           {showForm && (
             <div className="space-y-4">
-              {/* Provider selection */}
-              <div>
-                <label className="mb-2 block text-sm font-medium">Provider</label>
-                <div className="flex gap-2">
-                  {(["OIDC"] as const).map((p) => (
-                    <button
-                      key={p}
-                      type="button"
-                      onClick={() => setProvider(p)}
-                      className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
-                        provider === p
-                          ? "border-teal-500 bg-teal-500/10 text-teal-600 dark:text-teal-400"
-                          : "hover:bg-muted"
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* SAML fields */}
-              {provider === "SAML" && (
-                <>
-                  <div>
-                    <label className="mb-1 block text-sm font-medium">
-                      Identity Provider Entity ID
-                    </label>
-                    <input
-                      type="url"
-                      value={entityId}
-                      onChange={(e) => setEntityId(e.target.value)}
-                      placeholder="https://idp.example.com/metadata"
-                      className="w-full rounded-lg border bg-background px-3 py-2 text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-sm font-medium">SSO Login URL</label>
-                    <input
-                      type="url"
-                      value={ssoUrl}
-                      onChange={(e) => setSsoUrl(e.target.value)}
-                      placeholder="https://idp.example.com/sso/saml"
-                      className="w-full rounded-lg border bg-background px-3 py-2 text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-sm font-medium">
-                      X.509 Certificate (PEM format)
-                    </label>
-                    <textarea
-                      value={certificate}
-                      onChange={(e) => setCertificate(e.target.value)}
-                      placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"
-                      rows={4}
-                      className="w-full rounded-lg border bg-background px-3 py-2 font-mono text-xs"
-                    />
-                  </div>
-                </>
-              )}
-
               {/* OIDC fields */}
-              {provider === "OIDC" && (
-                <>
-                  <div>
-                    <label className="mb-1 block text-sm font-medium">Issuer URL</label>
-                    <input
-                      type="url"
-                      value={issuer}
-                      onChange={(e) => setIssuer(e.target.value)}
-                      placeholder="https://accounts.google.com"
-                      className="w-full rounded-lg border bg-background px-3 py-2 text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-sm font-medium">Client ID</label>
-                    <input
-                      type="text"
-                      value={clientId}
-                      onChange={(e) => setClientId(e.target.value)}
-                      placeholder="your-client-id"
-                      className="w-full rounded-lg border bg-background px-3 py-2 text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-sm font-medium">
-                      Client Secret {ssoConfig?.configured && "(leave blank to keep current)"}
-                    </label>
-                    <input
-                      type="password"
-                      value={clientSecret}
-                      onChange={(e) => setClientSecret(e.target.value)}
-                      placeholder="••••••••"
-                      className="w-full rounded-lg border bg-background px-3 py-2 text-sm"
-                    />
-                  </div>
-                </>
-              )}
-
-              {/* LDAP fields */}
-              {provider === "LDAP" && (
-                <>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="mb-1 block text-sm font-medium">LDAP Host</label>
-                      <input
-                        type="text"
-                        value={ldapHost}
-                        onChange={(e) => setLdapHost(e.target.value)}
-                        placeholder="ldap.example.com"
-                        className="w-full rounded-lg border bg-background px-3 py-2 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-sm font-medium">Port</label>
-                      <input
-                        type="number"
-                        value={ldapPort}
-                        onChange={(e) => setLdapPort(parseInt(e.target.value) || 389)}
-                        className="w-full rounded-lg border bg-background px-3 py-2 text-sm"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-sm font-medium">Base DN</label>
-                    <input
-                      type="text"
-                      value={baseDn}
-                      onChange={(e) => setBaseDn(e.target.value)}
-                      placeholder="dc=example,dc=com"
-                      className="w-full rounded-lg border bg-background px-3 py-2 text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-sm font-medium">Bind DN</label>
-                    <input
-                      type="text"
-                      value={bindDn}
-                      onChange={(e) => setBindDn(e.target.value)}
-                      placeholder="cn=admin,dc=example,dc=com"
-                      className="w-full rounded-lg border bg-background px-3 py-2 text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-sm font-medium">
-                      Bind Password {ssoConfig?.configured && "(leave blank to keep current)"}
-                    </label>
-                    <input
-                      type="password"
-                      value={bindPassword}
-                      onChange={(e) => setBindPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="w-full rounded-lg border bg-background px-3 py-2 text-sm"
-                    />
-                  </div>
-                </>
-              )}
+              <div>
+                <label className="mb-1 block text-sm font-medium">Issuer URL</label>
+                <input
+                  type="url"
+                  value={issuer}
+                  onChange={(e) => setIssuer(e.target.value)}
+                  placeholder="https://accounts.google.com"
+                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">Client ID</label>
+                <input
+                  type="text"
+                  value={clientId}
+                  onChange={(e) => setClientId(e.target.value)}
+                  placeholder="your-client-id"
+                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">
+                  Client Secret {ssoConfig?.configured && "(leave blank to keep current)"}
+                </label>
+                <input
+                  type="password"
+                  value={clientSecret}
+                  onChange={(e) => setClientSecret(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm"
+                />
+              </div>
 
               {/* Common fields */}
               <div>

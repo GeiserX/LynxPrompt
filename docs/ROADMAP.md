@@ -37,7 +37,7 @@ All features configurable via env vars for maximum deployment flexibility:
 - `ENABLE_EMAIL_AUTH=true` — magic link / email login
 - `ENABLE_PASSKEYS=true` — WebAuthn passkeys
 - `ENABLE_TURNSTILE=false` — Cloudflare Turnstile CAPTCHA
-- `ENABLE_SSO=false` — SAML/OIDC/LDAP (promoted from Teams-only to first-class)
+- `ENABLE_SSO=false` — OpenID Connect (promoted from Teams-only to first-class)
 - `ENABLE_USER_REGISTRATION=true` — set false for invite-only instances
 
 **AI:**

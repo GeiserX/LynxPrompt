@@ -95,12 +95,13 @@ describe("POST /api/teams/[teamId]/sso", () => {
   it.each([
     ["SAML", { entityId: "https://idp.example.com", ssoUrl: "https://idp.example.com/sso", certificate: "x" }],
     ["LDAP", { host: "ldap.example.com", baseDn: "dc=x", bindDn: "cn=y", bindPassword: "z" }],
-  ])("refuses %s as not supported yet", async (provider, fields) => {
-    const res = await save({ provider, enabled: true, ...fields });
+    ["no", { issuer: ISSUER, clientId: "c", clientSecret: "s", ...ENDPOINTS }],
+  ])("accepts only OpenID Connect (%s provider refused)", async (provider, fields) => {
+    const res = await save({ ...(provider === "no" ? {} : { provider }), enabled: true, ...fields });
     const body = await res.json();
 
     expect(res.status).toBe(400);
-    expect(body.error).toContain("not supported yet");
+    expect(body.error).toBe("Only OpenID Connect (OIDC) is supported");
     expect(configUpsert).not.toHaveBeenCalled();
   });
 
@@ -187,6 +188,48 @@ describe("POST /api/teams/[teamId]/sso", () => {
     expect(update.allowedDomains).toEqual(["acme.example", "new.example"]);
     expect(update.verifiedDomains).toEqual(["acme.example"]);
     expect(update.domainVerificationToken).toBe("tok");
+  });
+});
+
+describe("GET /api/teams/[teamId]/sso", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.clearAllMocks();
+    memberFindUnique.mockResolvedValue({ role: "ADMIN" });
+  });
+
+  async function read() {
+    const { GET } = await import("@/app/api/teams/[teamId]/sso/route");
+    return GET(new NextRequest("https://lynxprompt.test/api/teams/team-1/sso"), params);
+  }
+
+  const row = (provider: string, config: Record<string, unknown>) => ({
+    provider,
+    enabled: true,
+    config,
+    allowedDomains: [],
+    verifiedDomains: [],
+    domainVerificationToken: "tok",
+  });
+
+  it("masks the OIDC client secret", async () => {
+    configFindUnique.mockResolvedValue(row("OIDC", { issuer: ISSUER, clientId: "c", clientSecret: "s3cret" }));
+
+    const body = await (await read()).json();
+
+    expect(body.config).toEqual({ issuer: ISSUER, clientId: "c", clientSecret: "••••••••" });
+  });
+
+  it.each([
+    ["SAML", { entityId: "https://idp.example.com", ssoUrl: "https://idp.example.com/sso", certificate: "PEM" }],
+    ["LDAP", { host: "ldap.example.com", bindDn: "cn=admin", bindPassword: "plain-old-password" }],
+  ])("never echoes a %s configuration saved before it was cut", async (provider, config) => {
+    configFindUnique.mockResolvedValue(row(provider, config));
+
+    const body = await (await read()).json();
+
+    expect(body.provider).toBe(provider);
+    expect(body.config).toEqual({});
   });
 });
 

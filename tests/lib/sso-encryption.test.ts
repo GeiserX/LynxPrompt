@@ -59,21 +59,6 @@ describe("sso-encryption", () => {
     expect(decrypted.issuer).toBe("https://auth.example.com");
   });
 
-  it("encrypts and decrypts bindPassword round-trip", async () => {
-    vi.stubEnv("SSO_ENCRYPTION_KEY", VALID_KEY);
-    const { encryptSSOConfig, decryptSSOConfig } = await import(
-      "@/lib/sso-encryption"
-    );
-
-    const original = { bindPassword: "ldap-password-123" };
-    const encrypted = encryptSSOConfig(original);
-
-    expect((encrypted.bindPassword as Record<string, unknown>).encrypted).toBe(true);
-
-    const decrypted = decryptSSOConfig(encrypted);
-    expect(decrypted.bindPassword).toBe("ldap-password-123");
-  });
-
   it("does not encrypt non-sensitive fields", async () => {
     vi.stubEnv("SSO_ENCRYPTION_KEY", VALID_KEY);
     const { encryptSSOConfig } = await import("@/lib/sso-encryption");

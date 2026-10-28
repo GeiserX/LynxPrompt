@@ -105,7 +105,7 @@ export default function TermsPage() {
                   Administrators may configure Single Sign-On (SSO) authentication when enabled:
                 </p>
                 <ul className="mt-3 list-inside list-disc space-y-1">
-                  <li><strong>Supported providers:</strong> SAML 2.0, OpenID Connect, and LDAP/Active Directory</li>
+                  <li><strong>Supported providers:</strong> OpenID Connect</li>
                   <li><strong>Configuration responsibility:</strong> Team administrators are responsible for correctly configuring SSO. LynxPrompt is not responsible for misconfiguration</li>
                   <li><strong>Domain restrictions:</strong> You may restrict team membership to specific email domains</li>
                   <li><strong>Data handling:</strong> SSO credentials are handled according to your identity provider&apos;s policies. We store only the minimum data necessary to authenticate users</li>

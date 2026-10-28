@@ -150,6 +150,9 @@ enum TeamInvitationStatus {
   REVOKED   // Admin revoked before acceptance
 }
 
+// Only OIDC has a sign-in flow. SAML and LDAP are refused on save and on
+// sign-in; the values stay because the db-push baseline in entrypoint.sh
+// refuses to drop enum values that existing databases hold.
 enum SSOProvider {
   SAML      // SAML 2.0 (Okta, Azure AD, OneLogin, etc.)
   OIDC      // OpenID Connect (Google Workspace, Auth0, etc.)
