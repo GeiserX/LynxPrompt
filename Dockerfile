@@ -3,7 +3,8 @@
 # LynxPrompt Dockerfile
 # Multi-stage build for production (optimized with BuildKit)
 # =============================================================================
-# Build with: docker build --platform linux/amd64 -t <tag> .
+# Build with: docker buildx build --platform linux/amd64,linux/arm64 -t <tag> .
+# (Releases build each platform natively; see .github/workflows/docker-publish.yml.)
 # Requires: DOCKER_BUILDKIT=1 (default in modern Docker)
 # =============================================================================
 
