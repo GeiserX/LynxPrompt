@@ -1,39 +1,11 @@
 /**
- * Access and write rules for user blueprints that the v1 API (used by the
- * CLI) must apply the same way the web routes do.
+ * Write rules for user blueprints that the web routes and the v1 API (used by
+ * the CLI) apply the same way. Read access lives in blueprint-access.ts.
  */
 import { prismaUsers } from "@/lib/db-users";
 import { TemplateType } from "@/generated/prisma-users/enums";
 import { detectSensitiveData, type SensitiveMatch } from "@/lib/sensitive-data";
 import { checkBlueprintLineCount } from "@/lib/subscription";
-
-export interface BlueprintAccessFields {
-  userId: string;
-  isPublic: boolean;
-  visibility: string;
-  teamId: string | null;
-}
-
-/**
- * A user may read a blueprint when it is public, when they own it, or when it
- * is a TEAM blueprint of a team they belong to. Same rule as getTemplateById.
- */
-export async function canReadBlueprint(
-  userId: string | null | undefined,
-  blueprint: BlueprintAccessFields
-): Promise<boolean> {
-  if (blueprint.isPublic) return true;
-  if (!userId) return false;
-  if (blueprint.userId === userId) return true;
-  if (blueprint.visibility === "TEAM" && blueprint.teamId) {
-    const membership = await prismaUsers.teamMember.findUnique({
-      where: { teamId_userId: { teamId: blueprint.teamId, userId } },
-      select: { teamId: true },
-    });
-    return Boolean(membership);
-  }
-  return false;
-}
 
 export type TeamResolution =
   | { ok: true; teamId: string }
@@ -83,7 +55,10 @@ export async function resolveBlueprintTeamId(
   return { ok: true, teamId: memberships[0].teamId };
 }
 
-const TEMPLATE_TYPES = new Set<string>(Object.values(TemplateType));
+/** Every blueprint type the database accepts, straight from the Prisma enum. */
+export const BLUEPRINT_TYPES = Object.values(TemplateType) as TemplateType[];
+
+const TEMPLATE_TYPES = new Set<string>(BLUEPRINT_TYPES);
 
 // Names older CLI releases send that are not in the TemplateType enum.
 const TYPE_ALIASES: Record<string, TemplateType> = {
@@ -93,15 +68,38 @@ const TYPE_ALIASES: Record<string, TemplateType> = {
   OPENCODE_CONFIG: "OPENCODE_JSON",
 };
 
+// Loose names older web clients send, such as "cursor" or "claude", matched
+// by substring in this order (the command types before their platform).
+const LOOSE_TYPES: [string, TemplateType][] = [
+  ["CURSOR_COMMAND", "CURSOR_COMMAND"],
+  ["CLAUDE_COMMAND", "CLAUDE_COMMAND"],
+  ["WINDSURF_WORKFLOW", "WINDSURF_WORKFLOW"],
+  ["COPILOT_PROMPT", "COPILOT_PROMPT"],
+  ["CONTINUE_PROMPT", "CONTINUE_PROMPT"],
+  ["OPENCODE_COMMAND", "OPENCODE_COMMAND"],
+  ["CURSOR", "CURSOR_RULES"],
+  ["CLAUDE", "CLAUDE_MD"],
+  ["COPILOT", "COPILOT_INSTRUCTIONS"],
+  ["WINDSURF", "WINDSURF_RULES"],
+  ["AGENT", "AGENTS_MD"],
+];
+
 /**
- * Map a client-sent type to a stored TemplateType. Unknown types become
- * CUSTOM instead of failing the database write.
+ * Map a type sent by any client (web or CLI) to a stored TemplateType.
+ *
+ * An exact enum value (case, spaces and "-" vs "_" ignored) is kept as is,
+ * then the old CLI names and the old loose web names are mapped, and
+ * anything else becomes CUSTOM instead of failing the database write.
  */
 export function normalizeBlueprintType(type: unknown): TemplateType {
   if (typeof type !== "string") return "CUSTOM";
   const upper = type.trim().toUpperCase().replace(/-/g, "_");
   if (TEMPLATE_TYPES.has(upper)) return upper as TemplateType;
-  return TYPE_ALIASES[upper] ?? "CUSTOM";
+  if (TYPE_ALIASES[upper]) return TYPE_ALIASES[upper];
+  for (const [needle, mapped] of LOOSE_TYPES) {
+    if (upper.includes(needle)) return mapped;
+  }
+  return "CUSTOM";
 }
 
 export type ContentCheck =

@@ -4,9 +4,10 @@ import { authOptions } from "@/lib/auth";
 import { getTemplateById } from "@/lib/data/templates";
 import { prismaUsers } from "@/lib/db-users";
 import { detectSensitiveData } from "@/lib/sensitive-data";
-import { normalizeBlueprintType } from "@/lib/blueprint-types";
+import { normalizeBlueprintType } from "@/lib/blueprint-rules";
 import { contentChecksum } from "@/lib/content-checksum";
 import { sanitizeRepositoryPath } from "@/lib/repository-path";
+import { checkBlueprintLineCount } from "@/lib/subscription";
 
 // GET /api/blueprints/[id] - Get blueprint details
 export async function GET(
@@ -177,6 +178,16 @@ export async function PUT(
       if (typeof content !== "string" || content.trim().length < 10) {
         return NextResponse.json(
           { error: "Content must be at least 10 characters" },
+          { status: 400 }
+        );
+      }
+      // Same line cap as create, so an edit cannot grow past it
+      const lineCheck = checkBlueprintLineCount(content);
+      if (!lineCheck.valid) {
+        return NextResponse.json(
+          {
+            error: `Blueprint exceeds maximum line limit. Your blueprint has ${lineCheck.lineCount.toLocaleString()} lines, but the maximum is ${lineCheck.maxLines.toLocaleString()} lines.`,
+          },
           { status: 400 }
         );
       }

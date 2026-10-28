@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { detectSensitiveData, type SensitiveMatch } from "@/lib/sensitive-data";
-import { normalizeBlueprintType } from "@/lib/blueprint-types";
+import { normalizeBlueprintType } from "@/lib/blueprint-rules";
 import { contentChecksum } from "@/lib/content-checksum";
 import { parsePage } from "@/lib/pagination";
 import { 
