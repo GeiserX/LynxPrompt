@@ -1,4 +1,5 @@
 import chalk from "chalk";
+import { api } from "../api.js";
 import {
   getApiUrl,
   setApiUrl,
@@ -9,13 +10,25 @@ import {
 } from "../config.js";
 
 // Each server keeps its own saved login, so switching URL never sends one
-// server's token to another.
-function printLoginState(): void {
-  if (isAuthenticated()) {
-    const email = getUser()?.email;
-    console.log(chalk.gray(`  Logged in${email ? ` as ${email}` : ""} on this instance.`));
+// server's token to another. When this server has one, ask it whether the
+// token still works instead of assuming it does.
+async function printLoginState(): Promise<void> {
+  if (!isAuthenticated()) {
+    console.log(chalk.gray("  No saved login for this instance. Run 'lynxp login' to authenticate with it."));
+    return;
+  }
+  const check = await api.checkLogin();
+  if (check.ok) {
+    console.log(chalk.gray(`  Logged in as ${check.email} on this instance (token checked).`));
+  } else if (check.rejected) {
+    console.log(chalk.yellow("  This instance refused the saved login (expired or revoked). Run 'lynxp login' again."));
   } else {
-    console.log(chalk.gray("  Run 'lynxp login' to authenticate with this instance."));
+    const email = getUser()?.email;
+    console.log(
+      chalk.yellow(
+        `  Saved login${email ? ` for ${email}` : ""} could not be checked: ${check.reason}`,
+      ),
+    );
   }
 }
 
@@ -68,7 +81,7 @@ export async function configCommand(
       chalk.green("✓") +
         ` API URL set to ${chalk.cyan(clean)}`,
     );
-    printLoginState();
+    await printLoginState();
     return;
   }
 
@@ -77,7 +90,7 @@ export async function configCommand(
     console.log(
       chalk.green("✓") + " API URL reset to " + chalk.cyan(url),
     );
-    printLoginState();
+    await printLoginState();
     return;
   }
 

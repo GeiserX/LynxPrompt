@@ -949,12 +949,12 @@ $ lynxp config
 # Point to self-hosted instance (each instance keeps its own login)
 $ lynxp config set-url https://lynxprompt.yourcompany.com
 ✓ API URL set to https://lynxprompt.yourcompany.com
-  Run 'lynxp login' to authenticate with this instance.
+  No saved login for this instance. Run 'lynxp login' to authenticate with it.
 
-# Reset to default
+# Reset to default (a saved login is checked with the instance)
 $ lynxp config reset-url
 ✓ API URL reset to https://lynxprompt.com
-  Logged in as user@example.com on this instance.
+  Logged in as user@example.com on this instance (token checked).
 
 # Find config file
 $ lynxp config path

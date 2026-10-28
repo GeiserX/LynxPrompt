@@ -207,6 +207,27 @@ class ApiClient {
     }
   }
 
+  /**
+   * Ask the current server whether the token saved for it still works.
+   * `rejected` means the server refused it (expired or revoked).
+   */
+  async checkLogin(): Promise<
+    { ok: true; email: string } | { ok: false; rejected: boolean; reason: string }
+  > {
+    try {
+      const { user } = await this.request<UserResponse>("/api/v1/user", {
+        signal: AbortSignal.timeout(10_000),
+      });
+      return { ok: true, email: user.email };
+    } catch (error) {
+      if (error instanceof ApiRequestError) {
+        const rejected = error.statusCode === 401 || error.statusCode === 403;
+        return { ok: false, rejected, reason: error.message };
+      }
+      return { ok: false, rejected: false, reason: error instanceof Error ? error.message : String(error) };
+    }
+  }
+
   // User endpoints
   async getUser(): Promise<UserResponse> {
     return this.request<UserResponse>("/api/v1/user");

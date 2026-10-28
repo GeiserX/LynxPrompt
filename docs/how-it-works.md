@@ -40,7 +40,7 @@ unless it has a pending, unexpired team invitation.
 
 `lynxp login` opens the configured instance in the browser (`lynxp config set-url`, or `LYNXPROMPT_API_URL`)
 and stores an API token in a file only its owner can read. The CLI keeps one token per instance, so switching
-with `lynxp config set-url` keeps the other logins. A token is sent only to the instance that issued it, and
+with `lynxp config set-url` keeps the other logins and asks the new instance whether its saved token still works. A token is sent only to the instance that issued it, and
 `lynxp logout` revokes the current instance's token there. Every call after that is `Authorization: Bearer <token>` against `/api/v1/`. Tokens
 are created in Settings, carry a role (`BLUEPRINTS_FULL`, `BLUEPRINTS_READONLY`, `PROFILE_FULL` and others)
 and an expiry, and the API answers `401` with the settings URL when one expires. The VS Code extension, the
