@@ -141,7 +141,7 @@ export default function HomePage() {
           <FeatureCard
             icon={<Users className="h-8 w-8" />}
             title="Blueprint Marketplace"
-            description="Share and discover community configurations across a federated network."
+            description="Share and discover community configurations on your instance."
           />
         </div>
 
@@ -198,7 +198,7 @@ export default function HomePage() {
             </h2>
             <p className="mx-auto mt-2 max-w-xl text-white/80">
               Generate, share, and discover AI coding rules that work across every IDE.
-              Turn your expertise into blueprints that help other developers — and share them across a federated network.
+              Turn your expertise into blueprints that help other developers.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-4">
               <Button

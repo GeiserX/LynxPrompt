@@ -76,7 +76,7 @@ The wizard asks about the project, the stack, the commands, the code style and t
 - Exports one set of rules as the rule file of 30 tools: `AGENTS.md`, Cursor, Claude Code, Copilot, Windsurf, Zed, Aider, Gemini CLI, Cline, Roo Code, Amazon Q, JetBrains Junie and the rest of the list in [Features](features.md), plus slash commands for Cursor, Claude Code, Windsurf, Copilot, Continue and OpenCode.
 - Builds those rules in a 12-step wizard on the web, or with `lynxp wizard` in a terminal; `lynxp analyze` reads an existing repository first.
 - Keeps blueprints with `[[VARIABLE|default]]` placeholders, so one blueprint fits many projects. Each blueprint is private, shared with a team, or public.
-- Gives a team its own page and its own blueprints. Federation lets instances that join share their public blueprints with each other.
+- Gives a team its own page and its own blueprints. An opt-in federation lists the instances that join in a shared directory.
 - Manages hierarchical `AGENTS.md` files for monorepos, from the dashboard, the CLI (`lynxp hierarchies`) and the API.
 - Serves the same data to the [CLI](usage.md#the-cli), the [VS Code extension](usage.md#vs-code-extension) and a REST API with per-token roles.
 - Signs users in with a magic link, passkeys, GitHub or Google OAuth, or OIDC SSO; each is one environment variable.
@@ -122,7 +122,7 @@ flowchart LR
 
 - Accounts, blueprints, drafts and teams live in your PostgreSQL; avatars, team logos and blog images live in the `uploads` volume. Back up both volumes and you have everything.
 - Every other outside service is off until you switch it on with an environment variable: SMTP for sign-in mail, GitHub and Google for OAuth, an SSO provider, Anthropic for AI editing, Cloudflare Turnstile, Umami analytics. The exception is Gravatar: an account without a profile picture shows a Gravatar image, so browsers request `gravatar.com` with a hash of that account's email address. See [Configuration](configuration.md).
-- Federation is on by default: at start and every six hours the instance sends its domain (the host of `APP_URL`) to the registry at lynxprompt.com, and `/.well-known/lynxprompt.json` answers with its name, version and number of public blueprints. `/api/v1/federation/blueprints` lists the name, description, tags and author of public blueprints; nothing private is listed, and no blueprint content is sent anywhere. `ENABLE_FEDERATION=false` turns it off.
+- Federation is off by default. With `ENABLE_FEDERATION=true`, at start and every six hours the instance sends its domain (the host of `APP_URL`) to the registry at lynxprompt.com, and `/.well-known/lynxprompt.json` answers with its name, version and number of public blueprints. `/api/v1/federation/blueprints` lists the name, description, tags and author of public blueprints; nothing private is listed, and no blueprint content is sent anywhere. Unless it is turned on, the instance makes no call to the registry.
 - The security policy is in [SECURITY.md](https://github.com/GeiserX/LynxPrompt/blob/main/SECURITY.md).
 
 ## Getting help
