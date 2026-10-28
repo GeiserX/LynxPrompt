@@ -282,7 +282,7 @@ describe("generateAllFiles - codegpt deep", () => {
       baseUser
     );
     const parsed = JSON.parse(files[0].content);
-    expect(parsed.techStack.databases).toContain("postgresql");
+    expect(parsed.techStack.databases).toContain("PostgreSQL");
     expect(parsed.techStack.databases).toContain("CockroachDB");
   });
 
@@ -484,7 +484,7 @@ describe("generateAllFiles - supermaven deep", () => {
       baseUser
     );
     const parsed = JSON.parse(files[0].content);
-    expect(parsed.techStack.databases).toContain("postgresql");
+    expect(parsed.techStack.databases).toContain("PostgreSQL");
     expect(parsed.techStack.databases).toContain("DynamoDB");
   });
 
@@ -676,7 +676,7 @@ describe("generateAllFiles - void deep", () => {
       baseUser
     );
     const parsed = JSON.parse(files[0].content);
-    expect(parsed.techStack.databases).toContain("redis");
+    expect(parsed.techStack.databases).toContain("Redis");
     expect(parsed.techStack.databases).toContain("ScyllaDB");
   });
 

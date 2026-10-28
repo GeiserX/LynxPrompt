@@ -9,9 +9,9 @@
  * push, convert and the wizard), so a path or format is changed here once.
  *
  * When adding a platform: add it below, then its content in
- * packages/shared/src/generator.ts (web) and cli/src/utils/generator.ts (CLI).
- * tests/lib/platform-table.test.ts checks both generators and the CLI's
- * pull and push agree with this table.
+ * packages/shared/src/generator.ts, which the web wizard and the CLI both use.
+ * tests/lib/platform-table.test.ts checks both callers and the CLI's pull and
+ * push agree with this table.
  */
 
 export interface PlatformDefinition {

@@ -42,9 +42,9 @@ else pass "wizard rejects an unknown --boundaries"; fi
 
 fresh
 "$LYNXP" wizard -y --license mit --ci-cd github_actions --project-type opensource > out.txt 2>&1
-if ! grep -qi "License:\*\* mit" AGENTS.md 2>/dev/null; then fail "wizard -y --license mit: license not in AGENTS.md"
+if ! grep -q "\*\*MIT\*\* license" AGENTS.md 2>/dev/null; then fail "wizard -y --license mit: license not in AGENTS.md"
 elif ! grep -q "GitHub Actions" AGENTS.md; then fail "wizard -y --ci-cd: GitHub Actions not in AGENTS.md"
-elif ! grep -q "open-source project" AGENTS.md; then fail "wizard -y --project-type: context not in AGENTS.md"
+elif ! grep -q "open source project" AGENTS.md; then fail "wizard -y --project-type: context not in AGENTS.md"
 else pass "wizard -y writes --license, --ci-cd and --project-type"; fi
 
 # --- check ---

@@ -340,13 +340,9 @@ describe("generateAllFiles - API sync header", () => {
     expect(files[0].content).toContain("bp-123");
   });
 
-  it("does NOT include sync header when autoUpdate is false", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "cursor", enableAutoUpdate: false },
-      baseUser,
-      { blueprintId: "bp-123" }
-    );
-    expect(files[0].content).not.toContain("bp-123");
+  it("does NOT include a sync header without a blueprint id", () => {
+    const files = generateAllFiles({ ...baseConfig, platform: "cursor", enableAutoUpdate: true }, baseUser);
+    expect(files[0].content).not.toContain("Cloud Sync");
   });
 });
 
