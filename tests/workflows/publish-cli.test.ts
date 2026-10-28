@@ -53,6 +53,13 @@ afterEach(() => {
 });
 
 describe("Homebrew tarball hash", () => {
+  it("waits 15 minutes for npm by default", () => {
+    // 3.0.0's version URL answered 404 for over 8 minutes after the publish.
+    const text = readFileSync(script, "utf8");
+    expect(text).toContain("attempts=${ATTEMPTS:-90}");
+    expect(text).toContain("delay=${DELAY:-10}");
+  });
+
   it("prints the sha256 of the tarball the registry serves", () => {
     const tgz = tarball("2.1.36");
     expect(registry({ tgz })).toEqual({ status: 0, hash: createHash("sha256").update(tgz).digest("hex") });
