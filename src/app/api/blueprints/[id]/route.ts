@@ -123,6 +123,7 @@ export async function PUT(
         currentVersion: true,
         content: true,
         isPublic: true,
+        visibility: true,
         teamId: true,
       },
     });
@@ -223,14 +224,23 @@ export async function PUT(
     if (isPublic !== undefined) {
       updateData.isPublic = Boolean(isPublic);
       // Write visibility together with the public flag so the two always
-      // match, even when two saves overlap. Publishing keeps teamId, and this
-      // route never changes it, so an unpublished blueprint with a team goes
-      // back to TEAM and one without goes to PRIVATE.
+      // match, even when two saves overlap. Publishing keeps teamId, so an
+      // unpublished blueprint with a team goes back to TEAM and one without
+      // goes to PRIVATE. A save that leaves it unpublished keeps TEAM or
+      // PRIVATE as stored.
       updateData.visibility = updateData.isPublic
         ? "PUBLIC"
-        : existingBlueprint.teamId
-          ? "TEAM"
-          : "PRIVATE";
+        : existingBlueprint.visibility !== "PUBLIC"
+          ? existingBlueprint.visibility
+          : existingBlueprint.teamId
+            ? "TEAM"
+            : "PRIVATE";
+      // A PRIVATE blueprint keeps no team, as in the v1 PUT. Older rows made
+      // private through the API may still carry one; drop it so a later
+      // publish and unpublish cannot hand the blueprint back to that team.
+      if (existingBlueprint.visibility === "PRIVATE" && existingBlueprint.teamId) {
+        updateData.teamId = null;
+      }
     }
 
     if (showcaseUrl !== undefined) {
