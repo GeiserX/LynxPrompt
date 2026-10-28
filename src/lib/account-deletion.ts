@@ -12,7 +12,9 @@
  * - pending invitations and sign-in tokens addressed to their email;
  * - the support forum and the blog live in other databases, keyed by user id
  *   without a foreign key. Posts and comments stay, so threads keep making
- *   sense, but lose the name and picture; votes are removed.
+ *   sense, but lose the name and picture; votes are removed. These run when
+ *   their database is configured, and only stop the deletion on failure while
+ *   the feature is on (with it off, the database may not exist).
  * - uploaded avatars on disk.
  */
 
@@ -21,6 +23,7 @@ import path from "node:path";
 import { prismaUsers } from "@/lib/db-users";
 import { prismaSupport } from "@/lib/db-support";
 import { prismaBlog } from "@/lib/db-blog";
+import { envBool } from "@/lib/feature-flags";
 
 // The id that anonymized forum and blog content points at
 export const DELETED_USER_ID = "deleted-user";
@@ -48,8 +51,22 @@ export async function teamsBlockingDeletion(userId: string): Promise<string[]> {
   return blocking;
 }
 
+/**
+ * Runs a step on the forum or blog database. With the feature on, a failure
+ * stops the deletion. With it off, the database may hold data from when it was
+ * on, or may never have been created, so a failure is only logged.
+ */
+async function optionalDatabase(flag: string, urlVar: string, step: () => Promise<void>) {
+  if (!process.env[urlVar]) return;
+  if (envBool(flag, false)) return step();
+  try {
+    await step();
+  } catch (error) {
+    console.error(`[Account] ${flag} is off and its database could not be cleaned:`, error);
+  }
+}
+
 async function anonymizeSupport(userId: string): Promise<void> {
-  if (!process.env.DATABASE_URL_SUPPORT) return;
 
   const votes = await prismaSupport.supportVote.findMany({
     where: { userId },
@@ -75,7 +92,6 @@ async function anonymizeSupport(userId: string): Promise<void> {
 }
 
 async function anonymizeBlog(userId: string): Promise<void> {
-  if (!process.env.DATABASE_URL_BLOG) return;
   await prismaBlog.blogPost.updateMany({
     where: { authorId: userId },
     data: { authorId: DELETED_USER_ID, authorName: null },
@@ -101,8 +117,8 @@ export async function deleteAccount(userId: string): Promise<void> {
   });
   if (!user) return;
 
-  await anonymizeSupport(userId);
-  await anonymizeBlog(userId);
+  await optionalDatabase("ENABLE_SUPPORT_FORUM", "DATABASE_URL_SUPPORT", () => anonymizeSupport(userId));
+  await optionalDatabase("ENABLE_BLOG", "DATABASE_URL_BLOG", () => anonymizeBlog(userId));
 
   const blueprints = await prismaUsers.userTemplate.findMany({
     where: { userId },

@@ -56,6 +56,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   process.env.DATABASE_URL_SUPPORT = "postgresql://s";
   process.env.DATABASE_URL_BLOG = "postgresql://b";
+  process.env.ENABLE_SUPPORT_FORUM = "true";
+  process.env.ENABLE_BLOG = "true";
   mockSession.mockResolvedValue({ user: { id: "u1" } });
   mockPasskeyBlock.mockResolvedValue(null);
   users.user.findUnique.mockResolvedValue({ email: "Ana@Example.com" });
@@ -143,6 +145,19 @@ describe("DELETE /api/user", () => {
     expect(res.status).toBe(200);
     expect(support.$transaction).not.toHaveBeenCalled();
     expect(blog.blogPost.updateMany).not.toHaveBeenCalled();
+    usersTransaction();
+  });
+
+  it("stops before the account goes when the forum fails while the forum is on", async () => {
+    support.$transaction.mockRejectedValue(new Error("connection refused"));
+    expect((await del("ana@example.com")).status).toBe(500);
+    expect(users.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("still deletes the account when the forum is off and its database is missing", async () => {
+    delete process.env.ENABLE_SUPPORT_FORUM;
+    support.supportVote.findMany.mockRejectedValue(new Error('database "lynxprompt_support" does not exist'));
+    expect((await del("ana@example.com")).status).toBe(200);
     usersTransaction();
   });
 
