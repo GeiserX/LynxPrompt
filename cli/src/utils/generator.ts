@@ -1,4 +1,4 @@
-import { PLATFORMS, getPlatform } from "../../../packages/shared/src/platforms.js";
+import { PLATFORMS, getPlatform, AGENTS_MD_POINTER, agentsMdPointerFiles } from "../../../packages/shared/src/platforms.js";
 
 export interface GenerateOptions {
   // Server the sync header points at. The CLI passes getApiUrl(); kept as an
@@ -8,6 +8,8 @@ export interface GenerateOptions {
   description: string;
   stack: string[];
   platforms: string[];
+  // CLAUDE.md and GEMINI.md generated next to AGENTS.md just import it
+  pointerFiles?: boolean;
   persona: string;
   boundaries: "conservative" | "standard" | "permissive";
   commands: Record<string, string | string[]>;
@@ -681,11 +683,13 @@ export function generateConfig(options: GenerateOptions): Record<string, string>
   const files: Record<string, string> = {};
 
   // Generate AI IDE config files
-  for (const platform of options.platforms) {
-    const filename = PLATFORM_FILES[platform];
-    if (filename) {
-      files[filename] = generateFileContent(options, platform);
-    }
+  const platforms = options.platforms.filter((platform) => PLATFORM_FILES[platform]);
+  const pointers = options.pointerFiles
+    ? agentsMdPointerFiles(platforms.map((platform) => ({ platform, file: PLATFORM_FILES[platform] })))
+    : new Set<string>();
+  for (const platform of platforms) {
+    const file = PLATFORM_FILES[platform];
+    files[file] = pointers.has(file) ? AGENTS_MD_POINTER : generateFileContent(options, platform);
   }
 
   // Generate static files (only if "both" mode - otherwise they're embedded in config)

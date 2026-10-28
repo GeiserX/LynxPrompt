@@ -122,3 +122,21 @@ describe("cli wizard to generator field coverage", () => {
     expect(dropped).toEqual([]);
   });
 });
+
+describe("pointer files", () => {
+  const generate = (platforms: string[], pointerFiles?: boolean) => generateConfig({ ...base, platforms, pointerFiles });
+
+  it("makes CLAUDE.md and GEMINI.md import AGENTS.md when it is generated with them", () => {
+    const files = generate(["agents", "claude", "gemini-cli", "cursor"], true);
+    expect(files["CLAUDE.md"]).toBe("@AGENTS.md\n");
+    expect(files["GEMINI.md"]).toBe("@AGENTS.md\n");
+    expect(files["AGENTS.md"]).toContain("## ");
+    expect(files[".cursor/rules/project.mdc"]).toContain("## ");
+  });
+
+  it("writes full copies without the option, without AGENTS.md, or when Antigravity also reads GEMINI.md", () => {
+    expect(generate(["agents", "claude"])["CLAUDE.md"]).toContain("## ");
+    expect(generate(["claude", "cursor"], true)["CLAUDE.md"]).toContain("## ");
+    expect(generate(["agents", "gemini-cli", "antigravity"], true)["GEMINI.md"]).toContain("## ");
+  });
+});

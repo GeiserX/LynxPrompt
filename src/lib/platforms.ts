@@ -25,5 +25,7 @@ export {
   convertCommand,
   getCommandDirectories,
   COMMAND_COUNT,
+  AGENTS_MD_POINTER,
+  agentsMdPointerFiles,
 } from "../../packages/shared/src/platforms";
 export type { PlatformDefinition, CommandDefinition } from "../../packages/shared/src/platforms";
