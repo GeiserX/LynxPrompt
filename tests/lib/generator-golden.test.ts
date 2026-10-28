@@ -121,6 +121,78 @@ const GENERATOR_PLATFORMS = [
 // The CLI only knows the rules platforms; command platforms are web-only here.
 const RULE_PLATFORM_IDS = PLATFORMS.filter((p) => !p.isCommand).map((p) => p.id);
 
+// Every answer the CLI wizard can give.
+const fullCliOptions: GenerateOptions = {
+  ...cliOptions,
+  stack: ["typescript", "python", "nextjs", "postgresql"],
+  persona: "backend",
+  boundaries: "conservative",
+  commands: { install: "npm ci", build: ["npm run build"], test: ["npm test"], lint: "npm run lint", typecheck: "npm run typecheck" },
+  projectType: "work",
+  devOS: ["linux"],
+  architecture: "modular",
+  repoHost: "github",
+  isPublic: false,
+  license: "apache-2.0",
+  conventionalCommits: true,
+  semver: true,
+  versionTagFormat: "v_prefix",
+  changelogTool: "release_please",
+  cicd: ["github_actions", "other"],
+  cicdOther: "Forgejo Actions",
+  deploymentTargets: ["fly", "docker"],
+  buildContainer: true,
+  containerRegistry: "ghcr",
+  dockerImageNames: "acme/demo",
+  exampleRepoUrl: "https://github.com/acme/example",
+  documentationUrl: "https://docs.acme.test",
+  letAiDecide: true,
+  loggingConventions: "structured_json",
+  namingConvention: "camelCase",
+  errorHandling: "result_types",
+  styleNotes: "Prefer pure functions.",
+  maxFileLength: 400,
+  importOrder: "grouped",
+  commentLanguage: "english",
+  docStyle: "tsdoc",
+  aiBehavior: ["always_debug_after_build", "check_docs_first"],
+  importantFilesOther: "docs/adr",
+  selfImprove: true,
+  includePersonalData: true,
+  userName: "Ada",
+  userEmail: "ada@example.test",
+  userPersona: "data_engineer",
+  userExpertise: "intermediate",
+  testLevels: ["unit", "smoke"],
+  testFrameworks: ["vitest"],
+  coverageTarget: 85,
+  testNotes: "Mock the network.",
+  tddPreference: true,
+  mockStrategy: "minimal",
+  staticFiles: ["editorconfig", "funding"],
+  staticFileHandling: "config_only",
+  extraNotes: "Ship small.",
+  security: {
+    authProviders: ["github"], secretsManagement: ["env_vars", "other"], secretsManagementOther: "Pass",
+    securityTooling: ["dependabot"], compliance: ["gdpr"], additionalNotes: "Rotate keys yearly.",
+  },
+  planModeFrequency: "multi_file",
+  explanationVerbosity: "balanced",
+  accessibilityFocus: true,
+  packageManager: "pnpm",
+  orm: "prisma",
+  branchStrategy: "trunk_based",
+  defaultBranch: "main",
+  allowDirectCommits: true,
+  useGitWorktrees: true,
+  additionalLibraries: "Telethon",
+  mcpServers: "github",
+  attemptWorkarounds: true,
+  serverAccess: true,
+  manualDeployment: true,
+  deploymentMethod: "portainer",
+};
+
 describe("web generator golden output", () => {
   it.each(RULE_PLATFORM_IDS)("%s", (platform) => {
     const files = generateAllFiles({ ...webConfig, platform } as never, user);
@@ -145,6 +217,10 @@ describe("web generator golden output", () => {
 describe("cli generator golden output", () => {
   it.each([...RULE_PLATFORM_IDS, "agents"])("%s", (platform) => {
     expect(generateConfig({ ...cliOptions, platforms: [platform] })).toMatchSnapshot();
+  });
+
+  it.each(["agents", "cursor", "continue", "tabnine"])("%s with every answer", (platform) => {
+    expect(generateConfig({ ...fullCliOptions, platforms: [platform] })).toMatchSnapshot();
   });
 
   it.each(["cursor", "claude"])("%s with the Cloud Sync header", (platform) => {

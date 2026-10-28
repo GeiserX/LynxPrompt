@@ -95,6 +95,264 @@ Follow these conventions:
 }
 `;
 
+exports[`cli generator golden output > agents with every answer 1`] = `
+{
+  "AGENTS.md": "# Demo - AI Assistant Configuration
+
+## Before Starting Any Coding Task
+
+1. Check existing worktrees with \`git worktree list\` and create a new one for this task if needed
+2. Use the naming convention: \`git worktree add -b ai/<task> .worktrees/<task>\`
+3. Navigate to the worktree directory before making any changes
+4. Commit changes when the task is finished. Merge to main, and clean the worktree.
+
+> **Project Context:** This is a professional/enterprise project. Follow strict procedures and maintain high code quality.
+
+## Persona
+
+You assist developers working on Demo.
+
+Developer background: data_engineer. Adapt your suggestions and level of explanation to this expertise.
+
+Project description: A demo project
+
+## Tech Stack
+
+- TypeScript
+- Python
+- Next.js
+- PostgreSQL
+- Telethon
+- **Package manager:** pnpm
+- **ORM / database library:** prisma
+- **Development OS:** linux
+
+> **AI Assistance:** Let AI analyze the codebase and suggest additional technologies and approaches as needed.
+
+## Repository & Infrastructure
+
+- **Host:** github
+- **License:** apache-2.0
+- **Architecture:** modular
+- **CI/CD:** GitHub Actions, Forgejo Actions
+- **Commits:** Follow [Conventional Commits](https://conventionalcommits.org) format
+- **Versioning:** Follow [Semantic Versioning](https://semver.org) (semver)
+- **Version tags:** v prefix
+- **Changelog:** release please
+- **Deployment:** Fly.io, Docker
+- **Containers:** Docker container builds enabled → GitHub Container Registry
+- **Docker Images:**
+  - \`acme/demo\`
+- **Example Repo:** https://github.com/acme/example (use as reference for style/structure)
+- **Documentation:** https://docs.acme.test
+
+## Commands
+
+Use these commands for common tasks:
+
+\`\`\`bash
+# Install: npm ci
+# Build: npm run build
+# Test: npm test
+# Lint: npm run lint
+# Typecheck: npm run typecheck
+\`\`\`
+
+## AI Behavior Rules
+
+- Always build and run the code locally to verify changes work before calling them complete
+- Always check documentation (via MCP or project docs) before assuming knowledge about APIs or libraries
+- **Explanations:** Explain clearly with enough context, without padding
+- **Accessibility:** Prioritize accessibility (WCAG, a11y) in every UI change
+- **Use Plan Mode** when changes span multiple files
+- When stuck, **attempt creative workarounds** before asking for help
+
+## Git Workflow
+
+- **Workflow:** Create feature branches and submit pull requests
+- **Branch strategy:** Trunk-based (short-lived branches, continuous integration)
+- Create a descriptive branch name (e.g., \`feat/add-login\`, \`fix/button-styling\`)
+- Open a PR for review before merging
+- **Exception:** Direct commits to \`main\` are acceptable for small fixes (typos, docs, minor fixes)
+
+## MCP Servers
+
+The developer has these MCP (Model Context Protocol) servers available. Use them when relevant:
+
+- github
+
+## Infrastructure
+
+- **Server access**: via SSH. SSH key in default location (~/.ssh/)
+- **Deployment**: Portainer (GitOps stacks)
+
+## Important Files to Read
+
+Always read these files first to understand the project context:
+
+- \`README.md\`
+- \`docs/adr\`
+
+## Self-Improving Blueprint
+
+> **Auto-update enabled:** As you work on this project, track patterns and update this configuration file to better reflect the project's conventions and preferences.
+
+## Commit Identity
+
+- **Name:** Ada
+- **Email:** ada@example.test
+- **Expertise:** intermediate
+
+> Use this identity for git commits when making changes on my behalf.
+
+## Boundaries
+
+### ✅ Always (do without asking)
+
+- Read any file in the project
+- Run lint and format commands
+
+### ⚠️ Ask First
+
+- Modify any source file
+- Add new dependencies
+- Create new files
+- Run test commands
+- Modify configuration files
+
+### 🚫 Never
+
+- Delete any files
+- Modify .env or secret files
+- Push to git or make commits
+- Access external APIs or services
+
+## Code Style
+
+- **Naming:** use camelCase for variables and functions
+- **Errors:** Use Result/Either types for error handling
+- **Logging:** structured json
+- **File length:** Keep files under 400 lines
+- **Imports:** Group imports: external, then internal, then relative
+- **Comment language:** Write code comments in English
+- **Documentation style:** tsdoc
+- **Notes:** Prefer pure functions.
+
+Follow these conventions:
+
+- Use TypeScript strict mode when available
+- Prefer const over let, avoid var
+- Use async/await over raw promises
+- Use descriptive variable and function names
+- Use functional components with hooks
+- Keep components small and focused
+- Colocate related files (component, styles, tests)
+- Follow PEP 8 style guidelines
+- Use type hints for function signatures
+- Prefer f-strings for string formatting
+- Write self-documenting code
+- Add comments for complex logic only
+- Keep functions focused and testable
+
+## Testing Strategy
+
+### Test Levels
+
+- **Unit:** Unit tests for individual functions and components
+- **Smoke:** Quick sanity checks for critical paths
+
+### Frameworks
+
+Use: vitest
+
+### Coverage Target: 85%
+
+### Practices
+
+- Write the failing test first, then the code (TDD)
+- **Mocking:** Mock only external dependencies
+
+**Notes:** Mock the network.
+
+## Additional Notes
+
+Ship small.
+
+## 🔐 Security Configuration
+
+### Authentication Providers
+
+- GitHub
+
+### Secrets Management
+
+- Environment Variables
+- Other: Pass
+
+### Security Tooling
+
+- Dependabot (dependency updates)
+
+### Compliance Standards
+
+- GDPR (EU)
+
+### Additional Security Notes
+
+Rotate keys yearly.
+
+## ⚠️ Security Notice
+
+> **Do not commit secrets to the repository or to the live app.**
+> Always use secure standards to transmit sensitive information.
+> Use environment variables, secret managers, or secure vaults for credentials.
+
+**🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.
+
+## 📄 Static Files Reference
+
+The following static file contents are included for AI context. These are not separate files.
+
+### .editorconfig
+
+\`\`\`
+# EditorConfig is awesome: https://EditorConfig.org
+
+root = true
+
+[*]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.md]
+trim_trailing_whitespace = false
+
+[Makefile]
+indent_style = tab
+\`\`\`
+
+### .github/FUNDING.yml
+
+\`\`\`
+# These are supported funding model platforms
+
+github: [] # Replace with your GitHub username
+patreon: # Replace with your Patreon username
+open_collective: # Replace with your Open Collective username
+ko_fi: # Replace with your Ko-fi username
+custom: [] # Add custom funding links
+\`\`\`
+
+---
+
+*Generated by [LynxPrompt](https://lynxprompt.com) CLI*",
+}
+`;
+
 exports[`cli generator golden output > aider 1`] = `
 {
   "CONVENTIONS.md": "# Demo - AI Assistant Configuration
@@ -907,6 +1165,48 @@ exports[`cli generator golden output > continue 1`] = `
 }
 `;
 
+exports[`cli generator golden output > continue with every answer 1`] = `
+{
+  ".continue/config.json": "{
+  "version": "1.0.0",
+  "project": {
+    "name": "Demo",
+    "description": "A demo project",
+    "stack": [
+      "TypeScript",
+      "Python",
+      "Next.js",
+      "PostgreSQL"
+    ]
+  },
+  "persona": "data_engineer",
+  "rules": [
+    "AUTO-APPROVE: Read any file in the project",
+    "AUTO-APPROVE: Run lint and format commands",
+    "ASK FIRST: Modify any source file",
+    "ASK FIRST: Add new dependencies",
+    "ASK FIRST: Create new files",
+    "ASK FIRST: Run test commands",
+    "ASK FIRST: Modify configuration files",
+    "PROHIBITED: Delete any files",
+    "PROHIBITED: Modify .env or secret files",
+    "PROHIBITED: Push to git or make commits",
+    "PROHIBITED: Access external APIs or services",
+    "SECURITY: Do not commit secrets. Use environment variables or secret managers.",
+    "SECURITY: When making changes involving auth, data, or APIs, perform security audit."
+  ],
+  "context": {
+    "readFirst": [
+      "README.md"
+    ]
+  },
+  "name": "Demo",
+  "customInstructions": "AUTO-APPROVE: Read any file in the project\\nAUTO-APPROVE: Run lint and format commands\\nASK FIRST: Modify any source file\\nASK FIRST: Add new dependencies\\nASK FIRST: Create new files\\nASK FIRST: Run test commands\\nASK FIRST: Modify configuration files\\nPROHIBITED: Delete any files\\nPROHIBITED: Modify .env or secret files\\nPROHIBITED: Push to git or make commits\\nPROHIBITED: Access external APIs or services\\nSECURITY: Do not commit secrets. Use environment variables or secret managers.\\nSECURITY: When making changes involving auth, data, or APIs, perform security audit.",
+  "_comment": "Generated by LynxPrompt CLI for Demo"
+}",
+}
+`;
+
 exports[`cli generator golden output > copilot 1`] = `
 {
   ".github/copilot-instructions.md": "# Demo - AI Assistant Configuration
@@ -1191,6 +1491,270 @@ Follow these conventions:
 > Use environment variables, secret managers, or secure vaults for credentials.
 
 **🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.
+
+---
+
+*Generated by [LynxPrompt](https://lynxprompt.com) CLI*",
+}
+`;
+
+exports[`cli generator golden output > cursor with every answer 1`] = `
+{
+  ".cursor/rules/project.mdc": "---
+description: "Demo - AI coding rules"
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# Demo - AI Assistant Configuration
+
+## Before Starting Any Coding Task
+
+1. Check existing worktrees with \`git worktree list\` and create a new one for this task if needed
+2. Use the naming convention: \`git worktree add -b ai/<task> .worktrees/<task>\`
+3. Navigate to the worktree directory before making any changes
+4. Commit changes when the task is finished. Merge to main, and clean the worktree.
+
+> **Project Context:** This is a professional/enterprise project. Follow strict procedures and maintain high code quality.
+
+## Persona
+
+You assist developers working on Demo.
+
+Developer background: data_engineer. Adapt your suggestions and level of explanation to this expertise.
+
+Project description: A demo project
+
+## Tech Stack
+
+- TypeScript
+- Python
+- Next.js
+- PostgreSQL
+- Telethon
+- **Package manager:** pnpm
+- **ORM / database library:** prisma
+- **Development OS:** linux
+
+> **AI Assistance:** Let AI analyze the codebase and suggest additional technologies and approaches as needed.
+
+## Repository & Infrastructure
+
+- **Host:** github
+- **License:** apache-2.0
+- **Architecture:** modular
+- **CI/CD:** GitHub Actions, Forgejo Actions
+- **Commits:** Follow [Conventional Commits](https://conventionalcommits.org) format
+- **Versioning:** Follow [Semantic Versioning](https://semver.org) (semver)
+- **Version tags:** v prefix
+- **Changelog:** release please
+- **Deployment:** Fly.io, Docker
+- **Containers:** Docker container builds enabled → GitHub Container Registry
+- **Docker Images:**
+  - \`acme/demo\`
+- **Example Repo:** https://github.com/acme/example (use as reference for style/structure)
+- **Documentation:** https://docs.acme.test
+
+## Commands
+
+Use these commands for common tasks:
+
+\`\`\`bash
+# Install: npm ci
+# Build: npm run build
+# Test: npm test
+# Lint: npm run lint
+# Typecheck: npm run typecheck
+\`\`\`
+
+## AI Behavior Rules
+
+- Always build and run the code locally to verify changes work before calling them complete
+- Always check documentation (via MCP or project docs) before assuming knowledge about APIs or libraries
+- **Explanations:** Explain clearly with enough context, without padding
+- **Accessibility:** Prioritize accessibility (WCAG, a11y) in every UI change
+- **Use Plan Mode** when changes span multiple files
+- When stuck, **attempt creative workarounds** before asking for help
+
+## Git Workflow
+
+- **Workflow:** Create feature branches and submit pull requests
+- **Branch strategy:** Trunk-based (short-lived branches, continuous integration)
+- Create a descriptive branch name (e.g., \`feat/add-login\`, \`fix/button-styling\`)
+- Open a PR for review before merging
+- **Exception:** Direct commits to \`main\` are acceptable for small fixes (typos, docs, minor fixes)
+
+## MCP Servers
+
+The developer has these MCP (Model Context Protocol) servers available. Use them when relevant:
+
+- github
+
+## Infrastructure
+
+- **Server access**: via SSH. SSH key in default location (~/.ssh/)
+- **Deployment**: Portainer (GitOps stacks)
+
+## Important Files to Read
+
+Always read these files first to understand the project context:
+
+- \`README.md\`
+- \`docs/adr\`
+
+## Self-Improving Blueprint
+
+> **Auto-update enabled:** As you work on this project, track patterns and update this configuration file to better reflect the project's conventions and preferences.
+
+## Commit Identity
+
+- **Name:** Ada
+- **Email:** ada@example.test
+- **Expertise:** intermediate
+
+> Use this identity for git commits when making changes on my behalf.
+
+## Boundaries
+
+### ✅ Always (do without asking)
+
+- Read any file in the project
+- Run lint and format commands
+
+### ⚠️ Ask First
+
+- Modify any source file
+- Add new dependencies
+- Create new files
+- Run test commands
+- Modify configuration files
+
+### 🚫 Never
+
+- Delete any files
+- Modify .env or secret files
+- Push to git or make commits
+- Access external APIs or services
+
+## Code Style
+
+- **Naming:** use camelCase for variables and functions
+- **Errors:** Use Result/Either types for error handling
+- **Logging:** structured json
+- **File length:** Keep files under 400 lines
+- **Imports:** Group imports: external, then internal, then relative
+- **Comment language:** Write code comments in English
+- **Documentation style:** tsdoc
+- **Notes:** Prefer pure functions.
+
+Follow these conventions:
+
+- Use TypeScript strict mode when available
+- Prefer const over let, avoid var
+- Use async/await over raw promises
+- Use descriptive variable and function names
+- Use functional components with hooks
+- Keep components small and focused
+- Colocate related files (component, styles, tests)
+- Follow PEP 8 style guidelines
+- Use type hints for function signatures
+- Prefer f-strings for string formatting
+- Write self-documenting code
+- Add comments for complex logic only
+- Keep functions focused and testable
+
+## Testing Strategy
+
+### Test Levels
+
+- **Unit:** Unit tests for individual functions and components
+- **Smoke:** Quick sanity checks for critical paths
+
+### Frameworks
+
+Use: vitest
+
+### Coverage Target: 85%
+
+### Practices
+
+- Write the failing test first, then the code (TDD)
+- **Mocking:** Mock only external dependencies
+
+**Notes:** Mock the network.
+
+## Additional Notes
+
+Ship small.
+
+## 🔐 Security Configuration
+
+### Authentication Providers
+
+- GitHub
+
+### Secrets Management
+
+- Environment Variables
+- Other: Pass
+
+### Security Tooling
+
+- Dependabot (dependency updates)
+
+### Compliance Standards
+
+- GDPR (EU)
+
+### Additional Security Notes
+
+Rotate keys yearly.
+
+## ⚠️ Security Notice
+
+> **Do not commit secrets to the repository or to the live app.**
+> Always use secure standards to transmit sensitive information.
+> Use environment variables, secret managers, or secure vaults for credentials.
+
+**🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.
+
+## 📄 Static Files Reference
+
+The following static file contents are included for AI context. These are not separate files.
+
+### .editorconfig
+
+\`\`\`
+# EditorConfig is awesome: https://EditorConfig.org
+
+root = true
+
+[*]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.md]
+trim_trailing_whitespace = false
+
+[Makefile]
+indent_style = tab
+\`\`\`
+
+### .github/FUNDING.yml
+
+\`\`\`
+# These are supported funding model platforms
+
+github: [] # Replace with your GitHub username
+patreon: # Replace with your Patreon username
+open_collective: # Replace with your Open Collective username
+ko_fi: # Replace with your Ko-fi username
+custom: [] # Add custom funding links
+\`\`\`
 
 ---
 
@@ -2418,6 +2982,32 @@ exports[`cli generator golden output > supermaven 1`] = `
 `;
 
 exports[`cli generator golden output > tabnine 1`] = `
+{
+  ".tabnine.yaml": "# Tabnine configuration
+# Project: Demo
+
+version: 1.0.0
+
+project:
+  name: Demo
+  description: "A demo project"
+
+context:
+  include:
+    - "**/*.ts"
+    - "**/*.js"
+    - "**/*.py"
+
+# SECURITY: Do not commit secrets to the repository.
+# Use environment variables or secret managers for credentials.
+# When making changes involving auth, data handling, APIs, or dependencies,
+# proactively offer to perform a security audit of the affected code.
+
+# Generated by LynxPrompt CLI",
+}
+`;
+
+exports[`cli generator golden output > tabnine with every answer 1`] = `
 {
   ".tabnine.yaml": "# Tabnine configuration
 # Project: Demo
