@@ -170,6 +170,29 @@ describe("escaping of user values", () => {
     expect(detectDuplicateVariableDefaults("[[V|a[1]]]\n[[V|b]]")[0]?.occurrences.map((o) => o.defaultValue)).toEqual(["a[1]", "b"]);
   });
 
+  it.each(["cursor", "firebender", "augment"])(
+    "%s blueprint: a quoted name fills cleanly and the frontmatter stays valid YAML",
+    (platform) => {
+      const { content } = generate(platform, { blueprintMode: true, projectName: 'Acme "beta"' });
+      expect(detectDuplicateVariableDefaults(content)).toEqual([]);
+
+      // The download modal prefills from the first default it finds
+      const defaults = Object.fromEntries(
+        Object.entries(parseVariablesWithDefaults(content)).map(([k, v]) => [k, v ?? ""])
+      );
+      const filled = replaceVariables(content, defaults);
+      const heading = filled.split("\n").find((l) => l.startsWith("# "));
+      expect(heading).toBe('# Acme "beta" - AI Rules');
+      expect(filled).not.toContain("\\");
+      expect(() => frontmatterDescription(filled)).not.toThrow();
+
+      // A value typed at download time never lands inside the YAML
+      const typed = replaceVariables(content, { ...defaults, PROJECT_NAME: 'Acme "beta": v2' });
+      expect(() => frontmatterDescription(typed)).not.toThrow();
+      expect(typed).toContain('# Acme "beta": v2 - AI Rules');
+    }
+  );
+
   it("a blueprint-mode value with ']' fills back to the original text", () => {
     const { content } = generate("universal", { blueprintMode: true, projectDescription: "Parses arr[0] fast" });
     expect(replaceVariables(content, {})).toContain("Parses arr[0] fast");

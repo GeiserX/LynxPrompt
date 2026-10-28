@@ -488,6 +488,14 @@ function yamlString(value: string): string {
   return JSON.stringify(value);
 }
 
+// The frontmatter description. A blueprint never puts a [[VAR]] placeholder
+// here: its default would be JSON-escaped and differ from the same variable in
+// the body, and a value filled in at download time would land unquoted.
+function rulesDescription(config: WizardConfig): string {
+  const name = config.blueprintMode ? "" : config.projectName;
+  return `AI rules for ${name || "this project"}`;
+}
+
 const FRONTMATTER_PATTERN = /^---\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n)+/;
 
 function frontmatterLines(platform: string, description: string): string[] {
@@ -529,7 +537,7 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
   const bp = config.blueprintMode;
 
   // MDC frontmatter
-  lines.push(...frontmatterLines("cursor", `AI rules for ${bpVar(bp, "PROJECT_NAME", config.projectName || "this project")}`));
+  lines.push(...frontmatterLines("cursor", rulesDescription(config)));
   lines.push(`# ${bpVar(bp, "PROJECT_NAME", config.projectName || "Project")} - AI Rules`);
   lines.push("");
   
@@ -4202,7 +4210,7 @@ export function generateAllFiles(
         generateCursorRules(config, user),
         "cursor",
         platform,
-        `AI rules for ${bpVar(config.blueprintMode, "PROJECT_NAME", config.projectName || "this project")}`
+        rulesDescription(config)
       );
       break;
     case "warp":
