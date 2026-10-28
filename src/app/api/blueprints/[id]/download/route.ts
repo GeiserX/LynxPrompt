@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { prismaApp } from "@/lib/db-app";
-import { createHash } from "crypto";
+import { hashIP } from "@/lib/ip-hash";
 
 // POST /api/blueprints/[id]/download - Record a blueprint download
 export async function POST(
@@ -41,7 +41,7 @@ export async function POST(
       request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       request.headers.get("x-real-ip") ||
       "unknown";
-    const ipHash = createHash("sha256").update(clientIP).digest("hex").substring(0, 16);
+    const ipHash = hashIP(clientIP);
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
     const recentDownload = await prismaUsers.templateDownload.findFirst({
