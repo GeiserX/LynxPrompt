@@ -25,7 +25,7 @@ export default function AIFeaturesOverviewPage() {
           <code className="rounded bg-muted px-1.5 py-0.5 text-xs">ENABLE_AI</code> environment
           variable and require an{" "}
           <code className="rounded bg-muted px-1.5 py-0.5 text-xs">ANTHROPIC_API_KEY</code>.
-          The default model is <code className="rounded bg-muted px-1.5 py-0.5 text-xs">claude-3-5-haiku-latest</code>,
+          The default model is <code className="rounded bg-muted px-1.5 py-0.5 text-xs">claude-haiku-5-5</code>,
           configurable via <code className="rounded bg-muted px-1.5 py-0.5 text-xs">AI_MODEL</code>.
           See the{" "}
           <Link href="/docs/self-hosting" className="text-primary hover:underline">

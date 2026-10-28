@@ -30,8 +30,11 @@ export const ENABLE_SSO = envBool("ENABLE_SSO", false);
 export const ENABLE_USER_REGISTRATION = envBool("ENABLE_USER_REGISTRATION", true);
 
 // AI
+// The one place the default model is named. docker-compose, the Helm chart and
+// env.example leave AI_MODEL empty so this default applies.
+export const DEFAULT_AI_MODEL = "claude-haiku-5-5";
 export const ENABLE_AI = envBool("ENABLE_AI", false);
-export const AI_MODEL = process.env.AI_MODEL || "claude-3-5-haiku-latest";
+export const AI_MODEL = process.env.AI_MODEL || DEFAULT_AI_MODEL;
 
 // Content
 export const ENABLE_BLOG = envBool("ENABLE_BLOG", false);
