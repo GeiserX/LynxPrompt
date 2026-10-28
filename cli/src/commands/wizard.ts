@@ -6,9 +6,10 @@ import * as os from "os";
 import { writeFile, mkdir, access, readFile } from "fs/promises";
 import { join, dirname, relative } from "path";
 import { detectProject, detectFromRemoteUrl, isGitUrl } from "../utils/detect.js";
-import { generateConfig, GenerateOptions, parseVariablesString, PLATFORM_FILES } from "../utils/generator.js";
-import { PLATFORMS, AGENTS_MD_POINTER } from "../../../packages/shared/src/platforms.js";
+import { generateConfig, GenerateOptions, mergeAiderConfig, parseVariablesString, pickSyncFile, PLATFORM_FILES } from "../utils/generator.js";
+import { PLATFORMS, AGENTS_MD_POINTER, resolvePlatformId } from "../../../packages/shared/src/platforms.js";
 import { trackBlueprint } from "../utils/blueprint-tracker.js";
+import { rulesWritePath } from "../utils/blueprint-files.js";
 import { buildPromptOverrides } from "../utils/prompt-overrides.js";
 import { isAuthenticated, getUser, getApiUrl } from "../config.js";
 import { api, ApiRequestError } from "../api.js";
@@ -166,7 +167,7 @@ interface WizardOptions {
   loadDraft?: string;
   saveDraft?: string;
   vars?: string;
-  pointers?: boolean; // --no-pointers: full copies in CLAUDE.md/GEMINI.md next to AGENTS.md
+  pointers?: boolean; // --no-pointers: every tool gets its own full file, no shared AGENTS.md
   // Internal: for resuming from a draft
   _resumeFromStep?: number;
   _draftAnswers?: Record<string, unknown>;
@@ -906,7 +907,8 @@ const promptConfig = {
  * so a typo fails loudly instead of generating nothing.
  */
 export function parsePlatformList(value: string): string[] {
-  const platforms = value.split(",").map(f => f.trim()).filter(Boolean);
+  // A retired name (devin, continue...) means the platform that covers it now
+  const platforms = value.split(",").map(f => resolvePlatformId(f.trim())).filter(Boolean);
   const unknown = platforms.filter(p => !PLATFORM_FILES[p]);
   if (unknown.length > 0 || platforms.length === 0) {
     console.error(chalk.red(`  ✗ Unknown format: ${unknown.join(", ") || value}`));
@@ -1312,10 +1314,7 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
       spinner.text = "Saving blueprint to cloud...";
       try {
         // Upload the file the user chose to sync (or the first one) and remember which it is
-        const primaryFile = config.primarySyncFormat ? PLATFORM_FILES[config.primarySyncFormat] : undefined;
-        const mainFile = (primaryFile && files[primaryFile] !== undefined)
-          ? [primaryFile, files[primaryFile]] as const
-          : Object.entries(files)[0];
+        const mainFile = pickSyncFile(files, config.primarySyncFormat);
         if (mainFile) {
           const [fileName, content] = mainFile;
           syncedFile = { file: fileName, uploadedContent: content };
@@ -1357,7 +1356,9 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
     // Determine output directory
     const outputDir = options.output || process.cwd();
     
-    for (const [filename, content] of Object.entries(files)) {
+    for (const [generatedName, generatedContent] of Object.entries(files)) {
+      const filename = rulesWritePath(outputDir, generatedName);
+      let content = generatedContent;
       const outputPath = join(outputDir, filename);
       
       // Check if file exists
@@ -1369,8 +1370,19 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
         // File doesn't exist
       }
 
+      // An existing Aider config keeps its settings and gains AGENTS.md under read:
+      let merged = false;
+      if (exists && filename === ".aider.conf.yml") {
+        try {
+          content = mergeAiderConfig(await readFile(outputPath, "utf-8"));
+          merged = true;
+        } catch {
+          // Not a YAML mapping: ask before overwriting it, as for any file
+        }
+      }
+
       // Ask to overwrite if exists and not in --yes mode
-      if (exists && !options.yes) {
+      if (exists && !merged && !options.yes) {
         const response = await prompts({
           type: "confirm",
           name: "overwrite",
@@ -1391,12 +1403,14 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
       }
 
       await writeFile(outputPath, content, "utf-8");
-      const note = content === AGENTS_MD_POINTER ? chalk.gray(" (imports AGENTS.md; --no-pointers for a full copy)") : "";
+      const note = content === AGENTS_MD_POINTER
+        ? chalk.gray(" (imports AGENTS.md; --no-pointers for a full copy)")
+        : merged ? chalk.gray(" (added AGENTS.md to read:)") : "";
       console.log(`     ${chalk.cyan("→")} ${chalk.bold(filename)}${note}`);
 
       // Link the synced file to its new blueprint so 'lynxp push' updates it instead of
       // creating a duplicate. The checksum is the uploaded content, which is what the server holds.
-      if (savedBlueprintId && syncedFile && syncedFile.file === filename) {
+      if (savedBlueprintId && syncedFile && syncedFile.file === generatedName) {
         await trackBlueprint(process.cwd(), {
           id: savedBlueprintId,
           name: config.name || "My AI Config",
@@ -1405,6 +1419,14 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
           source: "private",
         });
       }
+    }
+
+    // Picked tools that read AGENTS.md and so got no file of their own
+    const readersOnly = config.platforms
+      .map((p) => PLATFORMS.find((platform) => platform.id === resolvePlatformId(p)))
+      .filter((p) => p?.readsAgentsMd && files["AGENTS.md"] !== undefined && files[p.file] === undefined);
+    if (readersOnly.length > 0) {
+      console.log(chalk.gray(`     ${readersOnly.map((p) => p!.name).join(", ")} read AGENTS.md (--no-pointers for a file each)`));
     }
 
     console.log();

@@ -2,6 +2,7 @@
  * Where a pulled blueprint is written on disk.
  */
 
+import fs from "fs";
 import path from "path";
 import {
   PLATFORMS,
@@ -65,6 +66,22 @@ export function safePath(root: string, untrusted: string, pathImpl: path.Platfor
   return resolved;
 }
 
+/**
+ * The path to write a rules file at under `root`. Cline reads a legacy
+ * .clinerules FILE or a .clinerules/ folder, and both cannot exist at once,
+ * so with the file present a .clinerules/ rule goes to .cline/rules/ instead.
+ */
+export function rulesWritePath(root: string, file: string): string {
+  const parts = file.replace(/\\/g, "/").split("/");
+  if (parts.length < 2 || parts[0] !== ".clinerules") return file;
+  try {
+    if (!fs.statSync(path.join(root, ".clinerules")).isFile()) return file;
+  } catch {
+    return file;
+  }
+  return [".cline", "rules", ...parts.slice(1)].join("/");
+}
+
 /** Repository paths are compared with "/" separators and in lower case. */
 function normPath(p: string): string {
   return p.replace(/\\/g, "/").toLowerCase();
@@ -81,7 +98,9 @@ interface ConfigPattern {
   label: string;
 }
 
-const RULE_PLATFORMS = PLATFORMS.filter((p) => !p.isCommand);
+// Rules files only: a JSON or YAML config (Aider's .aider.conf.yml) can hold
+// API keys, so a scan never picks it up
+const RULE_PLATFORMS = PLATFORMS.filter((p) => !p.isCommand && p.format !== "json" && p.format !== "yaml");
 const typeOf = (p: { blueprintType?: string }) => p.blueprintType ?? "CUSTOM";
 const atPath = (relativePath: string, file: string) => {
   const p = normPath(relativePath);
@@ -93,6 +112,9 @@ const inSkillFolder = (relativePath: string, dir: string) => {
   const n = parts.length;
   return n >= 4 && parts[n - 1] === "skill.md" && parts.slice(n - 4, n - 2).join("/") === dir;
 };
+/** A file at a fixed path (with a "/"), or with a fixed name wherever it sits. */
+const fileAt = (relativePath: string, file: string) =>
+  file.includes("/") ? atPath(relativePath, normPath(file)) : basename(relativePath) === file;
 const inFolder = (relativePath: string, folder: string) => {
   const p = normPath(relativePath);
   return p.startsWith(folder) || p.includes(`/${folder}`);
@@ -127,18 +149,31 @@ const CONFIG_PATTERNS: ConfigPattern[] = [
     type: typeOf(p),
     label: `${p.name} Rules`,
   })),
+  // Other files and folders the tool reads (before the fixed names, so
+  // .junie/AGENTS.md is Junie's, not the universal AGENTS.md)
+  ...RULE_PLATFORMS.flatMap((p) =>
+    (p.otherFiles ?? []).map((other) => ({
+      match: (rel: string) => (other.endsWith("/") ? inFolder(rel, other) && /\.mdc?$/.test(rel) : fileAt(rel, other)),
+      type: typeOf(p),
+      label: p.name,
+    }))
+  ),
   // A file at a fixed path or with a fixed name, wherever it sits
   ...RULE_PLATFORMS.map((p) => ({
-    match: (rel: string) => (p.file.includes("/") ? atPath(rel, p.file) : basename(rel) === p.file),
+    match: (rel: string) => fileAt(rel, p.file),
     type: typeOf(p),
     label: p.name,
   })),
   // Paths older CLI versions generated
   { match: (p) => inFolder(p, ".copilot/prompts/") && p.endsWith(".md"), type: "COPILOT_PROMPT", label: "Copilot Prompt" },
+  { match: (p) => inFolder(p, ".windsurf/workflows/") && p.endsWith(".md"), type: "WINDSURF_WORKFLOW", label: "Windsurf Workflow" },
+  { match: (p) => basename(p) === "CONVENTIONS.md", type: "AIDER_MD", label: "Aider Conventions" },
   { match: (p) => inFolder(p, ".idx/") && p.endsWith(".mdc"), type: "IDX_CONFIG", label: "Firebase Studio" },
   { match: (p) => atPath(p, ".zed/instructions.md"), type: "ZED_INSTRUCTIONS", label: "Zed" },
   { match: (p) => basename(p) === "AIDER.md", type: "AIDER_MD", label: "AIDER.md" },
   { match: (p) => basename(p) === ".cursorrules", type: "CURSORRULES", label: "Cursor Rules (legacy)" },
+  // Read by a tool the table does not generate for
+  { match: (p) => basename(p) === "QWEN.md", type: "CUSTOM", label: "Qwen Code" },
   { match: (p) => basename(p) === "opencode.json", type: "OPENCODE_JSON", label: "OpenCode Config" },
   { match: (p) => basename(p) === "firebender.json", type: "CUSTOM", label: "Firebender Config" },
 ];

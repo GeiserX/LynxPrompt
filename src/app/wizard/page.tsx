@@ -1382,7 +1382,13 @@ function WizardPageContent() {
         ? new Blob([finalContent], { type: "text/plain" })
         : blob;
       
-      downloadConfigFile(finalBlob, files);
+      if (files.length > 1) {
+        // A tool that needs two files (Aider: its config and AGENTS.md) gets a .zip
+        const slug = (config.projectName || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+        downloadBlob(await zipFiles(files), `${slug || "ai-config"}-ai-rules.zip`);
+      } else {
+        downloadConfigFile(finalBlob, files);
+      }
       
       // After successful download, ask about draft deletion and blueprint saving
       if (currentDraftId) {
@@ -1676,7 +1682,9 @@ function WizardPageContent() {
             <label className="mt-4 flex cursor-pointer items-start gap-2 text-sm">
               <input type="checkbox" className="mt-1" checked={zipPointers} onChange={(e) => setZipPointers(e.target.checked)} />
               <span>
-                CLAUDE.md and GEMINI.md import AGENTS.md (<code>@AGENTS.md</code>) instead of repeating it, so there is one rule set to edit.
+                One AGENTS.md holds the rules: tools that read it get no copy of their own, and CLAUDE.md and
+                GEMINI.md import it (<code>@AGENTS.md</code>). Copilot, Trae, Tabnine and Firebase Studio still
+                get a full copy. Untick to give every tool its own full file.
               </span>
             </label>
             {variablesWithoutDefaults.some((v) => !variableValues[v]) && (

@@ -128,9 +128,11 @@ describe("TemplateDownloadModal: the file matches the chosen platform", () => {
     const showAll = screen.queryByRole("button", { name: /Show all/ });
     if (showAll) fireEvent.click(showAll);
     expect(platformButton("Sourcegraph Cody")).toBeNull();
-    expect(platformButton("Tabnine")).toBeNull();
+    expect(platformButton("Aider")).toBeNull();
     expect(platformButton("Cursor Command")).toBeNull();
     expect(platformButton("Kiro")).not.toBeNull();
+    // Tabnine reads Markdown guidelines now, so the rules can go there
+    expect(platformButton("Tabnine")).not.toBeNull();
   });
 });
 
