@@ -48,7 +48,6 @@ interface Tag {
 interface Post {
   id: string;
   title: string;
-  content: string;
   status: string;
   isPinned: boolean;
   voteCount: number;
@@ -181,7 +180,7 @@ function SupportPageContent() {
     }
   }
 
-  async function fetchPosts() {
+  async function fetchPosts(page = 1) {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -189,7 +188,7 @@ function SupportPageContent() {
       if (selectedTag) params.set("tag", selectedTag);
       if (selectedStatus) params.set("status", selectedStatus);
       params.set("sort", sortBy);
-      params.set("page", "1");
+      params.set("page", String(page));
 
       const res = await fetch(`/api/support/posts?${params}`);
       if (res.ok) {
@@ -718,9 +717,25 @@ function SupportPageContent() {
           {pagination.pages > 1 && (
             <div className="mt-8 flex justify-center">
               <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={loading || pagination.page <= 1}
+                  onClick={() => fetchPosts(pagination.page - 1)}
+                >
+                  Previous
+                </Button>
                 <span className="text-sm text-muted-foreground">
                   Page {pagination.page} of {pagination.pages}
                 </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={loading || pagination.page >= pagination.pages}
+                  onClick={() => fetchPosts(pagination.page + 1)}
+                >
+                  Next
+                </Button>
               </div>
             </div>
           )}

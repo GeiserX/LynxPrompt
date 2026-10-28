@@ -48,4 +48,13 @@ fi
 
 echo "Database sync complete."
 
+# A new post needs one of the default forum categories, and nothing else creates
+# them. The seed only adds missing categories and tags, so it is safe on every start.
+case "$ENABLE_SUPPORT_FORUM" in
+  true|1)
+    npx tsx prisma/seed-support.ts 2>&1 && echo "Support DB: default categories present" \
+      || echo "WARNING: support forum seed failed; new posts fail until its categories exist"
+    ;;
+esac
+
 exec node server.js

@@ -1,23 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { createHash } from "crypto";
 import { authOptions } from "@/lib/auth";
 import { prismaSupport } from "@/lib/db-support";
+import { supportForumDisabled } from "@/lib/support-guard";
 import { prismaUsers } from "@/lib/db-users";
-
-// Generate Gravatar URL from email
-function getGravatarUrl(email: string, size: number = 96): string {
-  const hash = createHash("md5")
-    .update(email.toLowerCase().trim())
-    .digest("hex");
-  return `https://www.gravatar.com/avatar/${hash}?s=${size}&d=identicon`;
-}
 
 // Public endpoint - no auth required for reading
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const disabled = supportForumDisabled();
+  if (disabled) return disabled;
+
   try {
     // Session is optional - used only for hasVoted status
     const session = await getServerSession(authOptions);
@@ -77,7 +72,6 @@ export async function GET(
         id: true,
         name: true,
         displayName: true,
-        email: true,
         image: true,
         subscriptionPlan: true,
         role: true,
@@ -85,11 +79,9 @@ export async function GET(
     });
     const userMap = new Map(users.map((u) => [u.id, u]));
 
-    // Helper to get user image with fallback
-    const getUserImage = (userId: string) => {
-      const user = userMap.get(userId);
-      return user?.image || (user?.email ? getGravatarUrl(user.email) : null);
-    };
+    // No Gravatar fallback: its URL is the md5 of the email, which lets anyone
+    // match users against leaked address lists. The UI shows an initial instead.
+    const getUserImage = (userId: string) => userMap.get(userId)?.image || null;
 
     // Enrich post with fresh user data
     const postUser = userMap.get(post.userId);
@@ -135,6 +127,9 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const disabled = supportForumDisabled();
+  if (disabled) return disabled;
+
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -144,6 +139,21 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
     const { title, content } = body;
+
+    // Same limits as creating a post
+    if (title !== undefined && (typeof title !== "string" || title.length > 200)) {
+      return NextResponse.json(
+        { error: "Title must be 200 characters or less" },
+        { status: 400 }
+      );
+    }
+
+    if (content !== undefined && (typeof content !== "string" || content.length > 20_000)) {
+      return NextResponse.json(
+        { error: "Content must be 20,000 characters or less" },
+        { status: 400 }
+      );
+    }
 
     // Get the post
     const post = await prismaSupport.supportPost.findUnique({
@@ -191,6 +201,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const disabled = supportForumDisabled();
+  if (disabled) return disabled;
+
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {

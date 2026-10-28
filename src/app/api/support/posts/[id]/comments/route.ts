@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaSupport } from "@/lib/db-support";
+import { supportForumDisabled } from "@/lib/support-guard";
 import { prismaUsers } from "@/lib/db-users";
 
 // Public endpoint - no auth required for reading comments
@@ -9,6 +10,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const disabled = supportForumDisabled();
+  if (disabled) return disabled;
+
   try {
     const { id } = await params;
 
@@ -39,6 +43,9 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const disabled = supportForumDisabled();
+  if (disabled) return disabled;
+
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {

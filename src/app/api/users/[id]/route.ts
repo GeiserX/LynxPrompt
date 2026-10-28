@@ -1,14 +1,5 @@
 import { NextResponse } from "next/server";
-import { createHash } from "crypto";
 import { prismaUsers } from "@/lib/db-users";
-
-// Generate Gravatar URL from email (server-side)
-function getGravatarUrl(email: string, size: number = 96): string {
-  const hash = createHash("md5")
-    .update(email.toLowerCase().trim())
-    .digest("hex");
-  return `https://www.gravatar.com/avatar/${hash}?s=${size}&d=identicon`;
-}
 
 // GET /api/users/[id] - Get public user profile
 export async function GET(
@@ -25,7 +16,6 @@ export async function GET(
         id: true,
         displayName: true,
         name: true,
-        email: true, // Needed for Gravatar fallback (not exposed to client)
         image: true,
         persona: true,
         skillLevel: true,
@@ -84,8 +74,9 @@ export async function GET(
     }
 
     // Profile is public - return allowed fields
-    // Use OAuth image if available, otherwise generate Gravatar from email
-    const profileImage = user.image || (user.email ? getGravatarUrl(user.email) : null);
+    // No Gravatar fallback: its URL is the md5 of the email, which lets anyone
+    // match the profile against leaked address lists. The page shows initials.
+    const profileImage = user.image || null;
     
     const publicProfile = {
       id: user.id,
