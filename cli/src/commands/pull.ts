@@ -38,8 +38,9 @@ function contentToWrite(content: string, options: PullOptions, label: string): s
   return filled;
 }
 
-function pulledVariables(options: PullOptions): Record<string, string> | undefined {
-  return options.vars === undefined ? undefined : parseVariablesString(options.vars);
+// Values to remember for sync, only when they changed what was written
+function pulledVariables(options: PullOptions, written: string, content: string): Record<string, string> | undefined {
+  return options.vars === undefined || written === content ? undefined : parseVariablesString(options.vars);
 }
 
 // Determine blueprint source from visibility
@@ -204,7 +205,7 @@ async function pullHierarchy(
           hierarchyName: hierarchy.name,
           repositoryPath: bp.repository_path || undefined,
           localContent: written,
-          variables: pulledVariables(options),
+          variables: pulledVariables(options, written, blueprint.content),
         });
       }
 
@@ -436,7 +437,7 @@ async function pullBlueprint(
         hierarchyId: blueprint.hierarchy_id || undefined,
         repositoryPath: blueprint.repository_path || undefined,
         localContent: written,
-        variables: pulledVariables(options),
+        variables: pulledVariables(options, written, blueprint.content),
       });
     }
 

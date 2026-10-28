@@ -254,6 +254,16 @@ describe("lynxp pull --vars", () => {
     expect(t.localChecksum).toBeUndefined();
   });
 
+  it("treats a blueprint with no placeholders as a plain pull even with --vars", async () => {
+    await pullCommand("bp_1", { output: dir, yes: true, vars: "TEAM=Platform" });
+    fs.writeFileSync(file(), "# Rules\n\nUse tabs. Edited.\n");
+
+    await syncCommand(undefined, {});
+
+    expect((await tracked()).variables).toBeUndefined();
+    expect(server.bp_1.content).toBe("# Rules\n\nUse tabs. Edited.");
+  });
+
   it("writes placeholders untouched without --vars", async () => {
     server.bp_1.content = TEMPLATE;
 
