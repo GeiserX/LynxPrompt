@@ -11,6 +11,12 @@ import {
   fromBlueprintApiId,
   toHierarchyApiId,
 } from "@/lib/api-tokens";
+import {
+  canReadBlueprint,
+  checkBlueprintContent,
+  normalizeBlueprintType,
+  resolveBlueprintTeamId,
+} from "@/lib/blueprint-rules";
 
 /**
  * Compute SHA-256 checksum of content for optimistic locking
@@ -85,6 +91,8 @@ export async function GET(
         category: true,
         tags: true,
         visibility: true,
+        isPublic: true,
+        teamId: true,
         variables: true,
         downloads: true,
         favorites: true,
@@ -107,10 +115,10 @@ export async function GET(
       );
     }
 
-    // Verify ownership
-    if (blueprint.userId !== tokenData.userId) {
+    // Public blueprints, your own, and your teams' blueprints are readable
+    if (!(await canReadBlueprint(tokenData.userId, blueprint))) {
       return NextResponse.json(
-        { error: "Forbidden - you don't own this blueprint" },
+        { error: "Forbidden - you don't have access to this blueprint" },
         { status: 403 }
       );
     }
@@ -214,7 +222,15 @@ export async function PUT(
     // Check ownership first and get current checksum for optimistic locking
     const existing = await prismaUsers.userTemplate.findUnique({
       where: { id: blueprintId },
-      select: { userId: true, contentChecksum: true },
+      select: {
+        userId: true,
+        content: true,
+        contentChecksum: true,
+        isPublic: true,
+        visibility: true,
+        teamId: true,
+        currentVersion: true,
+      },
     });
 
     if (!existing) {
@@ -236,7 +252,17 @@ export async function PUT(
     const decodedContent = body.content_base64
       ? Buffer.from(body.content_base64, "base64").toString("utf-8")
       : body.content;
-    const { name, description, type, category, tags, visibility, expected_checksum } = body;
+    const {
+      name,
+      description,
+      type,
+      category,
+      tags,
+      visibility,
+      expected_checksum,
+      team_id,
+      sensitive_data_acknowledged = false,
+    } = body;
     const content = decodedContent;
 
     // Optimistic locking: if expected_checksum is provided, verify it matches
@@ -291,7 +317,7 @@ export async function PUT(
     }
 
     if (type !== undefined) {
-      updateData.type = type.toUpperCase();
+      updateData.type = normalizeBlueprintType(type);
     }
 
     if (category !== undefined) {
@@ -317,6 +343,40 @@ export async function PUT(
         : "PRIVATE";
       updateData.visibility = normalizedVisibility;
       updateData.isPublic = normalizedVisibility === "PUBLIC";
+
+      // A TEAM blueprint needs a team, or no teammate can ever see it
+      if (normalizedVisibility === "TEAM" && (team_id || !existing.teamId)) {
+        const team = await resolveBlueprintTeamId(tokenData.userId, team_id);
+        if (!team.ok) {
+          return NextResponse.json({ error: team.error }, { status: team.status });
+        }
+        updateData.teamId = team.teamId;
+      }
+    }
+
+    const willBePublic =
+      updateData.isPublic !== undefined ? Boolean(updateData.isPublic) : existing.isPublic;
+    const newContent =
+      typeof updateData.content === "string" ? updateData.content : existing.content;
+    if (updateData.content !== undefined || willBePublic !== existing.isPublic) {
+      const contentCheck = checkBlueprintContent(newContent, {
+        willBePublic,
+        sensitiveDataAcknowledged: sensitive_data_acknowledged === true,
+      });
+      if (!contentCheck.ok) {
+        return NextResponse.json(contentCheck.body, { status: contentCheck.status });
+      }
+    }
+
+    // Every content change gets a version, so CLI edits can be reverted
+    const contentChanged =
+      typeof updateData.content === "string" && updateData.content !== existing.content;
+    const newVersion = existing.currentVersion + 1;
+    if (contentChanged) {
+      updateData.currentVersion = newVersion;
+      if (willBePublic) {
+        updateData.publishedVersion = newVersion;
+      }
     }
 
     // Update blueprint
@@ -341,6 +401,20 @@ export async function PUT(
         contentChecksum: true,
       },
     });
+
+    if (contentChanged) {
+      await prismaUsers.userTemplateVersion.create({
+        data: {
+          templateId: blueprintId,
+          version: newVersion,
+          content: newContent,
+          variables: undefined,
+          changelog: "Updated via API",
+          isPublished: willBePublic,
+          createdBy: tokenData.userId,
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,

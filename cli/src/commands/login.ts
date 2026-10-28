@@ -1,5 +1,6 @@
 import chalk from "chalk";
 import ora from "ora";
+import { createHash, randomBytes } from "node:crypto";
 import { api, ApiRequestError } from "../api.js";
 import { setToken, setUser, isAuthenticated } from "../config.js";
 
@@ -16,8 +17,11 @@ export async function loginCommand(): Promise<void> {
   const spinner = ora("Initializing authentication...").start();
 
   try {
-    // Initialize CLI session
-    const session = await api.initCliSession();
+    // Initialize CLI session. The verifier stays in this process; the server
+    // only sees its hash until we poll.
+    const verifier = randomBytes(32).toString("base64url");
+    const codeChallenge = createHash("sha256").update(verifier).digest("base64url");
+    const session = await api.initCliSession(codeChallenge);
     spinner.stop();
 
     console.log();
@@ -44,7 +48,7 @@ export async function loginCommand(): Promise<void> {
       await sleep(pollInterval);
 
       try {
-        const result = await api.pollCliSession(session.session_id);
+        const result = await api.pollCliSession(session.session_id, verifier);
 
         if (result.status === "completed" && result.token && result.user) {
           pollSpinner.succeed("Authentication successful!");

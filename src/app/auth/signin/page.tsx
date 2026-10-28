@@ -63,6 +63,12 @@ function SignInContent() {
             setCliAuthComplete(true);
           } else {
             return res.json().then((data) => {
+              if (res.status === 403 && data.passkeyRequired) {
+                // Passkey users prove the passkey first, then come back here
+                const back = `/auth/signin?cli_session=${encodeURIComponent(cliSession)}`;
+                window.location.assign(`/auth/verify-passkey?callbackUrl=${encodeURIComponent(back)}`);
+                return;
+              }
               setCliAuthError(data.error || "Failed to complete CLI authentication");
             });
           }

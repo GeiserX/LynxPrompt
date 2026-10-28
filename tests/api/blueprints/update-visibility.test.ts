@@ -107,3 +107,32 @@ describe("PUT /api/blueprints/[id] visibility", () => {
     expect(written().visibility).toBeUndefined();
   });
 });
+
+describe("PUT /api/blueprints/[id] new version", () => {
+  beforeEach(() => {
+    mockFindUnique.mockReset();
+    mockUpdate.mockReset();
+    mockUpdate.mockImplementation(async ({ data }) => ({ id: "tpl_1", ...data }));
+  });
+
+  // The version row goes in the same write as currentVersion, so a failure
+  // cannot leave the blueprint pointing at a version that was never stored
+  it("writes the new version together with the blueprint update", async () => {
+    existing({ visibility: "PRIVATE", isPublic: false, teamId: null });
+    const response = await update({
+      content: "# AGENTS.md\n\nUse bun and keep functions small.",
+      publishNewVersion: true,
+      changelog: "Switch to bun",
+    });
+
+    expect(response.status).toBe(200);
+    expect(written().currentVersion).toBe(2);
+    expect(written().versions.create).toMatchObject({
+      version: 2,
+      content: "# AGENTS.md\n\nUse bun and keep functions small.",
+      changelog: "Switch to bun",
+      isPublished: false,
+      createdBy: "user_1",
+    });
+  });
+});

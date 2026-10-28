@@ -39,6 +39,10 @@ services:
     restart: unless-stopped
     ports:
       - "${PORT:-3000}:3000"
+    volumes:
+      # Avatars, team logos and blog images. The database keeps only their
+      # URLs, so without this volume a new image tag deletes every upload.
+      - uploads:/data/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -80,3 +84,4 @@ services:
 
 volumes:
   pgdata:
+  uploads:

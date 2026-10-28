@@ -5,6 +5,7 @@ import { prismaUsers } from "@/lib/db-users";
 import { createHash } from "crypto";
 import { sessionCookieName } from "@/lib/auth-cookies";
 import { getClientIP } from "@/lib/client-ip";
+import { getPasskeyStatus } from "@/lib/passkey-session";
 
 // Helper to generate device hash
 function generateDeviceHash(userAgent: string, fingerprint: string): string {
@@ -113,7 +114,9 @@ export async function POST(request: NextRequest) {
         data: { lastSeenAt: new Date() },
       });
 
-      // Update session to mark as trusted
+      // Record the device on the session. SECURITY: a known device does not
+      // stand in for the passkey: the fingerprint comes from the client, so
+      // only the WebAuthn verify handler may mark the session verified.
       if (sessionToken) {
         await prismaUsers.session.updateMany({
           where: {
@@ -125,15 +128,15 @@ export async function POST(request: NextRequest) {
             deviceName,
             ipHash,
             isNewDevice: false,
-            passkeyVerified: true,
-            passkeyVerifiedAt: new Date(),
           },
         });
       }
 
+      const status = await getPasskeyStatus(session.user.id, sessionToken);
+
       return NextResponse.json({
         isKnownDevice: true,
-        requiresPasskey: false,
+        requiresPasskey: status.required && !status.verified,
         deviceName,
       });
     }
@@ -194,11 +197,20 @@ export async function PUT(request: NextRequest) {
     const userAgent = request.headers.get("user-agent") || "";
     const ip = getClientIP(request);
 
+    // SECURITY: only a session that already passed the WebAuthn check may
+    // trust a device. This route never marks the session verified itself.
+    const status = await getPasskeyStatus(session.user.id, sessionToken);
+    if (status.required && !status.verified) {
+      return NextResponse.json(
+        { error: "Passkey verification required", passkeyRequired: true },
+        { status: 403 }
+      );
+    }
+
     const deviceHash = generateDeviceHash(userAgent, fingerprint);
     const deviceName = getDeviceName(userAgent);
     const ipHash = hashIP(ip);
 
-    // Update session to mark as verified
     if (sessionToken) {
       await prismaUsers.session.updateMany({
         where: {
@@ -210,8 +222,6 @@ export async function PUT(request: NextRequest) {
           deviceName,
           ipHash,
           isNewDevice: false,
-          passkeyVerified: true,
-          passkeyVerifiedAt: new Date(),
         },
       });
     }

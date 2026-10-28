@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
+import { requirePasskeyVerified } from "@/lib/passkey-session";
 import {
   generateToken,
   canUseApi,
@@ -94,6 +95,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const passkeyBlock = await requirePasskeyVerified(request, session.user.id);
+    if (passkeyBlock) return passkeyBlock;
+
     // Check subscription
     const user = await prismaUsers.user.findUnique({
       where: { id: session.user.id },
@@ -142,11 +146,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Limit number of active tokens per user (prevent abuse)
+    // Limit number of active tokens per user (prevent abuse).
+    // Expired tokens no longer work, so they do not take a slot.
     const activeTokenCount = await prismaUsers.apiToken.count({
       where: {
         userId: session.user.id,
         revokedAt: null,
+        expiresAt: { gt: new Date() },
       },
     });
 

@@ -788,6 +788,8 @@ export default function BlueprintDetailPage() {
             targetPlatform: blueprint.targetPlatform || blueprint.type,
             compatibleWith: blueprint.compatibleWith,
           }}
+          isOwner={blueprint.isOwner}
+          onCloneToEdit={handleCloneToEdit}
         />
       )}
 
