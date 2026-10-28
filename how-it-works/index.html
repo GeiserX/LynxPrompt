@@ -947,7 +947,7 @@
     CLI[lynxp CLI, VS Code extension,&lt;br/&gt;GitHub Action, MCP server] &lt;--&gt;|Bearer API token| WEB
     WEB --&gt; DB[(PostgreSQL: app, users,&lt;br/&gt;blog, support)]
     WEB --&gt; SMTP[SMTP server]
-    WEB -.-&gt; EXT[GitHub or Google OAuth, SSO,&lt;br/&gt;Anthropic API, Stripe: optional]
+    WEB -.-&gt; EXT[GitHub or Google OAuth, SSO,&lt;br/&gt;Anthropic API: optional]
     WEB &lt;-.-&gt;|public blueprints| FED[Other LynxPrompt instances]</code></pre>
 <h2 id="sign-in">Sign-in<a class="headerlink" href="#sign-in" title="Permanent link">&para;</a></h2>
 <p>NextAuth with database sessions (30 days, refreshed daily). The providers are built from the feature flags:
