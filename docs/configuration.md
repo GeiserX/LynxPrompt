@@ -48,7 +48,7 @@ schema's tables.
 | `ENABLE_GITHUB_OAUTH` | `false` | GitHub login. Needs `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`; callback `<APP_URL>/api/auth/callback/github`. |
 | `ENABLE_GOOGLE_OAUTH` | `false` | Google login. Needs `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`; callback `<APP_URL>/api/auth/callback/google`. |
 | `ENABLE_SSO` | `false` | SAML, OIDC and LDAP, configured per team in the UI. |
-| `ENABLE_USER_REGISTRATION` | `true` | `false` lets only existing accounts sign in (new ones get `RegistrationDisabled`). |
+| `ENABLE_USER_REGISTRATION` | `true` | `false` lets only existing accounts and addresses with a pending team invitation sign in (others get `RegistrationDisabled`). |
 | `ENABLE_TURNSTILE` | `false` | Cloudflare Turnstile on the sign-in forms. |
 
 ## Features

@@ -379,8 +379,8 @@ APP_URL=https://lynxprompt.yourcompany.com`}</code>
             <h3 className="font-semibold">Invite-Only Mode</h3>
             <p className="mt-1 text-sm text-muted-foreground">
               Set <code className="rounded bg-muted px-1 py-0.5 text-xs">ENABLE_USER_REGISTRATION=false</code>{" "}
-              to prevent new sign-ups. Existing users can still sign in. Admins can
-              invite users via the admin panel.
+              to prevent new sign-ups. Existing users can still sign in, and a team
+              admin can bring someone new in by inviting their address to a team.
             </p>
           </div>
         </div>

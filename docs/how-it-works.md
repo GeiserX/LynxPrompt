@@ -30,7 +30,8 @@ NextAuth with database sessions (30 days, refreshed daily). The providers are bu
 the mail link (`ENABLE_EMAIL_AUTH`, on by default, needs `SMTP_*`), passkeys (`ENABLE_PASSKEYS`, for existing
 accounts), GitHub and Google OAuth, and SAML, OIDC or LDAP SSO per team. When an account whose address equals
 `SUPERADMIN_EMAIL` signs in, it is promoted to superadmin. Roles are USER, ADMIN and SUPERADMIN. With
-`ENABLE_USER_REGISTRATION=false`, an address without an account is refused with `RegistrationDisabled`.
+`ENABLE_USER_REGISTRATION=false`, an address without an account is refused with `RegistrationDisabled`,
+unless it has a pending, unexpired team invitation.
 
 ## What the CLI and the extension talk to
 
