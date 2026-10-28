@@ -95,7 +95,12 @@ lynxp check
 
 # CI mode (exit code 0=pass, 1=fail)
 lynxp check --ci
+
+# The result as JSON: { valid, files, errors, warnings }
+lynxp check --json
 ```
+
+Besides empty files, placeholders and secrets, `check` fails on hidden Unicode: zero-width characters, bidi controls and tag characters that an agent reads as instructions but a reviewer cannot see. Each error names the line, column and code point. Emoji joiners, joiners inside Persian or Indic words and a byte order mark at the start of the file are not reported.
 
 ### Status (`lynxp status`)
 
@@ -210,6 +215,7 @@ Search public blueprints in the marketplace:
 ```bash
 lynxp search "nextjs typescript"
 lynxp search react --limit 10
+lynxp search react --json
 ```
 
 ### List (`lynxp list`)
@@ -219,6 +225,7 @@ List your own blueprints:
 ```bash
 lynxp list
 lynxp list --visibility PUBLIC
+lynxp list --json
 ```
 
 ### Authentication
@@ -227,7 +234,7 @@ lynxp list --visibility PUBLIC
 # Login (opens browser for OAuth)
 lynxp login
 
-# Show current user
+# Show current user (--json for scripts)
 lynxp whoami
 
 # Logout

@@ -65,6 +65,7 @@ program
   .command("check")
   .description("Validate AI configuration files (for CI/CD)")
   .option("--ci", "CI mode - exit codes only (0=pass, 1=fail)")
+  .option("-j, --json", "Output as JSON (for scripting)")
   .action(checkCommand);
 
 // Analyze - standalone project analyzer
@@ -129,6 +130,7 @@ program
   .command("search <query>")
   .description("Search public blueprints in the marketplace")
   .option("-l, --limit <number>", "Number of results", "20")
+  .option("-j, --json", "Output as JSON (for scripting)")
   .action(searchCommand);
 
 program
@@ -136,6 +138,7 @@ program
   .description("List your blueprints")
   .option("-l, --limit <number>", "Number of results", "20")
   .option("-v, --visibility <visibility>", "Filter: PRIVATE, TEAM, PUBLIC, or all")
+  .option("-j, --json", "Output as JSON (for scripting)")
   .action(listCommand);
 
 program
@@ -201,6 +204,7 @@ program
 program
   .command("whoami")
   .description("Show current authenticated user")
+  .option("-j, --json", "Output as JSON (for scripting)")
   .action(whoamiCommand);
 
 program
@@ -256,6 +260,7 @@ ${chalk.cyan("Blueprint Tracking:")}
 
 ${chalk.cyan("CI/CD:")}
   ${chalk.white("$ lynxp check --ci")}            ${chalk.gray("Validate config (exit code)")}
+  ${chalk.white("$ lynxp check --json")}          ${chalk.gray("Validation result as JSON")}
 
 ${chalk.cyan("Configuration:")}
   ${chalk.white("$ lynxp config")}                 ${chalk.gray("Show current settings")}

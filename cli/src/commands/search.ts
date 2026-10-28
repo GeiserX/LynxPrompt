@@ -5,6 +5,7 @@ import { safeText } from "../utils/terminal.js";
 
 interface SearchOptions {
   limit: string;
+  json?: boolean;
 }
 
 export async function searchCommand(
@@ -15,8 +16,15 @@ export async function searchCommand(
 
   try {
     const limit = parseInt(options.limit, 10) || 20;
-    const { templates, total, hasMore } = await api.searchBlueprints(query, limit);
+    const response = await api.searchBlueprints(query, limit);
     spinner.stop();
+
+    if (options.json) {
+      console.log(JSON.stringify(response, null, 2));
+      return;
+    }
+
+    const { templates, total, hasMore } = response;
 
     if (templates.length === 0) {
       console.log();

@@ -58,6 +58,18 @@ mkdir .clinerules && printf '# Rules\n\nUse TypeScript strict mode.\n' > .cliner
 if "$LYNXP" check --ci > out.txt 2>&1; then pass "check --ci reads a .clinerules/ directory"
 else fail "check --ci fails on a .clinerules/ directory"; cat out.txt; fi
 
+fresh
+printf '# Rules\n\nUse TypeScript str\342\200\213ict mode everywhere.\n' > AGENTS.md
+if "$LYNXP" check --ci > out.txt 2>&1; then fail "check --ci passes on a zero-width space in AGENTS.md"
+elif ! grep -q "U+200B" out.txt; then fail "check --ci does not say which hidden character it found"; cat out.txt
+else pass "check --ci fails on hidden Unicode and names it"; fi
+
+fresh
+printf '# Rules\n\nUse TypeScript strict mode everywhere.\n' > AGENTS.md
+if "$LYNXP" check --json 2>/dev/null | node -e 'const r = JSON.parse(require("fs").readFileSync(0, "utf8")); process.exit(r.valid && r.files[0] === "AGENTS.md" ? 0 : 1)' 2>/dev/null
+then pass "check --json prints only JSON"
+else fail "check --json output is not the expected JSON"; fi
+
 # --- import --json ---
 fresh
 printf '# Project\n\nUse TypeScript.\n' > AGENTS.md
