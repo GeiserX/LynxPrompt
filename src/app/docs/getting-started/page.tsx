@@ -23,7 +23,7 @@ export default function GettingStartedPage() {
         <p className="max-w-2xl text-lg text-muted-foreground">
           LynxPrompt is an open-source platform for generating AI IDE
           configuration files for tools like Cursor, Claude Code, GitHub
-          Copilot, Windsurf, and Antigravity. Self-host your own instance,
+          Copilot, Devin Desktop, and Antigravity. Self-host your own instance,
           connect to a federated network, or use the public instance — get
           started in just a few minutes.
         </p>

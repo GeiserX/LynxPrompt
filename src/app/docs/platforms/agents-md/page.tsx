@@ -171,20 +171,24 @@ E-commerce platform with React frontend and Go backend.
       <section className="space-y-4">
         <h2 className="text-2xl font-bold">Compatible Tools</h2>
         <p className="text-muted-foreground">
-          AGENTS.md is supported or can be used with:
+          These tools read AGENTS.md by themselves:
         </p>
         <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <li className="flex items-center gap-2 rounded-lg border bg-card p-3">
+            <span className="text-green-500">✓</span>
+            OpenAI Codex
+          </li>
           <li className="flex items-center gap-2 rounded-lg border bg-card p-3">
             <span className="text-green-500">✓</span>
             Cursor
           </li>
           <li className="flex items-center gap-2 rounded-lg border bg-card p-3">
             <span className="text-green-500">✓</span>
-            Claude Code
+            Devin Desktop (formerly Windsurf)
           </li>
           <li className="flex items-center gap-2 rounded-lg border bg-card p-3">
             <span className="text-green-500">✓</span>
-            Aider
+            Antigravity
           </li>
           <li className="flex items-center gap-2 rounded-lg border bg-card p-3">
             <span className="text-green-500">✓</span>
@@ -192,13 +196,61 @@ E-commerce platform with React frontend and Go backend.
           </li>
           <li className="flex items-center gap-2 rounded-lg border bg-card p-3">
             <span className="text-green-500">✓</span>
-            Continue
+            Cline
           </li>
           <li className="flex items-center gap-2 rounded-lg border bg-card p-3">
             <span className="text-green-500">✓</span>
-            Many others
+            Roo Code / Zoo Code
+          </li>
+          <li className="flex items-center gap-2 rounded-lg border bg-card p-3">
+            <span className="text-green-500">✓</span>
+            Augment Code
+          </li>
+          <li className="flex items-center gap-2 rounded-lg border bg-card p-3">
+            <span className="text-green-500">✓</span>
+            Kilo Code
+          </li>
+          <li className="flex items-center gap-2 rounded-lg border bg-card p-3">
+            <span className="text-green-500">✓</span>
+            Junie
+          </li>
+          <li className="flex items-center gap-2 rounded-lg border bg-card p-3">
+            <span className="text-green-500">✓</span>
+            Kiro
+          </li>
+          <li className="flex items-center gap-2 rounded-lg border bg-card p-3">
+            <span className="text-green-500">✓</span>
+            Goose
+          </li>
+          <li className="flex items-center gap-2 rounded-lg border bg-card p-3">
+            <span className="text-green-500">✓</span>
+            Warp
+          </li>
+          <li className="flex items-center gap-2 rounded-lg border bg-card p-3">
+            <span className="text-green-500">✓</span>
+            OpenCode
+          </li>
+          <li className="flex items-center gap-2 rounded-lg border bg-card p-3">
+            <span className="text-green-500">✓</span>
+            OpenHands
+          </li>
+          <li className="flex items-center gap-2 rounded-lg border bg-card p-3">
+            <span className="text-green-500">✓</span>
+            Crush
+          </li>
+          <li className="flex items-center gap-2 rounded-lg border bg-card p-3">
+            <span className="text-green-500">✓</span>
+            Firebender
           </li>
         </ul>
+        <p className="text-muted-foreground">
+          Claude Code and Gemini CLI read their own file, so LynxPrompt writes a
+          one-line <code>CLAUDE.md</code> or <code>GEMINI.md</code> that imports
+          AGENTS.md with <code>@AGENTS.md</code>. Aider loads no rules file by
+          itself, so LynxPrompt writes a <code>.aider.conf.yml</code> that lists
+          AGENTS.md under <code>read:</code>. GitHub Copilot, Trae, Tabnine and
+          Firebase Studio get a full copy of the rules in their own file.
+        </p>
       </section>
 
       {/* Monorepo Support */}
@@ -258,8 +310,8 @@ E-commerce platform with React frontend and Go backend.
         </p>
         <ul className="list-inside list-disc space-y-2 text-muted-foreground">
           <li>
-            Generate AGENTS.md alongside platform-specific files (e.g.,
-            .cursor/rules)
+            Pick several tools at once: the rules go in one AGENTS.md, and each
+            tool gets only the file it needs to reach it
           </li>
           <li>Create blueprints that include AGENTS.md</li>
           <li>Use AI editing to customize your AGENTS.md</li>
@@ -275,7 +327,7 @@ E-commerce platform with React frontend and Go backend.
           href="/docs/platforms/windsurf"
           className="text-sm text-muted-foreground hover:text-foreground"
         >
-          ← Windsurf
+          ← Devin Desktop
         </Link>
         <Link
           href="/docs/faq"
