@@ -9,6 +9,39 @@ entries:
           description: Mount the uploads volume at /data/uploads, where the app writes; it was mounted at /app/public/uploads, which the app never uses
       category: AI
     apiVersion: v2
+    appVersion: 2.1.45
+    created: "2026-10-28T05:04:25.859021061Z"
+    description: A Helm chart for LynxPrompt - Self-hosted AI IDE configuration hub
+    digest: 36e9e614d8083c4cca4bff02a9d577fdd0be3a96e5db2e45a18d5d6b3e42a59e
+    home: https://lynxprompt.com
+    keywords:
+    - lynxprompt
+    - ai
+    - ide
+    - configuration
+    - cursor
+    - claude
+    - copilot
+    - self-hosted
+    kubeVersion: '>=1.21.0-0'
+    maintainers:
+    - email: acsdesk@protonmail.com
+      name: Sergio Fernandez
+    name: lynxprompt
+    sources:
+    - https://github.com/GeiserX/LynxPrompt
+    type: application
+    urls:
+    - https://github.com/GeiserX/LynxPrompt/releases/download/lynxprompt-0.1.5/lynxprompt-0.1.5.tgz
+    version: 0.1.5
+  - annotations:
+      artifacthub.io/changes: |
+        - kind: changed
+          description: Run app 2.1.40, which signs in over plain http, makes SUPERADMIN_EMAIL superadmin on the first sign-in and creates /data/uploads
+        - kind: fixed
+          description: Mount the uploads volume at /data/uploads, where the app writes; it was mounted at /app/public/uploads, which the app never uses
+      category: AI
+    apiVersion: v2
     appVersion: 2.1.40
     created: "2026-10-10T21:13:39.22259453Z"
     description: A Helm chart for LynxPrompt - Self-hosted AI IDE configuration hub
@@ -122,4 +155,4 @@ entries:
     urls:
     - https://github.com/GeiserX/LynxPrompt/releases/download/lynxprompt-0.1.1/lynxprompt-0.1.1.tgz
     version: 0.1.1
-generated: "2026-10-10T21:13:39.222609288Z"
+generated: "2026-10-28T05:04:25.859039649Z"
