@@ -135,7 +135,6 @@ export default function ShareBlueprintPage() {
   const [sensitiveWarningDismissed, setSensitiveWarningDismissed] = useState(false);
   const [acknowledgedMatchCount, setAcknowledgedMatchCount] = useState<number>(0);
   const [acknowledgedContentHash, setAcknowledgedContentHash] = useState<string>("");
-  const [userPlan, setUserPlan] = useState<string>("FREE");
   const [loadingPlan, setLoadingPlan] = useState(true);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   
@@ -171,7 +170,6 @@ export default function ShareBlueprintPage() {
         const billingRes = await fetch("/api/billing/status");
         if (billingRes.ok) {
           const data = await billingRes.json();
-          setUserPlan(data.plan || "FREE");
           const teams = data.teams || (data.team ? [data.team] : []);
           if (teams.length > 0) {
             setAllTeams(teams);
@@ -619,8 +617,8 @@ export default function ShareBlueprintPage() {
                   </p>
                 </div>
 
-                {/* AI Edit Panel - MAX users only, when AI is enabled */}
-                {enableAI && userPlan === "max" && (
+                {/* AI Edit Panel - shown whenever AI is enabled on this instance */}
+                {enableAI && (
                   <div className="mb-3 rounded-lg border border-purple-300 bg-purple-100 p-3 dark:border-purple-500/50 dark:bg-purple-900/30">
                     <div className="mb-2 flex items-center gap-2 text-sm">
                       <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-300" />
