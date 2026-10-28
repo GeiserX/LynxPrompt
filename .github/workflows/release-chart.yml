@@ -47,3 +47,22 @@ jobs:
           skip_existing: true
         env:
           CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # chart-releaser can finish without the chart being installable (the index
+      # lives on GitHub Pages, which deploys after the push). Wait until a plain
+      # `helm pull` of this chart version works, as a user's would.
+      - name: Check the chart is installable
+        env:
+          REPO_URL: https://geiserx.github.io/LynxPrompt
+        run: |
+          VERSION=$(sed -n "s/^version: *//p" charts/lynxprompt/Chart.yaml)
+          for i in $(seq 1 40); do
+            if helm repo add lynxprompt "$REPO_URL" --force-update >/dev/null 2>&1 &&
+              helm pull lynxprompt/lynxprompt --version "$VERSION" --destination "$RUNNER_TEMP" >/dev/null 2>&1; then
+              echo "lynxprompt chart $VERSION installs from $REPO_URL"
+              exit 0
+            fi
+            sleep 30
+          done
+          echo "::error::lynxprompt chart $VERSION is not in $REPO_URL after 20 minutes"
+          exit 1
