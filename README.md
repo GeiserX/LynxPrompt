@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://hub.docker.com/r/drumsergio/lynxprompt/tags"><img src="https://img.shields.io/docker/v/drumsergio/lynxprompt?sort=semver&style=flat-square&logo=docker&label=release" alt="Release"></a>
-  <a href="https://github.com/GeiserX/LynxPrompt/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/GeiserX/LynxPrompt/ci.yml?branch=main&style=flat-square&logo=github&label=CI" alt="CI"></a>
+  <a href="https://github.com/GeiserX/LynxPrompt/actions/workflows/release.yml"><img src="https://img.shields.io/github/actions/workflow/status/GeiserX/LynxPrompt/release.yml?branch=main&event=push&style=flat-square&logo=github&label=CI" alt="CI"></a>
   <a href="https://github.com/GeiserX/LynxPrompt/blob/main/LICENSE"><img src="https://img.shields.io/github/license/GeiserX/LynxPrompt?style=flat-square" alt="License"></a>
   <a href="https://hub.docker.com/r/drumsergio/lynxprompt"><img src="https://img.shields.io/docker/pulls/drumsergio/lynxprompt?style=flat-square&logo=docker&label=Docker%20pulls" alt="Docker pulls"></a>
   <a href="https://github.com/GeiserX/LynxPrompt/stargazers"><img src="https://img.shields.io/github/stars/GeiserX/LynxPrompt?style=flat-square&logo=github" alt="GitHub stars"></a>

@@ -13,10 +13,10 @@ describe("production deployment workflow contract", () => {
     const release = readWorkflow("release.yml");
     const publish = readWorkflow("docker-publish.yml");
 
-    expect(release).toContain("event-type: app-release");
-    expect(publish).toContain("types: [app-release]");
+    expect(release).toContain("event-type: release-published");
+    expect(publish).toContain("types: [release-published]");
     expect(publish).toContain("ref: ${{ steps.release.outputs.ref }}");
-    expect(publish).toContain("ref=refs/tags/app-v$VERSION");
+    expect(publish).toContain("ref=refs/tags/v$VERSION");
     expect(publish).toContain("queue: max");
     expect(publish).toContain("already exists and is immutable");
     expect(publish).not.toMatch(/type=raw,value=latest/);

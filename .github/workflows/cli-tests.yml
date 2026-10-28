@@ -1,8 +1,9 @@
 name: CLI Integration Tests
 
 on:
+  # On main, release.yml runs the build and the public tests on every push.
   push:
-    branches: [main, develop]
+    branches: [develop]
     paths:
       - 'cli/**'
       - 'packages/shared/**'

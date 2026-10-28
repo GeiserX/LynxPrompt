@@ -45,6 +45,9 @@ jobs:
           charts_dir: charts
           config: .github/cr.yaml
           skip_existing: true
+          # The app's v<version> release stays the Latest one; a chart release
+          # created after it must not take that over.
+          mark_as_latest: false
         env:
           CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

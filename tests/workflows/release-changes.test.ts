@@ -131,9 +131,24 @@ describe("release change detection", () => {
     expect(stderr).toContain("shares no history with HEAD");
   });
 
+  // App and CLI ship in one release, so any shipped change releases both.
+  it("all releases for an app change, a CLI change or both, and for nothing else", () => {
+    const all = (change: (dir: string) => void) => {
+      const dir = released();
+      change(dir);
+      git(dir, "add", "-A");
+      git(dir, "commit", "-q", "--allow-empty", "-m", "change");
+      return execFileSync("bash", [script, "all", "app-v1.0.1"], { cwd: dir, encoding: "utf8" }).trim();
+    };
+    expect(all(touching("src/app/page.tsx"))).toBe("true");
+    expect(all(touching("cli/src/index.ts"))).toBe("true");
+    expect(all(touching("Dockerfile", "cli/package.json"))).toBe("true");
+    expect(all(touching(".github/workflows/ci.yml", "docs/guide.md", "tests/lib/utils.test.ts", "charts/lynxprompt/values.yaml"))).toBe("false");
+    expect(all(() => {})).toBe("false");
+  });
+
   it("is what the release workflow uses", () => {
     const release = readFileSync(resolve(process.cwd(), ".github/workflows/release.yml"), "utf8");
-    expect(release).toContain('.github/scripts/release-changes.sh app "$APP_BASE"');
-    expect(release).toContain('.github/scripts/release-changes.sh cli "$CLI_BASE"');
+    expect(release).toContain('bash .github/scripts/release-changes.sh all "$LAST"');
   });
 });

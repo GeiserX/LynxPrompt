@@ -5,6 +5,8 @@ All notable changes to LynxPrompt will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+From 2.2.0 the web app and the CLI share one version and one release: the `vX.Y.Z` tag, the Docker image `drumsergio/lynxprompt:X.Y.Z` and `lynxprompt@X.Y.Z` on npm. Each `## [X.Y.Z]` section below covers both and becomes that release's notes. Before 2.2.0 the app and the CLI had their own version lines (`app-v*` and `cli-v*` tags).
+
 ## [Unreleased]
 
 ### Fixed

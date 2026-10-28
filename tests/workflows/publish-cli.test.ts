@@ -99,9 +99,25 @@ describe("CLI release pipeline", () => {
     expect(job(publish, "check")).toContain('echo "ref=refs/tags/$TAG"');
   });
 
-  it("a lockfile-only merge starts the release", () => {
-    const paths = read("release.yml").match(/\n  push:\n(?: {4}.*\n)*/)![0];
-    for (const path of ["package-lock.json", "cli/package-lock.json"]) expect(paths).toContain(`- '${path}'`);
+  // The push trigger once listed only package.json and the lockfiles, so a
+  // merge of src/ or cli/ released nothing. Now every push reaches the script,
+  // except pushes that only touch docs, the chart or root Markdown files.
+  it("every push to main that could ship reaches the release", () => {
+    const push = read("release.yml").match(/\n  push:\n((?: {4}.*\n)*)/)![1];
+    expect(push).not.toMatch(/^ {4}paths:/m);
+    const ignored = [...push.matchAll(/^ {6}- '(.*)'$/gm)].map((m) => m[1]);
+    expect(ignored).toEqual(["docs/**", "mkdocs.yml", "charts/**", "*.md"]);
+  });
+
+  it("publishes from the v<version> tag and its release, started by the release dispatch", () => {
+    const publish = read("publish-cli.yml");
+    expect(publish).toContain("types: [release-published]");
+    // A release made with GITHUB_TOKEN starts no workflow; a release trigger
+    // would only fire on a hand-made release and publish it a second time.
+    expect(publish).not.toMatch(/\n  release:\n/);
+    expect(job(publish, "check")).toContain('TAG="v${{ steps.version.outputs.version }}"');
+    for (const name of ["publish-binaries", "sign-macos"]) expect(job(publish, name)).toContain("tag_name: v${{ needs.check.outputs.version }}");
+    expect(job(publish, "verify")).toContain('gh release view "v$VERSION"');
   });
 });
 
@@ -140,5 +156,9 @@ describe("Helm chart release", () => {
     const chart = read("release-chart.yml");
     expect(chart).toContain('helm pull lynxprompt/lynxprompt --version "$VERSION"');
     expect(chart).toContain("exit 1");
+  });
+
+  it("never takes Latest from the app and CLI release", () => {
+    expect(read("release-chart.yml")).toMatch(/^ {10}mark_as_latest: false$/m);
   });
 });
