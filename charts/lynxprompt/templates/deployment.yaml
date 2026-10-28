@@ -215,8 +215,10 @@ spec:
                 secretKeyRef:
                   name: {{ include "lynxprompt.secretName" . }}
                   key: anthropic-api-key
+            {{- if .Values.ai.model }}
             - name: AI_MODEL
               value: {{ .Values.ai.model | quote }}
+            {{- end }}
             {{- end }}
             {{- with .Values.extraEnv }}
             {{- toYaml . | nindent 12 }}

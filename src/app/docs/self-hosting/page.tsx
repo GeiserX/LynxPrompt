@@ -240,7 +240,7 @@ APP_URL=https://lynxprompt.yourcompany.com`}</code>
               </tr>
               <tr>
                 <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">AI_MODEL</code></td>
-                <td className="px-4 py-2 text-muted-foreground">claude-3-5-haiku-latest</td>
+                <td className="px-4 py-2 text-muted-foreground">claude-haiku-5-5</td>
                 <td className="px-4 py-2">Anthropic model to use for AI features</td>
               </tr>
             </tbody>
@@ -425,7 +425,7 @@ APP_URL=https://lynxprompt.yourcompany.com`}</code>
               <pre className="mt-2 overflow-x-auto rounded-lg bg-muted p-3 text-sm">
                 <code>{`ENABLE_AI=true
 ANTHROPIC_API_KEY=sk-ant-...
-AI_MODEL=claude-3-5-haiku-latest  # optional`}</code>
+AI_MODEL=claude-haiku-5-5  # optional`}</code>
               </pre>
             </div>
           </div>

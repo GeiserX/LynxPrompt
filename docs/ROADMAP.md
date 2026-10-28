@@ -43,7 +43,7 @@ All features configurable via env vars for maximum deployment flexibility:
 **AI:**
 - `ENABLE_AI=false` — master toggle for all AI features (editing, wizard assistant)
 - `ANTHROPIC_API_KEY` — required when AI enabled
-- `AI_MODEL=claude-3-5-haiku-latest` — configurable model
+- `AI_MODEL=claude-haiku-5-5` — configurable model
 
 **Content:**
 - `ENABLE_BLOG=false` — blog nav item and routes
