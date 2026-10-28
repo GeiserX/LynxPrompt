@@ -536,6 +536,17 @@ export function TemplateDownloadModal({
                   {isSkill ? `${skillDirectory}/${skillDirName}/SKILL.md` : mcpTarget.file}
                 </code>
               </p>
+              {isMcp && mcpTarget.kind !== "whole" && (
+                <p className="mt-2 text-xs text-muted-foreground" data-testid="mcp-merge-note">
+                  {mcpTarget.kind === "toml"
+                    ? `This file holds other settings too. The download has only the [mcp_servers] tables: add them to your ${mcpTarget.file}.`
+                    : `This file holds other settings too. The download has only the "${mcpTarget.key}" key: merge it into your ${mcpTarget.file}.`}{" "}
+                  lynxp pull and lynxp convert do that for you and keep the other settings.
+                </p>
+              )}
+              {isMcp && mcpTarget.note && (
+                <p className="mt-2 text-xs text-muted-foreground">{mcpTarget.note}.</p>
+              )}
             </div>
           )}
 
