@@ -19,8 +19,8 @@ import {
   sourceFilePlatform,
 } from "../utils/convert-format.js";
 import { PLATFORM_FILES } from "../utils/generator.js";
-import { COMMANDS, MCP_CONFIGS, convertMcpConfig } from "../../../packages/shared/src/platforms.js";
-import { matchConfigFile } from "../utils/blueprint-files.js";
+import { COMMANDS, MCP_CONFIGS, PLATFORMS, convertMcpConfig, resolvePlatformId } from "../../../packages/shared/src/platforms.js";
+import { matchConfigFile, rulesWritePath } from "../utils/blueprint-files.js";
 
 interface ConvertOptions {
   output?: string;
@@ -28,57 +28,21 @@ interface ConvertOptions {
 }
 
 // Target format to output filename: every platform of the shared table (the
-// file the wizard and the web download write), plus the legacy .cursorrules,
-// Codex and one example file per command folder.
+// file the wizard and the web download write), plus the legacy .cursorrules
+// and one example file per command folder.
 const TARGET_FILES: Record<string, string> = {
   ...PLATFORM_FILES,
   cursor_legacy: ".cursorrules",
-  codex: "codex.md",
   ...Object.fromEntries(COMMANDS.map((c) => [c.id, `${c.directory}/command${c.extension}`])),
 };
 
-// Platform display names
+// Display names, from the same table
 const PLATFORM_NAMES: Record<string, string> = {
+  ...Object.fromEntries(PLATFORMS.map((p) => [p.id, p.name])),
+  ...Object.fromEntries(COMMANDS.map((c) => [c.id, c.name])),
   universal: "AGENTS.md (Universal)",
   agents: "AGENTS.md (Universal)",
-  cursor: "Cursor Rules (.mdc)",
   cursor_legacy: "Cursor Rules (legacy)",
-  claude: "CLAUDE.md",
-  copilot: "GitHub Copilot",
-  windsurf: "Windsurf",
-  antigravity: "Antigravity (Gemini IDE)",
-  zed: "Zed",
-  void: "Void",
-  trae: "Trae AI",
-  firebase: "Firebase Studio",
-  cline: "Cline",
-  roocode: "Roo Code",
-  continue: "Continue",
-  cody: "Sourcegraph Cody",
-  tabnine: "Tabnine",
-  supermaven: "Supermaven",
-  codegpt: "CodeGPT",
-  amazonq: "Amazon Q",
-  augment: "Augment Code",
-  kilocode: "Kilo Code",
-  junie: "Junie",
-  kiro: "Kiro",
-  aider: "Aider",
-  goose: "Goose",
-  warp: "Warp AI",
-  "gemini-cli": "Gemini CLI",
-  opencode: "OpenCode",
-  codex: "Codex",
-  openhands: "OpenHands",
-  crush: "Crush",
-  devin: "Devin",
-  firebender: "Firebender",
-  "cursor-command": "Cursor Command",
-  "claude-command": "Claude Code Command",
-  "windsurf-workflow": "Windsurf Workflow",
-  "copilot-prompt": "Copilot Prompt",
-  "continue-prompt": "Continue Prompt",
-  "opencode-command": "OpenCode Command",
 };
 
 // Command directory patterns for detection (.copilot/prompts is where older
@@ -169,7 +133,8 @@ export async function convertCommand(
   }
 
   // Validate target format — try exact match, then underscore variant
-  const targetLower = target.toLowerCase();
+  // A retired name (devin, continue...) means the platform that covers it now
+  const targetLower = resolvePlatformId(target.toLowerCase());
   const normalizedTarget = TARGET_FILES[targetLower] ? targetLower : targetLower.replace(/-/g, "_");
   if (!TARGET_FILES[normalizedTarget]) {
     console.log(chalk.red(`  ✗ Unknown target format: ${target}`));
@@ -190,7 +155,9 @@ export async function convertCommand(
   const structured = [sourcePlatform, normalizedTarget].find(isStructuredPlatform);
   if (structured) {
     console.log(chalk.red(`  ✗ ${PLATFORM_NAMES[structured] || structured} uses a JSON/YAML config, not a rules file, so it cannot be converted`));
-    console.log(chalk.gray(`     Run 'lynxp wizard' and pick ${PLATFORM_NAMES[structured] || structured} to generate one`));
+    console.log(chalk.gray(structured === "aider"
+      ? "     Aider reads AGENTS.md when .aider.conf.yml lists it: run 'lynxp wizard -f aider' to add it"
+      : `     Run 'lynxp wizard' and pick ${PLATFORM_NAMES[structured] || structured} to generate one`));
     process.exit(1);
   }
 
@@ -215,12 +182,12 @@ export async function convertCommand(
   spinner.stop();
 
   // Determine output path
-  let outputFilename = options.output || TARGET_FILES[normalizedTarget];
+  let outputFilename = options.output || rulesWritePath(cwd, TARGET_FILES[normalizedTarget]);
   
   // For commands, keep the command's name but use the target's folder and extension
   const targetCommand = COMMANDS.find((c) => c.id === normalizedTarget);
   if (targetCommand && !options.output) {
-    const commandName = basename(sourcePath).replace(/(\.prompt)?\.md$/, "");
+    const commandName = basename(sourcePath).replace(/(\.prompt)?\.(md|mdc|toml)$/, "");
     outputFilename = `${targetCommand.directory}/${commandName}${targetCommand.extension}`;
   }
   

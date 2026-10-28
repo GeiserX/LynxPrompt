@@ -114,8 +114,7 @@ const fullUser = { name: "Tester", displayName: "Test Author", persona: "backend
 
 // One platform per generator function.
 const GENERATOR_PLATFORMS = [
-  "universal", "cursor", "claude", "copilot", "windsurf", "antigravity", "aider",
-  "continue", "cody", "tabnine", "supermaven", "codegpt", "void",
+  "universal", "cursor", "claude", "copilot", "windsurf", "gemini-cli", "aider", "zed", "crush", "tabnine",
 ];
 
 // The CLI only knows the rules platforms; command platforms are web-only here.
@@ -219,7 +218,7 @@ describe("cli generator golden output", () => {
     expect(generateConfig({ ...cliOptions, platforms: [platform] })).toMatchSnapshot();
   });
 
-  it.each(["agents", "cursor", "continue", "tabnine"])("%s with every answer", (platform) => {
+  it.each(["agents", "cursor", "windsurf", "tabnine"])("%s with every answer", (platform) => {
     expect(generateConfig({ ...fullCliOptions, platforms: [platform] })).toMatchSnapshot();
   });
 
