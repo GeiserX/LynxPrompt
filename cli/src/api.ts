@@ -145,7 +145,19 @@ class ApiClient {
       },
     });
 
-    const data = await response.json();
+    // A proxy or WAF can answer with an HTML page; report that as an API error
+    // with the status instead of crashing on JSON.parse
+    const text = await response.text();
+    let data: unknown;
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      throw new ApiRequestError(
+        `Unexpected response from server (HTTP ${response.status})`,
+        response.status,
+        { error: "invalid_response" }
+      );
+    }
 
     if (!response.ok) {
       const error = data as ApiError;
@@ -192,6 +204,17 @@ class ApiClient {
     return this.request<BlueprintsResponse>(
       `/api/v1/blueprints${query ? `?${query}` : ""}`
     );
+  }
+
+  /** Every blueprint of the user, following has_more across pages. */
+  async listAllBlueprints(): Promise<Blueprint[]> {
+    const all: Blueprint[] = [];
+    const limit = 50;
+    for (let offset = 0; ; offset += limit) {
+      const page = await this.listBlueprints({ limit, offset });
+      all.push(...page.blueprints);
+      if (!page.has_more || page.blueprints.length === 0) return all;
+    }
   }
 
   async getBlueprint(id: string): Promise<{ blueprint: Blueprint }> {
