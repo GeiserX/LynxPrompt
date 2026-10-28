@@ -115,8 +115,8 @@ program
 // ============================================
 
 program
-  .command("pull <id>")
-  .description("Download a blueprint (bp_xxx) or entire hierarchy (ha_xxx)")
+  .command("pull <ids...>")
+  .description("Download blueprints (bp_xxx) or entire hierarchies (ha_xxx), one or several")
   .option("-o, --output <path>", "Output directory", ".")
   .option("-y, --yes", "Overwrite existing files without prompting")
   .option("--preview", "Preview content without downloading")
@@ -240,6 +240,7 @@ ${chalk.cyan("Marketplace:")}
   ${chalk.white("$ lynxp search nextjs")}         ${chalk.gray("Search blueprints")}
   ${chalk.white("$ lynxp pull bp_abc123")}        ${chalk.gray("Download and track a blueprint")}
   ${chalk.white("$ lynxp pull ha_xyz789")}        ${chalk.gray("Download entire hierarchy")}
+  ${chalk.white("$ lynxp pull bp_a bp_b")}        ${chalk.gray("Download several at once")}
   ${chalk.white("$ lynxp push")}                  ${chalk.gray("Push local file to cloud")}
   ${chalk.white("$ lynxp push --all")}             ${chalk.gray("Push ALL config files recursively")}
   ${chalk.white("$ lynxp hierarchies")}           ${chalk.gray("List your hierarchies")}

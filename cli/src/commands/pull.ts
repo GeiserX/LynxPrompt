@@ -64,8 +64,12 @@ function isHierarchyId(id: string): boolean {
   return id.startsWith("ha_");
 }
 
+/**
+ * Pull one or more blueprints (bp_) and hierarchies (ha_), in the order given.
+ * A failure stops the run; files already written stay written and tracked.
+ */
 export async function pullCommand(
-  id: string,
+  ids: string | string[],
   options: PullOptions
 ): Promise<void> {
   // Check authentication - require login for API access
@@ -76,11 +80,12 @@ export async function pullCommand(
     process.exit(1);
   }
 
-  // Check if pulling a hierarchy
-  if (isHierarchyId(id)) {
-    await pullHierarchy(id, options);
-  } else {
-    await pullBlueprint(id, options);
+  for (const id of Array.isArray(ids) ? ids : [ids]) {
+    if (isHierarchyId(id)) {
+      await pullHierarchy(id, options);
+    } else {
+      await pullBlueprint(id, options);
+    }
   }
 }
 
@@ -95,7 +100,9 @@ async function pullHierarchy(
   const spinner = ora(`Fetching hierarchy ${chalk.cyan(id)}...`).start();
 
   try {
-    const response = await api.getHierarchy(id);
+    // One request for the whole tree; older servers return no content and
+    // each blueprint is then fetched on its own below
+    const response = await api.getHierarchy(id, { includeContent: !options.preview });
     const { hierarchy, blueprints } = response;
     spinner.stop();
 
@@ -172,9 +179,8 @@ async function pullHierarchy(
         }
       }
 
-      // Fetch full blueprint content
-      const { blueprint } = await api.getBlueprint(bp.id);
-      
+      const blueprint = typeof bp.content === "string" ? bp : (await api.getBlueprint(bp.id)).blueprint;
+
       if (!blueprint.content) {
         console.log(chalk.yellow(`  ⚠ No content: ${filename}`));
         skipped++;

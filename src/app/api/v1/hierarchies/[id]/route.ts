@@ -13,7 +13,9 @@ import {
 
 /**
  * GET /api/v1/hierarchies/[id]
- * Get a hierarchy with all its blueprints (tree structure)
+ * Get a hierarchy with all its blueprints (tree structure).
+ * `?include=content` adds each blueprint's content to the flat list, so a
+ * client can pull the whole hierarchy in one request.
  */
 export async function GET(
   request: NextRequest,
@@ -54,6 +56,7 @@ export async function GET(
 
     const { id } = await params;
     const hierarchyId = fromHierarchyApiId(id);
+    const includeContent = request.nextUrl.searchParams.get("include") === "content";
 
     // Fetch hierarchy with all blueprints
     const hierarchy = await prismaUsers.hierarchy.findUnique({
@@ -69,7 +72,7 @@ export async function GET(
             tier: true,
             repositoryPath: true,
             parentId: true,
-            // Read for the checksum only; the response does not return content.
+            // Read for the checksum; returned only with ?include=content
             content: true,
             visibility: true,
             downloads: true,
@@ -165,6 +168,7 @@ export async function GET(
         repository_path: bp.repositoryPath,
         parent_id: bp.parentId ? toBlueprintApiId(bp.parentId) : null,
         content_checksum: contentChecksum(bp.content),
+        ...(includeContent ? { content: bp.content } : {}),
         visibility: bp.visibility,
         downloads: bp.downloads,
         favorites: bp.favorites,

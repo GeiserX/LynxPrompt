@@ -289,7 +289,10 @@ Authorization: Bearer lp_xxx
 # Response includes:
 # - hierarchy metadata
 # - blueprints array (flat list)
-# - tree structure (nested for traversal)`}</code>
+# - tree structure (nested for traversal)
+
+# Add each blueprint's content to the flat list:
+GET /api/v1/hierarchies/ha_xyz789?include=content`}</code>
             </pre>
           </div>
           <div className="rounded-lg border bg-muted/30 p-4">

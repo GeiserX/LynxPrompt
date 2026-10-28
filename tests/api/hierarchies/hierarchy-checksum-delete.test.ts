@@ -95,6 +95,30 @@ describe("GET /api/v1/hierarchies/[id]", () => {
     expect(body.blueprints[0].content_checksum).toBe(contentChecksum(content));
     expect(body.blueprints[0].content).toBeUndefined();
   });
+
+  it("returns every blueprint's content with ?include=content", async () => {
+    const now = new Date();
+    const row = (id: string, repositoryPath: string, content: string) => ({
+      id, name: id, description: null, type: "AGENTS_MD", tier: "SHORT", repositoryPath,
+      parentId: null, content, visibility: "PRIVATE", downloads: 0, favorites: 0, createdAt: now, updatedAt: now,
+    });
+    mockHierarchyFindUnique.mockResolvedValue({
+      id: "h1", userId: "user_1", name: "repo", description: null, repositoryRoot: null, createdAt: now, updatedAt: now,
+      blueprints: [row("tpl_1", "AGENTS.md", "# Root"), row("tpl_2", "api/AGENTS.md", "# API")],
+    });
+    const { GET } = await import("@/app/api/v1/hierarchies/[id]/route");
+    const response = await GET(
+      new NextRequest("https://lynxprompt.com/api/v1/hierarchies/ha_h1?include=content", {
+        headers: { authorization: "Bearer lp_test" },
+      }),
+      params
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.blueprints.map((b: { content: string }) => b.content)).toEqual(["# Root", "# API"]);
+    expect(body.blueprints[1].content_checksum).toBe(contentChecksum("# API"));
+  });
 });
 
 describe("DELETE /api/hierarchies/[id]?deleteBlueprints=true", () => {
