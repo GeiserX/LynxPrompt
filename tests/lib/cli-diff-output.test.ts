@@ -1,15 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
-
-// diff.ts imports the CLI config (which writes a config file on load) and the
-// API client; neither is needed to format a diff.
-vi.mock("../../cli/src/config.js", () => ({ isAuthenticated: () => false }));
-vi.mock("../../cli/src/api.js", () => ({ api: {}, ApiRequestError: class extends Error {} }));
-vi.mock("../../cli/src/utils/blueprint-tracker.js", () => ({
-  checkSyncStatus: vi.fn(),
-  findBlueprintByFile: vi.fn(),
-}));
-
-import { computeDiff, formatDiff } from "../../cli/src/commands/diff";
+import { describe, it, expect } from "vitest";
+import { computeDiff, formatDiff } from "../../cli/src/utils/line-diff";
 
 describe("lynxp diff output", () => {
   it("prints no escape or bidi controls from remote blueprint content", () => {
