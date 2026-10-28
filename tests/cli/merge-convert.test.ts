@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { parseMarkdownSections, mergeSectionsByStrategy } from "../../cli/src/utils/markdown-sections";
-import { parseMarkdownConfig, generateTargetContent } from "../../cli/src/utils/convert-format";
+import { convertContent, isStructuredPlatform, platformForPath } from "../../cli/src/utils/convert-format";
 
 const withFence = `# Project
 
@@ -58,33 +58,66 @@ alwaysApply: false
 - **Never** log tokens
 ${Array.from({ length: 25 }, (_, i) => `- rule ${i + 1}`).join("\n")}
 `;
+  const body = source.slice(source.indexOf("# My API Rules"));
 
-  it("keeps the title and one frontmatter block for Cursor", () => {
-    const out = generateTargetContent(parseMarkdownConfig(source), "cursor");
-    expect(out).toContain("# My API Rules");
-    expect(out.match(/^---$/gm)?.length).toBe(2);
-    expect(out).toContain('globs: ["src/api/**"]');
+  it("keeps Cursor's own frontmatter for Cursor and Firebender", () => {
+    expect(convertContent(source, "cursor", "cursor")).toBe(source);
+    expect(convertContent(source, "cursor", "firebender")).toBe(source);
   });
 
-  it("keeps bold text for Windsurf, Cline and Goose", () => {
-    for (const target of ["windsurf", "cline", "goose"]) {
-      const out = generateTargetContent(parseMarkdownConfig(source), target);
-      expect(out).toContain("- **Never** log tokens");
-      expect(out).not.toContain("alwaysApply");
+  it("adds Cursor frontmatter to Markdown converted for Cursor", () => {
+    expect(convertContent(body, "agents", "cursor")).toBe(
+      `---\ndescription: "AI rules for this project"\nalwaysApply: true\n---\n\n${body}`
+    );
+  });
+
+  // .cursorrules, Copilot, Windsurf, Cline, Goose, Aider and the rest read
+  // Markdown: the rules are copied as written, with no heading or emphasis lost
+  it.each(["cursor_legacy", "copilot", "windsurf", "cline", "goose", "aider", "claude", "codex"])(
+    "copies the rules unchanged for %s",
+    (target) => {
+      expect(convertContent(source, "cursor", target)).toBe(body);
+      expect(convertContent(body, "agents", target)).toBe(body);
+    }
+  );
+
+  it("swaps the frontmatter for Kiro and Augment", () => {
+    expect(convertContent(source, "cursor", "kiro")).toBe(`---\ninclusion: always\n---\n\n${body}`);
+    expect(convertContent(source, "cursor", "augment")).toBe(
+      `---\ntype: always_apply\ndescription: "AI rules for this project"\n---\n\n${body}`
+    );
+  });
+
+  it("copies a command unchanged", () => {
+    expect(convertContent(source, "cursor-command", "claude-command")).toBe(source);
+  });
+
+  it("treats JSON and YAML configs as no rules file", () => {
+    for (const id of ["continue", "cody", "void", "supermaven", "codegpt", "tabnine"]) {
+      expect(isStructuredPlatform(id)).toBe(true);
+    }
+    for (const id of ["universal", "cursor", "windsurf", "aider", "kiro", "cursor_legacy", "codex", "unknown"]) {
+      expect(isStructuredPlatform(id)).toBe(false);
     }
   });
+});
 
-  // Aider's file is CONVENTIONS.md (Markdown), not the .aider.conf.yml settings file
-  it("keeps every Aider convention as Markdown", () => {
-    const out = generateTargetContent(parseMarkdownConfig(source), "aider");
-    expect(out).toContain("- rule 25");
-    expect(out).toContain("# My API Rules");
-    expect(out).not.toContain("alwaysApply");
-    expect(out).not.toContain("conventions:");
+describe("cli convert source detection", () => {
+  it("knows a rules file by its tool's folder, whatever its name", () => {
+    expect(platformForPath(".cursor/rules/api.mdc")).toBe("cursor");
+    expect(platformForPath("./.kiro/steering/style.md")).toBe("kiro");
+    expect(platformForPath("repo\\.augment\\rules\\x.md")).toBe("augment");
   });
 
-  it("writes Kiro and Augment frontmatter", () => {
-    expect(generateTargetContent(parseMarkdownConfig(source), "kiro")).toMatch(/^---\ninclusion: always\n---\n\n# My API Rules/);
-    expect(generateTargetContent(parseMarkdownConfig(source), "augment")).toMatch(/^---\ntype: always_apply\n---\n\n# My API Rules/);
+  it("knows a tool's own file and a config file", () => {
+    expect(platformForPath("CONVENTIONS.md")).toBe("aider");
+    expect(platformForPath("sub/.windsurfrules")).toBe("windsurf");
+    expect(platformForPath(".continue/config.json")).toBe("continue");
+    expect(platformForPath(".tabnine.yaml")).toBe("tabnine");
+  });
+
+  it("claims no file it does not know", () => {
+    expect(platformForPath("notes/rules.md")).toBeUndefined();
+    expect(platformForPath("my.rules")).toBeUndefined();
   });
 });
