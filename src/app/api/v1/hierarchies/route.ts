@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prismaUsers } from "@/lib/db-users";
+import { parseLimit, parseOffset } from "@/lib/pagination";
 import { APP_URL } from "@/lib/feature-flags";
 import {
   validateApiToken,
@@ -62,8 +63,8 @@ export async function GET(request: NextRequest) {
 
     // Parse query params
     const { searchParams } = new URL(request.url);
-    const limit = Math.min(parseInt(searchParams.get("limit") || "50", 10), 100);
-    const offset = parseInt(searchParams.get("offset") || "0", 10);
+    const limit = parseLimit(searchParams, 50);
+    const offset = parseOffset(searchParams);
 
     // Get total count
     const total = await prismaUsers.hierarchy.count({
