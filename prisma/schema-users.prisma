@@ -545,6 +545,10 @@ model CliSession {
   
   // Raw token (stored temporarily for CLI to retrieve, cleared after retrieval)
   token       String?        @db.Text
+
+  // SHA-256 (base64url) of a verifier only the CLI knows; polling must present
+  // the verifier. Null for sessions started by CLIs older than this check.
+  codeChallenge String?
   
   expiresAt   DateTime
   createdAt   DateTime       @default(now())
