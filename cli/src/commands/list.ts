@@ -6,6 +6,7 @@ import { isAuthenticated } from "../config.js";
 interface ListOptions {
   limit: string;
   visibility?: string;
+  json?: boolean;
 }
 
 export async function listCommand(options: ListOptions): Promise<void> {
@@ -18,12 +19,19 @@ export async function listCommand(options: ListOptions): Promise<void> {
 
   try {
     const limit = parseInt(options.limit, 10) || 20;
-    const { blueprints, total, has_more } = await api.listBlueprints({
+    const response = await api.listBlueprints({
       limit,
       visibility: options.visibility,
     });
 
     spinner.stop();
+
+    if (options.json) {
+      console.log(JSON.stringify(response, null, 2));
+      return;
+    }
+
+    const { blueprints, total, has_more } = response;
 
     if (blueprints.length === 0) {
       console.log();

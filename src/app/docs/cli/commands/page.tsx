@@ -512,7 +512,8 @@ $ lynxp import --json | jq '.hierarchy'`}</code>
             <code>{`lynxp check [options]
 
 Options:
-  --ci    CI mode - exit codes only (0=pass, 1=fail)`}</code>
+  --ci        CI mode - exit codes only (0=pass, 1=fail)
+  -j, --json  Output as JSON (for scripting)`}</code>
           </pre>
         </div>
 
@@ -546,6 +547,7 @@ $ lynxp check --ci
             <li>• Empty or minimal content</li>
             <li>• Placeholder text (TODO, FIXME, etc.)</li>
             <li>• Potential secrets or API keys</li>
+            <li>• Hidden Unicode (zero-width, bidi and tag characters) that can carry instructions a reviewer cannot see</li>
             <li>• YAML frontmatter syntax (for .mdc files)</li>
             <li>• LynxPrompt config file validity</li>
           </ul>
@@ -873,7 +875,8 @@ Arguments:
   query           Search terms
 
 Options:
-  --limit <n>     Maximum results (default: 20)`}</code>
+  --limit <n>     Maximum results (default: 20)
+  -j, --json      Output as JSON (for scripting)`}</code>
           </pre>
         </div>
       </section>

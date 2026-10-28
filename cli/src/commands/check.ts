@@ -6,6 +6,7 @@
  * Usage:
  *   lynxp check           - Interactive validation with detailed output
  *   lynxp check --ci      - CI mode with exit codes (0 = pass, 1 = fail)
+ *   lynxp check --json    - The result as JSON on stdout (exit code 1 on errors)
  */
 
 import chalk from "chalk";
@@ -14,9 +15,11 @@ import { readFile, readdir, stat } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
 import * as yaml from "yaml";
+import { findHiddenUnicode, describeHiddenUnicode } from "../utils/hidden-unicode.js";
 
 interface CheckOptions {
   ci?: boolean;
+  json?: boolean;
 }
 
 interface ValidationResult {
@@ -117,6 +120,16 @@ function validateMarkdown(content: string, filename: string): { errors: string[]
 }
 
 /**
+ * Invisible characters in a rule file can hold instructions the agent reads and
+ * a reviewer does not see, so any found is an error. The whole file is scanned,
+ * frontmatter included.
+ */
+function validateHiddenUnicode(content: string, filename: string): string[] {
+  const found = findHiddenUnicode(content);
+  return found.length > 0 ? [describeHiddenUnicode(filename, found)] : [];
+}
+
+/**
  * Validate LynxPrompt configuration
  */
 async function validateLynxPromptConfig(cwd: string): Promise<{ errors: string[]; warnings: string[] }> {
@@ -204,9 +217,10 @@ function validateMdc(content: string, filename: string): { errors: string[]; war
 
 export async function checkCommand(options: CheckOptions = {}): Promise<void> {
   const isCi = options.ci;
+  const isJson = options.json;
   const cwd = process.cwd();
 
-  if (!isCi) {
+  if (!isCi && !isJson) {
     console.log();
     console.log(chalk.cyan("🐱 LynxPrompt Check"));
     console.log();
@@ -219,7 +233,7 @@ export async function checkCommand(options: CheckOptions = {}): Promise<void> {
     files: [],
   };
 
-  const spinner = !isCi ? ora("Scanning for configuration files...").start() : null;
+  const spinner = !isCi && !isJson ? ora("Scanning for configuration files...").start() : null;
 
   // Check for config files
   for (const file of CONFIG_FILES) {
@@ -230,7 +244,7 @@ export async function checkCommand(options: CheckOptions = {}): Promise<void> {
       try {
         const content = await readFile(filePath, "utf-8");
         const validation = validateMarkdown(content, file.path);
-        result.errors.push(...validation.errors);
+        result.errors.push(...validation.errors, ...validateHiddenUnicode(content, file.path));
         result.warnings.push(...validation.warnings);
       } catch (error) {
         result.errors.push(`${file.path}: Could not read file`);
@@ -251,7 +265,8 @@ export async function checkCommand(options: CheckOptions = {}): Promise<void> {
           if (fileStat.isFile()) {
             result.files.push(`${dir.path}/${file}`);
             const content = await readFile(filePath, "utf-8");
-            
+            result.errors.push(...validateHiddenUnicode(content, `${dir.path}/${file}`));
+
             // Use MDC validation for .mdc files
             if (file.endsWith(".mdc")) {
               const validation = validateMdc(content, `${dir.path}/${file}`);
@@ -281,7 +296,11 @@ export async function checkCommand(options: CheckOptions = {}): Promise<void> {
   result.valid = result.errors.length === 0;
 
   // Output results
-  if (isCi) {
+  if (isJson) {
+    // Only JSON on stdout. Exit codes follow --ci when it is given too.
+    console.log(JSON.stringify(result, null, 2));
+    if (!result.valid || (isCi && result.files.length === 0)) process.exitCode = 1;
+  } else if (isCi) {
     // CI mode - minimal output, use exit codes
     if (!result.valid) {
       console.error("✗ Validation failed");

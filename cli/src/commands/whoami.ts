@@ -3,7 +3,11 @@ import ora from "ora";
 import { api, ApiRequestError } from "../api.js";
 import { isAuthenticated, setUser } from "../config.js";
 
-export async function whoamiCommand(): Promise<void> {
+interface WhoamiOptions {
+  json?: boolean;
+}
+
+export async function whoamiCommand(options: WhoamiOptions = {}): Promise<void> {
   if (!isAuthenticated()) {
     console.log(chalk.yellow("Not logged in. Run 'lynxprompt login' to authenticate."));
     process.exit(1);
@@ -21,6 +25,11 @@ export async function whoamiCommand(): Promise<void> {
       email: user.email,
       name: user.name,
     });
+
+    if (options.json) {
+      console.log(JSON.stringify({ user }, null, 2));
+      return;
+    }
 
     console.log();
     console.log(chalk.cyan("🐱 LynxPrompt Account"));
