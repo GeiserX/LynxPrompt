@@ -11,7 +11,8 @@
  * - one zero-width joiner or non-joiner, or one direction mark, between two
  *   visible non-ASCII characters (emoji sequences such as a family emoji, Persian
  *   and Indic words, right-to-left text);
- * - the tag sequence of a subdivision flag such as the flag of England.
+ * - the tag sequence of the England, Scotland and Wales flags (the only
+ *   subdivision flags in the recommended emoji set).
  */
 
 export interface HiddenChar {
@@ -67,14 +68,18 @@ function nameOf(cp: number): string {
   return "VARIATION SELECTOR";
 }
 
+// The only subdivision flags in Unicode's recommended (RGI) emoji set: England, Scotland, Wales.
+// Any other tag run after a black flag is not a flag an emoji keyboard produces, so it is reported.
+const RGI_SUBDIVISIONS = new Set(["gbeng", "gbsct", "gbwls"]);
+
 /** Length of the subdivision-flag tag run starting at i (right after U+1F3F4 black flag), or 0 if it is not one */
 function flagTagRunLength(cps: number[], i: number): number {
   if (cps[i - 1] !== BLACK_FLAG) return 0;
   let j = i;
-  // Subdivision codes are lowercase letters and digits, "gbeng", "usca"
-  while (j < cps.length && ((cps[j] >= 0xe0061 && cps[j] <= 0xe007a) || (cps[j] >= 0xe0030 && cps[j] <= 0xe0039))) j++;
-  const letters = j - i;
-  return letters >= 2 && letters <= 6 && cps[j] === CANCEL_TAG ? letters + 1 : 0;
+  while (j < cps.length && cps[j] >= 0xe0020 && cps[j] < CANCEL_TAG) j++;
+  if (cps[j] !== CANCEL_TAG) return 0;
+  const code = String.fromCharCode(...cps.slice(i, j).map((cp) => cp - 0xe0000));
+  return RGI_SUBDIVISIONS.has(code) ? j - i + 1 : 0;
 }
 
 const isVisibleNonAscii = (cp: number | undefined) =>
