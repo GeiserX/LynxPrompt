@@ -884,17 +884,19 @@ lynxp config path               # Show config file location`}</code>
             <pre className="text-sm text-zinc-100">
               <code>{`# View current configuration
 $ lynxp config
-🐱 LynxPrompt CLI Configuration
-   API URL: https://api.lynxprompt.com
-   Logged in as: user@example.com
+⚙️  LynxPrompt CLI Configuration
+  API URL: https://lynxprompt.com
+  Login:   user@example.com
 
-# Point to self-hosted instance
+# Point to self-hosted instance (each instance keeps its own login)
 $ lynxp config set-url https://lynxprompt.yourcompany.com
 ✓ API URL set to https://lynxprompt.yourcompany.com
+  Run 'lynxp login' to authenticate with this instance.
 
 # Reset to default
 $ lynxp config reset-url
-✓ API URL reset to https://api.lynxprompt.com
+✓ API URL reset to https://lynxprompt.com
+  Logged in as user@example.com on this instance.
 
 # Find config file
 $ lynxp config path

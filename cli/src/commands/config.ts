@@ -1,5 +1,23 @@
 import chalk from "chalk";
-import { getApiUrl, setApiUrl, getConfigPath } from "../config.js";
+import {
+  getApiUrl,
+  setApiUrl,
+  resetApiUrl,
+  getConfigPath,
+  getUser,
+  isAuthenticated,
+} from "../config.js";
+
+// Each server keeps its own saved login, so switching URL never sends one
+// server's token to another.
+function printLoginState(): void {
+  if (isAuthenticated()) {
+    const email = getUser()?.email;
+    console.log(chalk.gray(`  Logged in${email ? ` as ${email}` : ""} on this instance.`));
+  } else {
+    console.log(chalk.gray("  Run 'lynxp login' to authenticate with this instance."));
+  }
+}
 
 export async function configCommand(
   action?: string,
@@ -11,6 +29,11 @@ export async function configCommand(
     console.log();
     console.log(
       chalk.white("  API URL: ") + chalk.green(getApiUrl()),
+    );
+    const loggedIn = isAuthenticated();
+    console.log(
+      chalk.white("  Login:   ") +
+        (loggedIn ? chalk.green(getUser()?.email ?? "token set") : chalk.gray("not logged in")),
     );
     console.log(
       chalk.white("  Config:  ") + chalk.gray(getConfigPath()),
@@ -45,19 +68,16 @@ export async function configCommand(
       chalk.green("✓") +
         ` API URL set to ${chalk.cyan(clean)}`,
     );
-    console.log(
-      chalk.gray("  Run 'lynxp login' to authenticate with this instance."),
-    );
+    printLoginState();
     return;
   }
 
   if (action === "reset-url") {
-    setApiUrl("https://api.lynxprompt.com");
+    const url = resetApiUrl();
     console.log(
-      chalk.green("✓") +
-        " API URL reset to " +
-        chalk.cyan("https://api.lynxprompt.com"),
+      chalk.green("✓") + " API URL reset to " + chalk.cyan(url),
     );
+    printLoginState();
     return;
   }
 

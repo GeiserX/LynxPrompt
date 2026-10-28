@@ -103,15 +103,17 @@ Run 'lynxprompt login' to authenticate.`}</code>
       <section className="space-y-4">
         <h2 className="text-2xl font-bold">Logout</h2>
         <p className="text-muted-foreground">
-          Remove stored credentials and log out of the CLI.
+          Revoke the token on the server and remove it from this machine. The CLI keeps one
+          login per instance, so logout only touches the instance <code className="rounded bg-muted px-2 py-0.5">lynxp config</code> points at
+          and lists any others that are still logged in.
         </p>
 
         <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
           <pre className="text-sm text-zinc-100">
             <code>{`$ lynxprompt logout
 
-✅ Logged out successfully
-   Credentials removed from config`}</code>
+✓ Logged out from user@example.com at https://lynxprompt.com
+  Removed stored credentials`}</code>
           </pre>
         </div>
       </section>
@@ -232,8 +234,8 @@ lynxprompt pull bp_abc123 --yes`}</code>
             <div>
               <p className="font-medium">Security</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                The config file is plain JSON written with your user&apos;s default file
-                permissions, so treat it like a password. <code className="rounded bg-muted px-1 py-0.5 text-xs">lynxp config path</code>{" "}
+                The config file is plain JSON readable by your user only (mode 0600), so
+                treat it like a password. Each token is only sent to the instance that issued it. <code className="rounded bg-muted px-1 py-0.5 text-xs">lynxp config path</code>{" "}
                 prints where it is. A token from <code className="rounded bg-muted px-1 py-0.5 text-xs">lynxp login</code>{" "}
                 expires after 90 days and can be revoked anytime from your{" "}
                 <Link href="/settings" className="text-primary hover:underline">
