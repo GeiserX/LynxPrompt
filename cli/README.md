@@ -67,12 +67,14 @@ lynxp wizard -f cursor        # .cursor/rules/
 lynxp wizard -f agents        # AGENTS.md (universal)
 lynxp wizard -f copilot       # .github/copilot-instructions.md
 
-# Generate multiple formats
+# Generate for several tools: the rules go in AGENTS.md once. Tools that
+# read it (Cursor, Codex, Devin Desktop, Cline, Junie...) get no file of
+# their own, Copilot gets a full copy
 lynxp wizard -f agents,cursor,copilot
 
-# Next to AGENTS.md, CLAUDE.md and GEMINI.md just import it (@AGENTS.md);
-# --no-pointers writes full copies instead
-lynxp wizard -f agents,claude,gemini-cli
+# CLAUDE.md and GEMINI.md import AGENTS.md (@AGENTS.md), and Aider gets
+# a .aider.conf.yml that loads it; --no-pointers writes full copies instead
+lynxp wizard -f claude,gemini-cli,aider
 
 # Non-interactive with all options
 lynxp wizard \
@@ -285,8 +287,8 @@ For power users who want to generate configs for multiple AI editors at once:
 # Generate for multiple formats at once
 lynxp wizard -f agents,cursor,copilot,windsurf
 
-# Manage AI agents
-lynxp agents
+# A full copy in every tool's own file instead of one AGENTS.md
+lynxp wizard -f agents,cursor,copilot,windsurf --no-pointers
 ```
 
 ## Blueprint Tracking

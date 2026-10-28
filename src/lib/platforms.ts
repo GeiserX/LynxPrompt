@@ -23,6 +23,7 @@ export {
   BLUEPRINT_TYPE_ALIASES,
   platformForBlueprintType,
   convertCommand,
+  commandContent,
   SKILL_BLUEPRINT_TYPE,
   SKILL_DIRECTORIES,
   SKILL_TARGETS,

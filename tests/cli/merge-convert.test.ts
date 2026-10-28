@@ -71,9 +71,9 @@ ${Array.from({ length: 25 }, (_, i) => `- rule ${i + 1}`).join("\n")}
     );
   });
 
-  // .cursorrules, Copilot, Windsurf, Cline, Goose, Aider and the rest read
-  // Markdown: the rules are copied as written, with no heading or emphasis lost
-  it.each(["cursor_legacy", "copilot", "windsurf", "cline", "goose", "aider", "claude", "codex"])(
+  // .cursorrules, Copilot, Cline, Goose and the rest read Markdown: the rules
+  // are copied as written, with no heading or emphasis lost
+  it.each(["cursor_legacy", "copilot", "cline", "goose", "tabnine", "claude", "codex"])(
     "copies the rules unchanged for %s",
     (target) => {
       expect(convertContent(source, "cursor", target)).toBe(body);
@@ -81,8 +81,10 @@ ${Array.from({ length: 25 }, (_, i) => `- rule ${i + 1}`).join("\n")}
     }
   );
 
-  it("swaps the frontmatter for Kiro and Augment", () => {
+  it("swaps the frontmatter for Kiro, Augment, Devin Desktop and Trae", () => {
     expect(convertContent(source, "cursor", "kiro")).toBe(`---\ninclusion: always\n---\n\n${body}`);
+    expect(convertContent(source, "cursor", "windsurf")).toBe(`---\ntrigger: always_on\n---\n\n${body}`);
+    expect(convertContent(source, "cursor", "trae")).toBe(`---\nalwaysApply: true\n---\n\n${body}`);
     expect(convertContent(source, "cursor", "augment")).toBe(
       `---\ntype: always_apply\ndescription: "AI rules for this project"\n---\n\n${body}`
     );
@@ -90,13 +92,24 @@ ${Array.from({ length: 25 }, (_, i) => `- rule ${i + 1}`).join("\n")}
 
   it("copies a command unchanged", () => {
     expect(convertContent(source, "cursor-command", "claude-command")).toBe(source);
+    expect(convertContent(source, "cursor-command", "kiro-prompt")).toBe(source);
+  });
+
+  it("writes a command for Gemini CLI as TOML, backslashes and quotes kept", () => {
+    const command = '---\ndescription: Deploy the app\n---\n\nRun C:\\deploy and say "done".\n';
+    expect(convertContent(command, "cursor-command", "gemini-command")).toBe(
+      "description = \"Deploy the app\"\nprompt = '''\nRun C:\\deploy and say \"done\".\n'''\n"
+    );
+    // A prompt holding ''' falls back to an escaped basic string
+    expect(convertContent("a ''' b \\ c\n", "cursor-command", "gemini-command")).toBe(
+      'prompt = """\na \'\'\' b \\\\ c\n"""\n'
+    );
   });
 
   it("treats JSON and YAML configs as no rules file", () => {
-    for (const id of ["continue", "cody", "void", "supermaven", "codegpt", "tabnine"]) {
-      expect(isStructuredPlatform(id)).toBe(true);
-    }
-    for (const id of ["universal", "cursor", "windsurf", "aider", "kiro", "cursor_legacy", "codex", "unknown"]) {
+    // Aider's file is its YAML config, which lists AGENTS.md
+    expect(isStructuredPlatform("aider")).toBe(true);
+    for (const id of ["universal", "cursor", "windsurf", "tabnine", "kiro", "cursor_legacy", "codex", "unknown"]) {
       expect(isStructuredPlatform(id)).toBe(false);
     }
   });
@@ -110,10 +123,14 @@ describe("cli convert source detection", () => {
   });
 
   it("knows a tool's own file and a config file", () => {
-    expect(platformForPath("CONVENTIONS.md")).toBe("aider");
+    expect(platformForPath(".aider.conf.yml")).toBe("aider");
     expect(platformForPath("sub/.windsurfrules")).toBe("windsurf");
-    expect(platformForPath(".continue/config.json")).toBe("continue");
-    expect(platformForPath(".tabnine.yaml")).toBe("tabnine");
+    expect(platformForPath(".windsurf/rules/style.md")).toBe("windsurf");
+    expect(platformForPath("WARP.md")).toBe("warp");
+    expect(platformForPath(".junie/guidelines.md")).toBe("junie");
+    expect(platformForPath(".tabnine/guidelines/style.md")).toBe("tabnine");
+    // Retired tools' configs belong to no platform
+    expect(platformForPath(".continue/config.json")).toBeUndefined();
   });
 
   it("reads any other .mdc file as a Cursor rule and keeps its frontmatter", () => {

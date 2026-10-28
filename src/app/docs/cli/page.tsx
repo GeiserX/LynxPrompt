@@ -130,7 +130,7 @@ export default function CliDocsPage() {
 $ lynxp wizard
 🐱 LynxPrompt Wizard
   ●○○○○  Step 1/5: Output Format
-  [→] AGENTS.md (Universal)  Cursor  Windsurf  Claude
+  [→] AGENTS.md (Universal)  Cursor  Devin Desktop  Claude
 ✅ Generated: AGENTS.md
 
 # Push to cloud & sync with team

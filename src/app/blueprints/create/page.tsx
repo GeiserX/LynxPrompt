@@ -41,35 +41,31 @@ import { checkSkillContent } from "@/lib/platforms";
 const BLUEPRINT_TYPES = [
   // Popular / Recommended
   { value: "AGENTS_MD", label: "Universal (AGENTS.md) — Recommended", icon: "📋", isCommand: false },
+  { value: "CODEX_MD", label: "OpenAI Codex (AGENTS.md)", icon: "🧩", isCommand: false },
   { value: "CLAUDE_MD", label: "Claude Code (CLAUDE.md)", icon: "🤖", isCommand: false },
   { value: "COPILOT_INSTRUCTIONS", label: "GitHub Copilot (.github/copilot-instructions.md)", icon: "✈️", isCommand: false },
-  { value: "WINDSURF_RULES", label: "Windsurf Rules (.windsurfrules)", icon: "🏄", isCommand: false },
+  { value: "WINDSURF_RULES", label: "Devin Desktop / Windsurf (.devin/rules/)", icon: "🏄", isCommand: false },
   // IDEs
   { value: "CURSOR_MDC", label: "Cursor Rules (.cursor/rules/)", icon: "⚡", isCommand: false },
   { value: "ZED_INSTRUCTIONS", label: "Zed (.rules)", icon: "⚡", isCommand: false },
-  { value: "GEMINI_MD", label: "Antigravity/Gemini (GEMINI.md)", icon: "💎", isCommand: false },
-  { value: "VOID_CONFIG", label: "Void IDE (.void/config.json)", icon: "🌑", isCommand: false },
+  { value: "GEMINI_MD", label: "Gemini CLI (GEMINI.md)", icon: "💎", isCommand: false },
   { value: "TRAE_RULES", label: "Trae (.trae/rules/)", icon: "🎯", isCommand: false },
-  { value: "IDX_CONFIG", label: "Firebase Studio (.idx/airules.md)", icon: "🔷", isCommand: false },
+  { value: "IDX_CONFIG", label: "Firebase Studio (.idx/airules.md) — Sunsetting", icon: "🔷", isCommand: false },
   // Editor Extensions
-  { value: "CLINE_RULES", label: "Cline Rules (.clinerules)", icon: "💡", isCommand: false },
-  { value: "ROO_RULES", label: "Roo-Cline (.roo/rules/)", icon: "🦘", isCommand: false },
-  { value: "CONTINUE_CONFIG", label: "Continue (.continue/config.json)", icon: "➡️", isCommand: false },
-  { value: "CODY_CONFIG", label: "Sourcegraph Cody (.cody/config.json)", icon: "🤖", isCommand: false },
-  { value: "TABNINE_CONFIG", label: "Tabnine (.tabnine.yaml)", icon: "📊", isCommand: false },
+  { value: "CLINE_RULES", label: "Cline Rules (.clinerules/)", icon: "💡", isCommand: false },
+  { value: "ROO_RULES", label: "Roo Code / Zoo Code (.roo/rules/)", icon: "🦘", isCommand: false },
   { value: "AMAZONQ_RULES", label: "Amazon Q (.amazonq/rules/)", icon: "🔶", isCommand: false },
   { value: "AUGMENT_RULES", label: "Augment (.augment/rules/)", icon: "🔧", isCommand: false },
-  { value: "KILOCODE_RULES", label: "Kilocode (.kilocode/rules/)", icon: "💻", isCommand: false },
-  { value: "JUNIE_GUIDELINES", label: "Junie (.junie/guidelines.md)", icon: "🎀", isCommand: false },
+  { value: "KILOCODE_RULES", label: "Kilo Code (AGENTS.md)", icon: "💻", isCommand: false },
+  { value: "JUNIE_GUIDELINES", label: "Junie (AGENTS.md)", icon: "🎀", isCommand: false },
   { value: "KIRO_STEERING", label: "Kiro (.kiro/steering/)", icon: "🚀", isCommand: false },
   // CLI Tools
-  { value: "AIDER_MD", label: "Aider (CONVENTIONS.md)", icon: "🛠️", isCommand: false },
-  { value: "GOOSEHINTS", label: "Goose (.goosehints)", icon: "🪿", isCommand: false },
-  { value: "WARP_MD", label: "Warp AI (WARP.md)", icon: "🌀", isCommand: false },
+  { value: "AIDER_MD", label: "Aider (AGENTS.md, read through .aider.conf.yml)", icon: "🛠️", isCommand: false },
+  { value: "GOOSEHINTS", label: "Goose (AGENTS.md)", icon: "🪿", isCommand: false },
+  { value: "WARP_MD", label: "Warp AI (AGENTS.md)", icon: "🌀", isCommand: false },
   { value: "OPENCODE_JSON", label: "OpenCode (AGENTS.md)", icon: "🔓", isCommand: false },
   // Other
-  { value: "OPENHANDS_MD", label: "OpenHands (.openhands/microagents/repo.md)", icon: "🤲", isCommand: false },
-  { value: "CODEX_MD", label: "OpenAI Codex (CODEX.md)", icon: "🧠", isCommand: false },
+  { value: "OPENHANDS_MD", label: "OpenHands (AGENTS.md)", icon: "🤲", isCommand: false },
   { value: "CURSOR_RULES", label: "Cursor Rules (.cursorrules) — Deprecated", icon: "🎯", isCommand: false },
   { value: "CUSTOM", label: "Custom / Other", icon: "📄", isCommand: false },
 ] as const;
@@ -79,9 +75,8 @@ const BLUEPRINT_TYPES = [
 const COMMAND_TYPES = [
   { value: "CURSOR_COMMAND", label: "Cursor Command (.cursor/commands/)", icon: "⚡", isCommand: true, platform: "cursor" },
   { value: "CLAUDE_COMMAND", label: "Claude Code Command (.claude/commands/)", icon: "🧠", isCommand: true, platform: "claude" },
-  { value: "WINDSURF_WORKFLOW", label: "Windsurf Workflow (.windsurf/workflows/)", icon: "🏄", isCommand: true, platform: "windsurf" },
+  { value: "WINDSURF_WORKFLOW", label: "Devin Desktop Workflow (.devin/workflows/)", icon: "🏄", isCommand: true, platform: "windsurf" },
   { value: "COPILOT_PROMPT", label: "Copilot Prompt (.github/prompts/)", icon: "🐙", isCommand: true, platform: "copilot" },
-  { value: "CONTINUE_PROMPT", label: "Continue Prompt (.continue/prompts/)", icon: "➡️", isCommand: true, platform: "continue" },
   { value: "OPENCODE_COMMAND", label: "OpenCode Command (.opencode/commands/)", icon: "🔓", isCommand: true, platform: "opencode" },
 ] as const;
 

@@ -17,6 +17,7 @@ import {
 } from "../utils/blueprint-tracker.js";
 import { withSensitiveDataAck, type SensitiveMatchInfo } from "../utils/sensitive-ack.js";
 import { matchConfigFile, isAssetCopyOf, keepOneCopy, writeAssetCopies } from "../utils/blueprint-files.js";
+import { inferCommandType, isAgentsMdPointer, ruleFileLocations } from "../../../packages/shared/src/platforms.js";
 
 interface PushOptions {
   name?: string;
@@ -131,6 +132,8 @@ function scanForAllConfigFiles(cwd: string, maxDepth: number = 5): DiscoveredFil
             try {
               const stat = fs.statSync(fullPath);
               if (stat.size === 0 || stat.size > MAX_FILE_SIZE) continue;
+              // A CLAUDE.md or GEMINI.md that only imports AGENTS.md has no rules of its own
+              if (isAgentsMdPointer(fs.readFileSync(fullPath, "utf-8"))) continue;
             } catch {
               continue;
             }
@@ -355,6 +358,11 @@ export async function pushCommand(
   const content = fs.readFileSync(file, "utf-8");
   const filename = path.basename(file);
 
+  if (isAgentsMdPointer(content) && !options.force) {
+    console.log(chalk.yellow(`⚠ Not pushed: ${file} only imports AGENTS.md (@AGENTS.md). Push AGENTS.md instead.`));
+    process.exit(1);
+  }
+
   // Check if file is already linked to a blueprint
   const linked = await findBlueprintByFile(cwd, file);
 
@@ -522,26 +530,13 @@ async function createOrLinkBlueprint(
 
   // Infer the blueprint type from the file path
   const inferredType = inferBlueprintType(file);
-  const COMMAND_TYPES = [
-    "CURSOR_COMMAND", "CLAUDE_COMMAND", "WINDSURF_WORKFLOW", 
-    "COPILOT_PROMPT", "CONTINUE_PROMPT", "OPENCODE_COMMAND"
-  ];
-  const isCommandFile = COMMAND_TYPES.includes(inferredType);
-  
-  // Get friendly name for command type
-  const commandNames: Record<string, string> = {
-    "CURSOR_COMMAND": "Cursor",
-    "CLAUDE_COMMAND": "Claude Code",
-    "WINDSURF_WORKFLOW": "Windsurf",
-    "COPILOT_PROMPT": "Copilot",
-    "CONTINUE_PROMPT": "Continue",
-    "OPENCODE_COMMAND": "OpenCode",
-  };
+  // A command file from any tool's command folder (some are saved as CUSTOM)
+  const command = inferCommandType(file);
   
   console.log(chalk.cyan("\n📤 Push new blueprint"));
   console.log(chalk.gray(`   File: ${file}`));
-  if (isCommandFile) {
-    console.log(chalk.magenta(`   Type: ${commandNames[inferredType] || "Command"} Command`));
+  if (command) {
+    console.log(chalk.magenta(`   Type: ${command.name}`));
   } else {
     console.log(chalk.gray(`   Type: ${inferredType.replace(/_/g, " ")}`));
   }
@@ -673,7 +668,7 @@ async function createOrLinkBlueprint(
     await refreshCopies(cwd, file, content);
 
     console.log();
-    const typeDesc = isCommandFile ? `${commandNames[inferredType]} Command` : "Blueprint";
+    const typeDesc = command ? command.name : "Blueprint";
     console.log(chalk.green(`✅ Created ${typeDesc} ${chalk.bold(result.blueprint.name)}`));
     console.log(chalk.gray(`   ID: ${result.blueprint.id}`));
     console.log(chalk.gray(`   Type: ${inferredType}`));
@@ -919,21 +914,25 @@ async function pushHierarchy(
   console.log();
 }
 
+/**
+ * The rules file a bare `lynxp push` pushes: AGENTS.md, then CLAUDE.md, then
+ * any other tool's file from the platform table. A file that only imports
+ * AGENTS.md is skipped.
+ */
 function findDefaultFile(): string | null {
   const candidates = [
     "AGENTS.md",
     "CLAUDE.md",
-    ".cursor/rules/project.mdc",
-    ".github/copilot-instructions.md",
-    ".windsurfrules",
-    "AIDER.md",
-    "GEMINI.md",
-    ".clinerules",
+    ...ruleFileLocations().map((l) => l.path).filter((p) => !p.endsWith("/")),
   ];
 
   for (const candidate of candidates) {
-    if (fs.existsSync(candidate)) {
-      return candidate;
+    try {
+      if (fs.statSync(candidate).isFile() && !isAgentsMdPointer(fs.readFileSync(candidate, "utf-8"))) {
+        return candidate;
+      }
+    } catch {
+      // Not there
     }
   }
 

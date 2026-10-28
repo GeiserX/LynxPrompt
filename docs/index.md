@@ -73,7 +73,7 @@ The wizard asks about the project, the stack, the commands, the code style and t
 
 ## What it does
 
-- Exports one set of rules as the rule file of 30 tools: `AGENTS.md`, Cursor, Claude Code, Copilot, Windsurf, Zed, Aider, Gemini CLI, Cline, Roo Code, Amazon Q, JetBrains Junie and the rest of the list in [Features](features.md), plus slash commands for Cursor, Claude Code, Windsurf, Copilot, Continue and OpenCode.
+- Keeps one set of rules for 26 coding agents in one `AGENTS.md`, with an import, a config or a full copy for the tools that do not read it directly (the list is in [Features](features.md)), plus slash commands for 18 of them.
 - Builds those rules in a 12-step wizard on the web, or with `lynxp wizard` in a terminal; `lynxp analyze` reads an existing repository first.
 - Keeps blueprints with `[[VARIABLE|default]]` placeholders, so one blueprint fits many projects. Each blueprint is private, shared with a team, or public.
 - Gives a team its own page and its own blueprints. An opt-in federation lists the instances that join in a shared directory.

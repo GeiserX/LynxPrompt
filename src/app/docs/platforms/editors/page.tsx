@@ -60,10 +60,11 @@ export default function EditorPlatformsPage() {
         <h3 className="font-semibold">VS Code Extensions</h3>
         <p className="mt-2 text-sm text-muted-foreground">
           Many of these tools are available as VS Code extensions. They typically look for
-          configuration files in your project root or in specific directories like{" "}
-          <code className="rounded bg-muted px-1 text-xs">.vscode/</code>,{" "}
-          <code className="rounded bg-muted px-1 text-xs">.continue/</code>, or similar.
-          LynxPrompt generates the appropriate files for each tool.
+          rules in your project root or in their own folder, such as{" "}
+          <code className="rounded bg-muted px-1 text-xs">.clinerules/</code> or{" "}
+          <code className="rounded bg-muted px-1 text-xs">.roo/rules/</code>. Most of them
+          also read AGENTS.md, so LynxPrompt writes the rules there once when you pick
+          several tools.
         </p>
       </div>
 

@@ -70,8 +70,17 @@ describe("blueprintTypeForPlatform", () => {
     expect(blueprintTypeForPlatform("universal")).toBe("AGENTS_MD");
     expect(blueprintTypeForPlatform("cursor")).toBe("CURSOR_RULES");
     expect(blueprintTypeForPlatform("claude")).toBe("CLAUDE_MD");
-    expect(blueprintTypeForPlatform("warp")).toBe("CUSTOM");
+    expect(blueprintTypeForPlatform("warp")).toBe("WARP_MD");
     expect(blueprintTypeForPlatform(undefined)).toBe("AGENTS_MD");
+  });
+
+  it("follows the platform table: AGENTS.md readers, configs and retired ids", () => {
+    expect(blueprintTypeForPlatform("antigravity")).toBe("AGENTS_MD");
+    expect(blueprintTypeForPlatform("codex")).toBe("CODEX_MD");
+    expect(blueprintTypeForPlatform("aider")).toBe("CUSTOM");
+    expect(blueprintTypeForPlatform("crush")).toBe("CUSTOM");
+    expect(blueprintTypeForPlatform("devin")).toBe("WINDSURF_RULES");
+    expect(blueprintTypeForPlatform("cursor-command")).toBe("CURSOR_COMMAND");
   });
 });
 
@@ -97,6 +106,16 @@ describe("sync file path", () => {
     expect(out).toContain("lynxp push .cursor/rules/project.mdc");
     const curl = addApiSyncHeader(file.content, { ...base, preferCliSync: false, fileName: payload.repositoryPath });
     expect(curl).toContain("> .cursor/rules/project.mdc.new && mv .cursor/rules/project.mdc.new .cursor/rules/project.mdc");
+  });
+
+  it("an Aider download syncs the AGENTS.md rules, never the Aider config", () => {
+    const config = { ...createDefaultWizardConfig(), projectName: "acme", platform: "aider", additionalFeedback: "Use strict TypeScript" };
+    const [file] = generateAllFiles(buildGeneratorConfig(config), user);
+    const payload = syncBlueprintPayload(config, file);
+    expect(payload.repositoryPath).toBe("AGENTS.md");
+    expect(payload.type).toBe("AGENTS_MD");
+    expect(payload.content).toContain("Use strict TypeScript");
+    expect(payload.content).not.toContain("read: [AGENTS.md]");
   });
 
   it("every platform listed by a folder syncs to a file in that folder", () => {

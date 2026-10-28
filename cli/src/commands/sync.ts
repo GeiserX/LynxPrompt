@@ -21,6 +21,7 @@ import { existsSync } from "fs";
 import { dirname, join } from "path";
 import { api, ApiRequestError } from "../api.js";
 import { isAuthenticated } from "../config.js";
+import { isAgentsMdPointer } from "../../../packages/shared/src/platforms.js";
 import {
   calculateChecksum,
   conflictFilePath,
@@ -147,8 +148,11 @@ async function syncOne(cwd: string, tracked: TrackedBlueprint, options: SyncOpti
       : !tracked.editable
         ? "marketplace blueprints are read-only"
         : null;
-    if (reason) {
-      console.log(chalk.yellow(`● ${file}: local changes kept, not pushed (${reason})`));
+    const pointerReason = isAgentsMdPointer(local)
+      ? "it only imports AGENTS.md (@AGENTS.md); push AGENTS.md instead"
+      : null;
+    if (reason || pointerReason) {
+      console.log(chalk.yellow(`● ${file}: local changes kept, not pushed (${reason ?? pointerReason})`));
       return "kept";
     }
     if (dry) {
