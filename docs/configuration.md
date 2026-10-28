@@ -43,7 +43,6 @@ schema's tables.
 | `SMTP_PORT` | `587` | `465` switches to implicit TLS. |
 | `SMTP_USER`, `SMTP_PASSWORD` | empty | Mail server login. The app logs in whenever the server offers AUTH, so a server that offers it needs both. |
 | `SMTP_FROM` | `noreply@<host of APP_URL>` | Sender address. |
-| `SMTP_FROM_NAME` | `LynxPrompt` | Sender name on the contact form's mail. |
 | `ENABLE_PASSKEYS` | `true` | WebAuthn passkeys, for accounts that already exist. |
 | `ENABLE_GITHUB_OAUTH` | `false` | GitHub login. Needs `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`; callback `<APP_URL>/api/auth/callback/github`. |
 | `ENABLE_GOOGLE_OAUTH` | `false` | Google login. Needs `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`; callback `<APP_URL>/api/auth/callback/google`. |
@@ -57,16 +56,16 @@ schema's tables.
 | Variable | Default | What it does |
 |---|---|---|
 | `APP_NAME` | `LynxPrompt` | Name shown in the UI and in mail. |
-| `APP_LOGO_URL` | empty | Your own logo in the header. |
+| `APP_LOGO_URL` | empty | Your own logo in the sign-in mail and in search-engine metadata. The header keeps the LynxPrompt logo. |
 | `ENABLE_AI` | `false` | AI editing of blueprints. Needs `ANTHROPIC_API_KEY`. |
 | `AI_MODEL` | `claude-3-5-haiku-latest` | Model used for AI editing. |
 | `ANTHROPIC_API_KEY` | empty | Your Anthropic key; only read when `ENABLE_AI=true`. |
 | `ENABLE_BLOG` | `false` | The blog module (uses the blog schema). |
 | `ENABLE_SUPPORT_FORUM` | `false` | The support forum module (uses the support schema). |
-| `ENABLE_STRIPE` | `false` | Paid marketplace listings through Stripe. |
 | `UMAMI_SCRIPT_URL` | empty | Umami analytics script. |
-| `CONTACT_EMAIL` | empty | Where the contact form sends. |
+| `CONTACT_EMAIL` | `info@<host of APP_URL>` | Where the contact form sends. The form needs `SMTP_HOST`, `SMTP_USER` and `SMTP_PASSWORD`, so it does not work against a mail server without a login. |
 | `STATUS_PAGE_URL` | empty | Status page link in the footer. |
+| `UPLOAD_DIR` | `/data/uploads/blog` | Where blog images go; avatars and team logos go one level up. The self-host compose file mounts the `uploads` volume at `/data/uploads`. |
 | `ENABLE_FEDERATION` | `true` | Registers the instance's domain with the federation registry at start and every six hours, and serves `/.well-known/lynxprompt.json`. `false` keeps the instance to itself. |
 | `FEDERATION_REGISTRY_URL` | `https://lynxprompt.com` | The registry the instance registers with. |
 

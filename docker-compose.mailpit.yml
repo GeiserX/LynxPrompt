@@ -7,7 +7,8 @@ services:
     image: axllent/mailpit:v1.31.3
     restart: unless-stopped
     ports:
-      - "${MAILPIT_PORT:-8025}:8025"
+      # Loopback only: the inbox holds working sign-in links.
+      - "127.0.0.1:${MAILPIT_PORT:-8025}:8025"
 
   lynxprompt:
     environment:
