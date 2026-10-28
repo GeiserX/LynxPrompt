@@ -147,7 +147,7 @@ program
   .option("-t, --tags <tags>", "Tags (comma-separated)")
   .option("-y, --yes", "Skip prompts")
   .option("-f, --force", "Force push (overwrite remote changes)")
-  .option("--allow-sensitive", "Publish public content even if it looks like it holds secrets")
+  .option("--allow-sensitive", "Push public content or MCP configs even if they look like they hold secrets")
   .action(pushCommand);
 
 program
