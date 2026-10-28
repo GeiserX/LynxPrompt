@@ -28,10 +28,13 @@ export {
   skillFolder,
   MCP_BLUEPRINT_TYPE,
   MCP_CONFIGS,
+  mcpConfigForPath,
   convertMcpConfig,
+  extractMcpConfig,
+  mergeMcpConfig,
   getCommandDirectories,
   COMMAND_COUNT,
   AGENTS_MD_POINTER,
   agentsMdPointerFiles,
 } from "../../packages/shared/src/platforms";
-export type { PlatformDefinition, CommandDefinition } from "../../packages/shared/src/platforms";
+export type { PlatformDefinition, CommandDefinition, McpConfigTarget } from "../../packages/shared/src/platforms";
