@@ -34,6 +34,7 @@ function variablesRead(): Set<string> {
     for (const m of text.matchAll(/process\.env\.([A-Z][A-Z0-9_]+)/g)) vars.add(m[1]);
     for (const m of text.matchAll(/process\.env\[["']([A-Z][A-Z0-9_]+)["']\]/g)) vars.add(m[1]);
     for (const m of text.matchAll(/envBool\(\s*["']([A-Z][A-Z0-9_]+)["']/g)) vars.add(m[1]);
+    for (const m of text.matchAll(/runtimeEnv\(\s*["']([A-Z][A-Z0-9_]+)["']/g)) vars.add(m[1]);
   }
   // entrypoint.sh reads DB_<NAME>_* and DATABASE_URL_<NAME> through eval.
   const entrypoint = read("entrypoint.sh");
