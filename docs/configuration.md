@@ -47,7 +47,8 @@ schema's tables.
 | `ENABLE_PASSKEYS` | `true` | WebAuthn passkeys, for accounts that already exist. |
 | `ENABLE_GITHUB_OAUTH` | `false` | GitHub login. Needs `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`; callback `<APP_URL>/api/auth/callback/github`. |
 | `ENABLE_GOOGLE_OAUTH` | `false` | Google login. Needs `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`; callback `<APP_URL>/api/auth/callback/google`. |
-| `ENABLE_SSO` | `false` | SAML, OIDC and LDAP, configured per team in the UI. |
+| `ENABLE_SSO` | `false` | SAML, OIDC and LDAP, configured per team in the UI. Needs `SSO_ENCRYPTION_KEY`. |
+| `SSO_ENCRYPTION_KEY` | empty | 64 hex characters (32 bytes, `openssl rand -hex 32`). Encrypts the SSO client secrets and LDAP bind passwords at rest; without it a team cannot save an SSO configuration. Keep it: changing it makes the stored secrets unreadable. |
 | `ENABLE_USER_REGISTRATION` | `true` | `false` lets only existing accounts sign in (new ones get `RegistrationDisabled`). |
 | `ENABLE_TURNSTILE` | `false` | Cloudflare Turnstile on the sign-in forms. |
 
