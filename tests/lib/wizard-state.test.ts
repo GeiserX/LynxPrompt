@@ -103,6 +103,11 @@ describe("mergeWizardConfig", () => {
     expect(merged.testing.coverage).toBe(80);
   });
 
+  it("keeps fields it does not know, such as the save metadata", () => {
+    const merged = mergeWizardConfig({ _meta: { source: "web" } }) as WizardConfig & { _meta?: unknown };
+    expect(merged._meta).toEqual({ source: "web" });
+  });
+
   it("returns the defaults for something that is not an object", () => {
     expect(mergeWizardConfig(null)).toEqual(createDefaultWizardConfig());
   });
@@ -134,6 +139,83 @@ describe("saved preferences", () => {
     config.staticFiles = { ...config.staticFiles, licenseSave: true };
     for (const pref of buildPreferencesPayload(config)) {
       expect(typeof pref.value).toBe("string");
+    }
+  });
+
+  it("reads every saved preference from the grouped API response", () => {
+    const v = (value: unknown) => ({ value });
+    const restored = applyPreferences(createDefaultWizardConfig(), {
+      commands: { build: v("make"), test: v("make test"), lint: v("make lint"), dev: v("make dev") },
+      codeStyle: { naming: v("snake_case"), notes: v("short functions") },
+      testing: { levels: v("unit,e2e"), coverage: v("70"), frameworks: v("pytest"), notes: v("fast") },
+      static: {
+        "FUNDING.yml": v("github: me"),
+        editorconfig: v("true"),
+        editorconfigCustom: v("root = true"),
+        contributing: v("false"),
+        contributingCustom: v("# Contributing"),
+        codeOfConduct: v("true"),
+        codeOfConductCustom: v("# Be kind"),
+        security: v("true"),
+        securityCustom: v("# Security"),
+        gitignoreMode: v("custom"),
+        gitignoreCustom: v("node_modules"),
+        dockerignoreMode: v("generate"),
+        dockerignoreCustom: v(".git"),
+      },
+      general: { license: v("apache-2.0") },
+      repo: { host: v("gitlab"), isPublic: v("false") },
+    });
+    expect(restored.commands).toMatchObject({ build: "make", test: "make test", lint: "make lint", dev: "make dev" });
+    expect(restored.codeStyle).toMatchObject({ naming: "snake_case", notes: "short functions" });
+    expect(restored.testing).toMatchObject({ levels: ["unit", "e2e"], coverage: 70, frameworks: ["pytest"], notes: "fast" });
+    expect(restored.staticFiles).toMatchObject({
+      funding: true,
+      fundingYml: "github: me",
+      editorconfig: true,
+      editorconfigSave: true,
+      contributing: false,
+      contributingSave: true,
+      codeOfConduct: true,
+      security: true,
+      gitignoreMode: "custom",
+      gitignoreSave: true,
+      dockerignoreMode: "generate",
+      dockerignoreSave: true,
+      licenseSave: true,
+    });
+    expect(restored.license).toBe("apache-2.0");
+    expect(restored.repoHost).toBe("gitlab");
+    expect(restored.isPublic).toBe(false);
+  });
+
+  it("accepts non-string values and ignores an empty response", () => {
+    const prev = createDefaultWizardConfig();
+    expect(applyPreferences(prev, null)).toEqual(prev);
+    const restored = applyPreferences(prev, {
+      testing: { levels: { value: ["unit"] }, coverage: { value: 60 }, frameworks: { value: ["jest"] } },
+      static: { editorconfig: { value: true }, contributing: { value: true }, codeOfConduct: { value: false }, security: { value: false }, roadmap: { value: true } },
+      boundaries: { always: { value: ["Edit README"] } },
+      repo: { isPublic: { value: true }, license: { value: "gpl-3.0" } },
+    });
+    expect(restored.testing).toMatchObject({ levels: ["unit"], coverage: 60, frameworks: ["jest"] });
+    expect(restored.staticFiles).toMatchObject({ editorconfig: true, contributing: true, codeOfConduct: false, security: false, roadmap: true });
+    expect(restored.boundaries.always).toEqual(["Edit README"]);
+    expect(restored.license).toBe("gpl-3.0");
+    expect(restored.isPublic).toBe(true);
+  });
+
+  it("saves every ticked box", () => {
+    const config = createDefaultWizardConfig();
+    config.commands.savePreferences = true;
+    config.codeStyle.savePreferences = true;
+    config.testing.savePreferences = true;
+    for (const key of ["editorconfigSave", "contributingSave", "codeOfConductSave", "securitySave", "gitignoreSave", "dockerignoreSave", "fundingSave", "licenseSave"] as const) {
+      config.staticFiles[key] = true;
+    }
+    const keys = buildPreferencesPayload(config).map((p) => `${p.category}.${p.key}`);
+    for (const key of ["commands.build", "codeStyle.naming", "testing.levels", "static.editorconfig", "static.contributing", "static.codeOfConduct", "static.security", "static.gitignoreMode", "static.dockerignoreMode", "static.FUNDING.yml", "general.license", "repo.isPublic"]) {
+      expect(keys).toContain(key);
     }
   });
 
