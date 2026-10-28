@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -11,6 +12,16 @@ import { describe, expect, it } from "vitest";
 // migration, it must be the schema's full SQL, as `prisma migrate dev` writes it.
 const prisma = resolve(process.cwd(), "node_modules/.bin/prisma");
 const schemas = ["app", "users", "blog", "support"];
+
+// migrate deploy skips a migration it has already recorded and never compares
+// checksums, so an edit to an applied migration never reaches an existing
+// database. 0_init is applied everywhere once it ships: it is frozen.
+const frozen: Record<string, string> = {
+  app: "dd81af2781e270006531fbc4dca159a17809f0287fd139f09460ed962cb21127",
+  users: "3b5219421ebd55e6dbc00f76b88f6b4293d4548102791b8acb5c3d330355dfb6",
+  blog: "19ffd69873212aa89ec9dd45e35b98b6582b48612b667628da6c9a0084df699b",
+  support: "b3edc78629d4a3d48c382afbed40b8c26c8f5147f7b0971475cc88d77dfca134",
+};
 
 function fromEmpty(schema: string): string {
   const dir = mkdtempSync(join(tmpdir(), "lp-migrate-diff-"));
@@ -44,6 +55,15 @@ describe.each(schemas)("prisma/migrations-%s", (schema) => {
   it("starts with the 0_init baseline the entrypoint records on db-push databases", () => {
     expect(migrations[0]).toBe("0_init");
     expect(readFileSync(join(dir, "migration_lock.toml"), "utf8")).toMatch(/provider = "postgresql"/);
+  });
+
+  it("0_init is unchanged; a schema change needs a new migration folder", () => {
+    const sha = createHash("sha256").update(readFileSync(join(dir, "0_init", "migration.sql"))).digest("hex");
+    expect(
+      sha,
+      `${dir}/0_init/migration.sql was edited. Existing databases already recorded 0_init and will never ` +
+        "run the edit. Restore it and add a new migration instead (docs/development.md).",
+    ).toBe(frozen[schema]);
   });
 
   it.runIf(migrations.length <= 1)("0_init creates the whole schema", () => {

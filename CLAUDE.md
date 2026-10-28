@@ -573,7 +573,10 @@ npm run db:generate
 # 3. Push to database (local dev)
 npm run db:push
 
-# 4. Build and deploy
+# 4. Add a new migration folder under prisma/migrations-*/ (docs/development.md).
+#    Never edit an existing migration: databases that recorded it never rerun it.
+
+# 5. Build and deploy
 ```
 
 ### Running Tests
