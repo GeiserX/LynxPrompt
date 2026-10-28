@@ -18,4 +18,10 @@ describe("lynxp diff output", () => {
     const diff = computeDiff("a\u001b[2J", "a[2J");
     expect(diff.some((d) => d.type !== "same")).toBe(true);
   });
+
+  it("treats a final newline as the end of the last line, not an added line", () => {
+    expect(computeDiff("# Rules\nshared", "# Rules\nshared\n").every((d) => d.type === "same")).toBe(true);
+    expect(computeDiff("# Rules\nshared", "# Rules\nshared\n\n").some((d) => d.type === "add")).toBe(true);
+    expect(computeDiff("# Rules\r\nshared", "# Rules\r\nshared\r\n").every((d) => d.type === "same")).toBe(true);
+  });
 });

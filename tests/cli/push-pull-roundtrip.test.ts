@@ -172,15 +172,30 @@ async function pullInto(dir: string, id: string) {
 }
 
 describe("lynxp push then lynxp pull against this commit's server", () => {
-  it("brings the pushed rules back unchanged", async () => {
+  it("brings the pushed rules back unchanged, final newline included", async () => {
     await pushFile(RULES);
     const row = only();
-    expect(row.content).toBe(RULES.trim());
+    expect(row.content).toBe(RULES);
 
-    // The server stores content trimmed, so the file's final newline does not
-    // come back; every other byte must.
     const pulled = await pullInto(clone, `bp_${row.id}`);
-    expect(pulled).toBe(RULES.trimEnd());
+    expect(pulled).toBe(RULES);
+  });
+
+  it("ends a pulled file with one newline when the row was stored trimmed", async () => {
+    await pushFile(RULES);
+    const row = only();
+    // Rows written before the server kept content as sent
+    db.rows.set(row.id, { ...row, content: RULES.trim() });
+
+    const pulled = await pullInto(clone, `bp_${row.id}`);
+    expect(pulled).toBe(RULES);
+
+    // Pushing the pulled file back matches the server's checksum, stores the
+    // newline and is not a new version
+    await pushCommand(path.join(clone, "AGENTS.md"), { yes: true });
+    expect(only().content).toBe(RULES);
+    expect(only().currentVersion).toBe(1);
+    expect(db.versions).toHaveLength(1);
   });
 
   it("pushes a later edit of the tracked file without --force", async () => {
@@ -189,10 +204,10 @@ describe("lynxp push then lynxp pull against this commit's server", () => {
     await pushFile(edited);
 
     const row = only();
-    expect(row.content).toBe(edited.trim());
+    expect(row.content).toBe(edited);
     expect(row.currentVersion).toBe(2);
     expect(db.versions.map((v) => v.version)).toEqual([1, 2]);
-    expect(await pullInto(clone, `bp_${row.id}`)).toBe(edited.trimEnd());
+    expect(await pullInto(clone, `bp_${row.id}`)).toBe(edited);
   });
 
   it("an edit made after a pull on another machine pushes back", async () => {

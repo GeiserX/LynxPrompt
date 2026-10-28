@@ -111,7 +111,7 @@ describe("lynxp sync", () => {
 
     await syncCommand(undefined, {});
 
-    expect(read(file())).toBe("# Rules\n\nUse spaces.");
+    expect(read(file())).toBe("# Rules\n\nUse spaces.\n");
     expect((await tracked()).checksum).toBe(calculateChecksum("# Rules\n\nUse spaces."));
     expect(puts).toHaveLength(0);
   });
@@ -147,7 +147,7 @@ describe("lynxp sync", () => {
     await syncCommand(undefined, {});
 
     expect(read(file())).toBe(mine);
-    expect(read(`${file()}.remote`)).toBe("# Rules\n\nUse tabs. Theirs.");
+    expect(read(`${file()}.remote`)).toBe("# Rules\n\nUse tabs. Theirs.\n");
     expect(puts).toHaveLength(0);
     expect(server.bp_1.content).toBe("# Rules\n\nUse tabs. Theirs.");
     expect(process.exitCode).toBe(1);
@@ -203,7 +203,7 @@ describe("lynxp pull --vars", () => {
 
     await pullCommand("bp_1", { output: dir, yes: true, vars: "project_name=acme,TEAM=Platform" });
 
-    expect(read(file())).toBe("# acme\n\nTeam: Platform\nRepo: none");
+    expect(read(file())).toBe("# acme\n\nTeam: Platform\nRepo: none\n");
     const t = await tracked();
     expect(t.checksum).toBe(calculateChecksum(TEMPLATE));
     expect(t.variables).toEqual({ PROJECT_NAME: "acme", TEAM: "Platform" });
@@ -216,7 +216,7 @@ describe("lynxp pull --vars", () => {
     // sync sees no change on either side
     await syncCommand(undefined, {});
     expect(puts).toHaveLength(0);
-    expect(read(file())).toBe("# acme\n\nTeam: Platform\nRepo: none");
+    expect(read(file())).toBe("# acme\n\nTeam: Platform\nRepo: none\n");
   });
 
   it("refills a cloud update with the same values on sync", async () => {
@@ -226,7 +226,7 @@ describe("lynxp pull --vars", () => {
 
     await syncCommand(undefined, {});
 
-    expect(read(file())).toBe("# acme\n\nTeam: Platform\nRepo: none\nOwner: Platform");
+    expect(read(file())).toBe("# acme\n\nTeam: Platform\nRepo: none\nOwner: Platform\n");
     expect(puts).toHaveLength(0);
   });
 
@@ -269,7 +269,7 @@ describe("lynxp pull --vars", () => {
 
     await pullCommand("bp_1", { output: dir, yes: true });
 
-    expect(read(file())).toBe(TEMPLATE);
+    expect(read(file())).toBe(`${TEMPLATE}\n`);
     expect((await tracked()).variables).toBeUndefined();
   });
 });
