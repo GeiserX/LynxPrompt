@@ -983,6 +983,27 @@ schema's tables.</p>
 </tr>
 </tbody>
 </table>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DB_SSL</code></td>
+<td><code>false</code></td>
+<td><code>true</code> makes the app's own connections to PostgreSQL use TLS. The migrations at start connect with the connection string as written.</td>
+</tr>
+<tr>
+<td><code>DB_SSL_REJECT_UNAUTHORIZED</code></td>
+<td><code>true</code></td>
+<td>With <code>DB_SSL=true</code>, <code>false</code> accepts a server certificate that does not verify, such as a self-signed one.</td>
+</tr>
+</tbody>
+</table>
 <h2 id="sign-in">Sign-in<a class="headerlink" href="#sign-in" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1056,7 +1077,17 @@ schema's tables.</p>
 <tr>
 <td><code>ENABLE_TURNSTILE</code></td>
 <td><code>false</code></td>
-<td>Cloudflare Turnstile on the sign-in forms.</td>
+<td>Cloudflare Turnstile on the sign-in forms. Needs both keys below.</td>
+</tr>
+<tr>
+<td><code>NEXT_PUBLIC_TURNSTILE_SITE_KEY</code></td>
+<td>empty</td>
+<td>Turnstile site key, read when the container starts.</td>
+</tr>
+<tr>
+<td><code>TURNSTILE_SECRET_KEY</code></td>
+<td>empty</td>
+<td>Turnstile secret key. With <code>ENABLE_TURNSTILE=true</code> and no secret, the server skips the check.</td>
 </tr>
 </tbody>
 </table>
@@ -1126,7 +1157,12 @@ schema's tables.</p>
 <tr>
 <td><code>UMAMI_SCRIPT_URL</code></td>
 <td>empty</td>
-<td>Umami analytics script.</td>
+<td>Umami analytics script. Loaded only when <code>NEXT_PUBLIC_UMAMI_WEBSITE_ID</code> is set too.</td>
+</tr>
+<tr>
+<td><code>NEXT_PUBLIC_UMAMI_WEBSITE_ID</code></td>
+<td>empty</td>
+<td>Umami website id.</td>
 </tr>
 <tr>
 <td><code>CONTACT_EMAIL</code></td>
