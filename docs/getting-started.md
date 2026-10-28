@@ -57,7 +57,7 @@ account that already exists, so the first sign-in is always the mail link or OAu
 Change the image tag in `docker-compose.selfhost.yml` to the newer release from
 [Docker Hub](https://hub.docker.com/r/drumsergio/lynxprompt/tags) and run the same `docker compose ... up -d`.
 Migrations run at start. Back up the four databases first (`docker compose ... exec postgres pg_dumpall -U
-lynxprompt > backup.sql`).
+lynxprompt > backup.sql`). Uploaded images live in the `uploads` volume, which survives the upgrade.
 
 ## Helm chart (Kubernetes)
 
@@ -89,5 +89,5 @@ The chart is also on [ArtifactHub](https://artifacthub.io/packages/helm/lynxprom
 | AI assistants | MCP server | [lynxprompt-mcp](https://github.com/GeiserX/lynxprompt-mcp) |
 
 After installing the CLI: `lynxp config set-url https://lynxprompt.example.com` for your own instance (the
-default, which `lynxp config show` prints, is the hosted instance's API at `https://api.lynxprompt.com`), then
+default, which `lynxp config show` prints, is the hosted instance at `https://lynxprompt.com`), then
 `lynxp login`. See [Usage](usage.md#the-cli).

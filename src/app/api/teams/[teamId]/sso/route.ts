@@ -4,7 +4,20 @@ import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { encryptSSOConfig, decryptSSOConfig } from "@/lib/sso-encryption";
 import { z } from "zod";
+import { randomBytes } from "crypto";
 import { Prisma } from "@/generated/prisma-users/client";
+import {
+  isAllowedIdpUrl,
+  normalizeDomain,
+  resolveOidcEndpoints,
+  verificationRecord,
+} from "@/lib/sso-oidc";
+
+const MASK = "••••••••";
+
+// The browser is sent to these URLs and the server calls them, so a
+// javascript: or data: URL must never be stored.
+const idpUrl = z.string().refine(isAllowedIdpUrl, { message: "Must be an https:// URL" });
 
 // Base SSO config schema
 const baseSSOSchema = z.object({
@@ -27,12 +40,12 @@ const samlConfigSchema = z.object({
 // OIDC-specific config
 const oidcConfigSchema = z.object({
   provider: z.literal("OIDC"),
-  issuer: z.string().url(), // OpenID Connect Issuer URL
+  issuer: idpUrl, // OpenID Connect Issuer URL
   clientId: z.string(),
-  clientSecret: z.string(),
-  authorizationUrl: z.string().url().optional(), // Auto-discovered from issuer if not provided
-  tokenUrl: z.string().url().optional(),
-  userInfoUrl: z.string().url().optional(),
+  clientSecret: z.string().optional(), // Omitted or masked on edit: keep the stored one
+  authorizationUrl: idpUrl.optional(), // Discovered from the issuer if not provided
+  tokenUrl: idpUrl.optional(),
+  userInfoUrl: idpUrl.optional(),
   scopes: z.array(z.string()).default(["openid", "profile", "email"]),
 });
 
@@ -110,20 +123,29 @@ export async function GET(
 
     // Mask sensitive fields
     if ("clientSecret" in safeConfig) {
-      safeConfig.clientSecret = "••••••••";
+      safeConfig.clientSecret = MASK;
     }
     if ("bindPassword" in safeConfig) {
-      safeConfig.bindPassword = "••••••••";
+      safeConfig.bindPassword = MASK;
     }
     if ("certificate" in safeConfig) {
-      safeConfig.certificate = "••••••••";
+      safeConfig.certificate = MASK;
     }
+
+    const token = ssoConfig.domainVerificationToken;
+    const pendingDomains = token
+      ? ssoConfig.allowedDomains
+          .filter((d) => !ssoConfig.verifiedDomains.includes(d))
+          .map((domain) => ({ domain, record: verificationRecord(domain, token) }))
+      : [];
 
     return NextResponse.json({
       configured: true,
       provider: ssoConfig.provider,
       enabled: ssoConfig.enabled,
       allowedDomains: ssoConfig.allowedDomains,
+      verifiedDomains: ssoConfig.verifiedDomains,
+      pendingDomains,
       config: safeConfig,
       lastSyncAt: ssoConfig.lastSyncAt,
       updatedAt: ssoConfig.updatedAt,
@@ -161,6 +183,16 @@ export async function POST(
     }
 
     const body = await request.json();
+
+    // Only OpenID Connect has a working sign-in flow. The SAML and LDAP
+    // schemas stay below for when those flows exist.
+    if (body?.provider === "SAML" || body?.provider === "LDAP") {
+      return NextResponse.json(
+        { error: `${body.provider} sign-in is not supported yet. Use OpenID Connect (OIDC).` },
+        { status: 400 }
+      );
+    }
+
     const validation = ssoConfigSchema.safeParse(body);
 
     if (!validation.success) {
@@ -170,18 +202,69 @@ export async function POST(
       );
     }
 
-    const { provider, enabled, allowedDomains, ...providerConfig } = validation.data;
+    const { provider, enabled, allowedDomains: rawDomains, ...providerConfig } = validation.data;
+
+    const allowedDomains: string[] = [];
+    for (const raw of rawDomains || []) {
+      const domain = normalizeDomain(raw);
+      if (!domain) {
+        return NextResponse.json({ error: `Not a valid domain: ${raw}` }, { status: 400 });
+      }
+      if (!allowedDomains.includes(domain)) allowedDomains.push(domain);
+    }
+
+    const existing = await prismaUsers.teamSSOConfig.findUnique({ where: { teamId } });
+
+    // A blank or masked secret on edit keeps the stored one
+    const config: Record<string, unknown> = { ...providerConfig };
+    if (provider === "OIDC") {
+      if (!config.clientSecret || config.clientSecret === MASK) {
+        let stored: unknown;
+        if (existing?.provider === "OIDC") {
+          try {
+            stored = decryptSSOConfig(existing.config as Record<string, unknown>).clientSecret;
+          } catch {
+            stored = undefined;
+          }
+        }
+        if (typeof stored !== "string" || !stored) {
+          return NextResponse.json({ error: "Client secret is required" }, { status: 400 });
+        }
+        config.clientSecret = stored;
+      }
+
+      // Read the endpoints from the issuer now, so a wrong issuer fails here
+      // rather than at the first sign-in
+      try {
+        Object.assign(config, await resolveOidcEndpoints(config));
+      } catch {
+        return NextResponse.json(
+          {
+            error:
+              "Could not read the OpenID configuration from the issuer. Check the issuer URL, or set the authorization, token and userinfo URLs.",
+          },
+          { status: 400 }
+        );
+      }
+    }
 
     // Encrypt sensitive fields before storing in database
     let encryptedConfig: Prisma.InputJsonValue;
     try {
-      encryptedConfig = encryptSSOConfig(providerConfig) as Prisma.InputJsonValue;
+      encryptedConfig = encryptSSOConfig(config) as Prisma.InputJsonValue;
     } catch {
       return NextResponse.json(
         { error: "SSO encryption is not configured. Set SSO_ENCRYPTION_KEY in your environment." },
         { status: 500 }
       );
     }
+
+    // A domain stays verified only while the team still lists it
+    const verifiedDomains = (existing?.verifiedDomains || []).filter((d) =>
+      allowedDomains.includes(d)
+    );
+    const domainVerificationToken =
+      existing?.domainVerificationToken || randomBytes(16).toString("hex");
 
     // Upsert the SSO config
     const ssoConfig = await prismaUsers.teamSSOConfig.upsert({
@@ -190,13 +273,17 @@ export async function POST(
         teamId,
         provider,
         enabled,
-        allowedDomains: allowedDomains || [],
+        allowedDomains,
+        verifiedDomains,
+        domainVerificationToken,
         config: encryptedConfig,
       },
       update: {
         provider,
         enabled,
-        allowedDomains: allowedDomains || [],
+        allowedDomains,
+        verifiedDomains,
+        domainVerificationToken,
         config: encryptedConfig,
       },
     });
@@ -206,6 +293,7 @@ export async function POST(
       provider: ssoConfig.provider,
       enabled: ssoConfig.enabled,
       allowedDomains: ssoConfig.allowedDomains,
+      verifiedDomains: ssoConfig.verifiedDomains,
     });
   } catch (error) {
     console.error("Error configuring SSO:", error);
@@ -323,17 +411,3 @@ export async function PATCH(
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

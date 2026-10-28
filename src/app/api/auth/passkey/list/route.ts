@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
+import { requirePasskeyVerified } from "@/lib/passkey-session";
 import { ENABLE_PASSKEYS } from "@/lib/feature-flags";
 
 export async function GET() {
@@ -39,7 +40,7 @@ export async function GET() {
   }
 }
 
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
   if (!ENABLE_PASSKEYS) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -50,6 +51,9 @@ export async function DELETE(request: Request) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
+
+    const passkeyBlock = await requirePasskeyVerified(request, session.user.id);
+    if (passkeyBlock) return passkeyBlock;
 
     const { id } = await request.json();
 

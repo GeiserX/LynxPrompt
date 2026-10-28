@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
+import { BLUEPRINT_ACCESS_SELECT, isOwnerOrTeamMember } from "@/lib/blueprint-access";
 
 // GET /api/blueprints/[id]/versions - Get version history for a blueprint
 export async function GET(
@@ -122,7 +123,7 @@ export async function POST(
     // Check access
     const blueprint = await prismaUsers.userTemplate.findUnique({
       where: { id: realId },
-      select: { userId: true, isPublic: true, teamId: true },
+      select: BLUEPRINT_ACCESS_SELECT,
     });
 
     if (!blueprint) {
@@ -133,9 +134,11 @@ export async function POST(
     }
 
     const session = await getServerSession(authOptions);
-    const isOwner = session?.user?.id === blueprint.userId;
+    // Same rule as the version list above: the owner and the blueprint's team
+    // see every version, everyone else only published versions of public ones
+    const hasFullAccess = await isOwnerOrTeamMember(blueprint, session?.user?.id);
 
-    if (!isOwner && !blueprint.isPublic) {
+    if (!hasFullAccess && !blueprint.isPublic) {
       return NextResponse.json(
         { error: "Access denied" },
         { status: 403 }
@@ -167,8 +170,8 @@ export async function POST(
       );
     }
 
-    // Non-owners can only see published versions
-    if (!isOwner && !version.isPublished) {
+    // Outsiders can only see published versions
+    if (!hasFullAccess && !version.isPublished) {
       return NextResponse.json(
         { error: "This version is not published" },
         { status: 403 }

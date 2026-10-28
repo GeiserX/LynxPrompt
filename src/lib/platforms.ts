@@ -19,7 +19,11 @@ export interface PlatformDefinition {
   id: string;
   /** Human-readable display name */
   name: string;
-  /** Output file or directory path */
+  /**
+   * Output file path. Rules platforms always name a real file (never a bare
+   * directory), because the web download uses its last segment as the file
+   * name. Command platforms (isCommand) name the directory their files go in.
+   */
   file: string;
   /** Emoji icon for UI */
   icon: string;
@@ -91,7 +95,7 @@ export const PLATFORMS: PlatformDefinition[] = [
   {
     id: "cursor",
     name: "Cursor",
-    file: ".cursor/rules/",
+    file: ".cursor/rules/project.mdc",
     icon: "⚡",
     gradient: "from-blue-500 to-cyan-500",
     note: "AI-powered code editor with native rules",
@@ -155,7 +159,7 @@ export const PLATFORMS: PlatformDefinition[] = [
   {
     id: "zed",
     name: "Zed",
-    file: ".zed/instructions.md",
+    file: ".rules",
     icon: "⚡",
     gradient: "from-amber-500 to-yellow-500",
     note: "High-performance editor with AI",
@@ -177,23 +181,23 @@ export const PLATFORMS: PlatformDefinition[] = [
   {
     id: "trae",
     name: "Trae AI",
-    file: ".trae/rules/",
+    file: ".trae/rules/project_rules.md",
     icon: "🔷",
     gradient: "from-blue-400 to-blue-600",
     note: "ByteDance's AI IDE",
     category: "ide",
-    format: "mdc",
+    format: "markdown",
     url: "https://trae.ai",
   },
   {
     id: "firebase",
     name: "Firebase Studio",
-    file: ".idx/",
+    file: ".idx/airules.md",
     icon: "🔥",
     gradient: "from-yellow-500 to-orange-500",
     note: "Google's cloud IDE",
     category: "ide",
-    format: "mdc",
+    format: "markdown",
     url: "https://idx.dev",
   },
 
@@ -214,12 +218,12 @@ export const PLATFORMS: PlatformDefinition[] = [
   {
     id: "roocode",
     name: "Roo Code",
-    file: ".roo/rules/",
+    file: ".roo/rules/project.md",
     icon: "🦘",
     gradient: "from-orange-400 to-red-500",
     note: "AI coding assistant for VS Code",
     category: "editor",
-    format: "mdc",
+    format: "markdown",
     url: "https://roocode.com",
   },
   {
@@ -280,34 +284,34 @@ export const PLATFORMS: PlatformDefinition[] = [
   {
     id: "amazonq",
     name: "Amazon Q",
-    file: ".amazonq/rules/",
+    file: ".amazonq/rules/project.md",
     icon: "📦",
     gradient: "from-orange-400 to-amber-500",
     note: "AWS AI coding companion",
     category: "editor",
-    format: "mdc",
+    format: "markdown",
     url: "https://aws.amazon.com/q/developer/",
   },
   {
     id: "augment",
     name: "Augment Code",
-    file: ".augment/rules/",
+    file: ".augment/rules/project.md",
     icon: "🔮",
     gradient: "from-violet-500 to-purple-600",
     note: "AI code augmentation",
     category: "editor",
-    format: "mdc",
+    format: "markdown",
     url: "https://augmentcode.com",
   },
   {
     id: "kilocode",
     name: "Kilo Code",
-    file: ".kilocode/rules/",
+    file: ".kilocode/rules/project.md",
     icon: "📊",
     gradient: "from-green-500 to-emerald-500",
     note: "AI code generation",
     category: "editor",
-    format: "mdc",
+    format: "markdown",
     url: "https://kilocode.ai",
   },
   {
@@ -324,12 +328,12 @@ export const PLATFORMS: PlatformDefinition[] = [
   {
     id: "kiro",
     name: "Kiro",
-    file: ".kiro/steering/",
+    file: ".kiro/steering/project.md",
     icon: "🚀",
     gradient: "from-blue-500 to-purple-500",
     note: "AWS spec-driven agent",
     category: "editor",
-    format: "mdc",
+    format: "markdown",
     url: "https://kiro.dev",
   },
 
@@ -339,7 +343,7 @@ export const PLATFORMS: PlatformDefinition[] = [
   {
     id: "aider",
     name: "Aider",
-    file: "AIDER.md",
+    file: "CONVENTIONS.md",
     icon: "🤖",
     gradient: "from-green-500 to-lime-500",
     note: "AI pair programming in terminal",
@@ -383,12 +387,12 @@ export const PLATFORMS: PlatformDefinition[] = [
   {
     id: "opencode",
     name: "Open Code",
-    file: "opencode.json",
+    file: "AGENTS.md",
     icon: "🔓",
     gradient: "from-gray-600 to-gray-800",
-    note: "Open-source AI coding",
+    note: "Open-source AI coding agent (reads AGENTS.md)",
     category: "cli",
-    format: "json",
+    format: "markdown",
     url: "https://opencode.ai",
   },
 
@@ -419,12 +423,12 @@ export const PLATFORMS: PlatformDefinition[] = [
   {
     id: "firebender",
     name: "Firebender",
-    file: "firebender.json",
+    file: ".firebender/rules/project.mdc",
     icon: "🔥",
     gradient: "from-orange-600 to-red-600",
     note: "AI code transformation",
     category: "other",
-    format: "json",
+    format: "mdc",
   },
 
   // ========================================
@@ -469,7 +473,7 @@ export const PLATFORMS: PlatformDefinition[] = [
   {
     id: "copilot-prompt",
     name: "Copilot Prompt",
-    file: ".copilot/prompts/",
+    file: ".github/prompts/",
     icon: "🐙",
     gradient: "from-gray-600 to-gray-800",
     note: "Custom prompts for GitHub Copilot Chat",
@@ -512,7 +516,7 @@ export const PLATFORMS: PlatformDefinition[] = [
  * - Cursor: .cursor/commands/*.md
  * - Claude Code: .claude/commands/*.md  
  * - Windsurf: .windsurf/workflows/*.md
- * - GitHub Copilot: .copilot/prompts/*.md
+ * - GitHub Copilot: .github/prompts/*.prompt.md
  * - Continue.dev: .continue/prompts/*.md (with invokable: true)
  * - OpenCode: .opencode/commands/*.md
  * - Zed: Custom slash command extensions
@@ -557,8 +561,8 @@ export const COMMANDS: CommandDefinition[] = [
   {
     id: "copilot-prompt",
     name: "Copilot Prompt",
-    directory: ".copilot/prompts",
-    extension: ".md",
+    directory: ".github/prompts",
+    extension: ".prompt.md",
     platformId: "copilot",
     icon: "🐙",
     gradient: "from-gray-600 to-gray-800",

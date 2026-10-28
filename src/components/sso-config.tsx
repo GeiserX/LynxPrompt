@@ -19,6 +19,8 @@ interface SSOConfig {
   provider?: "SAML" | "OIDC" | "LDAP";
   enabled?: boolean;
   allowedDomains?: string[];
+  verifiedDomains?: string[];
+  pendingDomains?: { domain: string; record: { name: string; value: string } }[];
   config?: Record<string, unknown>;
   lastSyncAt?: string;
   updatedAt?: string;
@@ -35,8 +37,9 @@ export function SSOConfigPanel({ teamId }: SSOConfigPanelProps) {
   const [success, setSuccess] = useState<string | null>(null);
   const [ssoConfig, setSsoConfig] = useState<SSOConfig | null>(null);
 
-  // Form state
-  const [provider, setProvider] = useState<"SAML" | "OIDC" | "LDAP">("SAML");
+  // Form state. Only OIDC has a working sign-in flow; SAML and LDAP are not
+  // offered until they do.
+  const [provider, setProvider] = useState<"SAML" | "OIDC" | "LDAP">("OIDC");
   const [enabled, setEnabled] = useState(false);
   const [allowedDomains, setAllowedDomains] = useState("");
 
@@ -58,6 +61,7 @@ export function SSOConfigPanel({ teamId }: SSOConfigPanelProps) {
   const [bindPassword, setBindPassword] = useState("");
 
   const [showForm, setShowForm] = useState(false);
+  const [verifying, setVerifying] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSSOConfig();
@@ -71,7 +75,7 @@ export function SSOConfigPanel({ teamId }: SSOConfigPanelProps) {
       if (res.ok) {
         setSsoConfig(data);
         if (data.configured) {
-          setProvider(data.provider);
+          if (data.provider === "OIDC") setProvider("OIDC");
           setEnabled(data.enabled);
           setAllowedDomains((data.allowedDomains || []).join(", "));
           
@@ -80,7 +84,7 @@ export function SSOConfigPanel({ teamId }: SSOConfigPanelProps) {
             if (data.provider === "SAML") {
               setEntityId(data.config.entityId as string || "");
               setSsoUrl(data.config.ssoUrl as string || "");
-              setCertificate(data.config.certificate as string || "");
+              // The certificate comes back masked; never pre-fill it
             } else if (data.provider === "OIDC") {
               setIssuer(data.config.issuer as string || "");
               setClientId(data.config.clientId as string || "");
@@ -186,6 +190,33 @@ export function SSOConfigPanel({ teamId }: SSOConfigPanelProps) {
     }
   };
 
+  const handleVerifyDomain = async (domain: string) => {
+    setVerifying(domain);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const res = await fetch(`/api/teams/${teamId}/sso/verify-domain`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ domain }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to verify domain");
+      }
+
+      setSuccess(`${domain} is verified`);
+      fetchSSOConfig();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to verify domain");
+    } finally {
+      setVerifying(null);
+    }
+  };
+
   const handleRemove = async () => {
     if (!confirm("Are you sure you want to remove SSO configuration? This cannot be undone.")) {
       return;
@@ -275,11 +306,18 @@ export function SSOConfigPanel({ teamId }: SSOConfigPanelProps) {
               </div>
             </div>
 
-            {ssoConfig.allowedDomains && ssoConfig.allowedDomains.length > 0 && (
+            {ssoConfig.provider !== "OIDC" && (
+              <p className="mt-3 border-t pt-3 text-sm text-muted-foreground">
+                {ssoConfig.provider} sign-in is not supported yet. Edit the configuration to use
+                OpenID Connect instead.
+              </p>
+            )}
+
+            {(ssoConfig.verifiedDomains?.length ?? 0) > 0 && (
               <div className="mt-3 border-t pt-3">
-                <p className="text-xs text-muted-foreground">Allowed domains:</p>
+                <p className="text-xs text-muted-foreground">Verified domains:</p>
                 <div className="mt-1 flex flex-wrap gap-1">
-                  {ssoConfig.allowedDomains.map((domain) => (
+                  {ssoConfig.verifiedDomains!.map((domain) => (
                     <span
                       key={domain}
                       className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary"
@@ -288,6 +326,35 @@ export function SSOConfigPanel({ teamId }: SSOConfigPanelProps) {
                     </span>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {(ssoConfig.pendingDomains?.length ?? 0) > 0 && (
+              <div className="mt-3 space-y-3 border-t pt-3">
+                <p className="text-xs text-muted-foreground">
+                  Not verified yet. SSO signs in nobody on these domains until you add this TXT
+                  record to the domain&apos;s DNS and press Verify:
+                </p>
+                {ssoConfig.pendingDomains!.map(({ domain, record }) => (
+                  <div key={domain} className="rounded-lg border p-3 text-xs">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium">@{domain}</span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleVerifyDomain(domain)}
+                        disabled={verifying !== null}
+                      >
+                        {verifying === domain && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+                        Verify
+                      </Button>
+                    </div>
+                    <p className="mt-2 text-muted-foreground">Name</p>
+                    <code className="block break-all">{record.name}</code>
+                    <p className="mt-1 text-muted-foreground">Value</p>
+                    <code className="block break-all">{record.value}</code>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -326,7 +393,7 @@ export function SSOConfigPanel({ teamId }: SSOConfigPanelProps) {
           {!showForm && !ssoConfig?.configured && (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Configure SAML 2.0, OpenID Connect, or LDAP for your team.
+                Configure OpenID Connect (OIDC) for your team. SAML and LDAP are not supported yet.
               </p>
               <Button onClick={() => setShowForm(true)} className="w-full">
                 <Lock className="mr-2 h-4 w-4" />
@@ -341,7 +408,7 @@ export function SSOConfigPanel({ teamId }: SSOConfigPanelProps) {
               <div>
                 <label className="mb-2 block text-sm font-medium">Provider</label>
                 <div className="flex gap-2">
-                  {(["SAML", "OIDC", "LDAP"] as const).map((p) => (
+                  {(["OIDC"] as const).map((p) => (
                     <button
                       key={p}
                       type="button"
@@ -498,7 +565,7 @@ export function SSOConfigPanel({ teamId }: SSOConfigPanelProps) {
               {/* Common fields */}
               <div>
                 <label className="mb-1 block text-sm font-medium">
-                  Allowed Email Domains (optional)
+                  Email Domains
                 </label>
                 <input
                   type="text"
@@ -508,7 +575,8 @@ export function SSOConfigPanel({ teamId }: SSOConfigPanelProps) {
                   className="w-full rounded-lg border bg-background px-3 py-2 text-sm"
                 />
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Comma-separated list of allowed email domains. Leave empty to allow all.
+                  Comma-separated. SSO signs in only addresses on these domains, each once you
+                  prove you own it with a DNS record.
                 </p>
               </div>
 
@@ -545,10 +613,3 @@ export function SSOConfigPanel({ teamId }: SSOConfigPanelProps) {
     </div>
   );
 }
-
-
-
-
-
-
-

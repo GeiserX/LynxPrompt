@@ -253,8 +253,13 @@ model TeamSSOConfig {
   // For LDAP: { host, port, baseDn, bindDn, bindPassword, userFilter, etc. }
   config    Json
   
-  // Optional: restrict to specific email domains
-  allowedDomains String[] // e.g., ["acme.com", "acme.co.uk"]
+  // Email domains the team claims for SSO, e.g. ["acme.com", "acme.co.uk"]
+  allowedDomains String[]
+  // The subset of allowedDomains whose ownership the team proved with a DNS TXT
+  // record. SSO only signs in addresses on a verified domain.
+  verifiedDomains String[] @default([])
+  // Value the team publishes at _lynxprompt-sso.<domain> to prove ownership
+  domainVerificationToken String?
   
   // Metadata
   createdAt DateTime @default(now())
@@ -545,6 +550,10 @@ model CliSession {
   
   // Raw token (stored temporarily for CLI to retrieve, cleared after retrieval)
   token       String?        @db.Text
+
+  // SHA-256 (base64url) of a verifier only the CLI knows; polling must present
+  // the verifier. Null for sessions started by CLIs older than this check.
+  codeChallenge String?
   
   expiresAt   DateTime
   createdAt   DateTime       @default(now())

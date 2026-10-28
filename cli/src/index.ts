@@ -145,6 +145,7 @@ program
   .option("-t, --tags <tags>", "Tags (comma-separated)")
   .option("-y, --yes", "Skip prompts")
   .option("-f, --force", "Force push (overwrite remote changes)")
+  .option("--allow-sensitive", "Publish public content even if it looks like it holds secrets")
   .action(pushCommand);
 
 program

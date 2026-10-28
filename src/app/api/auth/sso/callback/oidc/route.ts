@@ -1,13 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createHmac, randomUUID } from "crypto";
+import { createHmac, randomBytes } from "crypto";
 import { prismaUsers } from "@/lib/db-users";
-import { ENABLE_SSO } from "@/lib/feature-flags";
+import { ENABLE_SSO, ENABLE_USER_REGISTRATION } from "@/lib/feature-flags";
 import { decryptSSOConfig } from "@/lib/sso-encryption";
+import { emailDomain, idpFetch, resolveOidcEndpoints } from "@/lib/sso-oidc";
+import {
+  secureCookiesEnabled,
+  sessionCookieName,
+  SESSION_MAX_AGE_SECONDS,
+} from "@/lib/auth-cookies";
+
+const TERMS_VERSION = "2025-12";
 
 /**
  * GET /api/auth/sso/callback/oidc
  * Handles the OIDC authorization code callback from the identity provider.
- * Validates the state parameter against the signed cookie for CSRF protection.
+ * Validates the state parameter against the signed cookie for CSRF protection,
+ * then opens a database session for the user itself: next-auth's credentials
+ * flow cannot create one while session.strategy is "database".
  */
 export async function GET(request: NextRequest) {
   if (!ENABLE_SSO) {
@@ -52,7 +62,8 @@ export async function GET(request: NextRequest) {
   }
 
   const [, teamSlug, ...callbackParts] = stateParts;
-  const callbackUrl = decodeURIComponent(callbackParts.join(":")) || "/dashboard";
+  let callbackUrl = decodeURIComponent(callbackParts.join(":")) || "/dashboard";
+  if (!callbackUrl.startsWith("/") || callbackUrl.startsWith("//")) callbackUrl = "/dashboard";
 
   // Find team and SSO config
   const team = await prismaUsers.team.findUnique({
@@ -72,16 +83,18 @@ export async function GET(request: NextRequest) {
   }
 
   const baseUrl = process.env.NEXTAUTH_URL || process.env.APP_URL || "https://lynxprompt.com";
-  const tokenUrl = (config.tokenUrl as string) || `${config.issuer}/token`;
-  const userInfoUrl = (config.userInfoUrl as string) || `${config.issuer}/userinfo`;
 
-  // Exchange authorization code for tokens
-  let tokenData: Record<string, unknown>;
+  // One error code for every IdP failure, so the response says nothing about
+  // which internal step (or host) answered.
+  const providerError = () =>
+    NextResponse.redirect(new URL("/auth/signin?error=SSOProviderError", request.url));
+
+  let userInfo: Record<string, unknown>;
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10_000);
+    const { tokenUrl, userInfoUrl } = await resolveOidcEndpoints(config);
 
-    const tokenRes = await fetch(tokenUrl, {
+    // Exchange authorization code for tokens
+    const tokenRes = await idpFetch(tokenUrl, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
@@ -91,60 +104,44 @@ export async function GET(request: NextRequest) {
         client_id: config.clientId as string,
         client_secret: config.clientSecret as string,
       }),
-      signal: controller.signal,
     });
-    clearTimeout(timeout);
-
     if (!tokenRes.ok) {
       console.error("[SSO OIDC] Token exchange failed:", tokenRes.status);
-      return NextResponse.redirect(new URL("/auth/signin?error=SSOTokenExchangeFailed", request.url));
+      return providerError();
+    }
+    const tokenData = (await tokenRes.json()) as Record<string, unknown>;
+    const accessToken = tokenData.access_token;
+    if (typeof accessToken !== "string" || !accessToken) {
+      return providerError();
     }
 
-    tokenData = await tokenRes.json();
-  } catch {
-    return NextResponse.redirect(new URL("/auth/signin?error=SSOTokenExchangeFailed", request.url));
-  }
-
-  const accessToken = tokenData.access_token as string;
-  if (!accessToken) {
-    return NextResponse.redirect(new URL("/auth/signin?error=SSONoAccessToken", request.url));
-  }
-
-  // Fetch user info
-  let userInfo: Record<string, unknown>;
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10_000);
-
-    const userInfoRes = await fetch(userInfoUrl, {
+    // Fetch user info
+    const userInfoRes = await idpFetch(userInfoUrl, {
       headers: { Authorization: `Bearer ${accessToken}` },
-      signal: controller.signal,
     });
-    clearTimeout(timeout);
-
     if (!userInfoRes.ok) {
-      return NextResponse.redirect(new URL("/auth/signin?error=SSOUserInfoFailed", request.url));
+      console.error("[SSO OIDC] Userinfo request failed:", userInfoRes.status);
+      return providerError();
     }
-
-    userInfo = await userInfoRes.json();
-  } catch {
-    return NextResponse.redirect(new URL("/auth/signin?error=SSOUserInfoFailed", request.url));
+    userInfo = (await userInfoRes.json()) as Record<string, unknown>;
+  } catch (err) {
+    console.error("[SSO OIDC] Identity provider request failed:", (err as Error)?.message);
+    return providerError();
   }
 
-  const email = (userInfo.email as string)?.toLowerCase();
+  const email = typeof userInfo.email === "string" ? userInfo.email.trim().toLowerCase() : "";
   const name = (userInfo.name as string) || (userInfo.preferred_username as string) || email;
 
-  if (!email) {
+  if (!email || userInfo.email_verified === false) {
     return NextResponse.redirect(new URL("/auth/signin?error=SSONoEmail", request.url));
   }
 
-  // Validate email domain against allowed domains
-  const allowedDomains = team.ssoConfig.allowedDomains;
-  if (allowedDomains.length > 0) {
-    const emailDomain = email.split("@")[1];
-    if (!allowedDomains.includes(emailDomain)) {
-      return NextResponse.redirect(new URL("/auth/signin?error=SSODomainNotAllowed", request.url));
-    }
+  // The team's IdP is trusted only for addresses on a domain the team proved
+  // it owns. Without this, any team could point SSO at its own IdP, assert
+  // someone else's address and sign in to that account.
+  const domain = emailDomain(email);
+  if (!domain || !team.ssoConfig.verifiedDomains.includes(domain)) {
+    return NextResponse.redirect(new URL("/auth/signin?error=SSODomainNotVerified", request.url));
   }
 
   // Atomically find-or-create user and enforce seat limit in a serializable transaction
@@ -155,10 +152,18 @@ export async function GET(request: NextRequest) {
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     let seatLimitReached = false;
+    let registrationClosed = false;
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       user = await prismaUsers.$transaction(async (tx: any) => {
         let u = await tx.user.findUnique({ where: { email } });
+
+        // Same rule the other sign-in methods follow in auth.ts
+        if (!u && !ENABLE_USER_REGISTRATION) {
+          registrationClosed = true;
+          throw new Error("REGISTRATION_DISABLED");
+        }
+
         const existingMembership = u
           ? await tx.teamMember.findUnique({
               where: { teamId_userId: { teamId: team.id, userId: u.id } },
@@ -176,7 +181,19 @@ export async function GET(request: NextRequest) {
         }
 
         if (!u) {
-          u = await tx.user.create({ data: { email, name } });
+          // Signing in through the ToS notice counts as consent, as for
+          // accounts the next-auth adapter creates (createUser event)
+          const now = new Date();
+          u = await tx.user.create({
+            data: {
+              email,
+              name,
+              termsAcceptedAt: now,
+              termsVersion: TERMS_VERSION,
+              privacyAcceptedAt: now,
+              privacyVersion: TERMS_VERSION,
+            },
+          });
         }
 
         if (!existingMembership) {
@@ -189,6 +206,11 @@ export async function GET(request: NextRequest) {
       }, { isolationLevel: "Serializable" });
       break; // Success — exit retry loop
     } catch (err) {
+      if (registrationClosed) {
+        return NextResponse.redirect(
+          new URL("/auth/signin?error=RegistrationDisabled", request.url)
+        );
+      }
       if (seatLimitReached) {
         return NextResponse.redirect(
           new URL("/auth/signin?error=SSOSeatLimitReached", request.url)
@@ -217,37 +239,36 @@ export async function GET(request: NextRequest) {
     data: { lastSyncAt: new Date() },
   });
 
-  // Generate a one-time nonce for the SSO completion handoff
-  const nonce = randomUUID();
-  const expires = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
-
-  await prismaUsers.verificationToken.create({
-    data: {
-      identifier: `sso:${user.id}`,
-      token: nonce,
-      expires,
-    },
+  // Count the sign-in as activity, as the next-auth signIn callback does
+  await prismaUsers.teamMember.updateMany({
+    where: { userId: user.id },
+    data: { lastActiveAt: new Date(), isActiveThisCycle: true },
   });
 
-  // Redirect to the SSO sign-in completion page
-  // This page triggers NextAuth signIn() with the SSO credentials
-  const completeUrl = new URL("/auth/sso-complete", baseUrl);
-  completeUrl.searchParams.set("userId", user.id);
-  completeUrl.searchParams.set("email", email);
-  completeUrl.searchParams.set("teamId", team.id);
-  completeUrl.searchParams.set("nonce", nonce);
-  completeUrl.searchParams.set("callbackUrl", callbackUrl);
-  // Sign all params including nonce to prevent tampering
-  const signData = `${user.id}:${email}:${team.id}:${nonce}`;
-  const signature = createHmac("sha256", secret).update(signData).digest("hex");
-  completeUrl.searchParams.set("sig", signature);
+  // Open the database session next-auth reads on every request
+  const sessionToken = randomBytes(32).toString("hex");
+  const expires = new Date(Date.now() + SESSION_MAX_AGE_SECONDS * 1000);
+  await prismaUsers.session.create({
+    data: { sessionToken, userId: user.id, expires },
+  });
 
-  const response = NextResponse.redirect(completeUrl);
+  const secure = secureCookiesEnabled();
+  let destination = new URL(callbackUrl, baseUrl);
+  if (destination.origin !== new URL(baseUrl).origin) destination = new URL("/dashboard", baseUrl);
+  const response = NextResponse.redirect(destination);
+
+  response.cookies.set(sessionCookieName(), sessionToken, {
+    httpOnly: true,
+    secure,
+    sameSite: "lax",
+    path: "/",
+    expires,
+  });
 
   // Clear the state cookie
   response.cookies.set("sso_state", "", {
     httpOnly: true,
-    secure: true,
+    secure,
     sameSite: "lax",
     path: "/api/auth/sso/callback",
     maxAge: 0,

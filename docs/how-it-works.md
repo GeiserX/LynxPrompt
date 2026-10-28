@@ -28,14 +28,15 @@ flowchart LR
 
 NextAuth with database sessions (30 days, refreshed daily). The providers are built from the feature flags:
 the mail link (`ENABLE_EMAIL_AUTH`, on by default, needs `SMTP_*`), passkeys (`ENABLE_PASSKEYS`, for existing
-accounts), GitHub and Google OAuth, and SAML, OIDC or LDAP SSO per team. When an account whose address equals
-`SUPERADMIN_EMAIL` signs in, it is promoted to superadmin. Roles are USER, ADMIN and SUPERADMIN. With
+accounts), GitHub and Google OAuth, and OIDC SSO per team, limited to the email domains the team verified in DNS.
+When an account whose address equals `SUPERADMIN_EMAIL` signs in by any method but SSO, it is promoted to superadmin. Roles are USER, ADMIN and SUPERADMIN. With
 `ENABLE_USER_REGISTRATION=false`, an address without an account is refused with `RegistrationDisabled`.
 
 ## What the CLI and the extension talk to
 
 `lynxp login` opens the configured instance in the browser (`lynxp config set-url`, or `LYNXPROMPT_API_URL`)
-and stores an API token. Every call after that is `Authorization: Bearer <token>` against `/api/v1/`. Tokens
+and stores an API token in a file only its owner can read. The token is sent only to the instance that issued
+it, and `lynxp logout` revokes it there. Every call after that is `Authorization: Bearer <token>` against `/api/v1/`. Tokens
 are created in Settings, carry a role (`BLUEPRINTS_FULL`, `BLUEPRINTS_READONLY`, `PROFILE_FULL` and others)
 and an expiry, and the API answers `401` with the settings URL when one expires. The VS Code extension, the
 GitHub Action and the MCP server use the same API with the same tokens.

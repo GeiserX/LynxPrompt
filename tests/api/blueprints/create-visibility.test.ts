@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
 const mockCreate = vi.fn();
-const mockVersionCreate = vi.fn();
 
 vi.mock("next-auth", () => ({
   getServerSession: vi.fn().mockResolvedValue({ user: { id: "user_1" } }),
@@ -29,7 +28,6 @@ vi.mock("@/lib/db-users", () => ({
       findFirst: vi.fn().mockResolvedValue(null),
       create: mockCreate,
     },
-    userTemplateVersion: { create: mockVersionCreate },
   },
 }));
 
@@ -61,9 +59,7 @@ function stored() {
 describe("POST /api/blueprints visibility", () => {
   beforeEach(() => {
     mockCreate.mockReset();
-    mockVersionCreate.mockReset();
     mockCreate.mockImplementation(async ({ data }) => ({ id: "tpl_1", ...data }));
-    mockVersionCreate.mockResolvedValue({});
   });
 
   // What the wizard sends when it saves a config for API sync
@@ -74,7 +70,7 @@ describe("POST /api/blueprints visibility", () => {
     expect(stored().visibility).toBe("PRIVATE");
     expect(stored().isPublic).toBe(false);
     expect(stored().publishedVersion).toBeNull();
-    expect(mockVersionCreate.mock.calls[0][0].data.isPublished).toBe(false);
+    expect(stored().versions.create.isPublished).toBe(false);
   });
 
   it("keeps a team blueprint out of the public list", async () => {
@@ -109,7 +105,7 @@ describe("POST /api/blueprints visibility", () => {
     expect(stored().visibility).toBe("PUBLIC");
     expect(stored().isPublic).toBe(true);
     expect(stored().publishedVersion).toBe(1);
-    expect(mockVersionCreate.mock.calls[0][0].data.isPublished).toBe(true);
+    expect(stored().versions.create.isPublished).toBe(true);
   });
 
   it("still publishes for a caller that sends only the deprecated isPublic", async () => {
