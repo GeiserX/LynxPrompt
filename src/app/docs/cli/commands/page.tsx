@@ -170,15 +170,6 @@ export default function CliCommandsPage() {
                   Show or change CLI settings (API URL, config path)
                 </td>
               </tr>
-              {/* Advanced */}
-              <tr className="border-b">
-                <td className="py-3 pr-4">
-                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp agents</code>
-                </td>
-                <td className="py-3 pr-4 text-muted-foreground">
-                  Manage AI agents
-                </td>
-              </tr>
             </tbody>
           </table>
         </div>
@@ -423,7 +414,6 @@ Options:
   --no-recursive    Don't scan subdirectories
   --depth <n>       Max directory depth to scan (default: 10)
   --pattern <file>  Custom config filename to look for
-  --link            Link found files to cloud (requires login)
   -v, --verbose     Show detailed section information
   -j, --json        Output as JSON (for scripting)`}</code>
           </pre>

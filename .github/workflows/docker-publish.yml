@@ -209,9 +209,20 @@ jobs:
           IMAGE: ${{ env.DOCKER_IMAGE }}@${{ steps.verify.outputs.digest }}
         run: |
           cosign sign --yes "$IMAGE"
-          cosign verify "$IMAGE" \
-            --certificate-identity "https://github.com/${{ github.workflow_ref }}" \
-            --certificate-oidc-issuer https://token.actions.githubusercontent.com > /dev/null
+          # Docker Hub lists a new signature through its referrers index a few
+          # seconds after the push, so a verify straight after signing can find
+          # nothing. Retry for up to two minutes before calling it a failure.
+          for attempt in 1 2 3 4 5 6 7 8; do
+            if cosign verify "$IMAGE" \
+              --certificate-identity "https://github.com/${{ github.workflow_ref }}" \
+              --certificate-oidc-issuer https://token.actions.githubusercontent.com > /dev/null; then
+              exit 0
+            fi
+            echo "Signature not visible yet (attempt $attempt), retrying in 15 s"
+            sleep 15
+          done
+          echo "::error::cosign could not verify the signature of $IMAGE"
+          exit 1
 
       - name: Trigger production convergence verification
         uses: peter-evans/repository-dispatch@v4
