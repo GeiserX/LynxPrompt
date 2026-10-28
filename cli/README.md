@@ -70,6 +70,10 @@ lynxp wizard -f copilot       # .github/copilot-instructions.md
 # Generate multiple formats
 lynxp wizard -f agents,cursor,copilot
 
+# Next to AGENTS.md, CLAUDE.md and GEMINI.md just import it (@AGENTS.md);
+# --no-pointers writes full copies instead
+lynxp wizard -f agents,claude,gemini-cli
+
 # Non-interactive with all options
 lynxp wizard \
   --name "my-api" \

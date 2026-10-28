@@ -7,7 +7,7 @@ import { writeFile, mkdir, access, readFile } from "fs/promises";
 import { join, dirname, relative } from "path";
 import { detectProject, detectFromRemoteUrl, isGitUrl } from "../utils/detect.js";
 import { generateConfig, GenerateOptions, parseVariablesString, PLATFORM_FILES } from "../utils/generator.js";
-import { PLATFORMS } from "../../../packages/shared/src/platforms.js";
+import { PLATFORMS, AGENTS_MD_POINTER } from "../../../packages/shared/src/platforms.js";
 import { trackBlueprint } from "../utils/blueprint-tracker.js";
 import { buildPromptOverrides } from "../utils/prompt-overrides.js";
 import { isAuthenticated, getUser, getApiUrl } from "../config.js";
@@ -166,6 +166,7 @@ interface WizardOptions {
   loadDraft?: string;
   saveDraft?: string;
   vars?: string;
+  pointers?: boolean; // --no-pointers: full copies in CLAUDE.md/GEMINI.md next to AGENTS.md
   // Internal: for resuming from a draft
   _resumeFromStep?: number;
   _draftAnswers?: Record<string, unknown>;
@@ -1297,6 +1298,9 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
       blueprintMode: options.blueprint || config.blueprintMode || false,
       variables,
       enableAutoUpdate: false, // Don't generate curl header yet
+      // One rule set: CLAUDE.md/GEMINI.md import AGENTS.md. Not with Cloud
+      // Sync, which uploads one of the files and must upload real rules.
+      pointerFiles: options.pointers !== false && !config.enableAutoUpdate,
     };
     
     let files = generateConfig({ ...finalConfig, apiUrl: getApiUrl() });
@@ -1387,7 +1391,8 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
       }
 
       await writeFile(outputPath, content, "utf-8");
-      console.log(`     ${chalk.cyan("→")} ${chalk.bold(filename)}`);
+      const note = content === AGENTS_MD_POINTER ? chalk.gray(" (imports AGENTS.md; --no-pointers for a full copy)") : "";
+      console.log(`     ${chalk.cyan("→")} ${chalk.bold(filename)}${note}`);
 
       // Link the synced file to its new blueprint so 'lynxp push' updates it instead of
       // creating a duplicate. The checksum is the uploaded content, which is what the server holds.
