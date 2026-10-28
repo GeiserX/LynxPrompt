@@ -71,7 +71,14 @@ describe.runIf(base)("entrypoint upgrade of a db-push database", () => {
       symlinkSync(join(root, "prisma"), join(dir, "prisma"));
       symlinkSync(join(root, "node_modules"), join(dir, "node_modules"));
       writeFileSync(join(dir, "server.js"), `require("fs").writeFileSync(${JSON.stringify(join(dir, "started"))}, "")`);
-      const env: NodeJS.ProcessEnv = { NODE_ENV: "test", PATH: process.env.PATH, HOME: process.env.HOME ?? dir };
+      // Both optional features on, as on the hosted instance, so every schema is upgraded
+      const env: NodeJS.ProcessEnv = {
+        NODE_ENV: "test",
+        PATH: process.env.PATH,
+        HOME: process.env.HOME ?? dir,
+        ENABLE_BLOG: "true",
+        ENABLE_SUPPORT_FORUM: "true",
+      };
       for (const s of schemas) env[envKey(s)] = urlFor(s);
       const start = spawnSync("sh", [resolve(root, "entrypoint.sh")], { cwd: dir, env, encoding: "utf8", timeout: 300_000 });
       const output = start.stdout + start.stderr;

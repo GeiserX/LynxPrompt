@@ -20,7 +20,10 @@ unset; "compose" means the self-host compose file sets it for you.
 The entrypoint builds one connection string per schema (app, users, blog, support) from these, unless the
 full `DATABASE_URL_APP`, `DATABASE_URL_USERS`, `DATABASE_URL_BLOG` or `DATABASE_URL_SUPPORT` is set. The self-host
 compose file uses one PostgreSQL server and one database per schema: `lynxprompt`, `lynxprompt_users`,
-`lynxprompt_blog` and `lynxprompt_support` (the first start creates the last three). Never point two schemas
+`lynxprompt_blog` and `lynxprompt_support`. The first start creates `lynxprompt_users`. The blog and support
+databases are only created and migrated while `ENABLE_BLOG` or `ENABLE_SUPPORT_FORUM` is on, so an instance
+without those features runs on two databases. Turning a feature off leaves its database as it is, and turning
+it back on migrates it from where it stopped. Never point two schemas
 at the same database: `prisma db push` drops the tables it does not know, so each start would delete the other
 schema's tables.
 
@@ -69,8 +72,8 @@ Rate limits and download counts key on the client's address, so the app needs to
 | `ENABLE_AI` | `false` | AI editing of blueprints. Needs `ANTHROPIC_API_KEY`. |
 | `AI_MODEL` | `claude-haiku-5-5` | Model used for AI editing. |
 | `ANTHROPIC_API_KEY` | empty | Your Anthropic key; only read when `ENABLE_AI=true`. |
-| `ENABLE_BLOG` | `false` | The blog module (uses the blog schema). |
-| `ENABLE_SUPPORT_FORUM` | `false` | The support forum module (uses the support schema). |
+| `ENABLE_BLOG` | `false` | The blog module. Its database is migrated only while this is on. |
+| `ENABLE_SUPPORT_FORUM` | `false` | The support forum module. Its database is migrated only while this is on. |
 | `UMAMI_SCRIPT_URL` | empty | Umami analytics script. |
 | `CONTACT_EMAIL` | `info@<host of APP_URL>` | Where the contact form sends. The form needs `SMTP_HOST`, `SMTP_USER` and `SMTP_PASSWORD`, so it does not work against a mail server without a login. |
 | `STATUS_PAGE_URL` | empty | Status page link in the footer. |

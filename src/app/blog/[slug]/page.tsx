@@ -8,7 +8,7 @@ import { authOptions } from "@/lib/auth";
 import { markdownToHtml } from "@/lib/blog-markdown";
 import { prismaBlog } from "@/lib/db-blog";
 import { prismaUsers } from "@/lib/db-users";
-import { APP_NAME, APP_URL, APP_LOGO_URL } from "@/lib/feature-flags";
+import { APP_NAME, APP_URL, APP_LOGO_URL, envBool } from "@/lib/feature-flags";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
@@ -28,6 +28,9 @@ export async function generateMetadata({
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
+  // The layout 404s with the blog off, but metadata runs anyway, and the blog
+  // database may not exist then
+  if (!envBool("ENABLE_BLOG", false)) return {};
   const { slug } = await params;
   const post = await prismaBlog.blogPost.findUnique({
     where: { slug },
@@ -96,6 +99,7 @@ interface PageProps {
 }
 
 export default async function BlogPostPage({ params }: PageProps) {
+  if (!envBool("ENABLE_BLOG", false)) notFound();
   const { slug } = await params;
   
   // Get session for admin check

@@ -5,12 +5,16 @@ import { prismaBlog } from "@/lib/db-blog";
 import { prismaUsers } from "@/lib/db-users";
 import { isAdminRole, UserRole } from "@/lib/subscription";
 import { requireSession } from "@/lib/api-auth";
+import { blogDisabled } from "@/lib/blog-guard";
 
 // GET: Get single blog post by slug
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  const disabled = blogDisabled();
+  if (disabled) return disabled;
+
   try {
     const { slug } = await params;
     
@@ -63,6 +67,9 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  const disabled = blogDisabled();
+  if (disabled) return disabled;
+
   try {
     const { slug } = await params;
     const auth = await requireSession(request);
@@ -138,6 +145,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  const disabled = blogDisabled();
+  if (disabled) return disabled;
+
   try {
     const { slug } = await params;
     const auth = await requireSession(request);

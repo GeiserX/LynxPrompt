@@ -73,8 +73,9 @@ vi.mock("@/lib/feature-flags", async (importOriginal) => {
   };
 });
 
-// The support forum reads its flag at request time
+// The support forum and the blog read their flags at request time
 process.env.ENABLE_SUPPORT_FORUM = "true";
+process.env.ENABLE_BLOG = "true";
 
 const WRITES: [string, string][] = [
   ["ai/edit-blueprint", "POST"],
