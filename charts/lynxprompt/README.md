@@ -12,7 +12,7 @@ This chart deploys the LynxPrompt web application and an optional bundled Postgr
 
 ## Important Operational Notes
 
-- The container entrypoint runs `prisma migrate deploy` for all four LynxPrompt databases on startup. A database an earlier release built with `prisma db push` is brought up to date by one last `db push`, which refuses any change that would lose data, and then has its migrations recorded as applied.
+- The container entrypoint runs `prisma migrate deploy` for all four LynxPrompt databases on startup. A database an earlier release built with `prisma db push` is brought to the first migration (`0_init`) by one last `db push` of the schema as that migration created it, which refuses any change that would lose data. Only `0_init` is then recorded as applied, so every later migration runs as written.
 - The Deployment uses the `Recreate` strategy by default, so an upgrade stops the old pod before the new one starts. A rolling update would leave the new pod Pending on the `ReadWriteOnce` uploads volume when it lands on another node. Set `strategy.type: RollingUpdate` only with a `ReadWriteMany` volume.
 - The liveness probe uses `/api/health/live`, which does not touch the database. Readiness and startup use `/api/health`, which checks the app and users databases.
 - The default chart uses `replicaCount: 1` because:

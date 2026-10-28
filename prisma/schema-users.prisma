@@ -92,9 +92,6 @@ model User {
   socialMastodon   String?   // Mastodon handle (e.g., @user@instance.social)
   socialDiscord    String?   // Discord username
 
-  // Subscription (billing removed - all users get full access)
-  subscriptionPlan       SubscriptionPlan @default(FREE)
-
   // AI Usage Tracking
   aiTokensUsedThisPeriod Int       @default(0)   // Total tokens used this billing period
   aiUsageResetAt         DateTime? // When to reset token count (aligned with billing period)
@@ -135,11 +132,6 @@ enum UserRole {
   USER
   ADMIN
   SUPERADMIN
-}
-
-enum SubscriptionPlan {
-  FREE    // All users - everyone gets full access
-  TEAMS   // Kept for DB backwards compatibility (no longer used for gating)
 }
 
 // ============================================================================

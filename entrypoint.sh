@@ -63,18 +63,19 @@ END $$;
 SQL
 }
 
-# A db-push database is brought to the current schema one last time with
-# `db push`, which refuses any change that would lose data, and then every
-# migration is recorded as applied, because the pushed schema already contains
-# them all. From then on only `migrate deploy` touches it.
+# A db-push database is brought to the 0_init state with one last `db push` of
+# the frozen copy of the schema as 0_init created it (prisma/baseline), which
+# refuses any change that would lose data. Only 0_init is then recorded as
+# applied, so `migrate deploy` runs every later migration as reviewed SQL, the
+# same as on a database that was baselined earlier. Pushing the current schema
+# instead would refuse a later migration's column drop and would skip any data
+# change a later migration makes.
 migrate() {
   config="prisma/prisma.config-$1.ts"
   if needs_baseline "$1"; then
-    echo "$2 DB: created by prisma db push; recording its migrations as applied"
-    npx prisma db push --config="$config" 2>&1 || return 1
-    for dir in prisma/migrations-"$1"/*/; do
-      npx prisma migrate resolve --applied "$(basename "$dir")" --config="$config" 2>&1 || return 1
-    done
+    echo "$2 DB: created by prisma db push; recording 0_init as applied"
+    npx prisma db push --config="$config" --schema="prisma/baseline/schema-$1.prisma" 2>&1 || return 1
+    npx prisma migrate resolve --applied 0_init --config="$config" 2>&1 || return 1
   fi
   npx prisma migrate deploy --config="$config" 2>&1
 }

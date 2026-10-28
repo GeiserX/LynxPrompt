@@ -1,0 +1,709 @@
+// FROZEN: the users schema as 0_init (prisma/migrations-users/0_init) creates it.
+// entrypoint.sh pushes this to a database an earlier release made with
+// prisma db push, records 0_init as applied, and lets migrate deploy apply the
+// rest. Never edit it; change prisma/schema-users.prisma and add a migration.
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================================
+// AUTHENTICATION & USERS
+// ============================================================================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  
+  // Provider-specific identifiers (captured at sign-in time)
+  providerEmail     String?  // Email from OAuth provider (e.g., Google email)
+  providerUsername  String?  // Username from OAuth provider (e.g., GitHub username)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  
+  // Passkey 2FA verification state
+  passkeyVerified   Boolean   @default(false)  // Whether passkey was verified for this session
+  passkeyVerifiedAt DateTime?                  // When passkey was last verified
+  
+  // Device fingerprint for 2FA on new devices
+  deviceHash    String?   // SHA-256 hash of user-agent + screen resolution + timezone
+  deviceName    String?   // Human-readable device name (e.g., "Chrome on macOS")
+  ipHash        String?   // Hash of IP address (for privacy)
+  isNewDevice   Boolean   @default(true)  // True until passkey verified on this device
+  
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([deviceHash])
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  role          UserRole  @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Profile fields (user onboarding)
+  displayName      String?   // For author attribution in templates
+  persona          String?   // backend, frontend, fullstack, devops, etc.
+  skillLevel       String?   // novice, intermediate, senior
+  profileCompleted Boolean   @default(false)  // Track if onboarding done
+
+  // Public profile visibility settings
+  isProfilePublic  Boolean   @default(false)  // Allow others to view profile page
+  showJobTitle     Boolean   @default(false)  // Show persona/job title on public profile
+  showSkillLevel   Boolean   @default(false)  // Show skill level on public profile
+
+  // Social links (optional, displayed on public profile)
+  socialGithub     String?   // GitHub username
+  socialTwitter    String?   // Twitter/X username  
+  socialLinkedin   String?   // LinkedIn username or full URL
+  socialWebsite    String?   // Personal website URL
+  socialYoutube    String?   // YouTube channel URL or username
+  socialBluesky    String?   // Bluesky handle
+  socialMastodon   String?   // Mastodon handle (e.g., @user@instance.social)
+  socialDiscord    String?   // Discord username
+
+  // Subscription (billing removed - all users get full access)
+  subscriptionPlan       SubscriptionPlan @default(FREE)
+
+  // AI Usage Tracking
+  aiTokensUsedThisPeriod Int       @default(0)   // Total tokens used this billing period
+  aiUsageResetAt         DateTime? // When to reset token count (aligned with billing period)
+  aiLastRequestAt        DateTime? // For rate limiting
+  aiRequestsThisMinute   Int       @default(0)   // Counter reset every minute
+
+  // Legal Consent Tracking (GDPR/EU compliance)
+  termsAcceptedAt        DateTime? // When user accepted Terms of Service
+  termsVersion           String?   // Version of Terms accepted (e.g., "2025-12")
+  privacyAcceptedAt      DateTime? // When user accepted Privacy Policy
+  privacyVersion         String?   // Version of Privacy Policy accepted
+
+  // Activity tracking
+  lastLoginAt    DateTime? // Last time user logged in (updated on session creation)
+
+  // Relations
+  accounts       Account[]
+  sessions       Session[]
+  preferences    Preference[]
+  templates      UserTemplate[]
+  hierarchies    Hierarchy[]   // User's blueprint hierarchies (monorepo groupings)
+  projects       Project[]
+  authenticators Authenticator[]
+  favorites      TemplateFavorite[]
+  downloads      TemplateDownload[]
+  teamMemberships TeamMember[] // Teams user belongs to
+  apiTokens      ApiToken[]    // API tokens for programmatic access
+  knownDevices   KnownDevice[] // Trusted devices for 2FA
+  wizardDrafts   WizardDraft[] // Saved wizard configurations
+  cliSessions    CliSession[]  // CLI authentication sessions
+
+  @@index([email])
+  @@index([role])
+  @@index([lastLoginAt])
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPERADMIN
+}
+
+enum SubscriptionPlan {
+  FREE    // All users - everyone gets full access
+  TEAMS   // Kept for DB backwards compatibility (no longer used for gating)
+}
+
+// ============================================================================
+// TEAMS - Enterprise team management
+// ============================================================================
+
+enum TeamRole {
+  ADMIN   // Can invite/remove members, manage billing, configure SSO
+  MEMBER  // Regular team member with Teams tier access
+}
+
+enum TeamInvitationStatus {
+  PENDING   // Invitation sent, awaiting acceptance
+  ACCEPTED  // User accepted and joined
+  EXPIRED   // Invitation expired (7 days default)
+  REVOKED   // Admin revoked before acceptance
+}
+
+enum SSOProvider {
+  SAML      // SAML 2.0 (Okta, Azure AD, OneLogin, etc.)
+  OIDC      // OpenID Connect (Google Workspace, Auth0, etc.)
+  LDAP      // LDAP/Active Directory direct connection
+}
+
+enum BlueprintVisibility {
+  PRIVATE   // Only the author can see/access
+  TEAM      // All team members can see/access
+  PUBLIC    // Anyone can see/access (subject to pricing)
+}
+
+model Team {
+  id            String   @id @default(cuid())
+  name          String   // Company/team display name
+  slug          String   @unique // URL-friendly identifier (e.g., "acme-corp")
+  logo          String?  // Team logo URL (uploaded image)
+  
+  // Organization limits
+  maxSeats             Int       @default(50) // Max members in the team
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  members       TeamMember[]
+  invitations   TeamInvitation[]
+  ssoConfig     TeamSSOConfig?
+  blueprints    UserTemplate[]  // Team-shared blueprints
+  
+  @@index([slug])
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  teamId    String
+  userId    String
+  role      TeamRole @default(MEMBER)
+  
+  // Activity tracking for billing
+  joinedAt      DateTime  @default(now())
+  lastActiveAt  DateTime? // Last login while in this team (for billing)
+  
+  // Billing status
+  isActiveThisCycle Boolean @default(false) // Has logged in this billing cycle
+  
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([teamId, userId]) // User can only be in a team once
+  @@index([teamId])
+  @@index([userId])
+  @@index([lastActiveAt])
+}
+
+model TeamInvitation {
+  id        String   @id @default(cuid())
+  teamId    String
+  email     String   // Email to invite
+  role      TeamRole @default(MEMBER) // Role to assign when accepted
+  
+  // Invitation token (sent via magic link)
+  token     String   @unique @default(cuid())
+  expiresAt DateTime // Default: 7 days from creation
+  
+  // Status tracking
+  status    TeamInvitationStatus @default(PENDING)
+  
+  // Audit
+  invitedBy String   // User ID of admin who sent invite
+  createdAt DateTime @default(now())
+  acceptedAt DateTime?
+  
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  
+  @@index([teamId])
+  @@index([email])
+  @@index([token])
+  @@index([status])
+}
+
+model TeamSSOConfig {
+  id        String   @id @default(cuid())
+  teamId    String   @unique
+  
+  // SSO Provider Configuration
+  provider  SSOProvider
+  enabled   Boolean  @default(false)
+  
+  // Provider-specific configuration (JSON)
+  // For SAML: { entityId, ssoUrl, certificate, signatureAlgorithm, etc. }
+  // For OIDC: { issuer, clientId, clientSecret, authorizationUrl, tokenUrl, etc. }
+  // For LDAP: { host, port, baseDn, bindDn, bindPassword, userFilter, etc. }
+  config    Json
+  
+  // Email domains the team claims for SSO, e.g. ["acme.com", "acme.co.uk"]
+  allowedDomains String[]
+  // The subset of allowedDomains whose ownership the team proved with a DNS TXT
+  // record. SSO only signs in addresses on a verified domain.
+  verifiedDomains String[] @default([])
+  // Value the team publishes at _lynxprompt-sso.<domain> to prove ownership
+  domainVerificationToken String?
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  lastSyncAt DateTime? // Last successful SSO sync
+  
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+}
+
+// ============================================================================
+// PASSKEYS (WebAuthn Authenticators)
+// ============================================================================
+
+model Authenticator {
+  id                   String   @id @default(cuid())
+  userId               String
+  credentialID         String   @unique
+  credentialPublicKey  Bytes
+  counter              BigInt
+  credentialDeviceType String
+  credentialBackedUp   Boolean
+  transports           String[]
+  name                 String?  // User-friendly name like "MacBook Touch ID"
+  createdAt            DateTime @default(now())
+  lastUsedAt           DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================================================
+// KNOWN DEVICES - Trusted devices for passkey 2FA bypass
+// ============================================================================
+
+model KnownDevice {
+  id          String   @id @default(cuid())
+  userId      String
+  deviceHash  String   // SHA-256 hash of device fingerprint
+  deviceName  String   // Human-readable name (e.g., "Chrome on macOS")
+  ipHash      String?  // Hash of IP when device was trusted
+  lastSeenAt  DateTime @default(now())
+  trustedAt   DateTime @default(now()) // When user verified passkey on this device
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, deviceHash]) // One entry per device per user
+  @@index([userId])
+  @@index([deviceHash])
+}
+
+// ============================================================================
+// WIZARD DRAFTS - Saved wizard configurations
+// ============================================================================
+
+model WizardDraft {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String   // User-given name (e.g., "My React Project")
+  step        Int      // Current step index (0-10)
+  config      Json     // Full WizardConfig object
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([updatedAt])
+}
+
+// ============================================================================
+// USER PREFERENCES - Memory of past decisions
+// ============================================================================
+
+model Preference {
+  id        String   @id @default(cuid())
+  userId    String
+  category  String   // e.g., "license", "funding", "cicd", "testing"
+  key       String   // e.g., "default_license", "github_sponsors_username"
+  value     String   @db.Text // JSON or plain text value
+  isDefault Boolean  @default(false)
+  usageCount Int     @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, category, key])
+  @@index([userId])
+  @@index([category])
+}
+
+// ============================================================================
+// HIERARCHIES - Monorepo AGENTS.md groupings
+// ============================================================================
+
+model Hierarchy {
+  id              String   @id @default(cuid())
+  userId          String
+  name            String           // Human-readable name (e.g., "My Company Monorepo")
+  repositoryRoot  String           // Unique identifier for the repo (git remote or path hash)
+  description     String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blueprints      UserTemplate[]
+  
+  @@unique([userId, repositoryRoot])  // One hierarchy per repo per user
+  @@index([userId])
+  @@index([repositoryRoot])
+}
+
+// ============================================================================
+// USER TEMPLATES - User-created templates (NOT system templates)
+// ============================================================================
+
+model UserTemplate {
+  id          String       @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  type        TemplateType
+  content     String       @db.Text   // ALWAYS stored with placeholders like {{AUTHOR_NAME}}
+  variables   Json?                    // Default values for variables (NOT personal data)
+  
+  // Visibility: PRIVATE (author only), TEAM (team members), PUBLIC (everyone)
+  // Replaces isPublic - migration: isPublic=true → PUBLIC, isPublic=false → PRIVATE
+  visibility   BlueprintVisibility @default(PRIVATE)
+  isPublic     Boolean      @default(false) // DEPRECATED: Use visibility instead. Kept for backwards compat.
+  isOfficial   Boolean      @default(false)  // Official LynxPrompt templates
+  
+  // Team ownership (optional - if set, blueprint belongs to team)
+  teamId       String?      // If set, this is a team blueprint
+  
+  // Versioning
+  currentVersion   Int      @default(1)  // Current version number (auto-incremented)
+  publishedVersion Int?                   // Latest published version (null = never published publicly)
+  
+  // Statistics (denormalized for performance, updated via triggers/API)
+  downloads    Int          @default(0)
+  favorites    Int          @default(0)
+  
+  tier             TemplateTier @default(INTERMEDIATE)
+  targetPlatform   String?
+  compatibleWith   String[]
+  tags             String[]
+  category         String?
+  difficulty       String?
+  
+  // Privacy: defines which fields contain personal data and should be stripped when sharing
+  // Format: { "AUTHOR_NAME": { "label": "Author Name", "private": true }, ... }
+  sensitiveFields  Json?
+  
+  // AI disclosure: was this blueprint created with AI assistance?
+  aiAssisted       Boolean      @default(false)
+  
+  // Showcase URL: link to demo, GitHub repo, or live app built with this blueprint
+  showcaseUrl      String?
+  
+  // Hierarchy support for monorepo AGENTS.md files
+  // Blueprint optionally belongs to a Hierarchy (ha_...)
+  hierarchyId      String?      // Links to Hierarchy entity
+  repositoryPath   String?      // Relative path within hierarchy (e.g., "packages/core/AGENTS.md")
+  parentId         String?      // Parent blueprint ID within the hierarchy
+  
+  // Optimistic locking for collaboration
+  contentChecksum  String?      // SHA256 of content, for conflict detection
+  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team      Team?              @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  hierarchy Hierarchy?         @relation(fields: [hierarchyId], references: [id], onDelete: SetNull)
+  versions  UserTemplateVersion[]
+  
+  // Self-referential relation for parent-child within hierarchy
+  parent    UserTemplate?      @relation("BlueprintHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children  UserTemplate[]     @relation("BlueprintHierarchy")
+
+  @@index([userId])
+  @@index([type])
+  @@index([isPublic])
+  @@index([visibility])
+  @@index([teamId])
+  @@index([tier])
+  @@index([downloads])
+  @@index([favorites])
+  @@index([currentVersion])
+  @@index([hierarchyId])
+  @@index([parentId])
+}
+
+// ============================================================================
+// BLUEPRINT VERSIONS - Historical versions of blueprints
+// ============================================================================
+
+model UserTemplateVersion {
+  id            String   @id @default(cuid())
+  templateId    String
+  version       Int      // 1, 2, 3, ... (auto-increment per template)
+  
+  // Snapshot of content at this version
+  content       String   @db.Text
+  variables     Json?
+  
+  // Metadata
+  changelog     String?  @db.Text  // What changed (optional, author-provided)
+  isPublished   Boolean  @default(false)  // Was this version published to marketplace?
+  
+  createdAt     DateTime @default(now())
+  createdBy     String?  // User ID who made this version (for team blueprints)
+  
+  template      UserTemplate       @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  
+  @@unique([templateId, version])
+  @@index([templateId])
+  @@index([isPublished])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// API TOKENS - Programmatic access for Pro/Max/Teams users
+// ============================================================================
+
+model ApiToken {
+  id              String       @id @default(cuid())
+  userId          String
+  
+  // Token identification
+  name            String       // User-friendly name like "CLI Token", "CI/CD Pipeline"
+  tokenHash       String       @unique // SHA-256 hash of the actual token (prefix: lp_)
+  lastFourChars   String       // Last 4 chars for display (e.g., "...x7f2")
+  
+  // Access control
+  role            ApiTokenRole @default(BLUEPRINTS_FULL)
+  
+  // Expiration (default 1 week, max 1 year)
+  expiresAt       DateTime
+  
+  // Usage tracking
+  lastUsedAt      DateTime?    // Updated on each API request
+  createdAt       DateTime     @default(now())
+  revokedAt       DateTime?    // Soft delete - set when token is revoked
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cliSessions CliSession[]  // Sessions that created this token
+  
+  @@index([userId])
+  @@index([tokenHash])
+  @@index([expiresAt])
+}
+
+enum ApiTokenRole {
+  BLUEPRINTS_FULL       // Create, read, update, delete user's blueprints (default)
+  BLUEPRINTS_READONLY   // Read-only access to list/download blueprints
+  PROFILE_FULL          // Read and update profile info (not billing)
+  FULL                  // All permissions including profile
+}
+
+// ============================================================================
+// CLI SESSIONS - Temporary sessions for CLI authentication flow
+// ============================================================================
+
+model CliSession {
+  id          String         @id @default(cuid())
+  sessionId   String         @unique // The session ID sent to CLI
+  status      CliSessionStatus @default(PENDING)
+  
+  // Associated user (set when auth completes)
+  userId      String?
+  user        User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Token created for this session (set when auth completes)
+  apiTokenId  String?
+  apiToken    ApiToken?      @relation(fields: [apiTokenId], references: [id], onDelete: SetNull)
+  
+  // Raw token (stored temporarily for CLI to retrieve, cleared after retrieval)
+  token       String?        @db.Text
+
+  // SHA-256 (base64url) of a verifier only the CLI knows; polling must present
+  // the verifier. Null for sessions started by CLIs older than this check.
+  codeChallenge String?
+  
+  expiresAt   DateTime
+  createdAt   DateTime       @default(now())
+  
+  @@index([sessionId])
+  @@index([expiresAt])
+}
+
+enum CliSessionStatus {
+  PENDING     // Waiting for user to authenticate
+  COMPLETED   // User authenticated, token created
+}
+
+enum TemplateTier {
+  SHORT
+  INTERMEDIATE
+  LONG
+  SUPERLONG
+}
+
+enum TemplateType {
+  LICENSE
+  FUNDING
+  CURSORRULES       // Legacy - keep for backwards compat
+  CURSOR_RULES      // New standard (still deprecated in favor of AGENTS_MD)
+  CURSOR_MDC        // Cursor MDC format (.cursor/rules/)
+  CLAUDE_MD
+  COPILOT_INSTRUCTIONS
+  WINDSURF_RULES
+  GEMINI_MD         // Antigravity (Google's AI-powered IDE)
+  AGENTS_MD         // Universal AGENTS.md - Recommended
+  CLINE_RULES
+  CODEX_MD
+  // IDEs
+  ZED_INSTRUCTIONS  // Zed (.zed/instructions.md)
+  VOID_CONFIG       // Void IDE (.void/config.json)
+  TRAE_RULES        // Trae (.trae/rules/)
+  IDX_CONFIG        // Project IDX (.idx/)
+  // Editor Extensions
+  ROO_RULES         // Roo-Cline (.roo/rules/)
+  CONTINUE_CONFIG   // Continue (.continue/config.json)
+  CODY_CONFIG       // Sourcegraph Cody (.cody/config.json)
+  TABNINE_CONFIG    // Tabnine (.tabnine.yaml)
+  AMAZONQ_RULES     // Amazon Q (.amazonq/rules/)
+  AUGMENT_RULES     // Augment (.augment/rules/)
+  KILOCODE_RULES    // Kilocode (.kilocode/rules/)
+  JUNIE_GUIDELINES  // Junie (.junie/guidelines.md)
+  KIRO_STEERING     // Kiro (.kiro/steering/)
+  // CLI Tools
+  AIDER_MD          // Aider (AIDER.md)
+  GOOSEHINTS        // Goose (.goosehints)
+  WARP_MD           // Warp AI (WARP.md)
+  OPENCODE_JSON     // OpenCode (opencode.json)
+  // Other
+  OPENHANDS_MD      // OpenHands (.openhands/microagents/repo.md)
+  // AI Agent Commands - Slash commands for AI IDEs
+  CURSOR_COMMAND    // Cursor commands (.cursor/commands/*.md)
+  CLAUDE_COMMAND    // Claude Code commands (.claude/commands/*.md)
+  WINDSURF_WORKFLOW // Windsurf workflows (.windsurf/workflows/*.md)
+  COPILOT_PROMPT    // GitHub Copilot prompts (.copilot/prompts/*.md)
+  CONTINUE_PROMPT   // Continue.dev prompts (.continue/prompts/*.md)
+  OPENCODE_COMMAND  // OpenCode commands (.opencode/commands/*.md)
+  GITIGNORE
+  README
+  CONTRIBUTING
+  CODE_OF_CONDUCT
+  SECURITY
+  DOCKERFILE
+  DOCKER_COMPOSE
+  GITHUB_ACTIONS
+  GITLAB_CI
+  EDITORCONFIG
+  PRETTIER
+  ESLINT
+  PRE_COMMIT
+  CUSTOM
+}
+
+// ============================================================================
+// PROJECTS - User's saved configurations
+// ============================================================================
+
+model Project {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  config      Json
+  persona     String?
+  languages   String[]
+  frameworks  String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  generatedFiles GeneratedFile[]
+
+  @@index([userId])
+  @@index([persona])
+}
+
+// ============================================================================
+// TEMPLATE FAVORITES - Track which users favorited which templates
+// ============================================================================
+
+model TemplateFavorite {
+  id           String   @id @default(cuid())
+  userId       String
+  templateId   String   // Can be SystemTemplate or UserTemplate ID
+  templateType String   // "system" or "user" - which database the template is in
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, templateId, templateType])
+  @@index([templateId, templateType])
+  @@index([userId])
+}
+
+// ============================================================================
+// TEMPLATE DOWNLOADS - Track template downloads (can be anonymous)
+// ============================================================================
+
+model TemplateDownload {
+  id           String   @id @default(cuid())
+  userId       String?  // null for anonymous downloads
+  templateId   String
+  templateType String   // "system" or "user"
+  platform     String?  // which IDE they downloaded for (cursor, claude, etc.)
+  ipHash       String?  // hashed IP for download deduplication (not PII)
+  createdAt    DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([templateId, templateType])
+  @@index([templateId, ipHash, createdAt]) // dedup lookups
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// GENERATED FILES - User's generated output files
+// ============================================================================
+
+model GeneratedFile {
+  id        String   @id @default(cuid())
+  projectId String
+  type      TemplateType
+  filename  String
+  filepath  String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}

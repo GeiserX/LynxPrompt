@@ -7,8 +7,8 @@ import { afterEach, describe, expect, it } from "vitest";
 
 // entrypoint.sh used to run `prisma db push` on every start. It now runs
 // `prisma migrate deploy`, and a database an earlier release created with db push
-// is first brought up to date by one last db push and then has its migrations
-// recorded as applied. A fake npx records every Prisma call; whether
+// is first brought to the 0_init state by one last db push of the frozen 0_init
+// schema, then has 0_init alone recorded as applied, so deploy runs the rest. A fake npx records every Prisma call; whether
 // `db execute` (the "made by db push?" check) succeeds is set per test.
 const entrypoint = resolve(process.cwd(), "entrypoint.sh");
 const schemas = ["app", "users", "blog", "support"];
@@ -21,7 +21,10 @@ afterEach(() => {
 
 function run(opts: { legacy?: string[]; failDeploy?: string } = {}) {
   dir = mkdtempSync(join(tmpdir(), "lp-entrypoint-migrate-"));
-  for (const s of schemas) mkdirSync(join(dir, "prisma", `migrations-${s}`, "0_init"), { recursive: true });
+  for (const s of schemas) {
+    mkdirSync(join(dir, "prisma", `migrations-${s}`, "0_init"), { recursive: true });
+    mkdirSync(join(dir, "prisma", `migrations-${s}`, "20990101000000_later"), { recursive: true });
+  }
   const log = join(dir, "calls.txt");
   const legacy = (opts.legacy ?? []).map((s) => `*config-${s}.ts*`).join("|");
   const failDeploy = opts.failDeploy ? `*config-${opts.failDeploy}.ts*` : "__none__";
@@ -62,12 +65,14 @@ describe("entrypoint database migrations", () => {
     expect(calls.some((c) => c.includes("db push"))).toBe(false);
   });
 
-  it("baselines a database made by db push: push once, record 0_init, then deploy", () => {
+  it("baselines a database made by db push: push the 0_init schema, record only 0_init, then deploy", () => {
     const { calls, status, output } = run({ legacy: ["users"] });
     expect(status).toBe(0);
+    // The later migration is left to migrate deploy: pushing the current schema
+    // would refuse its column drops, and recording it would skip its SQL.
     expect(callsFor(calls, "users")).toEqual([
       "prisma db execute --stdin",
-      "prisma db push",
+      "prisma db push --schema=prisma/baseline/schema-users.prisma",
       "prisma migrate resolve --applied 0_init",
       "prisma migrate deploy",
     ]);

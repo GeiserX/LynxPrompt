@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
 
           await tx.user.update({
             where: { id: session.user.id },
-            data: { subscriptionPlan: "TEAMS", lastLoginAt: new Date() },
+            data: { lastLoginAt: new Date() },
           });
         }, { isolationLevel: "Serializable" });
         accepted = true;
