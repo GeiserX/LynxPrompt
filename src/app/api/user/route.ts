@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
-import { requirePasskeyVerified } from "@/lib/passkey-session";
+import { requireSession } from "@/lib/api-auth";
 import { deleteAccount, teamsBlockingDeletion } from "@/lib/account-deletion";
 
 /**
@@ -12,14 +10,9 @@ import { deleteAccount, teamsBlockingDeletion } from "@/lib/account-deletion";
  */
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const userId = session.user.id;
-
-    const passkeyBlock = await requirePasskeyVerified(request, userId);
-    if (passkeyBlock) return passkeyBlock;
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { userId } = auth;
 
     const user = await prismaUsers.user.findUnique({
       where: { id: userId },

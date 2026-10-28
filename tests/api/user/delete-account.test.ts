@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
 // DELETE /api/user deletes the signed-in account and what it owns across the
 // databases: the cascade in the users database, plus what no foreign key reaches.
 const mockSession = vi.fn();
-const mockPasskeyBlock = vi.fn();
+const mockPasskeyStatus = vi.fn();
 
 const users = vi.hoisted(() => ({
   user: { findUnique: vi.fn(), delete: vi.fn() },
@@ -29,7 +29,7 @@ const app = vi.hoisted(() => ({ systemTemplate: { updateMany: vi.fn() } }));
 vi.mock("next-auth", () => ({ getServerSession: () => mockSession() }));
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
 vi.mock("@/lib/passkey-session", () => ({
-  requirePasskeyVerified: () => mockPasskeyBlock(),
+  getPasskeyStatus: () => mockPasskeyStatus(),
 }));
 vi.mock("@/lib/db-users", () => ({ prismaUsers: users }));
 vi.mock("@/lib/db-support", () => ({ prismaSupport: support }));
@@ -61,7 +61,7 @@ beforeEach(() => {
   process.env.ENABLE_SUPPORT_FORUM = "true";
   process.env.ENABLE_BLOG = "true";
   mockSession.mockResolvedValue({ user: { id: "u1" } });
-  mockPasskeyBlock.mockResolvedValue(null);
+  mockPasskeyStatus.mockResolvedValue({ required: false, verified: true });
   users.user.findUnique.mockResolvedValue({ email: "Ana@Example.com" });
   users.teamMember.findMany.mockResolvedValue([]);
   users.teamMember.count.mockResolvedValue(0);
@@ -231,9 +231,7 @@ describe("DELETE /api/user", () => {
     mockSession.mockResolvedValueOnce(null);
     expect((await del("ana@example.com")).status).toBe(401);
 
-    mockPasskeyBlock.mockResolvedValueOnce(
-      NextResponse.json({ error: "Passkey verification required" }, { status: 403 })
-    );
+    mockPasskeyStatus.mockResolvedValueOnce({ required: true, verified: false });
     expect((await del("ana@example.com")).status).toBe(403);
     expect(users.$transaction).not.toHaveBeenCalled();
   });
