@@ -292,6 +292,7 @@ export async function POST(request: NextRequest) {
       sensitiveDataAcknowledged = false, // User acknowledged sensitive data warning
       // Hierarchy fields for monorepo AGENTS.md support
       hierarchyId = null, // Hierarchy ID (ha_xxx)
+      repositoryRoot = null, // Repository identifier; finds or creates the caller's hierarchy
       parentId = null, // Parent blueprint ID for nested AGENTS.md
       repositoryPath = null, // Relative path within repo (e.g., "packages/core/AGENTS.md")
     } = body;
@@ -490,6 +491,30 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Link to a hierarchy only the caller owns. An explicit hierarchyId must be
+    // theirs; otherwise a repositoryRoot finds or creates their hierarchy for it.
+    let validatedHierarchyId: string | null = null;
+    if (typeof hierarchyId === "string" && hierarchyId.trim()) {
+      const rawHierarchyId = hierarchyId.trim();
+      const hierarchy = await prismaUsers.hierarchy.findFirst({
+        where: {
+          id: rawHierarchyId.startsWith("ha_") ? rawHierarchyId.slice(3) : rawHierarchyId,
+          userId: session.user.id,
+        },
+        select: { id: true },
+      });
+      validatedHierarchyId = hierarchy?.id ?? null;
+    } else if (typeof repositoryRoot === "string" && repositoryRoot.trim()) {
+      const root = repositoryRoot.trim();
+      const hierarchy = await prismaUsers.hierarchy.upsert({
+        where: { userId_repositoryRoot: { userId: session.user.id, repositoryRoot: root } },
+        update: {},
+        create: { userId: session.user.id, repositoryRoot: root, name: root },
+        select: { id: true },
+      });
+      validatedHierarchyId = hierarchy.id;
+    }
+
     // Create the blueprint with version 1
     const blueprint = await prismaUsers.userTemplate.create({
       data: {
@@ -511,7 +536,7 @@ export async function POST(request: NextRequest) {
         currentVersion: 1,
         publishedVersion: effectiveIsPublic ? 1 : null, // Set publishedVersion if public
         // Hierarchy fields
-        hierarchyId: hierarchyId?.trim() || null,
+        hierarchyId: validatedHierarchyId,
         parentId: validatedParentId,
         repositoryPath: sanitizeRepositoryPath(repositoryPath) || null,
       },
