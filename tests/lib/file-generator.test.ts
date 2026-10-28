@@ -415,26 +415,10 @@ describe("generateAllFiles", () => {
       { ...baseConfig, platform: "aider" },
       baseUser
     );
-    expect(files).toHaveLength(1);
+    // Aider's config, and the AGENTS.md it reads
+    expect(files).toHaveLength(2);
     expect(files[0].fileName).toBe(PLATFORM_FILES["aider"]);
-  });
-
-  it("generates continue config", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "continue" },
-      baseUser
-    );
-    expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe(PLATFORM_FILES["continue"]);
-  });
-
-  it("generates cody config", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "cody" },
-      baseUser
-    );
-    expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe(PLATFORM_FILES["cody"]);
+    expect(files[1].fileName).toBe("AGENTS.md");
   });
 
   it("generates tabnine config", () => {
@@ -444,33 +428,6 @@ describe("generateAllFiles", () => {
     );
     expect(files).toHaveLength(1);
     expect(files[0].fileName).toBe(PLATFORM_FILES["tabnine"]);
-  });
-
-  it("generates supermaven config", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "supermaven" },
-      baseUser
-    );
-    expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe(PLATFORM_FILES["supermaven"]);
-  });
-
-  it("generates codegpt config", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "codegpt" },
-      baseUser
-    );
-    expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe(PLATFORM_FILES["codegpt"]);
-  });
-
-  it("generates void config", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "void" },
-      baseUser
-    );
-    expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe(PLATFORM_FILES["void"]);
   });
 
   it("defaults to cursor when no platform specified", () => {
@@ -1100,33 +1057,7 @@ describe("generateAllFiles", () => {
   });
 
   // --- Continue config (JSON) ---
-  it("continue: generates valid JSON with config sections", () => {
-    const files = generateAllFiles(
-      {
-        ...baseConfig,
-        platform: "continue",
-        commands: { build: "npm run build", test: "npm test" },
-        additionalFeedback: "Be helpful",
-      },
-      baseUser
-    );
-    // Should be valid JSON
-    expect(() => JSON.parse(files[0].content)).not.toThrow();
-  });
-
   // --- Cody config (JSON) ---
-  it("cody: generates valid JSON", () => {
-    const files = generateAllFiles(
-      {
-        ...baseConfig,
-        platform: "cody",
-        additionalFeedback: "Focus on security",
-      },
-      baseUser
-    );
-    expect(() => JSON.parse(files[0].content)).not.toThrow();
-  });
-
   // --- Tabnine config (YAML) ---
   it("tabnine: generates YAML content with comments", () => {
     const files = generateAllFiles(
@@ -1142,32 +1073,8 @@ describe("generateAllFiles", () => {
   });
 
   // --- Void config (JSON) ---
-  it("void: generates JSON content", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "void" },
-      baseUser
-    );
-    expect(() => JSON.parse(files[0].content)).not.toThrow();
-  });
-
   // --- Supermaven config (JSON) ---
-  it("supermaven: generates JSON content", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "supermaven" },
-      baseUser
-    );
-    expect(() => JSON.parse(files[0].content)).not.toThrow();
-  });
-
   // --- CodeGPT config (JSON) ---
-  it("codegpt: generates JSON content", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "codegpt" },
-      baseUser
-    );
-    expect(() => JSON.parse(files[0].content)).not.toThrow();
-  });
-
   // --- Aider specific ---
   it("aider: includes conventions", () => {
     const files = generateAllFiles(
@@ -1179,8 +1086,9 @@ describe("generateAllFiles", () => {
       },
       baseUser
     );
-    expect(files[0].content.toLowerCase()).toContain("conventional");
-    expect(files[0].content).toContain("Extra aider rule");
+    // The rules are in the AGENTS.md Aider reads
+    expect(files[1].content.toLowerCase()).toContain("conventional");
+    expect(files[1].content).toContain("Extra aider rule");
   });
 
   // --- Antigravity/Gemini specific ---
@@ -1433,7 +1341,7 @@ describe("generateAllFiles", () => {
       },
       { ...baseUser, skillLevel: "expert" }
     );
-    const content = files[0].content;
+    const content = files[1].content;
     expect(content.toLowerCase()).toContain("open source");
   });
 });

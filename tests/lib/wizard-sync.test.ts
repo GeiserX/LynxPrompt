@@ -70,8 +70,17 @@ describe("blueprintTypeForPlatform", () => {
     expect(blueprintTypeForPlatform("universal")).toBe("AGENTS_MD");
     expect(blueprintTypeForPlatform("cursor")).toBe("CURSOR_RULES");
     expect(blueprintTypeForPlatform("claude")).toBe("CLAUDE_MD");
-    expect(blueprintTypeForPlatform("warp")).toBe("CUSTOM");
+    expect(blueprintTypeForPlatform("warp")).toBe("WARP_MD");
     expect(blueprintTypeForPlatform(undefined)).toBe("AGENTS_MD");
+  });
+
+  it("follows the platform table: AGENTS.md readers, configs and retired ids", () => {
+    expect(blueprintTypeForPlatform("antigravity")).toBe("AGENTS_MD");
+    expect(blueprintTypeForPlatform("codex")).toBe("CODEX_MD");
+    expect(blueprintTypeForPlatform("aider")).toBe("CUSTOM");
+    expect(blueprintTypeForPlatform("crush")).toBe("CUSTOM");
+    expect(blueprintTypeForPlatform("devin")).toBe("WINDSURF_RULES");
+    expect(blueprintTypeForPlatform("cursor-command")).toBe("CURSOR_COMMAND");
   });
 });
 

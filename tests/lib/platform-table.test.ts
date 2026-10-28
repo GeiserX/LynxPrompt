@@ -23,6 +23,9 @@ import { convertContent, isStructuredPlatform } from "../../cli/src/utils/conver
 import { adaptRulesContent } from "@/lib/file-generator";
 
 const RULE_PLATFORMS = PLATFORMS.filter((p) => !p.isCommand);
+// Retired platforms: their stored blueprints hold a JSON or YAML config, so
+// the types stay in the enum and load as they are, with no platform
+const RETIRED_TYPES = ["VOID_CONFIG", "CODY_CONFIG", "CONTINUE_CONFIG", "CONTINUE_PROMPT", "TABNINE_CONFIG"];
 
 const user = { name: "Tester", tier: "free" };
 const webConfig = {
@@ -118,7 +121,8 @@ describe("lynxp convert follows the same formats", () => {
 });
 
 describe("lynxp push then lynxp pull lands on the same file", () => {
-  it.each(RULE_PLATFORMS.map((p) => [p.id, p.file]))("%s (%s)", (_id, file) => {
+  const RULES_FILES = RULE_PLATFORMS.filter((p) => p.format !== "json" && p.format !== "yaml");
+  it.each(RULES_FILES.map((p) => [p.id, p.file]))("%s (%s)", (_id, file) => {
     const match = matchConfigFile(file);
     expect(match).not.toBeNull();
     // A CUSTOM blueprint keeps its repository path, so pull writes it back there
@@ -129,9 +133,18 @@ describe("lynxp push then lynxp pull lands on the same file", () => {
   });
 
   it.each(COMMANDS.map((c) => [c.id, `${c.directory}/deploy-app${c.extension}`]))("%s (%s)", (id, file) => {
-    const type = getCommandTemplateType(id)!;
-    expect(matchConfigFile(file)?.type).toBe(type);
-    expect(blueprintFilename({ type, name: "Deploy App" })).toBe(file);
+    const type = getCommandTemplateType(id);
+    expect(matchConfigFile(file)).toEqual({ type: type ?? "CUSTOM", label: COMMANDS.find((c) => c.id === id)!.name });
+    if (type) {
+      expect(blueprintFilename({ type, name: "Deploy App" })).toBe(file);
+    } else {
+      // A tool without a command type of its own: pushed as CUSTOM, pulled back to its path
+      expect(blueprintFilename({ type: "CUSTOM", repository_path: file })).toBe(file);
+    }
+  });
+
+  it("never picks up Aider's config, which can hold API keys", () => {
+    expect(matchConfigFile(".aider.conf.yml")).toBeNull();
   });
 
   it("finds config files in subfolders and with Windows separators", () => {
@@ -167,13 +180,14 @@ describe("every blueprint type of the database has a home", () => {
     // Skill folders and MCP configs: not one platform's file (see blueprint-files tests)
     "AGENT_SKILL", "MCP_CONFIG",
   ]);
+  const RETIRED = new Set(RETIRED_TYPES);
 
   it("parses the enum", () => {
     expect(types).toContain("AGENTS_MD");
     expect(types.length).toBeGreaterThan(40);
   });
 
-  it.each(types.filter((t) => !NOT_RULES.has(t)))("%s maps to a platform and a file", (type) => {
+  it.each(types.filter((t) => !NOT_RULES.has(t) && !RETIRED.has(t)))("%s maps to a platform and a file", (type) => {
     const platform = platformForBlueprintType(type);
     expect(platform).toBeDefined();
     expect(PLATFORMS.some((p) => p.id === platform)).toBe(true);
@@ -187,24 +201,32 @@ describe("every blueprint type of the database has a home", () => {
   });
 });
 
-describe("Devin", () => {
-  // Devin reads every Markdown file in .devin/rules/; a rule there needs
-  // Windsurf-style frontmatter to apply to every request
+it.each(RETIRED_TYPES)("retired type %s has no platform and pulls to the fallback name", (type) => {
+  expect(platformForBlueprintType(type)).toBeUndefined();
+  expect(blueprintFilename({ type, name: "x" })).toBe("ai-config.md");
+});
+
+describe("Devin Desktop (formerly Windsurf)", () => {
+  // Devin Desktop reads every Markdown file in .devin/rules/; a rule there
+  // needs trigger frontmatter to apply to every request
   const ALWAYS_ON = "---\ntrigger: always_on\n---\n";
 
   it("is generated as an always-on rule in .devin/rules/ by the web and the CLI", () => {
-    expect(web("devin").fileName).toBe(".devin/rules/project.md");
-    expect(web("devin").content.startsWith(ALWAYS_ON)).toBe(true);
-    expect(cli("devin").fileName).toBe(".devin/rules/project.md");
-    expect(cli("devin").content.startsWith(ALWAYS_ON)).toBe(true);
+    expect(web("windsurf").fileName).toBe(".devin/rules/project.md");
+    expect(web("windsurf").content.startsWith(ALWAYS_ON)).toBe(true);
+    expect(cli("windsurf").fileName).toBe(".devin/rules/project.md");
+    expect(cli("windsurf").content.startsWith(ALWAYS_ON)).toBe(true);
   });
 
   it("is a conversion target with the same frontmatter", () => {
-    expect(convertContent("# Rules\n", "universal", "devin")).toBe(`${ALWAYS_ON}\n# Rules\n`);
+    expect(convertContent("# Rules\n", "universal", "windsurf")).toBe(`${ALWAYS_ON}\n# Rules\n`);
   });
 
-  it("any rule file in .devin/rules/ is pushed and pulled back to its path", () => {
-    expect(matchConfigFile(".devin/rules/testing.md")).toEqual({ type: "CUSTOM", label: "Devin Rules" });
-    expect(blueprintFilename({ type: "CUSTOM", repository_path: ".devin/rules/testing.md" })).toBe(".devin/rules/testing.md");
+  it("any rule file in .devin/rules/ or the old Windsurf paths is pushed as Windsurf rules, and pulled back to its path", () => {
+    for (const file of [".devin/rules/testing.md", ".windsurf/rules/testing.md", ".windsurfrules"]) {
+      expect(matchConfigFile(file)?.type).toBe("WINDSURF_RULES");
+      expect(blueprintFilename({ type: "WINDSURF_RULES", repository_path: file })).toBe(file);
+    }
+    expect(blueprintFilename({ type: "WINDSURF_RULES" })).toBe(".devin/rules/project.md");
   });
 });

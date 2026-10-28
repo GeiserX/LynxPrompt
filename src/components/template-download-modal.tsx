@@ -40,6 +40,7 @@ import {
   SKILL_DIRECTORIES,
   skillFolder,
   convertMcpConfig,
+  commandContent,
 } from "@/lib/platforms";
 
 interface SensitiveField {
@@ -86,14 +87,16 @@ const LEGACY_TARGETS: Record<string, string> = {
   CUSTOM: "universal",
   claude_code: "claude",
   github_copilot: "copilot",
-  continue_dev: "continue",
+  continue_dev: "universal", // Continue is retired; it read AGENTS.md
 };
 
-// Command blueprint types, and where each tool keeps its commands.
-// All are plain Markdown, so converting one is only a rename.
-const COMMAND_TYPES = COMMANDS.map((c) => getCommandTemplateType(c.id));
+// Command blueprint types (and the retired Continue prompts), and where each
+// tool keeps its commands. Converting one is a rename, except for Gemini CLI,
+// which reads TOML (commandContent).
+const COMMAND_TYPES = [...COMMANDS.map((c) => getCommandTemplateType(c.id)), "CONTINUE_PROMPT"];
 const commandExportTargets = COMMANDS.map((c) => ({
   id: c.platformId,
+  commandId: c.id,
   name: c.name,
   directory: `${c.directory}/`,
   extension: c.extension,
@@ -339,11 +342,14 @@ export function TemplateDownloadModal({
   // Priority: user-entered value > creator default > keep placeholder
   const filledContent = replaceVariables(template.content || "", values);
   // Shape it for the chosen platform: its frontmatter (Cursor, Kiro, Augment) or none
+  const commandId = commandExportTargets.find((t) => t.id === commandExportTarget)?.commandId ?? "";
   const processedContent = isMcp
     ? mcpContent(filledContent, mcpTarget.id)
-    : isCommand || isStructured || isSkill
-      ? filledContent
-      : adaptRulesContent(filledContent, storedPlatform, selectedPlatform, template.name);
+    : isCommand
+      ? commandContent(filledContent, commandId)
+      : isStructured || isSkill
+        ? filledContent
+        : adaptRulesContent(filledContent, storedPlatform, selectedPlatform, template.name);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(processedContent);
@@ -469,7 +475,7 @@ export function TemplateDownloadModal({
                 </label>
               </div>
               
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid max-h-72 grid-cols-2 gap-3 overflow-y-auto">
                 {commandExportTargets.map((target) => (
                   <button
                     key={target.id}
