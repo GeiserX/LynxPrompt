@@ -49,9 +49,10 @@ services:
     environment:
       # One PostgreSQL server, one database per Prisma schema: prisma db push
       # drops the tables it does not know, so two schemas in one database would
-      # delete each other's tables at every start. The entrypoint's db push
-      # creates the three databases after lynxprompt on the first start. The
-      # password is defined once and shared with the Postgres container.
+      # delete each other's tables at every start. The first start creates
+      # lynxprompt_users; the blog and support databases are created only once
+      # ENABLE_BLOG or ENABLE_SUPPORT_FORUM is turned on. The password is
+      # defined once and shared with the Postgres container.
       DB_APP_HOST: postgres
       DB_APP_USER: lynxprompt
       DB_APP_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set, generate one with openssl rand -hex 24}

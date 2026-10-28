@@ -19,7 +19,10 @@ afterEach(() => {
   dir = "";
 });
 
-function run(opts: { legacy?: string[]; failDeploy?: string } = {}) {
+// The hosted instance runs with the blog and the support forum on.
+const allOn = { ENABLE_BLOG: "true", ENABLE_SUPPORT_FORUM: "true" };
+
+function run(opts: { legacy?: string[]; failDeploy?: string; env?: Record<string, string> } = {}) {
   dir = mkdtempSync(join(tmpdir(), "lp-entrypoint-migrate-"));
   for (const s of schemas) {
     mkdirSync(join(dir, "prisma", `migrations-${s}`, "0_init"), { recursive: true });
@@ -43,7 +46,7 @@ exit 0
   writeFileSync(join(dir, "server.js"), `require("fs").writeFileSync("${dir}/started", "")`);
   const result = spawnSync("sh", [entrypoint], {
     cwd: dir,
-    env: { NODE_ENV: "test", PATH: `${dir}:${dirname(process.execPath)}:/usr/bin:/bin` },
+    env: { NODE_ENV: "test", PATH: `${dir}:${dirname(process.execPath)}:/usr/bin:/bin`, ...(opts.env ?? allOn) },
     encoding: "utf8",
   });
   const calls = readFileSync(log, "utf8").trim().split("\n");
@@ -85,6 +88,30 @@ describe("entrypoint database migrations", () => {
     const pushes = calls.filter((c) => c.includes("db push"));
     expect(pushes).toHaveLength(4);
     for (const p of pushes) expect(p).not.toContain("accept-data-loss");
+  });
+
+  it("leaves the blog and support databases alone while their features are off", () => {
+    const { calls, status, started, output } = run({ env: {} });
+    expect(status).toBe(0);
+    expect(started).toBe(true);
+    expect(callsFor(calls, "blog")).toEqual([]);
+    expect(callsFor(calls, "support")).toEqual([]);
+    expect(calls.some((c) => c.includes("seed-support"))).toBe(false);
+    for (const s of ["app", "users"]) {
+      expect(callsFor(calls, s)).toEqual(["prisma db execute --stdin", "prisma migrate deploy"]);
+    }
+    expect(output).toContain("Blog DB: skipped (ENABLE_BLOG is off)");
+    expect(output).toContain("Support DB: skipped (ENABLE_SUPPORT_FORUM is off)");
+  });
+
+  it("migrates each optional database when its own flag is on, with the same values envBool accepts", () => {
+    const blogOnly = run({ env: { ENABLE_BLOG: "1", ENABLE_SUPPORT_FORUM: "false" } }).calls;
+    expect(callsFor(blogOnly, "blog")).toEqual(["prisma db execute --stdin", "prisma migrate deploy"]);
+    expect(callsFor(blogOnly, "support")).toEqual([]);
+    const supportOnly = run({ env: { ENABLE_SUPPORT_FORUM: "true" } }).calls;
+    expect(callsFor(supportOnly, "blog")).toEqual([]);
+    expect(callsFor(supportOnly, "support")).toEqual(["prisma db execute --stdin", "prisma migrate deploy"]);
+    expect(supportOnly.some((c) => c.includes("seed-support"))).toBe(true);
   });
 
   it("asks whether the tables exist and whether 0_init is recorded", () => {

@@ -1,6 +1,7 @@
 import { MetadataRoute } from "next";
 import { prismaUsers } from "@/lib/db-users";
 import { prismaBlog } from "@/lib/db-blog";
+import { envBool } from "@/lib/feature-flags";
 
 export const dynamic = "force-dynamic";
 
@@ -251,22 +252,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let blueprintPages: MetadataRoute.Sitemap = [];
   let userPages: MetadataRoute.Sitemap = [];
 
-  try {
-    // Blog posts (only published)
-    const blogPosts = await prismaBlog.blogPost.findMany({
-      where: { status: "PUBLISHED" },
-      select: { slug: true, updatedAt: true },
-      orderBy: { publishedAt: "desc" },
-    });
+  // With the blog off its database may not exist
+  if (envBool("ENABLE_BLOG", false)) {
+    try {
+      // Blog posts (only published)
+      const blogPosts = await prismaBlog.blogPost.findMany({
+        where: { status: "PUBLISHED" },
+        select: { slug: true, updatedAt: true },
+        orderBy: { publishedAt: "desc" },
+      });
 
-    blogPages = blogPosts.map((post) => ({
-      url: `${baseUrl}/blog/${post.slug}`,
-      lastModified: post.updatedAt,
-      changeFrequency: "weekly" as const,
-      priority: 0.7,
-    }));
-  } catch (error) {
-    console.error("Error fetching blog posts for sitemap:", error);
+      blogPages = blogPosts.map((post) => ({
+        url: `${baseUrl}/blog/${post.slug}`,
+        lastModified: post.updatedAt,
+        changeFrequency: "weekly" as const,
+        priority: 0.7,
+      }));
+    } catch (error) {
+      console.error("Error fetching blog posts for sitemap:", error);
+    }
   }
 
   try {

@@ -6,6 +6,7 @@ import { prismaBlog } from "@/lib/db-blog";
 import { prismaUsers } from "@/lib/db-users";
 import { isAdminRole, UserRole } from "@/lib/subscription";
 import { parsePage } from "@/lib/pagination";
+import { blogDisabled } from "@/lib/blog-guard";
 
 // Generate Gravatar URL from email (server-side)
 function getGravatarUrl(email: string, size: number = 96): string {
@@ -26,6 +27,9 @@ function generateSlug(title: string): string {
 
 // GET: List blog posts (public - only published posts, unless admin)
 export async function GET(request: NextRequest) {
+  const disabled = blogDisabled();
+  if (disabled) return disabled;
+
   try {
     const { searchParams } = new URL(request.url);
     const { page, limit, skip } = parsePage(searchParams, 10);
@@ -111,6 +115,9 @@ export async function GET(request: NextRequest) {
 
 // POST: Create new blog post (admin only)
 export async function POST(request: NextRequest) {
+  const disabled = blogDisabled();
+  if (disabled) return disabled;
+
   try {
     const session = await getServerSession(authOptions);
     

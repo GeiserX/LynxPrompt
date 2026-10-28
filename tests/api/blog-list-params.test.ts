@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
 
 const mockPostFindMany = vi.fn();
@@ -15,8 +15,30 @@ vi.mock("@/lib/db-users", () => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  process.env.ENABLE_BLOG = "true";
   mockPostFindMany.mockResolvedValue([]);
   mockPostCount.mockResolvedValue(0);
+});
+
+afterEach(() => {
+  delete process.env.ENABLE_BLOG;
+});
+
+describe("GET /api/blog with ENABLE_BLOG off", () => {
+  // The entrypoint does not migrate the blog database then, so it may not exist
+  it("answers 404 without touching the blog database", async () => {
+    delete process.env.ENABLE_BLOG;
+    const { GET, POST } = await import("@/app/api/blog/route");
+    expect((await GET(new NextRequest("https://lynxprompt.com/api/blog"))).status).toBe(404);
+    expect(
+      (await POST(new NextRequest("https://lynxprompt.com/api/blog", { method: "POST", body: "{}" }))).status
+    ).toBe(404);
+    const slug = await import("@/app/api/blog/[slug]/route");
+    const params = { params: Promise.resolve({ slug: "hello" }) };
+    expect((await slug.GET(new NextRequest("https://lynxprompt.com/api/blog/hello"), params)).status).toBe(404);
+    expect(mockPostFindMany).not.toHaveBeenCalled();
+    expect(mockPostCount).not.toHaveBeenCalled();
+  });
 });
 
 describe("GET /api/blog pagination", () => {

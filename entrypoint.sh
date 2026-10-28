@@ -80,13 +80,32 @@ migrate() {
   npx prisma migrate deploy --config="$config" 2>&1
 }
 
+# Same truth values as envBool in src/lib/feature-flags.ts
+enabled() {
+  case "$1" in true|1) return 0 ;; esac
+  return 1
+}
+
 FAILED=0
 
 echo "Applying database migrations..."
 migrate app App && echo "App DB: migrated" || { echo "ERROR: App DB migration failed"; FAILED=1; }
 migrate users Users && echo "Users DB: migrated" || { echo "ERROR: Users DB migration failed"; FAILED=1; }
-migrate blog Blog && echo "Blog DB: migrated" || { echo "ERROR: Blog DB migration failed"; FAILED=1; }
-migrate support Support && echo "Support DB: migrated" || { echo "ERROR: Support DB migration failed"; FAILED=1; }
+
+# The blog and the support forum are off unless enabled, and nothing reads
+# their databases then, so an instance without them needs only two databases.
+# A database left from a time the feature was on is not touched; turning the
+# feature back on migrates it from where it stopped.
+if enabled "$ENABLE_BLOG"; then
+  migrate blog Blog && echo "Blog DB: migrated" || { echo "ERROR: Blog DB migration failed"; FAILED=1; }
+else
+  echo "Blog DB: skipped (ENABLE_BLOG is off)"
+fi
+if enabled "$ENABLE_SUPPORT_FORUM"; then
+  migrate support Support && echo "Support DB: migrated" || { echo "ERROR: Support DB migration failed"; FAILED=1; }
+else
+  echo "Support DB: skipped (ENABLE_SUPPORT_FORUM is off)"
+fi
 
 if [ "$FAILED" -ne 0 ]; then
   echo "FATAL: One or more database migrations failed. Aborting startup."
@@ -97,11 +116,9 @@ echo "Database migrations complete."
 
 # A new post needs one of the default forum categories, and nothing else creates
 # them. The seed only adds missing categories and tags, so it is safe on every start.
-case "$ENABLE_SUPPORT_FORUM" in
-  true|1)
-    npx tsx prisma/seed-support.ts 2>&1 && echo "Support DB: default categories present" \
-      || echo "WARNING: support forum seed failed; new posts fail until its categories exist"
-    ;;
-esac
+if enabled "$ENABLE_SUPPORT_FORUM"; then
+  npx tsx prisma/seed-support.ts 2>&1 && echo "Support DB: default categories present" \
+    || echo "WARNING: support forum seed failed; new posts fail until its categories exist"
+fi
 
 exec node server.js

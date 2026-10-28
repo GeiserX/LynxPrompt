@@ -6,6 +6,7 @@ import { writeFile, mkdir } from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
 import { validateMagicBytes } from "@/lib/file-validation";
+import { blogDisabled } from "@/lib/blog-guard";
 
 // The upload directory is a runtime volume outside the build. The
 // turbopackIgnore comments stop Next from tracing the whole project into the
@@ -26,6 +27,9 @@ function generateFilename(originalName: string): string {
 }
 
 export async function POST(request: NextRequest) {
+  const disabled = blogDisabled();
+  if (disabled) return disabled;
+
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
