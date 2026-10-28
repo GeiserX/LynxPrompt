@@ -40,6 +40,12 @@ afterAll(async () => {
   await client.end();
 });
 
+// The test below is the one that proves 0_init plus every later migration
+// builds each current schema. Skipping it in CI would pass that check unseen.
+it.runIf(process.env.GITHUB_ACTIONS === "true")("CI gives the migration tests a database", () => {
+  expect(base, "set MIGRATE_TEST_DATABASE_URL in the CI test job").toBeTruthy();
+});
+
 describe.runIf(base)("entrypoint upgrade of a db-push database", () => {
   it("starts, keeps the rows, and applies every later migration", async () => {
     const client = new pg.Client({ connectionString: base });
