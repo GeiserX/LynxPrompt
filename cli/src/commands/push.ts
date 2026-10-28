@@ -53,6 +53,7 @@ const EXCLUDED_DIRS = new Set([
  */
 interface ConfigPattern {
   match: (relativePath: string) => boolean;
+  // Must be a TemplateType value from prisma/schema-users.prisma; tools without one use CUSTOM
   type: string;
   label: string;
 }
@@ -73,7 +74,7 @@ const CONFIG_PATTERNS: ConfigPattern[] = [
   // Directory-based rules
   { match: (p) => normPath(p).includes(".cursor/rules/") && p.endsWith(".mdc"), type: "CURSOR_RULES", label: "Cursor Rules" },
   { match: (p) => normPath(p).includes(".trae/rules/") && p.endsWith(".mdc"), type: "TRAE_RULES", label: "Trae Rules" },
-  { match: (p) => normPath(p).includes(".idx/") && p.endsWith(".mdc"), type: "FIREBASE_RULES", label: "Firebase Rules" },
+  { match: (p) => normPath(p).includes(".idx/") && p.endsWith(".mdc"), type: "IDX_CONFIG", label: "Firebase Rules" },
   { match: (p) => normPath(p).includes(".roo/rules/") && p.endsWith(".mdc"), type: "ROO_RULES", label: "Roo Rules" },
   { match: (p) => normPath(p).includes(".amazonq/rules/") && p.endsWith(".mdc"), type: "AMAZONQ_RULES", label: "Amazon Q Rules" },
   { match: (p) => normPath(p).includes(".augment/rules/") && p.endsWith(".mdc"), type: "AUGMENT_RULES", label: "Augment Rules" },
@@ -83,13 +84,13 @@ const CONFIG_PATTERNS: ConfigPattern[] = [
   // Path-based configs
   { match: (p) => normPath(p).includes(".github/copilot-instructions.md"), type: "COPILOT_INSTRUCTIONS", label: "Copilot Instructions" },
   { match: (p) => normPath(p).includes(".zed/instructions.md"), type: "ZED_INSTRUCTIONS", label: "Zed Instructions" },
-  { match: (p) => normPath(p).includes(".openhands/microagents/repo.md"), type: "OPENHANDS_CONFIG", label: "OpenHands Config" },
+  { match: (p) => normPath(p).includes(".openhands/microagents/repo.md"), type: "OPENHANDS_MD", label: "OpenHands Config" },
   { match: (p) => normPath(p).includes(".junie/guidelines.md"), type: "JUNIE_GUIDELINES", label: "Junie Guidelines" },
   { match: (p) => normPath(p).includes(".void/config.json"), type: "VOID_CONFIG", label: "Void Config" },
   { match: (p) => normPath(p).includes(".continue/config.json"), type: "CONTINUE_CONFIG", label: "Continue Config" },
   { match: (p) => normPath(p).includes(".cody/config.json"), type: "CODY_CONFIG", label: "Cody Config" },
-  { match: (p) => normPath(p).includes(".supermaven/config.json"), type: "SUPERMAVEN_CONFIG", label: "Supermaven Config" },
-  { match: (p) => normPath(p).includes(".codegpt/config.json"), type: "CODEGPT_CONFIG", label: "CodeGPT Config" },
+  { match: (p) => normPath(p).includes(".supermaven/config.json"), type: "CUSTOM", label: "Supermaven Config" },
+  { match: (p) => normPath(p).includes(".codegpt/config.json"), type: "CUSTOM", label: "CodeGPT Config" },
 
   // Basename rules
   { match: (p) => path.basename(p) === "AGENTS.md", type: "AGENTS_MD", label: "AGENTS.md" },
@@ -97,13 +98,13 @@ const CONFIG_PATTERNS: ConfigPattern[] = [
   { match: (p) => path.basename(p) === "AIDER.md", type: "AIDER_MD", label: "AIDER.md" },
   { match: (p) => path.basename(p) === "GEMINI.md", type: "GEMINI_MD", label: "GEMINI.md" },
   { match: (p) => path.basename(p) === "WARP.md", type: "WARP_MD", label: "WARP.md" },
-  { match: (p) => path.basename(p) === "CRUSH.md", type: "CRUSH_MD", label: "CRUSH.md" },
+  { match: (p) => path.basename(p) === "CRUSH.md", type: "CUSTOM", label: "CRUSH.md" },
   { match: (p) => path.basename(p) === ".windsurfrules", type: "WINDSURF_RULES", label: "Windsurf Rules" },
   { match: (p) => path.basename(p) === ".clinerules", type: "CLINE_RULES", label: "Cline Rules" },
-  { match: (p) => path.basename(p) === ".goosehints", type: "GOOSE_HINTS", label: "Goose Hints" },
+  { match: (p) => path.basename(p) === ".goosehints", type: "GOOSEHINTS", label: "Goose Hints" },
   { match: (p) => path.basename(p) === ".tabnine.yaml", type: "TABNINE_CONFIG", label: "Tabnine Config" },
-  { match: (p) => path.basename(p) === "opencode.json", type: "OPENCODE_CONFIG", label: "OpenCode Config" },
-  { match: (p) => path.basename(p) === "firebender.json", type: "FIREBENDER_CONFIG", label: "Firebender Config" },
+  { match: (p) => path.basename(p) === "opencode.json", type: "OPENCODE_JSON", label: "OpenCode Config" },
+  { match: (p) => path.basename(p) === "firebender.json", type: "CUSTOM", label: "Firebender Config" },
 ];
 
 /**
