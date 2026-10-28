@@ -18,6 +18,8 @@ vi.mock("@/lib/auth-cookies", () => ({
 vi.mock("@/lib/db-users", () => ({
   prismaUsers: {
     session: { updateMany: mockSessionUpdateMany },
+    // No passkeys, so the passkey gate lets the session trust the device.
+    authenticator: { count: vi.fn(() => Promise.resolve(0)) },
     knownDevice: { upsert: mockKnownDeviceUpsert },
   },
 }));

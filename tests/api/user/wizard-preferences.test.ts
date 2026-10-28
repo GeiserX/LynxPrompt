@@ -6,6 +6,7 @@ vi.mock("next-auth", () => ({ getServerSession: vi.fn() }));
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
 vi.mock("@/lib/api-auth", () => ({
   authenticateRequest: vi.fn().mockResolvedValue({ source: "session", user: { id: "user_1" } }),
+  canPerform: vi.fn(() => true),
 }));
 vi.mock("@/lib/db-users", () => ({
   prismaUsers: { preference: { upsert: mockUpsert } },
