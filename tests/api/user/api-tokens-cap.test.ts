@@ -11,6 +11,8 @@ vi.mock("@/lib/auth", () => ({ authOptions: {} }));
 vi.mock("@/lib/db-users", () => ({
   prismaUsers: {
     user: { findUnique: vi.fn().mockResolvedValue({ subscriptionPlan: "FREE" }) },
+    // A user with no passkeys, so the passkey gate lets the session through.
+    authenticator: { count: vi.fn(() => Promise.resolve(0)) },
     apiToken: {
       // Applies the same filters Prisma would: revokedAt null, and expiresAt > gt when given.
       count: vi.fn(async ({ where }) =>
