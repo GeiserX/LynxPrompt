@@ -5,23 +5,17 @@ import GoogleProvider from "next-auth/providers/google";
 import EmailProvider, {
   SendVerificationRequestParams,
 } from "next-auth/providers/email";
-import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prismaUsers } from "@/lib/db-users";
 import {
   ENABLE_GITHUB_OAUTH,
   ENABLE_GOOGLE_OAUTH,
   ENABLE_EMAIL_AUTH,
-  ENABLE_PASSKEYS,
   ENABLE_USER_REGISTRATION,
   APP_NAME,
   APP_URL,
   APP_LOGO_URL,
 } from "@/lib/feature-flags";
-import {
-  verifyAuthenticationResponse,
-  type VerifiedAuthenticationResponse,
-} from "@simplewebauthn/server";
 import { createTransport } from "nodemailer";
 import { createHash } from "crypto";
 import { secureCookiesEnabled, SESSION_MAX_AGE_SECONDS } from "@/lib/auth-cookies";
@@ -246,85 +240,6 @@ function buildProviders(): Provider[] {
     );
   }
 
-  if (ENABLE_PASSKEYS) {
-    providers.push(
-      CredentialsProvider({
-        id: "passkey",
-        name: "Passkey",
-        credentials: {
-          email: { label: "Email", type: "email" },
-          authResponse: { label: "Auth Response", type: "text" },
-          challenge: { label: "Challenge", type: "text" },
-        },
-        async authorize(credentials) {
-          if (
-            !credentials?.email ||
-            !credentials?.authResponse ||
-            !credentials?.challenge
-          ) {
-            return null;
-          }
-
-          try {
-            const authResponse = JSON.parse(credentials.authResponse);
-
-            const user = await prismaUsers.user.findUnique({
-              where: { email: credentials.email },
-              include: { authenticators: true },
-            });
-
-            if (!user || user.authenticators.length === 0) {
-              return null;
-            }
-
-            const authenticator = user.authenticators.find(
-              (a) => a.credentialID === authResponse.id
-            );
-
-            if (!authenticator) {
-              return null;
-            }
-
-            const verification: VerifiedAuthenticationResponse =
-              await verifyAuthenticationResponse({
-                response: authResponse,
-                expectedChallenge: credentials.challenge,
-                expectedOrigin: rpOrigin,
-                expectedRPID: rpID,
-                credential: {
-                  id: authenticator.credentialID,
-                  publicKey: authenticator.credentialPublicKey,
-                  counter: Number(authenticator.counter),
-                },
-              });
-
-            if (!verification.verified) {
-              return null;
-            }
-
-            await prismaUsers.authenticator.update({
-              where: { id: authenticator.id },
-              data: {
-                counter: BigInt(verification.authenticationInfo.newCounter),
-                lastUsedAt: new Date(),
-              },
-            });
-
-            return {
-              id: user.id,
-              email: user.email,
-              name: user.name,
-              image: user.image,
-            };
-          } catch (error) {
-            console.error("Passkey authentication error:", error);
-            return null;
-          }
-        },
-      })
-    );
-  }
-
   return providers;
 }
 
@@ -477,7 +392,7 @@ export const authOptions: NextAuthOptions = {
       
       return true;
     },
-    async session({ session, user, token }) {
+    async session({ session, user }) {
       if (session.user) {
         // For database sessions (OAuth, Email)
         if (user) {
@@ -533,46 +448,8 @@ export const authOptions: NextAuthOptions = {
             session.user.requiresPasskeyCheck = false;
           }
         }
-        // For JWT sessions (Passkey)
-        if (token && !user) {
-          session.user.id = token.sub as string;
-          // Use stored image or generate Gravatar from email
-          session.user.image = (token.image as string) || (session.user.email ? getGravatarUrl(session.user.email) : null);
-          session.user.role = (token.role as string) || "USER";
-          session.user.displayName = (token.displayName as string) || null;
-          session.user.persona = (token.persona as string) || null;
-          session.user.skillLevel = (token.skillLevel as string) || null;
-          session.user.profileCompleted =
-            (token.profileCompleted as boolean) || false;
-          // Passkey login sessions are already verified
-          session.user.hasPasskeys = true;
-          session.user.requiresPasskeyCheck = false;
-        }
       }
       return session;
-    },
-    async jwt({ token, user }) {
-      // For passkey auth, we need JWT
-      if (user) {
-        const dbUser = await prismaUsers.user.findUnique({
-          where: { id: user.id },
-          select: {
-            image: true,
-            role: true,
-            displayName: true,
-            persona: true,
-            skillLevel: true,
-            profileCompleted: true,
-          },
-        });
-        token.image = dbUser?.image || null;
-        token.role = dbUser?.role || "USER";
-        token.displayName = dbUser?.displayName || null;
-        token.persona = dbUser?.persona || null;
-        token.skillLevel = dbUser?.skillLevel || null;
-        token.profileCompleted = dbUser?.profileCompleted || false;
-      }
-      return token;
     },
     async redirect({ url, baseUrl }) {
       // Allow relative URLs

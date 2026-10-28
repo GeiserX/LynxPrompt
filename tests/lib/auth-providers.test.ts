@@ -40,18 +40,8 @@ function setupBaseMocks() {
   vi.doMock("next-auth/providers/email", () => ({
     default: vi.fn((opts: Record<string, unknown>) => ({ id: "email", name: "Email", sendVerificationRequest: opts.sendVerificationRequest })),
   }));
-  vi.doMock("next-auth/providers/credentials", () => ({
-    default: vi.fn((opts: { id: string; name: string; authorize: Function }) => ({
-      id: opts.id,
-      name: opts.name,
-      authorize: opts.authorize,
-    })),
-  }));
   vi.doMock("@auth/prisma-adapter", () => ({
     PrismaAdapter: vi.fn(() => ({})),
-  }));
-  vi.doMock("@simplewebauthn/server", () => ({
-    verifyAuthenticationResponse: vi.fn(),
   }));
   vi.doMock("nodemailer", () => ({
     createTransport: vi.fn(() => ({
@@ -144,7 +134,10 @@ describe("buildProviders - Passkeys enabled", () => {
     vi.clearAllMocks();
   });
 
-  it("includes Passkey provider when ENABLE_PASSKEYS is true", async () => {
+  // A passkey is a second factor checked by /api/auth/passkey/authenticate.
+  // A credentials provider could not open a database session anyway, so none
+  // is registered for it.
+  it("registers no passkey credentials provider when ENABLE_PASSKEYS is true", async () => {
     vi.doMock("@/lib/feature-flags", () => ({
       ENABLE_GITHUB_OAUTH: false,
       ENABLE_GOOGLE_OAUTH: false,
@@ -159,191 +152,7 @@ describe("buildProviders - Passkeys enabled", () => {
     setupBaseMocks();
 
     const { authOptions } = await import("@/lib/auth");
-    const hasPasskey = authOptions.providers.some((p: { id?: string }) => p.id === "passkey");
-    expect(hasPasskey).toBe(true);
-  });
-
-  it("passkey authorize returns null for missing credentials", async () => {
-    vi.doMock("@/lib/feature-flags", () => ({
-      ENABLE_GITHUB_OAUTH: false,
-      ENABLE_GOOGLE_OAUTH: false,
-      ENABLE_EMAIL_AUTH: false,
-      ENABLE_PASSKEYS: true,
-      ENABLE_USER_REGISTRATION: true,
-      ENABLE_SSO: false,
-      APP_NAME: "TestApp",
-      APP_URL: "https://test.example.com",
-      APP_LOGO_URL: "",
-    }));
-    setupBaseMocks();
-
-    const { authOptions } = await import("@/lib/auth");
-    const passkeyProvider = authOptions.providers.find((p: { id?: string }) => p.id === "passkey") as { authorize: Function };
-    expect(passkeyProvider).toBeDefined();
-
-    // Missing credentials
-    const result = await passkeyProvider.authorize(null);
-    expect(result).toBeNull();
-
-    // Missing email
-    const result2 = await passkeyProvider.authorize({ authResponse: "{}", challenge: "abc" });
-    expect(result2).toBeNull();
-  });
-
-  it("passkey authorize returns null when user not found", async () => {
-    vi.doMock("@/lib/feature-flags", () => ({
-      ENABLE_GITHUB_OAUTH: false,
-      ENABLE_GOOGLE_OAUTH: false,
-      ENABLE_EMAIL_AUTH: false,
-      ENABLE_PASSKEYS: true,
-      ENABLE_USER_REGISTRATION: true,
-      ENABLE_SSO: false,
-      APP_NAME: "TestApp",
-      APP_URL: "https://test.example.com",
-      APP_LOGO_URL: "",
-    }));
-    setupBaseMocks();
-    mockFindUnique.mockResolvedValue(null);
-
-    const { authOptions } = await import("@/lib/auth");
-    const passkeyProvider = authOptions.providers.find((p: { id?: string }) => p.id === "passkey") as { authorize: Function };
-
-    const result = await passkeyProvider.authorize({
-      email: "test@test.com",
-      authResponse: JSON.stringify({ id: "cred-1" }),
-      challenge: "challenge-abc",
-    });
-    expect(result).toBeNull();
-  });
-
-  it("passkey authorize returns null when no authenticators", async () => {
-    vi.doMock("@/lib/feature-flags", () => ({
-      ENABLE_GITHUB_OAUTH: false,
-      ENABLE_GOOGLE_OAUTH: false,
-      ENABLE_EMAIL_AUTH: false,
-      ENABLE_PASSKEYS: true,
-      ENABLE_USER_REGISTRATION: true,
-      ENABLE_SSO: false,
-      APP_NAME: "TestApp",
-      APP_URL: "https://test.example.com",
-      APP_LOGO_URL: "",
-    }));
-    setupBaseMocks();
-    mockFindUnique.mockResolvedValue({ id: "u1", authenticators: [] });
-
-    const { authOptions } = await import("@/lib/auth");
-    const passkeyProvider = authOptions.providers.find((p: { id?: string }) => p.id === "passkey") as { authorize: Function };
-
-    const result = await passkeyProvider.authorize({
-      email: "test@test.com",
-      authResponse: JSON.stringify({ id: "cred-1" }),
-      challenge: "abc",
-    });
-    expect(result).toBeNull();
-  });
-
-  it("passkey authorize returns null when authenticator not found", async () => {
-    vi.doMock("@/lib/feature-flags", () => ({
-      ENABLE_GITHUB_OAUTH: false,
-      ENABLE_GOOGLE_OAUTH: false,
-      ENABLE_EMAIL_AUTH: false,
-      ENABLE_PASSKEYS: true,
-      ENABLE_USER_REGISTRATION: true,
-      ENABLE_SSO: false,
-      APP_NAME: "TestApp",
-      APP_URL: "https://test.example.com",
-      APP_LOGO_URL: "",
-    }));
-    setupBaseMocks();
-    mockFindUnique.mockResolvedValue({
-      id: "u1",
-      authenticators: [{ id: "auth-1", credentialID: "other-cred" }],
-    });
-
-    const { authOptions } = await import("@/lib/auth");
-    const passkeyProvider = authOptions.providers.find((p: { id?: string }) => p.id === "passkey") as { authorize: Function };
-
-    const result = await passkeyProvider.authorize({
-      email: "test@test.com",
-      authResponse: JSON.stringify({ id: "cred-1" }),
-      challenge: "abc",
-    });
-    expect(result).toBeNull();
-  });
-
-  it("passkey authorize returns null when verification fails", async () => {
-    vi.doMock("@/lib/feature-flags", () => ({
-      ENABLE_GITHUB_OAUTH: false,
-      ENABLE_GOOGLE_OAUTH: false,
-      ENABLE_EMAIL_AUTH: false,
-      ENABLE_PASSKEYS: true,
-      ENABLE_USER_REGISTRATION: true,
-      ENABLE_SSO: false,
-      APP_NAME: "TestApp",
-      APP_URL: "https://test.example.com",
-      APP_LOGO_URL: "",
-    }));
-    setupBaseMocks();
-
-    const mockVerify = vi.fn().mockResolvedValue({ verified: false });
-    vi.doMock("@simplewebauthn/server", () => ({
-      verifyAuthenticationResponse: mockVerify,
-    }));
-
-    mockFindUnique.mockResolvedValue({
-      id: "u1",
-      email: "test@test.com",
-      name: "Test",
-      image: null,
-      authenticators: [{
-        id: "auth-1",
-        credentialID: "cred-1",
-        credentialPublicKey: Buffer.from("pubkey"),
-        counter: 0,
-      }],
-    });
-
-    const { authOptions } = await import("@/lib/auth");
-    const passkeyProvider = authOptions.providers.find((p: { id?: string }) => p.id === "passkey") as { authorize: Function };
-
-    const result = await passkeyProvider.authorize({
-      email: "test@test.com",
-      authResponse: JSON.stringify({ id: "cred-1" }),
-      challenge: "abc",
-    });
-    expect(result).toBeNull();
-  });
-
-  // Passkey successful verification test removed — vi.doMock for
-  // @simplewebauthn/server doesn't reliably override in CI due to
-  // module caching. The error path is covered by adjacent tests.
-
-  it("passkey authorize catches errors and returns null", async () => {
-    vi.doMock("@/lib/feature-flags", () => ({
-      ENABLE_GITHUB_OAUTH: false,
-      ENABLE_GOOGLE_OAUTH: false,
-      ENABLE_EMAIL_AUTH: false,
-      ENABLE_PASSKEYS: true,
-      ENABLE_USER_REGISTRATION: true,
-      ENABLE_SSO: false,
-      APP_NAME: "TestApp",
-      APP_URL: "https://test.example.com",
-      APP_LOGO_URL: "",
-    }));
-    setupBaseMocks();
-    mockFindUnique.mockRejectedValue(new Error("DB error"));
-
-    const { authOptions } = await import("@/lib/auth");
-    const passkeyProvider = authOptions.providers.find((p: { id?: string }) => p.id === "passkey") as { authorize: Function };
-
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    const result = await passkeyProvider.authorize({
-      email: "test@test.com",
-      authResponse: JSON.stringify({ id: "cred-1" }),
-      challenge: "abc",
-    });
-    expect(result).toBeNull();
-    consoleSpy.mockRestore();
+    expect(authOptions.providers).toEqual([]);
   });
 });
 
@@ -396,7 +205,7 @@ describe("buildProviders - all enabled", () => {
     setupBaseMocks();
 
     const { authOptions } = await import("@/lib/auth");
-    expect(authOptions.providers.length).toBe(4);
+    expect(authOptions.providers.map((p: { id?: string }) => p.id)).toEqual(["github", "google", "email"]);
   });
 });
 
