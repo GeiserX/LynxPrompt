@@ -112,6 +112,8 @@ export async function statusCommand(): Promise<void> {
         console.log();
       }
     }
+    console.log(chalk.gray("  ✓ means no local edits. Run 'lynxp sync --dry-run' to check the cloud too."));
+    console.log();
   }
 
   // Show AI config files
