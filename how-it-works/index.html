@@ -956,8 +956,9 @@ When an account whose address equals <code>SUPERADMIN_EMAIL</code> signs in by a
 unless it has a pending, unexpired team invitation.</p>
 <h2 id="what-the-cli-and-the-extension-talk-to">What the CLI and the extension talk to<a class="headerlink" href="#what-the-cli-and-the-extension-talk-to" title="Permanent link">&para;</a></h2>
 <p><code>lynxp login</code> opens the configured instance in the browser (<code>lynxp config set-url</code>, or <code>LYNXPROMPT_API_URL</code>)
-and stores an API token in a file only its owner can read. The token is sent only to the instance that issued
-it, and <code>lynxp logout</code> revokes it there. Every call after that is <code>Authorization: Bearer &lt;token&gt;</code> against <code>/api/v1/</code>. Tokens
+and stores an API token in a file only its owner can read. The CLI keeps one token per instance, so switching
+with <code>lynxp config set-url</code> keeps the other logins. A token is sent only to the instance that issued it, and
+<code>lynxp logout</code> revokes the current instance's token there. Every call after that is <code>Authorization: Bearer &lt;token&gt;</code> against <code>/api/v1/</code>. Tokens
 are created in Settings, carry a role (<code>BLUEPRINTS_FULL</code>, <code>BLUEPRINTS_READONLY</code>, <code>PROFILE_FULL</code> and others)
 and an expiry, and the API answers <code>401</code> with the settings URL when one expires. The VS Code extension, the
 GitHub Action and the MCP server use the same API with the same tokens.</p>
