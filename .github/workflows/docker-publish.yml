@@ -94,8 +94,6 @@ jobs:
             ${{ steps.meta.outputs.labels }}
             org.opencontainers.image.revision=${{ steps.source.outputs.revision }}
           build-args: |
-            NEXT_PUBLIC_UMAMI_WEBSITE_ID=${{ secrets.NEXT_PUBLIC_UMAMI_WEBSITE_ID }}
-            NEXT_PUBLIC_TURNSTILE_SITE_KEY=${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
             APP_URL=https://lynxprompt.com
             APP_REVISION=${{ steps.source.outputs.revision }}
           cache-from: type=gha
