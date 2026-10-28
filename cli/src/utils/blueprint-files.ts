@@ -13,6 +13,10 @@ import {
   skillFolder,
   MCP_BLUEPRINT_TYPE,
   MCP_CONFIGS,
+  extractMcpConfig,
+  mcpConfigForPath,
+  mergeMcpConfig,
+  type McpConfigTarget,
 } from "../../../packages/shared/src/platforms.js";
 import { PLATFORM_FILES } from "./generator.js";
 
@@ -98,6 +102,8 @@ const inFolder = (relativePath: string, folder: string) => {
   return p.startsWith(folder) || p.includes(`/${folder}`);
 };
 
+const LEGACY_WHOLE_FILES = new Set(["opencode.json", "firebender.json"]);
+
 /**
  * Config files `lynxp push` recognises, most specific first, built from the
  * shared platform table plus the paths older CLI versions wrote.
@@ -109,8 +115,9 @@ const CONFIG_PATTERNS: ConfigPattern[] = [
     type: SKILL_BLUEPRINT_TYPE,
     label: "Agent Skill",
   })),
-  // MCP server configs
-  ...MCP_CONFIGS.map((c) => ({
+  // MCP server configs. opencode.json and firebender.json keep the types older
+  // CLI versions pushed them as (below), so they are pushed whole.
+  ...MCP_CONFIGS.filter((c) => !LEGACY_WHOLE_FILES.has(c.file)).map((c) => ({
     match: (p: string) => atPath(p, c.file),
     type: MCP_BLUEPRINT_TYPE,
     label: `MCP Servers (${c.name})`,
@@ -163,4 +170,36 @@ export function matchConfigFile(relativePath: string): { type: string; label: st
  */
 export function withFinalNewline(content: string): string {
   return content.endsWith("\n") ? content : `${content}\n`;
+}
+
+/**
+ * The MCP config a path is when only part of the file is the blueprint: a
+ * settings file (.gemini/settings.json, .zed/settings.json, kilo.jsonc...) or
+ * a TOML config (.codex/config.toml, .vibe/config.toml). Null for any other
+ * file, which is the blueprint whole.
+ */
+export function mcpPart(relativePath: string): McpConfigTarget | null {
+  if (matchConfigFile(relativePath)?.type !== MCP_BLUEPRINT_TYPE) return null;
+  const target = mcpConfigForPath(relativePath);
+  return target && target.kind !== "whole" ? target : null;
+}
+
+/**
+ * What a local file holds as blueprint content: the file itself, or only the
+ * MCP servers of a settings or TOML file (null when it has none). push, sync
+ * and diff read files through this, so another setting never reaches the cloud.
+ */
+export function blueprintContentOf(relativePath: string, fileText: string): string | null {
+  const target = mcpPart(relativePath);
+  return target ? extractMcpConfig(fileText, target.id) : fileText;
+}
+
+/**
+ * The text to write to a file for blueprint content: the content itself, or,
+ * for a settings or TOML file, the existing file with its MCP servers replaced
+ * and every other setting kept.
+ */
+export function fileTextFor(relativePath: string, existing: string | null, content: string): string {
+  const target = mcpPart(relativePath);
+  return target ? mergeMcpConfig(existing ?? "", content, target.id, target.file) : content;
 }

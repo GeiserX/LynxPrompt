@@ -15,6 +15,7 @@ import { readFile, writeFile, mkdir, access } from "fs/promises";
 import { join, dirname, isAbsolute, relative, sep } from "path";
 import { createHash } from "crypto";
 import * as yaml from "yaml";
+import { blueprintContentOf } from "./blueprint-files.js";
 
 // Blueprint source types
 export type BlueprintSource = "marketplace" | "team" | "private" | "local";
@@ -160,7 +161,11 @@ export async function trackBlueprint(
           variables: blueprint.variables,
           localChecksum: calculateChecksum(blueprint.localContent ?? blueprint.content),
         }
-      : {}),
+      : // An MCP config written in another tool's shape reads back different
+        blueprint.localContent !== undefined &&
+          calculateChecksum(blueprint.localContent) !== calculateChecksum(blueprint.content)
+        ? { localChecksum: calculateChecksum(blueprint.localContent) }
+        : {}),
   });
   
   await saveBlueprints(cwd, config);
@@ -188,7 +193,7 @@ export async function findBlueprintById(cwd: string, id: string): Promise<Tracke
 export async function hasLocalChanges(cwd: string, tracked: TrackedBlueprint): Promise<boolean> {
   try {
     const filePath = join(cwd, tracked.file);
-    const content = await readFile(filePath, "utf-8");
+    const content = blueprintContentOf(tracked.file, await readFile(filePath, "utf-8")) ?? "";
     const currentChecksum = calculateChecksum(content);
     return currentChecksum !== (tracked.localChecksum ?? tracked.checksum);
   } catch {

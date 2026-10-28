@@ -31,7 +31,7 @@ import {
   type TrackedBlueprint,
 } from "../utils/blueprint-tracker.js";
 import { fillBlueprintVariables } from "../utils/variables.js";
-import { withFinalNewline } from "../utils/blueprint-files.js";
+import { blueprintContentOf, fileTextFor, withFinalNewline } from "../utils/blueprint-files.js";
 
 interface SyncOptions {
   dryRun?: boolean;
@@ -118,7 +118,9 @@ async function syncOne(cwd: string, tracked: TrackedBlueprint, options: SyncOpti
     return "error";
   }
 
-  const local = await readFile(filePath, "utf-8");
+  // Of a settings file only its MCP servers are the blueprint
+  const localFile = await readFile(filePath, "utf-8");
+  const local = blueprintContentOf(file, localFile) ?? "";
   // What the file should hold for the current cloud content
   const rendered = tracked.variables ? fillBlueprintVariables(remote, tracked.variables).content : remote;
   const localChanged = calculateChecksum(local) !== (tracked.localChecksum ?? tracked.checksum);
@@ -133,7 +135,7 @@ async function syncOne(cwd: string, tracked: TrackedBlueprint, options: SyncOpti
 
   if (!localChanged) {
     if (!dry) {
-      await writeFile(filePath, withFinalNewline(rendered), "utf-8");
+      await writeFile(filePath, withFinalNewline(fileTextFor(file, localFile, rendered)), "utf-8");
       await record(cwd, tracked, remote, rendered);
     }
     console.log(chalk.cyan(`↓ ${file}: ${dry ? "would update from the cloud" : "updated from the cloud"}`));

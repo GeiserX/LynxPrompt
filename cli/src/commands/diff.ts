@@ -21,6 +21,7 @@ import { safeText } from "../utils/terminal.js";
 import { computeDiff, formatDiff } from "../utils/line-diff.js";
 import { checkSyncStatus, findBlueprintByFile } from "../utils/blueprint-tracker.js";
 import { fillBlueprintVariables } from "../utils/variables.js";
+import { blueprintContentOf } from "../utils/blueprint-files.js";
 
 interface DiffOptions {
   local?: boolean;
@@ -143,7 +144,8 @@ async function diffFileWithBlueprint(
       return "error";
     }
 
-    const localContent = await readFile(filePath, "utf-8");
+    // Of a settings file only its MCP servers are the blueprint
+    const localContent = blueprintContentOf(file, await readFile(filePath, "utf-8")) ?? "";
     // A file pulled with --vars is compared with the cloud content filled the same way
     const cloudContent = variables
       ? fillBlueprintVariables(blueprint.content, variables).content

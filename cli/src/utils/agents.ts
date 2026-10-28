@@ -3,6 +3,8 @@
  * Supports 40+ AI coding agents with simple, discoverable patterns
  */
 
+import { MCP_CONFIGS } from "../../../packages/shared/src/platforms.js";
+
 export interface AgentDefinition {
   /** Unique identifier */
   id: string;
@@ -259,43 +261,16 @@ export const AGENTS: AgentDefinition[] = [
     category: "config",
   },
 
-  // === MCP (Model Context Protocol) AGENTS ===
-  {
-    id: "vscode-mcp",
-    name: "VS Code MCP",
-    description: "VS Code with Model Context Protocol",
-    patterns: [".vscode/mcp.json"],
-    output: ".vscode/mcp.json",
-    format: "json",
+  // === MCP (Model Context Protocol) CONFIGS: one per tool, from the shared table ===
+  ...MCP_CONFIGS.map((c): AgentDefinition => ({
+    id: c.id,
+    name: `${c.name} MCP`,
+    description: `MCP servers for ${c.name}`,
+    patterns: [c.file],
+    output: c.file,
+    format: c.kind === "toml" ? "toml" : "json",
     category: "mcp",
-  },
-  {
-    id: "cursor-mcp",
-    name: "Cursor MCP",
-    description: "Cursor with Model Context Protocol",
-    patterns: [".cursor/mcp.json"],
-    output: ".cursor/mcp.json",
-    format: "json",
-    category: "mcp",
-  },
-  {
-    id: "root-mcp",
-    name: "Root MCP",
-    description: "Root-level MCP config for Claude Code, Aider",
-    patterns: [".mcp.json"],
-    output: ".mcp.json",
-    format: "json",
-    category: "mcp",
-  },
-  {
-    id: "windsurf-mcp",
-    name: "Windsurf MCP",
-    description: "Windsurf with Model Context Protocol",
-    patterns: [".windsurf/mcp_config.json"],
-    output: ".windsurf/mcp_config.json",
-    format: "json",
-    category: "mcp",
-  },
+  })),
 ];
 
 /**

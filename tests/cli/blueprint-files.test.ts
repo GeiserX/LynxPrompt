@@ -95,6 +95,47 @@ describe("Agent Skills and MCP configs", () => {
     expect(matchConfigFile(".vscode/mcp.json")?.type).toBe("MCP_CONFIG");
     expect(matchConfigFile(".kiro/settings/mcp.json")?.type).toBe("MCP_CONFIG");
     expect(matchConfigFile("mcp.json")).toBeNull();
+    for (const f of [".github/mcp.json", ".agents/mcp_config.json", ".devin/mcp_config.json", ".gemini/settings.json", ".zed/settings.json", "kilo.jsonc", ".codex/config.toml", ".vibe/config.toml"]) {
+      expect(matchConfigFile(f)?.type).toBe("MCP_CONFIG");
+    }
+    expect(matchConfigFile(".windsurf/mcp_config.json")).toBeNull();
+    // Pushed whole under the types older CLI versions gave them
+    expect(matchConfigFile("opencode.json")?.type).toBe("OPENCODE_JSON");
+    expect(matchConfigFile("firebender.json")?.type).toBe("CUSTOM");
+  });
+
+  it("reads and writes only the MCP servers of a settings file", async () => {
+    const { blueprintContentOf, fileTextFor } = await import("../../cli/src/utils/blueprint-files");
+    const settings = '{\n  "theme": "Dracula",\n  "mcpServers": { "a": { "command": "x" } }\n}\n';
+    const part = '{\n  "mcpServers": {\n    "a": {\n      "command": "x"\n    }\n  }\n}\n';
+    expect(blueprintContentOf(".gemini/settings.json", settings)).toBe(part);
+    expect(blueprintContentOf(".gemini/settings.json", '{"theme":"Dracula"}')).toBeNull();
+    // Files that are the blueprint whole are left alone
+    expect(blueprintContentOf(".mcp.json", "anything")).toBe("anything");
+    expect(blueprintContentOf("AGENTS.md", "# Rules")).toBe("# Rules");
+    expect(fileTextFor("AGENTS.md", "# Old", "# New")).toBe("# New");
+
+    const written = fileTextFor(".gemini/settings.json", '{ "theme": "Light" }', part);
+    expect(JSON.parse(written)).toEqual({ theme: "Light", mcpServers: { a: { command: "x" } } });
+    expect(blueprintContentOf(".gemini/settings.json", written)).toBe(part);
+    expect(JSON.parse(fileTextFor(".gemini/settings.json", null, part))).toEqual({ mcpServers: { a: { command: "x" } } });
+  });
+
+  it("does not report a settings file changed when only its other settings were edited", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "lp-mcp-track-"));
+    try {
+      const part = '{\n  "mcpServers": {}\n}\n';
+      const { mkdir } = await import("fs/promises");
+      await mkdir(path.join(dir, ".gemini"));
+      await writeFile(path.join(dir, ".gemini/settings.json"), '{ "theme": "Light", "mcpServers": {} }');
+      await trackBlueprint(dir, { id: "bp_1", name: "MCP", file: ".gemini/settings.json", content: part, source: "private" });
+      const tracked = await findBlueprintByFile(dir, ".gemini/settings.json");
+      expect(await hasLocalChanges(dir, tracked!)).toBe(false);
+      await writeFile(path.join(dir, ".gemini/settings.json"), '{ "theme": "Dark", "mcpServers": { "a": { "command": "x" } } }');
+      expect(await hasLocalChanges(dir, tracked!)).toBe(true);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 
   it("pulls a skill into its own folder and an MCP config to .mcp.json", () => {
