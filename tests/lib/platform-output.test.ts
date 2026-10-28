@@ -121,13 +121,7 @@ describe("generated content matches each platform's format", () => {
     const fmEnd = content.indexOf("\n---\n");
     expect(content.indexOf("<!--")).toBeGreaterThan(fmEnd);
     // and the sync commands point at a real file
-    expect(content).toContain("cat .cursor/rules/project.mdc");
-  });
-
-  it("Windows sync command sends the file once-escaped, as JSON", () => {
-    const { content } = generate("claude", { enableAutoUpdate: true, devOS: "windows" }, { blueprintId: "bp_1" });
-    expect(content).not.toContain("-replace");
-    expect(content).toContain('-ContentType "application/json"');
+    expect(content.slice(content.indexOf("<!--"))).toContain(".cursor/rules/project.mdc");
   });
 
   it("the wizard's Open Source project type adds its guidance", () => {

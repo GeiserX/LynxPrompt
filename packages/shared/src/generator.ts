@@ -1,6 +1,36 @@
 // The rules-file generator the web wizard and the CLI share. It runs in the
 // browser and in Node, so it imports nothing from either.
-import { adaptRulesContent, frontmatterLines, splitFrontmatter } from "./rules-format.js";
+import { adaptRulesContent, frontmatterLines } from "./rules-format.js";
+import { addApiSyncHeader } from "./sync-header.js";
+
+import {
+  ARCHITECTURE_PATTERNS,
+  CICD_OPTIONS,
+  CONTAINER_REGISTRIES,
+  DATABASES,
+  DEPLOYMENT_TARGETS,
+  ERROR_HANDLING_PATTERNS,
+  FRAMEWORKS,
+  LANGUAGES,
+  LICENSES,
+  LOGGING_OPTIONS,
+  REPO_HOSTS,
+  TEST_LEVELS,
+} from "./wizard/index.js";
+
+// The wizard's own label for an answer id, or the answer itself (typed text, or
+// an id from an older wizard). The tables below hold the generator's longer
+// wording; this covers every id they do not list.
+function optionLabel(options: readonly { id: string; label: string }[], id: string): string {
+  return options.find((option) => option.id === id)?.label ?? id;
+}
+
+const STACK_OPTIONS = [...LANGUAGES, ...FRAMEWORKS, ...DATABASES];
+
+/** A language, framework or database as people write it ("Next.js", not "nextjs"); "custom:" entries are the user's text. */
+export function stackLabel(id: string): string {
+  return id.startsWith("custom:") ? id.slice("custom:".length) : optionLabel(STACK_OPTIONS, id);
+}
 
 
 interface CommandsConfig {
@@ -49,6 +79,9 @@ interface TestingStrategyConfig {
 }
 
 interface StaticFilesConfig {
+  // Files whose full content goes into the rules file (the CLI's "config
+  // only" static files)
+  customFiles?: { path: string; content: string }[];
   funding?: boolean;
   fundingYml?: string;
   fundingSave?: boolean;
@@ -93,7 +126,7 @@ export interface GeneratorConfig {
   repoUrl: string;
   exampleRepoUrl?: string;
   documentationUrl?: string; // external docs (Confluence, Notion, etc.)
-  isPublic: boolean;
+  isPublic?: boolean;
   license: string;
   licenseOther?: string;
   licenseNotes?: string;
@@ -232,6 +265,11 @@ const PROJECT_TYPE_INSTRUCTIONS: Record<string, string[]> = {
     "Consider backward compatibility for all changes.",
     "Document everything thoroughly for maintainers and contributors.",
   ],
+  learning: [
+    "This is a learning project.",
+    "Explain concepts and the reasoning behind each change.",
+    "Prefer clear, conventional solutions the developer can study.",
+  ],
   private_business: [
     "This is a private business project.",
     "Balance development speed with code quality.",
@@ -264,13 +302,6 @@ import {
   mcpServerSection,
   toolingLines,
 } from "./generator-sections.js";
-
-// Helper: normalize platforms array (supports legacy array or single string)
-function resolvePlatforms(config: GeneratorConfig): string[] {
-  if (Array.isArray(config.platforms)) return config.platforms;
-  if (config.platform) return [config.platform];
-  return ["cursor"];
-}
 
 // Helper: normalize devOS to array (supports legacy string or new array format)
 function resolveDevOS(config: GeneratorConfig): string[] {
@@ -352,7 +383,7 @@ function generateCursorRules(config: GeneratorConfig, user: GeneratorUser, brand
       mvc: "MVC / MVVM - Model-View-Controller or Model-View-ViewModel",
       other: config.architecturePatternOther || "Custom architecture",
     };
-    const archValue = archLabels[config.architecturePattern] || config.architecturePattern;
+    const archValue = archLabels[config.architecturePattern] || optionLabel(ARCHITECTURE_PATTERNS, config.architecturePattern);
     lines.push(`**Architecture Pattern**: ${bpVar(bp, "ARCHITECTURE_PATTERN", archValue)}`);
   }
   if (config.isPublic !== undefined) {
@@ -387,7 +418,7 @@ function generateCursorRules(config: GeneratorConfig, user: GeneratorUser, brand
         other: config.repoHostOther || "Other",
       };
       const hosts = config.repoHosts?.length ? config.repoHosts : [config.repoHost];
-      const hostLabels = hosts.map(h => hostNames[h] || h).join(", ");
+      const hostLabels = hosts.map(h => hostNames[h] || optionLabel(REPO_HOSTS, h)).join(", ");
       lines.push(`- **Platform${hosts.length > 1 ? 's' : ''}**: ${bpVar(bp, "REPO_HOST", hostLabels)}`);
       if (hosts.length > 1 && config.multiRepoReason) {
         lines.push(`- **Why multiple platforms**: ${config.multiRepoReason}`);
@@ -438,15 +469,15 @@ function generateCursorRules(config: GeneratorConfig, user: GeneratorUser, brand
     lines.push("This project uses the following technologies. Please ensure all code follows the conventions and best practices for these:");
     lines.push("");
     if (config.languages.length > 0) {
-      const langs = config.languages.map(l => l.startsWith("custom:") ? l.replace("custom:", "") : l);
+      const langs = config.languages.map(stackLabel);
       lines.push(`**Programming Languages**: ${bpVarArray(bp, "LANGUAGES", langs)}`);
     }
     if (config.frameworks.length > 0) {
-      const fws = config.frameworks.map(f => f.startsWith("custom:") ? f.replace("custom:", "") : f);
+      const fws = config.frameworks.map(stackLabel);
       lines.push(`**Frameworks & Libraries**: ${bpVarArray(bp, "FRAMEWORKS", fws)}`);
     }
     if (config.databases && config.databases.length > 0) {
-      const dbs = config.databases.map(d => d.startsWith("custom:") ? d.replace("custom:", "") : d);
+      const dbs = config.databases.map(stackLabel);
       lines.push(`**Database${config.databases.length > 1 ? 's' : ''}**: ${bpVarArray(bp, "DATABASES", dbs)}`);
     }
     if (tooling.length > 0) {
@@ -469,14 +500,20 @@ function generateCursorRules(config: GeneratorConfig, user: GeneratorUser, brand
   lines.push("Follow these coding style guidelines when writing or modifying code:");
   lines.push("");
   
-  // Developer profile (if included)
-  if (config.includePersonalData !== false && user.skillLevel) {
+  // Developer profile (if included). A background alone is written too: the
+  // CLI asks for it without a skill level.
+  if (config.includePersonalData !== false && (user.skillLevel || user.persona)) {
     lines.push("### Developer Profile");
-    const authorName = user.displayName || user.name || "Developer";
-    lines.push(`- **Author**: ${bpVar(bp, "AUTHOR_NAME", authorName)}`);
+    if (user.skillLevel) {
+      const authorName = user.displayName || user.name || "Developer";
+      lines.push(`- **Author**: ${bpVar(bp, "AUTHOR_NAME", authorName)}`);
+    }
     if (user.persona) {
       lines.push(`- **Developer Background**: ${user.persona.replace(/_/g, " ")} — adapt responses to this domain expertise`);
     }
+    if (!user.skillLevel) lines.push("");
+  }
+  if (config.includePersonalData !== false && user.skillLevel) {
     lines.push(`- **Experience Level**: ${user.skillLevel.charAt(0).toUpperCase() + user.skillLevel.slice(1)}`);
     lines.push("");
     lines.push("### Communication Style");
@@ -521,7 +558,7 @@ function generateCursorRules(config: GeneratorConfig, user: GeneratorUser, brand
       exceptions: "Use custom exception/error classes with meaningful error messages and types",
       other: config.codeStyle.errorHandlingOther || "Follow the project's custom error handling approach",
     };
-    const errorValue = errorDescriptions[config.codeStyle.errorHandling] || config.codeStyle.errorHandling;
+    const errorValue = errorDescriptions[config.codeStyle.errorHandling] || optionLabel(ERROR_HANDLING_PATTERNS, config.codeStyle.errorHandling);
     lines.push("### Error Handling");
     lines.push(`**Approach**: ${bpVar(bp, "ERROR_HANDLING", errorValue)}`);
     lines.push("");
@@ -530,7 +567,7 @@ function generateCursorRules(config: GeneratorConfig, user: GeneratorUser, brand
   // Logging
   if (config.codeStyle?.loggingConventions) {
     lines.push("### Logging Conventions");
-    lines.push(`**Guidelines**: ${bpVar(bp, "LOGGING_CONVENTIONS", config.codeStyle.loggingConventions)}`);
+    lines.push(`**Guidelines**: ${bpVar(bp, "LOGGING_CONVENTIONS", optionLabel(LOGGING_OPTIONS, config.codeStyle.loggingConventions))}`);
     lines.push("");
   }
 
@@ -704,7 +741,7 @@ function generateCursorRules(config: GeneratorConfig, user: GeneratorUser, brand
       };
       lines.push("**Testing Levels**:");
       config.testingStrategy!.levels.forEach(level => {
-        lines.push(`- ${levelDescriptions[level] || level}`);
+        lines.push(`- ${levelDescriptions[level] || optionLabel(TEST_LEVELS, level)}`);
       });
       lines.push("");
     }
@@ -739,6 +776,7 @@ function generateCursorRules(config: GeneratorConfig, user: GeneratorUser, brand
       startup: "Startup / MVP",
       enterprise: "Enterprise / Corporate",
       educational: "Educational / Learning",
+      learning: "Learning Project",
       prototype: "Prototype / Proof of Concept",
     };
     lines.push("## Project Type Context");
@@ -779,7 +817,7 @@ function generateCursorRules(config: GeneratorConfig, user: GeneratorUser, brand
         drone: "Drone CI",
         none: "Manual deployment",
       };
-      const cicdNames = config.cicd.map(c => cicdLabels[c] || c).join(", ");
+      const cicdNames = config.cicd.map(c => cicdLabels[c] || optionLabel(CICD_OPTIONS, c)).join(", ");
       lines.push(`**CI/CD Platform**: ${bpVar(bp, "CICD_PLATFORM", cicdNames)}`);
     }
     if (config.deploymentTarget && config.deploymentTarget.length > 0) {
@@ -796,7 +834,7 @@ function generateCursorRules(config: GeneratorConfig, user: GeneratorUser, brand
         digitalocean: "DigitalOcean",
         baremetal: "Bare Metal / On-Prem",
       };
-      const deployNames = config.deploymentTarget.map(d => deployLabels[d] || d).join(", ");
+      const deployNames = config.deploymentTarget.map(d => deployLabels[d] || optionLabel(DEPLOYMENT_TARGETS, d)).join(", ");
       lines.push(`**Deployment Target${config.deploymentTarget.length > 1 ? 's' : ''}**: ${bpVar(bp, "DEPLOYMENT_TARGETS", deployNames)}`);
     }
     if (config.buildContainer) {
@@ -810,7 +848,7 @@ function generateCursorRules(config: GeneratorConfig, user: GeneratorUser, brand
           acr: "Azure Container Registry",
           custom: config.customRegistry || "Custom registry",
         };
-        const registryValue = registryLabels[config.containerRegistry] || config.containerRegistry;
+        const registryValue = registryLabels[config.containerRegistry] || optionLabel(CONTAINER_REGISTRIES, config.containerRegistry);
         lines.push(`**Container Registry**: ${bpVar(bp, "CONTAINER_REGISTRY", registryValue)}`);
       }
       lines.push(...dockerImageLines(config));
@@ -1104,6 +1142,14 @@ function generateWindsurfRules(
     .replace("AI Rules", "Windsurf AI Rules");
 }
 
+// AGENTS.md titled for a tool that reads it under another file name
+function generateNamedAgentsMd(config: GeneratorConfig, user: GeneratorUser, tool: string): string {
+  return generateAgentsMd(config, user).replace(
+    /^# (.*) - AI Agent Instructions/,
+    (_match, name: string) => `# ${name} - ${tool} Instructions`
+  );
+}
+
 // Generate Antigravity GEMINI.md - Google's AI-powered IDE
 function generateGeminiMd(config: GeneratorConfig, user: GeneratorUser): string {
   // Use AGENTS.md as base and transform for Antigravity/Gemini
@@ -1151,7 +1197,7 @@ function generateAgentsMd(config: GeneratorConfig, user: GeneratorUser): string 
       mvc: "MVC / MVVM - Model-View-Controller or Model-View-ViewModel",
       other: config.architecturePatternOther || "Custom architecture",
     };
-    const archValue = archLabels[config.architecturePattern] || config.architecturePattern;
+    const archValue = archLabels[config.architecturePattern] || optionLabel(ARCHITECTURE_PATTERNS, config.architecturePattern);
     lines.push(`**Architecture Pattern**: ${bpVar(bp, "ARCHITECTURE_PATTERN", archValue)}`);
   }
   
@@ -1188,7 +1234,7 @@ function generateAgentsMd(config: GeneratorConfig, user: GeneratorUser): string 
         other: config.repoHostOther || "Other",
       };
       const hosts = config.repoHosts?.length ? config.repoHosts : [config.repoHost];
-      const hostLabels = hosts.map(h => hostNames[h] || h).join(", ");
+      const hostLabels = hosts.map(h => hostNames[h] || optionLabel(REPO_HOSTS, h)).join(", ");
       lines.push(`- **Platform${hosts.length > 1 ? 's' : ''}**: ${hostLabels}`);
       if (hosts.length > 1 && config.multiRepoReason) {
         lines.push(`- **Why multiple platforms**: ${config.multiRepoReason}`);
@@ -1214,7 +1260,7 @@ function generateAgentsMd(config: GeneratorConfig, user: GeneratorUser): string 
     lines.push("## Technology Stack");
     lines.push("");
     if (config.languages.length > 0) {
-      const langs = config.languages.map(l => l.startsWith("custom:") ? l.replace("custom:", "") : l);
+      const langs = config.languages.map(stackLabel);
       if (bp) {
         lines.push(`### Languages`);
         lines.push(`${bpVarArray(bp, "LANGUAGES", langs)}`);
@@ -1225,7 +1271,7 @@ function generateAgentsMd(config: GeneratorConfig, user: GeneratorUser): string 
       lines.push("");
     }
     if (config.frameworks.length > 0) {
-      const fws = config.frameworks.map(f => f.startsWith("custom:") ? f.replace("custom:", "") : f);
+      const fws = config.frameworks.map(stackLabel);
       if (bp) {
         lines.push(`### Frameworks & Libraries`);
         lines.push(`${bpVarArray(bp, "FRAMEWORKS", fws)}`);
@@ -1236,7 +1282,7 @@ function generateAgentsMd(config: GeneratorConfig, user: GeneratorUser): string 
       lines.push("");
     }
     if (config.databases && config.databases.length > 0) {
-      const dbs = config.databases.map(d => d.startsWith("custom:") ? d.replace("custom:", "") : d);
+      const dbs = config.databases.map(stackLabel);
       if (bp) {
         lines.push(`### Database${config.databases.length > 1 ? 's' : ''}`);
         lines.push(`${bpVarArray(bp, "DATABASES", dbs)}`);
@@ -1265,7 +1311,7 @@ function generateAgentsMd(config: GeneratorConfig, user: GeneratorUser): string 
   lines.push("## Development Guidelines");
   lines.push("");
   
-  if (config.includePersonalData !== false && user.skillLevel) {
+  if (config.includePersonalData !== false && (user.skillLevel || user.persona)) {
     lines.push("### Communication Style");
     if (user.skillLevel === "novice" || user.skillLevel === "beginner") {
       lines.push("- Explain concepts thoroughly with detailed comments");
@@ -1273,13 +1319,15 @@ function generateAgentsMd(config: GeneratorConfig, user: GeneratorUser): string 
     } else if (user.skillLevel === "intermediate") {
       lines.push("- Balance explanations with efficiency");
       lines.push("- Explain non-obvious decisions, skip basics");
-    } else {
+    } else if (user.skillLevel) {
       lines.push("- Be concise and direct");
     }
     if (user.persona) {
       lines.push(`- Developer background: ${user.persona.replace(/_/g, " ")} — adapt responses to this domain expertise`);
     }
-    lines.push(`- Skill level: ${user.skillLevel.charAt(0).toUpperCase() + user.skillLevel.slice(1)}`);
+    if (user.skillLevel) {
+      lines.push(`- Skill level: ${user.skillLevel.charAt(0).toUpperCase() + user.skillLevel.slice(1)}`);
+    }
     lines.push("");
   }
 
@@ -1387,10 +1435,10 @@ function generateAgentsMd(config: GeneratorConfig, user: GeneratorUser): string 
         exceptions: "Custom Exceptions / Error classes with meaningful types",
         other: config.codeStyle.errorHandlingOther || "Custom error handling approach",
       };
-      lines.push(`- **Error Handling**: ${errorDescriptions[config.codeStyle.errorHandling] || config.codeStyle.errorHandling}`);
+      lines.push(`- **Error Handling**: ${errorDescriptions[config.codeStyle.errorHandling] || optionLabel(ERROR_HANDLING_PATTERNS, config.codeStyle.errorHandling)}`);
     }
     if (config.codeStyle?.loggingConventions) {
-      lines.push(`- **Logging**: ${config.codeStyle.loggingConventions}`);
+      lines.push(`- **Logging**: ${optionLabel(LOGGING_OPTIONS, config.codeStyle.loggingConventions)}`);
     }
     lines.push(...styleExtrasAgents);
     if (config.codeStyle?.notes) {
@@ -1445,7 +1493,7 @@ function generateAgentsMd(config: GeneratorConfig, user: GeneratorUser): string 
       };
       lines.push("**Testing Levels**:");
       config.testingStrategy!.levels.forEach(level => {
-        lines.push(`- ${levelDescriptions[level] || level}`);
+        lines.push(`- ${levelDescriptions[level] || optionLabel(TEST_LEVELS, level)}`);
       });
     }
     if (config.testingStrategy!.frameworks?.length) {
@@ -1478,7 +1526,7 @@ function generateAgentsMd(config: GeneratorConfig, user: GeneratorUser): string 
         drone: "Drone CI",
         none: "Manual deployment",
       };
-      const cicdNames = config.cicd.map(c => cicdLabels[c] || c).join(", ");
+      const cicdNames = config.cicd.map(c => cicdLabels[c] || optionLabel(CICD_OPTIONS, c)).join(", ");
       lines.push(`- **CI/CD Platform**: ${cicdNames}`);
     }
     if (config.deploymentTarget && config.deploymentTarget.length > 0) {
@@ -1495,7 +1543,7 @@ function generateAgentsMd(config: GeneratorConfig, user: GeneratorUser): string 
         digitalocean: "DigitalOcean",
         baremetal: "Bare Metal / On-Prem",
       };
-      const deployNames = config.deploymentTarget.map(d => deployLabels[d] || d).join(", ");
+      const deployNames = config.deploymentTarget.map(d => deployLabels[d] || optionLabel(DEPLOYMENT_TARGETS, d)).join(", ");
       lines.push(`- **Deployment Target${config.deploymentTarget.length > 1 ? 's' : ''}**: ${deployNames}`);
     }
     if (config.buildContainer) {
@@ -1509,7 +1557,7 @@ function generateAgentsMd(config: GeneratorConfig, user: GeneratorUser): string 
           acr: "Azure Container Registry",
           custom: config.customRegistry || "Custom registry",
         };
-        lines.push(`- **Container Registry**: ${registryLabels[config.containerRegistry] || config.containerRegistry}`);
+        lines.push(`- **Container Registry**: ${registryLabels[config.containerRegistry] || optionLabel(CONTAINER_REGISTRIES, config.containerRegistry)}`);
       }
       lines.push(...dockerImageLines(config));
     }
@@ -1776,7 +1824,7 @@ function generateContinueConfig(config: GeneratorConfig, user: GeneratorUser): s
       hexagonal: "Hexagonal / Ports & Adapters", clean: "Clean Architecture",
       cqrs: "CQRS", mvc: "MVC / MVVM", other: config.architecturePatternOther || "Custom",
     };
-    systemMessageParts.push(`**Architecture**: ${archLabels[config.architecturePattern] || config.architecturePattern}`);
+    systemMessageParts.push(`**Architecture**: ${archLabels[config.architecturePattern] || optionLabel(ARCHITECTURE_PATTERNS, config.architecturePattern)}`);
   }
   systemMessageParts.push("");
   
@@ -1784,15 +1832,15 @@ function generateContinueConfig(config: GeneratorConfig, user: GeneratorUser): s
   if (config.languages.length > 0 || config.frameworks.length > 0 || (config.databases && config.databases.length > 0)) {
     systemMessageParts.push("## Technology Stack");
     if (config.languages.length > 0) {
-      const langs = config.languages.map(l => l.startsWith("custom:") ? l.replace("custom:", "") : l);
+      const langs = config.languages.map(stackLabel);
       systemMessageParts.push(`**Languages**: ${langs.join(", ")}`);
     }
     if (config.frameworks.length > 0) {
-      const fws = config.frameworks.map(f => f.startsWith("custom:") ? f.replace("custom:", "") : f);
+      const fws = config.frameworks.map(stackLabel);
       systemMessageParts.push(`**Frameworks**: ${fws.join(", ")}`);
     }
     if (config.databases && config.databases.length > 0) {
-      const dbs = config.databases.map(d => d.startsWith("custom:") ? d.replace("custom:", "") : d);
+      const dbs = config.databases.map(stackLabel);
       systemMessageParts.push(`**Databases**: ${dbs.join(", ")}`);
     }
     if (config.letAiDecide) {
@@ -1840,7 +1888,7 @@ function generateContinueConfig(config: GeneratorConfig, user: GeneratorUser): s
       systemMessageParts.push(`- **Error Handling**: ${errorDesc[config.codeStyle.errorHandling] || config.codeStyle.errorHandling}`);
     }
     if (config.codeStyle?.loggingConventions) {
-      systemMessageParts.push(`- **Logging**: ${config.codeStyle.loggingConventions}`);
+      systemMessageParts.push(`- **Logging**: ${optionLabel(LOGGING_OPTIONS, config.codeStyle.loggingConventions)}`);
     }
     if (config.codeStyle?.notes) {
       systemMessageParts.push(`- **Notes**: ${config.codeStyle.notes}`);
@@ -2026,7 +2074,7 @@ function generateCodyConfig(config: GeneratorConfig, user: GeneratorUser): strin
       hexagonal: "Hexagonal / Ports & Adapters", clean: "Clean Architecture",
       cqrs: "CQRS", mvc: "MVC / MVVM", other: config.architecturePatternOther || "Custom",
     };
-    instructionParts.push(`**Architecture**: ${archLabels[config.architecturePattern] || config.architecturePattern}`);
+    instructionParts.push(`**Architecture**: ${archLabels[config.architecturePattern] || optionLabel(ARCHITECTURE_PATTERNS, config.architecturePattern)}`);
   }
   
   if (config.repoUrl) {
@@ -2038,15 +2086,15 @@ function generateCodyConfig(config: GeneratorConfig, user: GeneratorUser): strin
   if (config.languages.length > 0 || config.frameworks.length > 0 || (config.databases && config.databases.length > 0)) {
     instructionParts.push("## Technology Stack");
     if (config.languages.length > 0) {
-      const langs = config.languages.map(l => l.startsWith("custom:") ? l.replace("custom:", "") : l);
+      const langs = config.languages.map(stackLabel);
       instructionParts.push(`**Languages**: ${langs.join(", ")}`);
     }
     if (config.frameworks.length > 0) {
-      const fws = config.frameworks.map(f => f.startsWith("custom:") ? f.replace("custom:", "") : f);
+      const fws = config.frameworks.map(stackLabel);
       instructionParts.push(`**Frameworks**: ${fws.join(", ")}`);
     }
     if (config.databases && config.databases.length > 0) {
-      const dbs = config.databases.map(d => d.startsWith("custom:") ? d.replace("custom:", "") : d);
+      const dbs = config.databases.map(stackLabel);
       instructionParts.push(`**Databases**: ${dbs.join(", ")}`);
     }
     if (config.letAiDecide) {
@@ -2092,7 +2140,7 @@ function generateCodyConfig(config: GeneratorConfig, user: GeneratorUser): strin
       instructionParts.push(`- **Error Handling**: ${errorDesc[config.codeStyle.errorHandling] || config.codeStyle.errorHandling}`);
     }
     if (config.codeStyle?.loggingConventions) {
-      instructionParts.push(`- **Logging**: ${config.codeStyle.loggingConventions}`);
+      instructionParts.push(`- **Logging**: ${optionLabel(LOGGING_OPTIONS, config.codeStyle.loggingConventions)}`);
     }
     if (config.codeStyle?.notes) {
       instructionParts.push(`- **Notes**: ${config.codeStyle.notes}`);
@@ -2281,7 +2329,7 @@ function generateTabnineConfig(config: GeneratorConfig, user: GeneratorUser, bra
       hexagonal: "Hexagonal", clean: "Clean Architecture",
       cqrs: "CQRS", mvc: "MVC / MVVM", other: config.architecturePatternOther || "Custom",
     };
-    lines.push(`# Architecture: ${archLabels[config.architecturePattern] || config.architecturePattern}`);
+    lines.push(`# Architecture: ${archLabels[config.architecturePattern] || optionLabel(ARCHITECTURE_PATTERNS, config.architecturePattern)}`);
   }
   lines.push("#");
   
@@ -2290,11 +2338,11 @@ function generateTabnineConfig(config: GeneratorConfig, user: GeneratorUser, bra
     lines.push("# ─── Technology Stack ──────────────────────────────────────────────────────");
     lines.push("#");
     if (config.frameworks.length > 0) {
-      const fws = config.frameworks.map(f => f.startsWith("custom:") ? f.replace("custom:", "") : f);
+      const fws = config.frameworks.map(stackLabel);
       lines.push(`# Frameworks: ${fws.join(", ")}`);
     }
     if (config.databases && config.databases.length > 0) {
-      const dbs = config.databases.map(d => d.startsWith("custom:") ? d.replace("custom:", "") : d);
+      const dbs = config.databases.map(stackLabel);
       lines.push(`# Databases: ${dbs.join(", ")}`);
     }
     lines.push("#");
@@ -2323,7 +2371,7 @@ function generateTabnineConfig(config: GeneratorConfig, user: GeneratorUser, bra
     lines.push(`# Error Handling: ${errorDesc[config.codeStyle.errorHandling] || config.codeStyle.errorHandling}`);
   }
   if (config.codeStyle?.loggingConventions) {
-    lines.push(`# Logging: ${config.codeStyle.loggingConventions}`);
+    lines.push(`# Logging: ${optionLabel(LOGGING_OPTIONS, config.codeStyle.loggingConventions)}`);
   }
   if (config.codeStyle?.notes) {
     lines.push(`# Style Notes: ${config.codeStyle.notes}`);
@@ -2417,14 +2465,14 @@ function generateTabnineConfig(config: GeneratorConfig, user: GeneratorUser, bra
         jenkins: "Jenkins", circleci: "CircleCI", travis: "Travis CI",
         azure_pipelines: "Azure Pipelines", none: "Manual",
       };
-      lines.push(`# CI/CD: ${config.cicd.map(c => cicdLabels[c] || c).join(", ")}`);
+      lines.push(`# CI/CD: ${config.cicd.map(c => cicdLabels[c] || optionLabel(CICD_OPTIONS, c)).join(", ")}`);
     }
     if (config.deploymentTarget && config.deploymentTarget.length > 0) {
       const deployLabels: Record<string, string> = {
         aws: "AWS", gcp: "GCP", azure: "Azure", kubernetes: "K8s",
         vercel: "Vercel", netlify: "Netlify", heroku: "Heroku",
       };
-      lines.push(`# Deploy: ${config.deploymentTarget.map(d => deployLabels[d] || d).join(", ")}`);
+      lines.push(`# Deploy: ${config.deploymentTarget.map(d => deployLabels[d] || optionLabel(DEPLOYMENT_TARGETS, d)).join(", ")}`);
     }
     lines.push("#");
   }
@@ -2437,7 +2485,7 @@ function generateTabnineConfig(config: GeneratorConfig, user: GeneratorUser, bra
       work: "Work / Professional", leisure: "Personal / Hobby",
       open_source: "Open Source Project",
       open_source_small: "Open Source (Small)", open_source_large: "Open Source (Large)",
-      private_business: "Private Business",
+      private_business: "Private Business", learning: "Learning",
     };
     lines.push(`# Type: ${projectTypeLabels[config.projectType] || config.projectType}`);
     lines.push("# Guidelines:");
@@ -2506,7 +2554,7 @@ function generateSupermavenConfig(config: GeneratorConfig, user: GeneratorUser):
       hexagonal: "Hexagonal", clean: "Clean Architecture",
       cqrs: "CQRS", mvc: "MVC / MVVM", other: config.architecturePatternOther || "Custom",
     };
-    contextParts.push(`Architecture: ${archLabels[config.architecturePattern] || config.architecturePattern}`);
+    contextParts.push(`Architecture: ${archLabels[config.architecturePattern] || optionLabel(ARCHITECTURE_PATTERNS, config.architecturePattern)}`);
     contextParts.push("");
   }
   
@@ -2514,15 +2562,15 @@ function generateSupermavenConfig(config: GeneratorConfig, user: GeneratorUser):
   if (config.languages.length > 0 || config.frameworks.length > 0) {
     contextParts.push("## Technology Stack");
     if (config.languages.length > 0) {
-      const langs = config.languages.map(l => l.startsWith("custom:") ? l.replace("custom:", "") : l);
+      const langs = config.languages.map(stackLabel);
       contextParts.push(`Languages: ${langs.join(", ")}`);
     }
     if (config.frameworks.length > 0) {
-      const fws = config.frameworks.map(f => f.startsWith("custom:") ? f.replace("custom:", "") : f);
+      const fws = config.frameworks.map(stackLabel);
       contextParts.push(`Frameworks: ${fws.join(", ")}`);
     }
     if (config.databases && config.databases.length > 0) {
-      const dbs = config.databases.map(d => d.startsWith("custom:") ? d.replace("custom:", "") : d);
+      const dbs = config.databases.map(stackLabel);
       contextParts.push(`Databases: ${dbs.join(", ")}`);
     }
     contextParts.push("");
@@ -2548,7 +2596,7 @@ function generateSupermavenConfig(config: GeneratorConfig, user: GeneratorUser):
       contextParts.push(`Error Handling: ${errorDesc[config.codeStyle.errorHandling] || config.codeStyle.errorHandling}`);
     }
     if (config.codeStyle?.loggingConventions) {
-      contextParts.push(`Logging: ${config.codeStyle.loggingConventions}`);
+      contextParts.push(`Logging: ${optionLabel(LOGGING_OPTIONS, config.codeStyle.loggingConventions)}`);
     }
     if (config.codeStyle?.notes) {
       contextParts.push(`Notes: ${config.codeStyle.notes}`);
@@ -2700,9 +2748,9 @@ function generateSupermavenConfig(config: GeneratorConfig, user: GeneratorUser):
       notes: config.codeStyle?.notes || ""
     },
     techStack: {
-      languages: config.languages.map(l => l.startsWith("custom:") ? l.replace("custom:", "") : l),
-      frameworks: config.frameworks.map(f => f.startsWith("custom:") ? f.replace("custom:", "") : f),
-      databases: config.databases?.map(d => d.startsWith("custom:") ? d.replace("custom:", "") : d) || []
+      languages: config.languages.map(stackLabel),
+      frameworks: config.frameworks.map(stackLabel),
+      databases: config.databases?.map(stackLabel) || []
     },
     commands: {
       build: config.commands?.build || "",
@@ -2747,7 +2795,7 @@ function generateCodeGPTConfig(config: GeneratorConfig, user: GeneratorUser): st
       hexagonal: "Hexagonal / Ports & Adapters", clean: "Clean Architecture",
       cqrs: "CQRS", mvc: "MVC / MVVM", other: config.architecturePatternOther || "Custom",
     };
-    promptParts.push(`**Architecture**: ${archLabels[config.architecturePattern] || config.architecturePattern}`);
+    promptParts.push(`**Architecture**: ${archLabels[config.architecturePattern] || optionLabel(ARCHITECTURE_PATTERNS, config.architecturePattern)}`);
   }
   
   if (config.repoUrl) {
@@ -2759,15 +2807,15 @@ function generateCodeGPTConfig(config: GeneratorConfig, user: GeneratorUser): st
   if (config.languages.length > 0 || config.frameworks.length > 0 || (config.databases && config.databases.length > 0)) {
     promptParts.push("## Technology Stack");
     if (config.languages.length > 0) {
-      const langs = config.languages.map(l => l.startsWith("custom:") ? l.replace("custom:", "") : l);
+      const langs = config.languages.map(stackLabel);
       promptParts.push(`**Languages**: ${langs.join(", ")}`);
     }
     if (config.frameworks.length > 0) {
-      const fws = config.frameworks.map(f => f.startsWith("custom:") ? f.replace("custom:", "") : f);
+      const fws = config.frameworks.map(stackLabel);
       promptParts.push(`**Frameworks**: ${fws.join(", ")}`);
     }
     if (config.databases && config.databases.length > 0) {
-      const dbs = config.databases.map(d => d.startsWith("custom:") ? d.replace("custom:", "") : d);
+      const dbs = config.databases.map(stackLabel);
       promptParts.push(`**Databases**: ${dbs.join(", ")}`);
     }
     if (config.letAiDecide) {
@@ -2816,7 +2864,7 @@ function generateCodeGPTConfig(config: GeneratorConfig, user: GeneratorUser): st
       promptParts.push(`- **Error Handling**: ${errorDesc[config.codeStyle.errorHandling] || config.codeStyle.errorHandling}`);
     }
     if (config.codeStyle?.loggingConventions) {
-      promptParts.push(`- **Logging**: ${config.codeStyle.loggingConventions}`);
+      promptParts.push(`- **Logging**: ${optionLabel(LOGGING_OPTIONS, config.codeStyle.loggingConventions)}`);
     }
     if (config.codeStyle?.notes) {
       promptParts.push(`- **Notes**: ${config.codeStyle.notes}`);
@@ -2899,14 +2947,14 @@ function generateCodeGPTConfig(config: GeneratorConfig, user: GeneratorUser): st
         github_actions: "GitHub Actions", gitlab_ci: "GitLab CI/CD",
         jenkins: "Jenkins", circleci: "CircleCI", travis: "Travis CI",
       };
-      promptParts.push(`**CI/CD**: ${config.cicd.map(c => cicdLabels[c] || c).join(", ")}`);
+      promptParts.push(`**CI/CD**: ${config.cicd.map(c => cicdLabels[c] || optionLabel(CICD_OPTIONS, c)).join(", ")}`);
     }
     if (config.deploymentTarget && config.deploymentTarget.length > 0) {
       const deployLabels: Record<string, string> = {
         aws: "AWS", gcp: "GCP", azure: "Azure", kubernetes: "Kubernetes",
         vercel: "Vercel", netlify: "Netlify",
       };
-      promptParts.push(`**Deploy**: ${config.deploymentTarget.map(d => deployLabels[d] || d).join(", ")}`);
+      promptParts.push(`**Deploy**: ${config.deploymentTarget.map(d => deployLabels[d] || optionLabel(DEPLOYMENT_TARGETS, d)).join(", ")}`);
     }
     promptParts.push("");
   }
@@ -2974,9 +3022,9 @@ function generateCodeGPTConfig(config: GeneratorConfig, user: GeneratorUser): st
       errorHandling: config.codeStyle?.errorHandling || "try_catch"
     },
     techStack: {
-      languages: config.languages.map(l => l.startsWith("custom:") ? l.replace("custom:", "") : l),
-      frameworks: config.frameworks.map(f => f.startsWith("custom:") ? f.replace("custom:", "") : f),
-      databases: config.databases?.map(d => d.startsWith("custom:") ? d.replace("custom:", "") : d) || []
+      languages: config.languages.map(stackLabel),
+      frameworks: config.frameworks.map(stackLabel),
+      databases: config.databases?.map(stackLabel) || []
     },
     commands: {
       build: config.commands?.build || "",
@@ -3022,7 +3070,7 @@ function generateVoidConfig(config: GeneratorConfig, user: GeneratorUser): strin
       hexagonal: "Hexagonal / Ports & Adapters", clean: "Clean Architecture",
       cqrs: "CQRS", mvc: "MVC / MVVM", other: config.architecturePatternOther || "Custom",
     };
-    rulesParts.push(`**Architecture**: ${archLabels[config.architecturePattern] || config.architecturePattern}`);
+    rulesParts.push(`**Architecture**: ${archLabels[config.architecturePattern] || optionLabel(ARCHITECTURE_PATTERNS, config.architecturePattern)}`);
   }
   
   if (config.isPublic !== undefined) {
@@ -3058,15 +3106,15 @@ function generateVoidConfig(config: GeneratorConfig, user: GeneratorUser): strin
     rulesParts.push("## Technology Stack");
     rulesParts.push("");
     if (config.languages.length > 0) {
-      const langs = config.languages.map(l => l.startsWith("custom:") ? l.replace("custom:", "") : l);
+      const langs = config.languages.map(stackLabel);
       rulesParts.push(`**Languages**: ${langs.join(", ")}`);
     }
     if (config.frameworks.length > 0) {
-      const fws = config.frameworks.map(f => f.startsWith("custom:") ? f.replace("custom:", "") : f);
+      const fws = config.frameworks.map(stackLabel);
       rulesParts.push(`**Frameworks**: ${fws.join(", ")}`);
     }
     if (config.databases && config.databases.length > 0) {
-      const dbs = config.databases.map(d => d.startsWith("custom:") ? d.replace("custom:", "") : d);
+      const dbs = config.databases.map(stackLabel);
       rulesParts.push(`**Databases**: ${dbs.join(", ")}`);
     }
     if (config.letAiDecide) {
@@ -3140,7 +3188,7 @@ function generateVoidConfig(config: GeneratorConfig, user: GeneratorUser): strin
   // Logging
   if (config.codeStyle?.loggingConventions) {
     rulesParts.push("### Logging");
-    rulesParts.push(`**Guidelines**: ${config.codeStyle.loggingConventions}`);
+    rulesParts.push(`**Guidelines**: ${optionLabel(LOGGING_OPTIONS, config.codeStyle.loggingConventions)}`);
     rulesParts.push("");
   }
   
@@ -3280,7 +3328,7 @@ function generateVoidConfig(config: GeneratorConfig, user: GeneratorUser): strin
         azure_pipelines: "Azure Pipelines", aws_codepipeline: "AWS CodePipeline",
         bitbucket_pipelines: "Bitbucket Pipelines", drone: "Drone CI", none: "Manual",
       };
-      rulesParts.push(`**CI/CD**: ${config.cicd.map(c => cicdLabels[c] || c).join(", ")}`);
+      rulesParts.push(`**CI/CD**: ${config.cicd.map(c => cicdLabels[c] || optionLabel(CICD_OPTIONS, c)).join(", ")}`);
     }
     if (config.deploymentTarget && config.deploymentTarget.length > 0) {
       const deployLabels: Record<string, string> = {
@@ -3288,14 +3336,14 @@ function generateVoidConfig(config: GeneratorConfig, user: GeneratorUser): strin
         vercel: "Vercel", netlify: "Netlify", heroku: "Heroku", railway: "Railway",
         flyio: "Fly.io", digitalocean: "DigitalOcean", baremetal: "Bare Metal",
       };
-      rulesParts.push(`**Deployment**: ${config.deploymentTarget.map(d => deployLabels[d] || d).join(", ")}`);
+      rulesParts.push(`**Deployment**: ${config.deploymentTarget.map(d => deployLabels[d] || optionLabel(DEPLOYMENT_TARGETS, d)).join(", ")}`);
     }
     if (config.buildContainer && config.containerRegistry) {
       const registryLabels: Record<string, string> = {
         dockerhub: "Docker Hub", ghcr: "GHCR", ecr: "AWS ECR",
         gcr: "Google CR", acr: "Azure CR", custom: config.customRegistry || "Custom",
       };
-      rulesParts.push(`**Container Registry**: ${registryLabels[config.containerRegistry] || config.containerRegistry}`);
+      rulesParts.push(`**Container Registry**: ${registryLabels[config.containerRegistry] || optionLabel(CONTAINER_REGISTRIES, config.containerRegistry)}`);
     }
     rulesParts.push("");
   }
@@ -3306,7 +3354,7 @@ function generateVoidConfig(config: GeneratorConfig, user: GeneratorUser): strin
       work: "Work / Professional", leisure: "Personal / Hobby",
       open_source: "Open Source Project",
       open_source_small: "Open Source (Small)", open_source_large: "Open Source (Enterprise)",
-      private_business: "Private Business",
+      private_business: "Private Business", learning: "Learning",
     };
     rulesParts.push("## Project Context");
     rulesParts.push("");
@@ -3404,9 +3452,9 @@ function generateVoidConfig(config: GeneratorConfig, user: GeneratorUser): strin
       notes: config.codeStyle?.notes || ""
     },
     techStack: {
-      languages: config.languages.map(l => l.startsWith("custom:") ? l.replace("custom:", "") : l),
-      frameworks: config.frameworks.map(f => f.startsWith("custom:") ? f.replace("custom:", "") : f),
-      databases: config.databases?.map(d => d.startsWith("custom:") ? d.replace("custom:", "") : d) || []
+      languages: config.languages.map(stackLabel),
+      frameworks: config.frameworks.map(stackLabel),
+      databases: config.databases?.map(stackLabel) || []
     },
     commands: {
       build: config.commands?.build || "",
@@ -3547,7 +3595,7 @@ ${config.staticFiles.gitignoreCustom.trim()}
     if (config.letAiDecide && langs.length === 0 && frameworks.length === 0) {
       instructions.push("- **`.gitignore`**: Generate based on detected project languages and frameworks. Include IDE files, build artifacts, dependencies, and environment files.");
     } else if (langs.length > 0 || frameworks.length > 0) {
-      const techs = [...langs, ...frameworks].map(t => t.startsWith("custom:") ? t.replace("custom:", "") : t);
+      const techs = [...langs, ...frameworks].map(stackLabel);
       instructions.push(`- **\`.gitignore\`**: Generate for ${techs.join(", ")}. Include IDE files, build artifacts, dependencies, and environment files.`);
     }
   }
@@ -3566,7 +3614,7 @@ ${config.staticFiles.dockerignoreCustom.trim()}
       if (config.letAiDecide && langs.length === 0 && frameworks.length === 0) {
         instructions.push("- **`.dockerignore`**: Generate based on detected project languages. Exclude .git, node_modules, .env files, build artifacts, and documentation to keep images small.");
       } else if (langs.length > 0 || frameworks.length > 0) {
-        const techs = [...langs, ...frameworks].map(t => t.startsWith("custom:") ? t.replace("custom:", "") : t);
+        const techs = [...langs, ...frameworks].map(stackLabel);
         instructions.push(`- **\`.dockerignore\`**: Generate for ${techs.join(", ")}. Exclude .git, dependencies, .env files, build artifacts, and documentation to keep images small.`);
       } else {
         instructions.push("- **`.dockerignore`**: Generate excluding .git, node_modules, .env files, build artifacts, and non-essential files to keep container images small.");
@@ -3599,12 +3647,20 @@ ${config.staticFiles.roadmapCustom.trim()}
     }
   }
   
+  for (const file of config.staticFiles?.customFiles ?? []) {
+    if (!file.content.trim()) continue;
+    customFiles.push(`### ${file.path}
+\`\`\`
+${file.content.trim()}
+\`\`\``);
+  }
+
   // License - improved text with optional notes
   if (config.license && config.license !== "none") {
     // Get license name, using licenseOther for custom licenses
     const licenseName = config.license === "other" 
       ? (config.licenseOther || "a custom license")
-      : (LICENSE_NAMES[config.license] || config.license);
+      : (LICENSE_NAMES[config.license] || optionLabel(LICENSES, config.license));
     const author = user.displayName || user.name || "the project author";
     const licenseNameVar = bpVar(bp, "LICENSE_TYPE", licenseName);
     const authorVar = bpVar(bp, "AUTHOR_NAME", author);
@@ -3646,101 +3702,6 @@ export interface GeneratedFile {
   platform?: string;
 }
 
-// Generate API sync header for files with auto-update enabled
-// devOS: linux, macos, windows, wsl - can be array for multi-platform
-function generateApiSyncHeader(brand: Brand, blueprintId: string, platform: string, devOS: string | string[] = "linux", preferCliSync?: boolean, tokenEnvVar?: string): string {
-  const { appName: APP_NAME, appUrl: APP_URL } = brand;
-  const lines: string[] = [];
-  const fileName = getFileName(platform);
-  
-  const isJsonPlatform = ["continue", "cody", "supermaven", "codegpt", "void"].includes(platform);
-  const isYamlPlatform = platform === "tabnine";
-  
-  if (isJsonPlatform) {
-    return "";
-  }
-  
-  let syncCommands = "";
-  const envVar = tokenEnvVar || "LYNXPROMPT_API_TOKEN";
-  
-  if (preferCliSync) {
-    syncCommands = [
-      "Using LynxPrompt CLI (recommended):",
-      "lynxp push    # Upload local changes to cloud",
-      "lynxp pull    # Download cloud changes to local",
-      "lynxp diff    # Compare local vs cloud versions",
-      "",
-      "Install CLI: npm install -g lynxprompt",
-      "Login: lynxp login",
-    ].join("\n");
-  } else {
-    const osList = Array.isArray(devOS) ? devOS : [devOS];
-    const hasWindows = osList.includes("windows");
-    const hasUnix = osList.includes("linux") || osList.includes("macos") || osList.includes("wsl");
-    const isMultiPlatform = (hasWindows && hasUnix) || osList.length > 1;
-    
-    if (isMultiPlatform) {
-      syncCommands = `To update this file on ${APP_NAME} (token stored in $${envVar}):
-
-# Linux/macOS:
-curl -X PUT ${APP_URL}/api/v1/blueprints/${blueprintId} \\
-  -H "Authorization: Bearer $${envVar}" \\
-  -H "Content-Type: application/json" \\
-  -d "{\\"content\\": $(cat ${fileName} | jq -Rs .)}"
-
-# Windows PowerShell:
-$c = Get-Content "${fileName}" -Raw; Invoke-RestMethod -Uri "${APP_URL}/api/v1/blueprints/${blueprintId}" -Method PUT -ContentType "application/json" -Headers @{ Authorization = "Bearer $env:${envVar}" } -Body (@{ content = $c } | ConvertTo-Json)`;
-    } else if (osList.includes("windows")) {
-      syncCommands = `To update this file on ${APP_NAME} (token stored in $env:${envVar}):
-
-$content = Get-Content "${fileName}" -Raw
-Invoke-RestMethod -Uri "${APP_URL}/api/v1/blueprints/${blueprintId}" \`
-  -Method PUT -ContentType "application/json" -Headers @{ "Authorization" = "Bearer $env:${envVar}" } \`
-  -Body (@{ content = $content } | ConvertTo-Json)`;
-    } else {
-      syncCommands = `To update this file on ${APP_NAME} (token stored in $${envVar}):
-
-curl -X PUT ${APP_URL}/api/v1/blueprints/${blueprintId} \\
-  -H "Authorization: Bearer $${envVar}" \\
-  -H "Content-Type: application/json" \\
-  -d "{\\"content\\": $(cat ${fileName} | jq -Rs .)}"`;
-    }
-  }
-  
-  const docsUrl = preferCliSync ? `${APP_URL}/docs/cli` : `${APP_URL}/docs/api`;
-  
-  if (isYamlPlatform) {
-    lines.push("# ══════════════════════════════════════════════════════════════════");
-    lines.push(`# ${APP_NAME} Cloud Sync`);
-    lines.push(`# Blueprint ID: ${blueprintId}`);
-    lines.push("#");
-    syncCommands.split("\n").forEach(line => lines.push(`# ${line}`));
-    lines.push("#");
-    lines.push(`# Docs: ${docsUrl}`);
-    lines.push("# ══════════════════════════════════════════════════════════════════");
-    lines.push("");
-  } else {
-    lines.push("<!--");
-    lines.push("══════════════════════════════════════════════════════════════════");
-    lines.push(`${APP_NAME} Cloud Sync`);
-    lines.push(`Blueprint ID: ${blueprintId}`);
-    lines.push("");
-    lines.push(syncCommands);
-    lines.push("");
-    lines.push(`Docs: ${docsUrl}`);
-    lines.push("══════════════════════════════════════════════════════════════════");
-    lines.push("-->");
-    lines.push("");
-  }
-  
-  return lines.join("\n");
-}
-
-// Helper to get file name for a platform
-function getFileName(platform: string): string {
-  return PLATFORM_FILES[platform] || "ai-config.md";
-}
-
 // The product name and URL written into generated files (a self-hosted
 // instance has its own).
 export interface Brand {
@@ -3752,7 +3713,7 @@ export const DEFAULT_BRAND: Brand = { appName: "LynxPrompt", appUrl: "https://ly
 
 // Options for file generation
 export interface GenerateFilesOptions {
-  blueprintId?: string; // If provided, adds API sync header to the file
+  blueprintId?: string; // The synced blueprint: adds the Cloud Sync header to the file
   brand?: Brand;
 }
 
@@ -3814,16 +3775,10 @@ export function generateAllFiles(
     // New platforms - using appropriate generators
     case "zed":
       // Zed reads a Markdown .rules file at the project root
-      content = generateClaudeMd(config, user);
+      content = generateNamedAgentsMd(config, user, "Zed");
       break;
     case "cline":
-      // Cline uses plain text rules similar to Windsurf
-      content = generateWindsurfRules(config, user, brand);
-      break;
     case "goose":
-      // Goose uses plain text hints
-      content = generateWindsurfRules(config, user, brand);
-      break;
     case "amazonq":
     case "roocode":
     case "trae":
@@ -3832,8 +3787,9 @@ export function generateAllFiles(
     case "kiro":
     case "augment":
     case "devin":
-      // Markdown rules files: Cursor's content, minus Cursor's frontmatter,
-      // plus the platform's own frontmatter where it reads one (Kiro, Augment, Devin)
+      // Markdown rules files (Cline and Goose read plain Markdown too): Cursor's
+      // content, minus Cursor's frontmatter, plus the platform's own frontmatter
+      // where it reads one (Kiro, Augment, Devin)
       content = adaptRulesContent(
         generateCursorRules(config, user, brand),
         "cursor",
@@ -3842,24 +3798,20 @@ export function generateAllFiles(
       );
       break;
     case "warp":
-      // Warp uses markdown
-      content = generateClaudeMd(config, user);
+      content = generateNamedAgentsMd(config, user, "Warp");
       break;
     case "gemini-cli":
       // Gemini CLI uses same format as Antigravity
       content = generateGeminiMd(config, user);
       break;
     case "junie":
-      // Junie uses markdown
-      content = generateClaudeMd(config, user);
+      content = generateNamedAgentsMd(config, user, "Junie");
       break;
     case "openhands":
-      // OpenHands uses markdown
-      content = generateClaudeMd(config, user);
+      content = generateNamedAgentsMd(config, user, "OpenHands");
       break;
     case "crush":
-      // Crush uses markdown
-      content = generateClaudeMd(config, user);
+      content = generateNamedAgentsMd(config, user, "Crush");
       break;
     case "opencode":
       // OpenCode reads AGENTS.md for project rules
@@ -3871,14 +3823,15 @@ export function generateAllFiles(
       break;
   }
 
-  // Add API sync header if blueprintId is provided and enableAutoUpdate is true
-  if (content && options?.blueprintId && config.enableAutoUpdate) {
-    const syncHeader = generateApiSyncHeader(brand, options.blueprintId, platform, config.devOS || "linux", config.preferCliSync, config.tokenEnvVar);
-    if (syncHeader) {
-      // Frontmatter must stay the first thing in the file or the tool ignores it
-      const { frontmatter, body } = splitFrontmatter(content);
-      content = frontmatter + syncHeader + body;
-    }
+  // A synced file says how to push and pull it (after any frontmatter)
+  if (content && options?.blueprintId) {
+    content = addApiSyncHeader(content, {
+      blueprintId: options.blueprintId,
+      fileName,
+      appUrl: brand.appUrl,
+      preferCliSync: Boolean(config.preferCliSync),
+      tokenEnvVar: config.tokenEnvVar,
+    });
   }
 
   if (content) {
@@ -3897,11 +3850,11 @@ export function generatePlatformFiles(
   config: GeneratorConfig,
   user: GeneratorUser,
   platforms: string[],
-  { pointers = true, brand }: { pointers?: boolean; brand?: Brand } = {}
+  { pointers = true, ...options }: { pointers?: boolean } & GenerateFilesOptions = {}
 ): GeneratedFile[] {
   const files: GeneratedFile[] = [];
   for (const platform of platforms) {
-    for (const file of generateAllFiles({ ...config, platform }, user, { brand })) {
+    for (const file of generateAllFiles({ ...config, platform }, user, options)) {
       if (!files.some((f) => f.fileName === file.fileName)) files.push(file);
     }
   }

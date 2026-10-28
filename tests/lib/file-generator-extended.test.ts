@@ -100,7 +100,7 @@ describe("generateAllFiles - continue generator", () => {
     );
     const parsed = JSON.parse(files[0].content);
     const systemMsg = parsed.systemMessage;
-    expect(systemMsg).toContain("mongodb");
+    expect(systemMsg).toContain("MongoDB");
   });
 
   it("includes code style naming", () => {
@@ -230,7 +230,7 @@ describe("generateAllFiles - cody generator", () => {
       { ...baseConfig, platform: "cody", databases: ["mysql"] },
       baseUser
     );
-    expect(files[0].content).toContain("mysql");
+    expect(files[0].content).toContain("MySQL");
   });
 
   it("includes code style - naming", () => {
@@ -348,8 +348,8 @@ describe("generateAllFiles - tabnine generator", () => {
       { ...baseConfig, platform: "tabnine", databases: ["postgresql"], frameworks: ["express"] },
       baseUser
     );
-    expect(files[0].content).toContain("postgresql");
-    expect(files[0].content).toContain("express");
+    expect(files[0].content).toContain("PostgreSQL");
+    expect(files[0].content).toContain("Express");
   });
 
   it("includes code style naming", () => {
@@ -496,7 +496,7 @@ describe("generateAllFiles - supermaven generator", () => {
       { ...baseConfig, platform: "supermaven", databases: ["sqlite"] },
       baseUser
     );
-    expect(files[0].content).toContain("sqlite");
+    expect(files[0].content).toContain("SQLite");
   });
 
   it("includes code style", () => {
@@ -793,32 +793,14 @@ describe("generateAllFiles - API sync header", () => {
     expect(files[0].content).toContain("bp-123");
   });
 
-  it("includes curl command for linux", () => {
+  it("uses curl with the token from the environment when the CLI is not preferred", () => {
     const files = generateAllFiles(
-      { ...baseConfig, platform: "cursor", enableAutoUpdate: true, devOS: "linux" },
+      { ...baseConfig, platform: "cursor", enableAutoUpdate: true, preferCliSync: false },
       baseUser,
       { blueprintId: "bp-456" }
     );
-    expect(files[0].content).toContain("curl -X PUT");
-  });
-
-  it("includes PowerShell for windows", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "cursor", enableAutoUpdate: true, devOS: "windows" },
-      baseUser,
-      { blueprintId: "bp-789" }
-    );
-    expect(files[0].content).toContain("PowerShell");
-  });
-
-  it("includes both commands for multi-platform", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "cursor", enableAutoUpdate: true, devOS: ["linux", "windows"] },
-      baseUser,
-      { blueprintId: "bp-multi" }
-    );
-    expect(files[0].content).toContain("curl");
-    expect(files[0].content).toContain("PowerShell");
+    expect(files[0].content).toContain("curl -sf -X PUT");
+    expect(files[0].content).toContain("$LYNXPROMPT_API_TOKEN");
   });
 
   it("uses CLI sync when preferred", () => {
@@ -869,12 +851,8 @@ describe("generateAllFiles - API sync header", () => {
     expect(files[0].content).toContain("MY_TOKEN");
   });
 
-  it("does not add header without enableAutoUpdate", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "cursor" },
-      baseUser,
-      { blueprintId: "bp-no" }
-    );
+  it("does not add a header without a blueprint id", () => {
+    const files = generateAllFiles({ ...baseConfig, platform: "cursor", enableAutoUpdate: true }, baseUser);
     expect(files[0].content).not.toContain("Cloud Sync");
   });
 });

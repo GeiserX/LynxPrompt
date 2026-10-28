@@ -825,12 +825,8 @@ describe("generateAllFiles", () => {
     expect(files[0].content).toContain("bp_12345");
   });
 
-  it("does not add sync header when autoUpdate disabled", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "cursor", enableAutoUpdate: false },
-      baseUser,
-      { blueprintId: "bp_12345" }
-    );
+  it("does not add a sync header without a blueprint id", () => {
+    const files = generateAllFiles({ ...baseConfig, platform: "cursor", enableAutoUpdate: true }, baseUser);
     expect(files[0].content).not.toContain("Cloud Sync");
   });
 
