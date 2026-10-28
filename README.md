@@ -18,7 +18,7 @@ LynxPrompt is a self-hosted web app that turns one set of AI coding rules into t
 
 ## Features
 
-- One set of rules for 26 coding agents, kept in one `AGENTS.md`: Codex, Cursor, Devin Desktop (formerly Windsurf), Antigravity, Zed, Cline, Junie, Goose, Warp and most others read it directly; Claude Code and Gemini CLI get a one-line import, Aider a config that loads it, and Copilot, Trae, Tabnine and Firebase Studio a full copy in their own file. Slash commands for 18 of them.
+- One set of rules for 26 coding agents, kept in one `AGENTS.md`: Codex, Cursor, Devin Desktop (formerly Windsurf), Antigravity, Zed, Cline, Junie, Goose, Warp and most others read it directly; Claude Code and Gemini CLI get a one-line import, Aider a config that loads it, and Copilot, Trae and Tabnine a full copy in their own file. Slash commands for 18 of them.
 - A 12-step wizard on the web or in the terminal builds the rules from your project, stack, commands, code style and boundaries; `lynxp analyze` reads an existing repository first.
 - Blueprints carry `[[VARIABLE|default]]` placeholders, so one blueprint fits many projects.
 - Each blueprint is private, shared with a team or public; teams get their own page. Federation is opt-in and only lists the instances that join in a shared directory.

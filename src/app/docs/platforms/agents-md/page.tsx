@@ -200,7 +200,7 @@ E-commerce platform with React frontend and Go backend.
           </li>
           <li className="flex items-center gap-2 rounded-lg border bg-card p-3">
             <span className="text-green-500">✓</span>
-            Roo Code / Zoo Code
+            Zoo Code
           </li>
           <li className="flex items-center gap-2 rounded-lg border bg-card p-3">
             <span className="text-green-500">✓</span>
@@ -232,6 +232,14 @@ E-commerce platform with React frontend and Go backend.
           </li>
           <li className="flex items-center gap-2 rounded-lg border bg-card p-3">
             <span className="text-green-500">✓</span>
+            Grok Build
+          </li>
+          <li className="flex items-center gap-2 rounded-lg border bg-card p-3">
+            <span className="text-green-500">✓</span>
+            Pi
+          </li>
+          <li className="flex items-center gap-2 rounded-lg border bg-card p-3">
+            <span className="text-green-500">✓</span>
             OpenHands
           </li>
           <li className="flex items-center gap-2 rounded-lg border bg-card p-3">
@@ -248,8 +256,8 @@ E-commerce platform with React frontend and Go backend.
           one-line <code>CLAUDE.md</code> or <code>GEMINI.md</code> that imports
           AGENTS.md with <code>@AGENTS.md</code>. Aider loads no rules file by
           itself, so LynxPrompt writes a <code>.aider.conf.yml</code> that lists
-          AGENTS.md under <code>read:</code>. GitHub Copilot, Trae, Tabnine and
-          Firebase Studio get a full copy of the rules in their own file.
+          AGENTS.md under <code>read:</code>. GitHub Copilot, Trae and Tabnine
+          get a full copy of the rules in their own file.
         </p>
       </section>
 

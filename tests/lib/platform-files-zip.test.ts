@@ -48,19 +48,18 @@ describe("generatePlatformFiles", () => {
   });
 
   it("keeps a full copy where a tool cannot reach AGENTS.md by itself", () => {
-    const files = generatePlatformFiles(config, user, ["cursor", "copilot", "trae", "tabnine", "firebase"]);
+    const files = generatePlatformFiles(config, user, ["cursor", "copilot", "trae", "tabnine"]);
     expect(files.map((f) => f.fileName)).toEqual([
       "AGENTS.md",
       ".github/copilot-instructions.md",
       ".trae/rules/project_rules.md",
       ".tabnine/guidelines/project.md",
-      ".idx/airules.md",
     ]);
     for (const f of files) expect(f.content).toMatch(/^## /m);
   });
 
   it("never writes a file that would hide AGENTS.md from a tool", () => {
-    const out = names(["warp", "junie", "zed", "windsurf", "cline", "firebender", "goose", "crush", "kilocode"]);
+    const out = names(["warp", "junie", "zed", "windsurf", "cline", "firebender", "goose", "crush", "kilocode", "grok", "pi"]);
     expect(out).toEqual(["AGENTS.md"]);
   });
 

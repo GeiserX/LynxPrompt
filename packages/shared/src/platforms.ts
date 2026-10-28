@@ -91,8 +91,8 @@ export interface CommandDefinition {
 
 /**
  * All supported AI coding tools. Tools that read only AGENTS.md (Amp, Jules,
- * Factory, Qwen Code, Kimi Code, Mistral Vibe, Pi, CodeGPT) are named in the
- * universal entry instead of having one each.
+ * Factory, Qwen Code, Kimi Code, Mistral Vibe, Muse Code, CodeGPT) are named in
+ * the universal entry instead of having one each.
  * 
  * Categories:
  * - popular: Most commonly used platforms (shown first)
@@ -112,7 +112,7 @@ export const PLATFORMS: PlatformDefinition[] = [
     blueprintType: "AGENTS_MD",
     icon: "🌐",
     gradient: "from-violet-500 to-purple-500",
-    note: "Read natively by Codex, Cursor, Copilot, Claude Code (when no CLAUDE.md), Antigravity, Devin, Jules, Amp, Kiro, Junie, Goose, Warp, OpenCode, OpenHands, Crush, Factory, Qwen Code, Kimi Code, Mistral Vibe, Pi, Augment, Kilo Code, Cline, Zed and CodeGPT",
+    note: "Read natively by Codex, Cursor, Copilot, Claude Code (when no CLAUDE.md), Antigravity, Devin, Jules, Amp, Kiro, Junie, Goose, Warp, OpenCode, OpenHands, Crush, Factory, Qwen Code, Kimi Code, Mistral Vibe, Pi, Grok Build, Muse Code, Augment, Kilo Code, Cline, Zoo Code, Zed and CodeGPT",
     category: "popular",
     format: "markdown",
     featured: true,
@@ -243,18 +243,6 @@ export const PLATFORMS: PlatformDefinition[] = [
     format: "markdown",
     url: "https://trae.ai",
   },
-  {
-    id: "firebase",
-    name: "Firebase Studio",
-    file: ".idx/airules.md",
-    blueprintType: "IDX_CONFIG",
-    icon: "🔥",
-    gradient: "from-yellow-500 to-orange-500",
-    note: "Sunsetting: no new workspaces since 2026-06-22, shutdown 2027-03-22; move to Antigravity",
-    category: "ide",
-    format: "markdown",
-    url: "https://firebase.google.com/studio",
-  },
 
   // ========================================
   // EDITOR EXTENSIONS & PLUGINS
@@ -275,18 +263,20 @@ export const PLATFORMS: PlatformDefinition[] = [
     url: "https://cline.bot",
   },
   {
+    // Roo Code shut down on 2026-05-15; the id stays for saved drafts and
+    // ROO_RULES blueprints. Zoo Code, its maintained fork, reads the same .roo/ paths
     id: "roocode",
-    name: "Roo Code (discontinued) / Zoo Code",
+    name: "Zoo Code (Roo Code fork)",
     file: ".roo/rules/project.md",
     rulesDirectory: ".roo/rules/",
     blueprintType: "ROO_RULES",
     readsAgentsMd: true,
     icon: "🦘",
     gradient: "from-orange-400 to-red-500",
-    note: "Roo shut down 2026-05-15; the Zoo Code fork reads the same .roo/ paths",
+    note: "Community fork of Roo Code, which shut down on 2026-05-15; reads the same .roo/ folders",
     category: "editor",
     format: "markdown",
-    url: "https://github.com/Zoo-Code-Org/Zoo-Code",
+    url: "https://docs.zoocode.dev",
   },
   {
     id: "tabnine",
@@ -300,19 +290,6 @@ export const PLATFORMS: PlatformDefinition[] = [
     category: "editor",
     format: "markdown",
     url: "https://docs.tabnine.com/main/getting-started/tabnine-agent/guidelines",
-  },
-  {
-    id: "amazonq",
-    name: "Amazon Q",
-    file: ".amazonq/rules/project.md",
-    rulesDirectory: ".amazonq/rules/",
-    blueprintType: "AMAZONQ_RULES",
-    icon: "📦",
-    gradient: "from-orange-400 to-amber-500",
-    note: "Merged into Kiro; IDE plugin support ends 2027-04-30",
-    category: "editor",
-    format: "markdown",
-    url: "https://aws.amazon.com/q/developer/",
   },
   {
     id: "augment",
@@ -442,6 +419,32 @@ export const PLATFORMS: PlatformDefinition[] = [
     category: "cli",
     format: "markdown",
     url: "https://opencode.ai",
+  },
+  {
+    id: "grok",
+    name: "Grok Build",
+    file: "AGENTS.md",
+    // Grok also loads every CLAUDE.md and .claude/ and .cursor/ rules next to AGENTS.md
+    rulesDirectory: ".grok/rules/",
+    readsAgentsMd: true,
+    icon: "✖️",
+    gradient: "from-neutral-700 to-neutral-900",
+    note: "xAI's coding agent for the terminal (reads AGENTS.md)",
+    category: "cli",
+    format: "markdown",
+    url: "https://docs.x.ai/build/overview",
+  },
+  {
+    id: "pi",
+    name: "Pi",
+    file: "AGENTS.md",
+    readsAgentsMd: true,
+    icon: "🥧",
+    gradient: "from-amber-500 to-orange-600",
+    note: "Open-source terminal coding agent (reads AGENTS.md)",
+    category: "cli",
+    format: "markdown",
+    url: "https://github.com/earendil-works/pi",
   },
 
   // ========================================
@@ -635,7 +638,7 @@ export const COMMANDS: CommandDefinition[] = [
   command("trae-command", "Trae Command", ".trae/commands", "trae", "🔷", "Custom commands for Trae"),
   command("kilo-command", "Kilo Code Command", ".kilo/commands", "kilocode", "📊", "Custom commands for Kilo Code"),
   command("cline-workflow", "Cline Workflow", ".clinerules/workflows", "cline", "🔧", "Workflows for Cline"),
-  command("roo-command", "Roo / Zoo Code Command", ".roo/commands", "roocode", "🦘", "Custom commands for Roo Code and Zoo Code"),
+  command("roo-command", "Zoo Code Command", ".roo/commands", "roocode", "🦘", "Custom commands for Zoo Code (and the retired Roo Code)"),
   command("crush-command", "Crush Command", ".crush/commands", "crush", "💥", "Custom commands for Crush"),
   command("firebender-command", "Firebender Command", ".firebender/commands", "firebender", "🔥", "Custom commands for Firebender", ".mdc"),
   command("factory-command", "Factory Droid Command", ".factory/commands", "factory", "🏭", "Custom commands for Factory Droid"),
@@ -801,7 +804,10 @@ export const BLUEPRINT_TYPE_ALIASES: Record<string, string> = {
   CURSOR_MDC: "cursor",
   CURSORRULES: "cursor", // .cursorrules is deprecated; Cursor reads .cursor/rules/
   AIDER_MD: "universal", // Aider conventions: Markdown rules, which Aider now reads from AGENTS.md
-  FIREBASE_RULES: "firebase",
+  // Retired platforms whose blueprints hold Markdown rules: the tool that reads them now
+  IDX_CONFIG: "universal", // Firebase Studio read AGENTS.md as a fallback; Antigravity reads it
+  FIREBASE_RULES: "universal",
+  AMAZONQ_RULES: "kiro", // Amazon Q Developer was merged into Kiro
   GOOSE_HINTS: "goose",
   OPENCODE_CONFIG: "opencode",
   OPENHANDS_CONFIG: "openhands",
@@ -831,6 +837,8 @@ export const RETIRED_PLATFORM_IDS: Record<string, string> = {
   supermaven: "universal",
   codegpt: "universal",
   void: "universal",
+  firebase: "universal", // Firebase Studio shuts down 2027-03-22; Antigravity reads AGENTS.md
+  amazonq: "kiro", // Amazon Q Developer was merged into Kiro; IDE plugins end 2027-04-30
 };
 
 /** A platform id as the table knows it today. */

@@ -17,7 +17,7 @@ const CLAUDE_SKILL =
 describe("skill folders", () => {
   it("lists .agents/skills first and .claude/skills second, and keeps every tool's folder for push", () => {
     expect(SKILL_DIRECTORIES.slice(0, 2)).toEqual([".agents/skills", ".claude/skills"]);
-    for (const dir of [".kiro/skills", ".firebender/skills", ".junie/skills", ".qwen/skills", ".tabnine/agent/skills", ".github/skills"]) {
+    for (const dir of [".kiro/skills", ".firebender/skills", ".junie/skills", ".qwen/skills", ".tabnine/agent/skills", ".github/skills", ".grok/skills"]) {
       expect(SKILL_DIRECTORIES).toContain(dir);
     }
   });

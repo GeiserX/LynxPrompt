@@ -75,6 +75,7 @@ export const SKILL_DIRECTORIES = [
   ".augment/skills",
   ".trae/skills",
   ".roo/skills",
+  ".grok/skills",
   ".continue/skills",
   ".warp/skills",
   ".crush/skills",

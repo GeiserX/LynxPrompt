@@ -258,8 +258,8 @@ describe("generateAllFiles - security config", () => {
 // ============================================================================
 describe("generateAllFiles - platform routing", () => {
   const delegationCases = [
-    "zed", "cline", "goose", "amazonq", "roocode", "warp",
-    "gemini-cli", "trae", "firebase", "augment", "kilocode",
+    "zed", "cline", "goose", "roocode", "warp",
+    "gemini-cli", "trae", "augment", "kilocode", "grok", "pi",
     "junie", "kiro", "openhands", "crush", "opencode", "firebender",
     "codex", "antigravity", "windsurf", "tabnine",
   ];

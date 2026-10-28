@@ -43,7 +43,9 @@ const LOCATIONS = [
   ...ruleFileLocations(),
   { path: ".zed/instructions.md", name: "Zed" },
   { path: "CONVENTIONS.md", name: "Aider" },
-  { path: ".idx/rules/", name: "Firebase Studio" },
+  { path: ".idx/airules.md", name: "Firebase Studio (retired)" },
+  { path: ".idx/rules/", name: "Firebase Studio (retired)" },
+  { path: ".amazonq/rules/", name: "Amazon Q (retired)" },
   { path: ".lynxprompt/rules/", name: "LynxPrompt" },
 ];
 const CONFIG_FILES = LOCATIONS.filter((l) => !l.path.endsWith("/"));

@@ -231,3 +231,54 @@ describe("Devin Desktop (formerly Windsurf)", () => {
     expect(blueprintFilename({ type: "WINDSURF_RULES" })).toBe(".devin/rules/project.md");
   });
 });
+
+describe("Firebase Studio, Amazon Q and Roo Code are retired", () => {
+  // Firebase Studio shuts down 2027-03-22 and reads AGENTS.md as a fallback;
+  // Amazon Q Developer was merged into Kiro. Saved drafts and CLI preferences
+  // with the old ids generate the file of the tool that replaced them.
+  it.each([
+    ["firebase", "AGENTS.md"],
+    ["amazonq", ".kiro/steering/project.md"],
+  ])("%s is gone from the table and generates %s", (id, file) => {
+    expect(PLATFORMS.some((p) => p.id === id)).toBe(false);
+    expect(web(id).fileName).toBe(file);
+    expect(cli(id).fileName).toBe(file);
+  });
+
+  it("stored Firebase Studio and Amazon Q blueprints still load, push and pull", () => {
+    expect(platformForBlueprintType("IDX_CONFIG")).toBe("universal");
+    expect(platformForBlueprintType("FIREBASE_RULES")).toBe("universal");
+    expect(platformForBlueprintType("AMAZONQ_RULES")).toBe("kiro");
+    expect(blueprintFilename({ type: "AMAZONQ_RULES" })).toBe(".kiro/steering/project.md");
+    expect(matchConfigFile(".idx/airules.md")?.type).toBe("IDX_CONFIG");
+    expect(matchConfigFile(".amazonq/rules/testing.md")?.type).toBe("AMAZONQ_RULES");
+    expect(blueprintFilename({ type: "AMAZONQ_RULES", repository_path: ".amazonq/rules/testing.md" })).toBe(
+      ".amazonq/rules/testing.md"
+    );
+  });
+
+  it("the roocode entry is Zoo Code, which reads the same .roo/ folders", () => {
+    const roo = PLATFORMS.find((p) => p.id === "roocode")!;
+    expect(roo.name).toMatch(/^Zoo Code/);
+    expect(roo.file).toBe(".roo/rules/project.md");
+    expect(platformForBlueprintType("ROO_RULES")).toBe("roocode");
+    expect(COMMANDS.find((c) => c.id === "roo-command")?.name).toBe("Zoo Code Command");
+  });
+});
+
+describe("Grok Build and Pi read AGENTS.md", () => {
+  it.each(["grok", "pi"])("%s is generated as AGENTS.md and needs no file of its own next to it", (id) => {
+    const p = PLATFORMS.find((x) => x.id === id)!;
+    expect(p.file).toBe("AGENTS.md");
+    expect(p.readsAgentsMd).toBe(true);
+    expect(web(id).fileName).toBe("AGENTS.md");
+    expect(cli(id).fileName).toBe("AGENTS.md");
+    const both = Object.keys(generateConfig({ ...cliOptions, platforms: ["claude", id] }));
+    expect(both.sort()).toEqual(["AGENTS.md", "CLAUDE.md"]);
+  });
+
+  it("a rule in .grok/rules/ is pushed as a Grok Build rule and pulled back to its path", () => {
+    expect(matchConfigFile(".grok/rules/testing.md")?.label).toBe("Grok Build Rules");
+    expect(blueprintFilename({ type: "CUSTOM", repository_path: ".grok/rules/testing.md" })).toBe(".grok/rules/testing.md");
+  });
+});
