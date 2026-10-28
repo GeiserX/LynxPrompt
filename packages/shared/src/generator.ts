@@ -1,22 +1,16 @@
 // The rules-file generator the web wizard and the CLI share. It runs in the
 // browser and in Node, so it imports nothing from either.
-import { adaptRulesContent, frontmatterLines } from "./rules-format.js";
-import { addApiSyncHeader } from "./sync-header.js";
-
-import {
-  ARCHITECTURE_PATTERNS,
-  CICD_OPTIONS,
-  CONTAINER_REGISTRIES,
-  DATABASES,
-  DEPLOYMENT_TARGETS,
-  ERROR_HANDLING_PATTERNS,
-  FRAMEWORKS,
-  LANGUAGES,
-  LICENSES,
-  LOGGING_OPTIONS,
-  REPO_HOSTS,
-  TEST_LEVELS,
-} from "./wizard/index.js";
+// Imports carry no ".js": the web build (Turbopack) does not map one to the
+// .ts file next to it.
+import { adaptRulesContent, frontmatterLines } from "./rules-format";
+import { addApiSyncHeader } from "./sync-header";
+import { LANGUAGES } from "./wizard/languages";
+import { FRAMEWORKS } from "./wizard/frameworks";
+import { DATABASES } from "./wizard/databases";
+import { ARCHITECTURE_PATTERNS } from "./wizard/project-types";
+import { CICD_OPTIONS, CONTAINER_REGISTRIES, DEPLOYMENT_TARGETS, LICENSES, REPO_HOSTS } from "./wizard/repository";
+import { ERROR_HANDLING_PATTERNS, LOGGING_OPTIONS } from "./wizard/code-style";
+import { TEST_LEVELS } from "./wizard/testing";
 
 // The wizard's own label for an answer id, or the answer itself (typed text, or
 // an id from an older wizard). The tables below hold the generator's longer
@@ -286,7 +280,7 @@ export interface GeneratorUser {
 }
 
 // Platform file names - imported from central definition
-import { PLATFORM_FILES, AGENTS_MD_POINTER, agentsMdPointerFiles } from "./platforms.js";
+import { PLATFORM_FILES, AGENTS_MD_POINTER, agentsMdPointerFiles } from "./platforms";
 import {
   ANALYTICS_LABELS,
   AUTH_PROVIDER_LABELS,
@@ -301,7 +295,7 @@ import {
   infrastructureSection,
   mcpServerSection,
   toolingLines,
-} from "./generator-sections.js";
+} from "./generator-sections";
 
 // Helper: normalize devOS to array (supports legacy string or new array format)
 function resolveDevOS(config: GeneratorConfig): string[] {
