@@ -193,6 +193,23 @@ export const PLATFORM_FILES: Record<string, string> = {
 };
 
 /**
+ * The generated file Cloud Sync uploads and links: the chosen platform's file,
+ * else the first. Only a rules file, never a tool's settings file (YAML, JSON,
+ * TOML): Aider's .aider.conf.yml may hold API keys, and the rules it points at
+ * are in AGENTS.md.
+ */
+export function pickSyncFile(
+  files: Record<string, string>,
+  primaryPlatform?: string
+): readonly [string, string] | undefined {
+  const isToolConfig = (name: string) => /\.(ya?ml|json|toml)$/i.test(name);
+  const primaryName = primaryPlatform ? PLATFORM_FILES[primaryPlatform] : undefined;
+  const primaryFile = primaryName && isToolConfig(primaryName) ? "AGENTS.md" : primaryName;
+  if (primaryFile && files[primaryFile] !== undefined) return [primaryFile, files[primaryFile]];
+  return Object.entries(files).find(([name]) => !isToolConfig(name));
+}
+
+/**
  * An existing .aider.conf.yml with AGENTS.md added to its `read:` files (a
  * single file name becomes a list). The rest of the file, comments included,
  * is kept. Throws on a file that is not a YAML mapping.

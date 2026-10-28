@@ -6,7 +6,7 @@ import * as os from "os";
 import { writeFile, mkdir, access, readFile } from "fs/promises";
 import { join, dirname, relative } from "path";
 import { detectProject, detectFromRemoteUrl, isGitUrl } from "../utils/detect.js";
-import { generateConfig, GenerateOptions, mergeAiderConfig, parseVariablesString, PLATFORM_FILES } from "../utils/generator.js";
+import { generateConfig, GenerateOptions, mergeAiderConfig, parseVariablesString, pickSyncFile, PLATFORM_FILES } from "../utils/generator.js";
 import { PLATFORMS, AGENTS_MD_POINTER, resolvePlatformId } from "../../../packages/shared/src/platforms.js";
 import { trackBlueprint } from "../utils/blueprint-tracker.js";
 import { rulesWritePath } from "../utils/blueprint-files.js";
@@ -1314,10 +1314,7 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
       spinner.text = "Saving blueprint to cloud...";
       try {
         // Upload the file the user chose to sync (or the first one) and remember which it is
-        const primaryFile = config.primarySyncFormat ? PLATFORM_FILES[config.primarySyncFormat] : undefined;
-        const mainFile = (primaryFile && files[primaryFile] !== undefined)
-          ? [primaryFile, files[primaryFile]] as const
-          : Object.entries(files)[0];
+        const mainFile = pickSyncFile(files, config.primarySyncFormat);
         if (mainFile) {
           const [fileName, content] = mainFile;
           syncedFile = { file: fileName, uploadedContent: content };

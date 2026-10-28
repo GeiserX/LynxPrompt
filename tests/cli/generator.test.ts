@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
-import { generateConfig, type GenerateOptions } from "../../cli/src/utils/generator";
+import { generateConfig, pickSyncFile, type GenerateOptions } from "../../cli/src/utils/generator";
 
 const base: GenerateOptions = {
   name: "demo",
@@ -221,5 +221,29 @@ describe("pointer files", () => {
 
   it("generates a retired platform name as the platform that covers it", () => {
     expect(Object.keys(generate(["devin"]))).toEqual([".devin/rules/project.md"]);
+  });
+});
+
+describe("Cloud Sync file", () => {
+  // As `lynxp wizard` builds it with Cloud Sync: no pointers, the blueprint id in the header
+  const synced = (platforms: string[]) =>
+    generateConfig({ ...base, platforms, extraNotes: "Keep functions small", enableAutoUpdate: true, blueprintId: "bp_42" });
+
+  it("syncs Aider's AGENTS.md rules, never its config that may hold API keys", () => {
+    const files = synced(["aider"]);
+    const [name, content] = pickSyncFile(files, "aider")!;
+    expect(name).toBe("AGENTS.md");
+    expect(content).toContain("Keep functions small");
+    expect(content).toContain("bp_42");
+    expect(files[".aider.conf.yml"]).toMatch(/^read: \[AGENTS\.md\]$/m);
+    expect(files[".aider.conf.yml"]).not.toContain("bp_42");
+    // No platform chosen: the first rules file, not the config
+    expect(pickSyncFile(files)?.[0]).toBe("AGENTS.md");
+  });
+
+  it("syncs the chosen platform's own file when it is a rules file", () => {
+    const files = synced(["aider", "claude"]);
+    expect(pickSyncFile(files, "claude")?.[0]).toBe("CLAUDE.md");
+    expect(pickSyncFile(files, "aider")?.[0]).toBe("AGENTS.md");
   });
 });

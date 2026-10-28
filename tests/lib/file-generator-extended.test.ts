@@ -40,15 +40,15 @@ const baseConfig = {
 // Aider: .aider.conf.yml lists AGENTS.md under read:, and AGENTS.md comes with it
 // ============================================================================
 describe("generateAllFiles - aider generator", () => {
-  it("writes the Aider config first, then the AGENTS.md it reads", () => {
+  it("writes the AGENTS.md rules first (the file Cloud Sync saves), then the Aider config that reads it", () => {
     const files = generateAllFiles(
       { ...baseConfig, platform: "aider", additionalFeedback: "Always use strict TypeScript" },
       baseUser
     );
-    expect(files.map((f) => f.fileName)).toEqual([".aider.conf.yml", "AGENTS.md"]);
-    expect(files[0].content).toMatch(/^read: \[AGENTS\.md\]$/m);
-    expect(files[1].content).toMatch(/^# TestProject - AI Agent Instructions/);
-    expect(files[1].content).toContain("Always use strict TypeScript");
+    expect(files.map((f) => f.fileName)).toEqual(["AGENTS.md", ".aider.conf.yml"]);
+    expect(files[1].content).toMatch(/^read: \[AGENTS\.md\]$/m);
+    expect(files[0].content).toMatch(/^# TestProject - AI Agent Instructions/);
+    expect(files[0].content).toContain("Always use strict TypeScript");
   });
 });
 
@@ -276,14 +276,15 @@ describe("generateAllFiles - API sync header", () => {
     expect(files[0].content).toContain("lynxp");
   });
 
-  it("uses yaml comments in Aider's config and leaves AGENTS.md beside it unsynced", () => {
+  it("syncs Aider's AGENTS.md and leaves its config without a sync header", () => {
     const files = generateAllFiles(
       { ...baseConfig, platform: "aider", enableAutoUpdate: true },
       baseUser,
       { blueprintId: "bp-aider" }
     );
-    expect(files[0].content.startsWith("# LynxPrompt Cloud Sync")).toBe(true);
+    expect(files.map((f) => f.fileName)).toEqual(["AGENTS.md", ".aider.conf.yml"]);
     expect(files[0].content).toContain("bp-aider");
+    expect(files[0].content).toContain("AGENTS.md");
     expect(files[1].content).not.toContain("bp-aider");
   });
 

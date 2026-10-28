@@ -58,7 +58,9 @@ describe("platform table: every rules platform names a real file", () => {
   it("the generator names the same file the table does", () => {
     for (const p of rulesPlatforms) {
       const files = generateAllFiles({ ...baseConfig, platform: p.id } as never, user);
-      if (files.length) expect(files[0].fileName).toBe(p.file);
+      // The platform's own file (Aider's comes after the AGENTS.md it reads)
+      const own = files.find((f) => f.platform === p.id);
+      if (files.length) expect(own?.fileName).toBe(p.file);
     }
   });
 
@@ -101,7 +103,7 @@ describe("generated content matches each platform's format", () => {
   });
 
   it("Aider gets a config that reads AGENTS.md, not a rules file it never loads", () => {
-    const [{ content }, agents] = generateAllFiles({ ...baseConfig, platform: "aider" } as never, user);
+    const [agents, { content }] = generateAllFiles({ ...baseConfig, platform: "aider" } as never, user);
     expect(agents.fileName).toBe("AGENTS.md");
     expect(content).toMatch(/^read: \[AGENTS\.md\]$/m);
     expect(content).not.toContain("auto-commits:");

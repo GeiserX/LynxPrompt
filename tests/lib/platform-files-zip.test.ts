@@ -65,7 +65,7 @@ describe("generatePlatformFiles", () => {
   });
 
   it("gives Aider its config and the AGENTS.md it reads", () => {
-    expect(names(["aider"])).toEqual([".aider.conf.yml", "AGENTS.md"]);
+    expect(names(["aider"])).toEqual(["AGENTS.md", ".aider.conf.yml"]);
     expect(names(["aider", "cursor"])).toEqual(["AGENTS.md", ".aider.conf.yml"]);
   });
 

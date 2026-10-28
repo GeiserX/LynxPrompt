@@ -50,14 +50,15 @@ const cliOptions: GenerateOptions = {
   commands: {},
 };
 
+// The platform's own file (Aider also gets the AGENTS.md its config reads)
 function web(platform: string) {
-  const [file] = generateAllFiles({ ...webConfig, platform } as never, user);
-  return file;
+  const files = generateAllFiles({ ...webConfig, platform } as never, user);
+  return files.find((f) => f.platform === platform) ?? files[0];
 }
 
 function cli(platform: string) {
-  const files = generateConfig({ ...cliOptions, platforms: [platform] });
-  const [[fileName, content]] = Object.entries(files);
+  const entries = Object.entries(generateConfig({ ...cliOptions, platforms: [platform] }));
+  const [fileName, content] = entries.find(([name]) => name !== "AGENTS.md") ?? entries[0];
   return { fileName, content };
 }
 

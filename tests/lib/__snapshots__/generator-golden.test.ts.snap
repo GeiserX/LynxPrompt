@@ -3613,12 +3613,6 @@ Before making changes, read these files to understand the project:
 exports[`web generator golden output > aider 1`] = `
 [
   {
-    "content": "# Aider loads these files as read-only context. AGENTS.md holds the project rules.
-read: [AGENTS.md]
-",
-    "fileName": ".aider.conf.yml",
-  },
-  {
     "content": "# Demo - AI Agent Instructions
 
 ## Project Overview
@@ -3682,17 +3676,17 @@ When requested or when missing, create these files following these guidelines:
 **🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.",
     "fileName": "AGENTS.md",
   },
-]
-`;
-
-exports[`web generator golden output > aider with every answer 1`] = `
-[
   {
     "content": "# Aider loads these files as read-only context. AGENTS.md holds the project rules.
 read: [AGENTS.md]
 ",
     "fileName": ".aider.conf.yml",
   },
+]
+`;
+
+exports[`web generator golden output > aider with every answer 1`] = `
+[
   {
     "content": "# Demo - AI Agent Instructions
 
@@ -3937,6 +3931,12 @@ Rotate keys yearly.
 
 **🔍 Security Audit Recommendation:** When making changes that involve authentication, data handling, API endpoints, or dependencies, proactively offer to perform a security review of the affected code.",
     "fileName": "AGENTS.md",
+  },
+  {
+    "content": "# Aider loads these files as read-only context. AGENTS.md holds the project rules.
+read: [AGENTS.md]
+",
+    "fileName": ".aider.conf.yml",
   },
 ]
 `;

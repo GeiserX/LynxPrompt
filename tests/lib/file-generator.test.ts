@@ -415,10 +415,10 @@ describe("generateAllFiles", () => {
       { ...baseConfig, platform: "aider" },
       baseUser
     );
-    // Aider's config, and the AGENTS.md it reads
+    // The AGENTS.md rules, then Aider's config that reads them
     expect(files).toHaveLength(2);
-    expect(files[0].fileName).toBe(PLATFORM_FILES["aider"]);
-    expect(files[1].fileName).toBe("AGENTS.md");
+    expect(files[0].fileName).toBe("AGENTS.md");
+    expect(files[1].fileName).toBe(PLATFORM_FILES["aider"]);
   });
 
   it("generates tabnine config", () => {
@@ -1087,8 +1087,8 @@ describe("generateAllFiles", () => {
       baseUser
     );
     // The rules are in the AGENTS.md Aider reads
-    expect(files[1].content.toLowerCase()).toContain("conventional");
-    expect(files[1].content).toContain("Extra aider rule");
+    expect(files[0].content.toLowerCase()).toContain("conventional");
+    expect(files[0].content).toContain("Extra aider rule");
   });
 
   // --- Antigravity/Gemini specific ---
@@ -1341,7 +1341,7 @@ describe("generateAllFiles", () => {
       },
       { ...baseUser, skillLevel: "expert" }
     );
-    const content = files[1].content;
+    const content = files[0].content;
     expect(content.toLowerCase()).toContain("open source");
   });
 });

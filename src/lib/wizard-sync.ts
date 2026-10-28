@@ -49,7 +49,10 @@ export function syncBlueprintPayload(
     name: config.projectName || "My AI Config",
     description: config.projectDescription || "Generated with the LynxPrompt wizard",
     content: file.content, // Keep [[VAR|default]] syntax for blueprints
-    type: blueprintTypeForPlatform(config.platform),
+    // Aider's own file is its config; the rules it syncs are in AGENTS.md
+    type: file.fileName === "AGENTS.md" && getPlatform(resolvePlatformId(config.platform || "universal"))?.file !== "AGENTS.md"
+      ? "AGENTS_MD"
+      : blueprintTypeForPlatform(config.platform),
     // Where the file lives, so `lynxp pull` writes it back to the same path
     repositoryPath: syncFilePath(config.platform, file.fileName),
     category: "other",

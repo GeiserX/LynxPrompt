@@ -108,6 +108,16 @@ describe("sync file path", () => {
     expect(curl).toContain("> .cursor/rules/project.mdc.new && mv .cursor/rules/project.mdc.new .cursor/rules/project.mdc");
   });
 
+  it("an Aider download syncs the AGENTS.md rules, never the Aider config", () => {
+    const config = { ...createDefaultWizardConfig(), projectName: "acme", platform: "aider", additionalFeedback: "Use strict TypeScript" };
+    const [file] = generateAllFiles(buildGeneratorConfig(config), user);
+    const payload = syncBlueprintPayload(config, file);
+    expect(payload.repositoryPath).toBe("AGENTS.md");
+    expect(payload.type).toBe("AGENTS_MD");
+    expect(payload.content).toContain("Use strict TypeScript");
+    expect(payload.content).not.toContain("read: [AGENTS.md]");
+  });
+
   it("every platform listed by a folder syncs to a file in that folder", () => {
     for (const platform of PLATFORMS) {
       const path = syncFilePath(platform.id, platform.file);

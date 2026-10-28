@@ -2050,10 +2050,13 @@ export function generateAllFiles(
       content = generateCopilotInstructions(config, user);
       break;
     case "aider":
-      // Aider reads the rules from AGENTS.md, listed in its config
-      content = AIDER_CONFIG;
-      files.push(...generateAllFiles({ ...config, platform: "universal" }, user, { brand }));
-      break;
+      // Aider reads the rules from AGENTS.md, listed in its config. AGENTS.md
+      // comes first: it holds the rules, so it is the file Cloud Sync saves and
+      // links; the config never carries a sync header.
+      return [
+        ...generateAllFiles({ ...config, platform: "universal" }, user, options),
+        { fileName, content: AIDER_CONFIG, platform },
+      ];
     case "zed":
       // Zed reads a Markdown .rules file at the project root
       content = generateNamedAgentsMd(config, user, "Zed");
