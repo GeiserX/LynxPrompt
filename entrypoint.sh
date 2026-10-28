@@ -38,20 +38,61 @@ for db in APP USERS BLOG SUPPORT; do
   fi
 done
 
+# Each schema's migrations live in prisma/migrations-<name>. Earlier releases
+# ran `prisma db push` instead, so their databases hold the tables but no
+# record of any migration, and `migrate deploy` would refuse them (P3005).
+#
+# needs_baseline succeeds only for such a database: it has tables, and the first
+# migration (0_init) is not recorded as applied. Any error, such as a database
+# that does not exist yet, also answers no; migrate deploy then creates the
+# database or reports the error.
+needs_baseline() {
+  npx prisma db execute --config="prisma/prisma.config-$1.ts" --stdin >/dev/null 2>&1 <<'SQL'
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_tables
+                 WHERE schemaname = current_schema() AND tablename <> '_prisma_migrations') THEN
+    RAISE EXCEPTION 'empty database';
+  END IF;
+  IF to_regclass('_prisma_migrations') IS NOT NULL THEN
+    IF EXISTS (SELECT 1 FROM _prisma_migrations WHERE migration_name = '0_init'
+               AND finished_at IS NOT NULL AND rolled_back_at IS NULL) THEN
+      RAISE EXCEPTION 'already baselined';
+    END IF;
+  END IF;
+END $$;
+SQL
+}
+
+# A db-push database is brought to the current schema one last time with
+# `db push`, which refuses any change that would lose data, and then every
+# migration is recorded as applied, because the pushed schema already contains
+# them all. From then on only `migrate deploy` touches it.
+migrate() {
+  config="prisma/prisma.config-$1.ts"
+  if needs_baseline "$1"; then
+    echo "$2 DB: created by prisma db push; recording its migrations as applied"
+    npx prisma db push --config="$config" 2>&1 || return 1
+    for dir in prisma/migrations-"$1"/*/; do
+      npx prisma migrate resolve --applied "$(basename "$dir")" --config="$config" 2>&1 || return 1
+    done
+  fi
+  npx prisma migrate deploy --config="$config" 2>&1
+}
+
 FAILED=0
 
 echo "Applying database migrations..."
-npx prisma db push --config=prisma/prisma.config-app.ts 2>&1 && echo "App DB: synced" || { echo "ERROR: App DB sync failed"; FAILED=1; }
-npx prisma db push --config=prisma/prisma.config-users.ts 2>&1 && echo "Users DB: synced" || { echo "ERROR: Users DB sync failed"; FAILED=1; }
-npx prisma db push --config=prisma/prisma.config-blog.ts 2>&1 && echo "Blog DB: synced" || { echo "ERROR: Blog DB sync failed"; FAILED=1; }
-npx prisma db push --config=prisma/prisma.config-support.ts 2>&1 && echo "Support DB: synced" || { echo "ERROR: Support DB sync failed"; FAILED=1; }
+migrate app App && echo "App DB: migrated" || { echo "ERROR: App DB migration failed"; FAILED=1; }
+migrate users Users && echo "Users DB: migrated" || { echo "ERROR: Users DB migration failed"; FAILED=1; }
+migrate blog Blog && echo "Blog DB: migrated" || { echo "ERROR: Blog DB migration failed"; FAILED=1; }
+migrate support Support && echo "Support DB: migrated" || { echo "ERROR: Support DB migration failed"; FAILED=1; }
 
 if [ "$FAILED" -ne 0 ]; then
-  echo "FATAL: One or more database syncs failed. Aborting startup."
+  echo "FATAL: One or more database migrations failed. Aborting startup."
   exit 1
 fi
 
-echo "Database sync complete."
+echo "Database migrations complete."
 
 # A new post needs one of the default forum categories, and nothing else creates
 # them. The seed only adds missing categories and tags, so it is safe on every start.

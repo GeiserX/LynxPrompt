@@ -27,7 +27,7 @@ fix `.env`, restart and sign in again.
 
 ## The container fails to start with a database error
 
-The entrypoint runs `prisma db push` on four schemas and exits if one fails. The log names the schema. Usual
+The entrypoint runs `prisma migrate deploy` on four schemas and exits if one fails. The log names the schema. Usual
 causes: PostgreSQL not ready yet (the compose file waits for its healthcheck, a hand-written one may not),
 a wrong `DB_*_PASSWORD`, or a PostgreSQL 18 volume mounted at `/var/lib/postgresql/data` instead of
 `/var/lib/postgresql` (the compose file has the right path and a comment).

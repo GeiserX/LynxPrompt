@@ -124,9 +124,6 @@
   "engines": {
     "node": ">=20.0.0"
   },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
-  },
   "overrides": {
     "nodemailer": "$nodemailer",
     "uuid": "^11.1.1",

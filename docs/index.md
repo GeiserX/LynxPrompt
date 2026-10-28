@@ -90,7 +90,7 @@ flowchart LR
     CLI[lynxp CLI<br/>VS Code extension<br/>GitHub Action]
     subgraph app [lynxprompt container, port 3000]
         WEB[Next.js app and API]
-        MIG[prisma db push on start]
+        MIG[prisma migrate deploy on start]
     end
     DB[(PostgreSQL<br/>app, users, blog, support schemas)]
     SMTP[Your SMTP server<br/>sign-in mail]
@@ -107,7 +107,7 @@ flowchart LR
 ```
 
 - The image is `drumsergio/lynxprompt`, built for linux/amd64, running as user id 1001. On an ARM host (Apple Silicon, Raspberry Pi) the compose file's `platform: linux/amd64` line runs it under emulation.
-- Migrations run every time the container starts (`prisma db push` on the four schemas), so an upgrade is a tag change and `docker compose up -d`.
+- Migrations run every time the container starts (`prisma migrate deploy` on the four schemas), so an upgrade is a tag change and `docker compose up -d`.
 - The self-host compose file runs one PostgreSQL server with one database per schema (`lynxprompt`, `lynxprompt_users`, `lynxprompt_blog`, `lynxprompt_support`). See [Components](how-it-works.md#components).
 - The CLI and the extension talk to `/api/v1/` with an API token you create in Settings. See [How it works](how-it-works.md).
 
