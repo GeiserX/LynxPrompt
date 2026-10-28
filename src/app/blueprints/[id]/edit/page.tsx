@@ -109,7 +109,8 @@ export default function EditBlueprintPage() {
         setDescription(data.description || "");
         setContent(data.content || "");
         setOriginalContent(data.content || ""); // Store original for comparison
-        setType(data.targetPlatform?.toUpperCase() || "CURSOR_RULES");
+        // Keep the stored type; saving must not change it unless the user does.
+        setType(data.type || "CUSTOM");
         setCategory(data.category || "other");
         setTags(data.tags || []);
         setIsPublic(data.isPublic !== false);
@@ -603,6 +604,10 @@ export default function EditBlueprintPage() {
                           {t.icon} {t.label}
                         </option>
                       ))}
+                      {/* A type set elsewhere (CLI, API) that this list does not offer */}
+                      {!BLUEPRINT_TYPES.some((t) => t.value === type) && (
+                        <option value={type}>📄 {type}</option>
+                      )}
                     </select>
                     {/* Interoperability notice */}
                     <div className="mt-2 rounded-lg border border-sky-200 bg-sky-50 p-3 dark:border-sky-500/50 dark:bg-sky-900/30">

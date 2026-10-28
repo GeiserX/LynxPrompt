@@ -213,7 +213,7 @@ export async function DELETE(
 
       if (ids.length > 0) {
         await prismaUsers.$transaction([
-          prismaUsers.templateDownload.deleteMany({ where: { templateId: { in: ids } } }),
+          prismaUsers.templateDownload.deleteMany({ where: { templateId: { in: ids.flatMap((i) => [i, `bp_${i}`]) } } }),
           prismaUsers.templateFavorite.deleteMany({ where: { templateId: { in: ids } } }),
           prismaUsers.userTemplateVersion.deleteMany({ where: { templateId: { in: ids } } }),
           prismaUsers.userTemplate.deleteMany({ where: { id: { in: ids } } }),
