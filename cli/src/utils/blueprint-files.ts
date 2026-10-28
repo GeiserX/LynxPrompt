@@ -195,11 +195,21 @@ export function blueprintContentOf(relativePath: string, fileText: string): stri
 }
 
 /**
- * The text to write to a file for blueprint content: the content itself, or,
- * for a settings or TOML file, the existing file with its MCP servers replaced
- * and every other setting kept.
+ * The text to write to a file for blueprint content. A rule or command file
+ * gets the content itself. An MCP file gets the content in its tool's format
+ * (a blueprint written for another tool, such as Codex TOML, is converted);
+ * a settings or TOML file keeps every other setting it holds. Throws when the
+ * content is not a readable MCP config and the file holds more than servers.
  */
 export function fileTextFor(relativePath: string, existing: string | null, content: string): string {
-  const target = mcpPart(relativePath);
-  return target ? mergeMcpConfig(existing ?? "", content, target.id, target.file) : content;
+  if (matchConfigFile(relativePath)?.type !== MCP_BLUEPRINT_TYPE) return content;
+  const target = mcpConfigForPath(relativePath);
+  if (!target) return content;
+  if (target.kind !== "whole") return mergeMcpConfig(existing ?? "", content, target.id, target.file);
+  try {
+    return mergeMcpConfig("", content, target.id, target.file);
+  } catch {
+    // Not a readable MCP config: the file is the content, as before
+    return content;
+  }
 }
