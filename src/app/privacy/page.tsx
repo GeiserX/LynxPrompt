@@ -43,7 +43,7 @@ export default function PrivacyPage() {
               Privacy Policy
             </h1>
             <p className="mt-3 text-lg text-muted-foreground">
-              Last updated: February 2026
+              Last updated: October 2026
             </p>
           </div>
         </div>
@@ -119,7 +119,10 @@ export default function PrivacyPage() {
                     <ul className="ml-4 mt-1 list-inside list-disc">
                       <li>Email address</li>
                       <li>Name (if provided by your OAuth provider)</li>
-                      <li>Profile picture (if provided by your OAuth provider)</li>
+                      <li>
+                        Profile picture (one you upload, or the one your OAuth
+                        provider sends)
+                      </li>
                       <li>OAuth provider identifiers (GitHub ID, Google ID)</li>
                     </ul>
                   </div>
@@ -286,6 +289,45 @@ export default function PrivacyPage() {
 
                   <div className="rounded-lg border p-4">
                     <h3 className="font-medium text-foreground">
+                      Gravatar (Automattic)
+                    </h3>
+                    <p className="mt-1 text-sm">
+                      <strong>Data shared:</strong> An MD5 hash of your email
+                      address, when your account has no profile picture. Your
+                      browser then loads your avatar from gravatar.com, so
+                      Gravatar also sees your IP address and browser details,
+                      as with any web request.
+                    </p>
+                    <p className="text-sm">
+                      <strong>Where it is used:</strong> Your own menu and
+                      settings pages, and the author line of blog posts you
+                      write. Public profiles and the support forum never use
+                      Gravatar; they show your initials instead.
+                    </p>
+                    <p className="text-sm">
+                      <strong>How to avoid it:</strong> Upload a profile
+                      picture in Settings. An account created through GitHub
+                      or Google uses that provider&apos;s picture instead.
+                    </p>
+                    <p className="text-sm">
+                      <strong>Location:</strong> USA
+                    </p>
+                    <p className="text-sm">
+                      <strong>Legal basis:</strong> Legitimate interest (showing
+                      an avatar for accounts without a picture)
+                    </p>
+                    <a
+                      href="https://automattic.com/privacy/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 inline-block text-sm text-primary hover:underline"
+                    >
+                      Automattic Privacy Policy →
+                    </a>
+                  </div>
+
+                  <div className="rounded-lg border p-4">
+                    <h3 className="font-medium text-foreground">
                       Anthropic (Claude AI)
                     </h3>
                     <p className="mt-1 text-sm">
@@ -425,8 +467,10 @@ export default function PrivacyPage() {
                     inaccurate data
                   </li>
                   <li>
-                    <strong>Erasure:</strong> Request deletion of your data
-                    (&quot;right to be forgotten&quot;)
+                    <strong>Erasure:</strong> Delete your account yourself in
+                    Settings (Security, Delete account), or ask us to delete
+                    your data (&quot;right to be forgotten&quot;). Section 12
+                    says what deletion removes
                   </li>
                   <li>
                     <strong>Restriction:</strong> Request limited processing of
@@ -483,8 +527,8 @@ export default function PrivacyPage() {
                     data we collect
                   </li>
                   <li>
-                    <strong>Right to Delete:</strong> Request deletion of your
-                    personal data
+                    <strong>Right to Delete:</strong> Delete your account in
+                    Settings, or ask us to delete your personal data
                   </li>
                   <li>
                     <strong>Non-Discrimination:</strong> We will not
@@ -515,10 +559,46 @@ export default function PrivacyPage() {
                   12. Data Retention
                 </h2>
                 <p>
-                  We retain your personal data for as long as your account is
-                  active. If you request account deletion, we will erase your
-                  personal data within one month, except where we are legally
-                  required to retain certain records (e.g., account records for
+                  We keep your personal data while your account is active. You
+                  can delete your account at any time in Settings (Security,
+                  Delete account). Deletion takes effect at once and removes:
+                </p>
+                <ul className="mt-3 list-inside list-disc space-y-1">
+                  <li>
+                    Your account, linked sign-in methods, sessions, passkeys,
+                    trusted devices and API tokens
+                  </li>
+                  <li>
+                    Your profile, preferences, wizard drafts, hierarchies and
+                    uploaded profile pictures
+                  </li>
+                  <li>
+                    Your blueprints, including the ones you shared with a team,
+                    with their version history, and the favorites and download
+                    records other people left on them
+                  </li>
+                  <li>Your favorites, and teams where you were the only member</li>
+                  <li>Pending team invitations and sign-in links sent to your email</li>
+                </ul>
+                <p className="mt-3">
+                  Some content stays, without anything that identifies you:
+                  support forum posts and comments keep their text but lose your
+                  name, picture and account link (your votes are removed), blog
+                  posts you wrote keep their text without your name, and your
+                  downloads of other people&apos;s blueprints stay as anonymous
+                  download counts. If you are the only admin of a team that has
+                  other members, make another member an admin first.
+                </p>
+                <p className="mt-3">
+                  You can also ask us to delete your account at{" "}
+                  <a
+                    href="mailto:privacy@lynxprompt.com"
+                    className="text-primary hover:underline"
+                  >
+                    privacy@lynxprompt.com
+                  </a>
+                  ; we will do so within one month. We keep certain records only
+                  where the law requires it (for example, account records for
                   legal purposes, which may be retained for up to 7 years).
                 </p>
               </section>

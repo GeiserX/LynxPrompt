@@ -370,8 +370,9 @@ export default function SecurityPage() {
                     <p className="mt-1 text-sm">
                       LynxPrompt is fully compliant with the General Data
                       Protection Regulation (GDPR). We provide data access,
-                      rectification, erasure, and portability rights. Data
-                      deletion requests are processed within 30 days.
+                      rectification, erasure, and portability rights. You can
+                      delete your account yourself in Settings, and we answer
+                      other data requests within one month.
                     </p>
                   </div>
                   <div className="rounded-lg border p-4">
