@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createHash } from "crypto";
 import { prismaUsers } from "@/lib/db-users";
 import { contentChecksum } from "@/lib/content-checksum";
 import { APP_URL } from "@/lib/feature-flags";
@@ -17,9 +18,17 @@ import {
   resolveBlueprintTeamId,
 } from "@/lib/blueprint-rules";
 
+// If-None-Match may list several tags, or "*"; tags compare weakly (RFC 9110 13.1.2)
+function ifNoneMatchHits(header: string | null, etag: string): boolean {
+  if (!header) return false;
+  const bare = (tag: string) => tag.trim().replace(/^W\//, "");
+  return header.split(",").some((tag) => tag.trim() === "*" || bare(tag) === bare(etag));
+}
+
 /**
  * GET /api/v1/blueprints/[id]
- * Get a single blueprint with full content
+ * Get a single blueprint with full content. Sends an ETag and answers
+ * If-None-Match with 304 when the blueprint has not changed.
  */
 export async function GET(
   request: NextRequest,
@@ -106,7 +115,7 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({
+    const body = JSON.stringify({
       blueprint: {
         id: toBlueprintApiId(blueprint.id),
         name: blueprint.name,
@@ -130,6 +139,25 @@ export async function GET(
         repository_path: blueprint.repositoryPath,
         content_checksum: contentChecksum(blueprint.content),
       },
+    });
+
+    // A client that already holds this exact response (sync, editors polling
+    // for changes) gets a 304 with no body. Checked only after the token and
+    // access checks above, so a 304 never answers for a blueprint the caller
+    // cannot read.
+    const etag = `W/"${createHash("sha256").update(body).digest("hex").slice(0, 32)}"`;
+    const headers = {
+      ETag: etag,
+      // The answer depends on the token, so shared caches must not keep it
+      "Cache-Control": "private, no-cache",
+      Vary: "Authorization",
+    };
+    if (ifNoneMatchHits(request.headers.get("if-none-match"), etag)) {
+      return new NextResponse(null, { status: 304, headers });
+    }
+    return new NextResponse(body, {
+      status: 200,
+      headers: { ...headers, "Content-Type": "application/json" },
     });
   } catch (error) {
     console.error("API v1 GET /blueprints/[id] error:", error);
