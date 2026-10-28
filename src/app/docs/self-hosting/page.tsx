@@ -32,13 +32,19 @@ export default function SelfHostingPage() {
               1
             </div>
             <div className="min-w-0 flex-1">
-              <h3 className="font-semibold">Create an environment file</h3>
+              <h3 className="font-semibold">Download the compose file and write a .env</h3>
               <pre className="mt-2 overflow-x-auto rounded-lg bg-muted p-3 text-sm">
-                <code>{`# .env
-NEXTAUTH_SECRET=$(openssl rand -base64 32)
-ADMIN_EMAIL=you@example.com
-APP_URL=https://lynxprompt.yourcompany.com`}</code>
+                <code>{`curl -O https://raw.githubusercontent.com/GeiserX/LynxPrompt/main/docker-compose.selfhost.yml
+(umask 077; printf 'NEXTAUTH_SECRET=%s\\nDB_PASSWORD=%s\\nADMIN_EMAIL=you@example.com\\nAPP_URL=https://lynxprompt.yourcompany.com\\n' "$(openssl rand -base64 32)" "$(openssl rand -hex 24)" > .env)`}</code>
               </pre>
+              <p className="mt-2 text-sm text-muted-foreground">
+                The shell runs <code className="text-xs">openssl</code> once and writes the
+                values into <code className="text-xs">.env</code>. Docker Compose does not run
+                commands found inside <code className="text-xs">.env</code>, so never put{" "}
+                <code className="text-xs">$(...)</code> there. Sign-in is a link sent by mail, so add the{" "}
+                <code className="text-xs">SMTP_*</code> variables too (see{" "}
+                <a href="#authentication" className="text-primary hover:underline">Authentication</a>).
+              </p>
             </div>
           </div>
           <div className="flex items-start gap-4">
@@ -73,8 +79,9 @@ APP_URL=https://lynxprompt.yourcompany.com`}</code>
         <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
           <p className="text-sm">
             <strong>Requirements:</strong> Docker Engine 24+ and Docker Compose v2.
-            The default compose file uses a single PostgreSQL instance and
-            exposes port 3000.
+            The default compose file runs one PostgreSQL server with one database
+            per schema, keeps uploads in the <code className="text-xs">uploads</code> volume
+            and exposes port 3000.
           </p>
         </div>
       </section>
@@ -83,9 +90,10 @@ APP_URL=https://lynxprompt.yourcompany.com`}</code>
       <section className="space-y-4" id="environment-variables">
         <h2 className="text-2xl font-bold">Environment Variables</h2>
         <p className="text-muted-foreground">
-          All configuration is done through environment variables. Only{" "}
-          <code className="rounded bg-muted px-1.5 py-0.5 text-sm">NEXTAUTH_SECRET</code> is
-          strictly required.
+          All configuration is done through environment variables.{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 text-sm">NEXTAUTH_SECRET</code> and
+          the database connection are required; the self-host compose file also needs{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 text-sm">DB_PASSWORD</code>.
         </p>
 
         {/* Core */}
@@ -190,7 +198,7 @@ APP_URL=https://lynxprompt.yourcompany.com`}</code>
               <tr>
                 <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">ENABLE_GITHUB_OAUTH</code></td>
                 <td className="px-4 py-2 text-muted-foreground">false</td>
-                <td className="px-4 py-2">GitHub OAuth (requires GITHUB_ID + GITHUB_SECRET)</td>
+                <td className="px-4 py-2">GitHub OAuth (requires GITHUB_CLIENT_ID + GITHUB_CLIENT_SECRET)</td>
               </tr>
               <tr>
                 <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">ENABLE_GOOGLE_OAUTH</code></td>
@@ -261,8 +269,8 @@ APP_URL=https://lynxprompt.yourcompany.com`}</code>
             <tbody className="divide-y">
               <tr>
                 <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">ENABLE_FEDERATION</code></td>
-                <td className="px-4 py-2 text-muted-foreground">false</td>
-                <td className="px-4 py-2">Join the federated network to share and discover blueprints across instances</td>
+                <td className="px-4 py-2 text-muted-foreground">true</td>
+                <td className="px-4 py-2">Register the instance&apos;s domain with the federation registry at start and every six hours, and serve <code className="text-xs">/.well-known/lynxprompt.json</code>. Set to <code className="text-xs">false</code> to keep the instance to itself</td>
               </tr>
               <tr>
                 <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">FEDERATION_REGISTRY_URL</code></td>
@@ -293,12 +301,12 @@ APP_URL=https://lynxprompt.yourcompany.com`}</code>
               <tr>
                 <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">APP_LOGO_URL</code></td>
                 <td className="px-4 py-2 text-muted-foreground">—</td>
-                <td className="px-4 py-2">URL to a custom logo image</td>
+                <td className="px-4 py-2">Logo used in sign-in mail and search-engine metadata (the header keeps the default logo)</td>
               </tr>
               <tr>
                 <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">CONTACT_EMAIL</code></td>
                 <td className="px-4 py-2 text-muted-foreground">—</td>
-                <td className="px-4 py-2">Displayed as contact email in the UI</td>
+                <td className="px-4 py-2">Where the contact form sends, also shown in page metadata. The contact form needs SMTP_HOST, SMTP_USER and SMTP_PASSWORD</td>
               </tr>
               <tr>
                 <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">STATUS_PAGE_URL</code></td>
@@ -347,8 +355,11 @@ APP_URL=https://lynxprompt.yourcompany.com`}</code>
             <h3 className="font-semibold">Email Magic Links (default: on)</h3>
             <p className="mt-1 text-sm text-muted-foreground">
               Requires an SMTP server. Set{" "}
-              <code className="rounded bg-muted px-1 py-0.5 text-xs">EMAIL_SERVER</code> and{" "}
-              <code className="rounded bg-muted px-1 py-0.5 text-xs">EMAIL_FROM</code> in your
+              <code className="rounded bg-muted px-1 py-0.5 text-xs">SMTP_HOST</code>,{" "}
+              <code className="rounded bg-muted px-1 py-0.5 text-xs">SMTP_PORT</code>,{" "}
+              <code className="rounded bg-muted px-1 py-0.5 text-xs">SMTP_USER</code>,{" "}
+              <code className="rounded bg-muted px-1 py-0.5 text-xs">SMTP_PASSWORD</code> and{" "}
+              <code className="rounded bg-muted px-1 py-0.5 text-xs">SMTP_FROM</code> in your
               environment. Without SMTP, disable with{" "}
               <code className="rounded bg-muted px-1 py-0.5 text-xs">ENABLE_EMAIL_AUTH=false</code>.
             </p>
@@ -357,8 +368,8 @@ APP_URL=https://lynxprompt.yourcompany.com`}</code>
             <h3 className="font-semibold">GitHub OAuth</h3>
             <p className="mt-1 text-sm text-muted-foreground">
               Set <code className="rounded bg-muted px-1 py-0.5 text-xs">ENABLE_GITHUB_OAUTH=true</code>,{" "}
-              <code className="rounded bg-muted px-1 py-0.5 text-xs">GITHUB_ID</code>, and{" "}
-              <code className="rounded bg-muted px-1 py-0.5 text-xs">GITHUB_SECRET</code>.
+              <code className="rounded bg-muted px-1 py-0.5 text-xs">GITHUB_CLIENT_ID</code>, and{" "}
+              <code className="rounded bg-muted px-1 py-0.5 text-xs">GITHUB_CLIENT_SECRET</code>.
               Create an OAuth App at{" "}
               <span className="text-foreground">GitHub → Settings → Developer settings → OAuth Apps</span>.
               Set the callback URL to{" "}
@@ -467,8 +478,9 @@ STATUS_PAGE_URL=https://status.mycompany.com`}</code>
         </pre>
         <p className="text-sm text-muted-foreground">
           The app name is used throughout the UI, in page titles, email
-          templates, and OpenGraph metadata. The logo replaces the default
-          LynxPrompt logo in the header and email templates.
+          templates, and OpenGraph metadata. The logo is used in the sign-in
+          mail and in search-engine metadata; the header keeps the default
+          LynxPrompt logo.
         </p>
       </section>
 
@@ -484,19 +496,25 @@ STATUS_PAGE_URL=https://status.mycompany.com`}</code>
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-xl border bg-card p-6">
-            <h3 className="font-semibold">Single Database (recommended)</h3>
+            <h3 className="font-semibold">One server, four databases (default)</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Point all four <code className="text-xs">DATABASE_URL_*</code> variables to the
-              same PostgreSQL database. This is the default in{" "}
-              <code className="text-xs">docker-compose.selfhost.yml</code> and is the simplest
-              setup.
+              Point the four <code className="text-xs">DATABASE_URL_*</code> variables at four
+              databases on the same PostgreSQL server. This is what{" "}
+              <code className="text-xs">docker-compose.selfhost.yml</code> does; the first start
+              creates the databases.
             </p>
             <pre className="mt-3 overflow-x-auto rounded-lg bg-muted p-3 text-xs">
-              <code>{`DATABASE_URL_APP=postgresql://...
-DATABASE_URL_USERS=postgresql://...   # same
-DATABASE_URL_BLOG=postgresql://...    # same
-DATABASE_URL_SUPPORT=postgresql://... # same`}</code>
+              <code>{`DATABASE_URL_APP=postgresql://.../lynxprompt
+DATABASE_URL_USERS=postgresql://.../lynxprompt_users
+DATABASE_URL_BLOG=postgresql://.../lynxprompt_blog
+DATABASE_URL_SUPPORT=postgresql://.../lynxprompt_support`}</code>
             </pre>
+            <p className="mt-3 text-sm text-muted-foreground">
+              <strong>Never point two of them at the same database.</strong> At every start the
+              entrypoint runs <code className="text-xs">prisma db push</code> once per schema, and
+              each push drops the tables it does not know, so the schemas would delete each
+              other&apos;s tables.
+            </p>
           </div>
           <div className="rounded-xl border bg-card p-6">
             <h3 className="font-semibold">Multi-Database</h3>
@@ -583,7 +601,7 @@ lynxp login`}</code>
 # Then configure your reverse proxy to serve both domains,
 # pointing to the same LynxPrompt backend.
 #
-# The CLI defaults to https://api.lynxprompt.com for the
+# The CLI defaults to https://lynxprompt.com for the
 # public instance. For self-hosted, point the CLI:
 lynxp config set-url https://api.lynxprompt.yourcompany.com`}</code>
           </pre>
@@ -609,9 +627,10 @@ lynxp config set-url https://api.lynxprompt.yourcompany.com`}</code>
           <h2 className="text-2xl font-bold">Federation</h2>
         </div>
         <p className="text-muted-foreground">
-          Federation connects independent LynxPrompt instances into a shared
-          network. Users on any federated instance can discover and download
-          blueprints published on other instances.
+          Federation lists independent LynxPrompt instances in a shared
+          directory, so people can find them. Blueprints stay on the instance
+          that holds them: browsing other instances&apos; blueprints from your
+          own UI is not built yet.
         </p>
         <div className="rounded-xl border bg-card p-6 space-y-3">
             <div className="flex items-start gap-4">
@@ -619,12 +638,12 @@ lynxp config set-url https://api.lynxprompt.yourcompany.com`}</code>
               1
             </div>
             <div className="min-w-0 flex-1">
-              <h3 className="font-semibold">Enable federation</h3>
+              <h3 className="font-semibold">Federation is on by default</h3>
               <pre className="mt-2 overflow-x-auto rounded-lg bg-muted p-3 text-sm">
-                <code>{`ENABLE_FEDERATION=true`}</code>
+                <code>{`ENABLE_FEDERATION=true   # the default; false opts out`}</code>
               </pre>
               <p className="mt-2 text-sm text-muted-foreground">
-                This is all you need to join the default public network
+                With nothing set, the instance joins the default public network
                 at <code className="rounded bg-muted px-1 py-0.5 text-xs">https://lynxprompt.com</code>.
                 Only set{" "}
                 <code className="rounded bg-muted px-1 py-0.5 text-xs">FEDERATION_REGISTRY_URL</code>{" "}
@@ -637,10 +656,12 @@ lynxp config set-url https://api.lynxprompt.yourcompany.com`}</code>
               2
             </div>
             <div className="min-w-0 flex-1">
-              <h3 className="font-semibold">Restart the container</h3>
+              <h3 className="font-semibold">What it sends</h3>
               <p className="mt-1 text-muted-foreground">
-                Your instance will register with the federation registry and
-                begin syncing the blueprint index.
+                At start and every six hours the instance sends its domain (the
+                host of <code className="rounded bg-muted px-1 py-0.5 text-xs">APP_URL</code>)
+                to the registry. <code className="rounded bg-muted px-1 py-0.5 text-xs">/.well-known/lynxprompt.json</code>{" "}
+                answers with its name, version and number of public blueprints.
               </p>
             </div>
           </div>
@@ -649,17 +670,20 @@ lynxp config set-url https://api.lynxprompt.yourcompany.com`}</code>
               3
             </div>
             <div className="min-w-0 flex-1">
-              <h3 className="font-semibold">Browse federated blueprints</h3>
+              <h3 className="font-semibold">Find other instances</h3>
               <p className="mt-1 text-muted-foreground">
-                Blueprints from other instances appear alongside local ones in the
-                browse page, tagged with their origin instance.
+                The <code className="rounded bg-muted px-1 py-0.5 text-xs">/federation</code> page
+                lists the registered instances. Each one also lists the name,
+                description and author of its public blueprints at{" "}
+                <code className="rounded bg-muted px-1 py-0.5 text-xs">/api/v1/federation/blueprints</code>.
               </p>
             </div>
           </div>
         </div>
         <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
           <p className="text-sm">
-            <strong>Note:</strong> Federation is optional. Without it, your instance
+            <strong>Note:</strong> Federation is optional. With{" "}
+            <code className="text-xs">ENABLE_FEDERATION=false</code> your instance
             works as a fully standalone platform with its own local blueprint
             library.
           </p>
@@ -679,10 +703,10 @@ lynxp config set-url https://api.lynxprompt.yourcompany.com`}</code>
           <code>{`GET /api/health
 
 # Healthy response (200):
-{"status":"ok","db":"connected"}
+{"status":"ok","db":"connected","version":"X.Y.Z","revision":"<commit>"}
 
 # Unhealthy response (503):
-{"status":"error","db":"disconnected"}`}</code>
+{"status":"error","db":"disconnected","version":"X.Y.Z","revision":"<commit>"}`}</code>
         </pre>
         <p className="text-sm text-muted-foreground">
           Use this endpoint in Docker health checks, Kubernetes liveness probes,
@@ -691,7 +715,8 @@ lynxp config set-url https://api.lynxprompt.yourcompany.com`}</code>
         <pre className="overflow-x-auto rounded-lg bg-muted p-4 text-sm">
           <code>{`# Docker Compose healthcheck example
 healthcheck:
-  test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+  # The image has no curl; Node is always there.
+  test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
   interval: 30s
   timeout: 5s
   retries: 3`}</code>

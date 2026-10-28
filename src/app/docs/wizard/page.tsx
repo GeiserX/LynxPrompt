@@ -1,6 +1,22 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Wand2, ArrowRight, FileText, Code, Laptop, GitBranch, Tag, Workflow, Brain, MessageSquare, Sparkles, Check } from "lucide-react";
+import { Wand2, ArrowRight, Brain, MessageSquare } from "lucide-react";
+
+// The twelve steps of src/app/wizard/page.tsx (WIZARD_STEPS), in order.
+const WIZARD_STEPS = [
+  { title: "Project Basics", description: "Name and describe the repository you are configuring." },
+  { title: "Tech Stack", description: "Languages, frameworks and tools; they decide which rules are included." },
+  { title: "Repository Setup", description: "Hosting, branching, commit conventions, versioning, releases and CI/CD." },
+  { title: "Security", description: "The security practices the AI should follow in this project." },
+  { title: "Commands", description: "Build, test, lint and run commands the AI can use." },
+  { title: "Code Style", description: "Naming, formatting and other style conventions." },
+  { title: "AI Behavior", description: "How the assistant should behave while it helps you code." },
+  { title: "Boundaries", description: "What the AI should always do, ask about first, or never do." },
+  { title: "Testing Strategy", description: "Test levels, frameworks and coverage expectations." },
+  { title: "Static Files", description: "Files to embed in the configuration." },
+  { title: "Anything Else?", description: "Free-form notes for anything the other steps missed." },
+  { title: "Generate", description: "Preview the files, copy them one by one or download them, and save the result as a blueprint." },
+];
 
 export default function WizardOverviewPage() {
   return (
@@ -58,151 +74,19 @@ export default function WizardOverviewPage() {
           All steps are available to every user. Walk through each one to build your perfect configuration.
         </p>
 
-        {/* Step 1: Project Info */}
-        <div className="rounded-xl border bg-card p-6">
-          <div className="flex items-start gap-4">
-            <div className="rounded-lg bg-primary/10 p-2">
-              <FileText className="h-5 w-5 text-primary" />
-            </div>
-            <div className="space-y-3">
-              <h3 className="text-xl font-semibold">1. Project Information</h3>
-              <p className="text-muted-foreground">
-                Describe your project to help the AI understand your codebase context.
-              </p>
-              <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-3">
-                <span className="flex items-center gap-1"><Check className="h-3 w-3 text-green-500" /> Project name</span>
-                <span className="flex items-center gap-1"><Check className="h-3 w-3 text-green-500" /> Description</span>
-                <span className="flex items-center gap-1"><Check className="h-3 w-3 text-green-500" /> Project type</span>
+        <ol className="space-y-3">
+          {WIZARD_STEPS.map((step, i) => (
+            <li key={step.title} className="flex items-start gap-4 rounded-xl border bg-card p-4">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                {i + 1}
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Step 2: Tech Stack */}
-        <div className="rounded-xl border bg-card p-6">
-          <div className="flex items-start gap-4">
-            <div className="rounded-lg bg-primary/10 p-2">
-              <Code className="h-5 w-5 text-primary" />
-            </div>
-            <div className="space-y-3">
-              <h3 className="text-xl font-semibold">2. Tech Stack</h3>
-              <p className="text-muted-foreground">
-                Select your languages, frameworks, and tools. This determines the specific rules included.
-              </p>
-              <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-3">
-                <span className="flex items-center gap-1"><Check className="h-3 w-3 text-green-500" /> Languages</span>
-                <span className="flex items-center gap-1"><Check className="h-3 w-3 text-green-500" /> Frameworks</span>
-                <span className="flex items-center gap-1"><Check className="h-3 w-3 text-green-500" /> Libraries</span>
+              <div>
+                <h3 className="font-semibold">{step.title}</h3>
+                <p className="text-sm text-muted-foreground">{step.description}</p>
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Step 3: AI Platforms */}
-        <div className="rounded-xl border bg-card p-6">
-          <div className="flex items-start gap-4">
-            <div className="rounded-lg bg-primary/10 p-2">
-              <Laptop className="h-5 w-5 text-primary" />
-            </div>
-            <div className="space-y-3">
-              <h3 className="text-xl font-semibold">3. AI Platforms</h3>
-              <p className="text-muted-foreground">
-                Choose which AI IDE platforms to generate configs for. Select multiple platforms.
-              </p>
-              <div className="flex flex-wrap gap-2 text-xs">
-                <code className="rounded bg-muted px-2 py-1">AGENTS.md</code>
-                <code className="rounded bg-muted px-2 py-1">.cursor/rules</code>
-                <code className="rounded bg-muted px-2 py-1">CLAUDE.md</code>
-                <code className="rounded bg-muted px-2 py-1">.windsurfrules</code>
-                <Link href="/docs/platforms" className="text-primary hover:underline">+30 more</Link>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Step 4: Repository Settings */}
-        <div className="rounded-xl border bg-card p-6">
-          <div className="flex items-start gap-4">
-            <div className="rounded-lg bg-blue-500/10 p-2">
-              <GitBranch className="h-5 w-5 text-blue-500" />
-            </div>
-            <div className="space-y-3">
-              <h3 className="text-xl font-semibold">4. Repository Settings</h3>
-              <p className="text-muted-foreground">
-                Configure branching strategy, commit conventions, and PR guidelines.
-              </p>
-              <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
-                <span className="flex items-center gap-1"><Check className="h-3 w-3 text-green-500" /> Branching strategy</span>
-                <span className="flex items-center gap-1"><Check className="h-3 w-3 text-green-500" /> Commit conventions</span>
-                <span className="flex items-center gap-1"><Check className="h-3 w-3 text-green-500" /> PR guidelines</span>
-                <span className="flex items-center gap-1"><Check className="h-3 w-3 text-green-500" /> Branch naming</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Step 5: Release Strategy */}
-        <div className="rounded-xl border bg-card p-6">
-          <div className="flex items-start gap-4">
-            <div className="rounded-lg bg-blue-500/10 p-2">
-              <Tag className="h-5 w-5 text-blue-500" />
-            </div>
-            <div className="space-y-3">
-              <h3 className="text-xl font-semibold">5. Release Strategy</h3>
-              <p className="text-muted-foreground">
-                Define versioning and release process for consistency.
-              </p>
-              <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
-                <span className="flex items-center gap-1"><Check className="h-3 w-3 text-green-500" /> Versioning scheme</span>
-                <span className="flex items-center gap-1"><Check className="h-3 w-3 text-green-500" /> Changelog format</span>
-                <span className="flex items-center gap-1"><Check className="h-3 w-3 text-green-500" /> Release process</span>
-                <span className="flex items-center gap-1"><Check className="h-3 w-3 text-green-500" /> Tag format</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Step 6: CI/CD */}
-        <div className="rounded-xl border bg-card p-6">
-          <div className="flex items-start gap-4">
-            <div className="rounded-lg bg-purple-500/10 p-2">
-              <Workflow className="h-5 w-5 text-purple-500" />
-            </div>
-            <div className="space-y-3">
-              <h3 className="text-xl font-semibold">6. CI/CD Configuration</h3>
-              <p className="text-muted-foreground">
-                Configure your deployment pipeline so the AI understands your workflow.
-              </p>
-              <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
-                <span className="flex items-center gap-1"><Check className="h-3 w-3 text-green-500" /> CI platform</span>
-                <span className="flex items-center gap-1"><Check className="h-3 w-3 text-green-500" /> Pipeline stages</span>
-                <span className="flex items-center gap-1"><Check className="h-3 w-3 text-green-500" /> Deploy targets</span>
-                <span className="flex items-center gap-1"><Check className="h-3 w-3 text-green-500" /> Environments</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Step 7: Generate */}
-        <div className="rounded-xl border bg-card p-6">
-          <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500/10">
-              <Sparkles className="h-5 w-5 text-green-600 dark:text-green-400" />
-            </div>
-            <div className="space-y-3">
-              <h3 className="text-xl font-semibold">7. Generate & Download</h3>
-              <p className="text-muted-foreground">
-                Preview, adjust, and download your configuration files.
-              </p>
-              <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
-                <li>Preview each file before downloading</li>
-                <li>Copy individual files to clipboard</li>
-                <li>Download all files as a ZIP archive</li>
-                <li>Save as a blueprint to share with others</li>
-              </ul>
-            </div>
-          </div>
-        </div>
+            </li>
+          ))}
+        </ol>
       </section>
 
       {/* AI Features (Teams) */}

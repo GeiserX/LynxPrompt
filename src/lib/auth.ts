@@ -14,7 +14,6 @@ import {
   ENABLE_EMAIL_AUTH,
   ENABLE_PASSKEYS,
   ENABLE_USER_REGISTRATION,
-  ENABLE_SSO,
   APP_NAME,
   APP_URL,
   APP_LOGO_URL,
@@ -24,8 +23,8 @@ import {
   type VerifiedAuthenticationResponse,
 } from "@simplewebauthn/server";
 import { createTransport } from "nodemailer";
-import { createHash, createHmac } from "crypto";
-import { secureCookiesEnabled } from "@/lib/auth-cookies";
+import { createHash } from "crypto";
+import { secureCookiesEnabled, SESSION_MAX_AGE_SECONDS } from "@/lib/auth-cookies";
 
 // Generate Gravatar URL from email
 function getGravatarUrl(email: string): string {
@@ -294,76 +293,6 @@ function buildProviders(): Provider[] {
             console.error("Passkey authentication error:", error);
             return null;
           }
-        },
-      })
-    );
-  }
-
-  // SSO credentials provider - validates HMAC-signed one-time nonce from OIDC callback
-  if (ENABLE_SSO) {
-    providers.push(
-      CredentialsProvider({
-        id: "sso",
-        name: "SSO",
-        credentials: {
-          userId: { type: "text" },
-          email: { type: "text" },
-          teamId: { type: "text" },
-          nonce: { type: "text" },
-          sig: { type: "text" },
-        },
-        async authorize(credentials) {
-          if (
-            !credentials?.userId || !credentials?.email ||
-            !credentials?.teamId || !credentials?.nonce || !credentials?.sig
-          ) {
-            return null;
-          }
-
-          const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
-          if (!secret) return null;
-
-          // Verify HMAC signature (includes nonce to bind it)
-          const signData = `${credentials.userId}:${credentials.email}:${credentials.teamId}:${credentials.nonce}`;
-          const expected = createHmac("sha256", secret).update(signData).digest("hex");
-
-          if (credentials.sig !== expected) {
-            return null;
-          }
-
-          // Consume one-time nonce — delete it and verify it existed + hasn't expired
-          try {
-            const token = await prismaUsers.verificationToken.delete({
-              where: {
-                identifier_token: {
-                  identifier: `sso:${credentials.userId}`,
-                  token: credentials.nonce,
-                },
-              },
-            });
-            if (token.expires < new Date()) {
-              return null; // Nonce expired
-            }
-          } catch {
-            return null; // Nonce not found (already consumed or never existed)
-          }
-
-          // Look up the user - they must already exist (created by OIDC callback)
-          const user = await prismaUsers.user.findUnique({
-            where: { id: credentials.userId },
-            select: { id: true, email: true, name: true, image: true },
-          });
-
-          if (!user || user.email !== credentials.email) {
-            return null;
-          }
-
-          return {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            image: user.image,
-          };
         },
       })
     );
@@ -692,7 +621,7 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "database",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: SESSION_MAX_AGE_SECONDS, // 30 days
     updateAge: 24 * 60 * 60, // 24 hours - refresh session if older
   },
   // Disable debug in production

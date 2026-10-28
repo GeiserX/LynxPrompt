@@ -39,6 +39,7 @@ jobs:
     outputs:
       should_publish: ${{ steps.check.outputs.should_publish }}
       version: ${{ steps.version.outputs.version }}
+      ref: ${{ steps.ref.outputs.ref }}
       platforms: ${{ steps.platforms.outputs.platforms }}
 
     steps:
@@ -82,6 +83,19 @@ jobs:
             echo "version=$VERSION" >> $GITHUB_OUTPUT
           fi
 
+      # Build the code that was tagged, not whatever main holds when the job
+      # starts: a merge landing between the tag and this run would otherwise ship
+      # untagged code under the tagged version.
+      - name: Resolve the release tag
+        id: ref
+        run: |
+          TAG="cli-v${{ steps.version.outputs.version }}"
+          if ! git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null; then
+            echo "::error::tag $TAG does not exist; publish only released versions"
+            exit 1
+          fi
+          echo "ref=refs/tags/$TAG" >> $GITHUB_OUTPUT
+
       - name: Get platforms
         id: platforms
         run: |
@@ -103,11 +117,12 @@ jobs:
         working-directory: cli
     outputs:
       version: ${{ needs.check.outputs.version }}
-      tarball_sha256: ${{ steps.sha.outputs.sha256 }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.check.outputs.ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -152,13 +167,6 @@ jobs:
           npm install -g npm@^11.5.1
           npm publish --access public --loglevel verbose
 
-      - name: Get tarball SHA256
-        id: sha
-        run: |
-          sleep 10
-          SHA=$(curl -sL "https://registry.npmjs.org/lynxprompt/-/lynxprompt-${{ needs.check.outputs.version }}.tgz" | sha256sum | cut -d' ' -f1)
-          echo "sha256=$SHA" >> $GITHUB_OUTPUT
-
   # ===========================================
   # Build and upload standalone binaries
   # ===========================================
@@ -183,6 +191,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.check.outputs.ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -253,6 +263,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.check.outputs.ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -379,6 +391,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.check.outputs.ref }}
 
       - name: Update nuspec version
         shell: pwsh
@@ -418,6 +432,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.check.outputs.ref }}
 
       - name: Update snapcraft.yaml version
         run: |
@@ -453,6 +469,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.check.outputs.ref }}
+          sparse-checkout: .github/scripts
+
+      # The registry can answer 404 for a few seconds after npm publish; the
+      # script waits for the real tarball and fails rather than hash anything else.
+      - name: Get tarball SHA256
+        id: sha
+        run: |
+          SHA=$(bash .github/scripts/npm-tarball-sha256.sh lynxprompt "${{ needs.check.outputs.version }}")
+          echo "sha256=$SHA" >> $GITHUB_OUTPUT
+
       - name: Checkout Homebrew tap
         uses: actions/checkout@v7
         with:
@@ -472,7 +502,7 @@ jobs:
             desc "CLI for LynxPrompt - Generate AI IDE configuration files"
             homepage "https://lynxprompt.com"
             url "https://registry.npmjs.org/lynxprompt/-/lynxprompt-${{ needs.check.outputs.version }}.tgz"
-            sha256 "${{ needs.publish-npm.outputs.tarball_sha256 }}"
+            sha256 "${{ steps.sha.outputs.sha256 }}"
             license "SEE LICENSE IN LICENSE"
 
             depends_on "node@22"

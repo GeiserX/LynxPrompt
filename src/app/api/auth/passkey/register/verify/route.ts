@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions, webAuthnConfig } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
+import { requirePasskeyVerified } from "@/lib/passkey-session";
+import { sessionCookieName } from "@/lib/auth-cookies";
 import { ENABLE_PASSKEYS } from "@/lib/feature-flags";
 import { verifyRegistrationResponse } from "@simplewebauthn/server";
 
@@ -23,6 +25,9 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
+
+    const passkeyBlock = await requirePasskeyVerified(request, session.user.id);
+    if (passkeyBlock) return passkeyBlock;
 
     const challenge = request.cookies.get("passkey-challenge")?.value;
     if (!challenge) {
@@ -65,6 +70,17 @@ export async function POST(request: NextRequest) {
         name: sanitizedName,
       },
     });
+
+    // The user just proved the new passkey on this session (and passed the
+    // gate above), so this session counts as verified. Without this, adding a
+    // first passkey would lock the current session out of sensitive routes.
+    const sessionToken = request.cookies.get(sessionCookieName())?.value;
+    if (sessionToken) {
+      await prismaUsers.session.updateMany({
+        where: { sessionToken, userId: session.user.id },
+        data: { passkeyVerified: true, passkeyVerifiedAt: new Date() },
+      });
+    }
 
     // Clear the challenge cookie
     const response = NextResponse.json({ success: true });

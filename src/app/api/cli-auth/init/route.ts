@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prismaUsers } from "@/lib/db-users";
 import { randomBytes } from "crypto";
+import { isValidCodeChallenge } from "@/lib/cli-auth";
 
 // Rate limiting: max 5 init calls per IP per 5 minutes
 const initRateLimitStore = new Map<string, { count: number; resetTime: number }>();
@@ -40,6 +41,17 @@ export async function POST(request: NextRequest): Promise<Response> {
       );
     }
 
+    // Current CLIs send the SHA-256 of a verifier they keep to themselves.
+    // Older CLIs send no body; their sessions keep working without the check.
+    const body = await request.json().catch(() => null);
+    const codeChallenge = body?.code_challenge;
+    if (codeChallenge !== undefined && !isValidCodeChallenge(codeChallenge)) {
+      return NextResponse.json(
+        { error: "Invalid code_challenge" },
+        { status: 400 }
+      );
+    }
+
     // Generate a unique session ID
     const sessionId = randomBytes(32).toString("hex");
     
@@ -52,6 +64,7 @@ export async function POST(request: NextRequest): Promise<Response> {
         sessionId,
         expiresAt,
         status: "PENDING",
+        codeChallenge: codeChallenge ?? null,
       },
     });
 

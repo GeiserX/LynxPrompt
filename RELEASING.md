@@ -10,7 +10,7 @@ LynxPrompt uses [Semantic Versioning](https://semver.org/):
 - **MINOR** (0.x.0): New features, backward compatible
 - **PATCH** (0.0.x): Bug fixes, security patches
 
-Current version is tracked in `package.json`.
+The released version is the highest `app-v*` (app) or `cli-v*` (CLI) tag. `package.json` on `main` can lag behind it, because the release job bumps the version only in its own tagged commit; the next release starts from whichever is higher.
 
 ## Release Process
 
@@ -23,51 +23,38 @@ On every push to `main` that changes `package.json`, `cli/package.json` or the r
 
 Workflows, docs, tests and the Helm chart release nothing on their own, so a CI-only change does not publish a new image or leave production behind a new tag.
 
-### 1. Prepare the Release
+### 1. Bump the version in a pull request
+
+`release.yml` creates the tags, the GitHub Releases and the images. Never run `npm version` with a tag, never
+create a tag by hand and never build or push the image yourself.
 
 ```bash
-# Ensure you're on main branch with latest changes
-git checkout main
-git pull origin main
-
-# Run all checks
-npm run lint
-npm run typecheck
-npm test
-npm run build
+git checkout -b release/x.y.z origin/main
+npm version patch --no-git-tag-version              # app: package.json and package-lock.json
+(cd cli && npm version patch --no-git-tag-version)   # CLI, only when cli/ changed
+git commit -m "chore(release): x.y.z" package.json package-lock.json cli/package.json
+git push -u origin release/x.y.z
 ```
 
-### 2. Update Version
+Open the pull request into `main` and merge it once CI is green.
+
+### 2. What the merge triggers
+
+1. `release.yml` runs CI and the CLI tests, then for each product with changes since its last tag creates
+   `app-vX.Y.Z` / `cli-vX.Y.Z` and the GitHub Release with a changelog from the commits.
+2. The app release dispatches `docker-publish.yml`, which builds `drumsergio/lynxprompt:X.Y.Z` and pushes it to
+   Docker Hub.
+3. The CLI release triggers `publish-cli.yml`: npm, the standalone binaries, Homebrew, Chocolatey and Snap.
+
+### 3. Check it
 
 ```bash
-# For patch release (0.21.0 -> 0.21.1)
-npm version patch
-
-# For minor release (0.21.0 -> 0.22.0)
-npm version minor
-
-# For major release (0.21.0 -> 1.0.0)
-npm version major
+gh run list -R GeiserX/LynxPrompt -w "Release" --limit 3
+gh release list -R GeiserX/LynxPrompt --limit 5
+gh run list -R GeiserX/LynxPrompt -w "Publish CLI" --limit 3   # if the CLI was released
 ```
 
-This will:
-- Update `package.json` version
-- Create a git commit
-- Create a git tag
-
-### 3. Build Docker Image
-
-```bash
-# Get the new version
-VERSION=$(node -p "require('./package.json').version")
-
-# Build and push
-docker buildx build --platform linux/amd64 \
-  --cache-from type=registry,ref=YOUR_REGISTRY/lynxprompt:buildcache \
-  --cache-to type=registry,ref=YOUR_REGISTRY/lynxprompt:buildcache,mode=max \
-  -t YOUR_REGISTRY/lynxprompt:$VERSION \
-  --push .
-```
+If `publish-cli.yml` did not start, run it by hand: `gh workflow run "Publish CLI" -R GeiserX/LynxPrompt -f platforms=all`.
 
 ### 4. Deploy
 
@@ -78,35 +65,9 @@ Production runs the image pinned by tag and digest in the GitOps repo's `docker-
 
 The "Verify Production Deployment" workflow then polls `/api/health` for the new version. It gives up after 20 minutes, so it fails whenever the deploy waits on Renovate's one-day delay. That means not deployed yet, not broken.
 
-### 5. Post-Release
-
-```bash
-# Push tags
-git push origin main --tags
-
-# Create GitHub release
-gh release create v$VERSION --generate-notes
-```
-
 ## Hotfix Process
 
-For urgent fixes:
-
-```bash
-# Create hotfix branch from main
-git checkout -b hotfix/description main
-
-# Make fix, commit
-git commit -m "fix: description"
-
-# Merge to main
-git checkout main
-git merge hotfix/description
-
-# Bump patch version and release
-npm version patch
-# ... follow release steps
-```
+A hotfix is a normal pull request into `main` with the fix and the patch bump from step 1. Merging it releases.
 
 ## Rollback Process
 
@@ -125,33 +86,26 @@ If a release has issues:
 
 ### Git Rollback
 
-```bash
-# Revert the release commit
-git revert HEAD
-
-# Create new patch release
-npm version patch
-```
+Revert the faulty commit in a pull request that also bumps the patch version (step 1), and merge it.
 
 ## Environment Configuration
 
 ### GitHub Secrets Required for CI/CD
 
-| Secret | Description |
-|--------|-------------|
-| `DOCKER_REGISTRY` | Docker registry URL |
-| `DOCKER_USERNAME` | Registry username |
-| `DOCKER_PASSWORD` | Registry password |
-| `GITEA_USERNAME` | GitOps repo username |
-| `GITEA_TOKEN` | GitOps repo access token |
-| `CLOUDFLARE_ZONE_ID` | Cloudflare zone ID |
-| `CLOUDFLARE_API_TOKEN` | Cloudflare API token |
-| `CODECOV_TOKEN` | Codecov upload token |
+| Secret | Used by |
+|--------|---------|
+| `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` | Image publish, the development deploy and the Docker Hub description |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `NEXT_PUBLIC_UMAMI_WEBSITE_ID` | Build arguments of the image |
+| `GITEA_USERNAME`, `GITEA_TOKEN` | The development deploy (GitOps repo) |
+| `CLOUDFLARE_ZONE_ID`, `CLOUDFLARE_API_TOKEN` | Cache purge after the production deploy check |
+| `LYNXPROMPT_DEV_TOKEN` | CLI tests against the development instance |
+| `HOMEBREW_TAP_TOKEN`, `CHOCOLATEY_API_KEY`, `SNAPCRAFT_STORE_CREDENTIALS` | CLI package channels |
+| `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID` | Signing and notarizing the macOS CLI binaries |
 
 ### GitHub Environments
 
-- **production**: lynxprompt.com - manual approval required
-- **development**: dev.lynxprompt.com - auto-deploy on develop branch
+- **production**: lynxprompt.com, used by the "Verify Production Deployment" workflow (no approval rule)
+- **development**: dev.lynxprompt.com, auto-deploy on every push to `develop`
 
 ## Pre-Release Checklist
 
