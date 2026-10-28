@@ -761,7 +761,8 @@ function generateFileContent(options: GenerateOptions, platform: string): string
   // MDC frontmatter for Cursor
   if (isMdc) {
     sections.push("---");
-    sections.push(`description: "${projectName} - AI coding rules"`);
+    // JSON strings are valid YAML, so quotes, ": " and " #" in the name stay text
+    sections.push(`description: ${JSON.stringify(`${projectName} - AI coding rules`)}`);
     sections.push('globs: ["**/*"]');
     sections.push("alwaysApply: true");
     sections.push("---");
@@ -1890,9 +1891,9 @@ function generateYamlConfig(options: GenerateOptions, platform: string): string 
     lines.push("version: 1.0.0");
     lines.push("");
     lines.push("project:");
-    lines.push(`  name: ${options.name}`);
+    lines.push(`  name: ${JSON.stringify(options.name)}`);
     if (options.description) {
-      lines.push(`  description: "${options.description}"`);
+      lines.push(`  description: ${JSON.stringify(options.description)}`);
     }
     lines.push("");
     lines.push("context:");

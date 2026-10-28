@@ -45,7 +45,6 @@ app:
   logoUrl: ""
   contactEmail: ""
   statusPageUrl: ""
-  platformOwnerEmail: ""
   enableUserRegistration: "true"
   enableEmailAuth: "true"
   enablePasskeys: "true"
@@ -81,7 +80,6 @@ smtp:
   user: ""
   password: ""
   from: "noreply@localhost"
-  fromName: "LynxPrompt"
 
 ai:
   anthropicApiKey: ""
