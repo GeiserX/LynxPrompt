@@ -18,6 +18,16 @@ function job(workflow: string, name: string): string {
 }
 
 describe("CI gates can fail", () => {
+  it("the app CI installs from the lockfile on the image's Node major", () => {
+    // npm install hid a package-lock.json that npm ci rejected (28-10), and CI ran
+    // Node 22 while the image runs node:26-alpine.
+    const ci = read("ci.yml");
+    expect(ci).not.toMatch(/run: npm install\b/);
+    expect(ci.match(/run: npm ci\n/g)?.length).toBeGreaterThanOrEqual(2);
+    const image = readFileSync(resolve(process.cwd(), "Dockerfile"), "utf8").match(/^FROM node:(\d+)-/m)![1];
+    expect(ci).toMatch(new RegExp(`NODE_VERSION: "${image}"`));
+  });
+
   it("CLI tests never swallow a command's exit code", () => {
     expect(read("cli-tests.yml")).not.toMatch(/\|\|\s*true/);
   });
