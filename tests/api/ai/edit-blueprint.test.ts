@@ -82,9 +82,13 @@ vi.mock("@/lib/api-auth", () => ({
   canPerform: vi.fn(() => true),
 }));
 
+const flags = vi.hoisted(() => ({ model: "claude-haiku-5-5" }));
+
 vi.mock("@/lib/feature-flags", () => ({
   ENABLE_AI: true,
-  AI_MODEL: "test-model",
+  get AI_MODEL() {
+    return flags.model;
+  },
 }));
 
 const mockCreate = vi.fn();
@@ -101,8 +105,9 @@ vi.mock("@anthropic-ai/sdk", () => {
 const MAX = 1_000_000;
 const DAY = 24 * 60 * 60 * 1000;
 
-// 100 input + 1000 output tokens = 2.5 + 125 = 128 cost units (rounded up).
-const COST = 128;
+// At Claude Haiku 5.5 list prices ($0.10 / $0.50 per million tokens, 1 cost
+// unit = $0.00001): 100 input + 1000 output tokens = 1 + 50 = 51 cost units.
+const COST = 51;
 function reply(text: string, stopReason = "end_turn") {
   return {
     content: [{ type: "text", text }],
@@ -132,6 +137,7 @@ const edit = { content: "# AGENTS.md\nUse GitHub.", instruction: "change GitHub 
 describe("POST /api/ai/edit-blueprint usage budget", () => {
   beforeEach(() => {
     vi.stubEnv("ANTHROPIC_API_KEY", "test-key");
+    flags.model = "claude-haiku-5-5";
     mockCreate.mockReset();
     mockCreate.mockImplementation(async () => {
       await tick();
@@ -179,14 +185,26 @@ describe("POST /api/ai/edit-blueprint usage budget", () => {
   });
 
   it("lets only as many parallel requests through as the budget covers", async () => {
-    row.aiTokensUsedThisPeriod = MAX - 1500; // room for one worst-case call
+    // A worst-case blueprint call reserves about 415 units on Haiku 5.5.
+    row.aiTokensUsedThisPeriod = MAX - 600; // room for one worst-case call
 
     const results = await Promise.all(Array.from({ length: 5 }, () => post(edit)));
     const ok = results.filter((r) => r.status === 200).length;
 
     expect(ok).toBe(1);
     expect(mockCreate).toHaveBeenCalledTimes(1);
-    expect(row.aiTokensUsedThisPeriod).toBe(MAX - 1500 + COST);
+    expect(row.aiTokensUsedThisPeriod).toBe(MAX - 600 + COST);
+  });
+
+  it("refuses a model with no price instead of counting it at a guessed rate", async () => {
+    flags.model = "claude-unpriced-model";
+    row.aiTokensUsedThisPeriod = 500;
+
+    const res = await post(edit);
+
+    expect(res.status).toBe(503);
+    expect(mockCreate).not.toHaveBeenCalled();
+    expect(row.aiTokensUsedThisPeriod).toBe(500);
   });
 
   it("counts calls the model answers with ERROR:", async () => {
