@@ -232,6 +232,31 @@ describe("CLI config", () => {
     expect(config.getOtherLoggedInUrls()).toEqual([]);
   });
 
+  it("keeps the old-host login while LYNXPROMPT_API_URL still selects the old host", async () => {
+    state.store = {
+      apiUrl: "https://lynxprompt.com",
+      tokens: { "https://lynxprompt.com": { token: "lp_hosted" } },
+    };
+    process.env.LYNXPROMPT_API_URL = "https://lynxprompt.com/";
+    const config = await loadConfig();
+    expect(config.getToken()).toBe("lp_hosted");
+    expect(state.store.tokens).toEqual({ "https://lynxprompt.com": { token: "lp_hosted" } });
+  });
+
+  it("leaves both logins and the saved URL alone when each host holds a different one", async () => {
+    const store = {
+      apiUrl: "https://lynxprompt.com",
+      tokens: {
+        "https://lynxprompt.com": { token: "lp_old_account" },
+        "https://lynxprompt.geiser.cloud": { token: "lp_new_account" },
+      },
+    };
+    state.store = structuredClone(store);
+    const config = await loadConfig();
+    expect(state.store).toEqual(store);
+    expect(config.getToken()).toBe("lp_old_account");
+  });
+
   it("leaves a custom server URL, and LYNXPROMPT_API_URL, as they are", async () => {
     state.store = {
       apiUrl: "https://prompts.example.org",

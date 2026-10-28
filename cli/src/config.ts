@@ -105,17 +105,25 @@ for (const key of ["token", "tokenApiUrl", "user"] as const) {
 
 // Point a config still on the old hosted address at the new one, with its
 // login: same server, same accounts. A self-hosted URL is left alone, and so
-// is LYNXPROMPT_API_URL, which is never saved.
-if (normalizeUrl(config.get("apiUrl")) === LEGACY_DEFAULT_API_URL) {
-  config.set("apiUrl", DEFAULT_API_URL);
-}
+// is LYNXPROMPT_API_URL, which is never saved. Nothing moves while the
+// environment still selects the old host (its login must stay findable), or
+// when each host already holds a different login (the user picks one).
 {
   const logins = getLogins();
   const legacyLogin = logins[LEGACY_DEFAULT_API_URL];
-  if (legacyLogin) {
-    delete logins[LEGACY_DEFAULT_API_URL];
-    logins[DEFAULT_API_URL] ??= legacyLogin;
-    setLogins(logins);
+  const newLogin = logins[DEFAULT_API_URL];
+  const envSelectsLegacy =
+    normalizeUrl(process.env.LYNXPROMPT_API_URL ?? "") === LEGACY_DEFAULT_API_URL;
+  const conflict = !!legacyLogin && !!newLogin && legacyLogin.token !== newLogin.token;
+  if (!envSelectsLegacy && !conflict) {
+    if (normalizeUrl(config.get("apiUrl")) === LEGACY_DEFAULT_API_URL) {
+      config.set("apiUrl", DEFAULT_API_URL);
+    }
+    if (legacyLogin) {
+      delete logins[LEGACY_DEFAULT_API_URL];
+      logins[DEFAULT_API_URL] = newLogin ?? legacyLogin;
+      setLogins(logins);
+    }
   }
 }
 
