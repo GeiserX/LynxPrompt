@@ -257,14 +257,15 @@ describe("generateAllFiles - API sync header", () => {
     expect(files[0].content).toContain("bp-123");
   });
 
-  it("uses curl with the token from the environment when the CLI is not preferred", () => {
+  it("uses lynxp pull with the token from the environment when lynxp login is not used", () => {
     const files = generateAllFiles(
       { ...baseConfig, platform: "cursor", enableAutoUpdate: true, preferCliSync: false },
       baseUser,
       { blueprintId: "bp-456" }
     );
-    expect(files[0].content).toContain("curl -sf -X PUT");
-    expect(files[0].content).toContain("$LYNXPROMPT_API_TOKEN");
+    expect(files[0].content).toContain("lynxp pull bp_bp-456 --yes");
+    expect(files[0].content).toContain('export LYNXPROMPT_TOKEN="$LYNXPROMPT_API_TOKEN"');
+    expect(files[0].content).not.toContain("curl");
   });
 
   it("uses CLI sync when preferred", () => {

@@ -1,6 +1,7 @@
 /**
  * The Cloud Sync instructions written into a synced rules file: how to push
- * and pull it with the CLI or with curl. The web wizard and the CLI both
+ * and pull it with the CLI, signed in with lynxp login or with an API token
+ * taken from an environment variable. The web wizard and the CLI both
  * write them, so a synced file reads the same whichever made it.
  */
 
@@ -23,6 +24,7 @@ function syncInstructions(opts: ApiSyncHeaderOptions): string[] {
   const bpId = toBlueprintApiId(opts.blueprintId);
   const file = opts.fileName;
   const appUrl = opts.appUrl.replace(/\/+$/, "");
+  const token = opts.tokenEnvVar || "LYNXPROMPT_API_TOKEN";
   const lines = [
     "LynxPrompt Cloud Sync",
     `Blueprint ID: ${bpId}`,
@@ -30,14 +32,18 @@ function syncInstructions(opts: ApiSyncHeaderOptions): string[] {
     "",
   ];
 
+  lines.push(
+    opts.preferCliSync
+      ? "Using the LynxPrompt CLI (recommended, no token in this file):"
+      : `Using the LynxPrompt CLI, with the API token in $${token} (never put the token in this file):`,
+    "  npm install -g lynxprompt",
+  );
+  // A token is only good on the server that issued it, so token mode always
+  // names it rather than trusting a URL saved in the CLI's config.
+  if (!opts.preferCliSync || appUrl !== CLI_DEFAULT_API_URL) {
+    lines.push(`  export LYNXPROMPT_API_URL=${appUrl}`);
+  }
   if (opts.preferCliSync) {
-    lines.push(
-      "Using the LynxPrompt CLI (recommended, no token in this file):",
-      "  npm install -g lynxprompt",
-    );
-    if (appUrl !== CLI_DEFAULT_API_URL) {
-      lines.push(`  export LYNXPROMPT_API_URL=${appUrl}`);
-    }
     lines.push(
       "  lynxp login",
       `  lynxp link ${file} ${bpId}   # once: track this file without overwriting it`,
@@ -46,17 +52,10 @@ function syncInstructions(opts: ApiSyncHeaderOptions): string[] {
       `  lynxp diff ${file}   # compare local and cloud`,
     );
   } else {
-    const token = opts.tokenEnvVar || "LYNXPROMPT_API_TOKEN";
-    const url = `${appUrl}/api/v1/blueprints/${bpId}`;
+    if (token !== "LYNXPROMPT_TOKEN") lines.push(`  export LYNXPROMPT_TOKEN="$${token}"`);
     lines.push(
-      `Using curl, with the API token in $${token} (never put the token in this file):`,
-      `  export ${token}="your_token_here"`,
-      "",
-      "  Upload local changes:",
-      `  jq -Rs '{content: .}' ${file} | curl -sf -X PUT "${url}" -H "Authorization: Bearer $${token}" -H "Content-Type: application/json" --data-binary @-`,
-      "",
-      "  Download cloud changes:",
-      `  curl -sf "${url}" -H "Authorization: Bearer $${token}" | jq -er '.blueprint.content' > ${file}.new && mv ${file}.new ${file}`,
+      `  lynxp pull ${bpId} --yes   # download cloud changes into ${file}`,
+      `  lynxp push ${file}   # upload local changes`,
     );
   }
 

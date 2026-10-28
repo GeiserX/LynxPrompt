@@ -22,14 +22,3 @@ declare module "next-auth" {
     role?: UserRole | string;
   }
 }
-
-declare module "next-auth/jwt" {
-  interface JWT {
-    role?: UserRole | string;
-    image?: string | null;
-    displayName?: string | null;
-    persona?: string | null;
-    skillLevel?: string | null;
-    profileCompleted?: boolean;
-  }
-}

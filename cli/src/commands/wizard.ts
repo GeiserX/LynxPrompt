@@ -1294,12 +1294,12 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
   try {
     // Add blueprint mode and variables to config
     const variables = options.vars ? parseVariablesString(options.vars) : undefined;
-    // Don't pass enableAutoUpdate/blueprintId to generator yet - we'll add curl header after saving
+    // Don't pass enableAutoUpdate/blueprintId to generator yet - we'll add the sync header after saving
     const finalConfig = {
       ...config,
       blueprintMode: options.blueprint || config.blueprintMode || false,
       variables,
-      enableAutoUpdate: false, // Don't generate curl header yet
+      enableAutoUpdate: false, // Don't generate the sync header yet
       // One rule set: CLAUDE.md/GEMINI.md import AGENTS.md. Not with Cloud
       // Sync, which uploads one of the files and must upload real rules.
       pointerFiles: options.pointers !== false && !config.enableAutoUpdate,
@@ -1323,10 +1323,12 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
             description: config.description || "Generated with LynxPrompt CLI",
             content: content,
             visibility: "PRIVATE",
+            // lynxp pull writes the blueprint back to this path
+            repository_path: fileName,
           });
           savedBlueprintId = response.blueprint.id;
           
-          // Now regenerate with the real blueprint ID to include curl header
+          // Now regenerate with the real blueprint ID to include the sync header
           const configWithAutoUpdate = {
             ...finalConfig,
             enableAutoUpdate: true,
@@ -1342,7 +1344,7 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
         if (saveError instanceof Error) {
           console.log(chalk.gray(`     ${saveError.message}`));
         }
-        console.log(chalk.gray("     Continuing without auto-update curl command..."));
+        console.log(chalk.gray("     Continuing without the Cloud Sync header..."));
         // Continue without auto-update
       }
     }
@@ -3270,24 +3272,24 @@ async function runInteractiveWizard(
     console.log();
     console.log(chalk.gray("  📦 How should the AI perform sync operations?"));
     console.log();
-    console.log(chalk.green.bold("     CLI (Recommended):"));
+    console.log(chalk.green.bold("     lynxp login (Recommended):"));
     console.log(chalk.gray("     • Most secure - no tokens stored anywhere"));
-    console.log(chalk.gray("     • AI runs lynxp commands directly"));
-    console.log(chalk.gray("     • Requires CLI installed: npm install -g lynxprompt"));
+    console.log(chalk.gray("     • AI runs lynxp push, pull and diff directly"));
     console.log();
-    console.log(chalk.yellow("     curl/token/env variable:"));
-    console.log(chalk.gray("     • Works without CLI installed"));
+    console.log(chalk.yellow("     API token in an environment variable:"));
+    console.log(chalk.gray("     • For CI or agents that cannot run lynxp login"));
     console.log(chalk.gray("     • Token stored in environment variable (not in file)"));
-    console.log(chalk.gray("     • Less convenient but still secure"));
+    console.log(chalk.gray("     • AI runs lynxp pull with that token"));
+    console.log(chalk.gray("     Both need the CLI installed: npm install -g lynxprompt"));
     console.log();
     
     const syncMethodResponse = await prompts({
       type: "toggle",
       name: "preferCliSync",
-      message: chalk.white("Will LynxPrompt CLI be available in your dev environment?"),
+      message: chalk.white("Can you run lynxp login where the AI works?"),
       initial: true, // Default to yes - strongly recommended
-      active: "Yes, use CLI (recommended)",
-      inactive: "No, use curl/token/env variable",
+      active: "Yes, use lynxp login (recommended)",
+      inactive: "No, use an API token from an env variable",
       hint: chalk.green("Strongly recommended for security"),
     }, promptConfig);
     answers.preferCliSync = syncMethodResponse.preferCliSync ?? true;
@@ -3298,7 +3300,7 @@ async function runInteractiveWizard(
     } else {
       // Ask for env var name where token will be stored
       console.log();
-      console.log(chalk.gray("  🔐 Config will include curl commands using an environment variable."));
+      console.log(chalk.gray("  🔐 Config will run lynxp pull with the token from an environment variable."));
       console.log(chalk.gray("     Your API token will NOT be stored in the config file."));
       const envVarResponse = await prompts({
         type: "text",

@@ -6885,7 +6885,7 @@ function StepGenerate({
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                   <label className="font-medium text-sm">
-                    📦 Use LynxPrompt CLI
+                    📦 Sign in with lynxp login
                     <span className="ml-2 rounded bg-green-100 px-2 py-0.5 text-xs text-green-700 dark:bg-green-900 dark:text-green-300">
                       Recommended
                     </span>
@@ -6893,7 +6893,7 @@ function StepGenerate({
                   <p className="mt-1 text-xs text-muted-foreground">
                     {preferCliSync 
                       ? "AI will use lynxp push/pull/diff commands. No API token stored in file."
-                      : "AI will use curl with environment variable. Token in $" + tokenEnvVar}
+                      : "AI will run lynxp pull with the API token from $" + tokenEnvVar + "."}
                   </p>
                 </div>
                 <button
@@ -6902,7 +6902,7 @@ function StepGenerate({
                   aria-checked={preferCliSync}
                   onClick={() => onPreferCliSyncChange(!preferCliSync)}
                   className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${preferCliSync ? "bg-green-500" : "bg-muted"}`}
-                  aria-label="Toggle CLI preference"
+                  aria-label="Toggle lynxp login"
                 >
                   <span
                     className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${preferCliSync ? "translate-x-5" : "translate-x-0"}`}
@@ -6910,7 +6910,7 @@ function StepGenerate({
                 </button>
               </div>
               
-              {/* Env var name input - shown when not using CLI */}
+              {/* Env var name input - shown when not using lynxp login */}
               {!preferCliSync && (
                 <div>
                   <label className="text-xs text-muted-foreground">Environment variable for API token:</label>

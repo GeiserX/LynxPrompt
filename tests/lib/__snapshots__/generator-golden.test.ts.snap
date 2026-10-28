@@ -749,14 +749,12 @@ LynxPrompt Cloud Sync
 Blueprint ID: bp_golden
 This file is synced with LynxPrompt.
 
-Using curl, with the API token in $LYNXPROMPT_API_TOKEN (never put the token in this file):
-  export LYNXPROMPT_API_TOKEN="your_token_here"
-
-  Upload local changes:
-  jq -Rs '{content: .}' CLAUDE.md | curl -sf -X PUT "https://lynxprompt.com/api/v1/blueprints/bp_golden" -H "Authorization: Bearer $LYNXPROMPT_API_TOKEN" -H "Content-Type: application/json" --data-binary @-
-
-  Download cloud changes:
-  curl -sf "https://lynxprompt.com/api/v1/blueprints/bp_golden" -H "Authorization: Bearer $LYNXPROMPT_API_TOKEN" | jq -er '.blueprint.content' > CLAUDE.md.new && mv CLAUDE.md.new CLAUDE.md
+Using the LynxPrompt CLI, with the API token in $LYNXPROMPT_API_TOKEN (never put the token in this file):
+  npm install -g lynxprompt
+  export LYNXPROMPT_API_URL=https://lynxprompt.com
+  export LYNXPROMPT_TOKEN="$LYNXPROMPT_API_TOKEN"
+  lynxp pull bp_golden --yes   # download cloud changes into CLAUDE.md
+  lynxp push CLAUDE.md   # upload local changes
 
 Generate an API token at: https://lynxprompt.com/settings
 Docs: https://lynxprompt.com/docs/api
@@ -1563,14 +1561,12 @@ LynxPrompt Cloud Sync
 Blueprint ID: bp_golden
 This file is synced with LynxPrompt.
 
-Using curl, with the API token in $LYNXPROMPT_API_TOKEN (never put the token in this file):
-  export LYNXPROMPT_API_TOKEN="your_token_here"
-
-  Upload local changes:
-  jq -Rs '{content: .}' .cursor/rules/project.mdc | curl -sf -X PUT "https://lynxprompt.com/api/v1/blueprints/bp_golden" -H "Authorization: Bearer $LYNXPROMPT_API_TOKEN" -H "Content-Type: application/json" --data-binary @-
-
-  Download cloud changes:
-  curl -sf "https://lynxprompt.com/api/v1/blueprints/bp_golden" -H "Authorization: Bearer $LYNXPROMPT_API_TOKEN" | jq -er '.blueprint.content' > .cursor/rules/project.mdc.new && mv .cursor/rules/project.mdc.new .cursor/rules/project.mdc
+Using the LynxPrompt CLI, with the API token in $LYNXPROMPT_API_TOKEN (never put the token in this file):
+  npm install -g lynxprompt
+  export LYNXPROMPT_API_URL=https://lynxprompt.com
+  export LYNXPROMPT_TOKEN="$LYNXPROMPT_API_TOKEN"
+  lynxp pull bp_golden --yes   # download cloud changes into .cursor/rules/project.mdc
+  lynxp push .cursor/rules/project.mdc   # upload local changes
 
 Generate an API token at: https://lynxprompt.com/settings
 Docs: https://lynxprompt.com/docs/api
@@ -4504,14 +4500,12 @@ LynxPrompt Cloud Sync
 Blueprint ID: bp_golden
 This file is synced with LynxPrompt.
 
-Using curl, with the API token in $LYNXPROMPT_API_TOKEN (never put the token in this file):
-  export LYNXPROMPT_API_TOKEN="your_token_here"
-
-  Upload local changes:
-  jq -Rs '{content: .}' CLAUDE.md | curl -sf -X PUT "https://lynxprompt.com/api/v1/blueprints/bp_golden" -H "Authorization: Bearer $LYNXPROMPT_API_TOKEN" -H "Content-Type: application/json" --data-binary @-
-
-  Download cloud changes:
-  curl -sf "https://lynxprompt.com/api/v1/blueprints/bp_golden" -H "Authorization: Bearer $LYNXPROMPT_API_TOKEN" | jq -er '.blueprint.content' > CLAUDE.md.new && mv CLAUDE.md.new CLAUDE.md
+Using the LynxPrompt CLI, with the API token in $LYNXPROMPT_API_TOKEN (never put the token in this file):
+  npm install -g lynxprompt
+  export LYNXPROMPT_API_URL=https://lynxprompt.com
+  export LYNXPROMPT_TOKEN="$LYNXPROMPT_API_TOKEN"
+  lynxp pull bp_golden --yes   # download cloud changes into CLAUDE.md
+  lynxp push CLAUDE.md   # upload local changes
 
 Generate an API token at: https://lynxprompt.com/settings
 Docs: https://lynxprompt.com/docs/api
@@ -5795,14 +5789,12 @@ LynxPrompt Cloud Sync
 Blueprint ID: bp_golden
 This file is synced with LynxPrompt.
 
-Using curl, with the API token in $LYNXPROMPT_API_TOKEN (never put the token in this file):
-  export LYNXPROMPT_API_TOKEN="your_token_here"
-
-  Upload local changes:
-  jq -Rs '{content: .}' .cursor/rules/project.mdc | curl -sf -X PUT "https://lynxprompt.com/api/v1/blueprints/bp_golden" -H "Authorization: Bearer $LYNXPROMPT_API_TOKEN" -H "Content-Type: application/json" --data-binary @-
-
-  Download cloud changes:
-  curl -sf "https://lynxprompt.com/api/v1/blueprints/bp_golden" -H "Authorization: Bearer $LYNXPROMPT_API_TOKEN" | jq -er '.blueprint.content' > .cursor/rules/project.mdc.new && mv .cursor/rules/project.mdc.new .cursor/rules/project.mdc
+Using the LynxPrompt CLI, with the API token in $LYNXPROMPT_API_TOKEN (never put the token in this file):
+  npm install -g lynxprompt
+  export LYNXPROMPT_API_URL=https://lynxprompt.com
+  export LYNXPROMPT_TOKEN="$LYNXPROMPT_API_TOKEN"
+  lynxp pull bp_golden --yes   # download cloud changes into .cursor/rules/project.mdc
+  lynxp push .cursor/rules/project.mdc   # upload local changes
 
 Generate an API token at: https://lynxprompt.com/settings
 Docs: https://lynxprompt.com/docs/api

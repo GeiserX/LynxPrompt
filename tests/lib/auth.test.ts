@@ -150,32 +150,19 @@ describe("authOptions.callbacks.redirect", () => {
 });
 
 // ============================================================================
-// callbacks.session (JWT path)
+// callbacks.session without a database user
 // ============================================================================
 describe("authOptions.callbacks.session", () => {
   const sessionCallback = authOptions.callbacks!.session!;
 
-  it("populates session from JWT token when no db user", async () => {
+  // Sessions live in the database. A JWT (once written by a passkey
+  // credentials provider) must not name the user or waive the passkey check.
+  it("a JWT alone neither signs the user in nor waives the passkey check", async () => {
     const session = {
-      user: {
-        id: "",
-        email: "test@test.com",
-        name: "Test",
-        image: null,
-      },
+      user: { id: "", email: "test@test.com", name: "Test", image: null },
       expires: "",
     };
-
-    const token = {
-      sub: "user-123",
-      image: "https://example.com/avatar.jpg",
-      role: "ADMIN",
-      displayName: "Admin User",
-      persona: "developer",
-      skillLevel: "advanced",
-      profileCompleted: true,
-      subscriptionPlan: "TEAMS",
-    };
+    const token = { sub: "user-123", role: "ADMIN" };
 
     const result = await (sessionCallback as Function)({
       session,
@@ -185,59 +172,15 @@ describe("authOptions.callbacks.session", () => {
       newSession: undefined,
     });
 
-    expect(result.user.id).toBe("user-123");
-    expect(result.user.role).toBe("ADMIN");
-    expect(result.user.displayName).toBe("Admin User");
-    expect(result.user.persona).toBe("developer");
-    expect(result.user.skillLevel).toBe("advanced");
-    expect(result.user.profileCompleted).toBe(true);
-    expect(result.user).not.toHaveProperty("subscriptionPlan");
-    expect(result.user.hasPasskeys).toBe(true);
-    expect(result.user.requiresPasskeyCheck).toBe(false);
-  });
-
-  it("uses Gravatar for email when no image in token", async () => {
-    const session = {
-      user: {
-        id: "",
-        email: "test@test.com",
-        name: "Test",
-        image: null,
-      },
-      expires: "",
-    };
-
-    const token = {
-      sub: "user-123",
-      role: "USER",
-    };
-
-    const result = await (sessionCallback as Function)({
-      session,
-      user: undefined,
-      token,
-      trigger: "update",
-      newSession: undefined,
-    });
-
-    expect(result.user.image).toContain("gravatar.com/avatar");
+    expect(result.user.id).toBe("");
+    expect(result.user.role).toBeUndefined();
+    expect(result.user).not.toHaveProperty("requiresPasskeyCheck");
+    expect(result.user).not.toHaveProperty("hasPasskeys");
   });
 });
 
-// ============================================================================
-// callbacks.jwt
-// ============================================================================
 describe("authOptions.callbacks.jwt", () => {
-  const jwtCallback = authOptions.callbacks!.jwt!;
-
-  it("passes through token when no user", async () => {
-    const token = { sub: "user-123", role: "USER" };
-    const result = await (jwtCallback as Function)({
-      token,
-      user: undefined,
-      account: null,
-      trigger: "update",
-    });
-    expect(result.sub).toBe("user-123");
+  it("is not defined: no provider signs in with a JWT", () => {
+    expect(authOptions.callbacks?.jwt).toBeUndefined();
   });
 });

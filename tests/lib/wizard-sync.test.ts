@@ -55,13 +55,38 @@ describe("addApiSyncHeader", () => {
     expect(out).not.toContain("LYNXPROMPT_API_URL");
   });
 
-  it("curl instructions send valid JSON and read the content from the response envelope", () => {
+  it("token mode always names the server the token belongs to", () => {
+    const out = addApiSyncHeader("# A\n", {
+      ...base,
+      preferCliSync: false,
+      appUrl: "https://lynxprompt.com",
+      fileName: "AGENTS.md",
+    });
+    expect(out).toContain("export LYNXPROMPT_API_URL=https://lynxprompt.com");
+  });
+
+  it("token mode runs lynxp pull with the token from the environment, never curl", () => {
     const out = addApiSyncHeader("# A\n", { ...base, preferCliSync: false, fileName: "AGENTS.md" });
-    expect(out).toContain(`jq -Rs '{content: .}' AGENTS.md | curl`);
-    expect(out).toContain("https://prompts.example.org/api/v1/blueprints/bp_abc123");
-    expect(out).toContain("jq -er '.blueprint.content'");
-    expect(out).not.toContain("jq -r '.content'");
-    expect(out).toContain("$MY_TOKEN");
+    expect(out).toContain('export LYNXPROMPT_TOKEN="$MY_TOKEN"');
+    expect(out).toContain("export LYNXPROMPT_API_URL=https://prompts.example.org");
+    expect(out).toContain("lynxp pull bp_abc123 --yes");
+    expect(out).toContain("lynxp push AGENTS.md   # upload local changes");
+    expect(out).not.toContain("lynxp login");
+    expect(out).not.toContain("curl");
+    expect(out).not.toContain("jq ");
+    expect(out).not.toContain("your_token_here");
+  });
+
+  it("token mode skips the export when the token is already in LYNXPROMPT_TOKEN", () => {
+    const out = addApiSyncHeader("# A\n", {
+      ...base,
+      preferCliSync: false,
+      tokenEnvVar: "LYNXPROMPT_TOKEN",
+      fileName: "AGENTS.md",
+    });
+    expect(out).toContain("API token in $LYNXPROMPT_TOKEN");
+    expect(out).not.toContain("export LYNXPROMPT_TOKEN");
+    expect(out).toContain("lynxp pull bp_abc123 --yes");
   });
 });
 
@@ -104,8 +129,9 @@ describe("sync file path", () => {
     const out = addApiSyncHeader(file.content, { ...base, fileName: payload.repositoryPath });
     expect(out).toContain("lynxp link .cursor/rules/project.mdc bp_abc123");
     expect(out).toContain("lynxp push .cursor/rules/project.mdc");
-    const curl = addApiSyncHeader(file.content, { ...base, preferCliSync: false, fileName: payload.repositoryPath });
-    expect(curl).toContain("> .cursor/rules/project.mdc.new && mv .cursor/rules/project.mdc.new .cursor/rules/project.mdc");
+    const token = addApiSyncHeader(file.content, { ...base, preferCliSync: false, fileName: payload.repositoryPath });
+    expect(token).toContain("lynxp pull bp_abc123 --yes   # download cloud changes into .cursor/rules/project.mdc");
+    expect(token).toContain("lynxp push .cursor/rules/project.mdc   # upload local changes");
   });
 
   it("an Aider download syncs the AGENTS.md rules, never the Aider config", () => {
