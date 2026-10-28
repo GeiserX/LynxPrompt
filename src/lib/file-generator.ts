@@ -244,7 +244,6 @@ interface UserProfile {
   name?: string | null;
   persona?: string | null;
   skillLevel?: string | null;
-  tier?: string; // legacy, ignored: every section is generated for everyone
 }
 
 // Platform file names - imported from central definition

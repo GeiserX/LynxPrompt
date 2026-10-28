@@ -21,7 +21,6 @@ const baseUser = {
   name: "Test User",
   displayName: "Test Author",
   email: "test@test.com",
-  tier: "max" as const,
   skillLevel: "expert",
   persona: "fullstack",
   subscriptionPlan: "MAX",

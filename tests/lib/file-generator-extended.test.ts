@@ -53,7 +53,6 @@ const baseUser = {
   name: "Test User",
   displayName: "Test User",
   email: "test@test.com",
-  tier: "free" as const,
   skillLevel: "intermediate",
   persona: null,
   subscriptionPlan: "FREE",
@@ -630,7 +629,7 @@ describe("generateAllFiles - void generator", () => {
 // Embedded static files
 // ============================================================================
 describe("generateAllFiles - embedded static files", () => {
-  const maxUser = { ...baseUser, tier: "max" as const };
+  const maxUser = { ...baseUser };
 
   it("includes editorconfig instruction", () => {
     const files = generateAllFiles(
@@ -1023,7 +1022,7 @@ describe("generateAllFiles - AGENTS.md additional branches", () => {
   it("includes commands in AGENTS.md with intermediate tier", () => {
     const files = generateAllFiles(
       { ...baseConfig, platform: "universal", commands: { build: "yarn build", test: "yarn test", lint: "yarn lint", dev: "yarn dev", additional: ["yarn seed"] } },
-      { ...baseUser, tier: "pro" }
+      { ...baseUser }
     );
     expect(files[0].content).toContain("yarn build");
     expect(files[0].content).toContain("yarn seed");
@@ -1032,7 +1031,7 @@ describe("generateAllFiles - AGENTS.md additional branches", () => {
   it("includes testing strategy in AGENTS.md with advanced tier", () => {
     const files = generateAllFiles(
       { ...baseConfig, platform: "universal", testingStrategy: { levels: ["unit", "integration", "e2e"], coverage: 90, frameworks: ["jest", "cypress"], notes: "Always mock externals" } },
-      { ...baseUser, tier: "max" }
+      { ...baseUser }
     );
     expect(files[0].content).toContain("90");
     expect(files[0].content).toContain("jest");
@@ -1042,7 +1041,7 @@ describe("generateAllFiles - AGENTS.md additional branches", () => {
   it("includes boundaries in AGENTS.md with advanced tier", () => {
     const files = generateAllFiles(
       { ...baseConfig, platform: "universal", boundaries: { always: ["Auto-lint"], ask: ["Large refactors"], never: ["Delete database"] } },
-      { ...baseUser, tier: "max" }
+      { ...baseUser }
     );
     expect(files[0].content).toContain("Auto-lint");
     expect(files[0].content).toContain("Large refactors");
@@ -1130,7 +1129,7 @@ describe("generateAllFiles - cursor rules additional branches", () => {
   it("includes testing with notes", () => {
     const files = generateAllFiles(
       { ...baseConfig, platform: "cursor", testingStrategy: { levels: ["unit"], coverage: 80, notes: "Use snapshot tests for components" } },
-      { ...baseUser, tier: "max" }
+      { ...baseUser }
     );
     expect(files[0].content).toContain("snapshot tests");
   });

@@ -83,7 +83,7 @@ describe("toBlueprintApiId", () => {
 });
 
 describe("sync file path", () => {
-  const user = { displayName: "Dev", name: "Dev", persona: "fullstack", skillLevel: "intermediate", tier: "free" };
+  const user = { displayName: "Dev", name: "Dev", persona: "fullstack", skillLevel: "intermediate" };
 
   it("a Cursor download is synced as a file inside .cursor/rules/, not as the folder", () => {
     const config = { ...createDefaultWizardConfig(), projectName: "acme", platform: "cursor" };

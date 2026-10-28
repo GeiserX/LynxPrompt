@@ -69,30 +69,27 @@ import { addApiSyncHeader, syncBlueprintPayload, syncFilePath, toBlueprintApiId 
 // The shared package (packages/shared) contains the canonical list.
 // TODO: Migrate to importing from @/lib/wizard-options once inline constants are removed.
 
-type WizardTier = "basic" | "intermediate" | "advanced";
-
 type WizardStep = {
   id: WizardStepId;
   title: string;
   icon: React.ComponentType<{ className?: string }>;
-  tier: WizardTier;
 };
 
 // One entry per id in WIZARD_STEP_IDS (shared with the draft API), so the
 // screens and the step numbers the server accepts cannot drift apart.
 const WIZARD_STEP_META: Record<WizardStepId, Omit<WizardStep, "id">> = {
-  project: { title: "Project Basics", icon: Sparkles, tier: "basic" },
-  tech: { title: "Tech Stack", icon: Code, tier: "basic" },
-  repo: { title: "Repository Setup", icon: GitBranch, tier: "basic" },
-  security: { title: "Security", icon: Lock, tier: "basic" },
-  commands: { title: "Commands", icon: ClipboardList, tier: "intermediate" },
-  code_style: { title: "Code Style", icon: Wand2, tier: "intermediate" },
-  ai: { title: "AI Behavior", icon: Brain, tier: "basic" },
-  boundaries: { title: "Boundaries", icon: Shield, tier: "advanced" },
-  testing: { title: "Testing Strategy", icon: Shield, tier: "advanced" },
-  static: { title: "Static Files", icon: FileText, tier: "advanced" },
-  extra: { title: "Anything Else?", icon: MessageSquare, tier: "basic" },
-  generate: { title: "Generate", icon: Download, tier: "basic" },
+  project: { title: "Project Basics", icon: Sparkles },
+  tech: { title: "Tech Stack", icon: Code },
+  repo: { title: "Repository Setup", icon: GitBranch },
+  security: { title: "Security", icon: Lock },
+  commands: { title: "Commands", icon: ClipboardList },
+  code_style: { title: "Code Style", icon: Wand2 },
+  ai: { title: "AI Behavior", icon: Brain },
+  boundaries: { title: "Boundaries", icon: Shield },
+  testing: { title: "Testing Strategy", icon: Shield },
+  static: { title: "Static Files", icon: FileText },
+  extra: { title: "Anything Else?", icon: MessageSquare },
+  generate: { title: "Generate", icon: Download },
 };
 
 const WIZARD_STEPS: WizardStep[] = WIZARD_STEP_IDS.map((id) => ({ id, ...WIZARD_STEP_META[id] }));
@@ -113,18 +110,6 @@ const MOBILE_PROGRESS_WIDTHS = [
   "w-[92%]",
   "w-[100%]",
 ];
-
-// Tier badges removed - all wizard steps are now available to all users
-function getTierBadge(_tier: WizardTier) {
-  // No badges needed - all users have full wizard access
-  return null;
-}
-
-// All users can access all wizard steps
-function canAccessTier(_userTier: string, _requiredTier: WizardTier): boolean {
-  // All users get full wizard access - only AI features are restricted to Teams
-  return true;
-}
 
 // Tech stack constants - these should eventually be imported from @/lib/wizard-options
 // For now they're defined inline to match the CLI wizard
@@ -609,8 +594,6 @@ function WizardPageContent() {
   const [previewFiles, setPreviewFiles] = useState<GeneratedFile[]>([]);
   const [expandedFile, setExpandedFile] = useState<string | null>(null);
   const [copiedFile, setCopiedFile] = useState<string | null>(null);
-  const [userTier, setUserTier] = useState<string>("free");
-  const [tierLoading, setTierLoading] = useState(true);
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const [showVariableModal, setShowVariableModal] = useState(false);
   const [variableValues, setVariableValues] = useState<Record<string, string>>({});
@@ -988,27 +971,6 @@ function WizardPageContent() {
     setRepoDetectUrl("");
   };
 
-  useEffect(() => {
-    const fetchTier = async () => {
-      if (status !== "authenticated") {
-        setTierLoading(false);
-        return;
-      }
-      try {
-        const res = await fetch("/api/billing/status");
-        if (res.ok) {
-          const data = await res.json();
-          setUserTier(data.plan || "free");
-        }
-      } catch {
-        setUserTier("free");
-      } finally {
-        setTierLoading(false);
-      }
-    };
-    fetchTier();
-  }, [status]);
-
   // Prefill from preferences
   useEffect(() => {
     const loadPrefs = async () => {
@@ -1031,11 +993,6 @@ function WizardPageContent() {
     };
     loadPrefs();
   }, [status]);
-
-  const lockedSteps = useMemo(
-    () => WIZARD_STEPS.filter((s) => !canAccessTier(userTier, s.tier)),
-    [userTier],
-  );
 
   // Extract [[VARIABLE]] or [[VARIABLE|default]] patterns from content
   const extractVariables = (content: string): string[] => {
@@ -1128,13 +1085,11 @@ function WizardPageContent() {
         name: session.user.name,
         persona: session.user.persona,
         skillLevel: session.user.skillLevel,
-        tier: userTier,
       } : {
         displayName: "Developer",
         name: "Guest",
         persona: "fullstack",
         skillLevel: "intermediate",
-        tier: "free",
       };
       const files = generateAllFiles(buildGeneratorConfig(config), userProfile);
       setPreviewFiles(files);
@@ -1144,7 +1099,7 @@ function WizardPageContent() {
         setExpandedFile(files[0].fileName);
       }
     }
-  }, [currentStep, session?.user, config, userTier]);
+  }, [currentStep, session?.user, config]);
 
   // Auth/loading gates - only show loading when checking auth status
   if (status === "loading") {
@@ -1182,12 +1137,7 @@ function WizardPageContent() {
 
   const handleNext = () => {
     if (currentStep >= WIZARD_STEPS.length - 1) return;
-    let next = currentStep + 1;
-    while (next < WIZARD_STEPS.length && !canAccessTier(userTier, WIZARD_STEPS[next].tier)) {
-      next++;
-    }
-    if (next >= WIZARD_STEPS.length) next = WIZARD_STEPS.length - 1;
-    goToStep(next);
+    goToStep(currentStep + 1);
   };
 
   const handleCopyFile = async (fileName: string, content: string) => {
@@ -1202,14 +1152,7 @@ function WizardPageContent() {
 
   const handleBack = () => {
     if (currentStep > 0) {
-      // Find previous accessible step
-      let prevStep = currentStep - 1;
-      while (prevStep >= 0 && !canAccessTier(userTier, WIZARD_STEPS[prevStep].tier)) {
-        prevStep--;
-      }
-      if (prevStep >= 0) {
-        goToStep(prevStep);
-      }
+      goToStep(currentStep - 1);
     }
   };
 
@@ -1315,13 +1258,11 @@ function WizardPageContent() {
         name: session.user.name,
         persona: session.user.persona,
         skillLevel: session.user.skillLevel,
-        tier: userTier,
       } : {
         displayName: "Developer",
         name: "Guest",
         persona: "fullstack",
         skillLevel: "intermediate",
-        tier: "free",
       };
       
       // Build config (keep variables intact for blueprint saving)
@@ -1937,52 +1878,38 @@ function WizardPageContent() {
               const Icon = step.icon;
               const isActive = index === currentStep;
               const isCompleted = index < currentStep;
-              const isLocked = !canAccessTier(userTier, step.tier);
-              // tierBadge removed - all wizard steps now available to all users
 
               return (
                 <button
                   key={step.id}
-                  onClick={() => !isLocked && goToStep(index)}
-                  disabled={isLocked}
+                  onClick={() => goToStep(index)}
                   className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors ${
-                    isLocked
-                      ? "cursor-not-allowed opacity-50"
-                      : isActive
-                        ? "bg-primary text-primary-foreground"
-                        : isCompleted
-                          ? "bg-muted text-foreground"
-                          : "text-muted-foreground hover:bg-muted"
+                    isActive
+                      ? "bg-primary text-primary-foreground"
+                      : isCompleted
+                        ? "bg-muted text-foreground"
+                        : "text-muted-foreground hover:bg-muted"
                   }`}
                 >
                   <div
                     className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                      isLocked
-                        ? "bg-muted"
-                        : isActive
-                          ? "bg-primary-foreground/20"
-                          : isCompleted
-                            ? "bg-primary/20"
-                            : "bg-muted"
+                      isActive
+                        ? "bg-primary-foreground/20"
+                        : isCompleted
+                          ? "bg-primary/20"
+                          : "bg-muted"
                     }`}
                   >
-                    {isLocked ? (
-                      <Lock className="h-4 w-4" />
-                    ) : isCompleted ? (
+                    {isCompleted ? (
                       <Check className="h-4 w-4 text-primary" />
                     ) : (
                       <Icon className="h-4 w-4" />
                     )}
                   </div>
                   <span className="flex-1 text-sm font-medium">{step.title}</span>
-                  {/* Tier badges removed - all wizard steps now available to all users */}
                 </button>
               );
             })}
-
-            {/* Note: All wizard steps are now unlocked for all users.
-                This block is kept for backwards compatibility but will never render
-                since canAccessTier always returns true. */}
           </div>
         </aside>
 
@@ -2018,7 +1945,6 @@ function WizardPageContent() {
                   architecturePatternOther={config.architecturePatternOther}
                   devOS={config.devOS}
                   blueprintMode={config.blueprintMode}
-                  userTier={userTier}
                   repoDetectUrl={repoDetectUrl}
                   isDetecting={isDetecting}
                   detectError={detectError}
@@ -2164,7 +2090,6 @@ function WizardPageContent() {
                   enableApiSync={config.enableApiSync}
                   preferCliSync={config.preferCliSync}
                   tokenEnvVar={config.tokenEnvVar}
-                  userTier={userTier}
                   onToggleExpand={(fileName) => setExpandedFile(expandedFile === fileName ? null : fileName)}
                   onCopyFile={handleCopyFile}
                   onPlatformChange={(v) => setConfig({ ...config, platform: v })}
@@ -2294,7 +2219,6 @@ function StepProject({
   architecturePatternOther,
   devOS,
   blueprintMode,
-  userTier,
   repoDetectUrl,
   isDetecting,
   detectError,
@@ -2318,7 +2242,6 @@ function StepProject({
   architecturePatternOther: string;
   devOS: string[];
   blueprintMode: boolean;
-  userTier: string;
   repoDetectUrl: string;
   isDetecting: boolean;
   detectError: string | null;
@@ -6670,7 +6593,6 @@ function StepGenerate({
   enableApiSync,
   preferCliSync,
   tokenEnvVar,
-  userTier,
   onToggleExpand,
   onCopyFile,
   onPlatformChange,
@@ -6694,7 +6616,6 @@ function StepGenerate({
   enableApiSync: boolean;
   preferCliSync: boolean;
   tokenEnvVar: string;
-  userTier: string;
   onToggleExpand: (fileName: string) => void;
   onCopyFile: (fileName: string, content: string) => void;
   onPlatformChange: (v: string) => void;
