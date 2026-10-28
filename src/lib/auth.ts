@@ -320,7 +320,19 @@ export const authOptions: NextAuthOptions = {
           select: { id: true },
         });
         if (!existing) {
-          return "/auth/error?error=RegistrationDisabled";
+          // Invite-only instances: a pending, unexpired team invitation for
+          // this address lets the person create an account so they can accept it.
+          const invitation = await prismaUsers.teamInvitation.findFirst({
+            where: {
+              email: user.email.toLowerCase(),
+              status: "PENDING",
+              expiresAt: { gt: new Date() },
+            },
+            select: { id: true },
+          });
+          if (!invitation) {
+            return "/auth/error?error=RegistrationDisabled";
+          }
         }
       }
 

@@ -3,6 +3,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { z } from "zod";
+import {
+  sendTeamInvitationEmail,
+  teamInvitationLink,
+} from "@/lib/team-invitation-email";
 
 // Validation schema for sending invitations
 const sendInvitationsSchema = z.object({
@@ -61,6 +65,8 @@ export async function GET(
         email: inv.email,
         role: inv.role,
         status: inv.status,
+        // Admin-only list: the token lets the admin copy the join link.
+        token: inv.token,
         expiresAt: inv.expiresAt,
         createdAt: inv.createdAt,
         acceptedAt: inv.acceptedAt,
@@ -129,8 +135,13 @@ export async function POST(
       return NextResponse.json({ error: "Team not found" }, { status: 404 });
     }
 
-    // Check seat availability. An invitation past its expiresAt can no longer
-    // be accepted, so it holds no seat and does not block a new invite.
+    // Expired invitations no longer hold a seat or block a fresh invite.
+    await prismaUsers.teamInvitation.updateMany({
+      where: { teamId, status: "PENDING", expiresAt: { lte: new Date() } },
+      data: { status: "EXPIRED" },
+    });
+
+    // Check seat availability. Only open invitations hold a seat.
     const openInvitation = { teamId, status: "PENDING" as const, expiresAt: { gt: new Date() } };
     const currentMembers = team._count.members;
     const pendingInvitations = await prismaUsers.teamInvitation.count({
@@ -204,22 +215,34 @@ export async function POST(
       )
     );
 
-    // TODO: Send invitation emails via email service
-    // For now, return the invitation links that can be shared manually
-
-    const invitationLinks = createdInvitations.map((inv) => ({
-      email: inv.email,
-      token: inv.token,
-      link: `${process.env.NEXTAUTH_URL}/teams/join?token=${inv.token}`,
-      expiresAt: inv.expiresAt,
-    }));
+    const invitationLinks = await Promise.all(
+      createdInvitations.map(async (inv) => {
+        const link = teamInvitationLink(inv.token);
+        const emailed = await sendTeamInvitationEmail({
+          to: inv.email,
+          teamName: team.name,
+          inviterName: session.user.name ?? null,
+          link,
+          expiresAt: inv.expiresAt,
+        });
+        return {
+          email: inv.email,
+          token: inv.token,
+          link,
+          expiresAt: inv.expiresAt,
+          emailed,
+        };
+      })
+    );
 
     return NextResponse.json({
       message: `${invitationsToCreate.length} invitation(s) created`,
       results,
       invitationLinks,
       // Info for the admin
-      note: "Share these links with the invitees. They will need to sign in with the email address to accept.",
+      note: invitationLinks.some((l) => !l.emailed)
+        ? "Some invitations could not be emailed. Share their links with the invitees; they sign in with the invited address to accept."
+        : "Invitees sign in with the invited address to accept.",
     });
   } catch (error) {
     console.error("Error sending invitations:", error);
