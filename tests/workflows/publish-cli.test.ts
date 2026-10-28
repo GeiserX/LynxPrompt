@@ -101,3 +101,41 @@ describe("CLI release pipeline", () => {
     for (const path of ["package-lock.json", "cli/package-lock.json"]) expect(paths).toContain(`- '${path}'`);
   });
 });
+
+// The Homebrew push ran with continue-on-error and snap ended in `|| true`, so
+// a channel could fail on every release while the summary showed ✅.
+describe("CLI channels report what really happened", () => {
+  const publish = read("publish-cli.yml");
+
+  it("no publish step swallows a failure", () => {
+    expect(publish).not.toMatch(/\|\|\s*true/);
+    expect(job(publish, "update-homebrew")).not.toMatch(/continue-on-error/);
+    for (const name of ["publish-npm", "publish-binaries", "sign-macos"]) expect(job(publish, name)).not.toMatch(/continue-on-error/);
+  });
+
+  it("secondary channels show their own outcome, not the job's", () => {
+    expect(job(publish, "publish-snap")).toContain("published: ${{ steps.upload.outcome == 'success' }}");
+    expect(job(publish, "publish-chocolatey")).toContain("published: ${{ steps.push.outcome == 'success' }}");
+    const summary = job(publish, "summary");
+    expect(summary).toContain("needs.publish-snap.outputs.published == 'true'");
+    expect(summary).toContain("needs.publish-chocolatey.outputs.published == 'true'");
+  });
+
+  it("the run ends by installing the version from npm and Homebrew", () => {
+    const verify = job(publish, "verify");
+    expect(verify).toMatch(/needs: \[check, publish-npm, publish-binaries, sign-macos, update-homebrew\]/);
+    expect(verify).toContain('npx --yes "lynxprompt@$VERSION" --version');
+    expect(verify).toContain("brew install GeiserX/lynxprompt/lynxprompt");
+    expect(verify).toContain('[ "$got" = "$VERSION" ]');
+    for (const target of ["linux-x64.tar.gz", "linux-arm64.tar.gz", "macos-x64.tar.gz", "macos-arm64.tar.gz", "win-x64.zip"]) expect(verify).toContain(target);
+    expect(job(publish, "summary")).toMatch(/needs: \[[^\]]*\bverify\]/);
+  });
+});
+
+describe("Helm chart release", () => {
+  it("waits until the released chart version can be pulled", () => {
+    const chart = read("release-chart.yml");
+    expect(chart).toContain('helm pull lynxprompt/lynxprompt --version "$VERSION"');
+    expect(chart).toContain("exit 1");
+  });
+});

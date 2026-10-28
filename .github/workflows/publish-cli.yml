@@ -383,10 +383,12 @@ jobs:
     needs: [check, publish-npm]
     if: ${{ needs.check.outputs.platforms == 'all' || needs.check.outputs.platforms == 'npm-chocolatey' }}
     runs-on: windows-latest
-    # Secondary distribution channel (npm is primary). The self-hosted Windows
-    # runner may lack the Chocolatey/pwsh toolchain, so never let it fail the
-    # overall release; it self-heals once the runner toolchain is provisioned.
+    # Secondary channel (npm is primary), so a failure here does not fail the
+    # run, but the summary reports it: `published` is set only when the push
+    # went through. Chocolatey then moderates the version before it is listed.
     continue-on-error: true
+    outputs:
+      published: ${{ steps.push.outcome == 'success' }}
 
     steps:
       - name: Checkout
@@ -413,8 +415,8 @@ jobs:
         run: choco pack cli/chocolatey/lynxprompt.nuspec --out cli/chocolatey
 
       - name: Push to Chocolatey
+        id: push
         run: choco push cli/chocolatey/lynxprompt.${{ needs.check.outputs.version }}.nupkg --source https://push.chocolatey.org/ --api-key ${{ secrets.CHOCOLATEY_API_KEY }}
-        continue-on-error: true
 
   # ===========================================
   # Publish to Snap Store (Linux)
@@ -423,11 +425,12 @@ jobs:
     needs: [check, publish-npm]
     if: ${{ needs.check.outputs.platforms == 'all' || needs.check.outputs.platforms == 'npm-snap' }}
     runs-on: ubuntu-latest
-    # Secondary distribution channel (npm is primary; the snap just re-wraps the
-    # published npm package). snapd/LXD do not run in the Docker-based self-hosted
-    # runner, so never let this fail the overall release; it self-heals once snap
-    # infra is available on the runner.
+    # Secondary channel (npm is primary), so a failure here does not fail the
+    # run, but the summary reports it: `published` is set only when the upload
+    # went through. Before, a swallowed exit code hid every failed build and upload.
     continue-on-error: true
+    outputs:
+      published: ${{ steps.upload.outcome == 'success' }}
 
     steps:
       - name: Checkout
@@ -450,15 +453,14 @@ jobs:
         run: |
           cd cli
           snapcraft --use-lxd
-        continue-on-error: true
 
       - name: Upload to Snap Store
-        if: success()
+        id: upload
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
         run: |
           cd cli
-          snapcraft upload --release=stable lynxprompt_${{ needs.check.outputs.version }}_amd64.snap || true
+          snapcraft upload --release=stable lynxprompt_${{ needs.check.outputs.version }}_amd64.snap
 
   # ===========================================
   # Update Homebrew tap
@@ -526,13 +528,64 @@ jobs:
           git add Formula/lynxprompt.rb
           git diff --staged --quiet || git commit -m "Update lynxprompt to ${{ needs.check.outputs.version }}"
           git push
-        continue-on-error: true
+
+  # ===========================================
+  # Install the release from every primary channel
+  # ===========================================
+  # A channel can report success and still serve something broken (from 2.1.29
+  # the Homebrew formula carried the hash of npm's 404 page), so the run is not
+  # done until the published version installs and runs from npm and Homebrew
+  # and the release holds every binary.
+  verify:
+    needs: [check, publish-npm, publish-binaries, sign-macos, update-homebrew]
+    if: ${{ always() && !cancelled() && needs.check.outputs.should_publish == 'true' && !contains(needs.*.result, 'failure') }}
+    runs-on: macos-latest
+    permissions:
+      contents: read
+    env:
+      VERSION: ${{ needs.check.outputs.version }}
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
+      - name: npm serves the version
+        run: |
+          for i in $(seq 1 30); do
+            got=$(npx --yes "lynxprompt@$VERSION" --version 2>/dev/null) && [ "$got" = "$VERSION" ] && { echo "npm: lynxprompt@$VERSION runs"; exit 0; }
+            sleep 10
+          done
+          echo "::error::npx lynxprompt@$VERSION --version printed '${got:-nothing}'"
+          exit 1
+
+      - name: The release holds every binary
+        run: |
+          assets=$(gh release view "cli-v$VERSION" -R "${{ github.repository }}" --json assets --jq '.assets[].name')
+          status=0
+          for target in linux-x64.tar.gz linux-arm64.tar.gz macos-x64.tar.gz macos-arm64.tar.gz win-x64.zip; do
+            grep -qx "lynxprompt-$VERSION-$target" <<<"$assets" || { echo "::error::cli-v$VERSION has no lynxprompt-$VERSION-$target"; status=1; }
+          done
+          exit $status
+
+      - name: Homebrew installs the version
+        if: ${{ needs.update-homebrew.result == 'success' }}
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: '1'
+          HOMEBREW_NO_INSTALL_CLEANUP: '1'
+        run: |
+          brew install GeiserX/lynxprompt/lynxprompt
+          got=$("$(brew --prefix)/bin/lynxprompt" --version)
+          [ "$got" = "$VERSION" ] || { echo "::error::brew installed lynxprompt $got, expected $VERSION"; exit 1; }
+          echo "Homebrew: lynxprompt $VERSION runs"
 
   # ===========================================
   # Summary
   # ===========================================
   summary:
-    needs: [check, publish-npm, publish-binaries, sign-macos, publish-chocolatey, publish-snap, update-homebrew]
+    needs: [check, publish-npm, publish-binaries, sign-macos, publish-chocolatey, publish-snap, update-homebrew, verify]
     if: always() && needs.check.outputs.should_publish == 'true'
     runs-on: ubuntu-latest
 
@@ -548,9 +601,10 @@ jobs:
           echo "| npm | ${{ needs.publish-npm.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Standalone Binaries | ${{ needs.publish-binaries.result == 'success' && '✅' || needs.publish-binaries.result == 'skipped' && '⏭️' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| macOS signing | ${{ needs.sign-macos.result == 'success' && '✅' || needs.sign-macos.result == 'skipped' && '⏭️' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Chocolatey | ${{ needs.publish-chocolatey.result == 'success' && '✅' || needs.publish-chocolatey.result == 'skipped' && '⏭️' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Snap | ${{ needs.publish-snap.result == 'success' && '✅' || needs.publish-snap.result == 'skipped' && '⏭️' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Chocolatey | ${{ needs.publish-chocolatey.outputs.published == 'true' && '✅ pushed, awaiting moderation' || needs.publish-chocolatey.result == 'skipped' && '⏭️' || '⚠️ failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Snap | ${{ needs.publish-snap.outputs.published == 'true' && '✅' || needs.publish-snap.result == 'skipped' && '⏭️' || '⚠️ failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Homebrew | ${{ needs.update-homebrew.result == 'success' && '✅' || needs.update-homebrew.result == 'skipped' && '⏭️' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Install check | ${{ needs.verify.result == 'success' && '✅' || needs.verify.result == 'skipped' && '⏭️' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Installation" >> $GITHUB_STEP_SUMMARY
           echo '```bash' >> $GITHUB_STEP_SUMMARY
