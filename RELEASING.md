@@ -44,7 +44,9 @@ Open the pull request into `main` and merge it once CI is green.
    `app-vX.Y.Z` / `cli-vX.Y.Z` and the GitHub Release with a changelog from the commits.
 2. The app release dispatches `docker-publish.yml`, which builds `drumsergio/lynxprompt:X.Y.Z` and pushes it to
    Docker Hub.
-3. The CLI release triggers `publish-cli.yml`: npm, the standalone binaries, Homebrew, Chocolatey and Snap.
+3. The CLI release triggers `publish-cli.yml`: npm, the standalone binaries, Homebrew, Chocolatey, the Snap Store
+   (`snap.yml`) and the AUR (`aur.yml`). The Snap and AUR jobs build, install and run the package first, and fail
+   the run when their secret is missing or rejected.
 
 ### 3. Check it
 
@@ -99,7 +101,7 @@ Revert the faulty commit in a pull request that also bumps the patch version (st
 | `GITEA_USERNAME`, `GITEA_TOKEN` | The development deploy (GitOps repo) |
 | `CLOUDFLARE_ZONE_ID`, `CLOUDFLARE_API_TOKEN` | Cache purge after the production deploy check |
 | `LYNXPROMPT_DEV_TOKEN` | CLI tests against the development instance |
-| `HOMEBREW_TAP_TOKEN`, `CHOCOLATEY_API_KEY`, `SNAPCRAFT_STORE_CREDENTIALS` | CLI package channels |
+| `HOMEBREW_TAP_TOKEN`, `CHOCOLATEY_API_KEY`, `SNAPCRAFT_STORE_CREDENTIALS`, `AUR_SSH_PRIVATE_KEY` | CLI package channels (the Snap and AUR jobs print how to create theirs when it is missing) |
 | `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID` | Signing and notarizing the macOS CLI binaries |
 
 ### GitHub Environments

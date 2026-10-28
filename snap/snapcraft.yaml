@@ -1,5 +1,5 @@
 name: lynxprompt
-version: '2.1.1'
+version: '2.1.41'
 summary: CLI for generating and managing AI IDE configuration files
 description: |
   LynxPrompt CLI lets you generate, sync, and manage AI coding tool
@@ -63,6 +63,6 @@ parts:
     plugin: nil
     after: [node]
     override-build: |
-      "$CRAFT_STAGE/bin/node" "$CRAFT_STAGE/bin/npm" install -g --prefix="$CRAFT_PART_INSTALL" lynxprompt@2.1.1
+      "$CRAFT_STAGE/bin/node" "$CRAFT_STAGE/bin/npm" install -g --prefix="$CRAFT_PART_INSTALL" lynxprompt@2.1.41
     prime:
       - lib/node_modules/lynxprompt/**

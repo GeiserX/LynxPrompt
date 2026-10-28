@@ -1,0 +1,101 @@
+name: AUR package
+
+# Builds packaging/aur/PKGBUILD in an Arch container, installs the package and
+# checks that it runs. A pull request that touches the package only builds it;
+# the CLI release calls this with publish: true to set the new version and push
+# PKGBUILD and .SRCINFO to the AUR. Until 2.1.41 nothing updated the AUR, so it
+# stayed on the 2.1.1 that was uploaded by hand.
+on:
+  pull_request:
+    paths:
+      - 'packaging/aur/**'
+      - '.github/workflows/aur.yml'
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        required: true
+      ref:
+        type: string
+        required: true
+      publish:
+        type: boolean
+        default: false
+    secrets:
+      AUR_SSH_PRIVATE_KEY:
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  aur:
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel-20261025.0.616225
+    env:
+      AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+
+    steps:
+      # A release fails here, before anything is built, when the AUR key is missing.
+      - name: Check the AUR key
+        if: ${{ inputs.publish }}
+        run: |
+          if [ -z "$AUR_SSH_PRIVATE_KEY" ]; then
+            echo "::error::secret AUR_SSH_PRIVATE_KEY is not set; create a key with 'ssh-keygen -t ed25519 -N \"\" -f aur_lynxprompt', add aur_lynxprompt.pub under My Account > SSH Public Key on aur.archlinux.org (the account that maintains lynxprompt), then 'gh secret set AUR_SSH_PRIVATE_KEY -R ${{ github.repository }} < aur_lynxprompt'"
+            exit 1
+          fi
+
+      - name: Install the build tools
+        run: pacman -Syu --noconfirm --needed git openssh nodejs npm
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
+
+      # The hash comes from the same checked download as the Homebrew formula.
+      - name: Set the version
+        if: ${{ inputs.version != '' }}
+        working-directory: packaging/aur
+        run: |
+          sha=$(bash ../../.github/scripts/npm-tarball-sha256.sh lynxprompt "${{ inputs.version }}")
+          sed -i -e "s/^pkgver=.*/pkgver=${{ inputs.version }}/" -e "s/^pkgrel=.*/pkgrel=1/" \
+            -e "s/^sha256sums=.*/sha256sums=('$sha')/" PKGBUILD
+
+      # makepkg refuses to run as root.
+      - name: Build the package
+        working-directory: packaging/aur
+        run: |
+          useradd -m builder
+          chown -R builder .
+          su builder -c 'makepkg --noconfirm && makepkg --printsrcinfo > .SRCINFO'
+
+      - name: Check the package installs and runs
+        working-directory: packaging/aur
+        run: |
+          want=$(sed -n 's/^pkgver=//p' PKGBUILD)
+          pacman -U --noconfirm lynxprompt-"$want"-*.pkg.tar.zst
+          got=$(lynxprompt --version)
+          [ "$got" = "$want" ] || { echo "::error::the package's lynxprompt --version printed '$got', expected $want"; exit 1; }
+
+      - name: Push to the AUR
+        if: ${{ inputs.publish }}
+        working-directory: packaging/aur
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          printf '%s\n' "$AUR_SSH_PRIVATE_KEY" > ~/.ssh/aur
+          chmod 600 ~/.ssh/aur
+          # The AUR's published host key fingerprint; refuse any other.
+          ssh-keyscan -t ed25519 aur.archlinux.org > ~/.ssh/known_hosts 2>/dev/null
+          ssh-keygen -lf ~/.ssh/known_hosts | grep -q 'SHA256:RFzBCUItH9LZS0cKB5UE6ceAYhBD5C8GeOBip8Z11+4' ||
+            { echo "::error::aur.archlinux.org answered with an unknown host key"; exit 1; }
+          export GIT_SSH_COMMAND="ssh -i ~/.ssh/aur -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
+          git clone ssh://aur@aur.archlinux.org/lynxprompt.git "$RUNNER_TEMP/aur"
+          cp PKGBUILD .SRCINFO "$RUNNER_TEMP/aur/"
+          cd "$RUNNER_TEMP/aur"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add PKGBUILD .SRCINFO
+          git diff --staged --quiet || git commit -m "Update to ${{ inputs.version }}"
+          git push origin HEAD:master

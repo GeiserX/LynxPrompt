@@ -87,12 +87,15 @@ describe("Homebrew tarball hash", () => {
 describe("CLI release pipeline", () => {
   it("every publish job builds the tagged commit, not main", () => {
     const publish = read("publish-cli.yml");
-    for (const name of ["publish-npm", "publish-binaries", "sign-macos", "publish-chocolatey", "publish-snap", "update-homebrew"]) {
+    for (const name of ["publish-npm", "publish-binaries", "sign-macos", "publish-chocolatey", "update-homebrew"]) {
       const checkouts = job(publish, name).match(/uses: actions\/checkout@\S+\n(?: {8}.*\n)*/g) ?? [];
       const own = checkouts.filter((step) => !step.includes("repository:"));
       expect(own.length, `${name} has no checkout of this repository`).toBeGreaterThan(0);
       for (const step of own) expect(step, `${name} checks out without the tag`).toContain("ref: ${{ needs.check.outputs.ref }}");
     }
+    // The Snap and AUR jobs call a reusable workflow, which checks out the ref it is given.
+    for (const name of ["publish-snap", "publish-aur"]) expect(job(publish, name), `${name} builds without the tag`).toContain("ref: ${{ needs.check.outputs.ref }}");
+    for (const file of ["snap.yml", "aur.yml"]) expect(read(file)).toContain("ref: ${{ inputs.ref }}");
     expect(job(publish, "check")).toContain('echo "ref=refs/tags/$TAG"');
   });
 
@@ -114,11 +117,11 @@ describe("CLI channels report what really happened", () => {
   });
 
   it("secondary channels show their own outcome, not the job's", () => {
-    expect(job(publish, "publish-snap")).toContain("published: ${{ steps.upload.outcome == 'success' }}");
     expect(job(publish, "publish-chocolatey")).toContain("published: ${{ steps.push.outcome == 'success' }}");
     const summary = job(publish, "summary");
-    expect(summary).toContain("needs.publish-snap.outputs.published == 'true'");
     expect(summary).toContain("needs.publish-chocolatey.outputs.published == 'true'");
+    expect(summary).toContain("needs.publish-snap.result == 'success'");
+    expect(summary).toContain("needs.publish-aur.result == 'success'");
   });
 
   it("the run ends by installing the version from npm and Homebrew", () => {

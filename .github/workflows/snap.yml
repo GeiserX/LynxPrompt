@@ -1,0 +1,95 @@
+name: Snap package
+
+# Builds the snap from snap/snapcraft.yaml on amd64 and arm64, installs it and
+# checks that it runs. A pull request that touches the snap only builds it; the
+# CLI release calls this with publish: true to upload it to the stable channel.
+# Until 2.1.41 the release built a second, broken cli/snap/snapcraft.yaml, so no
+# snap after 2.1.1 ever reached the store.
+on:
+  pull_request:
+    paths:
+      - 'snap/**'
+      - '.github/workflows/snap.yml'
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        required: true
+      ref:
+        type: string
+        required: true
+      publish:
+        type: boolean
+        default: false
+    secrets:
+      SNAPCRAFT_STORE_CREDENTIALS:
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  snap:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { runner: ubuntu-24.04, arch: amd64 }
+          - { runner: ubuntu-24.04-arm, arch: arm64 }
+    runs-on: ${{ matrix.runner }}
+    env:
+      SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Setup Snapcraft
+        run: sudo snap install snapcraft --classic
+
+      # A release fails here, before the build, when the store login is missing
+      # or expired. Pull requests from this repository have the secret too, so
+      # they catch an expired login before a release does; forks skip the check.
+      - name: Check the Snap Store login
+        if: ${{ inputs.publish || env.SNAPCRAFT_STORE_CREDENTIALS != '' }}
+        run: |
+          renew="create one with 'snapcraft export-login --snaps=lynxprompt --acls=package_access,package_push,package_update,package_release lynxprompt.login', then 'gh secret set SNAPCRAFT_STORE_CREDENTIALS -R ${{ github.repository }} < lynxprompt.login'"
+          if [ -z "$SNAPCRAFT_STORE_CREDENTIALS" ]; then
+            echo "::error::secret SNAPCRAFT_STORE_CREDENTIALS is not set; $renew"
+            exit 1
+          fi
+          # whoami also prints the account e-mail; this log is public, so show the expiry only.
+          if ! out=$(snapcraft whoami 2>&1); then
+            echo "::error::the Snap Store rejects SNAPCRAFT_STORE_CREDENTIALS (expired or revoked); $renew"
+            exit 1
+          fi
+          grep -E '^expires:' <<<"$out" || echo "the login shows no expiry"
+
+      - name: Set the version
+        if: ${{ inputs.version != '' }}
+        run: |
+          sed -i "s/^version: .*/version: '${{ inputs.version }}'/" snap/snapcraft.yaml
+          sed -i "s/lynxprompt@[0-9.]*/lynxprompt@${{ inputs.version }}/" snap/snapcraft.yaml
+
+      - name: Setup LXD
+        uses: canonical/setup-lxd@main
+
+      - name: Build the snap
+        run: snapcraft pack --use-lxd
+
+      - name: Check the snap installs and runs
+        id: snap
+        run: |
+          want=$(sed -n "s/^version: '\(.*\)'$/\1/p" snap/snapcraft.yaml)
+          file="lynxprompt_${want}_${{ matrix.arch }}.snap"
+          [ -f "$file" ] || { echo "::error::snapcraft did not produce $file"; ls -la; exit 1; }
+          sudo snap install --dangerous "./$file"
+          got=$(/snap/bin/lynxprompt --version)
+          [ "$got" = "$want" ] || { echo "::error::the snap's lynxprompt --version printed '$got', expected $want"; exit 1; }
+          echo "file=$file" >> "$GITHUB_OUTPUT"
+
+      - name: Upload to the Snap Store
+        if: ${{ inputs.publish }}
+        run: snapcraft upload --release=stable "${{ steps.snap.outputs.file }}"
