@@ -6,6 +6,9 @@
  * cascade cannot reach is handled here:
  * - favorites and downloads other people left on this user's blueprints
  *   (templateId is polymorphic, so it has no foreign key);
+ * - the favorite counters of the blueprints this user had favorited: the
+ *   cascade removes their favorite rows, so each counter goes down by one, as
+ *   unfavoriting does;
  * - teams: a team where the user is the only member goes with them, and a
  *   team with other members must keep an admin, so the user has to promote
  *   one first;
@@ -21,6 +24,7 @@
 import { rm } from "node:fs/promises";
 import path from "node:path";
 import { prismaUsers } from "@/lib/db-users";
+import { prismaApp } from "@/lib/db-app";
 import { prismaSupport } from "@/lib/db-support";
 import { prismaBlog } from "@/lib/db-blog";
 import { envBool } from "@/lib/feature-flags";
@@ -127,6 +131,23 @@ export async function deleteAccount(userId: string): Promise<void> {
   // Rows may name a blueprint by its bare id or its bp_ API id
   const blueprintIds = blueprints.flatMap(({ id }) => [id, `bp_${id}`]);
 
+  // Favorites this user left elsewhere. Rows may carry an API prefix; the
+  // counter never goes below zero, and their own blueprints go anyway.
+  const favorited = await prismaUsers.templateFavorite.findMany({
+    where: { userId },
+    select: { templateId: true, templateType: true },
+  });
+  const ownIds = new Set(blueprints.map(({ id }) => id));
+  const favoritedIds = (type: string) => [
+    ...new Set(
+      favorited
+        .filter((f) => f.templateType === type)
+        .map((f) => f.templateId.replace(/^(sys_|bp_|usr_)/, ""))
+    ),
+  ];
+  const favoritedBlueprints = favoritedIds("user").filter((id) => !ownIds.has(id));
+  const favoritedSystem = favoritedIds("system");
+
   const soloTeams = await prismaUsers.team.findMany({
     where: { members: { some: { userId }, every: { userId } } },
     select: { id: true },
@@ -139,6 +160,11 @@ export async function deleteAccount(userId: string): Promise<void> {
     prismaUsers.templateDownload.deleteMany({
       where: { templateType: "user", templateId: { in: blueprintIds } },
     }),
+    // One favorite per blueprint, so each matched counter drops by one
+    prismaUsers.userTemplate.updateMany({
+      where: { id: { in: favoritedBlueprints }, favorites: { gt: 0 } },
+      data: { favorites: { decrement: 1 } },
+    }),
     prismaUsers.team.deleteMany({ where: { id: { in: soloTeams.map((t) => t.id) } } }),
     ...(user.email
       ? [
@@ -148,6 +174,19 @@ export async function deleteAccount(userId: string): Promise<void> {
       : []),
     prismaUsers.user.delete({ where: { id: userId } }),
   ]);
+
+  // System templates live in the app database; the favorite rows are already
+  // gone, so a counter left high is only logged
+  if (favoritedSystem.length > 0) {
+    try {
+      await prismaApp.systemTemplate.updateMany({
+        where: { id: { in: favoritedSystem }, favorites: { gt: 0 } },
+        data: { favorites: { decrement: 1 } },
+      });
+    } catch (error) {
+      console.error(`[Account] Could not lower system template favorites for deleted user ${userId}:`, error);
+    }
+  }
 
   // Avatars; the account is already gone, so a leftover file is only logged
   try {

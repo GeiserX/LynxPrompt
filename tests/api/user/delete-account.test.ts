@@ -10,8 +10,8 @@ const users = vi.hoisted(() => ({
   user: { findUnique: vi.fn(), delete: vi.fn() },
   teamMember: { findMany: vi.fn(), count: vi.fn() },
   team: { findMany: vi.fn(), deleteMany: vi.fn() },
-  userTemplate: { findMany: vi.fn() },
-  templateFavorite: { deleteMany: vi.fn() },
+  userTemplate: { findMany: vi.fn(), updateMany: vi.fn() },
+  templateFavorite: { findMany: vi.fn(), deleteMany: vi.fn() },
   templateDownload: { deleteMany: vi.fn() },
   teamInvitation: { deleteMany: vi.fn() },
   verificationToken: { deleteMany: vi.fn() },
@@ -24,6 +24,7 @@ const support = vi.hoisted(() => ({
   $transaction: vi.fn(),
 }));
 const blog = vi.hoisted(() => ({ blogPost: { updateMany: vi.fn() } }));
+const app = vi.hoisted(() => ({ systemTemplate: { updateMany: vi.fn() } }));
 
 vi.mock("next-auth", () => ({ getServerSession: () => mockSession() }));
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
@@ -33,6 +34,7 @@ vi.mock("@/lib/passkey-session", () => ({
 vi.mock("@/lib/db-users", () => ({ prismaUsers: users }));
 vi.mock("@/lib/db-support", () => ({ prismaSupport: support }));
 vi.mock("@/lib/db-blog", () => ({ prismaBlog: blog }));
+vi.mock("@/lib/db-app", () => ({ prismaApp: app }));
 vi.mock("node:fs/promises", async (importOriginal) => {
   const actual = await importOriginal<typeof import("node:fs/promises")>();
   const rm = vi.fn().mockResolvedValue(undefined);
@@ -65,6 +67,9 @@ beforeEach(() => {
   users.teamMember.count.mockResolvedValue(0);
   users.team.findMany.mockResolvedValue([{ id: "team_solo" }]);
   users.userTemplate.findMany.mockResolvedValue([{ id: "t1" }]);
+  users.templateFavorite.findMany.mockResolvedValue([]);
+  users.userTemplate.updateMany.mockImplementation((a) => ["blueprint.updateMany", a]);
+  app.systemTemplate.updateMany.mockResolvedValue({ count: 0 });
   // Each query builder returns a tag, so the transaction contents can be checked
   users.templateFavorite.deleteMany.mockImplementation((a) => ["favorite.deleteMany", a]);
   users.templateDownload.deleteMany.mockImplementation((a) => ["download.deleteMany", a]);
@@ -116,6 +121,45 @@ describe("DELETE /api/user", () => {
     ]);
     // The user row goes last: its cascade takes everything else it owns
     expect(ops[ops.length - 1]).toEqual(["user.delete", { where: { id: "u1" } }]);
+  });
+
+  it("lowers the favorite counters of the blueprints the user had favorited", async () => {
+    users.templateFavorite.findMany.mockResolvedValue([
+      { templateId: "t9", templateType: "user" },
+      { templateId: "bp_t8", templateType: "user" },
+      // Their own blueprint goes with the account, so it is not touched
+      { templateId: "t1", templateType: "user" },
+      { templateId: "s1", templateType: "system" },
+      { templateId: "sys_s2", templateType: "system" },
+    ]);
+    expect((await del("ana@example.com")).status).toBe(200);
+
+    expect(users.templateFavorite.findMany).toHaveBeenCalledWith({
+      where: { userId: "u1" },
+      select: { templateId: true, templateType: true },
+    });
+    expect(usersTransaction()).toContainEqual([
+      "blueprint.updateMany",
+      {
+        where: { id: { in: ["t9", "t8"] }, favorites: { gt: 0 } },
+        data: { favorites: { decrement: 1 } },
+      },
+    ]);
+    expect(app.systemTemplate.updateMany).toHaveBeenCalledWith({
+      where: { id: { in: ["s1", "s2"] }, favorites: { gt: 0 } },
+      data: { favorites: { decrement: 1 } },
+    });
+    // Only once the favorite rows are gone with the account
+    expect(users.$transaction.mock.invocationCallOrder[0]).toBeLessThan(
+      app.systemTemplate.updateMany.mock.invocationCallOrder[0]
+    );
+  });
+
+  it("still reports the account deleted when the system counters cannot be lowered", async () => {
+    users.templateFavorite.findMany.mockResolvedValue([{ templateId: "s1", templateType: "system" }]);
+    app.systemTemplate.updateMany.mockRejectedValue(new Error("connection refused"));
+    expect((await del("ana@example.com")).status).toBe(200);
+    usersTransaction();
   });
 
   it("anonymizes forum posts and comments and removes votes before the account goes", async () => {
