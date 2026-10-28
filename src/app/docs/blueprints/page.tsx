@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FileCode, Search, Plus, Variable, ArrowRight, Zap } from "lucide-react";
+import { FileCode, Search, Plus, Variable, ArrowRight, Zap, Puzzle } from "lucide-react";
 
 export default function BlueprintsOverviewPage() {
   return (
@@ -57,6 +57,18 @@ export default function BlueprintsOverviewPage() {
               <p className="font-medium">Commands & Workflows</p>
               <p className="text-sm text-muted-foreground">
                 Slash commands for AI IDEs
+              </p>
+            </div>
+          </Link>
+          <Link
+            href="/docs/blueprints/skills-and-subagents"
+            className="flex items-center gap-3 rounded-lg border bg-background p-4 transition-colors hover:bg-muted"
+          >
+            <Puzzle className="h-5 w-5 text-primary" />
+            <div>
+              <p className="font-medium">Agent Skills &amp; Subagents</p>
+              <p className="text-sm text-muted-foreground">
+                One SKILL.md or subagent for every coding agent
               </p>
             </div>
           </Link>

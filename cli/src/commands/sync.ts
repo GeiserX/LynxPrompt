@@ -32,7 +32,7 @@ import {
   type TrackedBlueprint,
 } from "../utils/blueprint-tracker.js";
 import { fillBlueprintVariables } from "../utils/variables.js";
-import { withFinalNewline } from "../utils/blueprint-files.js";
+import { withFinalNewline, writeAssetCopies } from "../utils/blueprint-files.js";
 
 interface SyncOptions {
   dryRun?: boolean;
@@ -136,6 +136,7 @@ async function syncOne(cwd: string, tracked: TrackedBlueprint, options: SyncOpti
     if (!dry) {
       await writeFile(filePath, withFinalNewline(rendered), "utf-8");
       await record(cwd, tracked, remote, rendered);
+      await writeAssetCopies(cwd, file, rendered, { onlyExisting: true });
     }
     console.log(chalk.cyan(`↓ ${file}: ${dry ? "would update from the cloud" : "updated from the cloud"}`));
     return "pulled";
@@ -161,6 +162,7 @@ async function syncOne(cwd: string, tracked: TrackedBlueprint, options: SyncOpti
     try {
       await api.updateBlueprint(tracked.id, { content: local, expected_checksum: tracked.checksum });
       await updateChecksum(cwd, file, local);
+      await writeAssetCopies(cwd, file, local, { onlyExisting: true });
       console.log(chalk.cyan(`↑ ${file}: pushed local changes`));
       return "pushed";
     } catch (error) {

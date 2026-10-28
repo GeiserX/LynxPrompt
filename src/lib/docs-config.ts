@@ -94,6 +94,11 @@ export const docsConfig: DocsSection[] = [
         description: "Slash commands for AI IDEs (Cursor, Claude, etc.)",
       },
       {
+        title: "Agent Skills & Subagents",
+        href: "/docs/blueprints/skills-and-subagents",
+        description: "One SKILL.md or subagent for every coding agent",
+      },
+      {
         title: "Template Variables",
         href: "/docs/blueprints/variables",
         description: "Using [[VARIABLE]] and [[VARIABLE|default]] placeholders",

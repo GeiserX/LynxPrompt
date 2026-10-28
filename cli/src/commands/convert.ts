@@ -20,7 +20,14 @@ import {
 } from "../utils/convert-format.js";
 import { PLATFORM_FILES } from "../utils/generator.js";
 import { COMMANDS, MCP_CONFIGS, PLATFORMS, convertMcpConfig, resolvePlatformId } from "../../../packages/shared/src/platforms.js";
-import { matchConfigFile, rulesWritePath } from "../utils/blueprint-files.js";
+import {
+  SKILL_TARGETS,
+  SUBAGENT_TARGETS,
+  skillFiles,
+  subagentFiles,
+  type AgentAssetTarget,
+} from "../../../packages/shared/src/agent-assets.js";
+import { matchConfigFile, rulesWritePath, assetLocation, withFinalNewline } from "../utils/blueprint-files.js";
 
 interface ConvertOptions {
   output?: string;
@@ -44,6 +51,12 @@ const PLATFORM_NAMES: Record<string, string> = {
   agents: "AGENTS.md (Universal)",
   cursor_legacy: "Cursor Rules (legacy)",
 };
+
+// Skill and subagent targets: "<tool>-skill" and "<tool>-agent"
+const ASSET_TARGETS: { id: string; kind: "skill" | "agent"; target: AgentAssetTarget }[] = [
+  ...SKILL_TARGETS.map((t) => ({ id: `${t.id}-skill`, kind: "skill" as const, target: t })),
+  ...SUBAGENT_TARGETS.map((t) => ({ id: `${t.id}-agent`, kind: "agent" as const, target: t })),
+];
 
 // Command directory patterns for detection (.copilot/prompts is where older
 // versions put Copilot prompts)
@@ -81,6 +94,14 @@ export async function convertCommand(
   console.log();
 
   const cwd = process.cwd();
+
+  // Skills and subagents convert to another tool's folder, never to or from a rules file
+  const assetTarget = ASSET_TARGETS.find((t) => t.id === target.toLowerCase());
+  const assetSource = source !== undefined ? assetLocation(source) : null;
+  if (assetTarget || assetSource) {
+    await convertAsset(cwd, source, assetTarget, options);
+    return;
+  }
 
   // MCP server configs convert to each other, never to or from a rules file
   const mcpTarget = MCP_CONFIGS.find((c) => c.id === target.toLowerCase());
@@ -272,5 +293,58 @@ async function convertMcp(
   await mkdir(dirname(outputPath), { recursive: true });
   await writeFile(outputPath, converted, "utf-8");
   console.log(chalk.green(`  ✓ Converted ${sourceFile} to ${outputFile} (MCP servers for ${target.name})`));
+  console.log();
+}
+
+/**
+ * Write a skill or subagent in another tool's folder: a skill's SKILL.md with
+ * only the spec fields (all of them for .claude/skills), a subagent as
+ * Markdown or, for Codex, as TOML.
+ */
+async function convertAsset(
+  cwd: string,
+  source: string | undefined,
+  asset: (typeof ASSET_TARGETS)[number] | undefined,
+  options: ConvertOptions
+): Promise<void> {
+  const loc = source !== undefined ? assetLocation(source) : null;
+  const targets = ASSET_TARGETS.map((t) => t.id).join(", ");
+  if (!loc || !asset || loc.kind !== asset.kind) {
+    console.log(chalk.red("  ✗ A skill converts only to another skills folder, and a subagent to another agents folder."));
+    console.log(chalk.gray(`     Usage: lynxp convert <SKILL.md or agent file> <target>, target one of: ${targets}`));
+    process.exit(1);
+  }
+  if (loc.kind === "agent" && !source!.toLowerCase().endsWith(".md")) {
+    console.log(chalk.red("  ✗ Only a Markdown subagent can be converted"));
+    process.exit(1);
+  }
+
+  let content: string;
+  try {
+    content = await readFile(resolve(cwd, source!), "utf-8");
+  } catch {
+    console.log(chalk.red(`  ✗ Could not read source file: ${source}`));
+    process.exit(1);
+  }
+  const files =
+    loc.kind === "skill" ? skillFiles({ content }, [asset.target.id], loc.name) : subagentFiles({ content }, [asset.target.id], loc.name);
+  const file = files.find((f) => f.path.startsWith(`${asset.target.directory}/`))!;
+
+  const outputFile = options.output || `${loc.base}${file.path}`;
+  const outputPath = resolve(cwd, outputFile);
+  if (outputPath === resolve(cwd, source!)) {
+    console.log(chalk.yellow(`  ⚠️ ${source} is already in ${asset.target.directory}`));
+    process.exit(1);
+  }
+  const exists = await access(outputPath).then(() => true, () => false);
+  if (exists && !options.force) {
+    console.log(chalk.yellow(`  ⚠️ File already exists: ${outputFile}`));
+    console.log(chalk.gray("     Use --force to overwrite"));
+    process.exit(1);
+  }
+  const { mkdir } = await import("fs/promises");
+  await mkdir(dirname(outputPath), { recursive: true });
+  await writeFile(outputPath, withFinalNewline(file.content), "utf-8");
+  console.log(chalk.green(`  ✓ Converted ${source} to ${outputFile} (${asset.target.name})`));
   console.log();
 }

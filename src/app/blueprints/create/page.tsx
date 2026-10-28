@@ -35,6 +35,7 @@ import { useFeatureFlags } from "@/components/providers/feature-flags-provider";
 import { Turnstile } from "@/components/turnstile";
 import { detectSensitiveData, type SensitiveMatch } from "@/lib/sensitive-data";
 import { detectVariables, detectDuplicateVariableDefaults, type DuplicateVariableDefault } from "@/lib/file-generator";
+import { checkSkillContent } from "@/lib/platforms";
 
 // All supported IDE types - blueprints are interchangeable across all platforms
 const BLUEPRINT_TYPES = [
@@ -82,6 +83,7 @@ const COMMAND_TYPES = [
 // Agent Skills and MCP server configs: one definition, written to each tool's folder or file
 const SKILL_MCP_TYPES = [
   { value: "AGENT_SKILL", label: "Agent Skill (<tool>/skills/<name>/SKILL.md)", icon: "🧩", isCommand: false },
+  { value: "AGENT_DEFINITION", label: "Subagent (.claude/agents/<name>.md, .agents/agents/<name>.md)", icon: "🤖", isCommand: false },
   { value: "MCP_CONFIG", label: "MCP Servers (.mcp.json, .cursor/mcp.json, .vscode/mcp.json)", icon: "🔌", isCommand: false },
 ] as const;
 const isSkillOrMcpType = (type: string) => SKILL_MCP_TYPES.some((t) => t.value === type);
@@ -392,6 +394,12 @@ export default function ShareBlueprintPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const skillProblem = type === "AGENT_SKILL" ? checkSkillContent(content) : null;
+    if (skillProblem) {
+      setError(skillProblem);
+      return;
+    }
     
     // Check for client-side sensitive data warnings first
     if (hasSensitiveData) {
@@ -824,7 +832,7 @@ export default function ShareBlueprintPage() {
                           </option>
                         ))}
                       </optgroup>
-                      <optgroup label="Agent Skills & MCP Servers">
+                      <optgroup label="Agent Skills, Subagents & MCP Servers">
                         {SKILL_MCP_TYPES.map((t) => (
                           <option key={t.value} value={t.value}>
                             {t.icon} {t.label}
@@ -850,7 +858,9 @@ export default function ShareBlueprintPage() {
                     {isSkillOrMcpType(type) && (
                       <div className="mt-2 rounded-lg border border-sky-200 bg-sky-50 p-3 text-xs text-sky-800 dark:border-sky-500/50 dark:bg-sky-900/30 dark:text-sky-200">
                         {type === "AGENT_SKILL"
-                          ? "Paste the SKILL.md of one skill, with its name and description frontmatter. lynxp pull writes it to .claude/skills/<name>/SKILL.md, and lynxp push picks up skills in the skills folder of Claude Code, Codex (.agents), Copilot (.github), Cursor, Gemini CLI and OpenCode."
+                          ? "Paste the SKILL.md of one skill, with its name and description frontmatter. The name is 1 to 64 lowercase letters, digits and hyphens, and is the folder name. The download and lynxp pull write it to .agents/skills/<name>/SKILL.md, which almost every agent reads, and to .claude/skills/<name>/SKILL.md for Claude Code; Kiro and Firebender get their own copy when you pick them."
+                          : type === "AGENT_DEFINITION"
+                          ? "Paste one subagent: a Markdown file with name and description frontmatter and the agent's instructions. The download and lynxp pull write it to .claude/agents/<name>.md (Claude Code, Cursor, Copilot in VS Code) and .agents/agents/<name>.md (Antigravity, Goose, OpenHands, Kimi Code), plus .github/agents/<name>.agent.md for Copilot and .codex/agents/<name>.toml for Codex when you pick them."
                           : "Paste a JSON MCP config with an \"mcpServers\" (or VS Code \"servers\") object. lynxp pull writes .mcp.json, and lynxp convert rewrites it for Cursor, VS Code or Kiro. Keep keys out of it: use environment variables."}
                       </div>
                     )}

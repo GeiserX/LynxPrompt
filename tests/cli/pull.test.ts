@@ -36,6 +36,24 @@ const BLUEPRINTS: Record<string, { name: string; type: string; repository_path: 
   bp_root: { name: "root", type: "AGENTS_MD", repository_path: "AGENTS.md", content: "# Root rules" },
   bp_api: { name: "api", type: "AGENTS_MD", repository_path: "packages/api/AGENTS.md", content: "# API rules" },
   bp_claude: { name: "claude", type: "CLAUDE_MD", repository_path: null, content: "# Claude rules" },
+  bp_skill: {
+    name: "Release notes",
+    type: "AGENT_SKILL",
+    repository_path: null,
+    content: "---\nname: release-notes\ndescription: Write release notes\nmodel: opus\n---\nRead the changelog.\n",
+  },
+  bp_review: {
+    name: "review",
+    type: "AGENT_SKILL",
+    repository_path: null,
+    content: "---\nname: review\ndescription: Review a diff\n---\nCheck the tests.\n",
+  },
+  bp_agent: {
+    name: "Reviewer",
+    type: "AGENT_DEFINITION",
+    repository_path: null,
+    content: "---\nname: reviewer\ndescription: Reviews diffs\n---\nReview the diff.\n",
+  },
 };
 
 let dir: string;
@@ -123,5 +141,71 @@ describe("lynxp pull with several ids", () => {
     expect(read("AGENTS.md")).toBe("# Root rules\n");
     expect(read("packages/api/AGENTS.md")).toBe("# API rules\n");
     expect((await loadBlueprints(dir)).blueprints.map((b) => b.id).sort()).toEqual(["bp_api", "bp_claude", "bp_root"]);
+  });
+});
+
+describe("lynxp pull of a skill or subagent", () => {
+  it("writes the skill for Claude Code and for every agent reading .agents/skills, and tracks the full copy", async () => {
+    await pullCommand("bp_skill", { output: dir, yes: true });
+
+    expect(read(".claude/skills/release-notes/SKILL.md")).toBe(BLUEPRINTS.bp_skill.content);
+    expect(read(".agents/skills/release-notes/SKILL.md")).toBe(
+      "---\nname: release-notes\ndescription: Write release notes\n---\nRead the changelog.\n"
+    );
+    expect(fs.existsSync(path.join(dir, ".kiro/skills"))).toBe(false);
+    expect((await loadBlueprints(dir)).blueprints.map((b) => b.file)).toEqual([".claude/skills/release-notes/SKILL.md"]);
+  });
+
+  it("adds the Codex and Copilot copies of a subagent when the project uses them", async () => {
+    fs.mkdirSync(path.join(dir, ".codex"));
+    fs.mkdirSync(path.join(dir, ".github/agents"), { recursive: true });
+
+    await pullCommand("bp_agent", { output: dir, yes: true });
+
+    expect(read(".claude/agents/reviewer.md")).toBe(BLUEPRINTS.bp_agent.content);
+    expect(read(".agents/agents/reviewer.md")).toBe(BLUEPRINTS.bp_agent.content);
+    expect(read(".github/agents/reviewer.agent.md")).toBe(BLUEPRINTS.bp_agent.content);
+    expect(read(".codex/agents/reviewer.toml")).toBe(
+      "name = \"reviewer\"\ndescription = \"Reviews diffs\"\ndeveloper_instructions = '''\nReview the diff.\n'''\n"
+    );
+  });
+
+  describe("a copy that already exists and differs", () => {
+    const MINE = "---\nname: review\ndescription: Mine\nmodel: opus\n---\nMY LOCAL WORK\n";
+    const write = (p: string, text: string) => {
+      fs.mkdirSync(path.dirname(path.join(dir, p)), { recursive: true });
+      fs.writeFileSync(path.join(dir, p), text, "utf-8");
+    };
+
+    it("keeps the user's own copy and says so, without --yes", async () => {
+      write(".claude/skills/review/SKILL.md", MINE);
+
+      await pullCommand("bp_review", { output: dir });
+
+      expect(read(".agents/skills/review/SKILL.md")).toBe(BLUEPRINTS.bp_review.content);
+      expect(read(".claude/skills/review/SKILL.md")).toBe(MINE);
+      const out = vi.mocked(console.log).mock.calls.flat().join("\n");
+      expect(out).toContain("Kept your .claude/skills/review/SKILL.md");
+    });
+
+    it("replaces it with --yes", async () => {
+      write(".claude/skills/review/SKILL.md", MINE);
+
+      await pullCommand("bp_review", { output: dir, yes: true });
+
+      expect(read(".claude/skills/review/SKILL.md")).toBe(BLUEPRINTS.bp_review.content);
+    });
+
+    it("updates a copy an earlier pull wrote, once the main file is overwritten", async () => {
+      const OLD = "---\nname: review\ndescription: Review a diff\n---\nOld steps.\n";
+      write(".agents/skills/review/SKILL.md", OLD);
+      write(".claude/skills/review/SKILL.md", OLD);
+      prompt.mockResolvedValueOnce({ action: "overwrite" });
+
+      await pullCommand("bp_review", { output: dir });
+
+      expect(read(".agents/skills/review/SKILL.md")).toBe(BLUEPRINTS.bp_review.content);
+      expect(read(".claude/skills/review/SKILL.md")).toBe(BLUEPRINTS.bp_review.content);
+    });
   });
 });

@@ -30,6 +30,7 @@ import { AiEditPanel } from "@/components/ai-edit-panel";
 import { useFeatureFlags } from "@/components/providers/feature-flags-provider";
 import { detectSensitiveData, type SensitiveMatch } from "@/lib/sensitive-data";
 import { detectVariables, detectDuplicateVariableDefaults, type DuplicateVariableDefault } from "@/lib/file-generator";
+import { checkSkillContent } from "@/lib/platforms";
 
 // All supported IDE types
 const BLUEPRINT_TYPES = [
@@ -42,6 +43,12 @@ const BLUEPRINT_TYPES = [
   { value: "CODEX_MD", label: "OpenAI Codex (AGENTS.md)", icon: "🧠" },
   { value: "CURSOR_RULES", label: "Cursor Rules (.cursorrules) — Deprecated", icon: "🎯" },
   { value: "CUSTOM", label: "Custom / Other", icon: "📄" },
+] as const;
+
+// Skills and subagents: one definition, written to each tool's folder
+const AGENT_ASSET_TYPES = [
+  { value: "AGENT_SKILL", label: "Agent Skill (<tool>/skills/<name>/SKILL.md)", icon: "🧩" },
+  { value: "AGENT_DEFINITION", label: "Subagent (.claude/agents/<name>.md, .agents/agents/<name>.md)", icon: "🤖" },
 ] as const;
 
 const CATEGORIES = [
@@ -224,6 +231,12 @@ export default function EditBlueprintPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const skillProblem = type === "AGENT_SKILL" ? checkSkillContent(content) : null;
+    if (skillProblem) {
+      setError(skillProblem);
+      return;
+    }
     
     // Check for client-side sensitive data warnings first
     if (hasSensitiveData) {
@@ -604,8 +617,13 @@ export default function EditBlueprintPage() {
                           {t.icon} {t.label}
                         </option>
                       ))}
+                      {AGENT_ASSET_TYPES.map((t) => (
+                        <option key={t.value} value={t.value}>
+                          {t.icon} {t.label}
+                        </option>
+                      ))}
                       {/* A type set elsewhere (CLI, API) that this list does not offer */}
-                      {!BLUEPRINT_TYPES.some((t) => t.value === type) && (
+                      {![...BLUEPRINT_TYPES, ...AGENT_ASSET_TYPES].some((t) => t.value === type) && (
                         <option value={type}>📄 {type}</option>
                       )}
                     </select>
