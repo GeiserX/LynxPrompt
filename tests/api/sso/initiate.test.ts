@@ -123,13 +123,17 @@ describe("POST /api/auth/sso/initiate", () => {
     expect(res.cookies.get("sso_state")?.secure).toBe(true);
   });
 
-  it.each(["SAML", "LDAP"])("says %s is not supported yet", async (provider) => {
-    teamFindUnique.mockResolvedValue(team(provider, {}));
+  it.each(["SAML", "LDAP"])("refuses a %s configuration saved before it was cut", async (provider) => {
+    teamFindUnique.mockResolvedValue(team(provider, { ssoUrl: "https://idp.example.com/sso" }));
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
 
     const res = await initiate();
     const body = await res.json();
 
-    expect(res.status).toBe(501);
-    expect(body.error).toContain("not supported yet");
+    expect(res.status).toBe(400);
+    expect(body.error).toContain("not supported");
+    expect(body.redirectUrl).toBeUndefined();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

@@ -11,14 +11,13 @@ import {
   Loader2, 
   AlertCircle, 
   ArrowLeft,
-  Shield,
   KeyRound,
   ExternalLink 
 } from "lucide-react";
 
 interface SSOConfig {
   configured: boolean;
-  provider?: "SAML" | "OIDC" | "LDAP";
+  provider?: string;
   enabled?: boolean;
   teamName?: string;
   teamId?: string;
@@ -102,31 +101,10 @@ export default function SSOLoginPage({
     }
   };
 
-  const getProviderIcon = (provider?: string) => {
-    switch (provider) {
-      case "SAML":
-        return <Shield className="h-6 w-6" />;
-      case "OIDC":
-        return <KeyRound className="h-6 w-6" />;
-      case "LDAP":
-        return <Building2 className="h-6 w-6" />;
-      default:
-        return <Building2 className="h-6 w-6" />;
-    }
-  };
+  const getProviderIcon = (provider?: string) =>
+    provider === "OIDC" ? <KeyRound className="h-6 w-6" /> : <Building2 className="h-6 w-6" />;
 
-  const getProviderName = (provider?: string) => {
-    switch (provider) {
-      case "SAML":
-        return "SAML 2.0";
-      case "OIDC":
-        return "OpenID Connect";
-      case "LDAP":
-        return "LDAP / Active Directory";
-      default:
-        return "SSO";
-    }
-  };
+  const getProviderName = (provider?: string) => (provider === "OIDC" ? "OpenID Connect" : "SSO");
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-teal-600/10 to-cyan-600/10 p-8">

@@ -75,95 +75,76 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const ssoConfig = team.ssoConfig;
-    const config = decryptSSOConfig(ssoConfig.config as Record<string, unknown>);
-
-    // Handle based on SSO provider
-    switch (ssoConfig.provider) {
-      case "SAML": {
-        // TODO: Implement SAML flow (AuthnRequest, signing, redirect to the IdP)
-        return NextResponse.json(
-          { error: "SAML sign-in is not supported yet.", provider: "SAML" },
-          { status: 501 }
-        );
-      }
-
-      case "OIDC": {
-        const clientId = config.clientId as string;
-        let authUrl: URL;
-        try {
-          // https only, so a stored javascript: URL can never reach the browser
-          authUrl = new URL((await resolveOidcEndpoints(config)).authorizationUrl);
-        } catch {
-          return NextResponse.json(
-            { error: "Could not reach the team's identity provider" },
-            { status: 502 }
-          );
-        }
-        const scopes = (config.scopes as string[]) || ["openid", "profile", "email"];
-
-        // Generate state and nonce for CSRF protection
-        const state = crypto.randomUUID();
-        const nonce = crypto.randomUUID();
-
-        const baseUrl = process.env.NEXTAUTH_URL || process.env.APP_URL || "https://lynxprompt.com";
-        const ourCallbackUrl = `${baseUrl}/api/auth/sso/callback/oidc`;
-
-        // Embed teamSlug and callbackUrl in state (signed via cookie)
-        const statePayload = `${state}:${teamSlug}:${encodeURIComponent(callbackUrl || "/dashboard")}`;
-
-        const params = new URLSearchParams({
-          client_id: clientId,
-          redirect_uri: ourCallbackUrl,
-          response_type: "code",
-          scope: scopes.join(" "),
-          state: statePayload,
-          nonce: nonce,
-        });
-
-        // Sign the state with NEXTAUTH_SECRET and store in httpOnly cookie
-        const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
-        if (!secret) {
-          return NextResponse.json(
-            { error: "Server misconfiguration: auth secret not set" },
-            { status: 500 }
-          );
-        }
-        const stateHash = createHmac("sha256", secret).update(statePayload).digest("hex");
-
-        params.forEach((value, key) => authUrl.searchParams.set(key, value));
-
-        const response = NextResponse.json({
-          redirectUrl: authUrl.toString(),
-          provider: "OIDC",
-        });
-
-        // Set signed state cookie (expires in 10 minutes)
-        response.cookies.set("sso_state", stateHash, {
-          httpOnly: true,
-          secure: secureCookiesEnabled(),
-          sameSite: "lax",
-          path: "/api/auth/sso/callback",
-          maxAge: 600,
-        });
-
-        return response;
-      }
-
-      case "LDAP": {
-        // TODO: Implement LDAP bind and a credentials form for it
-        return NextResponse.json(
-          { error: "LDAP sign-in is not supported yet.", provider: "LDAP" },
-          { status: 501 }
-        );
-      }
-
-      default:
-        return NextResponse.json(
-          { error: `Unknown SSO provider: ${ssoConfig.provider}` },
-          { status: 400 }
-        );
+    // SAML and LDAP never had a sign-in flow; a configuration saved with one
+    // before they were refused signs nobody in
+    if (team.ssoConfig.provider !== "OIDC") {
+      return NextResponse.json(
+        { error: "This team's SSO provider is not supported. Ask a team admin to set up OpenID Connect." },
+        { status: 400 }
+      );
     }
+
+    const config = decryptSSOConfig(team.ssoConfig.config as Record<string, unknown>);
+
+    const clientId = config.clientId as string;
+    let authUrl: URL;
+    try {
+      // https only, so a stored javascript: URL can never reach the browser
+      authUrl = new URL((await resolveOidcEndpoints(config)).authorizationUrl);
+    } catch {
+      return NextResponse.json(
+        { error: "Could not reach the team's identity provider" },
+        { status: 502 }
+      );
+    }
+    const scopes = (config.scopes as string[]) || ["openid", "profile", "email"];
+
+    // Generate state and nonce for CSRF protection
+    const state = crypto.randomUUID();
+    const nonce = crypto.randomUUID();
+
+    const baseUrl = process.env.NEXTAUTH_URL || process.env.APP_URL || "https://lynxprompt.com";
+    const ourCallbackUrl = `${baseUrl}/api/auth/sso/callback/oidc`;
+
+    // Embed teamSlug and callbackUrl in state (signed via cookie)
+    const statePayload = `${state}:${teamSlug}:${encodeURIComponent(callbackUrl || "/dashboard")}`;
+
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: ourCallbackUrl,
+      response_type: "code",
+      scope: scopes.join(" "),
+      state: statePayload,
+      nonce: nonce,
+    });
+
+    // Sign the state with NEXTAUTH_SECRET and store in httpOnly cookie
+    const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
+    if (!secret) {
+      return NextResponse.json(
+        { error: "Server misconfiguration: auth secret not set" },
+        { status: 500 }
+      );
+    }
+    const stateHash = createHmac("sha256", secret).update(statePayload).digest("hex");
+
+    params.forEach((value, key) => authUrl.searchParams.set(key, value));
+
+    const response = NextResponse.json({
+      redirectUrl: authUrl.toString(),
+      provider: "OIDC",
+    });
+
+    // Set signed state cookie (expires in 10 minutes)
+    response.cookies.set("sso_state", stateHash, {
+      httpOnly: true,
+      secure: secureCookiesEnabled(),
+      sameSite: "lax",
+      path: "/api/auth/sso/callback",
+      maxAge: 600,
+    });
+
+    return response;
   } catch (error) {
     console.error("SSO initiation error:", error);
     return NextResponse.json(

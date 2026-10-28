@@ -19,27 +19,11 @@ const MASK = "••••••••";
 // javascript: or data: URL must never be stored.
 const idpUrl = z.string().refine(isAllowedIdpUrl, { message: "Must be an https:// URL" });
 
-// Base SSO config schema
-const baseSSOSchema = z.object({
+// OpenID Connect is the only provider with a sign-in flow
+const ssoConfigSchema = z.object({
+  provider: z.literal("OIDC"),
   enabled: z.boolean(),
   allowedDomains: z.array(z.string()).optional(),
-});
-
-// SAML-specific config
-const samlConfigSchema = z.object({
-  provider: z.literal("SAML"),
-  entityId: z.string().url(), // Identity Provider Entity ID
-  ssoUrl: z.string().url(), // SSO Login URL
-  certificate: z.string(), // X.509 Certificate (PEM format)
-  signatureAlgorithm: z.enum(["sha256", "sha512"]).default("sha256"),
-  digestAlgorithm: z.enum(["sha256", "sha512"]).default("sha256"),
-  wantAssertionsSigned: z.boolean().default(true),
-  wantAuthnRequestsSigned: z.boolean().default(false),
-});
-
-// OIDC-specific config
-const oidcConfigSchema = z.object({
-  provider: z.literal("OIDC"),
   issuer: idpUrl, // OpenID Connect Issuer URL
   clientId: z.string(),
   clientSecret: z.string().optional(), // Omitted or masked on edit: keep the stored one
@@ -48,27 +32,6 @@ const oidcConfigSchema = z.object({
   userInfoUrl: idpUrl.optional(),
   scopes: z.array(z.string()).default(["openid", "profile", "email"]),
 });
-
-// LDAP-specific config
-const ldapConfigSchema = z.object({
-  provider: z.literal("LDAP"),
-  host: z.string(), // LDAP server hostname
-  port: z.number().default(389),
-  useTLS: z.boolean().default(true),
-  baseDn: z.string(), // Base DN for searches (e.g., "dc=company,dc=com")
-  bindDn: z.string(), // DN to bind with for searches
-  bindPassword: z.string(),
-  userSearchFilter: z.string().default("(uid={{username}})"),
-  emailAttribute: z.string().default("mail"),
-  nameAttribute: z.string().default("cn"),
-});
-
-// Combined schema
-const ssoConfigSchema = z.discriminatedUnion("provider", [
-  samlConfigSchema.merge(baseSSOSchema),
-  oidcConfigSchema.merge(baseSSOSchema),
-  ldapConfigSchema.merge(baseSSOSchema),
-]);
 
 /**
  * Helper: Check if user is a team admin
@@ -116,20 +79,12 @@ export async function GET(
       });
     }
 
-    // Decrypt secrets before masking for response
-    const rawConfig = ssoConfig.config as Record<string, unknown>;
-    const config = decryptSSOConfig(rawConfig);
-    const safeConfig = { ...config };
-
-    // Mask sensitive fields
-    if ("clientSecret" in safeConfig) {
-      safeConfig.clientSecret = MASK;
-    }
-    if ("bindPassword" in safeConfig) {
-      safeConfig.bindPassword = MASK;
-    }
-    if ("certificate" in safeConfig) {
-      safeConfig.certificate = MASK;
+    // A SAML or LDAP configuration saved before those were refused is never
+    // echoed back; its form no longer exists, and saving replaces it
+    let safeConfig: Record<string, unknown> = {};
+    if (ssoConfig.provider === "OIDC") {
+      safeConfig = decryptSSOConfig(ssoConfig.config as Record<string, unknown>);
+      if ("clientSecret" in safeConfig) safeConfig.clientSecret = MASK;
     }
 
     const token = ssoConfig.domainVerificationToken;
@@ -184,11 +139,9 @@ export async function POST(
 
     const body = await request.json();
 
-    // Only OpenID Connect has a working sign-in flow. The SAML and LDAP
-    // schemas stay below for when those flows exist.
-    if (body?.provider === "SAML" || body?.provider === "LDAP") {
+    if (body?.provider !== "OIDC") {
       return NextResponse.json(
-        { error: `${body.provider} sign-in is not supported yet. Use OpenID Connect (OIDC).` },
+        { error: "Only OpenID Connect (OIDC) is supported" },
         { status: 400 }
       );
     }
@@ -217,35 +170,33 @@ export async function POST(
 
     // A blank or masked secret on edit keeps the stored one
     const config: Record<string, unknown> = { ...providerConfig };
-    if (provider === "OIDC") {
-      if (!config.clientSecret || config.clientSecret === MASK) {
-        let stored: unknown;
-        if (existing?.provider === "OIDC") {
-          try {
-            stored = decryptSSOConfig(existing.config as Record<string, unknown>).clientSecret;
-          } catch {
-            stored = undefined;
-          }
+    if (!config.clientSecret || config.clientSecret === MASK) {
+      let stored: unknown;
+      if (existing?.provider === "OIDC") {
+        try {
+          stored = decryptSSOConfig(existing.config as Record<string, unknown>).clientSecret;
+        } catch {
+          stored = undefined;
         }
-        if (typeof stored !== "string" || !stored) {
-          return NextResponse.json({ error: "Client secret is required" }, { status: 400 });
-        }
-        config.clientSecret = stored;
       }
+      if (typeof stored !== "string" || !stored) {
+        return NextResponse.json({ error: "Client secret is required" }, { status: 400 });
+      }
+      config.clientSecret = stored;
+    }
 
-      // Read the endpoints from the issuer now, so a wrong issuer fails here
-      // rather than at the first sign-in
-      try {
-        Object.assign(config, await resolveOidcEndpoints(config));
-      } catch {
-        return NextResponse.json(
-          {
-            error:
-              "Could not read the OpenID configuration from the issuer. Check the issuer URL, or set the authorization, token and userinfo URLs.",
-          },
-          { status: 400 }
-        );
-      }
+    // Read the endpoints from the issuer now, so a wrong issuer fails here
+    // rather than at the first sign-in
+    try {
+      Object.assign(config, await resolveOidcEndpoints(config));
+    } catch {
+      return NextResponse.json(
+        {
+          error:
+            "Could not read the OpenID configuration from the issuer. Check the issuer URL, or set the authorization, token and userinfo URLs.",
+        },
+        { status: 400 }
+      );
     }
 
     // Encrypt sensitive fields before storing in database
