@@ -20,7 +20,7 @@ or invite the user to a team first.
 
 ## My account is not the superadmin
 
-The promotion happens at sign-in when the address equals `SUPERADMIN_EMAIL` exactly (the compose file copies
+The promotion happens at sign-in when the address equals `SUPERADMIN_EMAIL`, ignoring case (the compose file copies
 `ADMIN_EMAIL` into it). Check the value with `docker compose ... exec lynxprompt printenv SUPERADMIN_EMAIL`,
 fix `.env`, restart and sign in again.
 

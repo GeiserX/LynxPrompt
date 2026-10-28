@@ -27,6 +27,12 @@ import { createTransport } from "nodemailer";
 import { createHash, createHmac } from "crypto";
 import { secureCookiesEnabled } from "@/lib/auth-cookies";
 
+// SUPERADMIN_EMAIL is set by hand, so match it ignoring case and surrounding spaces.
+function isSuperadminEmail(email: string | null | undefined): boolean {
+  const configured = process.env.SUPERADMIN_EMAIL?.trim().toLowerCase();
+  return !!configured && !!email && email.trim().toLowerCase() === configured;
+}
+
 // Generate Gravatar URL from email
 function getGravatarUrl(email: string): string {
   const hash = createHash("md5").update(email.toLowerCase().trim()).digest("hex");
@@ -396,10 +402,9 @@ export const authOptions: NextAuthOptions = {
       }
 
       // Auto-promote superadmin on first sign-in
-      const superadminEmail = process.env.SUPERADMIN_EMAIL;
-      if (superadminEmail && user.email === superadminEmail) {
+      if (user.email && isSuperadminEmail(user.email)) {
         await prismaUsers.user.updateMany({
-          where: { email: superadminEmail },
+          where: { email: user.email },
           data: { role: "SUPERADMIN" },
         });
       }
@@ -615,6 +620,20 @@ export const authOptions: NextAuthOptions = {
     },
   },
   events: {
+    // Runs once per completed sign-in (after the account exists), unlike the
+    // signIn callback, which also runs when a magic link is only requested.
+    async signIn({ user }) {
+      if (!user?.id) return;
+      try {
+        await prismaUsers.user.update({
+          where: { id: user.id },
+          data: { lastLoginAt: new Date() },
+        });
+      } catch (error) {
+        // Don't fail sign-in if this fails
+        console.error(`[Auth] Failed to record last login for user ${user.id}:`, error);
+      }
+    },
     // Log consent when new user is created
     // By signing in with the ToS notice displayed, they agree to the terms
     async createUser({ user }) {
@@ -623,8 +642,7 @@ export const authOptions: NextAuthOptions = {
       const privacyVersion = "2025-12";
       // The signIn callback runs before the adapter creates a new user, so its
       // promotion finds nobody on the first sign-in; promote here instead.
-      const superadminEmail = process.env.SUPERADMIN_EMAIL;
-      const isSuperadmin = !!superadminEmail && user.email === superadminEmail;
+      const isSuperadmin = isSuperadminEmail(user.email);
       
       try {
         await prismaUsers.user.update({
