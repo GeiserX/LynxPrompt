@@ -3,4 +3,27 @@
  * read the same file paths, formats and blueprint types. See
  * packages/shared/src/platforms.ts.
  */
-export * from "../../packages/shared/src/platforms.js";
+export {
+  PLATFORMS,
+  COMMANDS,
+  getPlatform,
+  getAllPlatformIds,
+  getFeaturedPlatforms,
+  getPlatformsByCategory,
+  getPlatformDisplayName,
+  getPlatformFile,
+  PLATFORM_COUNT,
+  PLATFORM_FILES,
+  getCommand,
+  getCommandPlatforms,
+  getCommandForPlatform,
+  isCommandFile,
+  inferCommandType,
+  getCommandTemplateType,
+  BLUEPRINT_TYPE_ALIASES,
+  platformForBlueprintType,
+  convertCommand,
+  getCommandDirectories,
+  COMMAND_COUNT,
+} from "../../packages/shared/src/platforms";
+export type { PlatformDefinition, CommandDefinition } from "../../packages/shared/src/platforms";
