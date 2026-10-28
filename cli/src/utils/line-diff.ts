@@ -9,7 +9,7 @@ import { safeText } from "./terminal.js";
 // A final newline ends the last line; it is not an empty line after it. The
 // cloud may hold a file's content without it, and the two must compare equal.
 function lines(text: string): string[] {
-  return (text.endsWith("\n") ? text.slice(0, -1) : text).split("\n");
+  return text.replace(/\r?\n$/, "").split("\n");
 }
 
 /**

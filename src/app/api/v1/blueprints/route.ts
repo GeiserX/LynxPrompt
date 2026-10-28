@@ -262,7 +262,7 @@ export async function POST(request: NextRequest) {
       teamId = team.teamId;
     }
 
-    const contentCheck = checkBlueprintContent(content.trim(), {
+    const contentCheck = checkBlueprintContent(content, {
       willBePublic: isPublic,
       sensitiveDataAcknowledged: sensitive_data_acknowledged === true,
       type: normalizeBlueprintType(type),

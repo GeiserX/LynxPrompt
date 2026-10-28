@@ -11,7 +11,8 @@ export const BLUEPRINT_LIMITS = {
 } as const;
 
 export function checkBlueprintLineCount(content: string): { valid: boolean; lineCount: number; maxLines: number } {
-  const lineCount = content.split("\n").length;
+  // A final newline ends the last line; it does not start another one
+  const lineCount = content.replace(/\r?\n$/, "").split("\n").length;
   return {
     valid: lineCount <= BLUEPRINT_LIMITS.MAX_LINES,
     lineCount,

@@ -268,6 +268,18 @@ describe("v1 blueprint content is stored as sent", () => {
     expect(db.userTemplateVersion.create.mock.calls[0][0].data.content).toBe(`${CONTENT}\nMore rules here.\n`);
   });
 
+  it("checks the line limit on the content it stores", async () => {
+    const res = await create({ content: `${CONTENT}${"\n".repeat(10001)}` });
+    expect(res.status).toBe(400);
+    expect(db.userTemplate.create).not.toHaveBeenCalled();
+  });
+
+  it("accepts a file at the line limit that ends with a newline", async () => {
+    db.userTemplate.findUnique.mockResolvedValue(row({ userId: "user_1" }));
+    const res = await update({ content: `${Array(10000).fill("line").join("\n")}\n` });
+    expect(res.status).toBe(200);
+  });
+
   it("stores the newline on a row saved trimmed without writing a version", async () => {
     db.userTemplate.findUnique.mockResolvedValue(row({ userId: "user_1", currentVersion: 3 }));
     const res = await update({ content: FILE });
