@@ -13,7 +13,7 @@ import {
   toTrackedPath,
   type BlueprintSource,
 } from "../utils/blueprint-tracker.js";
-import { blueprintFilename, safePath } from "../utils/blueprint-files.js";
+import { blueprintFilename, safePath, withFinalNewline } from "../utils/blueprint-files.js";
 import { parseVariablesString } from "../utils/generator.js";
 import { fillBlueprintVariables } from "../utils/variables.js";
 
@@ -195,7 +195,7 @@ async function pullHierarchy(
 
       // Write the file
       const written = contentToWrite(blueprint.content, options, filename);
-      await writeFile(outputPath, written, "utf-8");
+      await writeFile(outputPath, withFinalNewline(written), "utf-8");
 
       // Track the blueprint with hierarchy info
       if (options.track !== false) {
@@ -430,7 +430,7 @@ async function pullBlueprint(
 
     // Write the file
     const written = contentToWrite(blueprint.content, options, filename);
-    await writeFile(outputPath, written, "utf-8");
+    await writeFile(outputPath, withFinalNewline(written), "utf-8");
 
     // Track the blueprint (default behavior unless --no-track)
     if (options.track !== false) {

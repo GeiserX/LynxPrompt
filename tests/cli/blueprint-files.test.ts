@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdtemp, writeFile, rm } from "fs/promises";
 import { tmpdir } from "os";
-import { blueprintFilename, safePath } from "../../cli/src/utils/blueprint-files";
+import { blueprintFilename, safePath, withFinalNewline } from "../../cli/src/utils/blueprint-files";
 import {
   toTrackedPath,
   trackBlueprint,
@@ -112,5 +112,14 @@ describe("Agent Skills and MCP configs", () => {
     const started = Date.now();
     expect(blueprintFilename({ type: "AGENT_SKILL", name: "x", content })).toBe(".claude/skills/pdf-tools/SKILL.md");
     expect(Date.now() - started).toBeLessThan(500);
+  });
+});
+
+describe("cli withFinalNewline", () => {
+  it("adds one newline only when the content lacks one", () => {
+    expect(withFinalNewline("# Rules")).toBe("# Rules\n");
+    expect(withFinalNewline("# Rules\n")).toBe("# Rules\n");
+    expect(withFinalNewline("# Rules\r\n")).toBe("# Rules\r\n");
+    expect(withFinalNewline("# Rules\n\n")).toBe("# Rules\n\n");
   });
 });

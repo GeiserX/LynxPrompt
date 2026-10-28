@@ -96,8 +96,8 @@ describe("lynxp pull ha_", () => {
     await pullCommand("ha_mono", { output: dir, yes: true });
 
     expect(requests).toEqual(["/api/v1/hierarchies/ha_mono?include=content"]);
-    expect(read("AGENTS.md")).toBe("# Root rules");
-    expect(read("packages/api/AGENTS.md")).toBe("# API rules");
+    expect(read("AGENTS.md")).toBe("# Root rules\n");
+    expect(read("packages/api/AGENTS.md")).toBe("# API rules\n");
     const tracked = (await loadBlueprints(dir)).blueprints;
     expect(tracked.map((b) => [b.file, b.hierarchyId])).toEqual([
       ["AGENTS.md", "ha_mono"],
@@ -111,7 +111,7 @@ describe("lynxp pull ha_", () => {
     await pullCommand("ha_mono", { output: dir, yes: true });
 
     expect(requests.slice(1)).toEqual(["/api/v1/blueprints/bp_root", "/api/v1/blueprints/bp_api"]);
-    expect(read("packages/api/AGENTS.md")).toBe("# API rules");
+    expect(read("packages/api/AGENTS.md")).toBe("# API rules\n");
   });
 });
 
@@ -119,9 +119,9 @@ describe("lynxp pull with several ids", () => {
   it("pulls every blueprint and hierarchy given", async () => {
     await pullCommand(["bp_claude", "ha_mono"], { output: dir, yes: true });
 
-    expect(read("CLAUDE.md")).toBe("# Claude rules");
-    expect(read("AGENTS.md")).toBe("# Root rules");
-    expect(read("packages/api/AGENTS.md")).toBe("# API rules");
+    expect(read("CLAUDE.md")).toBe("# Claude rules\n");
+    expect(read("AGENTS.md")).toBe("# Root rules\n");
+    expect(read("packages/api/AGENTS.md")).toBe("# API rules\n");
     expect((await loadBlueprints(dir)).blueprints.map((b) => b.id).sort()).toEqual(["bp_api", "bp_claude", "bp_root"]);
   });
 });

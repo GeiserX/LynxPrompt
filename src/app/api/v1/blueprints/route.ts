@@ -262,7 +262,7 @@ export async function POST(request: NextRequest) {
       teamId = team.teamId;
     }
 
-    const contentCheck = checkBlueprintContent(content.trim(), {
+    const contentCheck = checkBlueprintContent(content, {
       willBePublic: isPublic,
       sensitiveDataAcknowledged: sensitive_data_acknowledged === true,
       type: normalizeBlueprintType(type),
@@ -344,7 +344,9 @@ export async function POST(request: NextRequest) {
         userId: tokenData.userId,
         name: name.trim(),
         description: description?.trim() || null,
-        content: content.trim(),
+        // Stored as sent: the CLI pulls it back into a file, which must keep
+        // its final newline. Length and emptiness are checked trimmed above.
+        content,
         type: normalizeBlueprintType(type),
         category,
         tier,
@@ -383,7 +385,7 @@ export async function POST(request: NextRequest) {
       data: {
         templateId: blueprint.id,
         version: 1,
-        content: content.trim(),
+        content,
         variables: undefined,
         changelog: "Initial version",
         isPublished: isPublic,
