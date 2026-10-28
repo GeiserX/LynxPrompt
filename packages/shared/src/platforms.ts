@@ -953,9 +953,19 @@ export function needsAgentsMd(platforms: string[]): boolean {
 }
 
 /**
+ * Rules files tools read that no table entry writes: Qwen Code's own file and
+ * Cursor's legacy root file. Found by check and push, never generated.
+ */
+export const EXTRA_RULE_FILES: { path: string; name: string }[] = [
+  { path: "QWEN.md", name: "Qwen Code" },
+  { path: ".cursorrules", name: "Cursor (legacy)" },
+];
+
+/**
  * Every rules file and folder (ending in "/") the table's tools read, with the
- * tool's name: generated files, rules folders and other files. Configs
- * (Aider's YAML) are not rules files, so they are left out. Each path once.
+ * tool's name: generated files, rules folders, other files, then
+ * EXTRA_RULE_FILES. Configs (Aider's YAML) are not rules files, so they are
+ * left out. Each path once.
  */
 export function ruleFileLocations(): { path: string; name: string }[] {
   const seen = new Map<string, string>();
@@ -965,6 +975,7 @@ export function ruleFileLocations(): { path: string; name: string }[] {
       if (path && !seen.has(path)) seen.set(path, p.id === "universal" ? "AGENTS.md" : p.name);
     }
   }
+  for (const { path, name } of EXTRA_RULE_FILES) if (!seen.has(path)) seen.set(path, name);
   return [...seen].map(([path, name]) => ({ path, name }));
 }
 

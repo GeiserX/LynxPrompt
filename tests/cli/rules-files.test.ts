@@ -85,6 +85,8 @@ describe("lynxp push recognises every agent's rules files", () => {
     [".agents/rules/style.md", "CUSTOM"],
     [".tabnine/guidelines/style.md", "CUSTOM"],
     ["CRUSH.md", "CUSTOM"],
+    ["QWEN.md", "CUSTOM"],
+    [".cursorrules", "CURSORRULES"],
     [".gemini/commands/deploy.toml", "CUSTOM"],
     // Nested AGENTS.md stays the universal file
     ["packages/api/AGENTS.md", "AGENTS_MD"],
@@ -102,7 +104,8 @@ describe("lynxp push recognises every agent's rules files", () => {
     const paths = ruleFileLocations().map((l) => l.path);
     expect(new Set(paths).size).toBe(paths.length);
     for (const p of ["AGENTS.md", "CLAUDE.md", ".claude/rules/", ".devin/rules/", ".windsurfrules", ".clinerules",
-      ".clinerules/", ".junie/AGENTS.md", "WARP.md", ".goosehints", ".agents/rules/", ".github/instructions/"]) {
+      ".clinerules/", ".junie/AGENTS.md", "WARP.md", ".goosehints", ".agents/rules/", ".github/instructions/",
+      "QWEN.md", ".cursorrules"]) {
       expect(paths).toContain(p);
     }
     expect(paths).not.toContain(".aider.conf.yml");
@@ -147,6 +150,13 @@ describe("lynxp check", () => {
       "AGENTS.md", "CLAUDE.md", ".junie/guidelines.md", ".devin/rules/style.md",
       ".claude/rules/testing.md", ".github/instructions/api.instructions.md",
     ]));
+  });
+
+  it.each(["QWEN.md", ".cursorrules"])("finds the rules in a project whose only rules file is %s", async (file) => {
+    write(file, RULES);
+    await checkCommand({ json: true });
+    const result = JSON.parse(out.join("\n"));
+    expect(result.files).toEqual([file]);
   });
 });
 

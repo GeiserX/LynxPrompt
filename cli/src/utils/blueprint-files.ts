@@ -172,6 +172,8 @@ const CONFIG_PATTERNS: ConfigPattern[] = [
   { match: (p) => atPath(p, ".zed/instructions.md"), type: "ZED_INSTRUCTIONS", label: "Zed" },
   { match: (p) => basename(p) === "AIDER.md", type: "AIDER_MD", label: "AIDER.md" },
   { match: (p) => basename(p) === ".cursorrules", type: "CURSORRULES", label: "Cursor Rules (legacy)" },
+  // Read by a tool the table does not generate for
+  { match: (p) => basename(p) === "QWEN.md", type: "CUSTOM", label: "Qwen Code" },
   { match: (p) => basename(p) === "opencode.json", type: "OPENCODE_JSON", label: "OpenCode Config" },
   { match: (p) => basename(p) === "firebender.json", type: "CUSTOM", label: "Firebender Config" },
 ];
