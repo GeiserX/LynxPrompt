@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { authenticateRequest, canPerform } from "@/lib/api-auth";
+import { canPerform, requireUser } from "@/lib/api-auth";
 import { prismaUsers } from "@/lib/db-users";
 import { ENABLE_AI, AI_MODEL } from "@/lib/feature-flags";
 import Anthropic from "@anthropic-ai/sdk";
@@ -100,14 +100,8 @@ export async function POST(request: Request) {
 
   try {
     // Authenticate via session OR Bearer token
-    const auth = await authenticateRequest(request);
-
-    if (!auth) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
-    }
+    const auth = await requireUser(request);
+    if (auth instanceof NextResponse) return auth;
 
     if (!canPerform(auth, "blueprints:write")) {
       return NextResponse.json(

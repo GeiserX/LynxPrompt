@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
-import { requirePasskeyVerified } from "@/lib/passkey-session";
 import {
   generateToken,
   DEFAULT_EXPIRATION_DAYS,
@@ -10,6 +7,7 @@ import {
   ROLE_DISPLAY_NAMES,
 } from "@/lib/api-tokens";
 import type { ApiTokenRole } from "@/generated/prisma-users/enums";
+import { requireSession } from "@/lib/api-auth";
 
 // Valid roles for token creation
 const VALID_ROLES: ApiTokenRole[] = ["BLUEPRINTS_FULL", "BLUEPRINTS_READONLY", "PROFILE_FULL", "FULL"];
@@ -18,13 +16,11 @@ const VALID_ROLES: ApiTokenRole[] = ["BLUEPRINTS_FULL", "BLUEPRINTS_READONLY", "
  * GET /api/user/api-tokens
  * List all API tokens for the authenticated user
  */
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     // The account must still exist
     const user = await prismaUsers.user.findUnique({
@@ -88,14 +84,9 @@ export async function GET() {
  */
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const passkeyBlock = await requirePasskeyVerified(request, session.user.id);
-    if (passkeyBlock) return passkeyBlock;
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     // The account must still exist
     const user = await prismaUsers.user.findUnique({

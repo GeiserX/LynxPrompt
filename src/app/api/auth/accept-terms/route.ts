@@ -1,18 +1,12 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
+import { requireSession } from "@/lib/api-auth";
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
+    const auth = await requireSession(request, { allowUnverified: true });
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     const body = await request.json();
     const { termsVersion, privacyVersion } = body;

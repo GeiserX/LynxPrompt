@@ -1,21 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { WIZARD_LAST_STEP } from "@/lib/wizard-state";
 import packageJson from "../../../../../package.json";
+import { requireSession } from "@/lib/api-auth";
 
 // Web app version - read from package.json (single source of truth)
 const APP_VERSION: string = packageJson.version;
 
 // GET /api/wizard/drafts - List user's drafts
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     const drafts = await prismaUsers.wizardDraft.findMany({
       where: { userId: session.user.id },
@@ -62,11 +59,9 @@ export async function GET() {
 // POST /api/wizard/drafts - Create or update a draft
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     const body = await request.json();
     const { id, name, step, config } = body;

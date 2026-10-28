@@ -7,6 +7,7 @@ import { hashIP } from "@/lib/ip-hash";
 import { getClientIP } from "@/lib/client-ip";
 import { BLUEPRINT_ACCESS_SELECT, canReadBlueprint, canReadTemplate } from "@/lib/blueprint-access";
 import { COMMANDS, MCP_CONFIGS, PLATFORMS } from "@/lib/platforms";
+import { requireSession } from "@/lib/api-auth";
 
 // Every platform id from platforms.ts, plus "command-<platform>" for slash
 // command exports, "skill" for Agent Skills and the MCP target ids (what
@@ -123,10 +124,9 @@ export async function GET(
         return NextResponse.json({ total: 0, byPlatform: {} });
       }
       if (!template.isPublic) {
-        const session = await getServerSession(authOptions);
-        if (!session?.user?.id) {
-          return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
+        const auth = await requireSession(request);
+        if (auth instanceof NextResponse) return auth;
+        const { session } = auth;
         if (!(await canReadBlueprint(template, session.user.id))) {
           return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }

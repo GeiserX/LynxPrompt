@@ -1,21 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
-import { requirePasskeyVerified } from "@/lib/passkey-session";
 import { ENABLE_PASSKEYS } from "@/lib/feature-flags";
+import { requireSession } from "@/lib/api-auth";
 
-export async function GET() {
+export async function GET(request: Request) {
   if (!ENABLE_PASSKEYS) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     const authenticators = await prismaUsers.authenticator.findMany({
       where: { userId: session.user.id },
@@ -46,14 +42,9 @@ export async function DELETE(request: NextRequest) {
   }
 
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    const passkeyBlock = await requirePasskeyVerified(request, session.user.id);
-    if (passkeyBlock) return passkeyBlock;
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     const { id } = await request.json();
 
