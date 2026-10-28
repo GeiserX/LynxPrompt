@@ -1,6 +1,7 @@
 import { prismaApp } from "@/lib/db-app";
 import { prismaUsers } from "@/lib/db-users";
-import { canReadBlueprint } from "@/lib/blueprint-access";
+import { canReadBlueprint, isOwnerOrTeamMember } from "@/lib/blueprint-access";
+import { publicRepositoryPath } from "@/lib/repository-path";
 
 // =============================================================================
 // Template Types
@@ -648,7 +649,12 @@ export async function getTemplateById(
       difficulty: template.difficulty || undefined,
       isPublic: template.isPublic,
       type: template.type,
-      repositoryPath: template.repositoryPath || undefined,
+      // Where it was pushed from can name the owner's folders: in full only
+      // for the owner and the team, else just the part that sets its format
+      repositoryPath:
+        ((await isOwnerOrTeamMember(template, userId))
+          ? template.repositoryPath
+          : publicRepositoryPath(template.repositoryPath)) || undefined,
     };
   }
 

@@ -146,6 +146,59 @@ describe("getTemplateById - database mode bp_/usr_ templates", () => {
     expect((await getTemplateById("bp_mcp-1"))!.repositoryPath).toBe(".gemini/settings.json");
   });
 
+  describe("repositoryPath can name the owner's folders", () => {
+    function pushedFrom(repositoryPath: string, extra: Record<string, unknown> = {}) {
+      mockUserTemplateFindFirst.mockResolvedValue({
+        id: "rp-1",
+        name: "Core rules",
+        content: "# rules",
+        type: "AGENTS_MD",
+        tags: [],
+        userId: "owner-1",
+        user: { name: "Owner", id: "owner-1" },
+        isPublic: true,
+        visibility: "PUBLIC",
+        teamId: null,
+        repositoryPath,
+        ...extra,
+      });
+    }
+    const pathFor = async () => (await getTemplateById("bp_rp-1"))!.repositoryPath;
+
+    it("hides it from a signed-out visitor", async () => {
+      mockGetServerSession.mockResolvedValue(null);
+      pushedFrom("clients/acme-secret/AGENTS.md");
+      expect(await pathFor()).toBeUndefined();
+    });
+
+    it("hides it from a signed-in user who does not own the blueprint", async () => {
+      mockGetServerSession.mockResolvedValue({ user: { id: "someone-else" } });
+      pushedFrom("clients/acme-secret/AGENTS.md");
+      expect(await pathFor()).toBeUndefined();
+    });
+
+    it("gives it in full to the owner", async () => {
+      mockGetServerSession.mockResolvedValue({ user: { id: "owner-1" } });
+      pushedFrom("clients/acme-secret/AGENTS.md");
+      expect(await pathFor()).toBe("clients/acme-secret/AGENTS.md");
+    });
+
+    it("gives it in full to a member of the blueprint's team", async () => {
+      mockGetServerSession.mockResolvedValue({ user: { id: "member-1" } });
+      mockTeamMemberFindUnique.mockResolvedValue({ id: "tm-1" });
+      pushedFrom("clients/acme-secret/AGENTS.md", { teamId: "team-1" });
+      expect(await pathFor()).toBe("clients/acme-secret/AGENTS.md");
+    });
+
+    it("keeps only the tool's file of an MCP config or a subagent, which sets the format", async () => {
+      mockGetServerSession.mockResolvedValue(null);
+      pushedFrom("clients/acme-secret/.gemini/settings.json", { type: "MCP_CONFIG" });
+      expect(await pathFor()).toBe(".gemini/settings.json");
+      pushedFrom("clients/acme-secret/.codex/agents/reviewer.toml", { type: "AGENT_DEFINITION" });
+      expect(await pathFor()).toBe(".codex/agents/reviewer.toml");
+    });
+  });
+
   it("fetches user template with usr_ (legacy) prefix", async () => {
     mockGetServerSession.mockResolvedValue(null);
     mockUserTemplateFindFirst.mockResolvedValue({
