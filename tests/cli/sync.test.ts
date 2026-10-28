@@ -131,6 +131,21 @@ describe("lynxp sync", () => {
     expect((await tracked()).checksum).toBe(calculateChecksum(server.bp_1.content));
   });
 
+  it("never pushes a tracked file that now only imports AGENTS.md over the cloud rules", async () => {
+    const claude = path.join(dir, "CLAUDE.md");
+    fs.writeFileSync(claude, BASE);
+    await trackBlueprint(dir, { id: "bp_1", name: "Rules", file: "CLAUDE.md", content: BASE, source: "private" });
+    // `lynxp wizard` with several tools rewrote the tracked CLAUDE.md as a pointer
+    fs.writeFileSync(claude, "@AGENTS.md\n");
+
+    await syncCommand(undefined, {});
+
+    expect(puts).toHaveLength(0);
+    expect(server.bp_1.content).toBe(BASE.trim());
+    expect(read(claude)).toBe("@AGENTS.md\n");
+    expect(out.join("\n")).toContain("only imports AGENTS.md");
+  });
+
   it("leaves both sides alone when nothing changed", async () => {
     await trackAt(BASE);
 

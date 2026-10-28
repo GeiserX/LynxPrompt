@@ -10,12 +10,13 @@ export default function WindsurfPlatformPage() {
             Platforms
           </Link>
           <span>/</span>
-          <span>Windsurf</span>
+          <span>Devin Desktop</span>
         </div>
-        <h1 className="text-3xl font-bold tracking-tight">Windsurf</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Devin Desktop (formerly Windsurf)</h1>
         <p className="max-w-2xl text-lg text-muted-foreground">
-          Windsurf is Codeium&apos;s AI-powered code editor. It uses project
-          rules files to customize AI behavior.
+          Devin Desktop is the AI code editor that used to be called Windsurf.
+          It reads the project&apos;s AGENTS.md and the rule files in{" "}
+          <code>.devin/rules/</code>.
         </p>
       </div>
 
@@ -24,11 +25,14 @@ export default function WindsurfPlatformPage() {
         <h2 className="text-2xl font-bold">Configuration File</h2>
         <div className="rounded-lg border bg-card p-4">
           <code className="text-lg font-medium text-primary">
-            .windsurfrules
+            .devin/rules/project.md
           </code>
           <p className="mt-2 text-muted-foreground">
-            A plain text or markdown file that Windsurf reads to understand your
-            project preferences.
+            A Markdown rule file. LynxPrompt starts it with{" "}
+            <code>trigger: always_on</code> frontmatter, so the rule applies to
+            every request. Devin Desktop still reads <code>.windsurf/rules/</code>{" "}
+            and the old <code>.windsurfrules</code> file, and{" "}
+            <code>lynxp push</code> picks up all three.
           </p>
         </div>
       </section>
@@ -38,20 +42,24 @@ export default function WindsurfPlatformPage() {
         <h2 className="text-2xl font-bold">File Location</h2>
         <div className="rounded-lg bg-muted/50 p-4 font-mono text-sm">
           <pre>{`your-project/
-├── .windsurfrules    ← Your config file goes here
+├── .devin/
+│   └── rules/
+│       └── project.md    ← Your rule file goes here
 ├── src/
 └── package.json`}</pre>
         </div>
         <p className="text-muted-foreground">
-          Place the file in your project root directory.
+          Devin Desktop reads the root AGENTS.md on every request too. When you
+          pick it together with other tools, LynxPrompt writes the rules once in
+          AGENTS.md and skips the separate rule file.
         </p>
       </section>
 
       {/* How it works */}
       <section className="space-y-4">
-        <h2 className="text-2xl font-bold">How Windsurf Uses It</h2>
+        <h2 className="text-2xl font-bold">How Devin Desktop Uses It</h2>
         <p className="text-muted-foreground">
-          Windsurf&apos;s Cascade feature reads your rules file to:
+          Devin Desktop&apos;s agent reads your rules to:
         </p>
         <ul className="list-inside list-disc space-y-2 text-muted-foreground">
           <li>Understand your project context</li>
@@ -66,7 +74,11 @@ export default function WindsurfPlatformPage() {
         <h2 className="text-2xl font-bold">Example Rules File</h2>
         <div className="rounded-lg bg-muted/50 p-4">
           <pre className="overflow-x-auto text-sm">
-            {`# Project Rules
+            {`---
+trigger: always_on
+---
+
+# Project Rules
 
 ## Project Overview
 Full-stack e-commerce application

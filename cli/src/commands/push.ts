@@ -16,7 +16,8 @@ import {
   type TrackedBlueprint,
 } from "../utils/blueprint-tracker.js";
 import { withSensitiveDataAck, type SensitiveMatchInfo } from "../utils/sensitive-ack.js";
-import { blueprintContentOf, matchConfigFile } from "../utils/blueprint-files.js";
+import { blueprintContentOf, matchConfigFile, isAssetCopyOf, keepOneCopy, writeAssetCopies } from "../utils/blueprint-files.js";
+import { inferCommandType, isAgentsMdPointer, ruleFileLocations } from "../../../packages/shared/src/platforms.js";
 
 interface PushOptions {
   name?: string;
@@ -131,8 +132,11 @@ function scanForAllConfigFiles(cwd: string, maxDepth: number = 5): DiscoveredFil
             try {
               const stat = fs.statSync(fullPath);
               if (stat.size === 0 || stat.size > MAX_FILE_SIZE) continue;
+              const text = fs.readFileSync(fullPath, "utf-8");
+              // A CLAUDE.md or GEMINI.md that only imports AGENTS.md has no rules of its own
+              if (isAgentsMdPointer(text)) continue;
               // A settings file without MCP servers has nothing to push
-              if (blueprintContentOf(relativePath, fs.readFileSync(fullPath, "utf-8")) === null) continue;
+              if (blueprintContentOf(relativePath, text) === null) continue;
             } catch {
               continue;
             }
@@ -294,7 +298,8 @@ export async function pushCommand(
 
   // --all mode: scan for ALL config files recursively
   if (options.all) {
-    const discoveredFiles = scanForAllConfigFiles(cwd);
+    const tracked = new Set((await loadBlueprints(cwd)).blueprints.map((b) => toTrackedPath(cwd, b.file)));
+    const { kept: discoveredFiles, dropped } = keepOneCopy(scanForAllConfigFiles(cwd), (p) => tracked.has(p));
     if (discoveredFiles.length === 0) {
       console.log(chalk.yellow("No AI configuration files found."));
       console.log(chalk.gray("Run from a directory containing AGENTS.md, CLAUDE.md, .cursor/rules/, etc."));
@@ -314,6 +319,9 @@ export async function pushCommand(
       for (const f of files) {
         console.log(chalk.gray(`    ${f.path}`));
       }
+    }
+    for (const f of dropped) {
+      console.log(chalk.gray(`  ${f.path}: copy of a skill or subagent listed above, kept in step with it`));
     }
     console.log();
 
@@ -365,6 +373,11 @@ export async function pushCommand(
   const content = part;
   const filename = path.basename(file);
 
+  if (isAgentsMdPointer(content) && !options.force) {
+    console.log(chalk.yellow(`⚠ Not pushed: ${file} only imports AGENTS.md (@AGENTS.md). Push AGENTS.md instead.`));
+    process.exit(1);
+  }
+
   // Check if file is already linked to a blueprint
   const linked = await findBlueprintByFile(cwd, file);
 
@@ -377,10 +390,31 @@ export async function pushCommand(
     // Update existing blueprint
     await updateBlueprint(cwd, file, linked.id, content, options, linked.checksum);
   } else {
+    const sibling = await trackedCopyOf(cwd, file);
+    if (sibling) {
+      console.log(chalk.yellow(`⚠ Not pushed: ${file} is a copy of ${sibling}, which is linked to a blueprint.`));
+      console.log(chalk.gray(`   Edit and push ${sibling}; its copies are refreshed on push.`));
+      process.exit(1);
+    }
     // Create new blueprint or link to existing. A file named on the command line is
     // pushed alone; only a bare 'lynxp push' offers to push every AGENTS.md as a hierarchy.
     await createOrLinkBlueprint(cwd, file, filename, content, options, fileArg !== undefined);
   }
+}
+
+/** The tracked skill or subagent `file` is a LynxPrompt-written copy of, or null. */
+async function trackedCopyOf(cwd: string, file: string): Promise<string | null> {
+  const relative = toTrackedPath(cwd, path.resolve(file));
+  const match = (await loadBlueprints(cwd)).blueprints.find((b) =>
+    isAssetCopyOf(relative, toTrackedPath(cwd, b.file))
+  );
+  return match ? toTrackedPath(cwd, match.file) : null;
+}
+
+/** After a push, refresh the copies of a skill or subagent already in the project. */
+async function refreshCopies(cwd: string, file: string, content: string): Promise<void> {
+  const { written } = await writeAssetCopies(cwd, toTrackedPath(cwd, path.resolve(file)), content, { onlyExisting: true });
+  for (const copy of written) console.log(chalk.gray(`   ↳ refreshed ${copy}`));
 }
 
 /**
@@ -433,6 +467,7 @@ async function updateBlueprint(
 
     // Update local tracking with new checksum
     await updateChecksum(cwd, file, content);
+    await refreshCopies(cwd, file, content);
 
     console.log();
     console.log(chalk.green(`✅ Successfully updated ${chalk.bold(result.blueprint.name)}`));
@@ -510,26 +545,13 @@ async function createOrLinkBlueprint(
 
   // Infer the blueprint type from the file path
   const inferredType = inferBlueprintType(file);
-  const COMMAND_TYPES = [
-    "CURSOR_COMMAND", "CLAUDE_COMMAND", "WINDSURF_WORKFLOW", 
-    "COPILOT_PROMPT", "CONTINUE_PROMPT", "OPENCODE_COMMAND"
-  ];
-  const isCommandFile = COMMAND_TYPES.includes(inferredType);
-  
-  // Get friendly name for command type
-  const commandNames: Record<string, string> = {
-    "CURSOR_COMMAND": "Cursor",
-    "CLAUDE_COMMAND": "Claude Code",
-    "WINDSURF_WORKFLOW": "Windsurf",
-    "COPILOT_PROMPT": "Copilot",
-    "CONTINUE_PROMPT": "Continue",
-    "OPENCODE_COMMAND": "OpenCode",
-  };
+  // A command file from any tool's command folder (some are saved as CUSTOM)
+  const command = inferCommandType(file);
   
   console.log(chalk.cyan("\n📤 Push new blueprint"));
   console.log(chalk.gray(`   File: ${file}`));
-  if (isCommandFile) {
-    console.log(chalk.magenta(`   Type: ${commandNames[inferredType] || "Command"} Command`));
+  if (command) {
+    console.log(chalk.magenta(`   Type: ${command.name}`));
   } else {
     console.log(chalk.gray(`   Type: ${inferredType.replace(/_/g, " ")}`));
   }
@@ -658,8 +680,10 @@ async function createOrLinkBlueprint(
       repositoryPath: hierarchyInfo.repositoryPath || undefined,
     });
 
+    await refreshCopies(cwd, file, content);
+
     console.log();
-    const typeDesc = isCommandFile ? `${commandNames[inferredType]} Command` : "Blueprint";
+    const typeDesc = command ? command.name : "Blueprint";
     console.log(chalk.green(`✅ Created ${typeDesc} ${chalk.bold(result.blueprint.name)}`));
     console.log(chalk.gray(`   ID: ${result.blueprint.id}`));
     console.log(chalk.gray(`   Type: ${inferredType}`));
@@ -796,6 +820,7 @@ async function pushHierarchy(
           confirmSensitive(options, spinner)
         );
         await updateChecksum(cwd, file.path, content);
+        await refreshCopies(cwd, file.path, content);
 
         if (file.isRoot) rootBlueprintId = tracked.id;
         spinner.succeed(`${file.path} → updated (${tracked.id})`);
@@ -824,6 +849,7 @@ async function pushHierarchy(
           hierarchyName,
           repositoryPath: file.path,
         });
+        await refreshCopies(cwd, file.path, content);
 
         if (file.isRoot) rootBlueprintId = existing.id;
         spinner.succeed(`${file.path} → linked & updated (${existing.id})`);
@@ -872,6 +898,7 @@ async function pushHierarchy(
         hierarchyName,
         repositoryPath: file.path,
       });
+      await refreshCopies(cwd, file.path, content);
 
       spinner.succeed(`${file.path} → created (${result.blueprint.id})`);
       createCount++;
@@ -906,21 +933,25 @@ async function pushHierarchy(
   console.log();
 }
 
+/**
+ * The rules file a bare `lynxp push` pushes: AGENTS.md, then CLAUDE.md, then
+ * any other tool's file from the platform table. A file that only imports
+ * AGENTS.md is skipped.
+ */
 function findDefaultFile(): string | null {
   const candidates = [
     "AGENTS.md",
     "CLAUDE.md",
-    ".cursor/rules/project.mdc",
-    ".github/copilot-instructions.md",
-    ".windsurfrules",
-    "AIDER.md",
-    "GEMINI.md",
-    ".clinerules",
+    ...ruleFileLocations().map((l) => l.path).filter((p) => !p.endsWith("/")),
   ];
 
   for (const candidate of candidates) {
-    if (fs.existsSync(candidate)) {
-      return candidate;
+    try {
+      if (fs.statSync(candidate).isFile() && !isAgentsMdPointer(fs.readFileSync(candidate, "utf-8"))) {
+        return candidate;
+      }
+    } catch {
+      // Not there
     }
   }
 

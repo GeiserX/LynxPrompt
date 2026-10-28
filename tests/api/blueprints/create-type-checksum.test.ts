@@ -72,3 +72,29 @@ describe("POST /api/blueprints", () => {
     expect(stored().contentChecksum).toBe(contentChecksum(content));
   });
 });
+
+describe("POST /api/blueprints with a skill or subagent", () => {
+  beforeEach(() => {
+    mockCreate.mockReset();
+    mockCreate.mockImplementation(async ({ data }) => ({ id: "tpl_1", ...data }));
+  });
+
+  it("keeps the subagent type", async () => {
+    const response = await create({ type: "AGENT_DEFINITION", content: "---\nname: reviewer\ndescription: Reviews\n---\nReview it." });
+    expect(response.status).toBe(200);
+    expect(stored().type).toBe("AGENT_DEFINITION");
+  });
+
+  it("refuses a skill name that breaks the Agent Skills format", async () => {
+    const response = await create({ type: "AGENT_SKILL", content: "---\nname: PDF Tools\ndescription: x\n---\nUse pdftk." });
+    expect(response.status).toBe(400);
+    expect((await response.json()).error).toMatch(/PDF Tools/);
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  it("stores a skill with a valid name", async () => {
+    const response = await create({ type: "AGENT_SKILL", content: "---\nname: pdf-tools\ndescription: x\n---\nUse pdftk." });
+    expect(response.status).toBe(200);
+    expect(stored().type).toBe("AGENT_SKILL");
+  });
+});

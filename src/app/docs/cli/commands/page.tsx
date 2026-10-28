@@ -506,10 +506,10 @@ $ lynxp import --json | jq '.hierarchy'`}</code>
               <ul className="text-sm text-muted-foreground space-y-1">
                 <li>• <strong>.cursor/commands/*.md</strong> — Cursor commands</li>
                 <li>• <strong>.claude/commands/*.md</strong> — Claude Code commands</li>
-                <li>• <strong>.windsurf/workflows/*.md</strong> — Windsurf workflows</li>
+                <li>• <strong>.devin/workflows/*.md</strong> — Devin Desktop workflows (and the old <strong>.windsurf/workflows/</strong>)</li>
                 <li>• <strong>.github/prompts/*.prompt.md</strong> — GitHub Copilot prompts</li>
-                <li>• <strong>.continue/prompts/*.md</strong> — Continue.dev prompts</li>
                 <li>• <strong>.opencode/commands/*.md</strong> — OpenCode commands</li>
+                <li>• <strong>.gemini/commands/*.toml</strong>, <strong>.kiro/prompts/</strong>, <strong>.clinerules/workflows/</strong> and the command folders of the other supported tools</li>
               </ul>
             </div>
           </div>

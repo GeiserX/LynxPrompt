@@ -170,7 +170,7 @@ export default function CopilotPlatformPage() {
           href="/docs/platforms/windsurf"
           className="text-sm text-muted-foreground hover:text-foreground"
         >
-          Windsurf →
+          Devin Desktop →
         </Link>
       </section>
     </div>

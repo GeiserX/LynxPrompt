@@ -132,6 +132,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     },
     {
+      url: `${baseUrl}/docs/blueprints/skills-and-subagents`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
       url: `${baseUrl}/docs/blueprints/variables`,
       lastModified: new Date(),
       changeFrequency: "monthly",

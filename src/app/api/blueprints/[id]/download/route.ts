@@ -8,12 +8,13 @@ import { COMMANDS, MCP_CONFIGS, PLATFORMS } from "@/lib/platforms";
 import { getVerifiedSession, requireSession } from "@/lib/api-auth";
 
 // Every platform id from platforms.ts, plus "command-<platform>" for slash
-// command exports, "skill" for Agent Skills and the MCP target ids (what
+// command exports, "skill" for Agent Skills, "subagent" for subagents and the MCP target ids (what
 // template-download-modal.tsx sends)
 const ALLOWED_PLATFORMS = new Set<string>([
   ...PLATFORMS.map((p) => p.id),
   ...COMMANDS.map((c) => `command-${c.platformId}`),
   "skill",
+  "subagent",
   ...MCP_CONFIGS.map((c) => c.id),
 ]);
 

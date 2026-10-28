@@ -23,9 +23,19 @@ export {
   BLUEPRINT_TYPE_ALIASES,
   platformForBlueprintType,
   convertCommand,
+  commandContent,
   SKILL_BLUEPRINT_TYPE,
   SKILL_DIRECTORIES,
+  SKILL_TARGETS,
   skillFolder,
+  skillFiles,
+  checkSkillContent,
+  SUBAGENT_BLUEPRINT_TYPE,
+  SUBAGENT_DIRECTORIES,
+  SUBAGENT_TARGETS,
+  subagentName,
+  subagentFiles,
+  agentAssetFiles,
   MCP_BLUEPRINT_TYPE,
   MCP_CONFIGS,
   mcpConfigForPath,
@@ -37,4 +47,4 @@ export {
   AGENTS_MD_POINTER,
   agentsMdPointerFiles,
 } from "../../packages/shared/src/platforms";
-export type { PlatformDefinition, CommandDefinition, McpConfigTarget } from "../../packages/shared/src/platforms";
+export type { PlatformDefinition, CommandDefinition, AgentAssetFile, AgentAssetTarget, McpConfigTarget } from "../../packages/shared/src/platforms";

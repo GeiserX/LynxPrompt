@@ -15,6 +15,7 @@ import { canReadBlueprint } from "@/lib/blueprint-access";
 import {
   checkBlueprintContent,
   normalizeBlueprintType,
+  skillContentError,
   resolveBlueprintTeamId,
 } from "@/lib/blueprint-rules";
 
@@ -364,6 +365,16 @@ export async function PUT(
       // A private blueprint keeps no team, same as one created private
       if (normalizedVisibility === "PRIVATE") {
         updateData.teamId = null;
+      }
+    }
+
+    if (updateData.content !== undefined || updateData.type !== undefined) {
+      const skillError = skillContentError(
+        (updateData.type as string | undefined) ?? existing.type,
+        typeof updateData.content === "string" ? updateData.content : existing.content
+      );
+      if (skillError) {
+        return NextResponse.json({ error: skillError }, { status: 400 });
       }
     }
 

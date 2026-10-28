@@ -14,6 +14,8 @@
  * push agree with this table.
  */
 
+import { splitFrontmatter } from "./rules-format";
+
 export interface PlatformDefinition {
   /** Unique identifier used in code */
   id: string;
@@ -48,8 +50,20 @@ export interface PlatformDefinition {
   blueprintType?: string;
   /** A folder the tool reads every rule file from; `lynxp push` finds any .md/.mdc file in it. */
   rulesDirectory?: string;
+  /**
+   * Other rules files and folders (ending in "/") the tool reads: older names
+   * and files that would shadow AGENTS.md. `lynxp push` and `lynxp check`
+   * recognise them; the generator never writes them.
+   */
+  otherFiles?: string[];
   /** The tool follows `@path` imports in its file, so the file can just import AGENTS.md. */
   importsFiles?: boolean;
+  /**
+   * Every surface of the tool reads the root AGENTS.md with no setting, so
+   * next to AGENTS.md it needs no file of its own (a second copy would load
+   * the rules twice in tools that merge every rules file).
+   */
+  readsAgentsMd?: boolean;
 }
 
 /**
@@ -76,7 +90,9 @@ export interface CommandDefinition {
 }
 
 /**
- * All supported AI IDE platforms (30+ and growing!)
+ * All supported AI coding tools. Tools that read only AGENTS.md (Amp, Jules,
+ * Factory, Qwen Code, Kimi Code, Mistral Vibe, Pi, CodeGPT) are named in the
+ * universal entry instead of having one each.
  * 
  * Categories:
  * - popular: Most commonly used platforms (shown first)
@@ -96,11 +112,25 @@ export const PLATFORMS: PlatformDefinition[] = [
     blueprintType: "AGENTS_MD",
     icon: "🌐",
     gradient: "from-violet-500 to-purple-500",
-    note: "Works with Claude Code, Copilot, Aider, and many others",
+    note: "Read natively by Codex, Cursor, Copilot, Claude Code (when no CLAUDE.md), Antigravity, Devin, Jules, Amp, Kiro, Junie, Goose, Warp, OpenCode, OpenHands, Crush, Factory, Qwen Code, Kimi Code, Mistral Vibe, Pi, Augment, Kilo Code, Cline, Zed and CodeGPT",
     category: "popular",
     format: "markdown",
     featured: true,
-    url: "https://agents-md.dev",
+    url: "https://agents.md",
+  },
+  {
+    id: "codex",
+    name: "OpenAI Codex",
+    file: "AGENTS.md",
+    blueprintType: "CODEX_MD",
+    readsAgentsMd: true,
+    icon: "🧩",
+    gradient: "from-emerald-500 to-teal-600",
+    note: "OpenAI's coding agent (reads AGENTS.md)",
+    category: "popular",
+    format: "markdown",
+    featured: true,
+    url: "https://learn.chatgpt.com/docs/agent-configuration/agents-md",
   },
   {
     id: "cursor",
@@ -108,6 +138,7 @@ export const PLATFORMS: PlatformDefinition[] = [
     file: ".cursor/rules/project.mdc",
     rulesDirectory: ".cursor/rules/",
     blueprintType: "CURSOR_RULES",
+    readsAgentsMd: true,
     icon: "⚡",
     gradient: "from-blue-500 to-cyan-500",
     note: "AI-powered code editor with native rules",
@@ -120,7 +151,10 @@ export const PLATFORMS: PlatformDefinition[] = [
     id: "claude",
     name: "Claude Code",
     file: "CLAUDE.md",
+    rulesDirectory: ".claude/rules/",
+    otherFiles: [".claude/CLAUDE.md"],
     blueprintType: "CLAUDE_MD",
+    // Claude Code skips AGENTS.md whenever a CLAUDE.md exists, so CLAUDE.md stays as an @AGENTS.md import
     importsFiles: true,
     icon: "🧠",
     gradient: "from-orange-500 to-amber-500",
@@ -128,13 +162,15 @@ export const PLATFORMS: PlatformDefinition[] = [
     category: "popular",
     format: "markdown",
     featured: true,
-    url: "https://docs.anthropic.com/en/docs/claude-code",
+    url: "https://code.claude.com/docs",
   },
   {
     id: "copilot",
     name: "GitHub Copilot",
     file: ".github/copilot-instructions.md",
+    rulesDirectory: ".github/instructions/",
     blueprintType: "COPILOT_INSTRUCTIONS",
+    // Not readsAgentsMd: Copilot in Visual Studio, JetBrains and code review reads only this file
     icon: "🐙",
     gradient: "from-gray-600 to-gray-800",
     note: "GitHub's AI pair programmer",
@@ -145,16 +181,19 @@ export const PLATFORMS: PlatformDefinition[] = [
   },
   {
     id: "windsurf",
-    name: "Windsurf",
-    file: ".windsurfrules",
+    name: "Devin Desktop (formerly Windsurf)",
+    file: ".devin/rules/project.md",
+    rulesDirectory: ".devin/rules/",
+    otherFiles: [".windsurfrules", ".windsurf/rules/"],
     blueprintType: "WINDSURF_RULES",
+    readsAgentsMd: true,
     icon: "🏄",
     gradient: "from-teal-500 to-emerald-500",
-    note: "Codeium's AI-native IDE",
+    note: "Cognition's IDE, renamed from Windsurf on 2026-06-02",
     category: "popular",
-    format: "text",
+    format: "markdown",
     featured: true,
-    url: "https://windsurf.com",
+    url: "https://devin.ai/desktop",
   },
 
   // ========================================
@@ -163,21 +202,26 @@ export const PLATFORMS: PlatformDefinition[] = [
   {
     id: "antigravity",
     name: "Antigravity",
-    file: "GEMINI.md",
-    blueprintType: "GEMINI_MD",
+    file: "AGENTS.md",
+    // Every rule here needs a trigger frontmatter key, or Antigravity drops it
+    rulesDirectory: ".agents/rules/",
+    readsAgentsMd: true,
     icon: "💎",
     gradient: "from-blue-600 to-indigo-600",
-    note: "Google's Gemini-powered IDE",
+    note: "Google's agent IDE and CLI (successor of Gemini CLI)",
     category: "ide",
     format: "markdown",
     featured: true,
-    url: "https://idx.google.com",
+    url: "https://antigravity.google",
   },
   {
     id: "zed",
     name: "Zed",
     file: ".rules",
     blueprintType: "ZED_INSTRUCTIONS",
+    // Zed reads the first of .rules, .cursorrules, .windsurfrules, .clinerules,
+    // copilot-instructions.md, AGENTS.md...; next to AGENTS.md it needs no .rules
+    readsAgentsMd: true,
     icon: "⚡",
     gradient: "from-amber-500 to-yellow-500",
     note: "High-performance editor with AI",
@@ -186,23 +230,12 @@ export const PLATFORMS: PlatformDefinition[] = [
     url: "https://zed.dev",
   },
   {
-    id: "void",
-    name: "Void",
-    file: ".void/config.json",
-    blueprintType: "VOID_CONFIG",
-    icon: "🕳️",
-    gradient: "from-slate-600 to-slate-800",
-    note: "Open-source Cursor alternative",
-    category: "ide",
-    format: "json",
-    url: "https://voideditor.com",
-  },
-  {
     id: "trae",
     name: "Trae AI",
     file: ".trae/rules/project_rules.md",
     rulesDirectory: ".trae/rules/",
     blueprintType: "TRAE_RULES",
+    // Not readsAgentsMd: Trae reads AGENTS.md only after a settings switch
     icon: "🔷",
     gradient: "from-blue-400 to-blue-600",
     note: "ByteDance's AI IDE",
@@ -217,10 +250,10 @@ export const PLATFORMS: PlatformDefinition[] = [
     blueprintType: "IDX_CONFIG",
     icon: "🔥",
     gradient: "from-yellow-500 to-orange-500",
-    note: "Google's cloud IDE",
+    note: "Sunsetting: no new workspaces since 2026-06-22, shutdown 2027-03-22; move to Antigravity",
     category: "ide",
     format: "markdown",
-    url: "https://idx.dev",
+    url: "https://firebase.google.com/studio",
   },
 
   // ========================================
@@ -229,85 +262,44 @@ export const PLATFORMS: PlatformDefinition[] = [
   {
     id: "cline",
     name: "Cline",
-    file: ".clinerules",
+    file: ".clinerules/project.md",
+    rulesDirectory: ".clinerules/",
+    otherFiles: [".clinerules", ".cline/rules/"],
     blueprintType: "CLINE_RULES",
+    readsAgentsMd: true,
     icon: "🔧",
     gradient: "from-purple-500 to-pink-500",
     note: "Autonomous coding agent for VS Code",
     category: "editor",
-    format: "text",
+    format: "markdown",
     url: "https://cline.bot",
   },
   {
     id: "roocode",
-    name: "Roo Code",
+    name: "Roo Code (discontinued) / Zoo Code",
     file: ".roo/rules/project.md",
     rulesDirectory: ".roo/rules/",
     blueprintType: "ROO_RULES",
+    readsAgentsMd: true,
     icon: "🦘",
     gradient: "from-orange-400 to-red-500",
-    note: "AI coding assistant for VS Code",
+    note: "Roo shut down 2026-05-15; the Zoo Code fork reads the same .roo/ paths",
     category: "editor",
     format: "markdown",
-    url: "https://roocode.com",
-  },
-  {
-    id: "continue",
-    name: "Continue",
-    file: ".continue/config.json",
-    blueprintType: "CONTINUE_CONFIG",
-    icon: "➡️",
-    gradient: "from-blue-600 to-indigo-500",
-    note: "Open-source AI autopilot",
-    category: "editor",
-    format: "json",
-    url: "https://continue.dev",
-  },
-  {
-    id: "cody",
-    name: "Sourcegraph Cody",
-    file: ".cody/config.json",
-    blueprintType: "CODY_CONFIG",
-    icon: "🔍",
-    gradient: "from-pink-500 to-rose-500",
-    note: "Context-aware AI assistant",
-    category: "editor",
-    format: "json",
-    url: "https://sourcegraph.com/cody",
+    url: "https://github.com/Zoo-Code-Org/Zoo-Code",
   },
   {
     id: "tabnine",
     name: "Tabnine",
-    file: ".tabnine.yaml",
-    blueprintType: "TABNINE_CONFIG",
+    file: ".tabnine/guidelines/project.md",
+    rulesDirectory: ".tabnine/guidelines/",
+    // No blueprintType: TABNINE_CONFIG blueprints hold the old .tabnine.yaml, not guidelines
     icon: "📝",
     gradient: "from-cyan-500 to-blue-500",
-    note: "AI code completion",
+    note: "AI code assistant; reads project guidelines",
     category: "editor",
-    format: "yaml",
-    url: "https://tabnine.com",
-  },
-  {
-    id: "supermaven",
-    name: "Supermaven",
-    file: ".supermaven/config.json",
-    icon: "🦸",
-    gradient: "from-amber-500 to-orange-500",
-    note: "Fast AI code completions",
-    category: "editor",
-    format: "json",
-    url: "https://supermaven.com",
-  },
-  {
-    id: "codegpt",
-    name: "CodeGPT",
-    file: ".codegpt/config.json",
-    icon: "💬",
-    gradient: "from-emerald-500 to-teal-500",
-    note: "VS Code AI assistant",
-    category: "editor",
-    format: "json",
-    url: "https://codegpt.co",
+    format: "markdown",
+    url: "https://docs.tabnine.com/main/getting-started/tabnine-agent/guidelines",
   },
   {
     id: "amazonq",
@@ -317,7 +309,7 @@ export const PLATFORMS: PlatformDefinition[] = [
     blueprintType: "AMAZONQ_RULES",
     icon: "📦",
     gradient: "from-orange-400 to-amber-500",
-    note: "AWS AI coding companion",
+    note: "Merged into Kiro; IDE plugin support ends 2027-04-30",
     category: "editor",
     format: "markdown",
     url: "https://aws.amazon.com/q/developer/",
@@ -328,6 +320,7 @@ export const PLATFORMS: PlatformDefinition[] = [
     file: ".augment/rules/project.md",
     rulesDirectory: ".augment/rules/",
     blueprintType: "AUGMENT_RULES",
+    readsAgentsMd: true,
     icon: "🔮",
     gradient: "from-violet-500 to-purple-600",
     note: "AI code augmentation",
@@ -338,24 +331,29 @@ export const PLATFORMS: PlatformDefinition[] = [
   {
     id: "kilocode",
     name: "Kilo Code",
-    file: ".kilocode/rules/project.md",
+    file: "AGENTS.md",
     rulesDirectory: ".kilocode/rules/",
     blueprintType: "KILOCODE_RULES",
+    readsAgentsMd: true,
     icon: "📊",
     gradient: "from-green-500 to-emerald-500",
-    note: "AI code generation",
+    note: "AI coding agent (reads AGENTS.md; .kilocode/rules/ still loads)",
     category: "editor",
     format: "markdown",
-    url: "https://kilocode.ai",
+    url: "https://kilo.ai",
   },
   {
     id: "junie",
     name: "Junie",
-    file: ".junie/guidelines.md",
+    file: "AGENTS.md",
+    rulesDirectory: ".junie/rules/",
+    // .junie/AGENTS.md wins over the root AGENTS.md, so it is read, never written
+    otherFiles: [".junie/AGENTS.md", ".junie/guidelines.md"],
     blueprintType: "JUNIE_GUIDELINES",
+    readsAgentsMd: true,
     icon: "🎯",
     gradient: "from-pink-400 to-rose-500",
-    note: "JetBrains AI assistant",
+    note: "JetBrains coding agent (reads AGENTS.md)",
     category: "editor",
     format: "markdown",
     url: "https://www.jetbrains.com/junie/",
@@ -366,6 +364,7 @@ export const PLATFORMS: PlatformDefinition[] = [
     file: ".kiro/steering/project.md",
     rulesDirectory: ".kiro/steering/",
     blueprintType: "KIRO_STEERING",
+    readsAgentsMd: true,
     icon: "🚀",
     gradient: "from-blue-500 to-purple-500",
     note: "AWS spec-driven agent",
@@ -380,35 +379,40 @@ export const PLATFORMS: PlatformDefinition[] = [
   {
     id: "aider",
     name: "Aider",
-    file: "CONVENTIONS.md",
-    blueprintType: "AIDER_MD",
+    // Aider loads no rules file by itself; its config lists AGENTS.md under read:
+    file: ".aider.conf.yml",
     icon: "🤖",
     gradient: "from-green-500 to-lime-500",
-    note: "AI pair programming in terminal",
+    note: "AI pair programming in terminal (reads AGENTS.md through .aider.conf.yml)",
     category: "cli",
-    format: "markdown",
+    format: "yaml",
     url: "https://aider.chat",
   },
   {
     id: "goose",
     name: "Goose",
-    file: ".goosehints",
+    file: "AGENTS.md",
+    otherFiles: [".goosehints"],
     blueprintType: "GOOSEHINTS",
+    readsAgentsMd: true,
     icon: "🪿",
     gradient: "from-gray-500 to-gray-700",
-    note: "Block's AI coding agent",
+    note: "Open-source AI agent, now under the Agentic AI Foundation",
     category: "cli",
-    format: "text",
-    url: "https://github.com/block/goose",
+    format: "markdown",
+    url: "https://github.com/aaif-goose/goose",
   },
   {
     id: "warp",
     name: "Warp AI",
-    file: "WARP.md",
+    file: "AGENTS.md",
+    // WARP.md wins over AGENTS.md in the same folder, so it is read, never written
+    otherFiles: ["WARP.md"],
     blueprintType: "WARP_MD",
+    readsAgentsMd: true,
     icon: "🚀",
     gradient: "from-purple-500 to-pink-500",
-    note: "AI-powered terminal",
+    note: "AI-powered terminal (reads AGENTS.md)",
     category: "cli",
     format: "markdown",
     url: "https://warp.dev",
@@ -421,16 +425,17 @@ export const PLATFORMS: PlatformDefinition[] = [
     importsFiles: true,
     icon: "💎",
     gradient: "from-blue-500 to-cyan-500",
-    note: "Google's Gemini in terminal",
+    note: "Gemini CLI; consumer users moved to Antigravity CLI on 2026-06-18",
     category: "cli",
     format: "markdown",
-    url: "https://github.com/google-gemini/gemini-cli",
+    url: "https://geminicli.com",
   },
   {
     id: "opencode",
-    name: "Open Code",
+    name: "OpenCode",
     file: "AGENTS.md",
     blueprintType: "OPENCODE_JSON",
+    readsAgentsMd: true,
     icon: "🔓",
     gradient: "from-gray-600 to-gray-800",
     note: "Open-source AI coding agent (reads AGENTS.md)",
@@ -445,47 +450,41 @@ export const PLATFORMS: PlatformDefinition[] = [
   {
     id: "openhands",
     name: "OpenHands",
-    file: ".openhands/microagents/repo.md",
+    file: "AGENTS.md",
+    otherFiles: [".openhands/microagents/repo.md"],
     blueprintType: "OPENHANDS_MD",
+    readsAgentsMd: true,
     icon: "🤲",
     gradient: "from-indigo-500 to-purple-500",
-    note: "Open-source AI agent",
+    note: "Open-source AI agent (reads AGENTS.md)",
     category: "other",
     format: "markdown",
-    url: "https://github.com/All-Hands-AI/OpenHands",
+    url: "https://github.com/OpenHands/OpenHands",
   },
   {
     id: "crush",
     name: "Crush",
     file: "CRUSH.md",
+    readsAgentsMd: true,
     icon: "💥",
     gradient: "from-red-500 to-orange-500",
-    note: "AI coding assistant",
+    note: "Charm's terminal coding agent",
     category: "other",
     format: "markdown",
-  },
-  {
-    id: "devin",
-    name: "Devin",
-    file: ".devin/rules/project.md",
-    rulesDirectory: ".devin/rules/",
-    icon: "🛠️",
-    gradient: "from-emerald-600 to-teal-700",
-    note: "Cognition's AI software engineer",
-    category: "other",
-    format: "markdown",
-    url: "https://devin.ai",
+    url: "https://github.com/charmbracelet/crush",
   },
   {
     id: "firebender",
     name: "Firebender",
     file: ".firebender/rules/project.mdc",
     rulesDirectory: ".firebender/rules/",
+    readsAgentsMd: true,
     icon: "🔥",
     gradient: "from-orange-600 to-red-600",
-    note: "AI code transformation",
+    note: "AI agent for Android Studio and IntelliJ",
     category: "other",
     format: "mdc",
+    url: "https://firebender.com",
   },
 
   // ========================================
@@ -502,7 +501,7 @@ export const PLATFORMS: PlatformDefinition[] = [
     category: "command",
     format: "markdown",
     isCommand: true,
-    url: "https://docs.cursor.com/context/rules",
+    url: "https://cursor.com/docs",
   },
   {
     id: "claude-command",
@@ -511,24 +510,24 @@ export const PLATFORMS: PlatformDefinition[] = [
     blueprintType: "CLAUDE_COMMAND",
     icon: "🧠",
     gradient: "from-orange-500 to-amber-500",
-    note: "Custom slash commands for Claude Code",
+    note: "Slash commands for Claude Code (legacy format, still works; skills preferred)",
     category: "command",
     format: "markdown",
     isCommand: true,
-    url: "https://docs.anthropic.com/en/docs/claude-code",
+    url: "https://code.claude.com/docs",
   },
   {
     id: "windsurf-workflow",
-    name: "Windsurf Workflow",
-    file: ".windsurf/workflows/",
+    name: "Devin Desktop Workflow",
+    file: ".devin/workflows/",
     blueprintType: "WINDSURF_WORKFLOW",
     icon: "🏄",
     gradient: "from-teal-500 to-emerald-500",
-    note: "Cascade workflows for Windsurf IDE",
+    note: "Workflows for Devin Desktop (formerly Windsurf)",
     category: "command",
     format: "markdown",
     isCommand: true,
-    url: "https://windsurf.com",
+    url: "https://devin.ai/desktop",
   },
   {
     id: "copilot-prompt",
@@ -542,19 +541,6 @@ export const PLATFORMS: PlatformDefinition[] = [
     format: "markdown",
     isCommand: true,
     url: "https://github.com/features/copilot",
-  },
-  {
-    id: "continue-prompt",
-    name: "Continue Prompt",
-    file: ".continue/prompts/",
-    blueprintType: "CONTINUE_PROMPT",
-    icon: "➡️",
-    gradient: "from-blue-600 to-indigo-500",
-    note: "Invokable prompts for Continue.dev",
-    category: "command",
-    format: "markdown",
-    isCommand: true,
-    url: "https://continue.dev",
   },
   {
     id: "opencode-command",
@@ -572,24 +558,25 @@ export const PLATFORMS: PlatformDefinition[] = [
 ];
 
 /**
- * All supported AI agent command types
- * Commands are reusable workflows triggered via slash commands
- * 
- * Supported tools (from research):
- * - Cursor: .cursor/commands/*.md
- * - Claude Code: .claude/commands/*.md  
- * - Windsurf: .windsurf/workflows/*.md
- * - GitHub Copilot: .github/prompts/*.prompt.md
- * - Continue.dev: .continue/prompts/*.md (with invokable: true)
- * - OpenCode: .opencode/commands/*.md
- * - Zed: Custom slash command extensions
- * - Aider: Built-in commands (not storable)
- * 
- * NOT supported (no executable slash commands):
- * - JetBrains AI Assistant (uses Alt+Enter menu)
- * - Replit Agent
- * - Bolt.new
+ * Folders AI coding tools read slash commands (or workflows, or prompts) from,
+ * one file per command. The first five have a blueprint type of their own
+ * (the command platforms above); a command from any other folder is pushed as
+ * CUSTOM and pulled back to the path it came from.
+ *
+ * Not listed: Antigravity workflows (stopped working 2026-10-19, replaced by
+ * skills) and Codex prompts (user folder only, deprecated for skills).
+ * Augment also reads .claude/commands, and Factory imports it.
  */
+const command = (
+  id: string,
+  name: string,
+  directory: string,
+  platformId: string,
+  icon: string,
+  note: string,
+  extension = ".md"
+): CommandDefinition => ({ id, name, directory, extension, platformId, icon, gradient: "from-gray-600 to-gray-800", note });
+
 export const COMMANDS: CommandDefinition[] = [
   {
     id: "cursor-command",
@@ -609,17 +596,17 @@ export const COMMANDS: CommandDefinition[] = [
     platformId: "claude",
     icon: "🧠",
     gradient: "from-orange-500 to-amber-500",
-    note: "Custom slash commands for Claude Code (e.g., /review, /refactor)",
+    note: "Slash commands for Claude Code (legacy format, still works; skills preferred)",
   },
   {
     id: "windsurf-workflow",
-    name: "Windsurf Workflow",
-    directory: ".windsurf/workflows",
+    name: "Devin Desktop Workflow",
+    directory: ".devin/workflows",
     extension: ".md",
     platformId: "windsurf",
     icon: "🏄",
     gradient: "from-teal-500 to-emerald-500",
-    note: "Cascade workflows for Windsurf IDE",
+    note: "Workflows for Devin Desktop (formerly Windsurf; .windsurf/workflows is still read)",
   },
   {
     id: "copilot-prompt",
@@ -632,16 +619,6 @@ export const COMMANDS: CommandDefinition[] = [
     note: "Custom prompts for GitHub Copilot Chat",
   },
   {
-    id: "continue-prompt",
-    name: "Continue Prompt",
-    directory: ".continue/prompts",
-    extension: ".md",
-    platformId: "continue",
-    icon: "➡️",
-    gradient: "from-blue-600 to-indigo-500",
-    note: "Invokable prompts for Continue.dev extension",
-  },
-  {
     id: "opencode-command",
     name: "OpenCode Command",
     directory: ".opencode/commands",
@@ -651,48 +628,47 @@ export const COMMANDS: CommandDefinition[] = [
     gradient: "from-gray-600 to-gray-800",
     note: "Custom commands for OpenCode TUI",
   },
+  command("gemini-command", "Gemini CLI Command", ".gemini/commands", "gemini-cli", "💎", "Custom commands for Gemini CLI (TOML)", ".toml"),
+  command("kiro-prompt", "Kiro Prompt", ".kiro/prompts", "kiro", "🚀", "Custom prompts for Kiro"),
+  command("junie-command", "Junie Command", ".junie/commands", "junie", "🎯", "Custom commands for Junie"),
+  command("augment-command", "Augment Command", ".augment/commands", "augment", "🔮", "Custom commands for Augment Code"),
+  command("trae-command", "Trae Command", ".trae/commands", "trae", "🔷", "Custom commands for Trae"),
+  command("kilo-command", "Kilo Code Command", ".kilo/commands", "kilocode", "📊", "Custom commands for Kilo Code"),
+  command("cline-workflow", "Cline Workflow", ".clinerules/workflows", "cline", "🔧", "Workflows for Cline"),
+  command("roo-command", "Roo / Zoo Code Command", ".roo/commands", "roocode", "🦘", "Custom commands for Roo Code and Zoo Code"),
+  command("crush-command", "Crush Command", ".crush/commands", "crush", "💥", "Custom commands for Crush"),
+  command("firebender-command", "Firebender Command", ".firebender/commands", "firebender", "🔥", "Custom commands for Firebender", ".mdc"),
+  command("factory-command", "Factory Droid Command", ".factory/commands", "factory", "🏭", "Custom commands for Factory Droid"),
+  command("qwen-command", "Qwen Code Command", ".qwen/commands", "qwen", "🐉", "Custom commands for Qwen Code"),
+  command("pi-prompt", "Pi Prompt", ".pi/prompts", "pi", "🥧", "Prompt templates for Pi"),
 ];
+
+/**
+ * A command written for another tool, in the format of `toCommandId`: the
+ * Markdown body as it is, except Gemini CLI, which reads TOML with the
+ * prompt in `prompt` and the frontmatter description in `description`.
+ */
+export function commandContent(content: string, toCommandId: string): string {
+  if (toCommandId !== "gemini-command") return content;
+  const { frontmatter, body } = splitFrontmatter(content);
+  const descLine = frontmatter.split(/\r?\n/).find((l) => l.startsWith("description:"));
+  const description = descLine?.slice("description:".length).trim().replace(/^["']|["']$/g, "");
+  const prompt = body.trimEnd();
+  // A TOML literal string keeps backslashes and quotes as written; a basic
+  // string with escapes only when the prompt itself holds '''
+  const quoted = prompt.includes("'''")
+    ? `"""\n${prompt.replace(/\\/g, "\\\\").replace(/"""/g, '""\\"')}\n"""`
+    : `'''\n${prompt}\n'''`;
+  return `${description ? `description = ${JSON.stringify(description)}\n` : ""}prompt = ${quoted}\n`;
+}
 
 // ========================================
 // AGENT SKILLS (MCP SERVERS: mcp.ts)
 // ========================================
 
-/** Blueprint type of an Agent Skill: the SKILL.md of one skill folder. */
-export const SKILL_BLUEPRINT_TYPE = "AGENT_SKILL";
-
-/**
- * Folders tools read Agent Skills from, one folder per skill holding a
- * SKILL.md: Claude Code, Codex, GitHub Copilot, Cursor, Gemini CLI, OpenCode.
- * A skill pulled without a stored path goes in the first one.
- */
-export const SKILL_DIRECTORIES = [
-  ".claude/skills",
-  ".agents/skills",
-  ".github/skills",
-  ".cursor/skills",
-  ".gemini/skills",
-  ".opencode/skills",
-];
-
-/**
- * Folder a skill goes in under a skills directory: the "name" in its SKILL.md
- * frontmatter (the Agent Skills format wants the two to match), else the
- * blueprint name, slugified. The web download and `lynxp pull` both use it.
- */
-export function skillFolder(bp: { name?: string; content?: string }): string {
-  // Plain line scanning, no backtracking regex: the content is untrusted
-  const lines = (bp.content ?? "").split("\n").map((l) => l.trimEnd());
-  const end = lines[0] === "---" ? lines.indexOf("---", 1) : -1;
-  const nameLine = end > 0 ? lines.slice(1, end).find((l) => l.startsWith("name:")) : undefined;
-  const name = nameLine?.slice("name:".length).trim().replace(/^["']|["']$/g, "");
-  const slug = (name || bp.name || "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .split("-")
-    .filter(Boolean)
-    .join("-");
-  return slug || "skill";
-}
+// Skills and subagents live in agent-assets.ts; re-exported so imports of
+// this table keep working
+export * from "./agent-assets";
 
 // MCP server configs live in mcp.ts; re-exported here for existing imports
 export {
@@ -824,7 +800,7 @@ export function getCommandTemplateType(commandId: string): string | undefined {
 export const BLUEPRINT_TYPE_ALIASES: Record<string, string> = {
   CURSOR_MDC: "cursor",
   CURSORRULES: "cursor", // .cursorrules is deprecated; Cursor reads .cursor/rules/
-  CODEX_MD: "universal", // Codex reads AGENTS.md
+  AIDER_MD: "universal", // Aider conventions: Markdown rules, which Aider now reads from AGENTS.md
   FIREBASE_RULES: "firebase",
   GOOSE_HINTS: "goose",
   OPENCODE_CONFIG: "opencode",
@@ -834,52 +810,123 @@ export const BLUEPRINT_TYPE_ALIASES: Record<string, string> = {
 
 /**
  * The platform a blueprint type belongs to: the first platform with that
- * blueprintType (AGENTS_MD is universal, GEMINI_MD is Antigravity), then the
- * aliases. Undefined for CUSTOM and for types that are not rule files.
+ * blueprintType (AGENTS_MD is universal), then the aliases. Undefined for
+ * CUSTOM, for types that are not rule files, and for the types of retired
+ * platforms (VOID_CONFIG, CODY_CONFIG, CONTINUE_CONFIG, CONTINUE_PROMPT,
+ * TABNINE_CONFIG): those stored blueprints hold a JSON or YAML config, not
+ * rules, so they load and download as they are.
  */
 export function platformForBlueprintType(type: string): string | undefined {
   return PLATFORMS.find((p) => p.blueprintType === type)?.id ?? BLUEPRINT_TYPE_ALIASES[type];
 }
 
+/**
+ * Platform ids that are no longer in the table, and the platform that now
+ * covers each, so a saved wizard draft or CLI preference still generates.
+ */
+export const RETIRED_PLATFORM_IDS: Record<string, string> = {
+  devin: "windsurf", // Windsurf became Devin Desktop; both read .devin/rules/
+  continue: "universal",
+  cody: "universal",
+  supermaven: "universal",
+  codegpt: "universal",
+  void: "universal",
+};
+
+/** A platform id as the table knows it today. */
+export function resolvePlatformId(id: string): string {
+  return RETIRED_PLATFORM_IDS[id] ?? id;
+}
+
 /** A rules file that holds no rules of its own and imports AGENTS.md. */
 export const AGENTS_MD_POINTER = "@AGENTS.md\n";
+
+/** A rules file whose whole body is an AGENTS.md import: no content of its own to push or check. */
+export function isAgentsMdPointer(content: string): boolean {
+  return /^@(\.\/)?AGENTS\.md$/.test(content.trim());
+}
 
 /**
  * Of the files generated together, the ones that can be AGENTS_MD_POINTER
  * instead of a second copy of the rules: AGENTS.md is generated with them, and
  * every tool reading the file follows @path imports (Claude Code, Gemini CLI).
- * Antigravity also reads GEMINI.md, so picking it keeps GEMINI.md a full copy.
  */
 export function agentsMdPointerFiles(targets: { platform: string; file: string }[]): Set<string> {
-  const pointers = new Set<string>();
-  if (!targets.some((t) => t.file === "AGENTS.md")) return pointers;
-  for (const { file } of targets) {
-    if (file === "AGENTS.md") continue;
-    const readers = targets.filter((t) => t.file === file);
-    if (readers.every((t) => getPlatform(t.platform)?.importsFiles)) pointers.add(file);
-  }
-  return pointers;
+  return agentsMdFiles(targets, (p) => p.importsFiles);
 }
 
 /**
- * Convert a command to a different IDE format
- * Currently supports Cursor <-> Claude Code conversion
+ * Of the files generated together, the ones to leave out: AGENTS.md is
+ * generated with them, and every tool reading the file reads AGENTS.md too.
+ */
+export function agentsMdSkippedFiles(targets: { platform: string; file: string }[]): Set<string> {
+  return agentsMdFiles(targets, (p) => p.readsAgentsMd);
+}
+
+function agentsMdFiles(
+  targets: { platform: string; file: string }[],
+  covered: (p: PlatformDefinition) => boolean | undefined
+): Set<string> {
+  const files = new Set<string>();
+  if (!targets.some((t) => t.file === "AGENTS.md")) return files;
+  for (const { file } of targets) {
+    if (file === "AGENTS.md") continue;
+    const readers = targets.filter((t) => t.file === file);
+    if (readers.every((t) => covered(getPlatform(t.platform)!))) files.add(file);
+  }
+  return files;
+}
+
+/**
+ * Whether AGENTS.md joins a set of picked platforms: with two or more tools it
+ * is the one copy they share, and Claude Code and Gemini CLI import it.
+ */
+export function needsAgentsMd(platforms: string[]): boolean {
+  return platforms.length > 1 || platforms.some((p) => getPlatform(p)?.importsFiles);
+}
+
+/**
+ * Rules files tools read that no table entry writes: Qwen Code's own file and
+ * Cursor's legacy root file. Found by check and push, never generated.
+ */
+export const EXTRA_RULE_FILES: { path: string; name: string }[] = [
+  { path: "QWEN.md", name: "Qwen Code" },
+  { path: ".cursorrules", name: "Cursor (legacy)" },
+];
+
+/**
+ * Every rules file and folder (ending in "/") the table's tools read, with the
+ * tool's name: generated files, rules folders, other files, then
+ * EXTRA_RULE_FILES. Configs (Aider's YAML) are not rules files, so they are
+ * left out. Each path once.
+ */
+export function ruleFileLocations(): { path: string; name: string }[] {
+  const seen = new Map<string, string>();
+  for (const p of PLATFORMS) {
+    if (p.isCommand || p.format === "json" || p.format === "yaml") continue;
+    for (const path of [p.file, p.rulesDirectory, ...(p.otherFiles ?? [])]) {
+      if (path && !seen.has(path)) seen.set(path, p.id === "universal" ? "AGENTS.md" : p.name);
+    }
+  }
+  for (const { path, name } of EXTRA_RULE_FILES) if (!seen.has(path)) seen.set(path, name);
+  return [...seen].map(([path, name]) => ({ path, name }));
+}
+
+/**
+ * Convert a command to a different IDE format (see commandContent)
  */
 export function convertCommand(
   content: string,
   _fromType: string,
   toType: string
 ): { content: string; filename: string; directory: string } {
-  // Both use markdown, so content conversion is straightforward
-  // The main difference is the directory structure
-  
   const toCommand = COMMANDS.find((c) => c.id === toType);
   if (!toCommand) {
     throw new Error(`Unknown command type: ${toType}`);
   }
 
   return {
-    content: content,
+    content: commandContent(content, toType),
     filename: "command.md", // Will be replaced with actual filename
     directory: toCommand.directory,
   };

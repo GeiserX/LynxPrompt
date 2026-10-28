@@ -233,6 +233,58 @@ describe("lynxp push then lynxp pull against this commit's server", () => {
   });
 });
 
+describe("skills and subagents through push and pull", () => {
+  const SKILL = "---\nname: release-notes\ndescription: Write release notes\nmodel: opus\n---\nRead the changelog.\n";
+  const write = (rel: string, content: string) => {
+    fs.mkdirSync(path.dirname(path.join(cwd, rel)), { recursive: true });
+    fs.writeFileSync(path.join(cwd, rel), content);
+  };
+  const read = (dir: string, rel: string) => fs.readFileSync(path.join(dir, rel), "utf-8");
+
+  it("refreshes the .agents/skills copy on push and refuses to push that copy as a second skill", async () => {
+    write(".claude/skills/release-notes/SKILL.md", SKILL);
+    write(".agents/skills/release-notes/SKILL.md", "stale copy\n");
+
+    await pushCommand(path.join(cwd, ".claude/skills/release-notes/SKILL.md"), { yes: true, name: "Release notes" });
+    expect(only().type).toBe("AGENT_SKILL");
+    expect(read(home, ".agents/skills/release-notes/SKILL.md")).toBe(
+      "---\nname: release-notes\ndescription: Write release notes\n---\nRead the changelog.\n"
+    );
+
+    await expect(pushCommand(path.join(cwd, ".agents/skills/release-notes/SKILL.md"), { yes: true })).rejects.toThrow("exit 1");
+    expect(db.rows.size).toBe(1);
+  });
+
+  it("still pushes a skill in another tool's folder, which push never refreshes", async () => {
+    write(".claude/skills/release-notes/SKILL.md", SKILL);
+    write(".github/skills/release-notes/SKILL.md", "---\nname: release-notes\ndescription: Copilot only\n---\nOther steps.\n");
+
+    await pushCommand(path.join(cwd, ".claude/skills/release-notes/SKILL.md"), { yes: true, name: "Release notes" });
+    await pushCommand(path.join(cwd, ".github/skills/release-notes/SKILL.md"), { yes: true, name: "Copilot notes" });
+    expect(db.rows.size).toBe(2);
+  });
+
+  it("refuses a skill whose name breaks the Agent Skills format", async () => {
+    write(".claude/skills/release-notes/SKILL.md", SKILL.replace("name: release-notes", "name: Release_Notes"));
+    await expect(
+      pushCommand(path.join(cwd, ".claude/skills/release-notes/SKILL.md"), { yes: true, name: "Release notes" })
+    ).rejects.toThrow("exit 1");
+    expect(db.rows.size).toBe(0);
+  });
+
+  it("pulls a pushed subagent with its .agents/agents copy on another machine", async () => {
+    const agent = "---\nname: reviewer\ndescription: Reviews diffs\ntools: Read\n---\nReview the diff.\n";
+    write(".claude/agents/reviewer.md", agent);
+    await pushCommand(path.join(cwd, ".claude/agents/reviewer.md"), { yes: true, name: "Reviewer" });
+    expect(only().type).toBe("AGENT_DEFINITION");
+
+    cwd = clone;
+    await pullCommand(`bp_${only().id}`, { output: clone, yes: true });
+    expect(read(clone, ".claude/agents/reviewer.md")).toBe(agent);
+    expect(read(clone, ".agents/agents/reviewer.md")).toBe("---\nname: reviewer\ndescription: Reviews diffs\n---\nReview the diff.\n");
+  });
+});
+
 describe("an MCP config inside a settings file", () => {
   const servers = { mcpServers: { github: { command: "npx", args: ["-y", "github-mcp"] } } };
   const settings = (dir: string) => path.join(dir, ".gemini", "settings.json");

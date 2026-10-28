@@ -2,6 +2,7 @@ import { readFile, access, rm, mkdtemp } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 import { spawnSync } from "child_process";
+import { COMMANDS, commandContent, getCommandTemplateType } from "../../../packages/shared/src/platforms.js";
 
 export interface DetectedProject {
   name: string | null;
@@ -1478,30 +1479,30 @@ export interface CommandFileInfo {
   path: string;
   /** Filename without extension */
   name: string;
-  /** Command type (cursor-command, claude-command, windsurf-workflow, etc.) */
-  type: "cursor-command" | "claude-command" | "windsurf-workflow" | "copilot-prompt" | "continue-prompt" | "opencode-command";
+  /** Command type: a command id from the shared table (cursor-command, gemini-command...) */
+  type: string;
   /** Content of the command file */
   content: string;
-  /** IDE platform this command belongs to */
-  platform: "cursor" | "claude" | "windsurf" | "copilot" | "continue" | "opencode";
-  /** Template type for database storage */
-  templateType: "CURSOR_COMMAND" | "CLAUDE_COMMAND" | "WINDSURF_WORKFLOW" | "COPILOT_PROMPT" | "CONTINUE_PROMPT" | "OPENCODE_COMMAND";
+  /** Tool this command belongs to */
+  platform: string;
+  /** Blueprint type it is pushed as (CUSTOM for tools without a command type) */
+  templateType: string;
 }
 
 /**
- * Known command directories for various AI IDEs
- * 
- * All commands are markdown files - conversion between formats is just renaming/moving.
- * The content is plain markdown text, no special format required.
+ * Command folders of every tool, from the shared table
+ * (packages/shared/src/platforms.ts), plus folders older versions used.
  */
 const COMMAND_DIRECTORIES = [
-  { directory: ".cursor/commands", type: "cursor-command" as const, platform: "cursor" as const, templateType: "CURSOR_COMMAND" as const },
-  { directory: ".claude/commands", type: "claude-command" as const, platform: "claude" as const, templateType: "CLAUDE_COMMAND" as const },
-  { directory: ".windsurf/workflows", type: "windsurf-workflow" as const, platform: "windsurf" as const, templateType: "WINDSURF_WORKFLOW" as const },
-  { directory: ".github/prompts", type: "copilot-prompt" as const, platform: "copilot" as const, templateType: "COPILOT_PROMPT" as const },
-  { directory: ".copilot/prompts", type: "copilot-prompt" as const, platform: "copilot" as const, templateType: "COPILOT_PROMPT" as const },
-  { directory: ".continue/prompts", type: "continue-prompt" as const, platform: "continue" as const, templateType: "CONTINUE_PROMPT" as const },
-  { directory: ".opencode/commands", type: "opencode-command" as const, platform: "opencode" as const, templateType: "OPENCODE_COMMAND" as const },
+  ...COMMANDS.map((c) => ({
+    directory: c.directory,
+    extension: c.extension,
+    type: c.id,
+    platform: c.platformId,
+    templateType: getCommandTemplateType(c.id) ?? "CUSTOM",
+  })),
+  { directory: ".copilot/prompts", extension: ".md", type: "copilot-prompt", platform: "copilot", templateType: "COPILOT_PROMPT" },
+  { directory: ".windsurf/workflows", extension: ".md", type: "windsurf-workflow", platform: "windsurf", templateType: "WINDSURF_WORKFLOW" },
 ];
 
 /**
@@ -1520,11 +1521,11 @@ export async function detectCommandFiles(cwd: string): Promise<CommandFileInfo[]
       const entries = await readdir(dirPath, { withFileTypes: true });
       
       for (const entry of entries) {
-        if (entry.isFile() && entry.name.endsWith(".md")) {
+        if (entry.isFile() && entry.name.endsWith(cmdDir.extension)) {
           const filePath = join(dirPath, entry.name);
           try {
             const content = await readFileAsync(filePath, "utf-8");
-            const name = entry.name.replace(/(\.prompt)?\.md$/, "");
+            const name = entry.name.slice(0, -cmdDir.extension.length);
             
             commands.push({
               path: filePath,
@@ -1576,13 +1577,13 @@ export function inferCommandTypeFromPath(filePath: string): { type: string; plat
 /**
  * Get command directories to scan
  */
-export function getCommandDirectories(): { directory: string; type: string; platform: string; templateType: string }[] {
+export function getCommandDirectories(): { directory: string; extension: string; type: string; platform: string; templateType: string }[] {
   return COMMAND_DIRECTORIES;
 }
 
 /**
  * Convert a command from one IDE format to another
- * Currently both Cursor and Claude Code use markdown, so this is mostly about file placement
+ * Commands are Markdown in another folder, except Gemini CLI's TOML (commandContent)
  */
 export function convertCommandFormat(
   content: string,
@@ -1594,11 +1595,9 @@ export function convertCommandFormat(
     throw new Error(`Unknown command type: ${toType}`);
   }
   
-  // Both formats use markdown, so content stays the same
-  // Future: if formats diverge, add conversion logic here
   return {
-    content,
+    content: commandContent(content, toType),
     directory: targetDir.directory,
-    extension: ".md",
+    extension: targetDir.extension,
   };
 }

@@ -58,7 +58,9 @@ describe("platform table: every rules platform names a real file", () => {
   it("the generator names the same file the table does", () => {
     for (const p of rulesPlatforms) {
       const files = generateAllFiles({ ...baseConfig, platform: p.id } as never, user);
-      if (files.length) expect(files[0].fileName).toBe(p.file);
+      // The platform's own file (Aider's comes after the AGENTS.md it reads)
+      const own = files.find((f) => f.platform === p.id);
+      if (files.length) expect(own?.fileName).toBe(p.file);
     }
   });
 
@@ -68,7 +70,14 @@ describe("platform table: every rules platform names a real file", () => {
     expect(getPlatform("trae")?.file).toBe(".trae/rules/project_rules.md");
     expect(getPlatform("firebase")?.file).toBe(".idx/airules.md");
     expect(getPlatform("kiro")?.file).toBe(".kiro/steering/project.md");
-    expect(getPlatform("aider")?.file).toBe("CONVENTIONS.md");
+    expect(getPlatform("aider")?.file).toBe(".aider.conf.yml");
+    expect(getPlatform("windsurf")?.file).toBe(".devin/rules/project.md");
+    expect(getPlatform("cline")?.file).toBe(".clinerules/project.md");
+    expect(getPlatform("tabnine")?.file).toBe(".tabnine/guidelines/project.md");
+    // Tools that read AGENTS.md natively are generated as AGENTS.md
+    for (const id of ["codex", "antigravity", "junie", "kilocode", "goose", "warp", "openhands"]) {
+      expect(getPlatform(id)?.file).toBe("AGENTS.md");
+    }
     expect(getPlatform("opencode")?.file).toBe("AGENTS.md");
     expect(getPlatform("firebender")?.file).toBe(".firebender/rules/project.mdc");
     expect(getPlatform("copilot-prompt")?.file).toBe(".github/prompts/");
@@ -93,10 +102,16 @@ describe("generated content matches each platform's format", () => {
     expect(() => JSON.parse(content)).toThrow();
   });
 
-  it("Aider gets Markdown conventions, not YAML settings", () => {
-    const { content } = generate("aider");
-    expect(content.startsWith("# Demo - Aider Conventions")).toBe(true);
+  it("Aider gets a config that reads AGENTS.md, not a rules file it never loads", () => {
+    const [agents, { content }] = generateAllFiles({ ...baseConfig, platform: "aider" } as never, user);
+    expect(agents.fileName).toBe("AGENTS.md");
+    expect(content).toMatch(/^read: \[AGENTS\.md\]$/m);
     expect(content).not.toContain("auto-commits:");
+  });
+
+  it("Devin Desktop and Trae get frontmatter that applies the rule always", () => {
+    expect(generate("windsurf").content.startsWith("---\ntrigger: always_on\n---\n")).toBe(true);
+    expect(generate("trae").content.startsWith("---\nalwaysApply: true\n---\n")).toBe(true);
   });
 
   it("Kiro and Augment get their own frontmatter, not Cursor's", () => {
@@ -109,7 +124,7 @@ describe("generated content matches each platform's format", () => {
     expect(augment).not.toContain("alwaysApply");
   });
 
-  it.each(["amazonq", "roocode", "kilocode", "trae", "firebase"])("%s gets plain Markdown", (id) => {
+  it.each(["amazonq", "roocode", "cline", "tabnine", "firebase"])("%s gets plain Markdown", (id) => {
     const { content } = generate(id);
     expect(content.startsWith("# Demo - AI Rules")).toBe(true);
     expect(content).not.toContain("alwaysApply");
@@ -137,18 +152,11 @@ describe("escaping of user values", () => {
     expect(frontmatterDescription(content)).toBe('AI rules for Acme: API #1 "beta"');
   });
 
-  it("keeps every line of a multi-line description commented in .tabnine.yaml", () => {
-    const { content } = generate("tabnine", { projectDescription: "First line\ninjected: true\n- item" });
-    const live = content.split("\n").filter((l) => l.trim() && !l.trimStart().startsWith("#"));
-    expect(live.some((l) => l.includes("injected"))).toBe(false);
-    expect(live.some((l) => l.trim() === "- item")).toBe(false);
-  });
-
   it("inserts a project name with '$' patterns literally", () => {
     for (const [id, title] of [
       ["claude", "# Price $& Co $1 - Claude Code Instructions"],
       ["copilot", "# GitHub Copilot Instructions for Price $& Co $1"],
-      ["antigravity", "# Price $& Co $1 - Gemini Instructions"],
+      ["gemini-cli", "# Price $& Co $1 - Gemini Instructions"],
     ]) {
       const { content } = generate(id, { projectName: "Price $& Co $1" });
       expect(content.split("\n")[0]).toBe(title);

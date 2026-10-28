@@ -94,6 +94,11 @@ export const docsConfig: DocsSection[] = [
         description: "Slash commands for AI IDEs (Cursor, Claude, etc.)",
       },
       {
+        title: "Agent Skills & Subagents",
+        href: "/docs/blueprints/skills-and-subagents",
+        description: "One SKILL.md or subagent for every coding agent",
+      },
+      {
         title: "Template Variables",
         href: "/docs/blueprints/variables",
         description: "Using [[VARIABLE]] and [[VARIABLE|default]] placeholders",
@@ -155,17 +160,17 @@ export const docsConfig: DocsSection[] = [
       {
         title: "Popular Platforms",
         href: "/docs/platforms/popular",
-        description: "Cursor, Claude Code, Copilot, Windsurf",
+        description: "Cursor, Claude Code, Copilot, Devin Desktop",
       },
       {
         title: "AI-Powered IDEs",
         href: "/docs/platforms/ides",
-        description: "Antigravity, Zed, Void, Trae AI, Firebase Studio",
+        description: "Antigravity, Zed, Trae AI, Firebase Studio",
       },
       {
         title: "Editor Extensions",
         href: "/docs/platforms/editors",
-        description: "Cline, Roo Code, Continue, Cody, and more",
+        description: "Cline, Roo Code, Tabnine, Kilo Code, and more",
       },
       {
         title: "CLI Tools",

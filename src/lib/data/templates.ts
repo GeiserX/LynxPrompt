@@ -37,7 +37,8 @@ export interface TemplateData {
   isPublic?: boolean;
   // Blueprint type (for command detection)
   type?: string;
-  // The file the blueprint came from (CLI push); tells which tool's format it is in
+  // The file the blueprint came from (CLI push): which tool's format it is in,
+  // and where a Codex TOML or Kiro JSON subagent downloads to
   repositoryPath?: string;
 }
 

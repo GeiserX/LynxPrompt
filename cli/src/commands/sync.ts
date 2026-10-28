@@ -21,6 +21,7 @@ import { existsSync } from "fs";
 import { dirname, join } from "path";
 import { api, ApiRequestError } from "../api.js";
 import { isAuthenticated } from "../config.js";
+import { isAgentsMdPointer } from "../../../packages/shared/src/platforms.js";
 import {
   calculateChecksum,
   conflictFilePath,
@@ -31,7 +32,7 @@ import {
   type TrackedBlueprint,
 } from "../utils/blueprint-tracker.js";
 import { fillBlueprintVariables } from "../utils/variables.js";
-import { blueprintContentOf, fileTextFor, withFinalNewline } from "../utils/blueprint-files.js";
+import { blueprintContentOf, fileTextFor, withFinalNewline, writeAssetCopies } from "../utils/blueprint-files.js";
 
 interface SyncOptions {
   dryRun?: boolean;
@@ -151,6 +152,7 @@ async function syncOne(cwd: string, tracked: TrackedBlueprint, options: SyncOpti
     if (!dry) {
       await writeFile(filePath, withFinalNewline(fileText), "utf-8");
       await record(cwd, tracked, remote, wanted);
+      await writeAssetCopies(cwd, file, fileText, { onlyExisting: true });
     }
     console.log(chalk.cyan(`↓ ${file}: ${dry ? "would update from the cloud" : "updated from the cloud"}`));
     return "pulled";
@@ -162,8 +164,11 @@ async function syncOne(cwd: string, tracked: TrackedBlueprint, options: SyncOpti
       : !tracked.editable
         ? "marketplace blueprints are read-only"
         : null;
-    if (reason) {
-      console.log(chalk.yellow(`● ${file}: local changes kept, not pushed (${reason})`));
+    const pointerReason = isAgentsMdPointer(local)
+      ? "it only imports AGENTS.md (@AGENTS.md); push AGENTS.md instead"
+      : null;
+    if (reason || pointerReason) {
+      console.log(chalk.yellow(`● ${file}: local changes kept, not pushed (${reason ?? pointerReason})`));
       return "kept";
     }
     if (dry) {
@@ -173,6 +178,7 @@ async function syncOne(cwd: string, tracked: TrackedBlueprint, options: SyncOpti
     try {
       await api.updateBlueprint(tracked.id, { content: local, expected_checksum: tracked.checksum });
       await updateChecksum(cwd, file, local);
+      await writeAssetCopies(cwd, file, local, { onlyExisting: true });
       console.log(chalk.cyan(`↑ ${file}: pushed local changes`));
       return "pushed";
     } catch (error) {

@@ -67,12 +67,14 @@ lynxp wizard -f cursor        # .cursor/rules/
 lynxp wizard -f agents        # AGENTS.md (universal)
 lynxp wizard -f copilot       # .github/copilot-instructions.md
 
-# Generate multiple formats
+# Generate for several tools: the rules go in AGENTS.md once. Tools that
+# read it (Cursor, Codex, Devin Desktop, Cline, Junie...) get no file of
+# their own, Copilot gets a full copy
 lynxp wizard -f agents,cursor,copilot
 
-# Next to AGENTS.md, CLAUDE.md and GEMINI.md just import it (@AGENTS.md);
-# --no-pointers writes full copies instead
-lynxp wizard -f agents,claude,gemini-cli
+# CLAUDE.md and GEMINI.md import AGENTS.md (@AGENTS.md), and Aider gets
+# a .aider.conf.yml that loads it; --no-pointers writes full copies instead
+lynxp wizard -f claude,gemini-cli,aider
 
 # Non-interactive with all options
 lynxp wizard \
@@ -208,11 +210,26 @@ lynxp push AGENTS.md \
 lynxp push -y --name "My Config"
 ```
 
-### Agent Skills and MCP servers
+### Agent Skills, subagents and MCP servers
 
-A skill's `SKILL.md` (in `.claude/skills/`, `.agents/skills/`, `.github/skills/`,
-`.cursor/skills/`, `.gemini/skills/` or `.opencode/skills/`) and an MCP config
-push and pull like any rules file, and keep their path.
+A skill's `SKILL.md` in any agent's skills folder (`.agents/skills/`, `.claude/skills/`,
+`.github/skills/`, `.cursor/skills/`, `.kiro/skills/` and the rest), a subagent in any
+agents folder (`.claude/agents/`, `.agents/agents/`, `.github/agents/*.agent.md`,
+`.codex/agents/*.toml`, `.cursor/agents/` and the rest) and an MCP config (in any of the
+files below) push and pull like any rules file, and keep their path.
+
+`lynxp pull` also writes the copies every agent reads: a skill to `.agents/skills/<name>/`
+and `.claude/skills/<name>/`, a subagent to `.claude/agents/` and `.agents/agents/`. When the
+project already has `.kiro`, `.firebender`, `.github/agents` or `.codex`, those tools get a
+copy too. The `.claude` copy keeps every field you wrote; the others keep only the fields
+every agent accepts. A copy you already have with different content is kept, with a
+warning, unless you pass `--yes`. After `lynxp push` or `lynxp sync`, the copies already in
+the project are rewritten from the pushed file, and `lynxp push --all` pushes each skill or
+subagent once. A skill in another tool's own folder (`.github/skills`, `.cursor/skills`...)
+is not one of those copies, so it is pushed on its own. A subagent stored as Codex TOML or
+Kiro JSON is pulled and downloaded only to its own path.
+
+A skill name is 1 to 64 lowercase letters, digits and hyphens, and equals its folder name.
 
 MCP configs are read from and written to each tool's own file:
 
@@ -251,8 +268,13 @@ only, so SSE servers are left out of their files.
 
 ```bash
 lynxp push .claude/skills/release-notes/SKILL.md
+lynxp push .claude/agents/reviewer.md
 lynxp push .mcp.json
 lynxp push .gemini/settings.json     # only its mcpServers
+
+# One copy for another tool
+lynxp convert .claude/agents/reviewer.md codex-agent      # .codex/agents/reviewer.toml
+lynxp convert .agents/skills/release-notes/SKILL.md kiro-skill
 
 # The same MCP servers in another tool's file
 lynxp convert .mcp.json vscode-mcp    # .vscode/mcp.json, "servers" key
@@ -301,8 +323,8 @@ For power users who want to generate configs for multiple AI editors at once:
 # Generate for multiple formats at once
 lynxp wizard -f agents,cursor,copilot,windsurf
 
-# Manage AI agents
-lynxp agents
+# A full copy in every tool's own file instead of one AGENTS.md
+lynxp wizard -f agents,cursor,copilot,windsurf --no-pointers
 ```
 
 ## Blueprint Tracking

@@ -20,7 +20,8 @@ const PLATFORM_FRONTMATTER: Record<string, (description: string) => string[]> = 
   firebender: cursorFrontmatter, // Firebender reads Cursor-style .mdc rules
   kiro: () => ["inclusion: always"],
   augment: (description) => ["type: always_apply", `description: ${yamlString(description)}`],
-  devin: () => ["trigger: always_on"], // .devin/rules/ uses Windsurf's rule frontmatter
+  windsurf: () => ["trigger: always_on"], // Devin Desktop's .devin/rules/ (Windsurf's rule frontmatter)
+  trae: () => ["alwaysApply: true"],
 };
 
 const FRONTMATTER_PATTERN = /^---\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n)+/;
