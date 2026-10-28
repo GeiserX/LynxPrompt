@@ -13,6 +13,8 @@ This chart deploys the LynxPrompt web application and an optional bundled Postgr
 ## Important Operational Notes
 
 - The container entrypoint runs `prisma db push` for all four LynxPrompt databases on startup.
+- The Deployment uses the `Recreate` strategy by default, so an upgrade stops the old pod before the new one starts. A rolling update would leave the new pod Pending on the `ReadWriteOnce` uploads volume when it lands on another node. Set `strategy.type: RollingUpdate` only with a `ReadWriteMany` volume.
+- The liveness probe uses `/api/health/live`, which does not touch the database. Readiness and startup use `/api/health`, which checks the app and users databases.
 - The default chart uses `replicaCount: 1` because:
   - uploads default to a `ReadWriteOnce` PVC
   - concurrent pod starts all run `db push`
@@ -34,6 +36,17 @@ Expected keys in the Secret:
 - optional: `smtp-password`
 - optional: `anthropic-api-key`
 - optional: `turnstile-secret-key`
+
+With `app.enableSso: "true"` the app also needs `SSO_ENCRYPTION_KEY` (64 hex characters, `openssl rand -hex 32`), which encrypts SSO secrets at rest. Pass it from a Secret through `extraEnv`:
+
+```yaml
+extraEnv:
+  - name: SSO_ENCRYPTION_KEY
+    valueFrom:
+      secretKeyRef:
+        name: lynxprompt-sso
+        key: encryption-key
+```
 
 ## Minimal Example
 
