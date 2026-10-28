@@ -12,6 +12,7 @@ import {
   assetCopies,
   writeAssetCopies,
   keepOneCopy,
+  isAssetCopyOf,
   projectAssetTools,
 } from "../../cli/src/utils/blueprint-files";
 import {
@@ -221,6 +222,23 @@ describe("skills and subagents in every agent's folder", () => {
     expect(tracked.kept.map((f) => f.path)).toContain(".agents/skills/release-notes/SKILL.md");
     expect(tracked.dropped.map((f) => f.path)).toEqual([".claude/skills/release-notes/SKILL.md", ".agents/agents/reviewer.md"]);
   });
+
+  it("keeps a skill in another tool's folder, which LynxPrompt never writes or refreshes", () => {
+    const files = [
+      { path: ".claude/skills/foo/SKILL.md" },
+      { path: ".github/skills/foo/SKILL.md" },
+      { path: ".gemini/agents/reviewer.md" },
+      { path: ".claude/agents/reviewer.md" },
+    ];
+    expect(keepOneCopy(files, () => false)).toEqual({ kept: files, dropped: [] });
+    expect(isAssetCopyOf(".agents/skills/foo/SKILL.md", ".github/skills/foo/SKILL.md")).toBe(true);
+    expect(isAssetCopyOf(".github/skills/foo/SKILL.md", ".claude/skills/foo/SKILL.md")).toBe(false);
+  });
+
+  it("never drops a tracked file, even when it sits where a copy would go", () => {
+    const files = [{ path: ".claude/skills/foo/SKILL.md" }, { path: ".agents/skills/foo/SKILL.md" }];
+    expect(keepOneCopy(files, () => true).dropped).toEqual([]);
+  });
 });
 
 describe("writeAssetCopies", () => {
@@ -235,7 +253,7 @@ describe("writeAssetCopies", () => {
   it("writes every copy on pull, and the picked tools the project already uses", async () => {
     await mkdir(path.join(dir, ".kiro"));
     expect(projectAssetTools(dir)).toEqual(["kiro"]);
-    const written = await writeAssetCopies(dir, ".claude/skills/release-notes/SKILL.md", CLAUDE_SKILL);
+    const { written } = await writeAssetCopies(dir, ".claude/skills/release-notes/SKILL.md", CLAUDE_SKILL);
     expect(written).toEqual([".agents/skills/release-notes/SKILL.md", ".kiro/skills/release-notes/SKILL.md"]);
     expect(await readFile(path.join(dir, ".kiro/skills/release-notes/SKILL.md"), "utf-8")).not.toContain("model:");
   });
@@ -243,13 +261,34 @@ describe("writeAssetCopies", () => {
   it("refreshes only the copies already there with onlyExisting", async () => {
     await mkdir(path.join(dir, ".agents/agents"), { recursive: true });
     await writeFile(path.join(dir, ".agents/agents/reviewer.md"), "old", "utf-8");
-    const written = await writeAssetCopies(dir, ".claude/agents/reviewer.md", AGENT, { onlyExisting: true });
+    const { written } = await writeAssetCopies(dir, ".claude/agents/reviewer.md", AGENT, { onlyExisting: true });
     expect(written).toEqual([".agents/agents/reviewer.md"]);
     expect(await readFile(path.join(dir, ".agents/agents/reviewer.md"), "utf-8")).toBe(
       "---\nname: reviewer\ndescription: Reviews diffs\n---\nReview the diff.\n"
     );
     expect(existsSync(path.join(dir, ".github/agents/reviewer.agent.md"))).toBe(false);
     // Unchanged copies are not rewritten
-    expect(await writeAssetCopies(dir, ".claude/agents/reviewer.md", AGENT, { onlyExisting: true })).toEqual([]);
+    expect(await writeAssetCopies(dir, ".claude/agents/reviewer.md", AGENT, { onlyExisting: true })).toEqual({
+      written: [],
+      kept: [],
+    });
+  });
+
+  it("keeps a differing copy without overwrite, unless it is the copy of the previous content", async () => {
+    await mkdir(path.join(dir, ".agents/skills/release-notes"), { recursive: true });
+    const shared = path.join(dir, ".agents/skills/release-notes/SKILL.md");
+    await writeFile(shared, "my own skill\n", "utf-8");
+    expect(
+      await writeAssetCopies(dir, ".claude/skills/release-notes/SKILL.md", CLAUDE_SKILL, { overwrite: false, previous: "old" })
+    ).toEqual({ written: [], kept: [".agents/skills/release-notes/SKILL.md"] });
+    expect(await readFile(shared, "utf-8")).toBe("my own skill\n");
+
+    const OLD = "---\nname: release-notes\n---\nOld.\n";
+    await writeFile(shared, OLD, "utf-8");
+    const { written, kept } = await writeAssetCopies(dir, ".claude/skills/release-notes/SKILL.md", CLAUDE_SKILL, {
+      overwrite: false,
+      previous: OLD,
+    });
+    expect([written, kept]).toEqual([[".agents/skills/release-notes/SKILL.md"], []]);
   });
 });

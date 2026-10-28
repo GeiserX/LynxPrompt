@@ -255,15 +255,28 @@ export function assetCopies(relativePath: string, content: string, tools: string
  * Write the copies of a skill or subagent next to the file at `relativePath`
  * under `root`, so every tool sees the same definition. `onlyExisting`
  * refreshes the copies already there (push, sync) instead of adding new ones
- * (pull). Returns the paths written.
+ * (pull). With `overwrite: false` (pull without --yes) a copy that differs is
+ * replaced only when it is the copy of `previous`, the file's content before
+ * this pull; any other copy holds the user's own work and is kept.
  */
 export async function writeAssetCopies(
   root: string,
   relativePath: string,
   content: string,
-  { onlyExisting = false, tools = projectAssetTools(root) }: { onlyExisting?: boolean; tools?: string[] } = {}
-): Promise<string[]> {
+  {
+    onlyExisting = false,
+    tools = projectAssetTools(root),
+    overwrite = true,
+    previous,
+  }: { onlyExisting?: boolean; tools?: string[]; overwrite?: boolean; previous?: string } = {}
+): Promise<{ written: string[]; kept: string[] }> {
   const written: string[] = [];
+  const kept: string[] = [];
+  const before = new Map(
+    previous === undefined
+      ? []
+      : assetCopies(relativePath, previous, tools).map((c) => [normPath(c.path), withFinalNewline(c.content)])
+  );
   for (const copy of assetCopies(relativePath, content, tools)) {
     let target: string;
     try {
@@ -273,7 +286,12 @@ export async function writeAssetCopies(
     }
     const text = withFinalNewline(copy.content);
     if (existsSync(target)) {
-      if ((await readFile(target, "utf-8")) === text) continue;
+      const current = await readFile(target, "utf-8");
+      if (current === text) continue;
+      if (!overwrite && before.get(normPath(copy.path)) !== current) {
+        kept.push(copy.path);
+        continue;
+      }
     } else if (onlyExisting) {
       continue;
     }
@@ -281,13 +299,27 @@ export async function writeAssetCopies(
     await writeFile(target, text, "utf-8");
     written.push(copy.path);
   }
-  return written;
+  return { written, kept };
+}
+
+/** Every tool LynxPrompt can write a copy for: a copy on disk counts whichever tools are picked. */
+const ALL_ASSET_TOOLS = [...SKILL_TARGETS, ...SUBAGENT_TARGETS].map((t) => t.id);
+
+/**
+ * Whether `copyPath` is a file LynxPrompt writes as a copy of the skill or
+ * subagent at `ofPath`. A skill in another tool's folder (.github/skills,
+ * .cursor/skills...) is never a copy: LynxPrompt does not write there.
+ */
+export function isAssetCopyOf(copyPath: string, ofPath: string): boolean {
+  const target = normPath(copyPath);
+  return assetCopies(ofPath, "", ALL_ASSET_TOOLS).some((c) => normPath(c.path) === target);
 }
 
 /**
- * One file per skill or subagent: copies of the same one (same name, any tool
- * folder) are pushed once. The tracked copy wins, else the full one
- * (`.claude/...`), else the first found. Other files pass through.
+ * One file per skill or subagent: copies of the same one are pushed once. The
+ * tracked copy wins, else the full one (`.claude/...`), else the first found;
+ * a file is dropped only when it is a copy LynxPrompt writes of the winner
+ * (push refreshes those). Tracked files and every other file pass through.
  */
 export function keepOneCopy<T extends { path: string }>(
   files: T[],
@@ -304,7 +336,8 @@ export function keepOneCopy<T extends { path: string }>(
   }
   const kept = files.filter((f) => {
     const key = assetKey(f.path);
-    return !key || best.get(key) === f;
+    const winner = key ? best.get(key) : undefined;
+    return !winner || winner === f || isTracked(f.path) || !isAssetCopyOf(f.path, winner.path);
   });
   return { kept, dropped: files.filter((f) => !kept.includes(f)) };
 }

@@ -47,10 +47,26 @@ function pulledVariables(options: PullOptions, written: string, content: string)
  * A skill or subagent also goes to the other tools' folders (.agents and
  * .claude, plus Kiro, Firebender, Copilot or Codex when the project uses them).
  * The copies are not tracked: push and sync keep them in step with this file.
+ * Like the main file, a copy that holds different work of the user's is
+ * replaced only with --yes; one that is the copy of `previous` (the main
+ * file before this pull) is just an older pull and is updated.
  */
-async function writeCopies(options: PullOptions, filename: string, written: string, indent: string): Promise<void> {
-  for (const copy of await writeAssetCopies(resolve(options.output), filename, written)) {
+async function writeCopies(
+  options: PullOptions,
+  filename: string,
+  written: string,
+  previous: string | null,
+  indent: string
+): Promise<void> {
+  const { written: copies, kept } = await writeAssetCopies(resolve(options.output), filename, written, {
+    overwrite: Boolean(options.yes),
+    previous: previous ?? undefined,
+  });
+  for (const copy of copies) {
     console.log(chalk.gray(`${indent}↳ ${safeText(copy)}`));
+  }
+  for (const copy of kept) {
+    console.log(chalk.yellow(`${indent}⚠ Kept your ${safeText(copy)}: it differs from this blueprint. Run with --yes to replace it.`));
   }
 }
 
@@ -206,8 +222,9 @@ async function pullHierarchy(
 
       // Write the file
       const written = contentToWrite(blueprint.content, options, filename);
+      const previous = existsSync(outputPath) ? await readFile(outputPath, "utf-8") : null;
       await writeFile(outputPath, withFinalNewline(written), "utf-8");
-      await writeCopies(options, filename, written, "    ");
+      await writeCopies(options, filename, written, previous, "    ");
 
       // Track the blueprint with hierarchy info
       if (options.track !== false) {
@@ -443,7 +460,7 @@ async function pullBlueprint(
     // Write the file
     const written = contentToWrite(blueprint.content, options, filename);
     await writeFile(outputPath, withFinalNewline(written), "utf-8");
-    await writeCopies(options, filename, written, "   ");
+    await writeCopies(options, filename, written, localContent, "   ");
 
     // Track the blueprint (default behavior unless --no-track)
     if (options.track !== false) {

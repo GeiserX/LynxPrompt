@@ -254,6 +254,15 @@ describe("skills and subagents through push and pull", () => {
     expect(db.rows.size).toBe(1);
   });
 
+  it("still pushes a skill in another tool's folder, which push never refreshes", async () => {
+    write(".claude/skills/release-notes/SKILL.md", SKILL);
+    write(".github/skills/release-notes/SKILL.md", "---\nname: release-notes\ndescription: Copilot only\n---\nOther steps.\n");
+
+    await pushCommand(path.join(cwd, ".claude/skills/release-notes/SKILL.md"), { yes: true, name: "Release notes" });
+    await pushCommand(path.join(cwd, ".github/skills/release-notes/SKILL.md"), { yes: true, name: "Copilot notes" });
+    expect(db.rows.size).toBe(2);
+  });
+
   it("refuses a skill whose name breaks the Agent Skills format", async () => {
     write(".claude/skills/release-notes/SKILL.md", SKILL.replace("name: release-notes", "name: Release_Notes"));
     await expect(

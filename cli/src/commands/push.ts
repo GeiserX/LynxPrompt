@@ -16,7 +16,7 @@ import {
   type TrackedBlueprint,
 } from "../utils/blueprint-tracker.js";
 import { withSensitiveDataAck, type SensitiveMatchInfo } from "../utils/sensitive-ack.js";
-import { matchConfigFile, assetKey, keepOneCopy, writeAssetCopies } from "../utils/blueprint-files.js";
+import { matchConfigFile, isAssetCopyOf, keepOneCopy, writeAssetCopies } from "../utils/blueprint-files.js";
 
 interface PushOptions {
   name?: string;
@@ -379,17 +379,18 @@ export async function pushCommand(
   }
 }
 
-/** The tracked file another copy of the same skill or subagent is, or null. */
+/** The tracked skill or subagent `file` is a LynxPrompt-written copy of, or null. */
 async function trackedCopyOf(cwd: string, file: string): Promise<string | null> {
-  const key = assetKey(toTrackedPath(cwd, path.resolve(file)));
-  if (!key) return null;
-  const match = (await loadBlueprints(cwd)).blueprints.find((b) => assetKey(toTrackedPath(cwd, b.file)) === key);
+  const relative = toTrackedPath(cwd, path.resolve(file));
+  const match = (await loadBlueprints(cwd)).blueprints.find((b) =>
+    isAssetCopyOf(relative, toTrackedPath(cwd, b.file))
+  );
   return match ? toTrackedPath(cwd, match.file) : null;
 }
 
 /** After a push, refresh the copies of a skill or subagent already in the project. */
 async function refreshCopies(cwd: string, file: string, content: string): Promise<void> {
-  const written = await writeAssetCopies(cwd, toTrackedPath(cwd, path.resolve(file)), content, { onlyExisting: true });
+  const { written } = await writeAssetCopies(cwd, toTrackedPath(cwd, path.resolve(file)), content, { onlyExisting: true });
   for (const copy of written) console.log(chalk.gray(`   ↳ refreshed ${copy}`));
 }
 
