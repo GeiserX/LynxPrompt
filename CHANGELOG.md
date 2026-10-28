@@ -41,7 +41,7 @@ App 2.1.45 and CLI 2.1.38. This release fixes the findings of a full audit of th
 - **Health check**: `/api/health` checks both databases and returns 503 when one is down; `/api/health/live` answers without touching a database.
 - **Homebrew**: the formula's sha256 is the hash of the real npm tarball (2.1.36 shipped the hash of npm's 404 page), and the CLI is built from its release tag.
 - **Self-hosting docs and compose file**: the documented variables match what the code reads, and every database gets its own URL.
-- **Helm chart 0.1.5 and `docker-compose.selfhost.yml`** run app 2.1.45.
+- **Helm chart 0.1.5** runs app 2.1.45.
 - **Helm chart 0.1.4**: mounts the uploads volume at `/data/uploads`, where the app writes. Earlier charts mounted it at `/app/public/uploads`, so uploads never reached the volume.
 - **Helm chart 0.1.3**: each of the four Prisma schemas gets its own database (`<name>`, `<name>_users`, `<name>_blog`, `<name>_support`). Earlier charts pointed all four at one database, so every start dropped the other schemas' tables and sign-in failed.
 
