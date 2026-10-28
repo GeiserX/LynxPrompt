@@ -13,7 +13,6 @@ export interface AuthenticatedUser {
   id: string;
   email: string | null;
   name: string | null;
-  subscriptionPlan: string;
   role?: string;
 }
 
@@ -53,7 +52,6 @@ export async function authenticateRequest(request: Request): Promise<AuthResult 
         id: true,
         email: true,
         name: true,
-        subscriptionPlan: true,
         role: true,
       },
     });
@@ -64,7 +62,6 @@ export async function authenticateRequest(request: Request): Promise<AuthResult 
           id: user.id,
           email: user.email,
           name: user.name,
-          subscriptionPlan: user.subscriptionPlan || "FREE",
           role: user.role,
         },
         source: "session",
@@ -84,7 +81,6 @@ export async function authenticateRequest(request: Request): Promise<AuthResult 
           id: tokenResult.user.id,
           email: tokenResult.user.email,
           name: tokenResult.user.name,
-          subscriptionPlan: tokenResult.user.subscriptionPlan || "FREE",
         },
         source: "token",
         tokenId: tokenResult.tokenId,
@@ -95,26 +91,3 @@ export async function authenticateRequest(request: Request): Promise<AuthResult 
   
   return null;
 }
-
-/**
- * Check if user has Teams subscription (or admin role)
- * This is the only tier that has AI access
- */
-export function isTeams(user: AuthenticatedUser): boolean {
-  return (
-    user.subscriptionPlan === "TEAMS" ||
-    user.role === "ADMIN" ||
-    user.role === "SUPERADMIN"
-  );
-}
-
-/**
- * @deprecated Use isTeams instead - Max tier no longer exists
- * Check if user has Max or Teams subscription (or admin role)
- * Now just an alias for isTeams for backwards compatibility
- */
-export function isMaxOrTeams(user: AuthenticatedUser): boolean {
-  return isTeams(user);
-}
-
-

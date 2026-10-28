@@ -13,7 +13,6 @@ import {
   fromHierarchyApiId,
   isHierarchyId,
   hasPermission,
-  canUseApi,
   TOKEN_PREFIX,
   BLUEPRINT_PREFIX,
   HIERARCHY_PREFIX,
@@ -179,10 +178,3 @@ describe("hasPermission", () => {
   });
 });
 
-describe("canUseApi", () => {
-  it("returns true for all subscription plans", () => {
-    expect(canUseApi("FREE")).toBe(true);
-    expect(canUseApi("TEAMS")).toBe(true);
-    expect(canUseApi("anything")).toBe(true);
-  });
-});

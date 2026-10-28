@@ -468,7 +468,6 @@ export const authOptions: NextAuthOptions = {
                 skillLevel: true,
                 profileCompleted: true,
                 authenticators: { select: { id: true } },
-                subscriptionPlan: true,
               },
             });
             
@@ -480,7 +479,6 @@ export const authOptions: NextAuthOptions = {
             session.user.persona = dbUser?.persona || null;
             session.user.skillLevel = dbUser?.skillLevel || null;
             session.user.profileCompleted = dbUser?.profileCompleted || false;
-            session.user.subscriptionPlan = dbUser?.subscriptionPlan || "FREE";
             
             // Check if user has passkeys and if verification is needed
             const hasPasskeys = (dbUser?.authenticators?.length ?? 0) > 0;
@@ -505,7 +503,6 @@ export const authOptions: NextAuthOptions = {
             session.user.profileCompleted = false;
             session.user.hasPasskeys = false;
             session.user.requiresPasskeyCheck = false;
-            session.user.subscriptionPlan = "FREE";
           }
         }
         // For JWT sessions (Passkey)
@@ -519,7 +516,6 @@ export const authOptions: NextAuthOptions = {
           session.user.skillLevel = (token.skillLevel as string) || null;
           session.user.profileCompleted =
             (token.profileCompleted as boolean) || false;
-          session.user.subscriptionPlan = (token.subscriptionPlan as string) || "FREE";
           // Passkey login sessions are already verified
           session.user.hasPasskeys = true;
           session.user.requiresPasskeyCheck = false;
@@ -539,7 +535,6 @@ export const authOptions: NextAuthOptions = {
             persona: true,
             skillLevel: true,
             profileCompleted: true,
-            subscriptionPlan: true,
           },
         });
         token.image = dbUser?.image || null;
@@ -548,7 +543,6 @@ export const authOptions: NextAuthOptions = {
         token.persona = dbUser?.persona || null;
         token.skillLevel = dbUser?.skillLevel || null;
         token.profileCompleted = dbUser?.profileCompleted || false;
-        token.subscriptionPlan = dbUser?.subscriptionPlan || "FREE";
       }
       return token;
     },

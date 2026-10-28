@@ -1,5 +1,5 @@
 import "next-auth";
-import { UserRole, SubscriptionPlan } from "@/generated/prisma-users/client";
+import { UserRole } from "@/generated/prisma-users/client";
 
 declare module "next-auth" {
   interface Session {
@@ -15,7 +15,6 @@ declare module "next-auth" {
       profileCompleted?: boolean;
       hasPasskeys?: boolean;
       requiresPasskeyCheck?: boolean;
-      subscriptionPlan?: SubscriptionPlan | string;
     };
   }
 
@@ -32,6 +31,5 @@ declare module "next-auth/jwt" {
     persona?: string | null;
     skillLevel?: string | null;
     profileCompleted?: boolean;
-    subscriptionPlan?: SubscriptionPlan | string;
   }
 }

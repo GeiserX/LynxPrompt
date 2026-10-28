@@ -50,7 +50,6 @@ export async function GET() {
     }));
 
     return NextResponse.json({
-      plan: "free",
       isAdmin,
       isTeamsUser: teams.length > 0,
       // Keep backward-compat: "team" returns first membership

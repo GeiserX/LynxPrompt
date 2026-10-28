@@ -53,7 +53,6 @@ const baseUser = {
   name: "Test User",
   displayName: "Test User",
   email: "test@test.com",
-  tier: "max" as const,
   skillLevel: "intermediate",
   persona: null,
   subscriptionPlan: "MAX",

@@ -86,7 +86,6 @@ export async function POST(
         name: true,
         image: true,
         role: true,
-        subscriptionPlan: true,
       },
     });
 
@@ -101,7 +100,6 @@ export async function POST(
         userName: user?.name || session.user.name,
         userImage: user?.image || session.user.image,
         userRole: user?.role || "USER",
-        userPlan: user?.subscriptionPlan || "FREE",
         content,
         isOfficial: isAdmin && isOfficial, // Only admins can mark as official
       },

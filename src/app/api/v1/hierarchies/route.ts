@@ -6,7 +6,6 @@ import {
   validateApiToken,
   checkTokenExpiration,
   hasPermission,
-  canUseApi,
   toHierarchyApiId,
   toBlueprintApiId,
 } from "@/lib/api-tokens";
@@ -42,14 +41,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { error: "Invalid or missing API token" },
         { status: 401 }
-      );
-    }
-
-    // Check subscription
-    if (!canUseApi(tokenData.user.subscriptionPlan)) {
-      return NextResponse.json(
-        { error: "API access is not available for your account" },
-        { status: 403 }
       );
     }
 
@@ -149,14 +140,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Invalid or missing API token" },
         { status: 401 }
-      );
-    }
-
-    // Check subscription
-    if (!canUseApi(tokenData.user.subscriptionPlan)) {
-      return NextResponse.json(
-        { error: "API access is not available for your account" },
-        { status: 403 }
       );
     }
 

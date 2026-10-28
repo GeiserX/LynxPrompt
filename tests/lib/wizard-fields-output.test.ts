@@ -15,7 +15,7 @@ const NOT_IN_FILE: Record<string, string> = {
 // "Save as my default" ticks store preferences; they are not answers.
 const isSaveFlag = (key: string) => key === "savePreferences" || key.endsWith("Save");
 
-const user = { displayName: "Dev", name: "Dev", persona: "fullstack", skillLevel: "intermediate", tier: "free" };
+const user = { displayName: "Dev", name: "Dev", persona: "fullstack", skillLevel: "intermediate" };
 
 // A config where every conditional field is switched on, so changing any one
 // field has a place to show up.

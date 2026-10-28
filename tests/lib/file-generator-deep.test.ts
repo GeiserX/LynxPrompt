@@ -48,14 +48,13 @@ const baseUser = {
   name: "Test User",
   displayName: "Test User",
   email: "test@test.com",
-  tier: "free" as const,
   skillLevel: "intermediate",
   persona: null,
   subscriptionPlan: "FREE",
 };
 
-const maxUser = { ...baseUser, tier: "max" as const };
-const proUser = { ...baseUser, tier: "pro" as const };
+const maxUser = { ...baseUser };
+const proUser = { ...baseUser };
 
 const baseConfig = {
   projectName: "TestProject",

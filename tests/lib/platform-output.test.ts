@@ -17,7 +17,7 @@ import {
   detectDuplicateVariableDefaults,
 } from "@/lib/file-generator";
 
-const user = { name: "Tester", tier: "free" };
+const user = { name: "Tester" };
 
 const baseConfig = {
   projectName: "Demo",

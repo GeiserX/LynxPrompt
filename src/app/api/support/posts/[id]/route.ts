@@ -73,7 +73,6 @@ export async function GET(
         name: true,
         displayName: true,
         image: true,
-        subscriptionPlan: true,
         role: true,
       },
     });
@@ -89,14 +88,12 @@ export async function GET(
       ...post,
       userName: postUser?.displayName || postUser?.name || post.userName,
       userImage: getUserImage(post.userId),
-      userPlan: postUser?.subscriptionPlan || post.userPlan,
       comments: post.comments.map((comment) => {
         const commentUser = userMap.get(comment.userId);
         return {
           ...comment,
           userName: commentUser?.displayName || commentUser?.name || comment.userName,
           userImage: getUserImage(comment.userId),
-          userPlan: commentUser?.subscriptionPlan || comment.userPlan,
           userRole: commentUser?.role || comment.userRole,
           replies: comment.replies?.map((reply) => {
             const replyUser = userMap.get(reply.userId);
@@ -104,7 +101,6 @@ export async function GET(
               ...reply,
               userName: replyUser?.displayName || replyUser?.name || reply.userName,
               userImage: getUserImage(reply.userId),
-              userPlan: replyUser?.subscriptionPlan || reply.userPlan,
               userRole: replyUser?.role || reply.userRole,
             };
           }) || [],

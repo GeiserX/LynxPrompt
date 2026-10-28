@@ -71,7 +71,6 @@ export async function GET(request: NextRequest): Promise<Response> {
             id: true,
             email: true,
             name: true,
-            subscriptionPlan: true,
           },
         },
         apiToken: {
@@ -137,7 +136,6 @@ export async function GET(request: NextRequest): Promise<Response> {
           id: session.user.id,
           email: session.user.email,
           name: session.user.name,
-          plan: session.user.subscriptionPlan,
         },
       };
 

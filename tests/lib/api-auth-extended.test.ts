@@ -25,7 +25,7 @@ vi.mock("@/lib/db-users", () => ({
   },
 }));
 
-import { authenticateRequest, isTeams, isMaxOrTeams } from "@/lib/api-auth";
+import { authenticateRequest } from "@/lib/api-auth";
 
 describe("authenticateRequest", () => {
   beforeEach(() => {
@@ -51,7 +51,22 @@ describe("authenticateRequest", () => {
     expect(result!.source).toBe("session");
     expect(result!.user.id).toBe("user-1");
     expect(result!.user.email).toBe("test@example.com");
-    expect(result!.user.subscriptionPlan).toBe("FREE");
+  });
+
+  it("neither reads nor returns a billing plan (the column is being dropped)", async () => {
+    mockGetServerSession.mockResolvedValue({ user: { id: "user-1" } });
+    mockFindUnique.mockResolvedValue({
+      id: "user-1",
+      email: "test@example.com",
+      name: "Test User",
+      subscriptionPlan: "FREE",
+      role: "USER",
+    });
+
+    const result = await authenticateRequest(new Request("https://example.com/api/test"));
+
+    expect(mockFindUnique.mock.calls[0][0].select).not.toHaveProperty("subscriptionPlan");
+    expect(result!.user).not.toHaveProperty("subscriptionPlan");
   });
 
   it("returns null when session exists but user not found in DB", async () => {
@@ -109,76 +124,5 @@ describe("authenticateRequest", () => {
     const result = await authenticateRequest(request);
 
     expect(result).toBeNull();
-  });
-
-  it("defaults subscriptionPlan to FREE when null from session", async () => {
-    mockGetServerSession.mockResolvedValue({
-      user: { id: "user-1" },
-    });
-    mockFindUnique.mockResolvedValue({
-      id: "user-1",
-      email: "test@example.com",
-      name: "Test",
-      subscriptionPlan: null,
-      role: "USER",
-    });
-
-    const request = new Request("https://example.com/api/test");
-    const result = await authenticateRequest(request);
-
-    expect(result!.user.subscriptionPlan).toBe("FREE");
-  });
-
-  it("defaults subscriptionPlan to FREE when null from token", async () => {
-    mockGetServerSession.mockResolvedValue(null);
-    mockValidateApiToken.mockResolvedValue({
-      user: {
-        id: "user-2",
-        email: "token@example.com",
-        name: "Token",
-        subscriptionPlan: null,
-      },
-      tokenId: "tok-1",
-    });
-
-    const request = new Request("https://example.com/api/test", {
-      headers: { Authorization: "Bearer lp_test" },
-    });
-    const result = await authenticateRequest(request);
-
-    expect(result!.user.subscriptionPlan).toBe("FREE");
-  });
-});
-
-// ============================================================================
-// isTeams (extended)
-// ============================================================================
-describe("isTeams - extended", () => {
-  it("returns false when role is undefined", () => {
-    expect(
-      isTeams({ id: "1", email: "a@b.com", name: "A", subscriptionPlan: "FREE" })
-    ).toBe(false);
-  });
-
-  it("returns true for TEAMS even with USER role", () => {
-    expect(
-      isTeams({ id: "1", email: "a@b.com", name: "A", subscriptionPlan: "TEAMS", role: "USER" })
-    ).toBe(true);
-  });
-});
-
-// ============================================================================
-// isMaxOrTeams (alias)
-// ============================================================================
-describe("isMaxOrTeams - alias", () => {
-  it("returns same as isTeams for all cases", () => {
-    const cases = [
-      { id: "1", email: "a@b.com", name: "A", subscriptionPlan: "FREE" as string },
-      { id: "1", email: "a@b.com", name: "A", subscriptionPlan: "TEAMS" as string },
-      { id: "1", email: "a@b.com", name: "A", subscriptionPlan: "FREE" as string, role: "ADMIN" as string },
-    ];
-    for (const c of cases) {
-      expect(isMaxOrTeams(c)).toBe(isTeams(c));
-    }
   });
 });

@@ -5,7 +5,6 @@ import { prismaUsers } from "@/lib/db-users";
 import { requirePasskeyVerified } from "@/lib/passkey-session";
 import {
   generateToken,
-  canUseApi,
   DEFAULT_EXPIRATION_DAYS,
   MAX_EXPIRATION_DAYS,
   ROLE_DISPLAY_NAMES,
@@ -27,13 +26,13 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check subscription
+    // The account must still exist
     const user = await prismaUsers.user.findUnique({
       where: { id: session.user.id },
-      select: { subscriptionPlan: true },
+      select: { id: true },
     });
 
-    if (!user || !canUseApi(user.subscriptionPlan)) {
+    if (!user) {
       return NextResponse.json(
         { error: "API access is not available for your account" },
         { status: 403 }
@@ -98,13 +97,13 @@ export async function POST(request: NextRequest) {
     const passkeyBlock = await requirePasskeyVerified(request, session.user.id);
     if (passkeyBlock) return passkeyBlock;
 
-    // Check subscription
+    // The account must still exist
     const user = await prismaUsers.user.findUnique({
       where: { id: session.user.id },
-      select: { subscriptionPlan: true },
+      select: { id: true },
     });
 
-    if (!user || !canUseApi(user.subscriptionPlan)) {
+    if (!user) {
       return NextResponse.json(
         { error: "API access is not available for your account" },
         { status: 403 }

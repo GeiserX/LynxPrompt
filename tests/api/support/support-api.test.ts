@@ -128,4 +128,9 @@ describe("support API", () => {
     expect(data.posts[0].userImage).toBeNull();
     expect(JSON.stringify(data)).not.toContain("gravatar");
   });
+
+  it("reads no billing plan for the authors", async () => {
+    expect((await list()).status).toBe(200);
+    expect(mockUserFindMany.mock.calls[0][0].select).not.toHaveProperty("subscriptionPlan");
+  });
 });

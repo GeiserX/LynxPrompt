@@ -131,7 +131,6 @@ export async function GET(request: NextRequest) {
         name: true,
         displayName: true,
         image: true,
-        subscriptionPlan: true,
       },
     });
     const userMap = new Map(users.map((u) => [u.id, u]));
@@ -145,7 +144,6 @@ export async function GET(request: NextRequest) {
         ...post,
         userName: user?.displayName || user?.name || post.userName,
         userImage,
-        userPlan: user?.subscriptionPlan || post.userPlan,
         hasVoted: votedPostIds.has(post.id),
       };
     });
@@ -208,7 +206,6 @@ export async function POST(request: NextRequest) {
       select: {
         name: true,
         image: true,
-        subscriptionPlan: true,
       },
     });
 
@@ -240,7 +237,6 @@ export async function POST(request: NextRequest) {
         userId: session.user.id,
         userName: user?.name || session.user.name,
         userImage: user?.image || session.user.image,
-        userPlan: user?.subscriptionPlan || "FREE",
         title,
         content,
         tags: {

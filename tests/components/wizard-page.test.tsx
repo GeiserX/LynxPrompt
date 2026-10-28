@@ -64,7 +64,6 @@ describe("wizard page: resuming a draft", () => {
     mockApi({
       "/api/wizard/drafts/d1": { body: { id: "d1", name: "Draft", step: 5, config } },
       "/api/user/wizard-preferences": { body: savedPrefs, delayMs: 50 },
-      "/api/billing/status": { body: { plan: "free" } },
     });
 
     render(<WizardPage />);
@@ -87,12 +86,36 @@ describe("wizard page: resuming a draft", () => {
     mockApi({
       "/api/wizard/drafts/d1": { body: { id: "d1", name: "Old", step: 3, config: oldConfig } },
       "/api/user/wizard-preferences": { body: {} },
-      "/api/billing/status": { body: { plan: "free" } },
     });
     const errors = vi.spyOn(console, "error").mockImplementation(() => {});
 
     render(<WizardPage />);
     await waitFor(() => expect(screen.getAllByText(/Secrets Management/i).length).toBeGreaterThan(0));
     expect(errors.mock.calls.flat().join(" ")).not.toMatch(/Cannot read properties of undefined/);
+  });
+});
+
+describe("wizard page: no plans", () => {
+  beforeEach(() => {
+    searchParams.value = new URLSearchParams();
+    window.scrollTo = vi.fn() as unknown as typeof window.scrollTo;
+    vi.stubGlobal("localStorage", { getItem: () => null, setItem: () => {}, removeItem: () => {} });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it("never asks for a billing plan and lets every step be opened", async () => {
+    mockApi({ "/api/user/wizard-preferences": { body: {} } });
+
+    render(<WizardPage />);
+    const step = await screen.findByRole("button", { name: /Static Files/ });
+    await waitFor(() =>
+      expect(vi.mocked(fetch).mock.calls.map(([u]) => String(u))).toContain("/api/user/wizard-preferences"),
+    );
+    expect(vi.mocked(fetch).mock.calls.map(([u]) => String(u)).filter((u) => u.includes("billing"))).toEqual([]);
+    expect(step).toBeEnabled();
   });
 });

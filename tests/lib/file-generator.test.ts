@@ -384,7 +384,7 @@ describe("generateAllFiles", () => {
     aiBehaviorRules: ["concise_responses"],
     additionalFeedback: "",
   };
-  const baseUser = { name: "TestUser", tier: "free" };
+  const baseUser = { name: "TestUser" };
 
   it("generates cursor rules file", () => {
     const files = generateAllFiles(
@@ -607,7 +607,7 @@ describe("generateAllFiles", () => {
         platform: "cursor",
         commands: { build: "npm run build", test: "npm test" },
       },
-      { ...baseUser, tier: "pro" }
+      { ...baseUser }
     );
     expect(files[0].content).toContain("npm run build");
     expect(files[0].content).toContain("npm test");
@@ -938,7 +938,7 @@ describe("generateAllFiles", () => {
           never: ["Push to main"],
         },
       },
-      { ...baseUser, tier: "max" }
+      { ...baseUser }
     );
     expect(files[0].content).toContain("Write tests");
     expect(files[0].content).toContain("Delete files");
@@ -977,7 +977,7 @@ describe("generateAllFiles", () => {
         platform: "claude",
         codeStyle: { naming: "snake_case" },
       },
-      { ...baseUser, tier: "pro" }
+      { ...baseUser }
     );
     expect(files[0].content).toContain("snake_case");
   });
@@ -989,7 +989,7 @@ describe("generateAllFiles", () => {
         platform: "claude",
         codeStyle: { errorHandling: "try_catch" },
       },
-      { ...baseUser, tier: "pro" }
+      { ...baseUser }
     );
     expect(files[0].content.toLowerCase()).toContain("error");
   });
@@ -1066,7 +1066,7 @@ describe("generateAllFiles", () => {
         platform: "windsurf",
         boundaries: { always: ["Lint code"], never: ["Deploy directly"] },
       },
-      { ...baseUser, tier: "max" }
+      { ...baseUser }
     );
     expect(files[0].content).toContain("Lint code");
     expect(files[0].content).toContain("Deploy directly");
@@ -1079,7 +1079,7 @@ describe("generateAllFiles", () => {
         platform: "windsurf",
         commands: { build: "make build", test: "make test" },
       },
-      { ...baseUser, tier: "pro" }
+      { ...baseUser }
     );
     expect(files[0].content).toContain("make build");
   });
@@ -1109,7 +1109,7 @@ describe("generateAllFiles", () => {
         conventionalCommits: true,
         additionalFeedback: "Custom copilot rule",
       },
-      { ...baseUser, tier: "max", skillLevel: "beginner" }
+      { ...baseUser, skillLevel: "beginner" }
     );
     const content = files[0].content;
     expect(content).toContain("Custom copilot rule");
@@ -1129,7 +1129,7 @@ describe("generateAllFiles", () => {
         additionalFeedback: "Always check lifetimes",
         projectType: "work",
       },
-      { ...baseUser, tier: "pro", skillLevel: "expert", persona: "systems_programmer" }
+      { ...baseUser, skillLevel: "expert", persona: "systems_programmer" }
     );
     const content = files[0].content;
     expect(content).toContain("STRICT MODE");
@@ -1234,7 +1234,7 @@ describe("generateAllFiles", () => {
         conventionalCommits: true,
         projectType: "work",
       },
-      { ...baseUser, tier: "pro", skillLevel: "intermediate" }
+      { ...baseUser, skillLevel: "intermediate" }
     );
     const content = files[0].content;
     expect(content).toContain("TestProject");
@@ -1405,7 +1405,7 @@ describe("generateAllFiles", () => {
         platform: "cursor",
         codeStyle: { notes: "Follow team coding standards" },
       },
-      { ...baseUser, tier: "pro" }
+      { ...baseUser }
     );
     expect(files[0].content).toContain("Follow team coding standards");
   });
@@ -1449,7 +1449,7 @@ describe("generateAllFiles", () => {
         additionalFeedback: "Be thorough",
         projectType: "leisure",
       },
-      { ...baseUser, tier: "pro", skillLevel: "beginner", persona: "frontend_developer" }
+      { ...baseUser, skillLevel: "beginner", persona: "frontend_developer" }
     );
     const content = files[0].content;
     expect(content).toContain("CREATIVE MODE");

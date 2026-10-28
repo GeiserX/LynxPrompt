@@ -23,7 +23,6 @@ vi.mock("@/lib/api-tokens", () => ({
   }),
   checkTokenExpiration: vi.fn().mockResolvedValue({ isExpired: false }),
   hasPermission: vi.fn().mockReturnValue(true),
-  canUseApi: vi.fn().mockReturnValue(true),
   toBlueprintApiId: (id: string) => `bp_${id}`,
   fromBlueprintApiId: (id: string) => id.replace(/^bp_/, ""),
   toHierarchyApiId: (id: string) => `ha_${id}`,
