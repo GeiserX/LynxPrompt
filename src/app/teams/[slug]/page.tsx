@@ -32,7 +32,6 @@ interface TeamMember {
   role: "ADMIN" | "MEMBER";
   joinedAt: string;
   lastActiveAt: string | null;
-  isActiveThisCycle: boolean;
   user: {
     id: string;
     email: string;
@@ -492,17 +491,17 @@ export default function TeamManagementPage() {
                             {member.user.displayName || member.user.name || member.user.email}
                           </p>
                           <p className="text-sm text-muted-foreground">{member.user.email}</p>
+                          {member.lastActiveAt && (
+                            <p className="text-xs text-muted-foreground">
+                              Last seen {new Date(member.lastActiveAt).toLocaleDateString()}
+                            </p>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         {member.role === "ADMIN" && (
                           <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-800 dark:bg-teal-900/30 dark:text-teal-300">
                             Admin
-                          </span>
-                        )}
-                        {member.isActiveThisCycle && (
-                          <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">
-                            Active
                           </span>
                         )}
                         {userRole === "ADMIN" && member.user.id !== session?.user?.id && (
@@ -671,12 +670,6 @@ export default function TeamManagementPage() {
                     <span className="text-muted-foreground">Current Members</span>
                     <span className="font-medium">{team?.members?.length || 0}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Active This Cycle</span>
-                    <span className="font-medium text-green-500">
-                      {team?.members?.filter(m => m.isActiveThisCycle).length || 0}
-                    </span>
-                  </div>
                   {userRole === "ADMIN" && pendingInvitations.length > 0 && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Pending Invites</span>
@@ -687,7 +680,11 @@ export default function TeamManagementPage() {
                   )}
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Seats</span>
-                    <span className="font-medium">{team?.maxSeats ?? "—"}</span>
+                    <span className="font-medium">
+                      {userRole === "ADMIN" && team?.maxSeats
+                        ? `${(team.members?.length || 0) + pendingInvitations.length} of ${team.maxSeats} used`
+                        : team?.maxSeats ?? "—"}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Admins</span>

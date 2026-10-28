@@ -18,6 +18,7 @@ vi.mock("@/components/sso-config", () => ({ SSOConfigPanel: () => null }));
 import TeamManagementPage from "@/app/teams/[slug]/page";
 
 const future = "2030-01-15T12:00:00.000Z";
+const lastSeen = "2026-03-04T12:00:00.000Z";
 
 function json(body: unknown, status = 200) {
   return Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -38,8 +39,8 @@ beforeEach(() => {
     if (url === "/api/teams/team_1/members" && method === "GET") {
       return json({
         members: [
-          { id: "m_admin", role: "ADMIN", isActiveThisCycle: true, user: { id: "u_admin", email: "admin@example.com", name: "Admin" } },
-          { id: "m_bob", role: "MEMBER", isActiveThisCycle: false, user: { id: "u_bob", email: "bob@example.com", name: "Bob" } },
+          { id: "m_admin", role: "ADMIN", isActiveThisCycle: true, lastActiveAt: lastSeen, user: { id: "u_admin", email: "admin@example.com", name: "Admin" } },
+          { id: "m_bob", role: "MEMBER", isActiveThisCycle: false, lastActiveAt: null, user: { id: "u_bob", email: "bob@example.com", name: "Bob" } },
         ],
       });
     }
@@ -121,6 +122,24 @@ describe("team management page", () => {
     fireEvent.click(screen.getByText("Delete team"));
     await waitFor(() => expect(calls("DELETE").length).toBe(1));
     expect(calls("DELETE")[0][0]).toBe("/api/teams/team_1");
+  });
+
+  it("shows when each member was last seen, not a billing-cycle flag", async () => {
+    render(<TeamManagementPage />);
+    await screen.findByText("bob@example.com");
+
+    expect(screen.getByText(`Last seen ${new Date(lastSeen).toLocaleDateString()}`)).toBeTruthy();
+    // Only the admin has a last-seen date; the flag is never reset, so it is not shown.
+    expect(screen.getAllByText(/^Last seen /)).toHaveLength(1);
+    expect(screen.queryByText("Active")).toBeNull();
+    expect(screen.queryByText(/This Cycle/i)).toBeNull();
+  });
+
+  it("tells the admin how many seats members and pending invitations use", async () => {
+    render(<TeamManagementPage />);
+    await screen.findByText("new@example.com");
+    // 2 members + 1 pending invitation (the revoked one holds no seat), out of 5
+    expect(screen.getByText("3 of 5 used")).toBeTruthy();
   });
 
   it("saves a new seat count", async () => {

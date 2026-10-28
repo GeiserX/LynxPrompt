@@ -10,7 +10,7 @@ import { Footer } from "@/components/footer";
 import {
   Users,
   Shield,
-  CreditCard,
+  UserCog,
   Share2,
   Check,
   Building,
@@ -34,16 +34,16 @@ const TEAMS_FEATURES = [
       "Connect your identity provider (Okta, Azure AD, Google Workspace, LDAP) for seamless, secure authentication.",
   },
   {
-    icon: CreditCard,
+    icon: UserCog,
     title: "Team Management",
     description:
-      "Track team member activity. Only active members consume resources on the platform.",
+      "See every member, their role and when they were last seen. Members can leave on their own.",
   },
   {
     icon: Building,
     title: "Centralized Management",
     description:
-      "One admin dashboard to manage all team members, roles, and settings. Invite users with magic links.",
+      "One admin dashboard to manage all team members, roles, and settings. Invite people by email.",
   },
   {
     icon: KeyRound,
@@ -190,12 +190,12 @@ export default function TeamsPage() {
         </div>
       </section>
 
-      {/* Pricing Details */}
+      {/* Team Details */}
       <section className="border-y bg-muted/30 py-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl">
             <h2 className="mb-8 text-center text-2xl font-bold">
-              Team Plan Details
+              Team Details
             </h2>
 
             <div className="rounded-xl border bg-card overflow-hidden">
@@ -224,11 +224,9 @@ export default function TeamsPage() {
                 <h4 className="mb-2 font-medium">What&apos;s Included:</h4>
                 <ul className="grid gap-2 sm:grid-cols-2">
                   {[
-                    "Everything in Free plan",
                     "Team-shared blueprints",
                     "SAML/OIDC/LDAP SSO",
                     "Multiple team admins",
-                    "Priority support",
                     "AI features",
                   ].map((item) => (
                     <li key={item} className="flex items-center gap-2 text-sm">
