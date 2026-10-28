@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
+import { requirePasskeyVerified } from "@/lib/passkey-session";
 import { generateToken } from "@/lib/api-tokens";
 import { createCipheriv, randomBytes } from "crypto";
 
@@ -25,6 +26,9 @@ export async function POST(request: NextRequest): Promise<Response> {
         { status: 401 }
       );
     }
+
+    const passkeyBlock = await requirePasskeyVerified(request, session.user.id);
+    if (passkeyBlock) return passkeyBlock;
 
     const body = await request.json();
     const { session_id } = body;

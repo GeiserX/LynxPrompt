@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
+import { requirePasskeyVerified } from "@/lib/passkey-session";
 import {
   generateToken,
   canUseApi,
@@ -93,6 +94,9 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const passkeyBlock = await requirePasskeyVerified(request, session.user.id);
+    if (passkeyBlock) return passkeyBlock;
 
     // Check subscription
     const user = await prismaUsers.user.findUnique({
