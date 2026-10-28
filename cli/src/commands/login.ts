@@ -60,7 +60,7 @@ export async function loginCommand(): Promise<void> {
 
         if (result.status === "expired") {
           pollSpinner.fail("Authentication session expired. Please try again.");
-          return;
+          process.exit(1);
         }
 
         // status === "pending", continue polling
@@ -70,6 +70,7 @@ export async function loginCommand(): Promise<void> {
     }
 
     pollSpinner.fail("Authentication timed out. Please try again.");
+    process.exit(1);
   } catch (error) {
     spinner.fail("Failed to initialize authentication");
     
