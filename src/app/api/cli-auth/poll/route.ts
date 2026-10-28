@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prismaUsers } from "@/lib/db-users";
+import { getClientIP } from "@/lib/client-ip";
 import { decryptCliToken, verifierMatches } from "@/lib/cli-auth";
 
 // Rate limiting: max 30 poll calls per IP per minute
 const pollRateLimitStore = new Map<string, { count: number; resetTime: number }>();
 const POLL_RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
 const POLL_RATE_LIMIT_MAX = 30;
+
+// Drop expired entries so the store does not keep every address ever seen
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, record] of pollRateLimitStore) {
+    if (now > record.resetTime) pollRateLimitStore.delete(ip);
+  }
+}, POLL_RATE_LIMIT_WINDOW_MS).unref();
 
 function isPollRateLimited(ip: string): boolean {
   const now = Date.now();
@@ -31,10 +40,7 @@ function isPollRateLimited(ip: string): boolean {
  */
 export async function GET(request: NextRequest): Promise<Response> {
   try {
-    const clientIP =
-      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-      request.headers.get("x-real-ip") ||
-      "unknown";
+    const clientIP = getClientIP(request);
 
     if (isPollRateLimited(clientIP)) {
       return NextResponse.json(

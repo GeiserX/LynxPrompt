@@ -27,10 +27,12 @@ interface TurnstileProps {
   onSuccess: (token: string) => void;
   onError?: () => void;
   onExpire?: () => void;
+  /** Change this value to get a fresh token, e.g. after the server used one up. */
+  resetSignal?: number;
   className?: string;
 }
 
-export function Turnstile({ onSuccess, onError, onExpire, className }: TurnstileProps) {
+export function Turnstile({ onSuccess, onError, onExpire, resetSignal, className }: TurnstileProps) {
   const { enableTurnstile } = useFeatureFlags();
   const { resolvedTheme } = useTheme();
   const [siteKey, setSiteKey] = useState<string | null>(null);
@@ -89,6 +91,8 @@ export function Turnstile({ onSuccess, onError, onExpire, className }: Turnstile
           onError?.();
         },
         "expired-callback": () => {
+          // Let the token the widget issues next reach onSuccess again
+          hasSucceeded.current = false;
           onExpire?.();
           // Reset the widget
           if (widgetIdRef.current && window.turnstile) {
@@ -127,6 +131,18 @@ export function Turnstile({ onSuccess, onError, onExpire, className }: Turnstile
       }
     }
   }, [scriptLoaded, siteKey, status, renderWidget, retryCount]);
+
+  // Tokens are single-use: when the parent asks, drop the used one and
+  // have the widget issue a new one
+  const lastResetSignal = useRef(resetSignal);
+  useEffect(() => {
+    if (resetSignal === lastResetSignal.current) return;
+    lastResetSignal.current = resetSignal;
+    hasSucceeded.current = false;
+    if (widgetIdRef.current && window.turnstile) {
+      window.turnstile.reset(widgetIdRef.current);
+    }
+  }, [resetSignal]);
 
   // Cleanup
   useEffect(() => {

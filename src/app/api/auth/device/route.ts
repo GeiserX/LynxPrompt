@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { createHash } from "crypto";
 import { sessionCookieName } from "@/lib/auth-cookies";
+import { getClientIP } from "@/lib/client-ip";
 import { getPasskeyStatus } from "@/lib/passkey-session";
 
 // Helper to generate device hash
@@ -71,9 +72,7 @@ export async function POST(request: NextRequest) {
     const sessionToken = request.cookies.get(sessionCookieName())?.value;
 
     const userAgent = request.headers.get("user-agent") || "";
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-               request.headers.get("x-real-ip") ||
-               "unknown";
+    const ip = getClientIP(request);
 
     const deviceHash = generateDeviceHash(userAgent, fingerprint);
     const deviceName = getDeviceName(userAgent);
@@ -196,9 +195,7 @@ export async function PUT(request: NextRequest) {
     const sessionToken = request.cookies.get(sessionCookieName())?.value;
 
     const userAgent = request.headers.get("user-agent") || "";
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-               request.headers.get("x-real-ip") ||
-               "unknown";
+    const ip = getClientIP(request);
 
     // SECURITY: only a session that already passed the WebAuthn check may
     // trust a device. This route never marks the session verified itself.

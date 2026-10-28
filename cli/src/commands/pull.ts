@@ -2,6 +2,7 @@ import chalk from "chalk";
 import ora from "ora";
 import prompts from "prompts";
 import { api, ApiRequestError, Blueprint } from "../api.js";
+import { safeText } from "../utils/terminal.js";
 import { isAuthenticated } from "../config.js";
 import { writeFile, mkdir, readFile } from "fs/promises";
 import { dirname, resolve } from "path";
@@ -78,11 +79,11 @@ async function pullHierarchy(
     spinner.stop();
 
     console.log();
-    console.log(chalk.cyan(`📁 Hierarchy: ${chalk.bold(hierarchy.name)}`));
+    console.log(chalk.cyan(`📁 Hierarchy: ${chalk.bold(safeText(hierarchy.name))}`));
     if (hierarchy.description) {
-      console.log(chalk.gray(`   ${hierarchy.description}`));
+      console.log(chalk.gray(`   ${safeText(hierarchy.description)}`));
     }
-    console.log(chalk.gray(`   Repository: ${hierarchy.repository_root}`));
+    console.log(chalk.gray(`   Repository: ${safeText(hierarchy.repository_root)}`));
     console.log(chalk.gray(`   Blueprints: ${blueprints.length}`));
     console.log();
 
@@ -94,8 +95,8 @@ async function pullHierarchy(
       for (const bp of blueprints) {
         const indent = bp.parent_id ? "  ↳ " : "  ";
         const path = blueprintFilename(bp);
-        console.log(chalk.gray(`${indent}${path}`));
-        console.log(chalk.gray(`${indent}  └─ ${bp.name} (${bp.id})`));
+        console.log(chalk.gray(`${indent}${safeText(path)}`));
+        console.log(chalk.gray(`${indent}  └─ ${safeText(bp.name)} (${safeText(bp.id)})`));
       }
       
       console.log();
@@ -228,9 +229,9 @@ async function pullBlueprint(
     const isMarketplace = source === "marketplace";
 
     console.log();
-    console.log(chalk.cyan(`🐱 Blueprint: ${chalk.bold(blueprint.name)}`));
+    console.log(chalk.cyan(`🐱 Blueprint: ${chalk.bold(safeText(blueprint.name))}`));
     if (blueprint.description) {
-      console.log(chalk.gray(`   ${blueprint.description}`));
+      console.log(chalk.gray(`   ${safeText(blueprint.description)}`));
     }
     console.log(chalk.gray(`   Type: ${blueprint.type} • Tier: ${blueprint.tier} • Visibility: ${blueprint.visibility}`));
     
@@ -238,7 +239,7 @@ async function pullBlueprint(
     if (blueprint.hierarchy_id) {
       console.log(chalk.blue(`   📁 Part of hierarchy: ${blueprint.hierarchy_id}`));
       if (blueprint.repository_path) {
-        console.log(chalk.gray(`   Path in hierarchy: ${blueprint.repository_path}`));
+        console.log(chalk.gray(`   Path in hierarchy: ${safeText(blueprint.repository_path)}`));
       }
     }
     
@@ -360,7 +361,7 @@ async function pullBlueprint(
         console.log(chalk.gray("─".repeat(60)));
         console.log();
         
-        const lines = blueprint.content.split("\n").slice(0, 30);
+        const lines = safeText(blueprint.content).split("\n").slice(0, 30);
         for (const line of lines) {
           if (line.startsWith("#")) {
             console.log(chalk.cyan(line));

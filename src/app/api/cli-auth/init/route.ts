@@ -1,12 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prismaUsers } from "@/lib/db-users";
 import { randomBytes } from "crypto";
+import { getClientIP } from "@/lib/client-ip";
 import { isValidCodeChallenge } from "@/lib/cli-auth";
 
 // Rate limiting: max 5 init calls per IP per 5 minutes
 const initRateLimitStore = new Map<string, { count: number; resetTime: number }>();
 const INIT_RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 const INIT_RATE_LIMIT_MAX = 5;
+
+// Drop expired entries so the store does not keep every address ever seen
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, record] of initRateLimitStore) {
+    if (now > record.resetTime) initRateLimitStore.delete(ip);
+  }
+}, INIT_RATE_LIMIT_WINDOW_MS).unref();
 
 function isInitRateLimited(ip: string): boolean {
   const now = Date.now();
@@ -29,10 +38,7 @@ function isInitRateLimited(ip: string): boolean {
  */
 export async function POST(request: NextRequest): Promise<Response> {
   try {
-    const clientIP =
-      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-      request.headers.get("x-real-ip") ||
-      "unknown";
+    const clientIP = getClientIP(request);
 
     if (isInitRateLimited(clientIP)) {
       return NextResponse.json(
