@@ -611,6 +611,9 @@ enum TemplateType {
   COPILOT_PROMPT    // GitHub Copilot prompts (.copilot/prompts/*.md)
   CONTINUE_PROMPT   // Continue.dev prompts (.continue/prompts/*.md)
   OPENCODE_COMMAND  // OpenCode commands (.opencode/commands/*.md)
+  // Agent Skills and MCP servers, one definition for every tool
+  AGENT_SKILL       // Agent Skill (<tool>/skills/<name>/SKILL.md)
+  MCP_CONFIG        // MCP servers (.mcp.json, .cursor/mcp.json, .vscode/mcp.json)
   GITIGNORE
   README
   CONTRIBUTING

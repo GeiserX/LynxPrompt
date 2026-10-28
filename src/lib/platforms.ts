@@ -25,5 +25,10 @@ export {
   convertCommand,
   getCommandDirectories,
   COMMAND_COUNT,
+  SKILL_BLUEPRINT_TYPE,
+  SKILL_DIRECTORIES,
+  MCP_BLUEPRINT_TYPE,
+  MCP_CONFIGS,
+  convertMcpConfig,
 } from "../../packages/shared/src/platforms";
 export type { PlatformDefinition, CommandDefinition } from "../../packages/shared/src/platforms";

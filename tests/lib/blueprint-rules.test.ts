@@ -11,6 +11,11 @@ describe("normalizeBlueprintType", () => {
     }
   });
 
+  it("stores skills and MCP configs as their own types, not as AGENTS.md or CUSTOM", () => {
+    expect(normalizeBlueprintType("AGENT_SKILL")).toBe("AGENT_SKILL");
+    expect(normalizeBlueprintType("mcp-config")).toBe("MCP_CONFIG");
+  });
+
   it("ignores case, dashes and surrounding spaces", () => {
     expect(normalizeBlueprintType(" kiro-steering ")).toBe("KIRO_STEERING");
   });
