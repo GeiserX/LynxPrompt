@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { createHash } from "crypto";
 import { sessionCookieName } from "@/lib/auth-cookies";
 import { hashIP } from "@/lib/ip-hash";
 import { getClientIP } from "@/lib/client-ip";
-import { getPasskeyStatus } from "@/lib/passkey-session";
+import { requireSession } from "@/lib/api-auth";
 
 // Helper to generate device hash
 function generateDeviceHash(userAgent: string, fingerprint: string): string {
@@ -48,11 +46,9 @@ function getDeviceName(userAgent: string): string {
 // POST /api/auth/device - Check if device is known and update session
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireSession(request, { allowUnverified: true });
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     const body = await request.json();
     const { fingerprint } = body;
@@ -128,11 +124,9 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      const status = await getPasskeyStatus(session.user.id, sessionToken);
-
       return NextResponse.json({
         isKnownDevice: true,
-        requiresPasskey: status.required && !status.verified,
+        requiresPasskey: !auth.passkeyVerified,
         deviceName,
       });
     }
@@ -171,11 +165,12 @@ export async function POST(request: NextRequest) {
 // PUT /api/auth/device - Trust the current device after passkey verification
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // SECURITY: only a session that already passed the WebAuthn check may
+    // trust a device (requireSession refuses the rest). This route never
+    // marks the session verified itself.
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     const body = await request.json();
     const { fingerprint, trustDevice } = body;
@@ -192,16 +187,6 @@ export async function PUT(request: NextRequest) {
 
     const userAgent = request.headers.get("user-agent") || "";
     const ip = getClientIP(request);
-
-    // SECURITY: only a session that already passed the WebAuthn check may
-    // trust a device. This route never marks the session verified itself.
-    const status = await getPasskeyStatus(session.user.id, sessionToken);
-    if (status.required && !status.verified) {
-      return NextResponse.json(
-        { error: "Passkey verification required", passkeyRequired: true },
-        { status: 403 }
-      );
-    }
 
     const deviceHash = generateDeviceHash(userAgent, fingerprint);
     const deviceName = getDeviceName(userAgent);

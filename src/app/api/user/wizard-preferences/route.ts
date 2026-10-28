@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { authenticateRequest, canPerform } from "@/lib/api-auth";
+import { canPerform, requireSession, requireUser } from "@/lib/api-auth";
 import { prismaUsers } from "@/lib/db-users";
 
 // Limits for one save. Values hold whole custom files (CONTRIBUTING, .gitignore).
@@ -33,12 +31,11 @@ function normalisePreference(raw: unknown): IncomingPreference | null | undefine
 }
 
 // GET - Fetch all wizard preferences for the user
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     // Exclude blueprint_variables category - those are managed separately via /api/user/variables
     // and displayed in the "Saved Variables" section, not "Wizard Preferences"
@@ -73,11 +70,8 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     // Support both session auth (browser) and Bearer token auth (CLI)
-    const auth = await authenticateRequest(req);
-
-    if (!auth) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireUser(req);
+    if (auth instanceof NextResponse) return auth;
 
     // Wizard defaults feed blueprint generation: any write-scoped token may save them
     if (!canPerform(auth, "profile:write", "blueprints:write")) {
@@ -163,10 +157,9 @@ export async function POST(req: Request) {
 // DELETE - Remove a specific preference
 export async function DELETE(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireSession(req);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     const { searchParams } = new URL(req.url);
     const category = searchParams.get("category");

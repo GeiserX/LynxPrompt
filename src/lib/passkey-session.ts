@@ -4,15 +4,13 @@
  * A user with a registered passkey must prove it on every new session. The
  * proof is the session row's passkeyVerified flag, and only the WebAuthn
  * verify handler (POST /api/auth/passkey/authenticate/verify) may set it.
- * Sensitive routes call requirePasskeyVerified so a session cookie alone
- * cannot mint tokens or change the passkeys.
+ * requireSession and requireUser (src/lib/api-auth.ts) refuse writes from a
+ * session that has not proven it, so a session cookie alone cannot change
+ * anything.
  */
 
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 import { prismaUsers } from "@/lib/db-users";
 import { ENABLE_PASSKEYS } from "@/lib/feature-flags";
-import { sessionCookieName } from "@/lib/auth-cookies";
 
 export interface PasskeyStatus {
   required: boolean;
@@ -53,25 +51,4 @@ export async function getPasskeyStatus(
   }
 
   return { required: true, verified: sessionRecord.passkeyVerified };
-}
-
-/**
- * Returns a 403 response when the session has not passed its passkey check,
- * or null when the route may go on. Errors propagate so callers fail closed.
- */
-export async function requirePasskeyVerified(
-  request: NextRequest,
-  userId: string
-): Promise<NextResponse | null> {
-  const sessionToken = request.cookies.get(sessionCookieName())?.value;
-  const status = await getPasskeyStatus(userId, sessionToken);
-
-  if (status.required && !status.verified) {
-    return NextResponse.json(
-      { error: "Passkey verification required", passkeyRequired: true },
-      { status: 403 }
-    );
-  }
-
-  return null;
 }

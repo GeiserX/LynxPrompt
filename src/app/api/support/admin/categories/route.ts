@@ -1,18 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismaSupport } from "@/lib/db-support";
 import { supportForumDisabled } from "@/lib/support-guard";
+import { requireSession } from "@/lib/api-auth";
 
-export async function GET() {
+export async function GET(request: Request) {
   const disabled = supportForumDisabled();
   if (disabled) return disabled;
 
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     // Check admin role
     if (session.user.role !== "ADMIN" && session.user.role !== "SUPERADMIN") {
@@ -43,10 +41,9 @@ export async function POST(request: NextRequest) {
   if (disabled) return disabled;
 
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     // Check admin role
     if (session.user.role !== "ADMIN" && session.user.role !== "SUPERADMIN") {

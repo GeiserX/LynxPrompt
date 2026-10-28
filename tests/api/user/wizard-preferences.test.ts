@@ -5,7 +5,7 @@ const mockUpsert = vi.fn();
 vi.mock("next-auth", () => ({ getServerSession: vi.fn() }));
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
 vi.mock("@/lib/api-auth", () => ({
-  authenticateRequest: vi.fn().mockResolvedValue({ source: "session", user: { id: "user_1" } }),
+  requireUser: vi.fn().mockResolvedValue({ source: "session", user: { id: "user_1" }, passkeyVerified: true }),
   canPerform: vi.fn(() => true),
 }));
 vi.mock("@/lib/db-users", () => ({

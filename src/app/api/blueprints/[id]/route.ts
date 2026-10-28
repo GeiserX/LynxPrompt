@@ -8,6 +8,7 @@ import { normalizeBlueprintType } from "@/lib/blueprint-rules";
 import { contentChecksum } from "@/lib/content-checksum";
 import { sanitizeRepositoryPath } from "@/lib/repository-path";
 import { checkBlueprintLineCount } from "@/lib/subscription";
+import { requireSession } from "@/lib/api-auth";
 
 // GET /api/blueprints/[id] - Get blueprint details
 export async function GET(
@@ -94,14 +95,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
-    }
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     const { id } = await params;
     
@@ -355,14 +351,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
-    }
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     const { id } = await params;
     

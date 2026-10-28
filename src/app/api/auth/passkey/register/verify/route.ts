@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions, webAuthnConfig } from "@/lib/auth";
+import { webAuthnConfig } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
-import { requirePasskeyVerified } from "@/lib/passkey-session";
 import { sessionCookieName } from "@/lib/auth-cookies";
 import { ENABLE_PASSKEYS } from "@/lib/feature-flags";
 import { verifyRegistrationResponse } from "@simplewebauthn/server";
+import { requireSession } from "@/lib/api-auth";
 
 function sanitizeString(input: string, maxLength: number = 100): string {
   return input
@@ -20,14 +19,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    const passkeyBlock = await requirePasskeyVerified(request, session.user.id);
-    if (passkeyBlock) return passkeyBlock;
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     const challenge = request.cookies.get("passkey-challenge")?.value;
     if (!challenge) {

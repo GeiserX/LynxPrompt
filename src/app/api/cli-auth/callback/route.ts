@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
-import { requirePasskeyVerified } from "@/lib/passkey-session";
 import { generateToken } from "@/lib/api-tokens";
 import { encryptCliToken } from "@/lib/cli-auth";
+import { requireSession } from "@/lib/api-auth";
 
 /**
  * POST /api/auth/cli/callback
@@ -19,16 +17,9 @@ import { encryptCliToken } from "@/lib/cli-auth";
 export async function POST(request: NextRequest): Promise<Response> {
   try {
     // Verify the user is authenticated
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
-    const passkeyBlock = await requirePasskeyVerified(request, session.user.id);
-    if (passkeyBlock) return passkeyBlock;
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     const body = await request.json();
     const { session_id } = body;

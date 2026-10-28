@@ -17,6 +17,11 @@ const mockDownloadCount = vi.fn();
 const mockDownloadGroupBy = vi.fn();
 const mockSystemFindUnique = vi.fn();
 
+// Passkeys are not under test here: every session counts as verified.
+vi.mock("@/lib/passkey-session", () => ({
+  getPasskeyStatus: vi.fn().mockResolvedValue({ required: false, verified: true }),
+}));
+
 vi.mock("next-auth", () => ({ getServerSession: () => mockSession() }));
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
 

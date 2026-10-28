@@ -1,21 +1,15 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
+import { requireSession } from "@/lib/api-auth";
 
 const CATEGORY = "blueprint_variables";
 
 // GET /api/user/variables - Get all saved variable preferences
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
-    }
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     const preferences = await prismaUsers.preference.findMany({
       where: {
@@ -47,14 +41,9 @@ export async function GET() {
 // PUT /api/user/variables - Save or update a variable preference
 export async function PUT(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
-    }
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     const { key, value } = await request.json();
 
@@ -127,14 +116,9 @@ export async function PUT(request: Request) {
 // DELETE /api/user/variables - Delete a variable preference
 export async function DELETE(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
-    }
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     const { key } = await request.json();
 
