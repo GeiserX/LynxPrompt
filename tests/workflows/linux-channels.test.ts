@@ -35,7 +35,7 @@ describe("Snap channel", () => {
   it("has one snapcraft.yaml, the one the release builds", () => {
     expect(existsSync(resolve(root, "cli/snap"))).toBe(false);
     expect(snap).not.toMatch(/\bcd cli\b/);
-    expect(snap).toContain("snapcraft pack --use-lxd");
+    expect(snap).toContain("sudo snapcraft pack --destructive-mode");
     expect(snap).toMatch(/sed -i "s\/\^version: [^"]*" snap\/snapcraft\.yaml/);
     expect(snap).toMatch(/sed -i "s\/lynxprompt@[^"]*" snap\/snapcraft\.yaml/);
   });
@@ -60,6 +60,15 @@ describe("Snap channel", () => {
     expect(yaml).toContain("curl -fsSL --retry 5 --retry-all-errors --speed-limit 10000 --speed-time 60 -o node.tar.xz");
     expect(yaml).toContain('tar xJf node.tar.xz --strip-components=1 -C "$CRAFT_PART_INSTALL"');
     expect(yaml).not.toMatch(/curl[^\n]*\|\s*tar/);
+  });
+
+  // --destructive-mode builds on the runner itself, so the runner must be the
+  // Ubuntu release of the snap's base (core22 = 22.04).
+  it("builds both architectures on the Ubuntu release of the snap's base", () => {
+    expect(read("snap/snapcraft.yaml")).toMatch(/^base: core22$/m);
+    expect(snap).toContain("{ runner: ubuntu-22.04, arch: amd64 }");
+    expect(snap).toContain("{ runner: ubuntu-22.04-arm, arch: arm64 }");
+    expect(snap).not.toContain("setup-lxd");
   });
 
   it("builds both architectures and runs the snap before it uploads", () => {

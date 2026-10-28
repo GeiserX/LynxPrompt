@@ -34,8 +34,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { runner: ubuntu-24.04, arch: amd64 }
-          - { runner: ubuntu-24.04-arm, arch: arm64 }
+          - { runner: ubuntu-22.04, arch: amd64 }
+          - { runner: ubuntu-22.04-arm, arch: arm64 }
     runs-on: ${{ matrix.runner }}
 
     steps:
@@ -79,11 +79,11 @@ jobs:
           sed -i "s/^version: .*/version: '${{ inputs.version }}'/" snap/snapcraft.yaml
           sed -i "s/lynxprompt@[0-9.]*/lynxprompt@${{ inputs.version }}/" snap/snapcraft.yaml
 
-      - name: Setup LXD
-        uses: canonical/setup-lxd@main
-
+      # Built straight on the runner, which matches the snap's core22 base (Ubuntu
+      # 22.04). Inside an LXD instance on the arm64 runner the Node download from
+      # nodejs.org stalled in three of four builds.
       - name: Build the snap
-        run: snapcraft pack --use-lxd
+        run: sudo snapcraft pack --destructive-mode
 
       - name: Check the snap installs and runs
         id: snap
