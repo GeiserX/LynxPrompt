@@ -137,6 +137,17 @@ describe("DELETE /api/hierarchies/[id]/blueprints", () => {
     expect(mockTemplateUpdate).toHaveBeenCalledTimes(1);
   });
 
+  it("refuses a hierarchy owner detaching another user's blueprint that sits in a different hierarchy", async () => {
+    mockHierarchyFindUnique.mockResolvedValue({ userId: "user_1", name: "My repo" });
+    mockTemplateFindUnique.mockResolvedValue({ userId: "user_2", hierarchyId: "h_victim", name: "Theirs" });
+
+    const response = await unlink("ha_h_mine", "bp_tpl_9");
+
+    expect(response.status).toBe(400);
+    expect(mockTemplateUpdate).not.toHaveBeenCalled();
+    expect(mockTemplateUpdateMany).not.toHaveBeenCalled();
+  });
+
   it("refuses a caller who owns neither", async () => {
     mockHierarchyFindUnique.mockResolvedValue({ userId: "user_2", name: "Their repo" });
     mockTemplateFindUnique.mockResolvedValue({ userId: "user_3", hierarchyId: "h_theirs", name: "Other" });
