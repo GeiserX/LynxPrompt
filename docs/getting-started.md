@@ -89,5 +89,5 @@ The chart is also on [ArtifactHub](https://artifacthub.io/packages/helm/lynxprom
 | AI assistants | MCP server | [lynxprompt-mcp](https://github.com/GeiserX/lynxprompt-mcp) |
 
 After installing the CLI: `lynxp config set-url https://lynxprompt.example.com` for your own instance (the
-default, which `lynxp config show` prints, is the hosted instance's API at `https://api.lynxprompt.com`), then
+default, which `lynxp config show` prints, is the hosted instance at `https://lynxprompt.com`), then
 `lynxp login`. See [Usage](usage.md#the-cli).

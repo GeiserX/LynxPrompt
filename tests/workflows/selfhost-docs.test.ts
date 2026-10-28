@@ -111,7 +111,14 @@ describe("self-hosting docs", () => {
     const cliDefault = read("cli/src/config.ts").match(/apiUrl:\s*"([^"]+)"/)![1];
     const claims = [...page.matchAll(/CLI defaults to (https?:\/\/[^\s<]+)/g)].map((m) => m[1]);
     expect(claims.length).toBeGreaterThan(0);
-    for (const claim of claims) expect(claim).toBe(cliDefault);
+    // The mkdocs pages say it as "the hosted instance, `<url>`" or "... at `<url>`".
+    const mdClaims = readdirSync(resolve(root, "docs"))
+      .filter((name) => name.endsWith(".md"))
+      .flatMap((name) =>
+        [...read(`docs/${name}`).matchAll(/hosted instance(?:'s API)?(?:,| at) `(https?:\/\/[^`]+)`/g)].map((m) => m[1]),
+      );
+    expect(mdClaims.length, "docs/*.md default URL claims not found").toBeGreaterThan(1);
+    for (const claim of [...claims, ...mdClaims]) expect(claim).toBe(cliDefault);
   });
 
   it("uses a healthcheck command the image has", () => {
@@ -126,7 +133,9 @@ describe("wizard docs", () => {
       [...text.slice(start, text.indexOf("];", start)).matchAll(/title: "([^"]+)"/g)].map((m) => m[1]);
     const app = read("src/app/wizard/page.tsx");
     const docs = read("src/app/docs/wizard/page.tsx");
-    const appSteps = titles(app, app.indexOf("const WIZARD_STEPS"));
+    // Each step is declared as `title: "...", icon: ...`, whether in one
+    // WIZARD_STEPS array or in a per-id metadata map.
+    const appSteps = [...app.matchAll(/\btitle: "([^"]+)", icon:/g)].map((m) => m[1]);
     expect(appSteps.length).toBeGreaterThan(5);
     expect(docs.indexOf("const WIZARD_STEPS"), "docs page has no step list").toBeGreaterThan(-1);
     expect(titles(docs, docs.indexOf("const WIZARD_STEPS"))).toEqual(appSteps);

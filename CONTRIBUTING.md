@@ -88,7 +88,7 @@ tests/                # Vitest tests for the app
 
 ## 📝 Adding New AI Platforms
 
-1. Add the platform to the `PLATFORMS` array in `src/lib/platforms.ts`; the web wizard and the CLI wizard both read it
+1. Add the platform to the `PLATFORMS` array in `src/lib/platforms.ts` (web wizard) and to `ALL_PLATFORMS` in `cli/src/commands/wizard.ts` (CLI wizard); the CLI keeps its own copy, so update both
 2. Add its generation logic in `src/lib/file-generator.ts` (and `cli/src/utils/generator.ts` for the CLI output)
 3. Update documentation
 
