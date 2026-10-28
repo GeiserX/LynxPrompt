@@ -12,6 +12,12 @@ import {
   toHierarchyApiId,
   fromHierarchyApiId,
 } from "@/lib/api-tokens";
+import {
+  checkBlueprintContent,
+  normalizeBlueprintType,
+  resolveBlueprintTeamId,
+} from "@/lib/blueprint-rules";
+import { getEffectiveTier, getMaxBlueprintCount } from "@/lib/subscription";
 
 /**
  * Compute SHA-256 checksum of content for optimistic locking
@@ -173,6 +179,8 @@ export async function GET(request: NextRequest) {
  * - category?: string (default "other")
  * - tags?: string[]
  * - visibility?: "PRIVATE" | "TEAM" | "PUBLIC" (default "PRIVATE")
+ * - team_id?: string (TEAM only; defaults to the user's only team)
+ * - sensitive_data_acknowledged?: boolean (publish PUBLIC content that looks like it holds secrets)
  */
 export async function POST(request: NextRequest) {
   try {
@@ -232,6 +240,8 @@ export async function POST(request: NextRequest) {
       hierarchy_id = null,
       parent_id = null,
       repository_path = null,
+      team_id = null,
+      sensitive_data_acknowledged = false,
     } = body;
     const content = decodedContent;
 
@@ -255,6 +265,42 @@ export async function POST(request: NextRequest) {
     const normalizedVisibility = validVisibilities.includes(visibility.toUpperCase())
       ? visibility.toUpperCase()
       : "PRIVATE";
+    const isPublic = normalizedVisibility === "PUBLIC";
+
+    // A TEAM blueprint needs a team, or no teammate can ever see it
+    let teamId: string | null = null;
+    if (normalizedVisibility === "TEAM") {
+      const team = await resolveBlueprintTeamId(tokenData.userId, team_id);
+      if (!team.ok) {
+        return NextResponse.json({ error: team.error }, { status: team.status });
+      }
+      teamId = team.teamId;
+    }
+
+    const contentCheck = checkBlueprintContent(content.trim(), {
+      willBePublic: isPublic,
+      sensitiveDataAcknowledged: sensitive_data_acknowledged === true,
+    });
+    if (!contentCheck.ok) {
+      return NextResponse.json(contentCheck.body, { status: contentCheck.status });
+    }
+
+    const maxBlueprints = getMaxBlueprintCount(
+      getEffectiveTier("USER", tokenData.user.subscriptionPlan)
+    );
+    const existingBlueprintCount = await prismaUsers.userTemplate.count({
+      where: { userId: tokenData.userId },
+    });
+    if (existingBlueprintCount >= maxBlueprints) {
+      return NextResponse.json(
+        {
+          error: `You have reached the maximum number of blueprints for your plan (${maxBlueprints.toLocaleString()}).`,
+          limit: maxBlueprints,
+          current: existingBlueprintCount,
+        },
+        { status: 403 }
+      );
+    }
 
     // Validate tags
     const validatedTags: string[] = [];
@@ -317,12 +363,15 @@ export async function POST(request: NextRequest) {
         name: name.trim(),
         description: description?.trim() || null,
         content: content.trim(),
-        type: type.toUpperCase(),
+        type: normalizeBlueprintType(type),
         category,
         tier,
         tags: validatedTags,
         visibility: normalizedVisibility as "PRIVATE" | "TEAM" | "PUBLIC",
-        isPublic: normalizedVisibility === "PUBLIC",
+        isPublic,
+        teamId,
+        currentVersion: 1,
+        publishedVersion: isPublic ? 1 : null,
         // Hierarchy fields
         hierarchyId: validatedHierarchyId,
         parentId: validatedParentId,
@@ -344,6 +393,19 @@ export async function POST(request: NextRequest) {
         parentId: true,
         repositoryPath: true,
         contentChecksum: true,
+      },
+    });
+
+    // Initial version, same as the web editor writes
+    await prismaUsers.userTemplateVersion.create({
+      data: {
+        templateId: blueprint.id,
+        version: 1,
+        content: content.trim(),
+        variables: undefined,
+        changelog: "Initial version",
+        isPublished: isPublic,
+        createdBy: tokenData.userId,
       },
     });
 
