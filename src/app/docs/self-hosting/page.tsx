@@ -133,6 +133,11 @@ export default function SelfHostingPage() {
                 <td className="px-4 py-2 text-muted-foreground">production</td>
                 <td className="px-4 py-2">Set to <code className="text-xs">production</code> for self-hosted deployments</td>
               </tr>
+              <tr>
+                <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">TRUSTED_PROXY</code></td>
+                <td className="px-4 py-2 text-muted-foreground">1</td>
+                <td className="px-4 py-2">How many reverse proxies sit in front of the app; rate limits and download counts key on the client address it finds. <code className="text-xs">cloudflare</code> reads CF-Connecting-IP instead; use it only when the app cannot be reached except through Cloudflare</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -168,6 +173,16 @@ export default function SelfHostingPage() {
                 <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">DATABASE_URL_SUPPORT</code></td>
                 <td className="px-4 py-2 text-muted-foreground">—</td>
                 <td className="px-4 py-2">Support forum data (when ENABLE_SUPPORT_FORUM is on)</td>
+              </tr>
+              <tr>
+                <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">DB_SSL</code></td>
+                <td className="px-4 py-2 text-muted-foreground">false</td>
+                <td className="px-4 py-2">Set to <code className="text-xs">true</code> to make the app&apos;s own database connections use TLS. The migrations at start connect with the connection string as written</td>
+              </tr>
+              <tr>
+                <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">DB_SSL_REJECT_UNAUTHORIZED</code></td>
+                <td className="px-4 py-2 text-muted-foreground">true</td>
+                <td className="px-4 py-2">With DB_SSL on, <code className="text-xs">false</code> accepts a server certificate that does not verify, such as a self-signed one</td>
               </tr>
             </tbody>
           </table>
@@ -208,7 +223,17 @@ export default function SelfHostingPage() {
               <tr>
                 <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">ENABLE_SSO</code></td>
                 <td className="px-4 py-2 text-muted-foreground">false</td>
-                <td className="px-4 py-2">Enterprise SSO (OpenID Connect)</td>
+                <td className="px-4 py-2">Enterprise SSO (OpenID Connect), configured per team. Needs SSO_ENCRYPTION_KEY</td>
+              </tr>
+              <tr>
+                <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">SSO_ENCRYPTION_KEY</code></td>
+                <td className="px-4 py-2 text-muted-foreground">—</td>
+                <td className="px-4 py-2">64 hex characters (<code className="text-xs">openssl rand -hex 32</code>). Encrypts the SSO client secrets at rest; without it a team cannot save an SSO configuration. Changing it makes the stored secrets unreadable</td>
+              </tr>
+              <tr>
+                <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">SSO_ALLOW_PRIVATE_IDP</code></td>
+                <td className="px-4 py-2 text-muted-foreground">false</td>
+                <td className="px-4 py-2">Set to <code className="text-xs">true</code> to let a team&apos;s IdP live on a private or loopback address and use plain http. Leave it off on an instance strangers can sign up to</td>
               </tr>
               <tr>
                 <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">ENABLE_USER_REGISTRATION</code></td>
@@ -218,7 +243,17 @@ export default function SelfHostingPage() {
               <tr>
                 <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">ENABLE_TURNSTILE</code></td>
                 <td className="px-4 py-2 text-muted-foreground">false</td>
-                <td className="px-4 py-2">Cloudflare Turnstile CAPTCHA on sign-up</td>
+                <td className="px-4 py-2">Cloudflare Turnstile on the sign-in forms. Needs both keys below</td>
+              </tr>
+              <tr>
+                <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">NEXT_PUBLIC_TURNSTILE_SITE_KEY</code></td>
+                <td className="px-4 py-2 text-muted-foreground">—</td>
+                <td className="px-4 py-2">Turnstile site key, read when the container starts</td>
+              </tr>
+              <tr>
+                <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">TURNSTILE_SECRET_KEY</code></td>
+                <td className="px-4 py-2 text-muted-foreground">—</td>
+                <td className="px-4 py-2">Turnstile secret key. With ENABLE_TURNSTILE on and no secret, the server skips the check</td>
               </tr>
             </tbody>
           </table>
@@ -319,6 +354,11 @@ export default function SelfHostingPage() {
                 <td className="px-4 py-2">Enable the built-in blog</td>
               </tr>
               <tr>
+                <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">UPLOAD_DIR</code></td>
+                <td className="px-4 py-2 text-muted-foreground">/data/uploads/blog</td>
+                <td className="px-4 py-2">Where blog images go; avatars and team logos go one level up. The self-host compose file mounts a volume at <code className="text-xs">/data/uploads</code></td>
+              </tr>
+              <tr>
                 <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">ENABLE_SUPPORT_FORUM</code></td>
                 <td className="px-4 py-2 text-muted-foreground">false</td>
                 <td className="px-4 py-2">Enable the support forum</td>
@@ -326,7 +366,12 @@ export default function SelfHostingPage() {
               <tr>
                 <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">UMAMI_SCRIPT_URL</code></td>
                 <td className="px-4 py-2 text-muted-foreground">—</td>
-                <td className="px-4 py-2">Umami analytics script URL (self-hosted analytics)</td>
+                <td className="px-4 py-2">Umami analytics script URL. Loaded only when NEXT_PUBLIC_UMAMI_WEBSITE_ID is set too</td>
+              </tr>
+              <tr>
+                <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">NEXT_PUBLIC_UMAMI_WEBSITE_ID</code></td>
+                <td className="px-4 py-2 text-muted-foreground">—</td>
+                <td className="px-4 py-2">Umami website id</td>
               </tr>
             </tbody>
           </table>
@@ -496,12 +541,15 @@ STATUS_PAGE_URL=https://status.mycompany.com`}</code>
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-xl border bg-card p-6">
-            <h3 className="font-semibold">One server, four databases (default)</h3>
+            <h3 className="font-semibold">One server, one database per schema (default)</h3>
             <p className="mt-2 text-sm text-muted-foreground">
               Point the four <code className="text-xs">DATABASE_URL_*</code> variables at four
               databases on the same PostgreSQL server. This is what{" "}
-              <code className="text-xs">docker-compose.selfhost.yml</code> does; the first start
-              creates the databases.
+              <code className="text-xs">docker-compose.selfhost.yml</code> does. The first start
+              creates the users database; the blog and support databases are only created and
+              migrated while <code className="text-xs">ENABLE_BLOG</code> or{" "}
+              <code className="text-xs">ENABLE_SUPPORT_FORUM</code> is on, so an instance without
+              those features runs on two databases.
             </p>
             <pre className="mt-3 overflow-x-auto rounded-lg bg-muted p-3 text-xs">
               <code>{`DATABASE_URL_APP=postgresql://.../lynxprompt
