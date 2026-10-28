@@ -858,14 +858,22 @@ four; two schemas must never share a database, because <code>prisma db push</cod
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>npm<span class="w"> </span>run<span class="w"> </span>db:push
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>npm<span class="w"> </span>run<span class="w"> </span>dev
 </code></pre></div>
+<p>A schema change needs a migration, because the image applies migrations, not the schema. Write it from the
+difference to the schema on <code>main</code>, which needs no database (here for the users schema):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>git<span class="w"> </span>show<span class="w"> </span>origin/main:prisma/schema-users.prisma<span class="w"> </span>&gt;<span class="w"> </span>/tmp/old.prisma
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nv">dir</span><span class="o">=</span>prisma/migrations-users/<span class="k">$(</span>date<span class="w"> </span>-u<span class="w"> </span>+%Y%m%d%H%M%S<span class="k">)</span>_add_something
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>mkdir<span class="w"> </span>-p<span class="w"> </span><span class="s2">"</span><span class="nv">$dir</span><span class="s2">"</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>npx<span class="w"> </span>prisma<span class="w"> </span>migrate<span class="w"> </span>diff<span class="w"> </span>--config<span class="o">=</span>prisma/prisma.config-users.ts<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span>--from-schema<span class="w"> </span>/tmp/old.prisma<span class="w"> </span>--to-schema<span class="w"> </span>prisma/schema-users.prisma<span class="w"> </span>--script<span class="w"> </span>-o<span class="w"> </span><span class="s2">"</span><span class="nv">$dir</span><span class="s2">/migration.sql"</span>
+</code></pre></div>
 <p><code>docker compose up -d</code> with the root <code>docker-compose.yml</code> starts the full stack, app included, on port 3000;
 its databases publish no port, so <code>npm run dev</code> cannot reach them. Use it to run the image, not to develop.</p>
 <p>See <a href="https://github.com/GeiserX/LynxPrompt/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a> for contribution guidelines.</p>
 <h2 id="docs">Docs<a class="headerlink" href="#docs" title="Permanent link">&para;</a></h2>
 <p>The site is MkDocs Material, built strictly:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>docs/requirements-docs.txt
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>mkdocs<span class="w"> </span>build<span class="w"> </span>--strict<span class="w">     </span><span class="c1"># any broken link or unreachable page fails it</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>mkdocs<span class="w"> </span>serve
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>docs/requirements-docs.txt
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>mkdocs<span class="w"> </span>build<span class="w"> </span>--strict<span class="w">     </span><span class="c1"># any broken link or unreachable page fails it</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>mkdocs<span class="w"> </span>serve
 </code></pre></div>
 <p><code>docs.yml</code> builds every pull request and deploys <code>main</code> into the <code>gh-pages</code> branch next to the Helm
 repository's <code>index.yaml</code>, which it never touches.</p>

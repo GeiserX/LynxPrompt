@@ -936,7 +936,9 @@
   drops the tables it does not know; the self-host compose file keeps the four databases on one PostgreSQL
   server.</li>
 <li><strong>Migrations</strong> run at every start: the entrypoint builds the four connection strings from the <code>DB_*</code>
-  variables, runs <code>prisma db push</code> for each schema, and refuses to start if one fails.</li>
+  variables, runs <code>prisma migrate deploy</code> for each schema, and refuses to start if one fails. A database
+  that an earlier release built with <code>prisma db push</code> gets one last <code>db push</code>, which refuses any change that
+  would lose data, and then has its migrations recorded as applied.</li>
 <li><strong>Mail</strong>: the sign-in link is sent through your SMTP server with nodemailer. Nothing else is mailed unless
   the contact form is on.</li>
 </ul>

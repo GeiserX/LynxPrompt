@@ -1010,7 +1010,7 @@ with registration on.</p>
 <code>ADMIN_EMAIL</code> into it). Check the value with <code>docker compose ... exec lynxprompt printenv SUPERADMIN_EMAIL</code>,
 fix <code>.env</code>, restart and sign in again.</p>
 <h2 id="the-container-fails-to-start-with-a-database-error">The container fails to start with a database error<a class="headerlink" href="#the-container-fails-to-start-with-a-database-error" title="Permanent link">&para;</a></h2>
-<p>The entrypoint runs <code>prisma db push</code> on four schemas and exits if one fails. The log names the schema. Usual
+<p>The entrypoint runs <code>prisma migrate deploy</code> on four schemas and exits if one fails. The log names the schema. Usual
 causes: PostgreSQL not ready yet (the compose file waits for its healthcheck, a hand-written one may not),
 a wrong <code>DB_*_PASSWORD</code>, or a PostgreSQL 18 volume mounted at <code>/var/lib/postgresql/data</code> instead of
 <code>/var/lib/postgresql</code> (the compose file has the right path and a comment).</p>
