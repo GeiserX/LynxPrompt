@@ -77,7 +77,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (typeof step !== "number" || step < 0 || step > 10) {
+    // The wizard has 12 steps (0-11) and offers Save Draft on the last one too
+    if (typeof step !== "number" || !Number.isInteger(step) || step < 0 || step > 11) {
       return NextResponse.json(
         { error: "Invalid step number" },
         { status: 400 }
