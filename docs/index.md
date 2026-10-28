@@ -120,9 +120,9 @@ flowchart LR
 
 ## Privacy
 
-- Accounts, blueprints, drafts and teams live in your PostgreSQL. Back up the `pgdata` volume and you have everything.
-- Every other outside service is off until you switch it on with an environment variable: SMTP for sign-in mail, GitHub and Google for OAuth, an SSO provider, Anthropic for AI editing, Stripe for paid marketplace listings, Cloudflare Turnstile, Umami analytics. See [Configuration](configuration.md).
-- Federation is on by default: at start and every six hours the instance sends its domain (the host of `APP_URL`) to the registry at lynxprompt.com, and `/.well-known/lynxprompt.json` answers with its name, version and number of public blueprints. Only blueprints marked public are shared. `ENABLE_FEDERATION=false` turns it off.
+- Accounts, blueprints, drafts and teams live in your PostgreSQL; avatars, team logos and blog images live in the `uploads` volume. Back up both volumes and you have everything.
+- Every other outside service is off until you switch it on with an environment variable: SMTP for sign-in mail, GitHub and Google for OAuth, an SSO provider, Anthropic for AI editing, Cloudflare Turnstile, Umami analytics. The exception is Gravatar: an account without a profile picture shows a Gravatar image, so browsers request `gravatar.com` with a hash of that account's email address. See [Configuration](configuration.md).
+- Federation is on by default: at start and every six hours the instance sends its domain (the host of `APP_URL`) to the registry at lynxprompt.com, and `/.well-known/lynxprompt.json` answers with its name, version and number of public blueprints. `/api/v1/federation/blueprints` lists the name, description, tags and author of public blueprints; nothing private is listed, and no blueprint content is sent anywhere. `ENABLE_FEDERATION=false` turns it off.
 - The security policy is in [SECURITY.md](https://github.com/GeiserX/LynxPrompt/blob/main/SECURITY.md).
 
 ## Getting help

@@ -57,7 +57,7 @@ account that already exists, so the first sign-in is always the mail link or OAu
 Change the image tag in `docker-compose.selfhost.yml` to the newer release from
 [Docker Hub](https://hub.docker.com/r/drumsergio/lynxprompt/tags) and run the same `docker compose ... up -d`.
 Migrations run at start. Back up the four databases first (`docker compose ... exec postgres pg_dumpall -U
-lynxprompt > backup.sql`).
+lynxprompt > backup.sql`). Uploaded images live in the `uploads` volume, which survives the upgrade.
 
 ## Helm chart (Kubernetes)
 
