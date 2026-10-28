@@ -116,6 +116,17 @@ describe("cli convert source detection", () => {
     expect(platformForPath(".tabnine.yaml")).toBe("tabnine");
   });
 
+  it("reads any other .mdc file as a Cursor rule and keeps its frontmatter", () => {
+    const rule = `---\nglobs: ["src/api/**"]\nalwaysApply: false\n---\n\n# API\n`;
+    for (const path of ["api.mdc", "backup/api.mdc", "x/.cursor/rules-old/a.mdc"]) {
+      const from = platformForPath(path);
+      expect(from).toBe("cursor");
+      expect(convertContent(rule, from!, "cursor")).toBe(rule);
+      expect(convertContent(rule, from!, "firebender")).toBe(rule);
+    }
+    expect(platformForPath(".firebender/rules/a.mdc")).toBe("firebender");
+  });
+
   it("claims no file it does not know", () => {
     expect(platformForPath("notes/rules.md")).toBeUndefined();
     expect(platformForPath("my.rules")).toBeUndefined();

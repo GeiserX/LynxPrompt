@@ -25,8 +25,10 @@ export function isStructuredPlatform(platform: string): boolean {
 
 /**
  * The platform a rules file belongs to, from its path: a tool's rules folder
- * (any file in .cursor/rules/ is Cursor's) or a tool's own file. Returns
- * undefined for a file no platform claims.
+ * (any file in .cursor/rules/ is Cursor's) or a tool's own file. Any other
+ * .mdc file is a Cursor rule, so its own frontmatter (globs, alwaysApply)
+ * survives a move to Cursor or Firebender. Returns undefined for a file no
+ * platform claims.
  */
 export function platformForPath(filePath: string): string | undefined {
   const normalized = filePath.replace(/\\/g, "/").toLowerCase();
@@ -37,7 +39,8 @@ export function platformForPath(filePath: string): string | undefined {
     const own = p.file.toLowerCase();
     return normalized === own || normalized.endsWith(`/${own}`);
   });
-  return file?.id;
+  if (file) return file.id;
+  return normalized.endsWith(".mdc") ? "cursor" : undefined;
 }
 
 /** Convert a rules or command file written for one platform to another one. */

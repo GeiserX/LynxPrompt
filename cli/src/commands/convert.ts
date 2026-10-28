@@ -31,8 +31,13 @@ const SOURCE_FILES: Record<string, string> = {
   "copilot-instructions.md": "copilot",
   ".windsurfrules": "windsurf",
   ".clinerules": "cline",
-  "conventions.md": "aider",
+  // Real case: auto-detect looks the name up as is, and Linux disks are case-sensitive
+  "CONVENTIONS.md": "aider",
 };
+
+/** The platform of a known source filename, whatever its case */
+const sourceFilePlatform = (name: string) =>
+  Object.entries(SOURCE_FILES).find(([file]) => file.toLowerCase() === name.toLowerCase())?.[1];
 
 // Target format to output filename: every platform of the shared table (the
 // file the wizard and the web download write), plus the legacy .cursorrules,
@@ -94,7 +99,7 @@ const COMMAND_DIRS: Record<string, string> = {
   ".copilot/prompts": "copilot-prompt",
 };
 
-async function detectSourceFile(cwd: string): Promise<{ path: string; platform: string } | null> {
+export async function detectSourceFile(cwd: string): Promise<{ path: string; platform: string } | null> {
   // Try to find a source file in common locations
   for (const [pattern, platform] of Object.entries(SOURCE_FILES)) {
     try {
@@ -164,7 +169,7 @@ export async function convertCommand(
       sourcePlatform = cmdPlatform;
     } else {
       // Detect platform from the path (a tool's rules folder or own file), then the filename
-      sourcePlatform = platformForPath(source) || SOURCE_FILES[basename(source).toLowerCase()] || "unknown";
+      sourcePlatform = platformForPath(source) || sourceFilePlatform(basename(source)) || "unknown";
     }
   } else {
     const detected = await detectSourceFile(cwd);
