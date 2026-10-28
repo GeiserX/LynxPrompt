@@ -7,6 +7,10 @@ interface CommandsConfig {
   test?: string;
   lint?: string;
   dev?: string;
+  typecheck?: string;
+  format?: string;
+  preCommit?: string;
+  clean?: string;
   additional?: string[];
   savePreferences?: boolean;
 }
@@ -24,6 +28,10 @@ interface CodeStyleConfig {
   errorHandlingOther?: string;
   loggingConventions?: string;
   patterns?: string;
+  maxFileLength?: number;
+  importOrder?: string;
+  commentLanguage?: string;
+  docStyle?: string;
   notes?: string;
   savePreferences?: boolean;
 }
@@ -33,6 +41,9 @@ interface TestingStrategyConfig {
   coverage?: number;
   frameworks?: string[];
   notes?: string;
+  tddPreference?: boolean;
+  snapshotTesting?: boolean;
+  mockStrategy?: string;
   savePreferences?: boolean;
 }
 
@@ -124,6 +135,21 @@ interface WizardConfig {
   sshKeyPath?: string; // Custom SSH key path (empty = default)
   manualDeployment?: boolean; // Whether deployment is manual (no CI/CD)
   deploymentMethod?: string; // portainer, docker_compose, kubernetes, bare_metal
+  packageManager?: string;
+  jsRuntime?: string;
+  monorepoTool?: string;
+  orm?: string;
+  branchStrategy?: string;
+  defaultBranch?: string;
+  allowDirectCommits?: boolean;
+  commitSigning?: boolean;
+  versionTagFormat?: string;
+  changelogTool?: string;
+  dockerImageNames?: string;
+  planModeFrequency?: string;
+  explanationVerbosity?: string;
+  accessibilityFocus?: boolean;
+  performanceFocus?: boolean;
 }
 
 // Security configuration (FREE tier)
@@ -217,6 +243,21 @@ interface UserProfile {
 
 // Platform file names - imported from central definition
 import { PLATFORM_FILES, getPlatform } from "./platforms";
+import {
+  ANALYTICS_LABELS,
+  AUTH_PROVIDER_LABELS,
+  COMPLIANCE_LABELS,
+  aiPreferenceLines,
+  dockerImageLines,
+  extraCodeStyleLines,
+  extraCommandLines,
+  extraTestingLines,
+  gitWorkflowLines,
+  hasExtraTesting,
+  infrastructureSection,
+  mcpServerSection,
+  toolingLines,
+} from "./generator-sections";
 
 // Helper: normalize platforms array (supports legacy array or single string)
 function resolvePlatforms(config: WizardConfig): string[] {
@@ -575,7 +616,8 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     lines.push("");
   }
 
-  if (config.languages.length > 0 || config.frameworks.length > 0 || (config.databases && config.databases.length > 0) || config.letAiDecide) {
+  const tooling = toolingLines(config);
+  if (config.languages.length > 0 || config.frameworks.length > 0 || (config.databases && config.databases.length > 0) || config.letAiDecide || tooling.length > 0) {
     lines.push("## Technology Stack");
     lines.push("");
     lines.push("This project uses the following technologies. Please ensure all code follows the conventions and best practices for these:");
@@ -591,6 +633,10 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     if (config.databases && config.databases.length > 0) {
       const dbs = config.databases.map(d => d.startsWith("custom:") ? d.replace("custom:", "") : d);
       lines.push(`**Database${config.databases.length > 1 ? 's' : ''}**: ${bpVarArray(bp, "DATABASES", dbs)}`);
+    }
+    if (tooling.length > 0) {
+      lines.push("");
+      lines.push(...tooling);
     }
     if (config.letAiDecide) {
       lines.push("");
@@ -673,6 +719,13 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     lines.push("");
   }
 
+  const styleExtras = extraCodeStyleLines(config);
+  if (styleExtras.length > 0) {
+    lines.push("### Formatting & Documentation");
+    lines.push(...styleExtras);
+    lines.push("");
+  }
+
   // Additional style notes
   if (config.codeStyle?.notes) {
     lines.push("### Additional Style Notes");
@@ -680,7 +733,8 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     lines.push("");
   }
 
-  if (config.aiBehaviorRules.length > 0) {
+  const aiPrefs = aiPreferenceLines(config);
+  if (config.aiBehaviorRules.length > 0 || aiPrefs.length > 0) {
     lines.push("## AI Behavior Guidelines");
     lines.push("");
     lines.push("When assisting with this project, follow these specific rules:");
@@ -689,6 +743,7 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
       const ruleText = getRuleDescription(rule);
       if (ruleText) lines.push(`- ${ruleText}`);
     });
+    lines.push(...aiPrefs);
     if (config.attemptWorkarounds === true) {
       lines.push("- When stuck, **attempt creative workarounds** before asking for help");
     } else if (config.attemptWorkarounds === false) {
@@ -697,42 +752,8 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     lines.push("");
   }
 
-  // MCP Servers
-  if (config.mcpServers) {
-    const servers = config.mcpServers.split(",").map((s: string) => s.trim()).filter(Boolean);
-    if (servers.length > 0) {
-      lines.push("## MCP Servers");
-      lines.push("");
-      lines.push("The developer has these MCP (Model Context Protocol) servers available. Use them when relevant:");
-      lines.push("");
-      servers.forEach((server: string) => {
-        lines.push(`- ${server}`);
-      });
-      lines.push("");
-    }
-  }
-
-  // Server access & deployment
-  if (config.serverAccess || config.manualDeployment) {
-    lines.push("## Infrastructure");
-    lines.push("");
-    if (config.serverAccess) {
-      const keyInfo = config.sshKeyPath
-        ? `SSH key: \`${config.sshKeyPath}\``
-        : "SSH key in default location (~/.ssh/)";
-      lines.push(`- **Server access**: via SSH. ${keyInfo}`);
-    }
-    if (config.manualDeployment && config.deploymentMethod) {
-      const methods: Record<string, string> = {
-        portainer: "Portainer (GitOps stacks)",
-        docker_compose: "Docker Compose (manual)",
-        kubernetes: "Kubernetes (kubectl apply)",
-        bare_metal: "Bare metal (direct deployment)",
-      };
-      lines.push(`- **Deployment**: ${methods[config.deploymentMethod] || config.deploymentMethod}`);
-    }
-    lines.push("");
-  }
+  lines.push(...mcpServerSection(config, "## MCP Servers"));
+  lines.push(...infrastructureSection(config, "## Infrastructure"));
 
   // Important files to read first
   const importantFileLabels: Record<string, string> = {
@@ -823,6 +844,7 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     config.commands.test ||
     config.commands.lint ||
     config.commands.dev ||
+    extraCommandLines(config).length > 0 ||
     (config.commands.additional?.length ?? 0) > 0
   );
   if (hasCommands) {
@@ -834,6 +856,7 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     if (config.commands!.test) lines.push(`- **Test**: \`${bpVar(bp, "TEST_COMMAND", config.commands!.test)}\``);
     if (config.commands!.lint) lines.push(`- **Lint**: \`${bpVar(bp, "LINT_COMMAND", config.commands!.lint)}\``);
     if (config.commands!.dev) lines.push(`- **Dev server**: \`${bpVar(bp, "DEV_COMMAND", config.commands!.dev)}\``);
+    lines.push(...extraCommandLines(config));
     if (config.commands!.additional?.length) {
       lines.push("");
       lines.push("**Other useful commands**:");
@@ -848,7 +871,8 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     (config.testingStrategy.frameworks?.length ?? 0) > 0 ||
     config.testingStrategy.notes ||
     // Only include coverage if it's not the default 80
-    (config.testingStrategy.coverage !== undefined && config.testingStrategy.coverage !== 80)
+    (config.testingStrategy.coverage !== undefined && config.testingStrategy.coverage !== 80) ||
+    hasExtraTesting(config)
   );
   if (hasTestingConfig) {
     lines.push("## Testing Requirements");
@@ -875,6 +899,11 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     }
     if (config.testingStrategy!.coverage !== undefined) {
       lines.push(`**Coverage Target**: ${bpVar(bp, "TEST_COVERAGE", String(config.testingStrategy!.coverage))}% minimum`);
+    }
+    const testingExtras = extraTestingLines(config);
+    if (testingExtras.length > 0) {
+      lines.push("");
+      lines.push(...testingExtras);
     }
     if (config.testingStrategy!.notes) {
       lines.push("");
@@ -968,7 +997,16 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
         const registryValue = registryLabels[config.containerRegistry] || config.containerRegistry;
         lines.push(`**Container Registry**: ${bpVar(bp, "CONTAINER_REGISTRY", registryValue)}`);
       }
+      lines.push(...dockerImageLines(config));
     }
+    lines.push("");
+  }
+
+  const gitWorkflow = gitWorkflowLines(config);
+  if (gitWorkflow.length > 0) {
+    lines.push("## Git Workflow");
+    lines.push("");
+    lines.push(...gitWorkflow);
     lines.push("");
   }
 
@@ -1044,8 +1082,9 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
 
   // Security Configuration - FREE tier feature
   const security = config.security;
-  if (security && (security.secretsManagement?.length || security.securityTooling?.length || 
-      security.authPatterns?.length || security.dataHandling?.length || security.additionalNotes)) {
+  if (security && (security.authProviders?.length || security.secretsManagement?.length || security.securityTooling?.length || 
+      security.authPatterns?.length || security.dataHandling?.length || security.compliance?.length ||
+      security.analytics?.length || security.additionalNotes)) {
     lines.push("## 🔐 Security Configuration");
     lines.push("");
     
@@ -1177,6 +1216,19 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
       for (const d of security.dataHandling) {
         lines.push(`- ${dataLabels[d] || d}`);
       }
+      lines.push("");
+    }
+
+    const securityLists: [string, string[] | undefined, Record<string, string>][] = [
+      ["Auth Providers", security.authProviders, AUTH_PROVIDER_LABELS],
+      ["Compliance", security.compliance, COMPLIANCE_LABELS],
+      ["Analytics & Telemetry", security.analytics, ANALYTICS_LABELS],
+    ];
+    for (const [title, items, labels] of securityLists) {
+      if (!items?.length) continue;
+      lines.push(`### ${title}`);
+      lines.push("");
+      for (const item of items) lines.push(`- ${labels[item] || item}`);
       lines.push("");
     }
 
@@ -1340,7 +1392,8 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
     lines.push("");
   }
 
-  if (config.languages.length > 0 || config.frameworks.length > 0 || (config.databases && config.databases.length > 0) || config.letAiDecide) {
+  const tooling = toolingLines(config);
+  if (config.languages.length > 0 || config.frameworks.length > 0 || (config.databases && config.databases.length > 0) || config.letAiDecide || tooling.length > 0) {
     lines.push("## Technology Stack");
     lines.push("");
     if (config.languages.length > 0) {
@@ -1376,6 +1429,11 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
       }
       lines.push("");
     }
+    if (tooling.length > 0) {
+      lines.push("### Tooling");
+      lines.push(...tooling);
+      lines.push("");
+    }
     if (config.letAiDecide) {
       lines.push("### AI Technology Selection");
       if (config.languages.length > 0 || config.frameworks.length > 0) {
@@ -1408,14 +1466,24 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
     lines.push("");
   }
 
-  if (config.aiBehaviorRules.length > 0) {
+  const aiPrefsAgents = aiPreferenceLines(config);
+  if (config.aiBehaviorRules.length > 0 || aiPrefsAgents.length > 0) {
     lines.push("### Workflow Rules");
     config.aiBehaviorRules.forEach((rule) => {
       const ruleText = getRuleDescription(rule);
       if (ruleText) lines.push(`- ${ruleText}`);
     });
+    lines.push(...aiPrefsAgents);
+    if (config.attemptWorkarounds === true) {
+      lines.push("- When stuck, **attempt creative workarounds** before asking for help");
+    } else if (config.attemptWorkarounds === false) {
+      lines.push("- When stuck, **stop and ask** rather than attempting workarounds");
+    }
     lines.push("");
   }
+
+  lines.push(...mcpServerSection(config, "### MCP Servers"));
+  lines.push(...infrastructureSection(config, "### Infrastructure"));
 
   // Important files to read first
   const importantFileLabelsAgents: Record<string, string> = {
@@ -1464,12 +1532,13 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
   }
 
   // Commands (all users)
-  if (config.commands && (config.commands.build || config.commands.test || config.commands.lint || config.commands.dev || config.commands.additional?.length)) {
+  if (config.commands && (config.commands.build || config.commands.test || config.commands.lint || config.commands.dev || extraCommandLines(config).length > 0 || config.commands.additional?.length)) {
     lines.push("### Commands");
     if (config.commands.build) lines.push(`- Build: \`${bpVar(bp, "BUILD_COMMAND", config.commands.build)}\``);
     if (config.commands.test) lines.push(`- Test: \`${bpVar(bp, "TEST_COMMAND", config.commands.test)}\``);
     if (config.commands.lint) lines.push(`- Lint: \`${bpVar(bp, "LINT_COMMAND", config.commands.lint)}\``);
     if (config.commands.dev) lines.push(`- Dev: \`${bpVar(bp, "DEV_COMMAND", config.commands.dev)}\``);
+    lines.push(...extraCommandLines(config));
     if (config.commands.additional?.length) {
       config.commands.additional.forEach(cmd => lines.push(`- \`${cmd}\``));
     }
@@ -1477,7 +1546,8 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
   }
 
   // Code Style (all users)
-  const hasCodeStyle = config.codeStyle?.naming || config.codeStyle?.errorHandling || config.codeStyle?.loggingConventions || config.codeStyle?.notes;
+  const styleExtrasAgents = extraCodeStyleLines(config);
+  const hasCodeStyle = config.codeStyle?.naming || config.codeStyle?.errorHandling || config.codeStyle?.loggingConventions || config.codeStyle?.notes || styleExtrasAgents.length > 0;
   if (hasCodeStyle) {
     lines.push("### Code Style & Conventions");
     if (config.codeStyle?.naming) {
@@ -1505,6 +1575,7 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
     if (config.codeStyle?.loggingConventions) {
       lines.push(`- **Logging**: ${config.codeStyle.loggingConventions}`);
     }
+    lines.push(...styleExtrasAgents);
     if (config.codeStyle?.notes) {
       lines.push(`- **Additional Notes**: ${config.codeStyle.notes}`);
     }
@@ -1542,7 +1613,8 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
     (config.testingStrategy.levels?.length ?? 0) > 0 ||
     (config.testingStrategy.frameworks?.length ?? 0) > 0 ||
     config.testingStrategy.notes ||
-    (config.testingStrategy.coverage !== undefined && config.testingStrategy.coverage !== 80)
+    (config.testingStrategy.coverage !== undefined && config.testingStrategy.coverage !== 80) ||
+    hasExtraTesting(config)
   );
   if (hasTestingAgents) {
     lines.push("### Testing Requirements");
@@ -1568,6 +1640,7 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
     if (config.testingStrategy!.notes) {
       lines.push(`**Notes**: ${config.testingStrategy!.notes}`);
     }
+    lines.push(...extraTestingLines(config));
     lines.push("");
   }
 
@@ -1621,7 +1694,15 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
         };
         lines.push(`- **Container Registry**: ${registryLabels[config.containerRegistry] || config.containerRegistry}`);
       }
+      lines.push(...dockerImageLines(config));
     }
+    lines.push("");
+  }
+
+  const gitWorkflowAgents = gitWorkflowLines(config);
+  if (gitWorkflowAgents.length > 0) {
+    lines.push("### Git Workflow");
+    lines.push(...gitWorkflowAgents);
     lines.push("");
   }
 

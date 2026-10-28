@@ -363,9 +363,21 @@ export function mergeWizardConfig(saved: unknown): WizardConfig {
   return mergeOver(defaults as unknown as PlainObject, saved) as unknown as WizardConfig;
 }
 
+// Split a comma-separated free-text answer into its items.
+function commaItems(value: string | undefined): string[] {
+  return (value || "").split(",").map((item) => item.trim()).filter(Boolean);
+}
+
+// Swap the "other" choice of a multi-select for the text the user typed in
+// its box, or drop it when the box is empty.
+function withOther(items: string[] | undefined, other: string | undefined): string[] {
+  return (items || []).flatMap((item) => (item === "other" ? commaItems(other) : [item]));
+}
+
 /** The config the file generator reads, built from the wizard state. */
 export function buildGeneratorConfig(config: WizardConfig) {
   const environments = config.deploymentEnvironment || [];
+  const security = config.security;
   return {
     // Project basics
     projectName: config.projectName,
@@ -377,10 +389,14 @@ export function buildGeneratorConfig(config: WizardConfig) {
 
     // Tech stack
     languages: config.languages,
-    frameworks: config.frameworks,
+    // Libraries typed by hand are listed with the picked frameworks
+    frameworks: [...config.frameworks, ...commaItems(config.additionalLibraries)],
     databases: config.databases,
-    additionalLibraries: config.additionalLibraries,
     letAiDecide: config.letAiDecide,
+    packageManager: config.packageManager,
+    jsRuntime: config.jsRuntime,
+    monorepoTool: config.monorepoTool,
+    orm: config.orm,
 
     // Repository
     repoHost: config.repoHost,
@@ -403,10 +419,15 @@ export function buildGeneratorConfig(config: WizardConfig) {
     dependabot: config.dependabot,
     allowDirectCommits: config.allowDirectCommits,
     useGitWorktrees: config.useGitWorktrees,
+    branchStrategy: config.branchStrategy,
+    defaultBranch: config.defaultBranch === "other" ? config.defaultBranchOther.trim() : config.defaultBranch,
+    commitSigning: config.commitSigning,
+    versionTagFormat: config.versionTagFormat,
+    changelogTool: config.changelogTool,
 
     // CI/CD & Deployment. The target lists stay filled when the user unticks
     // their environment, so only the ticked environments count.
-    cicd: config.cicd || [],
+    cicd: withOther(config.cicd, config.cicdOther),
     deploymentTarget: [
       ...(environments.includes("self_hosted") ? config.selfHostedTargets : []),
       ...(environments.includes("cloud") ? config.cloudTargets : []),
@@ -421,11 +442,24 @@ export function buildGeneratorConfig(config: WizardConfig) {
     funding: config.funding,
     fundingYml: config.fundingYml,
 
-    // Security step
-    security: config.security,
+    // Security step, with each "other" choice replaced by what the user typed
+    security: {
+      ...security,
+      authProviders: withOther(security.authProviders, security.authProvidersOther),
+      secretsManagement: withOther(security.secretsManagement, security.secretsManagementOther),
+      securityTooling: withOther(security.securityTooling, security.securityToolingOther),
+      authPatterns: withOther(security.authPatterns, security.authPatternsOther),
+      dataHandling: withOther(security.dataHandling, security.dataHandlingOther),
+      compliance: withOther(security.compliance, security.complianceOther),
+      analytics: withOther(security.analytics, security.analyticsOther),
+    },
 
     // AI behavior
     aiBehaviorRules: config.aiBehaviorRules,
+    planModeFrequency: config.planModeFrequency,
+    explanationVerbosity: config.explanationVerbosity,
+    accessibilityFocus: config.accessibilityFocus,
+    performanceFocus: config.performanceFocus,
     mcpServers: config.mcpServers,
     attemptWorkarounds: config.attemptWorkarounds,
     serverAccess: config.serverAccess,
@@ -448,14 +482,21 @@ export function buildGeneratorConfig(config: WizardConfig) {
     // Commands
     commands: config.commands,
 
-    // Code style (including error handling other)
+    // Code style. "Other" logging conventions are the text the user typed.
     codeStyle: {
       ...config.codeStyle,
-      errorHandlingOther: config.codeStyle.errorHandlingOther,
+      loggingConventions:
+        config.codeStyle.loggingConventions === "other"
+          ? config.codeStyle.loggingConventionsOther.trim()
+          : config.codeStyle.loggingConventions,
     },
 
-    // Boundaries
-    boundaries: config.boundaries,
+    // Boundaries, with the comma-separated custom entries of each list
+    boundaries: {
+      always: [...config.boundaries.always, ...commaItems(config.boundaries.customAlways)],
+      ask: [...config.boundaries.ask, ...commaItems(config.boundaries.customAsk)],
+      never: [...config.boundaries.never, ...commaItems(config.boundaries.customNever)],
+    },
 
     // Testing strategy
     testingStrategy: {
@@ -463,6 +504,9 @@ export function buildGeneratorConfig(config: WizardConfig) {
       coverage: config.testing.coverage,
       frameworks: config.testing.frameworks,
       notes: config.testing.notes,
+      tddPreference: config.testing.tddPreference,
+      snapshotTesting: config.testing.snapshotTesting,
+      mockStrategy: config.testing.mockStrategy,
     },
 
     // Static files
