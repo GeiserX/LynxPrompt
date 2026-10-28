@@ -220,4 +220,13 @@ describe("TemplateDownloadModal: Agent Skills and MCP servers", () => {
     expect(name).toBe("SKILL.md");
     expect(content).toBe(skill);
   });
+
+  it("names the skill folder after the frontmatter name, as lynxp pull does", () => {
+    const skill = "---\nname: release-notes\ndescription: Write release notes\n---\n\nRead the changelog.\n";
+    render(
+      <TemplateDownloadModal isOpen onClose={() => {}} template={{ name: "Team Release Helper", content: skill, targetPlatform: "AGENT_SKILL" }} />
+    );
+    expect(screen.getByText(".claude/skills/release-notes/SKILL.md")).toBeTruthy();
+    expect(screen.queryByText(".claude/skills/team-release-helper/SKILL.md")).toBeNull();
+  });
 });

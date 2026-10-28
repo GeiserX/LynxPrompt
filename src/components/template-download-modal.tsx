@@ -38,6 +38,7 @@ import {
   MCP_CONFIGS,
   SKILL_BLUEPRINT_TYPE,
   SKILL_DIRECTORIES,
+  skillFolder,
   convertMcpConfig,
 } from "@/lib/platforms";
 
@@ -142,7 +143,7 @@ export function TemplateDownloadModal({
   const [skillDirectory, setSkillDirectory] = useState<string>(SKILL_DIRECTORIES[0]);
   const [mcpTargetId, setMcpTargetId] = useState<string>(MCP_CONFIGS[0].id);
   const mcpTarget = MCP_CONFIGS.find((c) => c.id === mcpTargetId) ?? MCP_CONFIGS[0];
-  const skillFolder = template.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "skill";
+  const skillDirName = skillFolder({ name: template.name, content: template.content });
 
   const getInitialPlatform = () => {
     const rawPlatform = targetPlatform || template.targetPlatform || "universal";
@@ -532,7 +533,7 @@ export function TemplateDownloadModal({
               <p className="mt-3 text-xs text-muted-foreground">
                 Save the downloaded file to:{" "}
                 <code className="rounded bg-primary/10 px-1">
-                  {isSkill ? `${skillDirectory}/${skillFolder}/SKILL.md` : mcpTarget.file}
+                  {isSkill ? `${skillDirectory}/${skillDirName}/SKILL.md` : mcpTarget.file}
                 </code>
               </p>
             </div>

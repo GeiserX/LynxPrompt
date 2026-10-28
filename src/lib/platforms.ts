@@ -25,6 +25,7 @@ export {
   convertCommand,
   SKILL_BLUEPRINT_TYPE,
   SKILL_DIRECTORIES,
+  skillFolder,
   MCP_BLUEPRINT_TYPE,
   MCP_CONFIGS,
   convertMcpConfig,

@@ -10,6 +10,7 @@ import {
   getCommandTemplateType,
   SKILL_BLUEPRINT_TYPE,
   SKILL_DIRECTORIES,
+  skillFolder,
   MCP_BLUEPRINT_TYPE,
   MCP_CONFIGS,
 } from "../../../packages/shared/src/platforms.js";
@@ -20,13 +21,6 @@ const FALLBACK_FILE = "ai-config.md";
 function slugify(name: string): string {
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
   return slug || "command";
-}
-
-/** A skill's folder is named after the "name" in its SKILL.md frontmatter, else the blueprint name. */
-function skillFolder(bp: { name?: string; content?: string }): string {
-  const frontmatter = bp.content?.match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1];
-  const name = frontmatter?.match(/^name:\s*["']?([^"'\r\n]+?)["']?\s*$/m)?.[1];
-  return slugify(name || bp.name || "skill");
 }
 
 /**

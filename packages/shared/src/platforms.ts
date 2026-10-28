@@ -658,6 +658,21 @@ export const SKILL_DIRECTORIES = [
   ".opencode/skills",
 ];
 
+/**
+ * Folder a skill goes in under a skills directory: the "name" in its SKILL.md
+ * frontmatter (the Agent Skills format wants the two to match), else the
+ * blueprint name, slugified. The web download and `lynxp pull` both use it.
+ */
+export function skillFolder(bp: { name?: string; content?: string }): string {
+  const frontmatter = bp.content?.match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1];
+  const name = frontmatter?.match(/^name:\s*["']?([^"'\r\n]+?)["']?\s*$/m)?.[1];
+  const slug = (name || bp.name || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return slug || "skill";
+}
+
 /** Blueprint type of an MCP server config. */
 export const MCP_BLUEPRINT_TYPE = "MCP_CONFIG";
 
