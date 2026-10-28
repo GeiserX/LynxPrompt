@@ -22,6 +22,8 @@ vi.mock("@/lib/auth", () => ({ authOptions: {} }));
 vi.mock("@/lib/db-users", () => ({
   prismaUsers: {
     $executeRaw: vi.fn(() => Promise.resolve(0)),
+    // A user with no passkeys, so the passkey gate lets the session through.
+    authenticator: { count: vi.fn(() => Promise.resolve(0)) },
     cliSession: {
       create: vi.fn(async ({ data }) => {
         const row: Row = {
