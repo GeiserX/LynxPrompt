@@ -26,6 +26,18 @@ describe("CI gates can fail", () => {
     expect(job(read("cli-tests.yml"), "public-tests")).not.toMatch(/npm install -g lynxprompt/);
   });
 
+  it("CLI tests build the CLI once and test that build", () => {
+    const workflow = read("cli-tests.yml");
+    expect(workflow.match(/npm run build/g)).toHaveLength(1);
+    expect(job(workflow, "build-test")).toMatch(/upload-artifact[\s\S]*name: cli-dist/);
+    for (const name of ["public-tests", "authenticated-tests"]) {
+      const steps = job(workflow, name);
+      expect(steps, name).toMatch(/needs: \[build-test\]/);
+      expect(steps, name).toMatch(/download-artifact[\s\S]*name: cli-dist/);
+      expect(steps, name).toContain("npm ci --omit=dev");
+    }
+  });
+
   it("the smoke job fails when dev does not answer", () => {
     const smoke = job(read("ci.yml"), "integration-smoke");
     expect(smoke).not.toMatch(/continue-on-error/);
