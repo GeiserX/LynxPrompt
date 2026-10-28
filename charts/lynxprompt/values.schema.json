@@ -138,9 +138,6 @@
         "statusPageUrl": {
           "type": "string"
         },
-        "platformOwnerEmail": {
-          "type": "string"
-        },
         "enableUserRegistration": {
           "type": ["string", "boolean"]
         },
@@ -244,9 +241,6 @@
           "type": "string"
         },
         "from": {
-          "type": "string"
-        },
-        "fromName": {
           "type": "string"
         }
       }
