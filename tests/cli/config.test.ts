@@ -43,9 +43,24 @@ vi.mock("../../cli/node_modules/conf/dist/source/index.js", () => ({
   default: state.FakeConf,
 }));
 
-async function loadConfig() {
+// The path sits in a variable so the root `tsc` does not follow it into cli/,
+// whose dependencies the root CI job does not install.
+const CONFIG_MODULE = "../../cli/src/config";
+
+type User = { id: string; email: string; name: string | null; plan: string };
+interface CliConfig {
+  getToken(): string | undefined;
+  setToken(token: string): void;
+  getStoredCredentials(): { token: string; apiUrl: string; email?: string } | undefined;
+  setApiUrl(url: string): void;
+  getUser(): User | undefined;
+  setUser(user: User): void;
+  isAuthenticated(): boolean;
+}
+
+async function loadConfig(): Promise<CliConfig> {
   vi.resetModules();
-  return import("../../cli/src/config");
+  return import(/* @vite-ignore */ CONFIG_MODULE);
 }
 
 describe("CLI config", () => {
