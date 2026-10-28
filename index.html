@@ -1028,9 +1028,9 @@
 </ul>
 <h2 id="privacy">Privacy<a class="headerlink" href="#privacy" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Accounts, blueprints, drafts and teams live in your PostgreSQL. Back up the <code>pgdata</code> volume and you have everything.</li>
-<li>Every other outside service is off until you switch it on with an environment variable: SMTP for sign-in mail, GitHub and Google for OAuth, an SSO provider, Anthropic for AI editing, Stripe for paid marketplace listings, Cloudflare Turnstile, Umami analytics. See <a href="configuration/">Configuration</a>.</li>
-<li>Federation is on by default: at start and every six hours the instance sends its domain (the host of <code>APP_URL</code>) to the registry at lynxprompt.com, and <code>/.well-known/lynxprompt.json</code> answers with its name, version and number of public blueprints. Only blueprints marked public are shared. <code>ENABLE_FEDERATION=false</code> turns it off.</li>
+<li>Accounts, blueprints, drafts and teams live in your PostgreSQL; avatars, team logos and blog images live in the <code>uploads</code> volume. Back up both volumes and you have everything.</li>
+<li>Every other outside service is off until you switch it on with an environment variable: SMTP for sign-in mail, GitHub and Google for OAuth, an SSO provider, Anthropic for AI editing, Cloudflare Turnstile, Umami analytics. The exception is Gravatar: an account without a profile picture shows a Gravatar image, so browsers request <code>gravatar.com</code> with a hash of that account's email address. See <a href="configuration/">Configuration</a>.</li>
+<li>Federation is on by default: at start and every six hours the instance sends its domain (the host of <code>APP_URL</code>) to the registry at lynxprompt.com, and <code>/.well-known/lynxprompt.json</code> answers with its name, version and number of public blueprints. <code>/api/v1/federation/blueprints</code> lists the name, description, tags and author of public blueprints; nothing private is listed, and no blueprint content is sent anywhere. <code>ENABLE_FEDERATION=false</code> turns it off.</li>
 <li>The security policy is in <a href="https://github.com/GeiserX/LynxPrompt/blob/main/SECURITY.md">SECURITY.md</a>.</li>
 </ul>
 <h2 id="getting-help">Getting help<a class="headerlink" href="#getting-help" title="Permanent link">&para;</a></h2>

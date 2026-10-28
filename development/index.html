@@ -844,15 +844,22 @@
 <li><strong>Auth</strong>: NextAuth.js with configurable providers</li>
 <li><strong>Search</strong>: Full-text search via PostgreSQL</li>
 </ul>
-<p>Supports single-database or multi-database setups depending on your scale requirements.</p>
+<p>Four Prisma schemas (app, users, blog, support), each in its own database. One PostgreSQL server can hold all
+four; two schemas must never share a database, because <code>prisma db push</code> drops the tables it does not know.</p>
 <h2 id="development_1">Development<a class="headerlink" href="#development_1" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/GeiserX/LynxPrompt.git
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">cd</span><span class="w"> </span>LynxPrompt
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>cp<span class="w"> </span>env.example<span class="w"> </span>.env
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>npm<span class="w"> </span>install<span class="w"> </span>--legacy-peer-deps
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>npm<span class="w"> </span>run<span class="w"> </span>dev
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>lynxprompt-db<span class="w"> </span>-p<span class="w"> </span><span class="m">5432</span>:5432<span class="w"> </span>-e<span class="w"> </span><span class="nv">POSTGRES_USER</span><span class="o">=</span>lynxprompt<span class="w"> </span>-e<span class="w"> </span><span class="nv">POSTGRES_PASSWORD</span><span class="o">=</span>changeme<span class="w"> </span>postgres:18-alpine
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">for</span><span class="w"> </span>db<span class="w"> </span><span class="k">in</span><span class="w"> </span>app<span class="w"> </span>users<span class="w"> </span>blog<span class="w"> </span>support<span class="p">;</span><span class="w"> </span><span class="k">do</span><span class="w"> </span>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>lynxprompt-db<span class="w"> </span>createdb<span class="w"> </span>-U<span class="w"> </span>lynxprompt<span class="w"> </span>lynxprompt_<span class="nv">$db</span><span class="p">;</span><span class="w"> </span><span class="k">done</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>cp<span class="w"> </span>env.example<span class="w"> </span>.env<span class="w">   </span><span class="c1"># uncomment the four DATABASE_URL_* lines (Option A)</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>npm<span class="w"> </span>install
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="nb">set</span><span class="w"> </span>-a<span class="p">;</span><span class="w"> </span>.<span class="w"> </span>./.env<span class="p">;</span><span class="w"> </span><span class="nb">set</span><span class="w"> </span>+a<span class="w">   </span><span class="c1"># Prisma 7 does not read .env by itself</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>npm<span class="w"> </span>run<span class="w"> </span>db:generate
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>npm<span class="w"> </span>run<span class="w"> </span>db:push
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>npm<span class="w"> </span>run<span class="w"> </span>dev
 </code></pre></div>
+<p><code>docker compose up -d</code> with the root <code>docker-compose.yml</code> starts the full stack, app included, on port 3000;
+its databases publish no port, so <code>npm run dev</code> cannot reach them. Use it to run the image, not to develop.</p>
 <p>See <a href="https://github.com/GeiserX/LynxPrompt/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a> for contribution guidelines.</p>
 <h2 id="docs">Docs<a class="headerlink" href="#docs" title="Permanent link">&para;</a></h2>
 <p>The site is MkDocs Material, built strictly:</p>

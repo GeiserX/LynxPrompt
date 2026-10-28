@@ -926,7 +926,7 @@ account that already exists, so the first sign-in is always the mail link or OAu
 <p>Change the image tag in <code>docker-compose.selfhost.yml</code> to the newer release from
 <a href="https://hub.docker.com/r/drumsergio/lynxprompt/tags">Docker Hub</a> and run the same <code>docker compose ... up -d</code>.
 Migrations run at start. Back up the four databases first (<code>docker compose ... exec postgres pg_dumpall -U
-lynxprompt &gt; backup.sql</code>).</p>
+lynxprompt &gt; backup.sql</code>). Uploaded images live in the <code>uploads</code> volume, which survives the upgrade.</p>
 <h2 id="helm-chart-kubernetes">Helm chart (Kubernetes)<a class="headerlink" href="#helm-chart-kubernetes" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>helm<span class="w"> </span>repo<span class="w"> </span>add<span class="w"> </span>lynxprompt<span class="w"> </span>https://geiserx.github.io/LynxPrompt
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>helm<span class="w"> </span>install<span class="w"> </span>lynxprompt<span class="w"> </span>lynxprompt/lynxprompt
@@ -1008,7 +1008,7 @@ The chart is also on <a href="https://artifacthub.io/packages/helm/lynxprompt/ly
 </tbody>
 </table>
 <p>After installing the CLI: <code>lynxp config set-url https://lynxprompt.example.com</code> for your own instance (the
-default, which <code>lynxp config show</code> prints, is the hosted instance's API at <code>https://api.lynxprompt.com</code>), then
+default, which <code>lynxp config show</code> prints, is the hosted instance at <code>https://lynxprompt.com</code>), then
 <code>lynxp login</code>. See <a href="../usage/#the-cli">Usage</a>.</p>
 
 

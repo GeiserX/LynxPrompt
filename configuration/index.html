@@ -994,11 +994,6 @@ schema's tables.</p>
 <td>Sender address.</td>
 </tr>
 <tr>
-<td><code>SMTP_FROM_NAME</code></td>
-<td><code>LynxPrompt</code></td>
-<td>Sender name on the contact form's mail.</td>
-</tr>
-<tr>
 <td><code>ENABLE_PASSKEYS</code></td>
 <td><code>true</code></td>
 <td>WebAuthn passkeys, for accounts that already exist.</td>
@@ -1053,7 +1048,7 @@ schema's tables.</p>
 <tr>
 <td><code>APP_LOGO_URL</code></td>
 <td>empty</td>
-<td>Your own logo in the header.</td>
+<td>Your own logo in the sign-in mail and in search-engine metadata. The header keeps the LynxPrompt logo.</td>
 </tr>
 <tr>
 <td><code>ENABLE_AI</code></td>
@@ -1081,24 +1076,24 @@ schema's tables.</p>
 <td>The support forum module (uses the support schema).</td>
 </tr>
 <tr>
-<td><code>ENABLE_STRIPE</code></td>
-<td><code>false</code></td>
-<td>Paid marketplace listings through Stripe.</td>
-</tr>
-<tr>
 <td><code>UMAMI_SCRIPT_URL</code></td>
 <td>empty</td>
 <td>Umami analytics script.</td>
 </tr>
 <tr>
 <td><code>CONTACT_EMAIL</code></td>
-<td>empty</td>
-<td>Where the contact form sends.</td>
+<td><code>info@&lt;host of APP_URL&gt;</code></td>
+<td>Where the contact form sends. The form needs <code>SMTP_HOST</code>, <code>SMTP_USER</code> and <code>SMTP_PASSWORD</code>, so it does not work against a mail server without a login.</td>
 </tr>
 <tr>
 <td><code>STATUS_PAGE_URL</code></td>
 <td>empty</td>
 <td>Status page link in the footer.</td>
+</tr>
+<tr>
+<td><code>UPLOAD_DIR</code></td>
+<td><code>/data/uploads/blog</code></td>
+<td>Where blog images go; avatars and team logos go one level up. The self-host compose file mounts the <code>uploads</code> volume at <code>/data/uploads</code>.</td>
 </tr>
 <tr>
 <td><code>ENABLE_FEDERATION</code></td>
