@@ -221,8 +221,12 @@ rules file, and keep their path.
 and `.claude/skills/<name>/`, a subagent to `.claude/agents/` and `.agents/agents/`. When the
 project already has `.kiro`, `.firebender`, `.github/agents` or `.codex`, those tools get a
 copy too. The `.claude` copy keeps every field you wrote; the others keep only the fields
-every agent accepts. After `lynxp push` or `lynxp sync`, the copies already in the project
-are rewritten from the pushed file, and `lynxp push --all` pushes each skill or subagent once.
+every agent accepts. A copy you already have with different content is kept, with a
+warning, unless you pass `--yes`. After `lynxp push` or `lynxp sync`, the copies already in
+the project are rewritten from the pushed file, and `lynxp push --all` pushes each skill or
+subagent once. A skill in another tool's own folder (`.github/skills`, `.cursor/skills`...)
+is not one of those copies, so it is pushed on its own. A subagent stored as Codex TOML or
+Kiro JSON is pulled and downloaded only to its own path.
 
 A skill name is 1 to 64 lowercase letters, digits and hyphens, and equals its folder name.
 

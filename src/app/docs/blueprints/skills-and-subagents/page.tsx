@@ -140,12 +140,15 @@ export default function SkillsAndSubagentsDocsPage() {
             <code>lynxp pull</code> writes the same copies, adding Kiro, Firebender, Copilot or Codex
             when the project already has their folder (<code>.kiro</code>, <code>.firebender</code>,{" "}
             <code>.github/agents</code>, <code>.codex</code>). One copy is tracked; the others are
-            plain copies, never symlinks.
+            plain copies, never symlinks. A copy you already have with different content is kept,
+            with a warning, unless you pass <code>--yes</code>.
           </li>
           <li>
             <code>lynxp push</code> recognises a skill or subagent in any of the folders above. With{" "}
-            <code>--all</code>, copies of the same skill or subagent are pushed once, and after a
-            push or <code>lynxp sync</code> the copies already in the project are rewritten from it.
+            <code>--all</code>, the copies LynxPrompt writes are pushed once, and after a push or{" "}
+            <code>lynxp sync</code> the copies already in the project are rewritten from it. A skill
+            in another tool&apos;s own folder, such as <code>.github/skills</code>, is pushed on its
+            own. A subagent stored as Codex TOML or Kiro JSON keeps its single file and path.
           </li>
           <li>
             <code>lynxp convert .claude/agents/reviewer.md codex-agent</code> writes one copy for
