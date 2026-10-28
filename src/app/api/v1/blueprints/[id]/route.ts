@@ -11,7 +11,8 @@ import {
   fromBlueprintApiId,
   toHierarchyApiId,
 } from "@/lib/api-tokens";
-import { canReadBlueprint } from "@/lib/blueprint-access";
+import { canReadBlueprint, isOwnerOrTeamMember } from "@/lib/blueprint-access";
+import { publicRepositoryPath } from "@/lib/repository-path";
 import {
   checkBlueprintContent,
   normalizeBlueprintType,
@@ -137,7 +138,11 @@ export async function GET(
         // Hierarchy fields
         hierarchy_id: blueprint.hierarchyId ? toHierarchyApiId(blueprint.hierarchyId) : null,
         parent_id: blueprint.parentId ? toBlueprintApiId(blueprint.parentId) : null,
-        repository_path: blueprint.repositoryPath,
+        // In full only for the owner and the team: its folders can name the
+        // owner's projects (see publicRepositoryPath)
+        repository_path: (await isOwnerOrTeamMember(blueprint, tokenData.userId))
+          ? blueprint.repositoryPath
+          : publicRepositoryPath(blueprint.repositoryPath),
         content_checksum: contentChecksum(blueprint.content),
       },
     });

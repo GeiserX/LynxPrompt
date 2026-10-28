@@ -188,7 +188,6 @@ const READS: [string, string][] = [
 const NOT_GATED: Record<string, string> = {
   "auth/[...nextauth] POST": "NextAuth's own sign-in and sign-out",
   "auth/accept-terms POST": "a step of signing in (tested below)",
-  "auth/device POST": "a step of signing in (tested below)",
   "auth/passkey/authenticate/options POST": "proving the passkey is what verifies the session",
   "auth/passkey/authenticate/verify POST": "proving the passkey is what verifies the session",
   "auth/sso/initiate POST": "runs before sign-in, with no session",
@@ -286,7 +285,6 @@ describe("writes from a session that still owes its passkey check", () => {
 
   it.each([
     ["auth/accept-terms", "POST"],
-    ["auth/device", "POST"],
   ])("%s %s still works, it is a step of signing in", async (route, method) => {
     const handler = (await load(route))[method];
     const { req } = call(route, method);
