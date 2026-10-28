@@ -28,7 +28,7 @@ interface DiffOptions {
  * Simple line-by-line diff implementation
  * Returns added (+), removed (-), and unchanged lines
  */
-function computeDiff(oldText: string, newText: string): Array<{ type: "add" | "remove" | "same"; line: string }> {
+export function computeDiff(oldText: string, newText: string): Array<{ type: "add" | "remove" | "same"; line: string }> {
   const oldLines = oldText.split("\n");
   const newLines = newText.split("\n");
   const result: Array<{ type: "add" | "remove" | "same"; line: string }> = [];
@@ -105,9 +105,12 @@ function longestCommonSubsequence(a: string[], b: string[]): string[] {
 }
 
 /**
- * Format diff output with colors
+ * Format diff output with colors.
+ *
+ * Lines are compared raw, so the diff stays true to the files, and cleaned only
+ * when printed: remote blueprint content is written by other users.
  */
-function formatDiff(diff: Array<{ type: "add" | "remove" | "same"; line: string }>, contextLines: number = 3): string {
+export function formatDiff(diff: Array<{ type: "add" | "remove" | "same"; line: string }>, contextLines: number = 3): string {
   const output: string[] = [];
   let lastPrintedIndex = -1;
   
@@ -130,11 +133,11 @@ function formatDiff(diff: Array<{ type: "add" | "remove" | "same"; line: string 
 
       // Format the line based on type
       if (item.type === "add") {
-        output.push(chalk.green(`+ ${item.line}`));
+        output.push(chalk.green(`+ ${safeText(item.line)}`));
       } else if (item.type === "remove") {
-        output.push(chalk.red(`- ${item.line}`));
+        output.push(chalk.red(`- ${safeText(item.line)}`));
       } else {
-        output.push(chalk.gray(`  ${item.line}`));
+        output.push(chalk.gray(`  ${safeText(item.line)}`));
       }
       lastPrintedIndex = i;
     }
