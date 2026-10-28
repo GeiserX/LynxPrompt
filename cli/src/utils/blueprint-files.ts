@@ -93,6 +93,12 @@ const atPath = (relativePath: string, file: string) => {
   const p = normPath(relativePath);
   return p === file || p.endsWith(`/${file}`);
 };
+/** <dir>/<skill name>/SKILL.md, with <dir> at the root or in a subfolder. */
+const inSkillFolder = (relativePath: string, dir: string) => {
+  const parts = normPath(relativePath).split("/");
+  const n = parts.length;
+  return n >= 4 && parts[n - 1] === "skill.md" && parts.slice(n - 4, n - 2).join("/") === dir;
+};
 const inFolder = (relativePath: string, folder: string) => {
   const p = normPath(relativePath);
   return p.startsWith(folder) || p.includes(`/${folder}`);
@@ -105,7 +111,7 @@ const inFolder = (relativePath: string, folder: string) => {
 const CONFIG_PATTERNS: ConfigPattern[] = [
   // Agent Skills: <tool>/skills/<skill name>/SKILL.md
   ...SKILL_DIRECTORIES.map((dir) => ({
-    match: (p: string) => new RegExp(`(^|/)${dir.replace(/\./g, "\\.")}/[^/]+/skill\\.md$`).test(normPath(p)),
+    match: (p: string) => inSkillFolder(p, dir),
     type: SKILL_BLUEPRINT_TYPE,
     label: "Agent Skill",
   })),
