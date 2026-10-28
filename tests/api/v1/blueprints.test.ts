@@ -242,6 +242,43 @@ describe("POST /api/v1/blueprints write checks", () => {
   });
 });
 
+describe("v1 blueprint content is stored as sent", () => {
+  // A file pushed by the CLI ends with a newline; pull writes the stored
+  // content back, so trimming it would drop the newline from every file.
+  const FILE = `${CONTENT}\n`;
+
+  it("keeps the final newline on create, in the row and the first version", async () => {
+    const res = await create({ content: FILE });
+    expect(res.status).toBe(201);
+    expect(created().content).toBe(FILE);
+    expect(db.userTemplateVersion.create.mock.calls[0][0].data.content).toBe(FILE);
+  });
+
+  it("still refuses content that is short once trimmed", async () => {
+    const res = await create({ content: `   short   \n\n\n\n` });
+    expect(res.status).toBe(400);
+    expect(db.userTemplate.create).not.toHaveBeenCalled();
+  });
+
+  it("keeps the final newline on update", async () => {
+    db.userTemplate.findUnique.mockResolvedValue(row({ userId: "user_1" }));
+    const res = await update({ content: `${CONTENT}\nMore rules here.\n` });
+    expect(res.status).toBe(200);
+    expect(db.userTemplate.update.mock.calls[0][0].data.content).toBe(`${CONTENT}\nMore rules here.\n`);
+    expect(db.userTemplateVersion.create.mock.calls[0][0].data.content).toBe(`${CONTENT}\nMore rules here.\n`);
+  });
+
+  it("stores the newline on a row saved trimmed without writing a version", async () => {
+    db.userTemplate.findUnique.mockResolvedValue(row({ userId: "user_1", currentVersion: 3 }));
+    const res = await update({ content: FILE });
+    expect(res.status).toBe(200);
+    const data = db.userTemplate.update.mock.calls[0][0].data;
+    expect(data.content).toBe(FILE);
+    expect(data.currentVersion).toBeUndefined();
+    expect(db.userTemplateVersion.create).not.toHaveBeenCalled();
+  });
+});
+
 describe("POST /api/v1/blueprints MCP configs", () => {
   // MCP configs usually hold API keys in env or headers, so they are scanned
   // at every visibility, not only when public.
