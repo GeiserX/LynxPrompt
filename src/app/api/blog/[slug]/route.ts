@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismaBlog } from "@/lib/db-blog";
 import { prismaUsers } from "@/lib/db-users";
 import { isAdminRole, UserRole } from "@/lib/subscription";
-import { requireSession } from "@/lib/api-auth";
+import { getVerifiedSession, requireSession } from "@/lib/api-auth";
 import { blogDisabled } from "@/lib/blog-guard";
 
 // GET: Get single blog post by slug
@@ -19,7 +17,7 @@ export async function GET(
     const { slug } = await params;
     
     // Check if user is admin (for viewing drafts)
-    const session = await getServerSession(authOptions);
+    const session = await getVerifiedSession(request);
     const isAdmin = session?.user?.role
       ? isAdminRole(session.user.role as UserRole)
       : false;

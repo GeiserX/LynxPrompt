@@ -1,10 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { getServerSession } from "next-auth";
 import { createHash } from "crypto";
 import type { Metadata } from "next";
-import { authOptions } from "@/lib/auth";
+import { getVerifiedSession } from "@/lib/api-auth";
 import { markdownToHtml } from "@/lib/blog-markdown";
 import { prismaBlog } from "@/lib/db-blog";
 import { prismaUsers } from "@/lib/db-users";
@@ -103,7 +102,7 @@ export default async function BlogPostPage({ params }: PageProps) {
   const { slug } = await params;
   
   // Get session for admin check
-  const session = await getServerSession(authOptions);
+  const session = await getVerifiedSession();
   const isAdmin = session?.user?.role
     ? isAdminRole(session.user.role as UserRole)
     : false;

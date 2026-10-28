@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismaSupport } from "@/lib/db-support";
 import { supportForumDisabled } from "@/lib/support-guard";
 import { prismaUsers } from "@/lib/db-users";
-import { requireSession } from "@/lib/api-auth";
+import { getVerifiedSession, requireSession } from "@/lib/api-auth";
 
 // PostStatus values in prisma/schema-support.prisma
 const POST_STATUSES = ["OPEN", "IN_PROGRESS", "COMPLETED", "CLOSED", "DUPLICATE"];
@@ -16,7 +14,7 @@ export async function GET(request: NextRequest) {
 
   try {
     // Session is optional - used only for hasVoted status
-    const session = await getServerSession(authOptions);
+    const session = await getVerifiedSession(request);
 
     const { searchParams } = new URL(request.url);
     const categorySlug = searchParams.get("category");

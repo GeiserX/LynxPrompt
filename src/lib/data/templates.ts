@@ -585,11 +585,10 @@ export async function getTemplateById(
     // Handle both bp_ (current) and usr_ (legacy) prefixes
     const realId = id.replace(/^(bp_|usr_)/, "");
 
-    // Get session to check if user owns this template
-    const session = await import("next-auth").then(({ getServerSession }) =>
-      import("@/lib/auth").then(({ authOptions }) =>
-        getServerSession(authOptions)
-      )
+    // Get session to check if user owns this template; a session that still
+    // owes its passkey reads as signed out
+    const session = await import("@/lib/api-auth").then(({ getVerifiedSession }) =>
+      getVerifiedSession()
     );
 
     const userId = session?.user?.id;
