@@ -6,8 +6,13 @@ import { SessionProvider } from "@/components/providers/session-provider";
 import { FeatureFlagsProvider } from "@/components/providers/feature-flags-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { CookieBanner } from "@/components/cookie-banner";
-import { APP_NAME, APP_URL, UMAMI_SCRIPT_URL, getPublicFlags } from "@/lib/feature-flags";
+import { APP_NAME, APP_URL, UMAMI_SCRIPT_URL, getPublicFlags, runtimeEnv } from "@/lib/feature-flags";
 import "./globals.css";
+
+// Render per request: the metadata (canonical URL, Open Graph), the feature
+// flags and the analytics ID come from the container's env, and a page
+// prerendered at build time would keep the values of the image build.
+export const dynamic = "force-dynamic";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -144,10 +149,10 @@ export default function RootLayout({
           }}
         />
         {/* Umami Analytics - only when explicitly configured */}
-        {UMAMI_SCRIPT_URL && process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (
+        {UMAMI_SCRIPT_URL && runtimeEnv("NEXT_PUBLIC_UMAMI_WEBSITE_ID") && (
           <Script
             src={UMAMI_SCRIPT_URL}
-            data-website-id={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
+            data-website-id={runtimeEnv("NEXT_PUBLIC_UMAMI_WEBSITE_ID")}
             data-do-not-track="false"
             strategy="afterInteractive"
           />

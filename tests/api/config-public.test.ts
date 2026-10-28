@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("@/lib/feature-flags", () => ({
+vi.mock("@/lib/feature-flags", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/feature-flags")>()),
   getPublicFlags: vi.fn(() => ({
     enableGithubOAuth: false,
     enableGoogleOAuth: false,
