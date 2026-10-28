@@ -91,8 +91,6 @@ spec:
               value: {{ .Values.app.contactEmail | quote }}
             - name: STATUS_PAGE_URL
               value: {{ .Values.app.statusPageUrl | quote }}
-            - name: PLATFORM_OWNER_EMAIL
-              value: {{ .Values.app.platformOwnerEmail | quote }}
             - name: NEXTAUTH_SECRET
               valueFrom:
                 secretKeyRef:
@@ -204,8 +202,6 @@ spec:
                   optional: true
             - name: SMTP_FROM
               value: {{ .Values.smtp.from | quote }}
-            - name: SMTP_FROM_NAME
-              value: {{ .Values.smtp.fromName | quote }}
             {{- end }}
             {{- if .Values.analytics.umamiScriptUrl }}
             - name: UMAMI_SCRIPT_URL
