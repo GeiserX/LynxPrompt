@@ -38,7 +38,9 @@ function syncInstructions(opts: ApiSyncHeaderOptions): string[] {
       : `Using the LynxPrompt CLI, with the API token in $${token} (never put the token in this file):`,
     "  npm install -g lynxprompt",
   );
-  if (appUrl !== CLI_DEFAULT_API_URL) {
+  // A token is only good on the server that issued it, so token mode always
+  // names it rather than trusting a URL saved in the CLI's config.
+  if (!opts.preferCliSync || appUrl !== CLI_DEFAULT_API_URL) {
     lines.push(`  export LYNXPROMPT_API_URL=${appUrl}`);
   }
   if (opts.preferCliSync) {

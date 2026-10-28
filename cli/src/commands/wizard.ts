@@ -1292,12 +1292,12 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
   try {
     // Add blueprint mode and variables to config
     const variables = options.vars ? parseVariablesString(options.vars) : undefined;
-    // Don't pass enableAutoUpdate/blueprintId to generator yet - we'll add curl header after saving
+    // Don't pass enableAutoUpdate/blueprintId to generator yet - we'll add the sync header after saving
     const finalConfig = {
       ...config,
       blueprintMode: options.blueprint || config.blueprintMode || false,
       variables,
-      enableAutoUpdate: false, // Don't generate curl header yet
+      enableAutoUpdate: false, // Don't generate the sync header yet
       // One rule set: CLAUDE.md/GEMINI.md import AGENTS.md. Not with Cloud
       // Sync, which uploads one of the files and must upload real rules.
       pointerFiles: options.pointers !== false && !config.enableAutoUpdate,
@@ -1324,10 +1324,12 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
             description: config.description || "Generated with LynxPrompt CLI",
             content: content,
             visibility: "PRIVATE",
+            // lynxp pull writes the blueprint back to this path
+            repository_path: fileName,
           });
           savedBlueprintId = response.blueprint.id;
           
-          // Now regenerate with the real blueprint ID to include curl header
+          // Now regenerate with the real blueprint ID to include the sync header
           const configWithAutoUpdate = {
             ...finalConfig,
             enableAutoUpdate: true,
@@ -1343,7 +1345,7 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
         if (saveError instanceof Error) {
           console.log(chalk.gray(`     ${saveError.message}`));
         }
-        console.log(chalk.gray("     Continuing without auto-update curl command..."));
+        console.log(chalk.gray("     Continuing without the Cloud Sync header..."));
         // Continue without auto-update
       }
     }

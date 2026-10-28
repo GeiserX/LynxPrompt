@@ -55,6 +55,16 @@ describe("addApiSyncHeader", () => {
     expect(out).not.toContain("LYNXPROMPT_API_URL");
   });
 
+  it("token mode always names the server the token belongs to", () => {
+    const out = addApiSyncHeader("# A\n", {
+      ...base,
+      preferCliSync: false,
+      appUrl: "https://lynxprompt.com",
+      fileName: "AGENTS.md",
+    });
+    expect(out).toContain("export LYNXPROMPT_API_URL=https://lynxprompt.com");
+  });
+
   it("token mode runs lynxp pull with the token from the environment, never curl", () => {
     const out = addApiSyncHeader("# A\n", { ...base, preferCliSync: false, fileName: "AGENTS.md" });
     expect(out).toContain('export LYNXPROMPT_TOKEN="$MY_TOKEN"');

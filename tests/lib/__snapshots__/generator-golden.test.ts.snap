@@ -750,6 +750,7 @@ This file is synced with LynxPrompt.
 
 Using the LynxPrompt CLI, with the API token in $LYNXPROMPT_API_TOKEN (never put the token in this file):
   npm install -g lynxprompt
+  export LYNXPROMPT_API_URL=https://lynxprompt.com
   export LYNXPROMPT_TOKEN="$LYNXPROMPT_API_TOKEN"
   lynxp pull bp_golden --yes   # download cloud changes into CLAUDE.md
 
@@ -1745,6 +1746,7 @@ This file is synced with LynxPrompt.
 
 Using the LynxPrompt CLI, with the API token in $LYNXPROMPT_API_TOKEN (never put the token in this file):
   npm install -g lynxprompt
+  export LYNXPROMPT_API_URL=https://lynxprompt.com
   export LYNXPROMPT_TOKEN="$LYNXPROMPT_API_TOKEN"
   lynxp pull bp_golden --yes   # download cloud changes into .cursor/rules/project.mdc
 
@@ -4695,6 +4697,7 @@ This file is synced with LynxPrompt.
 
 Using the LynxPrompt CLI, with the API token in $LYNXPROMPT_API_TOKEN (never put the token in this file):
   npm install -g lynxprompt
+  export LYNXPROMPT_API_URL=https://lynxprompt.com
   export LYNXPROMPT_TOKEN="$LYNXPROMPT_API_TOKEN"
   lynxp pull bp_golden --yes   # download cloud changes into CLAUDE.md
 
@@ -6031,6 +6034,7 @@ This file is synced with LynxPrompt.
 
 Using the LynxPrompt CLI, with the API token in $LYNXPROMPT_API_TOKEN (never put the token in this file):
   npm install -g lynxprompt
+  export LYNXPROMPT_API_URL=https://lynxprompt.com
   export LYNXPROMPT_TOKEN="$LYNXPROMPT_API_TOKEN"
   lynxp pull bp_golden --yes   # download cloud changes into .cursor/rules/project.mdc
 
