@@ -6,7 +6,7 @@ pkgver=2.1.41
 pkgrel=1
 pkgdesc='CLI for LynxPrompt - Generate, sync, and manage AI IDE configuration files (AGENTS.md, CLAUDE.md, .cursorrules, and more)'
 arch=('any')
-url='https://lynxprompt.com'
+url='https://lynxprompt.geiser.cloud'
 license=('AGPL-3.0-or-later')
 depends=('nodejs>=18')
 makedepends=('npm')

@@ -56,7 +56,7 @@ app:
   enableBlog: "false"
   enableSupportForum: "false"
   enableFederation: "false"
-  federationRegistryUrl: "https://lynxprompt.com"
+  federationRegistryUrl: "https://lynxprompt.geiser.cloud"
 
 oauth:
   github:

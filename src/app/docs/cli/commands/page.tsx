@@ -959,7 +959,7 @@ Options:
           <pre className="text-sm text-zinc-100">
             <code>{`lynxp config                    # Show current settings
 lynxp config set-url <url>      # Point to a self-hosted instance
-lynxp config reset-url          # Reset to default (lynxprompt.com)
+lynxp config reset-url          # Reset to default (lynxprompt.geiser.cloud)
 lynxp config path               # Show config file location`}</code>
           </pre>
         </div>
@@ -971,7 +971,7 @@ lynxp config path               # Show config file location`}</code>
               <code>{`# View current configuration
 $ lynxp config
 ⚙️  LynxPrompt CLI Configuration
-  API URL: https://lynxprompt.com
+  API URL: https://lynxprompt.geiser.cloud
   Login:   user@example.com
 
 # Point to self-hosted instance (each instance keeps its own login)
@@ -981,7 +981,7 @@ $ lynxp config set-url https://lynxprompt.yourcompany.com
 
 # Reset to default (a saved login is checked with the instance)
 $ lynxp config reset-url
-✓ API URL reset to https://lynxprompt.com
+✓ API URL reset to https://lynxprompt.geiser.cloud
   Logged in as user@example.com on this instance (token checked).
 
 # Find config file

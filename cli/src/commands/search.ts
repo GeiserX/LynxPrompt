@@ -29,7 +29,7 @@ export async function searchCommand(
     if (templates.length === 0) {
       console.log();
       console.log(chalk.yellow(`No blueprints found for "${query}".`));
-      console.log(chalk.gray("Try different keywords or browse at https://lynxprompt.com/blueprints"));
+      console.log(chalk.gray("Try different keywords or browse at https://lynxprompt.geiser.cloud/blueprints"));
       return;
     }
 

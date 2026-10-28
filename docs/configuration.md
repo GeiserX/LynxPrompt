@@ -87,7 +87,7 @@ Rate limits and download counts key on the client's address, so the app needs to
 | `STATUS_PAGE_URL` | empty | Status page link in the footer. |
 | `UPLOAD_DIR` | `/data/uploads/blog` | Where blog images go; avatars and team logos go one level up. The self-host compose file mounts the `uploads` volume at `/data/uploads`. |
 | `ENABLE_FEDERATION` | `false` | `true` registers the instance's domain with the federation registry at start and every six hours, and serves `/.well-known/lynxprompt.json`. Needs an `APP_URL` on https with a public domain name. Off, the instance makes no call to the registry. |
-| `FEDERATION_REGISTRY_URL` | `https://lynxprompt.com` | The registry the instance registers with. |
+| `FEDERATION_REGISTRY_URL` | `https://lynxprompt.geiser.cloud` | The registry the instance registers with. |
 
 The CLI has two settings of its own: `lynxp config set-url <url>` (stored in the file `lynxp config path`
 prints) and the `LYNXPROMPT_API_URL` environment variable, which wins when set. See [Usage](usage.md#the-cli).

@@ -111,7 +111,7 @@ Security-related changes are documented in releases and the main CHANGELOG.
 
 ## Contact
 
-For security questions that aren't vulnerabilities, contact: security@lynxprompt.com
+For security questions that aren't vulnerabilities, contact: lynxprompt@geiser.cloud
 
 ---
 

@@ -2004,7 +2004,7 @@ export interface Brand {
   appUrl: string;
 }
 
-export const DEFAULT_BRAND: Brand = { appName: "LynxPrompt", appUrl: "https://lynxprompt.com" };
+export const DEFAULT_BRAND: Brand = { appName: "LynxPrompt", appUrl: "https://lynxprompt.geiser.cloud" };
 
 // Options for file generation
 export interface GenerateFilesOptions {

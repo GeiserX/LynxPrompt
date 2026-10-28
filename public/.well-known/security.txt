@@ -1,5 +1,5 @@
-Contact: mailto:security@lynxprompt.com
+Contact: mailto:lynxprompt@geiser.cloud
 Expires: 2027-03-03T00:00:00.000Z
 Preferred-Languages: en, es
-Canonical: https://lynxprompt.com/.well-known/security.txt
+Canonical: https://lynxprompt.geiser.cloud/.well-known/security.txt
 Policy: https://github.com/GeiserX/LynxPrompt/blob/main/SECURITY.md

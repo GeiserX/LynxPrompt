@@ -36,7 +36,7 @@ export async function listCommand(options: ListOptions): Promise<void> {
     if (blueprints.length === 0) {
       console.log();
       console.log(chalk.yellow("No blueprints found."));
-      console.log(chalk.gray("Create your first blueprint at https://lynxprompt.com/blueprints/create"));
+      console.log(chalk.gray("Create your first blueprint at https://lynxprompt.geiser.cloud/blueprints/create"));
       console.log(chalk.gray("Or run 'lynxprompt init' to generate one from the CLI!"));
       return;
     }

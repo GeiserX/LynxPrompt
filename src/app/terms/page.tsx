@@ -61,7 +61,7 @@ export default function TermsPage() {
                 </p>
                 <div className="mt-4 rounded-lg border p-4">
                   <p><strong className="text-foreground">Operator:</strong> GeiserCloud</p>
-                  <p><strong className="text-foreground">Contact:</strong> <a href="mailto:support@lynxprompt.com" className="text-primary hover:underline">support@lynxprompt.com</a></p>
+                  <p><strong className="text-foreground">Contact:</strong> <a href="mailto:lynxprompt@geiser.cloud" className="text-primary hover:underline">lynxprompt@geiser.cloud</a></p>
                 </div>
               </section>
 
@@ -294,7 +294,7 @@ export default function TermsPage() {
               <section>
                 <h2 className="mb-3 text-lg font-semibold text-foreground">17. Self-Hosted Instances</h2>
                 <p>
-                  Self-hosted LynxPrompt instances are independently operated. These Terms apply only to <a href="https://lynxprompt.com" className="text-primary hover:underline">lynxprompt.com</a>. Self-hosted instance operators may establish their own terms of service.
+                  Self-hosted LynxPrompt instances are independently operated. These Terms apply only to <a href="https://lynxprompt.geiser.cloud" className="text-primary hover:underline">lynxprompt.geiser.cloud</a>. Self-hosted instance operators may establish their own terms of service.
                 </p>
               </section>
 
@@ -341,7 +341,7 @@ export default function TermsPage() {
               <section>
                 <h2 className="mb-3 text-lg font-semibold text-foreground">21. Contact</h2>
                 <p>
-                  For questions about these terms, contact us at <a href="mailto:support@lynxprompt.com" className="text-primary hover:underline">support@lynxprompt.com</a>.
+                  For questions about these terms, contact us at <a href="mailto:lynxprompt@geiser.cloud" className="text-primary hover:underline">lynxprompt@geiser.cloud</a>.
                 </p>
               </section>
             </div>

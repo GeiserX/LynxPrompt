@@ -32,7 +32,7 @@ jobs:
     timeout-minutes: 25
     environment:
       name: production
-      url: https://lynxprompt.com
+      url: https://lynxprompt.geiser.cloud
     env:
       EXPECTED_VERSION: ${{ github.event.client_payload.version || inputs.version }}
       EXPECTED_REVISION: ${{ github.event.client_payload.revision || inputs.revision }}
@@ -60,7 +60,7 @@ jobs:
           for i in {1..120}; do
             RESPONSE=$(curl --fail --silent --show-error \
               --connect-timeout 5 --max-time 10 \
-              https://lynxprompt.com/api/health 2>/dev/null || true)
+              https://lynxprompt.geiser.cloud/api/health 2>/dev/null || true)
             ACTUAL_VERSION=$(jq -r '.version // empty' <<< "$RESPONSE" 2>/dev/null || true)
             ACTUAL_REVISION=$(jq -r '.revision // empty' <<< "$RESPONSE" 2>/dev/null || true)
             STATUS=$(jq -r '.status // empty' <<< "$RESPONSE" 2>/dev/null || true)
@@ -99,5 +99,5 @@ jobs:
             if [[ -n "$EXPECTED_DIGEST" ]]; then
               echo "- Image digest: \`$EXPECTED_DIGEST\`"
             fi
-            echo "- Health: https://lynxprompt.com/api/health"
+            echo "- Health: https://lynxprompt.geiser.cloud/api/health"
           } >> "$GITHUB_STEP_SUMMARY"

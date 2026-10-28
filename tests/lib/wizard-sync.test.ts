@@ -50,8 +50,8 @@ describe("addApiSyncHeader", () => {
     expect(out).not.toContain("curl");
   });
 
-  it("does not tell lynxprompt.com users to change the CLI URL", () => {
-    const out = addApiSyncHeader("# A\n", { ...base, appUrl: "https://lynxprompt.com", fileName: "AGENTS.md" });
+  it("does not tell hosted-instance users to change the CLI URL", () => {
+    const out = addApiSyncHeader("# A\n", { ...base, appUrl: "https://lynxprompt.geiser.cloud", fileName: "AGENTS.md" });
     expect(out).not.toContain("LYNXPROMPT_API_URL");
   });
 
@@ -59,10 +59,10 @@ describe("addApiSyncHeader", () => {
     const out = addApiSyncHeader("# A\n", {
       ...base,
       preferCliSync: false,
-      appUrl: "https://lynxprompt.com",
+      appUrl: "https://lynxprompt.geiser.cloud",
       fileName: "AGENTS.md",
     });
-    expect(out).toContain("export LYNXPROMPT_API_URL=https://lynxprompt.com");
+    expect(out).toContain("export LYNXPROMPT_API_URL=https://lynxprompt.geiser.cloud");
   });
 
   it("token mode runs lynxp pull with the token from the environment, never curl", () => {

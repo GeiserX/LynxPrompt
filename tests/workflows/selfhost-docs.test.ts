@@ -187,7 +187,7 @@ describe("self-hosting docs", () => {
   });
 
   it("states the CLI's real default URL", () => {
-    const cliDefault = read("cli/src/config.ts").match(/apiUrl:\s*"([^"]+)"/)![1];
+    const cliDefault = read("cli/src/config.ts").match(/DEFAULT_API_URL = "([^"]+)"/)![1];
     const claims = [...page.matchAll(/CLI defaults to (https?:\/\/[^\s<]+)/g)].map((m) => m[1]);
     expect(claims.length).toBeGreaterThan(0);
     // The mkdocs pages say it as "the hosted instance, `<url>`" or "... at `<url>`".

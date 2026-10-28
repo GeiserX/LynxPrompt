@@ -16,12 +16,12 @@ description: |
 
   Available as both `lynxprompt` and the short alias `lynxp`.
 
-  Full documentation: https://lynxprompt.com/docs/cli
+  Full documentation: https://lynxprompt.geiser.cloud/docs/cli
 grade: stable
 confinement: strict
 base: core22
 license: AGPL-3.0-or-later
-website: https://lynxprompt.com
+website: https://lynxprompt.geiser.cloud
 source-code: https://github.com/GeiserX/LynxPrompt
 issues: https://github.com/GeiserX/LynxPrompt/issues
 

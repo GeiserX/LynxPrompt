@@ -5,7 +5,7 @@
  * write them, so a synced file reads the same whichever made it.
  */
 
-const CLI_DEFAULT_API_URL = "https://lynxprompt.com";
+const CLI_DEFAULT_API_URL = "https://lynxprompt.geiser.cloud";
 
 /** Blueprint API ids carry a "bp_" prefix; the database id does not. */
 export function toBlueprintApiId(id: string): string {

@@ -128,9 +128,9 @@ describe("CLI config", () => {
     expect(config.isAuthenticated()).toBe(false);
     expect(config.getUser()).toBeUndefined();
     expect(config.getStoredCredentials()).toBeUndefined();
-    expect(config.getOtherLoggedInUrls()).toEqual(["https://lynxprompt.com"]);
+    expect(config.getOtherLoggedInUrls()).toEqual(["https://lynxprompt.geiser.cloud"]);
 
-    config.setApiUrl("https://lynxprompt.com/");
+    config.setApiUrl("https://lynxprompt.geiser.cloud/");
     expect(config.getToken()).toBe("lp_secret");
   });
 
@@ -145,7 +145,7 @@ describe("CLI config", () => {
     expect(config.getToken()).toBe("lp_self");
     expect(config.getUser()?.email).toBe("me@example.org");
 
-    config.setApiUrl("https://lynxprompt.com");
+    config.setApiUrl("https://lynxprompt.geiser.cloud");
     expect(config.getToken()).toBe("lp_hosted");
     expect(config.getUser()?.email).toBe("me@hosted.test");
 
@@ -161,7 +161,7 @@ describe("CLI config", () => {
     process.env.LYNXPROMPT_TOKEN = "lp_env";
     config.setUser({ id: "u1", email: "u@example.com", name: null });
     delete process.env.LYNXPROMPT_TOKEN;
-    expect(state.store).toEqual({ apiUrl: "https://lynxprompt.com" });
+    expect(state.store).toEqual({ apiUrl: "https://lynxprompt.geiser.cloud" });
     expect(config.getUser()).toBeUndefined();
   });
 
@@ -169,8 +169,8 @@ describe("CLI config", () => {
     const config = await loadConfig();
     config.setToken("lp_hosted");
     config.setApiUrl("https://prompts.example.org");
-    expect(config.resetApiUrl()).toBe("https://lynxprompt.com");
-    expect(config.getApiUrl()).toBe("https://lynxprompt.com");
+    expect(config.resetApiUrl()).toBe("https://lynxprompt.geiser.cloud");
+    expect(config.getApiUrl()).toBe("https://lynxprompt.geiser.cloud");
     expect(config.getToken()).toBe("lp_hosted");
   });
 
@@ -206,6 +206,44 @@ describe("CLI config", () => {
     config.setApiUrl("https://prompts.example.org");
     expect(config.getToken()).toBe("lp_prev");
     expect(config.getUser()).toEqual(user);
+  });
+
+  it("moves a config saved with the old hosted default, and its login, to the new host", async () => {
+    const user = { id: "u1", email: "u@example.org", name: null };
+    state.store = {
+      apiUrl: "https://lynxprompt.com/",
+      tokens: { "https://lynxprompt.com": { token: "lp_hosted", user } },
+    };
+    const config = await loadConfig();
+    expect(state.store).toEqual({
+      apiUrl: "https://lynxprompt.geiser.cloud",
+      tokens: { "https://lynxprompt.geiser.cloud": { token: "lp_hosted", user } },
+    });
+    expect(config.getApiUrl()).toBe("https://lynxprompt.geiser.cloud");
+    expect(config.getToken()).toBe("lp_hosted");
+    expect(config.getUser()).toEqual(user);
+  });
+
+  it("moves an old single login saved for the old hosted default", async () => {
+    state.store = { token: "lp_older", apiUrl: "https://lynxprompt.com" };
+    const config = await loadConfig();
+    expect(config.getApiUrl()).toBe("https://lynxprompt.geiser.cloud");
+    expect(config.getToken()).toBe("lp_older");
+    expect(config.getOtherLoggedInUrls()).toEqual([]);
+  });
+
+  it("leaves a custom server URL, and LYNXPROMPT_API_URL, as they are", async () => {
+    state.store = {
+      apiUrl: "https://prompts.example.org",
+      tokens: { "https://prompts.example.org": { token: "lp_self" } },
+    };
+    const config = await loadConfig();
+    expect(config.getApiUrl()).toBe("https://prompts.example.org");
+    expect(config.getToken()).toBe("lp_self");
+
+    process.env.LYNXPROMPT_API_URL = "https://lynxprompt.com";
+    expect(config.getApiUrl()).toBe("https://lynxprompt.com");
+    expect(state.store.apiUrl).toBe("https://prompts.example.org");
   });
 
   it("keeps LYNXPROMPT_TOKEN working for any server", async () => {
@@ -250,8 +288,8 @@ describe("lynxp logout and lynxp config", () => {
     expect(revokeToken).toHaveBeenCalledTimes(1);
     expect(revokeToken).toHaveBeenCalledWith("https://prompts.example.org", "lp_self");
     expect(config.getToken()).toBeUndefined();
-    expect(config.getOtherLoggedInUrls()).toEqual(["https://lynxprompt.com"]);
-    config.setApiUrl("https://lynxprompt.com");
+    expect(config.getOtherLoggedInUrls()).toEqual(["https://lynxprompt.geiser.cloud"]);
+    config.setApiUrl("https://lynxprompt.geiser.cloud");
     expect(config.getToken()).toBe("lp_hosted");
   });
 
@@ -264,7 +302,7 @@ describe("lynxp logout and lynxp config", () => {
     await logoutCommand();
 
     expect(revokeToken).not.toHaveBeenCalled();
-    config.setApiUrl("https://lynxprompt.com");
+    config.setApiUrl("https://lynxprompt.geiser.cloud");
     expect(config.getToken()).toBe("lp_hosted");
   });
 
@@ -275,14 +313,14 @@ describe("lynxp logout and lynxp config", () => {
     const { configCommand } = await import(/* @vite-ignore */ CONFIG_COMMAND_MODULE);
     await configCommand("reset-url");
 
-    expect(config.getApiUrl()).toBe("https://lynxprompt.com");
+    expect(config.getApiUrl()).toBe("https://lynxprompt.geiser.cloud");
   });
 
   it("set-url checks the saved login of the new instance with that instance", async () => {
     const config = await loadConfig();
     config.setApiUrl("https://prompts.example.org");
     config.setToken("lp_self");
-    config.setApiUrl("https://lynxprompt.com");
+    config.setApiUrl("https://lynxprompt.geiser.cloud");
     checkLogin.mockImplementation(async () => {
       // The check runs against the new URL, with the token saved for it
       expect(config.getApiUrl()).toBe("https://prompts.example.org");
@@ -301,7 +339,7 @@ describe("lynxp logout and lynxp config", () => {
     const config = await loadConfig();
     config.setApiUrl("https://prompts.example.org");
     config.setToken("lp_revoked");
-    config.setApiUrl("https://lynxprompt.com");
+    config.setApiUrl("https://lynxprompt.geiser.cloud");
     checkLogin.mockResolvedValue({ ok: false, rejected: true, reason: "Unauthorized" });
 
     const { configCommand } = await import(/* @vite-ignore */ CONFIG_COMMAND_MODULE);
@@ -315,7 +353,7 @@ describe("lynxp logout and lynxp config", () => {
     const config = await loadConfig();
     config.setApiUrl("https://prompts.example.org");
     config.setToken("lp_self");
-    config.setApiUrl("https://lynxprompt.com");
+    config.setApiUrl("https://lynxprompt.geiser.cloud");
     checkLogin.mockResolvedValue({ ok: false, rejected: false, reason: "fetch failed" });
 
     const { configCommand } = await import(/* @vite-ignore */ CONFIG_COMMAND_MODULE);

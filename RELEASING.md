@@ -102,7 +102,7 @@ Revert the faulty commit in a pull request and merge it; the release that follow
 
 ### GitHub Environments
 
-- **production**: lynxprompt.com, used by the "Verify Production Deployment" workflow (no approval rule)
+- **production**: lynxprompt.geiser.cloud, used by the "Verify Production Deployment" workflow (no approval rule)
 - **development**: dev.lynxprompt.com, auto-deploy on every push to `develop`
 
 ## Pre-Release Checklist

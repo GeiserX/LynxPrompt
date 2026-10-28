@@ -109,10 +109,10 @@ export default function FAQOverviewPage() {
             <p className="mt-2 text-muted-foreground">
               Email us at{" "}
               <a
-                href="mailto:support@lynxprompt.com"
+                href="mailto:lynxprompt@geiser.cloud"
                 className="text-primary hover:underline"
               >
-                support@lynxprompt.com
+                lynxprompt@geiser.cloud
               </a>
               . We read every message and prioritize feedback from the
               community.
@@ -122,7 +122,7 @@ export default function FAQOverviewPage() {
           <div className="rounded-lg border bg-card p-4">
             <h3 className="font-semibold">Is my data safe?</h3>
             <p className="mt-2 text-muted-foreground">
-              On lynxprompt.com, data is stored in the EU with GDPR compliance.
+              On lynxprompt.geiser.cloud, data is stored in the EU with GDPR compliance.
               A self-hosted instance keeps everything in its own database. Neither
               stores passwords: sign-in is by mail link, passkey, OAuth or SSO. See our{" "}
               <Link href="/privacy" className="text-primary hover:underline">
@@ -170,10 +170,10 @@ export default function FAQOverviewPage() {
           <li>
             <strong>Email:</strong>{" "}
             <a
-              href="mailto:support@lynxprompt.com"
+              href="mailto:lynxprompt@geiser.cloud"
               className="text-primary hover:underline"
             >
-              support@lynxprompt.com
+              lynxprompt@geiser.cloud
             </a>
           </li>
           <li>

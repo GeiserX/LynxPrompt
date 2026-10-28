@@ -186,7 +186,7 @@ export default function ContactPage() {
                 <Mail className="h-5 w-5 text-primary" />
                 <div>
                   <h3 className="font-semibold">Email</h3>
-                  <p className="text-sm text-muted-foreground">contact@lynxprompt.com — GeiserCloud, Europe</p>
+                  <p className="text-sm text-muted-foreground">lynxprompt@geiser.cloud — GeiserCloud, Europe</p>
                 </div>
               </div>
             </div>

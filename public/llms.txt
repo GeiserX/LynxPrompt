@@ -16,14 +16,14 @@ LynxPrompt is a web platform and CLI for generating and sharing AI IDE configura
 
 ## Documentation
 
-- [Getting Started](https://lynxprompt.com/docs/getting-started): Quick start guide
-- [Wizard Docs](https://lynxprompt.com/docs/wizard): Configuration wizard guide
-- [Blueprints Docs](https://lynxprompt.com/docs/blueprints): Blueprint marketplace and features
-- [CLI Docs](https://lynxprompt.com/docs/cli): Command-line interface reference
-- [API Docs](https://lynxprompt.com/docs/api): REST API documentation
-- [Platforms](https://lynxprompt.com/docs/platforms): Supported AI IDEs and tools
+- [Getting Started](https://lynxprompt.geiser.cloud/docs/getting-started): Quick start guide
+- [Wizard Docs](https://lynxprompt.geiser.cloud/docs/wizard): Configuration wizard guide
+- [Blueprints Docs](https://lynxprompt.geiser.cloud/docs/blueprints): Blueprint marketplace and features
+- [CLI Docs](https://lynxprompt.geiser.cloud/docs/cli): Command-line interface reference
+- [API Docs](https://lynxprompt.geiser.cloud/docs/api): REST API documentation
+- [Platforms](https://lynxprompt.geiser.cloud/docs/platforms): Supported AI IDEs and tools
 
 ## Optional
 
-- [Full Documentation](https://lynxprompt.com/llms-full.txt): Complete documentation for LLMs
+- [Full Documentation](https://lynxprompt.geiser.cloud/llms-full.txt): Complete documentation for LLMs
 
