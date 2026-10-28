@@ -164,6 +164,11 @@ export default function BlueprintsApiDocsPage() {
           </div>
           <p className="text-muted-foreground">
             Get a specific blueprint by ID, including its full content.
+            Only the owner and the blueprint&apos;s team get{" "}
+            <code>repository_path</code> in full. Anyone else gets the
+            tool&apos;s own file of an MCP config or a subagent (for example{" "}
+            <code>.codex/agents/reviewer.toml</code>), which sets its format,
+            and <code>null</code> for every other blueprint.
           </p>
           <div>
             <h4 className="mb-2 font-semibold">Example Request</h4>

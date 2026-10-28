@@ -565,8 +565,8 @@ export default function PrivacyPage() {
                 </p>
                 <ul className="mt-3 list-inside list-disc space-y-1">
                   <li>
-                    Your account, linked sign-in methods, sessions, passkeys,
-                    trusted devices and API tokens
+                    Your account, linked sign-in methods, sessions, passkeys
+                    and API tokens
                   </li>
                   <li>
                     Your profile, preferences, wizard drafts, hierarchies and
