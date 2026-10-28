@@ -461,6 +461,18 @@ export const PLATFORMS: PlatformDefinition[] = [
     format: "markdown",
   },
   {
+    id: "devin",
+    name: "Devin",
+    file: ".devin/rules/project.md",
+    rulesDirectory: ".devin/rules/",
+    icon: "🛠️",
+    gradient: "from-emerald-600 to-teal-700",
+    note: "Cognition's AI software engineer",
+    category: "other",
+    format: "markdown",
+    url: "https://devin.ai",
+  },
+  {
     id: "firebender",
     name: "Firebender",
     file: ".firebender/rules/project.mdc",

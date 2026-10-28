@@ -55,6 +55,7 @@ const CONFIG_DIRS = [
   { path: ".trae/rules", name: "Trae" },
   { path: ".augment/rules", name: "Augment" },
   { path: ".roo/rules", name: "Roo Code" },
+  { path: ".devin/rules", name: "Devin" },
   { path: ".kilocode/rules", name: "Kilo Code" },
   { path: ".amazonq/rules", name: "Amazon Q" },
   { path: ".idx/rules", name: "Firebase Studio" },
