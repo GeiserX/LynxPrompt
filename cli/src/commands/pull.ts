@@ -13,7 +13,7 @@ import {
   toTrackedPath,
   type BlueprintSource,
 } from "../utils/blueprint-tracker.js";
-import { blueprintFilename, safePath, withFinalNewline } from "../utils/blueprint-files.js";
+import { blueprintFilename, rulesWritePath, safePath, withFinalNewline } from "../utils/blueprint-files.js";
 import { parseVariablesString } from "../utils/generator.js";
 import { fillBlueprintVariables } from "../utils/variables.js";
 
@@ -154,7 +154,7 @@ async function pullHierarchy(
 
     for (const bp of blueprints) {
       // Determine output path - use repository_path if available
-      const filename = blueprintFilename(bp);
+      const filename = rulesWritePath(resolve(options.output), blueprintFilename(bp));
       let outputPath: string;
       try {
         outputPath = safePath(resolve(options.output), filename);
@@ -319,7 +319,7 @@ async function pullBlueprint(
     }
 
     // Determine output filename - use repository_path if available for hierarchy blueprints
-    const filename = blueprintFilename(blueprint);
+    const filename = rulesWritePath(resolve(options.output), blueprintFilename(blueprint));
     let outputPath: string;
     try {
       outputPath = safePath(resolve(options.output), filename);

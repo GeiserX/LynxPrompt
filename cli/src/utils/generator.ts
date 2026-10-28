@@ -1,4 +1,4 @@
-import { PLATFORMS } from "../../../packages/shared/src/platforms.js";
+import { PLATFORMS, resolvePlatformId } from "../../../packages/shared/src/platforms.js";
 import {
   generatePlatformFiles,
   stackLabel,
@@ -6,6 +6,7 @@ import {
   type GeneratorUser,
 } from "../../../packages/shared/src/generator.js";
 import { DATABASES, LANGUAGES } from "../../../packages/shared/src/wizard/index.js";
+import { parseDocument } from "yaml";
 
 // The rules content comes from the generator the web wizard uses
 // (packages/shared/src/generator.ts). This module maps the CLI wizard's
@@ -20,7 +21,8 @@ export interface GenerateOptions {
   description: string;
   stack: string[];
   platforms: string[];
-  // CLAUDE.md and GEMINI.md generated next to AGENTS.md just import it
+  // One AGENTS.md for every picked tool: tools that read it get no file of
+  // their own, CLAUDE.md and GEMINI.md import it
   pointerFiles?: boolean;
   persona: string;
   boundaries: "conservative" | "standard" | "permissive";
@@ -189,6 +191,25 @@ export const PLATFORM_FILES: Record<string, string> = {
   ...Object.fromEntries(PLATFORMS.filter((p) => !p.isCommand).map((p) => [p.id, p.file])),
   agents: "AGENTS.md",
 };
+
+/**
+ * An existing .aider.conf.yml with AGENTS.md added to its `read:` files (a
+ * single file name becomes a list). The rest of the file, comments included,
+ * is kept. Throws on a file that is not a YAML mapping.
+ */
+export function mergeAiderConfig(existing: string): string {
+  const doc = parseDocument(existing);
+  if (doc.errors.length > 0) throw doc.errors[0];
+  const config = doc.toJS() as unknown;
+  if (config !== null && (typeof config !== "object" || Array.isArray(config))) {
+    throw new Error(".aider.conf.yml is not a YAML mapping");
+  }
+  const read = (config as { read?: unknown } | null)?.read;
+  const files = read == null ? [] : Array.isArray(read) ? read : [read];
+  if (files.includes("AGENTS.md")) return existing;
+  doc.set("read", [...files, "AGENTS.md"]);
+  return doc.toString();
+}
 
 // Persona descriptions - these describe the developer's background so the AI can adapt
 const PERSONA_DESCRIPTIONS: Record<string, string> = {
@@ -709,8 +730,8 @@ export function generateConfig(options: GenerateOptions): Record<string, string>
 
   // AI tool rule files, from the shared generator. "agents" is universal.
   const platforms = options.platforms
-    .filter((platform) => PLATFORM_FILES[platform])
-    .map((platform) => (platform === "agents" ? "universal" : platform));
+    .map((platform) => (platform === "agents" ? "universal" : resolvePlatformId(platform)))
+    .filter((platform) => PLATFORM_FILES[platform]);
   const appUrl = (options.apiUrl ?? "https://lynxprompt.com").replace(/\/+$/, "");
   const generated = generatePlatformFiles(toGeneratorConfig(options), toGeneratorUser(options), platforms, {
     pointers: Boolean(options.pointerFiles),

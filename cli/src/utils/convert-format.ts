@@ -10,7 +10,7 @@
 
 import { access } from "fs/promises";
 import { join } from "path";
-import { PLATFORMS, getPlatform } from "../../../packages/shared/src/platforms.js";
+import { PLATFORMS, commandContent, getPlatform, type PlatformDefinition } from "../../../packages/shared/src/platforms.js";
 import { adaptRulesContent } from "../../../packages/shared/src/rules-format.js";
 
 /** Check if a target is a command type */
@@ -35,20 +35,24 @@ export function isStructuredPlatform(platform: string): boolean {
 export function platformForPath(filePath: string): string | undefined {
   const normalized = filePath.replace(/\\/g, "/").toLowerCase();
   const rules = PLATFORMS.filter((p) => !p.isCommand);
-  const inFolder = rules.find((p) => p.rulesDirectory && `/${normalized}`.includes(`/${p.rulesDirectory.toLowerCase()}`));
+  const paths = (p: PlatformDefinition) => [p.rulesDirectory, ...(p.otherFiles ?? [])].filter((x): x is string => Boolean(x));
+  const inFolder = rules.find((p) =>
+    paths(p).some((dir) => dir.endsWith("/") && `/${normalized}`.includes(`/${dir.toLowerCase()}`))
+  );
   if (inFolder) return inFolder.id;
-  const file = rules.find((p) => {
-    const own = p.file.toLowerCase();
-    return normalized === own || normalized.endsWith(`/${own}`);
-  });
+  const isFile = (own: string) => normalized === own.toLowerCase() || normalized.endsWith(`/${own.toLowerCase()}`);
+  // Other files first: .junie/AGENTS.md is Junie's, not the universal AGENTS.md
+  const other = rules.find((p) => paths(p).some((f) => !f.endsWith("/") && isFile(f)));
+  if (other) return other.id;
+  const file = rules.find((p) => isFile(p.file));
   if (file) return file.id;
   return normalized.endsWith(".mdc") ? "cursor" : undefined;
 }
 
 /** Convert a rules or command file written for one platform to another one. */
 export function convertContent(content: string, sourcePlatform: string, targetPlatform: string): string {
-  // Commands are all plain markdown; they only go in different directories
-  if (isCommandTarget(targetPlatform)) return content;
+  // Commands are plain Markdown in another folder, except Gemini CLI's TOML
+  if (isCommandTarget(targetPlatform)) return commandContent(content, targetPlatform);
   return adaptRulesContent(content, sourcePlatform, targetPlatform, RULES_DESCRIPTION);
 }
 
@@ -64,8 +68,11 @@ export const SOURCE_FILES: Record<string, string> = {
   "copilot-instructions.md": "copilot",
   ".windsurfrules": "windsurf",
   ".clinerules": "cline",
+  "GEMINI.md": "gemini-cli",
+  "WARP.md": "warp",
+  // Aider conventions are plain Markdown rules (Aider now reads AGENTS.md).
   // Real case: auto-detect looks the name up as is, and Linux disks are case-sensitive
-  "CONVENTIONS.md": "aider",
+  "CONVENTIONS.md": "universal",
 };
 
 /** The platform of a known source filename, whatever its case */

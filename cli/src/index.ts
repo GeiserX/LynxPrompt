@@ -57,7 +57,7 @@ program
   .option("--load-draft <name>", "Load a saved wizard draft")
   .option("--save-draft <name>", "Save wizard state as a draft (auto-saves at end)")
   .option("--vars <values>", "Fill variables: VAR1=value1,VAR2=value2")
-  .option("--no-pointers", "Write CLAUDE.md/GEMINI.md as full copies instead of importing AGENTS.md")
+  .option("--no-pointers", "Give every picked tool its own full rules file instead of one shared AGENTS.md")
   .action(wizardCommand);
 
 // Check - validation for CI/CD

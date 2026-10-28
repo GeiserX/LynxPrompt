@@ -17,7 +17,7 @@ describe("cli blueprintFilename", () => {
     expect(blueprintFilename({ type: "KIRO_STEERING" })).toBe(".kiro/steering/project.md");
     expect(blueprintFilename({ type: "CURSOR_MDC" })).toBe(".cursor/rules/project.mdc");
     expect(blueprintFilename({ type: "GEMINI_MD" })).toBe("GEMINI.md");
-    expect(blueprintFilename({ type: "CLINE_RULES" })).toBe(".clinerules");
+    expect(blueprintFilename({ type: "CLINE_RULES" })).toBe(".clinerules/project.md");
     expect(blueprintFilename({ type: "CLAUDE_COMMAND", name: "Deploy App" })).toBe(".claude/commands/deploy-app.md");
   });
 
