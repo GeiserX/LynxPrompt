@@ -7,6 +7,7 @@ import { useState, useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
+import { maskEmail } from "@/lib/mask-email";
 import {
   Users,
   Check,
@@ -251,7 +252,7 @@ function JoinTeamContent() {
               {authStatus === "authenticated" &&
                 session?.user?.email &&
                 invitation?.invitedEmail &&
-                session.user.email.toLowerCase() !== invitation.invitedEmail.toLowerCase() && (
+                maskEmail(session.user.email) !== invitation.invitedEmail.toLowerCase() && (
                   <div className="mt-4 rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-sm">
                     <p className="font-medium text-amber-600 dark:text-amber-400">
                       Email mismatch

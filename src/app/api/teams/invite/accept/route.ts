@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
+import { maskEmail } from "@/lib/mask-email";
 
 /**
  * POST /api/teams/invite/accept - Accept a team invitation
@@ -72,10 +73,7 @@ export async function POST(request: NextRequest) {
 
     // Check if email matches
     if (invitation.email.toLowerCase() !== session.user.email.toLowerCase()) {
-      const emailParts = invitation.email.split("@");
-      const maskedInviteEmail = emailParts.length === 2
-        ? `${emailParts[0].charAt(0)}***@${emailParts[1]}`
-        : "***";
+      const maskedInviteEmail = maskEmail(invitation.email);
       return NextResponse.json(
         {
           error: `This invitation was sent to ${maskedInviteEmail}. You are signed in as ${session.user.email}.`,
@@ -246,10 +244,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Mask the email: show first char + "***" + "@" + domain
-    const emailParts = invitation.email.split("@");
-    const maskedEmail = emailParts.length === 2
-      ? `${emailParts[0].charAt(0)}***@${emailParts[1]}`
-      : "***";
+    const maskedEmail = maskEmail(invitation.email);
 
     return NextResponse.json({
       valid: true,
