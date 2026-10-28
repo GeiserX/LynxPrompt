@@ -503,7 +503,9 @@ docker buildx build --platform linux/amd64 \
 ```
 
 **Build optimizations included:**
-- `npm install` (not `npm ci`) — local npm 11 and Docker npm 10 produce incompatible lockfiles; `npm install` tolerates both
+- `npm ci` in the deps stage, so the image gets exactly what `package-lock.json` pins (the `node:26-alpine` base ships npm 11, the same major as local)
+- The Prisma CLI stage installs only `prisma` and `tsx`, at their locked versions, against the full lockfile
+- No `NEXT_PUBLIC_*` build args: Next inlines them into server code too, so the Turnstile site key and Umami ID are read from the container env at runtime
 - BuildKit cache mounts keyed by `TARGETPLATFORM` (avoids ETXTBSY on QEMU arm64 cross-compilation)
 - Base image: `node:22-alpine` (Node 20 EOL, and `@prisma/streams-local` requires Node >= 22)
 - Parallel Prisma client generation

@@ -27,11 +27,11 @@ FROM base AS deps
 # Copy package files
 COPY package.json package-lock.json* ./
 
-# npm install (not ci) tolerates lockfiles across npm versions (local npm 11 vs Docker npm 10)
+# npm ci installs exactly what package-lock.json pins.
 # Cache keyed by TARGETPLATFORM to avoid ETXTBSY on QEMU cross-compilation
 ARG TARGETPLATFORM
 RUN --mount=type=cache,target=/root/.npm,id=npm-${TARGETPLATFORM} \
-    npm install
+    npm ci
 
 # -----------------------------------------------------------------------------
 # Builder stage - build the application
@@ -50,36 +50,44 @@ RUN npx prisma generate --config=prisma/prisma.config-app.ts & \
     npx prisma generate --config=prisma/prisma.config-support.ts & \
     wait
 
-# Build the application with Next.js build cache
-# NEXT_PUBLIC_* vars must be available at build time for Next.js to inline them
-ARG NEXT_PUBLIC_UMAMI_WEBSITE_ID
-ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY
-ARG UMAMI_SCRIPT_URL
+# Build the application with Next.js build cache.
+# No NEXT_PUBLIC_* build args: Next would inline them into the server code too,
+# and every self-hosted container would get the values of this build. The
+# Turnstile site key and Umami ID are read from the container's env instead.
+# APP_URL only adds its host to next/image's remote patterns (next.config.ts).
 ARG APP_URL
 ARG APP_REVISION
-ENV NEXT_PUBLIC_UMAMI_WEBSITE_ID=${NEXT_PUBLIC_UMAMI_WEBSITE_ID}
-ENV NEXT_PUBLIC_TURNSTILE_SITE_KEY=${NEXT_PUBLIC_TURNSTILE_SITE_KEY}
-ENV UMAMI_SCRIPT_URL=${UMAMI_SCRIPT_URL}
 ENV APP_URL=${APP_URL}
 ENV APP_REVISION=${APP_REVISION}
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV TSC_COMPILE_ON_ERROR=true
-# Disable Turbopack for production builds (fixes font resolution issues in Next.js 16)
-ENV TURBOPACK=0
 RUN --mount=type=cache,target=/app/.next/cache \
     npm run build
 
 # -----------------------------------------------------------------------------
-# Prisma CLI stage - resolve full dep tree for migrations
+# Prisma CLI stage - only what the entrypoint's `prisma db push` needs
 # -----------------------------------------------------------------------------
 FROM base AS prisma-deps
 
 WORKDIR /prisma-deps
 
-COPY --from=builder /app/package.json ./
+# Reduce package.json to the Prisma CLI and tsx at their locked versions, keep
+# the overrides, and install against the full lockfile, so every package lands
+# at the version package-lock.json pins. The app's own dependencies come from
+# the standalone build, not from here.
+COPY package.json package-lock.json ./
+RUN node -e ' \
+  const fs = require("fs"); \
+  const pkg = require("./package.json"); \
+  const locked = require("./package-lock.json").packages; \
+  const dependencies = {}; \
+  for (const name of ["prisma", "tsx"]) dependencies[name] = locked["node_modules/" + name].version; \
+  const overrides = Object.fromEntries( \
+    Object.entries(pkg.overrides || {}).filter(([, v]) => !String(v).startsWith("$"))); \
+  fs.writeFileSync("package.json", JSON.stringify({ name: "prisma-cli", private: true, dependencies, overrides }));'
 ARG TARGETPLATFORM
 RUN --mount=type=cache,target=/root/.npm,id=npm-prisma-${TARGETPLATFORM} \
-    npm install --no-save prisma tsx esbuild get-tsconfig resolve-pkg-maps
+    npm install --no-audit --no-fund
 
 # -----------------------------------------------------------------------------
 # Production stage - minimal runtime image

@@ -32,6 +32,18 @@
       "type": "integer",
       "minimum": 1
     },
+    "strategy": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["Recreate", "RollingUpdate"]
+        },
+        "rollingUpdate": {
+          "type": "object"
+        }
+      }
+    },
     "service": {
       "type": "object",
       "properties": {
@@ -130,37 +142,37 @@
           "type": "string"
         },
         "enableUserRegistration": {
-          "type": "string"
+          "type": ["string", "boolean"]
         },
         "enableEmailAuth": {
-          "type": "string"
+          "type": ["string", "boolean"]
         },
         "enablePasskeys": {
-          "type": "string"
+          "type": ["string", "boolean"]
         },
         "enableGithubOauth": {
-          "type": "string"
+          "type": ["string", "boolean"]
         },
         "enableGoogleOauth": {
-          "type": "string"
+          "type": ["string", "boolean"]
         },
         "enableTurnstile": {
-          "type": "string"
+          "type": ["string", "boolean"]
         },
         "enableSso": {
-          "type": "string"
+          "type": ["string", "boolean"]
         },
         "enableAi": {
-          "type": "string"
+          "type": ["string", "boolean"]
         },
         "enableBlog": {
-          "type": "string"
+          "type": ["string", "boolean"]
         },
         "enableSupportForum": {
-          "type": "string"
+          "type": ["string", "boolean"]
         },
         "enableFederation": {
-          "type": "string"
+          "type": ["string", "boolean"]
         },
         "federationRegistryUrl": {
           "type": "string"
@@ -223,7 +235,7 @@
           "type": "string"
         },
         "port": {
-          "type": "string"
+          "type": ["string", "integer"]
         },
         "user": {
           "type": "string"
