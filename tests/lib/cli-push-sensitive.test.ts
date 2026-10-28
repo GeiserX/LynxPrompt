@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from "vitest";
 import fs from "fs";
 import os from "os";
 import path from "path";
@@ -44,7 +44,13 @@ const prompt = vi.hoisted(() => vi.fn());
 vi.mock("prompts", () => ({ default: prompt }));
 vi.mock("../../cli/node_modules/prompts/index.js", () => ({ default: prompt }));
 
-import { pushCommand } from "../../cli/src/commands/push";
+// Loaded through a non-literal path so the root tsc does not type-check
+// cli/ (its deps are not installed at the root, and cli/ has its own tsc).
+const PUSH_MODULE = "../../cli/src/commands/push";
+let pushCommand: (file: string | undefined, options: Record<string, unknown>) => Promise<void>;
+beforeAll(async () => {
+  ({ pushCommand } = await import(/* @vite-ignore */ PUSH_MODULE));
+});
 
 const REFUSAL = {
   error: "Sensitive data detected",
