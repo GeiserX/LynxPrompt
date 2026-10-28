@@ -6,12 +6,14 @@
 # version and whose sha512 matches the registry's dist.integrity. Before this,
 # the formula got the hash of npm's 404 body and every brew install failed.
 #   npm-tarball-sha256.sh <name> <version>
-# NPM_REGISTRY, ATTEMPTS and DELAY (seconds) override the defaults.
+# NPM_REGISTRY, ATTEMPTS and DELAY (seconds) override the defaults. The default
+# waits 15 minutes: 3.0.0's version URL still answered 404 eight minutes after
+# the publish, so 5 minutes failed Homebrew and the AUR.
 [ $# -eq 2 ] || { echo "usage: $0 <name> <version>" >&2; exit 2; }
 set -euo pipefail
 name=$1 version=$2
 registry=${NPM_REGISTRY:-https://registry.npmjs.org}
-attempts=${ATTEMPTS:-30}
+attempts=${ATTEMPTS:-90}
 delay=${DELAY:-10}
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
