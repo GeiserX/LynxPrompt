@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.46] - 2026-10-28
+
+### Fixed
+- **Support forum categories on a fresh install**: 2.1.45 seeds the default categories on every start, but the image lacked `@prisma/adapter-pg`, which the seed imports, so the seed failed and a new instance's forum could not take posts. The image now installs it.
+
 ## [2.1.45] - 2026-10-28
 
 App 2.1.45 and CLI 2.1.38. This release fixes the findings of a full audit of the code.
