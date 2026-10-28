@@ -269,8 +269,8 @@ export default function SelfHostingPage() {
             <tbody className="divide-y">
               <tr>
                 <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">ENABLE_FEDERATION</code></td>
-                <td className="px-4 py-2 text-muted-foreground">true</td>
-                <td className="px-4 py-2">Register the instance&apos;s domain with the federation registry at start and every six hours, and serve <code className="text-xs">/.well-known/lynxprompt.json</code>. Set to <code className="text-xs">false</code> to keep the instance to itself</td>
+                <td className="px-4 py-2 text-muted-foreground">false</td>
+                <td className="px-4 py-2">Set to <code className="text-xs">true</code> to register the instance&apos;s domain with the federation registry at start and every six hours, and serve <code className="text-xs">/.well-known/lynxprompt.json</code>. Needs an <code className="text-xs">APP_URL</code> on https with a public domain name. Left off, the instance makes no call to the registry</td>
               </tr>
               <tr>
                 <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">FEDERATION_REGISTRY_URL</code></td>
@@ -638,14 +638,15 @@ lynxp config set-url https://api.lynxprompt.yourcompany.com`}</code>
               1
             </div>
             <div className="min-w-0 flex-1">
-              <h3 className="font-semibold">Federation is on by default</h3>
+              <h3 className="font-semibold">Federation is off until you turn it on</h3>
               <pre className="mt-2 overflow-x-auto rounded-lg bg-muted p-3 text-sm">
-                <code>{`ENABLE_FEDERATION=true   # the default; false opts out`}</code>
+                <code>{`ENABLE_FEDERATION=true   # the default is false`}</code>
               </pre>
               <p className="mt-2 text-sm text-muted-foreground">
-                With nothing set, the instance joins the default public network
-                at <code className="rounded bg-muted px-1 py-0.5 text-xs">https://lynxprompt.com</code>.
-                Only set{" "}
+                Turned on, the instance joins the default public network at{" "}
+                <code className="rounded bg-muted px-1 py-0.5 text-xs">https://lynxprompt.com</code>.
+                Its <code className="rounded bg-muted px-1 py-0.5 text-xs">APP_URL</code> must be https
+                on a public domain name, since the registry checks it from the internet. Only set{" "}
                 <code className="rounded bg-muted px-1 py-0.5 text-xs">FEDERATION_REGISTRY_URL</code>{" "}
                 if you are running your own federation registry.
               </p>
@@ -682,10 +683,10 @@ lynxp config set-url https://api.lynxprompt.yourcompany.com`}</code>
         </div>
         <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
           <p className="text-sm">
-            <strong>Note:</strong> Federation is optional. With{" "}
-            <code className="text-xs">ENABLE_FEDERATION=false</code> your instance
+            <strong>Note:</strong> Federation is optional. Without{" "}
+            <code className="text-xs">ENABLE_FEDERATION=true</code> your instance
             works as a fully standalone platform with its own local blueprint
-            library.
+            library and makes no call to the registry.
           </p>
         </div>
       </section>

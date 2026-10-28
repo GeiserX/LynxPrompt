@@ -482,13 +482,14 @@ export default function SecurityPage() {
                   </div>
                   <div className="rounded-lg border p-4">
                     <h3 className="font-medium text-foreground">
-                      Read-Only Blueprint Browsing
+                      Opt-In, Public Metadata Only
                     </h3>
                     <p className="mt-1 text-sm">
-                      Blueprint discovery across federated instances is strictly
-                      read-only. Remote instances can list and view public
-                      blueprints but cannot modify, delete, or execute them.
-                      Write operations are always local to the instance that owns
+                      Federation is off unless the operator turns it on. A
+                      federated instance lists only the name, description, tags
+                      and author of its public blueprints, read-only. Private
+                      and team blueprints and blueprint content never leave the
+                      instance, and writes stay local to the instance that owns
                       the blueprint.
                     </p>
                   </div>

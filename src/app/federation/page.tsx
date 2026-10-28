@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Federation",
-  description: `Discover ${APP_NAME} instances in the federated network. Self-hosted instances can join the network and share public blueprints.`,
+  description: `Discover ${APP_NAME} instances in the federated network. Self-hosted instances can opt in to be listed.`,
   alternates: { canonical: `${APP_URL}/federation` },
 };
 

@@ -55,11 +55,15 @@ and the CLI as `lynxp hierarchies`.
 
 ## Federation
 
-Federation is on by default (`ENABLE_FEDERATION`). At start, and every six hours after, the instance posts its
-domain (the host of `APP_URL`) to the registry (`FEDERATION_REGISTRY_URL`, lynxprompt.com by default) and serves
-`/.well-known/lynxprompt.json` with its name, version, API URL and number of public blueprints. Instances in
-the network share their public blueprints. Private and team blueprints never leave the instance.
-`ENABLE_FEDERATION=false` turns all of it off.
+Federation is off by default, and an instance makes no call to the registry until `ENABLE_FEDERATION=true`.
+Then, at start and every six hours after, it posts its domain (the host of `APP_URL`) to the registry
+(`FEDERATION_REGISTRY_URL`, lynxprompt.com by default) and serves `/.well-known/lynxprompt.json` with its name,
+version, API URL and number of public blueprints. An `APP_URL` that is not https on a public domain name (such
+as `http://localhost:3000`) is skipped with a warning, since the registry could not reach it. The registry lists
+the instances on `/federation`, and each instance lists the name, description, tags and author of its public
+blueprints at `/api/v1/federation/blueprints`; no instance pulls another's blueprints into its own marketplace.
+Private and team blueprints never leave the instance. These public reads carry a five-minute public
+`Cache-Control`, so a CDN in front of the instance can serve them.
 
 ## Security model
 

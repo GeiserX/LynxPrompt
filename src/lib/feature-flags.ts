@@ -41,7 +41,7 @@ export const ENABLE_BLOG = envBool("ENABLE_BLOG", false);
 export const ENABLE_SUPPORT_FORUM = envBool("ENABLE_SUPPORT_FORUM", false);
 
 // Federation
-export const ENABLE_FEDERATION = envBool("ENABLE_FEDERATION", true);
+export const ENABLE_FEDERATION = envBool("ENABLE_FEDERATION", false);
 export const FEDERATION_REGISTRY_URL = process.env.FEDERATION_REGISTRY_URL || "https://lynxprompt.com";
 
 // Branding
@@ -73,7 +73,7 @@ export function getPublicFlags() {
     enableAI: envBool("ENABLE_AI", false),
     enableBlog: envBool("ENABLE_BLOG", false),
     enableSupportForum: envBool("ENABLE_SUPPORT_FORUM", false),
-    enableFederation: envBool("ENABLE_FEDERATION", true),
+    enableFederation: envBool("ENABLE_FEDERATION", false),
     federationRegistryUrl: process.env.FEDERATION_REGISTRY_URL || "https://lynxprompt.com",
     appName: process.env.APP_NAME || "LynxPrompt",
     appUrl: process.env.APP_URL || process.env.NEXTAUTH_URL || "http://localhost:3000",

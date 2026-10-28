@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ENABLE_FEDERATION, APP_NAME, APP_URL } from "@/lib/feature-flags";
 import { prismaUsers } from "@/lib/db-users";
+import { FEDERATION_CACHE_HEADERS } from "@/lib/federation";
 import packageJson from "../../../../package.json";
 
 export async function GET() {
@@ -17,12 +18,15 @@ export async function GET() {
     // DB may not be migrated yet on fresh instances
   }
 
-  return NextResponse.json({
-    name: APP_NAME,
-    domain: new URL(APP_URL).host,
-    version: packageJson.version,
-    federation: true,
-    api: `${APP_URL}/api/v1`,
-    publicBlueprints: publicBlueprintCount,
-  });
+  return NextResponse.json(
+    {
+      name: APP_NAME,
+      domain: new URL(APP_URL).host,
+      version: packageJson.version,
+      federation: true,
+      api: `${APP_URL}/api/v1`,
+      publicBlueprints: publicBlueprintCount,
+    },
+    { headers: FEDERATION_CACHE_HEADERS },
+  );
 }

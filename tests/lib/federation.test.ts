@@ -7,9 +7,9 @@ describe("federation", () => {
   });
 
   describe("ENABLE_FEDERATION flag", () => {
-    it("should default to true", async () => {
+    it("should default to false, so federation is opt-in", async () => {
       const flags = await import("@/lib/feature-flags");
-      expect(flags.ENABLE_FEDERATION).toBe(true);
+      expect(flags.ENABLE_FEDERATION).toBe(false);
     });
 
     it("should respect ENABLE_FEDERATION=false", async () => {
@@ -36,7 +36,7 @@ describe("federation", () => {
     it("should expose federation flags publicly", async () => {
       const { getPublicFlags } = await import("@/lib/feature-flags");
       const flags = getPublicFlags();
-      expect(flags.enableFederation).toBe(true);
+      expect(flags.enableFederation).toBe(false);
       expect(flags.federationRegistryUrl).toBe("https://lynxprompt.com");
     });
   });
@@ -50,12 +50,13 @@ describe("federation", () => {
       initFederation();
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Disabled via ENABLE_FEDERATION=false"),
+        expect.stringContaining("Disabled"),
       );
       consoleSpy.mockRestore();
     });
 
     it("should skip self-registration when this instance IS the registry", async () => {
+      vi.stubEnv("ENABLE_FEDERATION", "true");
       vi.stubEnv("APP_URL", "https://lynxprompt.com");
       vi.stubEnv("FEDERATION_REGISTRY_URL", "https://lynxprompt.com");
       const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
@@ -70,6 +71,7 @@ describe("federation", () => {
     });
 
     it("should attempt registration when pointing to external registry", async () => {
+      vi.stubEnv("ENABLE_FEDERATION", "true");
       vi.stubEnv("APP_URL", "https://test.lynxprompt.com");
       vi.stubEnv("FEDERATION_REGISTRY_URL", "https://lynxprompt.com");
 
@@ -95,6 +97,53 @@ describe("federation", () => {
 
       consoleSpy.mockRestore();
       vi.unstubAllGlobals();
+    });
+
+    // A fresh self-hosted instance used to post its domain to the public
+    // registry at start and every six hours, without the operator asking.
+    it("makes no registry call on an instance that never set ENABLE_FEDERATION", async () => {
+      vi.stubEnv("APP_URL", "https://team.example.com");
+      const fetchSpy = vi.fn().mockResolvedValue(new Response("{}"));
+      vi.stubGlobal("fetch", fetchSpy);
+      vi.spyOn(console, "log").mockImplementation(() => {});
+      const { initFederation } = await import("@/lib/federation");
+
+      initFederation();
+      await new Promise((r) => setTimeout(r, 10));
+
+      expect(fetchSpy).not.toHaveBeenCalled();
+      vi.unstubAllGlobals();
+    });
+
+    it.each(["http://localhost:3000", "https://localhost:3000", "http://team.example.com", "https://10.0.0.5", "https://team.example.com:8443"])(
+      "does not try to register APP_URL %s, which the registry cannot reach",
+      async (appUrl) => {
+        vi.stubEnv("ENABLE_FEDERATION", "true");
+        vi.stubEnv("APP_URL", appUrl);
+        const fetchSpy = vi.fn().mockResolvedValue(new Response("{}"));
+        vi.stubGlobal("fetch", fetchSpy);
+        vi.spyOn(console, "log").mockImplementation(() => {});
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+        const { initFederation } = await import("@/lib/federation");
+
+        initFederation();
+        await new Promise((r) => setTimeout(r, 10));
+
+        expect(fetchSpy).not.toHaveBeenCalled();
+        expect(warn).toHaveBeenCalledWith(expect.stringContaining("Not joining"));
+        vi.unstubAllGlobals();
+        warn.mockRestore();
+      },
+    );
+  });
+
+  describe("isFederationDomain", () => {
+    it("accepts a public DNS name and rejects what the registry would refuse", async () => {
+      const { isFederationDomain } = await import("@/lib/federation");
+      expect(isFederationDomain("lynxprompt.example.com")).toBe(true);
+      for (const bad of ["localhost", "localhost:3000", "example.com:8443", "10.0.0.5", "a".repeat(250) + ".com"]) {
+        expect(isFederationDomain(bad), bad).toBe(false);
+      }
     });
   });
 });

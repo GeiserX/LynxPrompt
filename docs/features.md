@@ -5,7 +5,7 @@ LynxPrompt is a **self-hostable platform** for managing AI IDE configuration fil
 Instead of manually writing configuration files for every project and every AI tool, use LynxPrompt to:
 
 - **Generate** configs through an interactive wizard (web or CLI)
-- **Share** blueprints through a private or federated marketplace
+- **Share** blueprints with your team, or publicly, through your instance's marketplace
 - **Standardize** AI behavior across projects with reusable templates
 - **Export** to any supported format with one click
 
@@ -17,7 +17,7 @@ Rules for **30 tools**: Cursor, Claude Code, GitHub Copilot, Windsurf, Zed, Aide
 
 ## Blueprint Marketplace
 
-Internal or federated marketplace for sharing AI configurations and slash commands within your organization. Browse, search, favorite, and reuse blueprints across teams.
+Internal marketplace for sharing AI configurations and slash commands within your organization. Browse, search, favorite, and reuse blueprints across teams. Search and downloads cover the blueprints of your own instance; the opt-in federation lists instances in a shared directory but does not bring other instances' blueprints into your marketplace.
 
 ## Interactive Wizard
 

@@ -88,7 +88,7 @@ All features configurable via env vars for maximum deployment flexibility:
 A decentralized blueprint sharing network across LynxPrompt instances.
 
 **Concept:**
-- Each instance opts in via `ENABLE_FEDERATION=true` (default `true`)
+- Each instance opts in via `ENABLE_FEDERATION=true` (default `false`)
 - Instances register themselves in a central registry (GitHub Gist or lightweight discovery service)
 - Each instance publishes its public blueprints via a standardized API
 - When browsing the marketplace, users see blueprints from all federated instances

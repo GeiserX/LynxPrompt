@@ -174,8 +174,8 @@ export default function FederationDocsPage() {
           <div className="rounded-lg border bg-card p-4">
             <h3 className="font-medium">Registration</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Self-hosted instances register automatically on startup. No API
-              keys or manual steps required.
+              Self-hosted instances that set ENABLE_FEDERATION=true register
+              on startup. No API keys or manual steps required.
             </p>
           </div>
           <div className="rounded-lg border bg-card p-4">
@@ -233,8 +233,9 @@ export default function FederationDocsPage() {
           <h2 className="text-2xl font-bold">Self-Hosting Configuration</h2>
         </div>
         <p className="text-muted-foreground">
-          Joining the federation requires a single environment variable. The
-          registry URL is optional and only needed if you run your own registry.
+          Federation is off by default. Joining takes a single environment
+          variable. The registry URL is optional and only needed if you run
+          your own registry.
         </p>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-sm">
@@ -254,10 +255,11 @@ export default function FederationDocsPage() {
                     ENABLE_FEDERATION
                   </code>
                 </td>
-                <td className="px-4 py-2 text-muted-foreground">true</td>
+                <td className="px-4 py-2 text-muted-foreground">false</td>
                 <td className="px-4 py-2">
                   Register this instance with the federation and enable the{" "}
-                  <code className="text-xs">/federation</code> page
+                  <code className="text-xs">/federation</code> page. Left off,
+                  the instance makes no call to the registry
                 </td>
               </tr>
               <tr>
@@ -292,8 +294,9 @@ FEDERATION_REGISTRY_URL=https://lynxprompt.yourcompany.com`}</code>
             <code className="rounded bg-muted px-1 py-0.5 text-xs">
               .well-known/lynxprompt.json
             </code>{" "}
-            endpoint. LynxPrompt serves this automatically — just make sure your
-            domain and TLS are configured correctly.
+            endpoint. LynxPrompt serves this automatically once federation is
+            on. An instance whose APP_URL is not https on a public domain name,
+            such as http://localhost:3000, does not try to register.
           </p>
         </div>
       </section>
@@ -372,8 +375,8 @@ FEDERATION_REGISTRY_URL=https://lynxprompt.yourcompany.com`}</code>
         <div>
           <h2 className="text-lg font-semibold">See the network</h2>
           <p className="mt-1 text-sm text-white/80">
-            Browse all federated LynxPrompt instances and their public
-            blueprints.
+            Browse all federated LynxPrompt instances and how many public
+            blueprints each one holds.
           </p>
         </div>
         <Link

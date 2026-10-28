@@ -9,6 +9,38 @@ const REGISTRATION_RETRY_MS = 5 * 60 * 1000; // 5 minutes
 
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
+// The registry fetches https://<domain>/.well-known/lynxprompt.json, so only a
+// public DNS name on the default https port can join. A DNS name is at most
+// 253 characters, so nothing longer reaches the regex; labels cannot contain a
+// dot, so each one is split off without backtracking.
+const MAX_DOMAIN_LENGTH = 253;
+const DOMAIN_PATTERN = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;
+
+/** True when the registry can accept this domain (no port, no IP, no localhost). */
+export function isFederationDomain(domain: string): boolean {
+  return domain.length <= MAX_DOMAIN_LENGTH && DOMAIN_PATTERN.test(domain);
+}
+
+/**
+ * Cache headers for the public federation reads (the catalog, the instance
+ * list and /.well-known/lynxprompt.json), so a CDN in front of the instance
+ * can answer repeat requests. All three show public data only.
+ */
+export const FEDERATION_CACHE_HEADERS = {
+  "Cache-Control": "public, max-age=300, stale-while-revalidate=600",
+};
+
+/** The host of APP_URL when the registry could reach it, or null. */
+function joinableDomain(): string | null {
+  try {
+    const url = new URL(APP_URL);
+    if (url.protocol !== "https:") return null;
+    return isFederationDomain(url.host) ? url.host : null;
+  } catch {
+    return null;
+  }
+}
+
 function getInstanceDomain(): string {
   return new URL(APP_URL).host;
 }
@@ -89,13 +121,20 @@ async function sendHeartbeat(): Promise<void> {
 
 export function initFederation(): void {
   if (!ENABLE_FEDERATION) {
-    console.log("[federation] Disabled via ENABLE_FEDERATION=false");
+    console.log("[federation] Disabled; set ENABLE_FEDERATION=true to join the registry");
     return;
   }
 
   if (isSelfRegistry()) {
     console.log(
       "[federation] This instance IS the registry — skipping self-registration",
+    );
+    return;
+  }
+
+  if (!joinableDomain()) {
+    console.warn(
+      `[federation] Not joining: APP_URL (${APP_URL}) must be a public https address the registry can reach`,
     );
     return;
   }

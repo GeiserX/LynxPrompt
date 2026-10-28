@@ -121,9 +121,8 @@ export default function AboutPage() {
               But a tool is only as useful as its community. LynxPrompt is fully{" "}
               <strong>open-source under AGPL v3</strong>—anyone can self-host
               their own instance. And through{" "}
-              <strong>federation</strong>, instances can discover and share
-              blueprints across a decentralized network, so the best
-              configurations spread organically.
+              an opt-in <strong>federation</strong>, instances can list
+              themselves in a shared directory so others can find them.
             </p>
             <p>
               The wizard generates tailored configurations for any
@@ -162,8 +161,8 @@ export default function AboutPage() {
                 <Users className="mx-auto h-8 w-8 text-primary" />
                 <h3 className="mt-3 font-semibold">Community</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Discover and share battle-tested blueprints across a federated
-                  network of instances
+                  Discover and share battle-tested blueprints with everyone on
+                  your instance
                 </p>
               </div>
               <div className="text-center">

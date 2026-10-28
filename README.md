@@ -21,7 +21,7 @@ LynxPrompt is a self-hosted web app that turns one set of AI coding rules into t
 - One set of rules becomes the rule file of 30 tools: `AGENTS.md`, Cursor, Claude Code, Copilot, Windsurf, Zed, Aider, Gemini CLI, Cline, Roo Code, Amazon Q, JetBrains Junie and more, plus slash commands for six of them.
 - A 12-step wizard on the web or in the terminal builds the rules from your project, stack, commands, code style and boundaries; `lynxp analyze` reads an existing repository first.
 - Blueprints carry `[[VARIABLE|default]]` placeholders, so one blueprint fits many projects.
-- Each blueprint is private, shared with a team or public; teams get their own page, and federation shares public blueprints between instances that join.
+- Each blueprint is private, shared with a team or public; teams get their own page. Federation is opt-in and only lists the instances that join in a shared directory.
 - Hierarchical `AGENTS.md` for monorepos, managed from the dashboard, the CLI and the API.
 - The `lynxp` CLI (19 commands: `wizard`, `check`, `analyze`, `convert`, `diff`, `pull`, `push`, `search` and more) and the VS Code extension work against any instance.
 - Sign in with a magic link, passkeys, GitHub or Google OAuth, or OIDC SSO; each is one environment variable.
