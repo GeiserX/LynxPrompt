@@ -31,6 +31,16 @@ const state = vi.hoisted(() => {
     delete(key: string) {
       delete state.store[key];
     }
+    has(key: string) {
+      return key in state.store;
+    }
+    // Like conf: put a key back to the default from its schema.
+    reset(...keys: string[]) {
+      const schema = state.options?.schema as Record<string, { default?: unknown }>;
+      for (const key of keys) {
+        if (schema?.[key]?.default !== undefined) state.store[key] = schema[key].default;
+      }
+    }
   };
   return state;
 });
@@ -43,16 +53,26 @@ vi.mock("../../cli/node_modules/conf/dist/source/index.js", () => ({
   default: state.FakeConf,
 }));
 
-// The path sits in a variable so the root `tsc` does not follow it into cli/,
+// logout calls the server to revoke the token; record those calls instead.
+const revokeToken = vi.hoisted(() => vi.fn(async () => true));
+vi.mock("../../cli/src/api.js", () => ({ api: { revokeToken } }));
+
+// The paths sit in variables so the root `tsc` does not follow them into cli/,
 // whose dependencies the root CI job does not install.
 const CONFIG_MODULE = "../../cli/src/config";
+const LOGOUT_MODULE = "../../cli/src/commands/logout";
+const CONFIG_COMMAND_MODULE = "../../cli/src/commands/config";
 
 type User = { id: string; email: string; name: string | null; plan: string };
 interface CliConfig {
   getToken(): string | undefined;
   setToken(token: string): void;
   getStoredCredentials(): { token: string; apiUrl: string; email?: string } | undefined;
+  getOtherLoggedInUrls(): string[];
+  clearToken(): void;
+  getApiUrl(): string;
   setApiUrl(url: string): void;
+  resetApiUrl(): string;
   getUser(): User | undefined;
   setUser(user: User): void;
   isAuthenticated(): boolean;
@@ -105,16 +125,51 @@ describe("CLI config", () => {
     expect(config.getToken()).toBeUndefined();
     expect(config.isAuthenticated()).toBe(false);
     expect(config.getUser()).toBeUndefined();
-
-    // Logout can still find it, to revoke it where it was issued.
-    expect(config.getStoredCredentials()).toEqual({
-      token: "lp_secret",
-      apiUrl: "https://lynxprompt.com",
-      email: "u@example.com",
-    });
+    expect(config.getStoredCredentials()).toBeUndefined();
+    expect(config.getOtherLoggedInUrls()).toEqual(["https://lynxprompt.com"]);
 
     config.setApiUrl("https://lynxprompt.com/");
     expect(config.getToken()).toBe("lp_secret");
+  });
+
+  it("keeps one login per server, so switching back and forth needs no new login", async () => {
+    const config = await loadConfig();
+    config.setToken("lp_hosted");
+    config.setUser({ id: "u1", email: "me@hosted.test", name: null, plan: "FREE" });
+
+    config.setApiUrl("https://prompts.example.org");
+    config.setToken("lp_self");
+    config.setUser({ id: "u2", email: "me@example.org", name: null, plan: "TEAMS" });
+    expect(config.getToken()).toBe("lp_self");
+    expect(config.getUser()?.email).toBe("me@example.org");
+
+    config.setApiUrl("https://lynxprompt.com");
+    expect(config.getToken()).toBe("lp_hosted");
+    expect(config.getUser()?.email).toBe("me@hosted.test");
+
+    // Forgetting one login leaves the other in place.
+    config.clearToken();
+    expect(config.getToken()).toBeUndefined();
+    config.setApiUrl("https://prompts.example.org/");
+    expect(config.getToken()).toBe("lp_self");
+  });
+
+  it("does not attach an account to a server with no saved login", async () => {
+    const config = await loadConfig();
+    process.env.LYNXPROMPT_TOKEN = "lp_env";
+    config.setUser({ id: "u1", email: "u@example.com", name: null, plan: "FREE" });
+    delete process.env.LYNXPROMPT_TOKEN;
+    expect(state.store).toEqual({ apiUrl: "https://lynxprompt.com" });
+    expect(config.getUser()).toBeUndefined();
+  });
+
+  it("reset-url goes back to the hosted instance and its saved login", async () => {
+    const config = await loadConfig();
+    config.setToken("lp_hosted");
+    config.setApiUrl("https://prompts.example.org");
+    expect(config.resetApiUrl()).toBe("https://lynxprompt.com");
+    expect(config.getApiUrl()).toBe("https://lynxprompt.com");
+    expect(config.getToken()).toBe("lp_hosted");
   });
 
   it("does not send the stored token to a server set through LYNXPROMPT_API_URL", async () => {
@@ -132,10 +187,89 @@ describe("CLI config", () => {
     expect(config.getToken()).toBeUndefined();
   });
 
+  it("moves a single login saved by an older version into the per-server map", async () => {
+    const user = { id: "u1", email: "u@example.org", name: null, plan: "FREE" };
+    state.store = {
+      apiUrl: "https://other.example.com",
+      token: "lp_prev",
+      tokenApiUrl: "https://prompts.example.org",
+      user,
+    };
+    const config = await loadConfig();
+    expect(state.store).toEqual({
+      apiUrl: "https://other.example.com",
+      tokens: { "https://prompts.example.org": { token: "lp_prev", user } },
+    });
+    expect(config.getToken()).toBeUndefined();
+    config.setApiUrl("https://prompts.example.org");
+    expect(config.getToken()).toBe("lp_prev");
+    expect(config.getUser()).toEqual(user);
+  });
+
   it("keeps LYNXPROMPT_TOKEN working for any server", async () => {
     const config = await loadConfig();
     process.env.LYNXPROMPT_TOKEN = "lp_env";
     config.setApiUrl("https://other.example.com");
     expect(config.getToken()).toBe("lp_env");
+  });
+});
+
+describe("lynxp logout and lynxp config", () => {
+  let dir: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), "lynxp-logout-"));
+    state.path = join(dir, "config.json");
+    state.store = {};
+    state.options = undefined;
+    delete process.env.LYNXPROMPT_TOKEN;
+    delete process.env.LYNXPROMPT_API_URL;
+    revokeToken.mockClear();
+    vi.spyOn(console, "log").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("revokes and forgets only the current server's token", async () => {
+    const config = await loadConfig();
+    config.setToken("lp_hosted");
+    config.setApiUrl("https://prompts.example.org");
+    config.setToken("lp_self");
+
+    const { logoutCommand } = await import(/* @vite-ignore */ LOGOUT_MODULE);
+    await logoutCommand();
+
+    expect(revokeToken).toHaveBeenCalledTimes(1);
+    expect(revokeToken).toHaveBeenCalledWith("https://prompts.example.org", "lp_self");
+    expect(config.getToken()).toBeUndefined();
+    expect(config.getOtherLoggedInUrls()).toEqual(["https://lynxprompt.com"]);
+    config.setApiUrl("https://lynxprompt.com");
+    expect(config.getToken()).toBe("lp_hosted");
+  });
+
+  it("leaves another server's login alone when the current server has none", async () => {
+    const config = await loadConfig();
+    config.setToken("lp_hosted");
+    config.setApiUrl("https://prompts.example.org");
+
+    const { logoutCommand } = await import(/* @vite-ignore */ LOGOUT_MODULE);
+    await logoutCommand();
+
+    expect(revokeToken).not.toHaveBeenCalled();
+    config.setApiUrl("https://lynxprompt.com");
+    expect(config.getToken()).toBe("lp_hosted");
+  });
+
+  it("reset-url points the CLI back at the hosted instance", async () => {
+    const config = await loadConfig();
+    config.setApiUrl("https://prompts.example.org");
+
+    const { configCommand } = await import(/* @vite-ignore */ CONFIG_COMMAND_MODULE);
+    await configCommand("reset-url");
+
+    expect(config.getApiUrl()).toBe("https://lynxprompt.com");
   });
 });

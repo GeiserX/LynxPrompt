@@ -1,13 +1,19 @@
 import chalk from "chalk";
 import { api } from "../api.js";
-import { clearToken, getStoredCredentials } from "../config.js";
+import {
+  clearToken,
+  getApiUrl,
+  getOtherLoggedInUrls,
+  getStoredCredentials,
+} from "../config.js";
 
 export async function logoutCommand(): Promise<void> {
   // Only the token saved by `lynxp login` is ours to revoke; a LYNXPROMPT_TOKEN
   // from the environment is left alone.
   const stored = getStoredCredentials();
   if (!stored) {
-    console.log(chalk.yellow("You are not currently logged in."));
+    console.log(chalk.yellow(`You are not logged in at ${getApiUrl()}.`));
+    printOtherLogins();
     return;
   }
 
@@ -24,4 +30,13 @@ export async function logoutCommand(): Promise<void> {
       )
     );
   }
+  printOtherLogins();
+}
+
+// Each server keeps its own login; say which ones this logout did not touch.
+function printOtherLogins(): void {
+  const others = getOtherLoggedInUrls();
+  if (others.length === 0) return;
+  console.log(chalk.gray(`  Still logged in at: ${others.join(", ")}`));
+  console.log(chalk.gray("  Switch with 'lynxp config set-url <url>' and run 'lynxp logout' there."));
 }
