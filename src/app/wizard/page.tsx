@@ -1683,7 +1683,7 @@ function WizardPageContent() {
               <input type="checkbox" className="mt-1" checked={zipPointers} onChange={(e) => setZipPointers(e.target.checked)} />
               <span>
                 One AGENTS.md holds the rules: tools that read it get no copy of their own, and CLAUDE.md and
-                GEMINI.md import it (<code>@AGENTS.md</code>). Copilot, Trae, Tabnine and Firebase Studio still
+                GEMINI.md import it (<code>@AGENTS.md</code>). Copilot, Trae and Tabnine still
                 get a full copy. Untick to give every tool its own full file.
               </span>
             </label>

@@ -50,11 +50,9 @@ const BLUEPRINT_TYPES = [
   { value: "ZED_INSTRUCTIONS", label: "Zed (.rules)", icon: "⚡", isCommand: false },
   { value: "GEMINI_MD", label: "Gemini CLI (GEMINI.md)", icon: "💎", isCommand: false },
   { value: "TRAE_RULES", label: "Trae (.trae/rules/)", icon: "🎯", isCommand: false },
-  { value: "IDX_CONFIG", label: "Firebase Studio (.idx/airules.md) — Sunsetting", icon: "🔷", isCommand: false },
   // Editor Extensions
   { value: "CLINE_RULES", label: "Cline Rules (.clinerules/)", icon: "💡", isCommand: false },
-  { value: "ROO_RULES", label: "Roo Code / Zoo Code (.roo/rules/)", icon: "🦘", isCommand: false },
-  { value: "AMAZONQ_RULES", label: "Amazon Q (.amazonq/rules/)", icon: "🔶", isCommand: false },
+  { value: "ROO_RULES", label: "Zoo Code (.roo/rules/)", icon: "🦘", isCommand: false },
   { value: "AUGMENT_RULES", label: "Augment (.augment/rules/)", icon: "🔧", isCommand: false },
   { value: "KILOCODE_RULES", label: "Kilo Code (AGENTS.md)", icon: "💻", isCommand: false },
   { value: "JUNIE_GUIDELINES", label: "Junie (AGENTS.md)", icon: "🎀", isCommand: false },

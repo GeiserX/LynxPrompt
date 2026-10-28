@@ -584,15 +584,6 @@ describe("generateAllFiles", () => {
     expect(files[0].fileName).toBe(PLATFORM_FILES["goose"]);
   });
 
-  it("generates amazonq file", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "amazonq" },
-      baseUser
-    );
-    expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe(PLATFORM_FILES["amazonq"]);
-  });
-
   it("generates roocode file", () => {
     const files = generateAllFiles(
       { ...baseConfig, platform: "roocode" },
@@ -627,15 +618,6 @@ describe("generateAllFiles", () => {
     );
     expect(files).toHaveLength(1);
     expect(files[0].fileName).toBe(PLATFORM_FILES["trae"]);
-  });
-
-  it("generates firebase file", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "firebase" },
-      baseUser
-    );
-    expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe(PLATFORM_FILES["firebase"]);
   });
 
   it("generates augment file", () => {

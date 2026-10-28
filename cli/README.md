@@ -245,7 +245,7 @@ MCP configs are read from and written to each tool's own file:
 | JetBrains Junie | `.junie/mcp/mcp.json` | `mcpServers` |
 | Factory | `.factory/mcp.json` | `mcpServers` |
 | Trae | `.trae/mcp.json` | `mcpServers` |
-| Roo Code / Zoo Code | `.roo/mcp.json` | `mcpServers` |
+| Zoo Code | `.roo/mcp.json` | `mcpServers` |
 | Kimi Code | `.kimi-code/mcp.json` | `mcpServers` |
 | Pi | `.pi/mcp.json` | `mcpServers` |
 | Warp | `.warp/.mcp.json` | `mcpServers` |

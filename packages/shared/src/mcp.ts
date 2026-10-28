@@ -47,7 +47,7 @@ const whole = (id: string, name: string, file: string, note?: string): McpConfig
  * written as the first one.
  */
 export const MCP_CONFIGS: readonly McpConfigTarget[] = [
-  whole("claude-mcp", "Claude Code", ".mcp.json", "Also read by the GitHub Copilot CLI and VS Code"),
+  whole("claude-mcp", "Claude Code", ".mcp.json", "Also read by the GitHub Copilot CLI, VS Code and Grok Build"),
   whole("cursor-mcp", "Cursor", ".cursor/mcp.json"),
   {
     id: "vscode-mcp", name: "VS Code (Copilot)", file: ".vscode/mcp.json", key: "servers", kind: "whole", shape: "vscode",
@@ -63,7 +63,7 @@ export const MCP_CONFIGS: readonly McpConfigTarget[] = [
   whole("junie-mcp", "JetBrains Junie", ".junie/mcp/mcp.json"),
   whole("factory-mcp", "Factory (Droid)", ".factory/mcp.json"),
   whole("trae-mcp", "Trae", ".trae/mcp.json", "Project MCP must be turned on in Trae"),
-  whole("roo-mcp", "Roo Code / Zoo Code", ".roo/mcp.json"),
+  whole("roo-mcp", "Zoo Code", ".roo/mcp.json"),
   whole("kimi-mcp", "Kimi Code", ".kimi-code/mcp.json"),
   whole("pi-mcp", "Pi", ".pi/mcp.json"),
   whole("warp-mcp", "Warp", ".warp/.mcp.json"),

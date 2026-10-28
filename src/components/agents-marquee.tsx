@@ -28,11 +28,6 @@ const AGENTS_ROW_1 = [
     parent: "Codeium",
   },
   {
-    name: "RooCode",
-    href: "https://roocode.com",
-    logo: "/logos/agents/roocode.svg",
-  },
-  {
     name: "Amp",
     href: "https://ampcode.com",
     logo: "/logos/agents/amp.svg",

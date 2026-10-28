@@ -12,7 +12,7 @@ LynxPrompt is a web platform and CLI for generating and sharing AI IDE configura
 
 ## Supported Platforms
 
-30+ AI coding assistants including: Cursor, Claude Code, GitHub Copilot, Windsurf, Zed, Aider, Antigravity (Gemini), Cline, Roo Code, Continue.dev, Amazon Q, and more.
+26 coding agents including: Codex, Cursor, Claude Code, GitHub Copilot, Devin Desktop (formerly Windsurf), Zed, Aider, Antigravity, Cline, Zoo Code, Kiro, Grok Build, Pi, and more.
 
 ## Documentation
 

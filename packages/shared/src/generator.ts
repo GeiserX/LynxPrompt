@@ -2038,6 +2038,8 @@ export function generateAllFiles(
     case "warp":
     case "opencode":
     case "openhands":
+    case "grok":
+    case "pi":
       content = generateAgentsMd(config, user);
       break;
     case "cursor":
@@ -2063,10 +2065,8 @@ export function generateAllFiles(
       break;
     case "windsurf":
     case "cline":
-    case "amazonq":
     case "roocode":
     case "trae":
-    case "firebase":
     case "kiro":
     case "augment":
     case "tabnine":

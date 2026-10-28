@@ -176,7 +176,9 @@ const CONFIG_PATTERNS: ConfigPattern[] = [
   { match: (p) => inFolder(p, ".copilot/prompts/") && p.endsWith(".md"), type: "COPILOT_PROMPT", label: "Copilot Prompt" },
   { match: (p) => inFolder(p, ".windsurf/workflows/") && p.endsWith(".md"), type: "WINDSURF_WORKFLOW", label: "Windsurf Workflow" },
   { match: (p) => basename(p) === "CONVENTIONS.md", type: "AIDER_MD", label: "Aider Conventions" },
-  { match: (p) => inFolder(p, ".idx/") && p.endsWith(".mdc"), type: "IDX_CONFIG", label: "Firebase Studio" },
+  // Files of retired platforms, kept under their stored types
+  { match: (p) => inFolder(p, ".idx/") && /\.mdc?$/.test(p), type: "IDX_CONFIG", label: "Firebase Studio (retired)" },
+  { match: (p) => inFolder(p, ".amazonq/rules/") && /\.mdc?$/.test(p), type: "AMAZONQ_RULES", label: "Amazon Q (retired)" },
   { match: (p) => atPath(p, ".zed/instructions.md"), type: "ZED_INSTRUCTIONS", label: "Zed" },
   { match: (p) => basename(p) === "AIDER.md", type: "AIDER_MD", label: "AIDER.md" },
   { match: (p) => basename(p) === ".cursorrules", type: "CURSORRULES", label: "Cursor Rules (legacy)" },

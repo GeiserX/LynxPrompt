@@ -22,9 +22,7 @@ export function blueprintTypeForPlatform(platform: string | undefined): string {
 const DIRECTORY_PLATFORM_FILES: Record<string, string> = {
   cursor: ".cursor/rules/project.mdc",
   trae: ".trae/rules/project.mdc",
-  firebase: ".idx/rules/project.mdc",
   roocode: ".roo/rules/project.mdc",
-  amazonq: ".amazonq/rules/project.md",
   augment: ".augment/rules/project.mdc",
   kilocode: ".kilocode/rules/project.mdc",
   kiro: ".kiro/steering/project.mdc",
