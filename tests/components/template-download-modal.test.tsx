@@ -238,6 +238,25 @@ describe("TemplateDownloadModal: Agent Skills and MCP servers", () => {
     expect(content).toContain('[mcp_servers.docs]\nurl = "https://docs.example/mcp"');
   });
 
+  it("reads a Gemini blueprint's bare url as SSE, as Gemini CLI does", async () => {
+    const gemini = JSON.stringify({ mcpServers: { docs: { url: "https://docs.example/sse" } } });
+    const template = { name: "Gemini MCP", content: gemini, targetPlatform: "MCP_CONFIG", repositoryPath: ".gemini/settings.json" };
+    const { unmount } = render(<TemplateDownloadModal isOpen onClose={() => {}} template={template} />);
+    fireEvent.click(platformButton("Gemini CLI")!);
+    fireEvent.click(screen.getByRole("button", { name: /Download/ }));
+    expect(JSON.parse((await lastDownload()).content)).toEqual({ mcpServers: { docs: { url: "https://docs.example/sse" } } });
+    unmount();
+    blobs = [];
+    names = [];
+
+    render(<TemplateDownloadModal isOpen onClose={() => {}} template={template} />);
+    fireEvent.click(platformButton("Claude Code")!);
+    fireEvent.click(screen.getByRole("button", { name: /Download/ }));
+    expect(JSON.parse((await lastDownload()).content)).toEqual({
+      mcpServers: { docs: { type: "sse", url: "https://docs.example/sse" } },
+    });
+  });
+
   it("downloads a skill as its SKILL.md, unchanged, with no rule platforms offered", async () => {
     const skill = "---\nname: release-notes\ndescription: Write release notes\n---\n\nRead the changelog.\n";
     render(

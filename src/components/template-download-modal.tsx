@@ -60,6 +60,8 @@ interface TemplateDownloadModalProps {
     sensitiveFields?: Record<string, SensitiveField>;
     targetPlatform?: string;
     compatibleWith?: string[];
+    /** The file the blueprint was pushed from; says which tool's MCP format it is in */
+    repositoryPath?: string;
   };
   targetPlatform?: string; // Override the default platform
   /** Whether the viewer owns the blueprint (they can edit it in place) */
@@ -104,10 +106,11 @@ const commandExportTargets = COMMANDS.map((c) => ({
 const DEFAULT_PLATFORM_COUNT = 6;
 
 // An MCP config rewritten for the target tool; content that is not a valid
-// config is offered as it is rather than failing the download
-function mcpContent(content: string, targetId: string): string {
+// config is offered as it is rather than failing the download. The source file
+// matters for a bare "url": Gemini CLI and Qwen Code mean SSE by it.
+function mcpContent(content: string, targetId: string, sourceFile?: string): string {
   try {
-    return convertMcpConfig(content, targetId);
+    return convertMcpConfig(content, targetId, sourceFile);
   } catch {
     return content;
   }
@@ -340,7 +343,7 @@ export function TemplateDownloadModal({
   const filledContent = replaceVariables(template.content || "", values);
   // Shape it for the chosen platform: its frontmatter (Cursor, Kiro, Augment) or none
   const processedContent = isMcp
-    ? mcpContent(filledContent, mcpTarget.id)
+    ? mcpContent(filledContent, mcpTarget.id, template.repositoryPath)
     : isCommand || isStructured || isSkill
       ? filledContent
       : adaptRulesContent(filledContent, storedPlatform, selectedPlatform, template.name);

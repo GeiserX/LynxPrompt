@@ -127,6 +127,25 @@ describe("getTemplateById - database mode bp_/usr_ templates", () => {
     expect(template!.platforms).toContain("cursor");
   });
 
+  it("returns the path a CLI-pushed blueprint came from, so the download knows its format", async () => {
+    mockGetServerSession.mockResolvedValue(null);
+    mockUserTemplateFindFirst.mockResolvedValue({
+      id: "mcp-1",
+      name: "Gemini MCP",
+      content: '{"mcpServers":{"docs":{"url":"https://docs.example/sse"}}}',
+      type: "MCP_CONFIG",
+      tags: [],
+      userId: "u-1",
+      user: { name: "Author", id: "u-1" },
+      isPublic: true,
+      visibility: "PUBLIC",
+      teamId: null,
+      repositoryPath: ".gemini/settings.json",
+    });
+
+    expect((await getTemplateById("bp_mcp-1"))!.repositoryPath).toBe(".gemini/settings.json");
+  });
+
   it("fetches user template with usr_ (legacy) prefix", async () => {
     mockGetServerSession.mockResolvedValue(null);
     mockUserTemplateFindFirst.mockResolvedValue({
