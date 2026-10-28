@@ -77,7 +77,7 @@ vi.mock("@/lib/db-users", () => ({
 }));
 
 vi.mock("@/lib/api-auth", () => ({
-  authenticateRequest: vi.fn(async () => ({ user: { id: "user_1" } })),
+  requireUser: vi.fn(async () => ({ source: "session", user: { id: "user_1" }, passkeyVerified: true })),
   // A browser session, which may do everything a write token may.
   canPerform: vi.fn(() => true),
 }));

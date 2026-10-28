@@ -10,6 +10,11 @@ const mockCategoryFindMany = vi.fn();
 const mockUserFindMany = vi.fn();
 const mockUserFindUnique = vi.fn();
 
+// Passkeys are not under test here: every session counts as verified.
+vi.mock("@/lib/passkey-session", () => ({
+  getPasskeyStatus: vi.fn().mockResolvedValue({ required: false, verified: true }),
+}));
+
 vi.mock("next-auth", () => ({
   getServerSession: (...args: unknown[]) => mockGetServerSession(...args),
 }));

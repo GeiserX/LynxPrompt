@@ -7,6 +7,11 @@ const mockSystemTemplateFindMany = vi.fn();
 const mockSystemTemplateFindUnique = vi.fn();
 const mockFavoriteFindMany = vi.fn();
 
+// Passkeys are not under test here: every session counts as verified.
+vi.mock("@/lib/passkey-session", () => ({
+  getPasskeyStatus: vi.fn().mockResolvedValue({ required: false, verified: true }),
+}));
+
 vi.mock("next-auth", () => ({
   getServerSession: vi.fn().mockResolvedValue({ user: { id: "user_1" } }),
 }));
@@ -66,7 +71,7 @@ describe("GET /api/user/dashboard favorites", () => {
 
   it("loads favorites with one query per template kind, keeping their order", async () => {
     const { GET } = await import("@/app/api/user/dashboard/route");
-    const res = await GET();
+    const res = await GET(new Request("https://lynxprompt.com/api/user/dashboard"));
     expect(res.status).toBe(200);
     const data = await res.json();
 
@@ -78,7 +83,7 @@ describe("GET /api/user/dashboard favorites", () => {
 
   it("does not cap the team member list it filters team blueprints by", async () => {
     const { GET } = await import("@/app/api/user/dashboard/route");
-    await GET();
+    await GET(new Request("https://lynxprompt.com/api/user/dashboard"));
     const include = mockTeamMemberFindMany.mock.calls[0][0].include;
     expect(include.team.include.members).not.toHaveProperty("take");
   });

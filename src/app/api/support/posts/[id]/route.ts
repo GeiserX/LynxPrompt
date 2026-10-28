@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prismaSupport } from "@/lib/db-support";
 import { supportForumDisabled } from "@/lib/support-guard";
 import { prismaUsers } from "@/lib/db-users";
+import { requireSession } from "@/lib/api-auth";
 
 // Public endpoint - no auth required for reading
 export async function GET(
@@ -127,10 +128,9 @@ export async function PATCH(
   if (disabled) return disabled;
 
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     const { id } = await params;
     const body = await request.json();
@@ -201,10 +201,9 @@ export async function DELETE(
   if (disabled) return disabled;
 
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     const { id } = await params;
 

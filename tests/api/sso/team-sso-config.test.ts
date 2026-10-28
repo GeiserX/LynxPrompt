@@ -9,6 +9,11 @@ const configUpsert = vi.fn();
 const configUpdate = vi.fn();
 const hasRecord = vi.fn();
 
+// Passkeys are not under test here: every session counts as verified.
+vi.mock("@/lib/passkey-session", () => ({
+  getPasskeyStatus: vi.fn().mockResolvedValue({ required: false, verified: true }),
+}));
+
 vi.mock("next-auth", () => ({
   getServerSession: vi.fn(async () => ({ user: { id: "admin-1" } })),
 }));

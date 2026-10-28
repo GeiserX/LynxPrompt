@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { maskEmail } from "@/lib/mask-email";
+import { requireSession } from "@/lib/api-auth";
 
 /**
  * POST /api/teams/invite/accept - Accept a team invitation
@@ -10,8 +9,10 @@ import { maskEmail } from "@/lib/mask-email";
  */
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id || !session.user.email) {
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
+    if (!session.user.email) {
       return NextResponse.json(
         { error: "You must be signed in to accept an invitation" },
         { status: 401 }

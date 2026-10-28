@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { detectRemoteRepo, detectRepoHost } from "@/lib/detect-repo";
+import { requireSession } from "@/lib/api-auth";
 
 /**
  * POST /api/wizard/detect-repo
@@ -13,13 +12,9 @@ import { detectRemoteRepo, detectRepoHost } from "@/lib/detect-repo";
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
-    }
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     // Parse request body
     const body = await request.json();
