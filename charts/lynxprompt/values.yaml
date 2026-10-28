@@ -4,7 +4,7 @@ fullnameOverride: ""
 image:
   repository: drumsergio/lynxprompt
   pullPolicy: IfNotPresent
-  tag: "2.1.45"
+  tag: "2.1.49"
 
 imagePullSecrets: []
 
