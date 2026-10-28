@@ -46,6 +46,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    # Every other setting in docs/configuration.md (ENABLE_AI, ENABLE_SSO,
+    # SSO_ENCRYPTION_KEY, TRUSTED_PROXY...) reaches the app from .env through
+    # this line; the environment block below wins where both set a name.
+    env_file:
+      - path: .env
+        required: false
     environment:
       # One PostgreSQL server, one database per Prisma schema: prisma db push
       # drops the tables it does not know, so two schemas in one database would
