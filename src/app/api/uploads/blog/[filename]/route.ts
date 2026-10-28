@@ -3,6 +3,9 @@ import { readFile, stat } from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
 
+// The upload directory is a runtime volume outside the build. The
+// turbopackIgnore comments stop Next from tracing the whole project into the
+// standalone output because of these dynamic paths.
 // Upload directory - mounted volume in production, local in dev
 const UPLOAD_DIR = process.env.UPLOAD_DIR || "/data/uploads/blog";
 
@@ -28,18 +31,18 @@ export async function GET(
 
     // Security: Sanitize filename to prevent path traversal
     const sanitizedFilename = path.basename(filename);
-    const filepath = path.join(UPLOAD_DIR, sanitizedFilename);
+    const filepath = path.join(/*turbopackIgnore: true*/ UPLOAD_DIR, sanitizedFilename);
 
     // Check if file exists
-    if (!existsSync(filepath)) {
+    if (!existsSync(/*turbopackIgnore: true*/ filepath)) {
       return NextResponse.json({ error: "File not found" }, { status: 404 });
     }
 
     // Get file stats for caching
-    const stats = await stat(filepath);
+    const stats = await stat(/*turbopackIgnore: true*/ filepath);
     
     // Read file
-    const fileBuffer = await readFile(filepath);
+    const fileBuffer = await readFile(/*turbopackIgnore: true*/ filepath);
 
     // Determine content type
     const ext = path.extname(sanitizedFilename).toLowerCase();

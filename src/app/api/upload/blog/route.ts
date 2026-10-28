@@ -7,6 +7,9 @@ import { existsSync } from "fs";
 import path from "path";
 import { validateMagicBytes } from "@/lib/file-validation";
 
+// The upload directory is a runtime volume outside the build. The
+// turbopackIgnore comments stop Next from tracing the whole project into the
+// standalone output because of these dynamic paths.
 // Upload directory - mounted volume in production, local in dev
 const UPLOAD_DIR = process.env.UPLOAD_DIR || "/data/uploads/blog";
 
@@ -64,8 +67,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Ensure upload directory exists
-    if (!existsSync(UPLOAD_DIR)) {
-      await mkdir(UPLOAD_DIR, { recursive: true });
+    if (!existsSync(/*turbopackIgnore: true*/ UPLOAD_DIR)) {
+      await mkdir(/*turbopackIgnore: true*/ UPLOAD_DIR, { recursive: true });
     }
 
     // Validate magic bytes match declared MIME type
@@ -80,10 +83,10 @@ export async function POST(request: NextRequest) {
 
     // Generate unique filename and save
     const filename = generateFilename(file.name);
-    const filepath = path.join(UPLOAD_DIR, filename);
+    const filepath = path.join(/*turbopackIgnore: true*/ UPLOAD_DIR, filename);
 
     // Save file (buffer already created during magic bytes validation)
-    await writeFile(filepath, buffer);
+    await writeFile(/*turbopackIgnore: true*/ filepath, buffer);
 
     // Return the URL path (will be served by /api/uploads/blog/[filename])
     const url = `/api/uploads/blog/${filename}`;

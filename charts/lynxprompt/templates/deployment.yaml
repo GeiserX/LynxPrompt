@@ -10,6 +10,10 @@ metadata:
     app.kubernetes.io/component: web
 spec:
   replicas: {{ .Values.replicaCount }}
+  {{- with .Values.strategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "lynxprompt.webSelectorLabels" . | nindent 6 }}
@@ -175,12 +179,13 @@ spec:
             - name: NEXT_PUBLIC_TURNSTILE_SITE_KEY
               value: {{ .Values.turnstile.siteKey | quote }}
             {{- end }}
-            {{- if .Values.turnstile.secretKey }}
+            {{- if or .Values.turnstile.secretKey .Values.auth.existingSecret }}
             - name: TURNSTILE_SECRET_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ include "lynxprompt.secretName" . }}
                   key: turnstile-secret-key
+                  optional: true
             {{- end }}
             # --- SMTP (optional) ---
             {{- if .Values.smtp.host }}
@@ -195,6 +200,8 @@ spec:
                 secretKeyRef:
                   name: {{ include "lynxprompt.secretName" . }}
                   key: smtp-password
+                  # A relay without AUTH needs no password.
+                  optional: true
             - name: SMTP_FROM
               value: {{ .Values.smtp.from | quote }}
             - name: SMTP_FROM_NAME
@@ -209,12 +216,13 @@ spec:
               value: {{ .Values.analytics.websiteId | quote }}
             {{- end }}
             # --- AI (optional) ---
-            {{- if .Values.ai.anthropicApiKey }}
+            {{- if or .Values.ai.anthropicApiKey .Values.auth.existingSecret }}
             - name: ANTHROPIC_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ include "lynxprompt.secretName" . }}
                   key: anthropic-api-key
+                  optional: true
             {{- if .Values.ai.model }}
             - name: AI_MODEL
               value: {{ .Values.ai.model | quote }}
