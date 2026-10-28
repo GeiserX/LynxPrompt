@@ -5,7 +5,7 @@ import { prismaUsers } from "@/lib/db-users";
 import { prismaApp } from "@/lib/db-app";
 import { hashIP } from "@/lib/ip-hash";
 import { getClientIP } from "@/lib/client-ip";
-import { canReadTemplate } from "@/lib/blueprint-access";
+import { BLUEPRINT_ACCESS_SELECT, canReadBlueprint, canReadTemplate } from "@/lib/blueprint-access";
 import { COMMANDS, PLATFORMS } from "@/lib/platforms";
 
 // Every platform id from platforms.ts, plus "command-<platform>" for slash
@@ -110,29 +110,21 @@ export async function GET(
     : rawId;
 
   try {
-    // For user blueprints, verify the requester owns it or it's public
+    // For user blueprints, the stats follow the same read rule as the blueprint
     if (templateType === "user") {
       const template = await prismaUsers.userTemplate.findUnique({
         where: { id: dbId },
-        select: { visibility: true, userId: true, teamId: true },
+        select: BLUEPRINT_ACCESS_SELECT,
       });
       if (!template) {
         return NextResponse.json({ total: 0, byPlatform: {} });
       }
-      if (template.visibility !== "PUBLIC") {
+      if (!template.isPublic) {
         const session = await getServerSession(authOptions);
         if (!session?.user?.id) {
           return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
-        const isOwner = template.userId === session.user.id;
-        let isTeamMember = false;
-        if (template.teamId) {
-          const membership = await prismaUsers.teamMember.findUnique({
-            where: { teamId_userId: { teamId: template.teamId, userId: session.user.id } },
-          });
-          isTeamMember = !!membership;
-        }
-        if (!isOwner && !isTeamMember) {
+        if (!(await canReadBlueprint(template, session.user.id))) {
           return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
       }

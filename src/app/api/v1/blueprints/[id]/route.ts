@@ -11,8 +11,8 @@ import {
   fromBlueprintApiId,
   toHierarchyApiId,
 } from "@/lib/api-tokens";
+import { canReadBlueprint } from "@/lib/blueprint-access";
 import {
-  canReadBlueprint,
   checkBlueprintContent,
   normalizeBlueprintType,
   resolveBlueprintTeamId,
@@ -108,7 +108,7 @@ export async function GET(
     }
 
     // Public blueprints, your own, and your teams' blueprints are readable
-    if (!(await canReadBlueprint(tokenData.userId, blueprint))) {
+    if (!(await canReadBlueprint(blueprint, tokenData.userId))) {
       return NextResponse.json(
         { error: "Forbidden - you don't have access to this blueprint" },
         { status: 403 }
@@ -347,6 +347,10 @@ export async function PUT(
           return NextResponse.json({ error: team.error }, { status: team.status });
         }
         updateData.teamId = team.teamId;
+      }
+      // A private blueprint keeps no team, same as one created private
+      if (normalizedVisibility === "PRIVATE") {
+        updateData.teamId = null;
       }
     }
 
