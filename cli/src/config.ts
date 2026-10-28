@@ -5,7 +5,6 @@ interface User {
   id: string;
   email: string;
   name: string | null;
-  plan: string;
 }
 
 // One login per server. A token is only ever sent to the server that issued it,
@@ -46,7 +45,6 @@ const config = new Conf<ConfigSchema>({
               id: { type: "string" },
               email: { type: "string" },
               name: { type: ["string", "null"] },
-              plan: { type: "string" },
             },
           },
         },

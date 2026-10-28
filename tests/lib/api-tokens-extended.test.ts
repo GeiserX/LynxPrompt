@@ -87,7 +87,8 @@ describe("validateApiToken", () => {
     expect(result!.userId).toBe("user-1");
     expect(result!.tokenId).toBe("tok-1");
     expect(result!.role).toBe("FULL");
-    expect(result!.user.subscriptionPlan).toBe("TEAMS");
+    expect(result!.user.email).toBe("test@test.com");
+    expect(mockFindUnique.mock.lastCall![0].include.user.select).not.toHaveProperty("subscriptionPlan");
   });
 
   it("updates lastUsedAt for valid token (fire and forget)", async () => {

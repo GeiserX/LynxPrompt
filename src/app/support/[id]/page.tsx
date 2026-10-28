@@ -50,7 +50,6 @@ interface Comment {
   userName: string | null;
   userImage: string | null;
   userRole: string;
-  userPlan: string;
   isOfficial: boolean;
   createdAt: string;
   replies: Comment[];
@@ -68,7 +67,6 @@ interface Post {
   updatedAt: string;
   userName: string | null;
   userImage: string | null;
-  userPlan: string;
   userId: string;
   hasVoted: boolean;
   category: Category;
@@ -89,10 +87,6 @@ const STATUS_BADGES: Record<string, { label: string; className: string; icon: Re
   COMPLETED: { label: "Completed", className: "bg-green-500/10 text-green-500", icon: <CheckCircle2 className="h-4 w-4" /> },
   CLOSED: { label: "Closed", className: "bg-gray-500/10 text-gray-500", icon: <AlertCircle className="h-4 w-4" /> },
   DUPLICATE: { label: "Duplicate", className: "bg-purple-500/10 text-purple-500", icon: <AlertCircle className="h-4 w-4" /> },
-};
-
-const PLAN_BADGES: Record<string, { label: string; className: string }> = {
-  FREE: { label: "Free", className: "bg-gray-500/20 text-gray-600 dark:text-gray-400" },
 };
 
 function PostDetailPageContent({
@@ -478,13 +472,6 @@ function PostDetailPageContent({
                         </div>
                       )}
                       <span className="font-medium">{post.userName || "Anonymous"}</span>
-                      {PLAN_BADGES[post.userPlan] && (
-                        <span
-                          className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${PLAN_BADGES[post.userPlan].className}`}
-                        >
-                          {PLAN_BADGES[post.userPlan].label}
-                        </span>
-                      )}
                     </Link>
                     <span className="text-muted-foreground">•</span>
                     <span className="flex items-center gap-1 text-muted-foreground">
@@ -698,13 +685,6 @@ function CommentCard({ comment }: { comment: Comment }) {
               <span className="flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
                 <Shield className="h-3 w-3" />
                 Staff
-              </span>
-            )}
-            {PLAN_BADGES[comment.userPlan] && !isStaff && (
-              <span
-                className={`rounded px-1.5 py-0.5 text-xs font-bold ${PLAN_BADGES[comment.userPlan].className}`}
-              >
-                {PLAN_BADGES[comment.userPlan].label}
               </span>
             )}
             <span className="text-xs text-muted-foreground">

@@ -162,7 +162,7 @@ export default function ShareBlueprintPage() {
     }
   }, []);
 
-  // Fetch user subscription plan and team info
+  // Fetch the user's teams
   useEffect(() => {
     const fetchPlanAndTeam = async () => {
       try {
@@ -186,7 +186,7 @@ export default function ShareBlueprintPage() {
           }
         }
       } catch {
-        // Default to FREE if fetch fails
+        // No teams if the fetch fails
       } finally {
         setLoadingPlan(false);
       }

@@ -57,7 +57,7 @@ export async function loginCommand(): Promise<void> {
           setToken(result.token);
           setUser(result.user);
 
-          // Show cool welcome message with plan info
+          // Show the welcome message
           displayWelcome(result.user);
           return;
         }
@@ -131,7 +131,6 @@ interface UserInfo {
   id: string;
   email: string;
   name: string | null;
-  plan: string;
 }
 
 function displayWelcome(user: UserInfo): void {

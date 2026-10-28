@@ -15,7 +15,6 @@ import {
 import { getGravatarUrl } from "@/lib/utils";
 
 interface BillingStatus {
-  plan: string;
   isTeamsUser?: boolean;
   team?: {
     id: string;

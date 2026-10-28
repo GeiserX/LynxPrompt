@@ -191,7 +191,7 @@ describe("authOptions.callbacks.session", () => {
     expect(result.user.persona).toBe("developer");
     expect(result.user.skillLevel).toBe("advanced");
     expect(result.user.profileCompleted).toBe(true);
-    expect(result.user.subscriptionPlan).toBe("TEAMS");
+    expect(result.user).not.toHaveProperty("subscriptionPlan");
     expect(result.user.hasPasskeys).toBe(true);
     expect(result.user.requiresPasskeyCheck).toBe(false);
   });

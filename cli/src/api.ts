@@ -74,7 +74,6 @@ export interface UserResponse {
     display_name: string | null;
     persona: string | null;
     skill_level: string | null;
-    plan: string;
     stats: {
       blueprints_count: number;
     };
@@ -95,7 +94,6 @@ export interface CliPollResponse {
     id: string;
     email: string;
     name: string | null;
-    plan: string;
   };
 }
 

@@ -4,7 +4,6 @@ import {
   validateApiToken,
   checkTokenExpiration,
   hasPermission,
-  canUseApi,
 } from "@/lib/api-tokens";
 import { APP_URL } from "@/lib/feature-flags";
 
@@ -38,14 +37,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Check subscription (all users can now use the API)
-    if (!canUseApi(tokenData.user.subscriptionPlan)) {
-      return NextResponse.json(
-        { error: "API access is not available for your account" },
-        { status: 403 }
-      );
-    }
-
     // Check permission - need at least profile:read (which is implied by any role)
     // All roles have at least read access to their own basic info
     const canReadProfile = hasPermission(tokenData.role, "profile:read") ||
@@ -68,7 +59,6 @@ export async function GET(request: NextRequest) {
         displayName: true,
         persona: true,
         skillLevel: true,
-        subscriptionPlan: true,
         createdAt: true,
         _count: {
           select: {
@@ -93,7 +83,6 @@ export async function GET(request: NextRequest) {
         display_name: user.displayName,
         persona: user.persona,
         skill_level: user.skillLevel,
-        plan: user.subscriptionPlan,
         stats: {
           blueprints_count: user._count.templates,
         },

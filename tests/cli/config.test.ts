@@ -63,7 +63,7 @@ const CONFIG_MODULE = "../../cli/src/config";
 const LOGOUT_MODULE = "../../cli/src/commands/logout";
 const CONFIG_COMMAND_MODULE = "../../cli/src/commands/config";
 
-type User = { id: string; email: string; name: string | null; plan: string };
+type User = { id: string; email: string; name: string | null };
 interface CliConfig {
   getToken(): string | undefined;
   setToken(token: string): void;
@@ -118,7 +118,7 @@ describe("CLI config", () => {
   it("stops sending the token after set-url points at another server", async () => {
     const config = await loadConfig();
     config.setToken("lp_secret");
-    config.setUser({ id: "u1", email: "u@example.com", name: null, plan: "FREE" });
+    config.setUser({ id: "u1", email: "u@example.com", name: null });
     expect(config.getToken()).toBe("lp_secret");
 
     config.setApiUrl("https://other.example.com");
@@ -135,11 +135,11 @@ describe("CLI config", () => {
   it("keeps one login per server, so switching back and forth needs no new login", async () => {
     const config = await loadConfig();
     config.setToken("lp_hosted");
-    config.setUser({ id: "u1", email: "me@hosted.test", name: null, plan: "FREE" });
+    config.setUser({ id: "u1", email: "me@hosted.test", name: null });
 
     config.setApiUrl("https://prompts.example.org");
     config.setToken("lp_self");
-    config.setUser({ id: "u2", email: "me@example.org", name: null, plan: "TEAMS" });
+    config.setUser({ id: "u2", email: "me@example.org", name: null });
     expect(config.getToken()).toBe("lp_self");
     expect(config.getUser()?.email).toBe("me@example.org");
 
@@ -157,7 +157,7 @@ describe("CLI config", () => {
   it("does not attach an account to a server with no saved login", async () => {
     const config = await loadConfig();
     process.env.LYNXPROMPT_TOKEN = "lp_env";
-    config.setUser({ id: "u1", email: "u@example.com", name: null, plan: "FREE" });
+    config.setUser({ id: "u1", email: "u@example.com", name: null });
     delete process.env.LYNXPROMPT_TOKEN;
     expect(state.store).toEqual({ apiUrl: "https://lynxprompt.com" });
     expect(config.getUser()).toBeUndefined();
@@ -188,7 +188,7 @@ describe("CLI config", () => {
   });
 
   it("moves a single login saved by an older version into the per-server map", async () => {
-    const user = { id: "u1", email: "u@example.org", name: null, plan: "FREE" };
+    const user = { id: "u1", email: "u@example.org", name: null };
     state.store = {
       apiUrl: "https://other.example.com",
       token: "lp_prev",

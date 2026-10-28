@@ -56,7 +56,6 @@ interface Post {
   userId: string;
   userName: string | null;
   userImage: string | null;
-  userPlan: string;
   hasVoted: boolean;
   category: Category;
   tags: { tag: Tag }[];
@@ -86,10 +85,6 @@ const STATUS_BADGES: Record<string, { label: string; className: string; icon: Re
   COMPLETED: { label: "Completed", className: "bg-green-500/10 text-green-500", icon: <CheckCircle2 className="h-3 w-3" /> },
   CLOSED: { label: "Closed", className: "bg-gray-500/10 text-gray-500", icon: <AlertCircle className="h-3 w-3" /> },
   DUPLICATE: { label: "Duplicate", className: "bg-purple-500/10 text-purple-500", icon: <AlertCircle className="h-3 w-3" /> },
-};
-
-const PLAN_BADGES: Record<string, { label: string; className: string }> = {
-  FREE: { label: "Free", className: "bg-gray-500/20 text-gray-600 dark:text-gray-400" },
 };
 
 function SupportPageContent() {
@@ -591,13 +586,6 @@ function SupportPageContent() {
                                 </div>
                               )}
                               {post.userName || "Anonymous"}
-                              {PLAN_BADGES[post.userPlan] && (
-                                <span
-                                  className={`ml-1 rounded px-1.5 py-0.5 text-[10px] font-bold ${PLAN_BADGES[post.userPlan].className}`}
-                                >
-                                  {PLAN_BADGES[post.userPlan].label}
-                                </span>
-                              )}
                             </Link>
                             <span>•</span>
                             <span>

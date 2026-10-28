@@ -180,7 +180,8 @@ describe("authOptions.callbacks.session", () => {
     expect(result.user.id).toBe("user-1");
     expect(result.user.role).toBe("ADMIN");
     expect(result.user.displayName).toBe("Admin User");
-    expect(result.user.subscriptionPlan).toBe("TEAMS");
+    expect(result.user).not.toHaveProperty("subscriptionPlan");
+    expect(mockFindUnique.mock.lastCall![0].select).not.toHaveProperty("subscriptionPlan");
     expect(result.user.hasPasskeys).toBe(true);
     expect(result.user.requiresPasskeyCheck).toBe(true);
   });
@@ -230,7 +231,7 @@ describe("authOptions.callbacks.session", () => {
     // Should use defaults
     expect(result.user.role).toBe("USER");
     expect(result.user.hasPasskeys).toBe(false);
-    expect(result.user.subscriptionPlan).toBe("FREE");
+    expect(result.user).not.toHaveProperty("subscriptionPlan");
   });
 
   it("handles JWT session (passkey login)", async () => {
@@ -259,7 +260,7 @@ describe("authOptions.callbacks.session", () => {
     expect(result.user.id).toBe("user-jwt");
     expect(result.user.role).toBe("SUPERADMIN");
     expect(result.user.displayName).toBe("JWT User");
-    expect(result.user.subscriptionPlan).toBe("MAX");
+    expect(result.user).not.toHaveProperty("subscriptionPlan");
     expect(result.user.hasPasskeys).toBe(true);
     expect(result.user.requiresPasskeyCheck).toBe(false);
   });
@@ -280,7 +281,7 @@ describe("authOptions.callbacks.session", () => {
 
     expect(result.user.id).toBe("user-minimal");
     expect(result.user.role).toBe("USER");
-    expect(result.user.subscriptionPlan).toBe("FREE");
+    expect(result.user).not.toHaveProperty("subscriptionPlan");
   });
 });
 
@@ -306,7 +307,8 @@ describe("authOptions.callbacks.jwt", () => {
 
     expect(result.role).toBe("ADMIN");
     expect(result.displayName).toBe("Admin");
-    expect(result.subscriptionPlan).toBe("TEAMS");
+    expect(result).not.toHaveProperty("subscriptionPlan");
+    expect(mockFindUnique.mock.lastCall![0].select).not.toHaveProperty("subscriptionPlan");
     expect(result.profileCompleted).toBe(true);
   });
 
@@ -320,7 +322,7 @@ describe("authOptions.callbacks.jwt", () => {
     });
 
     expect(result.role).toBe("USER");
-    expect(result.subscriptionPlan).toBe("FREE");
+    expect(result).not.toHaveProperty("subscriptionPlan");
   });
 
   it("returns token unchanged when no user", async () => {

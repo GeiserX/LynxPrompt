@@ -158,11 +158,8 @@ interface TeamInfo {
 }
 
 interface BillingStatus {
-  plan: string;
-  status: string;
   isAdmin?: boolean;
   isTeamsUser?: boolean;
-  hasActiveSubscription?: boolean;
   team?: TeamInfo | null;
   teams?: TeamInfo[];
 }

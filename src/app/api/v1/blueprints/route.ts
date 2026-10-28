@@ -8,7 +8,6 @@ import {
   validateApiToken,
   checkTokenExpiration,
   hasPermission,
-  canUseApi,
   toBlueprintApiId,
   toHierarchyApiId,
   fromHierarchyApiId,
@@ -18,7 +17,7 @@ import {
   normalizeBlueprintType,
   resolveBlueprintTeamId,
 } from "@/lib/blueprint-rules";
-import { getEffectiveTier, getMaxBlueprintCount } from "@/lib/subscription";
+import { BLUEPRINT_LIMITS } from "@/lib/subscription";
 
 function sanitizeRepositoryPath(input: string | null | undefined): string | null {
   if (!input?.trim()) return null;
@@ -60,14 +59,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { error: "Invalid or missing API token" },
         { status: 401 }
-      );
-    }
-
-    // Check subscription
-    if (!canUseApi(tokenData.user.subscriptionPlan)) {
-      return NextResponse.json(
-        { error: "API access is not available for your account" },
-        { status: 403 }
       );
     }
 
@@ -210,14 +201,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check subscription
-    if (!canUseApi(tokenData.user.subscriptionPlan)) {
-      return NextResponse.json(
-        { error: "API access is not available for your account" },
-        { status: 403 }
-      );
-    }
-
     // Check permission
     if (!hasPermission(tokenData.role, "blueprints:write")) {
       return NextResponse.json(
@@ -287,16 +270,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(contentCheck.body, { status: contentCheck.status });
     }
 
-    const maxBlueprints = getMaxBlueprintCount(
-      getEffectiveTier("USER", tokenData.user.subscriptionPlan)
-    );
+    const maxBlueprints = BLUEPRINT_LIMITS.MAX_COUNT;
     const existingBlueprintCount = await prismaUsers.userTemplate.count({
       where: { userId: tokenData.userId },
     });
     if (existingBlueprintCount >= maxBlueprints) {
       return NextResponse.json(
         {
-          error: `You have reached the maximum number of blueprints for your plan (${maxBlueprints.toLocaleString()}).`,
+          error: `You have reached the maximum number of blueprints (${maxBlueprints.toLocaleString()}).`,
           limit: maxBlueprints,
           current: existingBlueprintCount,
         },

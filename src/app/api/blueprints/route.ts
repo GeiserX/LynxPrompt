@@ -8,13 +8,7 @@ import { detectSensitiveData, type SensitiveMatch } from "@/lib/sensitive-data";
 import { normalizeBlueprintType } from "@/lib/blueprint-rules";
 import { contentChecksum } from "@/lib/content-checksum";
 import { parsePage } from "@/lib/pagination";
-import { 
-  getEffectiveTier, 
-  getMaxBlueprintCount, 
-  checkBlueprintLineCount,
-  BLUEPRINT_LIMITS,
-  type SubscriptionTier 
-} from "@/lib/subscription";
+import { checkBlueprintLineCount, BLUEPRINT_LIMITS } from "@/lib/subscription";
 
 /**
  * Determine tier based on total word count (all content including comments/headers).
@@ -286,32 +280,6 @@ export async function POST(request: NextRequest) {
     // isPublic mirrors visibility and never disagrees with it
     const effectiveIsPublic = normalizedVisibility === "PUBLIC";
 
-    // Fetch user plan to check if turnstile verification is needed
-    const user = await prismaUsers.user.findUnique({
-      where: { id: session.user.id },
-      select: { subscriptionPlan: true, role: true },
-    });
-
-    // All users can now create blueprints (not just paid users)
-    // Teams users and admins get extra features
-    const isTeamsUser = 
-      user?.subscriptionPlan === "TEAMS" ||
-      user?.role === "ADMIN" ||
-      user?.role === "SUPERADMIN";
-
-    // Turnstile verification is disabled for blueprint creation
-    // Only kept for sign-in flows
-    // If needed in future, uncomment:
-    // if (!isTeamsUser && turnstileToken) {
-    //   const isValid = await verifyTurnstileToken(turnstileToken);
-    //   if (!isValid) {
-    //     return NextResponse.json(
-    //       { error: "Security verification failed. Please try again." },
-    //       { status: 400 }
-    //     );
-    //   }
-    // }
-
     // Validation
     if (!name || typeof name !== "string" || name.trim().length < 3) {
       return NextResponse.json(
@@ -338,12 +306,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get user's effective tier for blueprint count limit
-    const userTier = getEffectiveTier(
-      (user?.role as "USER" | "ADMIN" | "SUPERADMIN") || "USER",
-      (user?.subscriptionPlan?.toLowerCase() as SubscriptionTier) || "free"
-    );
-    const maxBlueprints = getMaxBlueprintCount(userTier);
+    const maxBlueprints = BLUEPRINT_LIMITS.MAX_COUNT;
 
     // Count user's existing blueprints
     const existingBlueprintCount = await prismaUsers.userTemplate.count({
@@ -353,7 +316,7 @@ export async function POST(request: NextRequest) {
     if (existingBlueprintCount >= maxBlueprints) {
       return NextResponse.json(
         { 
-          error: `You have reached the maximum number of blueprints for your plan (${maxBlueprints.toLocaleString()}). Contact the administrator for a higher limit.`,
+          error: `You have reached the maximum number of blueprints (${maxBlueprints.toLocaleString()}). Contact the administrator for a higher limit.`,
           limit: maxBlueprints,
           current: existingBlueprintCount,
         },

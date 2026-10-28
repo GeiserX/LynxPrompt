@@ -1,24 +1,9 @@
 import { describe, it, expect } from "vitest";
-import {
-  getMaxBlueprintCount,
-  checkBlueprintLineCount,
-  getEffectiveTier,
-  hasTeamsFeatures,
-  canAccessAI,
-  canAccessWizard,
-  getRequiredTier,
-  getAvailableWizards,
-  isAdminRole,
-  BLUEPRINT_LIMITS,
-} from "@/lib/subscription";
+import { checkBlueprintLineCount, isAdminRole, BLUEPRINT_LIMITS } from "@/lib/subscription";
 
-describe("getMaxBlueprintCount", () => {
-  it("returns free limit for free tier", () => {
-    expect(getMaxBlueprintCount("free")).toBe(BLUEPRINT_LIMITS.MAX_COUNT.free);
-  });
-
-  it("returns teams limit for teams tier", () => {
-    expect(getMaxBlueprintCount("teams")).toBe(BLUEPRINT_LIMITS.MAX_COUNT.teams);
+describe("BLUEPRINT_LIMITS", () => {
+  it("is one blueprint cap for every account, the 5,000 the free tier had", () => {
+    expect(BLUEPRINT_LIMITS.MAX_COUNT).toBe(5000);
   });
 });
 
@@ -48,52 +33,6 @@ describe("checkBlueprintLineCount", () => {
     const result = checkBlueprintLineCount("");
     expect(result.lineCount).toBe(1);
     expect(result.valid).toBe(true);
-  });
-});
-
-describe("getEffectiveTier", () => {
-  it("always returns free", () => {
-    expect(getEffectiveTier("USER", "FREE")).toBe("free");
-    expect(getEffectiveTier("ADMIN", "TEAMS")).toBe("free");
-    expect(getEffectiveTier("SUPERADMIN", "anything")).toBe("free");
-  });
-});
-
-describe("hasTeamsFeatures", () => {
-  it("always returns true", () => {
-    expect(hasTeamsFeatures("free")).toBe(true);
-    expect(hasTeamsFeatures("teams")).toBe(true);
-  });
-});
-
-describe("canAccessAI", () => {
-  it("always returns true", () => {
-    expect(canAccessAI("free")).toBe(true);
-    expect(canAccessAI("teams")).toBe(true);
-  });
-});
-
-describe("canAccessWizard", () => {
-  it("always returns true regardless of tier and wizard tier", () => {
-    expect(canAccessWizard("free", "basic")).toBe(true);
-    expect(canAccessWizard("free", "intermediate")).toBe(true);
-    expect(canAccessWizard("free", "advanced")).toBe(true);
-    expect(canAccessWizard("teams", "advanced")).toBe(true);
-  });
-});
-
-describe("getRequiredTier", () => {
-  it("always returns free", () => {
-    expect(getRequiredTier("basic")).toBe("free");
-    expect(getRequiredTier("intermediate")).toBe("free");
-    expect(getRequiredTier("advanced")).toBe("free");
-  });
-});
-
-describe("getAvailableWizards", () => {
-  it("returns all wizard tiers for any subscription", () => {
-    expect(getAvailableWizards("free")).toEqual(["basic", "intermediate", "advanced"]);
-    expect(getAvailableWizards("teams")).toEqual(["basic", "intermediate", "advanced"]);
   });
 });
 

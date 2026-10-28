@@ -6,7 +6,6 @@ import {
   validateApiToken,
   checkTokenExpiration,
   hasPermission,
-  canUseApi,
   toBlueprintApiId,
   fromBlueprintApiId,
   toHierarchyApiId,
@@ -48,14 +47,6 @@ export async function GET(
       return NextResponse.json(
         { error: "Invalid or missing API token" },
         { status: 401 }
-      );
-    }
-
-    // Check subscription
-    if (!canUseApi(tokenData.user.subscriptionPlan)) {
-      return NextResponse.json(
-        { error: "API access is not available for your account" },
-        { status: 403 }
       );
     }
 
@@ -189,14 +180,6 @@ export async function PUT(
       return NextResponse.json(
         { error: "Invalid or missing API token" },
         { status: 401 }
-      );
-    }
-
-    // Check subscription
-    if (!canUseApi(tokenData.user.subscriptionPlan)) {
-      return NextResponse.json(
-        { error: "API access is not available for your account" },
-        { status: 403 }
       );
     }
 
@@ -474,14 +457,6 @@ export async function DELETE(
       return NextResponse.json(
         { error: "Invalid or missing API token" },
         { status: 401 }
-      );
-    }
-
-    // Check subscription
-    if (!canUseApi(tokenData.user.subscriptionPlan)) {
-      return NextResponse.json(
-        { error: "API access is not available for your account" },
-        { status: 403 }
       );
     }
 

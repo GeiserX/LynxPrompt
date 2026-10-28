@@ -122,6 +122,9 @@ describe("CLI login flow", () => {
     const body = await right.json();
     expect(body.status).toBe("completed");
     expect(body.token).toMatch(/^lp_[0-9a-f]{64}$/);
+    // There are no plans: the CLI gets the account, not a billing tier
+    expect(body.user.email).toBe("u@example.com");
+    expect(body.user).not.toHaveProperty("plan");
   });
 
   it("refuses a malformed code_challenge", async () => {
