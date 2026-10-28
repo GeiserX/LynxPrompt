@@ -53,6 +53,11 @@ services:
       - path: .env
         required: false
     environment:
+      # PORT in .env is the host port only (the ports line above). The server
+      # listens on process.env.PORT, so pin it here or env_file would move the
+      # server off the port the mapping points at.
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
       # One PostgreSQL server, one database per Prisma schema: prisma db push
       # drops the tables it does not know, so two schemas in one database would
       # delete each other's tables at every start. The first start creates

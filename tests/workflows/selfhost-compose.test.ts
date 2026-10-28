@@ -36,6 +36,17 @@ describe("self-host compose file", () => {
     expect(app).toMatch(/^ {4}env_file:\s*\n\s+- path: \.env\s*\n\s+required: false\s*$/m);
   });
 
+  it("keeps the server on container port 3000 whatever PORT .env holds", () => {
+    // The docs put PORT=8080 in .env to move the host port. Through env_file
+    // that value also reached the server, which then listened on 8080 while
+    // the mapping still pointed at 3000. The environment block beats env_file.
+    const app = compose.slice(compose.indexOf("\n  lynxprompt:"), compose.indexOf("\nvolumes:"));
+    expect(app).toMatch(/^\s*-\s*"\$\{PORT:-3000\}:3000"\s*$/m);
+    const env = app.slice(app.indexOf("\n    environment:"));
+    expect(env).toMatch(/^ {6}PORT:\s*"?3000"?\s*$/m);
+    expect(env).toMatch(/^ {6}HOSTNAME:\s*"?0\.0\.0\.0"?\s*$/m);
+  });
+
   it("keeps uploads in a named volume at /data/uploads", () => {
     // Avatars, team logos and blog images are files under /data/uploads with
     // only their URL in the database. Without a volume, recreating the
