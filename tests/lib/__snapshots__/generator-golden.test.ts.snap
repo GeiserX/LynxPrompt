@@ -2425,7 +2425,7 @@ exports[`cli generator golden output > tabnine 1`] = `
 version: 1.0.0
 
 project:
-  name: Demo
+  name: "Demo"
   description: "A demo project"
 
 context:

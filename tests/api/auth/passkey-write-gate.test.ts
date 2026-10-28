@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 
 // Every route that writes as a signed-in user goes through requireSession or
 // requireUser. A user with a passkey whose session has not proven it yet (a
@@ -140,6 +142,67 @@ const WRITES: [string, string][] = [
   ["wizard/drafts", "POST"],
 ];
 
+// Write handlers that are not in WRITES, and why the passkey gate does not
+// apply to them. A new write route must go in one list or the other.
+const NOT_GATED: Record<string, string> = {
+  "auth/[...nextauth] POST": "NextAuth's own sign-in and sign-out",
+  "auth/accept-terms POST": "a step of signing in (tested below)",
+  "auth/device POST": "a step of signing in (tested below)",
+  "auth/passkey/authenticate/options POST": "proving the passkey is what verifies the session",
+  "auth/passkey/authenticate/verify POST": "proving the passkey is what verifies the session",
+  "auth/sso/initiate POST": "runs before sign-in, with no session",
+  "auth/sso/lookup POST": "runs before sign-in, with no session",
+  "blueprints/[id]/download POST": "counts a download, open to visitors who are not signed in",
+  "blueprints/[id]/versions POST": "reads one version's content; changes nothing",
+  "cli-auth/init POST": "starts a CLI login, before any session or token",
+  "cli-auth/revoke POST": "API token only; revokes the token that calls it",
+  "contact POST": "public contact form",
+  "templates/[id]/download POST": "redirects to /api/blueprints, which is gated",
+  "templates/[id]/favorite POST": "redirects to /api/blueprints, which is gated",
+  "templates/[id] PUT": "redirects to /api/blueprints, which is gated",
+  "templates/[id] DELETE": "redirects to /api/blueprints, which is gated",
+  "templates POST": "redirects to /api/blueprints, which is gated",
+  "v1/blueprints/[id] PUT": "API token only; the passkey check is for browser sessions",
+  "v1/blueprints/[id] DELETE": "API token only; the passkey check is for browser sessions",
+  "v1/blueprints POST": "API token only; the passkey check is for browser sessions",
+  "v1/federation/heartbeat POST": "instance to instance, no user",
+  "v1/federation/register POST": "instance to instance, no user",
+  "v1/hierarchies/[id] PATCH": "API token only; the passkey check is for browser sessions",
+  "v1/hierarchies/[id] DELETE": "API token only; the passkey check is for browser sessions",
+  "v1/hierarchies POST": "API token only; the passkey check is for browser sessions",
+};
+
+const WRITE_METHODS = ["POST", "PUT", "PATCH", "DELETE"];
+
+// The write methods a route file exports, in any of the forms TypeScript
+// allows: `export async function POST`, `export const POST =`, `export { a as POST }`.
+function exportedWrites(source: string): string[] {
+  const names = new Set<string>();
+  for (const m of source.matchAll(/export\s+(?:async\s+)?(?:function\s*\*?|const|let|var)\s+(\w+)/g)) {
+    names.add(m[1]);
+  }
+  for (const m of source.matchAll(/export\s*\{([^}]*)\}/g)) {
+    for (const part of m[1].split(",")) {
+      const name = part.trim().split(/\s+as\s+/).pop();
+      if (name) names.add(name);
+    }
+  }
+  return WRITE_METHODS.filter((method) => names.has(method));
+}
+
+function writeHandlers(): string[] {
+  const api = join(process.cwd(), "src/app/api");
+  const found: string[] = [];
+  for (const file of readdirSync(api, { recursive: true }) as string[]) {
+    if (!/(^|[\\/])route\.tsx?$/.test(file)) continue;
+    const route = file.replace(/\\/g, "/").replace(/\/?route\.tsx?$/, "");
+    for (const method of exportedWrites(readFileSync(join(api, file), "utf8"))) {
+      found.push(`${route} ${method}`);
+    }
+  }
+  return found.sort();
+}
+
 const modules = import.meta.glob("../../../src/app/api/**/route.ts");
 
 function load(route: string) {
@@ -195,5 +258,33 @@ describe("writes from a session that still owes its passkey check", () => {
     const { req } = call("hierarchies", "GET");
     const res = await GET(req);
     expect(res.status).toBe(200);
+  });
+});
+
+describe("every write route is checked by the passkey gate", () => {
+  const gated = WRITES.map(([route, method]) => `${route} ${method}`);
+  const handlers = writeHandlers();
+
+  it("finds the write handlers in every export form", () => {
+    expect(exportedWrites("export async function POST(req) {}\nexport function PUT() {}")).toEqual(["POST", "PUT"]);
+    expect(exportedWrites("export const PATCH = wrap(fn);")).toEqual(["PATCH"]);
+    expect(exportedWrites("export { handler as GET, handler as DELETE, POST };")).toEqual(["POST", "DELETE"]);
+    expect(exportedWrites("export async function GET() {}\nconst POST = 1;")).toEqual([]);
+    expect(handlers.length).toBeGreaterThan(gated.length);
+  });
+
+  it("each POST, PUT, PATCH and DELETE under src/app/api is in WRITES or NOT_GATED", () => {
+    const unlisted = handlers.filter((h) => !gated.includes(h) && !(h in NOT_GATED));
+    expect(
+      unlisted,
+      "Add each one to WRITES (it must refuse a session that owes its passkey check, " +
+        "so use requireSession or requireUser) or to NOT_GATED with the reason it needs no gate.",
+    ).toEqual([]);
+  });
+
+  it("neither list names a handler that no longer exists, or one twice", () => {
+    expect([...gated, ...Object.keys(NOT_GATED)].filter((h) => !handlers.includes(h))).toEqual([]);
+    expect(gated.filter((h) => h in NOT_GATED)).toEqual([]);
+    expect(new Set(gated).size).toBe(gated.length);
   });
 });

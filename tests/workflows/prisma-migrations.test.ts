@@ -66,6 +66,8 @@ describe.each(schemas)("prisma/migrations-%s", (schema) => {
     ).toBe(frozen[schema]);
   });
 
+  // Once later migrations exist, entrypoint-upgrade-db.test.ts checks against
+  // a real Postgres that 0_init plus all of them ends on the current schema.
   it.runIf(migrations.length <= 1)("0_init creates the whole schema", () => {
     expect(readFileSync(join(dir, "0_init", "migration.sql"), "utf8")).toBe(fromEmpty(schema));
   }, 90_000);
