@@ -3,3 +3,4 @@ export * from "./wizard/index.js";
 
 
 
+export * from "./platforms.js";

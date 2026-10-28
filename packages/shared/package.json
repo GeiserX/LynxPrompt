@@ -13,6 +13,10 @@
     "./wizard": {
       "types": "./dist/wizard/index.d.ts",
       "import": "./dist/wizard/index.js"
+    },
+    "./platforms": {
+      "types": "./dist/platforms.d.ts",
+      "import": "./dist/platforms.js"
     }
   },
   "files": [
