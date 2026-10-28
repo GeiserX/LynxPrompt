@@ -10,7 +10,9 @@ import chalk from "chalk";
 import { readFile, writeFile, access } from "fs/promises";
 import { join, basename, resolve, dirname } from "path";
 import ora from "ora";
-import { parseMarkdownConfig, generateTargetContent, isCommandTarget } from "../utils/convert-format.js";
+import { parseMarkdownConfig, generateTargetContent } from "../utils/convert-format.js";
+import { PLATFORM_FILES } from "../utils/generator.js";
+import { COMMANDS } from "../../../packages/shared/src/platforms.js";
 
 interface ConvertOptions {
   output?: string;
@@ -32,53 +34,14 @@ const SOURCE_FILES: Record<string, string> = {
   ".aider.conf.yml": "aider",
 };
 
-// Target format to output filename (30+ platforms)
+// Target format to output filename: every platform of the shared table (the
+// file the wizard and the web download write), plus the legacy .cursorrules,
+// Codex and one example file per command folder.
 const TARGET_FILES: Record<string, string> = {
-  // Popular platforms
-  universal: "AGENTS.md",
-  agents: "AGENTS.md",
-  cursor: ".cursor/rules/project.mdc",
+  ...PLATFORM_FILES,
   cursor_legacy: ".cursorrules",
-  claude: "CLAUDE.md",
-  copilot: ".github/copilot-instructions.md",
-  windsurf: ".windsurfrules",
-  // AI-powered IDEs
-  antigravity: "GEMINI.md",
-  zed: ".zed/instructions.md",
-  void: ".void/config.json",
-  trae: ".trae/rules/project_rules.md",
-  firebase: ".idx/rules/project.mdc",
-  // Editor extensions
-  cline: ".clinerules",
-  roocode: ".roo/rules/project.mdc",
-  continue: ".continue/config.json",
-  cody: ".cody/config.json",
-  tabnine: ".tabnine.yaml",
-  supermaven: ".supermaven/config.json",
-  codegpt: ".codegpt/config.json",
-  amazonq: ".amazonq/rules/project.md",
-  augment: ".augment/rules/project.md",
-  kilocode: ".kilocode/rules/project.mdc",
-  junie: ".junie/guidelines.md",
-  kiro: ".kiro/steering/project.md",
-  // CLI tools
-  aider: ".aider.conf.yml",
-  goose: ".goosehints",
-  warp: "WARP.md",
-  "gemini-cli": "GEMINI.md",
-  opencode: "opencode.json",
   codex: "codex.md",
-  // Other emerging tools
-  openhands: ".openhands/microagents/repo.md",
-  crush: "CRUSH.md",
-  firebender: "firebender.json",
-  // Command targets
-  "cursor-command": ".cursor/commands/command.md",
-  "claude-command": ".claude/commands/command.md",
-  "windsurf-workflow": ".windsurf/workflows/workflow.md",
-  "copilot-prompt": ".copilot/prompts/prompt.md",
-  "continue-prompt": ".continue/prompts/prompt.md",
-  "opencode-command": ".opencode/commands/command.md",
+  ...Object.fromEntries(COMMANDS.map((c) => [c.id, `${c.directory}/command${c.extension}`])),
 };
 
 // Platform display names
@@ -124,16 +87,12 @@ const PLATFORM_NAMES: Record<string, string> = {
   "opencode-command": "OpenCode Command",
 };
 
-// Command directory patterns for detection
+// Command directory patterns for detection (.copilot/prompts is where older
+// versions put Copilot prompts)
 const COMMAND_DIRS: Record<string, string> = {
-  ".cursor/commands": "cursor-command",
-  ".claude/commands": "claude-command",
-  ".windsurf/workflows": "windsurf-workflow",
+  ...Object.fromEntries(COMMANDS.map((c) => [c.directory, c.id])),
   ".copilot/prompts": "copilot-prompt",
-  ".continue/prompts": "continue-prompt",
-  ".opencode/commands": "opencode-command",
 };
-
 
 async function detectSourceFile(cwd: string): Promise<{ path: string; platform: string } | null> {
   // Try to find a source file in common locations
@@ -269,11 +228,11 @@ export async function convertCommand(
   // Determine output path
   let outputFilename = options.output || TARGET_FILES[normalizedTarget];
   
-  // For commands, preserve original filename but change directory
-  if (isCommandTarget(normalizedTarget) && !options.output) {
-    const originalFilename = basename(sourcePath);
-    const targetDir = TARGET_FILES[normalizedTarget].split("/").slice(0, -1).join("/");
-    outputFilename = `${targetDir}/${originalFilename}`;
+  // For commands, keep the command's name but use the target's folder and extension
+  const targetCommand = COMMANDS.find((c) => c.id === normalizedTarget);
+  if (targetCommand && !options.output) {
+    const commandName = basename(sourcePath).replace(/(\.prompt)?\.md$/, "");
+    outputFilename = `${targetCommand.directory}/${commandName}${targetCommand.extension}`;
   }
   
   const outputPath = resolve(cwd, outputFilename);

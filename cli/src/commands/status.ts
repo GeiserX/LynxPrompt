@@ -10,10 +10,10 @@ const CONFIG_FILES = [
   { path: "CLAUDE.md", name: "CLAUDE.md", platform: "Claude Code" },
   { path: ".github/copilot-instructions.md", name: "Copilot Instructions", platform: "GitHub Copilot" },
   { path: ".windsurfrules", name: ".windsurfrules", platform: "Windsurf" },
-  { path: ".zed/instructions.md", name: "Zed Instructions", platform: "Zed" },
+  { path: ".rules", name: ".rules", platform: "Zed" },
   { path: ".clinerules", name: ".clinerules", platform: "Cline" },
   { path: ".goosehints", name: ".goosehints", platform: "Goose" },
-  { path: "AIDER.md", name: "AIDER.md", platform: "Aider" },
+  { path: "CONVENTIONS.md", name: "CONVENTIONS.md", platform: "Aider" },
 ];
 
 // Directory-based configs

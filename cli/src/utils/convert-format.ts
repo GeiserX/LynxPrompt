@@ -59,10 +59,8 @@ export function generateTargetContent(config: Record<string, string>, targetPlat
   // For simple conversions, adapt the content format
   switch (targetPlatform) {
     case "cursor":
-    case "roocode":
-    case "kilocode":
-    case "firebase":
-      // MDC format with frontmatter; the body (and its title) is kept as written
+    case "firebender":
+      // MDC format (the "mdc" platforms of packages/shared/src/platforms.ts) with frontmatter; the body (and its title) is kept as written
       return `---
 ${mdcFrontmatter}
 ---
@@ -100,23 +98,6 @@ ${rawContent}`;
       // These read Markdown as is
       return rawContent;
 
-    case "aider":
-      // YAML format (simplified)
-      return `# Aider configuration
-# Converted from AI IDE configuration
-
-lint-cmd: []
-auto-test: false
-read: []
-# AI rules converted below as conventions
-conventions:
-${rawContent
-  .split("\n")
-  .filter(line => line.trim() && !line.startsWith("#"))
-  .map(line => `  - "${line.trim().replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`)
-  .join("\n")}
-`;
-
     case "tabnine":
       // Tabnine YAML format
       return `# Tabnine configuration
@@ -130,8 +111,6 @@ ${rawContent.split("\n").map(line => `  ${line}`).join("\n")}
     case "cody":
     case "codegpt":
     case "supermaven":
-    case "opencode":
-    case "firebender":
       // JSON config format
       return JSON.stringify({ instructions: rawContent }, null, 2) + "\n";
 
@@ -151,6 +130,11 @@ ${rawContent.split("\n").map(line => `  ${line}`).join("\n")}
     case "warp":
     case "openhands":
     case "crush":
+    case "aider":
+    case "opencode":
+    case "firebase":
+    case "roocode":
+    case "kilocode":
     default:
       // Standard markdown format
       return rawContent;

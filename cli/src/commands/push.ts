@@ -14,6 +14,7 @@ import {
   toTrackedPath,
 } from "../utils/blueprint-tracker.js";
 import { withSensitiveDataAck, type SensitiveMatchInfo } from "../utils/sensitive-ack.js";
+import { matchConfigFile } from "../utils/blueprint-files.js";
 
 interface PushOptions {
   name?: string;
@@ -62,80 +63,6 @@ function blueprintUrl(id: string): string {
 }
 
 const VISIBILITIES = ["PRIVATE", "TEAM", "PUBLIC"];
-
-/**
- * Config file pattern rules.
- * Ordered from most specific to least specific.
- */
-interface ConfigPattern {
-  match: (relativePath: string) => boolean;
-  // Must be a TemplateType value from prisma/schema-users.prisma; tools without one use CUSTOM
-  type: string;
-  label: string;
-}
-
-function normPath(p: string): string {
-  return p.replace(/\\/g, "/").toLowerCase();
-}
-
-const CONFIG_PATTERNS: ConfigPattern[] = [
-  // Commands (most specific paths first)
-  { match: (p) => normPath(p).includes(".cursor/commands/") && p.endsWith(".md"), type: "CURSOR_COMMAND", label: "Cursor Command" },
-  { match: (p) => normPath(p).includes(".claude/commands/") && p.endsWith(".md"), type: "CLAUDE_COMMAND", label: "Claude Command" },
-  { match: (p) => normPath(p).includes(".windsurf/workflows/") && p.endsWith(".md"), type: "WINDSURF_WORKFLOW", label: "Windsurf Workflow" },
-  { match: (p) => normPath(p).includes(".copilot/prompts/") && p.endsWith(".md"), type: "COPILOT_PROMPT", label: "Copilot Prompt" },
-  { match: (p) => normPath(p).includes(".continue/prompts/") && p.endsWith(".md"), type: "CONTINUE_PROMPT", label: "Continue Prompt" },
-  { match: (p) => normPath(p).includes(".opencode/commands/") && p.endsWith(".md"), type: "OPENCODE_COMMAND", label: "OpenCode Command" },
-
-  // Directory-based rules
-  { match: (p) => normPath(p).includes(".cursor/rules/") && p.endsWith(".mdc"), type: "CURSOR_RULES", label: "Cursor Rules" },
-  { match: (p) => normPath(p).includes(".trae/rules/") && /\.mdc?$/.test(p), type: "TRAE_RULES", label: "Trae Rules" },
-  { match: (p) => normPath(p).includes(".idx/") && p.endsWith(".mdc"), type: "IDX_CONFIG", label: "Firebase Rules" },
-  { match: (p) => normPath(p).includes(".roo/rules/") && p.endsWith(".mdc"), type: "ROO_RULES", label: "Roo Rules" },
-  { match: (p) => normPath(p).includes(".amazonq/rules/") && /\.mdc?$/.test(p), type: "AMAZONQ_RULES", label: "Amazon Q Rules" },
-  { match: (p) => normPath(p).includes(".augment/rules/") && /\.mdc?$/.test(p), type: "AUGMENT_RULES", label: "Augment Rules" },
-  { match: (p) => normPath(p).includes(".kilocode/rules/") && p.endsWith(".mdc"), type: "KILOCODE_RULES", label: "Kilo Code Rules" },
-  { match: (p) => normPath(p).includes(".kiro/steering/") && /\.mdc?$/.test(p), type: "KIRO_STEERING", label: "Kiro Steering" },
-
-  // Path-based configs
-  { match: (p) => normPath(p).includes(".github/copilot-instructions.md"), type: "COPILOT_INSTRUCTIONS", label: "Copilot Instructions" },
-  { match: (p) => normPath(p).includes(".zed/instructions.md"), type: "ZED_INSTRUCTIONS", label: "Zed Instructions" },
-  { match: (p) => normPath(p).includes(".openhands/microagents/repo.md"), type: "OPENHANDS_MD", label: "OpenHands Config" },
-  { match: (p) => normPath(p).includes(".junie/guidelines.md"), type: "JUNIE_GUIDELINES", label: "Junie Guidelines" },
-  { match: (p) => normPath(p).includes(".void/config.json"), type: "VOID_CONFIG", label: "Void Config" },
-  { match: (p) => normPath(p).includes(".continue/config.json"), type: "CONTINUE_CONFIG", label: "Continue Config" },
-  { match: (p) => normPath(p).includes(".cody/config.json"), type: "CODY_CONFIG", label: "Cody Config" },
-  { match: (p) => normPath(p).includes(".supermaven/config.json"), type: "CUSTOM", label: "Supermaven Config" },
-  { match: (p) => normPath(p).includes(".codegpt/config.json"), type: "CUSTOM", label: "CodeGPT Config" },
-
-  // Basename rules
-  { match: (p) => path.basename(p) === "AGENTS.md", type: "AGENTS_MD", label: "AGENTS.md" },
-  { match: (p) => path.basename(p) === "CLAUDE.md", type: "CLAUDE_MD", label: "CLAUDE.md" },
-  { match: (p) => path.basename(p) === "AIDER.md", type: "AIDER_MD", label: "AIDER.md" },
-  { match: (p) => path.basename(p) === "GEMINI.md", type: "GEMINI_MD", label: "GEMINI.md" },
-  { match: (p) => path.basename(p) === "WARP.md", type: "WARP_MD", label: "WARP.md" },
-  { match: (p) => path.basename(p) === "CRUSH.md", type: "CUSTOM", label: "CRUSH.md" },
-  { match: (p) => path.basename(p) === ".windsurfrules", type: "WINDSURF_RULES", label: "Windsurf Rules" },
-  { match: (p) => path.basename(p) === ".cursorrules", type: "CURSORRULES", label: "Cursor Rules (legacy)" },
-  { match: (p) => path.basename(p) === ".clinerules", type: "CLINE_RULES", label: "Cline Rules" },
-  { match: (p) => path.basename(p) === ".goosehints", type: "GOOSEHINTS", label: "Goose Hints" },
-  { match: (p) => path.basename(p) === ".tabnine.yaml", type: "TABNINE_CONFIG", label: "Tabnine Config" },
-  { match: (p) => path.basename(p) === "opencode.json", type: "OPENCODE_JSON", label: "OpenCode Config" },
-  { match: (p) => path.basename(p) === "firebender.json", type: "CUSTOM", label: "Firebender Config" },
-];
-
-/**
- * Match a relative path against all known config file patterns.
- * Returns type + label if it matches, null otherwise.
- */
-function matchConfigFile(relativePath: string): { type: string; label: string } | null {
-  for (const pattern of CONFIG_PATTERNS) {
-    if (pattern.match(relativePath)) {
-      return { type: pattern.type, label: pattern.label };
-    }
-  }
-  return null;
-}
 
 /**
  * Scan for AGENTS.md files only (used when pushing a single AGENTS.md).
@@ -955,7 +882,7 @@ function findDefaultFile(): string | null {
 
 /**
  * Infer blueprint type from file path.
- * Uses CONFIG_PATTERNS for known types, falls back to heuristics.
+ * Uses the known config file patterns (blueprint-files.ts), falls back to heuristics.
  */
 function inferBlueprintType(filePath: string): string {
   const configMatch = matchConfigFile(filePath);

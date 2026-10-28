@@ -1498,6 +1498,7 @@ const COMMAND_DIRECTORIES = [
   { directory: ".cursor/commands", type: "cursor-command" as const, platform: "cursor" as const, templateType: "CURSOR_COMMAND" as const },
   { directory: ".claude/commands", type: "claude-command" as const, platform: "claude" as const, templateType: "CLAUDE_COMMAND" as const },
   { directory: ".windsurf/workflows", type: "windsurf-workflow" as const, platform: "windsurf" as const, templateType: "WINDSURF_WORKFLOW" as const },
+  { directory: ".github/prompts", type: "copilot-prompt" as const, platform: "copilot" as const, templateType: "COPILOT_PROMPT" as const },
   { directory: ".copilot/prompts", type: "copilot-prompt" as const, platform: "copilot" as const, templateType: "COPILOT_PROMPT" as const },
   { directory: ".continue/prompts", type: "continue-prompt" as const, platform: "continue" as const, templateType: "CONTINUE_PROMPT" as const },
   { directory: ".opencode/commands", type: "opencode-command" as const, platform: "opencode" as const, templateType: "OPENCODE_COMMAND" as const },
@@ -1523,7 +1524,7 @@ export async function detectCommandFiles(cwd: string): Promise<CommandFileInfo[]
           const filePath = join(dirPath, entry.name);
           try {
             const content = await readFileAsync(filePath, "utf-8");
-            const name = entry.name.replace(/\.md$/, "");
+            const name = entry.name.replace(/(\.prompt)?\.md$/, "");
             
             commands.push({
               path: filePath,
