@@ -129,10 +129,12 @@ export async function POST(
       return NextResponse.json({ error: "Team not found" }, { status: 404 });
     }
 
-    // Check seat availability
+    // Check seat availability. An invitation past its expiresAt can no longer
+    // be accepted, so it holds no seat and does not block a new invite.
+    const openInvitation = { teamId, status: "PENDING" as const, expiresAt: { gt: new Date() } };
     const currentMembers = team._count.members;
     const pendingInvitations = await prismaUsers.teamInvitation.count({
-      where: { teamId, status: "PENDING" },
+      where: openInvitation,
     });
     const paidSeats = team.maxSeats;
     const usedSeats = currentMembers + pendingInvitations;
@@ -164,7 +166,7 @@ export async function POST(
     const existingEmails = new Set(existingMembers.map((m) => m.user.email?.toLowerCase()));
 
     const existingInvitations = await prismaUsers.teamInvitation.findMany({
-      where: { teamId, status: "PENDING" },
+      where: openInvitation,
       select: { email: true },
     });
     const pendingEmails = new Set(existingInvitations.map((i) => i.email.toLowerCase()));
