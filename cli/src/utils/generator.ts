@@ -15,12 +15,14 @@ export interface GenerateOptions {
   projectType?: string;
   devOS?: string | string[];
   architecture?: string;
+  architectureOther?: string;
   repoHost?: string;
   isPublic?: boolean;
   license?: string;
   conventionalCommits?: boolean;
   semver?: boolean;
-  cicd?: string;
+  cicd?: string | string[];        // The wizard allows several CI/CD platforms
+  cicdOther?: string;
   deploymentTargets?: string[];
   buildContainer?: boolean;
   containerRegistry?: string;
@@ -32,7 +34,12 @@ export interface GenerateOptions {
   loggingConventionsOther?: string;
   namingConvention?: string;
   errorHandling?: string;
+  errorHandlingOther?: string;
   styleNotes?: string;
+  maxFileLength?: number;
+  importOrder?: string;
+  commentLanguage?: string;
+  docStyle?: string;
   aiBehavior?: string[];
   importantFiles?: string[];
   importantFilesOther?: string;
@@ -55,6 +62,9 @@ export interface GenerateOptions {
   testFrameworks?: string[];
   coverageTarget?: number;
   testNotes?: string;
+  tddPreference?: boolean;
+  snapshotTesting?: boolean;
+  mockStrategy?: string;
   staticFiles?: string[];
   staticFileContents?: Record<string, string>;
   staticFileHandling?: "config_only" | "both"; // How to handle static files
@@ -83,6 +93,20 @@ export interface GenerateOptions {
   changelogTool?: string;          // manual, conventional_changelog, etc.
   // AI Behavior
   planModeFrequency?: string;      // always, complex_tasks, multi_file, etc.
+  explanationVerbosity?: string;   // concise, balanced, detailed
+  accessibilityFocus?: boolean;
+  performanceFocus?: boolean;
+  // Tech stack details
+  packageManager?: string;
+  jsRuntime?: string;
+  monorepoTool?: string;
+  orm?: string;
+  // Git workflow
+  branchStrategy?: string;         // none, github_flow, gitflow, trunk_based, ...
+  defaultBranch?: string;
+  commitSigning?: boolean;
+  // Which platform's file is uploaded when cloud sync is on (wizard only, not rendered)
+  primarySyncFormat?: string;
   // Direct commits for small fixes
   allowDirectCommits?: boolean;    // Allow direct commits for typos, docs, minor fixes
   // Git worktrees for parallel AI sessions
@@ -156,7 +180,7 @@ export function parseVariablesString(varsStr: string): Record<string, string> {
 
 // Platform to filename mapping (30+ platforms)
 // IMPORTANT: Keep in sync with src/lib/platforms.ts
-const PLATFORM_FILES: Record<string, string> = {
+export const PLATFORM_FILES: Record<string, string> = {
   // Popular platforms
   universal: "AGENTS.md",
   agents: "AGENTS.md", // Alias for universal
@@ -169,7 +193,7 @@ const PLATFORM_FILES: Record<string, string> = {
   antigravity: "GEMINI.md",
   zed: ".zed/instructions.md",
   void: ".void/config.json",
-  trae: ".trae/rules/project.mdc",
+  trae: ".trae/rules/project_rules.md", // Trae reads project_rules.md
   firebase: ".idx/rules/project.mdc",
   
   // Editor extensions
@@ -181,10 +205,10 @@ const PLATFORM_FILES: Record<string, string> = {
   supermaven: ".supermaven/config.json",
   codegpt: ".codegpt/config.json",
   amazonq: ".amazonq/rules/project.md",
-  augment: ".augment/rules/project.mdc",
+  augment: ".augment/rules/project.md", // Augment rules are .md with a `type` frontmatter
   kilocode: ".kilocode/rules/project.mdc",
   junie: ".junie/guidelines.md",
-  kiro: ".kiro/steering/project.mdc",
+  kiro: ".kiro/steering/project.md", // Kiro steering files are .md with an `inclusion` frontmatter
   
   // CLI tools
   aider: ".aider.conf.yml",
@@ -261,6 +285,12 @@ const NAMING_DESCRIPTIONS: Record<string, string> = {
 
 // AI behavior rule descriptions
 const AI_BEHAVIOR_DESCRIPTIONS: Record<string, string> = {
+  // The rules the CLI wizard offers (AI_BEHAVIOR_RULES in commands/wizard.ts)
+  always_debug_after_build: "Always build and run the code locally to verify changes work before calling them complete",
+  check_logs_after_build: "Review build output, test logs and error messages after every build or commit",
+  run_tests_before_commit: "Run the test suite and make sure all tests pass before suggesting a commit",
+  follow_existing_patterns: "Study the existing code and follow its naming, structure and conventions",
+  ask_before_large_refactors: "Ask for explicit approval before significant architectural changes or refactors that touch many files",
   explain_changes: "Always explain what changes you're making and why before implementing them",
   preserve_style: "Preserve and follow the existing code style in the project",
   minimal_changes: "Make minimal, focused changes - avoid unnecessary refactoring",
@@ -289,6 +319,8 @@ const IMPORTANT_FILES_PATHS: Record<string, string> = {
   env_example: ".env.example",
   openapi: "openapi.yaml / swagger.json",
   architecture_md: "ARCHITECTURE.md",
+  api_docs: "API documentation",
+  database_schema: "Database schema / migrations",
   // Legacy aliases for backwards compatibility
   package: "package.json",
   tsconfig: "tsconfig.json",
@@ -361,6 +393,67 @@ const TEST_LEVEL_DESCRIPTIONS: Record<string, string> = {
   unit: "Unit tests for individual functions and components",
   integration: "Integration tests for component interactions",
   e2e: "End-to-end tests for full user flows",
+  regression: "Regression tests that keep fixed bugs from coming back",
+  performance: "Performance tests for load and stress",
+  security: "Security tests and vulnerability scanning",
+  accessibility: "Accessibility tests for WCAG compliance",
+  visual: "Visual regression tests by screenshot comparison",
+  contract: "Contract tests that validate API contracts",
+};
+
+/** "ask_before_large_refactors" -> "Ask before large refactors" (for ids with no description). */
+function humanizeId(id: string): string {
+  const text = id.replace(/[_-]+/g, " ").trim();
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/**
+ * Boundary lists for the file. A preset is used only when the user gave no custom lists:
+ * once any list is customised, mixing in preset lines would contradict it
+ * (e.g. "Delete files" under Always next to a preset "Delete any files" under Never).
+ */
+function resolveBoundaries(options: GenerateOptions): { always: string[]; askFirst: string[]; never: string[] } {
+  const hasCustom = Boolean(
+    options.boundaryAlways?.length || options.boundaryNever?.length || options.boundaryAsk?.length
+  );
+  if (hasCustom) {
+    return {
+      always: options.boundaryAlways || [],
+      askFirst: options.boundaryAsk || [],
+      never: options.boundaryNever || [],
+    };
+  }
+  return BOUNDARIES[options.boundaries] || BOUNDARIES.standard;
+}
+
+const CICD_NAMES: Record<string, string> = {
+  github_actions: "GitHub Actions",
+  gitlab_ci: "GitLab CI",
+  jenkins: "Jenkins",
+  circleci: "CircleCI",
+  travis: "Travis CI",
+  azure_devops: "Azure DevOps",
+  bitbucket: "Bitbucket Pipelines",
+  teamcity: "TeamCity",
+  drone: "Drone",
+  buildkite: "Buildkite",
+};
+
+/** CI/CD platforms as display names; "other" becomes the user's own text. */
+function cicdDisplay(options: GenerateOptions): string {
+  const ids = Array.isArray(options.cicd) ? options.cicd : options.cicd ? [options.cicd] : [];
+  return ids
+    .map((id) => (id === "other" ? options.cicdOther || "" : CICD_NAMES[id] || id))
+    .filter(Boolean)
+    .join(", ");
+}
+
+const BRANCH_STRATEGY_NAMES: Record<string, string> = {
+  github_flow: "GitHub Flow (main + feature branches)",
+  gitflow: "Gitflow (develop, feature, release and hotfix branches)",
+  trunk_based: "Trunk-based (short-lived branches, continuous integration)",
+  gitlab_flow: "GitLab Flow (environment branches)",
+  release_flow: "Release Flow (main + release branches)",
 };
 
 // Static file templates with defaults
@@ -665,17 +758,16 @@ export function generateConfig(options: GenerateOptions): Record<string, string>
 function generateFileContent(options: GenerateOptions, platform: string): string {
   const sections: string[] = [];
   
-  // Determine format based on platform
-  const mdcPlatforms = ["cursor", "trae", "firebase", "roocode", "augment", "kilocode", "kiro"];
+  // Determine format based on platform.
+  // Windsurf, Cline and Goose read Markdown, so they get the full Markdown rule set.
+  const mdcPlatforms = ["cursor", "firebase", "roocode", "kilocode"];
   const yamlPlatforms = ["aider", "tabnine"];
-  const plainTextPlatforms = ["windsurf", "cline", "goose"];
   const jsonPlatforms = ["void", "continue", "cody", "supermaven", "codegpt", "opencode", "firebender"];
   
   const isMdc = mdcPlatforms.includes(platform);
   const isYaml = yamlPlatforms.includes(platform);
-  const isPlainText = plainTextPlatforms.includes(platform);
   const isJson = jsonPlatforms.includes(platform);
-  const isMarkdown = !isMdc && !isYaml && !isPlainText && !isJson;
+  const isMarkdown = !isMdc && !isYaml && !isJson;
   const bp = options.blueprintMode || false;
   
   // Handle YAML formats
@@ -695,7 +787,7 @@ function generateFileContent(options: GenerateOptions, platform: string): string
   const authorName = bpVar(bp, "AUTHOR_NAME", options.userName || "");
   const authorEmail = bpVar(bp, "AUTHOR_EMAIL", options.userEmail || "");
   const architecture = bpVar(bp, "ARCHITECTURE", options.architecture || "");
-  const cicd = bpVar(bp, "CI_CD", options.cicd || "");
+  const cicd = bpVar(bp, "CI_CD", cicdDisplay(options));
   
   // MDC frontmatter for Cursor
   if (isMdc) {
@@ -709,8 +801,14 @@ function generateFileContent(options: GenerateOptions, platform: string): string
     sections.push("");
   }
   
-  // Header for regular markdown
+  // Header for regular markdown. Kiro and Augment only load a steering/rule file
+  // whose frontmatter says to always include it.
   if (isMarkdown) {
+    if (platform === "kiro") {
+      sections.push("---", "inclusion: always", "---", "");
+    } else if (platform === "augment") {
+      sections.push("---", "type: always_apply", "---", "");
+    }
     sections.push(`# ${projectName} - AI Assistant Configuration`);
     sections.push("");
   }
@@ -822,7 +920,8 @@ function generateFileContent(options: GenerateOptions, platform: string): string
   sections.push("");
 
   // Tech Stack section
-  if (options.stack.length > 0 || options.additionalLibraries) {
+  if (options.stack.length > 0 || options.additionalLibraries || options.packageManager ||
+      options.jsRuntime || options.monorepoTool || options.orm || options.devOS?.length) {
     if (isMarkdown || isMdc) {
       sections.push("## Tech Stack");
       sections.push("");
@@ -842,6 +941,12 @@ function generateFileContent(options: GenerateOptions, platform: string): string
           sections.push(`- ${lib}`);
         }
       }
+      if (options.packageManager) sections.push(`- **Package manager:** ${options.packageManager}`);
+      if (options.jsRuntime) sections.push(`- **Runtime:** ${options.jsRuntime}`);
+      if (options.monorepoTool) sections.push(`- **Monorepo tool:** ${options.monorepoTool}`);
+      if (options.orm) sections.push(`- **ORM / database library:** ${options.orm}`);
+      const devOS = Array.isArray(options.devOS) ? options.devOS : options.devOS ? [options.devOS] : [];
+      if (devOS.length > 0) sections.push(`- **Development OS:** ${devOS.join(", ")}`);
     } else {
       const allTech = [...stackList];
       if (options.additionalLibraries) {
@@ -863,8 +968,8 @@ function generateFileContent(options: GenerateOptions, platform: string): string
 
   // Repository info
   if (options.repoHost || options.license || options.conventionalCommits || options.semver || 
-      options.cicd || options.deploymentTargets?.length || options.buildContainer ||
-      options.exampleRepoUrl || options.documentationUrl) {
+      cicdDisplay(options) || options.deploymentTargets?.length || options.buildContainer ||
+      options.exampleRepoUrl || options.documentationUrl || options.architecture || options.commitSigning) {
     if (isMarkdown || isMdc) {
       sections.push("## Repository & Infrastructure");
       sections.push("");
@@ -891,34 +996,30 @@ function generateFileContent(options: GenerateOptions, platform: string): string
           component_based: "Component-Based",
           plugin: "Plugin Architecture",
         };
-        const archDisplay = archNames[options.architecture] || architecture || options.architecture;
+        const archDisplay = options.architecture === "other" && options.architectureOther
+          ? options.architectureOther
+          : archNames[options.architecture] || architecture || options.architecture;
         sections.push(`- **Architecture:** ${archDisplay}`);
       }
-      if (options.cicd) {
-        sections.push(`- **CI/CD:** ${cicd || options.cicd}`);
+      if (cicd) {
+        sections.push(`- **CI/CD:** ${cicd}`);
       }
       if (options.conventionalCommits) {
         sections.push("- **Commits:** Follow [Conventional Commits](https://conventionalcommits.org) format");
       }
       if (options.semver) {
         sections.push("- **Versioning:** Follow [Semantic Versioning](https://semver.org) (semver)");
+        if (options.versionTagFormat) {
+          sections.push(`- **Version tags:** ${options.versionTagFormat.replace(/_/g, " ")}`);
+        }
+        if (options.changelogTool) {
+          sections.push(`- **Changelog:** ${options.changelogTool.replace(/_/g, " ")}`);
+        }
+      }
+      if (options.commitSigning) {
+        sections.push("- **Commit signing:** Sign every commit (GPG or SSH)");
       }
       // Note: Dependency updates (Dependabot/Renovate) are now in security.securityTooling
-      if (options.cicd) {
-        const cicdNames: Record<string, string> = {
-          github_actions: "GitHub Actions",
-          gitlab_ci: "GitLab CI",
-          jenkins: "Jenkins",
-          circleci: "CircleCI",
-          travis: "Travis CI",
-          azure_devops: "Azure DevOps",
-          bitbucket: "Bitbucket Pipelines",
-          teamcity: "TeamCity",
-          drone: "Drone",
-          buildkite: "Buildkite",
-        };
-        sections.push(`- **CI/CD:** ${cicdNames[options.cicd] || options.cicd}`);
-      }
       if (options.deploymentTargets && options.deploymentTargets.length > 0) {
         const targetNames: Record<string, string> = {
           vercel: "Vercel",
@@ -950,7 +1051,10 @@ function generateFileContent(options: GenerateOptions, platform: string): string
             gitlab: "GitLab Registry",
             custom: "Custom registry",
           };
-          containerInfo += ` → ${registryNames[options.containerRegistry] || options.containerRegistry}`;
+          const registry = options.containerRegistry === "custom" && options.customRegistryUrl
+            ? options.customRegistryUrl
+            : registryNames[options.containerRegistry] || options.containerRegistry;
+          containerInfo += ` → ${registry}`;
         }
         sections.push(`- **Containers:** ${containerInfo}`);
       }
@@ -989,14 +1093,19 @@ function generateFileContent(options: GenerateOptions, platform: string): string
       sections.push("Commands:");
     }
     
-    const cmdCategories = ["build", "test", "lint", "dev", "custom"];
-    for (const cat of cmdCategories) {
+    // Every category the wizard collects, in a stable order
+    const cmdCategories: Array<[string, string]> = [
+      ["install", "Install"], ["build", "Build"], ["dev", "Dev"], ["test", "Test"],
+      ["testCoverage", "Test coverage"], ["lint", "Lint"], ["format", "Format"],
+      ["typecheck", "Typecheck"], ["clean", "Clean"], ["preCommit", "Pre-commit"],
+      ["additional", "Additional"], ["custom", "Custom"],
+    ];
+    for (const [cat, label] of cmdCategories) {
       const cmd = options.commands[cat];
       if (cmd) {
         const cmds = Array.isArray(cmd) ? cmd : [cmd];
         for (const c of cmds) {
           if (c) {
-            const label = cat.charAt(0).toUpperCase() + cat.slice(1);
             sections.push((isMarkdown || isMdc) ? `# ${label}: ${c}` : `- ${label}: ${c}`);
           }
         }
@@ -1010,15 +1119,29 @@ function generateFileContent(options: GenerateOptions, platform: string): string
   }
 
   // AI Behavior section
-  if (options.aiBehavior && options.aiBehavior.length > 0) {
+  const verbosityRules: Record<string, string> = {
+    concise: "Keep explanations brief and to the point",
+    balanced: "Explain clearly with enough context, without padding",
+    detailed: "Give in-depth explanations of the reasoning behind changes",
+  };
+  if (options.aiBehavior?.length || options.explanationVerbosity || options.accessibilityFocus ||
+      options.performanceFocus || (options.planModeFrequency && options.planModeFrequency !== "on_request") ||
+      options.attemptWorkarounds !== undefined) {
     if (isMarkdown || isMdc) {
       sections.push("## AI Behavior Rules");
       sections.push("");
-      for (const rule of options.aiBehavior) {
-        const desc = AI_BEHAVIOR_DESCRIPTIONS[rule];
-        if (desc) {
-          sections.push(`- ${desc}`);
-        }
+      for (const rule of options.aiBehavior || []) {
+        // Unknown ids (e.g. from a web draft) are kept as readable text rather than dropped
+        sections.push(`- ${AI_BEHAVIOR_DESCRIPTIONS[rule] || humanizeId(rule)}`);
+      }
+      if (options.explanationVerbosity && verbosityRules[options.explanationVerbosity]) {
+        sections.push(`- **Explanations:** ${verbosityRules[options.explanationVerbosity]}`);
+      }
+      if (options.accessibilityFocus) {
+        sections.push("- **Accessibility:** Prioritize accessibility (WCAG, a11y) in every UI change");
+      }
+      if (options.performanceFocus) {
+        sections.push("- **Performance:** Prioritize performance; flag slow paths and avoid needless work");
       }
       // Add plan mode frequency if specified
       if (options.planModeFrequency && options.planModeFrequency !== "on_request") {
@@ -1045,15 +1168,25 @@ function generateFileContent(options: GenerateOptions, platform: string): string
 
   // Git workflow preference
   if ((isMarkdown || isMdc)) {
+    const defaultBranch = options.defaultBranch || "main";
     sections.push("## Git Workflow");
     sections.push("");
-    sections.push("- **Workflow:** Create feature branches and submit pull requests");
-    sections.push("- Create a descriptive branch name (e.g., `feat/add-login`, `fix/button-styling`)");
-    sections.push("- Open a PR for review before merging");
-    if (options.allowDirectCommits) {
-      sections.push("- **Exception:** Direct commits to main are acceptable for small fixes (typos, docs, minor fixes)");
+    if (options.branchStrategy === "none") {
+      sections.push(`- **Workflow:** Commit directly to \`${defaultBranch}\`; no feature branches or pull requests`);
     } else {
-      sections.push("- Do NOT commit directly to main/master branch");
+      sections.push("- **Workflow:** Create feature branches and submit pull requests");
+      if (options.branchStrategy) {
+        sections.push(`- **Branch strategy:** ${BRANCH_STRATEGY_NAMES[options.branchStrategy] || options.branchStrategy}`);
+      }
+      sections.push("- Create a descriptive branch name (e.g., `feat/add-login`, `fix/button-styling`)");
+      sections.push("- Open a PR for review before merging");
+      if (options.allowDirectCommits) {
+        sections.push(`- **Exception:** Direct commits to \`${defaultBranch}\` are acceptable for small fixes (typos, docs, minor fixes)`);
+      } else {
+        sections.push(options.defaultBranch
+          ? `- Do NOT commit directly to the \`${defaultBranch}\` branch`
+          : "- Do NOT commit directly to main/master branch");
+      }
     }
     sections.push("");
   }
@@ -1108,6 +1241,11 @@ function generateFileContent(options: GenerateOptions, platform: string): string
           sections.push(`- \`${path}\``);
         }
       }
+      if (options.importantFilesOther) {
+        for (const other of options.importantFilesOther.split(",").map(f => f.trim()).filter(Boolean)) {
+          sections.push(`- \`${other}\``);
+        }
+      }
       sections.push("");
     }
   }
@@ -1153,15 +1291,7 @@ function generateFileContent(options: GenerateOptions, platform: string): string
   }
 
   // Boundaries section
-  // Get preset boundaries or use standard as fallback
-  const presetBoundaries = BOUNDARIES[options.boundaries] || BOUNDARIES.standard;
-  
-  // Build final boundaries - use custom values if provided, otherwise use preset
-  const boundaries = {
-    always: options.boundaryAlways?.length ? options.boundaryAlways : presetBoundaries.always,
-    never: options.boundaryNever?.length ? options.boundaryNever : presetBoundaries.never,
-    askFirst: options.boundaryAsk?.length ? options.boundaryAsk : presetBoundaries.askFirst,
-  };
+  const boundaries = resolveBoundaries(options);
   
   if (boundaries.always?.length || boundaries.never?.length || boundaries.askFirst?.length) {
     if (isMarkdown || isMdc) {
@@ -1229,7 +1359,9 @@ function generateFileContent(options: GenerateOptions, platform: string): string
         error_codes: "Use error codes with proper documentation",
         exceptions: "Use custom exception classes",
       };
-      if (errorStyles[options.errorHandling]) {
+      if (options.errorHandling === "other" && options.errorHandlingOther) {
+        sections.push(`- **Errors:** ${options.errorHandlingOther}`);
+      } else if (errorStyles[options.errorHandling]) {
         sections.push(`- **Errors:** ${errorStyles[options.errorHandling]}`);
       }
     }
@@ -1242,6 +1374,24 @@ function generateFileContent(options: GenerateOptions, platform: string): string
       sections.push(`- **Logging:** ${loggingValue}`);
     }
     
+    if (options.maxFileLength) {
+      sections.push(`- **File length:** Keep files under ${options.maxFileLength} lines`);
+    }
+    const importOrders: Record<string, string> = {
+      grouped: "Group imports: external, then internal, then relative",
+      sorted: "Sort imports alphabetically",
+      natural: "Leave import order as written",
+    };
+    if (options.importOrder && importOrders[options.importOrder]) {
+      sections.push(`- **Imports:** ${importOrders[options.importOrder]}`);
+    }
+    if (options.commentLanguage) {
+      sections.push(`- **Comment language:** Write code comments in ${humanizeId(options.commentLanguage)}`);
+    }
+    if (options.docStyle) {
+      sections.push(`- **Documentation style:** ${options.docStyle}`);
+    }
+
     // Style notes
     if (options.styleNotes) {
       sections.push(`- **Notes:** ${options.styleNotes}`);
@@ -1290,7 +1440,8 @@ function generateFileContent(options: GenerateOptions, platform: string): string
   }
 
   // Testing Strategy section
-  if (options.testLevels?.length || options.testFrameworks?.length || options.coverageTarget) {
+  if (options.testLevels?.length || options.testFrameworks?.length || options.coverageTarget ||
+      options.tddPreference || options.snapshotTesting || options.mockStrategy) {
     if (isMarkdown || isMdc) {
       sections.push("## Testing Strategy");
       sections.push("");
@@ -1299,10 +1450,10 @@ function generateFileContent(options: GenerateOptions, platform: string): string
         sections.push("### Test Levels");
         sections.push("");
         for (const level of options.testLevels) {
+          const label = level.charAt(0).toUpperCase() + level.slice(1);
           const desc = TEST_LEVEL_DESCRIPTIONS[level];
-          if (desc) {
-            sections.push(`- **${level.charAt(0).toUpperCase() + level.slice(1)}:** ${desc}`);
-          }
+          // Levels with no description (e.g. from a web draft) are kept, not dropped
+          sections.push(desc ? `- **${label}:** ${desc}` : `- **${humanizeId(level)}**`);
         }
         sections.push("");
       }
@@ -1316,6 +1467,24 @@ function generateFileContent(options: GenerateOptions, platform: string): string
       
       if (options.coverageTarget) {
         sections.push(`### Coverage Target: ${options.coverageTarget}%`);
+        sections.push("");
+      }
+
+      const mockStrategies: Record<string, string> = {
+        minimal: "Mock only external dependencies",
+        comprehensive: "Mock collaborators to isolate the unit under test",
+        none: "Avoid mocks; test against real implementations",
+      };
+      const practices: string[] = [];
+      if (options.tddPreference) practices.push("- Write the failing test first, then the code (TDD)");
+      if (options.snapshotTesting) practices.push("- Use snapshot tests to validate rendered or serialized output");
+      if (options.mockStrategy && mockStrategies[options.mockStrategy]) {
+        practices.push(`- **Mocking:** ${mockStrategies[options.mockStrategy]}`);
+      }
+      if (practices.length > 0) {
+        sections.push("### Practices");
+        sections.push("");
+        sections.push(...practices);
         sections.push("");
       }
       
@@ -1704,7 +1873,7 @@ function generateJsonConfig(options: GenerateOptions, platform: string): string 
   const rules: string[] = [];
   
   // Boundaries
-  const boundaryRules = BOUNDARIES[options.boundaries] || BOUNDARIES.standard;
+  const boundaryRules = resolveBoundaries(options);
   rules.push(...boundaryRules.always.map(r => `AUTO-APPROVE: ${r}`));
   rules.push(...boundaryRules.askFirst.map(r => `ASK FIRST: ${r}`));
   rules.push(...boundaryRules.never.map(r => `PROHIBITED: ${r}`));
@@ -1753,9 +1922,7 @@ function generateYamlConfig(options: GenerateOptions, platform: string): string 
     lines.push("# Aider configuration");
     lines.push(`# Project: ${options.name}`);
     lines.push("");
-    lines.push("# Model settings");
-    lines.push("model: gpt-4");
-    lines.push("");
+    // No model is pinned: a repo-level model would override every user's own choice.
     lines.push("# Code style");
     if (options.stack.includes("typescript") || options.stack.includes("javascript")) {
       lines.push("auto-lint: true");
@@ -1764,7 +1931,7 @@ function generateYamlConfig(options: GenerateOptions, platform: string): string 
     lines.push("# Custom instructions");
     lines.push("read:");
     lines.push("  - README.md");
-    if (options.importantFiles?.includes("architecture")) {
+    if (options.importantFiles?.includes("architecture") || options.importantFiles?.includes("architecture_md")) {
       lines.push("  - ARCHITECTURE.md");
     }
   } else if (platform === "tabnine") {
