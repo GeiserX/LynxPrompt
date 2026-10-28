@@ -7,12 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.45] - 2026-10-28
+
+App 2.1.45 and CLI 2.1.38. This release fixes the findings of a full audit of the code.
+
+### Upgrade notes
+- **SSO needs a verified domain.** A team's IdP now signs in only addresses on a domain the team verified with a TXT record at `_lynxprompt-sso.<domain>`. Existing SSO configurations stop signing anyone in until an admin adds the record and presses Verify. SAML and LDAP answer with a clear "not supported yet" error; only OpenID Connect works.
+- **`SSO_ENCRYPTION_KEY`** (64 hex characters) is required to save an SSO configuration. `SSO_ALLOW_PRIVATE_IDP=true` lets an IdP live on a private address or plain http, for trusted instances only.
+- **`TRUSTED_PROXY`** says which client address to use for rate limits: the number of reverse proxies in front of the app (default 1), or `cloudflare` to read `CF-Connecting-IP`, which is safe only when the app cannot be reached except through Cloudflare.
+- **`NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `NEXT_PUBLIC_UMAMI_WEBSITE_ID`** are read at runtime, not baked into the image. Set them in the container's environment.
+- **The AI editor defaults to `claude-haiku-5-5`**, since the old default model is retired. `AI_MODEL` still overrides it.
+- **Passkey "trust this device"** no longer skips the passkey prompt.
+
 ### Security
+- **SSO account takeover**: a team's IdP could sign in as any existing account by asserting its email. Sign-in now needs a verified domain, `javascript:` and other non-http URLs are refused in the SSO settings, and the server no longer calls IdP token or userinfo URLs on private addresses.
+- **Passkey second factor**: the server now enforces the passkey check before minting API tokens and managing passkeys, instead of trusting the browser.
+- **API token scopes**: read-only tokens can no longer write blueprints or use the AI editor.
+- **CLI login**: the CLI proves it started the login with a PKCE-style verifier, so someone who sees the login URL cannot collect the token. Tokens are stored with mode 0600 and bound to the server they were issued for, and `lynxp logout` revokes them.
+- **Rate limits and captcha**: forged `X-Forwarded-For` headers no longer give a fresh rate-limit bucket, the magic-link form checks Turnstile, and a slow regular expression in the sensitive-data check is gone.
+- **Blueprint routes**: hierarchy and parent ids must belong to the caller, private blueprints are no longer counted or listed through download and v1 routes, and bad paging values no longer cause 500s.
+- **Support forum and privacy**: the support API answers 404 when `ENABLE_SUPPORT_FORUM` is off, and stored IP hashes are an HMAC keyed with `NEXTAUTH_SECRET` instead of a plain sha256 anyone can reverse.
 - **The image no longer trusts the compromised eMudhra intermediates**: the image upgrades Alpine's CA bundle to 20261020-r0 and runs Node with `--use-openssl-ca`, because Node's built-in roots still accept certificates issued through the eight eMudhra intermediates whose keys leaked. Outgoing HTTPS and SMTP (GitHub, Google sign-in, Turnstile, mail) now verify against the patched system bundle.
 
 ### Fixed
-- **Helm chart 0.1.4**: runs app 2.1.40, and mounts the uploads volume at `/data/uploads`, where the app writes. Earlier charts mounted it at `/app/public/uploads`, so uploads never reached the volume.
-- **`docker-compose.selfhost.yml`** pins app 2.1.40, so the Mailpit try-out on `http://localhost:3000` can sign in.
+- **AI editor**: the usage budget resets every month instead of stopping after the first 30 days, parallel requests cannot overspend it, and the editor is reachable from the blueprint pages.
+- **Teams**: invitations are emailed to the invitee, admins can manage members and seats, and an invited address can sign in when registration is off.
+- **Wizard**: every answer reaches the generated file, drafts save from the last step too, and the Cloud Sync header points at the file the CLI writes.
+- **Generated files**: downloads use the file name and format each AI tool reads (for example `.rules` for Zed and `.github/prompts/*.prompt.md` for Copilot prompts).
+- **Blueprint edits and CLI sync**: editing a blueprint on the web keeps its type, every write stores the content checksum, and `lynxp push` no longer reports a conflict, or overwrites edits, because of a checksum mismatch. After upgrading, a file tracked by an older CLI can get one conflict on its first push; `lynxp pull` or `--force` clears it.
+- **`lynxp pull` and `push` through the v1 API** follow the same read, visibility and sensitive-data rules as the web.
+- **CLI behaviour**: `convert`, `push` and `pull` handle Trae, Amazon Q, Augment, Kiro and legacy `.cursorrules` files, and terminal output escapes control characters from the server.
+- **Last login**: accounts record `lastLoginAt` on every sign-in.
+- **Health check**: `/api/health` checks both databases and returns 503 when one is down; `/api/health/live` answers without touching a database.
+- **Homebrew**: the formula's sha256 is the hash of the real npm tarball (2.1.36 shipped the hash of npm's 404 page), and the CLI is built from its release tag.
+- **Self-hosting docs and compose file**: the documented variables match what the code reads, and every database gets its own URL.
+- **Helm chart 0.1.5 and `docker-compose.selfhost.yml`** run app 2.1.45.
+- **Helm chart 0.1.4**: mounts the uploads volume at `/data/uploads`, where the app writes. Earlier charts mounted it at `/app/public/uploads`, so uploads never reached the volume.
 - **Helm chart 0.1.3**: each of the four Prisma schemas gets its own database (`<name>`, `<name>_users`, `<name>_blog`, `<name>_support`). Earlier charts pointed all four at one database, so every start dropped the other schemas' tables and sign-in failed.
 
 ## [2.1.40] - 2026-10-10
