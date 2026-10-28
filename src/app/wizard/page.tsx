@@ -68,6 +68,7 @@ import {
   type WizardStepId,
 } from "@/lib/wizard-state";
 import { addApiSyncHeader, syncBlueprintPayload, syncFilePath, toBlueprintApiId } from "@/lib/wizard-sync";
+import { PASSKEY_REDIRECT_EVENT } from "@/lib/passkey-redirect";
 // NOTE: Wizard constants are defined inline in this file. 
 // The shared package (packages/shared) contains the canonical list.
 // TODO: Migrate to importing from @/lib/wizard-options once inline constants are removed.
@@ -639,7 +640,7 @@ function WizardPageContent() {
   const resumedConfigRef = useRef(false);
 
   // Save guest wizard state to localStorage before auth redirect
-  const saveGuestStateAndRedirect = (redirectUrl: string) => {
+  const saveGuestState = useCallback(() => {
     const guestState = {
       config,
       currentStep,
@@ -650,8 +651,18 @@ function WizardPageContent() {
     } catch (e) {
       console.error("Failed to save guest wizard state:", e);
     }
+  }, [config, currentStep]);
+  const saveGuestStateAndRedirect = (redirectUrl: string) => {
+    saveGuestState();
     router.push(redirectUrl);
   };
+
+  // A save refused for a missing passkey leaves for the passkey step and
+  // comes back here; keep the work so it is restored on return
+  useEffect(() => {
+    window.addEventListener(PASSKEY_REDIRECT_EVENT, saveGuestState);
+    return () => window.removeEventListener(PASSKEY_REDIRECT_EVENT, saveGuestState);
+  }, [saveGuestState]);
 
   // Restore guest state from localStorage on mount (runs once)
   useEffect(() => {
