@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prismaSupport } from "@/lib/db-support";
 import { supportForumDisabled } from "@/lib/support-guard";
 import { prismaUsers } from "@/lib/db-users";
+import { requireSession } from "@/lib/api-auth";
 
 // PostStatus values in prisma/schema-support.prisma
 const POST_STATUSES = ["OPEN", "IN_PROGRESS", "COMPLETED", "CLOSED", "DUPLICATE"];
@@ -171,10 +172,9 @@ export async function POST(request: NextRequest) {
   if (disabled) return disabled;
 
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     const body = await request.json();
     const { title, content, categorySlug, tagSlugs } = body;

@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions, webAuthnConfig } from "@/lib/auth";
+import { webAuthnConfig } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { ENABLE_PASSKEYS } from "@/lib/feature-flags";
 import {
@@ -8,18 +7,17 @@ import {
   type AuthenticatorTransportFuture,
 } from "@simplewebauthn/server";
 import { secureCookiesEnabled } from "@/lib/auth-cookies";
+import { requireSession } from "@/lib/api-auth";
 
-export async function POST() {
+export async function POST(request: Request) {
   if (!ENABLE_PASSKEYS) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     // Get user with existing authenticators
     const user = await prismaUsers.user.findUnique({
