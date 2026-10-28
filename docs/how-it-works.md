@@ -35,7 +35,8 @@ accounts), GitHub and Google OAuth, and SAML, OIDC or LDAP SSO per team. When an
 ## What the CLI and the extension talk to
 
 `lynxp login` opens the configured instance in the browser (`lynxp config set-url`, or `LYNXPROMPT_API_URL`)
-and stores an API token. Every call after that is `Authorization: Bearer <token>` against `/api/v1/`. Tokens
+and stores an API token in a file only its owner can read. The token is sent only to the instance that issued
+it, and `lynxp logout` revokes it there. Every call after that is `Authorization: Bearer <token>` against `/api/v1/`. Tokens
 are created in Settings, carry a role (`BLUEPRINTS_FULL`, `BLUEPRINTS_READONLY`, `PROFILE_FULL` and others)
 and an expiry, and the API answers `401` with the settings URL when one expires. The VS Code extension, the
 GitHub Action and the MCP server use the same API with the same tokens.
