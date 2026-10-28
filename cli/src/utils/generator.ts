@@ -66,7 +66,7 @@ export interface GenerateOptions {
   includePersonalData?: boolean;
   enableAutoUpdate?: boolean;
   blueprintId?: string; // For auto-update curl command
-  preferCliSync?: boolean; // Use CLI commands instead of curl (default true)
+  preferCliSync?: boolean; // Sign in with lynxp login instead of a token from an env var (default true)
   tokenEnvVar?: string; // Environment variable name for API token (default LYNXPROMPT_API_TOKEN)
   // User profile data (fetched from cloud)
   userName?: string;

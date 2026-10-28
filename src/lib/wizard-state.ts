@@ -171,7 +171,7 @@ export type WizardConfig = {
   platform: string;
   blueprintMode: boolean; // Generate with [[VARIABLE|default]] for blueprint templates
   enableApiSync: boolean; // Auto-save as private template with API sync instructions
-  preferCliSync: boolean; // Use CLI commands instead of curl (default true)
+  preferCliSync: boolean; // Sign in with lynxp login instead of a token from an env var (default true)
   tokenEnvVar: string; // Environment variable name for API token
   additionalFeedback: string;
   commands: CommandsConfig;
