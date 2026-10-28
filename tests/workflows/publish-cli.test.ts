@@ -83,3 +83,21 @@ describe("Homebrew tarball hash", () => {
     expect(homebrew).toContain('sha256 "${{ steps.sha.outputs.sha256 }}"');
   });
 });
+
+describe("CLI release pipeline", () => {
+  it("every publish job builds the tagged commit, not main", () => {
+    const publish = read("publish-cli.yml");
+    for (const name of ["publish-npm", "publish-binaries", "sign-macos", "publish-chocolatey", "publish-snap", "update-homebrew"]) {
+      const checkouts = job(publish, name).match(/uses: actions\/checkout@\S+\n(?: {8}.*\n)*/g) ?? [];
+      const own = checkouts.filter((step) => !step.includes("repository:"));
+      expect(own.length, `${name} has no checkout of this repository`).toBeGreaterThan(0);
+      for (const step of own) expect(step, `${name} checks out without the tag`).toContain("ref: ${{ needs.check.outputs.ref }}");
+    }
+    expect(job(publish, "check")).toContain('echo "ref=refs/tags/$TAG"');
+  });
+
+  it("a lockfile-only merge starts the release", () => {
+    const paths = read("release.yml").match(/\n  push:\n(?: {4}.*\n)*/)![0];
+    for (const path of ["package-lock.json", "cli/package-lock.json"]) expect(paths).toContain(`- '${path}'`);
+  });
+});

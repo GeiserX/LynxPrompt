@@ -39,6 +39,7 @@ jobs:
     outputs:
       should_publish: ${{ steps.check.outputs.should_publish }}
       version: ${{ steps.version.outputs.version }}
+      ref: ${{ steps.ref.outputs.ref }}
       platforms: ${{ steps.platforms.outputs.platforms }}
 
     steps:
@@ -82,6 +83,19 @@ jobs:
             echo "version=$VERSION" >> $GITHUB_OUTPUT
           fi
 
+      # Build the code that was tagged, not whatever main holds when the job
+      # starts: a merge landing between the tag and this run would otherwise ship
+      # untagged code under the tagged version.
+      - name: Resolve the release tag
+        id: ref
+        run: |
+          TAG="cli-v${{ steps.version.outputs.version }}"
+          if ! git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null; then
+            echo "::error::tag $TAG does not exist; publish only released versions"
+            exit 1
+          fi
+          echo "ref=refs/tags/$TAG" >> $GITHUB_OUTPUT
+
       - name: Get platforms
         id: platforms
         run: |
@@ -107,6 +121,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.check.outputs.ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -175,6 +191,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.check.outputs.ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -245,6 +263,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.check.outputs.ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -371,6 +391,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.check.outputs.ref }}
 
       - name: Update nuspec version
         shell: pwsh
@@ -410,6 +432,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.check.outputs.ref }}
 
       - name: Update snapcraft.yaml version
         run: |
@@ -448,6 +472,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
+          ref: ${{ needs.check.outputs.ref }}
           sparse-checkout: .github/scripts
 
       # The registry can answer 404 for a few seconds after npm publish; the
