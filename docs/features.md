@@ -23,6 +23,10 @@ Internal marketplace for sharing AI configurations and slash commands within you
 
 Step-by-step config generator available on both web and CLI. Auto-detects your tech stack, frameworks, and repo structure from GitHub/GitLab URLs. Supports template variables, monorepo hierarchies, and draft auto-saving.
 
+## Agent Skills and Subagents
+
+Store an Agent Skill (`SKILL.md`) or a subagent once and write it where every agent reads it. A skill goes to `.agents/skills/<name>/` (Codex, Cursor, Copilot, Gemini CLI, Antigravity, Zed, Junie and most others) and `.claude/skills/<name>/` (Claude Code), plus Kiro and Firebender when picked. A subagent goes to `.claude/agents/` and `.agents/agents/`, plus `.github/agents/<name>.agent.md` for Copilot and `.codex/agents/<name>.toml` for Codex when picked. The web download and `lynxp pull` write the same copies, and `lynxp push` keeps them in step.
+
 ## Configurable Authentication
 
 Flexible auth to fit your environment:
