@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtemp, rm, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
-import { detectSourceFile } from "../../cli/src/commands/convert";
+import { detectSourceFile } from "../../cli/src/utils/convert-format";
 
 describe("lynxp convert source auto-detect", () => {
   let dir: string;

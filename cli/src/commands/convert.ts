@@ -8,9 +8,16 @@
 
 import chalk from "chalk";
 import { readFile, writeFile, access } from "fs/promises";
-import { join, basename, resolve, dirname } from "path";
+import { basename, resolve, dirname } from "path";
 import ora from "ora";
-import { convertContent, isStructuredPlatform, platformForPath } from "../utils/convert-format.js";
+import {
+  SOURCE_FILES,
+  convertContent,
+  detectSourceFile,
+  isStructuredPlatform,
+  platformForPath,
+  sourceFilePlatform,
+} from "../utils/convert-format.js";
 import { PLATFORM_FILES } from "../utils/generator.js";
 import { COMMANDS } from "../../../packages/shared/src/platforms.js";
 
@@ -18,26 +25,6 @@ interface ConvertOptions {
   output?: string;
   force?: boolean;
 }
-
-// Supported source file patterns and their platforms
-const SOURCE_FILES: Record<string, string> = {
-  "agents.md": "agents",
-  "claude.md": "claude",
-  ".cursorrules": "cursor_legacy",
-  ".cursor/rules/project.mdc": "cursor",
-  "cursor.rules/project.mdc": "cursor",
-  "project.mdc": "cursor",
-  ".github/copilot-instructions.md": "copilot",
-  "copilot-instructions.md": "copilot",
-  ".windsurfrules": "windsurf",
-  ".clinerules": "cline",
-  // Real case: auto-detect looks the name up as is, and Linux disks are case-sensitive
-  "CONVENTIONS.md": "aider",
-};
-
-/** The platform of a known source filename, whatever its case */
-const sourceFilePlatform = (name: string) =>
-  Object.entries(SOURCE_FILES).find(([file]) => file.toLowerCase() === name.toLowerCase())?.[1];
 
 // Target format to output filename: every platform of the shared table (the
 // file the wizard and the web download write), plus the legacy .cursorrules,
@@ -98,34 +85,6 @@ const COMMAND_DIRS: Record<string, string> = {
   ...Object.fromEntries(COMMANDS.map((c) => [c.directory, c.id])),
   ".copilot/prompts": "copilot-prompt",
 };
-
-export async function detectSourceFile(cwd: string): Promise<{ path: string; platform: string } | null> {
-  // Try to find a source file in common locations
-  for (const [pattern, platform] of Object.entries(SOURCE_FILES)) {
-    try {
-      const fullPath = join(cwd, pattern);
-      await access(fullPath);
-      return { path: fullPath, platform };
-    } catch {
-      // File doesn't exist, try next
-    }
-  }
-  
-  // Try uppercase variants
-  const uppercaseVariants = ["AGENTS.md", "CLAUDE.md"];
-  for (const variant of uppercaseVariants) {
-    try {
-      const fullPath = join(cwd, variant);
-      await access(fullPath);
-      const platform = variant.toLowerCase().replace(".md", "");
-      return { path: fullPath, platform };
-    } catch {
-      // File doesn't exist
-    }
-  }
-  
-  return null;
-}
 
 /**
  * Detect if a source path is a command file
