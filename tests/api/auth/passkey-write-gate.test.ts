@@ -86,6 +86,7 @@ const WRITES: [string, string][] = [
   ["blog/[slug]", "DELETE"],
   ["blog", "POST"],
   ["blueprints/[id]/favorite", "POST"],
+  ["blueprints/[id]/versions", "DELETE"],
   ["blueprints/[id]", "PUT"],
   ["blueprints/[id]", "DELETE"],
   ["blueprints", "POST"],

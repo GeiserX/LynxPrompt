@@ -12,6 +12,10 @@ const mockVersionFindFirst = vi.fn();
 
 vi.mock("next-auth", () => ({ getServerSession: () => mockSession() }));
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
+// Passkeys are not under test here: every session counts as verified.
+vi.mock("@/lib/passkey-session", () => ({
+  getPasskeyStatus: vi.fn().mockResolvedValue({ required: false, verified: true }),
+}));
 
 vi.mock("@/lib/db-users", () => {
   const client = {
