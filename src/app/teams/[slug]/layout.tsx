@@ -1,6 +1,6 @@
 import { PasskeyGuard } from "@/components/passkey-guard";
 
-export default function TeamsLayout({
+export default function TeamLayout({
   children,
 }: {
   children: React.ReactNode;
