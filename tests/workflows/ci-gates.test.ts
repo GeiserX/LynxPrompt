@@ -44,7 +44,17 @@ describe("CI gates can fail", () => {
     const release = read("release.yml");
     expect(job(release, "ci")).toContain("uses: ./.github/workflows/ci.yml");
     expect(job(release, "cli-tests")).toContain("uses: ./.github/workflows/cli-tests.yml");
-    expect(job(release, "release-app")).toMatch(/needs: \[prepare, ci\]/);
-    expect(job(release, "release-cli")).toMatch(/needs: \[prepare, cli-tests\]/);
+    expect(job(release, "release-app")).toMatch(/needs: \[prepare, ci, docker-smoke\]/);
+    // cli-v2.1.37 was published while the CI tests were red, because the CLI
+    // release waited only for the CLI tests.
+    expect(job(release, "release-cli")).toMatch(/needs: \[prepare, ci, cli-tests\]/);
+  });
+
+  it("the app release waits for the image to build on both platforms", () => {
+    const smoke = job(read("release.yml"), "docker-smoke");
+    expect(smoke).toContain("platform: linux/amd64, arch: amd64, runner: ubuntu-latest");
+    expect(smoke).toContain("platform: linux/arm64, arch: arm64, runner: ubuntu-24.04-arm");
+    expect(smoke).toMatch(/push: false/);
+    expect(smoke).not.toMatch(/continue-on-error/);
   });
 });
