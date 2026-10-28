@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getTemplateById, incrementTemplateUsage } from "@/lib/data/templates";
+import { getTemplateById } from "@/lib/data/templates";
 import { prismaUsers } from "@/lib/db-users";
 import { detectSensitiveData } from "@/lib/sensitive-data";
+import { normalizeBlueprintType } from "@/lib/blueprint-types";
+import { contentChecksum } from "@/lib/content-checksum";
 import { sanitizeRepositoryPath } from "@/lib/repository-path";
 
 // GET /api/blueprints/[id] - Get blueprint details
@@ -57,8 +59,8 @@ export async function GET(
       }
     }
 
-    // Increment usage count (only for views, not just listing)
-    await incrementTemplateUsage(id);
+    // Viewing a blueprint is not a download: the counter moves only in
+    // POST /api/blueprints/[id]/download, which also deduplicates by IP.
 
     return NextResponse.json({
       ...templateWithShowcase,
@@ -72,21 +74,6 @@ export async function GET(
     );
   }
 }
-
-// Blueprint type options for validation
-const BLUEPRINT_TYPES = [
-  "AGENTS_MD",
-  "CLAUDE_MD",
-  "COPILOT_INSTRUCTIONS",
-  "WINDSURF_RULES",
-  "CLINE_RULES",
-  "CODEX_MD",
-  "CURSOR_RULES",
-  "CURSORRULES", // Legacy - backwards compat
-  "CUSTOM",
-] as const;
-
-type BlueprintType = (typeof BLUEPRINT_TYPES)[number];
 
 /**
  * Determine tier based on total word count (all content including comments/headers).
@@ -194,19 +181,13 @@ export async function PUT(
         );
       }
       updateData.content = content.trim();
+      updateData.contentChecksum = contentChecksum(content);
       // Re-calculate tier when content changes
       updateData.tier = determineTier(content);
     }
 
     if (type !== undefined) {
-      let normalizedType: BlueprintType = "CUSTOM";
-      const upperType = (type || "").toUpperCase().replace(/-/g, "_");
-      if (upperType.includes("CURSOR")) normalizedType = "CURSOR_RULES";
-      else if (upperType.includes("CLAUDE")) normalizedType = "CLAUDE_MD";
-      else if (upperType.includes("COPILOT")) normalizedType = "COPILOT_INSTRUCTIONS";
-      else if (upperType.includes("WINDSURF")) normalizedType = "WINDSURF_RULES";
-      else if (upperType.includes("AGENT")) normalizedType = "AGENTS_MD";
-      updateData.type = normalizedType;
+      updateData.type = normalizeBlueprintType(type);
     }
 
     if (repositoryPath !== undefined) {
@@ -394,10 +375,17 @@ export async function DELETE(
       );
     }
 
-    // Delete the blueprint
-    await prismaUsers.userTemplate.delete({
-      where: { id: realId },
-    });
+    // Favorites and downloads point at the blueprint by a plain id with no
+    // foreign key, so remove them with it. Versions cascade in the schema.
+    // Download rows keep the id as the client sent it (bp_ prefix), favorites
+    // keep the bare id; match both forms for downloads.
+    await prismaUsers.$transaction([
+      prismaUsers.templateDownload.deleteMany({
+        where: { templateId: { in: [realId, `bp_${realId}`] }, templateType: "user" },
+      }),
+      prismaUsers.templateFavorite.deleteMany({ where: { templateId: realId, templateType: "user" } }),
+      prismaUsers.userTemplate.delete({ where: { id: realId } }),
+    ]);
 
     return NextResponse.json({
       success: true,

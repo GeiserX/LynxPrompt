@@ -78,8 +78,6 @@ export default function EditBlueprintPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [sensitiveWarningDismissed, setSensitiveWarningDismissed] = useState(false);
-  const [userPlan, setUserPlan] = useState<string>("FREE");
-  const [loadingPlan, setLoadingPlan] = useState(true);
   
   // Versioning state
   const [currentVersion, setCurrentVersion] = useState(1);
@@ -111,7 +109,8 @@ export default function EditBlueprintPage() {
         setDescription(data.description || "");
         setContent(data.content || "");
         setOriginalContent(data.content || ""); // Store original for comparison
-        setType(data.targetPlatform?.toUpperCase() || "CURSOR_RULES");
+        // Keep the stored type; saving must not change it unless the user does.
+        setType(data.type || "CUSTOM");
         setCategory(data.category || "other");
         setTags(data.tags || []);
         setIsPublic(data.isPublic !== false);
@@ -130,28 +129,6 @@ export default function EditBlueprintPage() {
       router.push("/auth/signin");
     }
   }, [status, blueprintId, router]);
-
-  // Fetch user subscription plan
-  useEffect(() => {
-    const fetchPlan = async () => {
-      try {
-        const res = await fetch("/api/billing/status");
-        if (res.ok) {
-          const data = await res.json();
-          setUserPlan(data.plan || "FREE");
-        }
-      } catch {
-        // Default to FREE if fetch fails
-      } finally {
-        setLoadingPlan(false);
-      }
-    };
-    if (status === "authenticated") {
-      fetchPlan();
-    } else {
-      setLoadingPlan(false);
-    }
-  }, [status]);
 
   // Detect sensitive data in content
   const sensitiveMatches = useMemo<SensitiveMatch[]>(() => {
@@ -440,8 +417,8 @@ export default function EditBlueprintPage() {
                   Blueprint Content
                 </h2>
 
-                {/* AI Edit Panel - MAX users only, when AI is enabled */}
-                {enableAI && userPlan === "max" && (
+                {/* AI Edit Panel - shown whenever AI is enabled on this instance */}
+                {enableAI && (
                   <div className="mb-3 rounded-lg border border-purple-300 bg-purple-100 p-3 dark:border-purple-500/50 dark:bg-purple-900/30">
                     <div className="mb-2 flex items-center gap-2 text-sm">
                       <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-300" />
@@ -627,6 +604,10 @@ export default function EditBlueprintPage() {
                           {t.icon} {t.label}
                         </option>
                       ))}
+                      {/* A type set elsewhere (CLI, API) that this list does not offer */}
+                      {!BLUEPRINT_TYPES.some((t) => t.value === type) && (
+                        <option value={type}>📄 {type}</option>
+                      )}
                     </select>
                     {/* Interoperability notice */}
                     <div className="mt-2 rounded-lg border border-sky-200 bg-sky-50 p-3 dark:border-sky-500/50 dark:bg-sky-900/30">

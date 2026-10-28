@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   Users,
   TrendingUp,
@@ -146,23 +146,32 @@ const TYPE_LABELS: Record<string, string> = {
 
 export default function AdminStatsPage() {
   const { data: session, status } = useSession();
+  const router = useRouter();
+  const role = session?.user?.role;
+  const isSuperadmin = status === "authenticated" && role === "SUPERADMIN";
   const [data, setData] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState(30);
   const [showUsersList, setShowUsersList] = useState(false);
 
+  // redirect() only works while rendering; from an effect use the router.
+  // Signed-out visitors were left on an endless spinner.
   useEffect(() => {
-    if (status === "authenticated" && session?.user?.role !== "SUPERADMIN") {
-      redirect("/dashboard");
+    if (status === "unauthenticated") {
+      router.replace("/auth/signin?callbackUrl=/admin/stats");
+    } else if (status === "authenticated" && role !== "SUPERADMIN") {
+      router.replace("/dashboard");
     }
-  }, [status, session]);
+  }, [status, role, router]);
 
+  // Keyed on the role, not the session object: next-auth hands out a new
+  // object on every refetch (window focus), which refetched the stats.
   useEffect(() => {
-    if (status === "authenticated" && session?.user?.role === "SUPERADMIN") {
+    if (isSuperadmin) {
       fetchStats();
     }
-  }, [status, session, timeRange]);
+  }, [isSuperadmin, timeRange]);
 
   const fetchStats = async () => {
     setLoading(true);
@@ -178,7 +187,7 @@ export default function AdminStatsPage() {
     }
   };
 
-  if (status === "loading" || loading) {
+  if (status === "loading" || (isSuperadmin && loading)) {
     return (
       <div className="flex min-h-screen flex-col">
         <PageHeader currentPage="admin/stats" breadcrumbLabel="Stats" />
@@ -190,7 +199,7 @@ export default function AdminStatsPage() {
     );
   }
 
-  if (status === "unauthenticated" || session?.user?.role !== "SUPERADMIN") {
+  if (!isSuperadmin) {
     return null;
   }
 

@@ -173,6 +173,9 @@ export default function BlogPage() {
                         src={post.coverImage}
                         alt={post.title}
                         fill
+                        // A cover pasted as a URL can be on any host; only
+                        // the hosts in next.config remotePatterns can be optimised
+                        unoptimized={/^https?:\/\//i.test(post.coverImage)}
                         className="object-cover transition-transform group-hover:scale-105"
                       />
                     </div>

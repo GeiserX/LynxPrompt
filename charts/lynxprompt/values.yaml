@@ -85,7 +85,8 @@ smtp:
 
 ai:
   anthropicApiKey: ""
-  model: "claude-3-5-haiku-latest"
+  # Empty uses the app's built-in default model (claude-haiku-5-5)
+  model: ""
 
 postgresql:
   enabled: true

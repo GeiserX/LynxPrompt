@@ -8,6 +8,8 @@ const mockPostCount = vi.fn();
 
 vi.mock("next-auth", () => ({ getServerSession: vi.fn().mockResolvedValue(null) }));
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
+// The support forum is on for these tests.
+vi.mock("@/lib/support-guard", () => ({ supportForumDisabled: () => null }));
 vi.mock("@/lib/db-users", () => ({
   prismaUsers: {
     userTemplate: { findMany: mockFindMany, count: mockCount },

@@ -141,10 +141,11 @@ export async function POST(
       data: { status: "EXPIRED" },
     });
 
-    // Check seat availability
+    // Check seat availability. Only open invitations hold a seat.
+    const openInvitation = { teamId, status: "PENDING" as const, expiresAt: { gt: new Date() } };
     const currentMembers = team._count.members;
     const pendingInvitations = await prismaUsers.teamInvitation.count({
-      where: { teamId, status: "PENDING" },
+      where: openInvitation,
     });
     const paidSeats = team.maxSeats;
     const usedSeats = currentMembers + pendingInvitations;
@@ -176,7 +177,7 @@ export async function POST(
     const existingEmails = new Set(existingMembers.map((m) => m.user.email?.toLowerCase()));
 
     const existingInvitations = await prismaUsers.teamInvitation.findMany({
-      where: { teamId, status: "PENDING" },
+      where: openInvitation,
       select: { email: true },
     });
     const pendingEmails = new Set(existingInvitations.map((i) => i.email.toLowerCase()));

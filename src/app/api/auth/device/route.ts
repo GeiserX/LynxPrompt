@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { createHash } from "crypto";
 import { sessionCookieName } from "@/lib/auth-cookies";
+import { hashIP } from "@/lib/ip-hash";
 import { getClientIP } from "@/lib/client-ip";
 import { getPasskeyStatus } from "@/lib/passkey-session";
 
@@ -11,11 +12,6 @@ import { getPasskeyStatus } from "@/lib/passkey-session";
 function generateDeviceHash(userAgent: string, fingerprint: string): string {
   const combined = `${userAgent}|${fingerprint}`;
   return createHash("sha256").update(combined).digest("hex");
-}
-
-// Helper to hash IP for privacy
-function hashIP(ip: string): string {
-  return createHash("sha256").update(ip).digest("hex").substring(0, 16);
 }
 
 // Helper to extract device name from user agent

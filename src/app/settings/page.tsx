@@ -42,6 +42,7 @@ import { Footer } from "@/components/footer";
 import { UserMenu } from "@/components/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { getGravatarUrl } from "@/lib/utils";
+import { PERSONA_OPTIONS } from "@/components/dashboard/welcome-modal";
 import { useFeatureFlags } from "@/components/providers/feature-flags-provider";
 import { startRegistration } from "@simplewebauthn/browser";
 
@@ -769,6 +770,21 @@ function SettingsContent() {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
+                    {/* A type picked in the welcome dialog that this list lacks */}
+                    {persona && !PERSONAS.some((p) => p.value === persona) && (
+                      <button
+                        key={persona}
+                        className="flex items-center gap-3 rounded-lg border border-primary bg-primary/5 p-3 text-left ring-1 ring-primary"
+                      >
+                        <span className="text-xl">
+                          {PERSONA_OPTIONS.find((p) => p.value === persona)?.emoji || "✏️"}
+                        </span>
+                        <span className="text-sm font-medium">
+                          {PERSONA_OPTIONS.find((p) => p.value === persona)?.label || persona}
+                        </span>
+                        <Check className="ml-auto h-4 w-4 text-primary" />
+                      </button>
+                    )}
                     {PERSONAS.map((p) => (
                       <button
                         key={p.value}
@@ -2042,7 +2058,8 @@ function ApiTokensSection({ setError, setSuccess }: ApiTokensSectionProps) {
     }
   };
 
-  const handleRevoke = async (id: string) => {
+  const handleRevoke = async (id: string, name: string) => {
+    if (!confirm(`Remove the token "${name}"? Anything still using it stops working. This cannot be undone.`)) return;
     setRevoking(id);
     setError(null);
 
@@ -2276,7 +2293,7 @@ function ApiTokensSection({ setError, setSuccess }: ApiTokensSectionProps) {
                     <Button
                       size="sm"
                       variant="destructive"
-                      onClick={() => handleRevoke(token.id)}
+                      onClick={() => handleRevoke(token.id, token.name)}
                       disabled={revoking === token.id}
                     >
                       {revoking === token.id ? (

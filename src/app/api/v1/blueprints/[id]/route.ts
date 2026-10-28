@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createHash } from "crypto";
 import { prismaUsers } from "@/lib/db-users";
+import { contentChecksum } from "@/lib/content-checksum";
 import { APP_URL } from "@/lib/feature-flags";
 import {
   validateApiToken,
@@ -17,13 +17,6 @@ import {
   normalizeBlueprintType,
   resolveBlueprintTeamId,
 } from "@/lib/blueprint-rules";
-
-/**
- * Compute SHA-256 checksum of content for optimistic locking
- */
-function computeChecksum(content: string): string {
-  return createHash("sha256").update(content).digest("hex").slice(0, 16);
-}
 
 /**
  * GET /api/v1/blueprints/[id]
@@ -104,7 +97,6 @@ export async function GET(
         hierarchyId: true,
         parentId: true,
         repositoryPath: true,
-        contentChecksum: true,
       },
     });
 
@@ -145,7 +137,7 @@ export async function GET(
         hierarchy_id: blueprint.hierarchyId ? toHierarchyApiId(blueprint.hierarchyId) : null,
         parent_id: blueprint.parentId ? toBlueprintApiId(blueprint.parentId) : null,
         repository_path: blueprint.repositoryPath,
-        content_checksum: blueprint.contentChecksum,
+        content_checksum: contentChecksum(blueprint.content),
       },
     });
   } catch (error) {
@@ -265,13 +257,17 @@ export async function PUT(
     } = body;
     const content = decodedContent;
 
-    // Optimistic locking: if expected_checksum is provided, verify it matches
-    if (expected_checksum && existing.contentChecksum && expected_checksum !== existing.contentChecksum) {
+    // Optimistic locking: if expected_checksum is provided, verify it matches.
+    // Compare against the checksum of the content as stored now, not the
+    // contentChecksum column: rows written before every route kept that
+    // column up to date can hold a stale value or none at all.
+    const currentChecksum = contentChecksum(existing.content);
+    if (expected_checksum && expected_checksum !== currentChecksum) {
       return NextResponse.json(
         {
           error: "Conflict - blueprint has been modified",
           message: "The blueprint has been modified since you last pulled it. Pull the latest version and try again, or use force=true to overwrite.",
-          current_checksum: existing.contentChecksum,
+          current_checksum: currentChecksum,
           expected_checksum: expected_checksum,
         },
         { status: 409 }
@@ -309,7 +305,7 @@ export async function PUT(
       else updateData.tier = "SHORT";
 
       // Update checksum
-      updateData.contentChecksum = computeChecksum(content.trim());
+      updateData.contentChecksum = contentChecksum(content);
     }
 
     if (description !== undefined) {
@@ -398,7 +394,6 @@ export async function PUT(
         hierarchyId: true,
         parentId: true,
         repositoryPath: true,
-        contentChecksum: true,
       },
     });
 
@@ -433,7 +428,7 @@ export async function PUT(
         hierarchy_id: blueprint.hierarchyId ? toHierarchyApiId(blueprint.hierarchyId) : null,
         parent_id: blueprint.parentId ? toBlueprintApiId(blueprint.parentId) : null,
         repository_path: blueprint.repositoryPath,
-        content_checksum: blueprint.contentChecksum,
+        content_checksum: contentChecksum(blueprint.content),
       },
     });
   } catch (error) {
@@ -517,10 +512,17 @@ export async function DELETE(
       );
     }
 
-    // Delete blueprint
-    await prismaUsers.userTemplate.delete({
-      where: { id: blueprintId },
-    });
+    // Favorites and downloads point at the blueprint by a plain id with no
+    // foreign key, so remove them with it. Versions cascade in the schema.
+    // Download rows keep the id as the client sent it (bp_ prefix), favorites
+    // keep the bare id; match both forms for downloads.
+    await prismaUsers.$transaction([
+      prismaUsers.templateDownload.deleteMany({
+        where: { templateId: { in: [blueprintId, toBlueprintApiId(blueprintId)] }, templateType: "user" },
+      }),
+      prismaUsers.templateFavorite.deleteMany({ where: { templateId: blueprintId, templateType: "user" } }),
+      prismaUsers.userTemplate.delete({ where: { id: blueprintId } }),
+    ]);
 
     return NextResponse.json({
       success: true,

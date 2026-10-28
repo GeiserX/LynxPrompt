@@ -2150,7 +2150,7 @@ function WizardPageContent() {
                 <StepFeedback
                   value={config.additionalFeedback}
                   onChange={(v) => setConfig({ ...config, additionalFeedback: v })}
-                  userTier={userTier}
+                  signedIn={status === "authenticated"}
                 />
               )}
               {currentStep === 11 && (
@@ -6590,13 +6590,12 @@ dist/`}
 function StepFeedback({
   value,
   onChange,
-  userTier,
+  signedIn,
 }: {
   value: string;
   onChange: (v: string) => void;
-  userTier: string;
+  signedIn: boolean;
 }) {
-  const isTeamsUser = userTier === "teams";
   const { enableAI, appUrl } = useFeatureFlags();
   
   return (
@@ -6607,8 +6606,8 @@ function StepFeedback({
         project that we haven&apos;t asked? Add any additional context.
       </p>
 
-      {/* AI Assist Panel - Teams users only, when AI is enabled */}
-      {enableAI && isTeamsUser && (
+      {/* AI Assist Panel - when AI is enabled; the AI endpoint needs a signed-in user */}
+      {enableAI && signedIn && (
         <div className="mt-6 rounded-lg border border-purple-200 bg-white p-4 shadow-sm dark:border-purple-800 dark:bg-purple-900/20">
           <div className="mb-3 flex items-center gap-2 text-sm font-medium text-purple-700 dark:text-purple-300">
             <Sparkles className="h-4 w-4" />

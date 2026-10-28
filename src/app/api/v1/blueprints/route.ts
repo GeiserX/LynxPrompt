@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createHash } from "crypto";
 import { posix as posixPath } from "path";
 import { prismaUsers } from "@/lib/db-users";
+import { contentChecksum } from "@/lib/content-checksum";
 import { parseLimit, parseOffset } from "@/lib/pagination";
 import { APP_URL } from "@/lib/feature-flags";
 import {
@@ -19,13 +19,6 @@ import {
   resolveBlueprintTeamId,
 } from "@/lib/blueprint-rules";
 import { getEffectiveTier, getMaxBlueprintCount } from "@/lib/subscription";
-
-/**
- * Compute SHA-256 checksum of content for optimistic locking
- */
-function computeChecksum(content: string): string {
-  return createHash("sha256").update(content).digest("hex").slice(0, 16);
-}
 
 function sanitizeRepositoryPath(input: string | null | undefined): string | null {
   if (!input?.trim()) return null;
@@ -134,7 +127,8 @@ export async function GET(request: NextRequest) {
         hierarchyId: true,
         parentId: true,
         repositoryPath: true,
-        contentChecksum: true,
+        // Read for the checksum only; the list does not return content.
+        content: true,
       },
     });
 
@@ -156,7 +150,7 @@ export async function GET(request: NextRequest) {
       hierarchy_id: bp.hierarchyId ? toHierarchyApiId(bp.hierarchyId) : null,
       parent_id: bp.parentId ? toBlueprintApiId(bp.parentId) : null,
       repository_path: bp.repositoryPath,
-      content_checksum: bp.contentChecksum,
+      content_checksum: contentChecksum(bp.content),
     }));
 
     return NextResponse.json({
@@ -361,8 +355,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Compute content checksum for optimistic locking
-    const contentChecksum = computeChecksum(content.trim());
 
     // Create blueprint
     const blueprint = await prismaUsers.userTemplate.create({
@@ -384,7 +376,7 @@ export async function POST(request: NextRequest) {
         hierarchyId: validatedHierarchyId,
         parentId: validatedParentId,
         repositoryPath: sanitizeRepositoryPath(repository_path) || null,
-        contentChecksum,
+        contentChecksum: contentChecksum(content),
       },
       select: {
         id: true,

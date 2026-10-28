@@ -11,7 +11,7 @@ export function Logo({ href = "/", className = "", showText = true }: LogoProps)
   const logoContent = (
     <div className={`flex items-center gap-2 ${className}`}>
       <Image
-        src="/lynxprompt.png"
+        src="/lynx-mark.png"
         alt="LynxPrompt"
         width={42}
         height={42}

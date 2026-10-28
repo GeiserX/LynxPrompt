@@ -12,8 +12,8 @@ import {
   Search,
 } from "lucide-react";
 
-// Developer persona options - extensive list
-const PERSONA_OPTIONS = [
+// Developer persona options - extensive list (settings uses it for labels)
+export const PERSONA_OPTIONS = [
   // Most common first
   { value: "frontend", label: "Frontend Developer", emoji: "🎨" },
   { value: "backend", label: "Backend Developer", emoji: "⚙️" },
@@ -47,12 +47,12 @@ const PERSONA_OPTIONS = [
   { value: "other", label: "Other (specify)", emoji: "✏️" },
 ];
 
-// Skill level options
+// Skill level options: the same three as the settings page, so the choice made
+// here shows as selected there
 const SKILL_LEVELS = [
-  { value: "beginner", label: "Beginner", description: "Learning the basics" },
-  { value: "intermediate", label: "Intermediate", description: "Building real projects" },
-  { value: "advanced", label: "Advanced", description: "Deep expertise" },
-  { value: "expert", label: "Expert", description: "Industry leader" },
+  { value: "novice", label: "Novice", description: "New to this area - AI will be more verbose" },
+  { value: "intermediate", label: "Intermediate", description: "Comfortable with basics" },
+  { value: "senior", label: "Senior / Expert", description: "Deep expertise - AI is concise" },
 ];
 
 interface WelcomeModalProps {

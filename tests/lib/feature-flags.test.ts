@@ -79,9 +79,15 @@ describe("feature-flags", () => {
       expect(flags.AI_MODEL).toBe("gpt-4o");
     });
 
-    it("should default AI_MODEL to claude-3-5-haiku-latest", async () => {
+    it("should default AI_MODEL to a current model, claude-haiku-5-5", async () => {
       const flags = await import("@/lib/feature-flags");
-      expect(flags.AI_MODEL).toBe("claude-3-5-haiku-latest");
+      expect(flags.AI_MODEL).toBe("claude-haiku-5-5");
+    });
+
+    it("should fall back to the default when AI_MODEL is set but empty", async () => {
+      vi.stubEnv("AI_MODEL", "");
+      const flags = await import("@/lib/feature-flags");
+      expect(flags.AI_MODEL).toBe("claude-haiku-5-5");
     });
   });
 

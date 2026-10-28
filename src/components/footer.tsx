@@ -1,12 +1,18 @@
+"use client";
+
 import Link from "next/link";
 import { MessageSquareHeart } from "lucide-react";
-import { envBool } from "@/lib/feature-flags";
+import { useFeatureFlags } from "@/components/providers/feature-flags-provider";
 
+// Flags come from the provider: process.env is empty in the browser, so reading
+// it here hid the Blog and Support links on every client-rendered page.
 export function Footer() {
-  const enableFederation = envBool("ENABLE_FEDERATION", true);
-  const enableSupportForum = envBool("ENABLE_SUPPORT_FORUM", false);
-  const enableBlog = envBool("ENABLE_BLOG", false);
-  const statusPageUrl = process.env.STATUS_PAGE_URL || "";
+  const {
+    enableFederation,
+    enableSupportForum,
+    enableBlog,
+    statusPageUrl,
+  } = useFeatureFlags();
 
   return (
     <footer className="border-t py-8">
@@ -15,7 +21,7 @@ export function Footer() {
         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           {/* Brand */}
           <div className="flex items-center gap-2">
-            <img src="/lynx-icon.png" alt="LynxPrompt" className="h-5 w-5" />
+            <img src="/lynx-mark.png" alt="LynxPrompt" className="h-5 w-auto" />
             <p className="text-sm text-muted-foreground">
               © 2025–2026 LynxPrompt by{" "}
               <a

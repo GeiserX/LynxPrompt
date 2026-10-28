@@ -43,7 +43,11 @@ if (
 }
 
 async function main() {
-  const email = process.argv[2] || process.env.SUPERADMIN_EMAIL;
+  // Sign-in stores addresses lowercased and auth.ts matches SUPERADMIN_EMAIL
+  // ignoring case, so normalise here too or the placeholder never matches.
+  const email = (process.argv[2] || process.env.SUPERADMIN_EMAIL)
+    ?.trim()
+    .toLowerCase();
 
   if (!email) {
     console.error("Usage: npx tsx prisma/seed-superadmin.ts <email>");

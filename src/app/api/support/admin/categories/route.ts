@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaSupport } from "@/lib/db-support";
+import { supportForumDisabled } from "@/lib/support-guard";
 
 export async function GET() {
+  const disabled = supportForumDisabled();
+  if (disabled) return disabled;
+
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -35,6 +39,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const disabled = supportForumDisabled();
+  if (disabled) return disabled;
+
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
