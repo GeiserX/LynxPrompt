@@ -53,6 +53,15 @@ describe("Snap channel", () => {
     expect(read("snap/snapcraft.yaml")).toMatch(/^environment:\n {2}XDG_CONFIG_HOME: \$SNAP_USER_DATA\/\.config$/m);
   });
 
+  // A stalled nodejs.org download on the arm64 runner arrived cut short and failed
+  // the build twice in a row; the download must fail on errors and retry.
+  it("downloads Node with retries instead of piping a possibly truncated stream into tar", () => {
+    const yaml = read("snap/snapcraft.yaml");
+    expect(yaml).toContain("curl -fsSL --retry 5 --retry-all-errors --speed-limit 10000 --speed-time 60 -o node.tar.xz");
+    expect(yaml).toContain('tar xJf node.tar.xz --strip-components=1 -C "$CRAFT_PART_INSTALL"');
+    expect(yaml).not.toMatch(/curl[^\n]*\|\s*tar/);
+  });
+
   it("builds both architectures and runs the snap before it uploads", () => {
     expect(snap).toContain("arch: amd64");
     expect(snap).toContain("arch: arm64");

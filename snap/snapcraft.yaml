@@ -61,7 +61,11 @@ parts:
         arm64) ARCH="arm64" ;;
         *) ARCH="$DEB_ARCH" ;;
       esac
-      curl -sL "https://nodejs.org/dist/v${VERSION}/node-v${VERSION}-linux-${ARCH}.tar.xz" | tar xJ --strip-components=1 -C "$CRAFT_PART_INSTALL"
+      # The arm64 runners' download from nodejs.org sometimes stalls and arrives
+      # cut short; abort a stalled transfer and retry it instead of untarring half.
+      curl -fsSL --retry 5 --retry-all-errors --speed-limit 10000 --speed-time 60 -o node.tar.xz \
+        "https://nodejs.org/dist/v${VERSION}/node-v${VERSION}-linux-${ARCH}.tar.xz"
+      tar xJf node.tar.xz --strip-components=1 -C "$CRAFT_PART_INSTALL"
     prime:
       - bin/node
 
