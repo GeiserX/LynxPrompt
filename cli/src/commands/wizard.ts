@@ -9,7 +9,7 @@ import { detectProject, detectFromRemoteUrl, isGitUrl } from "../utils/detect.js
 import { generateConfig, GenerateOptions, parseVariablesString, PLATFORM_FILES } from "../utils/generator.js";
 import { trackBlueprint } from "../utils/blueprint-tracker.js";
 import { buildPromptOverrides } from "../utils/prompt-overrides.js";
-import { isAuthenticated, getUser } from "../config.js";
+import { isAuthenticated, getUser, getApiUrl } from "../config.js";
 import { api, ApiRequestError } from "../api.js";
 import {
   LANGUAGES as SHARED_LANGUAGES,
@@ -1340,7 +1340,7 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
       enableAutoUpdate: false, // Don't generate curl header yet
     };
     
-    let files = generateConfig(finalConfig);
+    let files = generateConfig({ ...finalConfig, apiUrl: getApiUrl() });
     
     // If enableAutoUpdate is true, save blueprint to cloud first
     let savedBlueprintId: string | null = null;
@@ -1370,7 +1370,7 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
             enableAutoUpdate: true,
             blueprintId: savedBlueprintId,
           };
-          files = generateConfig(configWithAutoUpdate);
+          files = generateConfig({ ...configWithAutoUpdate, apiUrl: getApiUrl() });
           
           console.log(chalk.green(`  ✓ Blueprint saved: ${savedBlueprintId}`));
         }

@@ -1,5 +1,7 @@
-import { getApiUrl } from "../config.js";
 export interface GenerateOptions {
+  // Server the sync header points at. The CLI passes getApiUrl(); kept as an
+  // option so this module does not load the CLI config store.
+  apiUrl?: string;
   name: string;
   description: string;
   stack: string[];
@@ -852,7 +854,7 @@ function generateFileContent(options: GenerateOptions, platform: string): string
       sections.push("");
       sections.push(`# Using curl with environment variable (token stored in $${tokenEnvVar}):`);
       sections.push("");
-      const apiUrl = getApiUrl().replace(/\/+$/, "");
+      const apiUrl = (options.apiUrl ?? "https://lynxprompt.com").replace(/\/+$/, "");
       const url = `${apiUrl}/api/v1/blueprints/${bpId}`;
       sections.push("# Push local changes to cloud:");
       sections.push(`jq -Rs '{content: .}' ${fileName} | curl -sf -X PUT "${url}" -H "Authorization: Bearer $${tokenEnvVar}" -H "Content-Type: application/json" --data-binary @-`);
@@ -865,7 +867,7 @@ function generateFileContent(options: GenerateOptions, platform: string): string
     }
     
     sections.push("");
-    sections.push(`Docs: ${getApiUrl().replace(/\/+$/, "")}/docs/api`);
+    sections.push(`Docs: ${(options.apiUrl ?? "https://lynxprompt.com").replace(/\/+$/, "")}/docs/api`);
     sections.push("-->");
     sections.push("");
   }
