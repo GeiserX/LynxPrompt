@@ -26,7 +26,8 @@ We will respond within **48 hours** and work with you to understand and address 
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 0.x.x   | ✅ Current release |
+| 2.x.x   | ✅ Current release |
+| < 2.0   | ❌ |
 
 Only the latest version receives security updates. We recommend always running the latest version.
 

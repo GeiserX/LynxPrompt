@@ -190,7 +190,7 @@ export async function DELETE(
     const { id } = await params;
     const hierarchyId = fromHierarchyId(id);
 
-    // Check hierarchy ownership
+    // Check the hierarchy exists
     const hierarchy = await prismaUsers.hierarchy.findUnique({
       where: { id: hierarchyId },
       select: { userId: true, name: true },
@@ -198,10 +198,6 @@ export async function DELETE(
 
     if (!hierarchy) {
       return NextResponse.json({ error: "Hierarchy not found" }, { status: 404 });
-    }
-
-    if (hierarchy.userId !== session.user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const body = await request.json();
@@ -226,7 +222,9 @@ export async function DELETE(
       return NextResponse.json({ error: "Blueprint not found" }, { status: 404 });
     }
 
-    if (blueprint.userId !== session.user.id) {
+    // Either side may undo the link: the hierarchy owner to drop a blueprint
+    // from their hierarchy, the blueprint owner to take theirs out of one
+    if (blueprint.userId !== session.user.id && hierarchy.userId !== session.user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

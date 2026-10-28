@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState, useCallback } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -46,31 +46,56 @@ import {
   generateAllFiles,
   type GeneratedFile,
 } from "@/lib/file-generator";
+import {
+  WIZARD_STEP_IDS,
+  applyDetectedRepo,
+  applyPreferences,
+  buildGeneratorConfig,
+  buildPreferencesPayload,
+  createDefaultWizardConfig,
+  mergeWizardConfig,
+  type BoundariesConfig,
+  type CodeStyleConfig,
+  type CommandsConfig,
+  type DetectedRepo,
+  type SecurityConfig,
+  type StaticFilesConfig,
+  type TestingStrategyConfig,
+  type WizardConfig,
+  type WizardStepId,
+} from "@/lib/wizard-state";
+import { addApiSyncHeader, syncBlueprintPayload, syncFilePath, toBlueprintApiId } from "@/lib/wizard-sync";
 // NOTE: Wizard constants are defined inline in this file. 
 // The shared package (packages/shared) contains the canonical list.
 // TODO: Migrate to importing from @/lib/wizard-options once inline constants are removed.
 
 type WizardTier = "basic" | "intermediate" | "advanced";
 
-const WIZARD_STEPS: {
-  id: string;
+type WizardStep = {
+  id: WizardStepId;
   title: string;
   icon: React.ComponentType<{ className?: string }>;
   tier: WizardTier;
-}[] = [
-  { id: "project", title: "Project Basics", icon: Sparkles, tier: "basic" },
-  { id: "tech", title: "Tech Stack", icon: Code, tier: "basic" },
-  { id: "repo", title: "Repository Setup", icon: GitBranch, tier: "basic" },
-  { id: "security", title: "Security", icon: Lock, tier: "basic" },  // NEW: Security step (FREE)
-  { id: "commands", title: "Commands", icon: ClipboardList, tier: "intermediate" },
-  { id: "code_style", title: "Code Style", icon: Wand2, tier: "intermediate" },
-  { id: "ai", title: "AI Behavior", icon: Brain, tier: "basic" },
-  { id: "boundaries", title: "Boundaries", icon: Shield, tier: "advanced" },
-  { id: "testing", title: "Testing Strategy", icon: Shield, tier: "advanced" },
-  { id: "static", title: "Static Files", icon: FileText, tier: "advanced" },
-  { id: "extra", title: "Anything Else?", icon: MessageSquare, tier: "basic" },
-  { id: "generate", title: "Generate", icon: Download, tier: "basic" },
-];
+};
+
+// One entry per id in WIZARD_STEP_IDS (shared with the draft API), so the
+// screens and the step numbers the server accepts cannot drift apart.
+const WIZARD_STEP_META: Record<WizardStepId, Omit<WizardStep, "id">> = {
+  project: { title: "Project Basics", icon: Sparkles, tier: "basic" },
+  tech: { title: "Tech Stack", icon: Code, tier: "basic" },
+  repo: { title: "Repository Setup", icon: GitBranch, tier: "basic" },
+  security: { title: "Security", icon: Lock, tier: "basic" },
+  commands: { title: "Commands", icon: ClipboardList, tier: "intermediate" },
+  code_style: { title: "Code Style", icon: Wand2, tier: "intermediate" },
+  ai: { title: "AI Behavior", icon: Brain, tier: "basic" },
+  boundaries: { title: "Boundaries", icon: Shield, tier: "advanced" },
+  testing: { title: "Testing Strategy", icon: Shield, tier: "advanced" },
+  static: { title: "Static Files", icon: FileText, tier: "advanced" },
+  extra: { title: "Anything Else?", icon: MessageSquare, tier: "basic" },
+  generate: { title: "Generate", icon: Download, tier: "basic" },
+};
+
+const WIZARD_STEPS: WizardStep[] = WIZARD_STEP_IDS.map((id) => ({ id, ...WIZARD_STEP_META[id] }));
 
 // Precomputed widths (Tailwind-safe arbitrary values) for the mobile progress bar
 // Updated for 12 steps (including security step)
@@ -559,181 +584,6 @@ const ERROR_HANDLING_PATTERNS = [
 // Import from central platforms definition
 import { PLATFORMS, PLATFORM_COUNT } from "@/lib/platforms";
 
-type CommandsConfig = {
-  build: string;
-  test: string;
-  lint: string;
-  dev: string;
-  format: string;
-  typecheck: string;
-  clean: string;
-  preCommit: string; // husky, lefthook, etc
-  additional: string[];
-  savePreferences: boolean;
-};
-
-type BoundariesConfig = {
-  always: string[];
-  ask: string[];
-  never: string[];
-  customAlways: string;
-  customAsk: string;
-  customNever: string;
-  savePreferences: boolean;
-};
-
-type CodeStyleConfig = {
-  naming: string;
-  errorHandling: string;
-  errorHandlingOther: string;
-  loggingConventions: string;
-  loggingConventionsOther: string;
-  maxFileLength: number; // max lines per file
-  importOrder: string; // sorted, grouped, natural
-  commentLanguage: string; // english, native, any
-  docStyle: string; // jsdoc, tsdoc, pydoc, etc
-  notes: string;
-  savePreferences: boolean;
-};
-
-type TestingStrategyConfig = {
-  levels: string[];
-  coverage: number;
-  frameworks: string[];
-  tddPreference: boolean; // Test-Driven Development
-  snapshotTesting: boolean;
-  mockStrategy: string; // minimal, comprehensive, none
-  notes: string;
-  savePreferences: boolean;
-};
-
-type StaticFilesConfig = {
-  funding: boolean;
-  fundingYml: string;
-  fundingSave: boolean;
-  editorconfig: boolean;
-  editorconfigCustom: string;
-  editorconfigSave: boolean;
-  contributing: boolean;
-  contributingCustom: string;
-  contributingSave: boolean;
-  codeOfConduct: boolean;
-  codeOfConductCustom: string;
-  codeOfConductSave: boolean;
-  security: boolean;
-  securityCustom: string;
-  securitySave: boolean;
-  roadmap: boolean;
-  roadmapCustom: string;
-  roadmapSave: boolean;
-  gitignoreMode: "generate" | "custom" | "skip";
-  gitignoreCustom: string;
-  gitignoreSave: boolean;
-  dockerignoreMode: "generate" | "custom" | "skip";
-  dockerignoreCustom: string;
-  dockerignoreSave: boolean;
-  licenseSave: boolean;
-};
-
-type WizardConfig = {
-  projectName: string;
-  projectDescription: string;
-  projectType: string;
-  architecturePattern: string;
-  architecturePatternOther: string;
-  devOS: string[]; // windows, macos, linux - multi-select
-  languages: string[];
-  frameworks: string[];
-  databases: string[]; // preferred databases (multi-select)
-  packageManager: string; // npm, yarn, pnpm, bun (JS/TS only)
-  monorepoTool: string; // turborepo, nx, lerna, pnpm-workspaces (JS/TS only)
-  jsRuntime: string; // node, deno, bun (JS/TS only)
-  orm: string; // prisma, drizzle, typeorm, sqlalchemy, etc.
-  additionalLibraries: string; // comma-separated list of additional libs not in predefined lists (e.g., Telethon, APScheduler)
-  letAiDecide: boolean;
-  repoHost: string;
-  repoHostOther: string;
-  repoUrl: string;
-  exampleRepoUrl: string;
-  documentationUrl: string; // external docs (Confluence, Notion, etc.)
-  isPublic: boolean;
-  license: string;
-  licenseOther: string;
-  licenseNotes: string;
-  licenseSave: boolean;
-  repoHosts: string[];
-  multiRepoReason: string;
-  funding: boolean;
-  fundingYml: string;
-  conventionalCommits: boolean;
-  semver: boolean;
-  versionTagFormat: string;
-  changelogTool: string;
-  dependabot: boolean;
-  branchStrategy: string; // gitflow, github_flow, trunk_based, gitlab_flow
-  defaultBranch: string; // main, master, develop, trunk, other
-  defaultBranchOther: string; // custom branch name when defaultBranch is "other"
-  allowDirectCommits: boolean; // Allow direct commits for small fixes (typos, docs, etc.)
-  commitSigning: boolean; // GPG/SSH signing
-  useGitWorktrees: boolean; // Use git worktrees for parallel AI agent sessions
-  cicd: string[]; // multi-select CI/CD platforms
-  cicdOther: string; // custom CI/CD platform when "other" is selected
-  deploymentEnvironment: string[]; // "self_hosted" | "cloud"
-  selfHostedTargets: string[];
-  cloudTargets: string[];
-  buildContainer: boolean;
-  containerRegistry: string;
-  containerRegistryOther: string;
-  dockerImageNames: string; // comma-separated list of published image names (e.g., "user/app, user/app-viewer")
-  registryUsername: string;
-  aiBehaviorRules: string[];
-  planModeFrequency: string; // always, complex_tasks, multi_file, new_features, on_request, never
-  explanationVerbosity: string; // concise, balanced, detailed
-  accessibilityFocus: boolean;
-  performanceFocus: boolean;
-  mcpServers: string; // Comma-separated list of MCP servers (e.g., "filesystem, github, postgres")
-  attemptWorkarounds: boolean; // Whether AI should attempt workarounds when stuck
-  serverAccess: boolean; // Whether project requires server login
-  sshKeyPath: string; // Custom SSH key path (empty = default)
-  manualDeployment: boolean; // Whether deployment is manual (no CI/CD)
-  deploymentMethod: string; // portainer, docker_compose, kubernetes, bare_metal
-  importantFiles: string[];
-  importantFilesOther: string;
-  enableAutoUpdate: boolean;
-  includePersonalData: boolean;
-  platform: string;
-  blueprintMode: boolean; // Generate with [[VARIABLE|default]] for blueprint templates
-  enableApiSync: boolean; // Auto-save as private template with API sync instructions
-  preferCliSync: boolean; // Use CLI commands instead of curl (default true)
-  tokenEnvVar: string; // Environment variable name for API token
-  additionalFeedback: string;
-  commands: CommandsConfig;
-  codeStyle: CodeStyleConfig;
-  boundaries: BoundariesConfig;
-  testing: TestingStrategyConfig;
-  staticFiles: StaticFilesConfig;
-  security: SecurityConfig;
-};
-
-// Security configuration (FREE tier)
-type SecurityConfig = {
-  authProviders: string[];
-  authProvidersOther: string;
-  secretsManagement: string[];
-  secretsManagementOther: string;
-  securityTooling: string[];
-  securityToolingOther: string;
-  authPatterns: string[];
-  authPatternsOther: string;
-  dataHandling: string[];
-  dataHandlingOther: string;
-  compliance: string[];
-  complianceOther: string;
-  analytics: string[];
-  analyticsOther: string;
-  additionalNotes: string;
-};
-
 interface WizardDraftSummary {
   id: string;
   name: string;
@@ -791,145 +641,12 @@ function WizardPageContent() {
   const [detectError, setDetectError] = useState<string | null>(null);
   // Track which fields were auto-filled from detection (persists after applying)
   const [detectedFields, setDetectedFields] = useState<Set<string>>(new Set());
-  const [detectedData, setDetectedData] = useState<{
-    name: string | null;
-    description: string | null;
-    stack: string[];
-    databases: string[];
-    commands: { build?: string; test?: string; lint?: string; dev?: string };
-    license: string | null;
-    repoHost: string;
-    cicd: string | null;
-    hasDocker: boolean;
-    containerRegistry: string | null;
-    testFramework: string | null;
-    existingFiles: string[];
-    isOpenSource: boolean;
-    projectType: string | null;
-  } | null>(null);
+  const [detectedData, setDetectedData] = useState<DetectedRepo | null>(null);
 
-  const [config, setConfig] = useState<WizardConfig>({
-    projectName: "",
-    projectDescription: "",
-    projectType: "leisure",
-    architecturePattern: "",
-    architecturePatternOther: "",
-    devOS: ["linux"],
-    languages: [],
-    frameworks: [],
-    databases: [],
-    packageManager: "",
-    monorepoTool: "",
-    jsRuntime: "",
-    orm: "",
-    additionalLibraries: "",
-    letAiDecide: false,
-    repoHost: "github",
-    repoHostOther: "",
-    repoUrl: "",
-    exampleRepoUrl: "",
-    documentationUrl: "",
-    isPublic: true,
-    license: "mit",
-    licenseOther: "",
-    licenseNotes: "",
-    licenseSave: false,
-    repoHosts: [],
-    multiRepoReason: "",
-    funding: false,
-    fundingYml: "",
-    conventionalCommits: true,
-    semver: true,
-    versionTagFormat: "v_prefix",
-    changelogTool: "manual",
-    dependabot: true,
-    branchStrategy: "github_flow",
-    defaultBranch: "main",
-    defaultBranchOther: "",
-    allowDirectCommits: false,
-    commitSigning: false,
-    useGitWorktrees: true, // Default to yes for parallel AI sessions
-    cicd: [],
-    cicdOther: "",
-    deploymentEnvironment: [],
-    selfHostedTargets: [],
-    cloudTargets: [],
-    buildContainer: false,
-    containerRegistry: "",
-    containerRegistryOther: "",
-    dockerImageNames: "",
-    registryUsername: "",
-    aiBehaviorRules: ["always_debug_after_build", "check_logs_after_build", "run_tests_before_commit", "follow_existing_patterns", "ask_before_large_refactors", "verify_work"],
-    planModeFrequency: "complex_tasks",
-    explanationVerbosity: "balanced",
-    accessibilityFocus: false,
-    performanceFocus: false,
-    mcpServers: "",
-    attemptWorkarounds: true,
-    serverAccess: false,
-    sshKeyPath: "",
-    manualDeployment: false,
-    deploymentMethod: "",
-    importantFiles: [],
-    importantFilesOther: "",
-    enableAutoUpdate: false,
-    includePersonalData: true,
-    platform: "universal",
-    blueprintMode: false,
-    enableApiSync: false,
-    preferCliSync: true, // Default to CLI (recommended, no token in file)
-    tokenEnvVar: "LYNXPROMPT_API_TOKEN",
-    additionalFeedback: "",
-    commands: { build: "", test: "", lint: "", dev: "", format: "", typecheck: "", clean: "", preCommit: "", additional: [], savePreferences: false },
-    codeStyle: { naming: "language_default", errorHandling: "", errorHandlingOther: "", loggingConventions: "", loggingConventionsOther: "", maxFileLength: 300, importOrder: "", commentLanguage: "", docStyle: "", notes: "", savePreferences: false },
-    boundaries: { always: [], ask: [], never: [], customAlways: "", customAsk: "", customNever: "", savePreferences: false },
-    testing: { levels: [], coverage: 80, frameworks: [], tddPreference: false, snapshotTesting: false, mockStrategy: "minimal", notes: "", savePreferences: false },
-    staticFiles: {
-      funding: false,
-      fundingYml: "",
-      fundingSave: false,
-      editorconfig: false,
-      editorconfigCustom: "",
-      editorconfigSave: false,
-      contributing: false,
-      contributingCustom: "",
-      contributingSave: false,
-      codeOfConduct: false,
-      codeOfConductCustom: "",
-      codeOfConductSave: false,
-      security: false,
-      securityCustom: "",
-      securitySave: false,
-      roadmap: true,
-      roadmapCustom: "",
-      roadmapSave: false,
-      gitignoreMode: "skip",
-      gitignoreCustom: "",
-      gitignoreSave: false,
-      dockerignoreMode: "skip",
-      dockerignoreCustom: "",
-      dockerignoreSave: false,
-      licenseSave: false,
-    },
-    // Security configuration (FREE tier)
-    security: {
-      authProviders: [],
-      authProvidersOther: "",
-      secretsManagement: ["env_vars"],  // Default to environment variables
-      secretsManagementOther: "",
-      securityTooling: ["dependabot", "renovate"],  // Default recommended tools
-      securityToolingOther: "",
-      authPatterns: [],
-      authPatternsOther: "",
-      dataHandling: ["encryption_at_rest", "encryption_in_transit"],  // Default recommended
-      dataHandlingOther: "",
-      compliance: [],
-      complianceOther: "",
-      analytics: [],
-      analyticsOther: "",
-      additionalNotes: "",
-    },
-  });
+  const [config, setConfig] = useState<WizardConfig>(createDefaultWizardConfig);
+  // Set once a draft or a saved guest session fills the wizard, so saved
+  // preferences arriving later do not overwrite what the user is resuming.
+  const resumedConfigRef = useRef(false);
 
   // Save guest wizard state to localStorage before auth redirect
   const saveGuestStateAndRedirect = (redirectUrl: string) => {
@@ -957,7 +674,8 @@ function WizardPageContent() {
         // Only restore if saved within the last hour
         if (parsed.timestamp && Date.now() - parsed.timestamp < 60 * 60 * 1000) {
           if (parsed.config) {
-            setConfig(parsed.config);
+            resumedConfigRef.current = true;
+            setConfig(mergeWizardConfig(parsed.config));
           }
           if (typeof parsed.currentStep === "number") {
             setCurrentStep(parsed.currentStep);
@@ -1031,7 +749,8 @@ function WizardPageContent() {
         const res = await fetch(`/api/wizard/drafts/${draftId}`);
         if (res.ok) {
           const draft = await res.json();
-          setConfig(draft.config as WizardConfig);
+          resumedConfigRef.current = true;
+          setConfig(mergeWizardConfig(draft.config));
           setCurrentStep(draft.step);
           setCurrentDraftId(draft.id);
           setDraftName(draft.name);
@@ -1097,7 +816,8 @@ function WizardPageContent() {
       const res = await fetch(`/api/wizard/drafts/${draftId}`);
       if (res.ok) {
         const draft = await res.json();
-        setConfig(draft.config as WizardConfig);
+        resumedConfigRef.current = true;
+        setConfig(mergeWizardConfig(draft.config));
         setCurrentStep(draft.step);
         setCurrentDraftId(draft.id);
         setDraftName(draft.name);
@@ -1169,7 +889,7 @@ function WizardPageContent() {
       if (data.detected) {
         setDetectedData(data.detected);
         // Auto-apply detected data immediately
-        applyDetectedDataFromResult(data.detected);
+        applyDetectedDataFromResult(data.detected, repoDetectUrl.trim());
       }
     } catch (error) {
       console.error("Repo detection error:", error);
@@ -1180,46 +900,12 @@ function WizardPageContent() {
   };
 
   // Apply detected data to config (called with result directly for auto-apply)
-  const applyDetectedDataFromResult = (detectedResult: typeof detectedData) => {
+  const applyDetectedDataFromResult = (detectedResult: DetectedRepo | null, repoUrl: string) => {
     if (!detectedResult) return;
-    
-    // Track which fields are being filled from detection
-    const newDetectedFields = new Set<string>();
-    if (detectedResult.name) newDetectedFields.add("projectName");
-    if (detectedResult.description) newDetectedFields.add("projectDescription");
-    if (detectedResult.stack.length > 0) {
-      newDetectedFields.add("languages");
-      newDetectedFields.add("frameworks");
-    }
-    if (detectedResult.databases?.length > 0) newDetectedFields.add("databases");
-    if (detectedResult.license) newDetectedFields.add("license");
-    if (detectedResult.cicd) newDetectedFields.add("cicd");
-    if (detectedResult.isOpenSource) newDetectedFields.add("projectType");
-    if (detectedResult.hasDocker) newDetectedFields.add("buildContainer");
-    if (detectedResult.containerRegistry) newDetectedFields.add("containerRegistry");
-    if (detectedResult.repoHost) newDetectedFields.add("repoHost");
+    const applied = applyDetectedRepo(config, detectedResult, repoUrl);
+    setConfig((prev) => applyDetectedRepo(prev, detectedResult, repoUrl).config);
+    setDetectedFields(applied.detectedFields);
 
-    setConfig((prev) => ({
-      ...prev,
-      projectName: detectedResult.name || prev.projectName,
-      projectDescription: detectedResult.description || prev.projectDescription,
-      languages: detectedResult.stack.filter((s: string) =>
-        ["javascript", "typescript", "python", "go", "rust", "java", "csharp", "ruby", "php", "swift", "kotlin", "cpp"].includes(s)
-      ),
-      frameworks: detectedResult.stack.filter((s: string) =>
-        ["nextjs", "react", "vue", "angular", "svelte", "express", "fastapi", "django", "flask", "nestjs", "nuxt", "remix", "astro", "hono", "fastify"].includes(s)
-      ),
-      databases: detectedResult.databases || prev.databases,
-      license: detectedResult.license || prev.license,
-      cicd: detectedResult.cicd ? [detectedResult.cicd] : prev.cicd,
-      projectType: detectedResult.isOpenSource ? "open_source" : prev.projectType,
-      buildContainer: detectedResult.hasDocker || prev.buildContainer,
-      containerRegistry: detectedResult.containerRegistry || prev.containerRegistry,
-      repoHost: detectedResult.repoHost || prev.repoHost,
-    }));
-
-    setDetectedFields(newDetectedFields);
-    
     // Clear detection state after applying
     setDetectedData(null);
     setRepoDetectUrl("");
@@ -1335,114 +1021,8 @@ function WizardPageContent() {
         if (!res.ok) throw new Error("pref fetch failed");
         const data = await res.json();
 
-        // API returns an object grouped by category/key. Flatten it for easy use.
-        const prefsArray: Array<{ category: string; key: string; value: any }> = [];
-        if (Array.isArray(data)) {
-          data.forEach((pref: any) => prefsArray.push(pref));
-        } else if (data && typeof data === "object") {
-          Object.entries(data).forEach(([category, entries]) => {
-            if (entries && typeof entries === "object") {
-              Object.entries(entries as Record<string, any>).forEach(([key, val]) => {
-                prefsArray.push({
-                  category,
-                  key,
-                  value: (val as any)?.value ?? (val as any),
-                });
-              });
-            }
-          });
-        }
-
-        const byCategory: Record<string, Record<string, any>> = {};
-        prefsArray.forEach((pref: any) => {
-          if (!byCategory[pref.category]) byCategory[pref.category] = {};
-          byCategory[pref.category][pref.key] = pref.value;
-        });
-        setConfig((prev) => ({
-          ...prev,
-          commands: {
-            ...prev.commands,
-            build: byCategory.commands?.build ?? prev.commands.build,
-            test: byCategory.commands?.test ?? prev.commands.test,
-            lint: byCategory.commands?.lint ?? prev.commands.lint,
-            dev: byCategory.commands?.dev ?? prev.commands.dev,
-          },
-          codeStyle: {
-            ...prev.codeStyle,
-            naming: byCategory.codeStyle?.naming ?? prev.codeStyle.naming,
-            notes: byCategory.codeStyle?.notes ?? prev.codeStyle.notes,
-          },
-          testing: {
-            ...prev.testing,
-            levels: byCategory.testing?.levels 
-              ? (typeof byCategory.testing.levels === 'string' 
-                  ? byCategory.testing.levels.split(',').filter(Boolean) 
-                  : byCategory.testing.levels)
-              : prev.testing.levels,
-            coverage: byCategory.testing?.coverage 
-              ? (typeof byCategory.testing.coverage === 'string' 
-                  ? parseInt(byCategory.testing.coverage, 10) 
-                  : byCategory.testing.coverage)
-              : prev.testing.coverage,
-            frameworks: byCategory.testing?.frameworks 
-              ? (typeof byCategory.testing.frameworks === 'string' 
-                  ? byCategory.testing.frameworks.split(',').filter(Boolean) 
-                  : byCategory.testing.frameworks)
-              : prev.testing.frameworks,
-            notes: byCategory.testing?.notes ?? prev.testing.notes,
-          },
-          staticFiles: {
-            ...prev.staticFiles,
-            // Support both new key "FUNDING.yml" and legacy "fundingYml"
-            funding: (byCategory.static?.["FUNDING.yml"] || byCategory.static?.fundingYml) ? true : prev.staticFiles.funding,
-            fundingYml: byCategory.static?.["FUNDING.yml"] ?? byCategory.static?.fundingYml ?? prev.staticFiles.fundingYml,
-            fundingSave: (byCategory.static?.["FUNDING.yml"] || byCategory.static?.fundingYml) ? true : prev.staticFiles.fundingSave,
-            editorconfig: byCategory.static?.editorconfig !== undefined
-              ? (typeof byCategory.static.editorconfig === 'string' 
-                  ? byCategory.static.editorconfig === 'true' 
-                  : Boolean(byCategory.static.editorconfig))
-              : prev.staticFiles.editorconfig,
-            editorconfigCustom: byCategory.static?.editorconfigCustom ?? prev.staticFiles.editorconfigCustom,
-            editorconfigSave: byCategory.static?.editorconfigCustom ? true : prev.staticFiles.editorconfigSave,
-            contributing: byCategory.static?.contributing !== undefined
-              ? (typeof byCategory.static.contributing === 'string' 
-                  ? byCategory.static.contributing === 'true' 
-                  : Boolean(byCategory.static.contributing))
-              : prev.staticFiles.contributing,
-            contributingCustom: byCategory.static?.contributingCustom ?? prev.staticFiles.contributingCustom,
-            contributingSave: byCategory.static?.contributingCustom ? true : prev.staticFiles.contributingSave,
-            codeOfConduct: byCategory.static?.codeOfConduct !== undefined
-              ? (typeof byCategory.static.codeOfConduct === 'string' 
-                  ? byCategory.static.codeOfConduct === 'true' 
-                  : Boolean(byCategory.static.codeOfConduct))
-              : prev.staticFiles.codeOfConduct,
-            codeOfConductCustom: byCategory.static?.codeOfConductCustom ?? prev.staticFiles.codeOfConductCustom,
-            codeOfConductSave: byCategory.static?.codeOfConductCustom ? true : prev.staticFiles.codeOfConductSave,
-            security: byCategory.static?.security !== undefined
-              ? (typeof byCategory.static.security === 'string' 
-                  ? byCategory.static.security === 'true' 
-                  : Boolean(byCategory.static.security))
-              : prev.staticFiles.security,
-            securityCustom: byCategory.static?.securityCustom ?? prev.staticFiles.securityCustom,
-            securitySave: byCategory.static?.securityCustom ? true : prev.staticFiles.securitySave,
-            gitignoreMode: byCategory.static?.gitignoreMode ?? prev.staticFiles.gitignoreMode,
-            gitignoreCustom: byCategory.static?.gitignoreCustom ?? prev.staticFiles.gitignoreCustom,
-            gitignoreSave: byCategory.static?.gitignoreCustom ? true : prev.staticFiles.gitignoreSave,
-            dockerignoreMode: byCategory.static?.dockerignoreMode ?? prev.staticFiles.dockerignoreMode,
-            dockerignoreCustom: byCategory.static?.dockerignoreCustom ?? prev.staticFiles.dockerignoreCustom,
-            dockerignoreSave: byCategory.static?.dockerignoreCustom ? true : prev.staticFiles.dockerignoreSave,
-            // licenseSave is now determined by whether license is in general
-            licenseSave: byCategory.general?.license ? true : prev.staticFiles.licenseSave,
-          },
-          // Load license from general (new) or repo (legacy)
-          license: byCategory.general?.license ?? byCategory.repo?.license ?? prev.license,
-          repoHost: byCategory.repo?.host ?? prev.repoHost,
-          isPublic: byCategory.repo?.isPublic !== undefined
-            ? (typeof byCategory.repo.isPublic === 'string' 
-                ? byCategory.repo.isPublic === 'true' 
-                : Boolean(byCategory.repo.isPublic))
-            : prev.isPublic,
-        }));
+        // A resumed draft or guest session already holds the user's choices.
+        setConfig((prev) => (resumedConfigRef.current ? prev : applyPreferences(prev, data)));
       } catch {
         // ignore
       } finally {
@@ -1456,121 +1036,6 @@ function WizardPageContent() {
     () => WIZARD_STEPS.filter((s) => !canAccessTier(userTier, s.tier)),
     [userTier],
   );
-
-  const buildGeneratorConfig = () => {
-    return {
-      // Project basics
-      projectName: config.projectName,
-      projectDescription: config.projectDescription,
-      projectType: config.projectType,
-      architecturePattern: config.architecturePattern,
-      architecturePatternOther: config.architecturePatternOther,
-      devOS: config.devOS,
-      
-      // Tech stack
-      languages: config.languages,
-      frameworks: config.frameworks,
-      databases: config.databases,
-      additionalLibraries: config.additionalLibraries,
-      letAiDecide: config.letAiDecide,
-      
-      // Repository
-      repoHost: config.repoHost,
-      repoHostOther: config.repoHostOther,
-      repoHosts: config.repoHosts,
-      multiRepoReason: config.multiRepoReason,
-      repoUrl: config.repoUrl,
-      exampleRepoUrl: config.exampleRepoUrl,
-      documentationUrl: config.documentationUrl,
-      isPublic: config.isPublic,
-      
-      // License
-      license: config.license,
-      licenseOther: config.licenseOther,
-      licenseNotes: config.licenseNotes,
-      
-      // Git workflow
-      conventionalCommits: config.conventionalCommits,
-      semver: config.semver,
-      dependabot: config.dependabot,
-      allowDirectCommits: config.allowDirectCommits,
-      
-      // CI/CD & Deployment
-      cicd: config.cicd || [],
-      deploymentTarget: [...config.selfHostedTargets, ...config.cloudTargets],
-      deploymentEnvironment: config.deploymentEnvironment,
-      buildContainer: config.buildContainer,
-      containerRegistry: config.containerRegistry,
-      customRegistry: config.containerRegistryOther,
-      dockerImageNames: config.dockerImageNames,
-      
-      // Funding
-      funding: config.funding,
-      fundingYml: config.fundingYml,
-      
-      // AI behavior
-      aiBehaviorRules: config.aiBehaviorRules,
-      mcpServers: config.mcpServers,
-      attemptWorkarounds: config.attemptWorkarounds,
-      serverAccess: config.serverAccess,
-      sshKeyPath: config.sshKeyPath,
-      manualDeployment: config.manualDeployment,
-      deploymentMethod: config.deploymentMethod,
-      importantFiles: config.importantFiles,
-      importantFilesOther: config.importantFilesOther,
-      enableAutoUpdate: config.enableAutoUpdate || config.enableApiSync,
-      preferCliSync: config.preferCliSync,
-      tokenEnvVar: config.tokenEnvVar,
-      includePersonalData: config.includePersonalData,
-      
-      // Platform & output
-      platform: config.platform,
-      platforms: [config.platform],
-      blueprintMode: config.blueprintMode,
-      additionalFeedback: config.additionalFeedback,
-      
-      // Commands
-      commands: config.commands,
-      
-      // Code style (including error handling other)
-      codeStyle: {
-        ...config.codeStyle,
-        errorHandlingOther: config.codeStyle.errorHandlingOther,
-      },
-      
-      // Boundaries
-      boundaries: config.boundaries,
-      
-      // Testing strategy
-      testingStrategy: {
-        levels: config.testing.levels,
-        coverage: config.testing.coverage,
-        frameworks: config.testing.frameworks,
-        notes: config.testing.notes,
-      },
-      
-      // Static files
-      staticFiles: {
-        funding: config.funding || config.staticFiles.funding,
-        fundingYml: config.staticFiles.fundingYml || config.fundingYml,
-        editorconfig: config.staticFiles.editorconfig,
-        editorconfigCustom: config.staticFiles.editorconfigCustom,
-        contributing: config.staticFiles.contributing,
-        contributingCustom: config.staticFiles.contributingCustom,
-        codeOfConduct: config.staticFiles.codeOfConduct,
-        codeOfConductCustom: config.staticFiles.codeOfConductCustom,
-        security: config.staticFiles.security,
-        securityCustom: config.staticFiles.securityCustom,
-        roadmap: config.staticFiles.roadmap,
-        roadmapCustom: config.staticFiles.roadmapCustom,
-        gitignoreMode: config.staticFiles.gitignoreMode,
-        gitignoreCustom: config.staticFiles.gitignoreCustom,
-        dockerignoreMode: config.buildContainer ? (config.staticFiles.dockerignoreMode === "skip" ? "generate" : config.staticFiles.dockerignoreMode) : config.staticFiles.dockerignoreMode,
-        dockerignoreCustom: config.staticFiles.dockerignoreCustom,
-        license: config.license,
-      },
-    };
-  };
 
   // Extract [[VARIABLE]] or [[VARIABLE|default]] patterns from content
   const extractVariables = (content: string): string[] => {
@@ -1638,7 +1103,7 @@ function WizardPageContent() {
 
   // Replace variables in content (handles [[VAR]] and [[VAR|default]] syntax)
   const replaceVariablesInContent = (content: string): string => {
-    return content.replace(/\[\[([A-Z_][A-Z0-9_]*)(?:\|([^\]]*))?\]\]/g, (match, varName, defaultVal) => {
+    return content.replace(/\[\[([A-Z_][A-Z0-9_]*)(?:\|((?:(?!\[\[)[\s\S])*?)\]\](?!\])|\]\])/g, (match, varName, defaultVal) => {
       const userValue = variableValues[varName];
       if (userValue !== undefined && userValue !== "") {
         return userValue;
@@ -1671,7 +1136,7 @@ function WizardPageContent() {
         skillLevel: "intermediate",
         tier: "free",
       };
-      const files = generateAllFiles(buildGeneratorConfig(), userProfile);
+      const files = generateAllFiles(buildGeneratorConfig(config), userProfile);
       setPreviewFiles(files);
       // When files change (e.g., IDE switch), always keep the first file expanded
       // This ensures the user always sees content, even after switching platforms
@@ -1770,85 +1235,7 @@ function WizardPageContent() {
     console.log("[savePreferences] gitignoreSave:", config.staticFiles.gitignoreSave);
     console.log("[savePreferences] dockerignoreSave:", config.staticFiles.dockerignoreSave);
     console.log("[savePreferences] licenseSave:", config.staticFiles.licenseSave);
-    const payload: { category: string; key: string; value: any; isDefault?: boolean }[] = [];
-    if (config.commands.savePreferences) {
-      payload.push(
-        { category: "commands", key: "build", value: config.commands.build },
-        { category: "commands", key: "test", value: config.commands.test },
-        { category: "commands", key: "lint", value: config.commands.lint },
-        { category: "commands", key: "dev", value: config.commands.dev },
-      );
-    }
-    if (config.staticFiles.licenseSave) {
-      payload.push(
-        { category: "repo", key: "license", value: config.license, isDefault: true },
-        { category: "repo", key: "host", value: config.repoHost },
-        { category: "repo", key: "isPublic", value: config.isPublic },
-      );
-    }
-    if (config.codeStyle.savePreferences) {
-      payload.push(
-        { category: "codeStyle", key: "naming", value: config.codeStyle.naming },
-        { category: "codeStyle", key: "notes", value: config.codeStyle.notes },
-      );
-    }
-    if (config.testing.savePreferences) {
-      payload.push(
-        { category: "testing", key: "levels", value: config.testing.levels.join(",") },
-        { category: "testing", key: "coverage", value: String(config.testing.coverage) },
-        { category: "testing", key: "frameworks", value: config.testing.frameworks.join(",") },
-        { category: "testing", key: "notes", value: config.testing.notes },
-      );
-    }
-    // Save each static file individually based on its save flag
-    if (config.staticFiles.editorconfigSave) {
-      payload.push(
-        { category: "static", key: "editorconfig", value: String(config.staticFiles.editorconfig) },
-        { category: "static", key: "editorconfigCustom", value: config.staticFiles.editorconfigCustom || "" },
-      );
-    }
-    if (config.staticFiles.contributingSave) {
-      payload.push(
-        { category: "static", key: "contributing", value: String(config.staticFiles.contributing) },
-        { category: "static", key: "contributingCustom", value: config.staticFiles.contributingCustom || "" },
-      );
-    }
-    if (config.staticFiles.codeOfConductSave) {
-      payload.push(
-        { category: "static", key: "codeOfConduct", value: String(config.staticFiles.codeOfConduct) },
-        { category: "static", key: "codeOfConductCustom", value: config.staticFiles.codeOfConductCustom || "" },
-      );
-    }
-    if (config.staticFiles.securitySave) {
-      payload.push(
-        { category: "static", key: "security", value: String(config.staticFiles.security) },
-        { category: "static", key: "securityCustom", value: config.staticFiles.securityCustom || "" },
-      );
-    }
-    if (config.staticFiles.gitignoreSave) {
-      payload.push(
-        { category: "static", key: "gitignoreMode", value: config.staticFiles.gitignoreMode },
-        { category: "static", key: "gitignoreCustom", value: config.staticFiles.gitignoreCustom || "" },
-      );
-    }
-    if (config.staticFiles.dockerignoreSave) {
-      payload.push(
-        { category: "static", key: "dockerignoreMode", value: config.staticFiles.dockerignoreMode },
-        { category: "static", key: "dockerignoreCustom", value: config.staticFiles.dockerignoreCustom || "" },
-      );
-    }
-    if (config.staticFiles.fundingSave) {
-      // Only save the FUNDING.yml content, no separate boolean flag needed
-      payload.push(
-        { category: "static", key: "FUNDING.yml", value: config.staticFiles.fundingYml || config.fundingYml || "" },
-      );
-    }
-    if (config.staticFiles.licenseSave) {
-      // Save license to general category (appears in General section of wizard preferences)
-      payload.push(
-        { category: "general", key: "license", value: config.license, isDefault: true },
-      );
-    }
+    const payload = buildPreferencesPayload(config);
     console.log("[savePreferences] payload to save:", payload);
     if (payload.length === 0) {
       console.log("[savePreferences] No preferences to save, payload is empty");
@@ -1938,7 +1325,7 @@ function WizardPageContent() {
       };
       
       // Build config (keep variables intact for blueprint saving)
-      const genConfig = buildGeneratorConfig();
+      const genConfig = buildGeneratorConfig(config);
       
       const blob = await generateConfigFiles(genConfig, userProfile);
       let files = generateAllFiles(genConfig, userProfile);
@@ -1948,21 +1335,16 @@ function WizardPageContent() {
       
       // If API sync is enabled, save/update the blueprint first (with variables intact)
       let blueprintId: string | null = null;
+      const syncPath = syncFilePath(config.platform, files[0]?.fileName || "AGENTS.md");
       if (config.enableApiSync && files.length > 0) {
         try {
-          const blueprintData = {
-            name: config.projectName || "My AI Config",
-            description: config.projectDescription || "Generated with the LynxPrompt wizard",
-            content: originalContent, // Keep [[VAR|default]] syntax for blueprints
-            type: "AGENTS_MD",
-            category: "other",
-            visibility: "PRIVATE",
-          };
+          const blueprintData = syncBlueprintPayload(config, { fileName: files[0].fileName, content: originalContent });
 
           let res: Response;
           if (overwriteBlueprintId) {
             // Update existing blueprint
-            res = await fetch(`/api/blueprints/${overwriteBlueprintId}`, {
+            // The name check returns the database id; the edit route wants the bp_ form
+            res = await fetch(`/api/blueprints/${toBlueprintApiId(overwriteBlueprintId)}`, {
               method: "PUT",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(blueprintData),
@@ -2000,8 +1382,13 @@ function WizardPageContent() {
       // If we have a blueprint ID, prepend API sync header to the content
       let finalContent = files[0]?.content || "";
       if (config.enableApiSync && blueprintId) {
-        const apiHeader = generateApiSyncHeader(blueprintId, files[0]?.fileName || "AGENTS.md");
-        finalContent = apiHeader + finalContent;
+        finalContent = addApiSyncHeader(finalContent, {
+          blueprintId,
+          fileName: syncPath,
+          appUrl,
+          preferCliSync: config.preferCliSync,
+          tokenEnvVar: config.tokenEnvVar,
+        });
         files = files.map((file, i) => i === 0 ? { ...file, content: finalContent } : file);
       }
       
@@ -2032,56 +1419,6 @@ function WizardPageContent() {
     }
   };
   
-  // Generate API sync header for the downloaded file - CLI or env var based (never put token directly in file)
-  const generateApiSyncHeader = (blueprintId: string, fileName: string) => {
-    const bpId = blueprintId.startsWith("bp_") ? blueprintId : `bp_${blueprintId}`;
-    const tokenEnvVar = config.tokenEnvVar || "LYNXPROMPT_API_TOKEN";
-    
-    let syncCommands = "";
-    
-    if (config.preferCliSync) {
-      // CLI method (recommended - no token needed in file)
-      syncCommands = `#   # Using LynxPrompt CLI (recommended):
-#   lynxp push    # Upload local changes to cloud
-#   lynxp pull    # Download cloud changes to local
-#   lynxp diff    # Compare local vs cloud versions
-#
-#   Install CLI: npm install -g lynxprompt
-#   Login: lynxp login`;
-    } else {
-      // Environment variable method (no token in file)
-      syncCommands = `#   # Using curl with environment variable:
-#   # Token stored in $${tokenEnvVar} - NEVER put token directly in this file!
-#
-#   # Push local changes to cloud:
-#   curl -X PUT "${appUrl}/api/v1/blueprints/${bpId}" \\
-#     -H "Authorization: Bearer \$${tokenEnvVar}" \\
-#     -H "Content-Type: application/json" \\
-#     -d "{\\"content\\": \\"$(cat ${fileName} | jq -Rs .)\\"}"\n#
-#   # Pull cloud changes to local:
-#   curl -s "${appUrl}/api/v1/blueprints/${bpId}" \\
-#     -H "Authorization: Bearer \$${tokenEnvVar}" | jq -r '.content' > ${fileName}
-#
-#   Set your token: export ${tokenEnvVar}="your_token_here"`;
-    }
-    
-    return `# ${config.projectName || fileName}
-#
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# 🔄 LynxPrompt Cloud Sync
-# Blueprint ID: ${bpId}
-# 
-# This file is synced with LynxPrompt.
-#
-${syncCommands}
-#
-# Generate an API token at: ${appUrl}/settings
-# Docs: ${appUrl}/docs/api
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-`;
-  };
-
   // Handle saving as blueprint (requires login)
   const handleShareAsBlueprint = () => {
     if (requireLogin("share")) return;
@@ -3109,14 +2446,18 @@ function StepProject({
                 </div>
               )}
             </div>
-            <div
+            <button
+              type="button"
+              role="switch"
+              aria-checked={blueprintMode}
+              aria-label="Blueprint template mode"
               onClick={() => onBlueprintModeChange(!blueprintMode)}
-              className={`relative h-6 w-11 cursor-pointer rounded-full transition-colors ${blueprintMode ? "bg-amber-500" : "bg-muted"}`}
+              className={`relative h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors ${blueprintMode ? "bg-amber-500" : "bg-muted"}`}
             >
-              <div
+              <span
                 className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${blueprintMode ? "left-0.5 translate-x-5" : "left-0.5 translate-x-0"}`}
               />
-            </div>
+            </button>
           </div>
         </div>
 
@@ -7490,6 +6831,9 @@ function StepGenerate({
               </p>
             </div>
             <button
+              type="button"
+              role="switch"
+              aria-checked={enableApiSync}
               onClick={() => onApiSyncChange(!enableApiSync)}
               className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${enableApiSync ? "bg-green-500" : "bg-muted"}`}
               aria-label="Toggle cloud sync"
@@ -7518,6 +6862,9 @@ function StepGenerate({
                   </p>
                 </div>
                 <button
+                  type="button"
+                  role="switch"
+                  aria-checked={preferCliSync}
                   onClick={() => onPreferCliSyncChange(!preferCliSync)}
                   className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${preferCliSync ? "bg-green-500" : "bg-muted"}`}
                   aria-label="Toggle CLI preference"

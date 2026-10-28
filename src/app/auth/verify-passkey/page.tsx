@@ -7,14 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Key, Loader2, ShieldCheck, AlertCircle } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { startAuthentication } from "@simplewebauthn/browser";
+import { safeCallbackUrl } from "@/lib/safe-callback-url";
 
 function VerifyPasskeyContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const rawCallbackUrl = searchParams.get("callbackUrl") || "/dashboard";
-  const callbackUrl = rawCallbackUrl.startsWith("/") && !rawCallbackUrl.startsWith("//")
-    ? rawCallbackUrl : "/dashboard";
+  const callbackUrl = safeCallbackUrl(searchParams.get("callbackUrl"));
 
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);

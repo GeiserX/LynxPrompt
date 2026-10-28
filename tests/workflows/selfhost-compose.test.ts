@@ -29,6 +29,23 @@ describe("self-host compose file", () => {
     }
   });
 
+  it("keeps uploads in a named volume at /data/uploads", () => {
+    // Avatars, team logos and blog images are files under /data/uploads with
+    // only their URL in the database. Without a volume, recreating the
+    // container for a new tag deleted them all.
+    const app = compose.slice(compose.indexOf("\n  lynxprompt:"), compose.indexOf("\nvolumes:"));
+    expect(app).toMatch(/^\s*-\s*uploads:\/data\/uploads\s*$/m);
+    expect(compose.slice(compose.indexOf("\nvolumes:"))).toMatch(/^\s{2}uploads:\s*$/m);
+  });
+
+  it("publishes Mailpit on loopback only", () => {
+    // The Mailpit inbox holds working sign-in links for every account.
+    const mailpit = readFileSync(resolve(process.cwd(), "docker-compose.mailpit.yml"), "utf8");
+    const ports = [...mailpit.matchAll(/^\s*-\s*"([^"]*:8025)"\s*$/gm)].map((m) => m[1]);
+    expect(ports.length).toBeGreaterThan(0);
+    for (const port of ports) expect(port).toMatch(/^127\.0\.0\.1:/);
+  });
+
   it("pins the app image to a semver tag", () => {
     expect(image, "no drumsergio/lynxprompt image with a tag").not.toBeNull();
     expect(image![1]).toMatch(/^\d+\.\d+\.\d+$/);

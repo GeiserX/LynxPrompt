@@ -89,7 +89,7 @@ describe("getPlatformDisplayName", () => {
 
 describe("getPlatformFile", () => {
   it("returns file path for known platform", () => {
-    expect(getPlatformFile("cursor")).toBe(".cursor/rules/");
+    expect(getPlatformFile("cursor")).toBe(".cursor/rules/project.mdc");
     expect(getPlatformFile("claude")).toBe("CLAUDE.md");
   });
 
@@ -105,7 +105,7 @@ describe("PLATFORM_COUNT and PLATFORM_FILES", () => {
 
   it("PLATFORM_FILES has entry for each platform", () => {
     expect(Object.keys(PLATFORM_FILES).length).toBe(PLATFORMS.length);
-    expect(PLATFORM_FILES["cursor"]).toBe(".cursor/rules/");
+    expect(PLATFORM_FILES["cursor"]).toBe(".cursor/rules/project.mdc");
   });
 });
 
