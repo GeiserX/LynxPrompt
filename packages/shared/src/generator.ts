@@ -501,7 +501,7 @@ function generateCursorRules(config: GeneratorConfig, user: GeneratorUser, brand
       language_default: "Follow the idiomatic naming conventions of each language",
       camelCase: "Use camelCase for variables and functions (e.g., myVariable, getUserName)",
       snake_case: "Use snake_case for variables and functions (e.g., my_variable, get_user_name)",
-      PascalCase: "Use PascalCase for classes and types (e.g., MyClass, GeneratorUser)",
+      PascalCase: "Use PascalCase for classes and types (e.g., MyClass, UserProfile)",
       "kebab-case": "Use kebab-case for file names and URLs (e.g., my-component, user-profile)",
     };
     const namingValue = namingDescriptions[config.codeStyle.naming] || config.codeStyle.naming;
@@ -1372,7 +1372,7 @@ function generateAgentsMd(config: GeneratorConfig, user: GeneratorUser): string 
         language_default: "Follow the idiomatic naming conventions of each language",
         camelCase: "camelCase for variables and functions (e.g., myVariable, getUserName)",
         snake_case: "snake_case for variables and functions (e.g., my_variable, get_user_name)",
-        PascalCase: "PascalCase for classes and types (e.g., MyClass, GeneratorUser)",
+        PascalCase: "PascalCase for classes and types (e.g., MyClass, UserProfile)",
         "kebab-case": "kebab-case for file names and URLs (e.g., my-component, user-profile)",
       };
       lines.push(`- **Naming**: ${namingDescriptions[config.codeStyle.naming] || config.codeStyle.naming}`);
