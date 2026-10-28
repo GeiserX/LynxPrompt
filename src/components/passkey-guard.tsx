@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { passkeyStepUrl } from "@/lib/passkey-redirect";
 
 interface PasskeyGuardProps {
   children: React.ReactNode;
@@ -55,9 +56,9 @@ export function PasskeyGuard({ children }: PasskeyGuardProps) {
         const { required, verified: isVerified } = await res.json();
 
         if (required && !isVerified) {
-          // Redirect to passkey verification
-          const callbackUrl = encodeURIComponent(pathname);
-          router.replace(`/auth/verify-passkey?callbackUrl=${callbackUrl}`);
+          // Redirect to passkey verification, back to this page with its query
+          // (a link can carry a token or a filter there)
+          router.replace(passkeyStepUrl(`${pathname}${window.location.search}`));
           return;
         }
 

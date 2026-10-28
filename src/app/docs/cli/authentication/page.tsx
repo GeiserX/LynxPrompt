@@ -276,6 +276,17 @@ lynxprompt pull bp_abc123 --yes`}</code>
               generate a new token.
             </p>
           </div>
+
+          <div className="rounded-lg border p-4">
+            <h3 className="font-semibold">&quot;This version of lynxp is too old to log in&quot;</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              lynxp before 2.1.37 logs in without the check that ties the token to the
+              terminal that asked for it. Those logins work until 2027-01-01 and are refused
+              from then on. Update with{" "}
+              <code className="rounded bg-muted px-1.5 py-0.5">npm install -g lynxprompt@latest</code>{" "}
+              (or your package manager) and log in again.
+            </p>
+          </div>
         </div>
       </section>
 

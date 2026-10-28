@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { BLUEPRINT_ACCESS_SELECT, isOwnerOrTeamMember } from "@/lib/blueprint-access";
-import { requireSession } from "@/lib/api-auth";
+import { getVerifiedSession, requireSession } from "@/lib/api-auth";
 
 // GET /api/blueprints/[id]/versions - Get version history for a blueprint
 export async function GET(
@@ -43,7 +41,7 @@ export async function GET(
       );
     }
 
-    const session = await getServerSession(authOptions);
+    const session = await getVerifiedSession(request);
     const isOwner = session?.user?.id === blueprint.userId;
 
     // The owner and the blueprint's team see every version
@@ -125,7 +123,7 @@ export async function POST(
       );
     }
 
-    const session = await getServerSession(authOptions);
+    const session = await getVerifiedSession(request);
     // Same rule as the version list above: the owner and the blueprint's team
     // see every version, everyone else only published versions of public ones
     const hasFullAccess = await isOwnerOrTeamMember(blueprint, session?.user?.id);

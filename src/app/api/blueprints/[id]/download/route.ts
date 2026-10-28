@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { prismaApp } from "@/lib/db-app";
 import { hashIP } from "@/lib/ip-hash";
 import { getClientIP } from "@/lib/client-ip";
 import { BLUEPRINT_ACCESS_SELECT, canReadBlueprint, canReadTemplate } from "@/lib/blueprint-access";
 import { COMMANDS, MCP_CONFIGS, PLATFORMS } from "@/lib/platforms";
-import { requireSession } from "@/lib/api-auth";
+import { getVerifiedSession, requireSession } from "@/lib/api-auth";
 
 // Every platform id from platforms.ts, plus "command-<platform>" for slash
 // command exports, "skill" for Agent Skills and the MCP target ids (what
@@ -24,7 +22,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions);
+  const session = await getVerifiedSession(request);
   const { id: rawId } = await params;
 
   try {

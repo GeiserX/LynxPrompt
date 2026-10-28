@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
 import { createHash } from "crypto";
-import { authOptions } from "@/lib/auth";
 import { prismaBlog } from "@/lib/db-blog";
 import { prismaUsers } from "@/lib/db-users";
 import { isAdminRole, UserRole } from "@/lib/subscription";
 import { parsePage } from "@/lib/pagination";
-import { requireSession } from "@/lib/api-auth";
+import { getVerifiedSession, requireSession } from "@/lib/api-auth";
 import { blogDisabled } from "@/lib/blog-guard";
 
 // Generate Gravatar URL from email (server-side)
@@ -37,7 +35,7 @@ export async function GET(request: NextRequest) {
     const includeUnpublished = searchParams.get("admin") === "true";
 
     // Check if user is admin (for viewing drafts)
-    const session = await getServerSession(authOptions);
+    const session = await getVerifiedSession(request);
     const isAdmin = session?.user?.role
       ? isAdminRole(session.user.role as UserRole)
       : false;

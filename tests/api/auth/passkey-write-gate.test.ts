@@ -3,20 +3,27 @@ import { NextRequest } from "next/server";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-// Every route that writes as a signed-in user goes through requireSession or
-// requireUser. A user with a passkey whose session has not proven it yet (a
-// magic link or OAuth login alone) must be refused before the route runs.
+// Every route that reads or writes as a signed-in user goes through
+// requireSession or requireUser. A user with a passkey whose session has not
+// proven it yet (a magic link or OAuth login alone) must be refused before the
+// route runs. Reads that also serve signed-out visitors must keep working for
+// that session, showing only what a signed-out visitor sees.
 
 const h = vi.hoisted(() => {
   // Any model, any method: a route that got past the gate would call one.
   const touched: string[] = [];
+  // Answers for one test, keyed "users.userTemplate.findFirst"
+  const answers: Record<string, unknown> = {};
   const model = (name: string) =>
     new Proxy(
       {},
       {
         get: (_t, method: string) =>
           vi.fn(async () => {
-            touched.push(`${name}.${method}`);
+            const key = `${name}.${method}`;
+            touched.push(key);
+            if (key in answers) return answers[key];
+            if (method === "count") return 0;
             return method === "findMany" ? [] : null;
           }),
       }
@@ -33,6 +40,8 @@ const h = vi.hoisted(() => {
             // requireUser looks the session user up before the gate
             return {
               findUnique: vi.fn(async () => ({ id: "user_1", email: "a@b.c", name: "A", role: "SUPERADMIN" })),
+              // public lists look their authors up
+              findMany: vi.fn(async () => []),
             };
           }
           if (prefix === "users" && name === "session") {
@@ -50,7 +59,7 @@ const h = vi.hoisted(() => {
         },
       }
     );
-  return { touched, users: db("users"), app: db("app"), blog: db("blog"), support: db("support") };
+  return { touched, answers, users: db("users"), app: db("app"), blog: db("blog"), support: db("support") };
 });
 
 vi.mock("next-auth", () => ({
@@ -59,6 +68,11 @@ vi.mock("next-auth", () => ({
   })),
 }));
 vi.mock("@/lib/auth", () => ({ authOptions: {}, webAuthnConfig: {} }));
+// Code without the request at hand (getTemplateById) reads the cookie here
+vi.mock("next/headers", () => ({
+  cookies: async () => ({ get: () => ({ value: "sess_1" }) }),
+  headers: async () => new Headers(),
+}));
 vi.mock("@/lib/db-users", () => ({ prismaUsers: h.users }));
 vi.mock("@/lib/db-app", () => ({ prismaApp: h.app }));
 vi.mock("@/lib/db-blog", () => ({ prismaBlog: h.blog }));
@@ -140,6 +154,34 @@ const WRITES: [string, string][] = [
   ["wizard/detect-repo", "POST"],
   ["wizard/drafts/[id]", "DELETE"],
   ["wizard/drafts", "POST"],
+];
+
+// Private reads: the API token list, team SSO settings, drafts, profile...
+const READS: [string, string][] = [
+  ["admin/stats", "GET"],
+  ["auth/passkey/list", "GET"],
+  ["billing/status", "GET"],
+  ["hierarchies/[id]", "GET"],
+  ["hierarchies", "GET"],
+  ["support/admin/categories", "GET"],
+  ["support/admin/tags", "GET"],
+  ["teams/[teamId]/billing", "GET"],
+  ["teams/[teamId]/invitations", "GET"],
+  ["teams/[teamId]/members", "GET"],
+  ["teams/[teamId]", "GET"],
+  ["teams/[teamId]/sso", "GET"],
+  ["teams", "GET"],
+  ["user/accounts", "GET"],
+  ["user/analytics", "GET"],
+  ["user/api-tokens", "GET"],
+  ["user/dashboard", "GET"],
+  ["user/favorites", "GET"],
+  ["user/preferences", "GET"],
+  ["user/profile", "GET"],
+  ["user/variables", "GET"],
+  ["user/wizard-preferences", "GET"],
+  ["wizard/drafts/[id]", "GET"],
+  ["wizard/drafts", "GET"],
 ];
 
 // Write handlers that are not in WRITES, and why the passkey gate does not
@@ -227,6 +269,7 @@ function call(route: string, method: string) {
 
 beforeEach(() => {
   h.touched.length = 0;
+  for (const key of Object.keys(h.answers)) delete h.answers[key];
 });
 
 describe("writes from a session that still owes its passkey check", () => {
@@ -253,11 +296,66 @@ describe("writes from a session that still owes its passkey check", () => {
     expect(body).not.toMatchObject({ passkeyRequired: true });
   });
 
-  it("a read from the same session still works", async () => {
-    const { GET } = await load("hierarchies");
-    const { req } = call("hierarchies", "GET");
-    const res = await GET(req);
+});
+
+describe("reads from a session that still owes its passkey check", () => {
+  it.each(READS)("%s %s is refused before the route runs", async (route, method) => {
+    const handler = (await load(route))[method];
+    expect(handler, `${method} export`).toBeTypeOf("function");
+
+    const { req, ctx } = call(route, method);
+    const res = await handler(req, ctx);
+
+    expect(res.status).toBe(403);
+    expect(await res.json()).toMatchObject({ passkeyRequired: true });
+    expect(h.touched).toEqual([]);
+  });
+
+  it("the passkey step can still ask whether it is needed", async () => {
+    const { GET } = await load("auth/passkey-check");
+    const { req } = call("auth/passkey-check", "GET");
+    expect(await (await GET(req)).json()).toEqual({ required: true, verified: false });
+  });
+
+  it.each([
+    ["blueprints", "GET"],
+    ["blog", "GET"],
+    ["support/posts", "GET"],
+  ])("public %s %s still works", async (route, method) => {
+    const handler = (await load(route))[method];
+    const { req, ctx } = call(route, method);
+    const res = await handler(req, ctx);
     expect(res.status).toBe(200);
+  });
+
+  const blueprint = (isPublic: boolean) => ({
+    id: "1",
+    name: "Mine",
+    content: "x",
+    userId: "user_1",
+    isPublic,
+    teamId: null,
+    visibility: isPublic ? "PUBLIC" : "PRIVATE",
+    user: { name: "A", id: "user_1" },
+    tags: [],
+  });
+
+  it("a public blueprint still renders", async () => {
+    h.answers["users.userTemplate.findFirst"] = blueprint(true);
+    const { GET } = await load("blueprints/[id]");
+    const { req, ctx } = call("blueprints/bp_1", "GET");
+    const res = await GET(req, ctx);
+    expect(res.status).toBe(200);
+    // Seen as a signed-out visitor: not the owner yet
+    expect(await res.json()).toMatchObject({ id: "bp_1", isOwner: false });
+  });
+
+  it("the user's own private blueprint stays hidden, as for a signed-out visitor", async () => {
+    h.answers["users.userTemplate.findFirst"] = blueprint(false);
+    const { GET } = await load("blueprints/[id]");
+    const { req, ctx } = call("blueprints/bp_1", "GET");
+    const res = await GET(req, ctx);
+    expect(res.status).toBe(404);
   });
 });
 

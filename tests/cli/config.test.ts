@@ -53,9 +53,11 @@ vi.mock("../../cli/node_modules/conf/dist/source/index.js", () => ({
   default: state.FakeConf,
 }));
 
-// logout calls the server to revoke the token; record those calls instead.
+// logout calls the server to revoke the token, and set-url asks it whether the
+// saved token still works; record those calls instead.
 const revokeToken = vi.hoisted(() => vi.fn(async () => true));
-vi.mock("../../cli/src/api.js", () => ({ api: { revokeToken } }));
+const checkLogin = vi.hoisted(() => vi.fn());
+vi.mock("../../cli/src/api.js", () => ({ api: { revokeToken, checkLogin } }));
 
 // The paths sit in variables so the root `tsc` does not follow them into cli/,
 // whose dependencies the root CI job does not install.
@@ -216,6 +218,7 @@ describe("CLI config", () => {
 
 describe("lynxp logout and lynxp config", () => {
   let dir: string;
+  let logged: string[] = [];
 
   beforeEach(() => {
     dir = mkdtempSync(join(tmpdir(), "lynxp-logout-"));
@@ -225,7 +228,9 @@ describe("lynxp logout and lynxp config", () => {
     delete process.env.LYNXPROMPT_TOKEN;
     delete process.env.LYNXPROMPT_API_URL;
     revokeToken.mockClear();
-    vi.spyOn(console, "log").mockImplementation(() => {});
+    checkLogin.mockReset();
+    logged = [];
+    vi.spyOn(console, "log").mockImplementation((...a: unknown[]) => void logged.push(a.join(" ")));
   });
 
   afterEach(() => {
@@ -271,5 +276,63 @@ describe("lynxp logout and lynxp config", () => {
     await configCommand("reset-url");
 
     expect(config.getApiUrl()).toBe("https://lynxprompt.com");
+  });
+
+  it("set-url checks the saved login of the new instance with that instance", async () => {
+    const config = await loadConfig();
+    config.setApiUrl("https://prompts.example.org");
+    config.setToken("lp_self");
+    config.setApiUrl("https://lynxprompt.com");
+    checkLogin.mockImplementation(async () => {
+      // The check runs against the new URL, with the token saved for it
+      expect(config.getApiUrl()).toBe("https://prompts.example.org");
+      expect(config.getToken()).toBe("lp_self");
+      return { ok: true, email: "me@example.org" };
+    });
+
+    const { configCommand } = await import(/* @vite-ignore */ CONFIG_COMMAND_MODULE);
+    await configCommand("set-url", "https://prompts.example.org/");
+
+    expect(checkLogin).toHaveBeenCalledTimes(1);
+    expect(logged.join("\n")).toContain("Logged in as me@example.org on this instance (token checked)");
+  });
+
+  it("set-url says when the new instance refuses its saved login", async () => {
+    const config = await loadConfig();
+    config.setApiUrl("https://prompts.example.org");
+    config.setToken("lp_revoked");
+    config.setApiUrl("https://lynxprompt.com");
+    checkLogin.mockResolvedValue({ ok: false, rejected: true, reason: "Unauthorized" });
+
+    const { configCommand } = await import(/* @vite-ignore */ CONFIG_COMMAND_MODULE);
+    await configCommand("set-url", "https://prompts.example.org");
+
+    expect(logged.join("\n")).toContain("refused the saved login");
+    expect(logged.join("\n")).not.toContain("Logged in as");
+  });
+
+  it("set-url reports an unreachable instance instead of claiming the login works", async () => {
+    const config = await loadConfig();
+    config.setApiUrl("https://prompts.example.org");
+    config.setToken("lp_self");
+    config.setApiUrl("https://lynxprompt.com");
+    checkLogin.mockResolvedValue({ ok: false, rejected: false, reason: "fetch failed" });
+
+    const { configCommand } = await import(/* @vite-ignore */ CONFIG_COMMAND_MODULE);
+    await configCommand("set-url", "https://prompts.example.org");
+
+    expect(logged.join("\n")).toContain("could not be checked: fetch failed");
+    expect(logged.join("\n")).not.toContain("Logged in as");
+  });
+
+  it("set-url to an instance with no saved login says so and calls nothing", async () => {
+    const config = await loadConfig();
+    config.setToken("lp_hosted");
+
+    const { configCommand } = await import(/* @vite-ignore */ CONFIG_COMMAND_MODULE);
+    await configCommand("set-url", "https://prompts.example.org");
+
+    expect(checkLogin).not.toHaveBeenCalled();
+    expect(logged.join("\n")).toContain("No saved login for this instance");
   });
 });

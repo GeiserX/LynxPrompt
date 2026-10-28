@@ -4,9 +4,9 @@
  * A user with a registered passkey must prove it on every new session. The
  * proof is the session row's passkeyVerified flag, and only the WebAuthn
  * verify handler (POST /api/auth/passkey/authenticate/verify) may set it.
- * requireSession and requireUser (src/lib/api-auth.ts) refuse writes from a
- * session that has not proven it, so a session cookie alone cannot change
- * anything.
+ * requireSession and requireUser (src/lib/api-auth.ts) refuse any request from
+ * a session that has not proven it, and getVerifiedSession treats it as signed
+ * out, so a session cookie alone can neither read nor change anything private.
  */
 
 import { prismaUsers } from "@/lib/db-users";

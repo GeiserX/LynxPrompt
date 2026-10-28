@@ -15,7 +15,12 @@ import { readFile, readdir, stat } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
 import * as yaml from "yaml";
-import { findHiddenUnicode, describeHiddenUnicode } from "../utils/hidden-unicode.js";
+import {
+  findHiddenUnicode,
+  findDirectionMarks,
+  describeHiddenUnicode,
+  describeDirectionMarks,
+} from "../utils/hidden-unicode.js";
 
 interface CheckOptions {
   ci?: boolean;
@@ -122,12 +127,17 @@ function validateMarkdown(content: string, filename: string): { errors: string[]
 
 /**
  * Invisible characters in a rule file can hold instructions the agent reads and
- * a reviewer does not see, so any found is an error. The whole file is scanned,
- * frontmatter included.
+ * a reviewer does not see, so any found is an error. A lone direction mark next
+ * to plain text is a warning: right-to-left text uses them on purpose. The
+ * whole file is scanned, frontmatter included.
  */
-function validateHiddenUnicode(content: string, filename: string): string[] {
-  const found = findHiddenUnicode(content);
-  return found.length > 0 ? [describeHiddenUnicode(filename, found)] : [];
+function validateHiddenUnicode(content: string, filename: string): { errors: string[]; warnings: string[] } {
+  const hidden = findHiddenUnicode(content);
+  const marks = findDirectionMarks(content);
+  return {
+    errors: hidden.length > 0 ? [describeHiddenUnicode(filename, hidden)] : [],
+    warnings: marks.length > 0 ? [describeDirectionMarks(filename, marks)] : [],
+  };
 }
 
 /**
@@ -245,8 +255,9 @@ export async function checkCommand(options: CheckOptions = {}): Promise<void> {
       try {
         const content = await readFile(filePath, "utf-8");
         const validation = validateMarkdown(content, file.path);
-        result.errors.push(...validation.errors, ...validateHiddenUnicode(content, file.path));
-        result.warnings.push(...validation.warnings);
+        const unicode = validateHiddenUnicode(content, file.path);
+        result.errors.push(...validation.errors, ...unicode.errors);
+        result.warnings.push(...validation.warnings, ...unicode.warnings);
       } catch (error) {
         result.errors.push(`${file.path}: Could not read file`);
       }
@@ -266,7 +277,9 @@ export async function checkCommand(options: CheckOptions = {}): Promise<void> {
           if (fileStat.isFile()) {
             result.files.push(`${dir.path}/${file}`);
             const content = await readFile(filePath, "utf-8");
-            result.errors.push(...validateHiddenUnicode(content, `${dir.path}/${file}`));
+            const unicode = validateHiddenUnicode(content, `${dir.path}/${file}`);
+            result.errors.push(...unicode.errors);
+            result.warnings.push(...unicode.warnings);
 
             // Use MDC validation for .mdc files
             if (file.endsWith(".mdc")) {

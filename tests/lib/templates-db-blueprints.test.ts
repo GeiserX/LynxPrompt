@@ -11,6 +11,9 @@ const mockUserTemplateCount = vi.fn();
 const mockUserTemplateFindFirst = vi.fn();
 const mockUserTemplateUpdate = vi.fn();
 const mockTeamMemberFindUnique = vi.fn();
+// The viewer's passkey: none unless a test says otherwise
+const mockAuthenticatorCount = vi.fn();
+const mockSessionFindUnique = vi.fn();
 
 vi.mock("@/lib/db-app", () => ({
   prismaApp: {
@@ -34,7 +37,17 @@ vi.mock("@/lib/db-users", () => ({
     teamMember: {
       findUnique: (...args: unknown[]) => mockTeamMemberFindUnique(...args),
     },
+    authenticator: {
+      count: (...args: unknown[]) => mockAuthenticatorCount(...args),
+    },
+    session: {
+      findUnique: (...args: unknown[]) => mockSessionFindUnique(...args),
+    },
   },
+}));
+
+vi.mock("next/headers", () => ({
+  cookies: async () => ({ get: () => ({ value: "sess_1" }) }),
 }));
 
 // Mock next-auth getServerSession
@@ -53,6 +66,31 @@ describe("getTemplateById - database mode bp_/usr_ templates", () => {
   beforeEach(() => {
     vi.stubEnv("MOCK", "false");
     vi.clearAllMocks();
+    mockAuthenticatorCount.mockResolvedValue(0);
+  });
+
+  it("hides the owner's private template while the session still owes its passkey", async () => {
+    mockGetServerSession.mockResolvedValue({ user: { id: "owner-1" } });
+    mockAuthenticatorCount.mockResolvedValue(1);
+    mockSessionFindUnique.mockResolvedValue({ userId: "owner-1", passkeyVerified: false });
+    mockUserTemplateFindFirst.mockResolvedValue({
+      id: "private-tmpl",
+      name: "Private Template",
+      content: "private content",
+      type: "CURSORRULES",
+      tags: [],
+      userId: "owner-1",
+      user: { name: "Owner", id: "owner-1" },
+      isPublic: false,
+      visibility: "PRIVATE",
+      teamId: null,
+    });
+
+    expect(await getTemplateById("bp_private-tmpl")).toBeNull();
+    // Asked as a signed-out visitor: public templates only
+    expect(mockUserTemplateFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: "private-tmpl", isPublic: true } })
+    );
   });
 
   it("fetches user template with bp_ prefix - public template, no session", async () => {

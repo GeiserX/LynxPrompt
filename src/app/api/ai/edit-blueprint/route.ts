@@ -3,21 +3,11 @@ import { canPerform, requireUser } from "@/lib/api-auth";
 import { prismaUsers } from "@/lib/db-users";
 import { ENABLE_AI, AI_MODEL } from "@/lib/feature-flags";
 import Anthropic from "@anthropic-ai/sdk";
+import { actualCostUnits, getModelPrice, worstCaseCostUnits } from "@/lib/ai-pricing";
 
-// Cost tracking constants (in tokens)
-// Haiku pricing: $0.25/M input, $1.25/M output
-// With prompt caching: cache write +25%, cache read -90%
-// €10 ≈ $11 budget → approximately 2.5M tokens mixed usage
-// We'll track in "cost units" where 1 unit = 0.001 cents
-// Input: 0.025 cost units per token, Output: 0.125 cost units per token
-// Cache write: 0.03125 cost units per token (25% premium)
-// Cache read: 0.0025 cost units per token (90% discount)
-// €10 limit = 1000 cents = 1,000,000 cost units
-const MAX_COST_UNITS_PER_PERIOD = 1_000_000; // €10 worth
-const INPUT_COST_PER_TOKEN = 0.025; // $0.25/M = 0.025 per 1000 tokens = 0.000025 per token → scaled
-const OUTPUT_COST_PER_TOKEN = 0.125; // $1.25/M = 0.125 per 1000 tokens
-const CACHE_WRITE_COST_PER_TOKEN = 0.03125; // 25% more than input
-const CACHE_READ_COST_PER_TOKEN = 0.0025; // 90% less than input
+// Per-user AI budget for each 30-day period, in cost units (src/lib/ai-pricing.ts):
+// 1,000,000 units = $10 of API spend at list price.
+const MAX_COST_UNITS_PER_PERIOD = 1_000_000;
 
 // Rate limiting
 const MAX_REQUESTS_PER_MINUTE = 10;
@@ -62,29 +52,6 @@ const BLUEPRINT_MAX_TOKENS = 8000;
 // for under 500 characters.
 const WIZARD_MAX_TOKENS = 1024;
 const USAGE_PERIOD_MS = 30 * 24 * 60 * 60 * 1000;
-
-// Worst-case cost of one call, reserved before the call so that parallel
-// requests cannot all pass the budget check. Counts one token per character
-// (an upper bound in practice) at the highest input rate, plus a full
-// max_tokens reply.
-function worstCaseCostUnits(promptChars: number, maxTokens: number): number {
-  return Math.ceil(
-    promptChars * CACHE_WRITE_COST_PER_TOKEN + maxTokens * OUTPUT_COST_PER_TOKEN
-  );
-}
-
-function actualCostUnits(usage: Anthropic.Usage): number {
-  const inputTokens = usage.input_tokens;
-  const outputTokens = usage.output_tokens;
-  const cacheCreationTokens = usage.cache_creation_input_tokens ?? 0;
-  const cacheReadTokens = usage.cache_read_input_tokens ?? 0;
-  return Math.ceil(
-    inputTokens * INPUT_COST_PER_TOKEN +
-      cacheCreationTokens * CACHE_WRITE_COST_PER_TOKEN +
-      cacheReadTokens * CACHE_READ_COST_PER_TOKEN +
-      outputTokens * OUTPUT_COST_PER_TOKEN
-  );
-}
 
 export async function POST(request: Request) {
   if (!ENABLE_AI) {
@@ -163,6 +130,17 @@ export async function POST(request: Request) {
       userMessage = `Template being modified:\n---\n${content}\n---\n\nUser instruction: ${instruction}`;
     }
 
+    // Without a known price the budget cannot be counted, so refuse rather
+    // than guess a rate.
+    const price = getModelPrice(AI_MODEL);
+    if (!price) {
+      console.error(`No price for AI model ${AI_MODEL}; add it to src/lib/ai-pricing.ts`);
+      return NextResponse.json(
+        { error: "AI service not configured" },
+        { status: 503 }
+      );
+    }
+
     // Check if Anthropic API key is configured
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
@@ -218,6 +196,7 @@ export async function POST(request: Request) {
 
     // Reserve the worst-case cost of this call; refuse if it would pass the cap.
     const reserve = worstCaseCostUnits(
+      price,
       systemPrompt.length + userMessage.length,
       maxTokens
     );
@@ -259,7 +238,7 @@ export async function POST(request: Request) {
 
     // Settle the reservation to the real cost. Every answered call counts,
     // including refusals and empty or cut-off replies.
-    const costUnits = actualCostUnits(response.usage);
+    const costUnits = actualCostUnits(price, response.usage);
     await prismaUsers.user.update({
       where: { id: userId },
       data: { aiTokensUsedThisPeriod: { increment: costUnits - reservedUnits } },

@@ -547,7 +547,7 @@ $ lynxp check --ci
             <li>• Empty or minimal content</li>
             <li>• Placeholder text (TODO, FIXME, etc.)</li>
             <li>• Potential secrets or API keys</li>
-            <li>• Hidden Unicode (zero-width, bidi and tag characters) that can carry instructions a reviewer cannot see</li>
+            <li>• Hidden Unicode (zero-width, bidi and tag characters) that can carry instructions a reviewer cannot see. A lone direction mark next to plain text, common in right-to-left text, is only a warning</li>
             <li>• YAML frontmatter syntax (for .mdc files)</li>
             <li>• LynxPrompt config file validity</li>
           </ul>
@@ -949,12 +949,12 @@ $ lynxp config
 # Point to self-hosted instance (each instance keeps its own login)
 $ lynxp config set-url https://lynxprompt.yourcompany.com
 ✓ API URL set to https://lynxprompt.yourcompany.com
-  Run 'lynxp login' to authenticate with this instance.
+  No saved login for this instance. Run 'lynxp login' to authenticate with it.
 
-# Reset to default
+# Reset to default (a saved login is checked with the instance)
 $ lynxp config reset-url
 ✓ API URL reset to https://lynxprompt.com
-  Logged in as user@example.com on this instance.
+  Logged in as user@example.com on this instance (token checked).
 
 # Find config file
 $ lynxp config path
