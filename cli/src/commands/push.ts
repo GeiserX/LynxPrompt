@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import ora from "ora";
+import ora, { type Ora } from "ora";
 import fs from "fs";
 import path from "path";
 import { createHash } from "crypto";
@@ -12,6 +12,7 @@ import {
   updateChecksum,
   loadBlueprints,
 } from "../utils/blueprint-tracker.js";
+import { withSensitiveDataAck, type SensitiveMatchInfo } from "../utils/sensitive-ack.js";
 
 interface PushOptions {
   name?: string;
@@ -21,6 +22,7 @@ interface PushOptions {
   yes?: boolean;
   force?: boolean;
   all?: boolean;
+  allowSensitive?: boolean;
 }
 
 interface HierarchyInfo {
@@ -444,7 +446,14 @@ async function updateBlueprint(
       updateData.expected_checksum = expectedChecksum;
     }
 
-    const result = await api.updateBlueprint(blueprintId, updateData);
+    const result = await withSensitiveDataAck(
+      (acknowledged) =>
+        api.updateBlueprint(
+          blueprintId,
+          acknowledged ? { ...updateData, sensitive_data_acknowledged: true } : updateData
+        ),
+      confirmSensitive(options, spinner)
+    );
     spinner.succeed("Blueprint updated!");
 
     // Update local tracking with new checksum
@@ -641,7 +650,7 @@ async function createOrLinkBlueprint(
   const spinner = ora("Creating blueprint...").start();
 
   try {
-    const result = await api.createBlueprint({
+    const createData = {
       name,
       description: description || "",
       content,
@@ -652,7 +661,12 @@ async function createOrLinkBlueprint(
       hierarchy_id: hierarchyId,
       parent_id: hierarchyInfo.parentId,
       repository_path: hierarchyInfo.repositoryPath,
-    });
+    };
+    const result = await withSensitiveDataAck(
+      (acknowledged) =>
+        api.createBlueprint(acknowledged ? { ...createData, sensitive_data_acknowledged: true } : createData),
+      confirmSensitive(options, spinner)
+    );
 
     spinner.succeed("Blueprint created!");
 
@@ -779,7 +793,14 @@ async function pushHierarchy(
         if (tracked.checksum && !options.force) {
           updateData.expected_checksum = tracked.checksum;
         }
-        await api.updateBlueprint(tracked.id, updateData);
+        await withSensitiveDataAck(
+          (acknowledged) =>
+            api.updateBlueprint(
+              tracked.id,
+              acknowledged ? { ...updateData, sensitive_data_acknowledged: true } : updateData
+            ),
+          confirmSensitive(options, spinner)
+        );
         await updateChecksum(cwd, file.path, content);
 
         if (file.isRoot) rootBlueprintId = tracked.id;
@@ -791,7 +812,14 @@ async function pushHierarchy(
       // 2. Check if exists on server with same repository_path → re-link & update
       const existing = await findExistingBlueprintOnServer(file.path, hierarchyId);
       if (existing) {
-        await api.updateBlueprint(existing.id, { content });
+        await withSensitiveDataAck(
+          (acknowledged) =>
+            api.updateBlueprint(
+              existing.id,
+              acknowledged ? { content, sensitive_data_acknowledged: true } : { content }
+            ),
+          confirmSensitive(options, spinner)
+        );
         await trackBlueprint(cwd, {
           id: existing.id,
           name: existing.name,
@@ -821,7 +849,7 @@ async function pushHierarchy(
         ? rootBlueprintId
         : null;
 
-      const result = await api.createBlueprint({
+      const createData = {
         name: blueprintName,
         description: "",
         content,
@@ -831,7 +859,12 @@ async function pushHierarchy(
         hierarchy_id: hierarchyId,
         parent_id: parentId,
         repository_path: file.path,
-      });
+      };
+      const result = await withSensitiveDataAck(
+        (acknowledged) =>
+          api.createBlueprint(acknowledged ? { ...createData, sensitive_data_acknowledged: true } : createData),
+        confirmSensitive(options, spinner)
+      );
 
       if (file.isRoot) rootBlueprintId = result.blueprint.id;
 
@@ -905,6 +938,44 @@ function inferBlueprintType(filePath: string): string {
   // Fallback for explicit single-file push of unknown files
   if (filePath.endsWith(".md") || filePath.endsWith(".mdc")) return "AGENTS_MD";
   return "CUSTOM";
+}
+
+/**
+ * Ask whether to publish PUBLIC content the server flagged as possible
+ * secrets. --allow-sensitive says yes up front; with -y or no terminal the
+ * answer is no, so a script never publishes a secret by accident.
+ */
+function confirmSensitive(options: PushOptions, spinner?: Ora) {
+  return async (matches: SensitiveMatchInfo[]): Promise<boolean> => {
+    spinner?.stop();
+    console.log(chalk.yellow("\n⚠ This blueprint is public and may contain secrets:"));
+    for (const m of matches) {
+      console.log(chalk.gray(`   line ${m.line}: ${m.type}${m.snippet ? ` (${m.snippet})` : ""}`));
+    }
+
+    let publish = false;
+    if (options.allowSensitive) {
+      console.log(chalk.gray("   Publishing anyway (--allow-sensitive)."));
+      publish = true;
+    } else if (!options.yes && process.stdin.isTTY) {
+      const answer = await prompts({
+        type: "confirm",
+        name: "publish",
+        message: "Publish it anyway?",
+        initial: false,
+      });
+      publish = answer.publish === true;
+    }
+
+    if (publish) {
+      spinner?.start();
+    } else {
+      console.log(
+        chalk.gray("   Remove them, keep the blueprint private, or run again with --allow-sensitive to publish anyway.")
+      );
+    }
+    return publish;
+  };
 }
 
 function handleError(error: unknown): void {

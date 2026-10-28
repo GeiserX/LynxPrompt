@@ -4,6 +4,9 @@ export interface ApiError {
   error: string;
   message?: string;
   expired_at?: string;
+  // Set on a 422 when PUBLIC content looks like it holds secrets
+  requires_acknowledgment?: boolean;
+  sensitive_data?: { type: string; line: number; snippet?: string }[];
 }
 
 export interface Blueprint {
@@ -227,6 +230,7 @@ class ApiClient {
     hierarchy_id?: string | null;
     parent_id?: string | null;
     repository_path?: string | null;
+    sensitive_data_acknowledged?: boolean; // Publish PUBLIC content the server flagged as possible secrets
   }): Promise<{ blueprint: Blueprint }> {
     // Base64-encode content to bypass WAF false positives on markdown/code blocks
     const payload = { ...data, content: undefined, content_base64: Buffer.from(data.content).toString("base64") };
@@ -245,6 +249,7 @@ class ApiClient {
       visibility?: "PRIVATE" | "TEAM" | "PUBLIC";
       tags?: string[];
       expected_checksum?: string; // For optimistic locking
+      sensitive_data_acknowledged?: boolean; // Publish PUBLIC content the server flagged as possible secrets
     }
   ): Promise<{ blueprint: Blueprint }> {
     const apiId = id.startsWith("bp_") ? id : `bp_${id}`;
