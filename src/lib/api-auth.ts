@@ -5,7 +5,8 @@
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { validateApiToken } from "@/lib/api-tokens";
+import { validateApiToken, hasPermission } from "@/lib/api-tokens";
+import type { ApiTokenRole } from "@/generated/prisma-users/enums";
 import { prismaUsers } from "@/lib/db-users";
 
 export interface AuthenticatedUser {
@@ -20,6 +21,20 @@ export interface AuthResult {
   user: AuthenticatedUser;
   source: "session" | "token";
   tokenId?: string;
+  /** Scope of the API token; set only when source is "token" */
+  tokenRole?: ApiTokenRole;
+}
+
+type TokenAction = Parameters<typeof hasPermission>[1];
+
+/**
+ * Whether the request may perform any of the given actions.
+ * Browser sessions act as the user; API tokens only within their role.
+ */
+export function canPerform(auth: AuthResult, ...actions: TokenAction[]): boolean {
+  if (auth.source === "session") return true;
+  if (!auth.tokenRole) return false;
+  return actions.some((action) => hasPermission(auth.tokenRole!, action));
 }
 
 /**
@@ -73,6 +88,7 @@ export async function authenticateRequest(request: Request): Promise<AuthResult 
         },
         source: "token",
         tokenId: tokenResult.tokenId,
+        tokenRole: tokenResult.role,
       };
     }
   }

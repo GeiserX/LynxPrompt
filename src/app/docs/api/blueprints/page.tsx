@@ -81,18 +81,29 @@ export default function BlueprintsApiDocsPage() {
                     </td>
                     <td className="py-2 pr-4 text-muted-foreground">string</td>
                     <td className="py-2 text-muted-foreground">
-                      Filter by visibility: private, public, or unlisted
+                      Filter by visibility: private, team, or public (default: all)
                     </td>
                   </tr>
                   <tr className="border-b">
                     <td className="py-2 pr-4">
                       <code className="rounded bg-muted px-1.5 py-0.5">
-                        platform
+                        limit
                       </code>
                     </td>
-                    <td className="py-2 pr-4 text-muted-foreground">string</td>
+                    <td className="py-2 pr-4 text-muted-foreground">number</td>
                     <td className="py-2 text-muted-foreground">
-                      Filter by platform: cursor, claude, copilot, windsurf, agentsmd
+                      Page size, up to 100 (default: 50)
+                    </td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-2 pr-4">
+                      <code className="rounded bg-muted px-1.5 py-0.5">
+                        offset
+                      </code>
+                    </td>
+                    <td className="py-2 pr-4 text-muted-foreground">number</td>
+                    <td className="py-2 text-muted-foreground">
+                      Number of blueprints to skip (default: 0)
                     </td>
                   </tr>
                 </tbody>
@@ -118,13 +129,25 @@ export default function BlueprintsApiDocsPage() {
       "id": "bp_clw2m8k0x0001",
       "name": "My React Config",
       "description": "Custom rules for React projects",
-      "visibility": "private",
-      "platform": "cursor",
-      "createdAt": "2025-01-15T10:30:00.000Z",
-      "updatedAt": "2025-01-20T14:45:00.000Z"
+      "type": "AGENTS_MD",
+      "tier": "SHORT",
+      "category": "web",
+      "tags": ["react", "typescript"],
+      "visibility": "PRIVATE",
+      "downloads": 0,
+      "favorites": 0,
+      "created_at": "2025-01-15T10:30:00.000Z",
+      "updated_at": "2025-01-20T14:45:00.000Z",
+      "hierarchy_id": null,
+      "parent_id": null,
+      "repository_path": null,
+      "content_checksum": "3f2a9c1d8e7b6a50"
     }
   ],
-  "total": 1
+  "total": 1,
+  "limit": 50,
+  "offset": 0,
+  "has_more": false
 }`}</code>
               </pre>
             </div>
@@ -156,18 +179,28 @@ export default function BlueprintsApiDocsPage() {
             <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
               <pre className="text-sm text-zinc-100">
                 <code>{`{
-  "id": "bp_clw2m8k0x0001",
-  "name": "My React Config",
-  "description": "Custom rules for React projects",
-  "content": "You are an expert React developer...",
-  "visibility": "private",
-  "platform": "cursor",
-  "variables": [
-    { "name": "PROJECT_NAME", "default": "my-app" },
-    { "name": "FRAMEWORK", "default": null }
-  ],
-  "createdAt": "2025-01-15T10:30:00.000Z",
-  "updatedAt": "2025-01-20T14:45:00.000Z"
+  "blueprint": {
+    "id": "bp_clw2m8k0x0001",
+    "name": "My React Config",
+    "description": "Custom rules for React projects",
+    "content": "You are an expert React developer...",
+    "type": "AGENTS_MD",
+    "tier": "SHORT",
+    "category": "web",
+    "tags": ["react", "typescript"],
+    "visibility": "PRIVATE",
+    "variables": { "PROJECT_NAME": "my-app" },
+    "downloads": 0,
+    "favorites": 0,
+    "ai_assisted": false,
+    "showcase_url": null,
+    "created_at": "2025-01-15T10:30:00.000Z",
+    "updated_at": "2025-01-20T14:45:00.000Z",
+    "hierarchy_id": null,
+    "parent_id": null,
+    "repository_path": null,
+    "content_checksum": "3f2a9c1d8e7b6a50"
+  }
 }`}</code>
               </pre>
             </div>
@@ -190,12 +223,17 @@ export default function BlueprintsApiDocsPage() {
             <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
               <pre className="text-sm text-zinc-100">
                 <code>{`{
-  "name": "My New Config",
+  "name": "My New Config",              // required, 3+ characters
+  "content": "You are an expert developer...", // required, 10+ characters
   "description": "Description of the blueprint",
-  "content": "You are an expert developer...",
-  "visibility": "private",  // private, public, or unlisted
-  "platform": "cursor"      // cursor, claude, copilot, windsurf, agentsmd
-}`}</code>
+  "type": "AGENTS_MD",                  // default AGENTS_MD
+  "category": "other",                  // default other
+  "tags": ["react"],                    // up to 10
+  "visibility": "PRIVATE"               // PRIVATE (default), TEAM or PUBLIC
+}
+
+// content_base64 can replace content when a proxy or WAF
+// blocks code in the request body.`}</code>
               </pre>
             </div>
           </div>
@@ -209,8 +247,7 @@ export default function BlueprintsApiDocsPage() {
      -d '{
        "name": "My New Config",
        "content": "You are an expert developer...",
-       "visibility": "private",
-       "platform": "cursor"
+       "visibility": "PRIVATE"
      }'`}</code>
               </pre>
             </div>
@@ -219,12 +256,25 @@ export default function BlueprintsApiDocsPage() {
             <h4 className="mb-2 font-semibold">Response</h4>
             <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
               <pre className="text-sm text-zinc-100">
-                <code>{`{
-  "id": "bp_clw2m8k0x0002",
-  "name": "My New Config",
-  "visibility": "private",
-  "platform": "cursor",
-  "createdAt": "2025-01-21T09:00:00.000Z"
+                <code>{`// 201 Created
+{
+  "success": true,
+  "blueprint": {
+    "id": "bp_clw2m8k0x0002",
+    "name": "My New Config",
+    "description": null,
+    "type": "AGENTS_MD",
+    "tier": "SHORT",
+    "category": "other",
+    "tags": [],
+    "visibility": "PRIVATE",
+    "created_at": "2025-01-21T09:00:00.000Z",
+    "updated_at": "2025-01-21T09:00:00.000Z",
+    "hierarchy_id": null,
+    "parent_id": null,
+    "repository_path": null,
+    "content_checksum": "9b1e4d7c2a3f8e60"
+  }
 }`}</code>
               </pre>
             </div>
@@ -241,6 +291,9 @@ export default function BlueprintsApiDocsPage() {
           </div>
           <p className="text-muted-foreground">
             Update an existing blueprint. Only include fields you want to change.
+            Send <code className="rounded bg-muted px-1.5 py-0.5">expected_checksum</code> (the{" "}
+            <code className="rounded bg-muted px-1.5 py-0.5">content_checksum</code> you last read)
+            to refuse the update with 409 Conflict if someone changed the blueprint in between.
           </p>
           <div>
             <h4 className="mb-2 font-semibold">Example Request</h4>
@@ -260,11 +313,17 @@ export default function BlueprintsApiDocsPage() {
             <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
               <pre className="text-sm text-zinc-100">
                 <code>{`{
-  "id": "bp_clw2m8k0x0001",
-  "name": "My React Config",
-  "visibility": "private",
-  "platform": "cursor",
-  "updatedAt": "2025-01-21T10:00:00.000Z"
+  "success": true,
+  "blueprint": {
+    "id": "bp_clw2m8k0x0001",
+    "name": "My React Config",
+    "content": "Updated content with new rules...",
+    "visibility": "PRIVATE",
+    "updated_at": "2025-01-21T10:00:00.000Z",
+    "content_checksum": "c4d2e9a1b7f3086e"
+    // ...plus description, type, tier, category, tags, created_at
+    // and the hierarchy fields
+  }
 }`}</code>
               </pre>
             </div>
@@ -295,7 +354,7 @@ export default function BlueprintsApiDocsPage() {
             <h4 className="mb-2 font-semibold">Response</h4>
             <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
               <pre className="text-sm text-zinc-100">
-                <code>{`{ "success": true }`}</code>
+                <code>{`{ "success": true, "message": "Blueprint \"My React Config\" deleted successfully" }`}</code>
               </pre>
             </div>
           </div>

@@ -24,7 +24,7 @@ LynxPrompt is a self-hosted web app that turns one set of AI coding rules into t
 - Each blueprint is private, shared with a team or public; teams get their own page, and federation shares public blueprints between instances that join.
 - Hierarchical `AGENTS.md` for monorepos, managed from the dashboard, the CLI and the API.
 - The `lynxp` CLI (19 commands: `wizard`, `check`, `analyze`, `convert`, `diff`, `pull`, `push`, `search` and more) and the VS Code extension work against any instance.
-- Sign in with a magic link, passkeys, GitHub or Google OAuth, or SAML, OIDC and LDAP SSO; each is one environment variable.
+- Sign in with a magic link, passkeys, GitHub or Google OAuth, or OIDC SSO; each is one environment variable.
 - Optional AI editing with your own Anthropic API key; off by default, everything else works without it.
 - Docker Compose or Helm, PostgreSQL included, migrations on start, every feature an environment variable.
 

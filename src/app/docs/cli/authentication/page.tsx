@@ -207,19 +207,19 @@ lynxprompt pull bp_abc123 --yes`}</code>
               <tr className="border-b">
                 <td className="py-3 pr-4">macOS</td>
                 <td className="py-3 pr-4">
-                  <code className="rounded bg-muted px-2 py-1 text-sm">~/Library/Application Support/lynxprompt/config.json</code>
+                  <code className="rounded bg-muted px-2 py-1 text-sm">~/Library/Preferences/lynxprompt-nodejs/config.json</code>
                 </td>
               </tr>
               <tr className="border-b">
                 <td className="py-3 pr-4">Linux</td>
                 <td className="py-3 pr-4">
-                  <code className="rounded bg-muted px-2 py-1 text-sm">~/.config/lynxprompt/config.json</code>
+                  <code className="rounded bg-muted px-2 py-1 text-sm">~/.config/lynxprompt-nodejs/config.json</code>
                 </td>
               </tr>
               <tr className="border-b">
                 <td className="py-3 pr-4">Windows</td>
                 <td className="py-3 pr-4">
-                  <code className="rounded bg-muted px-2 py-1 text-sm">%APPDATA%\lynxprompt\config.json</code>
+                  <code className="rounded bg-muted px-2 py-1 text-sm">%APPDATA%\lynxprompt-nodejs\Config\config.json</code>
                 </td>
               </tr>
             </tbody>
@@ -232,8 +232,10 @@ lynxprompt pull bp_abc123 --yes`}</code>
             <div>
               <p className="font-medium">Security</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                The config file is stored with user-only permissions. The token has a long
-                expiry (1 year) and can be revoked anytime from your{" "}
+                The config file is plain JSON written with your user&apos;s default file
+                permissions, so treat it like a password. <code className="rounded bg-muted px-1 py-0.5 text-xs">lynxp config path</code>{" "}
+                prints where it is. A token from <code className="rounded bg-muted px-1 py-0.5 text-xs">lynxp login</code>{" "}
+                expires after 90 days and can be revoked anytime from your{" "}
                 <Link href="/settings" className="text-primary hover:underline">
                   Settings page
                 </Link>.

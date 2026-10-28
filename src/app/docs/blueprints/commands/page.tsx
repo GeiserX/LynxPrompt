@@ -92,7 +92,7 @@ export default function CommandsDocsPage() {
               </tr>
               <tr>
                 <td className="py-3 pr-4 font-medium">GitHub Copilot</td>
-                <td className="py-3 pr-4"><code className="rounded bg-muted px-1.5 py-0.5">.copilot/prompts/*.md</code></td>
+                <td className="py-3 pr-4"><code className="rounded bg-muted px-1.5 py-0.5">.github/prompts/*.prompt.md</code></td>
                 <td className="py-3 text-muted-foreground">/prompt-name</td>
               </tr>
               <tr>

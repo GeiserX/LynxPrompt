@@ -31,11 +31,12 @@ export async function POST(request: NextRequest) {
 
     const domain = emailParts[1].toLowerCase();
 
-    // Find teams with SSO enabled for this domain
-    const ssoConfig = await prismaUsers.teamSSOConfig.findFirst({
+    // Only a domain the team proved it owns routes here, and only when exactly
+    // one team holds it; anything else falls back to the regular sign-in.
+    const matches = await prismaUsers.teamSSOConfig.findMany({
       where: {
         enabled: true,
-        allowedDomains: {
+        verifiedDomains: {
           has: domain,
         },
       },
@@ -48,14 +49,17 @@ export async function POST(request: NextRequest) {
           },
         },
       },
+      take: 2,
     });
 
-    if (!ssoConfig) {
+    if (matches.length !== 1) {
       return NextResponse.json({
         hasSSO: false,
         message: "No SSO configured for this domain. Use regular sign-in methods.",
       });
     }
+
+    const ssoConfig = matches[0];
 
     return NextResponse.json({
       hasSSO: true,
@@ -72,10 +76,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-
-
-
-
-
-

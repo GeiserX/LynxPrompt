@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ENABLE_FEDERATION } from "@/lib/feature-flags";
 import { prismaUsers } from "@/lib/db-users";
+import { parseLimit, parseOffset } from "@/lib/pagination";
 
 export async function GET(request: NextRequest) {
   if (!ENABLE_FEDERATION) {
@@ -8,8 +9,8 @@ export async function GET(request: NextRequest) {
   }
 
   const { searchParams } = new URL(request.url);
-  const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 100);
-  const offset = parseInt(searchParams.get("offset") || "0");
+  const limit = parseLimit(searchParams, 50);
+  const offset = parseOffset(searchParams);
 
   const where = { OR: [{ visibility: "PUBLIC" as const }, { isPublic: true }] };
 

@@ -3,6 +3,8 @@ import { prismaUsers } from "@/lib/db-users";
 import { ENABLE_SSO } from "@/lib/feature-flags";
 import { decryptSSOConfig } from "@/lib/sso-encryption";
 import { createHmac } from "crypto";
+import { secureCookiesEnabled } from "@/lib/auth-cookies";
+import { resolveOidcEndpoints } from "@/lib/sso-oidc";
 
 /**
  * POST /api/auth/sso/initiate - Initiate SSO authentication
@@ -79,27 +81,25 @@ export async function POST(request: NextRequest) {
     // Handle based on SSO provider
     switch (ssoConfig.provider) {
       case "SAML": {
-        // TODO: Implement SAML flow
-        // 1. Generate AuthnRequest XML
-        // 2. Sign the request if required
-        // 3. Encode and build redirect URL
-        // 4. Return redirectUrl to IdP SSO endpoint
-        
-        // For now, return a placeholder error
+        // TODO: Implement SAML flow (AuthnRequest, signing, redirect to the IdP)
         return NextResponse.json(
-          { 
-            error: "SAML SSO authentication is being configured. Please contact your administrator.",
-            provider: "SAML",
-            hint: "SAML integration requires server-side configuration. Check back soon.",
-          },
+          { error: "SAML sign-in is not supported yet.", provider: "SAML" },
           { status: 501 }
         );
       }
 
       case "OIDC": {
-        const issuer = config.issuer as string;
         const clientId = config.clientId as string;
-        const authUrl = (config.authorizationUrl as string) || `${issuer}/authorize`;
+        let authUrl: URL;
+        try {
+          // https only, so a stored javascript: URL can never reach the browser
+          authUrl = new URL((await resolveOidcEndpoints(config)).authorizationUrl);
+        } catch {
+          return NextResponse.json(
+            { error: "Could not reach the team's identity provider" },
+            { status: 502 }
+          );
+        }
         const scopes = (config.scopes as string[]) || ["openid", "profile", "email"];
 
         // Generate state and nonce for CSRF protection
@@ -131,15 +131,17 @@ export async function POST(request: NextRequest) {
         }
         const stateHash = createHmac("sha256", secret).update(statePayload).digest("hex");
 
+        params.forEach((value, key) => authUrl.searchParams.set(key, value));
+
         const response = NextResponse.json({
-          redirectUrl: `${authUrl}?${params.toString()}`,
+          redirectUrl: authUrl.toString(),
           provider: "OIDC",
         });
 
         // Set signed state cookie (expires in 10 minutes)
         response.cookies.set("sso_state", stateHash, {
           httpOnly: true,
-          secure: true,
+          secure: secureCookiesEnabled(),
           sameSite: "lax",
           path: "/api/auth/sso/callback",
           maxAge: 600,
@@ -149,16 +151,11 @@ export async function POST(request: NextRequest) {
       }
 
       case "LDAP": {
-        // LDAP requires username/password - return form requirement
-        // The actual authentication happens on form submission
-        return NextResponse.json({
-          provider: "LDAP",
-          requiresCredentials: true,
-          message: "Please enter your LDAP credentials",
-          formAction: `/api/auth/sso/ldap/authenticate`,
-          teamSlug,
-          callbackUrl,
-        });
+        // TODO: Implement LDAP bind and a credentials form for it
+        return NextResponse.json(
+          { error: "LDAP sign-in is not supported yet.", provider: "LDAP" },
+          { status: 501 }
+        );
       }
 
       default:
@@ -175,10 +172,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-
-
-
-
-
-

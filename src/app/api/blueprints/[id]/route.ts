@@ -6,6 +6,7 @@ import { prismaUsers } from "@/lib/db-users";
 import { detectSensitiveData } from "@/lib/sensitive-data";
 import { normalizeBlueprintType } from "@/lib/blueprint-types";
 import { contentChecksum } from "@/lib/content-checksum";
+import { sanitizeRepositoryPath } from "@/lib/repository-path";
 
 // GET /api/blueprints/[id] - Get blueprint details
 export async function GET(
@@ -149,6 +150,7 @@ export async function PUT(
       tags, 
       isPublic, 
       showcaseUrl,
+      repositoryPath, // Where `lynxp pull` writes the file; the wizard sends it on overwrite
       sensitiveDataAcknowledged = false, // User acknowledged sensitive data warning
       publishNewVersion = false, // If true, create a new version
       changelog, // Optional changelog for new version
@@ -186,6 +188,10 @@ export async function PUT(
 
     if (type !== undefined) {
       updateData.type = normalizeBlueprintType(type);
+    }
+
+    if (repositoryPath !== undefined) {
+      updateData.repositoryPath = sanitizeRepositoryPath(repositoryPath);
     }
 
     if (category !== undefined) {
@@ -281,17 +287,11 @@ export async function PUT(
       }
     }
 
-    // Update the blueprint
-    const updatedBlueprint = await prismaUsers.userTemplate.update({
-      where: { id: realId },
-      data: updateData,
-    });
-
-    // Create new version record if content changed and publishNewVersion is true
+    // Create the new version record in the same write as the blueprint update,
+    // so currentVersion never points at a version row that does not exist
     if (shouldCreateVersion) {
-      await prismaUsers.userTemplateVersion.create({
-        data: {
-          templateId: realId,
+      updateData.versions = {
+        create: {
           version: newVersion,
           content: content.trim(),
           variables: undefined,
@@ -299,8 +299,14 @@ export async function PUT(
           isPublished: Boolean(updateData.isPublic ?? existingBlueprint.isPublic),
           createdBy: session.user.id,
         },
-      });
+      };
     }
+
+    // Update the blueprint
+    const updatedBlueprint = await prismaUsers.userTemplate.update({
+      where: { id: realId },
+      data: updateData,
+    });
 
     return NextResponse.json({
       success: true,

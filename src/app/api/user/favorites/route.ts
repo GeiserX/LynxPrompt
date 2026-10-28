@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { prismaApp } from "@/lib/db-app";
+import { canReadTemplate } from "@/lib/blueprint-access";
 
 // GET user's favorite templates
 export async function GET() {
@@ -95,9 +96,16 @@ export async function POST(request: Request) {
 
     const { templateId: rawTemplateId, templateType } = await request.json();
 
-    if (!rawTemplateId || !templateType) {
+    if (!rawTemplateId || typeof rawTemplateId !== "string" || !templateType) {
       return NextResponse.json(
         { error: "templateId and templateType are required" },
+        { status: 400 }
+      );
+    }
+
+    if (templateType !== "system" && templateType !== "user") {
+      return NextResponse.json(
+        { error: 'templateType must be "system" or "user"' },
         { status: 400 }
       );
     }
@@ -137,6 +145,11 @@ export async function POST(request: Request) {
 
       return NextResponse.json({ favorited: false });
     } else {
+      // Only a template that exists and the caller can read can be favorited
+      if (!(await canReadTemplate(templateType, templateId, session.user.id))) {
+        return NextResponse.json({ error: "Template not found" }, { status: 404 });
+      }
+
       // Add favorite
       await prismaUsers.templateFavorite.create({
         data: {

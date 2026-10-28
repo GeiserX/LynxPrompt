@@ -7,6 +7,7 @@ import { verifyTurnstileToken } from "@/lib/turnstile";
 import { detectSensitiveData, type SensitiveMatch } from "@/lib/sensitive-data";
 import { normalizeBlueprintType } from "@/lib/blueprint-types";
 import { contentChecksum } from "@/lib/content-checksum";
+import { parsePage } from "@/lib/pagination";
 import { 
   getEffectiveTier, 
   getMaxBlueprintCount, 
@@ -66,9 +67,7 @@ export async function GET(request: NextRequest) {
     const tier = searchParams.get("tier");
     const typeFilter = searchParams.get("type"); // "configs" or "commands"
     const tagsParam = searchParams.get("tags");
-    const page = parseInt(searchParams.get("page") || "1", 10);
-    const limit = parseInt(searchParams.get("limit") || "12", 10);
-    const skip = (page - 1) * limit;
+    const { limit, skip } = parsePage(searchParams, 12);
 
     // Build sort order
     let orderBy: Record<string, "asc" | "desc"> = {};
@@ -255,6 +254,7 @@ export async function POST(request: NextRequest) {
       sensitiveDataAcknowledged = false, // User acknowledged sensitive data warning
       // Hierarchy fields for monorepo AGENTS.md support
       hierarchyId = null, // Hierarchy ID (ha_xxx)
+      repositoryRoot = null, // Repository identifier; finds or creates the caller's hierarchy
       parentId = null, // Parent blueprint ID for nested AGENTS.md
       repositoryPath = null, // Relative path within repo (e.g., "packages/core/AGENTS.md")
     } = body;
@@ -435,7 +435,31 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create the blueprint with version 1
+    // Link to a hierarchy only the caller owns. An explicit hierarchyId must be
+    // theirs; otherwise a repositoryRoot finds or creates their hierarchy for it.
+    let validatedHierarchyId: string | null = null;
+    if (typeof hierarchyId === "string" && hierarchyId.trim()) {
+      const rawHierarchyId = hierarchyId.trim();
+      const hierarchy = await prismaUsers.hierarchy.findFirst({
+        where: {
+          id: rawHierarchyId.startsWith("ha_") ? rawHierarchyId.slice(3) : rawHierarchyId,
+          userId: session.user.id,
+        },
+        select: { id: true },
+      });
+      validatedHierarchyId = hierarchy?.id ?? null;
+    } else if (typeof repositoryRoot === "string" && repositoryRoot.trim()) {
+      const root = repositoryRoot.trim();
+      const hierarchy = await prismaUsers.hierarchy.upsert({
+        where: { userId_repositoryRoot: { userId: session.user.id, repositoryRoot: root } },
+        update: {},
+        create: { userId: session.user.id, repositoryRoot: root, name: root },
+        select: { id: true },
+      });
+      validatedHierarchyId = hierarchy.id;
+    }
+
+    // Create the blueprint and its version 1 in one write
     const blueprint = await prismaUsers.userTemplate.create({
       data: {
         userId: session.user.id,
@@ -456,23 +480,20 @@ export async function POST(request: NextRequest) {
         currentVersion: 1,
         publishedVersion: effectiveIsPublic ? 1 : null, // Set publishedVersion if public
         // Hierarchy fields
-        hierarchyId: hierarchyId?.trim() || null,
+        hierarchyId: validatedHierarchyId,
         parentId: validatedParentId,
         repositoryPath: sanitizeRepositoryPath(repositoryPath) || null,
         contentChecksum: contentChecksum(content),
-      },
-    });
-
-    // Create the initial version record
-    await prismaUsers.userTemplateVersion.create({
-      data: {
-        templateId: blueprint.id,
-        version: 1,
-        content: content.trim(),
-        variables: undefined,
-        changelog: "Initial version",
-        isPublished: effectiveIsPublic,
-        createdBy: session.user.id,
+        versions: {
+          create: {
+            version: 1,
+            content: content.trim(),
+            variables: undefined,
+            changelog: "Initial version",
+            isPublished: effectiveIsPublic,
+            createdBy: session.user.id,
+          },
+        },
       },
     });
 

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { authenticateRequest } from "@/lib/api-auth";
+import { authenticateRequest, canPerform } from "@/lib/api-auth";
 import { prismaUsers } from "@/lib/db-users";
 import { ENABLE_AI, AI_MODEL } from "@/lib/feature-flags";
 import Anthropic from "@anthropic-ai/sdk";
@@ -69,6 +69,13 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "Authentication required" },
         { status: 401 }
+      );
+    }
+
+    if (!canPerform(auth, "blueprints:write")) {
+      return NextResponse.json(
+        { error: "This API token cannot edit blueprints" },
+        { status: 403 }
       );
     }
 
