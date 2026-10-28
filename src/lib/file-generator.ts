@@ -248,7 +248,7 @@ interface UserProfile {
 }
 
 // Platform file names - imported from central definition
-import { PLATFORM_FILES, getPlatform } from "./platforms";
+import { PLATFORM_FILES, getPlatform, AGENTS_MD_POINTER, agentsMdPointerFiles } from "./platforms";
 import {
   ANALYTICS_LABELS,
   AUTH_PROVIDER_LABELS,
@@ -4072,6 +4072,49 @@ export function generateAllFiles(
   }
 
   return files;
+}
+
+/**
+ * The rule files of several tools from one wizard config, for a .zip
+ * download. Tools that read the same file (AGENTS.md) get it once. With
+ * `pointers`, CLAUDE.md and GEMINI.md next to AGENTS.md just import it.
+ */
+export function generatePlatformFiles(
+  config: WizardConfig,
+  user: UserProfile,
+  platforms: string[],
+  { pointers = true }: { pointers?: boolean } = {}
+): GeneratedFile[] {
+  const files: GeneratedFile[] = [];
+  for (const platform of platforms) {
+    for (const file of generateAllFiles({ ...config, platform }, user)) {
+      if (!files.some((f) => f.fileName === file.fileName)) files.push(file);
+    }
+  }
+  if (!pointers) return files;
+  const pointerFiles = agentsMdPointerFiles(
+    platforms.filter((p) => PLATFORM_FILES[p]).map((platform) => ({ platform, file: PLATFORM_FILES[platform] }))
+  );
+  return files.map((f) => (pointerFiles.has(f.fileName) ? { ...f, content: AGENTS_MD_POINTER } : f));
+}
+
+/** A .zip of the files at their full paths, so it unpacks into the project as is. */
+export async function zipFiles(files: GeneratedFile[]): Promise<Blob> {
+  const zip = new JSZip();
+  for (const file of files) zip.file(file.fileName, file.content);
+  return zip.generateAsync({ type: "blob", mimeType: "application/zip" });
+}
+
+/** Save a blob under the given name. */
+export function downloadBlob(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 // Main function to generate single config file

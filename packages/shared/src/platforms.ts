@@ -48,6 +48,8 @@ export interface PlatformDefinition {
   blueprintType?: string;
   /** A folder the tool reads every rule file from; `lynxp push` finds any .md/.mdc file in it. */
   rulesDirectory?: string;
+  /** The tool follows `@path` imports in its file, so the file can just import AGENTS.md. */
+  importsFiles?: boolean;
 }
 
 /**
@@ -119,6 +121,7 @@ export const PLATFORMS: PlatformDefinition[] = [
     name: "Claude Code",
     file: "CLAUDE.md",
     blueprintType: "CLAUDE_MD",
+    importsFiles: true,
     icon: "🧠",
     gradient: "from-orange-500 to-amber-500",
     note: "Anthropic's agentic coding tool",
@@ -415,6 +418,7 @@ export const PLATFORMS: PlatformDefinition[] = [
     name: "Gemini CLI",
     file: "GEMINI.md",
     blueprintType: "GEMINI_MD",
+    importsFiles: true,
     icon: "💎",
     gradient: "from-blue-500 to-cyan-500",
     note: "Google's Gemini in terminal",
@@ -771,6 +775,26 @@ export const BLUEPRINT_TYPE_ALIASES: Record<string, string> = {
  */
 export function platformForBlueprintType(type: string): string | undefined {
   return PLATFORMS.find((p) => p.blueprintType === type)?.id ?? BLUEPRINT_TYPE_ALIASES[type];
+}
+
+/** A rules file that holds no rules of its own and imports AGENTS.md. */
+export const AGENTS_MD_POINTER = "@AGENTS.md\n";
+
+/**
+ * Of the files generated together, the ones that can be AGENTS_MD_POINTER
+ * instead of a second copy of the rules: AGENTS.md is generated with them, and
+ * every tool reading the file follows @path imports (Claude Code, Gemini CLI).
+ * Antigravity also reads GEMINI.md, so picking it keeps GEMINI.md a full copy.
+ */
+export function agentsMdPointerFiles(targets: { platform: string; file: string }[]): Set<string> {
+  const pointers = new Set<string>();
+  if (!targets.some((t) => t.file === "AGENTS.md")) return pointers;
+  for (const { file } of targets) {
+    if (file === "AGENTS.md") continue;
+    const readers = targets.filter((t) => t.file === file);
+    if (readers.every((t) => getPlatform(t.platform)?.importsFiles)) pointers.add(file);
+  }
+  return pointers;
 }
 
 /**

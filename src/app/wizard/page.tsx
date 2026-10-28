@@ -44,6 +44,9 @@ import {
   generateConfigFiles,
   downloadConfigFile,
   generateAllFiles,
+  generatePlatformFiles,
+  zipFiles,
+  downloadBlob,
   type GeneratedFile,
 } from "@/lib/file-generator";
 import {
@@ -599,6 +602,10 @@ function WizardPageContent() {
   const [variableValues, setVariableValues] = useState<Record<string, string>>({});
   const { appUrl } = useFeatureFlags();
   const [showOverwriteModal, setShowOverwriteModal] = useState(false);
+  // .zip download of several tools' files
+  const [showZipModal, setShowZipModal] = useState(false);
+  const [zipPlatforms, setZipPlatforms] = useState<string[]>([]);
+  const [zipPointers, setZipPointers] = useState(true);
   const [existingBlueprintId, setExistingBlueprintId] = useState<string | null>(null);
   const [isSavingBlueprint, setIsSavingBlueprint] = useState(false);
   const [savedBlueprintId, setSavedBlueprintId] = useState<string | null>(null);
@@ -1235,6 +1242,32 @@ function WizardPageContent() {
     await handleDownload();
   };
 
+  const openZipModal = () => {
+    setZipPlatforms(Array.from(new Set([config.platform || "universal", "universal"])));
+    setShowZipModal(true);
+  };
+
+  // Several tools' files in one .zip at their full paths. No Cloud Sync: that
+  // links one file to one blueprint, so it stays on the single-file download.
+  const handleZipDownload = async () => {
+    const userProfile = session?.user ? {
+      displayName: session.user.displayName,
+      name: session.user.name,
+      persona: session.user.persona,
+      skillLevel: session.user.skillLevel,
+    } : {
+      displayName: "Developer",
+      name: "Guest",
+      persona: "fullstack",
+      skillLevel: "intermediate",
+    };
+    const files = generatePlatformFiles(buildGeneratorConfig(config), userProfile, zipPlatforms, { pointers: zipPointers })
+      .map((file) => ({ ...file, content: replaceVariablesInContent(file.content) }));
+    const slug = (config.projectName || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    downloadBlob(await zipFiles(files), `${slug || "ai-config"}-ai-rules.zip`);
+    setShowZipModal(false);
+  };
+
   // Handle overwrite confirmation
   const handleOverwriteConfirm = async (overwrite: boolean) => {
     setShowOverwriteModal(false);
@@ -1593,6 +1626,60 @@ function WizardPageContent() {
               </Button>
               <Button onClick={() => handleOverwriteConfirm(true)}>
                 Yes, Overwrite
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Several tools as a .zip */}
+      {showZipModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="relative mx-4 w-full max-w-lg rounded-2xl bg-background p-6 shadow-2xl">
+            <button
+              onClick={() => setShowZipModal(false)}
+              className="absolute right-4 top-4 text-muted-foreground hover:text-foreground"
+              aria-label="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <h2 className="text-xl font-bold">Download for several tools</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              One .zip with each tool&apos;s file at its path in the repository. Unzip it at the project root.
+              Cloud Sync is not included; use the single-file download for that.
+            </p>
+            <div className="mt-4 grid max-h-64 grid-cols-2 gap-1 overflow-y-auto rounded-lg border p-2 text-sm">
+              {PLATFORMS.filter((p) => !p.isCommand).map((p) => (
+                <label key={p.id} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 hover:bg-muted">
+                  <input
+                    type="checkbox"
+                    checked={zipPlatforms.includes(p.id)}
+                    onChange={(e) =>
+                      setZipPlatforms(e.target.checked ? [...zipPlatforms, p.id] : zipPlatforms.filter((id) => id !== p.id))
+                    }
+                  />
+                  <span>{p.icon} {p.name}</span>
+                </label>
+              ))}
+            </div>
+            <label className="mt-4 flex cursor-pointer items-start gap-2 text-sm">
+              <input type="checkbox" className="mt-1" checked={zipPointers} onChange={(e) => setZipPointers(e.target.checked)} />
+              <span>
+                CLAUDE.md and GEMINI.md import AGENTS.md (<code>@AGENTS.md</code>) instead of repeating it, so there is one rule set to edit.
+              </span>
+            </label>
+            {variablesWithoutDefaults.some((v) => !variableValues[v]) && (
+              <p className="mt-3 text-sm text-amber-700 dark:text-amber-300">
+                Some variables have no value or default; they stay as [[VARIABLE]] in the files.
+              </p>
+            )}
+            <div className="mt-6 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowZipModal(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleZipDownload} disabled={zipPlatforms.length === 0}>
+                <Download className="mr-2 h-4 w-4" />
+                Download .zip ({zipPlatforms.length})
               </Button>
             </div>
           </div>
@@ -2147,6 +2234,15 @@ function WizardPageContent() {
                     >
                       <Share2 className="mr-2 h-4 w-4" />
                       Share/Save Blueprint
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={openZipModal}
+                      disabled={isDownloading}
+                      title="Download the files of several AI tools in one .zip"
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      Several Tools (.zip)
                     </Button>
                     <Button
                       className="bg-gradient-to-r from-purple-600 to-pink-600"
