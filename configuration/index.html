@@ -626,6 +626,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#client-address" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Client address
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#features" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -824,6 +835,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#client-address" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Client address
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#features" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1011,7 +1033,12 @@ schema's tables.</p>
 <tr>
 <td><code>ENABLE_SSO</code></td>
 <td><code>false</code></td>
-<td>OpenID Connect sign-in, configured per team in the UI (SAML and LDAP are not supported yet). A team's IdP signs in only addresses on a domain the team verified with a TXT record at <code>_lynxprompt-sso.&lt;domain&gt;</code>.</td>
+<td>OpenID Connect sign-in, configured per team in the UI (SAML and LDAP are not supported yet). A team's IdP signs in only addresses on a domain the team verified with a TXT record at <code>_lynxprompt-sso.&lt;domain&gt;</code>. Needs <code>SSO_ENCRYPTION_KEY</code>.</td>
+</tr>
+<tr>
+<td><code>SSO_ENCRYPTION_KEY</code></td>
+<td>empty</td>
+<td>64 hex characters (32 bytes, <code>openssl rand -hex 32</code>). Encrypts the SSO client secrets at rest; without it a team cannot save an SSO configuration. Keep it: changing it makes the stored secrets unreadable.</td>
 </tr>
 <tr>
 <td><code>SSO_ALLOW_PRIVATE_IDP</code></td>
@@ -1027,6 +1054,24 @@ schema's tables.</p>
 <td><code>ENABLE_TURNSTILE</code></td>
 <td><code>false</code></td>
 <td>Cloudflare Turnstile on the sign-in forms.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="client-address">Client address<a class="headerlink" href="#client-address" title="Permanent link">&para;</a></h2>
+<p>Rate limits and download counts key on the client's address, so the app needs to know which header your proxy writes.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TRUSTED_PROXY</code></td>
+<td><code>1</code></td>
+<td>How many reverse proxies sit in front of the app. The app reads the X-Forwarded-For entry that many places from the right, the one your outermost proxy wrote; anything to its left came from the client. <code>cloudflare</code> reads CF-Connecting-IP instead; set it only when the app cannot be reached except through Cloudflare. With no proxy at all, a client can choose its own X-Forwarded-For, so put the app behind one.</td>
 </tr>
 </tbody>
 </table>
