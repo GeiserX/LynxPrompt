@@ -161,6 +161,14 @@ export default function CliCommandsPage() {
                   Compare all tracked files with cloud
                 </td>
               </tr>
+              <tr className="border-b">
+                <td className="py-3 pr-4">
+                  <code className="rounded bg-muted px-2 py-1 text-sm">lynxp sync</code>
+                </td>
+                <td className="py-3 pr-4 text-muted-foreground">
+                  Pull cloud changes and push local ones for all tracked files
+                </td>
+              </tr>
               {/* Config */}
               <tr className="border-b">
                 <td className="py-3 pr-4">
@@ -571,7 +579,8 @@ Options:
   -o, --output <dir>    Output directory (default: current)
   -y, --yes             Skip confirmation prompts
   --preview             Preview content without downloading
-  --no-track            Don't track for future syncs`}</code>
+  --no-track            Don't track for future syncs
+  --vars <values>       Fill [[VARIABLES]]: VAR1=value1,VAR2=value2`}</code>
           </pre>
         </div>
 
@@ -593,7 +602,10 @@ $ lynxp pull bp_abc123 --preview
 # Shows content without writing file
 
 # Without tracking
-$ lynxp pull bp_abc123 --no-track`}</code>
+$ lynxp pull bp_abc123 --no-track
+
+# Fill variables (unset ones get their [[NAME|default]])
+$ lynxp pull bp_abc123 --vars PROJECT_NAME=acme,TEAM=Platform`}</code>
             </pre>
           </div>
         </div>
@@ -742,6 +754,55 @@ $ lynxp diff AGENTS.md
 $ lynxp diff bp_newid123`}</code>
             </pre>
           </div>
+        </div>
+      </section>
+
+      {/* sync command */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-3">
+          <ArrowRightLeft className="h-5 w-5 text-primary" />
+          <h2 className="text-2xl font-bold">lynxp sync</h2>
+        </div>
+        <p className="text-muted-foreground">
+          Bring every tracked file and its cloud blueprint together. Each file is compared with the
+          version you last pulled or pushed: cloud changes are pulled, local changes are pushed, and
+          when both sides changed the cloud version is written next to your file as{" "}
+          <code className="rounded bg-muted px-1">&lt;file&gt;.remote</code> so nothing is overwritten.
+        </p>
+
+        <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+          <pre className="text-sm text-zinc-100">
+            <code>{`lynxp sync               # Sync all tracked files
+lynxp sync <file>        # Sync one tracked file
+lynxp sync --dry-run     # Show what would happen, change nothing`}</code>
+          </pre>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="font-semibold">Example</h3>
+          <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
+            <pre className="text-sm text-zinc-100">
+              <code>{`$ lynxp sync
+🐱 LynxPrompt Sync
+
+↓ AGENTS.md: updated from the cloud
+↑ CLAUDE.md: pushed local changes
+✗ .cursor/rules/project.mdc: changed both locally and in the cloud
+   Cloud version written to .cursor/rules/project.mdc.remote; .cursor/rules/project.mdc was not touched.
+   Merge what you need into .cursor/rules/project.mdc, delete .cursor/rules/project.mdc.remote, then run 'lynxp sync' again.
+
+1 pulled, 1 pushed, 0 in sync, 1 conflict`}</code>
+            </pre>
+          </div>
+        </div>
+
+        <div className="rounded-lg border bg-card p-4">
+          <ul className="text-sm text-muted-foreground space-y-1">
+            <li>Marketplace blueprints are read-only: local edits stay local and are never pushed.</li>
+            <li>A file pulled with <code className="rounded bg-muted px-1">--vars</code> gets cloud updates filled with the same values, and is not pushed back.</li>
+            <li>While <code className="rounded bg-muted px-1">&lt;file&gt;.remote</code> exists, sync and push leave that file alone.</li>
+            <li>Exits with code 1 when a file has a conflict or could not be synced.</li>
+          </ul>
         </div>
       </section>
 

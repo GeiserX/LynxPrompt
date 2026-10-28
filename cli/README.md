@@ -117,7 +117,14 @@ lynxp pull bp_abc123 --preview
 
 # Don't track for future syncs
 lynxp pull bp_abc123 --no-track
+
+# Fill [[VARIABLES]] as you download (others get their [[NAME|default]])
+lynxp pull bp_abc123 --vars PROJECT_NAME=acme,TEAM=Platform
 ```
+
+A file pulled with `--vars` stays tracked: `lynxp sync` refills cloud updates
+with the same values, and `lynxp push` refuses to send your values over the
+blueprint's variables unless you pass `--force`.
 
 ### Link / Unlink
 
@@ -145,6 +152,27 @@ lynxp diff bp_abc123
 # Compare local rules with exports
 lynxp diff --local
 ```
+
+### Sync
+
+Bring every tracked file and its cloud blueprint together in one step:
+
+```bash
+lynxp sync              # all tracked files
+lynxp sync AGENTS.md    # one file
+lynxp sync --dry-run    # show what would happen, change nothing
+```
+
+For each file, sync compares the local file and the cloud with the version
+you last pulled or pushed:
+
+- only the cloud changed: the file is updated from the cloud
+- only the file changed: your changes are pushed (marketplace blueprints are read-only, so they stay local)
+- both changed: the cloud version is written to `<file>.remote` and your file is left alone.
+  Merge what you need into the file, delete `<file>.remote`, and run `lynxp sync` again.
+  Until then sync and push leave that file alone.
+
+Sync exits with code 1 when a file has a conflict or could not be synced.
 
 ### Push (`lynxp push`)
 
