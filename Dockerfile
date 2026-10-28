@@ -71,7 +71,8 @@ FROM base AS prisma-deps
 
 WORKDIR /prisma-deps
 
-# Reduce package.json to the Prisma CLI and tsx at their locked versions, keep
+# Reduce package.json to the Prisma CLI, tsx and the pg adapter the seeds import
+# (prisma/seed-support.ts runs on every start) at their locked versions, keep
 # the overrides, and install against the full lockfile, so every package lands
 # at the version package-lock.json pins. The app's own dependencies come from
 # the standalone build, not from here.
@@ -81,7 +82,7 @@ RUN node -e ' \
   const pkg = require("./package.json"); \
   const locked = require("./package-lock.json").packages; \
   const dependencies = {}; \
-  for (const name of ["prisma", "tsx"]) dependencies[name] = locked["node_modules/" + name].version; \
+  for (const name of ["prisma", "tsx", "@prisma/adapter-pg"]) dependencies[name] = locked["node_modules/" + name].version; \
   const overrides = Object.fromEntries( \
     Object.entries(pkg.overrides || {}).filter(([, v]) => !String(v).startsWith("$"))); \
   fs.writeFileSync("package.json", JSON.stringify({ name: "prisma-cli", private: true, dependencies, overrides }));'
