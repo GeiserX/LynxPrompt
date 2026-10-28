@@ -1,6 +1,6 @@
 // The rules-file generator the web wizard and the CLI share. It runs in the
 // browser and in Node, so it imports nothing from either.
-import { adaptRulesContent, frontmatterLines, splitFrontmatter } from "./rules-format.js";
+import { adaptRulesContent, frontmatterLines, splitFrontmatter } from "./rules-format";
 
 
 interface CommandsConfig {
@@ -248,7 +248,7 @@ export interface GeneratorUser {
 }
 
 // Platform file names - imported from central definition
-import { PLATFORM_FILES, AGENTS_MD_POINTER, agentsMdPointerFiles } from "./platforms.js";
+import { PLATFORM_FILES, AGENTS_MD_POINTER, agentsMdPointerFiles } from "./platforms";
 import {
   ANALYTICS_LABELS,
   AUTH_PROVIDER_LABELS,
@@ -263,7 +263,7 @@ import {
   infrastructureSection,
   mcpServerSection,
   toolingLines,
-} from "./generator-sections.js";
+} from "./generator-sections";
 
 // Helper: normalize platforms array (supports legacy array or single string)
 function resolvePlatforms(config: GeneratorConfig): string[] {
