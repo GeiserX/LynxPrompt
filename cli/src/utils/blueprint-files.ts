@@ -3,7 +3,17 @@
  */
 
 import path from "path";
-import { PLATFORMS, COMMANDS, platformForBlueprintType, getCommandTemplateType } from "../../../packages/shared/src/platforms.js";
+import {
+  PLATFORMS,
+  COMMANDS,
+  platformForBlueprintType,
+  getCommandTemplateType,
+  SKILL_BLUEPRINT_TYPE,
+  SKILL_DIRECTORIES,
+  skillFolder,
+  MCP_BLUEPRINT_TYPE,
+  MCP_CONFIGS,
+} from "../../../packages/shared/src/platforms.js";
 import { PLATFORM_FILES } from "./generator.js";
 
 const FALLBACK_FILE = "ai-config.md";
@@ -18,8 +28,15 @@ function slugify(name: string): string {
  * or hierarchy blueprint), otherwise the file the shared platform table gives its
  * type, the same file `lynxp wizard` generates and the web download names.
  */
-export function blueprintFilename(bp: { type: string; name?: string; repository_path?: string | null }): string {
+export function blueprintFilename(bp: {
+  type: string;
+  name?: string;
+  repository_path?: string | null;
+  content?: string;
+}): string {
   if (bp.repository_path) return bp.repository_path;
+  if (bp.type === SKILL_BLUEPRINT_TYPE) return `${SKILL_DIRECTORIES[0]}/${skillFolder(bp)}/SKILL.md`;
+  if (bp.type === MCP_BLUEPRINT_TYPE) return MCP_CONFIGS[0].file;
   const platform = platformForBlueprintType(bp.type);
   if (platform && PLATFORM_FILES[platform]) return PLATFORM_FILES[platform];
   // Command types live in a directory, one file per command
@@ -70,6 +87,12 @@ const atPath = (relativePath: string, file: string) => {
   const p = normPath(relativePath);
   return p === file || p.endsWith(`/${file}`);
 };
+/** <dir>/<skill name>/SKILL.md, with <dir> at the root or in a subfolder. */
+const inSkillFolder = (relativePath: string, dir: string) => {
+  const parts = normPath(relativePath).split("/");
+  const n = parts.length;
+  return n >= 4 && parts[n - 1] === "skill.md" && parts.slice(n - 4, n - 2).join("/") === dir;
+};
 const inFolder = (relativePath: string, folder: string) => {
   const p = normPath(relativePath);
   return p.startsWith(folder) || p.includes(`/${folder}`);
@@ -80,6 +103,18 @@ const inFolder = (relativePath: string, folder: string) => {
  * shared platform table plus the paths older CLI versions wrote.
  */
 const CONFIG_PATTERNS: ConfigPattern[] = [
+  // Agent Skills: <tool>/skills/<skill name>/SKILL.md
+  ...SKILL_DIRECTORIES.map((dir) => ({
+    match: (p: string) => inSkillFolder(p, dir),
+    type: SKILL_BLUEPRINT_TYPE,
+    label: "Agent Skill",
+  })),
+  // MCP server configs
+  ...MCP_CONFIGS.map((c) => ({
+    match: (p: string) => atPath(p, c.file),
+    type: MCP_BLUEPRINT_TYPE,
+    label: `MCP Servers (${c.name})`,
+  })),
   // Commands: one file per command in the tool's folder
   ...COMMANDS.map((c) => ({
     match: (p: string) => inFolder(p, `${c.directory}/`) && p.endsWith(c.extension),

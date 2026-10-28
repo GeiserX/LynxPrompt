@@ -6,6 +6,7 @@ import { prismaUsers } from "@/lib/db-users";
 import { TemplateType } from "@/generated/prisma-users/enums";
 import { detectSensitiveData, type SensitiveMatch } from "@/lib/sensitive-data";
 import { checkBlueprintLineCount } from "@/lib/subscription";
+import { MCP_BLUEPRINT_TYPE } from "@/lib/platforms";
 
 export type TeamResolution =
   | { ok: true; teamId: string }
@@ -118,11 +119,13 @@ export type ContentCheck =
 /**
  * Content rules shared by v1 create and update: the line cap for every
  * blueprint, and the sensitive-data check for anything that will be public.
+ * MCP server configs are checked at every visibility: they are where API keys
+ * usually sit, and a team or private copy still sends them to the server.
  * The sensitive-data check can be confirmed with sensitive_data_acknowledged.
  */
 export function checkBlueprintContent(
   content: string,
-  options: { willBePublic: boolean; sensitiveDataAcknowledged: boolean }
+  options: { willBePublic: boolean; sensitiveDataAcknowledged: boolean; type?: string | null }
 ): ContentCheck {
   const lineCheck = checkBlueprintLineCount(content);
   if (!lineCheck.valid) {
@@ -135,16 +138,20 @@ export function checkBlueprintContent(
     };
   }
 
-  if (options.willBePublic && !options.sensitiveDataAcknowledged) {
+  const isMcpConfig = options.type === MCP_BLUEPRINT_TYPE;
+  if ((options.willBePublic || isMcpConfig) && !options.sensitiveDataAcknowledged) {
     const matches = detectSensitiveData(content);
     if (matches.length > 0) {
       const found = [...new Set(matches.map((m) => `${m.type} (line ${m.line})`))].join(", ");
+      const advice = isMcpConfig
+        ? "Remove them (reference an environment variable instead), or confirm with sensitive_data_acknowledged."
+        : "Remove them, keep the blueprint private, or confirm with sensitive_data_acknowledged.";
       return {
         ok: false,
         status: 422,
         body: {
           error: "Sensitive data detected",
-          message: `Public blueprint not saved: found ${matches.length} possible secret(s): ${found}. Remove them, keep the blueprint private, or confirm with sensitive_data_acknowledged.`,
+          message: `${options.willBePublic ? "Public blueprint" : "MCP config"} not saved: found ${matches.length} possible secret(s): ${found}. ${advice}`,
           requires_acknowledgment: true,
           sensitive_data: matches,
         },

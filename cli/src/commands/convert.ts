@@ -19,7 +19,8 @@ import {
   sourceFilePlatform,
 } from "../utils/convert-format.js";
 import { PLATFORM_FILES } from "../utils/generator.js";
-import { COMMANDS } from "../../../packages/shared/src/platforms.js";
+import { COMMANDS, MCP_CONFIGS, convertMcpConfig } from "../../../packages/shared/src/platforms.js";
+import { matchConfigFile } from "../utils/blueprint-files.js";
 
 interface ConvertOptions {
   output?: string;
@@ -116,6 +117,18 @@ export async function convertCommand(
   console.log();
 
   const cwd = process.cwd();
+
+  // MCP server configs convert to each other, never to or from a rules file
+  const mcpTarget = MCP_CONFIGS.find((c) => c.id === target.toLowerCase());
+  const mcpSource = source !== undefined && matchConfigFile(source)?.type === "MCP_CONFIG";
+  if (mcpTarget || mcpSource) {
+    if (!mcpTarget) {
+      console.log(chalk.red(`  ✗ An MCP config converts only to another tool's MCP config: ${MCP_CONFIGS.map((c) => c.id).join(", ")}`));
+      process.exit(1);
+    }
+    await convertMcp(cwd, source, mcpTarget, options);
+    return;
+  }
   
   // Find source file
   let sourcePath: string;
@@ -165,6 +178,9 @@ export async function convertCommand(
     for (const [key, name] of Object.entries(PLATFORM_NAMES)) {
       if (isStructuredPlatform(key)) continue;
       console.log(chalk.gray(`    • ${key.padEnd(15)} → ${name}`));
+    }
+    for (const c of MCP_CONFIGS) {
+      console.log(chalk.gray(`    • ${c.id.padEnd(15)} → MCP servers for ${c.name} (${c.file})`));
     }
     process.exit(1);
   }
@@ -244,11 +260,50 @@ export async function convertCommand(
   }
 }
 
+/**
+ * Write the servers of one tool's MCP config in another tool's file. Without a
+ * source, the first MCP config found in the project (other than the target) is used.
+ */
+async function convertMcp(
+  cwd: string,
+  source: string | undefined,
+  target: (typeof MCP_CONFIGS)[number],
+  options: ConvertOptions
+): Promise<void> {
+  let sourceFile = source;
+  if (sourceFile === undefined) {
+    for (const c of MCP_CONFIGS) {
+      if (c.id !== target.id && (await access(resolve(cwd, c.file)).then(() => true, () => false))) {
+        sourceFile = c.file;
+        break;
+      }
+    }
+  }
+  if (sourceFile === undefined) {
+    console.log(chalk.red("  ✗ No MCP config found. Looked for:"));
+    for (const c of MCP_CONFIGS) console.log(chalk.gray(`    • ${c.file}`));
+    process.exit(1);
+  }
 
+  let converted: string;
+  try {
+    converted = convertMcpConfig(await readFile(resolve(cwd, sourceFile), "utf-8"), target.id);
+  } catch (error) {
+    console.log(chalk.red(`  ✗ Could not convert ${sourceFile}: ${error instanceof Error ? error.message : "unreadable"}`));
+    process.exit(1);
+  }
 
-
-
-
-
-
-
+  const outputFile = options.output || target.file;
+  const outputPath = resolve(cwd, outputFile);
+  const exists = await access(outputPath).then(() => true, () => false);
+  if (exists && !options.force) {
+    console.log(chalk.yellow(`  ⚠️ File already exists: ${outputFile}`));
+    console.log(chalk.gray("     Use --force to overwrite"));
+    process.exit(1);
+  }
+  const { mkdir } = await import("fs/promises");
+  await mkdir(dirname(outputPath), { recursive: true });
+  await writeFile(outputPath, converted, "utf-8");
+  console.log(chalk.green(`  ✓ Converted ${sourceFile} to ${outputFile} (MCP servers for ${target.name})`));
+  console.log();
+}

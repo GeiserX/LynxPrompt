@@ -84,8 +84,15 @@ const COMMAND_TYPES = [
   { value: "OPENCODE_COMMAND", label: "OpenCode Command (.opencode/commands/)", icon: "🔓", isCommand: true, platform: "opencode" },
 ] as const;
 
+// Agent Skills and MCP server configs: one definition, written to each tool's folder or file
+const SKILL_MCP_TYPES = [
+  { value: "AGENT_SKILL", label: "Agent Skill (<tool>/skills/<name>/SKILL.md)", icon: "🧩", isCommand: false },
+  { value: "MCP_CONFIG", label: "MCP Servers (.mcp.json, .cursor/mcp.json, .vscode/mcp.json)", icon: "🔌", isCommand: false },
+] as const;
+const isSkillOrMcpType = (type: string) => SKILL_MCP_TYPES.some((t) => t.value === type);
+
 // Combined types for the dropdown
-const ALL_BLUEPRINT_TYPES = [...BLUEPRINT_TYPES, ...COMMAND_TYPES] as const;
+const ALL_BLUEPRINT_TYPES = [...BLUEPRINT_TYPES, ...COMMAND_TYPES, ...SKILL_MCP_TYPES] as const;
 
 // Helper to check if a type is a command
 const isCommandType = (type: string) => COMMAND_TYPES.some(c => c.value === type);
@@ -304,6 +311,10 @@ export default function ShareBlueprintPage() {
         setType("CLINE_RULES");
       } else if (filename === "codex.md") {
         setType("CODEX_MD");
+      } else if (filename === "skill.md") {
+        setType("AGENT_SKILL");
+      } else if (filename === "mcp.json" || filename === ".mcp.json") {
+        setType("MCP_CONFIG");
       }
     };
     reader.onerror = () => {
@@ -818,6 +829,13 @@ export default function ShareBlueprintPage() {
                           </option>
                         ))}
                       </optgroup>
+                      <optgroup label="Agent Skills & MCP Servers">
+                        {SKILL_MCP_TYPES.map((t) => (
+                          <option key={t.value} value={t.value}>
+                            {t.icon} {t.label}
+                          </option>
+                        ))}
+                      </optgroup>
                     </select>
                     {/* Command type notice */}
                     {isCommandType(type) && (
@@ -834,8 +852,15 @@ export default function ShareBlueprintPage() {
                         </div>
                       </div>
                     )}
-                    {/* Interoperability notice (for non-command types) */}
-                    {!isCommandType(type) && (
+                    {isSkillOrMcpType(type) && (
+                      <div className="mt-2 rounded-lg border border-sky-200 bg-sky-50 p-3 text-xs text-sky-800 dark:border-sky-500/50 dark:bg-sky-900/30 dark:text-sky-200">
+                        {type === "AGENT_SKILL"
+                          ? "Paste the SKILL.md of one skill, with its name and description frontmatter. lynxp pull writes it to .claude/skills/<name>/SKILL.md, and lynxp push picks up skills in the skills folder of Claude Code, Codex (.agents), Copilot (.github), Cursor, Gemini CLI and OpenCode."
+                          : "Paste a JSON MCP config with an \"mcpServers\" (or VS Code \"servers\") object. lynxp pull writes .mcp.json, and lynxp convert rewrites it for Cursor, VS Code or Kiro. Keep keys out of it: use environment variables."}
+                      </div>
+                    )}
+                    {/* Interoperability notice (for rule types) */}
+                    {!isCommandType(type) && !isSkillOrMcpType(type) && (
                       <div className="mt-2 rounded-lg border border-sky-200 bg-sky-50 p-3 dark:border-sky-500/50 dark:bg-sky-900/30">
                         <div className="flex items-start gap-2">
                           <Info className="h-4 w-4 flex-shrink-0 text-sky-600 dark:text-sky-300 mt-0.5" />

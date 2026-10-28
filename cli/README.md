@@ -208,6 +208,22 @@ lynxp push AGENTS.md \
 lynxp push -y --name "My Config"
 ```
 
+### Agent Skills and MCP servers
+
+A skill's `SKILL.md` (in `.claude/skills/`, `.agents/skills/`, `.github/skills/`,
+`.cursor/skills/`, `.gemini/skills/` or `.opencode/skills/`) and an MCP config
+(`.mcp.json`, `.cursor/mcp.json`, `.vscode/mcp.json`, `.kiro/settings/mcp.json`)
+push and pull like any rules file, and keep their path.
+
+```bash
+lynxp push .claude/skills/release-notes/SKILL.md
+lynxp push .mcp.json
+
+# The same MCP servers in another tool's file
+lynxp convert .mcp.json vscode-mcp    # .vscode/mcp.json, "servers" key
+lynxp convert cursor-mcp              # from the first MCP config found
+```
+
 ### Search (`lynxp search`)
 
 Search public blueprints in the marketplace:

@@ -244,7 +244,7 @@ describe("POST /api/blueprints/[id]/download", () => {
     expect(mockDownloadCreate).not.toHaveBeenCalled();
   });
 
-  it.each(["universal", "zed", "gemini-cli", "command-claude"])(
+  it.each(["universal", "zed", "gemini-cli", "command-claude", "skill", "vscode-mcp", "kiro-mcp"])(
     "keeps the platform id %s that the download modal sends",
     async (platform) => {
       mockTemplateFindUnique.mockResolvedValue({ userId: "owner_1", isPublic: true, visibility: "PUBLIC", teamId: null });

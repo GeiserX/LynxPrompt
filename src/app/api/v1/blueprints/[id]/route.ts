@@ -233,6 +233,7 @@ export async function PUT(
         visibility: true,
         teamId: true,
         currentVersion: true,
+        type: true,
       },
     });
 
@@ -373,6 +374,7 @@ export async function PUT(
       const contentCheck = checkBlueprintContent(newContent, {
         willBePublic,
         sensitiveDataAcknowledged: sensitive_data_acknowledged === true,
+        type: (updateData.type as string | undefined) ?? existing.type,
       });
       if (!contentCheck.ok) {
         return NextResponse.json(contentCheck.body, { status: contentCheck.status });

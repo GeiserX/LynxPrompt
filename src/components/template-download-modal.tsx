@@ -29,7 +29,18 @@ import {
   downloadName,
   type DuplicateVariableDefault,
 } from "@/lib/file-generator";
-import { PLATFORMS, COMMANDS, platformForBlueprintType, getCommandTemplateType } from "@/lib/platforms";
+import {
+  PLATFORMS,
+  COMMANDS,
+  platformForBlueprintType,
+  getCommandTemplateType,
+  MCP_BLUEPRINT_TYPE,
+  MCP_CONFIGS,
+  SKILL_BLUEPRINT_TYPE,
+  SKILL_DIRECTORIES,
+  skillFolder,
+  convertMcpConfig,
+} from "@/lib/platforms";
 
 interface SensitiveField {
   label: string;
@@ -92,6 +103,16 @@ const commandExportTargets = COMMANDS.map((c) => ({
 // Default display count
 const DEFAULT_PLATFORM_COUNT = 6;
 
+// An MCP config rewritten for the target tool; content that is not a valid
+// config is offered as it is rather than failing the download
+function mcpContent(content: string, targetId: string): string {
+  try {
+    return convertMcpConfig(content, targetId);
+  } catch {
+    return content;
+  }
+}
+
 export function TemplateDownloadModal({
   isOpen,
   onClose,
@@ -115,6 +136,14 @@ export function TemplateDownloadModal({
   
   // Check if template is a command
   const isCommand = COMMAND_TYPES.includes(template.targetPlatform || "");
+  // Agent Skills go in a tool's skills folder unchanged; MCP configs are
+  // rewritten for the chosen tool's file
+  const isSkill = template.targetPlatform === SKILL_BLUEPRINT_TYPE;
+  const isMcp = template.targetPlatform === MCP_BLUEPRINT_TYPE;
+  const [skillDirectory, setSkillDirectory] = useState<string>(SKILL_DIRECTORIES[0]);
+  const [mcpTargetId, setMcpTargetId] = useState<string>(MCP_CONFIGS[0].id);
+  const mcpTarget = MCP_CONFIGS.find((c) => c.id === mcpTargetId) ?? MCP_CONFIGS[0];
+  const skillDirName = skillFolder({ name: template.name, content: template.content });
 
   const getInitialPlatform = () => {
     const rawPlatform = targetPlatform || template.targetPlatform || "universal";
@@ -310,8 +339,9 @@ export function TemplateDownloadModal({
   // Priority: user-entered value > creator default > keep placeholder
   const filledContent = replaceVariables(template.content || "", values);
   // Shape it for the chosen platform: its frontmatter (Cursor, Kiro, Augment) or none
-  const processedContent =
-    isCommand || isStructured
+  const processedContent = isMcp
+    ? mcpContent(filledContent, mcpTarget.id)
+    : isCommand || isStructured || isSkill
       ? filledContent
       : adaptRulesContent(filledContent, storedPlatform, selectedPlatform, template.name);
 
@@ -324,7 +354,11 @@ export function TemplateDownloadModal({
   const handleDownload = async () => {
     let filename: string;
     
-    if (isCommand) {
+    if (isSkill) {
+      filename = "SKILL.md";
+    } else if (isMcp) {
+      filename = downloadName(mcpTarget.file);
+    } else if (isCommand) {
       // For commands, use the template name as filename, sanitized
       const sanitizedName = template.name
         .toLowerCase()
@@ -343,7 +377,15 @@ export function TemplateDownloadModal({
         await fetch(`/api/blueprints/${template.id}/download`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ platform: isCommand ? `command-${commandExportTarget}` : selectedPlatform }),
+          body: JSON.stringify({
+            platform: isSkill
+              ? "skill"
+              : isMcp
+                ? mcpTarget.id
+                : isCommand
+                  ? `command-${commandExportTarget}`
+                  : selectedPlatform,
+          }),
         });
       } catch {
         // Don't fail the download if tracking fails
@@ -456,8 +498,49 @@ export function TemplateDownloadModal({
             </div>
           )}
 
-          {/* Platform Selection with Search (for non-command blueprints) */}
-          {!isCommand && (
+          {/* Skills folder or MCP config file to export to */}
+          {(isSkill || isMcp) && (
+            <div className="mb-6">
+              <label className="mb-3 block text-sm font-medium">
+                {isSkill ? "Which tool's skills folder?" : "Which tool's MCP config?"}
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                {isSkill
+                  ? SKILL_DIRECTORIES.map((dir) => (
+                      <button
+                        key={dir}
+                        onClick={() => setSkillDirectory(dir)}
+                        className={`rounded-lg border p-3 text-left transition-colors ${
+                          skillDirectory === dir ? "border-primary bg-primary/10" : "hover:border-primary/50"
+                        }`}
+                      >
+                        <code className="text-xs">{dir}/</code>
+                      </button>
+                    ))
+                  : MCP_CONFIGS.map((c) => (
+                      <button
+                        key={c.id}
+                        onClick={() => setMcpTargetId(c.id)}
+                        className={`flex flex-col items-start gap-1 rounded-lg border p-3 text-left transition-colors ${
+                          mcpTargetId === c.id ? "border-primary bg-primary/10" : "hover:border-primary/50"
+                        }`}
+                      >
+                        <span className="font-medium">{c.name}</span>
+                        <code className="text-xs text-muted-foreground">{c.file}</code>
+                      </button>
+                    ))}
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Save the downloaded file to:{" "}
+                <code className="rounded bg-primary/10 px-1">
+                  {isSkill ? `${skillDirectory}/${skillDirName}/SKILL.md` : mcpTarget.file}
+                </code>
+              </p>
+            </div>
+          )}
+
+          {/* Platform Selection with Search (for rule blueprints) */}
+          {!isCommand && !isSkill && !isMcp && (
             <div className="mb-6">
               <label className="mb-2 block text-sm font-medium">
                 Which AI IDE are you using?

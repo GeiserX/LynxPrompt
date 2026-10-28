@@ -265,6 +265,7 @@ export async function POST(request: NextRequest) {
     const contentCheck = checkBlueprintContent(content.trim(), {
       willBePublic: isPublic,
       sensitiveDataAcknowledged: sensitive_data_acknowledged === true,
+      type: normalizeBlueprintType(type),
     });
     if (!contentCheck.ok) {
       return NextResponse.json(contentCheck.body, { status: contentCheck.status });

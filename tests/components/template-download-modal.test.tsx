@@ -186,3 +186,47 @@ describe("TemplateDownloadModal: Clone & Edit", () => {
     expect(link).toHaveAttribute("href", "/blueprints/bp_1/edit");
   });
 });
+
+describe("TemplateDownloadModal: Agent Skills and MCP servers", () => {
+  const mcp = JSON.stringify({ mcpServers: { github: { command: "npx", args: ["-y", "github-mcp"] }, docs: { url: "https://docs.example/mcp" } } });
+
+  it("rewrites an MCP config for VS Code's file and key", async () => {
+    render(
+      <TemplateDownloadModal isOpen onClose={() => {}} template={{ name: "Team MCP", content: mcp, targetPlatform: "MCP_CONFIG" }} />
+    );
+    expect(platformButton("Claude Code")).not.toBeNull();
+    fireEvent.click(platformButton("VS Code (Copilot)")!);
+    fireEvent.click(screen.getByRole("button", { name: /Download/ }));
+    const { name, content } = await lastDownload();
+    expect(name).toBe("mcp.json");
+    expect(JSON.parse(content)).toEqual({
+      servers: {
+        github: { type: "stdio", command: "npx", args: ["-y", "github-mcp"] },
+        docs: { type: "http", url: "https://docs.example/mcp" },
+      },
+    });
+  });
+
+  it("downloads a skill as its SKILL.md, unchanged, with no rule platforms offered", async () => {
+    const skill = "---\nname: release-notes\ndescription: Write release notes\n---\n\nRead the changelog.\n";
+    render(
+      <TemplateDownloadModal isOpen onClose={() => {}} template={{ name: "Release Notes", content: skill, targetPlatform: "AGENT_SKILL" }} />
+    );
+    expect(platformButton("Cursor")).toBeNull();
+    fireEvent.click(screen.getByText(".agents/skills/"));
+    expect(screen.getByText(".agents/skills/release-notes/SKILL.md")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /Download/ }));
+    const { name, content } = await lastDownload();
+    expect(name).toBe("SKILL.md");
+    expect(content).toBe(skill);
+  });
+
+  it("names the skill folder after the frontmatter name, as lynxp pull does", () => {
+    const skill = "---\nname: release-notes\ndescription: Write release notes\n---\n\nRead the changelog.\n";
+    render(
+      <TemplateDownloadModal isOpen onClose={() => {}} template={{ name: "Team Release Helper", content: skill, targetPlatform: "AGENT_SKILL" }} />
+    );
+    expect(screen.getByText(".claude/skills/release-notes/SKILL.md")).toBeTruthy();
+    expect(screen.queryByText(".claude/skills/team-release-helper/SKILL.md")).toBeNull();
+  });
+});

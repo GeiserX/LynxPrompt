@@ -6,14 +6,17 @@ import { prismaApp } from "@/lib/db-app";
 import { hashIP } from "@/lib/ip-hash";
 import { getClientIP } from "@/lib/client-ip";
 import { BLUEPRINT_ACCESS_SELECT, canReadBlueprint, canReadTemplate } from "@/lib/blueprint-access";
-import { COMMANDS, PLATFORMS } from "@/lib/platforms";
+import { COMMANDS, MCP_CONFIGS, PLATFORMS } from "@/lib/platforms";
 import { requireSession } from "@/lib/api-auth";
 
 // Every platform id from platforms.ts, plus "command-<platform>" for slash
-// command exports (what template-download-modal.tsx sends)
+// command exports, "skill" for Agent Skills and the MCP target ids (what
+// template-download-modal.tsx sends)
 const ALLOWED_PLATFORMS = new Set<string>([
   ...PLATFORMS.map((p) => p.id),
   ...COMMANDS.map((c) => `command-${c.platformId}`),
+  "skill",
+  ...MCP_CONFIGS.map((c) => c.id),
 ]);
 
 // POST /api/blueprints/[id]/download - Record a blueprint download

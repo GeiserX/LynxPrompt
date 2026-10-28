@@ -242,6 +242,49 @@ describe("POST /api/v1/blueprints write checks", () => {
   });
 });
 
+describe("POST /api/v1/blueprints MCP configs", () => {
+  // MCP configs usually hold API keys in env or headers, so they are scanned
+  // at every visibility, not only when public.
+  const MCP_WITH_KEY = JSON.stringify(
+    { mcpServers: { aws: { command: "aws-mcp", env: { AWS_ACCESS_KEY_ID: "AKIAI44QH8DHBN7WQRTZ" } } } },
+    null,
+    2
+  );
+
+  it("refuses a team MCP config that holds a key", async () => {
+    db.teamMember.findMany.mockResolvedValue([{ teamId: "team_1" }]);
+    const res = await create({ type: "MCP_CONFIG", visibility: "TEAM", content: MCP_WITH_KEY });
+    expect(res.status).toBe(422);
+    const body = await res.json();
+    expect(body.requires_acknowledgment).toBe(true);
+    expect(body.message).toMatch(/^MCP config not saved/);
+    expect(db.userTemplate.create).not.toHaveBeenCalled();
+  });
+
+  it("refuses a private MCP config that holds a key", async () => {
+    const res = await create({ type: "MCP_CONFIG", content: MCP_WITH_KEY });
+    expect(res.status).toBe(422);
+    expect(db.userTemplate.create).not.toHaveBeenCalled();
+  });
+
+  it("saves it once the warning is acknowledged", async () => {
+    const res = await create({
+      type: "MCP_CONFIG",
+      content: MCP_WITH_KEY,
+      sensitive_data_acknowledged: true,
+    });
+    expect(res.status).toBe(201);
+    expect(created().type).toBe("MCP_CONFIG");
+  });
+
+  it("refuses a key pushed into an existing private MCP config", async () => {
+    db.userTemplate.findUnique.mockResolvedValue(row({ userId: "user_1", type: "MCP_CONFIG" }));
+    const res = await update({ content: MCP_WITH_KEY });
+    expect(res.status).toBe(422);
+    expect(db.userTemplate.update).not.toHaveBeenCalled();
+  });
+});
+
 describe("PUT /api/v1/blueprints/[id]", () => {
   beforeEach(() => {
     db.userTemplate.findUnique.mockResolvedValue(

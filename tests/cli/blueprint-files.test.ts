@@ -75,3 +75,42 @@ describe("cli blueprint tracker paths", () => {
     expect(await hasLocalChanges(dir, tracked!)).toBe(true);
   });
 });
+
+describe("Agent Skills and MCP configs", () => {
+  it("recognises a SKILL.md in every tool's skills folder, also in a subproject", async () => {
+    const { matchConfigFile } = await import("../../cli/src/utils/blueprint-files");
+    for (const dir of [".claude/skills", ".agents/skills", ".github/skills", ".cursor/skills", ".gemini/skills", ".opencode/skills"]) {
+      expect(matchConfigFile(`${dir}/pdf-tools/SKILL.md`)).toEqual({ type: "AGENT_SKILL", label: "Agent Skill" });
+    }
+    expect(matchConfigFile("apps/web/.claude/skills/deploy/SKILL.md")?.type).toBe("AGENT_SKILL");
+    // A file next to the skill, or a SKILL.md outside a skill folder, is not a skill
+    expect(matchConfigFile(".claude/skills/pdf-tools/reference.md")).toBeNull();
+    expect(matchConfigFile("docs/SKILL.md")).toBeNull();
+  });
+
+  it("recognises each tool's MCP config", async () => {
+    const { matchConfigFile } = await import("../../cli/src/utils/blueprint-files");
+    expect(matchConfigFile(".mcp.json")?.type).toBe("MCP_CONFIG");
+    expect(matchConfigFile(".cursor/mcp.json")?.type).toBe("MCP_CONFIG");
+    expect(matchConfigFile(".vscode/mcp.json")?.type).toBe("MCP_CONFIG");
+    expect(matchConfigFile(".kiro/settings/mcp.json")?.type).toBe("MCP_CONFIG");
+    expect(matchConfigFile("mcp.json")).toBeNull();
+  });
+
+  it("pulls a skill into its own folder and an MCP config to .mcp.json", () => {
+    const skill = "---\nname: Release Notes\ndescription: x\n---\nBody";
+    expect(blueprintFilename({ type: "AGENT_SKILL", name: "Whatever", content: skill })).toBe(".claude/skills/release-notes/SKILL.md");
+    expect(blueprintFilename({ type: "AGENT_SKILL", name: "PDF Tools", content: "No frontmatter" })).toBe(".claude/skills/pdf-tools/SKILL.md");
+    expect(blueprintFilename({ type: "AGENT_SKILL", name: "x", content: '---\r\nname: "pdf-tools"\r\n---\r\nBody' })).toBe(".claude/skills/pdf-tools/SKILL.md");
+    expect(blueprintFilename({ type: "AGENT_SKILL", name: "x", repository_path: ".agents/skills/x/SKILL.md" })).toBe(".agents/skills/x/SKILL.md");
+    expect(blueprintFilename({ type: "MCP_CONFIG" })).toBe(".mcp.json");
+  });
+
+  it("reads a skill name padded with whitespace without a slow regex", () => {
+    // A backtracking name regex took seconds on this line (cubic in its length) and found no name
+    const content = `---\nname:${" ".repeat(2000)}pdf'tools\n---\nBody`;
+    const started = Date.now();
+    expect(blueprintFilename({ type: "AGENT_SKILL", name: "x", content })).toBe(".claude/skills/pdf-tools/SKILL.md");
+    expect(Date.now() - started).toBeLessThan(500);
+  });
+});

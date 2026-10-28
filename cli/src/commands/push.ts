@@ -923,27 +923,28 @@ function inferBlueprintType(filePath: string): string {
 }
 
 /**
- * Ask whether to publish PUBLIC content the server flagged as possible
- * secrets. --allow-sensitive says yes up front; with -y or no terminal the
- * answer is no, so a script never publishes a secret by accident.
+ * Ask whether to push content the server flagged as possible secrets (any
+ * PUBLIC blueprint, and MCP server configs at every visibility).
+ * --allow-sensitive says yes up front; with -y or no terminal the answer is
+ * no, so a script never pushes a secret by accident.
  */
 function confirmSensitive(options: PushOptions, spinner?: Ora) {
   return async (matches: SensitiveMatchInfo[]): Promise<boolean> => {
     spinner?.stop();
-    console.log(chalk.yellow("\n⚠ This blueprint is public and may contain secrets:"));
+    console.log(chalk.yellow("\n⚠ This blueprint may contain secrets:"));
     for (const m of matches) {
       console.log(chalk.gray(`   line ${m.line}: ${m.type}${m.snippet ? ` (${m.snippet})` : ""}`));
     }
 
     let publish = false;
     if (options.allowSensitive) {
-      console.log(chalk.gray("   Publishing anyway (--allow-sensitive)."));
+      console.log(chalk.gray("   Pushing anyway (--allow-sensitive)."));
       publish = true;
     } else if (!options.yes && process.stdin.isTTY) {
       const answer = await prompts({
         type: "confirm",
         name: "publish",
-        message: "Publish it anyway?",
+        message: "Push it anyway?",
         initial: false,
       });
       publish = answer.publish === true;
@@ -953,7 +954,7 @@ function confirmSensitive(options: PushOptions, spinner?: Ora) {
       spinner?.start();
     } else {
       console.log(
-        chalk.gray("   Remove them, keep the blueprint private, or run again with --allow-sensitive to publish anyway.")
+        chalk.gray("   Remove them, or run again with --allow-sensitive to push anyway.")
       );
     }
     return publish;
