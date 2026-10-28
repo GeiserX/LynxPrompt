@@ -75,8 +75,8 @@ program
 
 // Convert - format conversion
 program
-  .command("convert [source] <target>")
-  .description("Convert AI config between formats (e.g., AGENTS.md → cursor)")
+  .command("convert <source> [target]")
+  .description("Convert AI config between formats (e.g., AGENTS.md → cursor); with one argument it is the target")
   .option("-o, --output <file>", "Output filename")
   .option("-f, --force", "Overwrite existing output file")
   .action(convertCommand);
@@ -99,7 +99,6 @@ program
   .option("--no-recursive", "Don't scan subdirectories")
   .option("--depth <n>", "Max directory depth to scan", "10")
   .option("--pattern <file>", "Custom config filename to look for")
-  .option("--link", "Link imported files to cloud (requires login)")
   .option("-v, --verbose", "Show detailed section information")
   .option("-j, --json", "Output as JSON")
   .action(importCommand);
@@ -142,7 +141,7 @@ program
   .option("-a, --all", "Scan recursively and push ALL AI config files (40+ types)")
   .option("-n, --name <name>", "Blueprint name")
   .option("-d, --description <desc>", "Blueprint description")
-  .option("-v, --visibility <vis>", "Visibility: PRIVATE, TEAM, or PUBLIC", "PRIVATE")
+  .option("-v, --visibility <vis>", "Visibility: PRIVATE, TEAM, or PUBLIC (default: PRIVATE)")
   .option("-t, --tags <tags>", "Tags (comma-separated)")
   .option("-y, --yes", "Skip prompts")
   .option("-f, --force", "Force push (overwrite remote changes)")

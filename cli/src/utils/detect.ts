@@ -121,9 +121,10 @@ async function detectExtendedCommands(cwd: string): Promise<DetectedProject["det
       const content = await readFile(packageJsonPath, "utf-8");
       const pkg = JSON.parse(content);
       if (pkg.scripts) {
+        const pm = (await detectNodePackageManager(cwd)) || "npm";
         for (const [name, script] of Object.entries(pkg.scripts)) {
           const scriptStr = String(script);
-          const fullCmd = `npm run ${name}`;
+          const fullCmd = `${pm} run ${name}`;
           
           // Categorize by script name patterns
           if (name.match(/^test$|^test:/i) || scriptStr.includes("jest") || scriptStr.includes("vitest") || scriptStr.includes("mocha")) {
@@ -468,53 +469,21 @@ export async function detectProject(cwd: string): Promise<DetectedProject | null
         detected.stack.unshift("javascript");
       }
       
-      // Detect commands from scripts
-      if (pkg.scripts) {
-        detected.commands.build = pkg.scripts.build;
-        detected.commands.test = pkg.scripts.test;
-        detected.commands.lint = pkg.scripts.lint || pkg.scripts["lint:check"];
-        detected.commands.dev = pkg.scripts.dev || pkg.scripts.start || pkg.scripts.serve;
-        detected.commands.format = pkg.scripts.format || pkg.scripts.prettier;
-      }
-
       // Detect package manager from lockfiles
-      if (await fileExists(join(cwd, "pnpm-lock.yaml"))) {
-        detected.packageManager = "pnpm";
-      } else if (await fileExists(join(cwd, "yarn.lock"))) {
-        detected.packageManager = "yarn";
-      } else if (await fileExists(join(cwd, "bun.lockb"))) {
-        detected.packageManager = "bun";
-      } else if (await fileExists(join(cwd, "package-lock.json"))) {
-        detected.packageManager = "npm";
-      }
+      detected.packageManager = await detectNodePackageManager(cwd);
 
-      // Add package manager prefix to commands if detected
-      if (detected.packageManager && detected.packageManager !== "npm") {
-        const pm = detected.packageManager;
-        for (const [key, value] of Object.entries(detected.commands)) {
-          if (value && !value.startsWith(pm) && !value.startsWith("npx")) {
-            // Commands are already script names, prefix with package manager
-            detected.commands[key as keyof typeof detected.commands] = `${pm} run ${value}`;
-          }
-        }
-      } else if (detected.commands) {
-        // Prefix with npm run
-        for (const [key, value] of Object.entries(detected.commands)) {
-          if (value && !value.startsWith("npm") && !value.startsWith("npx")) {
-            detected.commands[key as keyof typeof detected.commands] = `npm run ${value}`;
-          }
-        }
-      }
-
-      // Fix: commands should be the actual script names for display
+      // Commands are full invocations (e.g. "pnpm run build"), never bare script names
       if (pkg.scripts) {
-        detected.commands.build = pkg.scripts.build ? "build" : undefined;
-        detected.commands.test = pkg.scripts.test ? "test" : undefined;
-        detected.commands.lint = pkg.scripts.lint ? "lint" : (pkg.scripts["lint:check"] ? "lint:check" : undefined);
-        detected.commands.dev = pkg.scripts.dev ? "dev" : (pkg.scripts.start ? "start" : (pkg.scripts.serve ? "serve" : undefined));
+        const run = (script: string | undefined) =>
+          script ? `${detected.packageManager || "npm"} run ${script}` : undefined;
+        const pick = (...names: string[]) => names.find((n) => pkg.scripts[n]);
+        detected.commands.build = run(pick("build"));
+        detected.commands.test = run(pick("test"));
+        detected.commands.lint = run(pick("lint", "lint:check"));
+        detected.commands.dev = run(pick("dev", "start", "serve"));
+        detected.commands.format = run(pick("format", "prettier"));
       }
 
-      return detected;
     } catch {
       // Failed to parse package.json
     }
@@ -527,11 +496,11 @@ export async function detectProject(cwd: string): Promise<DetectedProject | null
       const content = await readFile(pyprojectPath, "utf-8");
       
       detected.stack.push("python");
-      detected.type = "application";
+      if (detected.type === "unknown") detected.type = "application";
       
       // Extract project name (basic TOML parsing)
       const nameMatch = content.match(/name\s*=\s*"([^"]+)"/);
-      if (nameMatch) detected.name = nameMatch[1];
+      if (nameMatch && !detected.name) detected.name = nameMatch[1];
       
       // Detect frameworks and tools
       if (content.includes("fastapi")) detected.stack.push("fastapi");
@@ -544,18 +513,15 @@ export async function detectProject(cwd: string): Promise<DetectedProject | null
       if (content.includes("mypy")) detected.stack.push("mypy");
       
       // Common Python commands
-      detected.commands.test = "pytest";
-      detected.commands.lint = "ruff check .";
+      detected.commands.test ??= "pytest";
+      detected.commands.lint ??= "ruff check .";
       
       // Check if using poetry or uv
       if (content.includes("[tool.poetry]")) {
-        detected.packageManager = "yarn"; // Closest analogy
-        detected.commands.dev = "poetry run python -m uvicorn main:app --reload";
+        detected.commands.dev ??= "poetry run python -m uvicorn main:app --reload";
       } else if (await fileExists(join(cwd, "uv.lock"))) {
-        detected.commands.dev = "uv run python main.py";
+        detected.commands.dev ??= "uv run python main.py";
       }
-      
-      return detected;
     } catch {
       // Failed to parse pyproject.toml
     }
@@ -568,16 +534,14 @@ export async function detectProject(cwd: string): Promise<DetectedProject | null
       const content = await readFile(requirementsPath, "utf-8");
       
       detected.stack.push("python");
-      detected.type = "application";
+      if (detected.type === "unknown") detected.type = "application";
       
       if (content.toLowerCase().includes("fastapi")) detected.stack.push("fastapi");
       if (content.toLowerCase().includes("django")) detected.stack.push("django");
       if (content.toLowerCase().includes("flask")) detected.stack.push("flask");
       
-      detected.commands.test = "pytest";
-      detected.commands.lint = "ruff check .";
-      
-      return detected;
+      detected.commands.test ??= "pytest";
+      detected.commands.lint ??= "ruff check .";
     } catch {
       // Failed to read requirements.txt
     }
@@ -590,11 +554,11 @@ export async function detectProject(cwd: string): Promise<DetectedProject | null
       const content = await readFile(cargoPath, "utf-8");
       
       detected.stack.push("rust");
-      detected.type = "application";
+      if (detected.type === "unknown") detected.type = "application";
       
       // Extract project name
       const nameMatch = content.match(/name\s*=\s*"([^"]+)"/);
-      if (nameMatch) detected.name = nameMatch[1];
+      if (nameMatch && !detected.name) detected.name = nameMatch[1];
       
       // Detect common crates
       if (content.includes("actix-web")) detected.stack.push("actix");
@@ -603,12 +567,10 @@ export async function detectProject(cwd: string): Promise<DetectedProject | null
       if (content.includes("serde")) detected.stack.push("serde");
       if (content.includes("sqlx")) detected.stack.push("sqlx");
       
-      detected.commands.build = "cargo build";
-      detected.commands.test = "cargo test";
-      detected.commands.lint = "cargo clippy";
-      detected.commands.dev = "cargo run";
-      
-      return detected;
+      detected.commands.build ??= "cargo build";
+      detected.commands.test ??= "cargo test";
+      detected.commands.lint ??= "cargo clippy";
+      detected.commands.dev ??= "cargo run";
     } catch {
       // Failed to parse Cargo.toml
     }
@@ -621,13 +583,13 @@ export async function detectProject(cwd: string): Promise<DetectedProject | null
       const content = await readFile(goModPath, "utf-8");
       
       detected.stack.push("go");
-      detected.type = "application";
+      if (detected.type === "unknown") detected.type = "application";
       
       // Extract module name
       const moduleMatch = content.match(/module\s+(\S+)/);
       if (moduleMatch) {
         const parts = moduleMatch[1].split("/");
-        detected.name = parts[parts.length - 1];
+        detected.name ||= parts[parts.length - 1];
       }
       
       // Detect common frameworks
@@ -636,12 +598,10 @@ export async function detectProject(cwd: string): Promise<DetectedProject | null
       if (content.includes("labstack/echo")) detected.stack.push("echo");
       if (content.includes("gorm.io/gorm")) detected.stack.push("gorm");
       
-      detected.commands.build = "go build";
-      detected.commands.test = "go test ./...";
-      detected.commands.lint = "golangci-lint run";
-      detected.commands.dev = "go run .";
-      
-      return detected;
+      detected.commands.build ??= "go build";
+      detected.commands.test ??= "go test ./...";
+      detected.commands.lint ??= "golangci-lint run";
+      detected.commands.dev ??= "go run .";
     } catch {
       // Failed to parse go.mod
     }
@@ -654,15 +614,14 @@ export async function detectProject(cwd: string): Promise<DetectedProject | null
       const content = await readFile(makefilePath, "utf-8");
       
       // Extract targets
-      if (content.includes("build:")) detected.commands.build = "make build";
-      if (content.includes("test:")) detected.commands.test = "make test";
-      if (content.includes("lint:")) detected.commands.lint = "make lint";
-      if (content.includes("dev:")) detected.commands.dev = "make dev";
-      if (content.includes("run:")) detected.commands.dev = detected.commands.dev || "make run";
+      if (content.includes("build:")) detected.commands.build ??= "make build";
+      if (content.includes("test:")) detected.commands.test ??= "make test";
+      if (content.includes("lint:")) detected.commands.lint ??= "make lint";
+      if (content.includes("dev:")) detected.commands.dev ??= "make dev";
+      if (content.includes("run:")) detected.commands.dev ??= "make run";
       
-      if (Object.keys(detected.commands).length > 0) {
+      if (Object.values(detected.commands).some(Boolean) && detected.type === "unknown") {
         detected.type = "application";
-        return detected;
       }
     } catch {
       // Failed to read Makefile
@@ -672,7 +631,7 @@ export async function detectProject(cwd: string): Promise<DetectedProject | null
   // Try to detect from Docker
   if (await fileExists(join(cwd, "Dockerfile")) || await fileExists(join(cwd, "docker-compose.yml"))) {
     detected.stack.push("docker");
-    detected.type = "application";
+    if (detected.type === "unknown") detected.type = "application";
     detected.hasDocker = true;
   }
 
@@ -802,7 +761,19 @@ export async function detectProject(cwd: string): Promise<DetectedProject | null
   // Detect extended commands from all sources
   detected.detectedCommands = await detectExtendedCommands(cwd);
 
+  // Several manifests can name the same technology (pyproject.toml and requirements.txt)
+  detected.stack = [...new Set(detected.stack)];
+
   return detected.stack.length > 0 || detected.name ? detected : null;
+}
+
+/** Node package manager named by the lockfile in cwd, or null when there is none. */
+async function detectNodePackageManager(cwd: string): Promise<DetectedProject["packageManager"]> {
+  if (await fileExists(join(cwd, "pnpm-lock.yaml"))) return "pnpm";
+  if (await fileExists(join(cwd, "yarn.lock"))) return "yarn";
+  if (await fileExists(join(cwd, "bun.lockb")) || await fileExists(join(cwd, "bun.lock"))) return "bun";
+  if (await fileExists(join(cwd, "package-lock.json"))) return "npm";
+  return null;
 }
 
 async function fileExists(path: string): Promise<boolean> {
@@ -855,9 +826,10 @@ export function detectRepoHost(url: string): string {
 /**
  * Parse GitHub URL to owner/repo
  */
-function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
+export function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
   const patterns = [
-    /github\.com[/:]([^/]+)\/([^/.]+)/,
+    // Repo names may contain dots (socket.io, next.js); only a trailing .git is dropped
+    /github\.com[/:]([^/]+)\/([^/?#\s]+)/,
     /^([^/]+)\/([^/]+)$/,
   ];
   for (const pattern of patterns) {

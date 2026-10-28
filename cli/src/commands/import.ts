@@ -2,7 +2,7 @@ import chalk from "chalk";
 import prompts from "prompts";
 import ora from "ora";
 import { readFile, access, readdir } from "fs/promises";
-import { join, relative, dirname, basename } from "path";
+import { join, relative, dirname, basename, resolve } from "path";
 
 import { detectCommandFiles } from "../utils/detect.js";
 
@@ -38,7 +38,6 @@ interface ImportOptions {
   recursive?: boolean;
   depth?: number;
   pattern?: string;
-  link?: boolean;
   verbose?: boolean;
   json?: boolean;
 }
@@ -46,6 +45,7 @@ interface ImportOptions {
 interface ImportResult {
   totalFound: number;
   files: AgentsMdFile[];
+  commands?: Awaited<ReturnType<typeof detectCommandFiles>>;
   hierarchy: MonorepoHierarchy[];
   errors: string[];
 }
@@ -318,23 +318,27 @@ function displayResults(result: ImportResult, options: ImportOptions): void {
  * Main import command
  */
 export async function importCommand(path: string = ".", options: ImportOptions): Promise<void> {
-  console.log();
-  console.log(chalk.cyan.bold("  📥 LynxPrompt Import"));
-  console.log(chalk.gray("     Scan and import AGENTS.md files and AI commands from your repository"));
-  console.log();
+  // --json prints only the JSON document, so it can be piped into a parser
+  const json = Boolean(options.json);
+  if (!json) {
+    console.log();
+    console.log(chalk.cyan.bold("  📥 LynxPrompt Import"));
+    console.log(chalk.gray("     Scan and import AGENTS.md files and AI commands from your repository"));
+    console.log();
+  }
 
-  // Resolve the path
-  const rootPath = join(process.cwd(), path);
+  // Resolve the path (absolute paths are used as given)
+  const rootPath = resolve(process.cwd(), path);
   
   // Check if path exists
   try {
     await access(rootPath);
   } catch {
-    console.log(chalk.red(`  ✗ Path not found: ${rootPath}`));
+    console.error(chalk.red(`  ✗ Path not found: ${rootPath}`));
     process.exit(1);
   }
 
-  const spinner = ora("Scanning for configuration files and commands...").start();
+  const spinner = ora({ text: "Scanning for configuration files and commands...", isSilent: json }).start();
 
   try {
     // Scan for config files
@@ -346,6 +350,10 @@ export async function importCommand(path: string = ".", options: ImportOptions):
     const totalFound = files.length + commands.length;
     
     if (totalFound === 0) {
+      if (json) {
+        console.log(JSON.stringify({ totalFound: 0, files: [], commands: [], hierarchy: [], errors: [] }, null, 2));
+        return;
+      }
       spinner.warn("No configuration files or commands found");
       console.log();
       console.log(chalk.gray("  Looking for:"));
@@ -355,7 +363,8 @@ export async function importCommand(path: string = ".", options: ImportOptions):
       return;
     }
 
-    spinner.succeed(`Found ${files.length} configuration file(s) and ${commands.length} command(s)`);
+    if (json) spinner.stop();
+    else spinner.succeed(`Found ${files.length} configuration file(s) and ${commands.length} command(s)`);
 
     // Build hierarchy
     const hierarchy = buildHierarchy(files, rootPath);
@@ -365,10 +374,12 @@ export async function importCommand(path: string = ".", options: ImportOptions):
       files,
       hierarchy,
       errors: [],
+      ...(json ? { commands } : {}),
     };
 
     // Display results
     displayResults(result, options);
+    if (json) return;
     
     // Display command files if found
     if (commands.length > 0) {

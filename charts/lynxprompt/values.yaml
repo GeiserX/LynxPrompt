@@ -10,6 +10,14 @@ imagePullSecrets: []
 
 replicaCount: 1
 
+# Recreate stops the old pod before the new one starts. The default uploads
+# volume is ReadWriteOnce, so a rolling update leaves the new pod Pending on a
+# Multi-Attach error whenever it lands on another node, and two pods would run
+# the startup schema sync at once. With a ReadWriteMany volume and more than
+# one replica, RollingUpdate is safe.
+strategy:
+  type: Recreate
+
 service:
   type: ClusterIP
   port: 3000
@@ -152,10 +160,12 @@ startupProbe:
   timeoutSeconds: 5
   failureThreshold: 30
 
+# Liveness answers without the database, so a database outage takes the pod
+# out of the Service (readiness) instead of restarting it.
 livenessProbe:
   enabled: true
   httpGet:
-    path: /api/health
+    path: /api/health/live
     port: http
   initialDelaySeconds: 30
   periodSeconds: 10

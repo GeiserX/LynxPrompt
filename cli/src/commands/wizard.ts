@@ -4,10 +4,12 @@ import ora from "ora";
 import * as readline from "readline";
 import * as os from "os";
 import { writeFile, mkdir, access, readFile } from "fs/promises";
-import { join, dirname } from "path";
+import { join, dirname, relative } from "path";
 import { detectProject, detectFromRemoteUrl, isGitUrl } from "../utils/detect.js";
-import { generateConfig, GenerateOptions, parseVariablesString } from "../utils/generator.js";
-import { isAuthenticated, getUser } from "../config.js";
+import { generateConfig, GenerateOptions, parseVariablesString, PLATFORM_FILES } from "../utils/generator.js";
+import { trackBlueprint } from "../utils/blueprint-tracker.js";
+import { buildPromptOverrides } from "../utils/prompt-overrides.js";
+import { isAuthenticated, getUser, getApiUrl } from "../config.js";
 import { api, ApiRequestError } from "../api.js";
 import {
   LANGUAGES as SHARED_LANGUAGES,
@@ -123,16 +125,14 @@ async function readMultilineInput(prompt: string): Promise<string> {
         return;
       }
       
-      if (line === "") {
+      if (line === "" && lines.length === 0) {
+        // Leading empty lines are not content; two of them skip the file
         emptyLineCount++;
-        if (emptyLineCount >= 2 && lines.length === 0) {
-          // Two empty lines at start = skip
+        if (emptyLineCount >= 2) {
           rl.close();
           resolve("");
-          return;
         }
-      } else {
-        emptyLineCount = 0;
+        return;
       }
       
       lines.push(line);
@@ -941,14 +941,37 @@ const promptConfig = {
   },
 };
 
-// Register SIGINT handler for Ctrl+C
-process.on("SIGINT", async () => {
+/**
+ * Split a --format/--platforms value and reject names the generator has no file for,
+ * so a typo fails loudly instead of generating nothing.
+ */
+export function parsePlatformList(value: string): string[] {
+  const platforms = value.split(",").map(f => f.trim()).filter(Boolean);
+  const unknown = platforms.filter(p => !PLATFORM_FILES[p]);
+  if (unknown.length > 0 || platforms.length === 0) {
+    console.error(chalk.red(`  ✗ Unknown format: ${unknown.join(", ") || value}`));
+    console.error(chalk.gray(`  Supported formats: ${Object.keys(PLATFORM_FILES).join(", ")}`));
+    process.exit(1);
+  }
+  return platforms;
+}
+
+// Ctrl+C saves a draft, but only while the wizard runs (not for every lynxp command)
+async function onWizardSigint(): Promise<void> {
   await saveDraftOnExit();
   console.log(chalk.yellow("\n  Interrupted. Run 'lynxp wizard' anytime to restart.\n"));
-  process.exit(0);
-});
+  process.exit(130);
+}
 
 export async function wizardCommand(options: WizardOptions): Promise<void> {
+  process.on("SIGINT", onWizardSigint);
+  if (options.boundaries && !["conservative", "standard", "permissive"].includes(options.boundaries)) {
+    console.error(chalk.red(`  ✗ Unknown boundary preset: ${options.boundaries}`));
+    console.error(chalk.gray("  Use conservative, standard or permissive."));
+    process.exit(1);
+  }
+  const formatFlag = options.format || options.platforms;
+  if (formatFlag) parsePlatformList(formatFlag);
   try {
     await runWizardWithDraftProtection(options);
   } catch (error) {
@@ -1000,7 +1023,7 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
       // Store draft answers and resume step for use in interactive wizard
       options._draftAnswers = draft.config;
       options._resumeFromStep = draft.stepReached;
-      // Also merge basic options (name, description, etc.)
+      // Every saved answer is reused (see buildPromptOverrides); also merge basic options
       if (draft.config.name) options.name = draft.config.name as string;
       if (draft.config.description) options.description = draft.config.description as string;
     } else {
@@ -1101,7 +1124,7 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
   showWizardOverview();
   
   // Show draft save hint
-  console.log(chalk.gray(`  💾 Tip: Type 'save:draftname' anytime to save progress locally`));
+  console.log(chalk.gray(`  💾 Tip: Press Ctrl+C anytime to save your progress as a draft`));
   console.log();
   
   // Try to detect from current directory first
@@ -1247,14 +1270,8 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
 
   // Non-interactive mode with --yes flag
   if (options.yes) {
-    let platforms: string[];
-    if (options.format) {
-      platforms = options.format.split(",").map(f => f.trim());
-    } else if (options.platforms) {
-      platforms = options.platforms.split(",").map(p => p.trim());
-    } else {
-      platforms = ["agents"];
-    }
+    const platformFlag = options.format || options.platforms;
+    const platforms = platformFlag ? parsePlatformList(platformFlag) : ["agents"];
 
     config = {
       name: options.name || detected?.name || "my-project",
@@ -1265,6 +1282,11 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
       boundaries: options.boundaries as "conservative" | "standard" | "permissive" || "standard",
       commands: detected?.commands || {},
       useGitWorktrees: true, // Default to true for parallel AI sessions
+      // Flags win over detection; both were shown below but never reached the file
+      license: options.license || detected?.license,
+      cicd: options.ciCd || detected?.cicd,
+      projectType: options.projectType,
+      repoHost: detected?.repoHost,
     };
 
     // Show auto-detected configuration summary (verbose -y mode)
@@ -1283,14 +1305,17 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
     if (cmdEntries.length > 0) {
       console.log(chalk.green("    ✓ ") + chalk.white("Commands    ") + chalk.cyan(cmdEntries.map(([k, v]) => `${k}=${v}`).join(", ")));
     }
-    if (detected?.license) {
-      console.log(chalk.green("    ✓ ") + chalk.white("License     ") + chalk.cyan(detected.license.toUpperCase()));
+    if (config.license) {
+      console.log(chalk.green("    ✓ ") + chalk.white("License     ") + chalk.cyan(config.license.toUpperCase()));
     }
-    if (detected?.repoHost) {
-      console.log(chalk.green("    ✓ ") + chalk.white("Repository  ") + chalk.cyan(detected.repoHost));
+    if (config.repoHost) {
+      console.log(chalk.green("    ✓ ") + chalk.white("Repository  ") + chalk.cyan(config.repoHost));
     }
-    if (detected?.cicd) {
-      console.log(chalk.green("    ✓ ") + chalk.white("CI/CD       ") + chalk.cyan(detected.cicd.replace("_", " ")));
+    if (typeof config.cicd === "string" && config.cicd) {
+      console.log(chalk.green("    ✓ ") + chalk.white("CI/CD       ") + chalk.cyan(config.cicd.replace("_", " ")));
+    }
+    if (config.projectType) {
+      console.log(chalk.green("    ✓ ") + chalk.white("Project type") + chalk.cyan(" " + config.projectType));
     }
     if (detected?.hasDocker) {
       console.log(chalk.green("    ✓ ") + chalk.white("Docker      ") + chalk.cyan("yes"));
@@ -1315,16 +1340,22 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
       enableAutoUpdate: false, // Don't generate curl header yet
     };
     
-    let files = generateConfig(finalConfig);
+    let files = generateConfig({ ...finalConfig, apiUrl: getApiUrl() });
     
     // If enableAutoUpdate is true, save blueprint to cloud first
     let savedBlueprintId: string | null = null;
+    let syncedFile: { file: string; uploadedContent: string } | null = null;
     if (config.enableAutoUpdate && api) {
       spinner.text = "Saving blueprint to cloud...";
       try {
-        const mainFile = Object.entries(files)[0];
+        // Upload the file the user chose to sync (or the first one) and remember which it is
+        const primaryFile = config.primarySyncFormat ? PLATFORM_FILES[config.primarySyncFormat] : undefined;
+        const mainFile = (primaryFile && files[primaryFile] !== undefined)
+          ? [primaryFile, files[primaryFile]] as const
+          : Object.entries(files)[0];
         if (mainFile) {
-          const [_fileName, content] = mainFile;
+          const [fileName, content] = mainFile;
+          syncedFile = { file: fileName, uploadedContent: content };
           const response = await api.createBlueprint({
             name: config.name || "My AI Config",
             description: config.description || "Generated with LynxPrompt CLI",
@@ -1339,7 +1370,7 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
             enableAutoUpdate: true,
             blueprintId: savedBlueprintId,
           };
-          files = generateConfig(configWithAutoUpdate);
+          files = generateConfig({ ...configWithAutoUpdate, apiUrl: getApiUrl() });
           
           console.log(chalk.green(`  ✓ Blueprint saved: ${savedBlueprintId}`));
         }
@@ -1398,6 +1429,18 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
 
       await writeFile(outputPath, content, "utf-8");
       console.log(`     ${chalk.cyan("→")} ${chalk.bold(filename)}`);
+
+      // Link the synced file to its new blueprint so 'lynxp push' updates it instead of
+      // creating a duplicate. The checksum is the uploaded content, which is what the server holds.
+      if (savedBlueprintId && syncedFile && syncedFile.file === filename) {
+        await trackBlueprint(process.cwd(), {
+          id: savedBlueprintId,
+          name: config.name || "My AI Config",
+          file: relative(process.cwd(), outputPath),
+          content: syncedFile.uploadedContent,
+          source: "private",
+        });
+      }
     }
 
     console.log();
@@ -1572,6 +1615,9 @@ async function runInteractiveWizard(
   const availableSteps = WIZARD_STEPS;
   let currentStepNum = 0;
 
+  // Saved draft answers and explicit flags are not asked again
+  prompts.override(buildPromptOverrides(options._draftAnswers, options));
+
   // Initialize global state for draft saving on exit
   wizardState.inProgress = true;
   wizardState.answers = answers;
@@ -1586,7 +1632,7 @@ async function runInteractiveWizard(
     if (answers.platforms) console.log(chalk.gray(`       • Platforms: ${(answers.platforms as string[]).join(", ")}`));
     if (answers.stack) console.log(chalk.gray(`       • Stack: ${(answers.stack as string[]).slice(0, 5).join(", ")}${(answers.stack as string[]).length > 5 ? "..." : ""}`));
     console.log();
-    console.log(chalk.yellow("     Steps 1-" + (resumeFromStep - 1) + " will use saved values. Continuing from step " + resumeFromStep + "."));
+    console.log(chalk.yellow("     Saved answers are reused; you will only be asked what the draft does not have."));
     console.log();
   }
 
@@ -1617,9 +1663,9 @@ async function runInteractiveWizard(
     // Use saved answer from draft
     platforms = answers.platforms as string[];
     console.log(chalk.gray(`  Step 1 (Output Format): Using saved platforms: ${platforms.join(", ")}`));
-  } else if (options.format) {
+  } else if (options.format || options.platforms) {
     showStep(currentStepNum, formatStep);
-    platforms = options.format.split(",").map(f => f.trim());
+    platforms = parsePlatformList((options.format || options.platforms)!);
     console.log(chalk.gray(`  Using format from flag: ${platforms.join(", ")}`));
   } else {
     showStep(currentStepNum, formatStep);
@@ -3881,6 +3927,26 @@ async function runInteractiveWizard(
     projectType: answers.projectType as string,
     devOS: answers.devOS as string[],
     architecture: answers.architecture as string,
+    architectureOther: answers.architectureOther as string,
+    packageManager: answers.packageManager as string,
+    jsRuntime: answers.jsRuntime as string,
+    monorepoTool: answers.monorepoTool as string,
+    orm: answers.orm as string,
+    branchStrategy: answers.branchStrategy as string,
+    defaultBranch: (answers.defaultBranch === "other" ? answers.defaultBranchOther : answers.defaultBranch) as string,
+    commitSigning: answers.commitSigning as boolean,
+    maxFileLength: answers.maxFileLength as number,
+    importOrder: answers.importOrder as string,
+    commentLanguage: answers.commentLanguage as string,
+    docStyle: answers.docStyle as string,
+    errorHandlingOther: answers.errorHandlingOther as string,
+    explanationVerbosity: answers.explanationVerbosity as string,
+    accessibilityFocus: answers.accessibilityFocus as boolean,
+    performanceFocus: answers.performanceFocus as boolean,
+    tddPreference: answers.tddPreference as boolean,
+    snapshotTesting: answers.snapshotTesting as boolean,
+    mockStrategy: answers.mockStrategy as string,
+    primarySyncFormat: answers.primarySyncFormat as string,
     repoHost: answers.repoHost as string,
     isPublic: answers.isPublic as boolean,
     license: answers.license as string,
@@ -3914,10 +3980,12 @@ async function runInteractiveWizard(
     includeFunding: answers.includeFunding as boolean,
     extraNotes: answers.extraNotes as string,
     semver: answers.semver as boolean,
-    cicd: answers.cicd as string,
+    cicd: answers.cicd as string | string[],
+    cicdOther: answers.cicdOther as string,
     deploymentTargets: answers.deploymentTargets as string[],
     buildContainer: answers.buildContainer as boolean,
     containerRegistry: answers.containerRegistry as string,
+    customRegistryUrl: answers.customRegistryUrl as string,
     exampleRepoUrl: answers.exampleRepoUrl as string,
     documentationUrl: answers.documentationUrl as string,
     loggingConventions: answers.loggingConventions as string,

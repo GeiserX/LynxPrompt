@@ -4,6 +4,16 @@
  * for minimal self-hosted deployments.
  */
 
+/**
+ * Read an env var when the code runs. Next inlines `process.env.NEXT_PUBLIC_*`
+ * into every bundle at build time, server code included, so reading one that
+ * way returns the value of the image build, not the container's env. A
+ * computed key is never inlined.
+ */
+export function runtimeEnv(key: string): string {
+  return process.env[key] || "";
+}
+
 export function envBool(key: string, defaultValue: boolean): boolean {
   const val = process.env[key];
   if (val === undefined || val === "") return defaultValue;

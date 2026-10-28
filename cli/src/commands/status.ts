@@ -2,7 +2,7 @@ import chalk from "chalk";
 import { readFile, readdir, access } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
-import { checkSyncStatus } from "../utils/blueprint-tracker.js";
+import { checkSyncStatus, toTrackedPath } from "../utils/blueprint-tracker.js";
 
 // AI config files to look for
 const CONFIG_FILES = [
@@ -132,7 +132,7 @@ export async function statusCommand(): Promise<void> {
       foundAny = true;
       
       // Check if this file is tracked
-      const tracked = trackedStatus.find(t => t.blueprint.file === config.path);
+      const tracked = trackedStatus.find(t => toTrackedPath(cwd, t.blueprint.file) === config.path);
       const trackedLabel = tracked ? chalk.cyan(" (tracked)") : "";
       
       console.log(`  ${chalk.green("✓")} ${chalk.bold(config.name)}${trackedLabel}`);

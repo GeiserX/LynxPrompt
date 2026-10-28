@@ -26,20 +26,36 @@ interface ValidationResult {
   files: string[];
 }
 
-// Known AI config files
+// Known AI config files (Markdown rule files the wizard can generate)
 const CONFIG_FILES = [
   { path: "AGENTS.md", name: "AGENTS.md" },
   { path: "CLAUDE.md", name: "CLAUDE.md" },
+  { path: "GEMINI.md", name: "Gemini" },
+  { path: "WARP.md", name: "Warp" },
+  { path: "CRUSH.md", name: "Crush" },
   { path: ".github/copilot-instructions.md", name: "GitHub Copilot" },
   { path: ".windsurfrules", name: "Windsurf" },
-  { path: ".clinerules", name: "Cline" },
+  { path: ".clinerules", name: "Cline" }, // may also be a directory of rule files
   { path: ".goosehints", name: "Goose" },
   { path: ".zed/instructions.md", name: "Zed" },
+  { path: ".junie/guidelines.md", name: "Junie" },
+  { path: ".openhands/microagents/repo.md", name: "OpenHands" },
 ];
 
+// Directories of rule files. .lynxprompt/ itself is not one: it holds tracking
+// metadata (blueprints.yml, drafts), and counting that made a repo with no rules pass.
 const CONFIG_DIRS = [
   { path: ".cursor/rules", name: "Cursor" },
-  { path: ".lynxprompt", name: "LynxPrompt" },
+  { path: ".clinerules", name: "Cline" },
+  { path: ".windsurf/rules", name: "Windsurf" },
+  { path: ".kiro/steering", name: "Kiro" },
+  { path: ".trae/rules", name: "Trae" },
+  { path: ".augment/rules", name: "Augment" },
+  { path: ".roo/rules", name: "Roo Code" },
+  { path: ".kilocode/rules", name: "Kilo Code" },
+  { path: ".amazonq/rules", name: "Amazon Q" },
+  { path: ".idx/rules", name: "Firebase Studio" },
+  { path: ".lynxprompt/rules", name: "LynxPrompt" },
 ];
 
 /**
@@ -205,7 +221,8 @@ export async function checkCommand(options: CheckOptions = {}): Promise<void> {
   // Check for config files
   for (const file of CONFIG_FILES) {
     const filePath = join(cwd, file.path);
-    if (existsSync(filePath)) {
+    // A directory (e.g. Cline's .clinerules/ folder) is checked in the loop below
+    if (existsSync(filePath) && (await stat(filePath)).isFile()) {
       result.files.push(file.path);
       try {
         const content = await readFile(filePath, "utf-8");
@@ -221,7 +238,7 @@ export async function checkCommand(options: CheckOptions = {}): Promise<void> {
   // Check for config directories
   for (const dir of CONFIG_DIRS) {
     const dirPath = join(cwd, dir.path);
-    if (existsSync(dirPath)) {
+    if (existsSync(dirPath) && (await stat(dirPath)).isDirectory()) {
       try {
         const files = await readdir(dirPath);
         for (const file of files) {
@@ -314,6 +331,7 @@ export async function checkCommand(options: CheckOptions = {}): Promise<void> {
       console.log(chalk.green("✅ Validation passed!"));
     } else {
       console.log(chalk.red("❌ Validation failed. Fix the errors above."));
+      process.exitCode = 1;
     }
     console.log();
   }

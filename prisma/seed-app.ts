@@ -1,6 +1,10 @@
 import { PrismaClient, TemplateType, TemplateTier } from "../src/generated/prisma-app/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import pg from "pg";
 
-const prisma = new PrismaClient();
+// Prisma 7 has no built-in connection: the client needs a driver adapter.
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL_APP });
+const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 async function main() {
   console.log("🌱 Seeding APP database (system data)...");
@@ -185,7 +189,7 @@ async function main() {
       tags: ["nextjs", "typescript", "react", "prisma", "fullstack"],
       category: "web",
       difficulty: "intermediate",
-      usageCount: 1567,
+      downloads: 1567,
     },
     {
       name: "Python Data Science",
@@ -224,7 +228,7 @@ You are an expert in Python, pandas, NumPy, scikit-learn, and data science workf
       tags: ["python", "data-science", "pandas", "ml", "jupyter"],
       category: "data-science",
       difficulty: "intermediate",
-      usageCount: 856,
+      downloads: 856,
     },
     {
       name: "Simple Project Setup",
@@ -258,7 +262,7 @@ You are an expert in Python, pandas, NumPy, scikit-learn, and data science workf
       tags: ["simple", "beginner", "minimal"],
       category: "general",
       difficulty: "beginner",
-      usageCount: 892,
+      downloads: 892,
     },
   ];
 
@@ -334,9 +338,11 @@ You are an expert in Python, pandas, NumPy, scikit-learn, and data science workf
 main()
   .then(async () => {
     await prisma.$disconnect();
+    await pool.end();
   })
   .catch(async (e) => {
     console.error("❌ Seeding failed:", e);
     await prisma.$disconnect();
+    await pool.end();
     process.exit(1);
   });
