@@ -29,7 +29,7 @@ import {
   downloadName,
   type DuplicateVariableDefault,
 } from "@/lib/file-generator";
-import { PLATFORMS } from "@/lib/platforms";
+import { PLATFORMS, COMMANDS, platformForBlueprintType, getCommandTemplateType } from "@/lib/platforms";
 
 interface SensitiveField {
   label: string;
@@ -69,6 +69,26 @@ const platformInfo: Record<string, { name: string; file: string; icon: string; f
 const MARKDOWN_FORMATS = new Set(["markdown", "text", "mdc"]);
 const MARKDOWN_TARGETS = PLATFORMS.filter((p) => !p.isCommand && MARKDOWN_FORMATS.has(p.format));
 
+// Stored blueprint types map to platforms through the shared table; these are
+// older values some blueprints still carry.
+const LEGACY_TARGETS: Record<string, string> = {
+  CUSTOM: "universal",
+  claude_code: "claude",
+  github_copilot: "copilot",
+  continue_dev: "continue",
+};
+
+// Command blueprint types, and where each tool keeps its commands.
+// All are plain Markdown, so converting one is only a rename.
+const COMMAND_TYPES = COMMANDS.map((c) => getCommandTemplateType(c.id));
+const commandExportTargets = COMMANDS.map((c) => ({
+  id: c.platformId,
+  name: c.name,
+  directory: `${c.directory}/`,
+  extension: c.extension,
+  icon: c.icon,
+}));
+
 // Default display count
 const DEFAULT_PLATFORM_COUNT = 6;
 
@@ -93,72 +113,12 @@ export function TemplateDownloadModal({
   const [showPreview, setShowPreview] = useState(false);
   const [savingVar, setSavingVar] = useState<string | null>(null);
   
-  // Map database platform values to our platform IDs
-  const platformIdMap: Record<string, string> = {
-    "AGENTS_MD": "universal",
-    "CURSOR_RULES": "cursor",
-    "CLAUDE_MD": "claude",
-    "COPILOT_INSTRUCTIONS": "copilot",
-    "WINDSURF_RULES": "windsurf",
-    "GEMINI_MD": "antigravity",
-    "CURSOR_MDC": "cursor",
-    "CURSORRULES": "cursor",
-    "ZED_INSTRUCTIONS": "zed",
-    "VOID_CONFIG": "void",
-    "TRAE_RULES": "trae",
-    "IDX_CONFIG": "firebase",
-    "CLINE_RULES": "cline",
-    "ROO_RULES": "roocode",
-    "CONTINUE_CONFIG": "continue",
-    "CODY_CONFIG": "cody",
-    "TABNINE_CONFIG": "tabnine",
-    "AMAZONQ_RULES": "amazonq",
-    "AUGMENT_RULES": "augment",
-    "KILOCODE_RULES": "kilocode",
-    "JUNIE_GUIDELINES": "junie",
-    "KIRO_STEERING": "kiro",
-    "AIDER_MD": "aider",
-    "GOOSEHINTS": "goose",
-    "WARP_MD": "warp",
-    "OPENCODE_JSON": "opencode",
-    "OPENHANDS_MD": "openhands",
-    "CODEX_MD": "universal",
-    "CUSTOM": "universal",
-    // Command types - map to their command platforms
-    "CURSOR_COMMAND": "cursor-command",
-    "CLAUDE_COMMAND": "claude-command",
-    "WINDSURF_WORKFLOW": "windsurf-workflow",
-    "COPILOT_PROMPT": "copilot-prompt",
-    "CONTINUE_PROMPT": "continue-prompt",
-    "OPENCODE_COMMAND": "opencode-command",
-    // Legacy mappings
-    "claude_code": "claude",
-    "github_copilot": "copilot",
-    "continue_dev": "continue",
-  };
-  
-  // All command template types
-  const COMMAND_TYPES = [
-    "CURSOR_COMMAND", "CLAUDE_COMMAND", "WINDSURF_WORKFLOW", 
-    "COPILOT_PROMPT", "CONTINUE_PROMPT", "OPENCODE_COMMAND"
-  ];
-  
   // Check if template is a command
   const isCommand = COMMAND_TYPES.includes(template.targetPlatform || "");
-  
-  // Command export targets - all use plain markdown, conversion is just renaming
-  const commandExportTargets = [
-    { id: "cursor", name: "Cursor", directory: ".cursor/commands/", extension: ".md", icon: "⚡" },
-    { id: "claude", name: "Claude Code", directory: ".claude/commands/", extension: ".md", icon: "🧠" },
-    { id: "windsurf", name: "Windsurf", directory: ".windsurf/workflows/", extension: ".md", icon: "🏄" },
-    { id: "copilot", name: "Copilot", directory: ".github/prompts/", extension: ".prompt.md", icon: "🐙" },
-    { id: "continue", name: "Continue", directory: ".continue/prompts/", extension: ".md", icon: "➡️" },
-    { id: "opencode", name: "OpenCode", directory: ".opencode/commands/", extension: ".md", icon: "🔓" },
-  ];
-  
+
   const getInitialPlatform = () => {
     const rawPlatform = targetPlatform || template.targetPlatform || "universal";
-    const mapped = platformIdMap[rawPlatform] || rawPlatform;
+    const mapped = platformForBlueprintType(rawPlatform) ?? LEGACY_TARGETS[rawPlatform] ?? rawPlatform;
     return platformInfo[mapped] ? mapped : "universal";
   };
   

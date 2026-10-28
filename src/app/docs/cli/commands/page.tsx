@@ -477,7 +477,7 @@ $ lynxp import --json | jq '.hierarchy'`}</code>
                 <li>• <strong>.cursor/commands/*.md</strong> — Cursor commands</li>
                 <li>• <strong>.claude/commands/*.md</strong> — Claude Code commands</li>
                 <li>• <strong>.windsurf/workflows/*.md</strong> — Windsurf workflows</li>
-                <li>• <strong>.copilot/prompts/*.md</strong> — GitHub Copilot prompts</li>
+                <li>• <strong>.github/prompts/*.prompt.md</strong> — GitHub Copilot prompts</li>
                 <li>• <strong>.continue/prompts/*.md</strong> — Continue.dev prompts</li>
                 <li>• <strong>.opencode/commands/*.md</strong> — OpenCode commands</li>
               </ul>
