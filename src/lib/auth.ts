@@ -38,6 +38,27 @@ function getGravatarUrl(email: string): string {
   return `https://www.gravatar.com/avatar/${hash}?d=identicon&s=200`;
 }
 
+// How long a sign-in link stays valid (the email provider's maxAge).
+const MAGIC_LINK_MAX_AGE_SECONDS = 24 * 60 * 60;
+
+// At most this many sign-in mails per address in the window, so nobody can
+// flood an inbox through the sign-in form.
+export const MAGIC_LINK_LIMIT = 3;
+export const MAGIC_LINK_WINDOW_MS = 10 * 60 * 1000;
+
+// Every mail sent leaves a VerificationToken row that expires maxAge after it
+// was created, so the rows created inside the window are the ones whose
+// expiry is later than now + maxAge - window. Using a link deletes its row.
+async function magicLinkThrottled(email: string): Promise<boolean> {
+  const createdAfterExpiry = new Date(
+    Date.now() + MAGIC_LINK_MAX_AGE_SECONDS * 1000 - MAGIC_LINK_WINDOW_MS
+  );
+  const recent = await prismaUsers.verificationToken.count({
+    where: { identifier: email, expires: { gt: createdAfterExpiry } },
+  });
+  return recent >= MAGIC_LINK_LIMIT;
+}
+
 // Custom email template for magic links
 async function sendVerificationRequest(
   params: SendVerificationRequestParams
@@ -219,7 +240,7 @@ function buildProviders(): Provider[] {
           },
         },
         from: process.env.SMTP_FROM || `noreply@${new URL(APP_URL).hostname}`,
-        maxAge: 24 * 60 * 60,
+        maxAge: MAGIC_LINK_MAX_AGE_SECONDS,
         sendVerificationRequest,
       })
     );
@@ -318,7 +339,14 @@ export const authOptions: NextAuthOptions = {
     error: "/auth/error",
   },
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account, profile, email }) {
+      // A magic-link request: NextAuth calls this before it stores the token
+      // and sends the mail, with user.email already normalized. The client
+      // parses the returned URL, so it has to be absolute.
+      if (email?.verificationRequest && user.email && (await magicLinkThrottled(user.email))) {
+        return new URL("/auth/signin?error=EmailThrottled", APP_URL).toString();
+      }
+
       // Block new user registration when disabled
       if (!ENABLE_USER_REGISTRATION && user.email) {
         const existing = await prismaUsers.user.findUnique({

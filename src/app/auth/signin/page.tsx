@@ -215,16 +215,21 @@ function SignInContent() {
       // Debug: Log the signIn result
       console.log("Magic link signIn result:", JSON.stringify(result, null, 2));
 
-      if (result?.ok) {
-        setEmailSent(true);
-      } else if (result?.error === "TurnstileFailed") {
+      // A refusal from the signIn callback comes back with ok: true and an
+      // error, so the error has to be checked first.
+      if (result?.error === "TurnstileFailed") {
         resetTurnstile();
         setTurnstileError("Security verification failed. Please try again.");
+      } else if (result?.error === "EmailThrottled") {
+        resetTurnstile();
+        setMagicLinkError("Too many sign-in links were sent to this address. Check your inbox, or wait 10 minutes and try again.");
       } else if (result?.error) {
         resetTurnstile();
         // Show user-friendly error message
         console.error("Magic link signIn error:", result.error);
         setMagicLinkError("Could not send magic link. Please try again later or use another sign-in method.");
+      } else if (result?.ok) {
+        setEmailSent(true);
       } else {
         // Unknown error - signIn returned but neither ok nor error
         resetTurnstile();
