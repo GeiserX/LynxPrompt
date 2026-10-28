@@ -1,0 +1,9 @@
+# chart-testing settings for `ct lint` (chart-lint.yml).
+chart-dirs:
+  - charts
+target-branch: main
+remote: origin
+# The maintainer entry is a person's name, not a GitHub login.
+validate-maintainers: false
+# The chart version is bumped when a release ships it, not in every PR.
+check-version-increment: false
