@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { validateDisplayName } from "@/lib/display-name";
+import { requireSession } from "@/lib/api-auth";
 
 // GET /api/user/profile - Fetch current user's profile
-export async function GET() {
-  const session = await getServerSession(authOptions);
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export async function GET(request: Request) {
+  const auth = await requireSession(request);
+  if (auth instanceof NextResponse) return auth;
+  const { session } = auth;
 
   try {
     const user = await prismaUsers.user.findUnique({
@@ -55,11 +52,9 @@ export async function GET() {
 
 // PUT /api/user/profile - Update current user's profile
 export async function PUT(request: NextRequest) {
-  const session = await getServerSession(authOptions);
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireSession(request);
+  if (auth instanceof NextResponse) return auth;
+  const { session } = auth;
 
   try {
     const body = await request.json();

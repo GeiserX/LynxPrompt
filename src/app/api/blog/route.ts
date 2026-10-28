@@ -6,6 +6,7 @@ import { prismaBlog } from "@/lib/db-blog";
 import { prismaUsers } from "@/lib/db-users";
 import { isAdminRole, UserRole } from "@/lib/subscription";
 import { parsePage } from "@/lib/pagination";
+import { requireSession } from "@/lib/api-auth";
 import { blogDisabled } from "@/lib/blog-guard";
 
 // Generate Gravatar URL from email (server-side)
@@ -119,11 +120,9 @@ export async function POST(request: NextRequest) {
   if (disabled) return disabled;
 
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     // Check if user is admin
     const isAdmin = session.user.role

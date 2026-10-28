@@ -9,6 +9,7 @@ import { normalizeBlueprintType } from "@/lib/blueprint-rules";
 import { contentChecksum } from "@/lib/content-checksum";
 import { parsePage } from "@/lib/pagination";
 import { checkBlueprintLineCount, BLUEPRINT_LIMITS } from "@/lib/subscription";
+import { requireSession } from "@/lib/api-auth";
 
 /**
  * Determine tier based on total word count (all content including comments/headers).
@@ -222,14 +223,9 @@ export async function GET(request: NextRequest) {
 // POST: Create a new blueprint
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
-    }
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     const body = await request.json();
     const { 

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prismaBlog } from "@/lib/db-blog";
 import { prismaUsers } from "@/lib/db-users";
 import { isAdminRole, UserRole } from "@/lib/subscription";
+import { requireSession } from "@/lib/api-auth";
 import { blogDisabled } from "@/lib/blog-guard";
 
 // GET: Get single blog post by slug
@@ -71,11 +72,9 @@ export async function PUT(
 
   try {
     const { slug } = await params;
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     // Check if user is admin
     const isAdmin = session.user.role
@@ -151,11 +150,9 @@ export async function DELETE(
 
   try {
     const { slug } = await params;
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     // Check if user is admin
     const isAdmin = session.user.role

@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { isAdminRole, UserRole } from "@/lib/subscription";
 import { writeFile, mkdir } from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
 import { validateMagicBytes } from "@/lib/file-validation";
+import { requireSession } from "@/lib/api-auth";
 import { blogDisabled } from "@/lib/blog-guard";
 
 // The upload directory is a runtime volume outside the build. The
@@ -32,10 +31,9 @@ export async function POST(request: NextRequest) {
 
   try {
     // Check authentication
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     // Check if user is admin
     const isAdmin = session.user.role

@@ -3,6 +3,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const mockFindUnique = vi.fn();
 const mockUpdate = vi.fn();
 
+// Passkeys are not under test here: every session counts as verified.
+vi.mock("@/lib/passkey-session", () => ({
+  getPasskeyStatus: vi.fn().mockResolvedValue({ required: false, verified: true }),
+}));
+
 vi.mock("next-auth", () => ({
   getServerSession: vi.fn().mockResolvedValue({ user: { id: "user_1" } }),
 }));

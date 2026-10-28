@@ -14,6 +14,11 @@ function matches(inv: Invite, where: Record<string, any>) {
 
 const mockCreate = vi.fn();
 
+// Passkeys are not under test here: every session counts as verified.
+vi.mock("@/lib/passkey-session", () => ({
+  getPasskeyStatus: vi.fn().mockResolvedValue({ required: false, verified: true }),
+}));
+
 vi.mock("next-auth", () => ({
   getServerSession: vi.fn().mockResolvedValue({ user: { id: "admin_1" } }),
 }));
