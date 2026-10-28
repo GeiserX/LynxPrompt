@@ -75,19 +75,18 @@ const baseConfig = {
 };
 
 // ============================================================================
-// Aider generator - comprehensive coverage
+// Aider generator - CONVENTIONS.md (Markdown), loaded with `aider --read`
 // ============================================================================
 describe("generateAllFiles - aider generator", () => {
-  it("generates basic aider config", () => {
+  it("generates Markdown conventions, not YAML", () => {
     const files = generateAllFiles(
       { ...baseConfig, platform: "aider" },
       baseUser
     );
     expect(files).toHaveLength(1);
-    expect(files[0].fileName).toBe("AIDER.md");
-    expect(files[0].content).toContain("Aider AI Pair Programming");
-    expect(files[0].content).toContain("auto-commits: true");
-    expect(files[0].content).toContain("TestProject");
+    expect(files[0].content).toMatch(/^# TestProject - Aider Conventions\n/);
+    expect(files[0].content).toContain("aider --read CONVENTIONS.md");
+    expect(files[0].content).not.toContain("auto-commits: true");
   });
 
   it("includes architecture pattern", () => {
@@ -98,223 +97,12 @@ describe("generateAllFiles - aider generator", () => {
     expect(files[0].content).toContain("Microservices");
   });
 
-  it("includes architecture pattern - other", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "aider", architecturePattern: "other", architecturePatternOther: "Custom CQRS" },
-      baseUser
-    );
-    expect(files[0].content).toContain("Custom CQRS");
-  });
-
-  it("includes dev OS", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "aider", devOS: "macos" },
-      baseUser
-    );
-    expect(files[0].content).toContain("macOS");
-  });
-
-  it("includes databases", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "aider", databases: ["postgresql", "redis"] },
-      baseUser
-    );
-    expect(files[0].content).toContain("postgresql");
-    expect(files[0].content).toContain("redis");
-  });
-
-  it("includes custom languages", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "aider", languages: ["custom:MyLang", "python"] },
-      baseUser
-    );
-    expect(files[0].content).toContain("MyLang");
-    expect(files[0].content).toContain("python");
-  });
-
-  it("includes let AI decide note", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "aider", letAiDecide: true },
-      baseUser
-    );
-    expect(files[0].content.toLowerCase()).toContain("ai");
-  });
-
-  it("includes code style naming", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "aider", codeStyle: { naming: "snake_case" } },
-      baseUser
-    );
-    expect(files[0].content).toContain("snake_case");
-  });
-
-  it("includes error handling", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "aider", codeStyle: { errorHandling: "try_catch" } },
-      baseUser
-    );
-    expect(files[0].content.toLowerCase()).toContain("try");
-  });
-
-  it("includes logging conventions", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "aider", codeStyle: { loggingConventions: "Use structured JSON logs" } },
-      baseUser
-    );
-    expect(files[0].content).toContain("structured JSON");
-  });
-
-  it("includes code style notes", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "aider", codeStyle: { notes: "Always use strict mode" } },
-      baseUser
-    );
-    expect(files[0].content).toContain("strict mode");
-  });
-
-  it("includes developer profile - novice", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "aider" },
-      { ...baseUser, skillLevel: "novice" }
-    );
-    expect(files[0].content.toLowerCase()).toContain("verbose");
-  });
-
-  it("includes developer profile - expert", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "aider" },
-      { ...baseUser, skillLevel: "expert" }
-    );
-    expect(files[0].content.toLowerCase()).toContain("concise");
-  });
-
-  it("includes ai behavior rules", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "aider", aiBehaviorRules: ["concise_responses", "follow_existing_patterns"] },
-      baseUser
-    );
-    expect(files[0].content.toLowerCase()).toContain("concise");
-  });
-
-  it("includes conventional commits", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "aider", conventionalCommits: true },
-      baseUser
-    );
-    expect(files[0].content.toLowerCase()).toContain("conventional commit");
-  });
-
-  it("includes commands", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "aider", commands: { build: "npm run build", test: "npm test", lint: "npm run lint", dev: "npm run dev" } },
-      baseUser
-    );
-    expect(files[0].content).toContain("npm run build");
-    expect(files[0].content).toContain("npm test");
-    expect(files[0].content).toContain("npm run lint");
-    expect(files[0].content).toContain("npm run dev");
-  });
-
-  it("includes additional commands", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "aider", commands: { additional: ["docker compose up", "make migrate"] } },
-      baseUser
-    );
-    expect(files[0].content).toContain("docker compose up");
-  });
-
-  it("includes boundaries", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "aider", boundaries: { always: ["Run tests"], ask: ["Refactor"], never: ["Push to main"] } },
-      baseUser
-    );
-    expect(files[0].content).toContain("Run tests");
-    expect(files[0].content).toContain("Refactor");
-    expect(files[0].content).toContain("Push to main");
-  });
-
-  it("includes testing strategy", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "aider", testingStrategy: { levels: ["unit", "integration"], coverage: 85, frameworks: ["pytest"], notes: "Focus on edge cases" } },
-      baseUser
-    );
-    const content = files[0].content;
-    expect(content.toLowerCase()).toContain("unit");
-    expect(content).toContain("85");
-  });
-
-  it("includes project type", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "aider", projectType: "open_source_large" },
-      baseUser
-    );
-    expect(files[0].content.toLowerCase()).toContain("open source");
-  });
-
-  it("includes security notice", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "aider" },
-      baseUser
-    );
-    expect(files[0].content.toLowerCase()).toContain("security");
-  });
-
-  it("includes deployment target", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "aider", deploymentTarget: ["docker", "kubernetes"] },
-      baseUser
-    );
-    expect(files[0].content.toLowerCase()).toContain("docker");
-  });
-
-  it("includes important files", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "aider", importantFiles: ["readme", "dockerfile"] },
-      baseUser
-    );
-    expect(files[0].content).toContain("README.md");
-    expect(files[0].content).toContain("Dockerfile");
-  });
-
-  it("includes important files other", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "aider", importantFilesOther: "custom.yaml, deploy.sh" },
-      baseUser
-    );
-    expect(files[0].content).toContain("custom.yaml");
-  });
-
-  it("includes additional feedback", () => {
+  it("includes custom instructions", () => {
     const files = generateAllFiles(
       { ...baseConfig, platform: "aider", additionalFeedback: "Always use strict TypeScript" },
       baseUser
     );
-    expect(files[0].content).toContain("strict TypeScript");
-  });
-
-  it("includes semver", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "aider", semver: true },
-      baseUser
-    );
-    expect(files[0].content.toLowerCase()).toContain("semantic versioning");
-  });
-
-  it("includes cicd labels", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "aider", cicd: ["github_actions", "jenkins"] },
-      baseUser
-    );
-    expect(files[0].content).toContain("GitHub Actions");
-    expect(files[0].content).toContain("Jenkins");
-  });
-
-  it("includes container registry", () => {
-    const files = generateAllFiles(
-      { ...baseConfig, platform: "aider", buildContainer: true, containerRegistry: "ghcr" },
-      baseUser
-    );
-    expect(files[0].content).toContain("GHCR");
+    expect(files[0].content).toContain("Always use strict TypeScript");
   });
 });
 
@@ -1080,13 +868,13 @@ describe("generateAllFiles - API sync header", () => {
     expect(files[0].content).toContain("lynxp");
   });
 
-  it("uses yaml comments for aider", () => {
+  it("uses an HTML comment for aider's Markdown conventions", () => {
     const files = generateAllFiles(
       { ...baseConfig, platform: "aider", enableAutoUpdate: true },
       baseUser,
       { blueprintId: "bp-aider" }
     );
-    expect(files[0].content).toContain("# ");
+    expect(files[0].content.startsWith("<!--")).toBe(true);
     expect(files[0].content).toContain("bp-aider");
   });
 

@@ -188,6 +188,12 @@ const PROJECT_TYPE_INSTRUCTIONS: Record<string, string[]> = {
     "**IMPORTANT**: Never delete files without explicit consent.",
     "Take time to explain concepts and alternatives.",
   ],
+  open_source: [
+    "This is an open source project; community contributions are welcome.",
+    "Follow existing conventions strictly and consider backward compatibility.",
+    "Document everything so contributors can follow along.",
+    "Be thorough but pragmatic.",
+  ],
   open_source_small: [
     "This is a small open source project.",
     "Balance best practices with pragmatic simplicity.",
@@ -271,10 +277,11 @@ function formatDevOSDisplay(config: WizardConfig): string {
 
 // Regular expression to detect template variables with optional defaults
 // Matches: [[VAR_NAME]] or [[VAR_NAME|default value]]
-const VARIABLE_PATTERN = /\[\[([A-Za-z_][A-Za-z0-9_]*)(?:\|([^\]]*))?\]\]/g;
-
-// Pattern for simple detection (without capturing defaults)
-const VARIABLE_SIMPLE_PATTERN = /\[\[([A-Za-z_][A-Za-z0-9_]*)(?:\|[^\]]*)?\]\]/g;
+// A default may contain "]" (a value like "items[0]"): it runs to the first
+// "]]" that is not followed by another "]", and never across another "[[".
+const VARIABLE_DEFAULT = String.raw`((?:(?!\[\[)[\s\S])*?)\]\](?!\])`;
+export const VARIABLE_PATTERN_SOURCE = String.raw`\[\[([A-Za-z_][A-Za-z0-9_]*)(?:\|${VARIABLE_DEFAULT}|\]\])`;
+const VARIABLE_PATTERN = new RegExp(VARIABLE_PATTERN_SOURCE, "g");
 
 // Common variable suggestions
 export const SUGGESTED_VARIABLES = [
@@ -305,7 +312,7 @@ export interface ParsedVariable {
  * So [[myVar]], [[MYVAR]], [[MyVar]] are all treated as [[MYVAR]]
  */
 export function detectVariables(content: string): string[] {
-  const matches = content.match(VARIABLE_SIMPLE_PATTERN);
+  const matches = content.match(VARIABLE_PATTERN);
   if (!matches) return [];
   
   // Extract unique variable names (without brackets/defaults), normalized to UPPERCASE
@@ -385,7 +392,7 @@ export function highlightVariables(content: string): string {
  */
 export function hasVariables(content: string): boolean {
   // Use a fresh regex to avoid state issues with global flag
-  return /\[\[([A-Za-z_][A-Za-z0-9_]*)(?:\|[^\]]*)?\]\]/.test(content);
+  return new RegExp(VARIABLE_PATTERN_SOURCE).test(content);
 }
 
 /**
@@ -412,7 +419,7 @@ export function detectDuplicateVariableDefaults(content: string): DuplicateVaria
   const variableOccurrences: Record<string, Array<{ line: number; defaultValue: string }>> = {};
   
   // Pattern to match variables with defaults only
-  const patternWithDefault = /\[\[([A-Za-z_][A-Za-z0-9_]*)\|([^\]]*)\]\]/g;
+  const patternWithDefault = new RegExp(String.raw`\[\[([A-Za-z_][A-Za-z0-9_]*)\|${VARIABLE_DEFAULT}`, "g");
   
   lines.forEach((lineContent, index) => {
     const lineNumber = index + 1;
@@ -460,6 +467,61 @@ export function escapeVariables(content: string): string {
   return content.replace(/\\\[\\\[/g, "[[").replace(/\\\]\\\]/g, "]]");
 }
 
+// ============================================================================
+// RULE FILE FRONTMATTER
+// Tools that read YAML frontmatter on their rule files, and the keys that make
+// the rule apply to every request. Every other platform gets plain Markdown.
+// ============================================================================
+
+const cursorFrontmatter = (description: string) => [`description: ${yamlString(description)}`, "alwaysApply: true"];
+
+const PLATFORM_FRONTMATTER: Record<string, (description: string) => string[]> = {
+  cursor: cursorFrontmatter,
+  firebender: cursorFrontmatter, // Firebender reads Cursor-style .mdc rules
+  kiro: () => ["inclusion: always"],
+  augment: (description) => ["type: always_apply", `description: ${yamlString(description)}`],
+};
+
+// A double-quoted YAML scalar. JSON string syntax is valid YAML, so a value
+// with ": ", "#", quotes or newlines cannot break the frontmatter.
+function yamlString(value: string): string {
+  return JSON.stringify(value);
+}
+
+const FRONTMATTER_PATTERN = /^---\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n)+/;
+
+function frontmatterLines(platform: string, description: string): string[] {
+  const keys = PLATFORM_FRONTMATTER[platform];
+  return keys ? ["---", ...keys(description), "---", ""] : [];
+}
+
+/** Split leading YAML frontmatter (if any) from the rest of a rules file. */
+function splitFrontmatter(content: string): { frontmatter: string; body: string } {
+  const match = content.match(FRONTMATTER_PATTERN);
+  if (!match) return { frontmatter: "", body: content };
+  return { frontmatter: match[0], body: content.slice(match[0].length) };
+}
+
+/**
+ * Re-target Markdown rules content written for one platform to another one:
+ * drop frontmatter the target does not read and add the frontmatter it needs.
+ * Content already shaped for the target (same platform, or one sharing its
+ * frontmatter keys) is returned untouched, so hand-written keys like globs stay.
+ */
+export function adaptRulesContent(
+  content: string,
+  fromPlatform: string,
+  toPlatform: string,
+  description: string
+): string {
+  const { frontmatter, body } = splitFrontmatter(content);
+  const target = PLATFORM_FRONTMATTER[toPlatform];
+  if (fromPlatform === toPlatform && (frontmatter || !target)) return content;
+  if (frontmatter && target && PLATFORM_FRONTMATTER[fromPlatform] === target) return content;
+  const lines = frontmatterLines(toPlatform, description);
+  return lines.length ? `${lines.join("\n")}\n${body}` : body;
+}
+
 // Generate Cursor project rules content (.cursor/rules/*.mdc format)
 // MDC format: Markdown with YAML frontmatter
 function generateCursorRules(config: WizardConfig, user: UserProfile): string {
@@ -467,11 +529,7 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
   const bp = config.blueprintMode;
 
   // MDC frontmatter
-  lines.push("---");
-  lines.push(`description: AI rules for ${bpVar(bp, "PROJECT_NAME", config.projectName || "this project")}`);
-  lines.push("alwaysApply: true");
-  lines.push("---");
-  lines.push("");
+  lines.push(...frontmatterLines("cursor", `AI rules for ${bpVar(bp, "PROJECT_NAME", config.projectName || "this project")}`));
   lines.push(`# ${bpVar(bp, "PROJECT_NAME", config.projectName || "Project")} - AI Rules`);
   lines.push("");
   
@@ -897,6 +955,7 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
     const projectTypeLabels: Record<string, string> = {
       work: "Work / Professional Project",
       leisure: "Personal / Hobby Project",
+      open_source: "Open Source Project",
       open_source_small: "Open Source (Small)",
       open_source_enterprise: "Open Source (Enterprise-grade)",
       startup: "Startup / MVP",
@@ -1219,7 +1278,7 @@ function generateCursorRules(config: WizardConfig, user: UserProfile): string {
 function generateClaudeMd(config: WizardConfig, user: UserProfile): string {
   // Use AGENTS.md as base and transform for Claude
   return generateAgentsMd(config, user)
-    .replace(/^# .* - AI Agent Instructions/, `# ${config.projectName || "Project"} - Claude Code Instructions`)
+    .replace(/^# .* - AI Agent Instructions/, () => `# ${config.projectName || "Project"} - Claude Code Instructions`)
     .replace(/^> \*\*Universal AI Configuration\*\*.*$/m, "");
 }
 
@@ -1230,7 +1289,7 @@ function generateCopilotInstructions(
 ): string {
   // Use AGENTS.md as base and transform for Copilot
   return generateAgentsMd(config, user)
-    .replace(/^# .* - AI Agent Instructions/, `# GitHub Copilot Instructions for ${config.projectName || "this project"}`)
+    .replace(/^# .* - AI Agent Instructions/, () => `# GitHub Copilot Instructions for ${config.projectName || "this project"}`)
     .replace(/^> \*\*Universal AI Configuration\*\*.*$/m, "");
 }
 
@@ -1249,7 +1308,7 @@ function generateWindsurfRules(
 function generateGeminiMd(config: WizardConfig, user: UserProfile): string {
   // Use AGENTS.md as base and transform for Antigravity/Gemini
   return generateAgentsMd(config, user)
-    .replace(/^# .* - AI Agent Instructions/, `# ${config.projectName || "Project"} - Gemini Instructions`)
+    .replace(/^# .* - AI Agent Instructions/, () => `# ${config.projectName || "Project"} - Gemini Instructions`)
     .replace(/^> \*\*Universal AI Configuration\*\*.*$/m, "> **Antigravity Configuration** - Google's AI-powered IDE with Gemini integration.");
 }
 
@@ -1858,350 +1917,14 @@ function generateAgentsMd(config: WizardConfig, user: UserProfile): string {
   return lines.join("\n");
 }
 
-// Generate Aider config - comprehensive YAML with embedded conventions
-// Aider reads .aider.conf.yml and can use conventions from comments or separate file
-function generateAiderConfig(config: WizardConfig, user: UserProfile): string {
-  const lines: string[] = [];
-  const bp = config.blueprintMode;
-  
-  lines.push("# ═══════════════════════════════════════════════════════════════════════════");
-  lines.push("# Aider AI Pair Programming Configuration");
-  lines.push(`# Generated by ${APP_NAME} - ${APP_URL}`);
-  lines.push("# ═══════════════════════════════════════════════════════════════════════════");
-  lines.push("# Documentation: https://aider.chat/docs/config.html");
-  lines.push("#");
-  lines.push("# Usage: Run `aider` in this directory. These settings apply automatically.");
-  lines.push("# For project context, Aider will read this file's comments and settings.");
-  lines.push("# ═══════════════════════════════════════════════════════════════════════════");
-  lines.push("");
-  
-  // Core settings
-  lines.push("# ─── Core Settings ─────────────────────────────────────────────────────────");
-  lines.push("auto-commits: true");
-  lines.push("map-tokens: 2048");
-  lines.push("cache-prompts: true");
-  lines.push("");
-  
-  // Project Overview Section
-  lines.push("# ═══════════════════════════════════════════════════════════════════════════");
-  lines.push("# PROJECT CONVENTIONS");
-  lines.push("# ═══════════════════════════════════════════════════════════════════════════");
-  lines.push("#");
-  lines.push(`# Project: ${bpVar(bp, "PROJECT_NAME", config.projectName || "Software Project")}`);
-  if (config.projectDescription) {
-    lines.push(`# Description: ${bpVar(bp, "PROJECT_DESCRIPTION", config.projectDescription)}`);
-  }
-  lines.push("#");
-  
-  // Architecture
-  if (config.architecturePattern) {
-    const archLabels: Record<string, string> = {
-      monolith: "Monolith",
-      modular_monolith: "Modular Monolith",
-      microservices: "Microservices",
-      serverless: "Serverless",
-      event_driven: "Event-Driven",
-      layered: "Layered / N-Tier",
-      hexagonal: "Hexagonal / Ports & Adapters",
-      clean: "Clean Architecture",
-      cqrs: "CQRS",
-      mvc: "MVC / MVVM",
-      other: config.architecturePatternOther || "Custom",
-    };
-    lines.push(`# Architecture: ${bpVar(bp, "ARCHITECTURE_PATTERN", archLabels[config.architecturePattern] || config.architecturePattern)}`);
-  }
-  
-  // Repository info
-  if (config.repoUrl) {
-    lines.push(`# Repository: ${bpVar(bp, "REPO_URL", config.repoUrl)}`);
-  }
-  
-  // Development OS
-  if (config.devOS) {
-    lines.push(`# Development OS: ${formatDevOSDisplay(config)}`);
-  }
-  lines.push("#");
-  
-  // Tech Stack
-  if (config.languages.length > 0 || config.frameworks.length > 0 || (config.databases && config.databases.length > 0)) {
-    lines.push("# ─── Technology Stack ──────────────────────────────────────────────────────");
-    lines.push("#");
-    if (config.languages.length > 0) {
-      const langs = config.languages.map(l => l.startsWith("custom:") ? l.replace("custom:", "") : l);
-      lines.push(`# Languages: ${bpVarArray(bp, "LANGUAGES", langs)}`);
-    }
-    if (config.frameworks.length > 0) {
-      const fws = config.frameworks.map(f => f.startsWith("custom:") ? f.replace("custom:", "") : f);
-      lines.push(`# Frameworks: ${bpVarArray(bp, "FRAMEWORKS", fws)}`);
-    }
-    if (config.databases && config.databases.length > 0) {
-      const dbs = config.databases.map(d => d.startsWith("custom:") ? d.replace("custom:", "") : d);
-      lines.push(`# Databases: ${bpVarArray(bp, "DATABASES", dbs)}`);
-    }
-    if (config.letAiDecide) {
-      lines.push("# Note: AI may suggest additional technologies based on codebase analysis");
-    }
-    lines.push("#");
-  }
-  
-  // Code Style
-  lines.push("# ─── Code Style & Conventions ─────────────────────────────────────────────");
-  lines.push("#");
-  
-  if (config.codeStyle?.naming) {
-    const namingDescriptions: Record<string, string> = {
-      language_default: "Follow language-specific conventions",
-      camelCase: "camelCase for variables/functions",
-      snake_case: "snake_case for variables/functions",
-      PascalCase: "PascalCase for classes/types",
-      "kebab-case": "kebab-case for files/URLs",
-    };
-    lines.push(`# Naming: ${bpVar(bp, "NAMING_CONVENTION", namingDescriptions[config.codeStyle.naming] || config.codeStyle.naming)}`);
-  }
-  
-  if (config.codeStyle?.errorHandling) {
-    const errorDescriptions: Record<string, string> = {
-      try_catch: "Try-catch blocks",
-      result_types: "Result/Either types (no exceptions for control flow)",
-      error_boundaries: "Error Boundaries (React)",
-      global_handler: "Global error handler",
-      middleware: "Middleware-based handling",
-      exceptions: "Custom exception classes",
-      other: config.codeStyle.errorHandlingOther || "Custom approach",
-    };
-    lines.push(`# Error Handling: ${bpVar(bp, "ERROR_HANDLING", errorDescriptions[config.codeStyle.errorHandling] || config.codeStyle.errorHandling)}`);
-  }
-  
-  if (config.codeStyle?.loggingConventions) {
-    lines.push(`# Logging: ${bpVar(bp, "LOGGING_CONVENTIONS", config.codeStyle.loggingConventions)}`);
-  }
-  
-  if (config.codeStyle?.notes) {
-    lines.push(`# Additional: ${bpVar(bp, "CODE_STYLE_NOTES", config.codeStyle.notes)}`);
-  }
-  lines.push("#");
-  
-  // Developer Profile
-  if (config.includePersonalData !== false && user.skillLevel) {
-    lines.push("# ─── Developer Profile ────────────────────────────────────────────────────");
-    lines.push("#");
-    const authorName = user.displayName || user.name || "Developer";
-    lines.push(`# Author: ${bpVar(bp, "AUTHOR_NAME", authorName)}`);
-    lines.push(`# Skill Level: ${user.skillLevel.charAt(0).toUpperCase() + user.skillLevel.slice(1)}`);
-    if (user.persona) {
-      lines.push(`# Developer Background: ${user.persona.replace(/_/g, " ")} - adapt responses to this domain expertise`);
-    }
-    lines.push("#");
-    lines.push("# Communication Style:");
-    if (user.skillLevel === "novice" || user.skillLevel === "beginner") {
-      lines.push("#   - Be verbose with explanations and add helpful comments");
-      lines.push("#   - Explain concepts and reasoning as you implement");
-      lines.push("#   - Ask clarifying questions when requirements are unclear");
-    } else if (user.skillLevel === "intermediate") {
-      lines.push("#   - Provide balanced explanations, not too verbose");
-      lines.push("#   - Focus on important decisions and trade-offs");
-    } else {
-      lines.push("#   - Be concise and direct");
-      lines.push("#   - Assume expertise, minimal hand-holding needed");
-      lines.push("#   - Focus on implementation details");
-    }
-    lines.push("#");
-  }
-  
-  // AI Behavior Rules
-  if (config.aiBehaviorRules.length > 0) {
-    lines.push("# ─── AI Behavior Guidelines ───────────────────────────────────────────────");
-    lines.push("#");
-    config.aiBehaviorRules.forEach((rule) => {
-      const ruleText = getRuleDescription(rule);
-      if (ruleText) lines.push(`# - ${ruleText}`);
-    });
-    lines.push("#");
-  }
-  
-  // Commands
-  const hasCommands = config.commands && (
-    config.commands.build || config.commands.test || 
-    config.commands.lint || config.commands.dev ||
-    (config.commands.additional?.length ?? 0) > 0
+// Generate Aider CONVENTIONS.md. Aider loads no rules file by itself; its
+// documented way to pass project conventions is a Markdown file given to --read.
+function generateAiderConventions(config: WizardConfig, user: UserProfile): string {
+  return generateAgentsMd(config, user).replace(
+    /^# (.*) - AI Agent Instructions/,
+    (_match, name: string) =>
+      `# ${name} - Aider Conventions\n\n> Load these conventions in Aider with \`aider --read CONVENTIONS.md\`, or add \`read: CONVENTIONS.md\` to \`.aider.conf.yml\`.`
   );
-  if (hasCommands) {
-    lines.push("# ─── Project Commands ─────────────────────────────────────────────────────");
-    lines.push("#");
-    if (config.commands!.build) lines.push(`# Build: ${bpVar(bp, "BUILD_COMMAND", config.commands!.build)}`);
-    if (config.commands!.test) lines.push(`# Test: ${bpVar(bp, "TEST_COMMAND", config.commands!.test)}`);
-    if (config.commands!.lint) lines.push(`# Lint: ${bpVar(bp, "LINT_COMMAND", config.commands!.lint)}`);
-    if (config.commands!.dev) lines.push(`# Dev: ${bpVar(bp, "DEV_COMMAND", config.commands!.dev)}`);
-    if (config.commands!.additional?.length) {
-      lines.push("# Additional commands:");
-      config.commands!.additional.forEach(cmd => lines.push(`#   - ${cmd}`));
-    }
-    lines.push("#");
-  }
-  
-  // Boundaries
-  const hasBoundaries = config.boundaries && (
-    (config.boundaries.always?.length ?? 0) > 0 ||
-    (config.boundaries.ask?.length ?? 0) > 0 ||
-    (config.boundaries.never?.length ?? 0) > 0
-  );
-  if (hasBoundaries) {
-    lines.push("# ─── Boundaries & Permissions ─────────────────────────────────────────────");
-    lines.push("#");
-    if (config.boundaries!.always?.length) {
-      lines.push("# ✅ ALWAYS DO (no need to ask):");
-      config.boundaries!.always.forEach(item => lines.push(`#   - ${item}`));
-    }
-    if (config.boundaries!.ask?.length) {
-      lines.push("# ❓ ASK FIRST:");
-      config.boundaries!.ask.forEach(item => lines.push(`#   - ${item}`));
-    }
-    if (config.boundaries!.never?.length) {
-      lines.push("# 🚫 NEVER DO:");
-      config.boundaries!.never.forEach(item => lines.push(`#   - ${item}`));
-    }
-    lines.push("#");
-  }
-  
-  // Testing
-  const hasTestingConfig = config.testingStrategy && (
-    (config.testingStrategy.levels?.length ?? 0) > 0 ||
-    (config.testingStrategy.frameworks?.length ?? 0) > 0 ||
-    config.testingStrategy.notes
-  );
-  if (hasTestingConfig) {
-    lines.push("# ─── Testing Requirements ─────────────────────────────────────────────────");
-    lines.push("#");
-    if (config.testingStrategy!.levels?.length) {
-      const levelDescriptions: Record<string, string> = {
-        unit: "Unit tests", integration: "Integration tests",
-        e2e: "End-to-end tests", performance: "Performance tests",
-        security: "Security tests",
-      };
-      lines.push("# Testing Levels:");
-      config.testingStrategy!.levels.forEach(level => {
-        lines.push(`#   - ${levelDescriptions[level] || level}`);
-      });
-    }
-    if (config.testingStrategy!.frameworks?.length) {
-      lines.push(`# Frameworks: ${config.testingStrategy!.frameworks.join(", ")}`);
-    }
-    if (config.testingStrategy!.coverage !== undefined) {
-      lines.push(`# Coverage Target: ${config.testingStrategy!.coverage}%`);
-    }
-    if (config.testingStrategy!.notes) {
-      lines.push(`# Notes: ${config.testingStrategy!.notes}`);
-    }
-    lines.push("#");
-  }
-  
-  // CI/CD
-  const hasCiCd = config.cicd?.length > 0 || config.deploymentTarget?.length || config.buildContainer;
-  if (hasCiCd) {
-    lines.push("# ─── CI/CD & Infrastructure ───────────────────────────────────────────────");
-    lines.push("#");
-    if (config.cicd?.length > 0) {
-      const cicdLabels: Record<string, string> = {
-        github_actions: "GitHub Actions", gitlab_ci: "GitLab CI/CD",
-        jenkins: "Jenkins", circleci: "CircleCI", travis: "Travis CI",
-        azure_pipelines: "Azure Pipelines", aws_codepipeline: "AWS CodePipeline",
-        bitbucket_pipelines: "Bitbucket Pipelines", drone: "Drone CI", none: "Manual",
-      };
-      lines.push(`# CI/CD: ${config.cicd.map(c => cicdLabels[c] || c).join(", ")}`);
-    }
-    if (config.deploymentTarget && config.deploymentTarget.length > 0) {
-      const deployLabels: Record<string, string> = {
-        aws: "AWS", gcp: "Google Cloud", azure: "Azure", kubernetes: "Kubernetes",
-        vercel: "Vercel", netlify: "Netlify", heroku: "Heroku", railway: "Railway",
-        flyio: "Fly.io", digitalocean: "DigitalOcean", baremetal: "Bare Metal",
-      };
-      lines.push(`# Deploy Target: ${config.deploymentTarget.map(d => deployLabels[d] || d).join(", ")}`);
-    }
-    if (config.buildContainer && config.containerRegistry) {
-      const registryLabels: Record<string, string> = {
-        dockerhub: "Docker Hub", ghcr: "GHCR", ecr: "AWS ECR",
-        gcr: "Google CR", acr: "Azure CR", custom: config.customRegistry || "Custom",
-      };
-      lines.push(`# Container Registry: ${registryLabels[config.containerRegistry] || config.containerRegistry}`);
-    }
-    lines.push("#");
-  }
-  
-  // Project Type
-  if (config.projectType && PROJECT_TYPE_INSTRUCTIONS[config.projectType]) {
-    lines.push("# ─── Project Context ──────────────────────────────────────────────────────");
-    lines.push("#");
-    const projectTypeLabels: Record<string, string> = {
-      work: "Work / Professional", leisure: "Personal / Hobby",
-      open_source_small: "Open Source (Small)", open_source_large: "Open Source (Enterprise)",
-      private_business: "Private Business",
-    };
-    lines.push(`# Type: ${projectTypeLabels[config.projectType] || config.projectType}`);
-    lines.push("# Guidelines:");
-    PROJECT_TYPE_INSTRUCTIONS[config.projectType].forEach((instruction) => {
-      lines.push(`#   - ${instruction}`);
-    });
-    lines.push("#");
-  }
-  
-  // Best Practices
-  lines.push("# ─── Best Practices ───────────────────────────────────────────────────────");
-  lines.push("#");
-  lines.push("# - Write clean code: Prioritize readability and maintainability");
-  lines.push("# - Handle errors properly: Don't ignore errors");
-  lines.push("# - Consider security: Review code for vulnerabilities");
-  if (config.conventionalCommits) {
-    lines.push("# - Use conventional commits (feat:, fix:, docs:, chore:, etc.)");
-  }
-  if (config.semver) {
-    lines.push("# - Follow semantic versioning (MAJOR.MINOR.PATCH)");
-  }
-  lines.push("#");
-  
-  // Custom Instructions
-  if (config.additionalFeedback) {
-    lines.push("# ─── Custom Instructions ──────────────────────────────────────────────────");
-    lines.push("#");
-    const feedbackLines = config.additionalFeedback.split("\n");
-    feedbackLines.forEach(line => lines.push(`# ${line}`));
-    lines.push("#");
-  }
-  
-  // Important files
-  const hasImportantFiles = (config.importantFiles?.length ?? 0) > 0 || config.importantFilesOther?.trim();
-  if (hasImportantFiles) {
-    lines.push("# ─── Important Files to Read ──────────────────────────────────────────────");
-    lines.push("#");
-    const importantFileLabels: Record<string, string> = {
-      readme: "README.md", package_json: "package.json", changelog: "CHANGELOG.md",
-      contributing: "CONTRIBUTING.md", makefile: "Makefile", dockerfile: "Dockerfile",
-      docker_compose: "docker-compose.yml", env_example: ".env.example",
-      openapi: "openapi.yaml", architecture_md: "ARCHITECTURE.md",
-      api_docs: "API docs", database_schema: "Database schema",
-    };
-    if (config.importantFiles?.length) {
-      config.importantFiles.forEach(f => {
-        lines.push(`#   - ${importantFileLabels[f] || f}`);
-      });
-    }
-    if (config.importantFilesOther?.trim()) {
-      config.importantFilesOther.split(",").map(f => f.trim()).filter(Boolean).forEach(f => {
-        lines.push(`#   - ${f}`);
-      });
-    }
-    lines.push("#");
-  }
-  
-  lines.push("# ═══════════════════════════════════════════════════════════════════════════");
-  lines.push("# END OF CONVENTIONS - Aider will read these comments for project context");
-  lines.push("# ═══════════════════════════════════════════════════════════════════════════");
-  lines.push("");
-  lines.push("# SECURITY: Do not commit secrets to the repository.");
-  lines.push("# Use environment variables or secret managers for credentials.");
-  lines.push("# When making changes involving auth, data handling, APIs, or dependencies,");
-  lines.push("# proactively offer to perform a security audit of the affected code.");
-  
-  return lines.join("\n");
 }
 
 // Generate Continue config (.continue/config.json) - comprehensive configuration
@@ -2885,6 +2608,7 @@ function generateTabnineConfig(config: WizardConfig, user: UserProfile): string 
     lines.push("#");
     const projectTypeLabels: Record<string, string> = {
       work: "Work / Professional", leisure: "Personal / Hobby",
+      open_source: "Open Source Project",
       open_source_small: "Open Source (Small)", open_source_large: "Open Source (Large)",
       private_business: "Private Business",
     };
@@ -2927,7 +2651,9 @@ function generateTabnineConfig(config: WizardConfig, user: UserProfile): string 
   lines.push("# When making changes involving auth, data handling, APIs, or dependencies,");
   lines.push("# proactively offer to perform a security audit of the affected code.");
   
-  return lines.join("\n");
+  // A newline inside a user value would end the "#" comment and turn the rest
+  // of that value into live YAML; keep every continuation line commented.
+  return lines.map((line) => (line.startsWith("#") ? line.replace(/\r?\n/g, "\n# ") : line)).join("\n");
 }
 
 // Generate Supermaven config (.supermaven/config.json) - comprehensive configuration
@@ -3751,6 +3477,7 @@ function generateVoidConfig(config: WizardConfig, user: UserProfile): string {
   if (config.projectType && PROJECT_TYPE_INSTRUCTIONS[config.projectType]) {
     const projectTypeLabels: Record<string, string> = {
       work: "Work / Professional", leisure: "Personal / Hobby",
+      open_source: "Open Source Project",
       open_source_small: "Open Source (Small)", open_source_large: "Open Source (Enterprise)",
       private_business: "Private Business",
     };
@@ -4303,7 +4030,7 @@ function generateApiSyncHeader(blueprintId: string, platform: string, devOS: str
   const fileName = getFileName(platform);
   
   const isJsonPlatform = ["continue", "cody", "supermaven", "codegpt", "void"].includes(platform);
-  const isYamlPlatform = ["aider", "tabnine"].includes(platform);
+  const isYamlPlatform = platform === "tabnine";
   
   if (isJsonPlatform) {
     return "";
@@ -4338,13 +4065,13 @@ curl -X PUT ${APP_URL}/api/v1/blueprints/${blueprintId} \\
   -d "{\\"content\\": $(cat ${fileName} | jq -Rs .)}"
 
 # Windows PowerShell:
-$c = Get-Content "${fileName}" -Raw; Invoke-RestMethod -Uri "${APP_URL}/api/v1/blueprints/${blueprintId}" -Method PUT -Headers @{ Authorization = "Bearer $env:${envVar}" } -Body (@{ content = $c } | ConvertTo-Json)`;
+$c = Get-Content "${fileName}" -Raw; Invoke-RestMethod -Uri "${APP_URL}/api/v1/blueprints/${blueprintId}" -Method PUT -ContentType "application/json" -Headers @{ Authorization = "Bearer $env:${envVar}" } -Body (@{ content = $c } | ConvertTo-Json)`;
     } else if (osList.includes("windows")) {
       syncCommands = `To update this file on ${APP_NAME} (token stored in $env:${envVar}):
 
-$content = (Get-Content "${fileName}" -Raw) -replace '"', '\\"'
+$content = Get-Content "${fileName}" -Raw
 Invoke-RestMethod -Uri "${APP_URL}/api/v1/blueprints/${blueprintId}" \`
-  -Method PUT -Headers @{ "Authorization" = "Bearer $env:${envVar}" } \`
+  -Method PUT -ContentType "application/json" -Headers @{ "Authorization" = "Bearer $env:${envVar}" } \`
   -Body (@{ content = $content } | ConvertTo-Json)`;
     } else {
       syncCommands = `To update this file on ${APP_NAME} (token stored in $${envVar}):
@@ -4429,7 +4156,7 @@ export function generateAllFiles(
       content = generateGeminiMd(config, user);
       break;
     case "aider":
-      content = generateAiderConfig(config, user);
+      content = generateAiderConventions(config, user);
       break;
     case "continue":
       content = generateContinueConfig(config, user);
@@ -4451,7 +4178,7 @@ export function generateAllFiles(
       break;
     // New platforms - using appropriate generators
     case "zed":
-      // Zed uses markdown format similar to CLAUDE.md
+      // Zed reads a Markdown .rules file at the project root
       content = generateClaudeMd(config, user);
       break;
     case "cline":
@@ -4463,12 +4190,20 @@ export function generateAllFiles(
       content = generateWindsurfRules(config, user);
       break;
     case "amazonq":
-      // Amazon Q uses Cursor-like MDC format
-      content = generateCursorRules(config, user);
-      break;
     case "roocode":
-      // Roo Code uses MDC format
-      content = generateCursorRules(config, user);
+    case "trae":
+    case "firebase":
+    case "kilocode":
+    case "kiro":
+    case "augment":
+      // Markdown rules files: Cursor's content, minus Cursor's frontmatter,
+      // plus the platform's own frontmatter where it reads one (Kiro, Augment)
+      content = adaptRulesContent(
+        generateCursorRules(config, user),
+        "cursor",
+        platform,
+        `AI rules for ${bpVar(config.blueprintMode, "PROJECT_NAME", config.projectName || "this project")}`
+      );
       break;
     case "warp":
       // Warp uses markdown
@@ -4478,29 +4213,9 @@ export function generateAllFiles(
       // Gemini CLI uses same format as Antigravity
       content = generateGeminiMd(config, user);
       break;
-    case "trae":
-      // Trae uses MDC format
-      content = generateCursorRules(config, user);
-      break;
-    case "firebase":
-      // Firebase Studio uses MDC format
-      content = generateCursorRules(config, user);
-      break;
-    case "augment":
-      // Augment uses MDC format
-      content = generateCursorRules(config, user);
-      break;
-    case "kilocode":
-      // Kilocode uses MDC format
-      content = generateCursorRules(config, user);
-      break;
     case "junie":
       // Junie uses markdown
       content = generateClaudeMd(config, user);
-      break;
-    case "kiro":
-      // Kiro uses MDC format
-      content = generateCursorRules(config, user);
       break;
     case "openhands":
       // OpenHands uses markdown
@@ -4511,12 +4226,12 @@ export function generateAllFiles(
       content = generateClaudeMd(config, user);
       break;
     case "opencode":
-      // OpenCode uses JSON config
-      content = generateCodyConfig(config, user);
+      // OpenCode reads AGENTS.md for project rules
+      content = generateAgentsMd(config, user);
       break;
     case "firebender":
-      // Firebender uses JSON config
-      content = generateCodyConfig(config, user);
+      // Firebender reads Cursor-style .mdc rules from .firebender/rules/
+      content = generateCursorRules(config, user);
       break;
   }
 
@@ -4524,7 +4239,9 @@ export function generateAllFiles(
   if (content && options?.blueprintId && config.enableAutoUpdate) {
     const syncHeader = generateApiSyncHeader(options.blueprintId, platform, config.devOS || "linux", config.preferCliSync, config.tokenEnvVar);
     if (syncHeader) {
-      content = syncHeader + content;
+      // Frontmatter must stay the first thing in the file or the tool ignores it
+      const { frontmatter, body } = splitFrontmatter(content);
+      content = frontmatter + syncHeader + body;
     }
   }
 
@@ -4556,11 +4273,19 @@ export function downloadZip(blob: Blob, projectName: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = fileName;
+  a.download = downloadName(fileName);
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+/**
+ * Browsers cannot save into a folder, and they mangle a "/" in a download
+ * name, so save the last path segment. The UI shows the full path to put it in.
+ */
+export function downloadName(filePath: string): string {
+  return filePath.split("/").filter(Boolean).pop() || "ai-config.md";
 }
 
 // Download with filename from files array
@@ -4570,7 +4295,7 @@ export function downloadConfigFile(blob: Blob, files: GeneratedFile[]) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = fileName;
+  a.download = downloadName(fileName);
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

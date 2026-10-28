@@ -1638,7 +1638,7 @@ function WizardPageContent() {
 
   // Replace variables in content (handles [[VAR]] and [[VAR|default]] syntax)
   const replaceVariablesInContent = (content: string): string => {
-    return content.replace(/\[\[([A-Z_][A-Z0-9_]*)(?:\|([^\]]*))?\]\]/g, (match, varName, defaultVal) => {
+    return content.replace(/\[\[([A-Z_][A-Z0-9_]*)(?:\|((?:(?!\[\[)[\s\S])*?)\]\](?!\])|\]\])/g, (match, varName, defaultVal) => {
       const userValue = variableValues[varName];
       if (userValue !== undefined && userValue !== "") {
         return userValue;
