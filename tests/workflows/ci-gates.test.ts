@@ -56,10 +56,10 @@ describe("CI gates can fail", () => {
     const release = read("release.yml");
     expect(job(release, "ci")).toContain("uses: ./.github/workflows/ci.yml");
     expect(job(release, "cli-tests")).toContain("uses: ./.github/workflows/cli-tests.yml");
-    expect(job(release, "release-app")).toMatch(/needs: \[prepare, ci, docker-smoke\]/);
     // cli-v2.1.37 was published while the CI tests were red, because the CLI
-    // release waited only for the CLI tests.
-    expect(job(release, "release-cli")).toMatch(/needs: \[prepare, ci, cli-tests\]/);
+    // release waited only for the CLI tests. The one release waits for all.
+    expect(job(release, "release")).toMatch(/needs: \[prepare, ci, cli-tests, docker-smoke\]/);
+    for (const name of ["ci", "cli-tests"]) expect(job(release, name), `${name} is skipped on some pushes`).not.toMatch(/\n    if:/);
   });
 
   it("the app release waits for the image to build on both platforms", () => {

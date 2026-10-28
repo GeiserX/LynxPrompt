@@ -1,19 +1,16 @@
 name: Publish CLI
 
 on:
-  # Trigger after CLI release is created
-  release:
-    types: [published]
-
-  # Trigger from release workflow
+  # Started by release.yml once the v<version> tag and release exist. (A release
+  # created with GITHUB_TOKEN starts no workflow, so there is no release trigger.)
   repository_dispatch:
-    types: [cli-release]
+    types: [release-published]
 
   # Manual trigger
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to publish (leave empty to use package.json)'
+        description: 'Released version to publish (leave empty to use cli/package.json)'
         required: false
         type: string
       platforms:
@@ -30,14 +27,21 @@ on:
 permissions:
   contents: write
 
+# One publish at a time, in release order. Without this, two releases close
+# together could finish out of order and move snap, AUR or Homebrew back to the
+# older version.
+concurrency:
+  group: publish-cli
+  cancel-in-progress: false
+  queue: max
+
 jobs:
   # ===========================================
-  # Check if this is a CLI release
+  # Resolve the version and its release tag
   # ===========================================
   check:
     runs-on: ubuntu-latest
     outputs:
-      should_publish: ${{ steps.check.outputs.should_publish }}
       version: ${{ steps.version.outputs.version }}
       ref: ${{ steps.ref.outputs.ref }}
       platforms: ${{ steps.platforms.outputs.platforms }}
@@ -45,23 +49,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-
-      - name: Check if CLI release
-        id: check
-        run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "should_publish=true" >> $GITHUB_OUTPUT
-            echo "✅ Manual trigger - will publish"
-          elif [[ "${{ github.event_name }}" == "repository_dispatch" ]]; then
-            echo "should_publish=true" >> $GITHUB_OUTPUT
-            echo "✅ Repository dispatch trigger - will publish"
-          elif [[ "${{ github.event.release.tag_name }}" == cli-v* ]]; then
-            echo "should_publish=true" >> $GITHUB_OUTPUT
-            echo "✅ CLI release detected - will publish"
-          else
-            echo "should_publish=false" >> $GITHUB_OUTPUT
-            echo "ℹ️ Not a CLI release, skipping"
-          fi
 
       - name: Get version
         id: version
@@ -74,10 +61,6 @@ jobs:
               VERSION=$(node -p "require('./cli/package.json').version")
             fi
             echo "version=$VERSION" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.event.release.tag_name }}" == cli-v* ]]; then
-            VERSION="${{ github.event.release.tag_name }}"
-            VERSION="${VERSION#cli-v}"
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
           else
             VERSION=$(node -p "require('./cli/package.json').version")
             echo "version=$VERSION" >> $GITHUB_OUTPUT
@@ -89,7 +72,7 @@ jobs:
       - name: Resolve the release tag
         id: ref
         run: |
-          TAG="cli-v${{ steps.version.outputs.version }}"
+          TAG="v${{ steps.version.outputs.version }}"
           if ! git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null; then
             echo "::error::tag $TAG does not exist; publish only released versions"
             exit 1
@@ -106,7 +89,6 @@ jobs:
   # ===========================================
   publish-npm:
     needs: check
-    if: ${{ needs.check.outputs.should_publish == 'true' }}
     runs-on: ubuntu-latest
     # npm trusted publishing: GitHub's OIDC token proves who publishes, so no NPM_TOKEN to expire.
     permissions:
@@ -174,7 +156,6 @@ jobs:
   # binary that does not start never reaches the release.
   publish-binaries:
     needs: [check, publish-npm]
-    if: ${{ needs.check.outputs.should_publish == 'true' }}
     strategy:
       fail-fast: false
       matrix:
@@ -238,7 +219,7 @@ jobs:
       - name: Upload binary to GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: cli-v${{ needs.check.outputs.version }}
+          tag_name: v${{ needs.check.outputs.version }}
           files: |
             cli/binaries/lynxprompt-*.tar.gz
             cli/binaries/lynxprompt-*.zip
@@ -254,7 +235,6 @@ jobs:
   # binaries cannot be stapled; Gatekeeper checks the ticket online.
   sign-macos:
     needs: [check, publish-npm]
-    if: ${{ needs.check.outputs.should_publish == 'true' }}
     runs-on: macos-latest
     defaults:
       run:
@@ -372,7 +352,7 @@ jobs:
       - name: Upload macOS binaries to GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: cli-v${{ needs.check.outputs.version }}
+          tag_name: v${{ needs.check.outputs.version }}
           files: cli/binaries/*.tar.gz
           fail_on_unmatched_files: true
 
@@ -526,7 +506,7 @@ jobs:
   # and the release holds every binary.
   verify:
     needs: [check, publish-npm, publish-binaries, sign-macos, update-homebrew]
-    if: ${{ always() && !cancelled() && needs.check.outputs.should_publish == 'true' && !contains(needs.*.result, 'failure') }}
+    if: ${{ always() && !cancelled() && !contains(needs.*.result, 'failure') }}
     runs-on: macos-latest
     permissions:
       contents: read
@@ -551,10 +531,10 @@ jobs:
 
       - name: The release holds every binary
         run: |
-          assets=$(gh release view "cli-v$VERSION" -R "${{ github.repository }}" --json assets --jq '.assets[].name')
+          assets=$(gh release view "v$VERSION" -R "${{ github.repository }}" --json assets --jq '.assets[].name')
           status=0
           for target in linux-x64.tar.gz linux-arm64.tar.gz macos-x64.tar.gz macos-arm64.tar.gz win-x64.zip; do
-            grep -qx "lynxprompt-$VERSION-$target" <<<"$assets" || { echo "::error::cli-v$VERSION has no lynxprompt-$VERSION-$target"; status=1; }
+            grep -qx "lynxprompt-$VERSION-$target" <<<"$assets" || { echo "::error::v$VERSION has no lynxprompt-$VERSION-$target"; status=1; }
           done
           exit $status
 
@@ -574,7 +554,7 @@ jobs:
   # ===========================================
   summary:
     needs: [check, publish-npm, publish-binaries, sign-macos, publish-chocolatey, publish-snap, publish-aur, update-homebrew, verify]
-    if: always() && needs.check.outputs.should_publish == 'true'
+    if: always() && needs.check.result == 'success'
     runs-on: ubuntu-latest
 
     steps:
@@ -601,5 +581,5 @@ jobs:
           echo "npm install -g lynxprompt@${{ needs.check.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "# Standalone binary (no dependencies)" >> $GITHUB_STEP_SUMMARY
-          echo "# Download from: https://github.com/GeiserX/LynxPrompt/releases/tag/cli-v${{ needs.check.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "# Download from: https://github.com/GeiserX/LynxPrompt/releases/tag/v${{ needs.check.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
