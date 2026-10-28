@@ -109,6 +109,9 @@ Download and track a blueprint from the marketplace:
 # Download and track
 lynxp pull bp_abc123
 
+# Several blueprints and hierarchies in one go
+lynxp pull bp_abc123 bp_def456 ha_xyz789
+
 # Push local file to cloud
 lynxp push
 

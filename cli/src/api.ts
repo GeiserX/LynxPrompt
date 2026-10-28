@@ -321,13 +321,21 @@ class ApiClient {
     );
   }
 
-  async getHierarchy(id: string): Promise<{ hierarchy: Hierarchy; blueprints: Blueprint[]; tree: BlueprintTreeNode[]; total_blueprints: number }> {
+  /**
+   * A hierarchy and its blueprints. With includeContent the server returns each
+   * blueprint's content in the list; a server older than that leaves it out.
+   */
+  async getHierarchy(
+    id: string,
+    { includeContent = false }: { includeContent?: boolean } = {}
+  ): Promise<{ hierarchy: Hierarchy; blueprints: Blueprint[]; tree: BlueprintTreeNode[]; total_blueprints: number }> {
     // Ensure ha_ prefix for hierarchy IDs
     let apiId = id;
     if (!id.startsWith("ha_")) {
       apiId = `ha_${id}`;
     }
-    return this.request<{ hierarchy: Hierarchy; blueprints: Blueprint[]; tree: BlueprintTreeNode[]; total_blueprints: number }>(`/api/v1/hierarchies/${apiId}`);
+    const query = includeContent ? "?include=content" : "";
+    return this.request<{ hierarchy: Hierarchy; blueprints: Blueprint[]; tree: BlueprintTreeNode[]; total_blueprints: number }>(`/api/v1/hierarchies/${apiId}${query}`);
   }
 
   async createHierarchy(data: {
