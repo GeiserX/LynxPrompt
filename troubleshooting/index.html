@@ -1006,7 +1006,7 @@ See <a href="../getting-started/#first-sign-in">First sign-in</a>.</p>
 pending, unexpired team invitation lets that address create its account and accept. Or create the account
 with registration on.</p>
 <h2 id="my-account-is-not-the-superadmin">My account is not the superadmin<a class="headerlink" href="#my-account-is-not-the-superadmin" title="Permanent link">&para;</a></h2>
-<p>The promotion happens at sign-in when the address equals <code>SUPERADMIN_EMAIL</code> exactly (the compose file copies
+<p>The promotion happens at sign-in when the address equals <code>SUPERADMIN_EMAIL</code>, ignoring case (the compose file copies
 <code>ADMIN_EMAIL</code> into it). Check the value with <code>docker compose ... exec lynxprompt printenv SUPERADMIN_EMAIL</code>,
 fix <code>.env</code>, restart and sign in again.</p>
 <h2 id="the-container-fails-to-start-with-a-database-error">The container fails to start with a database error<a class="headerlink" href="#the-container-fails-to-start-with-a-database-error" title="Permanent link">&para;</a></h2>
