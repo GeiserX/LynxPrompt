@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { prismaApp } from "@/lib/db-app";
 import { canReadTemplate } from "@/lib/blueprint-access";
+import { requireSession } from "@/lib/api-auth";
 
 // GET /api/blueprints/[id]/favorite - Check if user has favorited this blueprint
 export async function GET(
@@ -41,12 +42,10 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions);
+  const auth = await requireSession(request);
+  if (auth instanceof NextResponse) return auth;
+  const { session } = auth;
   const { id: rawId } = await params;
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
 
   // Determine template type and strip prefix for database lookup
   const isSystem = rawId.startsWith("sys_");

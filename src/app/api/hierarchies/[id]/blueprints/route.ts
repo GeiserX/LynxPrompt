@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { posix as posixPath } from "path";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
+import { requireSession } from "@/lib/api-auth";
 
 /**
  * Helper to strip ha_ prefix from hierarchy ID
@@ -39,11 +38,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     const { id } = await params;
     const hierarchyId = fromHierarchyId(id);
@@ -181,11 +178,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     const { id } = await params;
     const hierarchyId = fromHierarchyId(id);

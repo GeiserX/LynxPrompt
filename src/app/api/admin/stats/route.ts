@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { prismaApp } from "@/lib/db-app";
 import { prismaSupport } from "@/lib/db-support";
@@ -10,14 +8,13 @@ import {
   ENABLE_BLOG,
   ENABLE_AI,
 } from "@/lib/feature-flags";
+import { requireSession } from "@/lib/api-auth";
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireSession(req);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
 
     if (session.user.role !== "SUPERADMIN") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
