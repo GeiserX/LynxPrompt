@@ -250,12 +250,6 @@ export async function DELETE(
       where: { id: memberId },
     });
 
-    // Downgrade the removed user to FREE plan
-    await prismaUsers.user.update({
-      where: { id: memberToRemove.userId },
-      data: { subscriptionPlan: "FREE" },
-    });
-
     return NextResponse.json({
       message: `${memberToRemove.user.name || memberToRemove.user.email} has been removed from the team`,
     });

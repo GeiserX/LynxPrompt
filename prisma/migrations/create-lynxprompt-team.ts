@@ -72,7 +72,6 @@ async function createLynxPromptTeam() {
             data: {
               email: ADMIN_EMAIL,
               name: "LynxPrompt Dev",
-              subscriptionPlan: "TEAMS",
             },
           });
           console.log(`✅ Created admin user: ${ADMIN_EMAIL}`);
@@ -103,19 +102,9 @@ async function createLynxPromptTeam() {
         data: {
           email: ADMIN_EMAIL,
           name: "LynxPrompt Dev",
-          subscriptionPlan: "TEAMS",
         },
       });
       console.log(`✅ Created admin user: ${ADMIN_EMAIL}`);
-    } else {
-      // Update subscription plan to TEAMS if not already
-      if (adminUser.subscriptionPlan !== "TEAMS") {
-        await prisma.user.update({
-          where: { id: adminUser.id },
-          data: { subscriptionPlan: "TEAMS" },
-        });
-        console.log(`✅ Updated ${ADMIN_EMAIL} to TEAMS plan`);
-      }
     }
 
     // Create the team

@@ -63,7 +63,6 @@ model SupportPost {
   userId      String
   userName    String?      // Cached for display
   userImage   String?      // Cached for display
-  userPlan    String       @default("FREE") // FREE, PRO, MAX - for badge display
   
   // Post content
   title       String
@@ -152,7 +151,6 @@ model SupportComment {
   userName  String?
   userImage String?
   userRole  String   @default("USER") // USER, ADMIN, SUPERADMIN
-  userPlan  String   @default("FREE")
   
   // Comment content
   content   String   @db.Text
