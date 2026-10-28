@@ -766,13 +766,15 @@ function generateFileContent(options: GenerateOptions, platform: string): string
     sections.push("");
   }
   
-  // Header for regular markdown. Kiro and Augment only load a steering/rule file
+  // Header for regular markdown. Kiro, Augment and Devin only load a steering/rule file
   // whose frontmatter says to always include it.
   if (isMarkdown) {
     if (platform === "kiro") {
       sections.push("---", "inclusion: always", "---", "");
     } else if (platform === "augment") {
       sections.push("---", "type: always_apply", "---", "");
+    } else if (platform === "devin") {
+      sections.push("---", "trigger: always_on", "---", "");
     }
     sections.push(`# ${projectName} - AI Assistant Configuration`);
     sections.push("");

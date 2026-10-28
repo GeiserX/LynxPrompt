@@ -70,6 +70,7 @@ const PLATFORM_NAMES: Record<string, string> = {
   codex: "Codex",
   openhands: "OpenHands",
   crush: "Crush",
+  devin: "Devin",
   firebender: "Firebender",
   "cursor-command": "Cursor Command",
   "claude-command": "Claude Code Command",

@@ -4018,8 +4018,9 @@ export function generateAllFiles(
     case "kilocode":
     case "kiro":
     case "augment":
+    case "devin":
       // Markdown rules files: Cursor's content, minus Cursor's frontmatter,
-      // plus the platform's own frontmatter where it reads one (Kiro, Augment)
+      // plus the platform's own frontmatter where it reads one (Kiro, Augment, Devin)
       content = adaptRulesContent(
         generateCursorRules(config, user),
         "cursor",

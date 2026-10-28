@@ -184,3 +184,25 @@ describe("every blueprint type of the database has a home", () => {
     }
   });
 });
+
+describe("Devin", () => {
+  // Devin reads every Markdown file in .devin/rules/; a rule there needs
+  // Windsurf-style frontmatter to apply to every request
+  const ALWAYS_ON = "---\ntrigger: always_on\n---\n";
+
+  it("is generated as an always-on rule in .devin/rules/ by the web and the CLI", () => {
+    expect(web("devin").fileName).toBe(".devin/rules/project.md");
+    expect(web("devin").content.startsWith(ALWAYS_ON)).toBe(true);
+    expect(cli("devin").fileName).toBe(".devin/rules/project.md");
+    expect(cli("devin").content.startsWith(ALWAYS_ON)).toBe(true);
+  });
+
+  it("is a conversion target with the same frontmatter", () => {
+    expect(convertContent("# Rules\n", "universal", "devin")).toBe(`${ALWAYS_ON}\n# Rules\n`);
+  });
+
+  it("any rule file in .devin/rules/ is pushed and pulled back to its path", () => {
+    expect(matchConfigFile(".devin/rules/testing.md")).toEqual({ type: "CUSTOM", label: "Devin Rules" });
+    expect(blueprintFilename({ type: "CUSTOM", repository_path: ".devin/rules/testing.md" })).toBe(".devin/rules/testing.md");
+  });
+});
