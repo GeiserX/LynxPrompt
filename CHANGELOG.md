@@ -7,6 +7,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 From 3.0.0 the web app and the CLI share one version and one release: the `vX.Y.Z` tag, the Docker image `drumsergio/lynxprompt:X.Y.Z` and `lynxprompt@X.Y.Z` on npm. Each `## [X.Y.Z]` section below covers both and becomes that release's notes. Before 3.0.0 the app and the CLI had their own version lines (`app-v*` and `cli-v*` tags).
 
+## [3.1.0] - 2026-10-28
+
+3.1.0 keeps one copy of the rules in `AGENTS.md`, which most coding agents now read by themselves. It also writes skills, subagents and MCP servers where each agent looks for them, and retires five dead platforms.
+
+### Upgrade notes
+
+**1. Back up the app and users databases before you start the new image.** One migration per schema (`20261028160000_add_agent_definition_type`) adds `AGENT_DEFINITION` to the `TemplateType` enum. It is additive and changes nothing else, but Postgres cannot drop an enum value, so only a backup takes you back to 3.0.0.
+
+**2. Files the web wizard and `lynxp wizard` write now.**
+- **Several tools give one `AGENTS.md`.** A tool that reads `AGENTS.md` gets no file of its own. `CLAUDE.md` and `GEMINI.md` become the one-line pointer `@AGENTS.md`. Copilot, Trae, Tabnine and Firebase Studio cannot reach `AGENTS.md`, so they keep a full copy. Picking Claude Code or Gemini CLI alone also writes `AGENTS.md`. To keep a full file per tool, use `--no-pointers` in the CLI or turn pointers off on the web.
+- **Antigravity, Junie, Kilo Code, Goose, Warp and OpenHands** now get `AGENTS.md` instead of their own file.
+- **Windsurf is now Devin Desktop** and writes `.devin/rules/project.md` with `trigger: always_on`, not `.windsurfrules`. The old paths still work in the tool.
+- **Cline** writes `.clinerules/project.md`, or `.cline/rules/project.md` when a legacy `.clinerules` file is already there.
+- **Aider** gets `AGENTS.md` plus a `.aider.conf.yml` with `read: [AGENTS.md]`, not `CONVENTIONS.md`. The CLI adds `AGENTS.md` to an existing `.aider.conf.yml` and keeps the rest. Cloud Sync saves `AGENTS.md`, never the config. `lynxp convert <file> aider` no longer writes a file.
+- **Tabnine** writes Markdown guidelines to `.tabnine/guidelines/project.md` instead of `.tabnine.yaml`. **Trae** rules get `alwaysApply: true`.
+- Regenerate and commit the new files, then delete the old copies you no longer want.
+
+**3. Pulled skills land in two folders.** `lynxp pull` and the web download write a skill to `.agents/skills/<name>/SKILL.md` (only the Agent Skills fields) and `.claude/skills/<name>/SKILL.md` (as written). A skill with no stored path used to pull to `.claude/skills` only. Kiro and Firebender get a copy only when picked or when their folder is already in the project. A local copy that differs is kept unless you pass `--yes`.
+
+**4. Retired platforms: Continue, Sourcegraph Cody, Supermaven, CodeGPT and Void.** They are gone from the wizard, the CLI and the blueprint pickers. Their ids still work and generate `AGENTS.md`, and `devin` resolves to Devin Desktop. Their blueprint types stay in the database, so stored blueprints still load and download as they are.
+
+**5. API changes.**
+- **`PUT /api/auth/device` is removed.** Nothing called it. `POST /api/auth/device` stays.
+- **Saving a skill with an invalid name returns 400**, on the web API and the v1 API, so on `lynxp push` too. A name is 1 to 64 characters of `a-z`, `0-9` and `-`, with no hyphen at either end, no `--`, and equal to its folder. A skill with no name still saves.
+- **`lynxp convert` refuses an MCP config with no known servers key** (`mcpServers`, `servers`, `mcp`, `context_servers`, `mcp_servers`). `lynxp pull` writes such content as it is.
+- **`GET /api/blueprints/[id]` returns `repositoryPath`** when the blueprint has one, the path it was pushed from.
+
+**6. Pointer files and the token-mode sync header.**
+- `lynxp push` refuses a file whose whole body is `@AGENTS.md` (`--force` overrides) and leaves it out of `--all`. `lynxp sync` never pushes it over the cloud rules. `.aider.conf.yml` is never pushed or synced, since it can hold API keys.
+- A Cloud Sync header written in token mode now runs `lynxp pull <id> --yes` and `lynxp push <file>` with `LYNXPROMPT_TOKEN` and `LYNXPROMPT_API_URL` set, instead of curl and jq. Both sync modes now need the CLI installed. Headers already in your files keep working until you regenerate them.
+
+### Added
+- **OpenAI Codex** as a platform, writing `AGENTS.md`.
+- **Subagents** as the `AGENT_DEFINITION` blueprint type. They go to `.claude/agents/<name>.md` and `.agents/agents/<name>.md`, plus `.github/agents/<name>.agent.md` for Copilot and `.codex/agents/<name>.toml` for Codex when picked. `lynxp push` also finds subagents in the Cursor, Gemini, OpenCode, Kiro, Junie, Factory, Qwen, Augment, Trae, Kilo, Cline and Devin folders. The web create and edit pages offer the Subagent type.
+- **MCP configs for 24 targets**, up from four. These include settings files (`.gemini/settings.json`, `.qwen/settings.json`, `.zed/settings.json`, `.amp/settings.json`, `opencode.json`, `kilo.jsonc` and more) and TOML for Codex (`.codex/config.toml`) and Mistral Vibe (`.vibe/config.toml`). `lynxp convert`, `pull` and `sync` merge only the MCP part into a settings file and keep every other key, and `push` uploads only the servers. The web download gives the MCP part and explains how to merge it.
+- **Command targets** for Gemini CLI (TOML), Kiro, Junie, Augment, Trae, Kilo Code, Cline workflows, Roo, Crush, Firebender, Factory, Qwen Code and Pi.
+- **`lynxp convert <file> <target>`** writes one copy of a skill or subagent for another tool, for example `codex-agent`, `copilot-agent` or `kiro-skill`.
+- **A docs page for skills and subagents** at `/docs/blueprints/skills-and-subagents`.
+
+### Changed
+- **`lynxp push` and `lynxp check` find every rules file a tool reads**, from the platform table: `.claude/rules/`, `.github/instructions/`, `.devin/rules/`, `.junie/`, `.agents/rules/`, `QWEN.md`, a legacy `.cursorrules` and the old Windsurf paths. They skip `CLAUDE.local.md`, `AGENTS.local.md` and `AGENTS.override.md`. `lynxp check` does not warn about a pointer file.
+- **`lynxp push` reads every agent's skills folder.** Pushing a copy whose sibling is already linked is refused with a pointer to the linked file, and `push --all` pushes each skill or subagent once.
+- **The CLI wizard stores the synced file's path** on the blueprint it creates, so `lynxp pull` writes a synced Cursor or Claude file back to its own path instead of `AGENTS.md`.
+- **The web wizard toggle reads "Sign in with lynxp login"**, and the CLI wizard asks whether `lynxp login` is possible.
+- **Docs** show where each agent reads its rules, list 26 rules platforms and 18 with commands, and say Devin Desktop instead of Windsurf.
+
+### Removed
+- **`PUT /api/auth/device`.**
+- **The passkey `CredentialsProvider`**, which could never sign anyone in, and the JWT callbacks that existed only for it. Passkeys keep working as the second factor.
+- **`.windsurf/mcp_config.json`** as an MCP target. No tool reads it.
+- **Unused `cli/src/utils/agents.ts` and `agent-detector.ts`.**
+
+### Fixed
+- **`npm ci` works again**: `package-lock.json` lacked eight packages npm 10 needs. The app CI now runs `npm ci` on Node 26, the image's Node.
+
 ## [3.0.0] - 2026-10-28
 
 3.0.0 is the first release where the web app and the CLI share one version: the tag `v3.0.0`, the image `drumsergio/lynxprompt:3.0.0`, `lynxprompt@3.0.0` on npm, and the Homebrew, Chocolatey, Snap and AUR packages. It collects the changes released step by step on 2026-10-28 as app 2.1.45 to 2.1.50 and CLI 2.1.38 to 2.1.42, most of them fixes from a full audit of the code, plus what followed. Those releases stay published.
