@@ -3,65 +3,8 @@
  */
 
 import path from "path";
+import { PLATFORMS, COMMANDS, platformForBlueprintType, getCommandTemplateType } from "../../../packages/shared/src/platforms.js";
 import { PLATFORM_FILES } from "./generator.js";
-
-/**
- * Blueprint type -> platform in the generator's PLATFORM_FILES table, so `lynxp pull`
- * writes each type to the file its tool reads, the same file `lynxp wizard` generates.
- * Covers every rule type of the server enum plus the alternative names `lynxp push` sends.
- */
-const TYPE_TO_PLATFORM: Record<string, string> = {
-  AGENTS_MD: "universal",
-  CURSOR_RULES: "cursor",
-  CURSOR_MDC: "cursor",
-  CURSORRULES: "cursor", // .cursorrules is deprecated; Cursor reads .cursor/rules/
-  CLAUDE_MD: "claude",
-  COPILOT_INSTRUCTIONS: "copilot",
-  WINDSURF_RULES: "windsurf",
-  GEMINI_MD: "antigravity",
-  CLINE_RULES: "cline",
-  ZED_INSTRUCTIONS: "zed",
-  VOID_CONFIG: "void",
-  TRAE_RULES: "trae",
-  IDX_CONFIG: "firebase",
-  FIREBASE_RULES: "firebase",
-  ROO_RULES: "roocode",
-  CONTINUE_CONFIG: "continue",
-  CODY_CONFIG: "cody",
-  TABNINE_CONFIG: "tabnine",
-  SUPERMAVEN_CONFIG: "supermaven",
-  CODEGPT_CONFIG: "codegpt",
-  AMAZONQ_RULES: "amazonq",
-  AUGMENT_RULES: "augment",
-  KILOCODE_RULES: "kilocode",
-  JUNIE_GUIDELINES: "junie",
-  KIRO_STEERING: "kiro",
-  GOOSEHINTS: "goose",
-  GOOSE_HINTS: "goose",
-  WARP_MD: "warp",
-  OPENCODE_JSON: "opencode",
-  OPENCODE_CONFIG: "opencode",
-  OPENHANDS_MD: "openhands",
-  OPENHANDS_CONFIG: "openhands",
-  CRUSH_MD: "crush",
-  FIREBENDER_CONFIG: "firebender",
-};
-
-/** Types whose file name is not a generator platform. */
-const TYPE_TO_FIXED_FILE: Record<string, string> = {
-  CODEX_MD: "AGENTS.md", // Codex reads AGENTS.md
-  AIDER_MD: "AIDER.md",  // Markdown conventions, not the .aider.conf.yml settings file
-};
-
-/** Command types live in a directory, one Markdown file per command. */
-const COMMAND_TYPE_DIRS: Record<string, string> = {
-  CURSOR_COMMAND: ".cursor/commands",
-  CLAUDE_COMMAND: ".claude/commands",
-  WINDSURF_WORKFLOW: ".windsurf/workflows",
-  COPILOT_PROMPT: ".copilot/prompts",
-  CONTINUE_PROMPT: ".continue/prompts",
-  OPENCODE_COMMAND: ".opencode/commands",
-};
 
 const FALLBACK_FILE = "ai-config.md";
 
@@ -72,15 +15,16 @@ function slugify(name: string): string {
 
 /**
  * File a blueprint is written to: its repository_path when it has one (a CLI-pushed
- * or hierarchy blueprint), otherwise the file its type belongs in.
+ * or hierarchy blueprint), otherwise the file the shared platform table gives its
+ * type, the same file `lynxp wizard` generates and the web download names.
  */
 export function blueprintFilename(bp: { type: string; name?: string; repository_path?: string | null }): string {
   if (bp.repository_path) return bp.repository_path;
-  const platform = TYPE_TO_PLATFORM[bp.type];
+  const platform = platformForBlueprintType(bp.type);
   if (platform && PLATFORM_FILES[platform]) return PLATFORM_FILES[platform];
-  if (TYPE_TO_FIXED_FILE[bp.type]) return TYPE_TO_FIXED_FILE[bp.type];
-  const commandDir = COMMAND_TYPE_DIRS[bp.type];
-  if (commandDir) return `${commandDir}/${slugify(bp.name || "")}.md`;
+  // Command types live in a directory, one file per command
+  const command = COMMANDS.find((c) => c.id === platform);
+  if (command) return `${command.directory}/${slugify(bp.name || "")}${command.extension}`;
   return FALLBACK_FILE;
 }
 
@@ -102,4 +46,77 @@ export function safePath(root: string, untrusted: string, pathImpl: path.Platfor
     throw new Error(`Path traversal blocked: ${untrusted}`);
   }
   return resolved;
+}
+
+/** Repository paths are compared with "/" separators and in lower case. */
+function normPath(p: string): string {
+  return p.replace(/\\/g, "/").toLowerCase();
+}
+
+function basename(p: string): string {
+  return p.replace(/\\/g, "/").split("/").pop() || "";
+}
+
+interface ConfigPattern {
+  match: (relativePath: string) => boolean;
+  // Must be a TemplateType value from the Prisma schemas; tools without one use CUSTOM
+  type: string;
+  label: string;
+}
+
+const RULE_PLATFORMS = PLATFORMS.filter((p) => !p.isCommand);
+const typeOf = (p: { blueprintType?: string }) => p.blueprintType ?? "CUSTOM";
+const atPath = (relativePath: string, file: string) => {
+  const p = normPath(relativePath);
+  return p === file || p.endsWith(`/${file}`);
+};
+const inFolder = (relativePath: string, folder: string) => {
+  const p = normPath(relativePath);
+  return p.startsWith(folder) || p.includes(`/${folder}`);
+};
+
+/**
+ * Config files `lynxp push` recognises, most specific first, built from the
+ * shared platform table plus the paths older CLI versions wrote.
+ */
+const CONFIG_PATTERNS: ConfigPattern[] = [
+  // Commands: one file per command in the tool's folder
+  ...COMMANDS.map((c) => ({
+    match: (p: string) => inFolder(p, `${c.directory}/`) && p.endsWith(c.extension),
+    type: getCommandTemplateType(c.id) ?? "CUSTOM",
+    label: c.name,
+  })),
+  // Folders the tool reads every rule file from
+  ...RULE_PLATFORMS.filter((p) => p.rulesDirectory).map((p) => ({
+    match: (rel: string) => inFolder(rel, p.rulesDirectory!) && /\.mdc?$/.test(rel),
+    type: typeOf(p),
+    label: `${p.name} Rules`,
+  })),
+  // A file at a fixed path or with a fixed name, wherever it sits
+  ...RULE_PLATFORMS.map((p) => ({
+    match: (rel: string) => (p.file.includes("/") ? atPath(rel, p.file) : basename(rel) === p.file),
+    type: typeOf(p),
+    label: p.name,
+  })),
+  // Paths older CLI versions generated
+  { match: (p) => inFolder(p, ".copilot/prompts/") && p.endsWith(".md"), type: "COPILOT_PROMPT", label: "Copilot Prompt" },
+  { match: (p) => inFolder(p, ".idx/") && p.endsWith(".mdc"), type: "IDX_CONFIG", label: "Firebase Studio" },
+  { match: (p) => atPath(p, ".zed/instructions.md"), type: "ZED_INSTRUCTIONS", label: "Zed" },
+  { match: (p) => basename(p) === "AIDER.md", type: "AIDER_MD", label: "AIDER.md" },
+  { match: (p) => basename(p) === ".cursorrules", type: "CURSORRULES", label: "Cursor Rules (legacy)" },
+  { match: (p) => basename(p) === "opencode.json", type: "OPENCODE_JSON", label: "OpenCode Config" },
+  { match: (p) => basename(p) === "firebender.json", type: "CUSTOM", label: "Firebender Config" },
+];
+
+/**
+ * Match a relative path against all known config file patterns.
+ * Returns type + label if it matches, null otherwise.
+ */
+export function matchConfigFile(relativePath: string): { type: string; label: string } | null {
+  for (const pattern of CONFIG_PATTERNS) {
+    if (pattern.match(relativePath)) {
+      return { type: pattern.type, label: pattern.label };
+    }
+  }
+  return null;
 }

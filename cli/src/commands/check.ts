@@ -37,7 +37,10 @@ const CONFIG_FILES = [
   { path: ".windsurfrules", name: "Windsurf" },
   { path: ".clinerules", name: "Cline" }, // may also be a directory of rule files
   { path: ".goosehints", name: "Goose" },
+  { path: ".rules", name: "Zed" },
   { path: ".zed/instructions.md", name: "Zed" },
+  { path: "CONVENTIONS.md", name: "Aider" },
+  { path: ".idx/airules.md", name: "Firebase Studio" },
   { path: ".junie/guidelines.md", name: "Junie" },
   { path: ".openhands/microagents/repo.md", name: "OpenHands" },
 ];

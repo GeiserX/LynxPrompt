@@ -74,10 +74,13 @@ ${Array.from({ length: 25 }, (_, i) => `- rule ${i + 1}`).join("\n")}
     }
   });
 
-  it("keeps every Aider convention, not only the first 20", () => {
+  // Aider's file is CONVENTIONS.md (Markdown), not the .aider.conf.yml settings file
+  it("keeps every Aider convention as Markdown", () => {
     const out = generateTargetContent(parseMarkdownConfig(source), "aider");
-    expect(out).toContain('"- rule 25"');
+    expect(out).toContain("- rule 25");
+    expect(out).toContain("# My API Rules");
     expect(out).not.toContain("alwaysApply");
+    expect(out).not.toContain("conventions:");
   });
 
   it("writes Kiro and Augment frontmatter", () => {

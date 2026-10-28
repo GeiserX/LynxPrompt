@@ -75,7 +75,7 @@ export async function linkCommand(
       ".cursor/rules/project.mdc",
       ".github/copilot-instructions.md",
       ".windsurfrules",
-      ".zed/instructions.md",
+      ".rules",
       ".clinerules",
     ];
 
