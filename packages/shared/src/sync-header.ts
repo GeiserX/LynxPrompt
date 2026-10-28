@@ -53,7 +53,10 @@ function syncInstructions(opts: ApiSyncHeaderOptions): string[] {
     );
   } else {
     if (token !== "LYNXPROMPT_TOKEN") lines.push(`  export LYNXPROMPT_TOKEN="$${token}"`);
-    lines.push(`  lynxp pull ${bpId} --yes   # download cloud changes into ${file}`);
+    lines.push(
+      `  lynxp pull ${bpId} --yes   # download cloud changes into ${file}`,
+      `  lynxp push ${file}   # upload local changes`,
+    );
   }
 
   lines.push("", `Generate an API token at: ${appUrl}/settings`, `Docs: ${appUrl}/docs/api`);

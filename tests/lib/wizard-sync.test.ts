@@ -70,6 +70,7 @@ describe("addApiSyncHeader", () => {
     expect(out).toContain('export LYNXPROMPT_TOKEN="$MY_TOKEN"');
     expect(out).toContain("export LYNXPROMPT_API_URL=https://prompts.example.org");
     expect(out).toContain("lynxp pull bp_abc123 --yes");
+    expect(out).toContain("lynxp push AGENTS.md   # upload local changes");
     expect(out).not.toContain("lynxp login");
     expect(out).not.toContain("curl");
     expect(out).not.toContain("jq ");
@@ -121,6 +122,7 @@ describe("sync file path", () => {
     expect(out).toContain("lynxp push .cursor/rules/project.mdc");
     const token = addApiSyncHeader(file.content, { ...base, preferCliSync: false, fileName: payload.repositoryPath });
     expect(token).toContain("lynxp pull bp_abc123 --yes   # download cloud changes into .cursor/rules/project.mdc");
+    expect(token).toContain("lynxp push .cursor/rules/project.mdc   # upload local changes");
   });
 
   it("every platform listed by a folder syncs to a file in that folder", () => {

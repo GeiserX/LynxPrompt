@@ -753,6 +753,7 @@ Using the LynxPrompt CLI, with the API token in $LYNXPROMPT_API_TOKEN (never put
   export LYNXPROMPT_API_URL=https://lynxprompt.com
   export LYNXPROMPT_TOKEN="$LYNXPROMPT_API_TOKEN"
   lynxp pull bp_golden --yes   # download cloud changes into CLAUDE.md
+  lynxp push CLAUDE.md   # upload local changes
 
 Generate an API token at: https://lynxprompt.com/settings
 Docs: https://lynxprompt.com/docs/api
@@ -1749,6 +1750,7 @@ Using the LynxPrompt CLI, with the API token in $LYNXPROMPT_API_TOKEN (never put
   export LYNXPROMPT_API_URL=https://lynxprompt.com
   export LYNXPROMPT_TOKEN="$LYNXPROMPT_API_TOKEN"
   lynxp pull bp_golden --yes   # download cloud changes into .cursor/rules/project.mdc
+  lynxp push .cursor/rules/project.mdc   # upload local changes
 
 Generate an API token at: https://lynxprompt.com/settings
 Docs: https://lynxprompt.com/docs/api
@@ -4700,6 +4702,7 @@ Using the LynxPrompt CLI, with the API token in $LYNXPROMPT_API_TOKEN (never put
   export LYNXPROMPT_API_URL=https://lynxprompt.com
   export LYNXPROMPT_TOKEN="$LYNXPROMPT_API_TOKEN"
   lynxp pull bp_golden --yes   # download cloud changes into CLAUDE.md
+  lynxp push CLAUDE.md   # upload local changes
 
 Generate an API token at: https://lynxprompt.com/settings
 Docs: https://lynxprompt.com/docs/api
@@ -6037,6 +6040,7 @@ Using the LynxPrompt CLI, with the API token in $LYNXPROMPT_API_TOKEN (never put
   export LYNXPROMPT_API_URL=https://lynxprompt.com
   export LYNXPROMPT_TOKEN="$LYNXPROMPT_API_TOKEN"
   lynxp pull bp_golden --yes   # download cloud changes into .cursor/rules/project.mdc
+  lynxp push .cursor/rules/project.mdc   # upload local changes
 
 Generate an API token at: https://lynxprompt.com/settings
 Docs: https://lynxprompt.com/docs/api
