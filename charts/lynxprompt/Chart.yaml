@@ -3,8 +3,8 @@ name: lynxprompt
 description: A Helm chart for LynxPrompt - Self-hosted AI IDE configuration hub
 type: application
 kubeVersion: ">=1.21.0-0"
-version: 0.1.5
-appVersion: "2.1.45"
+version: 0.1.6
+appVersion: "2.1.50"
 keywords:
   - lynxprompt
   - ai
@@ -24,6 +24,4 @@ annotations:
   category: AI
   artifacthub.io/changes: |
     - kind: changed
-      description: Run app 2.1.40, which signs in over plain http, makes SUPERADMIN_EMAIL superadmin on the first sign-in and creates /data/uploads
-    - kind: fixed
-      description: Mount the uploads volume at /data/uploads, where the app writes; it was mounted at /app/public/uploads, which the app never uses
+      description: Run app 2.1.50
