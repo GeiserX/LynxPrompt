@@ -66,6 +66,8 @@ interface TemplateDownloadModalProps {
     sensitiveFields?: Record<string, SensitiveField>;
     targetPlatform?: string;
     compatibleWith?: string[];
+    /** Where the file sits in its repository (set by lynxp push) */
+    repositoryPath?: string | null;
   };
   targetPlatform?: string; // Override the default platform
   /** Whether the viewer owns the blueprint (they can edit it in place) */
@@ -354,13 +356,21 @@ export function TemplateDownloadModal({
       ? filledContent
       : adaptRulesContent(filledContent, storedPlatform, selectedPlatform, template.name);
 
+  // A subagent pushed as a Codex TOML or Kiro JSON file is not Markdown: like
+  // `lynxp pull`, it goes back to its own path alone, with no copies
+  const nativeSubagentPath =
+    isSubagent && template.repositoryPath && !template.repositoryPath.toLowerCase().endsWith(".md")
+      ? template.repositoryPath
+      : null;
   // Every copy of a skill or subagent, at its path in the project
-  const assetFiles = isAsset
-    ? agentAssetFiles(
-        { type: template.targetPlatform!, name: template.name, content: filledContent, description: template.description },
-        assetTools
-      )
-    : [];
+  const assetFiles = nativeSubagentPath
+    ? [{ path: nativeSubagentPath, content: filledContent }]
+    : isAsset
+      ? agentAssetFiles(
+          { type: template.targetPlatform!, name: template.name, content: filledContent, description: template.description },
+          assetTools
+        )
+      : [];
   const assetName = isSkill
     ? skillFolder({ name: template.name, content: template.content })
     : subagentName({ name: template.name, content: template.content });
@@ -528,6 +538,8 @@ export function TemplateDownloadModal({
           {/* Skill or subagent: the folders it is written to, and the tools to add */}
           {isAsset && (
             <div className="mb-6">
+              {!nativeSubagentPath && (
+              <>
               <label className="mb-3 block text-sm font-medium">
                 Also add a copy for
               </label>
@@ -549,6 +561,8 @@ export function TemplateDownloadModal({
                     </label>
                   ))}
               </div>
+              </>
+              )}
               <p className="mt-3 text-xs text-muted-foreground">
                 The .zip unpacks into your project root as:
               </p>
@@ -560,7 +574,9 @@ export function TemplateDownloadModal({
                 ))}
               </ul>
               <p className="mt-2 text-xs text-muted-foreground">
-                {isSkill
+                {nativeSubagentPath
+                  ? "This subagent is stored in its tool's own format, so it is not copied to the other agents' folders."
+                  : isSkill
                   ? ".agents/skills is read by almost every agent; Claude Code reads only .claude/skills."
                   : ".claude/agents is read by Claude Code, Cursor and Copilot in VS Code; .agents/agents by Antigravity, Goose, OpenHands and Kimi Code."}
               </p>

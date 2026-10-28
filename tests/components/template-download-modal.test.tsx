@@ -266,4 +266,23 @@ describe("TemplateDownloadModal: Agent Skills and MCP servers", () => {
     );
     expect(files[".github/agents/reviewer.agent.md"]).toBeUndefined();
   });
+
+  it("downloads a subagent stored as Codex TOML alone, at its own path", async () => {
+    const toml = "name = \"reviewer\"\ndescription = \"Reviews diffs\"\ndeveloper_instructions = \"Review the diff.\"\n";
+    render(
+      <TemplateDownloadModal
+        isOpen
+        onClose={() => {}}
+        template={{
+          name: "Reviewer",
+          content: toml,
+          targetPlatform: "AGENT_DEFINITION",
+          repositoryPath: ".codex/agents/reviewer.toml",
+        }}
+      />
+    );
+    expect(screen.queryByLabelText("OpenAI Codex")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Download/ }));
+    expect(await lastZip()).toEqual({ ".codex/agents/reviewer.toml": toml });
+  });
 });
