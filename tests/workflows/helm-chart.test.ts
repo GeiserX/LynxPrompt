@@ -26,6 +26,19 @@ function gateOf(key: string): string {
   return deployment.slice(ifAt, deployment.indexOf("}}", ifAt) + 2);
 }
 
+// The first `path:` inside a top-level block of values.yaml, read line by line.
+function probePath(block: string): string | undefined {
+  const lines = values.split("\n");
+  const start = lines.indexOf(`${block}:`);
+  expect(start, `no ${block} in values.yaml`).toBeGreaterThan(-1);
+  for (const line of lines.slice(start + 1)) {
+    if (line !== "" && !line.startsWith(" ")) break;
+    const m = line.trim().match(/^path:\s*(\S+)$/);
+    if (m) return m[1];
+  }
+  return undefined;
+}
+
 describe("Helm chart rollout", () => {
   // The uploads PVC defaults to ReadWriteOnce. A rolling update starts the new
   // pod before the old one stops, so on another node it hangs on Multi-Attach.
@@ -37,11 +50,8 @@ describe("Helm chart rollout", () => {
   // A liveness probe on the database endpoint restarts every pod on a
   // database blip; readiness is the probe that should react to it.
   it("keeps the database out of the liveness probe", () => {
-    const liveness = values.match(/^livenessProbe:\n(?:\s+.*\n)*?\s+path:\s*(\S+)/m);
-    expect(liveness, "no livenessProbe path").not.toBeNull();
-    expect(liveness![1]).toBe("/api/health/live");
-    const readiness = values.match(/^readinessProbe:\n(?:\s+.*\n)*?\s+path:\s*(\S+)/m);
-    expect(readiness![1]).toBe("/api/health");
+    expect(probePath("livenessProbe")).toBe("/api/health/live");
+    expect(probePath("readinessProbe")).toBe("/api/health");
   });
 });
 
