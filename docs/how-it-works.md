@@ -22,7 +22,7 @@ flowchart LR
     CLI[lynxp CLI, VS Code extension,<br/>GitHub Action, MCP server] <-->|Bearer API token| WEB
     WEB --> DB[(PostgreSQL: app, users,<br/>blog, support)]
     WEB --> SMTP[SMTP server]
-    WEB -.-> EXT[GitHub or Google OAuth, SSO,<br/>Anthropic API, Stripe: optional]
+    WEB -.-> EXT[GitHub or Google OAuth, SSO,<br/>Anthropic API: optional]
     WEB <-.->|public blueprints| FED[Other LynxPrompt instances]
 ```
 

@@ -94,7 +94,7 @@ flowchart LR
     end
     DB[(PostgreSQL<br/>app, users, blog, support schemas)]
     SMTP[Your SMTP server<br/>sign-in mail]
-    OPT[Optional: GitHub or Google OAuth,<br/>SSO provider, Anthropic API, Stripe]
+    OPT[Optional: GitHub or Google OAuth,<br/>SSO provider, Anthropic API]
     FED[Other instances<br/>public blueprints]
 
     BR <--> WEB
