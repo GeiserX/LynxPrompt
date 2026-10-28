@@ -18,8 +18,8 @@
 
 - **Dashboard** (`/dashboard`): Quick Actions, My Blueprints, Team Blueprints, Saved Drafts and the
   hierarchical `AGENTS.md` sets for monorepos.
-- **Teams** (`/teams`): create a team with a name and a slug, invite members (the invite is a link you copy
-  from the team page; no mail is sent), and share blueprints with the team only. Team blueprints show on the
+- **Teams** (`/teams`): create a team with a name and a slug, invite members (the invite is mailed when
+  `SMTP_*` is set, and the team page always has a link to copy), and share blueprints with the team only. Team blueprints show on the
   dashboard.
 
 ![A team page with two members and the invite form](images/screenshots/teams.png)

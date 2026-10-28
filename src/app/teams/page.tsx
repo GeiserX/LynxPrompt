@@ -405,9 +405,8 @@ export default function TeamsPage() {
                   <span className="transition-transform group-open:rotate-180">↓</span>
                 </summary>
                 <p className="border-t px-4 py-3 text-sm text-muted-foreground">
-                  Only team members who log in during a period count as active seats.
-                  If you have 10 seats but only 5 people log in, only 5 count toward your seat limit
-                  (with a minimum of 3 active seats).
+                  The seat count caps the team size: members plus pending invitations cannot
+                  go over it. A team starts with at least 3 seats.
                 </p>
               </details>
 
@@ -417,8 +416,8 @@ export default function TeamsPage() {
                   <span className="transition-transform group-open:rotate-180">↓</span>
                 </summary>
                 <p className="border-t px-4 py-3 text-sm text-muted-foreground">
-                  Yes! You can increase your team&apos;s seat count at any time from the team
-                  settings dashboard. New seats are available immediately.
+                  Yes. A team admin changes the seat count under Team Info on the team page.
+                  New seats are available immediately.
                 </p>
               </details>
 

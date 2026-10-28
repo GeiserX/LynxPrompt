@@ -230,6 +230,7 @@ describe("authOptions.callbacks.signIn - registration disabled", () => {
           update: vi.fn(),
           updateMany: vi.fn(),
         },
+        teamInvitation: { findFirst: vi.fn().mockResolvedValue(null) }, // No invitation
         authenticator: { update: vi.fn() },
         account: { findUnique: vi.fn(), update: vi.fn() },
         teamMember: { findUnique: vi.fn(), updateMany: vi.fn() },
