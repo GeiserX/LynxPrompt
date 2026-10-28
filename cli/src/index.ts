@@ -11,6 +11,7 @@ import { searchCommand } from "./commands/search.js";
 import { statusCommand } from "./commands/status.js";
 import { checkCommand } from "./commands/check.js";
 import { diffCommand } from "./commands/diff.js";
+import { syncCommand } from "./commands/sync.js";
 import { linkCommand, unlinkCommand } from "./commands/link.js";
 import { analyzeCommand } from "./commands/analyze.js";
 import { convertCommand } from "./commands/convert.js";
@@ -120,6 +121,7 @@ program
   .option("-y, --yes", "Overwrite existing files without prompting")
   .option("--preview", "Preview content without downloading")
   .option("--no-track", "Don't track the blueprint for future syncs")
+  .option("--vars <values>", "Fill [[VARIABLES]]: VAR1=value1,VAR2=value2 (others get their defaults)")
   .action(pullCommand);
 
 program
@@ -173,6 +175,13 @@ program
   .description("Compare tracked files with their cloud blueprints")
   .option("--local", "Compare .lynxprompt/rules/ with exported files")
   .action(diffCommand);
+
+// Sync - three-way: local file, tracked base, cloud
+program
+  .command("sync [file]")
+  .description("Pull cloud changes and push local ones for tracked files; conflicts go to <file>.remote")
+  .option("--dry-run", "Show what would change without writing or pushing")
+  .action(syncCommand);
 
 // ============================================
 // Auth Commands
@@ -240,6 +249,8 @@ ${chalk.cyan("Blueprint Tracking:")}
   ${chalk.white("$ lynxp link AGENTS.md bp_xyz")} ${chalk.gray("Link existing file to blueprint")}
   ${chalk.white("$ lynxp unlink AGENTS.md")}      ${chalk.gray("Disconnect from cloud")}
   ${chalk.white("$ lynxp diff bp_abc123")}        ${chalk.gray("Show changes vs cloud version")}
+  ${chalk.white("$ lynxp sync")}                  ${chalk.gray("Pull cloud changes, push local ones")}
+  ${chalk.white("$ lynxp pull bp_x --vars A=1")}  ${chalk.gray("Download with [[A]] filled in")}
 
 ${chalk.cyan("CI/CD:")}
   ${chalk.white("$ lynxp check --ci")}            ${chalk.gray("Validate config (exit code)")}

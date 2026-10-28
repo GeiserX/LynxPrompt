@@ -20,6 +20,7 @@ import { api, ApiRequestError } from "../api.js";
 import { safeText } from "../utils/terminal.js";
 import { computeDiff, formatDiff } from "../utils/line-diff.js";
 import { checkSyncStatus, findBlueprintByFile } from "../utils/blueprint-tracker.js";
+import { fillBlueprintVariables } from "../utils/variables.js";
 
 interface DiffOptions {
   local?: boolean;
@@ -57,7 +58,7 @@ export async function diffCommand(fileOrId?: string, options: DiffOptions = {}):
     // Check if it's a tracked file
     const tracked = await findBlueprintByFile(cwd, fileOrId);
     if (tracked) {
-      await diffFileWithBlueprint(cwd, fileOrId, tracked.id);
+      await diffFileWithBlueprint(cwd, fileOrId, tracked.id, false, tracked.variables);
       return;
     }
     
@@ -93,7 +94,7 @@ export async function diffCommand(fileOrId?: string, options: DiffOptions = {}):
     console.log(chalk.cyan(`📄 ${blueprint.file}`));
     console.log(chalk.gray(`   Linked to: ${blueprint.name} (${blueprint.id})`));
     
-    const result = await diffFileWithBlueprint(cwd, blueprint.file, blueprint.id, true);
+    const result = await diffFileWithBlueprint(cwd, blueprint.file, blueprint.id, true, blueprint.variables);
     if (result === "changed") {
       hasChanges = true;
     } else if (result === "same") {
@@ -109,8 +110,7 @@ export async function diffCommand(fileOrId?: string, options: DiffOptions = {}):
   } else if (!hasChanges) {
     console.log(chalk.green("✓ All tracked files are in sync with their cloud blueprints!"));
   } else {
-    console.log(chalk.gray("To push local changes: lynxp push"));
-    console.log(chalk.gray("To pull cloud changes: lynxp pull <id>"));
+    console.log(chalk.gray("To bring both sides together: lynxp sync"));
   }
   console.log();
 }
@@ -122,7 +122,8 @@ async function diffFileWithBlueprint(
   cwd: string,
   file: string,
   blueprintId: string,
-  compact: boolean = false
+  compact: boolean = false,
+  variables?: Record<string, string>
 ): Promise<"same" | "changed" | "error"> {
   const filePath = join(cwd, file);
   
@@ -143,7 +144,11 @@ async function diffFileWithBlueprint(
     }
 
     const localContent = await readFile(filePath, "utf-8");
-    const diff = computeDiff(blueprint.content, localContent);
+    // A file pulled with --vars is compared with the cloud content filled the same way
+    const cloudContent = variables
+      ? fillBlueprintVariables(blueprint.content, variables).content
+      : blueprint.content;
+    const diff = computeDiff(cloudContent, localContent);
     const stats = getDiffStats(diff);
 
     if (stats.added === 0 && stats.removed === 0) {

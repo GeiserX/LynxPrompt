@@ -25,6 +25,7 @@ vi.mock("../../cli/src/utils/blueprint-tracker.js", () => ({
   updateChecksum: vi.fn(async () => {}),
   loadBlueprints: vi.fn(async () => ({ version: "1", blueprints: [] })),
   toTrackedPath: (_cwd: string, file: string) => file,
+  conflictFilePath: (cwd: string, file: string) => `${cwd}/${file}.remote`,
 }));
 
 vi.mock("ora", () => ({

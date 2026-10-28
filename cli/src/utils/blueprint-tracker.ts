@@ -34,6 +34,11 @@ export interface TrackedBlueprint {
   hierarchyId?: string;    // Hierarchy ID (e.g., ha_xyz789)
   hierarchyName?: string;  // Hierarchy name for display
   repositoryPath?: string; // Path within hierarchy (e.g., "packages/core/AGENTS.md")
+  // Set by `lynxp pull --vars`: the values written in place of [[VARIABLES]].
+  // The file then differs from the cloud content, so localChecksum holds the
+  // checksum of the file as written and `checksum` stays the cloud's.
+  variables?: Record<string, string>;
+  localChecksum?: string;
 }
 
 // Blueprints file structure
@@ -121,6 +126,9 @@ export async function trackBlueprint(
     hierarchyId?: string;
     hierarchyName?: string;
     repositoryPath?: string;
+    // The file as written, when pull filled it with --vars
+    localContent?: string;
+    variables?: Record<string, string>;
   }
 ): Promise<void> {
   const config = await loadBlueprints(cwd);
@@ -147,6 +155,12 @@ export async function trackBlueprint(
     hierarchyId: blueprint.hierarchyId,
     hierarchyName: blueprint.hierarchyName,
     repositoryPath: blueprint.repositoryPath,
+    ...(blueprint.variables
+      ? {
+          variables: blueprint.variables,
+          localChecksum: calculateChecksum(blueprint.localContent ?? blueprint.content),
+        }
+      : {}),
   });
   
   await saveBlueprints(cwd, config);
@@ -176,14 +190,14 @@ export async function hasLocalChanges(cwd: string, tracked: TrackedBlueprint): P
     const filePath = join(cwd, tracked.file);
     const content = await readFile(filePath, "utf-8");
     const currentChecksum = calculateChecksum(content);
-    return currentChecksum !== tracked.checksum;
+    return currentChecksum !== (tracked.localChecksum ?? tracked.checksum);
   } catch {
     return false;
   }
 }
 
 /**
- * Update checksum after syncing
+ * Update checksum after a push: the cloud now holds exactly this content.
  */
 export async function updateChecksum(cwd: string, file: string, content: string): Promise<void> {
   const config = await loadBlueprints(cwd);
@@ -191,9 +205,19 @@ export async function updateChecksum(cwd: string, file: string, content: string)
   
   if (blueprint) {
     blueprint.checksum = calculateChecksum(content);
+    delete blueprint.variables;
+    delete blueprint.localChecksum;
     blueprint.pulledAt = new Date().toISOString();
     await saveBlueprints(cwd, config);
   }
+}
+
+/**
+ * Where `lynxp sync` puts the cloud version of a file whose local and cloud
+ * copies both changed. While it exists, sync and push leave the file alone.
+ */
+export function conflictFilePath(cwd: string, file: string): string {
+  return join(cwd, `${file}.remote`);
 }
 
 /**

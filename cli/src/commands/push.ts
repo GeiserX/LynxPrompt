@@ -12,6 +12,8 @@ import {
   updateChecksum,
   loadBlueprints,
   toTrackedPath,
+  conflictFilePath,
+  type TrackedBlueprint,
 } from "../utils/blueprint-tracker.js";
 import { withSensitiveDataAck, type SensitiveMatchInfo } from "../utils/sensitive-ack.js";
 import { matchConfigFile } from "../utils/blueprint-files.js";
@@ -353,6 +355,11 @@ export async function pushCommand(
   const linked = await findBlueprintByFile(cwd, file);
 
   if (linked) {
+    const refusal = refusePush(cwd, linked, options);
+    if (refusal) {
+      console.log(chalk.yellow(`⚠ Not pushed: ${refusal}`));
+      process.exit(1);
+    }
     // Update existing blueprint
     await updateBlueprint(cwd, file, linked.id, content, options, linked.checksum);
   } else {
@@ -360,6 +367,23 @@ export async function pushCommand(
     // pushed alone; only a bare 'lynxp push' offers to push every AGENTS.md as a hierarchy.
     await createOrLinkBlueprint(cwd, file, filename, content, options, fileArg !== undefined);
   }
+}
+
+/**
+ * Why a tracked file must not be pushed without --force, or null. A file
+ * filled by `pull --vars` holds the user's values where the blueprint has
+ * [[VARIABLES]]; a file with a <file>.remote beside it has a sync conflict
+ * nobody resolved yet.
+ */
+function refusePush(cwd: string, tracked: TrackedBlueprint, options: PushOptions): string | null {
+  if (options.force) return null;
+  if (fs.existsSync(conflictFilePath(cwd, tracked.file))) {
+    return `${tracked.file} has an unresolved sync conflict. Merge ${tracked.file}.remote into it and delete ${tracked.file}.remote first, or use --force.`;
+  }
+  if (tracked.variables) {
+    return `${tracked.file} was pulled with --vars, so pushing it would replace the blueprint's variables with your values. Use --force to push it anyway.`;
+  }
+  return null;
 }
 
 async function updateBlueprint(
@@ -736,6 +760,11 @@ async function pushHierarchy(
       // 1. Check if already tracked locally → update
       const tracked = await findBlueprintByFile(cwd, file.path);
       if (tracked) {
+        const refusal = refusePush(cwd, tracked, options);
+        if (refusal) {
+          spinner.warn(`${file.path} → skipped: ${refusal}`);
+          continue;
+        }
         const updateData: { content: string; expected_checksum?: string } = { content };
         if (tracked.checksum && !options.force) {
           updateData.expected_checksum = tracked.checksum;

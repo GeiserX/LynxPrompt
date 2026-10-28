@@ -14,12 +14,33 @@ import {
   type BlueprintSource,
 } from "../utils/blueprint-tracker.js";
 import { blueprintFilename, safePath } from "../utils/blueprint-files.js";
+import { parseVariablesString } from "../utils/generator.js";
+import { fillBlueprintVariables } from "../utils/variables.js";
 
 interface PullOptions {
   output: string;
   yes?: boolean;
   preview?: boolean;
   track?: boolean; // Track the blueprint for future syncs (default: true)
+  vars?: string; // Fill [[VARIABLES]]: "VAR1=value1,VAR2=value2"
+}
+
+/**
+ * The text to write for a blueprint: with --vars, placeholders are filled from
+ * the given values or their defaults. Variables with neither are reported.
+ */
+function contentToWrite(content: string, options: PullOptions, label: string): string {
+  if (options.vars === undefined) return content;
+  const { content: filled, missing } = fillBlueprintVariables(content, parseVariablesString(options.vars));
+  if (missing.length > 0) {
+    console.log(chalk.yellow(`  ⚠ ${label}: no value for ${missing.join(", ")} (left as [[...]])`));
+  }
+  return filled;
+}
+
+// Values to remember for sync, only when they changed what was written
+function pulledVariables(options: PullOptions, written: string, content: string): Record<string, string> | undefined {
+  return options.vars === undefined || written === content ? undefined : parseVariablesString(options.vars);
 }
 
 // Determine blueprint source from visibility
@@ -167,7 +188,8 @@ async function pullHierarchy(
       }
 
       // Write the file
-      await writeFile(outputPath, blueprint.content, "utf-8");
+      const written = contentToWrite(blueprint.content, options, filename);
+      await writeFile(outputPath, written, "utf-8");
 
       // Track the blueprint with hierarchy info
       if (options.track !== false) {
@@ -182,6 +204,8 @@ async function pullHierarchy(
           hierarchyId: id,
           hierarchyName: hierarchy.name,
           repositoryPath: bp.repository_path || undefined,
+          localContent: written,
+          variables: pulledVariables(options, written, blueprint.content),
         });
       }
 
@@ -399,7 +423,8 @@ async function pullBlueprint(
     }
 
     // Write the file
-    await writeFile(outputPath, blueprint.content, "utf-8");
+    const written = contentToWrite(blueprint.content, options, filename);
+    await writeFile(outputPath, written, "utf-8");
 
     // Track the blueprint (default behavior unless --no-track)
     if (options.track !== false) {
@@ -411,6 +436,8 @@ async function pullBlueprint(
         source,
         hierarchyId: blueprint.hierarchy_id || undefined,
         repositoryPath: blueprint.repository_path || undefined,
+        localContent: written,
+        variables: pulledVariables(options, written, blueprint.content),
       });
     }
 
@@ -422,8 +449,8 @@ async function pullBlueprint(
       if (blueprint.content_checksum) {
         console.log(chalk.gray(`   Checksum: ${blueprint.content_checksum}`));
       }
-      if (isMarketplace) {
-        console.log(chalk.gray(`   Updates: Run 'lynxp pull ${id}' to sync updates`));
+      if (isMarketplace || options.vars !== undefined) {
+        console.log(chalk.gray(`   Updates: Run 'lynxp sync ${trackedFile}' to get cloud updates`));
       } else {
         console.log(chalk.gray(`   Sync: Run 'lynxp push ${trackedFile}' to push changes`));
       }
