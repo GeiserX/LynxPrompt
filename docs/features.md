@@ -13,7 +13,7 @@ LynxPrompt is **free and open-source**. Self-host it for personal use, or deploy
 
 ## Universal AI Config Hub
 
-Rules for **30 tools**: Cursor, Claude Code, GitHub Copilot, Windsurf, Zed, Aider, Gemini CLI, Cline, Roo Code, Amazon Q, JetBrains Junie, and many more. Write once, export to any format. Slash commands for Cursor, Claude Code, Windsurf, Copilot, Continue and OpenCode. The CLI wizard can list your MCP servers in the generated rules; it does not write MCP configuration files.
+Rules for **30 tools**: Cursor, Claude Code, GitHub Copilot, Windsurf, Zed, Aider, Gemini CLI, Cline, Roo Code, Amazon Q, JetBrains Junie, and many more. Write once, export to any format. Slash commands for Cursor, Claude Code, Windsurf, Copilot, Continue and OpenCode. MCP server configs are blueprints too: one config downloads or converts to the MCP file of 24 tools (`.mcp.json`, `.cursor/mcp.json`, `.vscode/mcp.json`, `.gemini/settings.json`, `.zed/settings.json`, `opencode.json`, `.codex/config.toml` and more), and the CLI writes into a settings file without touching its other settings.
 
 ## Blueprint Marketplace
 

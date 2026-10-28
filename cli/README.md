@@ -212,15 +212,51 @@ lynxp push -y --name "My Config"
 
 A skill's `SKILL.md` (in `.claude/skills/`, `.agents/skills/`, `.github/skills/`,
 `.cursor/skills/`, `.gemini/skills/` or `.opencode/skills/`) and an MCP config
-(`.mcp.json`, `.cursor/mcp.json`, `.vscode/mcp.json`, `.kiro/settings/mcp.json`)
 push and pull like any rules file, and keep their path.
+
+MCP configs are read from and written to each tool's own file:
+
+| Tool | File | Servers under |
+|------|------|---------------|
+| Claude Code (also Copilot CLI, VS Code) | `.mcp.json` | `mcpServers` |
+| Cursor | `.cursor/mcp.json` | `mcpServers` |
+| VS Code (Copilot) | `.vscode/mcp.json` | `servers` |
+| Kiro | `.kiro/settings/mcp.json` | `mcpServers` |
+| GitHub Copilot CLI | `.github/mcp.json` | `mcpServers` |
+| Google Antigravity | `.agents/mcp_config.json` | `mcpServers` (`serverUrl`) |
+| Devin | `.devin/mcp_config.json` | `mcpServers` |
+| JetBrains Junie | `.junie/mcp/mcp.json` | `mcpServers` |
+| Factory | `.factory/mcp.json` | `mcpServers` |
+| Trae | `.trae/mcp.json` | `mcpServers` |
+| Roo Code / Zoo Code | `.roo/mcp.json` | `mcpServers` |
+| Kimi Code | `.kimi-code/mcp.json` | `mcpServers` |
+| Pi | `.pi/mcp.json` | `mcpServers` |
+| Warp | `.warp/.mcp.json` | `mcpServers` |
+| Gemini CLI | `.gemini/settings.json` * | `mcpServers` (`httpUrl`) |
+| Qwen Code | `.qwen/settings.json` * | `mcpServers` (`httpUrl`) |
+| Augment Code | `.augment/settings.json` * | `mcpServers` |
+| Firebender | `firebender.json` * | `mcpServers` |
+| Zed | `.zed/settings.json` * | `context_servers` |
+| Amp | `.amp/settings.json` * | `amp.mcpServers` |
+| OpenCode | `opencode.json` * | `mcp` |
+| Kilo Code | `kilo.jsonc` * | `mcp` |
+| OpenAI Codex | `.codex/config.toml` * | `[mcp_servers.<name>]` |
+| Mistral Vibe | `.vibe/config.toml` * | `[[mcp_servers]]` |
+
+\* A settings file: `convert`, `pull` and `sync` change only its MCP servers
+and keep every other setting (and the comments of `kilo.jsonc`), and `push`
+sends only its MCP servers. `opencode.json` and `firebender.json` are still
+pushed whole, as before. Antigravity, Codex and Vibe take streamable HTTP
+only, so SSE servers are left out of their files.
 
 ```bash
 lynxp push .claude/skills/release-notes/SKILL.md
 lynxp push .mcp.json
+lynxp push .gemini/settings.json     # only its mcpServers
 
 # The same MCP servers in another tool's file
 lynxp convert .mcp.json vscode-mcp    # .vscode/mcp.json, "servers" key
+lynxp convert .mcp.json codex-mcp     # [mcp_servers.*] in .codex/config.toml
 lynxp convert cursor-mcp              # from the first MCP config found
 ```
 
