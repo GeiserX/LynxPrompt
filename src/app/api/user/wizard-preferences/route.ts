@@ -4,6 +4,34 @@ import { authOptions } from "@/lib/auth";
 import { authenticateRequest, canPerform } from "@/lib/api-auth";
 import { prismaUsers } from "@/lib/db-users";
 
+// Limits for one save. Values hold whole custom files (CONTRIBUTING, .gitignore).
+const MAX_PREFERENCES_PER_REQUEST = 100;
+const MAX_NAME_LENGTH = 100;
+const MAX_VALUE_LENGTH = 50_000;
+
+type IncomingPreference = {
+  category: string;
+  key: string;
+  value: string;
+  isDefault?: boolean;
+};
+
+// Returns the preference with its value as a string, undefined when it carries no
+// value (nothing to save), or null when it breaks the limits.
+function normalisePreference(raw: unknown): IncomingPreference | null | undefined {
+  if (!raw || typeof raw !== "object") return null;
+  const { category, key, value, isDefault } = raw as Record<string, unknown>;
+  const validName = (v: unknown): v is string =>
+    typeof v === "string" && v.length > 0 && v.length <= MAX_NAME_LENGTH;
+  if (!validName(category) || !validName(key)) return null;
+  if (value === undefined || value === null) return undefined;
+  // The wizard sends some flags as booleans; the column is text.
+  if (typeof value !== "string" && typeof value !== "number" && typeof value !== "boolean") return null;
+  const text = String(value);
+  if (text.length > MAX_VALUE_LENGTH) return null;
+  return { category, key, value: text, isDefault: isDefault === true };
+}
+
 // GET - Fetch all wizard preferences for the user
 export async function GET() {
   try {
@@ -46,8 +74,7 @@ export async function POST(req: Request) {
   try {
     // Support both session auth (browser) and Bearer token auth (CLI)
     const auth = await authenticateRequest(req);
-    console.log("[wizard-preferences POST] auth:", auth?.source, auth?.user?.id);
-    
+
     if (!auth) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -62,29 +89,42 @@ export async function POST(req: Request) {
 
     const userId = auth.user.id;
     const body = await req.json();
-    console.log("[wizard-preferences POST] received body:", JSON.stringify(body, null, 2));
-    
+
     // Accept both formats: { preferences: [...] } or just [...]
-    let preferences: Array<{
-      category: string;
-      key: string;
-      value: string;
-      isDefault?: boolean;
-    }>;
-    
+    let rawPreferences: unknown[];
+
     if (Array.isArray(body)) {
       // Direct array format (from wizard's saveToProfileImmediately)
-      preferences = body;
+      rawPreferences = body;
     } else if (body?.preferences && Array.isArray(body.preferences)) {
       // Object format with preferences property
-      preferences = body.preferences;
+      rawPreferences = body.preferences;
     } else {
       return NextResponse.json({ error: "Invalid preferences format" }, { status: 400 });
     }
 
-    if (preferences.length === 0) {
+    if (rawPreferences.length === 0) {
       return NextResponse.json({ saved: 0 });
     }
+
+    if (rawPreferences.length > MAX_PREFERENCES_PER_REQUEST) {
+      return NextResponse.json(
+        { error: `At most ${MAX_PREFERENCES_PER_REQUEST} preferences per request` },
+        { status: 400 }
+      );
+    }
+
+    const normalised = rawPreferences.map(normalisePreference);
+    if (normalised.some((p) => p === null)) {
+      return NextResponse.json(
+        {
+          error: `Each preference needs a category and key of at most ${MAX_NAME_LENGTH} characters and a value of at most ${MAX_VALUE_LENGTH} characters`,
+        },
+        { status: 400 }
+      );
+    }
+
+    const preferences = normalised.filter((p): p is IncomingPreference => !!p);
 
     // Upsert each preference
     const results = await Promise.all(
@@ -113,7 +153,6 @@ export async function POST(req: Request) {
       )
     );
 
-    console.log("[wizard-preferences POST] saved", results.length, "preferences");
     return NextResponse.json({ saved: results.length });
   } catch (error) {
     console.error("[wizard-preferences POST] Error saving wizard preferences:", error);

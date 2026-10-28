@@ -14,8 +14,9 @@ async function getUserTeamInfo(userId: string) {
       team: {
         include: {
           members: {
+            // No cap: the ids filter team blueprints by author, so a cut list
+            // would hide blueprints of every member past the cut.
             select: { userId: true },
-            take: 100, // Limit for performance
           },
           _count: {
             select: { members: true },
@@ -286,12 +287,18 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
 
-    // Enrich favorites with template details
-    const enrichedFavorites = await Promise.all(
-      favorites.map(async (fav) => {
-        if (fav.templateType === "system") {
-          const template = await prismaApp.systemTemplate.findUnique({
-            where: { id: fav.templateId },
+    // Enrich favorites with template details: one query per template kind
+    const systemFavoriteIds = favorites
+      .filter((fav) => fav.templateType === "system")
+      .map((fav) => fav.templateId);
+    const userFavoriteIds = favorites
+      .filter((fav) => fav.templateType !== "system")
+      .map((fav) => fav.templateId);
+
+    const [systemFavoriteTemplates, userFavoriteTemplates] = await Promise.all([
+      systemFavoriteIds.length > 0
+        ? prismaApp.systemTemplate.findMany({
+            where: { id: { in: systemFavoriteIds } },
             select: {
               id: true,
               name: true,
@@ -300,41 +307,57 @@ export async function GET() {
               favorites: true,
               tier: true,
             },
-          });
-          if (template) {
-            return {
-              id: `sys_${template.id}`,
-              name: template.name,
-              description: template.description,
-              downloads: template.downloads,
-              favorites: template.favorites,
-              tier: template.tier,
-              isOfficial: true,
-            };
-          }
-        } else {
-          const template = await prismaUsers.userTemplate.findUnique({
-            where: { id: fav.templateId },
-            include: {
+          })
+        : [],
+      userFavoriteIds.length > 0
+        ? prismaUsers.userTemplate.findMany({
+            where: { id: { in: userFavoriteIds } },
+            select: {
+              id: true,
+              name: true,
+              description: true,
+              downloads: true,
+              favorites: true,
+              tier: true,
               user: { select: { name: true } },
             },
-          });
-          if (template) {
-            return {
-              id: `bp_${template.id}`,
-              name: template.name,
-              description: template.description,
-              downloads: template.downloads,
-              favorites: template.favorites,
-              tier: template.tier,
-              author: template.user?.name || "Anonymous",
-              isOfficial: false,
-            };
-          }
+          })
+        : [],
+    ]);
+    const systemFavoriteMap = new Map(systemFavoriteTemplates.map((t) => [t.id, t]));
+    const userFavoriteMap = new Map(userFavoriteTemplates.map((t) => [t.id, t]));
+
+    const enrichedFavorites = favorites.map((fav) => {
+      if (fav.templateType === "system") {
+        const template = systemFavoriteMap.get(fav.templateId);
+        if (template) {
+          return {
+            id: `sys_${template.id}`,
+            name: template.name,
+            description: template.description,
+            downloads: template.downloads,
+            favorites: template.favorites,
+            tier: template.tier,
+            isOfficial: true,
+          };
         }
-        return null;
-      })
-    );
+      } else {
+        const template = userFavoriteMap.get(fav.templateId);
+        if (template) {
+          return {
+            id: `bp_${template.id}`,
+            name: template.name,
+            description: template.description,
+            downloads: template.downloads,
+            favorites: template.favorites,
+            tier: template.tier,
+            author: template.user?.name || "Anonymous",
+            isOfficial: false,
+          };
+        }
+      }
+      return null;
+    });
 
     return NextResponse.json({
       stats: {

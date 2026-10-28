@@ -50,10 +50,12 @@ async function main() {
     },
   ];
 
+  // Create only: categories and tags an admin edited stay as they are, because
+  // the entrypoint runs this seed on every start when the forum is enabled.
   for (const category of categories) {
     await prisma.supportCategory.upsert({
       where: { slug: category.slug },
-      update: category,
+      update: {},
       create: category,
     });
     console.log(`  ✓ Category: ${category.name}`);
@@ -76,7 +78,7 @@ async function main() {
   for (const tag of tags) {
     await prisma.supportTag.upsert({
       where: { slug: tag.slug },
-      update: tag,
+      update: {},
       create: tag,
     });
     console.log(`  ✓ Tag: ${tag.name}`);

@@ -658,7 +658,7 @@ export default function DashboardPage() {
                             <div className="min-w-0 flex-1">
                               <h3 className="font-medium truncate">{draft.name}</h3>
                               <p className="text-xs text-muted-foreground mt-1">
-                                {draft.projectName || "Untitled"} • Step {draft.step + 1}/11
+                                {draft.projectName || "Untitled"} • Step {draft.step + 1}/12
                               </p>
                               <div className="flex flex-wrap gap-1 mt-2">
                                 {draft.languages?.slice(0, 3).map((lang: string) => (
@@ -906,7 +906,7 @@ export default function DashboardPage() {
                                 variant="ghost" 
                                 size="icon" 
                                 title="Delete hierarchy"
-                                onClick={() => setShowDeleteHierarchy(group)}
+                                onClick={() => { setHierarchyError(null); setShowDeleteHierarchy(group); }}
                               >
                                 <Trash2 className="h-4 w-4 text-destructive" />
                               </Button>
@@ -1879,8 +1879,11 @@ export default function DashboardPage() {
                 </label>
               </>
             )}
+            {hierarchyError && (
+              <p className="mb-4 text-sm text-destructive">{hierarchyError}</p>
+            )}
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => { setShowDeleteHierarchy(null); setDeleteHierarchyBlueprints(false); }} disabled={isDeletingHierarchy}>
+              <Button variant="outline" onClick={() => { setShowDeleteHierarchy(null); setDeleteHierarchyBlueprints(false); setHierarchyError(null); }} disabled={isDeletingHierarchy}>
                 Cancel
               </Button>
               <Button
@@ -1888,6 +1891,7 @@ export default function DashboardPage() {
                 disabled={isDeletingHierarchy}
                 onClick={async () => {
                   setIsDeletingHierarchy(true);
+                  setHierarchyError(null);
                   try {
                     const url = deleteHierarchyBlueprints
                       ? `/api/hierarchies/${showDeleteHierarchy.id}?deleteBlueprints=true`

@@ -439,3 +439,71 @@ describe("authOptions.events.createUser - superadmin on first sign-in", () => {
     expect(mockUpdate.mock.calls[0][0].data).not.toHaveProperty("role");
   });
 });
+
+describe("SUPERADMIN_EMAIL matching ignores case", () => {
+  const signIn = authOptions.callbacks!.signIn!;
+  const createUser = authOptions.events!.createUser!;
+  const originalEnv = process.env.SUPERADMIN_EMAIL;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUpdate.mockResolvedValue({});
+    mockUpdateMany.mockResolvedValue({});
+    mockTeamMemberUpdateMany.mockResolvedValue({});
+    mockFindUnique.mockResolvedValue({ id: "admin-1", termsAcceptedAt: new Date() });
+  });
+
+  afterEach(() => {
+    if (originalEnv !== undefined) {
+      process.env.SUPERADMIN_EMAIL = originalEnv;
+    } else {
+      delete process.env.SUPERADMIN_EMAIL;
+    }
+  });
+
+  it("promotes on sign-in when the env value has other casing and spaces", async () => {
+    // next-auth stores addresses lowercased; the operator typed the env by hand
+    process.env.SUPERADMIN_EMAIL = " Admin@Test.com ";
+    await (signIn as Function)({
+      user: { id: "admin-1", email: "admin@test.com" },
+      account: null,
+      profile: null,
+    });
+    expect(mockUpdateMany).toHaveBeenCalledWith({
+      where: { email: "admin@test.com" },
+      data: { role: "SUPERADMIN" },
+    });
+  });
+
+  it("creates the new account as superadmin when the env value has other casing", async () => {
+    process.env.SUPERADMIN_EMAIL = "Admin@Test.com";
+    await (createUser as Function)({ user: { id: "new-admin", email: "admin@test.com" } });
+    expect(mockUpdate.mock.calls[0][0].data).toHaveProperty("role", "SUPERADMIN");
+  });
+});
+
+describe("authOptions.events.signIn - records the last login", () => {
+  const signInEvent = authOptions.events!.signIn!;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUpdate.mockResolvedValue({});
+  });
+
+  it("writes lastLoginAt for the signed-in user", async () => {
+    const before = Date.now();
+    await (signInEvent as Function)({ user: { id: "u-1", email: "a@test.com" } });
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
+    const arg = mockUpdate.mock.calls[0][0];
+    expect(arg.where).toEqual({ id: "u-1" });
+    expect(arg.data.lastLoginAt).toBeInstanceOf(Date);
+    expect(arg.data.lastLoginAt.getTime()).toBeGreaterThanOrEqual(before);
+  });
+
+  it("does not throw when the update fails", async () => {
+    mockUpdate.mockRejectedValue(new Error("db down"));
+    await expect(
+      (signInEvent as Function)({ user: { id: "u-1", email: "a@test.com" } })
+    ).resolves.toBeUndefined();
+  });
+});

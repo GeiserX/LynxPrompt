@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { prismaApp } from "@/lib/db-app";
-import { createHash } from "crypto";
+import { hashIP } from "@/lib/ip-hash";
 import { getClientIP } from "@/lib/client-ip";
 import { canReadTemplate } from "@/lib/blueprint-access";
 import { COMMANDS, PLATFORMS } from "@/lib/platforms";
@@ -48,7 +48,7 @@ export async function POST(
 
     // Deduplicate: check for recent download from same IP + template in the last hour
     const clientIP = getClientIP(request);
-    const ipHash = createHash("sha256").update(clientIP).digest("hex").substring(0, 16);
+    const ipHash = hashIP(clientIP);
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
     const recentDownload = await prismaUsers.templateDownload.findFirst({

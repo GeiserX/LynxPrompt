@@ -1,23 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { createHash } from "crypto";
 import { authOptions } from "@/lib/auth";
 import { prismaSupport } from "@/lib/db-support";
+import { supportForumDisabled } from "@/lib/support-guard";
 import { prismaUsers } from "@/lib/db-users";
 
 // PostStatus values in prisma/schema-support.prisma
 const POST_STATUSES = ["OPEN", "IN_PROGRESS", "COMPLETED", "CLOSED", "DUPLICATE"];
 
-// Generate Gravatar URL from email
-function getGravatarUrl(email: string, size: number = 96): string {
-  const hash = createHash("md5")
-    .update(email.toLowerCase().trim())
-    .digest("hex");
-  return `https://www.gravatar.com/avatar/${hash}?s=${size}&d=identicon`;
-}
-
 // Public endpoint - no auth required for reading
 export async function GET(request: NextRequest) {
+  const disabled = supportForumDisabled();
+  if (disabled) return disabled;
+
   try {
     // Session is optional - used only for hasVoted status
     const session = await getServerSession(authOptions);
@@ -135,17 +130,17 @@ export async function GET(request: NextRequest) {
         id: true,
         name: true,
         displayName: true,
-        email: true,
         image: true,
         subscriptionPlan: true,
       },
     });
     const userMap = new Map(users.map((u) => [u.id, u]));
 
-    const postsWithVoteStatus = posts.map((post) => {
+    // The list never shows the post body, so it is left out (the detail route has it).
+    // No Gravatar fallback: its URL is the md5 of the author's email.
+    const postsWithVoteStatus = posts.map(({ content: _content, ...post }) => {
       const user = userMap.get(post.userId);
-      // Use OAuth image, fallback to Gravatar, then null
-      const userImage = user?.image || (user?.email ? getGravatarUrl(user.email) : null);
+      const userImage = user?.image || null;
       return {
         ...post,
         userName: user?.displayName || user?.name || post.userName,
@@ -174,6 +169,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const disabled = supportForumDisabled();
+  if (disabled) return disabled;
+
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {

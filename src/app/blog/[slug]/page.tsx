@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { createHash } from "crypto";
 import type { Metadata } from "next";
 import { authOptions } from "@/lib/auth";
+import { markdownToHtml } from "@/lib/blog-markdown";
 import { prismaBlog } from "@/lib/db-blog";
 import { prismaUsers } from "@/lib/db-users";
 import { APP_NAME, APP_URL, APP_LOGO_URL } from "@/lib/feature-flags";
@@ -89,103 +90,6 @@ function getGravatarUrl(email: string, size: number = 96): string {
 
 // Force dynamic rendering since we need session checks
 export const dynamic = "force-dynamic";
-
-// Validate URL for safe protocols (prevent javascript: XSS)
-function isSafeUrl(url: string): boolean {
-  const trimmed = url.trim().toLowerCase();
-  // Only allow http, https, mailto, and relative URLs
-  if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || 
-      trimmed.startsWith("mailto:") || trimmed.startsWith("/") || 
-      trimmed.startsWith("#") || trimmed.startsWith("./") || trimmed.startsWith("../")) {
-    return true;
-  }
-  // Block javascript:, data:, vbscript:, and other potentially dangerous protocols
-  if (trimmed.includes(":")) {
-    return false;
-  }
-  // Allow relative URLs without protocol
-  return true;
-}
-
-// Simple markdown to HTML converter (basic but effective)
-function markdownToHtml(markdown: string): string {
-  let html = markdown;
-  
-  // Escape HTML
-  html = html
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-  
-  // Headers
-  html = html.replace(/^### (.*$)/gim, "<h3>$1</h3>");
-  html = html.replace(/^## (.*$)/gim, "<h2>$1</h2>");
-  html = html.replace(/^# (.*$)/gim, "<h1>$1</h1>");
-  
-  // Bold and italic
-  html = html.replace(/\*\*\*(.*?)\*\*\*/g, "<strong><em>$1</em></strong>");
-  html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-  html = html.replace(/\*(.*?)\*/g, "<em>$1</em>");
-  
-  // Links - with URL validation to prevent javascript: XSS
-  html = html.replace(
-    /\[([^\]]+)\]\(([^)]+)\)/g,
-    (_match, text, url) => {
-      if (isSafeUrl(url)) {
-        // HTML-encode the URL to prevent attribute injection
-        const safeUrl = url
-          .replace(/&/g, "&amp;")
-          .replace(/"/g, "&quot;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;");
-        return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${text}</a>`;
-      }
-      // For unsafe URLs, render as plain text
-      return text;
-    }
-  );
-  
-  // Code blocks (triple backticks)
-  html = html.replace(
-    /```(\w*)\n([\s\S]*?)```/g,
-    '<pre><code class="language-$1">$2</code></pre>'
-  );
-  
-  // Inline code
-  html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
-  
-  // Unordered lists
-  html = html.replace(/^\s*[-*]\s+(.*)$/gm, "<li>$1</li>");
-  html = html.replace(/(<li>.*<\/li>\n?)+/g, "<ul>$&</ul>");
-  
-  // Ordered lists
-  html = html.replace(/^\s*\d+\.\s+(.*)$/gm, "<li>$1</li>");
-  
-  // Blockquotes
-  html = html.replace(/^>\s*(.*$)/gim, "<blockquote>$1</blockquote>");
-  
-  // Horizontal rule
-  html = html.replace(/^---$/gm, "<hr />");
-  
-  // Paragraphs (double newlines)
-  html = html.replace(/\n\n/g, "</p><p>");
-  html = "<p>" + html + "</p>";
-  
-  // Clean up empty paragraphs
-  html = html.replace(/<p>\s*<\/p>/g, "");
-  html = html.replace(/<p>(<h[1-6]>)/g, "$1");
-  html = html.replace(/(<\/h[1-6]>)<\/p>/g, "$1");
-  html = html.replace(/<p>(<ul>)/g, "$1");
-  html = html.replace(/(<\/ul>)<\/p>/g, "$1");
-  html = html.replace(/<p>(<pre>)/g, "$1");
-  html = html.replace(/(<\/pre>)<\/p>/g, "$1");
-  html = html.replace(/<p>(<blockquote>)/g, "$1");
-  html = html.replace(/(<\/blockquote>)<\/p>/g, "$1");
-  html = html.replace(/<p>(<hr \/>)/g, "$1");
-  html = html.replace(/(<hr \/>)<\/p>/g, "$1");
-  
-  return html;
-}
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -370,6 +274,9 @@ export default async function BlogPostPage({ params }: PageProps) {
                     src={post.coverImage}
                     alt={post.coverImageCaption || post.title}
                     fill
+                    // A cover pasted as a URL can be on any host; only the hosts
+                    // in next.config remotePatterns can be optimised
+                    unoptimized={/^https?:\/\//i.test(post.coverImage)}
                     className="object-cover"
                     priority
                   />
