@@ -653,7 +653,7 @@ export function commandContent(content: string, toCommandId: string): string {
   const { frontmatter, body } = splitFrontmatter(content);
   const descLine = frontmatter.split(/\r?\n/).find((l) => l.startsWith("description:"));
   const description = descLine?.slice("description:".length).trim().replace(/^["']|["']$/g, "");
-  const prompt = body.replace(/\s+$/, "");
+  const prompt = body.trimEnd();
   // A TOML literal string keeps backslashes and quotes as written; a basic
   // string with escapes only when the prompt itself holds '''
   const quoted = prompt.includes("'''")

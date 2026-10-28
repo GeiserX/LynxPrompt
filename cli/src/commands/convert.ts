@@ -155,7 +155,9 @@ export async function convertCommand(
   const structured = [sourcePlatform, normalizedTarget].find(isStructuredPlatform);
   if (structured) {
     console.log(chalk.red(`  ✗ ${PLATFORM_NAMES[structured] || structured} uses a JSON/YAML config, not a rules file, so it cannot be converted`));
-    console.log(chalk.gray(`     Run 'lynxp wizard' and pick ${PLATFORM_NAMES[structured] || structured} to generate one`));
+    console.log(chalk.gray(structured === "aider"
+      ? "     Aider reads AGENTS.md when .aider.conf.yml lists it: run 'lynxp wizard -f aider' to add it"
+      : `     Run 'lynxp wizard' and pick ${PLATFORM_NAMES[structured] || structured} to generate one`));
     process.exit(1);
   }
 
