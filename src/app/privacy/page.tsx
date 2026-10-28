@@ -306,8 +306,8 @@ export default function PrivacyPage() {
                     </p>
                     <p className="text-sm">
                       <strong>How to avoid it:</strong> Upload a profile
-                      picture in Settings, or sign in with GitHub or Google,
-                      whose picture is used instead.
+                      picture in Settings. An account created through GitHub
+                      or Google uses that provider&apos;s picture instead.
                     </p>
                     <p className="text-sm">
                       <strong>Location:</strong> USA

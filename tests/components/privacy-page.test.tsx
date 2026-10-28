@@ -24,5 +24,11 @@ describe("privacy page", () => {
     expect(page).toContain("Gravatar (Automattic)");
     expect(page).toContain("An MD5 hash of your email address");
     expect(page).toContain("Public profiles and the support forum never use Gravatar");
+    // Only an account created through GitHub or Google gets the provider's
+    // picture; linking a provider later does not, so the page must not promise it.
+    expect(page).toContain(
+      "Upload a profile picture in Settings. An account created through GitHub or Google uses that provider's picture instead."
+    );
+    expect(page).not.toMatch(/or sign in with GitHub or Google/);
   });
 });
