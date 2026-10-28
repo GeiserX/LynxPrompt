@@ -138,7 +138,7 @@ export default function CommandsDocsPage() {
                 <td className="py-3 text-muted-foreground">/workflow-name.md</td>
               </tr>
               <tr>
-                <td className="py-3 pr-4 font-medium">Roo Code / Zoo Code</td>
+                <td className="py-3 pr-4 font-medium">Zoo Code</td>
                 <td className="py-3 pr-4"><code className="rounded bg-muted px-1.5 py-0.5">.roo/commands/*.md</code></td>
                 <td className="py-3 text-muted-foreground">/command-name</td>
               </tr>

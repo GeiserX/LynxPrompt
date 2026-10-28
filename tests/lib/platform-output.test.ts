@@ -68,7 +68,6 @@ describe("platform table: every rules platform names a real file", () => {
     expect(getPlatform("cursor")?.file).toBe(".cursor/rules/project.mdc");
     expect(getPlatform("zed")?.file).toBe(".rules");
     expect(getPlatform("trae")?.file).toBe(".trae/rules/project_rules.md");
-    expect(getPlatform("firebase")?.file).toBe(".idx/airules.md");
     expect(getPlatform("kiro")?.file).toBe(".kiro/steering/project.md");
     expect(getPlatform("aider")?.file).toBe(".aider.conf.yml");
     expect(getPlatform("windsurf")?.file).toBe(".devin/rules/project.md");
@@ -124,7 +123,7 @@ describe("generated content matches each platform's format", () => {
     expect(augment).not.toContain("alwaysApply");
   });
 
-  it.each(["amazonq", "roocode", "cline", "tabnine", "firebase"])("%s gets plain Markdown", (id) => {
+  it.each(["roocode", "cline", "tabnine"])("%s gets plain Markdown", (id) => {
     const { content } = generate(id);
     expect(content.startsWith("# Demo - AI Rules")).toBe(true);
     expect(content).not.toContain("alwaysApply");

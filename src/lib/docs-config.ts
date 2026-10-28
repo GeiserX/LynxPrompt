@@ -165,17 +165,17 @@ export const docsConfig: DocsSection[] = [
       {
         title: "AI-Powered IDEs",
         href: "/docs/platforms/ides",
-        description: "Antigravity, Zed, Trae AI, Firebase Studio",
+        description: "Antigravity, Zed, Trae AI",
       },
       {
         title: "Editor Extensions",
         href: "/docs/platforms/editors",
-        description: "Cline, Roo Code, Tabnine, Kilo Code, and more",
+        description: "Cline, Zoo Code, Tabnine, Kilo Code, and more",
       },
       {
         title: "CLI Tools",
         href: "/docs/platforms/cli",
-        description: "Aider, Goose, Warp AI, Gemini CLI",
+        description: "Aider, Goose, Warp AI, Gemini CLI, Grok Build, Pi",
       },
       {
         title: "AGENTS.md Standard",
