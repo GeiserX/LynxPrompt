@@ -4,6 +4,37 @@ entries:
   - annotations:
       artifacthub.io/changes: |
         - kind: changed
+          description: Run app 2.1.50
+      category: AI
+    apiVersion: v2
+    appVersion: 2.1.50
+    created: "2026-10-28T12:14:39.510129133Z"
+    description: A Helm chart for LynxPrompt - Self-hosted AI IDE configuration hub
+    digest: 7c7293f6b243dfb39ac379735ae4b3c562a5f4fbaf7602ad9a77ac10b08fc40c
+    home: https://lynxprompt.com
+    keywords:
+    - lynxprompt
+    - ai
+    - ide
+    - configuration
+    - cursor
+    - claude
+    - copilot
+    - self-hosted
+    kubeVersion: '>=1.21.0-0'
+    maintainers:
+    - email: acsdesk@protonmail.com
+      name: Sergio Fernandez
+    name: lynxprompt
+    sources:
+    - https://github.com/GeiserX/LynxPrompt
+    type: application
+    urls:
+    - https://github.com/GeiserX/LynxPrompt/releases/download/lynxprompt-0.1.6/lynxprompt-0.1.6.tgz
+    version: 0.1.6
+  - annotations:
+      artifacthub.io/changes: |
+        - kind: changed
           description: Run app 2.1.40, which signs in over plain http, makes SUPERADMIN_EMAIL superadmin on the first sign-in and creates /data/uploads
         - kind: fixed
           description: Mount the uploads volume at /data/uploads, where the app writes; it was mounted at /app/public/uploads, which the app never uses
@@ -155,4 +186,4 @@ entries:
     urls:
     - https://github.com/GeiserX/LynxPrompt/releases/download/lynxprompt-0.1.1/lynxprompt-0.1.1.tgz
     version: 0.1.1
-generated: "2026-10-28T05:04:25.859039649Z"
+generated: "2026-10-28T12:14:39.510148943Z"
