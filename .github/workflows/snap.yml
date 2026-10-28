@@ -82,6 +82,19 @@ jobs:
       # Built straight on the runner, which matches the snap's core22 base (Ubuntu
       # 22.04). Inside an LXD instance on the arm64 runner the Node download from
       # nodejs.org stalled in three of four builds.
+      # The snap installs lynxprompt from npm, and the registry can take a few
+      # minutes to serve a version it just accepted (2.1.42's snap failed with
+      # ETARGET one minute after the publish). Wait for it before building.
+      - name: Wait until npm serves this version
+        run: |
+          want=$(sed -n "s/.*lynxprompt@\([0-9][0-9.]*\).*/\1/p" snap/snapcraft.yaml | head -n1)
+          for i in $(seq 1 30); do
+            [ "$(npm view "lynxprompt@$want" version 2>/dev/null)" = "$want" ] && { echo "npm serves lynxprompt@$want"; exit 0; }
+            sleep 20
+          done
+          echo "::error::npm still does not serve lynxprompt@$want after 10 minutes"
+          exit 1
+
       - name: Build the snap
         run: sudo snapcraft pack --destructive-mode
 

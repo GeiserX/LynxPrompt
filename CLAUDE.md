@@ -20,14 +20,14 @@
 
 ### Understanding the Release Pipeline
 
-The app and the CLI ship as **one release with one version**: tag `vX.Y.Z`, GitHub release "LynxPrompt vX.Y.Z" (marked Latest), image `drumsergio/lynxprompt:X.Y.Z`, npm `lynxprompt@X.Y.Z`, and Homebrew, Chocolatey, Snap and AUR at the same version. The old `app-v*` / `cli-v*` tags (up to 2.1.x) stay untouched; 2.2.0 is the first joined version.
+The app and the CLI ship as **one release with one version**: tag `vX.Y.Z`, GitHub release "LynxPrompt vX.Y.Z" (marked Latest), image `drumsergio/lynxprompt:X.Y.Z`, npm `lynxprompt@X.Y.Z`, and Homebrew, Chocolatey, Snap and AUR at the same version. The old `app-v*` / `cli-v*` tags (up to 2.1.x) stay untouched; 3.0.0 is the first joined version.
 
-1. **`release.yml`** runs on every push to `main` (docs, the chart and root Markdown files excepted) and by manual dispatch:
+1. **`release.yml`** runs on every push to `main` (docs, the chart and root Markdown files excepted) to test, and releases only by manual dispatch:
    - Runs CI and the CLI build and public tests: it is `main`'s CI, so `ci.yml` and `cli-tests.yml` run on pull requests and `develop` only
-   - Releases when something that ships changed since the last release (`.github/scripts/release-changes.sh all`, the union of the app and CLI paths). A manual run always releases; `dry_run=true` does everything except the tag, the release and the publishes
-   - Picks the version with `.github/scripts/release-version.sh`: the highest of the root `package.json`, `cli/package.json` and the last release (highest `v*`, `app-v*` or `cli-v*` tag) bumped by `patch`, or by `minor` on a manual run with `bump=minor`
+   - A push never releases. A manual run releases; `dry_run=true` does everything except the tag, the release and the publishes
+   - Picks the version with `.github/scripts/release-version.sh`: the highest of the root `package.json`, `cli/package.json` and the last release (highest `v*`, `app-v*` or `cli-v*` tag) bumped by `bump` (`patch` by default, `minor` or `major`)
    - Release notes are the `## [X.Y.Z]` section of `CHANGELOG.md`; without one, the commit subjects since the last release
-   - One release at a time, none cancelled; a newer push replaces the one pending run, so a burst of merges releases once
+   - One release at a time, none cancelled
    - **Tag-only — does NOT push the version bump back to `main`.** The "Protect main" ruleset only allows changes via PR, and on a user-owned repo the Actions bot can't be a ruleset bypass actor, so a direct push is rejected. Both `package.json` files are set to the version only in the tagged commit, so on `main` they lag the tags; the next version still comes out higher than every tag. **Do not re-add a `git push origin main` to the release job** — it will always be rejected. Keep the root and `cli/package.json` versions equal (a test checks it).
 
 2. **`docker-publish.yml`** and **`publish-cli.yml`** start on the `release-published` dispatch from `release.yml` (or by hand with a version). Both build the `vX.Y.Z` tag, never `main`. The image publish then starts the production check (`deploy-production.yml`) and the self-host pins PR (`selfhost-pins.yml`); the CLI publish attaches the binaries to the same release.
@@ -41,10 +41,9 @@ The app and the CLI ship as **one release with one version**: tag `vX.Y.Z`, GitH
 #    under a "## [X.Y.Z] - YYYY-MM-DD" heading, with an "Upgrade notes" part
 #    when operators must act. release.yml publishes it as the release notes.
 
-# 2. Merge the PR once CI is green. If it changed anything that ships, the push
-#    releases the next patch version. For a minor version, either raise both
-#    package.json files in the PR, or dispatch:
-unset GITHUB_TOKEN && gh workflow run release.yml -R GeiserX/LynxPrompt -f bump=minor
+# 2. Merge the PR once CI is green. Merging releases nothing.
+# 3. Release by hand (bump=patch by default, or minor / major):
+unset GITHUB_TOKEN && gh workflow run release.yml -R GeiserX/LynxPrompt -f bump=patch
 # Check what a release would do without releasing (any branch):
 unset GITHUB_TOKEN && gh workflow run release.yml -R GeiserX/LynxPrompt --ref <branch> -f dry_run=true
 
@@ -65,7 +64,7 @@ npm view lynxprompt versions --json | jq -r '.[-3:]'
 
 | ❌ NEVER DO THIS | ✅ DO THIS INSTEAD |
 |------------------|-------------------|
-| `git tag v2.2.0` | Let release.yml create tags |
+| `git tag v3.0.0` | Let release.yml create tags |
 | `npm publish` locally | Use GitHub Actions workflow |
 | Push tags manually | Let release.yml push tags |
 | Create `app-v*` or `cli-v*` tags | One `vX.Y.Z` tag for both, made by release.yml |
@@ -81,8 +80,8 @@ npm view lynxprompt versions --json | jq -r '.[-3:]'
 - Cause: Someone manually created a tag
 - Fix: Delete the manual tag from remote AND local:
   ```bash
-  git push origin --delete v2.2.0
-  git tag -d v2.2.0
+  git push origin --delete v3.0.0
+  git tag -d v3.0.0
   ```
 
 **Problem: npm publish didn't happen**
@@ -191,7 +190,7 @@ git checkout main
 git merge develop
 ```
 
-**Dependency and security updates target `main` directly via PR.** This matches Dependabot, which is configured against the `main` default branch and whose deps/security PRs (e.g. #88–#97) merge straight to `main`. `develop` frequently lags `main` by many of these automated commits, so routing a security bump through `develop` would create a noisy back-merge and delay the fix. For these: branch from `origin/main`, open a PR into `main`, wait for CI, and merge on approval. Merging a change to `package.json`, a lockfile or anything else that ships releases the next patch version on its own, so a dependency PR leaves the versions alone; never create tags by hand.
+**Dependency and security updates target `main` directly via PR.** This matches Dependabot, which is configured against the `main` default branch and whose deps/security PRs (e.g. #88–#97) merge straight to `main`. `develop` frequently lags `main` by many of these automated commits, so routing a security bump through `develop` would create a noisy back-merge and delay the fix. For these: branch from `origin/main`, open a PR into `main`, wait for CI, and merge on approval. Merging releases nothing; a dependency PR leaves the versions alone, and the next manual release ships it. Never create tags by hand.
 
 ## 🎯 Project Overview
 

@@ -147,8 +147,11 @@ describe("release change detection", () => {
     expect(all(() => {})).toBe("false");
   });
 
-  it("is what the release workflow uses", () => {
+  it("is not how releases start: a push to main only runs the tests", () => {
+    // Releases are manual since 3.0.0; only workflow_dispatch sets release=true.
     const release = readFileSync(resolve(process.cwd(), ".github/workflows/release.yml"), "utf8");
-    expect(release).toContain('bash .github/scripts/release-changes.sh all "$LAST"');
+    expect(release).not.toContain("release-changes.sh all");
+    const decide = release.slice(release.indexOf("- name: Decide whether to release"));
+    expect(decide).toMatch(/if \[\[ "\$GITHUB_EVENT_NAME" == workflow_dispatch \]\]; then\n\s+RELEASE=true\n\s+else\n\s+RELEASE=false/);
   });
 });
