@@ -231,7 +231,6 @@ export async function PATCH(
 
     const { id } = await params;
     const hierarchyId = fromHierarchyApiId(id);
-    const includeContent = request.nextUrl.searchParams.get("include") === "content";
 
     // Parse body
     const body = await request.json();
@@ -354,7 +353,6 @@ export async function DELETE(
 
     const { id } = await params;
     const hierarchyId = fromHierarchyApiId(id);
-    const includeContent = request.nextUrl.searchParams.get("include") === "content";
 
     // Check ownership
     const hierarchy = await prismaUsers.hierarchy.findUnique({
