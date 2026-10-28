@@ -22,10 +22,10 @@
 
 There are **two separate workflows** that work together:
 
-1. **`release.yml`** - Triggered on push to `main`:
-   - Detects changes in app vs CLI since last release
+1. **`release.yml`** - Triggered by a push to `main` that changes `package.json`, `cli/package.json`, their lockfiles or the workflow itself, or by a manual dispatch:
+   - Detects changes in app vs CLI since last release (`.github/scripts/release-changes.sh` holds the rule)
    - Creates git tags (`app-vX.Y.Z` for web, `cli-vX.Y.Z` for CLI)
-   - Creates GitHub Releases with changelogs
+   - Creates GitHub Releases. The app release notes are the `## [X.Y.Z]` section of `CHANGELOG.md`; without one they fall back to a list of commit subjects
    - **Tag-only — does NOT push the version bump back to `main`.** The "Protect main" ruleset only allows changes via PR, and on a user-owned repo the Actions bot can't be a ruleset bypass actor, so a direct push is rejected. The next version is derived from `max(package.json, latest matching tag)`, so it stays monotonic even though `package.json` on `main` lags the tags. **Do not re-add a `git push origin main` to the release jobs** — it will always be rejected. `publish-cli.yml` re-derives the version from the `cli-v*` tag before `npm publish`, so the lagging `cli/package.json` doesn't affect published artifacts.
 
 2. **`publish-cli.yml`** - Triggered by GitHub Release events OR manual dispatch:
@@ -35,50 +35,37 @@ There are **two separate workflows** that work together:
 
 ### Step-by-Step Release Process
 
-#### For a MINOR or MAJOR version (new features):
+`RELEASING.md` is the full procedure. In short:
 
 ```bash
-# 1. Switch to develop branch
-git checkout develop
+# 1. Write the CHANGELOG.md section for the version the release will get,
+#    under a "## [X.Y.Z] - YYYY-MM-DD" heading, with an "Upgrade notes" part
+#    when operators must act. release.yml publishes it as the release notes.
 
-# 2. Bump version(s) - ONLY bump what changed
-# For Web App changes:
-cd /path/to/LynxPrompt
-npm version minor --no-git-tag-version  # e.g., 0.23.0 → 0.24.0
+# 2. Bump the version in a pull request into main (ONLY bump what changed)
+git checkout -b release/x.y.z origin/main
+npm version patch --no-git-tag-version              # app: package.json and package-lock.json
+(cd cli && npm version patch --no-git-tag-version)   # CLI, only when cli/ changed
+git commit -m "chore(release): x.y.z" package.json package-lock.json cli/package.json
+git push -u origin release/x.y.z
+# Open the PR into main and merge it once CI is green.
+# Without a bump, run the workflow by hand instead; it releases the next patch:
+unset GITHUB_TOKEN && gh workflow run Release -R GeiserX/LynxPrompt -f type=auto
 
-# For CLI changes:
-cd cli
-npm version minor --no-git-tag-version  # e.g., 0.7.0 → 0.8.0
-cd ..
-
-# 3. Commit with conventional commit message
-git add package.json package-lock.json cli/package.json
-git commit -m "feat: description of changes"
-
-# 4. Push to develop (triggers CI tests)
-git push origin develop
-
-# 5. Wait for CI to pass, then merge to main
-git checkout main
-git merge develop
-git push origin main
-
-# 6. Verify release workflow succeeded
+# 3. Verify release workflow succeeded
 unset GITHUB_TOKEN && gh run list -R GeiserX/LynxPrompt -w "Release" --limit 3
 
-# 7. If CLI was released, verify npm publish workflow triggered
+# 4. If CLI was released, verify npm publish workflow triggered
 unset GITHUB_TOKEN && gh run list -R GeiserX/LynxPrompt -w "Publish CLI" --limit 3
 
-# 8. If publish-cli didn't auto-trigger, manually trigger it:
+# 5. If publish-cli didn't auto-trigger, manually trigger it:
 unset GITHUB_TOKEN && gh workflow run "Publish CLI" -R GeiserX/LynxPrompt -f platforms=all
 
-# 9. Verify npm package was published
+# 6. Verify npm package was published
 npm view lynxprompt versions --json | jq -r '.[-3:]'
 ```
 
-#### For a PATCH version (bug fixes only):
-
-Same process, but use `npm version patch` instead of `minor`.
+Use `minor` or `major` instead of `patch` for new features or breaking changes. If the tag for the version in `package.json` already exists, `release.yml` releases the next patch version instead.
 
 ### ⚠️ CRITICAL RULES - NEVER BREAK THESE
 
@@ -94,7 +81,7 @@ Same process, but use `npm version patch` instead of `minor`.
 
 **Problem: Release workflow skips CLI/App release**
 - Cause: No changes detected since last release tag
-- Fix: Ensure you modified files in the right directory (cli/ for CLI, anything else for app)
+- Fix: Only files that end up in the image release the app (`Dockerfile`, `entrypoint.sh`, root `package.json`/lockfile, `next.config.ts`, `src/`, `public/`, `prisma/`, `packages/` and a few configs), and only `cli/` or `packages/shared/` release the CLI. Workflows, docs, tests and the Helm chart release nothing
 
 **Problem: Tag already exists error**
 - Cause: Someone manually created a tag
@@ -139,7 +126,8 @@ git tag -l "app-v*" | tail -5
 When adding or modifying wizard features:
 1. **Update both CLI and Web** - Any new wizard step, option, or configuration must be implemented in both:
    - Web: `src/app/wizard/` and related components
-   - CLI: `cli/src/commands/init.ts` and `cli/src/utils/generator.ts`
+   - CLI: `cli/src/commands/wizard.ts` and `cli/src/utils/generator.ts`
+   - Shared by both: the platform table (`packages/shared/src/platforms.ts`: file paths, formats, blueprint types) and the rules formatting (`packages/shared/src/rules-format.ts`). Change a platform there, not in one of the two generators
 2. **Same options** - Tech stacks, platforms, personas, boundaries, and presets must match
 3. **Same output** - Generated configuration files must be identical regardless of source
 4. **Test both** - Before deploying, verify the feature works in both CLI and Web
@@ -210,11 +198,11 @@ git checkout main
 git merge develop
 ```
 
-**Dependency and security updates target `main` directly via PR.** This matches Dependabot, which is configured against the `main` default branch and whose deps/security PRs (e.g. #88–#97) merge straight to `main`. `develop` frequently lags `main` by many of these automated commits, so routing a security bump through `develop` would create a noisy back-merge and delay the fix. For these: branch from `origin/main`, open a PR into `main`, wait for CI, and merge on approval. Merging `package.json` / `cli/package.json` changes auto-triggers `release.yml` (patch bump + tags) — never bump versions or create tags by hand.
+**Dependency and security updates target `main` directly via PR.** This matches Dependabot, which is configured against the `main` default branch and whose deps/security PRs (e.g. #88–#97) merge straight to `main`. `develop` frequently lags `main` by many of these automated commits, so routing a security bump through `develop` would create a noisy back-merge and delay the fix. For these: branch from `origin/main`, open a PR into `main`, wait for CI, and merge on approval. Merging `package.json` / `cli/package.json` changes triggers `release.yml`, so a dependency PR leaves the versions alone; never create tags by hand.
 
 ## 🎯 Project Overview
 
-**LynxPrompt** is a SaaS web application that generates AI IDE configuration files (`.cursorrules`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.windsurfrules`, etc.) through an intuitive wizard interface. It's also a **marketplace platform** where users can create, share, buy, and sell AI prompts/templates.
+**LynxPrompt** is a self-hostable web application and CLI (`lynxp`) that generates AI IDE configuration files (`AGENTS.md`, `CLAUDE.md`, `.cursor/rules/*.mdc`, `.github/copilot-instructions.md`, Agent Skills, MCP configs, etc.) through a wizard. Users store them as **blueprints**, share them publicly or with a team, and keep them in sync with `lynxp`. Every feature is free; there is no billing. The official instance is lynxprompt.com.
 
 - **Live URL**: https://lynxprompt.com
 - **Dev URL**: https://dev.lynxprompt.com
@@ -296,24 +284,17 @@ git merge develop
 ### Infrastructure
 | Component | Details |
 |-----------|---------|
-| Docker | Multi-stage builds, images on Docker Hub (`drumsergio/lynxprompt`) |
+| Docker | Multi-stage builds, linux/amd64 and linux/arm64 images on Docker Hub (`drumsergio/lynxprompt`) |
 | Private GitOps repo + deploy webhook | GitOps: a push to a server's repo redeploys the stacks it changed |
 | Tailscale | VPN for internal services (always use MagicDNS hostnames) |
 | Umami | Self-hosted analytics (EU, cookieless) |
 | Caddy | Reverse proxy (production + dev) |
 
-### Payments & Billing
-| Component | Details |
-|-----------|---------|
-| Stripe | Payment processing, subscriptions |
-| Stripe Customer Portal | Self-service billing management |
-| Stripe Webhooks | Subscription lifecycle events |
-
 ---
 
 ## 🗄️ Multi-Database Architecture
 
-This project uses **four separate PostgreSQL databases** with distinct Prisma clients:
+This project uses **four separate PostgreSQL databases** with distinct Prisma clients. Blog and support are optional: the image migrates them only while `ENABLE_BLOG` / `ENABLE_SUPPORT_FORUM` is on, so a default self-host runs on app and users only.
 
 ```typescript
 // System/application data (templates, platforms)
@@ -338,19 +319,23 @@ import { prismaSupport } from "@/lib/db-support";
 **Commands:**
 ```bash
 npm run db:generate    # Generate all Prisma clients
-npm run db:push        # Push schema changes to all databases
+npm run db:push        # Push the schemas to local dev databases only
 npm run db:seed        # Seed databases
 ```
+
+**Migrations:** each schema has its history in `prisma/migrations-{app,users,blog,support}/`, starting at `0_init`. On start, `entrypoint.sh` runs `prisma migrate deploy` per database. A database an older release built with `db push` is first baselined from the frozen schemas in `prisma/baseline/` (only `0_init` recorded), then migrated. Every schema change needs a new timestamped migration folder; data fixes are data-only migrations.
 
 ---
 
 ## 🔐 Authentication
 
 ### Providers
+Each is switched on by a feature flag (`ENABLE_GITHUB_OAUTH`, `ENABLE_GOOGLE_OAUTH`, `ENABLE_EMAIL_AUTH`, `ENABLE_PASSKEYS`, `ENABLE_SSO`):
 - GitHub OAuth
 - Google OAuth
-- Magic Link (email)
-- Passkeys (WebAuthn)
+- Magic Link (email, at most three links per address every 10 minutes)
+- Passkeys (WebAuthn), used as a second factor
+- Team SSO, OpenID Connect only, for addresses on a domain the team verified
 
 ### User Roles
 - `USER` - Default role
@@ -359,35 +344,18 @@ npm run db:seed        # Seed databases
 
 ### Passkeys Implementation
 ```typescript
-// IMPORTANT: Types come from @simplewebauthn/types, NOT @simplewebauthn/server
-import { generateRegistrationOptions } from "@simplewebauthn/server";
-import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
+// @simplewebauthn v13 exports its types from the server package
+import {
+  generateRegistrationOptions,
+  type AuthenticatorTransportFuture,
+} from "@simplewebauthn/server";
 ```
 
 ---
 
 ## 💰 Business Model
 
-### Marketplace Structure
-- **Platform/Intermediary model** - Buyer-Seller contracts
-- **LynxPrompt is NOT merchant of record** for individual purchases
-- Subscriptions are direct contracts with LynxPrompt
-
-### Subscription Tiers (January 2026+)
-| Tier | Monthly | Annual (10% off) | Features |
-|------|---------|------------------|----------|
-| Users | €0/month | €0/year | Full wizard, all platforms, API access, sell blueprints |
-| Teams | €30/seat/month | €324/seat/year | Everything + AI editing, SSO, team blueprints |
-
-**Key changes:**
-- All users now get full wizard access (basic + intermediate + advanced steps)
-- AI features (editing, wizard assistant) are restricted to Teams users
-- No more Pro/Max tiers - simplified to Users vs Teams
-
-### Revenue Split
-- **70% to seller** / **30% to platform**
-- Minimum price for paid templates: €5
-- Minimum payout: €5 via PayPal
+LynxPrompt has no billing. Subscription tiers, Stripe and paid blueprints were removed: every account has every feature, and the last plan columns were dropped in 2.1.48. `TemplateTier` is the blueprint length class (Short to Super Long), not a billing tier. Don't add pricing, plan checks or checkout flows.
 
 ---
 
@@ -399,12 +367,8 @@ import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
 - No DPO appointed (stated in privacy policy)
 - Self-hosted Umami analytics (cookieless)
 - AEPD complaint rights mentioned
-- Data deletion within 30 days of request
-
-### EU Consumer Rights
-- 14-day withdrawal waived with explicit consent at checkout
-- Consent checkbox required before purchase
-- Store: user ID, timestamp, Terms version hash
+- Users delete their own account in Settings (`DELETE /api/user`, `src/lib/account-deletion.ts`); `/privacy` says what is deleted and what is kept anonymized. Keep the two in step
+- Third parties that receive personal data are named in `/privacy` (Gravatar gets an email hash for accounts without a picture)
 
 ### Key Legal Documents
 - `/privacy` - Privacy Policy (GDPR compliant)
@@ -420,7 +384,7 @@ import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
 - Format with Prettier
 - Lint with ESLint
 - Use `text-foreground` for readable text (not `text-muted-foreground` for body text)
-- Navigation order: `Pricing | Templates | Docs | [UserMenu]`
+- Navigation order: `Wizard | Blueprints | Docs | Blog (when enabled) | [UserMenu]`
 
 ### File Structure
 ```
@@ -461,16 +425,25 @@ LynxPrompt/
 
 ### API Routes Pattern
 ```typescript
-// Always check authentication
-const session = await getServerSession(authOptions);
-if (!session?.user?.id) {
-  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-}
+import { NextResponse } from "next/server";
+import { requireSession, requireUser, canPerform } from "@/lib/api-auth";
+
+// Browser-only route
+const auth = await requireSession(request);
+if (auth instanceof NextResponse) return auth;   // 401, or 403 passkeyRequired on a write
+const { session, userId } = auth;
+
+// Route that also takes an API token: limit what the token may do
+const caller = await requireUser(request);
+if (caller instanceof NextResponse) return caller;
+if (!canPerform(caller, "blueprints:write")) { /* 403 */ }
 
 // Use appropriate database client
 import { prismaApp } from "@/lib/db-app";
 import { prismaUsers } from "@/lib/db-users";
 ```
+
+Never call `getServerSession` for auth in a route: the helpers also enforce the passkey second factor on writes. Every new write route goes in `tests/api/auth/passkey-write-gate.test.ts`. The v1 API (`/api/v1/*`) authenticates with `validateApiToken` and checks `hasPermission` per route.
 
 ### Security Patterns
 1. **Never reveal if email exists** (user enumeration)
@@ -496,18 +469,16 @@ import { prismaUsers } from "@/lib/db-users";
 Images are built by GitHub Actions and pushed to **Docker Hub** (`drumsergio/lynxprompt`). Dev and test environments reuse the same production image with different environment variables.
 
 ```bash
-# Build Docker image (BuildKit optimized)
-docker buildx build --platform linux/amd64 \
-  -t drumsergio/lynxprompt:X.Y.Z \
-  --push .
+# Local image build (BuildKit needed for the cache mounts); releases are built by docker-publish.yml
+docker buildx build --load -t lynxprompt:dev .
 ```
 
 **Build optimizations included:**
 - `npm ci` in the deps stage, so the image gets exactly what `package-lock.json` pins (the `node:26-alpine` base ships npm 11, the same major as local)
 - The Prisma CLI stage installs only `prisma` and `tsx`, at their locked versions, against the full lockfile
 - No `NEXT_PUBLIC_*` build args: Next inlines them into server code too, so the Turnstile site key and Umami ID are read from the container env at runtime
-- BuildKit cache mounts keyed by `TARGETPLATFORM` (avoids ETXTBSY on QEMU arm64 cross-compilation)
-- Base image: `node:22-alpine` (Node 20 EOL, and `@prisma/streams-local` requires Node >= 22)
+- BuildKit cache mounts keyed by `TARGETPLATFORM`; amd64 and arm64 are built natively on their own runners and joined under one tag
+- Base image: `node:26-alpine`
 - Parallel Prisma client generation
 - `optimizePackageImports` for faster builds
 
@@ -518,12 +489,11 @@ See `env.example` for all required variables. Key categories:
 | Category | Variables |
 |----------|-----------|
 | Database | `DATABASE_URL_APP`, `DATABASE_URL_USERS`, `DATABASE_URL_BLOG`, `DATABASE_URL_SUPPORT` |
-| Auth | `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `GITHUB_*`, `GOOGLE_*` |
-| Email | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` |
-
-| Analytics | `NEXT_PUBLIC_UMAMI_WEBSITE_ID` |
-| Security | `TURNSTILE_SECRET_KEY`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY` |
-| Error Tracking | `SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_DSN` |
+| Auth | `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `GITHUB_*`, `GOOGLE_*`, `SSO_ENCRYPTION_KEY`, `SUPERADMIN_EMAIL` |
+| Email | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` |
+| Features | `ENABLE_*` flags (`src/lib/feature-flags.ts`); blog, support forum, AI, SSO and federation are off by default |
+| Analytics | `UMAMI_SCRIPT_URL`, `NEXT_PUBLIC_UMAMI_WEBSITE_ID` (read at runtime) |
+| Security | `TURNSTILE_SECRET_KEY`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (read at runtime), `TRUSTED_PROXY` |
 
 ---
 
@@ -570,19 +540,21 @@ See `env.example` for all required variables. Key categories:
 # 2. Generate clients
 npm run db:generate
 
-# 3. Push to database (local dev)
+# 3. Push to your local dev database
 npm run db:push
 
-# 4. Add a new migration folder under prisma/migrations-*/ (docs/development.md).
-#    Never edit an existing migration: databases that recorded it never rerun it.
+# 4. Add a new timestamped migration folder under prisma/migrations-*/, written
+#    with `prisma migrate diff` against the schema on main (docs/development.md).
+#    Never edit an existing migration (databases that recorded it never rerun
+#    it) or prisma/baseline/ (it must stay the schema 0_init creates).
 
-# 5. Build and deploy
+# 5. Prove it on a fresh database and on an upgrade from the last release's data
 ```
 
 ### Running Tests
 ```bash
-npm test              # Run all tests
-npm run test:watch    # Watch mode
+npm test              # Vitest in watch mode (npx vitest run for one pass)
+npm run test:ui       # Vitest UI
 npm run test:coverage # With coverage
 ```
 
@@ -593,11 +565,10 @@ npm run test:coverage # With coverage
 1. **`useSearchParams` requires Suspense boundary** in client components
 2. **Database pages need `export const dynamic = "force-dynamic"`** to prevent build-time DB access
 3. **Container name conflicts**: Remove old containers before recreating
-4. **Sentry config files at root**: Required by `@sentry/nextjs` - cannot be moved
-5. **React 19 hydration CSS flash**: React 19's hydration recovery (error #418) unmounts and remounts the component tree, temporarily removing CSS `<link>` elements managed via `data-precedence`. A MutationObserver script in `src/app/layout.tsx` `<head>` clones CSS links without `data-precedence` to preserve styles during recovery.
-6. **shields.io retired `visual-studio-marketplace` badge** — use static `img.shields.io/badge/` badges for VS Code marketplace links instead
-7. **Chocolatey `nodejs` vs `nodejs-lts`** — the `nodejs` package (latest, currently v25) hangs in Chocolatey test VMs; always use `nodejs-lts` (stable v22.x) as a dependency in `.nuspec` files
-8. **Tailscale TLS certs** — Tailscale-issued Let's Encrypt certs expire every 90 days. Auto-renewal runs as a scheduled script on the production and development hosts. GHA deploy workflows use Tailscale MagicDNS hostnames (not IPs) for proper TLS validation
+4. **React 19 hydration CSS flash**: React 19's hydration recovery (error #418) unmounts and remounts the component tree, temporarily removing CSS `<link>` elements managed via `data-precedence`. A MutationObserver script in `src/app/layout.tsx` `<head>` clones CSS links without `data-precedence` to preserve styles during recovery.
+5. **shields.io retired `visual-studio-marketplace` badge**: use static `img.shields.io/badge/` badges for VS Code marketplace links instead
+6. **Chocolatey `nodejs` vs `nodejs-lts`**: the `nodejs` package (latest, currently v25) hangs in Chocolatey test VMs; always use `nodejs-lts` (stable v22.x) as a dependency in `.nuspec` files
+7. **Tailscale TLS certs**: Tailscale-issued Let's Encrypt certs expire every 90 days. Auto-renewal runs as a scheduled script on the production and development hosts. GHA deploy workflows use Tailscale MagicDNS hostnames (not IPs) for proper TLS validation
 
 ## Satellite Repos — Known Workarounds
 
@@ -617,7 +588,11 @@ npm run test:coverage # With coverage
 |------|---------|
 | `src/lib/db-*.ts` | Database Prisma clients |
 | `src/lib/auth.ts` | NextAuth configuration |
-| `src/middleware.ts` | Rate limiting, security headers |
+| `src/proxy.ts` | Rate limiting, security headers, per-request CSP nonce |
+| `src/lib/api-auth.ts` | `requireSession` / `requireUser` for API routes |
+| `src/lib/feature-flags.ts` | `ENABLE_*` flags and their defaults |
+| `packages/shared/src/platforms.ts` | Platform table shared by the web and the CLI |
+| `prisma/migrations-*/` | Migration history per database |
 | `prisma/schema-*.prisma` | Database schemas |
 | `src/app/layout.tsx` | Root layout (CSS preservation script) |
 | `docs/ROADMAP.md` | Feature roadmap |
@@ -637,7 +612,7 @@ Before completing a task, verify:
 
 ---
 
-*Last updated: April 2026*
+*Last updated: October 2026*
 
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:970c3bf2 -->
