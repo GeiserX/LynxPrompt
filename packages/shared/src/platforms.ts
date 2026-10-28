@@ -664,12 +664,17 @@ export const SKILL_DIRECTORIES = [
  * blueprint name, slugified. The web download and `lynxp pull` both use it.
  */
 export function skillFolder(bp: { name?: string; content?: string }): string {
-  const frontmatter = bp.content?.match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1];
-  const name = frontmatter?.match(/^name:\s*["']?([^"'\r\n]+?)["']?\s*$/m)?.[1];
+  // Plain line scanning, no backtracking regex: the content is untrusted
+  const lines = (bp.content ?? "").split("\n").map((l) => l.trimEnd());
+  const end = lines[0] === "---" ? lines.indexOf("---", 1) : -1;
+  const nameLine = end > 0 ? lines.slice(1, end).find((l) => l.startsWith("name:")) : undefined;
+  const name = nameLine?.slice("name:".length).trim().replace(/^["']|["']$/g, "");
   const slug = (name || bp.name || "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .split("-")
+    .filter(Boolean)
+    .join("-");
   return slug || "skill";
 }
 

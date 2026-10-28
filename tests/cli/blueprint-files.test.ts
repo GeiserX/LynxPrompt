@@ -101,7 +101,16 @@ describe("Agent Skills and MCP configs", () => {
     const skill = "---\nname: Release Notes\ndescription: x\n---\nBody";
     expect(blueprintFilename({ type: "AGENT_SKILL", name: "Whatever", content: skill })).toBe(".claude/skills/release-notes/SKILL.md");
     expect(blueprintFilename({ type: "AGENT_SKILL", name: "PDF Tools", content: "No frontmatter" })).toBe(".claude/skills/pdf-tools/SKILL.md");
+    expect(blueprintFilename({ type: "AGENT_SKILL", name: "x", content: '---\r\nname: "pdf-tools"\r\n---\r\nBody' })).toBe(".claude/skills/pdf-tools/SKILL.md");
     expect(blueprintFilename({ type: "AGENT_SKILL", name: "x", repository_path: ".agents/skills/x/SKILL.md" })).toBe(".agents/skills/x/SKILL.md");
     expect(blueprintFilename({ type: "MCP_CONFIG" })).toBe(".mcp.json");
+  });
+
+  it("reads a skill name padded with whitespace without a slow regex", () => {
+    // A backtracking name regex took seconds on this line (cubic in its length) and found no name
+    const content = `---\nname:${" ".repeat(2000)}pdf'tools\n---\nBody`;
+    const started = Date.now();
+    expect(blueprintFilename({ type: "AGENT_SKILL", name: "x", content })).toBe(".claude/skills/pdf-tools/SKILL.md");
+    expect(Date.now() - started).toBeLessThan(500);
   });
 });
