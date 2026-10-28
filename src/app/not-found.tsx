@@ -54,7 +54,7 @@ export default function NotFound() {
         <p className="text-slate-500 text-sm">
           Need help?{" "}
           <Link
-            href="/feedback"
+            href="/contact"
             className="text-amber-400 hover:text-amber-300 underline"
           >
             Contact support

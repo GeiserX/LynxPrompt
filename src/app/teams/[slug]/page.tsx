@@ -19,6 +19,10 @@ import {
   Copy,
   Check,
   Camera,
+  LogOut,
+  ShieldCheck,
+  ShieldOff,
+  X,
 } from "lucide-react";
 import { SSOConfigPanel } from "@/components/sso-config";
 
@@ -42,8 +46,8 @@ interface TeamInvitation {
   email: string;
   role: "ADMIN" | "MEMBER";
   status: "PENDING" | "ACCEPTED" | "REVOKED" | "EXPIRED";
-  expires: string;
-  expiresAt?: string;
+  token: string;
+  expiresAt: string;
   createdAt: string;
 }
 
@@ -79,6 +83,9 @@ export default function TeamManagementPage() {
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
+  const [seatsInput, setSeatsInput] = useState("");
+  const [savingSeats, setSavingSeats] = useState(false);
+  const [seatsError, setSeatsError] = useState<string | null>(null);
   
   // Logo upload state
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -125,6 +132,7 @@ export default function TeamManagementPage() {
       }
       const teamData = await teamRes.json();
       setTeam(teamData.team);
+      setSeatsInput(String(teamData.team?.maxSeats ?? ""));
 
       // Fetch members
       const membersRes = await fetch(`/api/teams/${teamId}/members`);
@@ -166,10 +174,25 @@ export default function TeamManagementPage() {
       const data = await res.json();
 
       if (!res.ok) {
+        if (data.code === "SEATS_REQUIRED") {
+          throw new Error("All seats are in use. Raise the seat count under Team Info, then invite again.");
+        }
         throw new Error(data.error || "Failed to send invitation");
       }
 
-      setInviteSuccess(`Invitation sent to ${inviteEmail}`);
+      const result = data.results?.[0]?.status;
+      const created = data.invitationLinks?.[0];
+      if (result === "already_member") {
+        setInviteSuccess(`${inviteEmail} is already a member`);
+      } else if (result === "already_invited") {
+        setInviteSuccess(`${inviteEmail} already has a pending invitation. Use Copy Link below.`);
+      } else if (created?.emailed) {
+        setInviteSuccess(`Invitation emailed to ${inviteEmail}`);
+      } else {
+        setInviteSuccess(
+          `Invitation created for ${inviteEmail}, but no email was sent. Use Copy Link below and send it yourself.`
+        );
+      }
       setInviteEmail("");
       fetchTeam();
     } catch (err) {
@@ -184,6 +207,107 @@ export default function TeamManagementPage() {
     await navigator.clipboard.writeText(link);
     setCopiedLink(token);
     setTimeout(() => setCopiedLink(null), 2000);
+  };
+
+  const handleRevokeInvite = async (invitationId: string, email: string) => {
+    if (!team || !confirm(`Revoke the invitation for ${email}?`)) return;
+
+    try {
+      const res = await fetch(`/api/teams/${team.id}/invitations?invitationId=${invitationId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to revoke invitation");
+      }
+      fetchTeam();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to revoke invitation");
+    }
+  };
+
+  const handleChangeRole = async (memberId: string, role: "ADMIN" | "MEMBER") => {
+    if (!team) return;
+
+    try {
+      const res = await fetch(`/api/teams/${team.id}/members`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId, role }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to change role");
+      }
+      fetchTeam();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to change role");
+    }
+  };
+
+  const handleLeaveTeam = async (memberId: string) => {
+    if (!team || !confirm(`Leave ${team.name}?`)) return;
+
+    try {
+      const res = await fetch(`/api/teams/${team.id}/members?memberId=${memberId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to leave team");
+      }
+      router.push("/dashboard");
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to leave team");
+    }
+  };
+
+  const handleDeleteTeam = async () => {
+    if (!team) return;
+    const typed = prompt(
+      `This deletes ${team.name}, its members list and its invitations. Type the team slug (${team.slug}) to confirm.`
+    );
+    if (typed !== team.slug) return;
+
+    try {
+      const res = await fetch(`/api/teams/${team.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to delete team");
+      }
+      router.push("/dashboard");
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to delete team");
+    }
+  };
+
+  const handleSaveSeats = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!team) return;
+    const maxSeats = parseInt(seatsInput, 10);
+    if (!Number.isInteger(maxSeats) || maxSeats < 3) {
+      setSeatsError("A team needs at least 3 seats");
+      return;
+    }
+
+    setSavingSeats(true);
+    setSeatsError(null);
+    try {
+      const res = await fetch(`/api/teams/${team.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ maxSeats }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to update seats");
+      }
+      fetchTeam();
+    } catch (err) {
+      setSeatsError(err instanceof Error ? err.message : "Failed to update seats");
+    } finally {
+      setSavingSeats(false);
+    }
   };
 
   const handleRemoveMember = async (memberId: string) => {
@@ -254,6 +378,10 @@ export default function TeamManagementPage() {
       setLogoError(err instanceof Error ? err.message : "Failed to remove logo");
     }
   };
+
+  const pendingInvitations = (team?.invitations || []).filter(
+    (i) => i.status === "PENDING" && new Date(i.expiresAt).getTime() > Date.now()
+  );
 
   if (status === "loading" || loading) {
     return (
@@ -379,9 +507,36 @@ export default function TeamManagementPage() {
                         )}
                         {userRole === "ADMIN" && member.user.id !== session?.user?.id && (
                           <button
+                            onClick={() =>
+                              handleChangeRole(member.id, member.role === "ADMIN" ? "MEMBER" : "ADMIN")
+                            }
+                            className="rounded p-1 text-muted-foreground hover:bg-muted"
+                            title={member.role === "ADMIN" ? "Make member" : "Make admin"}
+                            aria-label={member.role === "ADMIN" ? "Make member" : "Make admin"}
+                          >
+                            {member.role === "ADMIN" ? (
+                              <ShieldOff className="h-4 w-4" />
+                            ) : (
+                              <ShieldCheck className="h-4 w-4" />
+                            )}
+                          </button>
+                        )}
+                        {member.user.id === session?.user?.id && (
+                          <button
+                            onClick={() => handleLeaveTeam(member.id)}
+                            className="flex items-center gap-1 rounded border px-2 py-0.5 text-xs text-muted-foreground hover:bg-muted"
+                            title="Leave team"
+                          >
+                            <LogOut className="h-3 w-3" />
+                            Leave
+                          </button>
+                        )}
+                        {userRole === "ADMIN" && member.user.id !== session?.user?.id && (
+                          <button
                             onClick={() => handleRemoveMember(member.id)}
                             className="rounded p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
                             title="Remove member"
+                            aria-label="Remove member"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -393,7 +548,7 @@ export default function TeamManagementPage() {
               </div>
 
               {/* Pending Invitations (Admin only) */}
-              {userRole === "ADMIN" && team?.invitations && team.invitations.length > 0 && (
+              {userRole === "ADMIN" && pendingInvitations.length > 0 && (
                 <div className="rounded-xl border bg-card p-6">
                   <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
                     <Mail className="h-5 w-5 text-amber-500" />
@@ -401,7 +556,7 @@ export default function TeamManagementPage() {
                   </h2>
 
                   <div className="space-y-3">
-                    {team.invitations.map((invite) => (
+                    {pendingInvitations.map((invite) => (
                       <div
                         key={invite.id}
                         className="flex items-center justify-between rounded-lg border border-dashed p-3"
@@ -409,25 +564,35 @@ export default function TeamManagementPage() {
                         <div>
                           <p className="font-medium">{invite.email}</p>
                           <p className="text-sm text-muted-foreground">
-                            Expires {new Date(invite.expires).toLocaleDateString()}
+                            Expires {new Date(invite.expiresAt).toLocaleDateString()}
                           </p>
                         </div>
-                        <button
-                          onClick={() => handleCopyInviteLink(invite.id)}
-                          className="flex items-center gap-1 rounded-md border px-2 py-1 text-sm hover:bg-muted"
-                        >
-                          {copiedLink === invite.id ? (
-                            <>
-                              <Check className="h-4 w-4 text-green-500" />
-                              Copied!
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="h-4 w-4" />
-                              Copy Link
-                            </>
-                          )}
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleCopyInviteLink(invite.token)}
+                            className="flex items-center gap-1 rounded-md border px-2 py-1 text-sm hover:bg-muted"
+                          >
+                            {copiedLink === invite.token ? (
+                              <>
+                                <Check className="h-4 w-4 text-green-500" />
+                                Copied!
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="h-4 w-4" />
+                                Copy Link
+                              </>
+                            )}
+                          </button>
+                          <button
+                            onClick={() => handleRevokeInvite(invite.id, invite.email)}
+                            className="rounded p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                            title="Revoke invitation"
+                            aria-label="Revoke invitation"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -512,14 +677,18 @@ export default function TeamManagementPage() {
                       {team?.members?.filter(m => m.isActiveThisCycle).length || 0}
                     </span>
                   </div>
-                  {userRole === "ADMIN" && (team?.invitations?.filter(i => i.status === "PENDING")?.length || 0) > 0 && (
+                  {userRole === "ADMIN" && pendingInvitations.length > 0 && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Pending Invites</span>
                       <span className="font-medium text-amber-500">
-                        {team?.invitations?.filter(i => i.status === "PENDING")?.length || 0}
+                        {pendingInvitations.length}
                       </span>
                     </div>
                   )}
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Seats</span>
+                    <span className="font-medium">{team?.maxSeats ?? "—"}</span>
+                  </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Admins</span>
                     <span className="font-medium">
@@ -533,11 +702,52 @@ export default function TeamManagementPage() {
                     </span>
                   </div>
                 </div>
+
+                {userRole === "ADMIN" && (
+                  <form onSubmit={handleSaveSeats} className="mt-4 space-y-2 border-t pt-4">
+                    <label htmlFor="team-seats" className="block text-sm font-medium">
+                      Seat count
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      Members plus pending invitations cannot go over this number.
+                    </p>
+                    <div className="flex gap-2">
+                      <input
+                        id="team-seats"
+                        type="number"
+                        min={3}
+                        value={seatsInput}
+                        onChange={(e) => setSeatsInput(e.target.value)}
+                        className="w-24 rounded-md border bg-background px-3 py-1.5 text-sm"
+                      />
+                      <Button type="submit" size="sm" variant="outline" disabled={savingSeats}>
+                        {savingSeats ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
+                      </Button>
+                    </div>
+                    {seatsError && <p className="text-sm text-red-500">{seatsError}</p>}
+                  </form>
+                )}
               </div>
 
               {/* SSO Settings (Admin only) */}
               {userRole === "ADMIN" && team?.id && (
                 <SSOConfigPanel teamId={team.id} />
+              )}
+
+              {/* Danger zone (Admin only) */}
+              {userRole === "ADMIN" && team && (
+                <div className="rounded-xl border border-red-500/40 bg-card p-6">
+                  <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold text-red-500">
+                    <Trash2 className="h-5 w-5" />
+                    Delete Team
+                  </h2>
+                  <p className="mb-4 text-sm text-muted-foreground">
+                    Removes the team, its members list and its pending invitations. This cannot be undone.
+                  </p>
+                  <Button variant="destructive" className="w-full" onClick={handleDeleteTeam}>
+                    Delete team
+                  </Button>
+                </div>
               )}
             </div>
           </div>
