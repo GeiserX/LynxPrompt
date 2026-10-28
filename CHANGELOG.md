@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **`docker-compose.selfhost.yml`** runs app 2.1.46.
+
 ## [2.1.46] - 2026-10-28
 
 ### Fixed
