@@ -255,6 +255,29 @@ export default function BlueprintDetailPage() {
     fetchVersionHistory();
   }, [showVersionDropdown, params.id, versionHistory.length, blueprint?.currentVersion]);
 
+  // Owner only: remove an old version, e.g. one that still holds a secret
+  const handleDeleteVersion = async (versionNumber: number) => {
+    if (!confirm(`Delete v${versionNumber}? Its content is removed for good.`)) return;
+    try {
+      const res = await fetch(`/api/blueprints/${params.id}/versions`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ versionNumber }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || "Failed to delete version");
+        return;
+      }
+      setVersionHistory((prev) => prev.filter((v) => v.version !== versionNumber));
+      setSelectedVersion(null);
+      setSelectedVersionContent(null);
+      setViewingVersion(null);
+    } catch {
+      alert("Failed to delete version");
+    }
+  };
+
   // Fetch specific version content when selected
   const handleVersionSelect = async (versionNumber: number) => {
     if (versionNumber === blueprint?.currentVersion) {
@@ -670,18 +693,30 @@ export default function BlueprintDetailPage() {
                       </p>
                     </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedVersion(null);
-                      setSelectedVersionContent(null);
-                      setViewingVersion(null);
-                    }}
-                    className="border-amber-400 text-amber-700 hover:bg-amber-100 dark:border-amber-600 dark:text-amber-300"
-                  >
-                    Back to Latest (v{blueprint.currentVersion})
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {blueprint.isOwner && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteVersion(viewingVersion.version)}
+                        className="border-red-400 text-red-700 hover:bg-red-100 dark:border-red-600 dark:text-red-300"
+                      >
+                        Delete v{viewingVersion.version}
+                      </Button>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedVersion(null);
+                        setSelectedVersionContent(null);
+                        setViewingVersion(null);
+                      }}
+                      className="border-amber-400 text-amber-700 hover:bg-amber-100 dark:border-amber-600 dark:text-amber-300"
+                    >
+                      Back to Latest (v{blueprint.currentVersion})
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { BLUEPRINT_ACCESS_SELECT, isOwnerOrTeamMember } from "@/lib/blueprint-access";
+import { requireSession } from "@/lib/api-auth";
 
 // GET /api/blueprints/[id]/versions - Get version history for a blueprint
 export async function GET(
@@ -185,3 +186,82 @@ export async function POST(
 
 
 
+
+// DELETE /api/blueprints/[id]/versions - Delete one old version
+// Body: { versionNumber }. Owner only. An old version keeps whatever its
+// content held, such as a secret removed in a later edit, so the owner needs
+// a way to remove it. The current version is the blueprint's content and
+// cannot be deleted here.
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const auth = await requireSession(request);
+    if (auth instanceof NextResponse) return auth;
+    const { session } = auth;
+
+    const { id } = await params;
+    if (!id.startsWith("bp_")) {
+      return NextResponse.json(
+        { error: "System blueprints don't have versions" },
+        { status: 400 }
+      );
+    }
+    const realId = id.replace("bp_", "");
+
+    const body = await request.json().catch(() => ({}));
+    const versionNumber = body?.versionNumber;
+    if (!Number.isInteger(versionNumber) || versionNumber < 1) {
+      return NextResponse.json({ error: "versionNumber is required" }, { status: 400 });
+    }
+
+    const blueprint = await prismaUsers.userTemplate.findUnique({
+      where: { id: realId },
+      select: { userId: true, currentVersion: true, publishedVersion: true },
+    });
+    // Same answer for a missing blueprint and someone else's
+    if (!blueprint || blueprint.userId !== session.user.id) {
+      return NextResponse.json({ error: "Blueprint not found" }, { status: 404 });
+    }
+
+    if (versionNumber === blueprint.currentVersion) {
+      return NextResponse.json(
+        { error: "The current version cannot be deleted. Edit the blueprint instead." },
+        { status: 400 }
+      );
+    }
+
+    const deleted = await prismaUsers.$transaction(async (tx) => {
+      const { count } = await tx.userTemplateVersion.deleteMany({
+        where: { templateId: realId, version: versionNumber },
+      });
+      if (count === 0) return false;
+
+      // publishedVersion must name a version that still exists
+      if (blueprint.publishedVersion === versionNumber) {
+        const latestPublished = await tx.userTemplateVersion.findFirst({
+          where: { templateId: realId, isPublished: true },
+          orderBy: { version: "desc" },
+          select: { version: true },
+        });
+        await tx.userTemplate.update({
+          where: { id: realId },
+          data: { publishedVersion: latestPublished?.version ?? null },
+        });
+      }
+      return true;
+    });
+
+    if (!deleted) {
+      return NextResponse.json({ error: "Version not found" }, { status: 404 });
+    }
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting blueprint version:", error);
+    return NextResponse.json(
+      { error: "Failed to delete version" },
+      { status: 500 }
+    );
+  }
+}
