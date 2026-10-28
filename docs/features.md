@@ -30,7 +30,7 @@ Flexible auth to fit your environment:
 - **OAuth** — GitHub, Google
 - **Email** — Passwordless magic link login
 - **Passkeys** — WebAuthn biometric/hardware key authentication
-- **SSO** — SAML, OIDC, and LDAP for enterprise identity providers
+- **SSO** — OpenID Connect for enterprise identity providers (SAML and LDAP are not supported yet)
 
 ## Optional AI-Powered Editing
 
