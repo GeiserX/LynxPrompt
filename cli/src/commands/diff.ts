@@ -17,6 +17,7 @@ import { join } from "path";
 import { existsSync } from "fs";
 import { isAuthenticated } from "../config.js";
 import { api, ApiRequestError } from "../api.js";
+import { safeText } from "../utils/terminal.js";
 import { checkSyncStatus, findBlueprintByFile } from "../utils/blueprint-tracker.js";
 
 interface DiffOptions {
@@ -297,9 +298,9 @@ async function diffWithBlueprintId(cwd: string, blueprintId: string): Promise<vo
       return;
     }
 
-    console.log(chalk.green(`✓ Blueprint: ${blueprint.name || blueprintId}`));
+    console.log(chalk.green(`✓ Blueprint: ${safeText(blueprint.name || blueprintId)}`));
     if (blueprint.description) {
-      console.log(chalk.gray(`  ${blueprint.description}`));
+      console.log(chalk.gray(`  ${safeText(blueprint.description)}`));
     }
     console.log();
 

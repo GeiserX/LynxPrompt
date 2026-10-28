@@ -1,6 +1,7 @@
 import chalk from "chalk";
 import ora from "ora";
 import { api, ApiRequestError, SearchResult } from "../api.js";
+import { safeText } from "../utils/terminal.js";
 
 interface SearchOptions {
   limit: string;
@@ -47,12 +48,12 @@ export async function searchCommand(
 function printSearchResult(result: SearchResult): void {
   const officialBadge = result.isOfficial ? chalk.magenta(" ★ Official") : "";
   
-  console.log(`  ${chalk.bold(result.name)}${officialBadge}`);
-  console.log(`     ${chalk.cyan(result.id)}`);
+  console.log(`  ${chalk.bold(safeText(result.name))}${officialBadge}`);
+  console.log(`     ${chalk.cyan(safeText(result.id))}`);
   if (result.description) {
-    console.log(`     ${chalk.gray(truncate(result.description, 60))}`);
+    console.log(`     ${chalk.gray(truncate(safeText(result.description), 60))}`);
   }
-  console.log(`     ${chalk.gray(`by ${result.author}`)} • ${chalk.gray(`↓${result.downloads}`)} ${chalk.gray(`♥${result.likes}`)}`);
+  console.log(`     ${chalk.gray(`by ${safeText(result.author)}`)} • ${chalk.gray(`↓${result.downloads}`)} ${chalk.gray(`♥${result.likes}`)}`);
   if (result.tags && result.tags.length > 0) {
     console.log(`     ${formatTags(result.tags)}`);
   }
@@ -60,7 +61,7 @@ function printSearchResult(result: SearchResult): void {
 }
 
 function formatTags(tags: string[]): string {
-  return tags.slice(0, 4).map((t) => chalk.gray(`#${t}`)).join(" ");
+  return tags.slice(0, 4).map((t) => chalk.gray(`#${safeText(t)}`)).join(" ");
 }
 
 function truncate(str: string, maxLength: number): string {

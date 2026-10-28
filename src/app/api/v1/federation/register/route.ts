@@ -28,6 +28,11 @@ function isRateLimited(ip: string): boolean {
   return record.count > RATE_LIMIT_MAX;
 }
 
+// A DNS name is at most 253 characters, so nothing longer reaches the regex.
+// Labels cannot contain a dot, so each one is split off without backtracking.
+const MAX_DOMAIN_LENGTH = 253;
+const DOMAIN_PATTERN = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;
+
 interface WellKnownResponse {
   name?: string;
   domain?: string;
@@ -70,7 +75,7 @@ export async function POST(request: NextRequest) {
   }
 
   const sanitizedDomain = domain.trim().toLowerCase();
-  if (!/^[a-z0-9]([a-z0-9.-]*[a-z0-9])?(\.[a-z]{2,})+$/.test(sanitizedDomain)) {
+  if (sanitizedDomain.length > MAX_DOMAIN_LENGTH || !DOMAIN_PATTERN.test(sanitizedDomain)) {
     return NextResponse.json(
       { error: "Invalid domain format" },
       { status: 400 },

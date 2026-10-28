@@ -16,6 +16,7 @@ import chalk from "chalk";
 import ora from "ora";
 import prompts from "prompts";
 import { api, ApiRequestError, Blueprint } from "../api.js";
+import { safeText } from "../utils/terminal.js";
 import { isAuthenticated } from "../config.js";
 import { join } from "path";
 import { existsSync } from "fs";
@@ -281,9 +282,9 @@ export async function linkCommand(
     const isMarketplace = source === "marketplace";
 
     console.log();
-    console.log(chalk.cyan(`🐱 Blueprint: ${chalk.bold(blueprint.name)}`));
+    console.log(chalk.cyan(`🐱 Blueprint: ${chalk.bold(safeText(blueprint.name))}`));
     if (blueprint.description) {
-      console.log(chalk.gray(`   ${blueprint.description}`));
+      console.log(chalk.gray(`   ${safeText(blueprint.description)}`));
     }
     console.log(chalk.gray(`   Visibility: ${blueprint.visibility}`));
     console.log();
