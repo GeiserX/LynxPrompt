@@ -1,8 +1,8 @@
 import chalk from "chalk";
-import ora, { type Ora } from "ora";
+import type { Ora } from "ora";
+import { createSpinner } from "../utils/spinner.js";
 import fs from "fs";
 import path from "path";
-import { createHash } from "crypto";
 import prompts from "prompts";
 import { api, ApiRequestError, type Blueprint } from "../api.js";
 import { isAuthenticated, getApiUrl } from "../config.js";
@@ -15,6 +15,7 @@ import {
   conflictFilePath,
   type TrackedBlueprint,
 } from "../utils/blueprint-tracker.js";
+import { chooseRepositoryRoot, repositoryRootKeys } from "../utils/repo-identity.js";
 import { withSensitiveDataAck, type SensitiveMatchInfo } from "../utils/sensitive-ack.js";
 import { blueprintContentOf, matchConfigFile, isAssetCopyOf, keepOneCopy, writeAssetCopies } from "../utils/blueprint-files.js";
 import { inferCommandType, isAgentsMdPointer, ruleFileLocations } from "../../../packages/shared/src/platforms.js";
@@ -169,7 +170,7 @@ function scanForAllConfigFiles(cwd: string, maxDepth: number = 5): DiscoveredFil
  * Creates or gets a hierarchy for the repository
  */
 async function detectHierarchyInfo(cwd: string, file: string): Promise<HierarchyInfo> {
-  const repositoryRoot = createRepositoryRoot(cwd);
+  const repositoryRoot = await createRepositoryRoot(cwd);
   const result: HierarchyInfo = {
     repositoryPath: null,
     hierarchyId: null,
@@ -255,24 +256,18 @@ async function findExistingBlueprintOnServer(
   return match ? { id: match.id, name: match.name } : null;
 }
 
-function createRepositoryRoot(rootPath: string): string {
-  // Try to get git remote URL first
+/**
+ * The repository's hierarchy key (see utils/repo-identity.ts). A hierarchy an older
+ * lynxp created under the raw remote's hash is kept when none exists under the new key.
+ */
+async function createRepositoryRoot(rootPath: string): Promise<string> {
+  const keys = repositoryRootKeys(rootPath);
+  if (!keys.legacyKey) return keys.key;
   try {
-    const gitConfigPath = path.join(rootPath, ".git", "config");
-    if (fs.existsSync(gitConfigPath)) {
-      const gitConfig = fs.readFileSync(gitConfigPath, "utf-8");
-      const urlMatch = gitConfig.match(/url = (.+)/);
-      if (urlMatch) {
-        // Hash the git URL for consistent identification
-        return createHash("sha256").update(urlMatch[1].trim()).digest("hex").substring(0, 16);
-      }
-    }
+    return chooseRepositoryRoot(keys, (await api.listAllHierarchies()).map((h) => h.repository_root));
   } catch {
-    // Fall through to path-based hashing
+    return keys.key;
   }
-  
-  // Fall back to hashing the absolute path
-  return createHash("sha256").update(path.resolve(rootPath)).digest("hex").substring(0, 16);
 }
 
 export async function pushCommand(
@@ -448,7 +443,7 @@ async function updateBlueprint(
   console.log(chalk.cyan(`\n📤 Updating blueprint ${chalk.bold(blueprintId)}...`));
   console.log(chalk.gray(`   File: ${file}`));
 
-  const spinner = ora("Pushing changes...").start();
+  const spinner = createSpinner("Pushing changes...").start();
 
   try {
     const updateData: { content: string; expected_checksum?: string } = { content };
@@ -649,7 +644,7 @@ async function createOrLinkBlueprint(
     return;
   }
 
-  const spinner = ora("Creating blueprint...").start();
+  const spinner = createSpinner("Creating blueprint...").start();
 
   try {
     const createData = {
@@ -761,7 +756,7 @@ async function pushHierarchy(
   console.log();
 
   // Create repository root identifier
-  const repositoryRoot = createRepositoryRoot(cwd);
+  const repositoryRoot = await createRepositoryRoot(cwd);
 
   // Create or get existing hierarchy
   let hierarchyId: string;
@@ -793,7 +788,7 @@ async function pushHierarchy(
   let failCount = 0;
 
   for (const file of files) {
-    const spinner = ora(`Processing ${file.path}...`).start();
+    const spinner = createSpinner(`Processing ${file.path}...`).start();
 
     try {
       const content = blueprintContentOf(file.path, fs.readFileSync(file.absolutePath, "utf-8"));

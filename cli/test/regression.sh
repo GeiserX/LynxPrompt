@@ -20,6 +20,7 @@ chmod +x "$WORK/bin/open" "$WORK/bin/xdg-open"
 export PATH="$WORK/bin:$PATH"
 unset LYNXPROMPT_TOKEN LYNXPROMPT_API_URL
 
+export MOCK_LOG="$WORK/roots"
 node "$HERE/mock-api.mjs" "$WORK/port" &
 MOCK_PID=$!
 trap 'kill $MOCK_PID 2>/dev/null; rm -rf "$WORK"' EXIT
@@ -46,6 +47,24 @@ if ! grep -q "\*\*MIT\*\* license" AGENTS.md 2>/dev/null; then fail "wizard -y -
 elif ! grep -q "GitHub Actions" AGENTS.md; then fail "wizard -y --ci-cd: GitHub Actions not in AGENTS.md"
 elif ! grep -q "open source project" AGENTS.md; then fail "wizard -y --project-type: context not in AGENTS.md"
 else pass "wizard -y writes --license, --ci-cd and --project-type"; fi
+
+# A terminal that reports zero columns made the spinner loop forever
+fresh
+if python3 "$HERE/pty-zero-columns.py" 60 "$LYNXP" wizard -y -n demo --no-pointers > out.txt 2>&1 && [ -f AGENTS.md ]
+then pass "wizard finishes in a zero-column terminal"
+else fail "wizard hangs or fails in a zero-column terminal"; cat out.txt; fi
+
+# --- status ---
+fresh
+"$LYNXP" wizard -y -n demo -f kiro,cline,roocode,trae,gemini-cli,windsurf --no-pointers > out.txt 2>&1
+"$LYNXP" status > out.txt 2>&1
+missing=""
+for f in .clinerules/ .devin/rules/ .kiro/steering/ .roo/rules/ .trae/rules/ GEMINI.md; do
+  grep -qF "$f" out.txt || missing="$missing $f"
+done
+if grep -q "No AI configuration files found" out.txt || [ -n "$missing" ]
+then fail "status misses files the wizard wrote:$missing"; cat out.txt
+else pass "status lists every file the wizard wrote"; fi
 
 # --- check ---
 fresh
@@ -102,6 +121,36 @@ fresh
 "$LYNXP" pull bp_html > out.txt 2>&1
 if grep -q "HTTP 502" out.txt; then pass "a non-JSON server error is reported with its status"
 else fail "a non-JSON server error is not reported with its status"; cat out.txt; fi
+
+# Other users' blueprint names never reach the terminal with their escape codes
+fresh
+"$LYNXP" pull bp_evil -y > out.txt 2>&1
+"$LYNXP" status > status.txt 2>&1
+"$LYNXP" link --list > list.txt 2>&1
+if ! grep -q "bp_evil" status.txt; then fail "pull bp_evil was not tracked"; cat out.txt
+elif grep -q "$(printf '\033')" out.txt status.txt list.txt; then fail "an escape sequence from a blueprint name reached the terminal"
+else pass "status and link --list strip escape sequences from blueprint names"; fi
+
+fresh
+"$LYNXP" list > out.txt 2>&1
+if grep -q "lynxp wizard" out.txt && grep -qF "$API/blueprints/create" out.txt && ! grep -q "init" out.txt
+then pass "list with no blueprints points at lynxp wizard on this instance"
+else fail "list with no blueprints gives a wrong hint"; cat out.txt; fi
+
+# The same repository gets the same hierarchy however it was cloned; a hierarchy
+# an older lynxp made under the raw remote is kept
+fresh
+mkdir .git && printf '[remote "origin"]\n\turl = git@github.com:GeiserX/LynxPrompt.git\n' > .git/config
+printf '# Project\n\nUse TypeScript strict mode everywhere.\n' > AGENTS.md
+: > "$MOCK_LOG"
+"$LYNXP" push --all -y > out.txt 2>&1
+if [ "$(head -1 "$MOCK_LOG")" = "eb2e56c7498b9899" ]; then pass "push keys the hierarchy on the normalized remote"
+else fail "push sent hierarchy root '$(head -1 "$MOCK_LOG")', want eb2e56c7498b9899"; fi
+printf '[remote "origin"]\n\turl = git@legacy.example:o/r.git\n' > .git/config
+: > "$MOCK_LOG"
+"$LYNXP" push --all -y > out.txt 2>&1
+if [ "$(head -1 "$MOCK_LOG")" = "cf992a65f6a13a54" ]; then pass "push keeps a hierarchy made under the legacy key"
+else fail "push sent hierarchy root '$(head -1 "$MOCK_LOG")', want the legacy cf992a65f6a13a54"; fi
 
 fresh
 printf '# Project\n\nUse TypeScript strict mode everywhere.\n' > AGENTS.md

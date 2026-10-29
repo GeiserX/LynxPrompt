@@ -9,7 +9,7 @@
 import chalk from "chalk";
 import { readFile, writeFile, access } from "fs/promises";
 import { basename, resolve } from "path";
-import ora from "ora";
+import { createSpinner } from "../utils/spinner.js";
 import prompts from "prompts";
 import { parseMarkdownSections, mergeSectionsByStrategy, type ConfigSection } from "../utils/markdown-sections.js";
 
@@ -110,7 +110,7 @@ export async function mergeCommand(
   }
 
   // Merge
-  const spinner = ora("Merging configurations...").start();
+  const spinner = createSpinner("Merging configurations...").start();
   const mergedContent = mergeSectionsByStrategy(allSections, strategy);
   spinner.stop();
 

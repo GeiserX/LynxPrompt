@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import ora from "ora";
+import { createSpinner } from "../utils/spinner.js";
 import { api, ApiRequestError } from "../api.js";
 import { isAuthenticated, setUser } from "../config.js";
 
@@ -13,7 +13,7 @@ export async function whoamiCommand(options: WhoamiOptions = {}): Promise<void> 
     process.exit(1);
   }
 
-  const spinner = ora("Fetching user info...").start();
+  const spinner = createSpinner("Fetching user info...").start();
 
   try {
     const { user } = await api.getUser();

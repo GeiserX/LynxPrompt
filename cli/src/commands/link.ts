@@ -13,13 +13,14 @@
  */
 
 import chalk from "chalk";
-import ora from "ora";
+import { createSpinner } from "../utils/spinner.js";
 import prompts from "prompts";
 import { api, ApiRequestError, Blueprint } from "../api.js";
 import { safeText } from "../utils/terminal.js";
+import { findRuleFiles } from "../utils/rule-locations.js";
 import { isAuthenticated } from "../config.js";
 import { join } from "path";
-import { existsSync } from "fs";
+import { existsSync, statSync } from "fs";
 import {
   linkBlueprint,
   untrackBlueprint,
@@ -68,18 +69,8 @@ export async function linkCommand(
 
   // Interactive mode - guide the user through linking
   if (!fileArg) {
-    // Find AI config files in the project
-    const configFiles = [
-      "AGENTS.md",
-      "CLAUDE.md",
-      ".cursor/rules/project.mdc",
-      ".github/copilot-instructions.md",
-      ".windsurfrules",
-      ".rules",
-      ".clinerules",
-    ];
-
-    const foundFiles = configFiles.filter(f => existsSync(join(cwd, f)));
+    // Rules files of every tool in the shared platform table; folders expanded to their files
+    const foundFiles = findRuleFiles(cwd);
 
     if (foundFiles.length === 0) {
       console.log(chalk.yellow("No AI configuration files found in this directory."));
@@ -118,11 +109,15 @@ export async function linkCommand(
     console.log(chalk.red(`✗ File not found: ${file}`));
     return;
   }
+  if (!statSync(filePath).isFile()) {
+    console.log(chalk.red(`✗ Not a file: ${file}. Link one of the files inside it.`));
+    return;
+  }
 
   // Check if already linked
   const existing = await findBlueprintByFile(cwd, file);
   if (existing) {
-    console.log(chalk.yellow(`This file is already linked to: ${existing.name}`));
+    console.log(chalk.yellow(`This file is already linked to: ${safeText(existing.name)}`));
     console.log(chalk.gray(`   ID: ${existing.id}`));
     console.log();
     const { proceed } = await prompts({
@@ -175,7 +170,7 @@ export async function linkCommand(
 
     if (searchMethod === "list") {
       // Fetch user's blueprints
-      const spinner = ora("Fetching your blueprints...").start();
+      const spinner = createSpinner("Fetching your blueprints...").start();
       try {
         const blueprints = await api.listAllBlueprints();
         spinner.stop();
@@ -191,9 +186,9 @@ export async function linkCommand(
           name: "selected",
           message: "Select a blueprint:",
           choices: blueprints.map(b => ({
-            title: b.name,
+            title: safeText(b.name),
             value: b.id,
-            description: b.description?.substring(0, 50) || "",
+            description: safeText(b.description).substring(0, 50),
           })),
         });
 
@@ -219,7 +214,7 @@ export async function linkCommand(
         return;
       }
 
-      const spinner = ora(`Searching for "${query}"...`).start();
+      const spinner = createSpinner(`Searching for "${query}"...`).start();
       try {
         const results = await api.searchBlueprints(query, 10);
         spinner.stop();
@@ -234,9 +229,9 @@ export async function linkCommand(
           name: "selected",
           message: "Select a blueprint:",
           choices: results.templates.map(b => ({
-            title: `${b.name} (★ ${b.likes})`,
+            title: `${safeText(b.name)} (★ ${safeText(b.likes)})`,
             value: b.id,
-            description: b.author ? `by ${b.author}` : "",
+            description: b.author ? `by ${safeText(b.author)}` : "",
           })),
         });
 
@@ -272,7 +267,7 @@ export async function linkCommand(
   }
 
   // Fetch blueprint info and link
-  const spinner = ora(`Fetching blueprint ${chalk.cyan(blueprintId)}...`).start();
+  const spinner = createSpinner(`Fetching blueprint ${chalk.cyan(blueprintId)}...`).start();
 
   try {
     const { blueprint } = await api.getBlueprint(blueprintId);
@@ -301,7 +296,7 @@ export async function linkCommand(
     const { confirm } = await prompts({
       type: "confirm",
       name: "confirm",
-      message: `Link ${chalk.cyan(file)} to ${chalk.cyan(blueprint.name)}?`,
+      message: `Link ${chalk.cyan(file)} to ${chalk.cyan(safeText(blueprint.name))}?`,
       initial: true,
     });
 
@@ -369,7 +364,7 @@ export async function unlinkCommand(fileArg?: string): Promise<void> {
       choices: status.map(({ blueprint }) => ({
         title: blueprint.file,
         value: blueprint.file,
-        description: `${blueprint.name} (${blueprint.source})`,
+        description: `${safeText(blueprint.name)} (${blueprint.source})`,
       })),
     });
 
@@ -449,8 +444,8 @@ async function listTrackedBlueprints(cwd: string): Promise<void> {
     }[blueprint.source];
 
     console.log(`${statusIcon} ${chalk.cyan(blueprint.file)}`);
-    console.log(`  ${sourceLabel} ${blueprint.name}`);
-    console.log(`  ${chalk.gray(`ID: ${blueprint.id}`)}`);
+    console.log(`  ${sourceLabel} ${safeText(blueprint.name)}`);
+    console.log(`  ${chalk.gray(`ID: ${safeText(blueprint.id)}`)}`);
     
     if (!fileExists) {
       console.log(chalk.red(`  ⚠ File not found`));

@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import ora from "ora";
+import { createSpinner } from "../utils/spinner.js";
 import { createHash, randomBytes } from "node:crypto";
 import { api, ApiRequestError } from "../api.js";
 import { setToken, setUser, isAuthenticated } from "../config.js";
@@ -14,7 +14,7 @@ export async function loginCommand(): Promise<void> {
     return;
   }
 
-  const spinner = ora("Initializing authentication...").start();
+  const spinner = createSpinner("Initializing authentication...").start();
 
   try {
     // Initialize CLI session. The verifier stays in this process; the server
@@ -38,7 +38,7 @@ export async function loginCommand(): Promise<void> {
     }
 
     // Poll for completion
-    const pollSpinner = ora("Waiting for authentication...").start();
+    const pollSpinner = createSpinner("Waiting for authentication...").start();
     
     const maxWaitTime = 5 * 60 * 1000; // 5 minutes
     const pollInterval = 2000; // 2 seconds
