@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 From 3.0.0 the web app and the CLI share one version and one release: the `vX.Y.Z` tag, the Docker image `drumsergio/lynxprompt:X.Y.Z` and `lynxprompt@X.Y.Z` on npm. Each `## [X.Y.Z]` section below covers both and becomes that release's notes. Before 3.0.0 the app and the CLI had their own version lines (`app-v*` and `cli-v*` tags).
 
+## [3.2.0] - 2026-10-29
+
+3.2.0 moves the official instance to https://lynxprompt.geiser.cloud before lynxprompt.com lapses in December 2026. It also stops showing other people the folder a blueprint was pushed from, drops device tracking nothing used, and refreshes the platform list.
+
+### Upgrade notes
+
+**1. Back up the users database before you start the new image.** Migration `20261028190148_drop_device_tracking` drops the `KnownDevice` table and four `Session` columns (`deviceHash`, `deviceName`, `ipHash`, `isNewDevice`). Sessions survive it. The dropped data is gone for good, so only a backup takes you back to 3.1.0.
+
+**2. The official instance is https://lynxprompt.geiser.cloud.** A CLI whose saved `apiUrl` is https://lynxprompt.com switches to the new address, login included, on its first run after the update. A self-hosted URL and `LYNXPROMPT_API_URL` are left alone. lynxprompt.com keeps serving the API until the domain lapses. Contact for privacy, legal, support and security is now lynxprompt@geiser.cloud.
+
+**3. `repositoryPath` is hidden from people who don't own the blueprint.** `GET /api/blueprints/[id]` and `GET /api/v1/blueprints/[id]` return the full path only to the owner and members of the blueprint's team. Anyone else gets just the tool file for an MCP config or a subagent (for example `.gemini/settings.json`), so downloads keep their format, and nothing for every other type. `lynxp pull` then writes the type's default file.
+
+**4. Platform changes.**
+- **Firebase Studio is retired.** It stopped taking new workspaces on 2026-06-22. `firebase` now generates `AGENTS.md`.
+- **Amazon Q is retired** in favour of Kiro. `amazonq` now generates Kiro steering files.
+- **Roo Code is now Zoo Code**, its maintained fork, which reads the same `.roo/` folders. The `roocode` id and `ROO_RULES` blueprints are unchanged.
+- Stored blueprints of the retired types still load, push and pull.
+
+### Added
+- **Grok Build** (`grok`) and **Pi** (`pi`) as platforms. Both read `AGENTS.md`, so they add no file of their own. `lynxp push` reads `.grok/rules/` and `.grok/skills`.
+
+### Removed
+- **`POST /api/auth/device`**, the `KnownDevice` table and the device columns on `Session`. Nothing called the route since 3.1.0.
+
 ## [3.1.0] - 2026-10-28
 
 3.1.0 keeps one copy of the rules in `AGENTS.md`, which most coding agents now read by themselves. It also writes skills, subagents and MCP servers where each agent looks for them, and retires five dead platforms.
