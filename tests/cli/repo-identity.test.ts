@@ -35,8 +35,18 @@ describe("normalizeRemote", () => {
     expect(normalizeRemote("git@github.com:geiserx/lynxprompt.git")).toBe("https://github.com/geiserx/lynxprompt");
   });
 
+  it("matches the edge cases the action and the extension pin", () => {
+    expect(normalizeRemote("git://Example.ORG/Team/Repo.GIT")).toBe("https://example.org/Team/Repo");
+    expect(normalizeRemote("git@host.example:/owner/repo.git")).toBe("https://host.example/owner/repo");
+    expect(normalizeRemote("git+ssh://git@host.example/owner/repo")).toBe("https://host.example/owner/repo");
+    expect(normalizeRemote("https://host.example//owner/repo")).toBe("https://host.example/owner/repo");
+    expect(normalizeRemote("https://host.example/")).toBe("https://host.example");
+    expect(hashRepositoryRoot("git@github.com:GeiserX/LynxPrompt.git")).toBe("f3c0a2588d1b8cbf");
+  });
+
   it("leaves a local path alone apart from the suffix", () => {
     expect(normalizeRemote("/srv/git/Repo.git/")).toBe("/srv/git/Repo");
+    expect(normalizeRemote(" /srv/git/repo.git/ ")).toBe("/srv/git/repo");
   });
 });
 
