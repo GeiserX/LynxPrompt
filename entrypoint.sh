@@ -135,13 +135,15 @@ migrate() {
     echo "$2 DB: created by prisma db push; recording 0_init as applied"
     renamed=0
     rename_tiers "$1" SIMPLE SHORT ADVANCED LONG && renamed=1
-    if enabled "$BASELINE_ACCEPT_DATA_LOSS"; then
-      npx prisma db push --accept-data-loss --config="$config" --schema="prisma/baseline/schema-$1.prisma" 2>&1 || return 1
-    elif ! npx prisma db push --config="$config" --schema="prisma/baseline/schema-$1.prisma" 2>&1; then
-      # Leave the database as the earlier release knows it, so it can still run.
+    accept=""
+    enabled "$BASELINE_ACCEPT_DATA_LOSS" && accept="--accept-data-loss"
+    if ! npx prisma db push $accept --config="$config" --schema="prisma/baseline/schema-$1.prisma" 2>&1; then
+      # Leave the tiers as the earlier release knows them, so it can still run.
       [ "$renamed" -eq 1 ] && rename_tiers "$1" SHORT SIMPLE LONG ADVANCED
-      echo "$2 DB predates 0_init and holds data of features since removed (listed above)."
-      echo "Back it up, then start once with BASELINE_ACCEPT_DATA_LOSS=true to drop that data (docs/troubleshooting.md)."
+      if [ -z "$accept" ]; then
+        echo "$2 DB predates 0_init and holds data of features since removed (listed above)."
+        echo "Back it up, then start once with BASELINE_ACCEPT_DATA_LOSS=true to drop that data (docs/troubleshooting.md)."
+      fi
       return 1
     fi
     npx prisma migrate resolve --applied 0_init --config="$config" 2>&1 || return 1

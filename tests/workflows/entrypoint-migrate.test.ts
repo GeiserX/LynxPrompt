@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -70,7 +70,8 @@ exit 0
   });
   const calls = readFileSync(log, "utf8").trim().split("\n");
   const started = spawnSync("test", ["-e", join(dir, "started")]).status === 0;
-  const renames = spawnSync("cat", [join(dir, "rename.sql")], { encoding: "utf8" }).stdout;
+  const renameLog = join(dir, "rename.sql");
+  const renames = existsSync(renameLog) ? readFileSync(renameLog, "utf8") : "";
   return { calls, status: result.status, output: result.stdout + result.stderr, started, renames };
 }
 
@@ -130,6 +131,17 @@ describe("entrypoint database migrations", () => {
     expect(renames).toContain(`RENAME VALUE 'LONG' TO 'ADVANCED'`);
     expect(callsFor(calls, "users")).not.toContain("prisma migrate resolve --applied 0_init");
     expect(output).toContain("BASELINE_ACCEPT_DATA_LOSS=true");
+  });
+
+  it("undoes the tier rename when the opted-in push fails too", () => {
+    const { status, renames } = run({
+      legacy: ["users"],
+      oldTiers: "users",
+      failPush: "users",
+      env: { ...allOn, BASELINE_ACCEPT_DATA_LOSS: "true" },
+    });
+    expect(status).toBe(1);
+    expect(renames).toContain(`RENAME VALUE 'SHORT' TO 'SIMPLE'`);
   });
 
   it("leaves the tiers alone after a refused push when it renamed nothing", () => {
