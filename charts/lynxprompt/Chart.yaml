@@ -3,8 +3,8 @@ name: lynxprompt
 description: A Helm chart for LynxPrompt - Self-hosted AI IDE configuration hub
 type: application
 kubeVersion: ">=1.21.0-0"
-version: 0.1.11
-appVersion: "3.3.0"
+version: 0.1.12
+appVersion: "3.3.1"
 keywords:
   - lynxprompt
   - ai
@@ -24,4 +24,4 @@ annotations:
   category: AI
   artifacthub.io/changes: |
     - kind: changed
-      description: Run app 3.3.0
+      description: Run app 3.3.1
