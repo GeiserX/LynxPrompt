@@ -32,7 +32,7 @@ services:
   lynxprompt:
     # A published release tag (tests/workflows/selfhost-compose.test.ts checks
     # it exists on Docker Hub). Newer releases: https://hub.docker.com/r/drumsergio/lynxprompt/tags
-    image: drumsergio/lynxprompt:3.2.1
+    image: drumsergio/lynxprompt:3.3.0
     restart: unless-stopped
     ports:
       - "${PORT:-3000}:3000"
