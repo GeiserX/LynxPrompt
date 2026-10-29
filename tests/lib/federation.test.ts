@@ -72,7 +72,7 @@ describe("federation", () => {
 
     it("should attempt registration when pointing to external registry", async () => {
       vi.stubEnv("ENABLE_FEDERATION", "true");
-      vi.stubEnv("APP_URL", "https://test.lynxprompt.com");
+      vi.stubEnv("APP_URL", "https://instance.example.test");
       vi.stubEnv("FEDERATION_REGISTRY_URL", "https://lynxprompt.geiser.cloud");
 
       const fetchSpy = vi.fn().mockRejectedValue(new Error("fetch disabled in test"));

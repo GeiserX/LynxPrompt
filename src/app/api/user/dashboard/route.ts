@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prismaUsers } from "@/lib/db-users";
 import { prismaApp } from "@/lib/db-app";
 import { requireSession } from "@/lib/api-auth";
+import { BLUEPRINT_ACCESS_SELECT, canReadBlueprint } from "@/lib/blueprint-access";
 
 /**
  * Get team membership for a user
@@ -316,13 +317,21 @@ export async function GET(request: Request) {
               downloads: true,
               favorites: true,
               tier: true,
-              user: { select: { name: true } },
+              ...BLUEPRINT_ACCESS_SELECT,
+              user: { select: { name: true, displayName: true } },
             },
           })
         : [],
     ]);
+    // A favorite made private, or shared with a team the user left, is no
+    // longer theirs to see: drop it rather than show its live title
+    const readableUserFavorites = (
+      await Promise.all(
+        userFavoriteTemplates.map(async (t) => ((await canReadBlueprint(t, userId)) ? t : null))
+      )
+    ).filter((t) => t !== null);
     const systemFavoriteMap = new Map(systemFavoriteTemplates.map((t) => [t.id, t]));
-    const userFavoriteMap = new Map(userFavoriteTemplates.map((t) => [t.id, t]));
+    const userFavoriteMap = new Map(readableUserFavorites.map((t) => [t.id, t]));
 
     const enrichedFavorites = favorites.map((fav) => {
       if (fav.templateType === "system") {
@@ -348,7 +357,7 @@ export async function GET(request: Request) {
             downloads: template.downloads,
             favorites: template.favorites,
             tier: template.tier,
-            author: template.user?.name || "Anonymous",
+            author: template.user?.displayName || template.user?.name || "Anonymous",
             isOfficial: false,
           };
         }

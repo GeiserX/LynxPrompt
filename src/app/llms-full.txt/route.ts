@@ -75,7 +75,7 @@ Step-by-step generator that creates AI config files tailored to your project.
 - Guest Mode: Use without signing up (login required to save/share)
 
 ### Blueprint Marketplace
-Browse, share, and sell AI configurations and commands.
+Browse and share AI configurations and commands. Every feature is free.
 - Two Types: AI Configs (rules/instructions) and Commands (slash commands/workflows)
 - Categories & Tags: Filter by category, platform, and tags
 - Search: Full-text search across all blueprints
@@ -102,8 +102,9 @@ First-class support for monorepo architectures.
 
 ### API Access
 REST API for programmatic access.
-- GET /api/v1/blueprints - List public blueprints
-- GET /api/v1/blueprints/{id} - Get specific blueprint
+- GET /api/v1/blueprints - List your own blueprints (token required)
+- GET /api/v1/blueprints/{id} - Get one blueprint you can read: yours, a team one, or a public one (token required)
+- GET /api/blueprints - Search public marketplace blueprints (no token)
 - Authentication via Bearer token (generate at /settings?tab=api-tokens)
 `);
 
@@ -125,7 +126,7 @@ Install via npm, Homebrew, or Chocolatey:
 - lynxp import - Import existing AGENTS.md files
 - lynxp convert - Convert between formats
 - lynxp analyze - Analyze project and output detected stack
-- lynxp hierarchy - Manage monorepo parent-child relationships
+- lynxp hierarchies - List your blueprint hierarchies (monorepo groupings)
 - lynxp login - Authenticate with LynxPrompt
 `);
 
@@ -166,7 +167,7 @@ npm install -g lynxprompt
 lynxp wizard
 
 ### API
-curl ${APP_URL}/api/v1/blueprints
+curl -H "Authorization: Bearer lp_xxxxx" ${APP_URL}/api/v1/blueprints
 curl -H "Authorization: Bearer lp_xxxxx" ${APP_URL}/api/v1/blueprints/bp_abc123
 `);
 

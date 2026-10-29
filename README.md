@@ -38,7 +38,7 @@ curl -O https://raw.githubusercontent.com/GeiserX/LynxPrompt/main/docker-compose
 docker compose -f docker-compose.selfhost.yml -f docker-compose.mailpit.yml up -d
 ```
 
-Put your own address in `ADMIN_EMAIL`, open http://localhost:3000, sign in with it, and read the sign-in link at http://localhost:8025 (Mailpit, a local mailbox for trying it out); the dashboard opens and that account is the superadmin. For a real deployment set the `SMTP_*` variables in `.env` and drop the Mailpit file; the image is amd64 and runs under emulation on ARM. Helm, the CLI and the other install channels are in [Getting started](https://geiserx.github.io/LynxPrompt/getting-started/).
+Put your own address in `ADMIN_EMAIL`, open http://localhost:3000, sign in with it, and read the sign-in link at http://localhost:8025 (Mailpit, a local mailbox for trying it out); the dashboard opens and that account is the superadmin. For a real deployment set the `SMTP_*` variables in `.env` and drop the Mailpit file; the image runs natively on amd64 and arm64. Helm, the CLI and the other install channels are in [Getting started](https://geiserx.github.io/LynxPrompt/getting-started/).
 
 ## Documentation
 

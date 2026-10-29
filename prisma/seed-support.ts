@@ -4,8 +4,13 @@ import pg from "pg";
 
 const { Pool } = pg;
 
+// Same TLS settings as the app's pool (src/lib/db-support.ts): a database that
+// refuses plaintext would otherwise reject the seed and leave the forum empty
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL_SUPPORT,
+  ...(process.env.DB_SSL === "true"
+    ? { ssl: { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== "false" } }
+    : {}),
 });
 
 const adapter = new PrismaPg(pool);

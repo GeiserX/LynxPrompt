@@ -18,9 +18,9 @@ The app and the CLI share one version and ship together: one tag `vX.Y.Z`, one G
 
 ### What gets released
 
-Every push to `main` runs `release.yml`, which runs the CI suite and the CLI build and public tests (this is `main`'s CI). A push never releases. Releases are manual: when `main` holds what you want to ship, run the Release workflow by hand (see below). Every release ships the app and the CLI together.
+Every push to `main` runs `release.yml`, which runs the CI suite and the CLI build and public tests (this is `main`'s CI), except a push that only touches `docs/**`, `mkdocs.yml`, `charts/**` or root Markdown files. A push never releases. Releases are manual: when `main` holds what you want to ship, run the Release workflow by hand (see below). Every release ships the app and the CLI together.
 
-One release runs at a time and none is cancelled.
+One release runs at a time and none is cancelled. Pushes, dry runs and real releases queue in separate groups, so a merge landing while a release waits does not replace it.
 
 ### 1. Write the notes, then merge
 
@@ -52,7 +52,10 @@ gh run list -R GeiserX/LynxPrompt -w "Docker Publish" --limit 3
 gh run list -R GeiserX/LynxPrompt -w "Publish CLI" --limit 3
 ```
 
-To publish a released version again: `gh workflow run "Docker Publish" -R GeiserX/LynxPrompt -f version=X.Y.Z`, or `gh workflow run "Publish CLI" -R GeiserX/LynxPrompt -f version=X.Y.Z -f platforms=all`.
+If a publish did not start or failed, run it by hand for the released version:
+
+- `gh workflow run "Docker Publish" -R GeiserX/LynxPrompt -f version=X.Y.Z` builds the image only when `drumsergio/lynxprompt:X.Y.Z` does not exist yet. Release tags are immutable, so it refuses a version already on Docker Hub.
+- `gh workflow run "Publish CLI" -R GeiserX/LynxPrompt -f version=X.Y.Z -f platforms=all` skips npm when the version is already there. With no version it takes the newest release. Homebrew, the AUR and Snap stable only move for the newest release, so publishing an older one never downgrades them.
 
 ### 4. Deploy
 
@@ -72,6 +75,10 @@ A hotfix is a normal pull request into `main` with the fix. Merge it, then run t
 If a release has issues:
 
 ### Quick Rollback (Docker)
+
+A release whose migrations drop columns cannot be rolled back by changing the image tag: the older image still reads the dropped columns and fails. 3.0.0 drops the plan columns (users and support databases) and 3.2.0 drops the device-tracking columns of `Session` (users database), so every signed-in request on a 3.1.0 image fails after 3.2.0 migrated. To roll back across such a release, restore the database backup taken before the upgrade, then pin the older image. Take that backup before every upgrade; the release notes' "Upgrade notes" say when a release has a destructive migration.
+
+For a release without one:
 
 ```bash
 # Revert to previous version in docker-compose.yml
@@ -93,22 +100,19 @@ Revert the faulty commit in a pull request and merge it; the release that follow
 | Secret | Used by |
 |--------|---------|
 | `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` | Image publish, the development deploy and the Docker Hub description |
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `NEXT_PUBLIC_UMAMI_WEBSITE_ID` | Build arguments of the image |
 | `GITEA_USERNAME`, `GITEA_TOKEN` | The development deploy (GitOps repo) |
-| `CLOUDFLARE_ZONE_ID`, `CLOUDFLARE_API_TOKEN` | Cache purge after the production deploy check |
-| `LYNXPROMPT_DEV_TOKEN` | CLI tests against the development instance |
+| `LYNXPROMPT_DEV_TOKEN` | CLI tests against the development instance (only while the `DEV_URL` variable is set) |
 | `HOMEBREW_TAP_TOKEN`, `CHOCOLATEY_API_KEY`, `SNAPCRAFT_STORE_CREDENTIALS`, `AUR_SSH_PRIVATE_KEY` | CLI package channels (the Snap and AUR jobs print how to create theirs when it is missing) |
 | `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID` | Signing and notarizing the macOS CLI binaries |
 
 ### GitHub Environments
 
 - **production**: lynxprompt.geiser.cloud, used by the "Verify Production Deployment" workflow (no approval rule)
-- **development**: dev.lynxprompt.com, auto-deploy on every push to `develop`
+- **development**: the server the `DEV_URL` repository variable names, deployed on every push to `develop`. There is none today: with `DEV_URL` unset, the development deploy, the integration smoke tests and the authenticated CLI tests are skipped
 
 ## Pre-Release Checklist
 
 - [ ] All tests pass
-- [ ] Linting passes
 - [ ] Build succeeds
 - [ ] Database migrations applied (if any)
 - [ ] CHANGELOG updated
@@ -127,17 +131,4 @@ Release notes should include:
 
 ---
 
-*Last updated: December 2025*
-
-
-
-
-
-
-
-
-
-
-
-
-
+*Last updated: October 2026*

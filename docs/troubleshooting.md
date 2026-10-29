@@ -42,9 +42,9 @@ each of the four its own database.
 
 ## Pull or start fails on an ARM host
 
-The image is amd64 only. The compose file sets `platform: linux/amd64`, so Docker Desktop and Colima with
-Rosetta run it under emulation; a Raspberry Pi needs `qemu-user-static` installed on the host. It is slower
-than native.
+The image is built for linux/amd64 and linux/arm64, and Docker pulls the one that matches the host. If it
+fails with `exec format error`, an override forces the other architecture: remove any `platform:` line you
+added to the compose file, or `DOCKER_DEFAULT_PLATFORM` from the environment, and pull again.
 
 ## Port 3000 is already in use
 

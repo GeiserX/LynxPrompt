@@ -9,7 +9,8 @@ vi.mock("@/lib/db-app", () => ({
   },
 }));
 
-vi.mock("@/lib/network-security", () => ({
+vi.mock("@/lib/network-security", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/network-security")>()),
   validateDomainNotPrivate: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -94,16 +95,14 @@ describe("POST /api/v1/federation/register", () => {
     vi.stubEnv("ENABLE_FEDERATION", "true");
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: () =>
-          Promise.resolve({
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({
             name: "Evil",
             domain: "evil.example.com",
             version: "1.0.0",
             federation: true,
-          }),
-      }),
+          })),
+      ),
     );
 
     const { POST } = await import(
@@ -125,17 +124,15 @@ describe("POST /api/v1/federation/register", () => {
     vi.stubEnv("ENABLE_FEDERATION", "true");
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: () =>
-          Promise.resolve({
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({
             name: "My Instance",
             domain: "test.example.com",
             version: "2.0.12",
             federation: true,
             publicBlueprints: 10,
-          }),
-      }),
+          })),
+      ),
     );
     mockUpsert.mockResolvedValueOnce({
       id: "inst_abc",
@@ -164,5 +161,29 @@ describe("POST /api/v1/federation/register", () => {
         create: expect.objectContaining({ domain: "test.example.com", verified: true }),
       }),
     );
+  });
+  // A .well-known body that never ends must not be buffered whole
+  it("stops reading a .well-known body past the size cap", async () => {
+    vi.stubEnv("ENABLE_FEDERATION", "true");
+    let sent = 0;
+    const endless = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        sent += 1;
+        controller.enqueue(new Uint8Array(16 * 1024).fill(32));
+      },
+    });
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(endless)));
+
+    const { POST } = await import("@/app/api/v1/federation/register/route");
+    const response = await POST(
+      new NextRequest("https://lynxprompt.com/api/v1/federation/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ domain: "test.example.com" }),
+      }),
+    );
+
+    expect(response.status).toBe(422);
+    expect(sent).toBeLessThan(10);
   });
 });

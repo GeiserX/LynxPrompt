@@ -54,6 +54,12 @@ export async function POST(
     const ipHash = hashIP(clientIP);
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
+    // The IP hash is only needed for the one-hour dedup window; erase older ones
+    await prismaUsers.templateDownload.updateMany({
+      where: { ipHash: { not: null }, createdAt: { lt: oneHourAgo } },
+      data: { ipHash: null },
+    });
+
     const recentDownload = await prismaUsers.templateDownload.findFirst({
       where: {
         templateId: rawId,

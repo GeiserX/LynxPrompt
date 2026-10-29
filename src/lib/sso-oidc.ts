@@ -1,6 +1,6 @@
 import dns from "node:dns";
 import net from "node:net";
-import { isPrivateIP, validateDomainNotPrivate } from "@/lib/network-security";
+import { isPrivateIP, validateDomainNotPrivate, readBodyCapped, REMOTE_JSON_MAX_BYTES } from "@/lib/network-security";
 
 // Team admins type the identity provider URLs, so every one of them is
 // untrusted input: the browser is sent to the authorization URL, and the server
@@ -44,17 +44,22 @@ async function assertPublicHost(url: URL): Promise<void> {
   }
 }
 
-/** fetch() for IdP URLs: scheme and address checked first, redirects refused, 10 s timeout. */
+/**
+ * fetch() for IdP URLs: scheme and address checked first, redirects refused.
+ * The 10 s timeout and the size cap cover the body too: it is read here, so a
+ * body that never ends cannot hold the request open or fill memory.
+ */
 export async function idpFetch(url: string, init: RequestInit = {}): Promise<Response> {
   if (!isAllowedIdpUrl(url)) throw new SSOProviderError("IdP URL must use https");
   await assertPublicHost(new URL(url));
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10_000);
-  try {
-    return await fetch(url, { ...init, redirect: "error", signal: controller.signal });
-  } finally {
-    clearTimeout(timeout);
-  }
+  const res = await fetch(url, { ...init, redirect: "error", signal: AbortSignal.timeout(10_000) });
+  const body = await readBodyCapped(res, REMOTE_JSON_MAX_BYTES);
+  // A 204 or 304 may not carry a body, even an empty one
+  return new Response(body.byteLength ? body : null, {
+    status: res.status,
+    statusText: res.statusText,
+    headers: res.headers,
+  });
 }
 
 export interface OidcEndpoints {

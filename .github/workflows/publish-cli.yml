@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Released version to publish (leave empty to use cli/package.json)'
+        description: 'Released version to publish (leave empty for the newest release; an older one skips Homebrew, the AUR and Snap)'
         required: false
         type: string
       platforms:
@@ -43,6 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
+      latest: ${{ steps.version.outputs.latest }}
       ref: ${{ steps.ref.outputs.ref }}
       platforms: ${{ steps.platforms.outputs.platforms }}
 
@@ -50,34 +51,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      # The version comes from the dispatch or the input, never from
+      # cli/package.json: release.yml bumps that only in the tagged commit, so
+      # on main it names an old release. An empty input means the newest tag.
       - name: Get version
         id: version
+        env:
+          REQUESTED: ${{ github.event.inputs.version || github.event.client_payload.version }}
         run: |
-          if [[ -n "${{ github.event.inputs.version }}" ]]; then
-            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.event_name }}" == "repository_dispatch" ]]; then
-            VERSION="${{ github.event.client_payload.version }}"
-            if [[ -z "$VERSION" ]]; then
-              VERSION=$(node -p "require('./cli/package.json').version")
-            fi
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
-          else
-            VERSION=$(node -p "require('./cli/package.json').version")
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
+          if [[ "${{ github.event_name }}" == "repository_dispatch" && -z "$REQUESTED" ]]; then
+            echo "::error::release-published dispatch carries no version"
+            exit 1
           fi
+          bash .github/scripts/publish-version.sh "$REQUESTED" >> "$GITHUB_OUTPUT"
 
       # Build the code that was tagged, not whatever main holds when the job
       # starts: a merge landing between the tag and this run would otherwise ship
-      # untagged code under the tagged version.
+      # untagged code under the tagged version. publish-version.sh checked the tag exists.
       - name: Resolve the release tag
         id: ref
-        run: |
-          TAG="v${{ steps.version.outputs.version }}"
-          if ! git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null; then
-            echo "::error::tag $TAG does not exist; publish only released versions"
-            exit 1
-          fi
-          echo "ref=refs/tags/$TAG" >> $GITHUB_OUTPUT
+        run: echo "ref=refs/tags/v${{ steps.version.outputs.version }}" >> $GITHUB_OUTPUT
 
       - name: Get platforms
         id: platforms
@@ -147,7 +140,12 @@ jobs:
         run: |
           # Trusted publishing needs npm 11.5.1 or newer; Node 22 ships npm 10.
           npm install -g npm@^11.5.1
-          npm publish --access public --loglevel verbose
+          # An older release must not take the latest dist-tag from the newest
+          if [[ "${{ needs.check.outputs.latest }}" == "true" ]]; then
+            npm publish --access public --loglevel verbose
+          else
+            npm publish --access public --tag previous --loglevel verbose
+          fi
 
   # ===========================================
   # Build and upload standalone binaries
@@ -217,7 +215,7 @@ jobs:
           ls -la
 
       - name: Upload binary to GitHub Release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           tag_name: v${{ needs.check.outputs.version }}
           files: |
@@ -350,7 +348,7 @@ jobs:
           ls -la
 
       - name: Upload macOS binaries to GitHub Release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           tag_name: v${{ needs.check.outputs.version }}
           files: cli/binaries/*.tar.gz
@@ -404,9 +402,11 @@ jobs:
   # Each builds, installs and runs the package before it publishes, and fails
   # the run when its store secret is missing or rejected: for months both
   # channels stayed on 2.1.1 while every run looked green.
+  # Snap stable, the AUR and Homebrew hold one version each: only the newest
+  # release may move them, or a re-publish of an older one would downgrade users.
   publish-snap:
     needs: [check, publish-npm]
-    if: ${{ needs.check.outputs.platforms == 'all' || needs.check.outputs.platforms == 'npm-snap' }}
+    if: ${{ (needs.check.outputs.platforms == 'all' || needs.check.outputs.platforms == 'npm-snap') && needs.check.outputs.latest == 'true' }}
     permissions:
       contents: read
     uses: ./.github/workflows/snap.yml
@@ -419,7 +419,7 @@ jobs:
 
   publish-aur:
     needs: [check, publish-npm]
-    if: ${{ needs.check.outputs.platforms == 'all' }}
+    if: ${{ needs.check.outputs.platforms == 'all' && needs.check.outputs.latest == 'true' }}
     permissions:
       contents: read
     uses: ./.github/workflows/aur.yml
@@ -435,7 +435,7 @@ jobs:
   # ===========================================
   update-homebrew:
     needs: [check, publish-npm]
-    if: ${{ needs.check.outputs.platforms == 'all' }}
+    if: ${{ needs.check.outputs.platforms == 'all' && needs.check.outputs.latest == 'true' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -473,7 +473,7 @@ jobs:
             homepage "https://lynxprompt.geiser.cloud"
             url "https://registry.npmjs.org/lynxprompt/-/lynxprompt-${{ needs.check.outputs.version }}.tgz"
             sha256 "${{ steps.sha.outputs.sha256 }}"
-            license "SEE LICENSE IN LICENSE"
+            license "AGPL-3.0-or-later"
 
             depends_on "node@22"
 
@@ -548,6 +548,8 @@ jobs:
           got=$("$(brew --prefix)/bin/lynxprompt" --version)
           [ "$got" = "$VERSION" ] || { echo "::error::brew installed lynxprompt $got, expected $VERSION"; exit 1; }
           echo "Homebrew: lynxprompt $VERSION runs"
+          # The tap audits every formula push the same way
+          brew audit --strict GeiserX/lynxprompt/lynxprompt
 
   # ===========================================
   # Summary

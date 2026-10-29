@@ -103,7 +103,7 @@ describe("CLI release pipeline", () => {
     // The Snap and AUR jobs call a reusable workflow, which checks out the ref it is given.
     for (const name of ["publish-snap", "publish-aur"]) expect(job(publish, name), `${name} builds without the tag`).toContain("ref: ${{ needs.check.outputs.ref }}");
     for (const file of ["snap.yml", "aur.yml"]) expect(read(file)).toContain("ref: ${{ inputs.ref }}");
-    expect(job(publish, "check")).toContain('echo "ref=refs/tags/$TAG"');
+    expect(job(publish, "check")).toContain('echo "ref=refs/tags/v${{ steps.version.outputs.version }}"');
   });
 
   // The push trigger once listed only package.json and the lockfiles, so a
@@ -122,7 +122,7 @@ describe("CLI release pipeline", () => {
     // A release made with GITHUB_TOKEN starts no workflow; a release trigger
     // would only fire on a hand-made release and publish it a second time.
     expect(publish).not.toMatch(/\n  release:\n/);
-    expect(job(publish, "check")).toContain('TAG="v${{ steps.version.outputs.version }}"');
+    expect(job(publish, "check")).toContain('ref=refs/tags/v${{ steps.version.outputs.version }}');
     for (const name of ["publish-binaries", "sign-macos"]) expect(job(publish, name)).toContain("tag_name: v${{ needs.check.outputs.version }}");
     expect(job(publish, "verify")).toContain('gh release view "v$VERSION"');
   });

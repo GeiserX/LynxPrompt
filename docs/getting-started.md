@@ -2,8 +2,8 @@
 
 LynxPrompt runs as one container next to PostgreSQL. You need Docker with Compose v2 (or Kubernetes for the
 Helm chart) and, for a real deployment, an SMTP server: the default way to sign in is a link sent by mail.
-The image is built for linux/amd64; Apple Silicon and Raspberry Pi hosts run it under emulation, which the
-compose file turns on with `platform: linux/amd64`.
+The image is built for linux/amd64 and linux/arm64, so Apple Silicon, Raspberry Pi and other ARM hosts run it
+natively.
 
 ## Docker Compose
 

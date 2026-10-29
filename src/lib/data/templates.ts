@@ -408,7 +408,7 @@ export async function getTemplates(options?: {
     },
     include: {
       user: {
-        select: { name: true, id: true },
+        select: { name: true, displayName: true, id: true, isProfilePublic: true },
       },
     },
     orderBy: getOrderBy(),
@@ -450,7 +450,7 @@ export async function getTemplates(options?: {
     name: t.name,
     description: t.description || "",
     content: t.content,
-    author: t.user?.name || "Anonymous",
+    author: t.user?.displayName || t.user?.name || "Anonymous",
     authorId: t.userId,
     downloads: t.downloads || 0,
     likes: t.favorites || 0,
@@ -605,7 +605,7 @@ export async function getTemplateById(
       },
       include: {
         user: {
-          select: { name: true, id: true },
+          select: { name: true, displayName: true, id: true, isProfilePublic: true },
         },
       },
     });
@@ -622,8 +622,12 @@ export async function getTemplateById(
       name: template.name,
       description: template.description || "",
       content: template.content,
-      author: template.user?.name || "Anonymous",
-      authorId: template.userId,
+      author: template.user?.displayName || template.user?.name || "Anonymous",
+      // Same rule as the list route: a private profile's id stays hidden
+      authorId:
+        template.user?.isProfilePublic || template.userId === userId
+          ? template.userId
+          : undefined,
       downloads: template.downloads || 0,
       likes: template.favorites || 0,
       tags: (template.tags as string[]) || [],

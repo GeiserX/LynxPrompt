@@ -127,6 +127,26 @@ describe("getTemplateById - database mode bp_/usr_ templates", () => {
     expect(template!.platforms).toContain("cursor");
   });
 
+  it("names the author by Display Name and hides a private profile's id from others", async () => {
+    mockGetServerSession.mockResolvedValue(null);
+    mockUserTemplateFindFirst.mockResolvedValue({
+      id: "bp-dn",
+      name: "Rules",
+      content: "x",
+      type: "CURSORRULES",
+      tags: [],
+      userId: "u-2",
+      user: { name: "Jane Realsurname", displayName: "jdev", id: "u-2", isProfilePublic: false },
+      isPublic: true,
+      visibility: "PUBLIC",
+      teamId: null,
+    });
+
+    const template = await getTemplateById("bp_bp-dn");
+    expect(template!.author).toBe("jdev");
+    expect(template!.authorId).toBeUndefined();
+  });
+
   it("returns the path a CLI-pushed blueprint came from, so the download knows its format", async () => {
     mockGetServerSession.mockResolvedValue(null);
     mockUserTemplateFindFirst.mockResolvedValue({

@@ -1,3 +1,5 @@
+import { AGENT_PLATFORM_COUNT } from "@/lib/platforms";
+
 // Documentation navigation structure
 // Each section can have subsections that are also clickable
 
@@ -149,13 +151,13 @@ export const docsConfig: DocsSection[] = [
   {
     title: "Supported Platforms",
     href: "/docs/platforms",
-    description: "All the AI IDEs and tools LynxPrompt supports (30+).",
+    description: `All the AI IDEs and tools LynxPrompt supports (${AGENT_PLATFORM_COUNT}).`,
     icon: "Laptop",
     items: [
       {
         title: "Overview",
         href: "/docs/platforms",
-        description: "All 30+ supported platforms",
+        description: `All ${AGENT_PLATFORM_COUNT} supported platforms`,
       },
       {
         title: "Popular Platforms",

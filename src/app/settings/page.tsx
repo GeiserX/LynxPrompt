@@ -1971,7 +1971,7 @@ interface ApiToken {
 const ROLE_OPTIONS = [
   { value: "BLUEPRINTS_FULL", label: "Blueprints (Full Access)", description: "Create, read, update, delete blueprints" },
   { value: "BLUEPRINTS_READONLY", label: "Blueprints (Read Only)", description: "List and download blueprints only" },
-  { value: "PROFILE_FULL", label: "Profile (Full Access)", description: "Read and update profile information" },
+  { value: "PROFILE_FULL", label: "Profile (Full Access)", description: "Read profile information" },
   { value: "FULL", label: "Full Access", description: "All permissions including profile and blueprints" },
 ];
 

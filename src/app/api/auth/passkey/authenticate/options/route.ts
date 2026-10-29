@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
-import { webAuthnConfig } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions, webAuthnConfig } from "@/lib/auth";
 import { prismaUsers } from "@/lib/db-users";
 import { ENABLE_PASSKEYS } from "@/lib/feature-flags";
 import {
@@ -8,30 +9,28 @@ import {
 } from "@simplewebauthn/server";
 import { secureCookiesEnabled } from "@/lib/auth-cookies";
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   if (!ENABLE_PASSKEYS) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
   try {
-    const { email } = await request.json();
-
-    if (!email) {
-      return NextResponse.json({ error: "Email required" }, { status: 400 });
+    // The passkey is a second factor: it is asked for by the signed-in session
+    // it will verify, so the credentials come from that session's user. Taking
+    // an email from the request let anyone learn which addresses have
+    // passkeys, and their credential ids.
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    // Find user and their authenticators
     const user = await prismaUsers.user.findUnique({
-      where: { email },
+      where: { id: session.user.id },
       include: { authenticators: true },
     });
 
-    // SECURITY: Don't reveal whether the email exists - prevents user enumeration
     if (!user || user.authenticators.length === 0) {
-      return NextResponse.json(
-        { error: "Invalid email or no passkeys registered" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "No passkeys registered" }, { status: 400 });
     }
 
     // Generate authentication options
@@ -45,7 +44,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Store challenge in cookie
-    const response = NextResponse.json({ options, email });
+    const response = NextResponse.json({ options, email: user.email });
     response.cookies.set("passkey-auth-challenge", options.challenge, {
       httpOnly: true,
       secure: secureCookiesEnabled(),

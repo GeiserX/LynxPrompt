@@ -571,7 +571,7 @@ const ERROR_HANDLING_PATTERNS = [
 
 // Platforms are the PRIMARY target, but files often work across multiple IDEs
 // Import from central platforms definition
-import { PLATFORMS, PLATFORM_COUNT } from "@/lib/platforms";
+import { PLATFORMS } from "@/lib/platforms";
 
 interface WizardDraftSummary {
   id: string;

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ENABLE_FEDERATION } from "@/lib/feature-flags";
 import { prismaApp } from "@/lib/db-app";
-import { validateDomainNotPrivate } from "@/lib/network-security";
+import { validateDomainNotPrivate, readJsonCapped, REMOTE_JSON_MAX_BYTES } from "@/lib/network-security";
 import { getClientIP } from "@/lib/client-ip";
 
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
@@ -92,14 +92,13 @@ export async function POST(request: NextRequest) {
 
   let wellKnown: WellKnownResponse;
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10_000);
-
+    // One 10 s limit for headers and body together, and a size cap: the
+    // remote server is anyone's, and a body that never ends must not hold
+    // the request open or fill memory
     const res = await fetch(
       `https://${instanceDomain}/.well-known/lynxprompt.json`,
-      { signal: controller.signal, redirect: "manual", headers: { Accept: "application/json" } },
+      { signal: AbortSignal.timeout(10_000), redirect: "manual", headers: { Accept: "application/json" } },
     );
-    clearTimeout(timeout);
 
     if (!res.ok) {
       return NextResponse.json(
@@ -108,7 +107,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    wellKnown = await res.json();
+    wellKnown = await readJsonCapped<WellKnownResponse>(res, REMOTE_JSON_MAX_BYTES);
   } catch (err) {
     return NextResponse.json(
       { error: "Cannot reach instance" },

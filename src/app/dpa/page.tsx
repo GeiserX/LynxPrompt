@@ -49,7 +49,7 @@ export default function DPAPage() {
               Data Processing Agreement
             </h1>
             <p className="mt-3 text-lg text-muted-foreground">
-              Version 1.1 – Effective February 2026
+              Version 1.2 – Effective October 2026
             </p>
           </div>
         </div>
@@ -367,8 +367,13 @@ export default function DPAPage() {
                       </tr>
                       <tr>
                         <td className="py-2 pr-4">Cloudflare</td>
-                        <td className="py-2 pr-4">CDN, DDoS protection</td>
+                        <td className="py-2 pr-4">Bot protection (Turnstile)</td>
                         <td className="py-2">Global (SCCs)</td>
+                      </tr>
+                      <tr>
+                        <td className="py-2 pr-4">Gravatar (Automattic)</td>
+                        <td className="py-2 pr-4">Avatars for accounts without a picture (email hash)</td>
+                        <td className="py-2">USA</td>
                       </tr>
                     </tbody>
                   </table>

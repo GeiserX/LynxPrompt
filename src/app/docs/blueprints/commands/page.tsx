@@ -194,20 +194,10 @@ export default function CommandsDocsPage() {
           <div className="rounded-lg border bg-card p-4">
             <h4 className="font-medium">Convert between platforms</h4>
             <pre className="mt-2 overflow-x-auto rounded-lg bg-muted p-3 text-sm">
-              <code>lynxp convert .cursor/commands/audit.md --target claude</code>
+              <code>lynxp convert .cursor/commands/audit.md claude-command</code>
             </pre>
             <p className="mt-2 text-xs text-muted-foreground">
               Converts to <code>.claude/commands/audit.md</code>
-            </p>
-          </div>
-
-          <div className="rounded-lg border bg-card p-4">
-            <h4 className="font-medium">Detect all commands in a project</h4>
-            <pre className="mt-2 overflow-x-auto rounded-lg bg-muted p-3 text-sm">
-              <code>lynxp detect</code>
-            </pre>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Scans your project for all configuration files and commands.
             </p>
           </div>
         </div>

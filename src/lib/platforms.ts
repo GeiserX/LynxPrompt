@@ -48,3 +48,9 @@ export {
   agentsMdPointerFiles,
 } from "../../packages/shared/src/platforms";
 export type { PlatformDefinition, CommandDefinition, AgentAssetFile, AgentAssetTarget, McpConfigTarget } from "../../packages/shared/src/platforms";
+
+import { PLATFORMS as ALL_PLATFORMS } from "../../packages/shared/src/platforms";
+
+// Coding agents only: the table also holds the slash-command formats
+// (cursor-command, claude-command...), which are not separate tools
+export const AGENT_PLATFORM_COUNT = ALL_PLATFORMS.filter((p) => !p.isCommand).length;

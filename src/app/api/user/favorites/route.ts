@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prismaUsers } from "@/lib/db-users";
 import { prismaApp } from "@/lib/db-app";
-import { canReadTemplate } from "@/lib/blueprint-access";
+import { canReadBlueprint, canReadTemplate } from "@/lib/blueprint-access";
 import { requireSession } from "@/lib/api-auth";
 
 // GET user's favorite templates
@@ -51,10 +51,12 @@ export async function GET(request: Request) {
           const template = await prismaUsers.userTemplate.findUnique({
             where: { id: cleanTemplateId },
             include: {
-              user: { select: { name: true } },
+              user: { select: { name: true, displayName: true } },
             },
           });
-          if (template) {
+          // A blueprint made private, or a team the user left, drops out of
+          // the list: its live title and description are no longer theirs to see
+          if (template && (await canReadBlueprint(template, session.user.id))) {
             return {
               id: `bp_${template.id}`,
               name: template.name,
@@ -62,7 +64,7 @@ export async function GET(request: Request) {
               downloads: template.downloads,
               favorites: template.favorites,
               tier: template.tier,
-              author: template.user?.name || "Anonymous",
+              author: template.user?.displayName || template.user?.name || "Anonymous",
               isOfficial: false,
               favoritedAt: fav.createdAt,
             };

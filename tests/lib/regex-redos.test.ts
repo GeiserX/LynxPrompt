@@ -44,7 +44,10 @@ describe("sensitive-data scanner runs in linear time", () => {
 });
 
 vi.mock("@/lib/db-app", () => ({ prismaApp: { federatedInstance: { upsert: vi.fn() } } }));
-vi.mock("@/lib/network-security", () => ({ validateDomainNotPrivate: vi.fn().mockResolvedValue(undefined) }));
+vi.mock("@/lib/network-security", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/network-security")>()),
+  validateDomainNotPrivate: vi.fn().mockResolvedValue(undefined),
+}));
 
 describe("federation register domain check", () => {
   it("rejects a huge domain without running a slow regex", async () => {

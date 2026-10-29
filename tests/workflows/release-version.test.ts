@@ -129,6 +129,23 @@ describe("one release workflow", () => {
     expect(concurrency).not.toMatch(/queue:/);
   });
 
+  // A push queued behind a pending manual release used to replace it, because
+  // both landed in the same group
+  it("gives pushes, dry runs and real releases their own concurrency group", () => {
+    const group = release.match(/\nconcurrency:\n {2}group: (.*)\n/)![1];
+    const evaluate = (event_name: string, dry_run: boolean | undefined) =>
+      group.replace(/\$\{\{(.*?)\}\}/g, (_, expr: string) =>
+        String(new Function("github", "inputs", `return (${expr.replace(/==/g, "===")});`)(
+          { ref: "refs/heads/main", event_name },
+          dry_run === undefined ? {} : { dry_run }
+        ))
+      );
+    const push = evaluate("push", undefined);
+    const real = evaluate("workflow_dispatch", false);
+    const dry = evaluate("workflow_dispatch", true);
+    expect(new Set([push, real, dry]).size).toBe(3);
+  });
+
   it("takes the version from the script and a bump of patch, minor or major", () => {
     expect(job(release, "prepare")).toContain("bash .github/scripts/release-version.sh \"${{ inputs.bump || 'patch' }}\"");
     const dispatch = release.match(/\n  workflow_dispatch:\n((?: {4}.*\n)*)/)![1];

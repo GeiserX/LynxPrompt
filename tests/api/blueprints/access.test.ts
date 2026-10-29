@@ -7,12 +7,14 @@ const mockTemplateUpdate = vi.fn();
 const mockTeamMemberFindUnique = vi.fn();
 const mockTeamMemberFindFirst = vi.fn();
 const mockFavoriteFindUnique = vi.fn();
+const mockFavoriteFindMany = vi.fn();
 const mockFavoriteCreate = vi.fn();
 const mockFavoriteDelete = vi.fn();
 const mockVersionFindUnique = vi.fn();
 const mockVersionFindMany = vi.fn();
 const mockDownloadFindFirst = vi.fn();
 const mockDownloadCreate = vi.fn();
+const mockDownloadUpdateMany = vi.fn();
 const mockDownloadCount = vi.fn();
 const mockDownloadGroupBy = vi.fn();
 const mockSystemFindUnique = vi.fn();
@@ -31,6 +33,7 @@ vi.mock("@/lib/db-users", () => {
     teamMember: { findUnique: mockTeamMemberFindUnique, findFirst: mockTeamMemberFindFirst },
     templateFavorite: {
       findUnique: mockFavoriteFindUnique,
+      findMany: mockFavoriteFindMany,
       create: mockFavoriteCreate,
       delete: mockFavoriteDelete,
     },
@@ -38,6 +41,7 @@ vi.mock("@/lib/db-users", () => {
     templateDownload: {
       findFirst: mockDownloadFindFirst,
       create: mockDownloadCreate,
+      updateMany: mockDownloadUpdateMany,
       count: mockDownloadCount,
       groupBy: mockDownloadGroupBy,
     },
@@ -113,6 +117,39 @@ describe("POST /api/blueprints/[id]/favorite", () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({ favorited: false });
     expect(mockFavoriteDelete).toHaveBeenCalledWith({ where: { id: "fav_1" } });
+  });
+});
+
+describe("GET /api/user/favorites", () => {
+  // The owner made it private (or removed the caller from its team) after it was favorited
+  it("drops a favorite the caller can no longer read", async () => {
+    mockFavoriteFindMany.mockResolvedValue([{ templateId: "tpl_1", templateType: "user", createdAt: new Date() }]);
+    mockTemplateFindUnique.mockResolvedValue({
+      ...privateTeamBlueprint,
+      id: "tpl_1",
+      name: "Client X rollout",
+      description: "internal",
+      user: { name: "Owner Real Name" },
+    });
+
+    const { GET } = await import("@/app/api/user/favorites/route");
+    const response = await GET(new Request("https://lynxprompt.com/api/user/favorites"));
+
+    expect(await response.json()).toEqual([]);
+  });
+
+  it("keeps a public favorite and names its author by Display Name", async () => {
+    mockFavoriteFindMany.mockResolvedValue([{ templateId: "tpl_2", templateType: "user", createdAt: new Date() }]);
+    mockTemplateFindUnique.mockResolvedValue({
+      userId: "owner_1", isPublic: true, visibility: "PUBLIC", teamId: null,
+      id: "tpl_2", name: "Rules", description: null,
+      user: { name: "Owner Real Name", displayName: "owner" },
+    });
+
+    const { GET } = await import("@/app/api/user/favorites/route");
+    const [fav] = await (await GET(new Request("https://lynxprompt.com/api/user/favorites"))).json();
+
+    expect(fav.author).toBe("owner");
   });
 });
 
@@ -255,6 +292,19 @@ describe("POST /api/blueprints/[id]/download", () => {
       expect(mockDownloadCreate.mock.calls[0][0].data.platform).toBe(platform);
     }
   );
+
+  // The policy says the IP hash only lives for the one-hour dedup window
+  it("erases IP hashes older than the dedup window", async () => {
+    mockTemplateFindUnique.mockResolvedValue({ userId: "owner_1", isPublic: true, visibility: "PUBLIC", teamId: null });
+
+    await download("bp_tpl_1", "cursor");
+
+    const call = mockDownloadUpdateMany.mock.calls[0][0];
+    expect(call.data).toEqual({ ipHash: null });
+    const cutoff = call.where.createdAt.lt.getTime();
+    expect(Math.abs(Date.now() - 60 * 60 * 1000 - cutoff)).toBeLessThan(5000);
+    expect(mockDownloadCreate).toHaveBeenCalled();
+  });
 
   it("drops a platform that is not a known id", async () => {
     mockTemplateFindUnique.mockResolvedValue({ userId: "owner_1", isPublic: true, visibility: "PUBLIC", teamId: null });
