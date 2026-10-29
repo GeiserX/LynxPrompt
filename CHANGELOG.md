@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 From 3.0.0 the web app and the CLI share one version and one release: the `vX.Y.Z` tag, the Docker image `drumsergio/lynxprompt:X.Y.Z` and `lynxprompt@X.Y.Z` on npm. Each `## [X.Y.Z]` section below covers both and becomes that release's notes. Before 3.0.0 the app and the CLI had their own version lines (`app-v*` and `cli-v*` tags).
 
+## [3.3.0] - 2026-10-29
+
+3.3.0 fixes what the 2026-10-29 gap review found after 3.2.1: team blueprints now stay with the team, the CLI sees every tool's files, and one repository gets one hierarchy however it was cloned. No database migrations.
+
+### Upgrade notes
+
+**1. Team blueprints belong to the team.** A blueprint shared with a team (TEAM visibility, or PUBLIC with a team) is handed to the team admin who joined first when its author is removed from the team, leaves it, or deletes their account. Before, the former member kept editing rights and teammates kept pulling whatever they wrote, while no admin could touch it. Team admins can now edit and delete their team's blueprints through the API and the CLI; the web Edit button still shows only for the owner. A PRIVATE blueprint stays its owner's.
+
+**2. One hierarchy per repository.** `lynxp push` now normalizes the git remote before hashing it, so SSH, https and `.git` clones of one repository share a hierarchy, the same key lynxprompt-action v1.1.3 and the VS Code extension 0.1.77 use. A hierarchy made under the old key keeps being used, so nothing moves.
+
+**3. Rollback guard.** From this image on, the container refuses to start when the database holds a finished migration the image does not ship, instead of starting and failing every sign-in. Rolling back to 3.2.1 or older still needs the pre-upgrade backup (see RELEASING.md).
+
+**4. Retired config types.** New blueprints of the Continue, Cody, Void and Tabnine config types are refused. Existing ones keep saving and now download as their own file instead of `AGENTS.md`.
+
+### Fixed
+- **CLI:** `lynxp status` and the `lynxp link` picker read the shared platform table, so Kiro, Devin, Gemini CLI, Roo, Trae and Cline files show up; `link` refuses a folder. Blueprint names and descriptions from the server are printed without terminal escape sequences in `link`, `status`, `hierarchies` and `list`. `lynxp list` suggests `lynxp wizard`, and `list` and `search` link to the configured instance. The wizard no longer loops forever in a terminal that reports zero columns.
+- **Web and API:** blueprint names lose control characters on create and update; descriptions keep newlines and tabs. Unlinking a sign-in provider removes one account and refuses to leave you with no way back in (a verified email counts only while email sign-in is on). The web wizard's zip dialog and tool grid handle drafts saved with a retired tool. Support post authors see only the statuses they can set, and a refused change shows its error.
+- **Blog:** inline code inside a link URL can no longer reach the `href`, and the RSS feed escapes descriptions instead of wrapping them in CDATA.
+
 ## [3.2.1] - 2026-10-29
 
 3.2.1 fixes what the 2026-10-29 review of the LynxPrompt repositories found in the app and the CLI. One fix is a security fix: a cloned repository could make `lynxp sync` write outside the project. No database migrations.
