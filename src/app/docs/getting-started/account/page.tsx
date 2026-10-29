@@ -138,10 +138,9 @@ export default function AccountSetupPage() {
               <p className="mt-1 text-muted-foreground">
                 Passkeys add an extra layer of security to your account using
                 biometric authentication (Face ID, Touch ID, Windows Hello).
-                After signing in with any of the methods above, you may be
-                prompted to verify with your passkey when accessing from a new
-                device or location. You can register passkeys in your account
-                settings after creating your account.
+                Once you register a passkey, every new sign-in asks for it,
+                after whichever of the methods above you used. You can register
+                passkeys in your account settings after creating your account.
               </p>
             </div>
           </div>

@@ -13,7 +13,8 @@ vi.mock("@/lib/db-app", () => ({
   },
 }));
 
-vi.mock("@/lib/network-security", () => ({
+vi.mock("@/lib/network-security", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/network-security")>()),
   validateDomainNotPrivate: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -87,16 +88,14 @@ describe("POST /api/v1/federation/heartbeat", () => {
     });
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: () =>
-          Promise.resolve({
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({
             domain: "test.example.com",
             version: "2.0.1",
             federation: true,
             publicBlueprints: 7,
-          }),
-      }),
+          })),
+      ),
     );
     mockUpdate.mockResolvedValueOnce({});
 
@@ -133,11 +132,9 @@ describe("POST /api/v1/federation/heartbeat", () => {
       version: "2.0.0",
       publicBlueprintCount: 5,
     });
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () =>
-        Promise.resolve({ domain: "registered.example.com", federation: true }),
-    });
+    const fetchMock = vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ domain: "registered.example.com", federation: true })),
+      );
     vi.stubGlobal("fetch", fetchMock);
     mockUpdate.mockResolvedValueOnce({});
 

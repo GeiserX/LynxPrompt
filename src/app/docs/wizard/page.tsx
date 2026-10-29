@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Wand2, ArrowRight, Brain, MessageSquare } from "lucide-react";
+import { AGENT_PLATFORM_COUNT } from "@/lib/platforms";
 
 // The twelve steps of src/app/wizard/page.tsx (WIZARD_STEPS), in order.
 const WIZARD_STEPS = [
@@ -58,7 +59,7 @@ export default function WizardOverviewPage() {
         <div className="rounded-lg border bg-card p-4">
           <h3 className="font-medium">What you&apos;ll get:</h3>
           <ul className="mt-2 list-inside list-disc space-y-1 text-muted-foreground">
-            <li>Configuration files for 30+ AI platforms</li>
+            <li>Configuration files for {AGENT_PLATFORM_COUNT} AI coding agents</li>
             <li>Customized rules based on your tech stack</li>
             <li>Best practices built-in from the community</li>
             <li>Preview before downloading</li>

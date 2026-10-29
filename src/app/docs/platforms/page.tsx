@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Laptop, FileCode, Star, ArrowRight } from "lucide-react";
 import { AgentsMarquee } from "@/components/agents-marquee";
-import { PLATFORMS, getPlatformsByCategory, PLATFORM_COUNT } from "@/lib/platforms";
+import { PLATFORMS, getPlatformsByCategory, AGENT_PLATFORM_COUNT } from "@/lib/platforms";
 
 export default function PlatformsOverviewPage() {
   const popularPlatforms = getPlatformsByCategory("popular");
@@ -23,7 +23,7 @@ export default function PlatformsOverviewPage() {
           </h1>
         </div>
         <p className="max-w-2xl text-lg text-muted-foreground">
-          LynxPrompt generates configuration files for <strong>{PLATFORM_COUNT}+ AI coding assistants</strong> and 
+          LynxPrompt generates configuration files for <strong>{AGENT_PLATFORM_COUNT} AI coding assistants</strong> and 
           the AGENTS.md universal standard.
         </p>
       </div>

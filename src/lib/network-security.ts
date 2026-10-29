@@ -90,3 +90,40 @@ export async function validateDomainNotPrivate(
     }
   }
 }
+
+/** Size cap for JSON documents fetched from servers we do not run. */
+export const REMOTE_JSON_MAX_BYTES = 64 * 1024;
+
+/**
+ * Read a response body from a remote server, stopping past maxBytes. A body
+ * that never ends, or is huge, would otherwise be buffered whole. Pass the
+ * fetch's own AbortSignal timeout so a slow trickle is cut off too.
+ */
+export async function readBodyCapped(res: Response, maxBytes: number): Promise<Uint8Array<ArrayBuffer>> {
+  const reader = res.body?.getReader();
+  if (!reader) return new Uint8Array(0);
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel().catch(() => {});
+      throw new Error(`Response body is larger than ${maxBytes} bytes`);
+    }
+    chunks.push(value);
+  }
+  const body = new Uint8Array(total);
+  let offset = 0;
+  for (const c of chunks) {
+    body.set(c, offset);
+    offset += c.byteLength;
+  }
+  return body;
+}
+
+/** JSON from a remote server, at most maxBytes long (see readBodyCapped). */
+export async function readJsonCapped<T>(res: Response, maxBytes: number): Promise<T> {
+  return JSON.parse(new TextDecoder().decode(await readBodyCapped(res, maxBytes))) as T;
+}

@@ -42,7 +42,7 @@ export default function TermsPage() {
               Terms of Service
             </h1>
             <p className="mt-3 text-lg text-muted-foreground">
-              Last updated: February 2026
+              Last updated: October 2026
             </p>
           </div>
         </div>
@@ -120,9 +120,9 @@ export default function TermsPage() {
                 </p>
                 <ul className="mt-3 list-inside list-disc space-y-1">
                   <li><strong>Visibility levels:</strong> Blueprints can be Private (author only), Team (all team members), or Public (everyone)</li>
-                  <li><strong>Ownership:</strong> Team blueprints belong to the team. If a member leaves, team-shared blueprints remain with the team</li>
+                  <li><strong>Ownership:</strong> A blueprint always belongs to its author, including one shared with a team. If the author leaves the team, the blueprints they shared stay visible to the team. If the author deletes their account, their blueprints are deleted, including the ones shared with a team</li>
                   <li><strong>Confidentiality:</strong> Team members must not share team-internal blueprints outside the team without authorization</li>
-                  <li><strong>Team deletion:</strong> If a team is deleted, team-shared blueprints are deleted. Members should export any content they wish to keep before team deletion</li>
+                  <li><strong>Team deletion:</strong> If a team is deleted, the blueprints shared with it are not deleted. They stay with their authors and are no longer shared with anyone</li>
                 </ul>
               </section>
 

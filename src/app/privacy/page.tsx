@@ -140,6 +140,12 @@ export default function PrivacyPage() {
                       <li>Pages visited and features used</li>
                       <li>Device type and browser information</li>
                       <li>Anonymized analytics data (via Umami)</li>
+                      <li>
+                        When you download a blueprint, signed in or not, a
+                        keyed hash of your IP address, so repeat downloads
+                        within an hour count once. It is erased with the next
+                        download recorded after that hour
+                      </li>
                     </ul>
                   </div>
                   <div>
@@ -328,6 +334,36 @@ export default function PrivacyPage() {
 
                   <div className="rounded-lg border p-4">
                     <h3 className="font-medium text-foreground">
+                      Cloudflare (Turnstile)
+                    </h3>
+                    <p className="mt-1 text-sm">
+                      <strong>Data shared:</strong> Your IP address and browser
+                      details, when a page with a bot check loads (sign-in and
+                      blueprint creation)
+                    </p>
+                    <p className="text-sm">
+                      <strong>Purpose:</strong> Protection against bots and
+                      automated attacks
+                    </p>
+                    <p className="text-sm">
+                      <strong>Location:</strong> Global (EU SCCs in place)
+                    </p>
+                    <p className="text-sm">
+                      <strong>Legal basis:</strong> Legitimate interest (keeping
+                      the service safe from abuse)
+                    </p>
+                    <a
+                      href="https://www.cloudflare.com/privacypolicy/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 inline-block text-sm text-primary hover:underline"
+                    >
+                      Cloudflare Privacy Policy →
+                    </a>
+                  </div>
+
+                  <div className="rounded-lg border p-4">
+                    <h3 className="font-medium text-foreground">
                       Anthropic (Claude AI)
                     </h3>
                     <p className="mt-1 text-sm">
@@ -381,7 +417,9 @@ export default function PrivacyPage() {
                     </p>
                     <p className="text-sm">
                       <strong>Data retention:</strong> SSO configuration data is
-                      deleted when the team is deleted or SSO is disabled
+                      deleted when the team is deleted or an administrator removes
+                      the SSO configuration. Disabling SSO keeps the configuration
+                      so it can be turned on again
                     </p>
                     <p className="text-sm">
                       <strong>Legal basis:</strong> Contractual necessity (you or

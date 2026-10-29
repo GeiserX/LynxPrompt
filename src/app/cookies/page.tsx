@@ -18,7 +18,7 @@ export default function CookiesPage() {
               Cookie Policy
             </h1>
             <p className="mt-3 text-lg text-muted-foreground">
-              Last updated: February 2026
+              Last updated: October 2026
             </p>
           </div>
         </div>
@@ -152,6 +152,36 @@ export default function CookiesPage() {
                           </td>
                           <td className="py-2">Session</td>
                         </tr>
+                        <tr>
+                          <td className="py-2 pr-4 font-mono text-xs">
+                            passkey-challenge
+                          </td>
+                          <td className="py-2 pr-4">LynxPrompt</td>
+                          <td className="py-2 pr-4">
+                            One-time challenge while you register a passkey
+                          </td>
+                          <td className="py-2">5 minutes</td>
+                        </tr>
+                        <tr>
+                          <td className="py-2 pr-4 font-mono text-xs">
+                            passkey-auth-challenge
+                          </td>
+                          <td className="py-2 pr-4">LynxPrompt</td>
+                          <td className="py-2 pr-4">
+                            One-time challenge while you verify with your passkey
+                          </td>
+                          <td className="py-2">5 minutes</td>
+                        </tr>
+                        <tr>
+                          <td className="py-2 pr-4 font-mono text-xs">
+                            sso_state
+                          </td>
+                          <td className="py-2 pr-4">LynxPrompt</td>
+                          <td className="py-2 pr-4">
+                            Ties a team single sign-on login to the browser that started it
+                          </td>
+                          <td className="py-2">10 minutes</td>
+                        </tr>
                       </tbody>
                     </table>
                   </div>
@@ -230,9 +260,9 @@ export default function CookiesPage() {
                     Local Storage (Not Cookies)
                   </h3>
                   <p className="mb-3 text-sm">
-                    We also use browser local storage for non-essential
-                    preferences. Unlike cookies, this data is never sent to our
-                    servers:
+                    We also use browser local storage for preferences and for
+                    wizard answers in progress. Unlike cookies, the browser does
+                    not send this data with every request:
                   </p>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
@@ -266,9 +296,27 @@ export default function CookiesPage() {
                           </td>
                           <td className="py-2">Until cleared</td>
                         </tr>
+                        <tr>
+                          <td className="py-2 pr-4 font-mono text-xs">
+                            lynxprompt_wizard_guest_state
+                          </td>
+                          <td className="py-2 pr-4">
+                            Keeps a guest&apos;s wizard answers while they sign in
+                            to save or share them
+                          </td>
+                          <td className="py-2">Until restored after sign-in</td>
+                        </tr>
                       </tbody>
                     </table>
                   </div>
+                  <p className="mt-3 text-sm">
+                    When you save wizard output as a blueprint, the wizard also
+                    passes its content, name and description to the create page
+                    in session storage (<code>wizardBlueprintContent</code>,{" "}
+                    <code>wizardBlueprintName</code>,{" "}
+                    <code>wizardBlueprintDescription</code>), which the browser
+                    clears when you close the tab.
+                  </p>
                 </div>
               </section>
 

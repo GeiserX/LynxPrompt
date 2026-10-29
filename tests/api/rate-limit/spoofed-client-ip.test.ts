@@ -14,7 +14,8 @@ vi.mock("@/lib/db-users", () => ({
   prismaUsers: { cliSession: { create: mockCliSessionCreate } },
 }));
 
-vi.mock("@/lib/network-security", () => ({
+vi.mock("@/lib/network-security", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/network-security")>()),
   validateDomainNotPrivate: vi.fn().mockResolvedValue(undefined),
 }));
 

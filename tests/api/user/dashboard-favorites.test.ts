@@ -39,9 +39,12 @@ vi.mock("@/lib/db-app", () => ({
   },
 }));
 
+const pub = { userId: "owner_9", isPublic: true, visibility: "PUBLIC", teamId: null };
 const userTemplates: Record<string, object> = {
-  u1: { id: "u1", name: "One", description: null, downloads: 1, favorites: 2, tier: "SHORT", user: { name: "A" } },
-  u2: { id: "u2", name: "Two", description: null, downloads: 3, favorites: 4, tier: "SHORT", user: { name: "B" } },
+  u1: { id: "u1", name: "One", description: null, downloads: 1, favorites: 2, tier: "SHORT", user: { name: "A" }, ...pub },
+  u2: { id: "u2", name: "Two", description: null, downloads: 3, favorites: 4, tier: "SHORT", user: { name: "B" }, ...pub },
+  // Made private by its owner after user_1 favorited it
+  hid: { id: "hid", name: "Client X secrets", description: "internal", downloads: 0, favorites: 1, tier: "SHORT", user: { name: "C" }, userId: "owner_9", isPublic: false, visibility: "PRIVATE", teamId: null },
 };
 const systemTemplates: Record<string, object> = {
   s1: { id: "s1", name: "Sys", description: "d", downloads: 5, favorites: 6, tier: "LONG" },
@@ -56,6 +59,7 @@ describe("GET /api/user/dashboard favorites", () => {
       { templateId: "s1", templateType: "system" },
       { templateId: "gone", templateType: "user" },
       { templateId: "u1", templateType: "user" },
+      { templateId: "hid", templateType: "user" },
     ]);
     mockUserTemplateFindMany.mockImplementation(async (args: { where?: { id?: { in?: string[] } } }) => {
       const ids = args?.where?.id?.in;

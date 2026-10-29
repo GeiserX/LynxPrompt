@@ -246,7 +246,7 @@ export const ROLE_DISPLAY_NAMES: Record<ApiTokenRole, string> = {
 export const ROLE_DESCRIPTIONS: Record<ApiTokenRole, string> = {
   BLUEPRINTS_FULL: "Create, read, update, and delete your blueprints",
   BLUEPRINTS_READONLY: "List and download your blueprints (read-only)",
-  PROFILE_FULL: "Read and update your profile information",
+  PROFILE_FULL: "Read your profile information",
   FULL: "Full access to blueprints and profile",
 };
 

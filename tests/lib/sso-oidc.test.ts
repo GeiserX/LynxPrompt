@@ -67,6 +67,32 @@ describe("sso-oidc", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("refuses an IdP body past the size cap", async () => {
+    const endless = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        controller.enqueue(new Uint8Array(16 * 1024).fill(32));
+      },
+    });
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(endless)));
+
+    await expect(idpFetch("https://idp.example.com/.well-known/openid-configuration")).rejects.toThrow(
+      /larger than/
+    );
+  });
+
+  it("hands back the body it read, status and headers intact", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response('{"a":1}', { status: 400, headers: { "x-k": "v" } }))
+    );
+
+    const res = await idpFetch("https://idp.example.com/token");
+
+    expect(res.status).toBe(400);
+    expect(res.headers.get("x-k")).toBe("v");
+    expect(await res.json()).toEqual({ a: 1 });
+  });
+
   it("does not follow redirects", async () => {
     const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => new Response("{}"));
     vi.stubGlobal("fetch", fetchMock);

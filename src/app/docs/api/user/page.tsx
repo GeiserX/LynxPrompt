@@ -14,7 +14,7 @@ export default function UserApiDocsPage() {
           <h1 className="text-3xl font-bold tracking-tight">User API</h1>
         </div>
         <p className="max-w-2xl text-lg text-muted-foreground">
-          Access and manage user profile information.
+          Read the profile of the account that owns the token.
         </p>
       </div>
 
@@ -22,11 +22,8 @@ export default function UserApiDocsPage() {
       <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-4">
         <p className="text-sm text-muted-foreground">
           <strong className="text-blue-600 dark:text-blue-400">Required Role:</strong>{" "}
-          <code className="rounded bg-muted px-1.5 py-0.5 text-sm">
-            PROFILE_FULL
-          </code>{" "}
-          or{" "}
-          <code className="rounded bg-muted px-1.5 py-0.5 text-sm">FULL</code>
+          any token role. This endpoint is read-only; the API has no endpoint
+          that updates a profile.
         </p>
       </div>
 
@@ -59,11 +56,18 @@ export default function UserApiDocsPage() {
             <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
               <pre className="text-sm text-zinc-100">
                 <code>{`{
-  "id": "bp_clw2m8k0x0001",
-  "email": "user@example.com",
-  "name": "John Doe",
-  "image": "https://avatars.githubusercontent.com/u/12345",
-  "createdAt": "2024-06-15T10:30:00.000Z"
+  "user": {
+    "id": "clw2m8k0x0001abcd",
+    "email": "user@example.com",
+    "name": "John Doe",
+    "display_name": "jdoe",
+    "persona": "fullstack",
+    "skill_level": "intermediate",
+    "stats": {
+      "blueprints_count": 12
+    },
+    "created_at": "2024-06-15T10:30:00.000Z"
+  }
 }`}</code>
               </pre>
             </div>
@@ -86,48 +90,66 @@ export default function UserApiDocsPage() {
             <tbody>
               <tr className="border-b">
                 <td className="py-2 pr-4">
-                  <code className="rounded bg-muted px-1.5 py-0.5">id</code>
+                  <code className="rounded bg-muted px-1.5 py-0.5">user</code>
                 </td>
-                <td className="py-2 pr-4 text-muted-foreground">string</td>
-                <td className="py-2 text-muted-foreground">
-                  Unique user identifier
-                </td>
+                <td className="py-2 pr-4 text-muted-foreground">object</td>
+                <td className="py-2 text-muted-foreground">The profile, wrapped in a user object</td>
               </tr>
               <tr className="border-b">
                 <td className="py-2 pr-4">
-                  <code className="rounded bg-muted px-1.5 py-0.5">email</code>
+                  <code className="rounded bg-muted px-1.5 py-0.5">user.id</code>
                 </td>
                 <td className="py-2 pr-4 text-muted-foreground">string</td>
-                <td className="py-2 text-muted-foreground">
-                  User&apos;s email address
-                </td>
+                <td className="py-2 text-muted-foreground">Unique user identifier</td>
               </tr>
               <tr className="border-b">
                 <td className="py-2 pr-4">
-                  <code className="rounded bg-muted px-1.5 py-0.5">name</code>
+                  <code className="rounded bg-muted px-1.5 py-0.5">user.email</code>
+                </td>
+                <td className="py-2 pr-4 text-muted-foreground">string</td>
+                <td className="py-2 text-muted-foreground">Email address of the account</td>
+              </tr>
+              <tr className="border-b">
+                <td className="py-2 pr-4">
+                  <code className="rounded bg-muted px-1.5 py-0.5">user.name</code>
                 </td>
                 <td className="py-2 pr-4 text-muted-foreground">string | null</td>
-                <td className="py-2 text-muted-foreground">
-                  User&apos;s display name
-                </td>
+                <td className="py-2 text-muted-foreground">Name from the sign-in provider</td>
               </tr>
               <tr className="border-b">
                 <td className="py-2 pr-4">
-                  <code className="rounded bg-muted px-1.5 py-0.5">image</code>
+                  <code className="rounded bg-muted px-1.5 py-0.5">user.display_name</code>
                 </td>
                 <td className="py-2 pr-4 text-muted-foreground">string | null</td>
-                <td className="py-2 text-muted-foreground">
-                  URL to profile image
-                </td>
+                <td className="py-2 text-muted-foreground">Display Name set in Settings</td>
               </tr>
               <tr className="border-b">
                 <td className="py-2 pr-4">
-                  <code className="rounded bg-muted px-1.5 py-0.5">createdAt</code>
+                  <code className="rounded bg-muted px-1.5 py-0.5">user.persona</code>
+                </td>
+                <td className="py-2 pr-4 text-muted-foreground">string | null</td>
+                <td className="py-2 text-muted-foreground">Developer persona chosen in the wizard</td>
+              </tr>
+              <tr className="border-b">
+                <td className="py-2 pr-4">
+                  <code className="rounded bg-muted px-1.5 py-0.5">user.skill_level</code>
+                </td>
+                <td className="py-2 pr-4 text-muted-foreground">string | null</td>
+                <td className="py-2 text-muted-foreground">Skill level chosen in the wizard</td>
+              </tr>
+              <tr className="border-b">
+                <td className="py-2 pr-4">
+                  <code className="rounded bg-muted px-1.5 py-0.5">user.stats.blueprints_count</code>
+                </td>
+                <td className="py-2 pr-4 text-muted-foreground">number</td>
+                <td className="py-2 text-muted-foreground">Number of blueprints the user owns</td>
+              </tr>
+              <tr className="border-b">
+                <td className="py-2 pr-4">
+                  <code className="rounded bg-muted px-1.5 py-0.5">user.created_at</code>
                 </td>
                 <td className="py-2 pr-4 text-muted-foreground">string</td>
-                <td className="py-2 text-muted-foreground">
-                  ISO 8601 timestamp of account creation
-                </td>
+                <td className="py-2 text-muted-foreground">ISO 8601 timestamp of account creation</td>
               </tr>
             </tbody>
           </table>
@@ -161,10 +183,3 @@ export default function UserApiDocsPage() {
     </div>
   );
 }
-
-
-
-
-
-
-

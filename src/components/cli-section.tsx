@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Terminal, Users, Copy, Check, ArrowUpDown, Globe } from "lucide-react";
 import { useFeatureFlags } from "@/components/providers/feature-flags-provider";
+import { AGENT_PLATFORM_COUNT } from "@/lib/platforms";
 
 const INSTALL_COMMANDS = {
   npm: "npm install -g lynxprompt",
@@ -54,7 +55,7 @@ const CLI_FEATURES = [
   },
   {
     icon: Globe,
-    title: "30+ AI IDEs & Tools",
+    title: `${AGENT_PLATFORM_COUNT} AI IDEs & Tools`,
     description: "Cursor, Claude, Copilot, Windsurf, Zed, and more. One source, all formats.",
   },
 ];

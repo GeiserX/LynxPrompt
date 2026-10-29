@@ -185,7 +185,7 @@ export default function ApiDocsPage() {
                   </code>
                 </td>
                 <td className="py-3 pr-4 text-muted-foreground">
-                  Read and update user profile
+                  Read your profile (the API has no profile write endpoint)
                 </td>
               </tr>
               <tr className="border-b">

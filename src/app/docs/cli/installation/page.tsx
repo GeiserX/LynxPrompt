@@ -103,28 +103,24 @@ export default function CliInstallationPage() {
         
         <div className="space-y-4">
           <div>
-            <h3 className="mb-2 font-semibold">Add the tap and install</h3>
-            <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
-              <pre className="text-sm text-zinc-100">
-                <code>{`brew tap GeiserX/lynxprompt
-brew install lynxprompt`}</code>
-              </pre>
-            </div>
-          </div>
-          
-          <div>
-            <h3 className="mb-2 font-semibold">Or in one command</h3>
+            <h3 className="mb-2 font-semibold">Install</h3>
             <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
               <code className="text-sm text-zinc-100">brew install GeiserX/lynxprompt/lynxprompt</code>
             </div>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Use the full name. Recent Homebrew refuses a formula from a tap
+              you only added with <code>brew tap</code>, so{" "}
+              <code>brew install lynxprompt</code> after a tap fails with
+              &quot;Refusing to load formula from untrusted tap&quot;.
+            </p>
           </div>
-          
+
           <div>
             <h3 className="mb-2 font-semibold">Update to latest version</h3>
             <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
               <pre className="text-sm text-zinc-100">
                 <code>{`brew update
-brew upgrade lynxprompt`}</code>
+brew upgrade GeiserX/lynxprompt/lynxprompt`}</code>
               </pre>
             </div>
           </div>

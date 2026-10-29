@@ -211,11 +211,11 @@ curl -H "Authorization: Bearer $LYNXPROMPT_API_TOKEN" \\
               <code className="rounded bg-red-500/10 px-2 py-1 text-sm text-red-600">
                 401 Unauthorized
               </code>
-              <span className="text-muted-foreground">- Missing or invalid token</span>
+              <span className="text-muted-foreground">- Missing, invalid or revoked token</span>
             </div>
             <div className="mt-3 overflow-x-auto rounded-lg bg-zinc-950 p-3">
               <pre className="text-sm text-zinc-100">
-                <code>{`{ "error": "Missing or invalid API token" }`}</code>
+                <code>{`{ "error": "Invalid or missing API token" }`}</code>
               </pre>
             </div>
           </div>
@@ -230,21 +230,9 @@ curl -H "Authorization: Bearer $LYNXPROMPT_API_TOKEN" \\
               <pre className="text-sm text-zinc-100">
                 <code>{`{
   "error": "Token expired",
-  "expired_at": "2025-01-15T10:30:00.000Z"
+  "expired_at": "2025-01-15T10:30:00.000Z",
+  "message": "Your API token has expired. Please generate a new token at ${APP_URL}/settings?tab=api-tokens"
 }`}</code>
-              </pre>
-            </div>
-          </div>
-          <div className="rounded-lg border bg-card p-4">
-            <div className="flex items-center gap-2">
-              <code className="rounded bg-red-500/10 px-2 py-1 text-sm text-red-600">
-                401 Unauthorized
-              </code>
-              <span className="text-muted-foreground">- Revoked token</span>
-            </div>
-            <div className="mt-3 overflow-x-auto rounded-lg bg-zinc-950 p-3">
-              <pre className="text-sm text-zinc-100">
-                <code>{`{ "error": "Token has been revoked" }`}</code>
               </pre>
             </div>
           </div>
@@ -257,7 +245,7 @@ curl -H "Authorization: Bearer $LYNXPROMPT_API_TOKEN" \\
             </div>
             <div className="mt-3 overflow-x-auto rounded-lg bg-zinc-950 p-3">
               <pre className="text-sm text-zinc-100">
-                <code>{`{ "error": "Insufficient permissions for this action" }`}</code>
+                <code>{`{ "error": "Token does not have blueprints:write permission" }`}</code>
               </pre>
             </div>
           </div>
