@@ -52,7 +52,7 @@ export function platformForPath(filePath: string): string | undefined {
 /** Convert a rules or command file written for one platform to another one. */
 export function convertContent(content: string, sourcePlatform: string, targetPlatform: string): string {
   // Commands are plain Markdown in another folder, except Gemini CLI's TOML
-  if (isCommandTarget(targetPlatform)) return commandContent(content, targetPlatform);
+  if (isCommandTarget(targetPlatform)) return commandContent(content, targetPlatform, sourcePlatform);
   return adaptRulesContent(content, sourcePlatform, targetPlatform, RULES_DESCRIPTION);
 }
 

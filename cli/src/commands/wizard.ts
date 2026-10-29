@@ -6,10 +6,11 @@ import * as os from "os";
 import { writeFile, mkdir, access, readFile } from "fs/promises";
 import { join, dirname, relative } from "path";
 import { detectProject, detectFromRemoteUrl, isGitUrl } from "../utils/detect.js";
-import { generateConfig, GenerateOptions, mergeAiderConfig, parseVariablesString, pickSyncFile, PLATFORM_FILES } from "../utils/generator.js";
+import { generateConfig, GenerateOptions, mergeAiderConfig, parseVariablesString, PLATFORM_FILES } from "../utils/generator.js";
 import { PLATFORMS, AGENTS_MD_POINTER, resolvePlatformId } from "../../../packages/shared/src/platforms.js";
 import { trackBlueprint } from "../utils/blueprint-tracker.js";
 import { rulesWritePath } from "../utils/blueprint-files.js";
+import { saveSyncedBlueprint } from "../utils/cloud-sync.js";
 import { buildPromptOverrides } from "../utils/prompt-overrides.js";
 import { isAuthenticated, getUser, getApiUrl } from "../config.js";
 import { api, ApiRequestError } from "../api.js";
@@ -1313,29 +1314,14 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
     if (config.enableAutoUpdate && api) {
       spinner.text = "Saving blueprint to cloud...";
       try {
-        // Upload the file the user chose to sync (or the first one) and remember which it is
-        const mainFile = pickSyncFile(files, config.primarySyncFormat);
-        if (mainFile) {
-          const [fileName, content] = mainFile;
-          syncedFile = { file: fileName, uploadedContent: content };
-          const response = await api.createBlueprint({
-            name: config.name || "My AI Config",
-            description: config.description || "Generated with LynxPrompt CLI",
-            content: content,
-            visibility: "PRIVATE",
-            // lynxp pull writes the blueprint back to this path
-            repository_path: fileName,
-          });
-          savedBlueprintId = response.blueprint.id;
-          
-          // Now regenerate with the real blueprint ID to include the sync header
-          const configWithAutoUpdate = {
-            ...finalConfig,
-            enableAutoUpdate: true,
-            blueprintId: savedBlueprintId,
-          };
-          files = generateConfig({ ...configWithAutoUpdate, apiUrl: getApiUrl() });
-          
+        const saved = await saveSyncedBlueprint(
+          files,
+          { name: config.name, description: config.description, primarySyncFormat: config.primarySyncFormat },
+          (blueprintId) => generateConfig({ ...finalConfig, enableAutoUpdate: true, blueprintId, apiUrl: getApiUrl() })
+        );
+        if (saved) {
+          ({ files, syncedFile } = saved);
+          savedBlueprintId = saved.blueprintId;
           console.log(chalk.green(`  ✓ Blueprint saved: ${savedBlueprintId}`));
         }
       } catch (saveError) {
@@ -1411,13 +1397,15 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
       console.log(`     ${chalk.cyan("→")} ${chalk.bold(filename)}${note}`);
 
       // Link the synced file to its new blueprint so 'lynxp push' updates it instead of
-      // creating a duplicate. The checksum is the uploaded content, which is what the server holds.
+      // creating a duplicate. The checksum is the uploaded content, which is what the server
+      // holds; the file as written is recorded too when it differs.
       if (savedBlueprintId && syncedFile && syncedFile.file === generatedName) {
         await trackBlueprint(process.cwd(), {
           id: savedBlueprintId,
           name: config.name || "My AI Config",
           file: relative(process.cwd(), outputPath),
           content: syncedFile.uploadedContent,
+          localContent: content,
           source: "private",
         });
       }

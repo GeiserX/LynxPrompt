@@ -185,16 +185,18 @@ describe("getTemplateById - database mode bp_/usr_ templates", () => {
     }
     const pathFor = async () => (await getTemplateById("bp_rp-1"))!.repositoryPath;
 
-    it("hides it from a signed-out visitor", async () => {
+    it("hides the folders from a signed-out visitor", async () => {
       mockGetServerSession.mockResolvedValue(null);
       pushedFrom("clients/acme-secret/AGENTS.md");
+      expect(await pathFor()).toBe("AGENTS.md");
+      pushedFrom("clients/acme-secret/notes.md");
       expect(await pathFor()).toBeUndefined();
     });
 
-    it("hides it from a signed-in user who does not own the blueprint", async () => {
+    it("hides the folders from a signed-in user who does not own the blueprint", async () => {
       mockGetServerSession.mockResolvedValue({ user: { id: "someone-else" } });
       pushedFrom("clients/acme-secret/AGENTS.md");
-      expect(await pathFor()).toBeUndefined();
+      expect(await pathFor()).toBe("AGENTS.md");
     });
 
     it("gives it in full to the owner", async () => {
@@ -210,12 +212,14 @@ describe("getTemplateById - database mode bp_/usr_ templates", () => {
       expect(await pathFor()).toBe("clients/acme-secret/AGENTS.md");
     });
 
-    it("keeps only the tool's file of an MCP config or a subagent, which sets the format", async () => {
+    it("keeps the tool's path of an MCP config, a subagent or a command, which sets the format", async () => {
       mockGetServerSession.mockResolvedValue(null);
       pushedFrom("clients/acme-secret/.gemini/settings.json", { type: "MCP_CONFIG" });
       expect(await pathFor()).toBe(".gemini/settings.json");
       pushedFrom("clients/acme-secret/.codex/agents/reviewer.toml", { type: "AGENT_DEFINITION" });
       expect(await pathFor()).toBe(".codex/agents/reviewer.toml");
+      pushedFrom("clients/acme-secret/.gemini/commands/deploy.toml", { type: "CUSTOM" });
+      expect(await pathFor()).toBe(".gemini/commands/deploy.toml");
     });
   });
 

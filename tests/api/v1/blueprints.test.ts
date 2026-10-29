@@ -157,8 +157,12 @@ describe("GET /api/v1/blueprints/[id] repository_path", () => {
   const PATH = "clients/acme-secret/AGENTS.md";
   const pathOf = async () => (await (await getOne()).json()).blueprint.repository_path;
 
-  it("is hidden from a user who does not own the public blueprint", async () => {
+  it("is cut to the tool's file for a user who does not own the public blueprint", async () => {
     db.userTemplate.findUnique.mockResolvedValue(row({ visibility: "PUBLIC", isPublic: true, repositoryPath: PATH }));
+    expect(await pathOf()).toBe("AGENTS.md");
+    db.userTemplate.findUnique.mockResolvedValue(
+      row({ visibility: "PUBLIC", isPublic: true, repositoryPath: "clients/acme-secret/notes.md" })
+    );
     expect(await pathOf()).toBeNull();
   });
 

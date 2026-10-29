@@ -46,6 +46,10 @@ describe("MCP targets", () => {
     expect(new Set(MCP_CONFIGS.map((c) => c.id)).size).toBe(MCP_CONFIGS.length);
     expect(mcpConfigForPath("apps/web/.zed/settings.json")?.id).toBe("zed-mcp");
     expect(mcpConfigForPath("settings.json")).toBeUndefined();
+    // Warp's file ends in /.mcp.json too, but is not Claude Code's
+    expect(mcpConfigForPath(".warp/.mcp.json")?.id).toBe("warp-mcp");
+    expect(mcpConfigForPath("apps/web/.warp/.mcp.json")?.id).toBe("warp-mcp");
+    expect(mcpConfigForPath("apps/web/.mcp.json")?.id).toBe("claude-mcp");
   });
 
   for (const target of MCP_CONFIGS) {
@@ -150,8 +154,23 @@ describe("MCP targets", () => {
     });
   });
 
+  it("reads multi-line TOML strings", () => {
+    const toml = [
+      "[mcp_servers.a]",
+      'command = """',
+      "np\\",
+      '   x"""',
+      "args = ['''",
+      "-y \\n''', \"b\"]",
+      "",
+    ].join("\n");
+    expect(JSON.parse(convertMcpConfig(toml, "claude-mcp", ".codex/config.toml"))).toEqual({
+      mcpServers: { a: { command: "npx", args: ["-y \\n", "b"] } },
+    });
+  });
+
   it("refuses TOML it cannot read rather than misreading it", () => {
-    expect(() => convertMcpConfig('[mcp_servers.a]\ncommand = """x"""\n', "claude-mcp", ".codex/config.toml")).toThrow(/multi-line/);
+    expect(() => convertMcpConfig('[mcp_servers.a]\ncommand = """x\n', "claude-mcp", ".codex/config.toml")).toThrow(/unterminated/);
     expect(() => convertMcpConfig('[mcp_servers.a]\ncommand = "x" extra\n', "claude-mcp", ".codex/config.toml")).toThrow(/TOML line 2/);
     expect(() => convertMcpConfig('[[mcp_servers]]\ncommand = "x"\n', "claude-mcp")).toThrow(/no name/);
   });

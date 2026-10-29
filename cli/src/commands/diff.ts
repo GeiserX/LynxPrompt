@@ -19,9 +19,9 @@ import { isAuthenticated } from "../config.js";
 import { api, ApiRequestError } from "../api.js";
 import { safeText } from "../utils/terminal.js";
 import { computeDiff, formatDiff } from "../utils/line-diff.js";
-import { checkSyncStatus, findBlueprintByFile } from "../utils/blueprint-tracker.js";
+import { checkSyncStatus, findBlueprintByFile, findBlueprintById } from "../utils/blueprint-tracker.js";
 import { fillBlueprintVariables } from "../utils/variables.js";
-import { blueprintContentOf } from "../utils/blueprint-files.js";
+import { blueprintContentOf, blueprintFilename, isInsideRoot, rulesWritePath } from "../utils/blueprint-files.js";
 
 interface DiffOptions {
   local?: boolean;
@@ -56,10 +56,12 @@ export async function diffCommand(fileOrId?: string, options: DiffOptions = {}):
   
   // If a specific file or blueprint ID is given
   if (fileOrId) {
-    // Check if it's a tracked file
-    const tracked = await findBlueprintByFile(cwd, fileOrId);
+    // A tracked file, or the id of a tracked blueprint (pull suggests 'lynxp diff <id>')
+    const trackedFile = await findBlueprintByFile(cwd, fileOrId);
+    const tracked = trackedFile ?? (await findBlueprintById(cwd, fileOrId));
     if (tracked) {
-      await diffFileWithBlueprint(cwd, fileOrId, tracked.id, false, tracked.variables);
+      if (!trackedFile) console.log(chalk.gray(`Comparing with: ${tracked.file}`));
+      await diffFileWithBlueprint(cwd, tracked.file, tracked.id, false, tracked.variables);
       return;
     }
     
@@ -206,34 +208,20 @@ async function diffWithBlueprintId(cwd: string, blueprintId: string): Promise<vo
     }
     console.log();
 
-    // Determine local file path based on blueprint type
-    const localPaths = [
-      "AGENTS.md",
-      "CLAUDE.md",
-      ".cursor/rules/project.mdc",
-      ".github/copilot-instructions.md",
-      ".windsurfrules",
-    ];
-
+    // The file 'lynxp pull' writes this blueprint to
+    const localPath = rulesWritePath(cwd, blueprintFilename(blueprint));
     let localContent: string | null = null;
-    let localPath: string | null = null;
-
-    for (const path of localPaths) {
-      const fullPath = join(cwd, path);
-      if (existsSync(fullPath)) {
-        try {
-          localContent = await readFile(fullPath, "utf-8");
-          localPath = path;
-          break;
-        } catch {
-          // Continue to next path
-        }
+    try {
+      if (isInsideRoot(cwd, localPath)) {
+        localContent = blueprintContentOf(localPath, await readFile(join(cwd, localPath), "utf-8")) ?? "";
       }
+    } catch {
+      // No such file
     }
 
-    if (!localContent) {
-      console.log(chalk.yellow("⚠ No local AI configuration file found."));
-      console.log(chalk.gray("Run 'lynxp wizard' to create one, or 'lynxp pull' to download the blueprint."));
+    if (localContent === null) {
+      console.log(chalk.yellow(`⚠ ${localPath} not found.`));
+      console.log(chalk.gray(`Run 'lynxp pull ${blueprintId}' to download the blueprint.`));
       return;
     }
 
