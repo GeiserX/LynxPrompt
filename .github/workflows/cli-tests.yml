@@ -16,7 +16,7 @@ on:
   workflow_call:
     inputs:
       release:
-        description: 'Called by the release workflow: skip the tests against the dev server'
+        description: 'Called by the release workflow: skip the authenticated tests'
         type: boolean
         default: false
   workflow_dispatch:
@@ -112,24 +112,27 @@ jobs:
           lynxp status
           echo "✓ Status works"
 
-      # A release checks the CLI against production, the server it ships for.
+      # Public search is read-only, so it runs against the hosted instance the
+      # CLI ships for. The dev server it used was frozen at a May 2026 build
+      # and lived on lynxprompt.com, which lapses on 2026-12-20.
       - name: Test search (public)
         env:
-          LYNXPROMPT_API_URL: ${{ (inputs.environment == 'prod' || inputs.release) && 'https://lynxprompt.geiser.cloud' || 'https://dev.lynxprompt.com' }}
+          LYNXPROMPT_API_URL: https://lynxprompt.geiser.cloud
         run: |
           lynxp search "nextjs" --limit 3
           echo "✓ Search works"
 
-  # Authenticated tests (only on main/develop, not PRs from forks)
-  # Uses built-from-source CLI to test current code against dev server
+  # Pushes, links and lists blueprints with the CLI built from source, against
+  # the development server named by the DEV_URL repository variable. There is
+  # no development server today, so with DEV_URL unset the job only says so.
   authenticated-tests:
     name: Authenticated CLI Tests
     if: ${{ !inputs.release && needs.build-test.outputs.cli == 'true' }}
     runs-on: ubuntu-latest
     needs: [build-test]  # Uses the CLI that job built
     env:
-      LYNXPROMPT_TOKEN: ${{ secrets.LYNXPROMPT_DEV_TOKEN }}
-      LYNXPROMPT_API_URL: https://dev.lynxprompt.com
+      LYNXPROMPT_TOKEN: ${{ vars.DEV_URL && secrets.LYNXPROMPT_DEV_TOKEN || '' }}
+      LYNXPROMPT_API_URL: ${{ vars.DEV_URL }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -157,26 +160,35 @@ jobs:
           lynxp --version
           echo "✓ CLI built from source"
 
-      - name: Check for token
+      - name: Check for a development server and token
         run: |
-          if [ -z "$LYNXPROMPT_TOKEN" ]; then
-            echo "⚠️ LYNXPROMPT_DEV_TOKEN secret not set, skipping authenticated tests"
+          if [ -z "$LYNXPROMPT_API_URL" ]; then
+            echo "::notice::No development server (repository variable DEV_URL is unset): authenticated tests skipped"
             exit 0
           fi
-          echo "✓ Token available"
+          if [ -z "$LYNXPROMPT_TOKEN" ]; then
+            echo "::notice::LYNXPROMPT_DEV_TOKEN secret not set: authenticated tests skipped"
+            exit 0
+          fi
+          echo "✓ Token available for $LYNXPROMPT_API_URL"
 
+      # A server that never answers fails the run: testing against nothing
+      # proves nothing
       - name: Wait for dev server to be healthy
+        if: env.LYNXPROMPT_TOKEN != ''
         run: |
           echo "Checking dev server health..."
           for i in 1 2 3 4 5; do
-            if curl -sf https://dev.lynxprompt.com/api/health > /dev/null 2>&1; then
+            if curl -sf "$LYNXPROMPT_API_URL/api/health"; then
+              echo
               echo "✓ Dev server is healthy"
               exit 0
             fi
             echo "Attempt $i: Server not ready, waiting 30s..."
             sleep 30
           done
-          echo "⚠️ Dev server may not be fully deployed yet, proceeding anyway"
+          echo "::error::$LYNXPROMPT_API_URL/api/health did not answer"
+          exit 1
 
       - name: Test whoami
         if: env.LYNXPROMPT_TOKEN != ''

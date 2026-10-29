@@ -47,6 +47,22 @@ describe("self-host compose file", () => {
     expect(env).toMatch(/^ {6}HOSTNAME:\s*"?0\.0\.0\.0"?\s*$/m);
   });
 
+  it("lets Docker pick the native image on arm64 hosts", () => {
+    // The image ships linux/amd64 and linux/arm64 since 3.0.0; a platform pin
+    // made arm64 hosts without qemu fail with exec format error.
+    expect(compose).not.toMatch(/^\s*platform:/m);
+    for (const doc of ["README.md", "docs/index.md", "docs/getting-started.md", "docs/troubleshooting.md"]) {
+      const text = readFileSync(resolve(process.cwd(), doc), "utf8");
+      expect(text, doc).not.toMatch(/amd64 only|built for linux\/amd64[;,.]|under emulation|does not ship an ARM image/);
+    }
+  });
+
+  it("keeps SUPERADMIN_EMAIL from .env when ADMIN_EMAIL is not set", () => {
+    // The environment block beats env_file, and `${ADMIN_EMAIL:-}` blanked a
+    // SUPERADMIN_EMAIL set in .env as docs/configuration.md says.
+    expect(compose).toMatch(/^ {6}SUPERADMIN_EMAIL: \$\{ADMIN_EMAIL:-\$\{SUPERADMIN_EMAIL:-\}\}\s*$/m);
+  });
+
   it("keeps uploads in a named volume at /data/uploads", () => {
     // Avatars, team logos and blog images are files under /data/uploads with
     // only their URL in the database. Without a volume, recreating the

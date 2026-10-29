@@ -13,12 +13,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # The development server is the one the DEV_URL repository variable names.
+  # There is none today, so with DEV_URL unset nothing is built or deployed.
   deploy:
     name: Deploy to Development
+    if: vars.DEV_URL != ''
     runs-on: ubuntu-latest
     environment:
       name: development
-      url: https://dev.lynxprompt.com
+      url: ${{ vars.DEV_URL }}
+    env:
+      DEV_URL: ${{ vars.DEV_URL }}
 
     steps:
       - name: Checkout code
@@ -48,7 +53,7 @@ jobs:
       - name: Build and push Docker image
         run: |
           docker buildx build --platform linux/amd64 \
-            --build-arg APP_URL=https://dev.lynxprompt.com \
+            --build-arg APP_URL="$DEV_URL" \
             -t drumsergio/lynxprompt:${{ steps.version.outputs.version }} \
             -t drumsergio/lynxprompt:dev-latest \
             --push .
@@ -74,11 +79,12 @@ jobs:
 
           cd /tmp && rm -rf gitops-deploy
 
+      # Every check fails the run: a deploy that did not come up must not look green
       - name: Health check
         run: |
           sleep 30
           for i in {1..10}; do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://dev.lynxprompt.com/api/health || echo "000")
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" $DEV_URL/api/health || echo "000")
             if [ "$STATUS" = "200" ]; then
               echo "✅ App is responding"
               break
@@ -86,30 +92,31 @@ jobs:
             echo "Waiting for site to be healthy... (attempt $i/10, status: $STATUS)"
             sleep 10
             if [ "$i" = "10" ]; then
-              echo "⚠️ Health check timed out - site may still be starting"
-              exit 0
+              echo "::error::Health check timed out"
+              exit 1
             fi
           done
 
-          HEALTH=$(curl -sf https://dev.lynxprompt.com/api/health)
+          HEALTH=$(curl -sf $DEV_URL/api/health)
           echo "Health: $HEALTH"
           echo "$HEALTH" | jq -e '.status == "ok" and .db == "connected"' > /dev/null || {
-            echo "⚠️ DB not connected"
-            exit 0
+            echo "::error::DB not connected"
+            exit 1
           }
 
-          CONFIG=$(curl -sf https://dev.lynxprompt.com/api/config/public)
+          CONFIG=$(curl -sf $DEV_URL/api/config/public)
           echo "Config: $CONFIG"
           echo "$CONFIG" | jq -e '.enableEmailAuth != null and .appName != null' > /dev/null || {
-            echo "⚠️ Public config unexpected shape"
-            exit 0
+            echo "::error::Public config has an unexpected shape"
+            exit 1
           }
 
-          HOME_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://dev.lynxprompt.com/)
+          HOME_STATUS=$(curl -s -o /dev/null -w "%{http_code}" $DEV_URL/)
           if [ "$HOME_STATUS" = "200" ]; then
             echo "✅ Homepage returns 200"
           else
-            echo "⚠️ Homepage returned $HOME_STATUS"
+            echo "::error::Homepage returned $HOME_STATUS"
+            exit 1
           fi
 
           echo "✅ Development deployment verified"

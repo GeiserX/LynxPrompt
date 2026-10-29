@@ -81,14 +81,6 @@ jobs:
           echo "Production did not converge on $EXPECTED_VERSION within 20 minutes"
           exit 1
 
-      - name: Purge Cloudflare cache
-        run: |
-          curl --fail-with-body --retry 3 --request POST \
-            "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/purge_cache" \
-            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d '{"purge_everything":true}'
-
       - name: Record deployment provenance
         run: |
           {

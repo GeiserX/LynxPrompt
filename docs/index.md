@@ -106,7 +106,7 @@ flowchart LR
     WEB <-.-> FED
 ```
 
-- The image is `drumsergio/lynxprompt`, built for linux/amd64, running as user id 1001. On an ARM host (Apple Silicon, Raspberry Pi) the compose file's `platform: linux/amd64` line runs it under emulation.
+- The image is `drumsergio/lynxprompt`, built for linux/amd64 and linux/arm64, running as user id 1001.
 - Migrations run every time the container starts (`prisma migrate deploy` on the four schemas), so an upgrade is a tag change and `docker compose up -d`.
 - The self-host compose file runs one PostgreSQL server with one database per schema (`lynxprompt`, `lynxprompt_users`, `lynxprompt_blog`, `lynxprompt_support`). See [Components](how-it-works.md#components).
 - The CLI and the extension talk to `/api/v1/` with an API token you create in Settings. See [How it works](how-it-works.md).
@@ -116,7 +116,6 @@ flowchart LR
 - It does not send mail by itself. The default login is a magic link, so a real deployment needs the five `SMTP_*` variables; the [Mailpit file](getting-started.md#first-sign-in) is only for trying it out.
 - It does not run your AI tools. It writes the files they read.
 - It does not edit with AI unless you give it an Anthropic API key.
-- It does not ship an ARM image; ARM hosts run the amd64 image under emulation, which is slower.
 
 ## Privacy
 

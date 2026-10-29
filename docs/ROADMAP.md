@@ -105,7 +105,7 @@ A decentralized blueprint sharing network across LynxPrompt instances.
 - Instance verification (domain ownership check)
 
 **Testing Plan:**
-- Use prod (lynxprompt.com) and dev (dev.lynxprompt.com) as the first two federated instances
+- Use the hosted instance (lynxprompt.geiser.cloud) and a second self-hosted instance as the first two federated instances
 - Dev instance should show prod blueprints with "from lynxprompt.com" label
 - Validate lazy loading and search across instances
 

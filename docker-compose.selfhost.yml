@@ -33,9 +33,6 @@ services:
     # A published release tag (tests/workflows/selfhost-compose.test.ts checks
     # it exists on Docker Hub). Newer releases: https://hub.docker.com/r/drumsergio/lynxprompt/tags
     image: drumsergio/lynxprompt:3.2.0
-    # The image is built for amd64 only; this lets ARM hosts (Apple Silicon,
-    # Raspberry Pi) run it under emulation instead of failing at pull.
-    platform: linux/amd64
     restart: unless-stopped
     ports:
       - "${PORT:-3000}:3000"
@@ -83,7 +80,8 @@ services:
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?NEXTAUTH_SECRET must be set, generate one with openssl rand -base64 32}
       NEXTAUTH_URL: ${APP_URL:-http://localhost:3000}
       APP_URL: ${APP_URL:-http://localhost:3000}
-      SUPERADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      # ADMIN_EMAIL is the short name; SUPERADMIN_EMAIL in .env works too
+      SUPERADMIN_EMAIL: ${ADMIN_EMAIL:-${SUPERADMIN_EMAIL:-}}
       # Sign-in mail. The default login is a link sent by mail, so a real
       # deployment sets these in .env. To try it out without a mail server,
       # add -f docker-compose.mailpit.yml to the docker compose line.

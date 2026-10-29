@@ -88,7 +88,7 @@ jobs:
           MIGRATE_TEST_DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/postgres"
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v7
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           flags: unittests
           fail_ci_if_error: false
@@ -140,37 +140,39 @@ jobs:
           NEXTAUTH_URL: "http://localhost:3000"
 
   # Checks the dev deployment answers after a push. Retries ride out a short
-  # blip; a dev server that stays down turns the run red.
+  # blip; a dev server that stays down turns the run red. It runs only while
+  # the DEV_URL repository variable names a development server (none today).
   integration-smoke:
     name: Integration Smoke Tests
     runs-on: ubuntu-latest
     needs: [build]
-    if: github.event_name == 'push' && github.workflow == 'CI'
+    if: github.event_name == 'push' && github.workflow == 'CI' && vars.DEV_URL != ''
     env:
       CURL: curl -sSf --retry 3 --retry-all-errors --retry-delay 10 --max-time 15
+      DEV_URL: ${{ vars.DEV_URL }}
     steps:
       - name: Health endpoint
         run: |
-          RESPONSE=$($CURL https://dev.lynxprompt.com/api/health)
+          RESPONSE=$($CURL $DEV_URL/api/health)
           echo "$RESPONSE"
           echo "$RESPONSE" | jq -e '.status == "ok" and .db == "connected"' > /dev/null
           echo "✅ Health endpoint OK"
 
       - name: Public config endpoint
         run: |
-          RESPONSE=$($CURL https://dev.lynxprompt.com/api/config/public)
+          RESPONSE=$($CURL $DEV_URL/api/config/public)
           echo "$RESPONSE" | jq -e '.enableEmailAuth != null and .appName != null and .appUrl != null' > /dev/null
           echo "✅ Public config endpoint OK"
 
       - name: Homepage returns 200
         run: |
-          STATUS=$($CURL -o /dev/null -w '%{http_code}' https://dev.lynxprompt.com/)
+          STATUS=$($CURL -o /dev/null -w '%{http_code}' $DEV_URL/)
           [ "$STATUS" = 200 ] || { echo "❌ Homepage returned $STATUS"; exit 1; }
           echo "✅ Homepage returns 200"
 
       - name: Login page returns 200
         run: |
-          STATUS=$($CURL -o /dev/null -w '%{http_code}' https://dev.lynxprompt.com/auth/signin)
+          STATUS=$($CURL -o /dev/null -w '%{http_code}' $DEV_URL/auth/signin)
           [ "$STATUS" = 200 ] || { echo "❌ Login page returned $STATUS"; exit 1; }
           echo "✅ Login page returns 200"
 

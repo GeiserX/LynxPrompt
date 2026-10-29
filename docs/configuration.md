@@ -11,7 +11,7 @@ unset; "compose" means the self-host compose file sets it for you.
 | `NEXTAUTH_SECRET` | none, required | Signs sessions. `openssl rand -base64 32`. Changing it signs everyone out. |
 | `DB_PASSWORD` | none, required | Used by the compose file for PostgreSQL and for the four `DB_*_PASSWORD` values below. |
 | `APP_URL` | `http://localhost:3000` | The URL browsers use. Sign-in links and OAuth callbacks are built from it; the compose file also sets `NEXTAUTH_URL` to it. |
-| `ADMIN_EMAIL` | empty | Compose only: copied into `SUPERADMIN_EMAIL`. |
+| `ADMIN_EMAIL` | empty | Compose only: copied into `SUPERADMIN_EMAIL`. When it is empty, `SUPERADMIN_EMAIL` from `.env` is used. |
 | `SUPERADMIN_EMAIL` | empty | The account with this address becomes superadmin when it signs in. |
 | `PORT` | `3000` | Compose only: the host port published for the app. |
 
