@@ -4,6 +4,37 @@ entries:
   - annotations:
       artifacthub.io/changes: |
         - kind: changed
+          description: Run app 3.3.1
+      category: AI
+    apiVersion: v2
+    appVersion: 3.3.1
+    created: "2026-10-29T21:46:26.089577834Z"
+    description: A Helm chart for LynxPrompt - Self-hosted AI IDE configuration hub
+    digest: 4a65a9072cace541afafc683dbfd5e01bbb9474d9ae452951852561c7df2bc64
+    home: https://lynxprompt.geiser.cloud
+    keywords:
+    - lynxprompt
+    - ai
+    - ide
+    - configuration
+    - cursor
+    - claude
+    - copilot
+    - self-hosted
+    kubeVersion: '>=1.21.0-0'
+    maintainers:
+    - email: acsdesk@protonmail.com
+      name: Sergio Fernandez
+    name: lynxprompt
+    sources:
+    - https://github.com/GeiserX/LynxPrompt
+    type: application
+    urls:
+    - https://github.com/GeiserX/LynxPrompt/releases/download/lynxprompt-0.1.12/lynxprompt-0.1.12.tgz
+    version: 0.1.12
+  - annotations:
+      artifacthub.io/changes: |
+        - kind: changed
           description: Run app 3.3.0
       category: AI
     apiVersion: v2
@@ -341,4 +372,4 @@ entries:
     urls:
     - https://github.com/GeiserX/LynxPrompt/releases/download/lynxprompt-0.1.1/lynxprompt-0.1.1.tgz
     version: 0.1.1
-generated: "2026-10-29T19:10:40.527728054Z"
+generated: "2026-10-29T21:46:26.089616642Z"
