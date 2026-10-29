@@ -14,7 +14,10 @@ import {
 } from "@/lib/api-tokens";
 import {
   checkBlueprintContent,
+  cleanBlueprintDescription,
+  cleanBlueprintName,
   normalizeBlueprintType,
+  retiredTypeError,
   skillContentError,
   resolveBlueprintTeamId,
 } from "@/lib/blueprint-rules";
@@ -232,7 +235,7 @@ export async function POST(request: NextRequest) {
     const content = decodedContent;
 
     // Validate required fields
-    if (!name || typeof name !== "string" || name.trim().length < 3) {
+    if (!name || typeof name !== "string" || cleanBlueprintName(name).length < 3) {
       return NextResponse.json(
         { error: "Name must be at least 3 characters" },
         { status: 400 }
@@ -263,7 +266,9 @@ export async function POST(request: NextRequest) {
       teamId = team.teamId;
     }
 
-    const skillError = skillContentError(normalizeBlueprintType(type), content, repository_path);
+    const skillError =
+      retiredTypeError(normalizeBlueprintType(type)) ??
+      skillContentError(normalizeBlueprintType(type), content, repository_path);
     if (skillError) {
       return NextResponse.json({ error: skillError }, { status: 400 });
     }
@@ -348,8 +353,8 @@ export async function POST(request: NextRequest) {
     const blueprint = await prismaUsers.userTemplate.create({
       data: {
         userId: tokenData.userId,
-        name: name.trim(),
-        description: description?.trim() || null,
+        name: cleanBlueprintName(name),
+        description: cleanBlueprintDescription(description),
         // Stored as sent: the CLI pulls it back into a file, which must keep
         // its final newline. Length and emptiness are checked trimmed above.
         content,

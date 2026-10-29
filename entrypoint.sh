@@ -63,6 +63,31 @@ END $$;
 SQL
 }
 
+# schema_ahead succeeds only for a database a newer release migrated: it records
+# a finished migration that this image's prisma/migrations-<name> does not have.
+# This image's code would then read columns that are gone, while migrate deploy
+# reports nothing to apply and /api/health stays green, so it must not start.
+# Any error, such as a database that does not exist yet, answers no.
+schema_ahead() {
+  known=""
+  for m in prisma/migrations-"$1"/*/; do
+    m=${m%/}
+    known="$known'${m##*/}',"
+  done
+  npx prisma db execute --config="prisma/prisma.config-$1.ts" --stdin >/dev/null 2>&1 <<SQL
+DO \$\$ BEGIN
+  IF to_regclass('_prisma_migrations') IS NULL THEN
+    RAISE EXCEPTION 'no migrations recorded';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM _prisma_migrations
+                 WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL
+                   AND migration_name NOT IN (${known%,})) THEN
+    RAISE EXCEPTION 'nothing newer';
+  END IF;
+END \$\$;
+SQL
+}
+
 # A db-push database is brought to the 0_init state with one last `db push` of
 # the frozen copy of the schema as 0_init created it (prisma/baseline), which
 # refuses any change that would lose data. Only 0_init is then recorded as
@@ -72,6 +97,11 @@ SQL
 # change a later migration makes.
 migrate() {
   config="prisma/prisma.config-$1.ts"
+  if schema_ahead "$1"; then
+    echo "ERROR: $2 DB was migrated by a newer LynxPrompt release than this image."
+    echo "Run that release again, or restore the backup taken before the upgrade (RELEASING.md, Rollback)."
+    return 1
+  fi
   if needs_baseline "$1"; then
     echo "$2 DB: created by prisma db push; recording 0_init as applied"
     npx prisma db push --config="$config" --schema="prisma/baseline/schema-$1.prisma" 2>&1 || return 1

@@ -153,6 +153,27 @@ describe("TemplateDownloadModal: the file matches the chosen platform", () => {
   });
 });
 
+describe("TemplateDownloadModal: configs of retired tools", () => {
+  const continueConfig = '{"models": [{"title": "GPT", "provider": "openai"}]}\n';
+
+  it.each([
+    ["CONTINUE_CONFIG", continueConfig, "config.json"],
+    ["TABNINE_CONFIG", "version: 1.0\n", ".tabnine.yaml"],
+  ])("downloads a %s blueprint as it is, under its own file name, with no rules targets", async (type, content, file) => {
+    render(
+      <TemplateDownloadModal isOpen onClose={() => {}} template={{ name: "Old config", content, targetPlatform: type }} />
+    );
+    expect(screen.getByTestId("retired-config-note")).toBeTruthy();
+    expect(platformButton("Universal (AGENTS.md)")).toBeNull();
+    expect(platformButton("Cursor")).toBeNull();
+    expect(screen.queryByText(/Will be saved as/)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Download/ }));
+    const download = await lastDownload();
+    expect(download.name).toBe(file);
+    expect(download.content).toBe(content);
+  });
+});
+
 describe("TemplateDownloadModal: typed values survive re-initialisation", () => {
   const template = { name: "Vars", content: "Hi [[NAME|x]] from [[CITY]]", targetPlatform: "AGENTS_MD" };
 

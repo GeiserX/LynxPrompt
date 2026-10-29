@@ -368,15 +368,15 @@ function SettingsContent() {
     signIn(provider, { callbackUrl: "/settings?tab=accounts" });
   };
 
-  const handleUnlinkAccount = async (provider: string) => {
-    setUnlinking(provider);
+  const handleUnlinkAccount = async (accountId: string, provider: string) => {
+    setUnlinking(accountId);
     setError(null);
 
     try {
       const res = await fetch("/api/user/accounts", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider }),
+        body: JSON.stringify({ accountId }),
       });
 
       if (!res.ok) {
@@ -1164,11 +1164,11 @@ function SettingsContent() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleUnlinkAccount(account.provider)}
-                          disabled={unlinking === account.provider}
+                          onClick={() => handleUnlinkAccount(account.id, account.provider)}
+                          disabled={unlinking === account.id}
                           className="text-destructive hover:text-destructive"
                         >
-                          {unlinking === account.provider ? (
+                          {unlinking === account.id ? (
                             "Unlinking..."
                           ) : (
                             <>

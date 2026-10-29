@@ -22,7 +22,7 @@ afterEach(() => {
 // The hosted instance runs with the blog and the support forum on.
 const allOn = { ENABLE_BLOG: "true", ENABLE_SUPPORT_FORUM: "true" };
 
-function run(opts: { legacy?: string[]; failDeploy?: string; env?: Record<string, string> } = {}) {
+function run(opts: { legacy?: string[]; ahead?: string; failDeploy?: string; env?: Record<string, string> } = {}) {
   dir = mkdtempSync(join(tmpdir(), "lp-entrypoint-migrate-"));
   for (const s of schemas) {
     mkdirSync(join(dir, "prisma", `migrations-${s}`, "0_init"), { recursive: true });
@@ -31,12 +31,18 @@ function run(opts: { legacy?: string[]; failDeploy?: string; env?: Record<string
   const log = join(dir, "calls.txt");
   const legacy = (opts.legacy ?? []).map((s) => `*config-${s}.ts*`).join("|");
   const failDeploy = opts.failDeploy ? `*config-${opts.failDeploy}.ts*` : "__none__";
+  const ahead = opts.ahead ? `*config-${opts.ahead}.ts*` : "__none__";
   writeFileSync(
     join(dir, "npx"),
     `#!/bin/sh
 echo "$*" >> "${log}"
 case "$*" in
-  *"db execute"*) cat > "${dir}/check.sql"; case "$*" in ${legacy || "__none__"}) exit 0 ;; esac; exit 1 ;;
+  *"db execute"*)
+    sql=$(cat)
+    case "$sql" in
+      *"nothing newer"*) printf '%s' "$sql" > "${dir}/ahead.sql"; case "$*" in ${ahead}) exit 0 ;; esac; exit 1 ;;
+    esac
+    printf '%s' "$sql" > "${dir}/check.sql"; case "$*" in ${legacy || "__none__"}) exit 0 ;; esac; exit 1 ;;
   *"migrate deploy"*) case "$*" in ${failDeploy}) exit 1 ;; esac ;;
 esac
 exit 0
@@ -54,6 +60,9 @@ exit 0
   return { calls, status: result.status, output: result.stdout + result.stderr, started };
 }
 
+// Two checks before any change: is the database ahead of this image, and was it made by db push?
+const CHECKS = ["prisma db execute --stdin", "prisma db execute --stdin"];
+
 const callsFor = (calls: string[], schema: string) =>
   calls.filter((c) => c.includes(`prisma.config-${schema}.ts`)).map((c) => c.replace(/ --config=\S+/, ""));
 
@@ -63,7 +72,7 @@ describe("entrypoint database migrations", () => {
     expect(status).toBe(0);
     expect(started).toBe(true);
     for (const s of schemas) {
-      expect(callsFor(calls, s)).toEqual(["prisma db execute --stdin", "prisma migrate deploy"]);
+      expect(callsFor(calls, s)).toEqual([...CHECKS, "prisma migrate deploy"]);
     }
     expect(calls.some((c) => c.includes("db push"))).toBe(false);
   });
@@ -74,12 +83,12 @@ describe("entrypoint database migrations", () => {
     // The later migration is left to migrate deploy: pushing the current schema
     // would refuse its column drops, and recording it would skip its SQL.
     expect(callsFor(calls, "users")).toEqual([
-      "prisma db execute --stdin",
+      ...CHECKS,
       "prisma db push --schema=prisma/baseline/schema-users.prisma",
       "prisma migrate resolve --applied 0_init",
       "prisma migrate deploy",
     ]);
-    expect(callsFor(calls, "app")).toEqual(["prisma db execute --stdin", "prisma migrate deploy"]);
+    expect(callsFor(calls, "app")).toEqual([...CHECKS, "prisma migrate deploy"]);
     expect(output).toContain("Users DB: created by prisma db push");
   });
 
@@ -98,7 +107,7 @@ describe("entrypoint database migrations", () => {
     expect(callsFor(calls, "support")).toEqual([]);
     expect(calls.some((c) => c.includes("seed-support"))).toBe(false);
     for (const s of ["app", "users"]) {
-      expect(callsFor(calls, s)).toEqual(["prisma db execute --stdin", "prisma migrate deploy"]);
+      expect(callsFor(calls, s)).toEqual([...CHECKS, "prisma migrate deploy"]);
     }
     expect(output).toContain("Blog DB: skipped (ENABLE_BLOG is off)");
     expect(output).toContain("Support DB: skipped (ENABLE_SUPPORT_FORUM is off)");
@@ -106,11 +115,11 @@ describe("entrypoint database migrations", () => {
 
   it("migrates each optional database when its own flag is on, with the same values envBool accepts", () => {
     const blogOnly = run({ env: { ENABLE_BLOG: "1", ENABLE_SUPPORT_FORUM: "false" } }).calls;
-    expect(callsFor(blogOnly, "blog")).toEqual(["prisma db execute --stdin", "prisma migrate deploy"]);
+    expect(callsFor(blogOnly, "blog")).toEqual([...CHECKS, "prisma migrate deploy"]);
     expect(callsFor(blogOnly, "support")).toEqual([]);
     const supportOnly = run({ env: { ENABLE_SUPPORT_FORUM: "true" } }).calls;
     expect(callsFor(supportOnly, "blog")).toEqual([]);
-    expect(callsFor(supportOnly, "support")).toEqual(["prisma db execute --stdin", "prisma migrate deploy"]);
+    expect(callsFor(supportOnly, "support")).toEqual([...CHECKS, "prisma migrate deploy"]);
     expect(supportOnly.some((c) => c.includes("seed-support"))).toBe(true);
   });
 
@@ -119,6 +128,23 @@ describe("entrypoint database migrations", () => {
     const sql = readFileSync(join(dir, "check.sql"), "utf8");
     expect(sql).toContain("current_schema()");
     expect(sql).toMatch(/migration_name = '0_init'/);
+  });
+
+  it("refuses to start on a database a newer release migrated, and changes nothing", () => {
+    const { calls, status, output, started } = run({ ahead: "users" });
+    expect(status).toBe(1);
+    expect(started).toBe(false);
+    expect(callsFor(calls, "users")).toEqual(["prisma db execute --stdin"]);
+    expect(output).toContain("ERROR: Users DB was migrated by a newer LynxPrompt release than this image.");
+    expect(output).toContain("FATAL");
+  });
+
+  it("asks for finished migrations this image does not ship", () => {
+    run();
+    const sql = readFileSync(join(dir, "ahead.sql"), "utf8");
+    expect(sql).toContain("finished_at IS NOT NULL AND rolled_back_at IS NULL");
+    expect(sql).toContain("migration_name NOT IN ('0_init','20990101000000_later')");
+    expect(sql).toContain("DO $$ BEGIN");
   });
 
   it("refuses to start when a migration fails", () => {

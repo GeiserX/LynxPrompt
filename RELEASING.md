@@ -78,6 +78,8 @@ If a release has issues:
 
 A release whose migrations drop columns cannot be rolled back by changing the image tag: the older image still reads the dropped columns and fails. 3.0.0 drops the plan columns (users and support databases) and 3.2.0 drops the device-tracking columns of `Session` (users database), so every signed-in request on a 3.1.0 image fails after 3.2.0 migrated. To roll back across such a release, restore the database backup taken before the upgrade, then pin the older image. Take that backup before every upgrade; the release notes' "Upgrade notes" say when a release has a destructive migration.
 
+Images after 3.2.1 refuse to start on a database a newer release migrated: before migrating, `entrypoint.sh` looks for a finished migration in `_prisma_migrations` that the image's `prisma/migrations-<name>` does not ship, and exits with `ERROR: <Name> DB was migrated by a newer LynxPrompt release than this image.` Without it the older image starts, `migrate deploy` reports nothing to apply and `/api/health` stays 200 while every sign-in fails. Images up to 3.2.1 have no such check and cannot be given one, because it runs in the older image's own entrypoint. Their health check is a `SELECT 1` on each database, so nothing a newer release writes makes them fail it. Rolling back to 3.2.1 or older therefore still starts green: check the release notes and restore the backup.
+
 For a release without one:
 
 ```bash

@@ -7,7 +7,7 @@ vi.mock("@/lib/db-users", () => ({
 }));
 vi.mock("@/lib/db-app", () => ({ prismaApp: {} }));
 
-import { canReadBlueprint, isOwnerOrTeamMember } from "@/lib/blueprint-access";
+import { canEditBlueprint, canReadBlueprint, isOwnerOrTeamMember } from "@/lib/blueprint-access";
 
 function bp(overrides: Record<string, unknown> = {}) {
   return {
@@ -68,5 +68,27 @@ describe("isOwnerOrTeamMember", () => {
 
   it("gives a stranger no full access to a public blueprint", async () => {
     expect(await isOwnerOrTeamMember(bp({ isPublic: true, visibility: "PUBLIC" }), "stranger")).toBe(false);
+  });
+});
+
+describe("canEditBlueprint", () => {
+  it("lets the owner edit, signed in", async () => {
+    expect(await canEditBlueprint(bp(), "owner_1")).toBe(true);
+    expect(await canEditBlueprint(bp(), null)).toBe(false);
+  });
+
+  it("lets an admin of the team edit a TEAM or published team blueprint", async () => {
+    mockTeamMemberFindUnique.mockResolvedValue({ role: "ADMIN" });
+    expect(await canEditBlueprint(bp({ visibility: "TEAM", teamId: "team_1" }), "admin")).toBe(true);
+    expect(await canEditBlueprint(bp({ visibility: "PUBLIC", teamId: "team_1" }), "admin")).toBe(true);
+  });
+
+  it("refuses a plain member, an outsider, and any PRIVATE blueprint", async () => {
+    mockTeamMemberFindUnique.mockResolvedValue({ role: "MEMBER" });
+    expect(await canEditBlueprint(bp({ visibility: "TEAM", teamId: "team_1" }), "member")).toBe(false);
+    mockTeamMemberFindUnique.mockResolvedValue(null);
+    expect(await canEditBlueprint(bp({ visibility: "TEAM", teamId: "team_1" }), "stranger")).toBe(false);
+    mockTeamMemberFindUnique.mockResolvedValue({ role: "ADMIN" });
+    expect(await canEditBlueprint(bp({ visibility: "PRIVATE", teamId: "team_1" }), "admin")).toBe(false);
   });
 });

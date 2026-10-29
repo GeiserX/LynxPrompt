@@ -2,10 +2,17 @@ import { NextResponse } from "next/server";
 import { getTemplateById } from "@/lib/data/templates";
 import { prismaUsers } from "@/lib/db-users";
 import { detectSensitiveData } from "@/lib/sensitive-data";
-import { normalizeBlueprintType, skillContentError } from "@/lib/blueprint-rules";
+import {
+  cleanBlueprintDescription,
+  cleanBlueprintName,
+  normalizeBlueprintType,
+  retiredTypeError,
+  skillContentError,
+} from "@/lib/blueprint-rules";
 import { contentChecksum } from "@/lib/content-checksum";
 import { sanitizeRepositoryPath } from "@/lib/repository-path";
 import { checkBlueprintLineCount } from "@/lib/subscription";
+import { canEditBlueprint } from "@/lib/blueprint-access";
 import { getVerifiedSession, requireSession } from "@/lib/api-auth";
 
 // GET /api/blueprints/[id] - Get blueprint details
@@ -119,6 +126,7 @@ export async function PUT(
         isPublic: true,
         visibility: true,
         teamId: true,
+        type: true,
       },
     });
 
@@ -129,9 +137,9 @@ export async function PUT(
       );
     }
 
-    if (existingBlueprint.userId !== session.user.id) {
+    if (!(await canEditBlueprint(existingBlueprint, session.user.id))) {
       return NextResponse.json(
-        { error: "You can only edit your own blueprints" },
+        { error: "You can only edit your own or your team's blueprints" },
         { status: 403 }
       );
     }
@@ -156,17 +164,17 @@ export async function PUT(
     const updateData: Record<string, unknown> = {};
 
     if (name !== undefined) {
-      if (typeof name !== "string" || name.trim().length < 3) {
+      if (typeof name !== "string" || cleanBlueprintName(name).length < 3) {
         return NextResponse.json(
           { error: "Title must be at least 3 characters" },
           { status: 400 }
         );
       }
-      updateData.name = name.trim();
+      updateData.name = cleanBlueprintName(name);
     }
 
     if (description !== undefined) {
-      updateData.description = description?.trim() || null;
+      updateData.description = cleanBlueprintDescription(description);
     }
 
     if (content !== undefined) {
@@ -194,6 +202,12 @@ export async function PUT(
 
     if (type !== undefined) {
       updateData.type = normalizeBlueprintType(type);
+      // An old blueprint keeps its retired type; none may move into one
+      const retiredError =
+        updateData.type !== existingBlueprint.type ? retiredTypeError(updateData.type as string) : null;
+      if (retiredError) {
+        return NextResponse.json({ error: retiredError }, { status: 400 });
+      }
       const skillError = skillContentError(
         updateData.type as string,
         typeof content === "string" ? content : existingBlueprint.content,
@@ -373,10 +387,10 @@ export async function DELETE(
 
     const realId = id.replace("bp_", "");
 
-    // Check if user owns this blueprint
+    // The owner, or an admin of the team it is shared with
     const existingBlueprint = await prismaUsers.userTemplate.findUnique({
       where: { id: realId },
-      select: { userId: true },
+      select: { userId: true, visibility: true, teamId: true },
     });
 
     if (!existingBlueprint) {
@@ -386,9 +400,9 @@ export async function DELETE(
       );
     }
 
-    if (existingBlueprint.userId !== session.user.id) {
+    if (!(await canEditBlueprint(existingBlueprint, session.user.id))) {
       return NextResponse.json(
-        { error: "You can only delete your own blueprints" },
+        { error: "You can only delete your own or your team's blueprints" },
         { status: 403 }
       );
     }

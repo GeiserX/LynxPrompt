@@ -8,7 +8,7 @@ const mockPasskeyStatus = vi.fn();
 
 const users = vi.hoisted(() => ({
   user: { findUnique: vi.fn(), delete: vi.fn() },
-  teamMember: { findMany: vi.fn(), count: vi.fn() },
+  teamMember: { findMany: vi.fn(), findFirst: vi.fn(), count: vi.fn() },
   team: { findMany: vi.fn(), deleteMany: vi.fn() },
   userTemplate: { findMany: vi.fn(), updateMany: vi.fn() },
   templateFavorite: { findMany: vi.fn(), deleteMany: vi.fn() },
@@ -65,6 +65,7 @@ beforeEach(() => {
   users.user.findUnique.mockResolvedValue({ email: "Ana@Example.com" });
   users.teamMember.findMany.mockResolvedValue([]);
   users.teamMember.count.mockResolvedValue(0);
+  users.teamMember.findFirst.mockResolvedValue(null);
   users.team.findMany.mockResolvedValue([{ id: "team_solo" }]);
   users.userTemplate.findMany.mockResolvedValue([{ id: "t1" }]);
   users.templateFavorite.findMany.mockResolvedValue([]);
@@ -225,6 +226,37 @@ describe("DELETE /api/user", () => {
     users.teamMember.findMany.mockResolvedValue([{ teamId: "team_1", team: { name: "Acme" } }]);
     users.teamMember.count.mockResolvedValue(1);
     expect((await del("ana@example.com")).status).toBe(200);
+  });
+
+  it("hands the blueprints shared with a team to its first admin instead of deleting them", async () => {
+    users.teamMember.findMany.mockResolvedValue([{ teamId: "team_1", team: { name: "Acme" } }]);
+    users.teamMember.count.mockResolvedValue(1);
+    users.teamMember.findFirst.mockResolvedValue({ userId: "admin_2" });
+    users.userTemplate.findMany.mockImplementation(async ({ where }) =>
+      where.teamId === "team_1" ? [{ id: "t_team" }] : [{ id: "t1" }, { id: "t_team" }]
+    );
+    expect((await del("ana@example.com")).status).toBe(200);
+
+    expect(users.userTemplate.findMany).toHaveBeenCalledWith({
+      where: { userId: "u1", teamId: "team_1", visibility: { not: "PRIVATE" } },
+      select: { id: true },
+    });
+    const ops = usersTransaction();
+    expect(ops).toContainEqual([
+      "blueprint.updateMany",
+      {
+        where: { id: { in: ["t_team"] } },
+        data: { userId: "admin_2", hierarchyId: null, parentId: null },
+      },
+    ]);
+    // Its favorites and downloads stay; only the private blueprint's go
+    expect(ops).toContainEqual([
+      "favorite.deleteMany",
+      { where: { templateType: "user", templateId: { in: ["t1", "bp_t1"] } } },
+    ]);
+    // Handed over before the account and its cascade go
+    const handover = ops.findIndex((op) => op[0] === "blueprint.updateMany");
+    expect(handover).toBeLessThan(ops.length - 1);
   });
 
   it("requires a session and a passed passkey check", async () => {

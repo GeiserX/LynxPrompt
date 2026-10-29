@@ -72,3 +72,22 @@ export async function canReadTemplate(
   });
   return !!template && canReadBlueprint(template, userId);
 }
+
+/**
+ * True when the user owns the blueprint, or is an admin of the team it is
+ * shared with. A team blueprint is the team's, so its admins can fix or remove
+ * one a member wrote. A PRIVATE blueprint stays its owner's alone.
+ */
+export async function canEditBlueprint(
+  blueprint: Pick<BlueprintAccessFields, "userId" | "visibility" | "teamId">,
+  userId: string | null | undefined
+): Promise<boolean> {
+  if (!userId) return false;
+  if (blueprint.userId === userId) return true;
+  if (!blueprint.teamId || blueprint.visibility === "PRIVATE") return false;
+  const membership = await prismaUsers.teamMember.findUnique({
+    where: { teamId_userId: { teamId: blueprint.teamId, userId } },
+    select: { role: true },
+  });
+  return membership?.role === "ADMIN";
+}

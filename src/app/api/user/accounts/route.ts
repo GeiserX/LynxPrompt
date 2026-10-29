@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prismaUsers } from "@/lib/db-users";
 import { requireSession } from "@/lib/api-auth";
+import { envBool } from "@/lib/feature-flags";
 
 // GET linked accounts
 export async function GET(request: Request) {
@@ -48,30 +49,44 @@ export async function DELETE(request: Request) {
     if (auth instanceof NextResponse) return auth;
     const { session } = auth;
 
-    const { provider } = await request.json();
+    const { accountId, provider } = await request.json();
 
-    if (!provider) {
+    if (!accountId && !provider) {
       return NextResponse.json(
-        { error: "Provider is required" },
+        { error: "accountId is required" },
         { status: 400 }
       );
     }
 
-    // Count total accounts to ensure user has at least one way to log in
-    const accountCount = await prismaUsers.account.count({
+    // Unlink one account by id. A provider alone (older pages) is taken only
+    // when it names a single account: a user can link two GitHub accounts.
+    const accounts = await prismaUsers.account.findMany({
       where: { userId: session.user.id },
+      select: { id: true, provider: true },
     });
+    const matches = accounts.filter((account) =>
+      accountId ? account.id === accountId : account.provider === provider
+    );
+    if (matches.length === 0) {
+      return NextResponse.json({ error: "Account not found" }, { status: 404 });
+    }
+    if (matches.length > 1) {
+      return NextResponse.json(
+        { error: "Several accounts of this provider are linked; choose one by accountId" },
+        { status: 400 }
+      );
+    }
+    const target = matches[0];
 
-    // Check if user has an email verified (for magic link fallback)
+    // A verified email is a way back in only while magic links are on
     const user = await prismaUsers.user.findUnique({
       where: { id: session.user.id },
       select: { emailVerified: true },
     });
+    const canUseEmail = !!user?.emailVerified && envBool("ENABLE_EMAIL_AUTH", true);
 
-    const hasVerifiedEmail = !!user?.emailVerified;
-
-    // Can't unlink if it's the only account and no verified email
-    if (accountCount <= 1 && !hasVerifiedEmail) {
+    // Keep at least one way to sign in after the unlink
+    if (accounts.length - 1 === 0 && !canUseEmail) {
       return NextResponse.json(
         {
           error:
@@ -81,13 +96,7 @@ export async function DELETE(request: Request) {
       );
     }
 
-    // Delete the account link
-    await prismaUsers.account.deleteMany({
-      where: {
-        userId: session.user.id,
-        provider,
-      },
-    });
+    await prismaUsers.account.delete({ where: { id: target.id } });
 
     return NextResponse.json({ success: true });
   } catch (error) {
