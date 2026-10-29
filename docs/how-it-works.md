@@ -57,7 +57,7 @@ and the CLI as `lynxp hierarchies`.
 
 Federation is off by default, and an instance makes no call to the registry until `ENABLE_FEDERATION=true`.
 Then, at start and every six hours after, it posts its domain (the host of `APP_URL`) to the registry
-(`FEDERATION_REGISTRY_URL`, lynxprompt.com by default) and serves `/.well-known/lynxprompt.json` with its name,
+(`FEDERATION_REGISTRY_URL`, lynxprompt.geiser.cloud by default) and serves `/.well-known/lynxprompt.json` with its name,
 version, API URL and number of public blueprints. An `APP_URL` that is not https on a public domain name (such
 as `http://localhost:3000`) is skipped with a warning, since the registry could not reach it. The registry lists
 the instances on `/federation`, and each instance lists the name, description, tags and author of its public

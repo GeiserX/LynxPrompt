@@ -33,7 +33,7 @@ const defaultFlags: FeatureFlags = {
   enableBlog: false,
   enableSupportForum: false,
   enableFederation: false,
-  federationRegistryUrl: "https://lynxprompt.com",
+  federationRegistryUrl: "https://lynxprompt.geiser.cloud",
   appName: "LynxPrompt",
   appUrl: "http://localhost:3000",
   appLogoUrl: "",

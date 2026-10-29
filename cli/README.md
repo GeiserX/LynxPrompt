@@ -360,7 +360,7 @@ lynxp link --list
 
 ## Documentation
 
-Full documentation: https://lynxprompt.com/docs/cli
+Full documentation: https://lynxprompt.geiser.cloud/docs/cli
 
 ## License
 

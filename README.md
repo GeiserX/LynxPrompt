@@ -10,7 +10,9 @@
   <a href="https://github.com/GeiserX/LynxPrompt/stargazers"><img src="https://img.shields.io/github/stars/GeiserX/LynxPrompt?style=flat-square&logo=github" alt="GitHub stars"></a>
 </p>
 
-LynxPrompt is a self-hosted web app that turns one set of AI coding rules into the file each tool reads: `AGENTS.md`, `CLAUDE.md`, `.cursor/rules/`, Copilot instructions, 30 rule-file formats in all, plus slash commands for six of them. A wizard writes the rules from your stack, blueprints let a team share them with variables, and the `lynxp` CLI and the VS Code extension put the files into every repository. Run it with Docker Compose or the Helm chart, or try the hosted instance at [lynxprompt.com](https://lynxprompt.com) first.
+LynxPrompt is a self-hosted web app that turns one set of AI coding rules into the file each tool reads: `AGENTS.md`, `CLAUDE.md`, `.cursor/rules/`, Copilot instructions, 30 rule-file formats in all, plus slash commands for six of them. A wizard writes the rules from your stack, blueprints let a team share them with variables, and the `lynxp` CLI and the VS Code extension put the files into every repository. Run it with Docker Compose or the Helm chart, or try the hosted instance at [lynxprompt.geiser.cloud](https://lynxprompt.geiser.cloud) first.
+
+The official instance is https://lynxprompt.geiser.cloud. It replaces lynxprompt.com, which keeps serving the API until the domain lapses in December 2026; a CLI still set to lynxprompt.com switches to the new address, with its login, on its next run after an update.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/GeiserX/LynxPrompt/main/docs/images/screenshots/wizard.png" alt="The wizard on its last step, with the generated rules and the formats to export" width="900">
@@ -50,7 +52,7 @@ The documentation lives at **[geiserx.github.io/LynxPrompt](https://geiserx.gith
 - [Troubleshooting](https://geiserx.github.io/LynxPrompt/troubleshooting/): the sign-in mail, ARM hosts, ports, what to include in a bug report
 - [Development](https://geiserx.github.io/LynxPrompt/development/): stack, local setup, the docs build
 
-The product manual for using LynxPrompt (the wizard, blueprints, the CLI and API reference) is a separate site at [lynxprompt.com/docs](https://lynxprompt.com/docs).
+The product manual for using LynxPrompt (the wizard, blueprints, the CLI and API reference) is a separate site at [lynxprompt.geiser.cloud/docs](https://lynxprompt.geiser.cloud/docs).
 
 ## Related projects
 

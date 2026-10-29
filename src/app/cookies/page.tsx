@@ -43,7 +43,7 @@ export default function CookiesPage() {
                 </p>
                 <p className="mt-3 text-sm">
                   <strong className="text-foreground">Note:</strong> This cookie
-                  policy applies to lynxprompt.com. Self-hosted LynxPrompt
+                  policy applies to lynxprompt.geiser.cloud. Self-hosted LynxPrompt
                   instances may have different cookie configurations depending
                   on their setup.
                 </p>
@@ -405,10 +405,10 @@ export default function CookiesPage() {
                   If you have questions about our use of cookies, please contact
                   us at{" "}
                   <a
-                    href="mailto:privacy@lynxprompt.com"
+                    href="mailto:lynxprompt@geiser.cloud"
                     className="text-primary hover:underline"
                   >
-                    privacy@lynxprompt.com
+                    lynxprompt@geiser.cloud
                   </a>
                   .
                 </p>

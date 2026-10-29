@@ -28,7 +28,7 @@
 
 ## The CLI
 
-The CLI tool mirrors the web platform and works against any LynxPrompt instance. By default it connects to `lynxprompt.com`, but you can point it to any self-hosted deployment.
+The CLI tool mirrors the web platform and works against any LynxPrompt instance. By default it connects to `lynxprompt.geiser.cloud`, but you can point it to any self-hosted deployment.
 
 ```bash
 # Install
@@ -60,7 +60,7 @@ Also available via Homebrew (`brew install GeiserX/lynxprompt/lynxprompt`) and C
 
 A recording of `lynxp wizard`, `check`, `push`, `diff` and `analyze` against the hosted instance:
 [demo.gif](images/demo.gif) (6.5 MB). The full command reference is in the
-[product manual](https://lynxprompt.com/docs/cli).
+[product manual](https://lynxprompt.geiser.cloud/docs/cli).
 
 ## VS Code extension
 
@@ -82,4 +82,4 @@ Install it from the Marketplace or run `ext install LynxPrompt.lynxprompt`.
 Create a token in Settings > API Tokens (`/settings?tab=api-tokens`); tokens have a role (full or read-only
 blueprint access, profile access) and an expiry. Send it as `Authorization: Bearer <token>` to `/api/v1/`:
 `GET` and `POST /api/v1/blueprints`, `/api/v1/hierarchies`, `/api/v1/user`. The API reference in the
-[product manual](https://lynxprompt.com/docs/api) lists every field.
+[product manual](https://lynxprompt.geiser.cloud/docs/api) lists every field.

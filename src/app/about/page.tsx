@@ -195,7 +195,7 @@ export default function AboutPage() {
               <Globe className="h-8 w-8 text-blue-600" />
               <h3 className="mt-3 font-semibold">EU Data Hosting</h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                On lynxprompt.com, all data is stored exclusively in the
+                On lynxprompt.geiser.cloud, all data is stored exclusively in the
                 European Union, complying with GDPR. Self-hosted instances use
                 your own infrastructure—you choose where your data lives.
               </p>

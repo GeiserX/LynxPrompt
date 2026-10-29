@@ -42,12 +42,12 @@ export default function FederationDocsPage() {
           LynxPrompt instances into a shared directory. Each self-hosted instance
           can register with a central registry (by default,{" "}
           <a
-            href="https://lynxprompt.com"
+            href="https://lynxprompt.geiser.cloud"
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary hover:underline"
           >
-            lynxprompt.com
+            lynxprompt.geiser.cloud
           </a>
           ) so that other instances — and their users — can discover it.
         </p>
@@ -269,7 +269,7 @@ export default function FederationDocsPage() {
                   </code>
                 </td>
                 <td className="px-4 py-2 text-muted-foreground">
-                  https://lynxprompt.com
+                  https://lynxprompt.geiser.cloud
                 </td>
                 <td className="px-4 py-2">
                   URL of the registry to register with. Only set this if you

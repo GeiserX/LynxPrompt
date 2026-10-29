@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/auth/signin?error=SSODecryptionFailed", request.url));
   }
 
-  const baseUrl = process.env.NEXTAUTH_URL || process.env.APP_URL || "https://lynxprompt.com";
+  const baseUrl = process.env.NEXTAUTH_URL || process.env.APP_URL || "https://lynxprompt.geiser.cloud";
 
   // One error code for every IdP failure, so the response says nothing about
   // which internal step (or host) answered.

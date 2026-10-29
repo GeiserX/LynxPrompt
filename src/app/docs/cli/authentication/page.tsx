@@ -112,7 +112,7 @@ Run 'lynxprompt login' to authenticate.`}</code>
           <pre className="text-sm text-zinc-100">
             <code>{`$ lynxprompt logout
 
-✓ Logged out from user@example.com at https://lynxprompt.com
+✓ Logged out from user@example.com at https://lynxprompt.geiser.cloud
   Removed stored credentials`}</code>
           </pre>
         </div>

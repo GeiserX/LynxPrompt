@@ -68,10 +68,10 @@ export default function PrivacyPage() {
                 </p>
                 <p className="mt-3">
                   LynxPrompt is open-source software licensed under AGPL v3. This
-                  privacy policy governs data processing on lynxprompt.com.
+                  privacy policy governs data processing on lynxprompt.geiser.cloud.
                   Self-hosted LynxPrompt instances are independently operated.
                   This privacy policy applies only to the official instance at
-                  lynxprompt.com. Self-hosted instance operators are responsible
+                  lynxprompt.geiser.cloud. Self-hosted instance operators are responsible
                   for their own privacy policies.
                 </p>
               </section>
@@ -89,10 +89,10 @@ export default function PrivacyPage() {
                   <li>
                     <strong>Email:</strong>{" "}
                     <a
-                      href="mailto:privacy@lynxprompt.com"
+                      href="mailto:lynxprompt@geiser.cloud"
                       className="text-primary hover:underline"
                     >
-                      privacy@lynxprompt.com
+                      lynxprompt@geiser.cloud
                     </a>
                   </li>
                 </ul>
@@ -488,10 +488,10 @@ export default function PrivacyPage() {
                 <p className="mt-3">
                   To exercise these rights, contact us at{" "}
                   <a
-                    href="mailto:privacy@lynxprompt.com"
+                    href="mailto:lynxprompt@geiser.cloud"
                     className="text-primary hover:underline"
                   >
-                    privacy@lynxprompt.com
+                    lynxprompt@geiser.cloud
                   </a>
                   . We will respond within one month of receiving your request.
                 </p>
@@ -592,10 +592,10 @@ export default function PrivacyPage() {
                 <p className="mt-3">
                   You can also ask us to delete your account at{" "}
                   <a
-                    href="mailto:privacy@lynxprompt.com"
+                    href="mailto:lynxprompt@geiser.cloud"
                     className="text-primary hover:underline"
                   >
-                    privacy@lynxprompt.com
+                    lynxprompt@geiser.cloud
                   </a>
                   ; we will do so within one month. We keep certain records only
                   where the law requires it (for example, account records for
@@ -678,10 +678,10 @@ export default function PrivacyPage() {
                   <p className="mt-2">
                     <strong>Email:</strong>{" "}
                     <a
-                      href="mailto:privacy@lynxprompt.com"
+                      href="mailto:lynxprompt@geiser.cloud"
                       className="text-primary hover:underline"
                     >
-                      privacy@lynxprompt.com
+                      lynxprompt@geiser.cloud
                     </a>
                   </p>
                 </div>

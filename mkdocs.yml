@@ -122,7 +122,7 @@ extra:
     - icon: simple/chocolatey
       link: https://community.chocolatey.org/packages/lynxprompt
     - icon: material/web
-      link: https://lynxprompt.com
+      link: https://lynxprompt.geiser.cloud
 
 extra_css:
   - stylesheets/theme.css

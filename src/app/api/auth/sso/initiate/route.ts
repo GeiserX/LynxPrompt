@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
         callbackUrl = trimmed;
       } else {
         try {
-          const appUrl = process.env.NEXTAUTH_URL || process.env.APP_URL || "https://lynxprompt.com";
+          const appUrl = process.env.NEXTAUTH_URL || process.env.APP_URL || "https://lynxprompt.geiser.cloud";
           const parsed = new URL(trimmed);
           const origin = new URL(appUrl);
           if (parsed.origin === origin.origin) {
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
     const state = crypto.randomUUID();
     const nonce = crypto.randomUUID();
 
-    const baseUrl = process.env.NEXTAUTH_URL || process.env.APP_URL || "https://lynxprompt.com";
+    const baseUrl = process.env.NEXTAUTH_URL || process.env.APP_URL || "https://lynxprompt.geiser.cloud";
     const ourCallbackUrl = `${baseUrl}/api/auth/sso/callback/oidc`;
 
     // Embed teamSlug and callbackUrl in state (signed via cookie)

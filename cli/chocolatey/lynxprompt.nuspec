@@ -6,14 +6,14 @@
     <title>LynxPrompt CLI</title>
     <authors>GeiserCloud</authors>
     <owners>GeiserCloud</owners>
-    <projectUrl>https://lynxprompt.com</projectUrl>
+    <projectUrl>https://lynxprompt.geiser.cloud</projectUrl>
     <projectSourceUrl>https://github.com/GeiserX/LynxPrompt</projectSourceUrl>
     <packageSourceUrl>https://github.com/GeiserX/LynxPrompt/tree/main/cli/chocolatey</packageSourceUrl>
-    <docsUrl>https://lynxprompt.com/docs/cli</docsUrl>
+    <docsUrl>https://lynxprompt.geiser.cloud/docs/cli</docsUrl>
     <bugTrackerUrl>https://github.com/GeiserX/LynxPrompt/issues</bugTrackerUrl>
     <licenseUrl>https://github.com/GeiserX/LynxPrompt/blob/main/LICENSE</licenseUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <iconUrl>https://lynxprompt.com/lynx-icon.png</iconUrl>
+    <iconUrl>https://lynxprompt.geiser.cloud/lynx-icon.png</iconUrl>
     <description>CLI for LynxPrompt - Generate AI IDE configuration files (.cursorrules, AGENTS.md, copilot-instructions.md, etc.) from your terminal.</description>
     <summary>Generate AI IDE configuration files from your terminal</summary>
     <releaseNotes>Major update: Full CLI wizard with all steps, 30+ AI editor platforms support, enhanced code generation with testing strategy, boundaries customization, static file generation, and Teams AI features.</releaseNotes>

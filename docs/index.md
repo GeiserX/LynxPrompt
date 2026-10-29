@@ -20,7 +20,7 @@ hide:
 
 **LynxPrompt** is a self-hosted web app that turns one set of AI coding rules into the file each tool reads: `AGENTS.md`, `CLAUDE.md`, `.cursor/rules/`, Copilot instructions, 30 rule-file formats in all, plus slash commands for six of them. A wizard writes the rules from your stack, blueprints let a team share them with variables, and the [CLI and the VS Code extension](usage.md) put the files into every repository.
 
-This site is about running your own instance: [start with Docker Compose](getting-started.md), then the settings, the CLI and how it is built. The product manual (the wizard step by step, blueprints, the CLI and API reference) is a separate site at [lynxprompt.com/docs](https://lynxprompt.com/docs), and [lynxprompt.com](https://lynxprompt.com) is a hosted instance you can try without installing anything.
+This site is about running your own instance: [start with Docker Compose](getting-started.md), then the settings, the CLI and how it is built. The product manual (the wizard step by step, blueprints, the CLI and API reference) is a separate site at [lynxprompt.geiser.cloud/docs](https://lynxprompt.geiser.cloud/docs), and [lynxprompt.geiser.cloud](https://lynxprompt.geiser.cloud) is a hosted instance you can try without installing anything.
 
 <div class="grid cards" markdown>
 
@@ -122,7 +122,7 @@ flowchart LR
 
 - Accounts, blueprints, drafts and teams live in your PostgreSQL; avatars, team logos and blog images live in the `uploads` volume. Back up both volumes and you have everything.
 - Every other outside service is off until you switch it on with an environment variable: SMTP for sign-in mail, GitHub and Google for OAuth, an SSO provider, Anthropic for AI editing, Cloudflare Turnstile, Umami analytics. The exception is Gravatar: an account without a profile picture shows a Gravatar image, so browsers request `gravatar.com` with a hash of that account's email address. See [Configuration](configuration.md).
-- Federation is off by default. With `ENABLE_FEDERATION=true`, at start and every six hours the instance sends its domain (the host of `APP_URL`) to the registry at lynxprompt.com, and `/.well-known/lynxprompt.json` answers with its name, version and number of public blueprints. `/api/v1/federation/blueprints` lists the name, description, tags and author of public blueprints; nothing private is listed, and no blueprint content is sent anywhere. Unless it is turned on, the instance makes no call to the registry.
+- Federation is off by default. With `ENABLE_FEDERATION=true`, at start and every six hours the instance sends its domain (the host of `APP_URL`) to the registry at lynxprompt.geiser.cloud, and `/.well-known/lynxprompt.json` answers with its name, version and number of public blueprints. `/api/v1/federation/blueprints` lists the name, description, tags and author of public blueprints; nothing private is listed, and no blueprint content is sent anywhere. Unless it is turned on, the instance makes no call to the registry.
 - The security policy is in [SECURITY.md](https://github.com/GeiserX/LynxPrompt/blob/main/SECURITY.md).
 
 ## Getting help

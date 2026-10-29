@@ -72,13 +72,13 @@ export default function DPAPage() {
                 LynxPrompt, you automatically accept this DPA. LynxPrompt is
                 open-source software licensed under AGPL v3, but this DPA governs
                 data processing specifically on the official instance at
-                lynxprompt.com. Business customers may request a signed copy by
+                lynxprompt.geiser.cloud. Business customers may request a signed copy by
                 emailing{" "}
                 <a
-                  href="mailto:legal@lynxprompt.com"
+                  href="mailto:lynxprompt@geiser.cloud"
                   className="text-primary hover:underline"
                 >
-                  legal@lynxprompt.com
+                  lynxprompt@geiser.cloud
                 </a>
                 .
               </p>
@@ -152,7 +152,7 @@ export default function DPAPage() {
                 <p className="mb-3">
                   This DPA applies to the Processing of Personal Data by
                   LynxPrompt in connection with providing the Services on the
-                  official instance at lynxprompt.com. Self-hosted LynxPrompt
+                  official instance at lynxprompt.geiser.cloud. Self-hosted LynxPrompt
                   instances are independently operated; their operators are
                   responsible for their own data processing agreements.
                 </p>
@@ -482,10 +482,10 @@ export default function DPAPage() {
                 <p className="mt-3 text-sm">
                   Requests can be submitted to{" "}
                   <a
-                    href="mailto:privacy@lynxprompt.com"
+                    href="mailto:lynxprompt@geiser.cloud"
                     className="text-primary hover:underline"
                   >
-                    privacy@lynxprompt.com
+                    lynxprompt@geiser.cloud
                   </a>{" "}
                   and will be addressed within 30 days.
                 </p>
@@ -520,10 +520,10 @@ export default function DPAPage() {
                   and allow for and contribute to audits. Audit requests should
                   be submitted to{" "}
                   <a
-                    href="mailto:legal@lynxprompt.com"
+                    href="mailto:lynxprompt@geiser.cloud"
                     className="text-primary hover:underline"
                   >
-                    legal@lynxprompt.com
+                    lynxprompt@geiser.cloud
                   </a>{" "}
                   with reasonable notice (minimum 30 days).
                 </p>
@@ -577,30 +577,12 @@ export default function DPAPage() {
                     GeiserCloud
                   </p>
                   <p className="mt-2">
-                    <strong>Privacy inquiries:</strong>{" "}
+                    <strong>Privacy, legal, DPA and support inquiries:</strong>{" "}
                     <a
-                      href="mailto:privacy@lynxprompt.com"
+                      href="mailto:lynxprompt@geiser.cloud"
                       className="text-primary hover:underline"
                     >
-                      privacy@lynxprompt.com
-                    </a>
-                  </p>
-                  <p>
-                    <strong>Legal/DPA inquiries:</strong>{" "}
-                    <a
-                      href="mailto:legal@lynxprompt.com"
-                      className="text-primary hover:underline"
-                    >
-                      legal@lynxprompt.com
-                    </a>
-                  </p>
-                  <p>
-                    <strong>Support:</strong>{" "}
-                    <a
-                      href="mailto:support@lynxprompt.com"
-                      className="text-primary hover:underline"
-                    >
-                      support@lynxprompt.com
+                      lynxprompt@geiser.cloud
                     </a>
                   </p>
                 </div>
@@ -615,10 +597,10 @@ export default function DPAPage() {
                   Business customers who require a countersigned DPA for their
                   records can request one by emailing{" "}
                   <a
-                    href="mailto:legal@lynxprompt.com"
+                    href="mailto:lynxprompt@geiser.cloud"
                     className="text-primary hover:underline"
                   >
-                    legal@lynxprompt.com
+                    lynxprompt@geiser.cloud
                   </a>{" "}
                   with your company name and the email address of the authorized
                   signatory. We will send you a PDF for countersignature within

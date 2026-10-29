@@ -35,9 +35,9 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "lynxprompt.com",
+        hostname: "lynxprompt.geiser.cloud",
       },
-      ...(getAppUrlHostname() && getAppUrlHostname() !== "lynxprompt.com" && getAppUrlHostname() !== "localhost"
+      ...(getAppUrlHostname() && getAppUrlHostname() !== "lynxprompt.geiser.cloud" && getAppUrlHostname() !== "localhost"
         ? [{ protocol: "https" as const, hostname: getAppUrlHostname()! }]
         : []),
     ],

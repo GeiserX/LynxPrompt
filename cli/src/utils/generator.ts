@@ -749,7 +749,7 @@ export function generateConfig(options: GenerateOptions): Record<string, string>
   const platforms = options.platforms
     .map((platform) => (platform === "agents" ? "universal" : resolvePlatformId(platform)))
     .filter((platform) => PLATFORM_FILES[platform]);
-  const appUrl = (options.apiUrl ?? "https://lynxprompt.com").replace(/\/+$/, "");
+  const appUrl = (options.apiUrl ?? "https://lynxprompt.geiser.cloud").replace(/\/+$/, "");
   const generated = generatePlatformFiles(toGeneratorConfig(options), toGeneratorUser(options), platforms, {
     pointers: Boolean(options.pointerFiles),
     brand: { appName: "LynxPrompt", appUrl },

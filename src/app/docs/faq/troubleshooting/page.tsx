@@ -70,7 +70,7 @@ export default function TroubleshootingPage() {
           <h3 className="font-semibold">OAuth sign-in failing</h3>
           <div className="mt-2 space-y-2 text-muted-foreground">
             <ul className="list-inside list-disc space-y-1">
-              <li>Clear your browser cookies for lynxprompt.com</li>
+              <li>Clear your browser cookies for lynxprompt.geiser.cloud</li>
               <li>Try a different browser or incognito mode</li>
               <li>
                 Make sure you&apos;re allowing pop-ups for the OAuth provider
@@ -121,10 +121,10 @@ export default function TroubleshootingPage() {
           <li>
             <strong>Email:</strong>{" "}
             <a
-              href="mailto:support@lynxprompt.com"
+              href="mailto:lynxprompt@geiser.cloud"
               className="text-primary hover:underline"
             >
-              support@lynxprompt.com
+              lynxprompt@geiser.cloud
             </a>
           </li>
           <li>

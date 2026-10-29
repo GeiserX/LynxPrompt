@@ -50,11 +50,14 @@ than native.
 
 Set `PORT=<free port>` and `APP_URL=http://localhost:<free port>` in `.env`.
 
-## `lynxp` talks to lynxprompt.com instead of my instance
+## `lynxp` talks to lynxprompt.geiser.cloud instead of my instance
 
-The CLI defaults to the hosted instance, `https://lynxprompt.com` (`lynxp config show` prints the
+The CLI defaults to the hosted instance, `https://lynxprompt.geiser.cloud` (`lynxp config show` prints the
 current value). Run `lynxp config set-url https://lynxprompt.example.com`, or set `LYNXPROMPT_API_URL`, which
 wins over the config file, then `lynxp login` again.
+
+The hosted instance moved from `https://lynxprompt.com`. A CLI from 3.1.0 or older keeps that address in
+its config file; a newer CLI rewrites it, and the login saved for it, to the new one on its next run.
 
 ## Reporting a bug
 

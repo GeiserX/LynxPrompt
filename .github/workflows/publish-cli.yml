@@ -470,7 +470,7 @@ jobs:
 
           class Lynxprompt < Formula
             desc "CLI for LynxPrompt - Generate AI IDE configuration files"
-            homepage "https://lynxprompt.com"
+            homepage "https://lynxprompt.geiser.cloud"
             url "https://registry.npmjs.org/lynxprompt/-/lynxprompt-${{ needs.check.outputs.version }}.tgz"
             sha256 "${{ steps.sha.outputs.sha256 }}"
             license "SEE LICENSE IN LICENSE"

@@ -131,7 +131,7 @@ jobs:
           platforms: ${{ matrix.platform }}
           push: false
           build-args: |
-            APP_URL=https://lynxprompt.com
+            APP_URL=https://lynxprompt.geiser.cloud
           cache-from: type=gha,scope=${{ matrix.arch }}
 
   # ===========================================

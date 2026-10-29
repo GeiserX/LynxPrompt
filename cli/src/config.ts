@@ -24,6 +24,11 @@ interface ConfigSchema {
   user?: User;
 }
 
+// The hosted instance. It moved from lynxprompt.com, which goes away in
+// December 2026; conf saved the old default into every existing config file.
+export const DEFAULT_API_URL = "https://lynxprompt.geiser.cloud";
+const LEGACY_DEFAULT_API_URL = "https://lynxprompt.com";
+
 const config = new Conf<ConfigSchema>({
   projectName: "lynxprompt",
   // The file holds API tokens: readable by its owner only.
@@ -31,7 +36,7 @@ const config = new Conf<ConfigSchema>({
   schema: {
     apiUrl: {
       type: "string",
-      default: "https://lynxprompt.com",
+      default: DEFAULT_API_URL,
     },
     tokens: {
       type: "object",
@@ -53,7 +58,7 @@ const config = new Conf<ConfigSchema>({
     },
   },
   defaults: {
-    apiUrl: "https://lynxprompt.com",
+    apiUrl: DEFAULT_API_URL,
   },
 });
 
@@ -96,6 +101,30 @@ if (legacyToken) {
 }
 for (const key of ["token", "tokenApiUrl", "user"] as const) {
   if (config.has(key)) config.delete(key);
+}
+
+// Point a config still on the old hosted address at the new one, with its
+// login: same server, same accounts. A self-hosted URL is left alone, and so
+// is LYNXPROMPT_API_URL, which is never saved. Nothing moves while the
+// environment still selects the old host (its login must stay findable), or
+// when each host already holds a different login (the user picks one).
+{
+  const logins = getLogins();
+  const legacyLogin = logins[LEGACY_DEFAULT_API_URL];
+  const newLogin = logins[DEFAULT_API_URL];
+  const envSelectsLegacy =
+    normalizeUrl(process.env.LYNXPROMPT_API_URL ?? "") === LEGACY_DEFAULT_API_URL;
+  const conflict = !!legacyLogin && !!newLogin && legacyLogin.token !== newLogin.token;
+  if (!envSelectsLegacy && !conflict) {
+    if (normalizeUrl(config.get("apiUrl")) === LEGACY_DEFAULT_API_URL) {
+      config.set("apiUrl", DEFAULT_API_URL);
+    }
+    if (legacyLogin) {
+      delete logins[LEGACY_DEFAULT_API_URL];
+      logins[DEFAULT_API_URL] = newLogin ?? legacyLogin;
+      setLogins(logins);
+    }
+  }
 }
 
 function currentLogin(): StoredLogin | undefined {

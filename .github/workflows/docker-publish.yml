@@ -126,7 +126,7 @@ jobs:
             org.opencontainers.image.version=${{ needs.prepare.outputs.version }}
             org.opencontainers.image.revision=${{ needs.prepare.outputs.revision }}
           build-args: |
-            APP_URL=https://lynxprompt.com
+            APP_URL=https://lynxprompt.geiser.cloud
             APP_REVISION=${{ needs.prepare.outputs.revision }}
           sbom: true
           provenance: mode=max

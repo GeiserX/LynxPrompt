@@ -20,9 +20,9 @@ describe("federation", () => {
   });
 
   describe("FEDERATION_REGISTRY_URL", () => {
-    it("should default to https://lynxprompt.com", async () => {
+    it("should default to https://lynxprompt.geiser.cloud", async () => {
       const flags = await import("@/lib/feature-flags");
-      expect(flags.FEDERATION_REGISTRY_URL).toBe("https://lynxprompt.com");
+      expect(flags.FEDERATION_REGISTRY_URL).toBe("https://lynxprompt.geiser.cloud");
     });
 
     it("should use custom registry URL", async () => {
@@ -37,7 +37,7 @@ describe("federation", () => {
       const { getPublicFlags } = await import("@/lib/feature-flags");
       const flags = getPublicFlags();
       expect(flags.enableFederation).toBe(false);
-      expect(flags.federationRegistryUrl).toBe("https://lynxprompt.com");
+      expect(flags.federationRegistryUrl).toBe("https://lynxprompt.geiser.cloud");
     });
   });
 
@@ -57,8 +57,8 @@ describe("federation", () => {
 
     it("should skip self-registration when this instance IS the registry", async () => {
       vi.stubEnv("ENABLE_FEDERATION", "true");
-      vi.stubEnv("APP_URL", "https://lynxprompt.com");
-      vi.stubEnv("FEDERATION_REGISTRY_URL", "https://lynxprompt.com");
+      vi.stubEnv("APP_URL", "https://lynxprompt.geiser.cloud");
+      vi.stubEnv("FEDERATION_REGISTRY_URL", "https://lynxprompt.geiser.cloud");
       const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
       const { initFederation } = await import("@/lib/federation");
 
@@ -73,7 +73,7 @@ describe("federation", () => {
     it("should attempt registration when pointing to external registry", async () => {
       vi.stubEnv("ENABLE_FEDERATION", "true");
       vi.stubEnv("APP_URL", "https://test.lynxprompt.com");
-      vi.stubEnv("FEDERATION_REGISTRY_URL", "https://lynxprompt.com");
+      vi.stubEnv("FEDERATION_REGISTRY_URL", "https://lynxprompt.geiser.cloud");
 
       const fetchSpy = vi.fn().mockRejectedValue(new Error("fetch disabled in test"));
       vi.stubGlobal("fetch", fetchSpy);
@@ -90,7 +90,7 @@ describe("federation", () => {
 
       await vi.waitFor(() => {
         expect(fetchSpy).toHaveBeenCalledWith(
-          "https://lynxprompt.com/api/v1/federation/register",
+          "https://lynxprompt.geiser.cloud/api/v1/federation/register",
           expect.objectContaining({ method: "POST" }),
         );
       });

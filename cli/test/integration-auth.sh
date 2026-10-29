@@ -10,7 +10,7 @@ TEST_DIR="/tmp/lynxp-auth-test-$$"
 
 if [ -z "$LYNXPROMPT_TOKEN" ]; then
   echo "Error: LYNXPROMPT_TOKEN environment variable required"
-  echo "Get your token from: https://lynxprompt.com/settings/api"
+  echo "Get your token from: https://lynxprompt.geiser.cloud/settings/api"
   exit 1
 fi
 
@@ -18,7 +18,7 @@ if [ "$ENV" = "dev" ]; then
   export LYNXPROMPT_API_URL="https://dev.lynxprompt.com"
   echo "🧪 Running authenticated tests against DEV environment"
 else
-  export LYNXPROMPT_API_URL="https://api.lynxprompt.com"
+  export LYNXPROMPT_API_URL="https://lynxprompt.geiser.cloud"
   echo "🧪 Running authenticated tests against PROD environment"
 fi
 
@@ -141,7 +141,7 @@ echo "================================================"
 echo ""
 echo "Note: A test blueprint was created in your account."
 echo "You may want to delete it manually from:"
-echo "  https://lynxprompt.com/dashboard"
+echo "  https://lynxprompt.geiser.cloud/dashboard"
 echo ""
 
 

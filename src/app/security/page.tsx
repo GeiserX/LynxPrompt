@@ -589,10 +589,10 @@ export default function SecurityPage() {
                     If you discover a security vulnerability, please report it
                     responsibly to{" "}
                     <a
-                      href="mailto:security@lynxprompt.com"
+                      href="mailto:lynxprompt@geiser.cloud"
                       className="font-medium text-primary hover:underline"
                     >
-                      security@lynxprompt.com
+                      lynxprompt@geiser.cloud
                     </a>
                     . We take all reports seriously and will investigate
                     promptly. Please do not disclose vulnerabilities publicly
@@ -611,10 +611,10 @@ export default function SecurityPage() {
                   additional information for your compliance requirements,
                   please contact us at{" "}
                   <a
-                    href="mailto:security@lynxprompt.com"
+                    href="mailto:lynxprompt@geiser.cloud"
                     className="text-primary hover:underline"
                   >
-                    security@lynxprompt.com
+                    lynxprompt@geiser.cloud
                   </a>
                   .
                 </p>

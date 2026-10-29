@@ -309,7 +309,7 @@ export default function SelfHostingPage() {
               </tr>
               <tr>
                 <td className="py-2 pr-4"><code className="rounded bg-muted px-1 py-0.5 text-xs">FEDERATION_REGISTRY_URL</code></td>
-                <td className="px-4 py-2 text-muted-foreground">https://lynxprompt.com</td>
+                <td className="px-4 py-2 text-muted-foreground">https://lynxprompt.geiser.cloud</td>
                 <td className="px-4 py-2">Optional. URL of the federation registry. Only set this if you run your own registry; omit to use the default public network</td>
               </tr>
             </tbody>
@@ -649,7 +649,7 @@ lynxp login`}</code>
 # Then configure your reverse proxy to serve both domains,
 # pointing to the same LynxPrompt backend.
 #
-# The CLI defaults to https://lynxprompt.com for the
+# The CLI defaults to https://lynxprompt.geiser.cloud for the
 # public instance. For self-hosted, point the CLI:
 lynxp config set-url https://api.lynxprompt.yourcompany.com`}</code>
           </pre>
@@ -692,7 +692,7 @@ lynxp config set-url https://api.lynxprompt.yourcompany.com`}</code>
               </pre>
               <p className="mt-2 text-sm text-muted-foreground">
                 Turned on, the instance joins the default public network at{" "}
-                <code className="rounded bg-muted px-1 py-0.5 text-xs">https://lynxprompt.com</code>.
+                <code className="rounded bg-muted px-1 py-0.5 text-xs">https://lynxprompt.geiser.cloud</code>.
                 Its <code className="rounded bg-muted px-1 py-0.5 text-xs">APP_URL</code> must be https
                 on a public domain name, since the registry checks it from the internet. Only set{" "}
                 <code className="rounded bg-muted px-1 py-0.5 text-xs">FEDERATION_REGISTRY_URL</code>{" "}

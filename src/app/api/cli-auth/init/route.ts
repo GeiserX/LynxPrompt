@@ -87,7 +87,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     });
 
     // Build the auth URL
-    const baseUrl = process.env.NEXTAUTH_URL || process.env.APP_URL || "https://lynxprompt.com";
+    const baseUrl = process.env.NEXTAUTH_URL || process.env.APP_URL || "https://lynxprompt.geiser.cloud";
     const authUrl = `${baseUrl}/auth/signin?cli_session=${sessionId}`;
 
     return NextResponse.json({

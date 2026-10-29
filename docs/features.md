@@ -9,7 +9,7 @@ Instead of manually writing configuration files for every project and every AI t
 - **Standardize** AI behavior across projects with reusable templates
 - **Export** to any supported format with one click
 
-LynxPrompt is **free and open-source**. Self-host it for personal use, or deploy it within your organization to enforce coding standards, share institutional knowledge, and ensure consistent AI assistant behavior across your engineering teams. A hosted instance is also available at [lynxprompt.com](https://lynxprompt.com) for those who prefer not to self-host.
+LynxPrompt is **free and open-source**. Self-host it for personal use, or deploy it within your organization to enforce coding standards, share institutional knowledge, and ensure consistent AI assistant behavior across your engineering teams. A hosted instance is also available at [lynxprompt.geiser.cloud](https://lynxprompt.geiser.cloud) for those who prefer not to self-host.
 
 ## Universal AI Config Hub
 
@@ -48,4 +48,4 @@ Programmatic access for automation and CI/CD integration. Generate API tokens, f
 
 Single `docker compose up` to run the entire stack. PostgreSQL included. Auto-runs database migrations on startup. Toggle every feature via environment variables.
 
-The product manual at [lynxprompt.com/docs](https://lynxprompt.com/docs) describes each feature from the user's side.
+The product manual at [lynxprompt.geiser.cloud/docs](https://lynxprompt.geiser.cloud/docs) describes each feature from the user's side.
