@@ -33,4 +33,21 @@ describe("blog markdownToHtml", () => {
     expect(html).not.toContain("<script>");
     expect(html).not.toContain("javascript:");
   });
+
+  it("keeps inline code in a link URL out of the href", () => {
+    const payload =
+      '[click me](https://example.com/`" onmouseover="alert(document.domain)" style="position:fixed" x="`)';
+    const html = markdownToHtml(payload);
+    expect(html).not.toContain("<a ");
+    expect(html).not.toMatch(/<[^>]*\sonmouseover=/);
+    expect(html).not.toMatch(/<[^>]*\sstyle=/);
+    // The code itself still renders, as text
+    expect(html).toContain('<code>" onmouseover="alert(document.domain)" style="position:fixed" x="</code>');
+  });
+
+  it("still allows inline code in a link's text", () => {
+    expect(markdownToHtml("[run `npm ci`](https://example.com/docs)")).toBe(
+      '<p><a href="https://example.com/docs" target="_blank" rel="noopener noreferrer">run <code>npm ci</code></a></p>'
+    );
+  });
 });

@@ -97,7 +97,10 @@ export function markdownToHtml(markdown: string): string {
   // Links - with URL validation to prevent javascript: XSS
   html = html.replace(
     /\[([^\]]+)\]\(([^)]+)\)/g,
-    (_match, text, url) => {
+    (match, text, url) => {
+      // Code set aside above is put back raw, quotes and all, so it must
+      // never land inside the href; leave such a link as text
+      if (url.includes("\u0000")) return match;
       if (isSafeUrl(url)) {
         // HTML-encode the URL to prevent attribute injection
         const safeUrl = url

@@ -8,8 +8,12 @@ const db = vi.hoisted(() => ({
     count: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
+    delete: vi.fn(),
   },
   userTemplateVersion: { create: vi.fn() },
+  templateDownload: { deleteMany: vi.fn() },
+  templateFavorite: { deleteMany: vi.fn() },
+  $transaction: vi.fn(),
   teamMember: { findUnique: vi.fn(), findMany: vi.fn() },
   hierarchy: { findFirst: vi.fn() },
 }));
@@ -462,5 +466,75 @@ describe("v1 skill names", () => {
     const res = await create({ type: "AGENT_DEFINITION", content: "---\nname: reviewer\ndescription: x\n---\nReview it." });
     expect(res.status).toBe(201);
     expect(created().type).toBe("AGENT_DEFINITION");
+  });
+});
+
+async function remove() {
+  const { DELETE } = await import("@/app/api/v1/blueprints/[id]/route");
+  return DELETE(req("https://lynxprompt.com/api/v1/blueprints/bp_tpl_1", "DELETE"), {
+    params: Promise.resolve({ id: "bp_tpl_1" }),
+  });
+}
+
+describe("v1 team blueprints are the team's to edit", () => {
+  const teamRow = row({ userId: "owner_9", visibility: "TEAM", teamId: "team_1" });
+
+  beforeEach(() => {
+    db.$transaction.mockResolvedValue([]);
+  });
+
+  it("lets an admin of the team edit a blueprint a member wrote", async () => {
+    db.userTemplate.findUnique.mockResolvedValue(teamRow);
+    db.teamMember.findUnique.mockResolvedValue({ role: "ADMIN" });
+    const res = await update({ name: "Fixed by the admin" });
+    expect(res.status).toBe(200);
+    expect(db.teamMember.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { teamId_userId: { teamId: "team_1", userId: "user_1" } } })
+    );
+  });
+
+  it("lets an admin of the team delete it", async () => {
+    db.userTemplate.findUnique.mockResolvedValue(teamRow);
+    db.teamMember.findUnique.mockResolvedValue({ role: "ADMIN" });
+    expect((await remove()).status).toBe(200);
+    expect(db.$transaction).toHaveBeenCalledTimes(1);
+  });
+
+  it("refuses a plain member of the team", async () => {
+    db.userTemplate.findUnique.mockResolvedValue(teamRow);
+    db.teamMember.findUnique.mockResolvedValue({ role: "MEMBER" });
+    expect((await update({ name: "Not mine" })).status).toBe(403);
+    expect((await remove()).status).toBe(403);
+    expect(db.userTemplate.update).not.toHaveBeenCalled();
+    expect(db.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("refuses a team admin a member's PRIVATE blueprint", async () => {
+    db.userTemplate.findUnique.mockResolvedValue(row({ userId: "owner_9", teamId: "team_1" }));
+    db.teamMember.findUnique.mockResolvedValue({ role: "ADMIN" });
+    expect((await update({ name: "Not mine" })).status).toBe(403);
+    expect((await remove()).status).toBe(403);
+  });
+});
+
+describe("v1 blueprints of retired config types", () => {
+  it("refuses a new Continue or Tabnine config", async () => {
+    for (const type of ["CONTINUE_CONFIG", "TABNINE_CONFIG"]) {
+      const res = await create({ type, content: '{"models": []}\nmore config here' });
+      expect(res.status).toBe(400);
+      expect((await res.json()).error).toMatch(/retired/);
+    }
+    expect(db.userTemplate.create).not.toHaveBeenCalled();
+  });
+
+  it("refuses turning a blueprint into one", async () => {
+    db.userTemplate.findUnique.mockResolvedValue(row({ userId: "user_1" }));
+    expect((await update({ type: "CODY_CONFIG" })).status).toBe(400);
+    expect(db.userTemplate.update).not.toHaveBeenCalled();
+  });
+
+  it("still saves an old one that keeps its type", async () => {
+    db.userTemplate.findUnique.mockResolvedValue(row({ userId: "user_1", type: "CONTINUE_CONFIG" }));
+    expect((await update({ type: "CONTINUE_CONFIG", name: "Renamed config" })).status).toBe(200);
   });
 });

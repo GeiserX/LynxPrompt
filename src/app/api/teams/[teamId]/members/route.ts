@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prismaUsers } from "@/lib/db-users";
 import { z } from "zod";
 import { requireSession } from "@/lib/api-auth";
+import { teamBlueprintHandover } from "@/lib/team-blueprints";
 
 // Validation schema for updating member role
 const updateMemberSchema = z.object({
@@ -241,10 +242,12 @@ export async function DELETE(
       }
     }
 
-    // Remove member
-    await prismaUsers.teamMember.delete({
-      where: { id: memberId },
-    });
+    // Remove member; the team blueprints they wrote stay with the team
+    const handover = await teamBlueprintHandover(memberToRemove.userId, [teamId]);
+    await prismaUsers.$transaction([
+      ...handover.operations,
+      prismaUsers.teamMember.delete({ where: { id: memberId } }),
+    ]);
 
     return NextResponse.json({
       message: `${memberToRemove.user.name || memberToRemove.user.email} has been removed from the team`,

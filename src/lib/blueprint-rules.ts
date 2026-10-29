@@ -6,7 +6,7 @@ import { prismaUsers } from "@/lib/db-users";
 import { TemplateType } from "@/generated/prisma-users/enums";
 import { detectSensitiveData, type SensitiveMatch } from "@/lib/sensitive-data";
 import { checkBlueprintLineCount } from "@/lib/subscription";
-import { MCP_BLUEPRINT_TYPE, SKILL_BLUEPRINT_TYPE, checkSkillContent } from "@/lib/platforms";
+import { MCP_BLUEPRINT_TYPE, RETIRED_CONFIG_FILES, SKILL_BLUEPRINT_TYPE, checkSkillContent } from "@/lib/platforms";
 
 export type TeamResolution =
   | { ok: true; teamId: string }
@@ -160,6 +160,17 @@ export function checkBlueprintContent(
   }
 
   return { ok: true };
+}
+
+/**
+ * Why a new blueprint of this type cannot be stored, or null: the config
+ * types of retired tools are kept for old blueprints only.
+ */
+export function retiredTypeError(type: string | null | undefined): string | null {
+  const retired = type ? RETIRED_CONFIG_FILES[type] : undefined;
+  return retired
+    ? `${retired.tool} is retired, so LynxPrompt no longer stores its ${retired.file}. Save the rules as AGENTS.md instead.`
+    : null;
 }
 
 /**

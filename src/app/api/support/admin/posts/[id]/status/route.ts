@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prismaSupport } from "@/lib/db-support";
 import { supportForumDisabled } from "@/lib/support-guard";
 import { requireSession } from "@/lib/api-auth";
+import { AUTHOR_STATUSES, SUPPORT_STATUSES } from "@/lib/support-status";
 
-const VALID_STATUSES = ["OPEN", "IN_PROGRESS", "COMPLETED", "CLOSED", "DUPLICATE"];
+const VALID_STATUSES = SUPPORT_STATUSES;
 
 export async function POST(
   request: NextRequest,
@@ -45,10 +46,9 @@ export async function POST(
     }
 
     // Authors can only set OPEN or CLOSED; admin-only statuses are restricted
-    const AUTHOR_ALLOWED_STATUSES = ["OPEN", "CLOSED"];
-    if (!isAdmin && !AUTHOR_ALLOWED_STATUSES.includes(status)) {
+    if (!isAdmin && !AUTHOR_STATUSES.includes(status)) {
       return NextResponse.json(
-        { error: "Authors can only set status to: " + AUTHOR_ALLOWED_STATUSES.join(", ") },
+        { error: "Authors can only set status to: " + AUTHOR_STATUSES.join(", ") },
         { status: 403 }
       );
     }

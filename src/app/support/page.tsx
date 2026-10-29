@@ -28,6 +28,7 @@ import {
   X,
   Pencil,
 } from "lucide-react";
+import { statusChoices } from "@/lib/support-status";
 
 interface Category {
   id: string;
@@ -246,13 +247,15 @@ function SupportPageContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        const data = await res.json();
         setPosts((prev) =>
           prev.map((p) =>
             p.id === postId ? { ...p, status: data.status } : p
           )
         );
+      } else {
+        alert(data.error || "Could not change the status");
       }
     } catch (error) {
       console.error("Error updating status:", error);
@@ -635,7 +638,7 @@ function SupportPageContent() {
                               </button>
                               {statusMenuOpen === post.id && (
                                 <div data-dropdown-menu className="absolute right-0 top-full z-10 mt-1 w-36 rounded-lg border bg-popover p-1 shadow-lg">
-                                  {Object.entries(STATUS_BADGES).map(([key, badge]) => (
+                                  {statusChoices(isAdmin).map((key) => (
                                     <button
                                       key={key}
                                       onClick={(e) => {
@@ -646,8 +649,8 @@ function SupportPageContent() {
                                         post.status === key ? "bg-muted" : ""
                                       }`}
                                     >
-                                      {badge.icon}
-                                      {badge.label}
+                                      {STATUS_BADGES[key].icon}
+                                      {STATUS_BADGES[key].label}
                                     </button>
                                   ))}
                                 </div>

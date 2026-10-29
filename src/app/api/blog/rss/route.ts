@@ -103,7 +103,7 @@ export async function GET() {
       <guid isPermaLink="true">${postUrl}</guid>
       <pubDate>${pubDate}</pubDate>
       <author>${escapeXml(authorName)}</author>
-      <description><![CDATA[${description}]]></description>
+      <description>${escapeXml(description)}</description>
 ${categories}
     </item>`;
       })

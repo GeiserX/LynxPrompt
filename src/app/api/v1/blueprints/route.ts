@@ -15,6 +15,7 @@ import {
 import {
   checkBlueprintContent,
   normalizeBlueprintType,
+  retiredTypeError,
   skillContentError,
   resolveBlueprintTeamId,
 } from "@/lib/blueprint-rules";
@@ -263,7 +264,9 @@ export async function POST(request: NextRequest) {
       teamId = team.teamId;
     }
 
-    const skillError = skillContentError(normalizeBlueprintType(type), content, repository_path);
+    const skillError =
+      retiredTypeError(normalizeBlueprintType(type)) ??
+      skillContentError(normalizeBlueprintType(type), content, repository_path);
     if (skillError) {
       return NextResponse.json({ error: skillError }, { status: 400 });
     }

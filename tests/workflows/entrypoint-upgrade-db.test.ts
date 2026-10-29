@@ -114,6 +114,20 @@ describe.runIf(base)("entrypoint upgrade of a db-push database", () => {
         ]);
         expect(diff.status, `${s} database differs from prisma/schema-${s}.prisma:\n${diff.stdout}${diff.stderr}`).toBe(0);
       }
+
+      // A newer release's migration in the record: this image must refuse to
+      // start rather than serve on a schema it does not know
+      rmSync(join(dir, "started"));
+      await client.query(
+        `INSERT INTO "${pgSchema("users")}"._prisma_migrations
+           (id, checksum, migration_name, started_at, finished_at, applied_steps_count)
+         VALUES ('future', 'x', '20991231000000_from_a_newer_release', now(), now(), 1)`,
+      );
+      const rollback = spawnSync("sh", [resolve(root, "entrypoint.sh")], { cwd: dir, env, encoding: "utf8", timeout: 300_000 });
+      const rollbackOutput = rollback.stdout + rollback.stderr;
+      expect(rollback.status, rollbackOutput).toBe(1);
+      expect(rollbackOutput).toContain("Users DB was migrated by a newer LynxPrompt release");
+      expect(existsSync(join(dir, "started"))).toBe(false);
     } finally {
       await client.end();
     }

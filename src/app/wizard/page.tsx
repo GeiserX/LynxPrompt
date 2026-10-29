@@ -57,6 +57,7 @@ import {
   buildPreferencesPayload,
   createDefaultWizardConfig,
   mergeWizardConfig,
+  initialZipPlatforms,
   type BoundariesConfig,
   type CodeStyleConfig,
   type CommandsConfig,
@@ -1254,7 +1255,7 @@ function WizardPageContent() {
   };
 
   const openZipModal = () => {
-    setZipPlatforms(Array.from(new Set([config.platform || "universal", "universal"])));
+    setZipPlatforms(initialZipPlatforms(config.platform));
     setShowZipModal(true);
   };
 
@@ -6751,8 +6752,12 @@ function StepGenerate({
     );
   }, [ideSearch]);
   
-  const visiblePlatforms = showAllIdes ? filteredPlatforms : filteredPlatforms.slice(0, 4);
-  const hasMore = filteredPlatforms.length > 4 && !showAllIdes;
+  // Collapsed: the first four, plus the selected tool when it is further down
+  const visiblePlatforms = showAllIdes
+    ? filteredPlatforms
+    : filteredPlatforms.filter((p, i) => i < 4 || p.id === config.platform);
+  const hiddenCount = filteredPlatforms.length - visiblePlatforms.length;
+  const hasMore = hiddenCount > 0;
   
   return (
     <div>
@@ -6824,7 +6829,7 @@ function StepGenerate({
                   onClick={() => setShowAllIdes(true)}
                   className="w-full rounded-md border border-dashed border-muted-foreground/30 py-2 text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors"
                 >
-                  Show {filteredPlatforms.length - 4} more IDEs...
+                  Show {hiddenCount} more IDEs...
                 </button>
               </div>
             )}

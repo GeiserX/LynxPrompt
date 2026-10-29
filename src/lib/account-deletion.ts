@@ -11,7 +11,8 @@
  *   unfavoriting does;
  * - teams: a team where the user is the only member goes with them, and a
  *   team with other members must keep an admin, so the user has to promote
- *   one first;
+ *   one first. Their blueprints shared with such a team stay with it, handed
+ *   to a remaining admin;
  * - pending invitations and sign-in tokens addressed to their email;
  * - the support forum and the blog live in other databases, keyed by user id
  *   without a foreign key. Posts and comments stay, so threads keep making
@@ -28,6 +29,7 @@ import { prismaApp } from "@/lib/db-app";
 import { prismaSupport } from "@/lib/db-support";
 import { prismaBlog } from "@/lib/db-blog";
 import { envBool } from "@/lib/feature-flags";
+import { teamBlueprintHandover } from "@/lib/team-blueprints";
 
 // The id that anonymized forum and blog content points at
 export const DELETED_USER_ID = "deleted-user";
@@ -124,10 +126,27 @@ export async function deleteAccount(userId: string): Promise<void> {
   await optionalDatabase("ENABLE_SUPPORT_FORUM", "DATABASE_URL_SUPPORT", () => anonymizeSupport(userId));
   await optionalDatabase("ENABLE_BLOG", "DATABASE_URL_BLOG", () => anonymizeBlog(userId));
 
-  const blueprints = await prismaUsers.userTemplate.findMany({
-    where: { userId },
+  const soloTeams = await prismaUsers.team.findMany({
+    where: { members: { some: { userId }, every: { userId } } },
     select: { id: true },
   });
+  const sharedTeams = await prismaUsers.teamMember.findMany({
+    where: { userId, teamId: { notIn: soloTeams.map((t) => t.id) } },
+    select: { teamId: true },
+  });
+  const handover = await teamBlueprintHandover(
+    userId,
+    sharedTeams.map(({ teamId }) => teamId)
+  );
+  const handedOver = new Set(handover.blueprintIds);
+
+  // The blueprints that go with the account
+  const blueprints = (
+    await prismaUsers.userTemplate.findMany({
+      where: { userId },
+      select: { id: true },
+    })
+  ).filter(({ id }) => !handedOver.has(id));
   // Rows may name a blueprint by its bare id or its bp_ API id
   const blueprintIds = blueprints.flatMap(({ id }) => [id, `bp_${id}`]);
 
@@ -148,12 +167,8 @@ export async function deleteAccount(userId: string): Promise<void> {
   const favoritedBlueprints = favoritedIds("user").filter((id) => !ownIds.has(id));
   const favoritedSystem = favoritedIds("system");
 
-  const soloTeams = await prismaUsers.team.findMany({
-    where: { members: { some: { userId }, every: { userId } } },
-    select: { id: true },
-  });
-
   await prismaUsers.$transaction([
+    ...handover.operations,
     prismaUsers.templateFavorite.deleteMany({
       where: { templateType: "user", templateId: { in: blueprintIds } },
     }),

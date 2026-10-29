@@ -26,6 +26,7 @@ import {
   Trash2,
   Edit,
 } from "lucide-react";
+import { statusChoices } from "@/lib/support-status";
 
 interface Category {
   id: string;
@@ -241,9 +242,11 @@ function PostDetailPageContent({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        const data = await res.json();
         setPost((prev) => (prev ? { ...prev, status: data.status } : null));
+      } else {
+        alert(data.error || "Could not change the status");
       }
     } catch (error) {
       console.error("Error changing status:", error);
@@ -415,7 +418,7 @@ function PostDetailPageContent({
                                 <div className="px-3 py-1 text-xs text-muted-foreground">
                                   Set Status
                                 </div>
-                                {["OPEN", "IN_PROGRESS", "COMPLETED", "CLOSED", "DUPLICATE"].map(
+                                {statusChoices(isAdmin).map(
                                   (status) => (
                                     <button
                                       key={status}

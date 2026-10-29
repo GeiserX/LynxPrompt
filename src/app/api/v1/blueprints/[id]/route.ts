@@ -11,11 +11,12 @@ import {
   fromBlueprintApiId,
   toHierarchyApiId,
 } from "@/lib/api-tokens";
-import { canReadBlueprint, isOwnerOrTeamMember } from "@/lib/blueprint-access";
+import { canEditBlueprint, canReadBlueprint, isOwnerOrTeamMember } from "@/lib/blueprint-access";
 import { publicRepositoryPath } from "@/lib/repository-path";
 import {
   checkBlueprintContent,
   normalizeBlueprintType,
+  retiredTypeError,
   skillContentError,
   resolveBlueprintTeamId,
 } from "@/lib/blueprint-rules";
@@ -250,9 +251,9 @@ export async function PUT(
       );
     }
 
-    if (existing.userId !== tokenData.userId) {
+    if (!(await canEditBlueprint(existing, tokenData.userId))) {
       return NextResponse.json(
-        { error: "Forbidden - you don't own this blueprint" },
+        { error: "Forbidden - you don't own this blueprint or admin its team" },
         { status: 403 }
       );
     }
@@ -333,6 +334,12 @@ export async function PUT(
 
     if (type !== undefined) {
       updateData.type = normalizeBlueprintType(type);
+      // An old blueprint keeps its retired type; none may move into one
+      const retiredError =
+        updateData.type !== existing.type ? retiredTypeError(updateData.type as string) : null;
+      if (retiredError) {
+        return NextResponse.json({ error: retiredError }, { status: 400 });
+      }
     }
 
     if (category !== undefined) {
@@ -524,7 +531,7 @@ export async function DELETE(
     // Check ownership first
     const existing = await prismaUsers.userTemplate.findUnique({
       where: { id: blueprintId },
-      select: { userId: true, name: true },
+      select: { userId: true, name: true, visibility: true, teamId: true },
     });
 
     if (!existing) {
@@ -534,9 +541,9 @@ export async function DELETE(
       );
     }
 
-    if (existing.userId !== tokenData.userId) {
+    if (!(await canEditBlueprint(existing, tokenData.userId))) {
       return NextResponse.json(
-        { error: "Forbidden - you don't own this blueprint" },
+        { error: "Forbidden - you don't own this blueprint or admin its team" },
         { status: 403 }
       );
     }

@@ -33,6 +33,7 @@ import {
 } from "@/lib/file-generator";
 import {
   PLATFORMS,
+  RETIRED_CONFIG_FILES,
   COMMANDS,
   platformForBlueprintType,
   getCommandTemplateType,
@@ -154,6 +155,9 @@ export function TemplateDownloadModal({
   const isSubagent = template.targetPlatform === SUBAGENT_BLUEPRINT_TYPE;
   const isAsset = isSkill || isSubagent;
   const isMcp = template.targetPlatform === MCP_BLUEPRINT_TYPE;
+  // A retired tool's own config (Continue, Cody...): not rules, so it is not
+  // re-targeted; it downloads as it is, under the file name it had
+  const retiredConfig = RETIRED_CONFIG_FILES[template.targetPlatform || ""];
   const assetTargets = isSkill ? SKILL_TARGETS : SUBAGENT_TARGETS;
   // Tools that get a copy only when picked (Kiro, Firebender, Copilot, Codex)
   const [assetTools, setAssetTools] = useState<string[]>([]);
@@ -359,7 +363,7 @@ export function TemplateDownloadModal({
     ? mcpContent(filledContent, mcpTarget.id, template.repositoryPath)
     : isCommand
       ? commandContent(filledContent, commandId)
-      : isStructured || isAsset
+      : isStructured || isAsset || retiredConfig
         ? filledContent
         : adaptRulesContent(filledContent, storedPlatform, selectedPlatform, template.name);
 
@@ -395,6 +399,8 @@ export function TemplateDownloadModal({
       filename = `${assetName}-${isSkill ? "skill" : "subagent"}.zip`;
     } else if (isMcp) {
       filename = downloadName(mcpTarget.file);
+    } else if (retiredConfig) {
+      filename = downloadName(retiredConfig.file);
     } else if (isCommand) {
       // For commands, use the template name as filename, sanitized
       const sanitizedName = template.name
@@ -421,6 +427,8 @@ export function TemplateDownloadModal({
                 ? "subagent"
                 : isMcp
                 ? mcpTarget.id
+                : retiredConfig
+                ? template.targetPlatform
                 : isCommand
                   ? `command-${commandExportTarget}`
                   : selectedPlatform,
@@ -626,8 +634,16 @@ export function TemplateDownloadModal({
             </div>
           )}
 
+          {retiredConfig && (
+            <p className="mb-6 text-sm text-muted-foreground" data-testid="retired-config-note">
+              This blueprint is a {retiredConfig.tool} config, and {retiredConfig.tool} is retired. It downloads
+              as it was saved:{" "}
+              <code className="rounded bg-muted px-1">{retiredConfig.file}</code>
+            </p>
+          )}
+
           {/* Platform Selection with Search (for rule blueprints) */}
-          {!isCommand && !isAsset && !isMcp && (
+          {!isCommand && !isAsset && !isMcp && !retiredConfig && (
             <div className="mb-6">
               <label className="mb-2 block text-sm font-medium">
                 Which AI IDE are you using?

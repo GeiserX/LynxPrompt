@@ -9,6 +9,7 @@ import {
   buildPreferencesPayload,
   createDefaultWizardConfig,
   mergeWizardConfig,
+  initialZipPlatforms,
   type DetectedRepo,
   type WizardConfig,
 } from "@/lib/wizard-state";
@@ -106,6 +107,21 @@ describe("mergeWizardConfig", () => {
   it("keeps fields it does not know, such as the save metadata", () => {
     const merged = mergeWizardConfig({ _meta: { source: "web" } }) as WizardConfig & { _meta?: unknown };
     expect(merged._meta).toEqual({ source: "web" });
+  });
+
+  it("ticks the replacement of a retired tool in the zip dialog, never an id it has no box for", () => {
+    expect(initialZipPlatforms("amazonq")).toEqual(["kiro", "universal"]);
+    expect(initialZipPlatforms("continue")).toEqual(["universal"]);
+    expect(initialZipPlatforms("cursor")).toEqual(["cursor", "universal"]);
+    expect(initialZipPlatforms(undefined)).toEqual(["universal"]);
+    expect(initialZipPlatforms("no-such-tool")).toEqual(["universal"]);
+  });
+
+  it("swaps a retired tool in an older draft for the one that replaced it", () => {
+    expect(mergeWizardConfig({ platform: "amazonq" }).platform).toBe("kiro");
+    expect(mergeWizardConfig({ platform: "devin" }).platform).toBe("windsurf");
+    expect(mergeWizardConfig({ platform: "continue" }).platform).toBe("universal");
+    expect(mergeWizardConfig({ platform: "cursor" }).platform).toBe("cursor");
   });
 
   it("returns the defaults for something that is not an object", () => {

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
-import { createDefaultWizardConfig } from "@/lib/wizard-state";
+import { WIZARD_STEP_IDS, createDefaultWizardConfig } from "@/lib/wizard-state";
+import { PLATFORMS } from "@/lib/platforms";
 
 const { searchParams } = vi.hoisted(() => ({ searchParams: { value: new URLSearchParams() } }));
 
@@ -92,6 +93,40 @@ describe("wizard page: resuming a draft", () => {
     render(<WizardPage />);
     await waitFor(() => expect(screen.getAllByText(/Secrets Management/i).length).toBeGreaterThan(0));
     expect(errors.mock.calls.flat().join(" ")).not.toMatch(/Cannot read properties of undefined/);
+  });
+});
+
+describe("wizard page: a draft for a retired tool", () => {
+  beforeEach(() => {
+    searchParams.value = new URLSearchParams("draft=d1");
+    window.scrollTo = vi.fn() as unknown as typeof window.scrollTo;
+    vi.stubGlobal("localStorage", { getItem: () => null, setItem: () => {}, removeItem: () => {} });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it("shows the tool that replaced the draft's retired one as selected", async () => {
+    const config = { ...createDefaultWizardConfig(), platform: "amazonq" };
+    mockApi({
+      "/api/wizard/drafts/d1": {
+        body: { id: "d1", name: "Old", step: WIZARD_STEP_IDS.length - 1, config },
+      },
+      "/api/user/wizard-preferences": { body: {} },
+    });
+
+    const { container } = render(<WizardPage />);
+    // Text queries: role queries over the whole wizard run out of memory in jsdom
+    await screen.findByText("Several Tools (.zip)");
+    // Kiro replaced Amazon Q; its tile is selected, though it sits past the first four
+    const kiro = PLATFORMS.find((p) => p.id === "kiro")!;
+    const tiles = [...container.querySelectorAll("button")].filter((b) =>
+      b.textContent?.startsWith(`${kiro.icon}${kiro.name}`)
+    );
+    expect(tiles.length).toBe(1);
+    expect(tiles[0].className).toContain("ring-1");
   });
 });
 

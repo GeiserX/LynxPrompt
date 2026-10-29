@@ -5,6 +5,8 @@
  * Kept outside the page so each step can be tested on its own.
  */
 
+import { PLATFORMS, resolvePlatformId } from "@/lib/platforms";
+
 /** Wizard steps in order. The page renders one screen per id, and the draft API accepts any index of this list. */
 export const WIZARD_STEP_IDS = [
   "project",
@@ -360,7 +362,22 @@ function mergeOver(defaults: PlainObject, saved: PlainObject): PlainObject {
 export function mergeWizardConfig(saved: unknown): WizardConfig {
   const defaults = createDefaultWizardConfig();
   if (!isPlainObject(saved)) return defaults;
-  return mergeOver(defaults as unknown as PlainObject, saved) as unknown as WizardConfig;
+  const merged = mergeOver(defaults as unknown as PlainObject, saved) as unknown as WizardConfig;
+  // A draft may name a tool that was retired since; the page only knows the
+  // tool that replaced it
+  merged.platform = resolvePlatformId(merged.platform);
+  return merged;
+}
+
+/**
+ * The tools ticked when the several-tools .zip dialog opens: the wizard's
+ * tool and AGENTS.md. Only tools the dialog lists, so every pick it counts
+ * has a box to untick.
+ */
+export function initialZipPlatforms(platform: string | undefined): string[] {
+  const listed = new Set(PLATFORMS.filter((p) => !p.isCommand).map((p) => p.id));
+  const picked = [resolvePlatformId(platform || "universal"), "universal"];
+  return Array.from(new Set(picked.filter((id) => listed.has(id))));
 }
 
 // Split a comma-separated free-text answer into its items.
