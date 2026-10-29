@@ -88,6 +88,35 @@ END \$\$;
 SQL
 }
 
+# Releases before 2.0.49 (February 2026) named the blueprint length tiers SIMPLE,
+# INTERMEDIATE and ADVANCED; 0_init has SHORT, INTERMEDIATE, LONG and SUPERLONG.
+# Renaming the two old values in place keeps every row's tier, where the
+# baseline db push would refuse to drop values still in use.
+# rename_tiers <schema> <old> <new> <old> <new> renames whichever of the two old
+# values the schema's TemplateTier still has, and fails when it has neither.
+rename_tiers() {
+  npx prisma db execute --config="prisma/prisma.config-$1.ts" --stdin >/dev/null 2>&1 <<SQL
+DO \$\$
+DECLARE
+  tier oid := (SELECT t.oid FROM pg_type t
+               WHERE t.typname = 'TemplateTier' AND t.typnamespace = current_schema()::regnamespace);
+  renamed boolean := false;
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_enum WHERE enumtypid = tier AND enumlabel = '$2') THEN
+    ALTER TYPE "TemplateTier" RENAME VALUE '$2' TO '$3';
+    renamed := true;
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_enum WHERE enumtypid = tier AND enumlabel = '$4') THEN
+    ALTER TYPE "TemplateTier" RENAME VALUE '$4' TO '$5';
+    renamed := true;
+  END IF;
+  IF NOT renamed THEN
+    RAISE EXCEPTION 'nothing to rename';
+  END IF;
+END \$\$;
+SQL
+}
+
 # A db-push database is brought to the 0_init state with one last `db push` of
 # the frozen copy of the schema as 0_init created it (prisma/baseline), which
 # refuses any change that would lose data. Only 0_init is then recorded as
@@ -104,7 +133,19 @@ migrate() {
   fi
   if needs_baseline "$1"; then
     echo "$2 DB: created by prisma db push; recording 0_init as applied"
-    npx prisma db push --config="$config" --schema="prisma/baseline/schema-$1.prisma" 2>&1 || return 1
+    renamed=0
+    rename_tiers "$1" SIMPLE SHORT ADVANCED LONG && renamed=1
+    accept=""
+    enabled "$BASELINE_ACCEPT_DATA_LOSS" && accept="--accept-data-loss"
+    if ! npx prisma db push $accept --config="$config" --schema="prisma/baseline/schema-$1.prisma" 2>&1; then
+      # Leave the tiers as the earlier release knows them, so it can still run.
+      [ "$renamed" -eq 1 ] && rename_tiers "$1" SHORT SIMPLE LONG ADVANCED
+      if [ -z "$accept" ]; then
+        echo "$2 DB predates 0_init and holds data of features since removed (listed above)."
+        echo "Back it up, then start once with BASELINE_ACCEPT_DATA_LOSS=true to drop that data (docs/troubleshooting.md)."
+      fi
+      return 1
+    fi
     npx prisma migrate resolve --applied 0_init --config="$config" 2>&1 || return 1
   fi
   npx prisma migrate deploy --config="$config" 2>&1

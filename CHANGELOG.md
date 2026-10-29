@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 From 3.0.0 the web app and the CLI share one version and one release: the `vX.Y.Z` tag, the Docker image `drumsergio/lynxprompt:X.Y.Z` and `lynxprompt@X.Y.Z` on npm. Each `## [X.Y.Z]` section below covers both and becomes that release's notes. Before 3.0.0 the app and the CLI had their own version lines (`app-v*` and `cli-v*` tags).
 
+## [3.3.1] - 2026-10-29
+
+3.3.1 lets an instance last run on a release before 2.0.49 upgrade. No new migrations.
+
+### Fixed
+- **Upgrades from old releases:** a database a release before 2.0.49 built with `prisma db push` stopped the container at start, because its blueprint tiers were still named SIMPLE and ADVANCED. The entrypoint now renames them to SHORT and LONG and keeps every blueprint's tier. A database that also holds rows of a removed feature (seller payouts, blueprint prices) still stops, lists what would be dropped and leaves that database as it was; back it up and start once with `BASELINE_ACCEPT_DATA_LOSS=true` (docs/troubleshooting.md).
+
 ## [3.3.0] - 2026-10-29
 
 3.3.0 fixes what the 2026-10-29 gap review found after 3.2.1: team blueprints now stay with the team, the CLI sees every tool's files, and one repository gets one hierarchy however it was cloned. No database migrations.

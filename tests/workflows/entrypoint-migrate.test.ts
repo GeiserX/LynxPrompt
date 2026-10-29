@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -22,7 +22,16 @@ afterEach(() => {
 // The hosted instance runs with the blog and the support forum on.
 const allOn = { ENABLE_BLOG: "true", ENABLE_SUPPORT_FORUM: "true" };
 
-function run(opts: { legacy?: string[]; ahead?: string; failDeploy?: string; env?: Record<string, string> } = {}) {
+function run(
+  opts: {
+    legacy?: string[];
+    ahead?: string;
+    failDeploy?: string;
+    oldTiers?: string;
+    failPush?: string;
+    env?: Record<string, string>;
+  } = {},
+) {
   dir = mkdtempSync(join(tmpdir(), "lp-entrypoint-migrate-"));
   for (const s of schemas) {
     mkdirSync(join(dir, "prisma", `migrations-${s}`, "0_init"), { recursive: true });
@@ -32,6 +41,8 @@ function run(opts: { legacy?: string[]; ahead?: string; failDeploy?: string; env
   const legacy = (opts.legacy ?? []).map((s) => `*config-${s}.ts*`).join("|");
   const failDeploy = opts.failDeploy ? `*config-${opts.failDeploy}.ts*` : "__none__";
   const ahead = opts.ahead ? `*config-${opts.ahead}.ts*` : "__none__";
+  const oldTiers = opts.oldTiers ? `*config-${opts.oldTiers}.ts*` : "__none__";
+  const failPush = opts.failPush ? `*config-${opts.failPush}.ts*` : "__none__";
   writeFileSync(
     join(dir, "npx"),
     `#!/bin/sh
@@ -41,9 +52,11 @@ case "$*" in
     sql=$(cat)
     case "$sql" in
       *"nothing newer"*) printf '%s' "$sql" > "${dir}/ahead.sql"; case "$*" in ${ahead}) exit 0 ;; esac; exit 1 ;;
+      *"RENAME VALUE"*) printf '%s\n' "$sql" >> "${dir}/rename.sql"; case "$*" in ${oldTiers}) exit 0 ;; esac; exit 1 ;;
     esac
     printf '%s' "$sql" > "${dir}/check.sql"; case "$*" in ${legacy || "__none__"}) exit 0 ;; esac; exit 1 ;;
   *"migrate deploy"*) case "$*" in ${failDeploy}) exit 1 ;; esac ;;
+  *"db push"*) case "$*" in ${failPush}) exit 1 ;; esac ;;
 esac
 exit 0
 `,
@@ -57,7 +70,9 @@ exit 0
   });
   const calls = readFileSync(log, "utf8").trim().split("\n");
   const started = spawnSync("test", ["-e", join(dir, "started")]).status === 0;
-  return { calls, status: result.status, output: result.stdout + result.stderr, started };
+  const renameLog = join(dir, "rename.sql");
+  const renames = existsSync(renameLog) ? readFileSync(renameLog, "utf8") : "";
+  return { calls, status: result.status, output: result.stdout + result.stderr, started, renames };
 }
 
 // Two checks before any change: is the database ahead of this image, and was it made by db push?
@@ -84,6 +99,7 @@ describe("entrypoint database migrations", () => {
     // would refuse its column drops, and recording it would skip its SQL.
     expect(callsFor(calls, "users")).toEqual([
       ...CHECKS,
+      "prisma db execute --stdin",
       "prisma db push --schema=prisma/baseline/schema-users.prisma",
       "prisma migrate resolve --applied 0_init",
       "prisma migrate deploy",
@@ -97,6 +113,49 @@ describe("entrypoint database migrations", () => {
     const pushes = calls.filter((c) => c.includes("db push"));
     expect(pushes).toHaveLength(4);
     for (const p of pushes) expect(p).not.toContain("accept-data-loss");
+  });
+
+  it("renames the old tiers before the baseline push and keeps the rename when the push works", () => {
+    const { status, renames } = run({ legacy: ["users"], oldTiers: "users" });
+    expect(status).toBe(0);
+    expect(renames).toContain(`RENAME VALUE 'SIMPLE' TO 'SHORT'`);
+    expect(renames).toContain(`RENAME VALUE 'ADVANCED' TO 'LONG'`);
+    expect(renames).not.toContain(`RENAME VALUE 'SHORT' TO 'SIMPLE'`);
+  });
+
+  it("refuses a push that would lose data, undoes the tier rename and says how to go on", () => {
+    const { calls, status, started, output, renames } = run({ legacy: ["users"], oldTiers: "users", failPush: "users" });
+    expect(status).toBe(1);
+    expect(started).toBe(false);
+    expect(renames).toContain(`RENAME VALUE 'SHORT' TO 'SIMPLE'`);
+    expect(renames).toContain(`RENAME VALUE 'LONG' TO 'ADVANCED'`);
+    expect(callsFor(calls, "users")).not.toContain("prisma migrate resolve --applied 0_init");
+    expect(output).toContain("BASELINE_ACCEPT_DATA_LOSS=true");
+  });
+
+  it("undoes the tier rename when the opted-in push fails too", () => {
+    const { status, renames } = run({
+      legacy: ["users"],
+      oldTiers: "users",
+      failPush: "users",
+      env: { ...allOn, BASELINE_ACCEPT_DATA_LOSS: "true" },
+    });
+    expect(status).toBe(1);
+    expect(renames).toContain(`RENAME VALUE 'SHORT' TO 'SIMPLE'`);
+  });
+
+  it("leaves the tiers alone after a refused push when it renamed nothing", () => {
+    const { status, renames } = run({ legacy: ["users"], failPush: "users" });
+    expect(status).toBe(1);
+    expect(renames).not.toContain(`TO 'SIMPLE'`);
+  });
+
+  it("accepts data loss in the baseline push only when BASELINE_ACCEPT_DATA_LOSS is on", () => {
+    const { calls, status } = run({ legacy: ["users"], env: { ...allOn, BASELINE_ACCEPT_DATA_LOSS: "true" } });
+    expect(status).toBe(0);
+    expect(callsFor(calls, "users")).toContain(
+      "prisma db push --accept-data-loss --schema=prisma/baseline/schema-users.prisma",
+    );
   });
 
   it("leaves the blog and support databases alone while their features are off", () => {

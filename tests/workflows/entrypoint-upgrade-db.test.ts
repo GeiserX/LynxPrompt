@@ -60,6 +60,15 @@ describe.runIf(base)("entrypoint upgrade of a db-push database", () => {
       await client.query(
         `INSERT INTO "${pgSchema("users")}"."User" (id, email, "updatedAt") VALUES ('u1', 'u1@example.com', now())`,
       );
+      // Releases before 2.0.49 named the tiers SIMPLE and ADVANCED; the
+      // entrypoint renames them so the baseline push keeps the rows' tiers.
+      const users = pgSchema("users");
+      await client.query(`ALTER TYPE "${users}"."TemplateTier" RENAME VALUE 'SHORT' TO 'SIMPLE'`);
+      await client.query(`ALTER TYPE "${users}"."TemplateTier" RENAME VALUE 'LONG' TO 'ADVANCED'`);
+      await client.query(
+        `INSERT INTO "${users}"."UserTemplate" (id, "userId", name, type, content, tier, "updatedAt")
+         VALUES ('t1', 'u1', 'a', 'CLAUDE_MD', 'x', 'SIMPLE', now()), ('t2', 'u1', 'b', 'CLAUDE_MD', 'x', 'ADVANCED', now())`,
+      );
       const support = pgSchema("support");
       await client.query(
         `INSERT INTO "${support}"."SupportCategory" (id, name, slug, "updatedAt") VALUES ('c1', 'Bugs', 'bugs', now())`,
@@ -93,6 +102,9 @@ describe.runIf(base)("entrypoint upgrade of a db-push database", () => {
 
       expect((await client.query(`SELECT id FROM "${pgSchema("users")}"."User"`)).rows).toEqual([{ id: "u1" }]);
       expect((await client.query(`SELECT id FROM "${support}"."SupportComment"`)).rows).toEqual([{ id: "m1" }]);
+      expect(
+        (await client.query(`SELECT id, tier FROM "${users}"."UserTemplate" ORDER BY id`)).rows,
+      ).toEqual([{ id: "t1", tier: "SHORT" }, { id: "t2", tier: "LONG" }]);
 
       for (const s of schemas) {
         const folders = readdirSync(join(root, "prisma", `migrations-${s}`), { withFileTypes: true })

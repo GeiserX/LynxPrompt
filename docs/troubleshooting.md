@@ -32,6 +32,17 @@ causes: PostgreSQL not ready yet (the compose file waits for its healthcheck, a 
 a wrong `DB_*_PASSWORD`, or a PostgreSQL 18 volume mounted at `/var/lib/postgresql/data` instead of
 `/var/lib/postgresql` (the compose file has the right path and a comment).
 
+## Start fails with "DB predates 0_init and holds data of features since removed"
+
+The database comes from a release older than 2.0.43 that still holds rows of a feature LynxPrompt has since
+removed, such as the seller payouts and blueprint prices. The entrypoint brings an old database to the first
+migration with one `prisma db push`, which refuses to drop data, and lists above that line what it would drop.
+The database it names is left as it was, though another one may already have been upgraded in the same start,
+so go back to the earlier image only with the backup. To upgrade, back up the databases, then start once with
+`BASELINE_ACCEPT_DATA_LOSS=true` in `.env` (on Kubernetes, in the chart's `extraEnv`); the listed data is
+deleted and every later migration runs. Remove the variable afterwards. Old blueprint tiers are kept without it: SIMPLE becomes SHORT and
+ADVANCED becomes LONG.
+
 ## Sign-in fails with "The table `public.User` does not exist"
 
 Two schemas point at the same database. `prisma db push` drops the tables it does not know, so each push at
