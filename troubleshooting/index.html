@@ -1021,9 +1021,9 @@ fetched before this page was written had that layout. Take the current <code>doc
 gives each schema its own database, and start again; if you set <code>DB_*_NAME</code> or <code>DATABASE_URL_*</code> yourself, give
 each of the four its own database.</p>
 <h2 id="pull-or-start-fails-on-an-arm-host">Pull or start fails on an ARM host<a class="headerlink" href="#pull-or-start-fails-on-an-arm-host" title="Permanent link">&para;</a></h2>
-<p>The image is amd64 only. The compose file sets <code>platform: linux/amd64</code>, so Docker Desktop and Colima with
-Rosetta run it under emulation; a Raspberry Pi needs <code>qemu-user-static</code> installed on the host. It is slower
-than native.</p>
+<p>The image is built for linux/amd64 and linux/arm64, and Docker pulls the one that matches the host. If it
+fails with <code>exec format error</code>, an override forces the other architecture: remove any <code>platform:</code> line you
+added to the compose file, or <code>DOCKER_DEFAULT_PLATFORM</code> from the environment, and pull again.</p>
 <h2 id="port-3000-is-already-in-use">Port 3000 is already in use<a class="headerlink" href="#port-3000-is-already-in-use" title="Permanent link">&para;</a></h2>
 <p>Set <code>PORT=&lt;free port&gt;</code> and <code>APP_URL=http://localhost:&lt;free port&gt;</code> in <code>.env</code>.</p>
 <h2 id="lynxp-talks-to-lynxpromptgeisercloud-instead-of-my-instance"><code>lynxp</code> talks to lynxprompt.geiser.cloud instead of my instance<a class="headerlink" href="#lynxp-talks-to-lynxpromptgeisercloud-instead-of-my-instance" title="Permanent link">&para;</a></h2>

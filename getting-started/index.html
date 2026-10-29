@@ -884,8 +884,8 @@
 <h1 id="getting-started">Getting started<a class="headerlink" href="#getting-started" title="Permanent link">&para;</a></h1>
 <p>LynxPrompt runs as one container next to PostgreSQL. You need Docker with Compose v2 (or Kubernetes for the
 Helm chart) and, for a real deployment, an SMTP server: the default way to sign in is a link sent by mail.
-The image is built for linux/amd64; Apple Silicon and Raspberry Pi hosts run it under emulation, which the
-compose file turns on with <code>platform: linux/amd64</code>.</p>
+The image is built for linux/amd64 and linux/arm64, so Apple Silicon, Raspberry Pi and other ARM hosts run it
+natively.</p>
 <h2 id="docker-compose">Docker Compose<a class="headerlink" href="#docker-compose" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>curl<span class="w"> </span>-O<span class="w"> </span>https://raw.githubusercontent.com/GeiserX/LynxPrompt/main/docker-compose.selfhost.yml<span class="w"> </span>-O<span class="w"> </span>https://raw.githubusercontent.com/GeiserX/LynxPrompt/main/docker-compose.mailpit.yml
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="o">(</span><span class="nb">umask</span><span class="w"> </span><span class="m">077</span><span class="p">;</span><span class="w"> </span><span class="nb">printf</span><span class="w"> </span><span class="s1">'NEXTAUTH_SECRET=%s\nDB_PASSWORD=%s\nADMIN_EMAIL=you@example.com\n'</span><span class="w"> </span><span class="s2">"</span><span class="k">$(</span>openssl<span class="w"> </span>rand<span class="w"> </span>-base64<span class="w"> </span><span class="m">32</span><span class="k">)</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="k">$(</span>openssl<span class="w"> </span>rand<span class="w"> </span>-hex<span class="w"> </span><span class="m">24</span><span class="k">)</span><span class="s2">"</span><span class="w"> </span>&gt;<span class="w"> </span>.env<span class="o">)</span>
