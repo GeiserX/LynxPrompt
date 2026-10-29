@@ -81,6 +81,40 @@ export function safePath(root: string, untrusted: string, pathImpl: path.Platfor
 }
 
 /**
+ * Whether `untrusted` names a file inside `root`: safePath accepts it, and the
+ * deepest part of it that exists, followed through any symlink, is still under
+ * the real `root`. A path from .lynxprompt/blueprints.yml comes from the
+ * repository, so a committed "../../.codex/config.toml" or a committed symlink
+ * to one must never be read or written.
+ */
+export function isInsideRoot(root: string, untrusted: string): boolean {
+  let target: string;
+  try {
+    target = safePath(root, untrusted);
+  } catch {
+    return false;
+  }
+  try {
+    const realRoot = fs.realpathSync(root);
+    // lstat, so a dangling symlink counts as there (and realpath refuses it)
+    const there = (p: string) => {
+      try {
+        fs.lstatSync(p);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+    let existing = target;
+    while (!there(existing) && path.dirname(existing) !== existing) existing = path.dirname(existing);
+    const rel = path.relative(realRoot, fs.realpathSync(existing));
+    return rel === "" || (rel !== ".." && !rel.startsWith(`..${path.sep}`) && !path.isAbsolute(rel));
+  } catch {
+    return false;
+  }
+}
+
+/**
  * The path to write a rules file at under `root`. Cline reads a legacy
  * .clinerules FILE or a .clinerules/ folder, and both cannot exist at once,
  * so with the file present a .clinerules/ rule goes to .cline/rules/ instead.
@@ -141,7 +175,7 @@ const CONFIG_PATTERNS: ConfigPattern[] = [
   // MCP server configs. opencode.json and firebender.json keep the types older
   // CLI versions pushed them as (below), so they are pushed whole.
   ...MCP_CONFIGS.filter((c) => !LEGACY_WHOLE_FILES.has(c.file)).map((c) => ({
-    match: (p: string) => atPath(p, c.file),
+    match: (p: string) => mcpConfigForPath(p)?.id === c.id,
     type: MCP_BLUEPRINT_TYPE,
     label: `MCP Servers (${c.name})`,
   })),
@@ -301,7 +335,10 @@ export function assetCopies(relativePath: string, content: string, tools: string
  * refreshes the copies already there (push, sync) instead of adding new ones
  * (pull). With `overwrite: false` (pull without --yes) a copy that differs is
  * replaced only when it is the copy of `previous`, the file's content before
- * this pull; any other copy holds the user's own work and is kept.
+ * this pull; any other copy holds the user's own work and is kept. A refresh
+ * (push, sync) never replaces a full copy (.claude/...) that differs from a
+ * portable one: the portable copy lacks the full one's tool-only fields
+ * (tools, model, hooks).
  */
 export async function writeAssetCopies(
   root: string,
@@ -321,6 +358,7 @@ export async function writeAssetCopies(
       ? []
       : assetCopies(relativePath, previous, tools).map((c) => [normPath(c.path), withFinalNewline(c.content)])
   );
+  const fromFull = isFullCopy(relativePath);
   for (const copy of assetCopies(relativePath, content, tools)) {
     let target: string;
     try {
@@ -332,7 +370,8 @@ export async function writeAssetCopies(
     if (existsSync(target)) {
       const current = await readFile(target, "utf-8");
       if (current === text) continue;
-      if (!overwrite && before.get(normPath(copy.path)) !== current) {
+      const ours = before.get(normPath(copy.path)) === current;
+      if ((!overwrite || (onlyExisting && !fromFull && isFullCopy(copy.path))) && !ours) {
         kept.push(copy.path);
         continue;
       }
@@ -344,6 +383,15 @@ export async function writeAssetCopies(
     written.push(copy.path);
   }
   return { written, kept };
+}
+
+/** Folders of the copies that hold a skill or subagent whole (.claude/skills, .claude/agents). */
+const FULL_DIRECTORIES = new Set(
+  [...SKILL_TARGETS, ...SUBAGENT_TARGETS].filter((t) => t.format === "full").map((t) => t.directory)
+);
+
+function isFullCopy(relativePath: string): boolean {
+  return FULL_DIRECTORIES.has(assetLocation(relativePath)?.directory ?? "");
 }
 
 /** Every tool LynxPrompt can write a copy for: a copy on disk counts whichever tools are picked. */
@@ -369,8 +417,7 @@ export function keepOneCopy<T extends { path: string }>(
   files: T[],
   isTracked: (relativePath: string) => boolean
 ): { kept: T[]; dropped: T[] } {
-  const full = new Set([...SKILL_TARGETS, ...SUBAGENT_TARGETS].filter((t) => t.format === "full").map((t) => t.directory));
-  const rank = (f: T) => (isTracked(f.path) ? 0 : full.has(assetLocation(f.path)!.directory) ? 1 : 2);
+  const rank = (f: T) => (isTracked(f.path) ? 0 : isFullCopy(f.path) ? 1 : 2);
   const best = new Map<string, T>();
   for (const f of files) {
     const key = assetKey(f.path);

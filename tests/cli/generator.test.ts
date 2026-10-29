@@ -200,8 +200,8 @@ describe("cli wizard Cloud Sync save", () => {
   // blueprint's stored path. Without it a Cursor or Claude file would come
   // back as AGENTS.md.
   it("stores the synced file's path on the blueprint it creates", () => {
-    const src = readFileSync(join(__dirname, "../../cli/src/commands/wizard.ts"), "utf-8");
-    const call = src.slice(src.indexOf("api.createBlueprint({"), src.indexOf("savedBlueprintId = response.blueprint.id"));
+    const src = readFileSync(join(__dirname, "../../cli/src/utils/cloud-sync.ts"), "utf-8");
+    const call = src.slice(src.indexOf("api.createBlueprint({"), src.indexOf("const blueprintId = response.blueprint.id"));
     expect(call).toMatch(/repository_path:\s*fileName/);
   });
 });

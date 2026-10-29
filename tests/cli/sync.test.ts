@@ -356,3 +356,110 @@ describe("MCP servers in another tool's format", () => {
     expect(read(path.join(dir, ".mcp.json"))).toBe("not a config\n");
   });
 });
+
+describe("lynxp diff <blueprint id>", () => {
+  const rule = "---\ndescription: rules\nalwaysApply: true\n---\n\nUse tabs.\n";
+
+  it("compares the file the id is tracked in, not AGENTS.md", async () => {
+    server.bp_1 = { content: rule.trim(), visibility: "PRIVATE", type: "CURSOR_RULES" };
+    fs.writeFileSync(file(), "# Some other rules\n\nNot this blueprint.\n");
+    await pullCommand("bp_1", { output: dir, yes: true });
+
+    await diffCommand("bp_1", {});
+
+    const text = out.join("\n");
+    expect(text).toContain("Comparing with: .cursor/rules/project.mdc");
+    expect(text).toContain("Files are identical");
+  });
+
+  it("compares an untracked id with the file pull would write it to", async () => {
+    server.bp_1 = { content: rule.trim(), visibility: "PRIVATE", type: "CURSOR_RULES" };
+    fs.writeFileSync(file(), "# Some other rules\n");
+    fs.mkdirSync(path.join(dir, ".cursor/rules"), { recursive: true });
+    fs.writeFileSync(path.join(dir, ".cursor/rules/project.mdc"), rule);
+
+    await diffCommand("bp_1", {});
+
+    const text = out.join("\n");
+    expect(text).toContain("Comparing with: .cursor/rules/project.mdc");
+    expect(text).toContain("Files are identical");
+  });
+});
+
+describe("tracked paths outside the project", () => {
+  // .lynxprompt/blueprints.yml is committed with the repository, so a cloned
+  // repo can name any path; sync must never read or write outside the project
+  let outside: string;
+  const emptyChecksum = calculateChecksum("");
+
+  beforeEach(() => {
+    outside = fs.mkdtempSync(path.join(os.tmpdir(), "lp-outside-"));
+    fs.writeFileSync(path.join(outside, "config.toml"), 'model = "o3"\n');
+    server.bp_1 = {
+      content: JSON.stringify({ mcpServers: { pwn: { command: "sh", args: ["-c", "touch /tmp/lp-pwned"] } } }),
+      visibility: "PUBLIC",
+      type: "MCP_CONFIG",
+    };
+  });
+
+  afterEach(() => {
+    fs.rmSync(outside, { recursive: true, force: true });
+  });
+
+  function commitTracker(file: string) {
+    fs.mkdirSync(path.join(dir, ".lynxprompt"), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, ".lynxprompt/blueprints.yml"),
+      [
+        'version: "1"',
+        "blueprints:",
+        "  - id: bp_1",
+        "    source: marketplace",
+        `    file: ${JSON.stringify(file)}`,
+        "    name: Rules",
+        "    pulledAt: 2026-10-29T00:00:00.000Z",
+        `    checksum: ${calculateChecksum(server.bp_1.content)}`,
+        `    localChecksum: ${emptyChecksum}`,
+        "    editable: false",
+        "    canPull: true",
+        "",
+      ].join("\n")
+    );
+  }
+
+  it("ignores a ../ entry, so the outside config is never written", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const rel = path.relative(dir, path.join(outside, ".codex/config.toml"));
+    fs.mkdirSync(path.join(outside, ".codex"));
+    fs.writeFileSync(path.join(outside, ".codex/config.toml"), 'model = "o3"\n');
+    commitTracker(rel);
+
+    await syncCommand(undefined, {});
+
+    expect(read(path.join(outside, ".codex/config.toml"))).toBe('model = "o3"\n');
+    expect((await loadBlueprints(dir)).blueprints).toEqual([]);
+  });
+
+  it("ignores an entry whose file is a symlink out of the project", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    fs.mkdirSync(path.join(outside, ".codex"));
+    fs.writeFileSync(path.join(outside, ".codex/config.toml"), 'model = "o3"\n');
+    fs.symlinkSync(path.join(outside, ".codex"), path.join(dir, ".codex"));
+    commitTracker(".codex/config.toml");
+
+    await syncCommand(undefined, {});
+
+    expect(read(path.join(outside, ".codex/config.toml"))).toBe('model = "o3"\n');
+    expect((await loadBlueprints(dir)).blueprints).toEqual([]);
+  });
+
+  it("still syncs the same entry inside the project", async () => {
+    fs.mkdirSync(path.join(dir, ".codex"));
+    fs.writeFileSync(path.join(dir, ".codex/config.toml"), 'model = "o3"\n');
+    commitTracker(".codex/config.toml");
+
+    await syncCommand(undefined, {});
+
+    expect(read(path.join(dir, ".codex/config.toml"))).toContain("[mcp_servers.pwn]");
+  });
+});

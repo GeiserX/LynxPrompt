@@ -413,8 +413,11 @@ async function trackedCopyOf(cwd: string, file: string): Promise<string | null> 
 
 /** After a push, refresh the copies of a skill or subagent already in the project. */
 async function refreshCopies(cwd: string, file: string, content: string): Promise<void> {
-  const { written } = await writeAssetCopies(cwd, toTrackedPath(cwd, path.resolve(file)), content, { onlyExisting: true });
+  const { written, kept } = await writeAssetCopies(cwd, toTrackedPath(cwd, path.resolve(file)), content, { onlyExisting: true });
   for (const copy of written) console.log(chalk.gray(`   ↳ refreshed ${copy}`));
+  for (const copy of kept) {
+    console.log(chalk.yellow(`   ↳ kept ${copy}: it differs and can hold fields ${file} lacks (tools, model), so it was not replaced`));
+  }
 }
 
 /**

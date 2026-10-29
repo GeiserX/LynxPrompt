@@ -243,18 +243,28 @@ describe("CLI config", () => {
     expect(state.store.tokens).toEqual({ "https://lynxprompt.com": { token: "lp_hosted" } });
   });
 
-  it("leaves both logins and the saved URL alone when each host holds a different one", async () => {
-    const store = {
+  it("moves to the new host and keeps its login when each host holds a different one, and says so", async () => {
+    state.store = {
       apiUrl: "https://lynxprompt.com",
       tokens: {
         "https://lynxprompt.com": { token: "lp_old_account" },
         "https://lynxprompt.geiser.cloud": { token: "lp_new_account" },
       },
     };
-    state.store = structuredClone(store);
+    const stderr = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
     const config = await loadConfig();
-    expect(state.store).toEqual(store);
-    expect(config.getToken()).toBe("lp_old_account");
+    // The old host's token is never sent again: that domain lapses
+    expect(state.store).toEqual({
+      apiUrl: "https://lynxprompt.geiser.cloud",
+      tokens: { "https://lynxprompt.geiser.cloud": { token: "lp_new_account" } },
+    });
+    expect(config.getToken()).toBe("lp_new_account");
+    expect(String(stderr.mock.calls[0]?.[0])).toContain("lynxp login");
+    // Told once: the next start finds nothing to move
+    stderr.mockClear();
+    await loadConfig();
+    expect(stderr).not.toHaveBeenCalled();
+    stderr.mockRestore();
   });
 
   it("leaves a custom server URL, and LYNXPROMPT_API_URL, as they are", async () => {

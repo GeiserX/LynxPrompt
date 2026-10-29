@@ -91,10 +91,13 @@ export const MCP_CONFIGS: readonly McpConfigTarget[] = [
   },
 ];
 
+// Longest file first: .warp/.mcp.json also ends in /.mcp.json (Claude Code's)
+const MCP_CONFIGS_LONGEST_FIRST = [...MCP_CONFIGS].sort((a, b) => b.file.length - a.file.length);
+
 /** The MCP config a project path is, compared in lower case with "/" separators. */
 export function mcpConfigForPath(path: string): McpConfigTarget | undefined {
   const p = path.replace(/\\/g, "/").toLowerCase();
-  return MCP_CONFIGS.find((c) => {
+  return MCP_CONFIGS_LONGEST_FIRST.find((c) => {
     const f = c.file.toLowerCase();
     return p === f || p.endsWith(`/${f}`);
   });
@@ -562,9 +565,9 @@ function writeVibeToml(servers: Servers): string {
 }
 
 /**
- * Read TOML: tables, arrays of tables, dotted keys, basic and literal strings,
- * numbers, booleans, arrays and inline tables. Multi-line strings are refused
- * rather than misread. Dates come back as their text.
+ * Read TOML: tables, arrays of tables, dotted keys, basic and literal strings
+ * (multi-line ones as values), numbers, booleans, arrays and inline tables.
+ * Dates come back as their text.
  */
 export function parseToml(text: string): Obj {
   const root: Obj = {};
@@ -587,6 +590,23 @@ export function parseToml(text: string): Obj {
     if (!text.startsWith(s, i)) throw fail(`expected ${s}`);
     i += s.length;
   };
+  /** The escape at text[i] (a backslash) in a basic string. */
+  const escape = (): string => {
+    const e = text[i + 1];
+    const simple: Record<string, string> = { b: "\b", t: "\t", n: "\n", f: "\f", r: "\r", '"': '"', "\\": "\\" };
+    if (e in simple) {
+      i += 2;
+      return simple[e];
+    }
+    if (e === "u" || e === "U") {
+      const len = e === "u" ? 4 : 8;
+      const hex = text.slice(i + 2, i + 2 + len);
+      if (!/^[0-9A-Fa-f]+$/.test(hex) || hex.length !== len) throw fail("bad escape");
+      i += 2 + len;
+      return String.fromCodePoint(parseInt(hex, 16));
+    }
+    throw fail("bad escape");
+  };
   const basic = (): string => {
     if (text.startsWith('"""', i)) throw fail("multi-line strings are not supported");
     i++;
@@ -599,24 +619,45 @@ export function parseToml(text: string): Obj {
         i++;
         continue;
       }
-      const e = text[i + 1];
-      const simple: Record<string, string> = { b: "\b", t: "\t", n: "\n", f: "\f", r: "\r", '"': '"', "\\": "\\" };
-      if (e in simple) {
-        s += simple[e];
-        i += 2;
-      } else if (e === "u" || e === "U") {
-        const len = e === "u" ? 4 : 8;
-        const hex = text.slice(i + 2, i + 2 + len);
-        if (!/^[0-9A-Fa-f]+$/.test(hex) || hex.length !== len) throw fail("bad escape");
-        s += String.fromCodePoint(parseInt(hex, 16));
-        i += 2 + len;
-      } else {
-        throw fail("bad escape");
-      }
+      s += escape();
     }
     if (i >= n) throw fail("unterminated string");
     i++;
     return s;
+  };
+  /**
+   * A multi-line string (''' or """): a newline right after the opening
+   * quotes is dropped, and up to two quotes before the closing ones belong to
+   * the string. A basic one reads escapes, and a backslash at the end of a
+   * line drops the line break and the blanks after it.
+   */
+  const multiline = (q: '"' | "'"): string => {
+    const delimiter = q.repeat(3);
+    i += 3;
+    if (text.startsWith("\r\n", i)) i += 2;
+    else if (text[i] === "\n") i++;
+    let s = "";
+    for (;;) {
+      if (i >= n) throw fail("unterminated string");
+      if (text.startsWith(delimiter, i)) {
+        let extra = 0;
+        while (extra < 2 && text[i + 3 + extra] === q) extra++;
+        i += 3 + extra;
+        return s + q.repeat(extra);
+      }
+      if (q === '"' && text[i] === "\\") {
+        let j = i + 1;
+        while (text[j] === " " || text[j] === "\t") j++;
+        if (text[j] === "\n" || text.startsWith("\r\n", j)) {
+          i = j;
+          while (i < n && /\s/.test(text[i])) i++;
+        } else {
+          s += escape();
+        }
+        continue;
+      }
+      s += text[i++];
+    }
   };
   const literal = (): string => {
     if (text.startsWith("'''", i)) throw fail("multi-line strings are not supported");
@@ -673,6 +714,8 @@ export function parseToml(text: string): Obj {
   const value = (): unknown => {
     blank();
     const ch = text[i];
+    if (text.startsWith('"""', i)) return multiline('"');
+    if (text.startsWith("'''", i)) return multiline("'");
     if (ch === '"') return basic();
     if (ch === "'") return literal();
     if (ch === "[") {
