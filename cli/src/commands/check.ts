@@ -10,7 +10,7 @@
  */
 
 import chalk from "chalk";
-import ora from "ora";
+import { createSpinner } from "../utils/spinner.js";
 import { readFile, readdir, stat } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
@@ -228,7 +228,7 @@ export async function checkCommand(options: CheckOptions = {}): Promise<void> {
     files: [],
   };
 
-  const spinner = !isCi && !isJson ? ora("Scanning for configuration files...").start() : null;
+  const spinner = !isCi && !isJson ? createSpinner("Scanning for configuration files...").start() : null;
 
   // Check for config files
   for (const file of CONFIG_FILES) {

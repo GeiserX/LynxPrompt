@@ -9,7 +9,7 @@
 import chalk from "chalk";
 import { readFile, writeFile, access } from "fs/promises";
 import { basename, resolve, dirname } from "path";
-import ora from "ora";
+import { createSpinner } from "../utils/spinner.js";
 import {
   SOURCE_FILES,
   convertContent,
@@ -205,7 +205,7 @@ export async function convertCommand(
   console.log();
 
   // Parse and convert
-  const spinner = ora("Converting configuration...").start();
+  const spinner = createSpinner("Converting configuration...").start();
   
   const targetContent = convertContent(sourceContent, sourcePlatform, normalizedTarget);
   

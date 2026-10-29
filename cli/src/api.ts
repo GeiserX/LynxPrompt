@@ -342,6 +342,16 @@ class ApiClient {
     );
   }
 
+  async listAllHierarchies(): Promise<Hierarchy[]> {
+    const all: Hierarchy[] = [];
+    const limit = 50;
+    for (let offset = 0; ; offset += limit) {
+      const page = await this.listHierarchies({ limit, offset });
+      all.push(...page.hierarchies);
+      if (!page.has_more || page.hierarchies.length === 0) return all;
+    }
+  }
+
   /**
    * A hierarchy and its blueprints. With includeContent the server returns each
    * blueprint's content in the list; a server older than that leaves it out.

@@ -11,7 +11,7 @@
  */
 
 import chalk from "chalk";
-import ora from "ora";
+import { createSpinner } from "../utils/spinner.js";
 import { readFile } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
@@ -135,7 +135,7 @@ async function diffFileWithBlueprint(
     return "error";
   }
 
-  const spinner = compact ? null : ora("Fetching blueprint...").start();
+  const spinner = compact ? null : createSpinner("Fetching blueprint...").start();
 
   try {
     const { blueprint } = await api.getBlueprint(blueprintId);
@@ -191,7 +191,7 @@ async function diffWithBlueprintId(cwd: string, blueprintId: string): Promise<vo
     console.log();
   }
 
-  const spinner = ora("Fetching blueprint...").start();
+  const spinner = createSpinner("Fetching blueprint...").start();
 
   try {
     const { blueprint } = await api.getBlueprint(blueprintId);

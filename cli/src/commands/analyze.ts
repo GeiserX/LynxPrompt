@@ -7,7 +7,7 @@
  */
 
 import chalk from "chalk";
-import ora from "ora";
+import { createSpinner } from "../utils/spinner.js";
 import { detectProject, detectFromRemoteUrl, isGitUrl, detectRepoHost } from "../utils/detect.js";
 
 interface AnalyzeOptions {
@@ -40,7 +40,7 @@ export async function analyzeCommand(options: AnalyzeOptions): Promise<void> {
     const method = host === "github" ? "GitHub API" : host === "gitlab" ? "GitLab API" : "shallow clone";
 
     if (!options.json) {
-      const spinner = ora(`Analyzing remote repository via ${method}...`).start();
+      const spinner = createSpinner(`Analyzing remote repository via ${method}...`).start();
       detected = await detectFromRemoteUrl(options.remote);
       
       if (detected) {
@@ -62,7 +62,7 @@ export async function analyzeCommand(options: AnalyzeOptions): Promise<void> {
   } else {
     // Analyze current directory
     if (!options.json) {
-      const spinner = ora("Analyzing current directory...").start();
+      const spinner = createSpinner("Analyzing current directory...").start();
       detected = await detectProject(process.cwd());
       
       if (detected) {

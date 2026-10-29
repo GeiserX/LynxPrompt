@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import ora from "ora";
+import { createSpinner } from "../utils/spinner.js";
 import prompts from "prompts";
 import { api, ApiRequestError, Blueprint } from "../api.js";
 import { safeText } from "../utils/terminal.js";
@@ -124,7 +124,7 @@ async function pullHierarchy(
   options: PullOptions
 ): Promise<void> {
   const cwd = process.cwd();
-  const spinner = ora(`Fetching hierarchy ${chalk.cyan(id)}...`).start();
+  const spinner = createSpinner(`Fetching hierarchy ${chalk.cyan(id)}...`).start();
 
   try {
     // One request for the whole tree; older servers return no content and
@@ -276,7 +276,7 @@ async function pullBlueprint(
   options: PullOptions
 ): Promise<void> {
   const cwd = process.cwd();
-  const spinner = ora(`Fetching blueprint ${chalk.cyan(id)}...`).start();
+  const spinner = createSpinner(`Fetching blueprint ${chalk.cyan(id)}...`).start();
 
   try {
     const { blueprint } = await api.getBlueprint(id);

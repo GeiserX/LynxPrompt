@@ -1,27 +1,10 @@
 import chalk from "chalk";
-import { readFile, readdir, access } from "fs/promises";
+import { readFile } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
 import { checkSyncStatus, toTrackedPath } from "../utils/blueprint-tracker.js";
-
-// AI config files to look for
-const CONFIG_FILES = [
-  { path: "AGENTS.md", name: "AGENTS.md", platform: "Claude Code, Cursor, AI Agents" },
-  { path: "CLAUDE.md", name: "CLAUDE.md", platform: "Claude Code" },
-  { path: ".github/copilot-instructions.md", name: "Copilot Instructions", platform: "GitHub Copilot" },
-  { path: ".windsurfrules", name: ".windsurfrules", platform: "Windsurf" },
-  { path: ".rules", name: ".rules", platform: "Zed" },
-  { path: ".clinerules", name: ".clinerules", platform: "Cline" },
-  { path: ".goosehints", name: ".goosehints", platform: "Goose" },
-  { path: "CONVENTIONS.md", name: "CONVENTIONS.md", platform: "Aider" },
-];
-
-// Directory-based configs
-const CONFIG_DIRS = [
-  { path: ".cursor/rules", name: ".cursor/rules/", platform: "Cursor" },
-  { path: ".amazonq/rules", name: ".amazonq/rules/", platform: "Amazon Q" },
-  { path: ".augment/rules", name: ".augment/rules/", platform: "Augment Code" },
-];
+import { findRuleLocations } from "../utils/rule-locations.js";
+import { safeText } from "../utils/terminal.js";
 
 export async function statusCommand(): Promise<void> {
   const cwd = process.cwd();
@@ -71,9 +54,9 @@ export async function statusCommand(): Promise<void> {
     // Show hierarchies first
     for (const [hierarchyId, items] of byHierarchy.entries()) {
       if (hierarchyId) {
-        const hierarchyName = items[0].blueprint.hierarchyName || "Unknown Hierarchy";
+        const hierarchyName = safeText(items[0].blueprint.hierarchyName) || "Unknown Hierarchy";
         console.log(chalk.magenta(`  📁 ${hierarchyName}`));
-        console.log(chalk.gray(`     Hierarchy: ${hierarchyId}`));
+        console.log(chalk.gray(`     Hierarchy: ${safeText(hierarchyId)}`));
         console.log();
       }
 
@@ -93,7 +76,7 @@ export async function statusCommand(): Promise<void> {
 
         const indent = hierarchyId ? "    " : "  ";
         console.log(`${indent}${statusIcon} ${chalk.bold(blueprint.file)} ${sourceLabel}`);
-        console.log(`${indent}   ${chalk.gray(`ID: ${blueprint.id} • ${blueprint.name}`)}`);
+        console.log(`${indent}   ${chalk.gray(`ID: ${safeText(blueprint.id)} • ${safeText(blueprint.name)}`)}`);
         
         // Show repository path if different from file
         if (blueprint.repositoryPath && blueprint.repositoryPath !== blueprint.file) {
@@ -120,25 +103,24 @@ export async function statusCommand(): Promise<void> {
   console.log(chalk.cyan("📄 AI Config Files"));
   console.log();
 
-  let foundAny = false;
+  // Every rules file and folder in the shared platform table
+  const found = findRuleLocations(cwd);
+  const foundAny = found.files.length > 0 || found.dirs.length > 0;
 
   // Check single files
-  for (const config of CONFIG_FILES) {
+  for (const config of found.files) {
     const filePath = join(cwd, config.path);
     try {
-      await access(filePath);
       const content = await readFile(filePath, "utf-8");
       const lines = content.split("\n").length;
       const size = formatBytes(content.length);
 
-      foundAny = true;
-      
       // Check if this file is tracked
       const tracked = trackedStatus.find(t => toTrackedPath(cwd, t.blueprint.file) === config.path);
       const trackedLabel = tracked ? chalk.cyan(" (tracked)") : "";
       
-      console.log(`  ${chalk.green("✓")} ${chalk.bold(config.name)}${trackedLabel}`);
-      console.log(`     ${chalk.gray(`Platform: ${config.platform}`)}`);
+      console.log(`  ${chalk.green("✓")} ${chalk.bold(config.path)}${trackedLabel}`);
+      console.log(`     ${chalk.gray(`Platform: ${config.name}`)}`);
       console.log(`     ${chalk.gray(`Size: ${size} (${lines} lines)`)}`);
       
       // Show first non-empty, non-comment line as preview
@@ -148,37 +130,25 @@ export async function statusCommand(): Promise<void> {
       }
       console.log();
     } catch {
-      // File doesn't exist, skip
+      // Unreadable, skip
     }
   }
 
   // Check directories
-  for (const config of CONFIG_DIRS) {
-    const dirPath = join(cwd, config.path);
-    if (existsSync(dirPath)) {
-      try {
-        const files = await readdir(dirPath);
-        const ruleFiles = files.filter(f => f.endsWith(".md") || f.endsWith(".mdc"));
-        
-        if (ruleFiles.length > 0) {
-          foundAny = true;
-          console.log(`  ${chalk.green("✓")} ${chalk.bold(config.name)}`);
-          console.log(`     ${chalk.gray(`Platform: ${config.platform}`)}`);
-          console.log(`     ${chalk.gray(`Rules: ${ruleFiles.length} file${ruleFiles.length === 1 ? "" : "s"}`)}`);
-          
-          // List rule files
-          for (const file of ruleFiles.slice(0, 3)) {
-            console.log(`     ${chalk.gray(`  • ${file}`)}`);
-          }
-          if (ruleFiles.length > 3) {
-            console.log(`     ${chalk.gray(`  ... and ${ruleFiles.length - 3} more`)}`);
-          }
-          console.log();
-        }
-      } catch {
-        // Can't read directory
-      }
+  for (const config of found.dirs) {
+    const ruleFiles = config.files;
+    console.log(`  ${chalk.green("✓")} ${chalk.bold(config.path)}`);
+    console.log(`     ${chalk.gray(`Platform: ${config.name}`)}`);
+    console.log(`     ${chalk.gray(`Rules: ${ruleFiles.length} file${ruleFiles.length === 1 ? "" : "s"}`)}`);
+
+    // List rule files
+    for (const file of ruleFiles.slice(0, 3)) {
+      console.log(`     ${chalk.gray(`  • ${file}`)}`);
     }
+    if (ruleFiles.length > 3) {
+      console.log(`     ${chalk.gray(`  ... and ${ruleFiles.length - 3} more`)}`);
+    }
+    console.log();
   }
 
   if (!foundAny) {

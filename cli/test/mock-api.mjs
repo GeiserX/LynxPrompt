@@ -1,7 +1,12 @@
 // Minimal stand-in for the LynxPrompt API, used by regression.sh.
 // Usage: node mock-api.mjs <port-file>. Writes the port it listens on to <port-file>.
 import { createServer } from "node:http";
-import { writeFileSync } from "node:fs";
+import { appendFileSync, writeFileSync } from "node:fs";
+
+// MOCK_LOG: file that gets one line per hierarchy root the CLI sends
+const log = process.env.MOCK_LOG;
+// Name of a public blueprint carrying terminal escape sequences
+const EVIL_NAME = "Evil \u001b]0;PWNED\u0007\u001b[2J\u001b[31mred name";
 
 let pulls = 0;
 
@@ -36,8 +41,37 @@ const server = createServer((req, res) => {
       return res.end("<html><body>Bad gateway</body></html>");
     case "GET /api/v1/blueprints":
       return json(res, 200, { blueprints: [], total: 0, limit: 50, offset: 0, has_more: false });
-    case "POST /api/v1/hierarchies":
-      return json(res, 200, { hierarchy: { id: "ha_ci", name: "ci", repository_root: "ci" } });
+    case "GET /api/v1/blueprints/bp_evil":
+      return json(res, 200, {
+        blueprint: {
+          id: "bp_evil",
+          name: EVIL_NAME,
+          description: EVIL_NAME,
+          type: "AGENTS_MD",
+          tier: "SHORT",
+          visibility: "PUBLIC",
+          content: "# Evil\n",
+        },
+      });
+    // One hierarchy an older lynxp made under the hash of the raw remote
+    // git@legacy.example:o/r.git
+    case "GET /api/v1/hierarchies":
+      return json(res, 200, {
+        hierarchies: [{ id: "ha_old", name: "old", description: null, repository_root: "cf992a65f6a13a54" }],
+        total: 1,
+        limit: 50,
+        offset: 0,
+        has_more: false,
+      });
+    case "POST /api/v1/hierarchies": {
+      let body = "";
+      req.on("data", (c) => (body += c));
+      req.on("end", () => {
+        if (log) appendFileSync(log, `${JSON.parse(body).repository_root}\n`);
+        json(res, 200, { hierarchy: { id: "ha_ci", name: "ci", repository_root: "ci" } });
+      });
+      return;
+    }
     // Every create fails, so 'push --all' has a failed file
     case "POST /api/v1/blueprints":
       return json(res, 500, { error: "create failed" });
