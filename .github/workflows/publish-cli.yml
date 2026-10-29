@@ -548,6 +548,8 @@ jobs:
           got=$("$(brew --prefix)/bin/lynxprompt" --version)
           [ "$got" = "$VERSION" ] || { echo "::error::brew installed lynxprompt $got, expected $VERSION"; exit 1; }
           echo "Homebrew: lynxprompt $VERSION runs"
+          # The tap audits every formula push the same way
+          brew audit --strict GeiserX/lynxprompt/lynxprompt
 
   # ===========================================
   # Summary

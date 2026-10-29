@@ -120,7 +120,7 @@ export default function CliInstallationPage() {
             <div className="overflow-x-auto rounded-lg bg-zinc-950 p-4">
               <pre className="text-sm text-zinc-100">
                 <code>{`brew update
-brew upgrade GeiserX/lynxprompt/lynxprompt`}</code>
+brew upgrade lynxprompt`}</code>
               </pre>
             </div>
           </div>
