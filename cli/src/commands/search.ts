@@ -1,6 +1,7 @@
 import chalk from "chalk";
-import ora from "ora";
+import { createSpinner } from "../utils/spinner.js";
 import { api, ApiRequestError, SearchResult } from "../api.js";
+import { getApiUrl } from "../config.js";
 import { safeText } from "../utils/terminal.js";
 
 interface SearchOptions {
@@ -12,7 +13,7 @@ export async function searchCommand(
   query: string,
   options: SearchOptions
 ): Promise<void> {
-  const spinner = ora(`Searching for "${query}"...`).start();
+  const spinner = createSpinner(`Searching for "${query}"...`).start();
 
   try {
     const limit = parseInt(options.limit, 10) || 20;
@@ -29,7 +30,7 @@ export async function searchCommand(
     if (templates.length === 0) {
       console.log();
       console.log(chalk.yellow(`No blueprints found for "${query}".`));
-      console.log(chalk.gray("Try different keywords or browse at https://lynxprompt.geiser.cloud/blueprints"));
+      console.log(chalk.gray(`Try different keywords or browse at ${getApiUrl().replace(/\/+$/, "")}/blueprints`));
       return;
     }
 

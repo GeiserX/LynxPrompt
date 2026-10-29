@@ -1,6 +1,6 @@
 import chalk from "chalk";
 import prompts from "prompts";
-import ora from "ora";
+import { createSpinner } from "../utils/spinner.js";
 import * as readline from "readline";
 import * as os from "os";
 import { writeFile, mkdir, access, readFile } from "fs/promises";
@@ -784,7 +784,7 @@ function sortSelectedFirst<T extends Choice>(choices: T[]): T[] {
 
 // AI assistant for text fields
 async function aiAssist(instruction: string, existingContent?: string): Promise<string | null> {
-  const spinner = ora("AI is thinking...").start();
+  const spinner = createSpinner("AI is thinking...").start();
   
   try {
     const response = await api.aiEditBlueprint({
@@ -1001,7 +1001,7 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
 
   // Handle --repo-url for direct remote analysis
   if (options.repoUrl) {
-    const spinner = ora("Analyzing remote repository...").start();
+    const spinner = createSpinner("Analyzing remote repository...").start();
     const detected = await detectFromRemoteUrl(options.repoUrl);
     if (detected) {
       spinner.succeed("Remote repository analyzed");
@@ -1160,7 +1160,7 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
               ? join(process.cwd(), inputPath)
               : inputPath;
           
-          const localSpinner = ora(`Analyzing local repository at ${resolvedPath}...`).start();
+          const localSpinner = createSpinner(`Analyzing local repository at ${resolvedPath}...`).start();
           const localDetected = await detectProject(resolvedPath);
           
           if (localDetected) {
@@ -1185,7 +1185,7 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
           const host = inputPath.toLowerCase().includes("github") ? "GitHub API" 
             : inputPath.toLowerCase().includes("gitlab") ? "GitLab API" 
             : "shallow clone";
-          const remoteSpinner = ora(`Analyzing remote repository via ${host}...`).start();
+          const remoteSpinner = createSpinner(`Analyzing remote repository via ${host}...`).start();
           const remoteDetected = await detectFromRemoteUrl(inputPath);
         
           if (remoteDetected) {
@@ -1290,7 +1290,7 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
   }
 
   // Generate and write files
-  const spinner = ora("Generating configuration...").start();
+  const spinner = createSpinner("Generating configuration...").start();
   
   try {
     // Add blueprint mode and variables to config
@@ -1490,7 +1490,7 @@ async function runWizardWithDraftProtection(options: WizardOptions): Promise<voi
         
         while (!saved && attempts < maxAttempts) {
           attempts++;
-          const saveSpinner = ora("Saving preferences to your profile...").start();
+          const saveSpinner = createSpinner("Saving preferences to your profile...").start();
           try {
             // Save wizard preferences via API
             await api.saveWizardPreferences({

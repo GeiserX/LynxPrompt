@@ -1,6 +1,6 @@
 import chalk from "chalk";
 import prompts from "prompts";
-import ora from "ora";
+import { createSpinner } from "../utils/spinner.js";
 import { readFile, access, readdir } from "fs/promises";
 import { join, relative, dirname, basename, resolve } from "path";
 
@@ -338,7 +338,7 @@ export async function importCommand(path: string = ".", options: ImportOptions):
     process.exit(1);
   }
 
-  const spinner = ora({ text: "Scanning for configuration files and commands...", isSilent: json }).start();
+  const spinner = createSpinner({ text: "Scanning for configuration files and commands...", isSilent: json }).start();
 
   try {
     // Scan for config files

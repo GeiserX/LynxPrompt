@@ -1,7 +1,8 @@
 import chalk from "chalk";
-import ora from "ora";
+import { createSpinner } from "../utils/spinner.js";
 import { api, ApiRequestError } from "../api.js";
 import { isAuthenticated } from "../config.js";
+import { safeText } from "../utils/terminal.js";
 
 interface HierarchiesOptions {
   limit?: number;
@@ -18,7 +19,7 @@ export async function hierarchiesCommand(
     process.exit(1);
   }
 
-  const spinner = ora("Fetching hierarchies...").start();
+  const spinner = createSpinner("Fetching hierarchies...").start();
 
   try {
     const response = await api.listHierarchies({
@@ -50,13 +51,13 @@ export async function hierarchiesCommand(
     console.log();
 
     for (const hierarchy of hierarchies) {
-      console.log(chalk.bold(`  ${hierarchy.name}`));
+      console.log(chalk.bold(`  ${safeText(hierarchy.name)}`));
       console.log(chalk.gray(`    ID: ${hierarchy.id}`));
       if (hierarchy.description) {
-        console.log(chalk.gray(`    ${hierarchy.description}`));
+        console.log(chalk.gray(`    ${safeText(hierarchy.description)}`));
       }
       console.log(chalk.gray(`    Blueprints: ${hierarchy.blueprint_count || 0}`));
-      console.log(chalk.gray(`    Repository: ${hierarchy.repository_root.slice(0, 16)}...`));
+      console.log(chalk.gray(`    Repository: ${safeText(hierarchy.repository_root).slice(0, 16)}...`));
       console.log();
     }
 
