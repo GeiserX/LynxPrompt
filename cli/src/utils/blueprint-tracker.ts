@@ -15,7 +15,7 @@ import { readFile, writeFile, mkdir, access } from "fs/promises";
 import { join, dirname, isAbsolute, relative, sep } from "path";
 import { createHash } from "crypto";
 import * as yaml from "yaml";
-import { blueprintContentOf } from "./blueprint-files.js";
+import { blueprintContentOf, isInsideRoot } from "./blueprint-files.js";
 
 // Blueprint source types
 export type BlueprintSource = "marketplace" | "team" | "private" | "local";
@@ -88,8 +88,16 @@ export async function loadBlueprints(cwd: string): Promise<BlueprintsConfig> {
   try {
     await access(filePath);
     const content = await readFile(filePath, "utf-8");
-    const config = yaml.parse(content) as BlueprintsConfig;
-    return config || { version: "1", blueprints: [] };
+    const config = (yaml.parse(content) as BlueprintsConfig) || { version: "1", blueprints: [] };
+    // The file is committed with the repository, so its paths are untrusted:
+    // an entry outside the project would let sync write there
+    const blueprints = Array.isArray(config.blueprints) ? config.blueprints : [];
+    config.blueprints = blueprints.filter((b) => {
+      const ok = typeof b?.file === "string" && isInsideRoot(cwd, b.file);
+      if (!ok) console.warn(`Ignoring ${BLUEPRINTS_FILE} entry outside the project: ${JSON.stringify(b?.file)}`);
+      return ok;
+    });
+    return config;
   } catch {
     return { version: "1", blueprints: [] };
   }

@@ -106,6 +106,26 @@ ${Array.from({ length: 25 }, (_, i) => `- rule ${i + 1}`).join("\n")}
     );
   });
 
+  it("reads a Gemini CLI TOML command back to a Markdown command", () => {
+    const toml = "description = \"Deploy it\"\nprompt = '''\nRun the deploy.\n'''\n";
+    expect(convertContent(toml, "gemini-command", "claude-command")).toBe(
+      "---\ndescription: Deploy it\n---\n\nRun the deploy.\n"
+    );
+    expect(convertContent('prompt = """\nSay "hi".\n"""\n', "gemini-command", "cursor-command")).toBe('Say "hi".\n');
+    // Indentation is kept, and a description YAML would read as another type is quoted
+    expect(convertContent('description = "true"\nprompt = """\n  indented\n"""\n', "gemini-command", "claude-command")).toBe(
+      '---\ndescription: "true"\n---\n\n  indented\n'
+    );
+    // TOML to TOML stays as it is, never wrapped in a second prompt
+    expect(convertContent(toml, "gemini-command", "gemini-command")).toBe(toml);
+  });
+
+  it("round-trips a command through Gemini CLI's TOML", () => {
+    const md = '---\ndescription: Deploy the app\n---\n\nRun C:\\deploy and say "done".\n';
+    const toml = convertContent(md, "cursor-command", "gemini-command");
+    expect(convertContent(toml, "gemini-command", "claude-command")).toBe(md);
+  });
+
   it("treats JSON and YAML configs as no rules file", () => {
     // Aider's file is its YAML config, which lists AGENTS.md
     expect(isStructuredPlatform("aider")).toBe(true);

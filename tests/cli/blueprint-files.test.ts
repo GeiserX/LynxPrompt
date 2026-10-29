@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdtemp, writeFile, rm, readFile, mkdir } from "fs/promises";
-import { existsSync } from "fs";
+import { existsSync, symlinkSync } from "fs";
 import { tmpdir } from "os";
 import {
   blueprintFilename,
@@ -14,6 +14,7 @@ import {
   keepOneCopy,
   isAssetCopyOf,
   projectAssetTools,
+  isInsideRoot,
 } from "../../cli/src/utils/blueprint-files";
 import {
   toTrackedPath,
@@ -103,6 +104,7 @@ describe("Agent Skills and MCP configs", () => {
   it("recognises each tool's MCP config", async () => {
     const { matchConfigFile } = await import("../../cli/src/utils/blueprint-files");
     expect(matchConfigFile(".mcp.json")?.type).toBe("MCP_CONFIG");
+    expect(matchConfigFile(".warp/.mcp.json")).toEqual({ type: "MCP_CONFIG", label: "MCP Servers (Warp)" });
     expect(matchConfigFile(".cursor/mcp.json")?.type).toBe("MCP_CONFIG");
     expect(matchConfigFile(".vscode/mcp.json")?.type).toBe("MCP_CONFIG");
     expect(matchConfigFile(".kiro/settings/mcp.json")?.type).toBe("MCP_CONFIG");
@@ -331,5 +333,61 @@ describe("writeAssetCopies", () => {
       previous: OLD,
     });
     expect([written, kept]).toEqual([[".agents/skills/release-notes/SKILL.md"], []]);
+  });
+
+  it("never replaces a differing full .claude copy from a portable copy", async () => {
+    const full = "---\nname: reviewer\ndescription: Reviews diffs\ntools: Read, Grep\nmodel: opus\n---\nReview the diff.\n";
+    await mkdir(path.join(dir, ".claude/agents"), { recursive: true });
+    await writeFile(path.join(dir, ".claude/agents/reviewer.md"), full, "utf-8");
+    const portable = "---\nname: reviewer\ndescription: Reviews diffs\n---\nReview the diff, briefly.\n";
+
+    expect(await writeAssetCopies(dir, ".agents/agents/reviewer.md", portable, { onlyExisting: true })).toEqual({
+      written: [],
+      kept: [".claude/agents/reviewer.md"],
+    });
+    expect(await readFile(path.join(dir, ".claude/agents/reviewer.md"), "utf-8")).toBe(full);
+  });
+
+  it("never writes a copy through a folder that links out of the project", async () => {
+    const outside = await mkdtemp(path.join(tmpdir(), "lp-assets-out-"));
+    try {
+      await writeFile(path.join(outside, "reviewer.md"), "outside\n", "utf-8");
+      await mkdir(path.join(dir, ".agents"), { recursive: true });
+      symlinkSync(outside, path.join(dir, ".agents/agents"));
+      const { written } = await writeAssetCopies(dir, ".claude/agents/reviewer.md", AGENT, { onlyExisting: true });
+      expect(written).toEqual([]);
+      expect(await readFile(path.join(outside, "reviewer.md"), "utf-8")).toBe("outside\n");
+    } finally {
+      await rm(outside, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("isInsideRoot", () => {
+  let dir: string;
+  let outside: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(path.join(tmpdir(), "lp-root-"));
+    outside = await mkdtemp(path.join(tmpdir(), "lp-out-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+    await rm(outside, { recursive: true, force: true });
+  });
+
+  it("accepts project paths, existing or not", async () => {
+    await writeFile(path.join(dir, "AGENTS.md"), "x", "utf-8");
+    expect(isInsideRoot(dir, "AGENTS.md")).toBe(true);
+    expect(isInsideRoot(dir, ".cursor/rules/new.mdc")).toBe(true);
+    expect(isInsideRoot(dir, "a/../AGENTS.md")).toBe(true);
+  });
+
+  it("refuses ../, absolute paths and symlinks out of the project", async () => {
+    expect(isInsideRoot(dir, "../../.codex/config.toml")).toBe(false);
+    expect(isInsideRoot(dir, path.join(outside, "x"))).toBe(false);
+    symlinkSync(outside, path.join(dir, "linked"));
+    expect(isInsideRoot(dir, "linked/config.toml")).toBe(false);
+    symlinkSync(path.join(outside, "missing.toml"), path.join(dir, "dangling.toml"));
+    expect(isInsideRoot(dir, "dangling.toml")).toBe(false);
   });
 });

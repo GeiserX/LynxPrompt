@@ -106,20 +106,28 @@ for (const key of ["token", "tokenApiUrl", "user"] as const) {
 // Point a config still on the old hosted address at the new one, with its
 // login: same server, same accounts. A self-hosted URL is left alone, and so
 // is LYNXPROMPT_API_URL, which is never saved. Nothing moves while the
-// environment still selects the old host (its login must stay findable), or
-// when each host already holds a different login (the user picks one).
+// environment still selects the old host (its login must stay findable). When
+// each host holds a different login, the new host's is kept and the user is
+// told once: the old host's token must never be sent to a domain that lapses.
 {
   const logins = getLogins();
   const legacyLogin = logins[LEGACY_DEFAULT_API_URL];
   const newLogin = logins[DEFAULT_API_URL];
   const envSelectsLegacy =
     normalizeUrl(process.env.LYNXPROMPT_API_URL ?? "") === LEGACY_DEFAULT_API_URL;
-  const conflict = !!legacyLogin && !!newLogin && legacyLogin.token !== newLogin.token;
-  if (!envSelectsLegacy && !conflict) {
+  if (!envSelectsLegacy) {
     if (normalizeUrl(config.get("apiUrl")) === LEGACY_DEFAULT_API_URL) {
       config.set("apiUrl", DEFAULT_API_URL);
     }
     if (legacyLogin) {
+      if (newLogin && newLogin.token !== legacyLogin.token) {
+        const account = (l: StoredLogin) => l.user?.email ?? "another account";
+        process.stderr.write(
+          `LynxPrompt moved to ${DEFAULT_API_URL}. You were logged in to both hosts with different logins; ` +
+            `the CLI now uses the one for ${DEFAULT_API_URL} (${account(newLogin)}) and forgot the one for ` +
+            `${LEGACY_DEFAULT_API_URL} (${account(legacyLogin)}). Run 'lynxp logout', then 'lynxp login', to use the other account.\n`
+        );
+      }
       delete logins[LEGACY_DEFAULT_API_URL];
       logins[DEFAULT_API_URL] = newLogin ?? legacyLogin;
       setLogins(logins);

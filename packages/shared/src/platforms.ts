@@ -15,6 +15,7 @@
  */
 
 import { splitFrontmatter } from "./rules-format";
+import { parseToml } from "./mcp";
 
 export interface PlatformDefinition {
   /** Unique identifier used in code */
@@ -649,9 +650,14 @@ export const COMMANDS: CommandDefinition[] = [
 /**
  * A command written for another tool, in the format of `toCommandId`: the
  * Markdown body as it is, except Gemini CLI, which reads TOML with the
- * prompt in `prompt` and the frontmatter description in `description`.
+ * prompt in `prompt` and the frontmatter description in `description`. A
+ * Gemini CLI command (`fromCommandId`) is read back to Markdown first.
  */
-export function commandContent(content: string, toCommandId: string): string {
+export function commandContent(content: string, toCommandId: string, fromCommandId?: string): string {
+  if (fromCommandId === "gemini-command") {
+    if (toCommandId === "gemini-command") return content;
+    content = geminiCommandToMarkdown(content);
+  }
   if (toCommandId !== "gemini-command") return content;
   const { frontmatter, body } = splitFrontmatter(content);
   const descLine = frontmatter.split(/\r?\n/).find((l) => l.startsWith("description:"));
@@ -663,6 +669,30 @@ export function commandContent(content: string, toCommandId: string): string {
     ? `"""\n${prompt.replace(/\\/g, "\\\\").replace(/"""/g, '""\\"')}\n"""`
     : `'''\n${prompt}\n'''`;
   return `${description ? `description = ${JSON.stringify(description)}\n` : ""}prompt = ${quoted}\n`;
+}
+
+/**
+ * A Gemini CLI command (TOML) as a Markdown command: the description as
+ * frontmatter and the prompt as the body. Text that is not such a TOML file
+ * is returned as it is.
+ */
+function geminiCommandToMarkdown(content: string): string {
+  let doc: Record<string, unknown>;
+  try {
+    doc = parseToml(content);
+  } catch {
+    return content;
+  }
+  if (typeof doc.prompt !== "string") return content;
+  const description = typeof doc.description === "string" ? doc.description : "";
+  const body = `${doc.prompt.replace(/^\n+|\s+$/g, "")}\n`;
+  if (!description) return body;
+  // Plain YAML only for text YAML reads back as the same string
+  const plain =
+    /^[A-Za-z][^:#'"\\\n]*$/.test(description) &&
+    !/\s$/.test(description) &&
+    !/^(true|false|yes|no|on|off|null|y|n)$/i.test(description);
+  return `---\ndescription: ${plain ? description : JSON.stringify(description)}\n---\n\n${body}`;
 }
 
 // ========================================
@@ -925,7 +955,7 @@ export function ruleFileLocations(): { path: string; name: string }[] {
  */
 export function convertCommand(
   content: string,
-  _fromType: string,
+  fromType: string,
   toType: string
 ): { content: string; filename: string; directory: string } {
   const toCommand = COMMANDS.find((c) => c.id === toType);
@@ -934,7 +964,7 @@ export function convertCommand(
   }
 
   return {
-    content: commandContent(content, toType),
+    content: commandContent(content, toType, fromType),
     filename: "command.md", // Will be replaced with actual filename
     directory: toCommand.directory,
   };
