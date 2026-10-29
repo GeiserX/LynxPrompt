@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 From 3.0.0 the web app and the CLI share one version and one release: the `vX.Y.Z` tag, the Docker image `drumsergio/lynxprompt:X.Y.Z` and `lynxprompt@X.Y.Z` on npm. Each `## [X.Y.Z]` section below covers both and becomes that release's notes. Before 3.0.0 the app and the CLI had their own version lines (`app-v*` and `cli-v*` tags).
 
+## [3.2.1] - 2026-10-29
+
+3.2.1 fixes what the 2026-10-29 review of the LynxPrompt repositories found in the app and the CLI. One fix is a security fix: a cloned repository could make `lynxp sync` write outside the project. No database migrations.
+
+### Upgrade notes
+
+**1. `lynxp sync` and the other tracker commands stay inside the project.** `.lynxprompt/blueprints.yml` is committed with the repository, and until now its paths were joined to the project folder without a check. An entry such as `../../.codex/config.toml` could merge a public blueprint's MCP server into your global Codex config. Entries whose path leaves the project, through `../`, an absolute path or a symlink, are now ignored with a warning. A tracked file you symlinked outside the project on purpose is ignored too.
+
+**2. Readers who don't own a blueprint see a little more of its path.** Since 3.2.0 they got the tool file of an MCP config or a subagent and nothing else. They now also get the command or rules folder and the file in it (`.gemini/commands/deploy.toml`) and a tool's own file (`CRUSH.md`), so a pull writes them where the tool reads them instead of `ai-config.md`. The owner's folders in front are still hidden.
+
+**3. `POST /api/auth/passkey/authenticate/options` needs a signed-in session** and builds the allowed credentials from it. It no longer accepts an email in the body, which let anyone check whether an address had passkeys.
+
+**4. Self-hosting.** The compose file no longer pins `linux/amd64`, so arm64 hosts pull the native image. `SUPERADMIN_EMAIL` alone now sets the admin (`ADMIN_EMAIL` still wins when both are set). The support seed honours `DB_SSL`.
+
+### Fixed
+- **CLI:** a saved lynxprompt.com address always moves to https://lynxprompt.geiser.cloud, even when both hosts held a login; the CLI keeps the new host's login and says so once. `.warp/.mcp.json` is read as Warp's file. `lynxp convert` turns a Gemini TOML command into Markdown instead of copying raw TOML. `lynxp diff <id>` compares against that blueprint's own file. A push no longer overwrites a hand-written `.claude` skill or subagent from its shorter `.agents` copy. The wizard's Cloud Sync saves the right type and uploads the file exactly as written.
+- **Web and API:** `GET /api/user/favorites` and the dashboard drop favorites you can no longer read. Blueprint pages show the author's display name and hide `authorId` for private profiles. Federation registration and heartbeat, and SSO identity-provider fetches, stop after 10 seconds and 64 KB. Download IP hashes are erased after the one-hour dedup window.
+- **Docs and legal pages:** the API docs, `llms-full.txt`, the cookies, privacy and terms pages and the DPA (now 1.2) match what the code does and stores. The sitemap has no dead URLs. Homebrew installs with `brew install GeiserX/lynxprompt/lynxprompt`.
+- **Releases:** a manual "Publish CLI" run with no version can no longer move Homebrew, the AUR and Snap back to an older version. A merge can no longer cancel a pending release. Third-party actions are pinned to commits. The Homebrew formula declares `AGPL-3.0-or-later`.
+
+### Security
+- `@simplewebauthn/server` resolves to 13.3.3 everywhere; an old 9.x copy pulled in by the auth adapter is gone (GHSA advisory on attestation trust anchors).
+
 ## [3.2.0] - 2026-10-29
 
 3.2.0 moves the official instance to https://lynxprompt.geiser.cloud before lynxprompt.com lapses in December 2026. It also stops showing other people the folder a blueprint was pushed from, drops device tracking nothing used, and refreshes the platform list.
