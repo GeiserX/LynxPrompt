@@ -3,7 +3,13 @@ import { posix as posixPath } from "path";
 import { prismaUsers } from "@/lib/db-users";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { detectSensitiveData, type SensitiveMatch } from "@/lib/sensitive-data";
-import { normalizeBlueprintType, retiredTypeError, skillContentError } from "@/lib/blueprint-rules";
+import {
+  cleanBlueprintDescription,
+  cleanBlueprintName,
+  normalizeBlueprintType,
+  retiredTypeError,
+  skillContentError,
+} from "@/lib/blueprint-rules";
 import { contentChecksum } from "@/lib/content-checksum";
 import { parsePage } from "@/lib/pagination";
 import { checkBlueprintLineCount, BLUEPRINT_LIMITS } from "@/lib/subscription";
@@ -275,7 +281,7 @@ export async function POST(request: NextRequest) {
     const effectiveIsPublic = normalizedVisibility === "PUBLIC";
 
     // Validation
-    if (!name || typeof name !== "string" || name.trim().length < 3) {
+    if (!name || typeof name !== "string" || cleanBlueprintName(name).length < 3) {
       return NextResponse.json(
         { error: "Title must be at least 3 characters" },
         { status: 400 }
@@ -425,8 +431,8 @@ export async function POST(request: NextRequest) {
     const blueprint = await prismaUsers.userTemplate.create({
       data: {
         userId: session.user.id,
-        name: name.trim(),
-        description: description?.trim() || null,
+        name: cleanBlueprintName(name),
+        description: cleanBlueprintDescription(description),
         content: content.trim(),
         type: normalizedType,
         category: normalizedCategory,

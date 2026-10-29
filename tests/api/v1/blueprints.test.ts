@@ -538,3 +538,20 @@ describe("v1 blueprints of retired config types", () => {
     expect((await update({ type: "CONTINUE_CONFIG", name: "Renamed config" })).status).toBe(200);
   });
 });
+
+describe("v1 blueprint names and descriptions", () => {
+  it("drops control characters on create, keeping newlines and tabs in the description", async () => {
+    const res = await create({ name: "My\u001b[31m rules\u009b", description: "One\n\ttwo\u0007" });
+    expect(res.status).toBe(201);
+    expect(created().name).toBe("My[31m rules");
+    expect(created().description).toBe("One\n\ttwo");
+  });
+
+  it("drops them on update", async () => {
+    db.userTemplate.findUnique.mockResolvedValue(row({ userId: "user_1" }));
+    expect((await update({ name: "Re\u0000named", description: "\u0085x" })).status).toBe(200);
+    const data = db.userTemplate.update.mock.calls[0][0].data;
+    expect(data.name).toBe("Renamed");
+    expect(data.description).toBe("x");
+  });
+});

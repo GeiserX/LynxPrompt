@@ -2,7 +2,13 @@ import { NextResponse } from "next/server";
 import { getTemplateById } from "@/lib/data/templates";
 import { prismaUsers } from "@/lib/db-users";
 import { detectSensitiveData } from "@/lib/sensitive-data";
-import { normalizeBlueprintType, retiredTypeError, skillContentError } from "@/lib/blueprint-rules";
+import {
+  cleanBlueprintDescription,
+  cleanBlueprintName,
+  normalizeBlueprintType,
+  retiredTypeError,
+  skillContentError,
+} from "@/lib/blueprint-rules";
 import { contentChecksum } from "@/lib/content-checksum";
 import { sanitizeRepositoryPath } from "@/lib/repository-path";
 import { checkBlueprintLineCount } from "@/lib/subscription";
@@ -158,17 +164,17 @@ export async function PUT(
     const updateData: Record<string, unknown> = {};
 
     if (name !== undefined) {
-      if (typeof name !== "string" || name.trim().length < 3) {
+      if (typeof name !== "string" || cleanBlueprintName(name).length < 3) {
         return NextResponse.json(
           { error: "Title must be at least 3 characters" },
           { status: 400 }
         );
       }
-      updateData.name = name.trim();
+      updateData.name = cleanBlueprintName(name);
     }
 
     if (description !== undefined) {
-      updateData.description = description?.trim() || null;
+      updateData.description = cleanBlueprintDescription(description);
     }
 
     if (content !== undefined) {

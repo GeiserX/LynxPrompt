@@ -15,6 +15,8 @@ import { canEditBlueprint, canReadBlueprint, isOwnerOrTeamMember } from "@/lib/b
 import { publicRepositoryPath } from "@/lib/repository-path";
 import {
   checkBlueprintContent,
+  cleanBlueprintDescription,
+  cleanBlueprintName,
   normalizeBlueprintType,
   retiredTypeError,
   skillContentError,
@@ -297,13 +299,13 @@ export async function PUT(
     const updateData: Record<string, unknown> = {};
 
     if (name !== undefined) {
-      if (typeof name !== "string" || name.trim().length < 3) {
+      if (typeof name !== "string" || cleanBlueprintName(name).length < 3) {
         return NextResponse.json(
           { error: "Name must be at least 3 characters" },
           { status: 400 }
         );
       }
-      updateData.name = name.trim();
+      updateData.name = cleanBlueprintName(name);
     }
 
     if (content !== undefined) {
@@ -329,7 +331,7 @@ export async function PUT(
     }
 
     if (description !== undefined) {
-      updateData.description = description?.trim() || null;
+      updateData.description = cleanBlueprintDescription(description);
     }
 
     if (type !== undefined) {

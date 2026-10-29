@@ -94,4 +94,13 @@ describe("web blueprint edits by a team admin", () => {
     expect((await remove()).status).toBe(403);
     expect(db.teamMember.findUnique).not.toHaveBeenCalled();
   });
+
+  it("drops control characters from an edited name and description", async () => {
+    stored();
+    expect((await update({ name: "Fixed\u001b]0;pwned\u0007", description: "a\u0008b\nc" })).status).toBe(200);
+    const data = db.userTemplate.update.mock.calls[0][0].data;
+    expect(data.name).toBe("Fixed]0;pwned");
+    expect(data.description).toBe("ab\nc");
+  });
 });
+

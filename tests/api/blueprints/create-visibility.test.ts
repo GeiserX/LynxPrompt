@@ -128,4 +128,22 @@ describe("POST /api/blueprints visibility", () => {
     expect(stored().visibility).toBe("PRIVATE");
     expect(stored().isPublic).toBe(false);
   });
+
+  it("drops control characters from the name and description it stores", async () => {
+    const response = await create({
+      name: "Rules\u001b[2K\u0007\u0085 v2",
+      description: "Line one\r\n\tindented\u0000\u009b",
+    });
+
+    expect(response.status).toBe(200);
+    expect(stored().name).toBe("Rules[2K v2");
+    expect(stored().description).toBe("Line one\n\tindented");
+  });
+
+  it("refuses a name that is only control characters", async () => {
+    const response = await create({ name: "\u0001\u0002\u0003\u0004" });
+    expect(response.status).toBe(400);
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
 });
+

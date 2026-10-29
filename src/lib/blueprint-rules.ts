@@ -162,6 +162,22 @@ export function checkBlueprintContent(
   return { ok: true };
 }
 
+// C0 and C1 control characters and DEL. They are invisible in a list and can
+// rewrite a terminal line when the CLI prints the name.
+const CONTROL_CHARS = /[\u0000-\u001f\u007f-\u009f]/g;
+const CONTROL_CHARS_BUT_NEWLINE_TAB = /[\u0000-\u0008\u000b-\u001f\u007f-\u009f]/g;
+
+/** A blueprint name as stored: no control characters, trimmed. */
+export function cleanBlueprintName(name: string): string {
+  return name.replace(CONTROL_CHARS, "").trim();
+}
+
+/** A blueprint description as stored: newlines and tabs kept, other control characters dropped, trimmed; null when empty. */
+export function cleanBlueprintDescription(description: unknown): string | null {
+  if (typeof description !== "string") return null;
+  return description.replace(/\r\n?/g, "\n").replace(CONTROL_CHARS_BUT_NEWLINE_TAB, "").trim() || null;
+}
+
 /**
  * Why a new blueprint of this type cannot be stored, or null: the config
  * types of retired tools are kept for old blueprints only.
