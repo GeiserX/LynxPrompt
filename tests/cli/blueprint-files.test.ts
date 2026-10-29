@@ -347,6 +347,20 @@ describe("writeAssetCopies", () => {
     });
     expect(await readFile(path.join(dir, ".claude/agents/reviewer.md"), "utf-8")).toBe(full);
   });
+
+  it("never writes a copy through a folder that links out of the project", async () => {
+    const outside = await mkdtemp(path.join(tmpdir(), "lp-assets-out-"));
+    try {
+      await writeFile(path.join(outside, "reviewer.md"), "outside\n", "utf-8");
+      await mkdir(path.join(dir, ".agents"), { recursive: true });
+      symlinkSync(outside, path.join(dir, ".agents/agents"));
+      const { written } = await writeAssetCopies(dir, ".claude/agents/reviewer.md", AGENT, { onlyExisting: true });
+      expect(written).toEqual([]);
+      expect(await readFile(path.join(outside, "reviewer.md"), "utf-8")).toBe("outside\n");
+    } finally {
+      await rm(outside, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("isInsideRoot", () => {

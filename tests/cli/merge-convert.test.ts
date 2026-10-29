@@ -112,6 +112,10 @@ ${Array.from({ length: 25 }, (_, i) => `- rule ${i + 1}`).join("\n")}
       "---\ndescription: Deploy it\n---\n\nRun the deploy.\n"
     );
     expect(convertContent('prompt = """\nSay "hi".\n"""\n', "gemini-command", "cursor-command")).toBe('Say "hi".\n');
+    // Indentation is kept, and a description YAML would read as another type is quoted
+    expect(convertContent('description = "true"\nprompt = """\n  indented\n"""\n', "gemini-command", "claude-command")).toBe(
+      '---\ndescription: "true"\n---\n\n  indented\n'
+    );
     // TOML to TOML stays as it is, never wrapped in a second prompt
     expect(convertContent(toml, "gemini-command", "gemini-command")).toBe(toml);
   });

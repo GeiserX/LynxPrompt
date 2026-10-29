@@ -21,7 +21,7 @@ import { safeText } from "../utils/terminal.js";
 import { computeDiff, formatDiff } from "../utils/line-diff.js";
 import { checkSyncStatus, findBlueprintByFile, findBlueprintById } from "../utils/blueprint-tracker.js";
 import { fillBlueprintVariables } from "../utils/variables.js";
-import { blueprintContentOf, blueprintFilename, rulesWritePath, safePath } from "../utils/blueprint-files.js";
+import { blueprintContentOf, blueprintFilename, isInsideRoot, rulesWritePath } from "../utils/blueprint-files.js";
 
 interface DiffOptions {
   local?: boolean;
@@ -212,9 +212,11 @@ async function diffWithBlueprintId(cwd: string, blueprintId: string): Promise<vo
     const localPath = rulesWritePath(cwd, blueprintFilename(blueprint));
     let localContent: string | null = null;
     try {
-      localContent = blueprintContentOf(localPath, await readFile(safePath(cwd, localPath), "utf-8")) ?? "";
+      if (isInsideRoot(cwd, localPath)) {
+        localContent = blueprintContentOf(localPath, await readFile(join(cwd, localPath), "utf-8")) ?? "";
+      }
     } catch {
-      // No such file, or a path outside the project
+      // No such file
     }
 
     if (localContent === null) {

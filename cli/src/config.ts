@@ -125,7 +125,7 @@ for (const key of ["token", "tokenApiUrl", "user"] as const) {
         process.stderr.write(
           `LynxPrompt moved to ${DEFAULT_API_URL}. You were logged in to both hosts with different logins; ` +
             `the CLI now uses the one for ${DEFAULT_API_URL} (${account(newLogin)}) and forgot the one for ` +
-            `${LEGACY_DEFAULT_API_URL} (${account(legacyLogin)}). Run 'lynxp login' to switch accounts.\n`
+            `${LEGACY_DEFAULT_API_URL} (${account(legacyLogin)}). Run 'lynxp logout', then 'lynxp login', to use the other account.\n`
         );
       }
       delete logins[LEGACY_DEFAULT_API_URL];

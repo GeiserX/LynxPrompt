@@ -259,7 +259,7 @@ describe("CLI config", () => {
       tokens: { "https://lynxprompt.geiser.cloud": { token: "lp_new_account" } },
     });
     expect(config.getToken()).toBe("lp_new_account");
-    expect(String(stderr.mock.calls[0]?.[0])).toContain("lynxp login");
+    expect(String(stderr.mock.calls[0]?.[0])).toContain("lynxp logout");
     // Told once: the next start finds nothing to move
     stderr.mockClear();
     await loadConfig();

@@ -685,10 +685,13 @@ function geminiCommandToMarkdown(content: string): string {
   }
   if (typeof doc.prompt !== "string") return content;
   const description = typeof doc.description === "string" ? doc.description : "";
-  const body = `${doc.prompt.trim()}\n`;
+  const body = `${doc.prompt.replace(/^\n+|\s+$/g, "")}\n`;
   if (!description) return body;
-  // Plain YAML when nothing in the text needs quotes
-  const plain = /^[^\s:#'"\\[\]{}&*!|>%@`,-][^:#'"\\\n]*$/.test(description) && !/\s$/.test(description);
+  // Plain YAML only for text YAML reads back as the same string
+  const plain =
+    /^[A-Za-z][^:#'"\\\n]*$/.test(description) &&
+    !/\s$/.test(description) &&
+    !/^(true|false|yes|no|on|off|null|y|n)$/i.test(description);
   return `---\ndescription: ${plain ? description : JSON.stringify(description)}\n---\n\n${body}`;
 }
 

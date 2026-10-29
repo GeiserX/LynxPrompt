@@ -386,6 +386,27 @@ describe("lynxp diff <blueprint id>", () => {
   });
 });
 
+describe("lynxp diff <blueprint id> through a symlink", () => {
+  it("never reads the pull path when it links out of the project", async () => {
+    const outside = fs.mkdtempSync(path.join(os.tmpdir(), "lp-diff-out-"));
+    try {
+      fs.mkdirSync(path.join(outside, "rules"));
+      fs.writeFileSync(path.join(outside, "rules/project.mdc"), "SECRET OUTSIDE\n");
+      fs.mkdirSync(path.join(dir, ".cursor"));
+      fs.symlinkSync(path.join(outside, "rules"), path.join(dir, ".cursor/rules"));
+      server.bp_1 = { content: "x", visibility: "PUBLIC", type: "CURSOR_RULES" };
+
+      await diffCommand("bp_1", {});
+
+      const text = out.join("\n");
+      expect(text).toContain(".cursor/rules/project.mdc not found");
+      expect(text).not.toContain("SECRET OUTSIDE");
+    } finally {
+      fs.rmSync(outside, { recursive: true, force: true });
+    }
+  });
+});
+
 describe("tracked paths outside the project", () => {
   // .lynxprompt/blueprints.yml is committed with the repository, so a cloned
   // repo can name any path; sync must never read or write outside the project

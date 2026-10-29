@@ -12,10 +12,14 @@ describe("publicRepositoryPath", () => {
     expect(publicRepositoryPath("clients/acme-secret/CRUSH.md")).toBe("CRUSH.md");
     expect(publicRepositoryPath("clients/acme-secret/.gemini/commands/deploy.toml")).toBe(".gemini/commands/deploy.toml");
     expect(publicRepositoryPath("clients/acme-secret/.junie/AGENTS.md")).toBe(".junie/AGENTS.md");
-    expect(publicRepositoryPath("clients/acme-secret/.cursor/rules/sub/style.mdc")).toBe(".cursor/rules/style.mdc");
+    expect(publicRepositoryPath("clients/acme-secret/.cursor/rules/sub/style.mdc")).toBe(".cursor/rules/sub/style.mdc");
     expect(publicRepositoryPath("clients\\acme-secret\\.tabnine\\guidelines\\project.md")).toBe(".tabnine/guidelines/project.md");
     expect(publicRepositoryPath("clients/acme-secret/.warp/.mcp.json")).toBe(".warp/.mcp.json");
     expect(publicRepositoryPath("clients/acme-secret/.codex/agents/reviewer.toml")).toBe(".codex/agents/reviewer.toml");
+  });
+
+  it("gives two rules in different subfolders different paths", () => {
+    expect(publicRepositoryPath("a/.cursor/rules/frontend/style.mdc")).not.toBe(publicRepositoryPath("a/.cursor/rules/backend/style.mdc"));
   });
 
   it("hides a path no tool reads", () => {

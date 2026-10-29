@@ -360,12 +360,9 @@ export async function writeAssetCopies(
   );
   const fromFull = isFullCopy(relativePath);
   for (const copy of assetCopies(relativePath, content, tools)) {
-    let target: string;
-    try {
-      target = safePath(root, copy.path);
-    } catch {
-      continue;
-    }
+    // A copy's folder can be a symlink out of the project
+    if (!isInsideRoot(root, copy.path)) continue;
+    const target = path.resolve(root, copy.path);
     const text = withFinalNewline(copy.content);
     if (existsSync(target)) {
       const current = await readFile(target, "utf-8");

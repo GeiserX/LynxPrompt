@@ -66,8 +66,10 @@ export function publicRepositoryPath(path: string | null | undefined): string | 
   }
   const lower = `/${p.toLowerCase()}`;
   for (const { folder, extensions } of TOOL_FOLDERS) {
-    if (!lower.includes(`/${folder.toLowerCase()}`)) continue;
-    if (extensions.some((e) => lowerFile.endsWith(e) && file.length > e.length)) return `${folder}${file}`;
+    const at = lower.indexOf(`/${folder.toLowerCase()}`);
+    if (at < 0) continue;
+    // Subfolders inside the tool's folder stay, so two rules never share a path
+    if (extensions.some((e) => lowerFile.endsWith(e) && file.length > e.length)) return `${folder}${p.slice(at + folder.length)}`;
   }
   for (const own of TOOL_FILES) {
     if (own.includes("/") ? lower.endsWith(`/${own.toLowerCase()}`) : file === own) return own;
