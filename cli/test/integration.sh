@@ -1,20 +1,14 @@
 #!/bin/bash
 # LynxPrompt CLI Integration Tests
-# Run against dev or prod environment
-# Usage: ./integration.sh [dev|prod]
+# Runs against https://lynxprompt.geiser.cloud, or the instance LYNXPROMPT_API_URL names
+# Usage: [LYNXPROMPT_API_URL=https://your.instance] ./integration.sh
 
 set -e
 
-ENV="${1:-prod}"
 TEST_DIR="/tmp/lynxp-integration-test-$$"
 
-if [ "$ENV" = "dev" ]; then
-  export LYNXPROMPT_API_URL="https://dev.lynxprompt.com"
-  echo "🧪 Running tests against DEV environment"
-else
-  export LYNXPROMPT_API_URL="https://lynxprompt.geiser.cloud"
-  echo "🧪 Running tests against PROD environment"
-fi
+export LYNXPROMPT_API_URL="${LYNXPROMPT_API_URL:-https://lynxprompt.geiser.cloud}"
+echo "🧪 Running tests against $LYNXPROMPT_API_URL"
 
 # Colors
 RED='\033[0;31m'
