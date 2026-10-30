@@ -10,24 +10,20 @@ const workflows = Object.fromEntries(
 const releasing = readFileSync(resolve(process.cwd(), "RELEASING.md"), "utf8");
 
 describe("development server", () => {
-  // dev.lynxprompt.com ran a May 2026 build and lapses with lynxprompt.com on
-  // 2026-12-20. The jobs that used it now read the DEV_URL variable and skip
-  // without it.
+  // The dev and test instances were retired on 2026-10-30. The CLI jobs that
+  // need a live server read the DEV_URL variable and skip without it.
   it("no workflow names a lynxprompt.com dev or test host", () => {
     const hits = Object.entries(workflows).filter(([, t]) => /(dev|test)\.lynxprompt\.com/.test(t)).map(([f]) => f);
     expect(hits).toEqual([]);
   });
 
   it("every dev-server job is gated on DEV_URL", () => {
-    expect(workflows["deploy-development.yml"]).toMatch(/\n {4}if: vars\.DEV_URL != ''\n/);
+    expect(workflows["deploy-development.yml"]).toBeUndefined();
     expect(workflows["ci.yml"]).toMatch(/integration-smoke:[\s\S]*?if: .*vars\.DEV_URL != ''/);
     expect(workflows["cli-tests.yml"]).toContain("LYNXPROMPT_API_URL: ${{ vars.DEV_URL }}");
   });
 
-  it("a dev deploy or health wait that fails turns the run red", () => {
-    const deploy = workflows["deploy-development.yml"];
-    const health = deploy.slice(deploy.indexOf("- name: Health check"));
-    expect(health).not.toMatch(/exit 0/);
+  it("a dev health wait that fails turns the run red", () => {
     expect(workflows["cli-tests.yml"]).not.toContain("proceeding anyway");
   });
 });
@@ -43,7 +39,6 @@ describe("third-party actions", () => {
   it("are pinned to a full commit sha with the version beside it", () => {
     const unpinned = Object.entries(workflows).flatMap(([f, t]) =>
       [...t.matchAll(/uses: ([^\s.][^\s@]*)@(\S+)(.*)/g)]
-        .filter(([, name]) => !name.startsWith("actions/"))
         .filter(([, , ref, rest]) => !/^[0-9a-f]{40}$/.test(ref) || !/# v\d+\.\d+\.\d+/.test(rest))
         .map(([line]) => `${f}: ${line}`)
     );

@@ -1,11 +1,11 @@
 #!/bin/bash
 # LynxPrompt CLI Integration Tests - Authenticated
 # Requires LYNXPROMPT_TOKEN environment variable
-# Usage: LYNXPROMPT_TOKEN=your_token ./integration-auth.sh [dev|prod]
+# Runs against https://lynxprompt.geiser.cloud, or the instance LYNXPROMPT_API_URL names
+# Usage: LYNXPROMPT_TOKEN=your_token [LYNXPROMPT_API_URL=https://your.instance] ./integration-auth.sh
 
 set -e
 
-ENV="${1:-prod}"
 TEST_DIR="/tmp/lynxp-auth-test-$$"
 
 if [ -z "$LYNXPROMPT_TOKEN" ]; then
@@ -14,13 +14,8 @@ if [ -z "$LYNXPROMPT_TOKEN" ]; then
   exit 1
 fi
 
-if [ "$ENV" = "dev" ]; then
-  export LYNXPROMPT_API_URL="https://dev.lynxprompt.com"
-  echo "🧪 Running authenticated tests against DEV environment"
-else
-  export LYNXPROMPT_API_URL="https://lynxprompt.geiser.cloud"
-  echo "🧪 Running authenticated tests against PROD environment"
-fi
+export LYNXPROMPT_API_URL="${LYNXPROMPT_API_URL:-https://lynxprompt.geiser.cloud}"
+echo "🧪 Running authenticated tests against $LYNXPROMPT_API_URL"
 
 # Colors
 RED='\033[0;31m'
