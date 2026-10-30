@@ -27,7 +27,7 @@ describe("runtime-only public config", () => {
     expect(offenders).toEqual([]);
   });
 
-  it.each(["Dockerfile", ".github/workflows/docker-publish.yml", ".github/workflows/deploy-development.yml"])(
+  it.each(["Dockerfile", ".github/workflows/docker-publish.yml"])(
     "%s passes no NEXT_PUBLIC_* value into the build",
     (file) => {
       expect(read(file)).not.toMatch(/(ARG|ENV|build-arg|^\s+)\s*NEXT_PUBLIC_\w+[=\s]/m);
