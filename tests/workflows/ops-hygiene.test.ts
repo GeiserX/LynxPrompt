@@ -39,7 +39,6 @@ describe("third-party actions", () => {
   it("are pinned to a full commit sha with the version beside it", () => {
     const unpinned = Object.entries(workflows).flatMap(([f, t]) =>
       [...t.matchAll(/uses: ([^\s.][^\s@]*)@(\S+)(.*)/g)]
-        .filter(([, name]) => !name.startsWith("actions/"))
         .filter(([, , ref, rest]) => !/^[0-9a-f]{40}$/.test(ref) || !/# v\d+\.\d+\.\d+/.test(rest))
         .map(([line]) => `${f}: ${line}`)
     );

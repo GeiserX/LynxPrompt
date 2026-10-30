@@ -95,7 +95,7 @@ describe("CLI release pipeline", () => {
   it("every publish job builds the tagged commit, not main", () => {
     const publish = read("publish-cli.yml");
     for (const name of ["publish-npm", "publish-binaries", "sign-macos", "publish-chocolatey", "update-homebrew"]) {
-      const checkouts = job(publish, name).match(/uses: actions\/checkout@\S+\n(?: {8}.*\n)*/g) ?? [];
+      const checkouts = job(publish, name).match(/uses: actions\/checkout@\S+.*\n(?: {8}.*\n)*/g) ?? [];
       const own = checkouts.filter((step) => !step.includes("repository:"));
       expect(own.length, `${name} has no checkout of this repository`).toBeGreaterThan(0);
       for (const step of own) expect(step, `${name} checks out without the tag`).toContain("ref: ${{ needs.check.outputs.ref }}");
