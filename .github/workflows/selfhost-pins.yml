@@ -39,7 +39,7 @@ jobs:
           echo "BRANCH=chore/selfhost-pins-$VERSION" >> "$GITHUB_ENV"
 
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # tests/workflows/selfhost-compose.test.ts fails a compose pin that is not
       # on Docker Hub, so never pin a tag before it is there.
