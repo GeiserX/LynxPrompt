@@ -1,611 +1,89 @@
-# CLAUDE.md - AI Agent Instructions for LynxPrompt
+# CLAUDE.md
 
-> 🧠 **PLAN MODE**: Use Plan Mode frequently! Before implementing complex features, multi-step tasks, or making significant changes, switch to Plan Mode to think through the approach, consider edge cases, and outline the implementation strategy. Planning prevents mistakes and saves time.
+LynxPrompt is a self-hostable web app and CLI (`lynxp`, npm package `lynxprompt`) that generates AI IDE configuration files (`AGENTS.md`, `CLAUDE.md`, `.cursor/rules/*.mdc`, Copilot instructions, Agent Skills, MCP configs) through a wizard and stores them as blueprints. Production is https://lynxprompt.geiser.cloud; the old lynxprompt.com domain redirects there until it lapses on 2026-12-20.
 
-> 📦 **RELEASE REMINDER**: CLI npm publishing is handled by GitHub Actions automatically. Do NOT run `npm publish` locally. Do NOT create git tags manually. The workflow handles everything.
+This repository is public. Secrets live in GitHub Secrets, the private GitOps repo and local gitignored `.env` files; `env.example` holds placeholders only.
 
-> ⚠️ **IMPORTANT**: Do NOT update this file unless the user explicitly says to. Only the user can authorize changes to AGENTS.md.
+## Changes and releases
 
-> ❌ **DEPRECATED FORMAT**: `.cursorrules` is **deprecated**. Do NOT suggest or generate `.cursorrules` files anywhere. Cursor now uses `.cursor/rules/*.mdc` (directory-based MDC format). Always use `.cursor/rules/` for Cursor configurations.
+The app and the CLI ship as one release with one version: tag `vX.Y.Z`, the image `drumsergio/lynxprompt:X.Y.Z`, `lynxprompt@X.Y.Z` on npm, and Homebrew, Chocolatey, Snap and the AUR at the same version.
 
-> 🔒 **SECURITY WARNING**: This repository is PUBLIC at [github.com/GeiserX/LynxPrompt](https://github.com/GeiserX/LynxPrompt). **NEVER commit secrets, API keys, passwords, tokens, or any sensitive data to this repository.** All secrets must be stored in:
-> - GitHub Secrets (for CI/CD)
-> - Private GitOps repositories (for docker-compose)
-> - Local `.env` files (gitignored)
-> - `AGENTS.md.old` (gitignored, local only)
+1. Every change is a pull request to `main`, branched from `origin/main`. Merge once CI is green. Merging releases nothing.
+2. Before releasing, write the `## [X.Y.Z] - YYYY-MM-DD` section of `CHANGELOG.md` for the version the release will get, with an "Upgrade notes" part when operators must act (a destructive migration, a new required variable). The release publishes that section as its notes.
+3. Release by dispatching `.github/workflows/release.yml` from `main`:
+   ```bash
+   unset GITHUB_TOKEN GH_TOKEN
+   gh workflow run release.yml -R GeiserX/LynxPrompt -f bump=patch          # or minor / major
+   gh workflow run release.yml -R GeiserX/LynxPrompt --ref <branch> -f dry_run=true   # CI, CLI tests and Docker smoke build only
+   ```
+   A dry run computes the version and runs CI, the CLI tests and the Docker smoke build, then stops: no tag, no release, no image or CLI publish, no production check, no pins PR. A real run tags, creates the release and starts `docker-publish.yml` and `publish-cli.yml`. The image publish then starts `deploy-production.yml` (which polls `/api/health` for the new version) and `selfhost-pins.yml`, which opens a PR moving `docker-compose.selfhost.yml` and the Helm chart to the new image; merge that PR once its checks are green.
+4. Check every channel: `gh run list -R GeiserX/LynxPrompt -w <workflow>` for "Release", "Docker Publish" and "Publish CLI", then `gh release list -R GeiserX/LynxPrompt` and `npm view lynxprompt version`. "Publish CLI" stays green when Chocolatey fails (`publish-chocolatey` has `continue-on-error`), so read the Chocolatey row of that run's summary: anything but "pushed, awaiting moderation" means the push did not go through. A publish that did not start or failed is rerun by hand with `-f version=X.Y.Z` (see [`RELEASING.md`](RELEASING.md)).
+5. Deploy: back up the production databases first, then set the pin in the private GitOps repo's `lynxprompt/docker-compose.yml` to `drumsergio/lynxprompt:X.Y.Z@sha256:<digest>` (digest from `docker buildx imagetools inspect drumsergio/lynxprompt:X.Y.Z --format '{{.Manifest.Digest}}'`), commit and push. The push makes the deploy webhook redeploy the stack. Renovate also opens that bump once the image is a day old. Changing only the tag deploys nothing, because Docker resolves the image by digest. Redeploy only through that push; a hand-run `docker compose up` or `docker restart` races the webhook.
 
----
+The release workflow owns every tag and package. Version bumps exist only in the tagged commit, so on `main` both `package.json` files lag the tags, and `.github/scripts/release-version.sh` still picks a version above every tag. Keep the root and `cli/package.json` versions equal (a test checks it). The release job cannot push to `main` (the ruleset takes changes only through PRs), so it must not try. `RELEASING.md` has the full procedure, the rollback rules and the secrets.
 
-## 🚀 RELEASE PROCESS (CRITICAL - READ CAREFULLY)
+## Databases and migrations
 
-### Understanding the Release Pipeline
+Four PostgreSQL databases, each with its own schema and Prisma client:
 
-The app and the CLI ship as **one release with one version**: tag `vX.Y.Z`, GitHub release "LynxPrompt vX.Y.Z" (marked Latest), image `drumsergio/lynxprompt:X.Y.Z`, npm `lynxprompt@X.Y.Z`, and Homebrew, Chocolatey, Snap and AUR at the same version. The old `app-v*` / `cli-v*` tags (up to 2.1.x) stay untouched; 3.0.0 is the first joined version.
+| Database | Schema | Client import |
+|---|---|---|
+| app | `prisma/schema-app.prisma` | `prismaApp` from `@/lib/db-app` |
+| users | `prisma/schema-users.prisma` | `prismaUsers` from `@/lib/db-users` |
+| blog | `prisma/schema-blog.prisma` | `prismaBlog` from `@/lib/db-blog` |
+| support | `prisma/schema-support.prisma` | `prismaSupport` from `@/lib/db-support` |
 
-1. **`release.yml`** runs on every push to `main` (docs, the chart and root Markdown files excepted) to test, and releases only by manual dispatch:
-   - Runs CI and the CLI build and public tests: it is `main`'s CI, so `ci.yml` and `cli-tests.yml` run on pull requests and `develop` only
-   - A push never releases. A manual run releases; `dry_run=true` does everything except the tag, the release and the publishes
-   - Picks the version with `.github/scripts/release-version.sh`: the highest of the root `package.json`, `cli/package.json` and the last release (highest `v*`, `app-v*` or `cli-v*` tag) bumped by `bump` (`patch` by default, `minor` or `major`)
-   - Release notes are the `## [X.Y.Z]` section of `CHANGELOG.md`; without one, the commit subjects since the last release
-   - One release at a time, none cancelled
-   - **Tag-only — does NOT push the version bump back to `main`.** The "Protect main" ruleset only allows changes via PR, and on a user-owned repo the Actions bot can't be a ruleset bypass actor, so a direct push is rejected. Both `package.json` files are set to the version only in the tagged commit, so on `main` they lag the tags; the next version still comes out higher than every tag. **Do not re-add a `git push origin main` to the release job** — it will always be rejected. Keep the root and `cli/package.json` versions equal (a test checks it).
+Blog and support are optional. The image migrates them only while `ENABLE_BLOG` / `ENABLE_SUPPORT_FORUM` is on.
 
-2. **`docker-publish.yml`** and **`publish-cli.yml`** start on the `release-published` dispatch from `release.yml` (or by hand with a version). Both build the `vX.Y.Z` tag, never `main`. The image publish then starts the production check (`deploy-production.yml`) and the self-host pins PR (`selfhost-pins.yml`); the CLI publish attaches the binaries to the same release.
+On start, `entrypoint.sh` runs `prisma migrate deploy` per database against `prisma/migrations-{app,users,blog,support}/`, each starting at `0_init`. A database an old release built with `db push` is first baselined from `prisma/baseline/`, then migrated; an image refuses to start on a database a newer release migrated.
 
-### Step-by-Step Release Process
+Rules for a schema change:
 
-`RELEASING.md` is the full procedure. In short:
+- Add a new timestamped migration folder under the database's `prisma/migrations-*` directory, written with `prisma migrate diff` from the schema on `origin/main` to yours (recipe in [`docs/development.md`](docs/development.md)). A data fix is a data-only migration.
+- Never edit an existing migration. Databases that recorded it never rerun it.
+- `prisma/baseline/` must stay the schema `0_init` creates. Never update it to the current schema.
+- A migration that drops columns makes rollback by image tag impossible; say so in the release's "Upgrade notes".
+- `npm run db:push` is for a local dev database only.
+
+Upgrades are proven by `tests/workflows/entrypoint-upgrade-db.test.ts`, which CI runs against a real Postgres (it is skipped without `MIGRATE_TEST_DATABASE_URL`). For a risky migration, also replay it on a copy of a real database on a scratch box before releasing.
+
+## Testing
 
 ```bash
-# 1. Write the CHANGELOG.md section for the version the release will get,
-#    under a "## [X.Y.Z] - YYYY-MM-DD" heading, with an "Upgrade notes" part
-#    when operators must act. release.yml publishes it as the release notes.
-
-# 2. Merge the PR once CI is green. Merging releases nothing.
-# 3. Release by hand (bump=patch by default, or minor / major):
-unset GITHUB_TOKEN && gh workflow run release.yml -R GeiserX/LynxPrompt -f bump=patch
-# Check what a release would do without releasing (any branch):
-unset GITHUB_TOKEN && gh workflow run release.yml -R GeiserX/LynxPrompt --ref <branch> -f dry_run=true
-
-# 3. Verify the release and the publishes
-unset GITHUB_TOKEN && gh run list -R GeiserX/LynxPrompt -w "Release" --limit 3
-unset GITHUB_TOKEN && gh run list -R GeiserX/LynxPrompt -w "Docker Publish" --limit 3
-unset GITHUB_TOKEN && gh run list -R GeiserX/LynxPrompt -w "Publish CLI" --limit 3
-
-# 4. If a publish did not start, run it by hand for the released version:
-unset GITHUB_TOKEN && gh workflow run "Publish CLI" -R GeiserX/LynxPrompt -f version=X.Y.Z -f platforms=all
-unset GITHUB_TOKEN && gh workflow run "Docker Publish" -R GeiserX/LynxPrompt -f version=X.Y.Z
-
-# 5. Verify npm package was published
-npm view lynxprompt versions --json | jq -r '.[-3:]'
+npm run db:generate        # Prisma clients; tests and typecheck need them
+npx vitest run             # one pass (npm test is watch mode)
+npm run typecheck
+npm run build
+cd cli && npm run build && npm run typecheck
+bash cli/test/regression.sh lynxp   # CLI regressions, after `npm link` in cli/
 ```
 
-### ⚠️ CRITICAL RULES - NEVER BREAK THESE
+`tests/workflows/` tests the workflows, the Dockerfile, `entrypoint.sh` and this file itself, so a change to any of them needs those tests green too.
 
-| ❌ NEVER DO THIS | ✅ DO THIS INSTEAD |
-|------------------|-------------------|
-| `git tag v3.0.0` | Let release.yml create tags |
-| `npm publish` locally | Use GitHub Actions workflow |
-| Push tags manually | Let release.yml push tags |
-| Create `app-v*` or `cli-v*` tags | One `vX.Y.Z` tag for both, made by release.yml |
-| Set different versions in `package.json` and `cli/package.json` | Keep them equal |
+## Code rules
 
-### Troubleshooting Release Issues
-
-**Problem: The push did not release**
-- Cause: Nothing that ships changed since the last release tag
-- Fix: Only files that end up in the image (`Dockerfile`, `entrypoint.sh`, root `package.json`/lockfile, `next.config.ts`, `src/`, `public/`, `prisma/`, `packages/` and a few configs) or in the CLI (`cli/`, `packages/shared/`) release. Workflows, docs, tests and the Helm chart release nothing. Dispatch `release.yml` to release anyway
-
-**Problem: Tag already exists error**
-- Cause: Someone manually created a tag
-- Fix: Delete the manual tag from remote AND local:
-  ```bash
-  git push origin --delete v3.0.0
-  git tag -d v3.0.0
+- API routes authenticate through `src/lib/api-auth.ts`, never a bare `getServerSession`. The helpers also enforce the passkey second factor on writes. Add every new write route to `tests/api/auth/passkey-write-gate.test.ts`. The v1 API (`/api/v1/*`) authenticates with `validateApiToken` and checks `hasPermission` per route.
+  ```typescript
+  const auth = await requireSession(request);       // browser-only route
+  if (auth instanceof NextResponse) return auth;
+  const caller = await requireUser(request);        // also takes an API token
+  if (caller instanceof NextResponse) return caller;
+  if (!canPerform(caller, "blueprints:write")) { /* 403 */ }
   ```
-
-**Problem: npm publish didn't happen**
-- Cause: publish-cli.yml didn't start or failed
-- Fix: Run it by hand for the released version:
-  ```bash
-  unset GITHUB_TOKEN && gh workflow run "Publish CLI" -R GeiserX/LynxPrompt -f version=X.Y.Z -f platforms=all
-  ```
-
-**Problem: npm says version already exists**
-- Cause: Version was already published (maybe partial failure)
-- Fix: the npm job skips a version that is already there; dispatch `release.yml` for the next patch if a fix is needed
-
-### Verifying a Successful Release
-
-```bash
-# 1. Check the GitHub release exists and is Latest
-unset GITHUB_TOKEN && gh release list -R GeiserX/LynxPrompt --limit 5
-
-# 2. Check npm has the new version
-npm view lynxprompt version
-
-# 3. Check git tags exist
-git fetch --tags
-git tag -l "v*" --sort=-version:refname | head -5
-```
-
----
-
-## 🔄 CLI & WEB WIZARD FEATURE PARITY
-
-**The CLI (`lynxprompt` package) and Web Wizard MUST always have the same functionality.**
-
-When adding or modifying wizard features:
-1. **Update both CLI and Web** - Any new wizard step, option, or configuration must be implemented in both:
-   - Web: `src/app/wizard/` and related components
-   - CLI: `cli/src/commands/wizard.ts` and `cli/src/utils/generator.ts`
-   - Shared by both: the platform table (`packages/shared/src/platforms.ts`: file paths, formats, blueprint types) and the rules formatting (`packages/shared/src/rules-format.ts`). Change a platform there, not in one of the two generators
-2. **Same options** - Tech stacks, platforms, personas, boundaries, and presets must match
-3. **Same output** - Generated configuration files must be identical regardless of source
-4. **Test both** - Before deploying, verify the feature works in both CLI and Web
-
----
-
-## 🚨 CRITICAL - READ FIRST
-
-### Always Backup Before Modifying Config Files
-
-Before modifying important config files (Caddyfile, docker-compose, etc.), ALWAYS create a backup first:
-
-```bash
-# Example (always use Tailscale MagicDNS hostnames):
-ssh root@<deploy-host> "cp /mnt/user/appdata/caddy/Caddyfile /mnt/user/appdata/caddy/Caddyfile.old"
-```
-
-### Always Check GitHub Actions After Push/Deploy
-
-After any push or deployment, ALWAYS check GitHub Actions logs:
-
-```bash
-# List recent workflow runs
-unset GITHUB_TOKEN && gh run list -R GeiserX/LynxPrompt --limit 5
-
-# View failed run logs
-unset GITHUB_TOKEN && gh run view <RUN_ID> -R GeiserX/LynxPrompt --log-failed
-
-# View specific job logs
-unset GITHUB_TOKEN && gh run view <RUN_ID> -R GeiserX/LynxPrompt --log
-```
-
-If CI/CD fails, investigate and fix before considering deployment complete.
-
-### NEVER Restart Docker Containers
-
-**General rule**: Prefer `reload` commands over container restarts. Redeploy through GitOps, not manual docker commands.
-
-**Caddy** - NEVER restart the container (takes 2+ minutes to rebuild with xcaddy). Instead:
-```bash
-ssh root@<deploy-host> "docker exec caddy caddy fmt --overwrite /etc/caddy/Caddyfile && docker exec caddy caddy reload --config /etc/caddy/Caddyfile"
-```
-
-**LynxPrompt** - Production deploys through GitOps:
-1. Production runs the image pinned by tag and digest in `lynxprompt/docker-compose.yml` of the deploy host's private GitOps repo.
-2. After each release, Renovate opens and automerges the pin bump once the image is a day old. To ship sooner, set the pin yourself to `drumsergio/lynxprompt:X.Y.Z@sha256:<digest>` (digest from `docker buildx imagetools inspect drumsergio/lynxprompt:X.Y.Z --format '{{.Manifest.Digest}}'`), commit and push. Changing only the tag deploys nothing new, because Docker resolves the image by digest.
-3. The push makes the deploy webhook on the deploy host run the stack. Wait for its `=== Deploy Summary ===` line in `docker logs webhook`, then check `https://lynxprompt.com/api/health` reports the new version.
-
-Never manually run `docker compose up` or `docker restart` on the stack. A hand-run compose races the webhook, and the webhook's rollback then leaves the checkout and the containers out of step.
-
-### Branching: `develop` for features, `main` for deps/security
-
-**Never push directly to `main`.** Always open a PR, wait for CI, and merge only with the owner's approval.
-
-**Feature / app / behavior changes** go through `develop` first:
-
-1. Work on `develop` branch
-2. Test changes on dev environment (dev.lynxprompt.com)
-3. Verify everything works correctly
-4. Only then merge to `main` for production deployment
-
-```bash
-# Switch to develop branch
-git checkout develop
-
-# After testing is complete, merge to main
-git checkout main
-git merge develop
-```
-
-**Dependency and security updates target `main` directly via PR.** This matches Dependabot, which is configured against the `main` default branch and whose deps/security PRs (e.g. #88–#97) merge straight to `main`. `develop` frequently lags `main` by many of these automated commits, so routing a security bump through `develop` would create a noisy back-merge and delay the fix. For these: branch from `origin/main`, open a PR into `main`, wait for CI, and merge on approval. Merging releases nothing; a dependency PR leaves the versions alone, and the next manual release ships it. Never create tags by hand.
-
-## 🎯 Project Overview
-
-**LynxPrompt** is a self-hostable web application and CLI (`lynxp`) that generates AI IDE configuration files (`AGENTS.md`, `CLAUDE.md`, `.cursor/rules/*.mdc`, `.github/copilot-instructions.md`, Agent Skills, MCP configs, etc.) through a wizard. Users store them as **blueprints**, share them publicly or with a team, and keep them in sync with `lynxp`. Every feature is free; there is no billing. The official instance is lynxprompt.com.
-
-- **Live URL**: https://lynxprompt.com
-- **Dev URL**: https://dev.lynxprompt.com
-- **Test URL**: https://test.lynxprompt.com
-- **Status Page**: https://status.lynxprompt.com
-- **Repository**: https://github.com/GeiserX/LynxPrompt
-
----
-
-## 👤 Owner Context
-
-**Operator**: Sergio Fernández Rubio
-**Trade Name**: GeiserCloud
-**Contact**: privacy@lynxprompt.com / legal@lynxprompt.com / support@lynxprompt.com
-
-### Communication Style
-
-- **Be direct and efficient** - Don't over-explain or add unnecessary caveats
-- **Do the work, don't ask permission** - If the task is clear, execute it
-- **Wait for explicit deploy instruction** - Do NOT commit, build Docker, or deploy until the user explicitly says to
-- **Use exact values when provided** - Don't modify user-provided values (emails, addresses, names, etc.)
-
-### Things I Like ✅
-
-- Clean, readable code without over-engineering
-- Proper GDPR/EU legal compliance
-- Self-hosted solutions (Umami analytics)
-- Privacy-focused approaches (cookieless analytics, minimal data collection)
-- Semver versioning for Docker images (e.g., `2.0.22`, never `:latest`)
-- GitOps for infrastructure (a private GitOps repo per server, redeployed by a webhook on push)
-- Docker Hub for all images (custom images built by GHA, pushed to `drumsergio/*`)
-- Tailwind CSS for styling
-- TypeScript with strict types
-
-### Things I Dislike ❌
-
-- **Restarting containers** when reload is possible (use `caddy reload`, not container restart)
-- **Manual docker commands** for deployments (push to the GitOps repo instead)
-- Over-engineering or unnecessary abstractions
-- Adding features I didn't ask for
-- Verbose explanations when action is needed
-- Third-party analytics/tracking services
-- Marketing consent flows (only transactional emails)
-- Breaking changes without clear communication
-- Using `:latest` tags for Docker images
-- Creating unnecessary documentation files
-
----
-
-## 🏗️ Tech Stack
-
-### Frontend
-| Technology | Purpose |
-|------------|---------|
-| Next.js 16 | App Router, Server Components |
-| React 19 | UI library |
-| TypeScript | Type safety |
-| Tailwind CSS | Styling |
-| shadcn/ui | UI components |
-| Zustand | Client state |
-| TanStack Query | Server state |
-
-### Backend
-| Technology | Purpose |
-|------------|---------|
-| Next.js API Routes | API endpoints |
-| Prisma ORM | Database access |
-| NextAuth.js 4.x | Authentication |
-| Zod | Validation |
-
-### Databases
-| Database | Purpose | Client |
-|----------|---------|--------|
-| PostgreSQL (app) | Templates, platforms, system data | `@prisma/client-app` |
-| PostgreSQL (users) | Users, sessions, passkeys | `@prisma/client-users` |
-| PostgreSQL (blog) | Blog posts and content | `@prisma/client-blog` |
-| PostgreSQL (support) | Feedback forum data | `@prisma/client-support` |
-
-### Infrastructure
-| Component | Details |
-|-----------|---------|
-| Docker | Multi-stage builds, linux/amd64 and linux/arm64 images on Docker Hub (`drumsergio/lynxprompt`) |
-| Private GitOps repo + deploy webhook | GitOps: a push to a server's repo redeploys the stacks it changed |
-| Tailscale | VPN for internal services (always use MagicDNS hostnames) |
-| Umami | Self-hosted analytics (EU, cookieless) |
-| Caddy | Reverse proxy (production + dev) |
-
----
-
-## 🗄️ Multi-Database Architecture
-
-This project uses **four separate PostgreSQL databases** with distinct Prisma clients. Blog and support are optional: the image migrates them only while `ENABLE_BLOG` / `ENABLE_SUPPORT_FORUM` is on, so a default self-host runs on app and users only.
-
-```typescript
-// System/application data (templates, platforms)
-import { prismaApp } from "@/lib/db-app";
-
-// User data (users, sessions, passkeys, user templates)
-import { prismaUsers } from "@/lib/db-users";
-
-// Blog posts and content
-import { prismaBlog } from "@/lib/db-blog";
-
-// Support/feedback forum data
-import { prismaSupport } from "@/lib/db-support";
-```
-
-**Schema files:**
-- `prisma/schema-app.prisma` → generates `@prisma/client-app`
-- `prisma/schema-users.prisma` → generates `@prisma/client-users`
-- `prisma/schema-blog.prisma` → generates `@prisma/client-blog`
-- `prisma/schema-support.prisma` → generates `@prisma/client-support`
-
-**Commands:**
-```bash
-npm run db:generate    # Generate all Prisma clients
-npm run db:push        # Push the schemas to local dev databases only
-npm run db:seed        # Seed databases
-```
-
-**Migrations:** each schema has its history in `prisma/migrations-{app,users,blog,support}/`, starting at `0_init`. On start, `entrypoint.sh` runs `prisma migrate deploy` per database. A database an older release built with `db push` is first baselined from the frozen schemas in `prisma/baseline/` (only `0_init` recorded), then migrated. Every schema change needs a new timestamped migration folder; data fixes are data-only migrations.
-
----
-
-## 🔐 Authentication
-
-### Providers
-Each is switched on by a feature flag (`ENABLE_GITHUB_OAUTH`, `ENABLE_GOOGLE_OAUTH`, `ENABLE_EMAIL_AUTH`, `ENABLE_PASSKEYS`, `ENABLE_SSO`):
-- GitHub OAuth
-- Google OAuth
-- Magic Link (email, at most three links per address every 10 minutes)
-- Passkeys (WebAuthn), used as a second factor
-- Team SSO, OpenID Connect only, for addresses on a domain the team verified
-
-### User Roles
-- `USER` - Default role
-- `ADMIN` - Administrative access
-- `SUPERADMIN` - Full system access (auto-promoted via `SUPERADMIN_EMAIL` env var)
-
-### Passkeys Implementation
-```typescript
-// @simplewebauthn v13 exports its types from the server package
-import {
-  generateRegistrationOptions,
-  type AuthenticatorTransportFuture,
-} from "@simplewebauthn/server";
-```
-
----
-
-## 💰 Business Model
-
-LynxPrompt has no billing. Subscription tiers, Stripe and paid blueprints were removed: every account has every feature, and the last plan columns were dropped in 2.1.48. `TemplateTier` is the blueprint length class (Short to Super Long), not a billing tier. Don't add pricing, plan checks or checkout flows.
-
----
-
-## 📜 Legal Compliance
-
-### GDPR Requirements
-- Physical address disclosed
-- Legal basis: Contract + Legitimate Interest
-- No DPO appointed (stated in privacy policy)
-- Self-hosted Umami analytics (cookieless)
-- AEPD complaint rights mentioned
-- Users delete their own account in Settings (`DELETE /api/user`, `src/lib/account-deletion.ts`); `/privacy` says what is deleted and what is kept anonymized. Keep the two in step
-- Third parties that receive personal data are named in `/privacy` (Gravatar gets an email hash for accounts without a picture)
-
-### Key Legal Documents
-- `/privacy` - Privacy Policy (GDPR compliant)
-- `/terms` - Terms of Service (marketplace clauses, EU compliant)
-- Governing law: **Spain** (Courts of Cartagena)
-
----
-
-## 🔧 Code Conventions
-
-### General Rules
-- Use TypeScript strict mode
-- Format with Prettier
-- Lint with ESLint
-- Use `text-foreground` for readable text (not `text-muted-foreground` for body text)
-- Navigation order: `Wizard | Blueprints | Docs | Blog (when enabled) | [UserMenu]`
-
-### File Structure
-```
-LynxPrompt/
-├── .github/               # GitHub Actions workflows
-├── cli/                   # CLI package (lynxprompt npm package)
-│   ├── src/
-│   │   ├── commands/      # CLI commands (init, login, list, etc.)
-│   │   ├── utils/         # Detection, generation utilities
-│   │   └── index.ts       # Main entry point
-│   ├── homebrew/          # Homebrew formula
-│   ├── chocolatey/        # Chocolatey package
-│   └── snap/              # Snap package config
-├── docs/                  # Documentation
-├── prisma/                # Database schemas and seeds
-├── public/                # Static assets
-│   └── logos/
-│       ├── agents/        # AI agent logos
-│       └── brand/         # LynxPrompt branding
-├── scripts/               # Build and migration scripts
-├── src/
-│   ├── app/               # Next.js App Router pages
-│   │   ├── api/           # API routes
-│   │   │   ├── cli-auth/  # CLI authentication endpoints
-│   │   │   └── v1/        # Public API v1
-│   │   └── [page]/        # Page components
-│   ├── components/
-│   │   ├── ui/            # shadcn/ui components
-│   │   └── [feature].tsx  # Feature components
-│   ├── lib/
-│   │   ├── db-*.ts        # Database clients
-│   │   ├── auth.ts        # NextAuth config
-│   │   └── utils.ts       # Utilities
-│   └── types/             # TypeScript types
-├── tests/                 # Test files
-└── tooling/               # Internal tools
-```
-
-### API Routes Pattern
-```typescript
-import { NextResponse } from "next/server";
-import { requireSession, requireUser, canPerform } from "@/lib/api-auth";
-
-// Browser-only route
-const auth = await requireSession(request);
-if (auth instanceof NextResponse) return auth;   // 401, or 403 passkeyRequired on a write
-const { session, userId } = auth;
-
-// Route that also takes an API token: limit what the token may do
-const caller = await requireUser(request);
-if (caller instanceof NextResponse) return caller;
-if (!canPerform(caller, "blueprints:write")) { /* 403 */ }
-
-// Use appropriate database client
-import { prismaApp } from "@/lib/db-app";
-import { prismaUsers } from "@/lib/db-users";
-```
-
-Never call `getServerSession` for auth in a route: the helpers also enforce the passkey second factor on writes. Every new write route goes in `tests/api/auth/passkey-write-gate.test.ts`. The v1 API (`/api/v1/*`) authenticates with `validateApiToken` and checks `hasPermission` per route.
-
-### Security Patterns
-1. **Never reveal if email exists** (user enumeration)
-2. **Always check ownership** for user resources (IDOR prevention)
-3. **Use `useSession()`** from NextAuth, never localStorage for auth
-4. **Sanitize user input** before storing
-5. **Validate `callbackUrl`** - only relative paths or same-origin
-
----
-
-## 🚀 Deployment
-
-### Environments
-
-| Environment | URL | Server | Image Source |
-|-------------|-----|--------|-------------|
-| Production | lynxprompt.com | production host | `drumsergio/lynxprompt:<semver>` (Docker Hub) |
-| Development | dev.lynxprompt.com | development host | Same image as prod |
-| Test | test.lynxprompt.com | test host | Same image as prod |
-
-### Build Process
-
-Images are built by GitHub Actions and pushed to **Docker Hub** (`drumsergio/lynxprompt`). Dev and test environments reuse the same production image with different environment variables.
-
-```bash
-# Local image build (BuildKit needed for the cache mounts); releases are built by docker-publish.yml
-docker buildx build --load -t lynxprompt:dev .
-```
-
-**Build optimizations included:**
-- `npm ci` in the deps stage, so the image gets exactly what `package-lock.json` pins (the `node:26-alpine` base ships npm 11, the same major as local)
-- The Prisma CLI stage installs only `prisma` and `tsx`, at their locked versions, against the full lockfile
-- No `NEXT_PUBLIC_*` build args: Next inlines them into server code too, so the Turnstile site key and Umami ID are read from the container env at runtime
-- BuildKit cache mounts keyed by `TARGETPLATFORM`; amd64 and arm64 are built natively on their own runners and joined under one tag
-- Base image: `node:26-alpine`
-- Parallel Prisma client generation
-- `optimizePackageImports` for faster builds
-
-### Environment Variables
-
-See `env.example` for all required variables. Key categories:
-
-| Category | Variables |
-|----------|-----------|
-| Database | `DATABASE_URL_APP`, `DATABASE_URL_USERS`, `DATABASE_URL_BLOG`, `DATABASE_URL_SUPPORT` |
-| Auth | `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `GITHUB_*`, `GOOGLE_*`, `SSO_ENCRYPTION_KEY`, `SUPERADMIN_EMAIL` |
-| Email | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` |
-| Features | `ENABLE_*` flags (`src/lib/feature-flags.ts`); blog, support forum, AI, SSO and federation are off by default |
-| Analytics | `UMAMI_SCRIPT_URL`, `NEXT_PUBLIC_UMAMI_WEBSITE_ID` (read at runtime) |
-| Security | `TURNSTILE_SECRET_KEY`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (read at runtime), `TRUSTED_PROXY` |
-
----
-
-## 🔒 Secrets Management
-
-**This project keeps secrets OUT of the repository.**
-
-### How Secrets are Handled
-
-1. **Development**: Use `.env` file (gitignored)
-2. **Production**: Secrets stored in docker-compose.yml in a **private GitOps repository** (not this repo)
-3. **CI/CD**: GitHub Secrets for deployment workflows
-
-### What Goes Where
-
-| Type | Location | Example |
-|------|----------|---------|
-| Placeholder values | `env.example` | `SMTP_HOST=smtp.example.com` |
-| Development secrets | `.env` (local, gitignored) | Actual test keys |
-| Production secrets | Private GitOps repo | Actual live keys |
-| CI secrets | GitHub Secrets | Deploy tokens |
-
-### Security Checklist
-- [ ] Never commit real secrets to this repository
-- [ ] Use `env.example` as template only
-- [ ] Keep production docker-compose in private repo
-- [ ] Rotate secrets if accidentally exposed
-
----
-
-## 🛠️ Common Tasks
-
-### Adding a New Page
-1. Create `src/app/[pagename]/page.tsx`
-2. Add navigation link to header
-3. Include proper header/footer components
-4. Use `text-foreground` for body text
-
-### Database Schema Changes
-```bash
-# 1. Edit the appropriate schema file
-# prisma/schema-*.prisma
-
-# 2. Generate clients
-npm run db:generate
-
-# 3. Push to your local dev database
-npm run db:push
-
-# 4. Add a new timestamped migration folder under prisma/migrations-*/, written
-#    with `prisma migrate diff` against the schema on main (docs/development.md).
-#    Never edit an existing migration (databases that recorded it never rerun
-#    it) or prisma/baseline/ (it must stay the schema 0_init creates).
-
-# 5. Prove it on a fresh database and on an upgrade from the last release's data
-```
-
-### Running Tests
-```bash
-npm test              # Vitest in watch mode (npx vitest run for one pass)
-npm run test:ui       # Vitest UI
-npm run test:coverage # With coverage
-```
-
----
-
-## ⚠️ Known Issues
-
-1. **`useSearchParams` requires Suspense boundary** in client components
-2. **Database pages need `export const dynamic = "force-dynamic"`** to prevent build-time DB access
-3. **Container name conflicts**: Remove old containers before recreating
-4. **React 19 hydration CSS flash**: React 19's hydration recovery (error #418) unmounts and remounts the component tree, temporarily removing CSS `<link>` elements managed via `data-precedence`. A MutationObserver script in `src/app/layout.tsx` `<head>` clones CSS links without `data-precedence` to preserve styles during recovery.
-5. **shields.io retired `visual-studio-marketplace` badge**: use static `img.shields.io/badge/` badges for VS Code marketplace links instead
-6. **Chocolatey `nodejs` vs `nodejs-lts`**: the `nodejs` package (latest, currently v25) hangs in Chocolatey test VMs; always use `nodejs-lts` (stable v22.x) as a dependency in `.nuspec` files
-7. **Tailscale TLS certs**: Tailscale-issued Let's Encrypt certs expire every 90 days. Auto-renewal runs as a scheduled script on the production and development hosts. GHA deploy workflows use Tailscale MagicDNS hostnames (not IPs) for proper TLS validation
-
-## Satellite Repos — Known Workarounds
-
-| Repo | Issue | Workaround |
-|------|-------|------------|
-| `lynxprompt-vscode` | Dependabot bumps `@types/vscode` without bumping `engines.vscode` → `vsce` rejects | Publish workflow auto-syncs `engines.vscode` from `@types/vscode` before packaging |
-| `lynxprompt-vscode` | `vsce` rejects SVGs in README | Use PNG images only in README (SVG ok elsewhere) |
-| `lynxprompt-vscode` | Publish workflow version commit must push to main | Branch protection PR requirement removed; workflow commits with `[skip ci]` |
-| `lynxprompt-action` | `@actions/glob` 0.6.x ESM-only exports breaks `@vercel/ncc` CJS bundling | Pinned to 0.5.1; Dependabot ignores it. Unpin when ncc adds ESM exports support |
-| Helm chart | ArtifactHub `artifacthub-repo.yml` must be on `gh-pages` branch | The copy in chart source (`charts/lynxprompt/`) is NOT read by ArtifactHub; edit `gh-pages` directly for ignore rules and metadata |
-
----
-
-## 📁 Key Files Reference
-
-| File | Purpose |
-|------|---------|
-| `src/lib/db-*.ts` | Database Prisma clients |
-| `src/lib/auth.ts` | NextAuth configuration |
-| `src/proxy.ts` | Rate limiting, security headers, per-request CSP nonce |
-| `src/lib/api-auth.ts` | `requireSession` / `requireUser` for API routes |
-| `src/lib/feature-flags.ts` | `ENABLE_*` flags and their defaults |
-| `packages/shared/src/platforms.ts` | Platform table shared by the web and the CLI |
-| `prisma/migrations-*/` | Migration history per database |
-| `prisma/schema-*.prisma` | Database schemas |
-| `src/app/layout.tsx` | Root layout (CSS preservation script) |
-| `docs/ROADMAP.md` | Feature roadmap |
-| `docs/how-it-works.md` | Security model (was `docs/SECURITY.md`) |
-
----
-
-## 📋 Checklist for AI Agents
-
-Before completing a task, verify:
-
-- [ ] Code follows TypeScript strict mode
-- [ ] No secrets committed to repository
-- [ ] Tests pass (if applicable)
-- [ ] Linting passes
-- [ ] Changes match the requested scope
-
----
-
-*Last updated: October 2026*
-
+- Never reveal whether an email exists, check ownership on every user resource, and accept only relative or same-origin `callbackUrl` values.
+- The CLI and the web wizard keep feature parity: same options, same generated files. The platform table (`packages/shared/src/platforms.ts`) and rules formatting (`packages/shared/src/rules-format.ts`) are shared; change a platform there. Wizard code lives in `src/app/wizard/` and `cli/src/commands/wizard.ts` / `cli/src/utils/generator.ts`.
+- Cursor configs are `.cursor/rules/*.mdc`; `.cursorrules` is deprecated. Generate the `.mdc` form only.
+- There is no billing. `TemplateTier` is the blueprint length class, not a plan. Add no pricing, plan checks or checkout.
+- Feature flags are the `ENABLE_*` variables in `src/lib/feature-flags.ts`; `env.example` lists every variable.
+- Account deletion (`src/lib/account-deletion.ts`) and `/privacy` describe the same data; change them together.
+- Docker images use pinned semver tags, never `:latest`.
+
+## Traps
+
+- `useSearchParams` in a client component needs a Suspense boundary, and a page that reads the database needs `export const dynamic = "force-dynamic"` or the build tries to query it.
+- React 19 hydration recovery (error #418) remounts the tree and drops `data-precedence` CSS links. The `MutationObserver` script in `src/app/layout.tsx` keeps the styles; leave it in place.
+- Chocolatey: depend on `nodejs-lts`, never `nodejs`, which hangs in Chocolatey's test VMs.
+- ArtifactHub reads `artifacthub-repo.yml` from the `gh-pages` branch, not from `charts/lynxprompt/`.
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:970c3bf2 -->
 ## Beads Issue Tracker
@@ -665,4 +143,4 @@ This protocol applies when ending a Beads implementation workflow. It is subordi
 
 ## Where the tracker syncs
 
-This repo is public, so its tracker syncs only to the private remote named by `sync.remote` in `.beads/config.yaml`. The block above says sync uses "your git remote". Here that never means this GitHub repo. Don't add it as a Dolt remote and don't push `refs/dolt/*` to it.
+This repo is public, so its tracker syncs only to the private remote named by `sync.remote` in `.beads/config.yaml`. The block above says sync uses "your git remote"; here that is never this GitHub repo. Keep `refs/dolt/*` off it and never add it as a Dolt remote.
