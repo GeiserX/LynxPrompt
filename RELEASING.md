@@ -18,7 +18,7 @@ The app and the CLI share one version and ship together: one tag `vX.Y.Z`, one G
 
 ### What gets released
 
-Every push to `main` runs `release.yml`, which runs the CI suite and the CLI build and public tests (this is `main`'s CI), except a push that only touches `docs/**`, `mkdocs.yml`, `charts/**` or root Markdown files. A push never releases. Releases are manual: when `main` holds what you want to ship, run the Release workflow by hand (see below). Every release ships the app and the CLI together.
+Every push to `main` runs `release.yml`, which runs the CI suite and the CLI build and public tests (this is `main`'s CI), except a push that only touches `docs/**`, `zensical.toml`, `charts/**` or root Markdown files. A push never releases. Releases are manual: when `main` holds what you want to ship, run the Release workflow by hand (see below). Every release ships the app and the CLI together.
 
 One release runs at a time and none is cancelled. Pushes, dry runs and real releases queue in separate groups, so a merge landing while a release waits does not replace it.
 
