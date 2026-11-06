@@ -46,9 +46,15 @@
  * scroll. Styling both would change every page title too.
  */
 .md-header__topic:first-child .md-ellipsis {
-  color: #f6f6f4;
   font-weight: 800;
   letter-spacing: -0.02em;
+}
+
+/* That colour only on the dark scheme: Zensical's modern header takes the page
+   background, so on the light scheme it is white and a light name would vanish.
+   There the name keeps the default text colour. */
+[data-md-color-scheme="slate"] .md-header__topic:first-child .md-ellipsis {
+  color: #f6f6f4;
 }
 
 /* Keep the mark and the name close, so they read as one unit. */

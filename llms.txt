@@ -1,0 +1,14 @@
+# LynxPrompt
+
+> Self-hosted web app that turns one set of AI coding rules into AGENTS.md, CLAUDE.md, .cursor/rules and 30 rule-file formats, with a wizard, shared blueprints, a CLI and a VS Code extension.
+
+## Documentation
+
+- [Configuration](<https://geiserx.github.io/LynxPrompt/configuration/index.md>)
+- [Development](<https://geiserx.github.io/LynxPrompt/development/index.md>)
+- [Features](<https://geiserx.github.io/LynxPrompt/features/index.md>)
+- [Getting started](<https://geiserx.github.io/LynxPrompt/getting-started/index.md>)
+- [How it works](<https://geiserx.github.io/LynxPrompt/how-it-works/index.md>)
+- [Home](<https://geiserx.github.io/LynxPrompt/index.md>)
+- [Troubleshooting](<https://geiserx.github.io/LynxPrompt/troubleshooting/index.md>)
+- [Usage](<https://geiserx.github.io/LynxPrompt/usage/index.md>)

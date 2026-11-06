@@ -1,0 +1,47 @@
+# How it works
+
+## Components
+
+- **The app**: one Next.js 16 process (App Router) that serves the pages and the API on port 3000, running as user id 1001 in the `drumsergio/lynxprompt` image (linux/amd64).
+- **PostgreSQL** with four Prisma schemas: app (platforms, languages, frameworks, wizard steps, system templates, federated instances), users (accounts, sessions, passkeys, teams, blueprints, drafts, hierarchies, API tokens), blog and support (the two optional modules). Each schema has its own database, because `prisma db push` drops the tables it does not know; the self-host compose file keeps the four databases on one PostgreSQL server.
+- **Migrations** run at every start: the entrypoint builds the four connection strings from the `DB_*` variables, runs `prisma migrate deploy` for each schema, and refuses to start if one fails. A database that an earlier release built with `prisma db push` gets one last `db push` of the schema as the first migration (`0_init`) created it, which refuses any change that would lose data. Only `0_init` is then recorded as applied, so every later migration runs as written.
+- **Mail**: the sign-in link is sent through your SMTP server with nodemailer. Nothing else is mailed unless the contact form is on.
+
+```
+flowchart LR
+    BR[Browser] <--> WEB[Next.js pages and API]
+    CLI[lynxp CLI, VS Code extension,<br/>GitHub Action, MCP server] <-->|Bearer API token| WEB
+    WEB --> DB[(PostgreSQL: app, users,<br/>blog, support)]
+    WEB --> SMTP[SMTP server]
+    WEB -.-> EXT[GitHub or Google OAuth, SSO,<br/>Anthropic API: optional]
+    WEB <-.->|public blueprints| FED[Other LynxPrompt instances]
+```
+
+## Sign-in
+
+NextAuth with database sessions (30 days, refreshed daily). The providers are built from the feature flags: the mail link (`ENABLE_EMAIL_AUTH`, on by default, needs `SMTP_*`), passkeys (`ENABLE_PASSKEYS`, for existing accounts), GitHub and Google OAuth, and OIDC SSO per team, limited to the email domains the team verified in DNS. When an account whose address equals `SUPERADMIN_EMAIL` signs in by any method but SSO, it is promoted to superadmin. Roles are USER, ADMIN and SUPERADMIN. With `ENABLE_USER_REGISTRATION=false`, an address without an account is refused with `RegistrationDisabled`, unless it has a pending, unexpired team invitation.
+
+## What the CLI and the extension talk to
+
+`lynxp login` opens the configured instance in the browser (`lynxp config set-url`, or `LYNXPROMPT_API_URL`) and stores an API token in a file only its owner can read. The CLI keeps one token per instance, so switching with `lynxp config set-url` keeps the other logins and asks the new instance whether its saved token still works. A token is sent only to the instance that issued it, and `lynxp logout` revokes the current instance's token there. Every call after that is `Authorization: Bearer <token>` against `/api/v1/`. Tokens are created in Settings, carry a role (`BLUEPRINTS_FULL`, `BLUEPRINTS_READONLY`, `PROFILE_FULL` and others) and an expiry, and the API answers `401` with the settings URL when one expires. The VS Code extension, the GitHub Action and the MCP server use the same API with the same tokens.
+
+## Blueprints, variables and hierarchies
+
+A blueprint is text plus a name, a description, a type, a category, tags and a visibility (private, team, public). `[[VARIABLE|default]]` placeholders are filled at download time. A hierarchy links several `AGENTS.md` blueprints to paths of one repository, for monorepos; the API exposes it at `/api/v1/hierarchies` and the CLI as `lynxp hierarchies`.
+
+## Federation
+
+Federation is off by default, and an instance makes no call to the registry until `ENABLE_FEDERATION=true`. Then, at start and every six hours after, it posts its domain (the host of `APP_URL`) to the registry (`FEDERATION_REGISTRY_URL`, lynxprompt.geiser.cloud by default) and serves `/.well-known/lynxprompt.json` with its name, version, API URL and number of public blueprints. An `APP_URL` that is not https on a public domain name (such as `http://localhost:3000`) is skipped with a warning, since the registry could not reach it. The registry lists the instances on `/federation`, and each instance lists the name, description, tags and author of its public blueprints at `/api/v1/federation/blueprints`; no instance pulls another's blueprints into its own marketplace. Private and team blueprints never leave the instance. These public reads carry a five-minute public `Cache-Control`, so a CDN in front of the instance can serve them.
+
+## Security model
+
+- Secrets come from environment variables; nothing is read from files in the image.
+- Sessions use secure, HttpOnly cookies with the `__Secure-` prefix in production.
+- The app rate-limits by client address in memory, per instance: 5000 requests per minute in general and 300 per minute on the sign-in endpoints, answering `429` with `Retry-After`.
+- Every response carries `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, a `Referrer-Policy`, a `Permissions-Policy`, a `Content-Security-Policy` and, in production, HSTS.
+- The container runs as a non-root user; the compose file publishes only the app port, never PostgreSQL.
+- Reporting: [SECURITY.md](<https://github.com/GeiserX/LynxPrompt/blob/main/SECURITY.md>).
+
+## Where the data is
+
+Everything is in PostgreSQL, in the `pgdata` volume of the compose file. A backup is `pg_dumpall` of that server; a restore is `psql` into an empty one before the first start. Uploaded files (blog and profile images) live in the app container's uploads path; the Helm chart gives them a volume.
