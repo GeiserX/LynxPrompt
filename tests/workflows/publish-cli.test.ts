@@ -113,7 +113,7 @@ describe("CLI release pipeline", () => {
     const push = read("release.yml").match(/\n  push:\n((?: {4}.*\n)*)/)![1];
     expect(push).not.toMatch(/^ {4}paths:/m);
     const ignored = [...push.matchAll(/^ {6}- '(.*)'$/gm)].map((m) => m[1]);
-    expect(ignored).toEqual(["docs/**", "mkdocs.yml", "charts/**", "*.md"]);
+    expect(ignored).toEqual(["docs/**", "zensical.toml", "charts/**", "*.md"]);
   });
 
   it("publishes from the v<version> tag and its release, started by the release dispatch", () => {

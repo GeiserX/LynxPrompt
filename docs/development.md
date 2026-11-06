@@ -44,12 +44,13 @@ See [CONTRIBUTING.md](https://github.com/GeiserX/LynxPrompt/blob/main/CONTRIBUTI
 
 ## Docs
 
-The site is MkDocs Material, built strictly:
+The site is built with Zensical, strictly, then checked, the same two commands CI runs:
 
 ```bash
 pip install -r docs/requirements-docs.txt
-mkdocs build --strict     # any broken link or unreachable page fails it
-mkdocs serve
+python -m zensical build --clean --strict      # a broken link or anchor fails it
+python -I .github/scripts/site-check.py site   # a page outside the nav, a missing image or a /rooted link fails it
+python -m zensical serve
 ```
 
 `docs.yml` builds every pull request and deploys `main` into the `gh-pages` branch next to the Helm
