@@ -34,7 +34,7 @@ SMTP_PASSWORD=...
 SMTP_FROM=lynxprompt@example.com
 ```
 
-Never expose Mailpit: anyone who can open its port can sign in as anyone. The other ways to sign in (passkeys, GitHub or Google OAuth, SSO) are switched on in [Configuration](<https://geiserx.github.io/LynxPrompt/configuration/#sign-in>); passkeys need an account that already exists, so the first sign-in is always the mail link or OAuth.
+Never expose Mailpit: anyone who can open its port can sign in as anyone. The other ways to sign in (passkeys, GitHub or Google OAuth, SSO) are switched on in [Configuration](<https://geiserx.github.io/LynxPrompt/configuration/index.md#sign-in>); passkeys need an account that already exists, so the first sign-in is always the mail link or OAuth.
 
 ## Upgrading
 
@@ -66,4 +66,4 @@ The chart bundles PostgreSQL by default, or points at an external one with `exte
 | CI | GitHub Action | [lynxprompt-action](<https://github.com/GeiserX/lynxprompt-action>) |
 | AI assistants | MCP server | [lynxprompt-mcp](<https://github.com/GeiserX/lynxprompt-mcp>) |
 
-After installing the CLI: `lynxp config set-url https://lynxprompt.example.com` for your own instance (the default, which `lynxp config show` prints, is the hosted instance at `https://lynxprompt.geiser.cloud`), then `lynxp login`. See [Usage](<https://geiserx.github.io/LynxPrompt/usage/#the-cli>).
+After installing the CLI: `lynxp config set-url https://lynxprompt.example.com` for your own instance (the default, which `lynxp config show` prints, is the hosted instance at `https://lynxprompt.geiser.cloud`), then `lynxp login`. See [Usage](<https://geiserx.github.io/LynxPrompt/usage/index.md#the-cli>).

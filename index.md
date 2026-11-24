@@ -15,7 +15,7 @@ This site is about running your own instance: [start with Docker Compose](<https
   ---
 
   Three commands start the app and PostgreSQL, and the Mailpit link signs you in. A Helm chart covers Kubernetes.
-- **[Your first sign-in](<https://geiserx.github.io/LynxPrompt/getting-started/#first-sign-in>)**
+- **[Your first sign-in](<https://geiserx.github.io/LynxPrompt/getting-started/index.md#first-sign-in>)**
 
   ---
 
@@ -29,11 +29,11 @@ This site is about running your own instance: [start with Docker Compose](<https
 
   ---
 
-  Every setting with its default, and the [five you need for sign-in](<https://geiserx.github.io/LynxPrompt/configuration/#sign-in>).
+  Every setting with its default, and the [five you need for sign-in](<https://geiserx.github.io/LynxPrompt/configuration/index.md#sign-in>).
 
 ## The web app
 
-The wizard asks about the project, the stack, the commands, the code style and the boundaries, then writes the files for the tools you pick. [Usage](<https://geiserx.github.io/LynxPrompt/usage/#the-web-app>) walks through the wizard, the blueprint pages, the dashboard and teams.
+The wizard asks about the project, the stack, the commands, the code style and the boundaries, then writes the files for the tools you pick. [Usage](<https://geiserx.github.io/LynxPrompt/usage/index.md#the-web-app>) walks through the wizard, the blueprint pages, the dashboard and teams.
 
 ![The wizard on its last step, with the generated rules and the formats to export](<https://geiserx.github.io/LynxPrompt/images/screenshots/wizard.png>)
 
@@ -56,7 +56,7 @@ One blueprint
 - Keeps blueprints with `[[VARIABLE|default]]` placeholders, so one blueprint fits many projects. Each blueprint is private, shared with a team, or public.
 - Gives a team its own page and its own blueprints. An opt-in federation lists the instances that join in a shared directory.
 - Manages hierarchical `AGENTS.md` files for monorepos, from the dashboard, the CLI (`lynxp hierarchies`) and the API.
-- Serves the same data to the [CLI](<https://geiserx.github.io/LynxPrompt/usage/#the-cli>), the [VS Code extension](<https://geiserx.github.io/LynxPrompt/usage/#vs-code-extension>) and a REST API with per-token roles.
+- Serves the same data to the [CLI](<https://geiserx.github.io/LynxPrompt/usage/index.md#the-cli>), the [VS Code extension](<https://geiserx.github.io/LynxPrompt/usage/index.md#vs-code-extension>) and a REST API with per-token roles.
 - Signs users in with a magic link, passkeys, GitHub or Google OAuth, or OIDC SSO; each is one environment variable.
 - Edits blueprints with Claude when you set your own Anthropic API key; off by default, and everything else works without it.
 
@@ -86,12 +86,12 @@ flowchart LR
 
 - The image is `drumsergio/lynxprompt`, built for linux/amd64 and linux/arm64, running as user id 1001.
 - Migrations run every time the container starts (`prisma migrate deploy` on the four schemas), so an upgrade is a tag change and `docker compose up -d`.
-- The self-host compose file runs one PostgreSQL server with one database per schema (`lynxprompt`, `lynxprompt_users`, `lynxprompt_blog`, `lynxprompt_support`). See [Components](<https://geiserx.github.io/LynxPrompt/how-it-works/#components>).
+- The self-host compose file runs one PostgreSQL server with one database per schema (`lynxprompt`, `lynxprompt_users`, `lynxprompt_blog`, `lynxprompt_support`). See [Components](<https://geiserx.github.io/LynxPrompt/how-it-works/index.md#components>).
 - The CLI and the extension talk to `/api/v1/` with an API token you create in Settings. See [How it works](<https://geiserx.github.io/LynxPrompt/how-it-works/index.md>).
 
 ## What it does not do
 
-- It does not send mail by itself. The default login is a magic link, so a real deployment needs the five `SMTP_*` variables; the [Mailpit file](<https://geiserx.github.io/LynxPrompt/getting-started/#first-sign-in>) is only for trying it out.
+- It does not send mail by itself. The default login is a magic link, so a real deployment needs the five `SMTP_*` variables; the [Mailpit file](<https://geiserx.github.io/LynxPrompt/getting-started/index.md#first-sign-in>) is only for trying it out.
 - It does not run your AI tools. It writes the files they read.
 - It does not edit with AI unless you give it an Anthropic API key.
 
@@ -104,7 +104,7 @@ flowchart LR
 
 ## Getting help
 
-- If something is broken, read [Troubleshooting](<https://geiserx.github.io/LynxPrompt/troubleshooting/index.md>), then open an issue with the details in [Reporting a bug](<https://geiserx.github.io/LynxPrompt/troubleshooting/#reporting-a-bug>).
+- If something is broken, read [Troubleshooting](<https://geiserx.github.io/LynxPrompt/troubleshooting/index.md>), then open an issue with the details in [Reporting a bug](<https://geiserx.github.io/LynxPrompt/troubleshooting/index.md#reporting-a-bug>).
 - To report a security problem, follow the [security policy](<https://github.com/GeiserX/LynxPrompt/blob/main/SECURITY.md>) and do not open a public issue.
 - The [releases page](<https://github.com/GeiserX/LynxPrompt/releases>) lists what changed in each version.
 - To send a fix or a feature, read [Development](<https://geiserx.github.io/LynxPrompt/development/index.md>) and [CONTRIBUTING.md](<https://github.com/GeiserX/LynxPrompt/blob/main/CONTRIBUTING.md>).

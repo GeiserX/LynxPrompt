@@ -2,7 +2,7 @@
 
 ## The sign-in mail never arrives
 
-The default login sends a link by mail through `SMTP_HOST`, and the self-host compose file sets no mail server. `docker compose -f docker-compose.selfhost.yml logs lynxprompt` shows a nodemailer connection error after each attempt. Fix: set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` and `SMTP_FROM` in `.env` and restart, or add `-f docker-compose.mailpit.yml` to try it out and read the link at http://localhost:8025. See [First sign-in](<https://geiserx.github.io/LynxPrompt/getting-started/#first-sign-in>).
+The default login sends a link by mail through `SMTP_HOST`, and the self-host compose file sets no mail server. `docker compose -f docker-compose.selfhost.yml logs lynxprompt` shows a nodemailer connection error after each attempt. Fix: set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` and `SMTP_FROM` in `.env` and restart, or add `-f docker-compose.mailpit.yml` to try it out and read the link at http://localhost:8025. See [First sign-in](<https://geiserx.github.io/LynxPrompt/getting-started/index.md#first-sign-in>).
 
 ## The link in the mail points at localhost, or at the wrong port
 

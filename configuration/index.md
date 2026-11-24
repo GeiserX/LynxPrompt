@@ -79,4 +79,4 @@ Rate limits and download counts key on the client's address, so the app needs to
 | `ENABLE_FEDERATION` | `false` | `true` registers the instance's domain with the federation registry at start and every six hours, and serves `/.well-known/lynxprompt.json`. Needs an `APP_URL` on https with a public domain name. Off, the instance makes no call to the registry. |
 | `FEDERATION_REGISTRY_URL` | `https://lynxprompt.geiser.cloud` | The registry the instance registers with. |
 
-The CLI has two settings of its own: `lynxp config set-url <url>` (stored in the file `lynxp config path` prints) and the `LYNXPROMPT_API_URL` environment variable, which wins when set. See [Usage](<https://geiserx.github.io/LynxPrompt/usage/#the-cli>).
+The CLI has two settings of its own: `lynxp config set-url <url>` (stored in the file `lynxp config path` prints) and the `LYNXPROMPT_API_URL` environment variable, which wins when set. See [Usage](<https://geiserx.github.io/LynxPrompt/usage/index.md#the-cli>).
